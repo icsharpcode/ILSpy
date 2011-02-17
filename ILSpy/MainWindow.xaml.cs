@@ -308,8 +308,16 @@ namespace ICSharpCode.ILSpy
 				name = name.Replace(c, '-');
 			string fileName = Path.Combine(Path.GetTempPath(), name);
 			graph.Save(fileName + ".gv");
-			Process.Start("dot", "\"" + fileName + ".gv\" -Tpng -o \"" + fileName + ".png\"").WaitForExit();
-			Process.Start(fileName + ".png");
+            try
+            {
+                Process.Start("dot", "\"" + fileName + ".gv\" -Tpng -o \"" + fileName + ".png\"").WaitForExit();
+                Process.Start(fileName + ".png");
+            }
+            catch (Win32Exception ex)
+            {
+                MessageBox.Show(String.Format("Unable to find Graphviz on your computer. Please install it. {0}", ex.Message), "ILSpy");
+            }
+			
 		}
 		#endif
 		#endregion
