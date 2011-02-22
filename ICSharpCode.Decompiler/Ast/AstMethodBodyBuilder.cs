@@ -679,6 +679,27 @@ namespace Decompiler
 					}
 				}
 			}
+
+            // If the method has multiple signatures and an null argument is present, then we must cast the null to the correct type.  This only needs to be done
+            // when the parameter number being passed a null has different types.
+            if (methodArgs.Exists(arg => arg is NullReferenceExpression))
+            {
+                var sameNames = cecilMethodDef.DeclaringType.Methods.Where(m => m.Name == cecilMethodDef.Name && m.Parameters.Count == cecilMethodDef.Parameters.Count).ToList();
+
+                if (sameNames.Count > 1)
+                {
+                    for (int i = cecilMethod.Parameters.Count - 1; 0 <= i; --i)
+                    {
+                        var arg = methodArgs[i] as NullReferenceExpression;
+                        if (arg != null)
+                        {
+                            if (sameNames.Count != sameNames.Count(m => m.Parameters[i].ParameterType.FullName == cecilMethodDef.Parameters[i].ParameterType.FullName))
+                                methodArgs[i] = arg.CastTo(AstBuilder.ConvertType(cecilMethod.Parameters[i].ParameterType));
+                        }
+                    }
+                }
+            }
+
 			// Default invocation
 			return target.Invoke(cecilMethod.Name, ConvertTypeArguments(cecilMethod), methodArgs).WithAnnotation(cecilMethod);
 		}
