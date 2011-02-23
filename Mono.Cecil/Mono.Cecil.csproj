@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">net_4_0_Debug</Configuration>
@@ -108,7 +108,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\winphone_Release\</OutputPath>
-    <DefineConstants>TRACE;NET_3_5;NET_4_0;SILVERLIGHT;CF</DefineConstants>
+    <DefineConstants>TRACE;NET_3_5;NET_4_0;</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <TargetFrameworkProfile>WindowsPhone</TargetFrameworkProfile>
