@@ -57,7 +57,7 @@ namespace Decompiler.Transforms.Ast
 			AstNode lastStmt = blockStatement.Children.LastOrDefault();
 			// End of for loop
 			if (lastStmt is ContinueStatement && 
-			    blockStatement.Parent is ForStatement)
+			    (blockStatement.Parent is ForStatement || blockStatement.Parent is WhileStatement))
 			{
 				lastStmt.Remove();
 				return null;
