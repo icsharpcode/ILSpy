@@ -51,9 +51,20 @@ namespace Decompiler
 		
 		public void GenerateCode(ITextOutput output, Predicate<IAstTransform> transformAbortCondition)
 		{
-			TransformationPipeline.RunTransformationsUntil(astCompileUnit, transformAbortCondition, context);
-			astCompileUnit.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true }, null);
-			
+			TransformAndGenerateCode(output, CreateStandardCodeTransformationPipeline(transformAbortCondition));
+		}
+	
+		public IEnumerable<IAstTransform> CreateStandardCodeTransformationPipeline(Predicate<IAstTransform> transformAbortCondition = null)
+		{
+			return
+				TransformationPipeline.CreateTransformationPipeline(context)
+				.TakeWhile(tr => transformAbortCondition == null || !transformAbortCondition(tr))
+				.Concat(new[] { VisitorTransform.Create(new InsertParenthesesVisitor { InsertParenthesesForReadability = true }, null) });
+		}
+
+		public void TransformAndGenerateCode(ITextOutput output, IEnumerable<IAstTransform> transformationPipeline) {
+			TransformationPipeline.RunTransformations(astCompileUnit, transformationPipeline, context);
+
 			var outputFormatter = new TextOutputFormatter(output);
 			var formattingPolicy = new CSharpFormattingPolicy();
 			// disable whitespace in front of parentheses:

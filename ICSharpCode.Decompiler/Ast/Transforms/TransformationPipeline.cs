@@ -2,6 +2,8 @@
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using ICSharpCode.NRefactory.CSharp;
 
@@ -10,6 +12,34 @@ namespace Decompiler.Transforms
 	public interface IAstTransform
 	{
 		void Run(AstNode node);
+	}
+
+	public class VisitorTransform<T, S> : IAstTransform
+	{
+		private IAstVisitor<T, S> visitor;
+		private T data;
+
+		public VisitorTransform(IAstVisitor<T, S> visitor, T data) {
+			if (visitor == null)
+				throw new ArgumentException("visitor");
+			this.visitor = visitor;
+			this.data = data;
+		}
+
+		public void Run(AstNode node)
+		{
+			if (node == null)
+				throw new ArgumentNullException("node");
+			node.AcceptVisitor(visitor, data);
+		}
+	}
+
+	public static class VisitorTransform
+	{
+		public static VisitorTransform<T, S> Create<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return new VisitorTransform<T, S>(visitor, data);
+		}
 	}
 	
 	public static class TransformationPipeline
@@ -24,30 +54,41 @@ namespace Decompiler.Transforms
 				new ReplaceMethodCallsWithOperators(),
 			};
 		}
-		
-		public static void RunTransformationsUntil(AstNode node, Predicate<IAstTransform> abortCondition, DecompilerContext context)
+
+		public static void RunTransformationsUntil(AstNode node, Predicate<IAstTransform> abortCondition, DecompilerContext context) {
+			if (node == null)
+				return;
+
+			RunTransformations(node, CreateTransformationPipeline(context).TakeWhile(tr => abortCondition == null || !abortCondition(tr)), context);
+		}
+
+		public static void RunTransformations(AstNode node, IEnumerable<IAstTransform> transformations, DecompilerContext context)
 		{
 			if (node == null)
 				return;
-			for (int i = 0; i < 4; i++) {
+
+			foreach (var transform in transformations) {
 				context.CancellationToken.ThrowIfCancellationRequested();
+				transform.Run(node);
+			}
+		}
+
+		public static IEnumerable<IAstTransform> CreateTransformationPipeline(DecompilerContext context) {
+			for (int i = 0; i < 4; i++) {
 				if (Options.ReduceAstJumps) {
-					node.AcceptVisitor(new Transforms.Ast.RemoveGotos(), null);
-					node.AcceptVisitor(new Transforms.Ast.RemoveDeadLabels(), null);
+					yield return VisitorTransform.Create(new Transforms.Ast.RemoveGotos(), null);
+					yield return VisitorTransform.Create(new Transforms.Ast.RemoveDeadLabels(), null);
 				}
 				if (Options.ReduceAstLoops) {
-					node.AcceptVisitor(new Transforms.Ast.RestoreLoop(), null);
+					yield return VisitorTransform.Create(new Transforms.Ast.RestoreLoop(), null);
 				}
 				if (Options.ReduceAstOther) {
-					node.AcceptVisitor(new Transforms.Ast.RemoveEmptyElseBody(), null);
+					yield return VisitorTransform.Create(new Transforms.Ast.RemoveEmptyElseBody(), null);
 				}
 			}
 			
 			foreach (var transform in CreatePipeline(context)) {
-				context.CancellationToken.ThrowIfCancellationRequested();
-				if (abortCondition != null && abortCondition(transform))
-					return;
-				transform.Run(node);
+				yield return transform;
 			}
 		}
 	}

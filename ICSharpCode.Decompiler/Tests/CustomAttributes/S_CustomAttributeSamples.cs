@@ -50,7 +50,6 @@ namespace AttributeWithTypeArgument
 		{
 		}
 	}
-
 	[MyType(typeof(Attribute))]
 	public class SomeClass
 	{

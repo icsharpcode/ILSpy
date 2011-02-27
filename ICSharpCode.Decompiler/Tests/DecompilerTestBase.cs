@@ -1,13 +1,14 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
-using Mono.Cecil;
-using System.IO;
 using Decompiler;
-using Microsoft.CSharp;
-using System.CodeDom.Compiler;
+using Decompiler.Transforms;
 using MbUnit.Framework;
+using Microsoft.CSharp;
+using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.Tests
 {
@@ -55,9 +56,13 @@ namespace ICSharpCode.Decompiler.Tests
 			AssemblyDefinition assembly = Compile(code);
 			AstBuilder decompiler = new AstBuilder(new DecompilerContext());
 			decompiler.AddAssembly(assembly);
-			decompiler.Transform(new Helpers.RemoveCompilerAttribute());
+
+			var pipeline =
+				decompiler.CreateStandardCodeTransformationPipeline()
+				.Concat(new IAstTransform[] { new Helpers.RemoveCompilerAttribute(), new Helpers.RemoveRedundantBaseConstructorInitializers() });
+
 			StringWriter output = new StringWriter();
-			decompiler.GenerateCode(new PlainTextOutput(output));
+			decompiler.TransformAndGenerateCode(new PlainTextOutput(output), pipeline);
 			return output.ToString();
 		}
 
