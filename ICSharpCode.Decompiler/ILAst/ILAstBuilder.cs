@@ -414,7 +414,7 @@ namespace ICSharpCode.Decompiler.ILAst
 				if (byteCode.StoreTo != null && byteCode.StoreTo.Count > 1) {
 					var locVars = byteCode.StoreTo;
 					// For each of the variables, find the location where it is loaded - there should be preciesly one
-					var loadedBy = locVars.Select(argVar => body.SelectMany(bc => bc.StackBefore).Where(s => s.LoadFrom == argVar).Single()).ToList();
+					var loadedBy = locVars.Select(argVar => body.Where(bc => bc.StackBefore != null).SelectMany(bc => bc.StackBefore).Where(s => s.LoadFrom == argVar).Single()).ToList();
 					// We now know that all the variables have a single load,
 					// Let's make sure that they have also a single store - us
 					if (loadedBy.All(slot => slot.PushedBy.Length == 1 && slot.PushedBy[0] == byteCode)) {
