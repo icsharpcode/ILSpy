@@ -142,7 +142,9 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		public void AddMethod(MethodDefinition method)
 		{
-			AstNode node = method.IsConstructor ? (AstNode)CreateConstructor(method) : CreateMethod(method);
+			AstNode node = method.IsConstructor ? (AstNode)CreateConstructor(method) : 
+                (method.IsSpecialName && method.Name.StartsWith("op_", StringComparison.Ordinal)) ? (AstNode)CreateOperator(method) :
+                CreateMethod(method);
 			astCompileUnit.AddChild(node, CompilationUnit.MemberRole);
 		}
 		
@@ -574,9 +576,16 @@ namespace ICSharpCode.Decompiler.Ast
 				astType.AddChild(CreateConstructor(methodDef), TypeDeclaration.MemberRole);
 			}
 			
+            // Add operators
+            foreach(MethodDefinition methodDef in typeDef.Methods) {
+                if (!methodDef.IsSpecialName || !methodDef.Name.StartsWith("op_", StringComparison.Ordinal)) continue;
+
+                astType.AddChild(CreateOperator(methodDef), TypeDeclaration.MemberRole);
+            }
+
 			// Add methods
 			foreach(MethodDefinition methodDef in typeDef.Methods) {
-				if (methodDef.IsConstructor || MemberIsHidden(methodDef, context.Settings)) continue;
+				if (methodDef.IsConstructor || MemberIsHidden(methodDef, context.Settings) || (methodDef.IsSpecialName && methodDef.Name.StartsWith("op_", StringComparison.Ordinal))) continue;
 				
 				astType.AddChild(CreateMethod(methodDef), TypeDeclaration.MemberRole);
 			}
@@ -610,6 +619,88 @@ namespace ICSharpCode.Decompiler.Ast
 					astAttr.Remove();
 			}
 		}
+
+        OperatorDeclaration CreateOperator(MethodDefinition methodDef)
+        {
+            OperatorDeclaration astMethod = new OperatorDeclaration();
+            astMethod.OperatorType = (OperatorType)MakeOperatorType(methodDef.Name);
+            astMethod.AddAnnotation(methodDef);
+            astMethod.ReturnType = ConvertType(methodDef.ReturnType, methodDef.MethodReturnType);
+            astMethod.Parameters.AddRange(MakeParameters(methodDef.Parameters));
+            ConvertAttributes(astMethod, methodDef);
+			if (!methodDef.DeclaringType.IsInterface) {
+    			astMethod.Modifiers = ConvertModifiers(methodDef);
+				astMethod.Body = AstMethodBodyBuilder.CreateMethodBody(methodDef, context, astMethod.Parameters);
+			}
+            if (methodDef.HasCustomAttributes && astMethod.Parameters.Count > 0)
+            {
+                foreach (CustomAttribute ca in methodDef.CustomAttributes)
+                {
+                    if (ca.AttributeType.Name == "ExtensionAttribute" && ca.AttributeType.Namespace == "System.Runtime.CompilerServices")
+                    {
+                        astMethod.Parameters.First().ParameterModifier = ParameterModifier.This;
+                    }
+                }
+            }
+            return astMethod;
+        }
+
+        private OperatorType? MakeOperatorType(string methodName)
+        {
+            switch (methodName)
+            {
+                case "op_LogicalNot":
+                    return OperatorType.LogicalNot;
+                case "op_OnesComplement":
+                    return OperatorType.OnesComplement;
+                case "op_UnaryNegation":
+                    return OperatorType.UnaryNegation;
+                case "op_UnaryPlus":
+                    return OperatorType.UnaryPlus;
+                case "op_Increment":
+                    return OperatorType.Increment;
+                case "op_Decrement":
+                    return OperatorType.Decrement;
+                case "op_Addition":
+                    return OperatorType.Addition;
+                case "op_Subtraction":
+                    return OperatorType.Subtraction;
+                case "op_Multiply":
+                    return OperatorType.Multiply;
+                case "op_Division":
+                    return OperatorType.Division;
+                case "op_Modulus":
+                    return OperatorType.Modulus;
+                case "op_BitwiseAnd":
+                    return OperatorType.BitwiseAnd;
+                case "op_BitwiseOr":
+                    return OperatorType.BitwiseOr;
+                case "op_ExlusiveOr":
+                    return OperatorType.ExclusiveOr;
+                case "op_LeftShift":
+                    return OperatorType.LeftShift;
+                case "op_RightShift":
+                    return OperatorType.RightShift;
+                case "op_Equality":
+                    return OperatorType.Equality;
+                case "op_Inequality":
+                    return OperatorType.Inequality;
+                case "op_LessThan":
+                    return OperatorType.LessThan;
+                case "op_LessThanOrEqual":
+                    return OperatorType.LessThanOrEqual;
+                case "op_GreaterThan":
+                    return OperatorType.GreaterThan;
+                case "op_GreaterThanOrEqual":
+                    return OperatorType.GreaterThanOrEqual;
+                case "op_Implicit":
+                    return OperatorType.Implicit;
+                case "op_Explicit":
+                    return OperatorType.Explicit;
+                default:
+                    return null;
+            }
+        }
 
 		MethodDeclaration CreateMethod(MethodDefinition methodDef)
 		{
