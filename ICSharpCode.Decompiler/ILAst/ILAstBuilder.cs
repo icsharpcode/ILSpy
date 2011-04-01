@@ -484,7 +484,9 @@ namespace ICSharpCode.Decompiler.ILAst
 					// If the variable is pinned, use single variable.
 					// If any of the loads is from "all", use single variable
 					// If any of the loads is ldloca, fallback to single variable as well
-					if (isPinned || loads.Any(b => b.VariablesBefore[variableIndex].StoredByAll || b.Code == ILCode.Ldloca)) {
+                    // If variable is not initialized, use single variable
+                    if (isPinned || loads.Any(b => b.VariablesBefore[variableIndex].StoredByAll || b.Code == ILCode.Ldloca) || !loads.Any(l => l.VariablesBefore[variableIndex].StoredBy.Length > 0))
+                    {
 						newVars = new List<VariableInfo>(1) { new VariableInfo() {
 							Variable = new ILVariable() {
 								Name = "var_" + variableIndex,
