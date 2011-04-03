@@ -142,9 +142,14 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		public void AddMethod(MethodDefinition method)
 		{
-			AstNode node = method.IsConstructor ? (AstNode)CreateConstructor(method) : 
-                (method.IsSpecialName && method.Name.StartsWith("op_", StringComparison.Ordinal)) ? (AstNode)CreateOperator(method) :
-                CreateMethod(method);
+			AstNode node;
+			OperatorType? opType;
+			if (method.IsConstructor)
+				node = (AstNode)CreateConstructor(method);
+			else if (method.IsSpecialName && null != (opType = MakeOperatorType(method.Name)))
+				node = (AstNode)CreateOperator(method, (OperatorType)opType);
+			else
+                node = CreateMethod(method);
 			astCompileUnit.AddChild(node, CompilationUnit.MemberRole);
 		}
 		
@@ -578,14 +583,15 @@ namespace ICSharpCode.Decompiler.Ast
 			
             // Add operators
             foreach(MethodDefinition methodDef in typeDef.Methods) {
-                if (!methodDef.IsSpecialName || !methodDef.Name.StartsWith("op_", StringComparison.Ordinal)) continue;
+            	OperatorType? opType;
+                if (!methodDef.IsSpecialName || null == (opType = MakeOperatorType(methodDef.Name))) continue;
 
-                astType.AddChild(CreateOperator(methodDef), TypeDeclaration.MemberRole);
+                astType.AddChild(CreateOperator(methodDef, (OperatorType)opType), TypeDeclaration.MemberRole);
             }
 
 			// Add methods
 			foreach(MethodDefinition methodDef in typeDef.Methods) {
-				if (methodDef.IsConstructor || MemberIsHidden(methodDef, context.Settings) || (methodDef.IsSpecialName && methodDef.Name.StartsWith("op_", StringComparison.Ordinal))) continue;
+				if (methodDef.IsConstructor || MemberIsHidden(methodDef, context.Settings) || (methodDef.IsSpecialName && null != MakeOperatorType(methodDef.Name))) continue;
 				
 				astType.AddChild(CreateMethod(methodDef), TypeDeclaration.MemberRole);
 			}
@@ -620,10 +626,10 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 		}
 
-        OperatorDeclaration CreateOperator(MethodDefinition methodDef)
+        OperatorDeclaration CreateOperator(MethodDefinition methodDef, OperatorType opType)
         {
             OperatorDeclaration astMethod = new OperatorDeclaration();
-            astMethod.OperatorType = (OperatorType)MakeOperatorType(methodDef.Name);
+          	astMethod.OperatorType = opType;
             astMethod.AddAnnotation(methodDef);
             astMethod.ReturnType = ConvertType(methodDef.ReturnType, methodDef.MethodReturnType);
             astMethod.Parameters.AddRange(MakeParameters(methodDef.Parameters));
