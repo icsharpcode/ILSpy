@@ -49,6 +49,14 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 	
+	[ExportMainMenuCommand(Menu="_File", Header = "Remove all assemblies", MenuIcon = "Images/Delete.png", MenuOrder = 0)]
+	sealed class RemoveAllCommand : SimpleCommand {
+		public override void Execute(object parameter)
+		{
+			MainWindow.Instance.AssemblyList.assemblies.Clear();
+		}
+	}
+
 	[ExportToolbarCommand(ToolTip = "Reload all assemblies", ToolbarIcon = "Images/Refresh.png", ToolbarCategory = "Open", ToolbarOrder = 2)]
 	[ExportMainMenuCommand(Menu = "_File", Header = "Reload", MenuIcon = "Images/Refresh.png", MenuCategory = "Open", MenuOrder = 2)]
 	sealed class RefreshCommand : CommandWrapper {
