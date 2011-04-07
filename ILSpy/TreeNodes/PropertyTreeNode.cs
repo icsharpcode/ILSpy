@@ -48,6 +48,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				foreach (var m in property.OtherMethods)
 					this.Children.Add(new MethodTreeNode(m));
 			}
+			
 		}
 
 		public PropertyDefinition PropertyDefinition {
@@ -56,7 +57,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text
 		{
-			get { return HighlightSearchMatch(property.Name, " : " + this.Language.TypeToString(property.PropertyType, false, property)); }
+			get { return GetText(property, Language); }
 		}
 
 		public override object Icon
