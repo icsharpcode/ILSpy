@@ -30,7 +30,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		readonly PropertyDefinition property;
 		readonly bool isIndexer;
-		readonly MethodAttributes attributesOfMostAccessibleMethod;
 
 		public PropertyTreeNode(PropertyDefinition property, bool isIndexer)
 		{
@@ -38,7 +37,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				throw new ArgumentNullException("property");
 			this.property = property;
 			this.isIndexer = isIndexer;
-			this.attributesOfMostAccessibleMethod = GetAttributesOfMostAccessibleMethod(this.property);
 
 			if (property.GetMethod != null)
 				this.Children.Add(new MethodTreeNode(property.GetMethod));
@@ -60,15 +58,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return GetText(property, Language); }
 		}
 
+		public static object GetText(PropertyDefinition property, Language language) {
+			return HighlightSearchMatch(property.Name, " : " + language.TypeToString(property.PropertyType, false, property)); 
+		}
+		
 		public override object Icon
 		{
-			get { return GetIcon(property); }
+			get { return GetIcon(property, this.isIndexer); }
 		}
 
-		private ImageSource GetIcon(PropertyDefinition property)
+		public static ImageSource GetIcon(PropertyDefinition property, bool isIndexer = false)
 		{
-			MemberIcon icon = this.isIndexer ? MemberIcon.Indexer : MemberIcon.Property;
-			return Images.GetIcon(icon, GetOverlayIcon(attributesOfMostAccessibleMethod), IsStatic);
+			MemberIcon icon = isIndexer ? MemberIcon.Indexer : MemberIcon.Property;
+			MethodAttributes attributesOfMostAccessibleMethod = GetAttributesOfMostAccessibleMethod(property);
+			bool isStatic = (attributesOfMostAccessibleMethod & MethodAttributes.Static) != 0;
+			return Images.GetIcon(icon, GetOverlayIcon(attributesOfMostAccessibleMethod), isStatic);
 		}
 
 		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
@@ -87,11 +91,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				default:
 					throw new NotSupportedException();
 			}
-		}
-
-		public bool IsStatic
-		{
-			get { return (attributesOfMostAccessibleMethod & MethodAttributes.Static) != 0; }
 		}
 
 		private static MethodAttributes GetAttributesOfMostAccessibleMethod(PropertyDefinition property)
