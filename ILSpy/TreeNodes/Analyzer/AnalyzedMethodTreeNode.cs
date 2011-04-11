@@ -24,12 +24,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 	class AnalyzedMethodTreeNode : AnalyzerTreeNode, IMemberTreeNode
 	{
 		MethodDefinition analyzedMethod;
+		string prefix;
 		
-		public AnalyzedMethodTreeNode(MethodDefinition analyzedMethod)
+		public AnalyzedMethodTreeNode(MethodDefinition analyzedMethod, string prefix = "")
 		{
 			if (analyzedMethod == null)
 				throw new ArgumentNullException("analyzedMethod");
 			this.analyzedMethod = analyzedMethod;
+			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
 		
@@ -38,7 +40,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		}
 		
 		public override object Text {
-			get { return Language.TypeToString(analyzedMethod.DeclaringType, true) + "." + MethodTreeNode.GetText(analyzedMethod, Language); }
+			get {
+				return prefix + Language.TypeToString(analyzedMethod.DeclaringType, true) + "." + MethodTreeNode.GetText(analyzedMethod, Language); }
 		}
 		
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
@@ -52,7 +55,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (analyzedMethod.HasBody)
 				this.Children.Add(new AnalyzedMethodUsesNode(analyzedMethod));
 			this.Children.Add(new AnalyzedMethodUsedByTreeNode(analyzedMethod));
-			if (analyzedMethod.IsVirtual && !analyzedMethod.IsFinal && !analyzedMethod.DeclaringType.IsInterface) // interfaces are temporarly disabled
+			if (AnalyzerMethodOverridesTreeNode.CanShowAnalyzer(analyzedMethod))
 				this.Children.Add(new AnalyzerMethodOverridesTreeNode(analyzedMethod));
 		}
 		
