@@ -52,7 +52,15 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 			foreach (ILVariable varDef in variables) {
 				if (!varDef.IsGenerated) {
-					varDef.Name = nv.GenerateNameForVariable(varDef, methodBody);
+
+                    if (varDef.OriginalVariable != null && !string.IsNullOrEmpty(varDef.OriginalVariable.Name) && !varDef.OriginalVariable.Name.StartsWith("V_"))
+                    {
+                        varDef.Name = varDef.OriginalVariable.Name;
+                    }
+                    else
+                    { 
+                        varDef.Name = nv.GenerateNameForVariable(varDef, methodBody);
+                    }
 				}
 			}
 		}

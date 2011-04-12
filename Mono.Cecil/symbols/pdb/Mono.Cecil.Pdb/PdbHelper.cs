@@ -65,8 +65,8 @@ namespace Mono.Cecil.Pdb {
 
 		public ISymbolReader GetSymbolReader (ModuleDefinition module, Stream symbolStream)
 		{
-			throw new NotImplementedException ();
-		}
+            return new PdbReader(symbolStream);
+        }
 	}
 
 #if !READ_ONLY
