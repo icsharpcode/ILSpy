@@ -49,7 +49,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 	
-	[ExportMainMenuCommand(Menu="_File", Header = "Remove all assemblies", MenuIcon = "Images/Delete.png", MenuOrder = 0)]
+	[ExportMainMenuCommand(Menu="_File", Header = "Remove all assemblies", MenuIcon = "Images/Delete.png", MenuCategory = "List", MenuOrder = 0)]
 	sealed class RemoveAllCommand : SimpleCommand {
 		public override void Execute(object parameter)
 		{
