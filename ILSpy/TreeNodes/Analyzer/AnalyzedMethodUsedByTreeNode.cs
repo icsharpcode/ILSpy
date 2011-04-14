@@ -32,30 +32,32 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 	{
 		MethodDefinition analyzedMethod;
 		ThreadingSupport threading;
-		
+
 		public AnalyzedMethodUsedByTreeNode(MethodDefinition analyzedMethod)
 		{
 			if (analyzedMethod == null)
 				throw new ArgumentNullException("analyzedMethod");
-			
+
 			this.analyzedMethod = analyzedMethod;
 			this.threading = new ThreadingSupport();
 			this.LazyLoading = true;
 		}
-		
-		public override object Text {
+
+		public override object Text
+		{
 			get { return "Used By"; }
 		}
-		
-		public override object Icon {
+
+		public override object Icon
+		{
 			get { return Images.Search; }
 		}
-		
+
 		protected override void LoadChildren()
 		{
 			threading.LoadChildren(this, FetchChildren);
 		}
-		
+
 		protected override void OnCollapsing()
 		{
 			if (threading.IsRunning) {
@@ -64,41 +66,119 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				this.Children.Clear();
 			}
 		}
-		
+
 		IEnumerable<SharpTreeNode> FetchChildren(CancellationToken ct)
 		{
-			return FindReferences(MainWindow.Instance.AssemblyList.GetAssemblies(), ct);
+			switch (DetermineAnalysisScope()) {
+				case AnalysisScope.Type:
+					return FindReferencesInDeclaringType(ct);
+				case AnalysisScope.Assembly:
+					return FindReferencesInAssembly(analyzedMethod.DeclaringType.Module.Assembly, ct);
+				case AnalysisScope.Global:
+				default:
+					return FindReferencesGlobal(ct);
+			}
 		}
-		
-		IEnumerable<SharpTreeNode> FindReferences(IEnumerable<LoadedAssembly> assemblies, CancellationToken ct)
+
+		IEnumerable<SharpTreeNode> FindReferencesGlobal(CancellationToken ct)
 		{
-			assemblies = assemblies.Where(asm => asm.AssemblyDefinition != null);
+			var assemblies = GetReferencingAssemblies(analyzedMethod.Module.Assembly, ct);
 			// use parallelism only on the assembly level (avoid locks within Cecil)
-			return assemblies.AsParallel().WithCancellation(ct).SelectMany((LoadedAssembly asm) => FindReferences(asm, ct));
+			return assemblies.AsParallel().WithCancellation(ct).SelectMany((AssemblyDefinition asm) => FindReferencesInAssembly(asm, ct));
 		}
-		
-		IEnumerable<SharpTreeNode> FindReferences(LoadedAssembly asm, CancellationToken ct)
+
+		IEnumerable<SharpTreeNode> FindReferencesInAssembly(AssemblyDefinition asm, CancellationToken ct)
+		{
+			foreach (TypeDefinition type in TreeTraversal.PreOrder(asm.MainModule.Types, t => t.NestedTypes)) {
+				ct.ThrowIfCancellationRequested();
+				foreach (var result in FindReferencesInType(type)) {
+					ct.ThrowIfCancellationRequested();
+					yield return result;
+				}
+			}
+		}
+
+		IEnumerable<SharpTreeNode> FindReferencesInDeclaringType(CancellationToken ct)
+		{
+			foreach (TypeDefinition type in TreeTraversal.PreOrder(analyzedMethod.DeclaringType, t => t.NestedTypes)) {
+				ct.ThrowIfCancellationRequested();
+				foreach (var result in FindReferencesInType(type)) {
+					ct.ThrowIfCancellationRequested();
+					yield return result;
+				}
+			}
+		}
+
+		IEnumerable<SharpTreeNode> FindReferencesInType(TypeDefinition type)
 		{
 			string name = analyzedMethod.Name;
 			string declTypeName = analyzedMethod.DeclaringType.FullName;
-			foreach (TypeDefinition type in TreeTraversal.PreOrder(asm.AssemblyDefinition.MainModule.Types, t => t.NestedTypes)) {
-				ct.ThrowIfCancellationRequested();
-				foreach (MethodDefinition method in type.Methods) {
-					ct.ThrowIfCancellationRequested();
-					bool found = false;
-					if (!method.HasBody)
-						continue;
-					foreach (Instruction instr in method.Body.Instructions) {
-						MethodReference mr = instr.Operand as MethodReference;
-						if (mr != null && mr.Name == name && mr.DeclaringType.FullName == declTypeName && mr.Resolve() == analyzedMethod) {
-							found = true;
-							break;
-						}
+
+			foreach (MethodDefinition method in type.Methods) {
+				bool found = false;
+				if (!method.HasBody)
+					continue;
+				foreach (Instruction instr in method.Body.Instructions) {
+					MethodReference mr = instr.Operand as MethodReference;
+					if (mr != null && mr.Name == name && mr.DeclaringType.FullName == declTypeName && mr.Resolve() == analyzedMethod) {
+						found = true;
+						break;
 					}
-					if (found)
-						yield return new AnalyzedMethodTreeNode(method);
 				}
+				if (found)
+					yield return new AnalyzedMethodTreeNode(method);
 			}
+		}
+
+		IEnumerable<AssemblyDefinition> GetReferencingAssemblies(AssemblyDefinition asm, CancellationToken ct)
+		{
+			yield return asm;
+
+			string requiredAssemblyFullName = asm.FullName;
+
+			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.AssemblyList.GetAssemblies().Where(assy => assy.AssemblyDefinition != null);
+
+			foreach (var assembly in assemblies) {
+				ct.ThrowIfCancellationRequested();
+				bool found = false;
+				foreach (var reference in assembly.AssemblyDefinition.MainModule.AssemblyReferences) {
+					if (requiredAssemblyFullName == reference.FullName) {
+						found = true;
+						break;
+					}
+				}
+				if (found)
+					yield return assembly.AssemblyDefinition;
+			}
+		}
+
+		private AnalysisScope DetermineAnalysisScope()
+		{
+			// NOTE: This is *extremely* crude, and does not constrain the analysis to the true
+			// accessibility domain of the member, but it is enough to significantly reduce the
+			// search space. 
+
+			// TODO: Nested classes are handled in a sub-optimal manner. we should walk the nesting hierarchy to determine visibility
+			TypeAttributes visibility = analyzedMethod.DeclaringType.Attributes & TypeAttributes.VisibilityMask;
+			MethodAttributes memberAccess = analyzedMethod.Attributes & MethodAttributes.MemberAccessMask;
+
+			if (memberAccess == MethodAttributes.Private)
+				return AnalysisScope.Type;
+
+			if (memberAccess == MethodAttributes.Assembly || memberAccess == MethodAttributes.FamANDAssem)
+				return AnalysisScope.Assembly;
+
+			if (visibility == TypeAttributes.NotPublic)
+				return AnalysisScope.Assembly;
+
+			return AnalysisScope.Global;
+		}
+
+		private enum AnalysisScope
+		{
+			Type,
+			Assembly,
+			Global
 		}
 	}
 }
