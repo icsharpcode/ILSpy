@@ -28,13 +28,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		readonly EventDefinition ev;
-		
+
 		public EventTreeNode(EventDefinition ev)
 		{
 			if (ev == null)
 				throw new ArgumentNullException("ev");
 			this.ev = ev;
-			
+
 			if (ev.AddMethod != null)
 				this.Children.Add(new MethodTreeNode(ev.AddMethod));
 			if (ev.RemoveMethod != null)
@@ -46,18 +46,34 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					this.Children.Add(new MethodTreeNode(m));
 			}
 		}
-		
-		public EventDefinition EventDefinition {
+
+		public EventDefinition EventDefinition
+		{
 			get { return ev; }
 		}
-		
-		public override object Text {
-			get { return HighlightSearchMatch(ev.Name, " : " + this.Language.TypeToString(ev.EventType, false, ev)); }
+
+		public override object Text
+		{
+			get { return GetText(ev, this.Language); }
 		}
-		
+
+		public static object GetText(EventDefinition eventDef, Language language)
+		{
+			return HighlightSearchMatch(eventDef.Name, " : " + language.TypeToString(eventDef.EventType, false, eventDef));
+		}
+
 		public override object Icon
 		{
-			get { return Images.GetIcon(MemberIcon.Event, GetOverlayIcon(ev.AddMethod.Attributes), ev.AddMethod.IsStatic); }
+			get { return GetIcon(ev); }
+		}
+
+		public static object GetIcon(EventDefinition eventDef)
+		{
+			MethodDefinition accessor = eventDef.AddMethod ?? eventDef.RemoveMethod;
+			if (accessor != null)
+				return Images.GetIcon(MemberIcon.Event, GetOverlayIcon(eventDef.AddMethod.Attributes), eventDef.AddMethod.IsStatic);
+			else
+				return Images.GetIcon(MemberIcon.Event, AccessOverlayIcon.Public, false);
 		}
 
 		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
@@ -85,13 +101,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			else
 				return FilterResult.Hidden;
 		}
-		
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.DecompileEvent(ev, output, options);
 		}
-		
-		MemberReference IMemberTreeNode.Member {
+
+		MemberReference IMemberTreeNode.Member
+		{
 			get { return ev; }
 		}
 	}
