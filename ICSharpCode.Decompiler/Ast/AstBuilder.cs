@@ -826,20 +826,17 @@ namespace ICSharpCode.Decompiler.Ast
 						Body = AstMethodBodyBuilder.CreateMethodBody(eventDef.AddMethod, context)
 					}.WithAnnotation(eventDef.AddMethod);
 					ConvertAttributes(astEvent.AddAccessor, eventDef.AddMethod);
-					if (eventDef.AddMethod.IsVirtual ^ !eventDef.AddMethod.IsNewSlot) {
-						if (TypesHierarchyHelpers.FindBaseMethods(eventDef.AddMethod).Any())
-							astEvent.Modifiers |= Modifiers.New;
-					}
 				}
 				if (eventDef.RemoveMethod != null) {
 					astEvent.RemoveAccessor = new Accessor {
 						Body = AstMethodBodyBuilder.CreateMethodBody(eventDef.RemoveMethod, context)
 					}.WithAnnotation(eventDef.RemoveMethod);
 					ConvertAttributes(astEvent.RemoveAccessor, eventDef.RemoveMethod);
-					if (eventDef.RemoveMethod.IsVirtual ^ !eventDef.RemoveMethod.IsNewSlot) {
-						if (TypesHierarchyHelpers.FindBaseMethods(eventDef.RemoveMethod).Any())
-							astEvent.Modifiers |= Modifiers.New;
-					}
+				}
+				MethodDefinition accessor = eventDef.AddMethod ?? eventDef.RemoveMethod;
+				if (accessor.IsVirtual ^ !accessor.IsNewSlot) {
+					if (TypesHierarchyHelpers.FindBaseMethods(accessor).Any())
+						astEvent.Modifiers |= Modifiers.New;
 				}
 				return astEvent;
 			}
