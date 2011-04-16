@@ -51,6 +51,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
+        protected override bool IsPublicAccess()
+        {
+            if (method != null)
+            {
+                return method.IsPublic;
+            }
+            return true;
+        }
+
 		public static object GetText(MethodDefinition method, Language language)
 		{
 			StringBuilder b = new StringBuilder();

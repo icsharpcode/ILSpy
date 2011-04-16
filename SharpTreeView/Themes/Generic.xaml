@@ -208,11 +208,29 @@
                                     Property="Foreground"
                                     Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
                         </MultiTrigger>-->
-                        <Trigger Property="IsEnabled"
+                        <!--<Trigger Property="IsSelected"
                                  Value="False">
-                            <Setter Property="Foreground"
-                                    Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
-                        </Trigger>
+                            <Setter TargetName="nodeView"
+                                    Property="Foreground"
+                                    Value="Red" />
+                        </Trigger>-->
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected"
+                                           Value="False" />
+                                <Condition Property="IsPublicAccess"
+                                           Value="False" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="nodeView"
+                                    Property="Foreground"
+                                    Value="Gray" />
+                        </MultiTrigger>
+                        <!--<Trigger Property="IsPublicAccess"
+                                 Value="False">
+                            <Setter TargetName="nodeView"
+                                    Property="Foreground"
+                                    Value="Gray" />
+                        </Trigger>-->
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

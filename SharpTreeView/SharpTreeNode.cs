@@ -662,5 +662,11 @@ namespace ICSharpCode.TreeView
 			object text = this.Text;
 			return text != null ? text.ToString() : string.Empty;
 		}
+
+        internal protected virtual bool IsPublicAccess()
+        {
+            return true;
+        }
+
 	}
 }
