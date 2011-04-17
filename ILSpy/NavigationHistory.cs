@@ -56,13 +56,11 @@ namespace ICSharpCode.ILSpy
 		
 		public void Replace(T node)
 		{
-			Debug.WriteLine(node, "Replace");
 			current = node;
 		}
 
 		public void Record(T node)
 		{
-			Debug.WriteLine(node, "Record");
 			if (current != null)
 				back.Add(current);
 
