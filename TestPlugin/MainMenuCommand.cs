@@ -26,4 +26,15 @@ namespace TestPlugin
 			}
 		}
 	}
+
+    [ExportMainMenuCommand(Menu = "_File", MenuIcon = "Order.png", Header = "_Order List", MenuCategory = "Open", MenuOrder = 1.6)]
+    [ExportToolbarCommand(ToolTip = "Orders the current assembly list alphabetical", ToolbarIcon = "Order.png", ToolbarCategory = "Open", ToolbarOrder = 1.6)]
+    public class OrderAssembliesCommand : SimpleCommand
+    {
+        public override void Execute(object parameter)
+        {
+            MainWindow.Instance.CurrentAssemblyList.Sort();
+        }
+    }
+
 }

@@ -65,7 +65,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 						break;
 					case NotifyCollectionChangedAction.Replace:
 					case NotifyCollectionChangedAction.Move:
-						throw new NotImplementedException();
+						this.Children.RemoveRange(e.OldStartingIndex, e.OldItems.Count);
+						this.Children.InsertRange(e.NewStartingIndex, e.NewItems.Cast<LoadedAssembly>().Select(a => new AssemblyTreeNode(a)));
+						break;
 					case NotifyCollectionChangedAction.Reset:
 						this.Children.Clear();
 						this.Children.AddRange(collection.Select(a => new AssemblyTreeNode(a)));

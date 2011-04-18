@@ -106,5 +106,8 @@
   <ItemGroup>
     <Page Include="CustomOptionPage.xaml" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Order.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

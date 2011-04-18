@@ -143,5 +143,13 @@ namespace ICSharpCode.ILSpy
 				assemblies.Remove(assembly);
 			}
 		}
+
+        public void Sort()
+        {
+            lock (assemblies)
+            {
+                System.Collections.ArrayList.Adapter(assemblies).Sort();
+            }
+        }
 	}
 }
