@@ -164,6 +164,22 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					ApplyFilterToChild(node);
 			}
 		}
+
+        public virtual bool IsPublicAccess()
+        {
+            return true;
+        }
+        
+        /// <summary>
+        /// return true if this node is public (this property is used in the UI binding)
+        /// </summary>
+        public bool IsPublicNode
+        {
+            get
+            {
+                return IsPublicAccess();
+            }
+        }
 	}
 	
 	public enum FilterResult

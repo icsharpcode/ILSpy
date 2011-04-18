@@ -153,5 +153,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			get { return property; }
 		}
+
+        public override bool IsPublicAccess()
+        {
+            if (this.property != null && this.property.GetMethod != null)
+                return this.property.GetMethod.IsPublic;
+            return true;
+        }
 	}
 }

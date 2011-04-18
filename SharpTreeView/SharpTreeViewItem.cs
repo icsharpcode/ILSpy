@@ -23,30 +23,7 @@ namespace ICSharpCode.TreeView
 
         public SharpTreeViewItem()
         {
-            this.DataContextChanged += new DependencyPropertyChangedEventHandler(SharpTreeViewItem_DataContextChanged);
         }
-
-        void SharpTreeViewItem_DataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
-        {
-            var n = this.Node;
-            if (n != null)
-            {
-                this.IsPublicAccess = n.IsPublicAccess();
-            }
-            else
-                this.IsPublicAccess = false;
-        }
-
-        public bool IsPublicAccess
-        {
-            get { return (bool)GetValue(IsPublicAccessProperty); }
-            set { SetValue(IsPublicAccessProperty, value); }
-        }
-
-        // Using a DependencyProperty as the backing store for IsPublicAccess.  This enables animation, styling, binding, etc...
-        public static readonly DependencyProperty IsPublicAccessProperty =
-            DependencyProperty.Register("IsPublicAccess", typeof(bool), typeof(SharpTreeViewItem), new UIPropertyMetadata(true));
-
 
 		public SharpTreeNode Node
 		{

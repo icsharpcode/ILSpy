@@ -116,6 +116,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return result ?? new ResourceTreeNode(resource);
 		}
+
+        public override bool IsPublicAccess()
+        {
+            if (r != null)
+                return r.IsPublic;
+            return base.IsPublicAccess();
+        }
 	}
 	
 	/// <summary>

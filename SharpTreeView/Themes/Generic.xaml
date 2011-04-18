@@ -214,23 +214,15 @@
                                     Property="Foreground"
                                     Value="Red" />
                         </Trigger>-->
-                        <MultiTrigger>
-                            <MultiTrigger.Conditions>
-                                <Condition Property="IsSelected"
-                                           Value="False" />
-                                <Condition Property="IsPublicAccess"
-                                           Value="False" />
-                            </MultiTrigger.Conditions>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding Path=IsSelected}" Value="False" />
+                                <Condition Binding="{Binding Path=IsPublicNode}" Value="False" />
+                            </MultiDataTrigger.Conditions>
                             <Setter TargetName="nodeView"
                                     Property="Foreground"
                                     Value="Gray" />
-                        </MultiTrigger>
-                        <!--<Trigger Property="IsPublicAccess"
-                                 Value="False">
-                            <Setter TargetName="nodeView"
-                                    Property="Foreground"
-                                    Value="Gray" />
-                        </Trigger>-->
+                        </MultiDataTrigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

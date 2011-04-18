@@ -184,7 +184,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return type; }
 		}
 
-        protected override bool IsPublicAccess()
+        public override bool IsPublicAccess()
         {
             if (type != null)
             {
