@@ -122,6 +122,7 @@
     <Compile Include="LoadedAssembly.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="NavigationHistory.cs" />
+    <Compile Include="NavigationState.cs" />
     <Compile Include="OpenFromGacDialog.xaml.cs">
       <DependentUpon>OpenFromGacDialog.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -143,6 +144,7 @@
       <DependentUpon>SplashScreen.cs</DependentUpon>
     </Compile>
     <Compile Include="TreeNodes\Analyzer\AnalyzeContextMenuEntry.cs" />
+    <Compile Include="TreeNodes\Analyzer\Helpers.cs" />
     <Compile Include="TreeNodes\IMemberTreeNode.cs" />
     <Compile Include="TreeNodes\XamlResourceNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyAccessorsTreeNode.cs" />
@@ -265,6 +267,7 @@
     <Resource Include="Images\OverlayProtectedInternal.png" />
     <Resource Include="Images\OverlayStatic.png" />
     <Resource Include="Images\VirtualMethod.png" />
+    <Resource Include="Images\PInvokeMethod.png" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj">
@@ -279,6 +282,10 @@
       <Project>{6C55B776-26D4-4DB3-A6AB-87E783B2F3D1}</Project>
       <Name>ICSharpCode.AvalonEdit</Name>
     </ProjectReference>
+    <ProjectReference Include="..\Mono.Cecil\symbols\pdb\Mono.Cecil.Pdb.csproj">
+      <Project>{63E6915C-7EA4-4D76-AB28-0D7191EEA626}</Project>
+      <Name>Mono.Cecil.Pdb</Name>
+    </ProjectReference>
     <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory\ICSharpCode.NRefactory.csproj">
       <Project>{3B2A5653-EC97-4001-BB9B-D90F1AF2C371}</Project>
       <Name>ICSharpCode.NRefactory</Name>
@@ -288,6 +295,7 @@
       <Name>ICSharpCode.TreeView</Name>
     </ProjectReference>
   </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="Images\loading_14.gif" />
     <None Include="Images\loading_13.gif" />

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
@@ -7,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Ast.Transforms;
 using ICSharpCode.Decompiler.ILAst;
@@ -29,7 +31,7 @@ namespace ICSharpCode.Decompiler.Ast
 		IncludeTypeParameterDefinitions = 2
 	}
 	
-	public class AstBuilder
+	public class AstBuilder : ICodeMappings
 	{
 		DecompilerContext context;
 		CompilationUnit astCompileUnit = new CompilationUnit();
@@ -42,6 +44,8 @@ namespace ICSharpCode.Decompiler.Ast
 				throw new ArgumentNullException("context");
 			this.context = context;
 			this.DecompileMethodBodies = true;
+			
+			this.LocalVariables = new ConcurrentDictionary<int, IEnumerable<ILVariable>>();
 		}
 		
 		public static bool MemberIsHidden(MemberReference member, DecompilerSettings settings)
@@ -192,6 +196,11 @@ namespace ICSharpCode.Decompiler.Ast
 		/// <returns>TypeDeclaration or DelegateDeclaration.</returns>
 		public AttributedNode CreateType(TypeDefinition typeDef)
 		{
+			// create CSharp code mappings - used for debugger
+			if (this.CodeMappings == null)
+				this.CodeMappings = new Tuple<string, List<MemberMapping>>(typeDef.FullName, new List<MemberMapping>());
+			
+			// create type
 			TypeDefinition oldCurrentType = context.CurrentType;
 			context.CurrentType = typeDef;
 			TypeDeclaration astType = new TypeDeclaration();
@@ -259,6 +268,7 @@ namespace ICSharpCode.Decompiler.Ast
 					if (m.Name == "Invoke") {
 						dd.ReturnType = ConvertType(m.ReturnType, m.MethodReturnType);
 						dd.Parameters.AddRange(MakeParameters(m));
+						ConvertAttributes(dd, m.MethodReturnType, m.Module);
 					}
 				}
 				result = dd;
@@ -614,6 +624,9 @@ namespace ICSharpCode.Decompiler.Ast
 
 		AttributedNode CreateMethod(MethodDefinition methodDef)
 		{
+			// Create mapping - used in debugger
+			MemberMapping methodMapping = methodDef.CreateCodeMapping(this.CodeMappings);
+			
 			MethodDeclaration astMethod = new MethodDeclaration();
 			astMethod.AddAnnotation(methodDef);
 			astMethod.ReturnType = ConvertType(methodDef.ReturnType, methodDef.MethodReturnType);
@@ -625,11 +638,16 @@ namespace ICSharpCode.Decompiler.Ast
 				if (!methodDef.HasOverrides) {
 					astMethod.Modifiers = ConvertModifiers(methodDef);
 					if (methodDef.IsVirtual ^ !methodDef.IsNewSlot) {
-						if (TypesHierarchyHelpers.FindBaseMethods(methodDef).Any())
-							astMethod.Modifiers |= Modifiers.New;
+						try {
+							if (TypesHierarchyHelpers.FindBaseMethods(methodDef).Any())
+								astMethod.Modifiers |= Modifiers.New;
+						} catch (ReferenceResolvingException) {
+							// TODO: add some kind of notification (a comment?) about possible problems with decompiled code due to unresolved references.
+						}
 					}
-				} else
+				} else {
 					astMethod.PrivateImplementationType = ConvertType(methodDef.Overrides.First().DeclaringType);
+				}
 				astMethod.Body = CreateMethodBody(methodDef, astMethod.Parameters);
 			}
 			ConvertAttributes(astMethod, methodDef);
@@ -656,6 +674,7 @@ namespace ICSharpCode.Decompiler.Ast
 					return op;
 				}
 			}
+			astMethod.WithAnnotation(methodMapping);
 			return astMethod;
 		}
 
@@ -699,6 +718,9 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		ConstructorDeclaration CreateConstructor(MethodDefinition methodDef)
 		{
+			// Create mapping - used in debugger
+			MemberMapping methodMapping = methodDef.CreateCodeMapping(this.CodeMappings);
+			
 			ConstructorDeclaration astMethod = new ConstructorDeclaration();
 			astMethod.AddAnnotation(methodDef);
 			astMethod.Modifiers = ConvertModifiers(methodDef);
@@ -710,6 +732,7 @@ namespace ICSharpCode.Decompiler.Ast
 			astMethod.Parameters.AddRange(MakeParameters(methodDef));
 			astMethod.Body = CreateMethodBody(methodDef, astMethod.Parameters);
 			ConvertAttributes(astMethod, methodDef);
+			astMethod.WithAnnotation(methodMapping);
 			return astMethod;
 		}
 
@@ -739,22 +762,32 @@ namespace ICSharpCode.Decompiler.Ast
 				getterModifiers = ConvertModifiers(propDef.GetMethod);
 				setterModifiers = ConvertModifiers(propDef.SetMethod);
 				astProp.Modifiers = FixUpVisibility(getterModifiers | setterModifiers);
-				if (accessor.IsVirtual && !accessor.IsNewSlot && (propDef.GetMethod == null || propDef.SetMethod == null))
-					foreach (var basePropDef in TypesHierarchyHelpers.FindBaseProperties(propDef))
-						if (basePropDef.GetMethod != null && basePropDef.SetMethod != null) {
-					var propVisibilityModifiers = ConvertModifiers(basePropDef.GetMethod) | ConvertModifiers(basePropDef.SetMethod);
-					astProp.Modifiers = FixUpVisibility((astProp.Modifiers & ~Modifiers.VisibilityMask) | (propVisibilityModifiers & Modifiers.VisibilityMask));
-					break;
-				} else if ((basePropDef.GetMethod ?? basePropDef.SetMethod).IsNewSlot)
-					break;
-				if (accessor.IsVirtual ^ !accessor.IsNewSlot) {
-					if (TypesHierarchyHelpers.FindBaseProperties(propDef).Any())
-						astProp.Modifiers |= Modifiers.New;
+				try {
+					if (accessor.IsVirtual && !accessor.IsNewSlot && (propDef.GetMethod == null || propDef.SetMethod == null)) {
+						foreach (var basePropDef in TypesHierarchyHelpers.FindBaseProperties(propDef)) {
+							if (basePropDef.GetMethod != null && basePropDef.SetMethod != null) {
+								var propVisibilityModifiers = ConvertModifiers(basePropDef.GetMethod) | ConvertModifiers(basePropDef.SetMethod);
+								astProp.Modifiers = FixUpVisibility((astProp.Modifiers & ~Modifiers.VisibilityMask) | (propVisibilityModifiers & Modifiers.VisibilityMask));
+								break;
+							} else if ((basePropDef.GetMethod ?? basePropDef.SetMethod).IsNewSlot) {
+								break;
+							}
+						}
+					}
+					if (accessor.IsVirtual ^ !accessor.IsNewSlot) {
+						if (TypesHierarchyHelpers.FindBaseProperties(propDef).Any())
+							astProp.Modifiers |= Modifiers.New;
+					}
+				} catch (ReferenceResolvingException) {
+					// TODO: add some kind of notification (a comment?) about possible problems with decompiled code due to unresolved references.
 				}
 			}
 			astProp.Name = CleanName(propDef.Name);
 			astProp.ReturnType = ConvertType(propDef.PropertyType, propDef);
 			if (propDef.GetMethod != null) {
+				// Create mapping - used in debugger
+				MemberMapping methodMapping = propDef.GetMethod.CreateCodeMapping(this.CodeMappings);
+				
 				astProp.Getter = new Accessor();
 				astProp.Getter.Body = CreateMethodBody(propDef.GetMethod);
 				astProp.AddAnnotation(propDef.GetMethod);
@@ -762,8 +795,13 @@ namespace ICSharpCode.Decompiler.Ast
 				
 				if ((getterModifiers & Modifiers.VisibilityMask) != (astProp.Modifiers & Modifiers.VisibilityMask))
 					astProp.Getter.Modifiers = getterModifiers & Modifiers.VisibilityMask;
+				
+				astProp.Getter.WithAnnotation(methodMapping);
 			}
 			if (propDef.SetMethod != null) {
+				// Create mapping - used in debugger
+				MemberMapping methodMapping = propDef.SetMethod.CreateCodeMapping(this.CodeMappings);
+				
 				astProp.Setter = new Accessor();
 				astProp.Setter.Body = CreateMethodBody(propDef.SetMethod);
 				astProp.Setter.AddAnnotation(propDef.SetMethod);
@@ -772,6 +810,8 @@ namespace ICSharpCode.Decompiler.Ast
 				
 				if ((setterModifiers & Modifiers.VisibilityMask) != (astProp.Modifiers & Modifiers.VisibilityMask))
 					astProp.Setter.Modifiers = setterModifiers & Modifiers.VisibilityMask;
+				
+				astProp.Setter.WithAnnotation(methodMapping);
 			}
 			ConvertCustomAttributes(astProp, propDef);
 			
@@ -819,16 +859,26 @@ namespace ICSharpCode.Decompiler.Ast
 				else
 					astEvent.PrivateImplementationType = ConvertType(eventDef.AddMethod.Overrides.First().DeclaringType);
 				if (eventDef.AddMethod != null) {
+					// Create mapping - used in debugger
+					MemberMapping methodMapping = eventDef.AddMethod.CreateCodeMapping(this.CodeMappings);
+					
 					astEvent.AddAccessor = new Accessor {
 						Body = CreateMethodBody(eventDef.AddMethod)
 					}.WithAnnotation(eventDef.AddMethod);
 					ConvertAttributes(astEvent.AddAccessor, eventDef.AddMethod);
+					
+					astEvent.AddAccessor.WithAnnotation(methodMapping);
 				}
 				if (eventDef.RemoveMethod != null) {
+					// Create mapping - used in debugger
+					MemberMapping methodMapping = eventDef.RemoveMethod.CreateCodeMapping(this.CodeMappings);
+					
 					astEvent.RemoveAccessor = new Accessor {
 						Body = CreateMethodBody(eventDef.RemoveMethod)
 					}.WithAnnotation(eventDef.RemoveMethod);
 					ConvertAttributes(astEvent.RemoveAccessor, eventDef.RemoveMethod);
+					
+					astEvent.RemoveAccessor.WithAnnotation(methodMapping);
 				}
 				return astEvent;
 			}
@@ -839,7 +889,7 @@ namespace ICSharpCode.Decompiler.Ast
 		BlockStatement CreateMethodBody(MethodDefinition method, IEnumerable<ParameterDeclaration> parameters = null)
 		{
 			if (DecompileMethodBodies)
-				return AstMethodBodyBuilder.CreateMethodBody(method, context, parameters);
+				return AstMethodBodyBuilder.CreateMethodBody(method, context, parameters, LocalVariables);
 			else
 				return null;
 		}
@@ -1062,9 +1112,14 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 			#endregion
 			
-			ConvertCustomAttributes(attributedNode, methodDefinition.MethodReturnType, "return");
-			if (methodDefinition.MethodReturnType.HasMarshalInfo) {
-				var marshalInfo = ConvertMarshalInfo(methodDefinition.MethodReturnType, methodDefinition.Module);
+			ConvertAttributes(attributedNode, methodDefinition.MethodReturnType, methodDefinition.Module);
+		}
+		
+		void ConvertAttributes(AttributedNode attributedNode, MethodReturnType methodReturnType, ModuleDefinition module)
+		{
+			ConvertCustomAttributes(attributedNode, methodReturnType, "return");
+			if (methodReturnType.HasMarshalInfo) {
+				var marshalInfo = ConvertMarshalInfo(methodReturnType, module);
 				attributedNode.Attributes.Add(new AttributeSection(marshalInfo) { AttributeTarget = "return" });
 			}
 		}
@@ -1306,5 +1361,16 @@ namespace ICSharpCode.Decompiler.Ast
 
 			return type.CustomAttributes.Any(attr => attr.AttributeType.FullName == "System.FlagsAttribute");
 		}
+		
+		/// <summary>
+		/// <inheritdoc/>
+		/// </summary>
+		public Tuple<string, List<MemberMapping>> CodeMappings { get; private set; }
+		
+		/// <summary>
+		/// Gets the local variables for the current decompiled type, method, etc.
+		/// <remarks>The key is the metadata token.</remarks>
+		/// </summary>
+		public ConcurrentDictionary<int, IEnumerable<ILVariable>> LocalVariables { get; private set; }
 	}
 }
