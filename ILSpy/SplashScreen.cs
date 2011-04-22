@@ -8,33 +8,30 @@ using System.Text;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Threading;
 
 namespace ICSharpCode.ILSpy
 {
-    public partial class SplashScreen : Form
+    class SplashScreen
     {
-        static SynchronizationContext context = null;
-
+        static Dispatcher context = null;
+        static bool closeRequest = false;
         #region static methods
         internal static void Start()
         {
-            //new thread for splash screen in 'windows forms'
-            new System.Threading.Thread(splashThread).Start();
+            var th = new System.Threading.Thread(splashThread);
+            th.SetApartmentState(ApartmentState.STA);
+            th.Start();
         }
 
         internal static void Stop()
         {
             try
             {
+                closeRequest = true;
                 if (context != null)
                 {
-                    context.Post(e =>
-                        {
-                            if (System.Windows.Forms.Application.OpenForms.Count > 0)
-                            {
-                                System.Windows.Forms.Application.OpenForms[0].Close();
-                            }
-                        }, null);
+                    context.BeginInvokeShutdown(DispatcherPriority.ApplicationIdle);
                 }
             }
             catch
@@ -48,64 +45,29 @@ namespace ICSharpCode.ILSpy
         [STAThread]
         static void splashThread(object state)
         {
-            using (var splashFrm = new SplashScreen())
+            context = Dispatcher.CurrentDispatcher;
+            Thread.Sleep(500);
+            if (closeRequest)
+                return;
+            var splashFrm = new MainWindowSplashScreen();
+            try
             {
-                context = SynchronizationContext.Current;
                 splashFrm.Show();
                 try
                 {
-                    Application.Run(splashFrm);
+                    Dispatcher.Run();
                 }
                 finally
                 {
                     context = null;
-                    //System.Diagnostics.Debug.WriteLine("end of thread");
                 }
+            }
+            finally
+            {
+                splashFrm.Close();
             }
         }
 
         #endregion
-
-        public SplashScreen()
-        {
-            InitializeComponent();
-        }
-
-        int index = 0;
-
-        private void timer1_Tick(object sender, EventArgs e)
-        {
-            Image current = null;
-            index = (index+1) % 6;
-            switch(index)
-            {
-                case 1 :
-                    current = Properties.Resources.loading_12;
-                    break;
-                case 2 :
-                    current = Properties.Resources.loading_13;
-                    break;
-                case 3 :
-                    current = Properties.Resources.loading_14;
-                    break;
-                case 4:
-                    current = Properties.Resources.loading_13;
-                    break;
-                case 5:
-                    current = Properties.Resources.loading_12;
-                    break;
-                default:
-                    current = Properties.Resources.loading_11;
-                    break;
-            }
-            this.pictureBox1.Image = current;
-        }
-
-        private void SplashScreen_Load(object sender, EventArgs e)
-        {
-            this.pictureBox1.Image = Properties.Resources.loading_11;
-            timer1.Enabled = true;
-        }
-
     }
 }

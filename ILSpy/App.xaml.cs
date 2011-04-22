@@ -61,7 +61,6 @@ namespace ICSharpCode.ILSpy
             }
             InitializeComponent();
 
-            //Thread.Sleep(10000);
             var catalog = new AggregateCatalog();
             catalog.Catalogs.Add(new AssemblyCatalog(typeof(App).Assembly));
             catalog.Catalogs.Add(new DirectoryCatalog(".", "*.Plugin.dll"));
@@ -79,7 +78,7 @@ namespace ICSharpCode.ILSpy
             EventManager.RegisterClassHandler(typeof(Window),
                                               Hyperlink.RequestNavigateEvent,
                                               new RequestNavigateEventHandler(Window_RequestNavigate));
-            EventManager.RegisterClassHandler(typeof(Window),
+            EventManager.RegisterClassHandler(typeof(MainWindow),
                                               Window.LoadedEvent,
                                               new RoutedEventHandler(OnMainWindowLoaded));
         }

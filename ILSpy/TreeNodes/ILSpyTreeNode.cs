@@ -169,15 +169,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
         {
             return true;
         }
-        
-        /// <summary>
-        /// return true if this node is public (this property is used in the UI binding)
-        /// </summary>
-        public bool IsPublicNode
+
+        public override System.Windows.Media.Brush ForegroundBrush
         {
             get
             {
-                return IsPublicAccess();
+                if (!IsPublicAccess())
+                    return System.Windows.SystemColors.GrayTextBrush;
+                return base.ForegroundBrush;
             }
         }
 	}
