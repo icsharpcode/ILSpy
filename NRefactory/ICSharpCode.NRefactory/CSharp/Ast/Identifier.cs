@@ -93,7 +93,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			if (name == null)
 				throw new ArgumentNullException("name");
-			IsQuoted = name.StartsWith ("@");
+			IsQuoted = name.Length > 0 && name[0] == '@';
 			this.Name = IsQuoted ? name.Substring (1) : name;
 			this.startLocation = location;
 		}

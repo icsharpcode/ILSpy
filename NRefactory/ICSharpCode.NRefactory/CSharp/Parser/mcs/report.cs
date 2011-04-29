@@ -854,7 +854,7 @@ namespace Mono.CSharp {
 
 			config = config.Substring (7);
 			
-			int p = config.IndexOf (",");
+			int p = config.IndexOf (',');
 			if (p == -1)
 				prefix = GetForeground (config);
 			else

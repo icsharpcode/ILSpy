@@ -254,15 +254,15 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			switch (NodeType) {
 				case ControlFlowNodeType.Normal:
 					int endOffset = End.GetEndOffset();
-					writer.Write("Block #{0}: IL_{1:x4} to IL_{2:x4}", BlockIndex, Start.Offset, endOffset);
+					writer.Write("Block #{0}: IL_{1:x4} to IL_{2:x4}", BlockIndex.ToString(), Start.Offset.ToString(), endOffset.ToString());
 					break;
 				case ControlFlowNodeType.CatchHandler:
 				case ControlFlowNodeType.FinallyOrFaultHandler:
-					writer.Write("Block #{0}: {1}: ", BlockIndex, NodeType);
+					writer.Write("Block #{0}: {1}: ", BlockIndex.ToString(), NodeType.ToString());
 					Disassembler.DisassemblerHelpers.WriteTo(ExceptionHandler, new PlainTextOutput(writer));
 					break;
 				default:
-					writer.Write("Block #{0}: {1}", BlockIndex, NodeType);
+					writer.Write("Block #{0}: {1}", BlockIndex.ToString(), NodeType.ToString());
 					break;
 			}
 //			if (ImmediateDominator != null) {

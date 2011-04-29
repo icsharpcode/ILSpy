@@ -12705,14 +12705,14 @@ namespace yydebug {
 		 public void shift (int from, int to, int errorFlag) {
 			 switch (errorFlag) {
 			 default:				// normally
-				 println("shift\tfrom state "+from+" to "+to);
+				 println("shift\tfrom state " + from.ToString() + " to " + to.ToString());
 				 break;
 			 case 0: case 1: case 2:		// in error recovery
-				 println("shift\tfrom state "+from+" to "+to
-					     +"\t"+errorFlag+" left to recover");
+				 println("shift\tfrom state " + from.ToString() + " to " + to.ToString()
+					     + "\t" + errorFlag.ToString() + " left to recover");
 				 break;
 			 case 3:				// normally
-				 println("shift\tfrom state "+from+" to "+to+"\ton error");
+				 println("shift\tfrom state " + from.ToString() + " to " + to.ToString() + "\ton error");
 				 break;
 			 }
 		 }

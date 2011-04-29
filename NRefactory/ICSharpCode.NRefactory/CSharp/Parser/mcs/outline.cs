@@ -616,7 +616,7 @@ public class Outline {
 		case "System.Void":  return "void";
 		}
 	
-		if (type.LastIndexOf(".") == 6)
+		if (type.LastIndexOf('.') == 6)
 			return type.Substring(7);
 
 		//

@@ -193,7 +193,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			if (accessor.IsNull || accessor.Body.IsNull || accessor.Body.FirstChild == null)
 				return true;
-			if (accessor.Body.Statements.Count () != 1)
+			if (accessor.Body.Statements.Count != 1)
 				return false;
 			return !(accessor.Body.Statements.FirstOrDefault () is BlockStatement);
 			
@@ -800,7 +800,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			case BraceForcement.RemoveBraces:
 				if (isBlock) {
 					BlockStatement block = node as BlockStatement;
-					if (block.Statements.Count () == 1) {
+					if (block.Statements.Count == 1) {
 						int offset1 = data.LocationToOffset (node.StartLocation.Line, node.StartLocation.Column);
 						int start = SearchWhitespaceStart (offset1);
 						
@@ -817,8 +817,8 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 			if (isBlock) {
 				BlockStatement block = node as BlockStatement;
-				if (allowInLine && block.StartLocation.Line == block.EndLocation.Line && block.Statements.Count () <= 1) {
-					if (block.Statements.Count () == 1)
+				if (allowInLine && block.StartLocation.Line == block.EndLocation.Line && block.Statements.Count <= 1) {
+					if (block.Statements.Count == 1)
 						nextStatementIndent = " ";
 				} else {
 					EnforceBraceStyle (braceStyle, block.LBraceToken, block.RBraceToken);

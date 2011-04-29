@@ -720,14 +720,14 @@ namespace ICSharpCode.Decompiler.Ast
 						collectionInit.Elements.AddRange(args);
 						return collectionInit;
 					}
-					default: throw new Exception("Unknown OpCode: " + byteCode.Code);
+					default: throw new Exception("Unknown OpCode: " + byteCode.Code.ToString());
 			}
 		}
 		
 		/// <summary>
 		/// Divides expr by the size of 'type'.
 		/// </summary>
-		Expression DivideBySize(Expression expr, TypeReference type)
+		private static Expression DivideBySize(Expression expr, TypeReference type)
 		{
 			CastExpression cast = expr as CastExpression;
 			if (cast != null && cast.Type is PrimitiveType && ((PrimitiveType)cast.Type).Keyword == "int")
@@ -763,7 +763,7 @@ namespace ICSharpCode.Decompiler.Ast
 			return new BinaryOperatorExpression(expr, BinaryOperatorType.Divide, sizeOfExpression);
 		}
 		
-		Expression MakeDefaultValue(TypeReference type)
+		private static Expression MakeDefaultValue(TypeReference type)
 		{
 			TypeDefinition typeDef = type.Resolve();
 			if (typeDef != null) {
@@ -1003,23 +1003,35 @@ namespace ICSharpCode.Decompiler.Ast
 		{
 			if (actualType == null || reqType == null || TypeAnalysis.IsSameType(actualType, reqType)) {
 				return expr;
-			} else if (actualType is ByReferenceType && reqType is PointerType && expr is DirectionExpression) {
+			}
+
+            var actualTypeAsByReferenceType = actualType as ByReferenceType;
+            if (actualTypeAsByReferenceType != null && reqType is PointerType && expr is DirectionExpression) {
 				return Convert(
 					new UnaryOperatorExpression(UnaryOperatorType.AddressOf, ((DirectionExpression)expr).Expression.Detach()),
-					new PointerType(((ByReferenceType)actualType).ElementType),
+					new PointerType(actualTypeAsByReferenceType.ElementType),
 					reqType);
-			} else if (actualType is PointerType && reqType is ByReferenceType) {
-				expr = Convert(expr, actualType, new PointerType(((ByReferenceType)reqType).ElementType));
-				return new DirectionExpression {
-					FieldDirection = FieldDirection.Ref,
-					Expression = new UnaryOperatorExpression(UnaryOperatorType.Dereference, expr)
-				};
-			} else if (actualType is PointerType && reqType is PointerType) {
-				if (actualType.FullName != reqType.FullName)
-					return expr.CastTo(AstBuilder.ConvertType(reqType));
-				else
-					return expr;
-			} else {
+			} else if (actualType is PointerType) {
+                var reqTypeAsByReferenceType = reqType as ByReferenceType;
+                if (reqTypeAsByReferenceType != null) {
+                    expr = Convert(expr, actualType, new PointerType(reqTypeAsByReferenceType.ElementType));
+                    return new DirectionExpression
+                    {
+                        FieldDirection = FieldDirection.Ref,
+                        Expression = new UnaryOperatorExpression(UnaryOperatorType.Dereference, expr)
+                    };
+                }
+
+                if (reqType is PointerType)
+                {
+                    if (actualType.FullName != reqType.FullName)
+                        return expr.CastTo(AstBuilder.ConvertType(reqType));
+                    else
+                        return expr;
+                }
+            }
+            
+            {
 				bool actualIsIntegerOrEnum = TypeAnalysis.IsIntegerOrEnum(actualType);
 				bool requiredIsIntegerOrEnum = TypeAnalysis.IsIntegerOrEnum(reqType);
 				

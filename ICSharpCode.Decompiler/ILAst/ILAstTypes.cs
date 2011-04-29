@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		
 		public virtual IEnumerable<ILNode> GetChildren()
 		{
-			yield break;
+			return Empty<ILNode>.Array;
 		}
 		
 		public override string ToString()
@@ -48,6 +48,11 @@ namespace ICSharpCode.Decompiler.ILAst
 		
 		public abstract void WriteTo(ITextOutput output);
 	}
+
+    static class Empty<T>
+    {
+        public static readonly T[] Array = new T[0];
+    }
 	
 	public class ILBlock: ILNode
 	{
@@ -443,7 +448,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		
 		public override void WriteTo(ITextOutput output)
 		{
-			output.WriteLine("");
+			output.WriteLine();
 			output.Write("loop (");
 			if (this.Condition != null)
 				this.Condition.WriteTo(output);
