@@ -65,6 +65,50 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 	
+	[ExportToolbarCommand(Toolbar = "Editor", ToolTip= "Expand all folds", ToolbarIcon = "Images/SubTypes.png", ToolbarCategory = "viewer", ToolbarOrder = 0)]
+	sealed class ExpandAllCommand : CommandWrapper {
+		public ExpandAllCommand() : base(new FoldingCommand(FoldingCommand.States.Expand )) {}
+	}
+
+	[ExportToolbarCommand(Toolbar = "Editor", ToolTip = "Collapse all folds", ToolbarIcon = "Images/SuperTypes.png", ToolbarCategory = "viewer", ToolbarOrder = 0)]
+	sealed class CollapseAllCommand : CommandWrapper {
+		public CollapseAllCommand() : base(new FoldingCommand(FoldingCommand.States.Collapse)) { }
+	}
+
+	internal sealed class FoldingCommand : SimpleCommand {
+		
+		private readonly States state;
+
+		public FoldingCommand(States state) {
+			this.state = state;
+		}
+
+		public override bool CanExecute(object parameter) {
+			
+			var view = MainWindow.Instance.TextView;
+			return view.FoldingManager != null;
+		}
+
+		public override void Execute(object parameter) {
+			
+			var view = MainWindow.Instance.TextView;
+			var manager = view.FoldingManager;
+
+			view.Cursor = Cursors.Wait;
+
+			foreach (var fold in manager.AllFoldings) {
+				fold.IsFolded = state == States.Collapse;
+			}
+
+			view.Cursor = Cursors.Arrow;
+		}
+
+		public enum States {
+			Expand,
+			Collapse
+		}
+	}
+
 	[ExportToolbarCommand(ToolTip = "Reload all assemblies", ToolbarIcon = "Images/Refresh.png", ToolbarCategory = "Open", ToolbarOrder = 2)]
 	[ExportMainMenuCommand(Menu = "_File", Header = "Reload", MenuIcon = "Images/Refresh.png", MenuCategory = "Open", MenuOrder = 2)]
 	sealed class RefreshCommand : CommandWrapper {
