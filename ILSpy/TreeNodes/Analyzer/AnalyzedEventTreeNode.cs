@@ -18,46 +18,56 @@
 
 using System;
 using Mono.Cecil;
-using ICSharpCode.Decompiler;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	class AnalyzedEventTreeNode : AnalyzerTreeNode
+	internal sealed class AnalyzedEventTreeNode : AnalyzerTreeNode
 	{
-		EventDefinition analyzedEvent;
-		string prefix;
-		
+		private readonly EventDefinition analyzedEvent;
+		private readonly string prefix;
+
 		public AnalyzedEventTreeNode(EventDefinition analyzedEvent, string prefix = "")
 		{
 			if (analyzedEvent == null)
-				throw new ArgumentNullException("analyzedMethod");
+				throw new ArgumentNullException("analyzedEvent");
 			this.analyzedEvent = analyzedEvent;
 			this.prefix = prefix;
 			this.LazyLoading = true;
 		}
-		
-		public override object Icon {
+
+		public override object Icon
+		{
 			get { return EventTreeNode.GetIcon(analyzedEvent); }
 		}
-		
-		public override object Text {
-			get {
+
+		public override object Text
+		{
+			get
+			{
 				// TODO: This way of formatting is not suitable for events which explicitly implement interfaces.
-				return prefix + Language.TypeToString(analyzedEvent.DeclaringType, true) + "." + EventTreeNode.GetText(analyzedEvent, Language); }
+				return prefix + Language.TypeToString(analyzedEvent.DeclaringType, true) + "." + EventTreeNode.GetText(analyzedEvent, Language);
+			}
 		}
-		
+
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
 			e.Handled = true;
 			MainWindow.Instance.JumpToReference(analyzedEvent);
 		}
-		
+
 		protected override void LoadChildren()
 		{
-			if(AnalyzedEventAccessorsTreeNode.CanShow(analyzedEvent))
-				this.Children.Add(new AnalyzedEventAccessorsTreeNode(analyzedEvent));
-			if (AnalyzedEventOverridesTreeNode.CanShowAnalyzer(analyzedEvent))
+			if (analyzedEvent.AddMethod != null)
+				this.Children.Add(new AnalyzedEventAccessorTreeNode(analyzedEvent.AddMethod, "add"));
+			if (analyzedEvent.RemoveMethod != null)
+				this.Children.Add(new AnalyzedEventAccessorTreeNode(analyzedEvent.RemoveMethod, "remove"));
+			foreach (var accessor in analyzedEvent.OtherMethods)
+				this.Children.Add(new AnalyzedEventAccessorTreeNode(accessor, null));
+
+			if (AnalyzedEventOverridesTreeNode.CanShow(analyzedEvent))
 				this.Children.Add(new AnalyzedEventOverridesTreeNode(analyzedEvent));
+			if (AnalyzedInterfaceEventImplementedByTreeNode.CanShow(analyzedEvent))
+				this.Children.Add(new AnalyzedInterfaceEventImplementedByTreeNode(analyzedEvent));
 		}
 
 		public static AnalyzerTreeNode TryCreateAnalyzer(MemberReference member)
@@ -70,12 +80,12 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public static bool CanShow(MemberReference member)
 		{
-			var property = member as EventDefinition;
-			if (property == null)
+			var eventDef = member as EventDefinition;
+			if (eventDef == null)
 				return false;
 
-			return AnalyzedEventAccessorsTreeNode.CanShow(property)
-				|| AnalyzedEventOverridesTreeNode.CanShowAnalyzer(property);
+			return !MainWindow.Instance.CurrentLanguage.ShowMember(eventDef.AddMethod ?? eventDef.RemoveMethod)
+				|| AnalyzedEventOverridesTreeNode.CanShow(eventDef);
 		}
 	}
 }

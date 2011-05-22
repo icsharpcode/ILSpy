@@ -1,3 +1,21 @@
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,6 +44,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		JoinBasicBlocks,
 		TransformDecimalCtorToConstant,
 		SimplifyLdObjAndStObj,
+		SimplifyCustomShortCircuit,
 		TransformArrayInitializers,
 		TransformObjectInitializers,
 		MakeAssignmentExpression,
@@ -117,6 +136,9 @@ namespace ICSharpCode.Decompiler.ILAst
 					
 					if (abortBeforeStep == ILAstOptimizationStep.SimplifyLdObjAndStObj) return;
 					modified |= block.RunOptimization(SimplifyLdObjAndStObj);
+					
+					if (abortBeforeStep == ILAstOptimizationStep.SimplifyCustomShortCircuit) return;
+					modified |= block.RunOptimization(new SimpleControlFlow(context, method).SimplifyCustomShortCircuit);
 					
 					if (abortBeforeStep == ILAstOptimizationStep.TransformArrayInitializers) return;
 					modified |= block.RunOptimization(TransformArrayInitializers);
@@ -290,34 +312,77 @@ namespace ICSharpCode.Decompiler.ILAst
 		/// Converts call and callvirt instructions that read/write properties into CallGetter/CallSetter instructions.
 		/// 
 		/// CallGetter/CallSetter is used to allow the ILAst to represent "while ((SomeProperty = value) != null)".
+		/// 
+		/// Also simplifies 'newobj(SomeDelegate, target, ldvirtftn(F, target))' to 'newobj(SomeDelegate, target, ldvirtftn(F))'
 		/// </summary>
-		void IntroducePropertyAccessInstructions(ILBlock method)
+		void IntroducePropertyAccessInstructions(ILNode node)
 		{
-			foreach (ILExpression expr in method.GetSelfAndChildrenRecursive<ILExpression>()) {
-				if (expr.Code == ILCode.Call || expr.Code == ILCode.Callvirt) {
-					MethodReference cecilMethod = (MethodReference)expr.Operand;
-					if (cecilMethod.DeclaringType is ArrayType) {
-						switch (cecilMethod.Name) {
-							case "Get":
-								expr.Code = ILCode.CallGetter;
-								break;
-							case "Set":
-								expr.Code = ILCode.CallSetter;
-								break;
-							case "Address":
-								expr.Code = ILCode.CallGetter;
-								expr.AddPrefix(new ILExpressionPrefix(ILCode.PropertyAddress));
-								break;
-						}
-					} else {
-						MethodDefinition cecilMethodDef = cecilMethod.Resolve();
-						if (cecilMethodDef != null) {
-							if (cecilMethodDef.IsGetter)
-								expr.Code = (expr.Code == ILCode.Call) ? ILCode.CallGetter : ILCode.CallvirtGetter;
-							else if (cecilMethodDef.IsSetter)
-								expr.Code = (expr.Code == ILCode.Call) ? ILCode.CallSetter : ILCode.CallvirtSetter;
-						}
+			ILExpression parentExpr = node as ILExpression;
+			if (parentExpr != null) {
+				for (int i = 0; i < parentExpr.Arguments.Count; i++) {
+					ILExpression expr = parentExpr.Arguments[i];
+					IntroducePropertyAccessInstructions(expr);
+					IntroducePropertyAccessInstructions(expr, parentExpr, i);
+				}
+			} else {
+				foreach (ILNode child in node.GetChildren()) {
+					IntroducePropertyAccessInstructions(child);
+					ILExpression expr = child as ILExpression;
+					if (expr != null) {
+						IntroducePropertyAccessInstructions(expr, null, -1);
 					}
+				}
+			}
+		}
+		
+		void IntroducePropertyAccessInstructions(ILExpression expr, ILExpression parentExpr, int posInParent)
+		{
+			if (expr.Code == ILCode.Call || expr.Code == ILCode.Callvirt) {
+				MethodReference cecilMethod = (MethodReference)expr.Operand;
+				if (cecilMethod.DeclaringType is ArrayType) {
+					switch (cecilMethod.Name) {
+						case "Get":
+							expr.Code = ILCode.CallGetter;
+							break;
+						case "Set":
+							expr.Code = ILCode.CallSetter;
+							break;
+						case "Address":
+							ByReferenceType brt = cecilMethod.ReturnType as ByReferenceType;
+							if (brt != null) {
+								MethodReference getMethod = new MethodReference("Get", brt.ElementType, cecilMethod.DeclaringType);
+								foreach (var p in cecilMethod.Parameters)
+									getMethod.Parameters.Add(p);
+								getMethod.HasThis = cecilMethod.HasThis;
+								expr.Operand = getMethod;
+							}
+							expr.Code = ILCode.CallGetter;
+							if (parentExpr != null) {
+								parentExpr.Arguments[posInParent] = new ILExpression(ILCode.AddressOf, null, expr);
+							}
+							break;
+					}
+				} else {
+					MethodDefinition cecilMethodDef = cecilMethod.Resolve();
+					if (cecilMethodDef != null) {
+						if (cecilMethodDef.IsGetter)
+							expr.Code = (expr.Code == ILCode.Call) ? ILCode.CallGetter : ILCode.CallvirtGetter;
+						else if (cecilMethodDef.IsSetter)
+							expr.Code = (expr.Code == ILCode.Call) ? ILCode.CallSetter : ILCode.CallvirtSetter;
+					}
+				}
+			} else if (expr.Code == ILCode.Newobj && expr.Arguments.Count == 2) {
+				// Might be 'newobj(SomeDelegate, target, ldvirtftn(F, target))'.
+				ILVariable target;
+				if (expr.Arguments[0].Match(ILCode.Ldloc, out target)
+				    && expr.Arguments[1].Code == ILCode.Ldvirtftn
+				    && expr.Arguments[1].Arguments.Count == 1
+				    && expr.Arguments[1].Arguments[0].MatchLdloc(target))
+				{
+					// Remove the 'target' argument from the ldvirtftn instruction.
+					// It's not needed in the translation to C#, and needs to be eliminated so that the target expression
+					// can be inlined.
+					expr.Arguments[1].Arguments.Clear();
 				}
 			}
 		}
@@ -352,7 +417,7 @@ namespace ICSharpCode.Decompiler.ILAst
 					    lastNode.IsUnconditionalControlFlow())
 					{
 						// Try to reuse the label
-						ILLabel label = currNode is ILLabel ? ((ILLabel)currNode) : new ILLabel() { Name = "Block_" + (nextLabelIndex++) };
+						ILLabel label = currNode as ILLabel ?? new ILLabel() { Name = "Block_" + (nextLabelIndex++).ToString() };
 						
 						// Terminate the last block
 						if (!lastNode.IsUnconditionalControlFlow()) {

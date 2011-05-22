@@ -1,7 +1,23 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under MIT X11 license (for details please see \doc\license.txt)
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
@@ -54,9 +70,29 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		
 		public override object VisitTypeDeclaration(TypeDeclaration typeDeclaration, object data)
 		{
-			var instanceCtors = typeDeclaration.Members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
+			// Handle initializers on instance fields
+			HandleInstanceFieldInitializers(typeDeclaration.Members);
+			
+			// Now convert base constructor calls to initializers:
+			base.VisitTypeDeclaration(typeDeclaration, data);
+			
+			// Remove single empty constructor:
+			RemoveSingleEmptyConstructor(typeDeclaration);
+			
+			// Handle initializers on static fields:
+			HandleStaticFieldInitializers(typeDeclaration.Members);
+			return null;
+		}
+		
+		void HandleInstanceFieldInitializers(IEnumerable<AstNode> members)
+		{
+			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			var instanceCtorsNotChainingWithThis = instanceCtors.Where(ctor => !thisCallPattern.IsMatch(ctor.Body.Statements.FirstOrDefault())).ToArray();
-			if (instanceCtorsNotChainingWithThis.Length > 0 && typeDeclaration.ClassType == NRefactory.TypeSystem.ClassType.Class) {
+			if (instanceCtorsNotChainingWithThis.Length > 0) {
+				MethodDefinition ctorMethodDef = instanceCtorsNotChainingWithThis[0].Annotation<MethodDefinition>();
+				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsValueType)
+					return;
+				
 				// Recognize field initializers:
 				// Convert first statement in all ctors (if all ctors have the same statement) into a field initializer.
 				bool allSame;
@@ -68,7 +104,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					FieldDefinition fieldDef = m.Get<AstNode>("fieldAccess").Single().Annotation<FieldReference>().ResolveWithinSameModule();
 					if (fieldDef == null)
 						break;
-					AttributedNode fieldOrEventDecl = typeDeclaration.Members.FirstOrDefault(f => f.Annotation<FieldDefinition>() == fieldDef);
+					AstNode fieldOrEventDecl = members.FirstOrDefault(f => f.Annotation<FieldDefinition>() == fieldDef);
 					if (fieldOrEventDecl == null)
 						break;
 					
@@ -84,11 +120,11 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					}
 				} while (allSame);
 			}
-			
-			// Now convert base constructor calls to initializers:
-			base.VisitTypeDeclaration(typeDeclaration, data);
-			
-			// Remove single empty constructor:
+		}
+		
+		void RemoveSingleEmptyConstructor(TypeDeclaration typeDeclaration)
+		{
+			var instanceCtors = typeDeclaration.Members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			if (instanceCtors.Length == 1) {
 				ConstructorDeclaration emptyCtor = new ConstructorDeclaration();
 				emptyCtor.Modifiers = ((typeDeclaration.Modifiers & Modifiers.Abstract) == Modifiers.Abstract ? Modifiers.Protected : Modifiers.Public);
@@ -96,12 +132,15 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				if (emptyCtor.IsMatch(instanceCtors[0]))
 					instanceCtors[0].Remove();
 			}
-			
+		}
+		
+		void HandleStaticFieldInitializers(IEnumerable<AstNode> members)
+		{
 			// Convert static constructor into field initializers if the class is BeforeFieldInit
-			var staticCtor = typeDeclaration.Members.OfType<ConstructorDeclaration>().FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
+			var staticCtor = members.OfType<ConstructorDeclaration>().FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
 			if (staticCtor != null) {
-				TypeDefinition typeDef = typeDeclaration.Annotation<TypeDefinition>();
-				if (typeDef != null && typeDef.IsBeforeFieldInit) {
+				MethodDefinition ctorMethodDef = staticCtor.Annotation<MethodDefinition>();
+				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsBeforeFieldInit) {
 					while (true) {
 						ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
 						if (es == null)
@@ -112,7 +151,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 						FieldDefinition fieldDef = assignment.Left.Annotation<FieldReference>().ResolveWithinSameModule();
 						if (fieldDef == null || !fieldDef.IsStatic)
 							break;
-						FieldDeclaration fieldDecl = typeDeclaration.Members.OfType<FieldDeclaration>().FirstOrDefault(f => f.Annotation<FieldDefinition>() == fieldDef);
+						FieldDeclaration fieldDecl = members.OfType<FieldDeclaration>().FirstOrDefault(f => f.Annotation<FieldDefinition>() == fieldDef);
 						if (fieldDecl == null)
 							break;
 						fieldDecl.Variables.Single().Initializer = assignment.Right.Detach();
@@ -122,11 +161,15 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 						staticCtor.Remove();
 				}
 			}
-			return null;
 		}
 		
 		void IAstTransform.Run(AstNode node)
 		{
+			// If we're viewing some set of members (fields are direct children of CompilationUnit),
+			// we also need to handle those:
+			HandleInstanceFieldInitializers(node.Children);
+			HandleStaticFieldInitializers(node.Children);
+			
 			node.AcceptVisitor(this, null);
 		}
 	}

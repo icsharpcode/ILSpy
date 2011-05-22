@@ -1,5 +1,20 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under MIT X11 license (for details please see \doc\license.txt)
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.IO;
@@ -34,6 +49,10 @@ namespace ICSharpCode.ILSpy
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 		
+		/// <summary>
+		/// Gets the Cecil AssemblyDefinition.
+		/// Can be null when there was a load error.
+		/// </summary>
 		public AssemblyDefinition AssemblyDefinition {
 			get {
 				try {
@@ -69,24 +88,28 @@ namespace ICSharpCode.ILSpy
 			// runs on background thread
 			ReaderParameters p = new ReaderParameters();
 			p.AssemblyResolver = new MyAssemblyResolver(this);
-			try {
-				if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
-					SetSymbolSettings(p);
+			AssemblyDefinition asm = AssemblyDefinition.ReadAssembly(fileName, p);
+			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
+				try {
+					LoadSymbols(asm.MainModule);
+				} catch (IOException) {
+				} catch (UnauthorizedAccessException) {
+				} catch (InvalidOperationException) {
+					// ignore any errors during symbol loading
 				}
-				return AssemblyDefinition.ReadAssembly(fileName, p);
-			} finally {
-				if (p.SymbolStream != null)
-					p.SymbolStream.Dispose();
 			}
+			return asm;
 		}
 		
-		private void SetSymbolSettings(ReaderParameters p)
+		private void LoadSymbols(ModuleDefinition module)
 		{
 			// search for pdb in same directory as dll
 			string pdbName = Path.Combine(Path.GetDirectoryName(fileName), Path.GetFileNameWithoutExtension(fileName) + ".pdb");
 			if (File.Exists(pdbName)) {
-				p.ReadSymbols = true;
-				p.SymbolStream = File.OpenRead(pdbName);
+				using (Stream s = File.OpenRead(pdbName)) {
+					module.ReadSymbols(new Mono.Cecil.Pdb.PdbReaderProvider().GetSymbolReader(module, s));
+				}
+				return;
 			}
 			
 			// TODO: use symbol cache, get symbols from microsoft

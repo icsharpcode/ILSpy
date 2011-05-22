@@ -1,5 +1,20 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under MIT X11 license (for details please see \doc\license.txt)
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.Collections.Generic;
@@ -252,6 +267,10 @@ namespace ICSharpCode.Decompiler.ILAst
 					return typeSystem.Boolean;
 				case ILCode.LogicAnd:
 				case ILCode.LogicOr:
+					// if Operand is set the logic and/or expression is a custom operator
+					// we can deal with it the same as a normal invocation.
+					if (expr.Operand != null)
+						goto case ILCode.Call;
 					if (forceInferChildren) {
 						InferTypeForExpression(expr.Arguments[0], typeSystem.Boolean);
 						InferTypeForExpression(expr.Arguments[1], typeSystem.Boolean);
@@ -319,10 +338,7 @@ namespace ICSharpCode.Decompiler.ILAst
 						if (expr.Code == ILCode.CallSetter || expr.Code == ILCode.CallvirtSetter) {
 							return SubstituteTypeArgs(method.Parameters.Last().ParameterType, method);
 						} else {
-							TypeReference type = SubstituteTypeArgs(method.ReturnType, method);
-							if (expr.GetPrefix(ILCode.PropertyAddress) != null && !(type is ByReferenceType))
-								type = new ByReferenceType(type);
-							return type;
+							return SubstituteTypeArgs(method.ReturnType, method);
 						}
 					}
 				case ILCode.Newobj:
@@ -463,6 +479,11 @@ namespace ICSharpCode.Decompiler.ILAst
 						InferTypeForExpression(expr.Arguments[0], typeSystem.TypedReference);
 					}
 					return new ByReferenceType((TypeReference)expr.Operand);
+				case ILCode.AddressOf:
+					{
+						TypeReference t = InferTypeForExpression(expr.Arguments[0], UnpackPointer(expectedType));
+						return t != null ? new ByReferenceType(t) : null;
+					}
 					#endregion
 					#region Arithmetic instructions
 				case ILCode.Not: // bitwise complement

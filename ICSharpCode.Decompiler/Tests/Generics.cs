@@ -35,6 +35,37 @@ public static class Generics
 		}
 	}
 	
+	public interface IInterface
+	{
+		void Method1<T>() where T : class;
+		void Method2<T>() where T : class;
+	}
+	
+	public abstract class Base : Generics.IInterface
+	{
+		// constraints must be repeated on implicit interface implementation
+		public abstract void Method1<T>() where T : class;
+		
+		// constraints must not be specified on explicit interface implementation
+		void Generics.IInterface.Method2<T>()
+		{
+		}
+	}
+	
+	public class Derived : Generics.Base
+	{
+		// constraints are inherited automatically and must not be specified
+		public override void Method1<T>()
+		{
+		}
+	}
+	
+	private static Type type1 = typeof(List<>);
+	private static Type type2 = typeof(Generics.MyArray<>);
+	private static Type type3 = typeof(List<>.Enumerator);
+	private static Type type4 = typeof(Generics.MyArray<>.NestedClass<>);
+	private static Type type5 = typeof(List<int>[]);
+	
 	public static void MethodWithConstraint<T, S>() where T : class, S where S : ICloneable, new()
 	{
 	}

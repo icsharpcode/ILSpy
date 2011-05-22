@@ -1,5 +1,20 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under MIT X11 license (for details please see \doc\license.txt)
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.IO;
@@ -22,17 +37,25 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public class ResourceEntryNode : ILSpyTreeNode
 	{
-		protected readonly string key;
-		protected readonly Stream data;
-		
-		public override object Text {
+		private readonly string key;
+		private readonly Stream data;
+
+		public override object Text
+		{
 			get { return key.ToString(); }
 		}
-		
-		public override object Icon {
+
+		public override object Icon
+		{
 			get { return Images.Resource; }
 		}
-		
+
+		protected Stream Data
+		{
+			get { return data; }
+		}
+
+
 		public ResourceEntryNode(string key, Stream data)
 		{
 			if (key == null)
@@ -42,7 +65,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.key = key;
 			this.data = data;
 		}
-		
+
 		public static ILSpyTreeNode Create(string key, Stream data)
 		{
 			ILSpyTreeNode result = null;
@@ -53,12 +76,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return result ?? new ResourceEntryNode(key, data);
 		}
-		
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
 			language.WriteCommentLine(output, string.Format("{0} = {1}", key, data));
 		}
-		
+
 		public override bool Save(DecompilerTextView textView)
 		{
 			SaveFileDialog dlg = new SaveFileDialog();
@@ -72,12 +95,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return true;
 		}
 	}
-	
+
 	[Export(typeof(IResourceNodeFactory))]
 	sealed class ImageResourceNodeFactory : IResourceNodeFactory
 	{
 		static readonly string[] imageFileExtensions = { ".png", ".gif", ".bmp", ".jpg", ".ico" };
-		
+
 		public ILSpyTreeNode CreateNode(Mono.Cecil.Resource resource)
 		{
 			EmbeddedResource er = resource as EmbeddedResource;
@@ -86,7 +109,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return null;
 		}
-		
+
 		public ILSpyTreeNode CreateNode(string key, Stream data)
 		{
 			foreach (string fileExt in imageFileExtensions) {
@@ -96,10 +119,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return null;
 		}
 	}
-	
+
 	sealed class ImageResourceEntryNode : ResourceEntryNode
 	{
-		public ImageResourceEntryNode(string key, Stream data) : base(key, data)
+		public ImageResourceEntryNode(string key, Stream data)
+			: base(key, data)
 		{
 		}
 
@@ -112,17 +136,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			try {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
-				data.Position = 0;
+				Data.Position = 0;
 				BitmapImage image = new BitmapImage();
 				image.BeginInit();
-				image.StreamSource = data;
+				image.StreamSource = Data;
 				image.EndInit();
 				output.AddUIElement(() => new Image { Source = image });
 				output.WriteLine();
 				output.AddButton(Images.Save, "Save", delegate { Save(null); });
-				textView.Show(output, null);
+				textView.ShowNode(output, this, null);
 				return true;
-			} catch (Exception) {
+			}
+			catch (Exception) {
 				return false;
 			}
 		}

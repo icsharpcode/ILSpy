@@ -31,6 +31,8 @@ using System.Xml;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.Decompiler.Ast.Transforms;
+using ICSharpCode.ILSpy.Baml;
+using ICSharpCode.ILSpy.XmlDoc;
 using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 
@@ -45,11 +47,11 @@ namespace ICSharpCode.ILSpy
 		string name = "C#";
 		bool showAllMembers = false;
 		Predicate<IAstTransform> transformAbortCondition = null;
-		
+
 		public CSharpLanguage()
 		{
 		}
-		
+
 		#if DEBUG
 		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
 		{
@@ -70,82 +72,174 @@ namespace ICSharpCode.ILSpy
 			};
 		}
 		#endif
-		
-		public override string Name {
+
+		public override string Name
+		{
 			get { return name; }
 		}
-		
-		public override string FileExtension {
+
+		public override string FileExtension
+		{
 			get { return ".cs"; }
 		}
-		
-		public override string ProjectFileExtension {
+
+		public override string ProjectFileExtension
+		{
 			get { return ".csproj"; }
 		}
-		
+
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
 			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: method.DeclaringType, isSingleMember: true);
-			codeDomBuilder.AddMethod(method);
-			codeDomBuilder.RunTransformations(transformAbortCondition);
-			codeDomBuilder.GenerateCode(output);
+			if (method.IsConstructor && !method.IsStatic && !method.DeclaringType.IsValueType) {
+				// also fields and other ctors so that the field initializers can be shown as such
+				AddFieldsAndCtors(codeDomBuilder, method.DeclaringType, method.IsStatic);
+				RunTransformsAndGenerateCode(codeDomBuilder, output, options, new SelectCtorTransform(method));
+			} else {
+				codeDomBuilder.AddMethod(method);
+				RunTransformsAndGenerateCode(codeDomBuilder, output, options);
+			}
 		}
 		
+		class SelectCtorTransform : IAstTransform
+		{
+			readonly MethodDefinition ctorDef;
+			
+			public SelectCtorTransform(MethodDefinition ctorDef)
+			{
+				this.ctorDef = ctorDef;
+			}
+			
+			public void Run(AstNode compilationUnit)
+			{
+				ConstructorDeclaration ctorDecl = null;
+				foreach (var node in compilationUnit.Children) {
+					ConstructorDeclaration ctor = node as ConstructorDeclaration;
+					if (ctor != null) {
+						if (ctor.Annotation<MethodDefinition>() == ctorDef) {
+							ctorDecl = ctor;
+						} else {
+							// remove other ctors
+							ctor.Remove();
+						}
+					}
+					// Remove any fields without initializers
+					FieldDeclaration fd = node as FieldDeclaration;
+					if (fd != null && fd.Variables.All(v => v.Initializer.IsNull))
+						fd.Remove();
+				}
+				if (ctorDecl.Initializer.ConstructorInitializerType == ConstructorInitializerType.This) {
+					// remove all fields
+					foreach (var node in compilationUnit.Children)
+						if (node is FieldDeclaration)
+							node.Remove();
+				}
+			}
+		}
+
 		public override void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(property.DeclaringType, includeNamespace: true));
 			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: property.DeclaringType, isSingleMember: true);
 			codeDomBuilder.AddProperty(property);
-			codeDomBuilder.RunTransformations(transformAbortCondition);
-			codeDomBuilder.GenerateCode(output);
+			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
 		}
-		
+
 		public override void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
 			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: field.DeclaringType, isSingleMember: true);
-			codeDomBuilder.AddField(field);
-			codeDomBuilder.RunTransformations(transformAbortCondition);
-			codeDomBuilder.GenerateCode(output);
+			if (field.IsLiteral) {
+				codeDomBuilder.AddField(field);
+			} else {
+				// also decompile ctors so that the field initializer can be shown
+				AddFieldsAndCtors(codeDomBuilder, field.DeclaringType, field.IsStatic);
+			}
+			RunTransformsAndGenerateCode(codeDomBuilder, output, options, new SelectFieldTransform(field));
 		}
 		
+		/// <summary>
+		/// Removes all top-level members except for the specified fields.
+		/// </summary>
+		sealed class SelectFieldTransform : IAstTransform
+		{
+			readonly FieldDefinition field;
+			
+			public SelectFieldTransform(FieldDefinition field)
+			{
+				this.field = field;
+			}
+			
+			public void Run(AstNode compilationUnit)
+			{
+				foreach (var child in compilationUnit.Children) {
+					if (child is AttributedNode) {
+						if (child.Annotation<FieldDefinition>() != field)
+							child.Remove();
+					}
+				}
+			}
+		}
+		
+		void AddFieldsAndCtors(AstBuilder codeDomBuilder, TypeDefinition declaringType, bool isStatic)
+		{
+			foreach (var field in declaringType.Fields) {
+				if (field.IsStatic == isStatic)
+					codeDomBuilder.AddField(field);
+			}
+			foreach (var ctor in declaringType.Methods) {
+				if (ctor.IsConstructor && ctor.IsStatic == isStatic)
+					codeDomBuilder.AddMethod(ctor);
+			}
+		}
+
 		public override void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(ev.DeclaringType, includeNamespace: true));
 			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: ev.DeclaringType, isSingleMember: true);
 			codeDomBuilder.AddEvent(ev);
-			codeDomBuilder.RunTransformations(transformAbortCondition);
-			codeDomBuilder.GenerateCode(output);
+			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
 		}
-		
+
 		public override void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: type);
 			codeDomBuilder.AddType(type);
-			codeDomBuilder.RunTransformations(transformAbortCondition);
-			codeDomBuilder.GenerateCode(output);
+			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
 		}
 		
-		public override void DecompileAssembly(AssemblyDefinition assembly, string fileName, ITextOutput output, DecompilationOptions options)
+		void RunTransformsAndGenerateCode(AstBuilder astBuilder, ITextOutput output, DecompilationOptions options, IAstTransform additionalTransform = null)
+		{
+			astBuilder.RunTransformations(transformAbortCondition);
+			if (additionalTransform != null) {
+				additionalTransform.Run(astBuilder.CompilationUnit);
+			}
+			if (options.DecompilerSettings.ShowXmlDocumentation) {
+				AddXmlDocTransform.Run(astBuilder.CompilationUnit);
+			}
+			astBuilder.GenerateCode(output);
+		}
+
+		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
 				HashSet<string> directories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-				var files = WriteCodeFilesInProject(assembly, options, directories).ToList();
-				files.AddRange(WriteResourceFilesInProject(assembly, fileName, options, directories));
-				WriteProjectFile(new TextOutputWriter(output), files, assembly.MainModule);
+				var files = WriteCodeFilesInProject(assembly.AssemblyDefinition, options, directories).ToList();
+				files.AddRange(WriteResourceFilesInProject(assembly, options, directories));
+				WriteProjectFile(new TextOutputWriter(output), files, assembly.AssemblyDefinition.MainModule);
 			} else {
-				base.DecompileAssembly(assembly, fileName, output, options);
+				base.DecompileAssembly(assembly, output, options);
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
 				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
-					AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: assembly.MainModule);
-					codeDomBuilder.AddAssembly(assembly, onlyAssemblyLevel: !options.FullDecompilation);
+					AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: assembly.AssemblyDefinition.MainModule);
+					codeDomBuilder.AddAssembly(assembly.AssemblyDefinition, onlyAssemblyLevel: !options.FullDecompilation);
 					codeDomBuilder.RunTransformations(transformAbortCondition);
 					codeDomBuilder.GenerateCode(output);
 				}
 			}
 		}
-		
+
 		#region WriteProjectFile
 		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module)
 		{
@@ -173,20 +267,20 @@ namespace ICSharpCode.ILSpy
 				w.WriteStartElement("Project", ns);
 				w.WriteAttributeString("ToolsVersion", "4.0");
 				w.WriteAttributeString("DefaultTargets", "Build");
-				
+
 				w.WriteStartElement("PropertyGroup");
 				w.WriteElementString("ProjectGuid", Guid.NewGuid().ToString().ToUpperInvariant());
-				
+
 				w.WriteStartElement("Configuration");
 				w.WriteAttributeString("Condition", " '$(Configuration)' == '' ");
 				w.WriteValue("Debug");
 				w.WriteEndElement(); // </Configuration>
-				
+
 				w.WriteStartElement("Platform");
 				w.WriteAttributeString("Condition", " '$(Platform)' == '' ");
 				w.WriteValue(platformName);
 				w.WriteEndElement(); // </Platform>
-				
+
 				switch (module.Kind) {
 					case ModuleKind.Windows:
 						w.WriteElementString("OutputType", "WinExe");
@@ -198,7 +292,7 @@ namespace ICSharpCode.ILSpy
 						w.WriteElementString("OutputType", "Library");
 						break;
 				}
-				
+
 				w.WriteElementString("AssemblyName", module.Assembly.Name.Name);
 				switch (module.Runtime) {
 					case TargetRuntime.Net_1_0:
@@ -217,14 +311,14 @@ namespace ICSharpCode.ILSpy
 						break;
 				}
 				w.WriteElementString("WarningLevel", "4");
-				
+
 				w.WriteEndElement(); // </PropertyGroup>
-				
+
 				w.WriteStartElement("PropertyGroup"); // platform-specific
 				w.WriteAttributeString("Condition", " '$(Platform)' == '" + platformName + "' ");
 				w.WriteElementString("PlatformTarget", platformName);
 				w.WriteEndElement(); // </PropertyGroup> (platform-specific)
-				
+
 				w.WriteStartElement("PropertyGroup"); // Debug
 				w.WriteAttributeString("Condition", " '$(Configuration)' == 'Debug' ");
 				w.WriteElementString("OutputPath", "bin\\Debug\\");
@@ -232,7 +326,7 @@ namespace ICSharpCode.ILSpy
 				w.WriteElementString("DebugType", "full");
 				w.WriteElementString("Optimize", "false");
 				w.WriteEndElement(); // </PropertyGroup> (Debug)
-				
+
 				w.WriteStartElement("PropertyGroup"); // Release
 				w.WriteAttributeString("Condition", " '$(Configuration)' == 'Release' ");
 				w.WriteElementString("OutputPath", "bin\\Release\\");
@@ -240,8 +334,8 @@ namespace ICSharpCode.ILSpy
 				w.WriteElementString("DebugType", "pdbonly");
 				w.WriteElementString("Optimize", "true");
 				w.WriteEndElement(); // </PropertyGroup> (Release)
-				
-				
+
+
 				w.WriteStartElement("ItemGroup"); // References
 				foreach (AssemblyNameReference r in module.AssemblyReferences) {
 					if (r.Name != "mscorlib") {
@@ -252,7 +346,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				w.WriteEndElement(); // </ItemGroup> (References)
-				
+
 				foreach (IGrouping<string, string> gr in (from f in files group f.Item2 by f.Item1 into g orderby g.Key select g)) {
 					w.WriteStartElement("ItemGroup");
 					foreach (string file in gr.OrderBy(f => f, StringComparer.OrdinalIgnoreCase)) {
@@ -262,16 +356,16 @@ namespace ICSharpCode.ILSpy
 					}
 					w.WriteEndElement();
 				}
-				
+
 				w.WriteStartElement("Import");
 				w.WriteAttributeString("Project", "$(MSBuildToolsPath)\\Microsoft.CSharp.targets");
 				w.WriteEndElement();
-				
+
 				w.WriteEndDocument();
 			}
 		}
 		#endregion
-		
+
 		#region WriteCodeFilesInProject
 		bool IncludeTypeWhenDecompilingProject(TypeDefinition type, DecompilationOptions options)
 		{
@@ -281,11 +375,11 @@ namespace ICSharpCode.ILSpy
 				return false;
 			return true;
 		}
-		
+
 		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(AssemblyDefinition assembly, DecompilationOptions options, HashSet<string> directories)
 		{
 			var files = assembly.MainModule.Types.Where(t => IncludeTypeWhenDecompilingProject(t, options)).GroupBy(
-				delegate (TypeDefinition type) {
+				delegate(TypeDefinition type) {
 					string file = TextView.DecompilerTextView.CleanUpName(type.Name) + this.FileExtension;
 					if (string.IsNullOrEmpty(type.Namespace)) {
 						return file;
@@ -300,7 +394,7 @@ namespace ICSharpCode.ILSpy
 			Parallel.ForEach(
 				files,
 				new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
-				delegate (IGrouping<string, TypeDefinition> file) {
+				delegate(IGrouping<string, TypeDefinition> file) {
 					using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, file.Key))) {
 						AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: assembly.MainModule);
 						foreach (TypeDefinition type in file) {
@@ -314,13 +408,13 @@ namespace ICSharpCode.ILSpy
 			return files.Select(f => Tuple.Create("Compile", f.Key));
 		}
 		#endregion
-		
+
 		#region WriteResourceFilesInProject
-		IEnumerable<Tuple<string, string>> WriteResourceFilesInProject(AssemblyDefinition assembly, string assemblyFileName, DecompilationOptions options, HashSet<string> directories)
+		IEnumerable<Tuple<string, string>> WriteResourceFilesInProject(LoadedAssembly assembly, DecompilationOptions options, HashSet<string> directories)
 		{
 			AppDomain bamlDecompilerAppDomain = null;
 			try {
-				foreach (EmbeddedResource r in assembly.MainModule.Resources.OfType<EmbeddedResource>()) {
+				foreach (EmbeddedResource r in assembly.AssemblyDefinition.MainModule.Resources.OfType<EmbeddedResource>()) {
 					string fileName;
 					Stream s = r.GetResourceStream();
 					s.Position = 0;
@@ -328,7 +422,8 @@ namespace ICSharpCode.ILSpy
 						IEnumerable<DictionaryEntry> rs = null;
 						try {
 							rs = new ResourceSet(s).Cast<DictionaryEntry>();
-						} catch (ArgumentException) {
+						}
+						catch (ArgumentException) {
 						}
 						if (rs != null && rs.All(e => e.Value is Stream)) {
 							foreach (var pair in rs) {
@@ -342,11 +437,12 @@ namespace ICSharpCode.ILSpy
 								if (fileName.EndsWith(".baml", StringComparison.OrdinalIgnoreCase)) {
 									MemoryStream ms = new MemoryStream();
 									entryStream.CopyTo(ms);
-									var decompiler = Baml.BamlResourceEntryNode.CreateBamlDecompilerInAppDomain(ref bamlDecompilerAppDomain, assemblyFileName);
+									var decompiler = Baml.BamlResourceEntryNode.CreateBamlDecompilerInAppDomain(ref bamlDecompilerAppDomain, assembly.FileName);
 									string xaml = null;
 									try {
-										xaml = decompiler.DecompileBaml(ms, assemblyFileName);
-									} catch (XamlXmlWriterException) {} // ignore XAML writer exceptions
+										xaml = decompiler.DecompileBaml(ms, assembly.FileName, new ConnectMethodDecompiler(assembly), new AssemblyResolver(assembly));
+									}
+									catch (XamlXmlWriterException) { } // ignore XAML writer exceptions
 									if (xaml != null) {
 										File.WriteAllText(Path.Combine(options.SaveAsProjectDirectory, Path.ChangeExtension(fileName, ".xaml")), xaml);
 										yield return Tuple.Create("Page", Path.ChangeExtension(fileName, ".xaml"));
@@ -367,12 +463,13 @@ namespace ICSharpCode.ILSpy
 					}
 					yield return Tuple.Create("EmbeddedResource", fileName);
 				}
-			} finally {
+			}
+			finally {
 				if (bamlDecompilerAppDomain != null)
 					AppDomain.Unload(bamlDecompilerAppDomain);
 			}
 		}
-		
+
 		string GetFileNameForResource(string fullName, HashSet<string> directories)
 		{
 			string[] splitName = fullName.Split('.');
@@ -388,7 +485,7 @@ namespace ICSharpCode.ILSpy
 			return fileName;
 		}
 		#endregion
-		
+
 		AstBuilder CreateAstBuilder(DecompilationOptions options, ModuleDefinition currentModule = null, TypeDefinition currentType = null, bool isSingleMember = false)
 		{
 			if (currentModule == null)
@@ -412,7 +509,7 @@ namespace ICSharpCode.ILSpy
 			if (includeNamespace)
 				options |= ConvertTypeOptions.IncludeNamespace;
 			AstType astType = AstBuilder.ConvertType(type, typeAttributes, options);
-			
+
 			StringWriter w = new StringWriter();
 			if (type.IsByReference) {
 				ParameterDefinition pd = typeAttributes as ParameterDefinition;
@@ -420,11 +517,11 @@ namespace ICSharpCode.ILSpy
 					w.Write("out ");
 				else
 					w.Write("ref ");
-				
+
 				if (astType is ComposedType && ((ComposedType)astType).PointerRank > 0)
 					((ComposedType)astType).PointerRank--;
 			}
-			
+
 			astType.AcceptVisitor(new OutputVisitor(w, new CSharpFormattingOptions()), null);
 			return w.ToString();
 		}
@@ -459,12 +556,20 @@ namespace ICSharpCode.ILSpy
 			} else
 				return property.Name;
 		}
-		
+
 		public override bool ShowMember(MemberReference member)
 		{
 			return showAllMembers || !AstBuilder.MemberIsHidden(member, new DecompilationOptions().DecompilerSettings);
 		}
-		
+
+		public override MemberReference GetOriginalCodeLocation(MemberReference member)
+		{
+			if (showAllMembers || !DecompilerSettingsPanel.CurrentDecompilerSettings.AnonymousMethods)
+				return member;
+			else
+				return ICSharpCode.ILSpy.TreeNodes.Analyzer.Helpers.GetOriginalCodeLocation(member);
+		}
+
 		public override string GetTooltip(MemberReference member)
 		{
 			MethodDefinition md = member as MethodDefinition;
@@ -485,12 +590,12 @@ namespace ICSharpCode.ILSpy
 				b.RunTransformations();
 				foreach (var attribute in b.CompilationUnit.Descendants.OfType<AttributeSection>())
 					attribute.Remove();
-				
+
 				StringWriter w = new StringWriter();
 				b.GenerateCode(new PlainTextOutput(w));
 				return Regex.Replace(w.ToString(), @"\s+", " ").TrimEnd();
 			}
-			
+
 			return base.GetTooltip(member);
 		}
 	}

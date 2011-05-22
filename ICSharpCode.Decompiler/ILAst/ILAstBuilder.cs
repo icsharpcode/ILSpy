@@ -1,3 +1,21 @@
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -437,7 +455,7 @@ namespace ICSharpCode.Decompiler.ILAst
 				if (byteCode.StoreTo != null && byteCode.StoreTo.Count > 1) {
 					var locVars = byteCode.StoreTo;
 					// For each of the variables, find the location where it is loaded - there should be preciesly one
-					var loadedBy = locVars.Select(locVar => reachableBody.SelectMany(bc => bc.StackBefore).Where(s => s.LoadFrom == locVar).Single()).ToList();
+					var loadedBy = locVars.Select(locVar => reachableBody.SelectMany(bc => bc.StackBefore).Single(s => s.LoadFrom == locVar)).ToList();
 					// We now know that all the variables have a single load,
 					// Let's make sure that they have also a single store - us
 					if (loadedBy.All(slot => slot.PushedBy.Length == 1 && slot.PushedBy[0] == byteCode)) {
@@ -554,7 +572,7 @@ namespace ICSharpCode.Decompiler.ILAst
 								    Loads  = new List<ByteCode>() { load }
 								});
 							} else if (storedBy.Length == 1) {
-								VariableInfo newVar = newVars.Where(v => v.Stores.Contains(storedBy[0])).Single();
+								VariableInfo newVar = newVars.Single(v => v.Stores.Contains(storedBy[0]));
 								newVar.Loads.Add(load);
 							} else {
 								List<VariableInfo> mergeVars = newVars.Where(v => v.Stores.Union(storedBy).Any()).ToList();

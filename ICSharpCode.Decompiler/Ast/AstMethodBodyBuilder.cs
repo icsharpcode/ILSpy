@@ -485,9 +485,12 @@ namespace ICSharpCode.Decompiler.Ast
 						return arg1;
 					else
 						return arg1.CastTo(operandAsTypeRef);
-					case ILCode.Isinst:         return arg1.CastAs(operandAsTypeRef);
-					case ILCode.Box:            return arg1;
-					case ILCode.Unbox:          return InlineAssembly(byteCode, args);
+				case ILCode.Isinst:
+					return arg1.CastAs(operandAsTypeRef);
+				case ILCode.Box:
+					return arg1;
+				case ILCode.Unbox:
+					return MakeRef(arg1.CastTo(operandAsTypeRef));
 					#endregion
 					#region Indirect
 				case ILCode.Ldind_Ref:
@@ -539,11 +542,7 @@ namespace ICSharpCode.Decompiler.Ast
 					case ILCode.Endfilter:   return InlineAssembly(byteCode, args);
 					case ILCode.Endfinally:  return null;
 					case ILCode.Initblk:     return InlineAssembly(byteCode, args);
-				case ILCode.Initobj:
-					if (args[0] is DirectionExpression)
-						return new AssignmentExpression(((DirectionExpression)args[0]).Expression.Detach(), MakeDefaultValue((TypeReference)operand));
-					else
-						return InlineAssembly(byteCode, args);
+					case ILCode.Initobj:      return InlineAssembly(byteCode, args);
 				case ILCode.DefaultValue:
 					return MakeDefaultValue((TypeReference)operand);
 					case ILCode.Jmp: return InlineAssembly(byteCode, args);
@@ -602,7 +601,7 @@ namespace ICSharpCode.Decompiler.Ast
 					case ILCode.Ldstr:  return new Ast.PrimitiveExpression(operand);
 				case ILCode.Ldtoken:
 					if (operand is Cecil.TypeReference) {
-						return new Ast.TypeOfExpression { Type = operandAsTypeRef }.Member("TypeHandle");
+						return AstBuilder.CreateTypeOfExpression((TypeReference)operand).Member("TypeHandle");
 					} else {
 						return InlineAssembly(byteCode, args);
 					}
@@ -743,6 +742,8 @@ namespace ICSharpCode.Decompiler.Ast
 					}
 				case ILCode.InitializedObject:
 					return new InitializedObjectExpression();
+				case ILCode.AddressOf:
+					return MakeRef(arg1);
 				default:
 					throw new Exception("Unknown OpCode: " + byteCode.Code);
 			}
@@ -884,8 +885,6 @@ namespace ICSharpCode.Decompiler.Ast
 			
 			if (cecilMethod.Name == "Get" && cecilMethod.DeclaringType is ArrayType && methodArgs.Count > 1) {
 				return target.Indexer(methodArgs);
-			} else if (cecilMethod.Name == "Address" && cecilMethod.DeclaringType is ArrayType && methodArgs.Count > 1) {
-				return MakeRef(target.Indexer(methodArgs));
 			} else if (cecilMethod.Name == "Set" && cecilMethod.DeclaringType is ArrayType && methodArgs.Count > 2) {
 				return new AssignmentExpression(target.Indexer(methodArgs.GetRange(0, methodArgs.Count - 1)), methodArgs.Last());
 			}

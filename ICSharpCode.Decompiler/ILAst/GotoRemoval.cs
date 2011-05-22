@@ -1,4 +1,22 @@
-﻿using System;
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Collections.Generic;
@@ -73,7 +91,7 @@ namespace ICSharpCode.Decompiler.ILAst
 					}
 				}
 				
-				var defaultCase = ilSwitch.CaseBlocks.Where(cb => cb.Values == null).SingleOrDefault();
+				var defaultCase = ilSwitch.CaseBlocks.SingleOrDefault(cb => cb.Values == null);
 				// If there is no default block, remove empty case blocks
 				if (defaultCase == null || (defaultCase.Body.Count == 1 && defaultCase.Body.Single().Match(ILCode.LoopOrSwitchBreak))) {
 					ilSwitch.CaseBlocks.RemoveAll(b => b.Body.Count == 1 && b.Body.Single().Match(ILCode.LoopOrSwitchBreak));
@@ -122,14 +140,14 @@ namespace ICSharpCode.Decompiler.ILAst
 				return true;
 			}
 			
-			ILNode breakBlock = GetParents(gotoExpr).Where(n => n is ILWhileLoop || n is ILSwitch).FirstOrDefault();
+			ILNode breakBlock = GetParents(gotoExpr).FirstOrDefault(n => n is ILWhileLoop || n is ILSwitch);
 			if (breakBlock != null && target == Exit(breakBlock, new HashSet<ILNode>() { gotoExpr })) {
 				gotoExpr.Code = ILCode.LoopOrSwitchBreak;
 				gotoExpr.Operand = null;
 				return true;
 			}
 			
-			ILNode continueBlock = GetParents(gotoExpr).Where(n => n is ILWhileLoop).FirstOrDefault();
+			ILNode continueBlock = GetParents(gotoExpr).FirstOrDefault(n => n is ILWhileLoop);
 			if (continueBlock != null && target == Enter(continueBlock, new HashSet<ILNode>() { gotoExpr })) {
 				gotoExpr.Code = ILCode.LoopContinue;
 				gotoExpr.Operand = null;
@@ -191,10 +209,10 @@ namespace ICSharpCode.Decompiler.ILAst
 				} else if (expr.Code == ILCode.Nop) {
 					return Exit(expr, visitedNodes);
 				} else if (expr.Code == ILCode.LoopOrSwitchBreak) {
-					ILNode breakBlock = GetParents(expr).Where(n => n is ILWhileLoop || n is ILSwitch).First();
+					ILNode breakBlock = GetParents(expr).First(n => n is ILWhileLoop || n is ILSwitch);
 					return Exit(breakBlock, new HashSet<ILNode>() { expr });
 				} else if (expr.Code == ILCode.LoopContinue) {
-					ILNode continueBlock = GetParents(expr).Where(n => n is ILWhileLoop).First();
+					ILNode continueBlock = GetParents(expr).First(n => n is ILWhileLoop);
 					return Enter(continueBlock, new HashSet<ILNode>() { expr });
 				} else {
 					return expr;

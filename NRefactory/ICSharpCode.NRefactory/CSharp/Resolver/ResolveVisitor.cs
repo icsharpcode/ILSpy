@@ -241,7 +241,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		
 		ResolveResult VisitFieldOrEventDeclaration(AttributedNode fieldOrEventDeclaration)
 		{
-			int initializerCount = fieldOrEventDeclaration.GetChildrenByRole(FieldDeclaration.Roles.Variable).Count();
+			int initializerCount = fieldOrEventDeclaration.GetChildrenByRole(FieldDeclaration.Roles.Variable).Count;
 			ResolveResult result = null;
 			for (AstNode node = fieldOrEventDeclaration.FirstChild; node != null; node = node.NextSibling) {
 				if (node.Role == FieldDeclaration.Roles.Variable) {
@@ -567,9 +567,10 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		public override ResolveResult VisitConditionalExpression(ConditionalExpression conditionalExpression, object data)
 		{
 			if (resolverEnabled) {
-				Scan(conditionalExpression.Condition);
-				return resolver.ResolveConditional(Resolve(conditionalExpression.TrueExpression),
-				                                   Resolve(conditionalExpression.FalseExpression));
+				return resolver.ResolveConditional(
+					Resolve(conditionalExpression.Condition),
+					Resolve(conditionalExpression.TrueExpression),
+					Resolve(conditionalExpression.FalseExpression));
 			} else {
 				ScanChildren(conditionalExpression);
 				return null;
@@ -579,7 +580,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		public override ResolveResult VisitDefaultValueExpression(DefaultValueExpression defaultValueExpression, object data)
 		{
 			if (resolverEnabled) {
-				return new ConstantResolveResult(ResolveType(defaultValueExpression.Type), null);
+				return resolver.ResolveDefaultValue(ResolveType(defaultValueExpression.Type));
 			} else {
 				ScanChildren(defaultValueExpression);
 				return null;
@@ -938,7 +939,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			                                        firstInitializer != null ? firstInitializer.Initializer : null,
 			                                        false);
 			
-			int initializerCount = variableDeclarationStatement.Variables.Count();
+			int initializerCount = variableDeclarationStatement.Variables.Count;
 			ResolveResult result = null;
 			for (AstNode node = variableDeclarationStatement.FirstChild; node != null; node = node.NextSibling) {
 				if (node.Role == FieldDeclaration.Roles.Variable) {

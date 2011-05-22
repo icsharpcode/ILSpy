@@ -1,5 +1,20 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under MIT X11 license (for details please see \doc\license.txt)
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using Mono.Cecil;
@@ -286,9 +301,12 @@ namespace ICSharpCode.Decompiler.ILAst
 		CallSetter,
 		/// <summary>Calls the setter of a instance property (or indexer)</summary>
 		CallvirtSetter,
-		/// <summary>Simulates getting the address of a property. Used as prefix on CallGetter or CallvirtGetter.</summary>
-		/// <remarks>Used for postincrement for properties, and to represent the Address() method on multi-dimensional arrays</remarks>
-		PropertyAddress
+		/// <summary>Simulates getting the address of the argument instruction.</summary>
+		/// <remarks>
+		/// Used for postincrement for properties, and to represent the Address() method on multi-dimensional arrays.
+		/// Also used when inlining a method call on a value type: "stloc(v, ...); call(M, ldloca(v));" becomes "call(M, AddressOf(...))"
+		/// </remarks>
+		AddressOf
 	}
 	
 	public static class ILCodeUtil

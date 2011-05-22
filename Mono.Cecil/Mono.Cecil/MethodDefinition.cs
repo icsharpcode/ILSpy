@@ -4,7 +4,7 @@
 // Author:
 //   Jb Evain (jbevain@gmail.com)
 //
-// Copyright (c) 2008 - 2010 Jb Evain
+// Copyright (c) 2008 - 2011 Jb Evain
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the
@@ -133,8 +133,9 @@ namespace Mono.Cecil {
 
 		public MethodBody Body {
 			get {
-				if (body != null)
-					return body;
+				MethodBody localBody = this.body;
+				if (localBody != null)
+					return localBody;
 
 				if (!HasBody)
 					return null;
@@ -144,7 +145,12 @@ namespace Mono.Cecil {
 
 				return body = new MethodBody (this);
 			}
-			set { body = value; }
+			set { 
+				// we reset Body to null in ILSpy to save memory; so we need that operation to be thread-safe
+				lock (Module.SyncRoot) {
+					body = value;
+				}
+			}
 		}
 
 		public bool HasPInvokeInfo {
