@@ -600,8 +600,25 @@ namespace ICSharpCode.TreeView
 		static void HandleExecuted_Delete(object sender, ExecutedRoutedEventArgs e)
 		{
 			SharpTreeView treeView = (SharpTreeView)sender;
-			foreach (SharpTreeNode node in treeView.GetTopLevelSelection().ToArray())
-				node.Delete();
+            //get the last selected node
+            var selectedNodes = treeView.GetTopLevelSelection().ToArray();
+            if (selectedNodes.Length > 0)
+            {
+                var lastSelected = selectedNodes.Last();
+                //get the next node after the last selected
+                var nextNode = lastSelected.Parent.Children.SkipWhile(x => x != lastSelected).Skip(1).SkipWhile(x => !x.IsVisible).FirstOrDefault();
+                //remove 
+                foreach (SharpTreeNode node in selectedNodes)
+	    			node.Delete();
+                //if nextnode is null select the last node of the treeview (the last assembly)
+                if (nextNode == null)
+                    nextNode = treeView.Root.Children.LastOrDefault();
+                if (nextNode != null)
+                {
+                    treeView.SelectedItem = nextNode;
+                    treeView.FocusNode(nextNode);
+                }
+            }
 		}
 
 		static void HandleCanExecute_Delete(object sender, CanExecuteRoutedEventArgs e)

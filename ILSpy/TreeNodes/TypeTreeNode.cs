@@ -200,5 +200,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		MemberReference IMemberTreeNode.Member {
 			get { return type; }
 		}
+
+        public override bool IsPublicAccess()
+        {
+            if (type != null)
+            {
+                return type.IsPublic;
+            }
+            return true;
+        }
 	}
 }

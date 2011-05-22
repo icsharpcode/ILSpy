@@ -164,6 +164,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					ApplyFilterToChild(node);
 			}
 		}
+
+        public virtual bool IsPublicAccess()
+        {
+            return true;
+        }
+
+        public override System.Windows.Media.Brush ForegroundBrush
+        {
+            get
+            {
+                if (!IsPublicAccess())
+                    return System.Windows.SystemColors.GrayTextBrush;
+                return base.ForegroundBrush;
+            }
+        }
 	}
 	
 	public enum FilterResult

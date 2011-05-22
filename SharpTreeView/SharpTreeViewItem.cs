@@ -21,6 +21,10 @@ namespace ICSharpCode.TreeView
 			                                         new FrameworkPropertyMetadata(typeof(SharpTreeViewItem)));
 		}
 
+        public SharpTreeViewItem()
+        {
+        }
+
 		public SharpTreeNode Node
 		{
 			get { return DataContext as SharpTreeNode; }

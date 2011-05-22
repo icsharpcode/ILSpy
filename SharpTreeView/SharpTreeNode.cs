@@ -157,6 +157,13 @@ namespace ICSharpCode.TreeView
 			}
 		}
 		
+        public virtual System.Windows.Media.Brush ForegroundBrush
+        {
+            get
+            {
+                return SystemColors.WindowTextBrush;
+            }
+        }
 		#endregion
 		
 		#region OnChildrenChanged

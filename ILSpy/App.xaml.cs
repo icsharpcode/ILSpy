@@ -46,6 +46,7 @@ namespace ICSharpCode.ILSpy
 		
 		public App()
 		{
+            SplashScreen.Start();
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
 			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
 			if (App.CommandLineArguments.SingleInstance ?? true) {
@@ -73,8 +74,23 @@ namespace ICSharpCode.ILSpy
 			EventManager.RegisterClassHandler(typeof(Window),
 			                                  Hyperlink.RequestNavigateEvent,
 			                                  new RequestNavigateEventHandler(Window_RequestNavigate));
+            EventManager.RegisterClassHandler(typeof(MainWindow),
+                                  Window.LoadedEvent,
+                                  new RoutedEventHandler(OnMainWindowLoaded));
+
 		}
-		
+
+        private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
+        {
+            CloseSplashScreen();
+            this.MainWindow.Activate();
+        }
+
+        private static void CloseSplashScreen()
+        {
+            SplashScreen.Stop();
+        }
+
 		string FullyQualifyPath(string argument)
 		{
 			// Fully qualify the paths before passing them to another process,

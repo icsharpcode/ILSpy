@@ -98,5 +98,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			get { return field; }
 		}
-	}
+
+        public override bool IsPublicAccess()
+        {
+            if (field != null)
+            {
+                return field.IsPublic;
+            }
+            return true;
+        }
+    }
 }
