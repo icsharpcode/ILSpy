@@ -205,7 +205,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
         {
             if (type != null)
             {
-                return type.IsPublic;
+                if (type.IsNested)
+                {
+                    return type.IsNestedPublic || type.IsNestedFamily; 
+                }
+                return !type.IsNotPublic;
             }
             return true;
         }
