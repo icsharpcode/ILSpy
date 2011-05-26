@@ -65,7 +65,9 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		DefinitionLookup definitionLookup;
 		CancellationTokenSource currentCancellationTokenSource;
-		
+
+		public FoldingManager FoldingManager { get { return foldingManager; } }
+
 		#region Constructor
 		public DecompilerTextView()
 		{

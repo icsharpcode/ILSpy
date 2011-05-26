@@ -102,25 +102,37 @@ namespace ICSharpCode.ILSpy
 		
 		void InitToolbar()
 		{
-			int navigationPos = 0;
-			int openPos = 1;
-			foreach (var commandGroup in toolbarCommands.OrderBy(c => c.Metadata.ToolbarOrder).GroupBy(c => c.Metadata.ToolbarCategory)) {
-				if (commandGroup.Key == "Navigation") {
-					foreach (var command in commandGroup) {
-						toolBar.Items.Insert(navigationPos++, MakeToolbarItem(command));
-						openPos++;
-					}
-				} else if (commandGroup.Key == "Open") {
-					foreach (var command in commandGroup) {
-						toolBar.Items.Insert(openPos++, MakeToolbarItem(command));
-					}
-				} else {
-					toolBar.Items.Add(new Separator());
-					foreach (var command in commandGroup) {
-						toolBar.Items.Add(MakeToolbarItem(command));
+
+			var toolbars = toolbarCommands.GroupBy(c => c.Metadata.Toolbar);
+			
+
+			foreach (var bar in toolbars) {
+
+				var parent = GetToolbarByName(bar.Key);
+
+				int navigationPos = 0;
+				int openPos = 1;
+
+				foreach (var commandGroup in bar.OrderBy(c => c.Metadata.ToolbarOrder).GroupBy(c => c.Metadata.ToolbarCategory)) {
+					
+					if (commandGroup.Key == "Navigation") {
+						foreach (var command in commandGroup) {
+							parent.Items.Insert(navigationPos++, MakeToolbarItem(command));
+							openPos++;
+						}
+					} else if (commandGroup.Key == "Open") {
+						foreach (var command in commandGroup) {
+							parent.Items.Insert(openPos++, MakeToolbarItem(command));
+						}
+					} else {
+						toolBar.Items.Add(new Separator());
+						foreach (var command in commandGroup) {
+							parent.Items.Add(MakeToolbarItem(command));
+						}
 					}
 				}
 			}
+
 			
 		}
 		
@@ -136,6 +148,16 @@ namespace ICSharpCode.ILSpy
 				}
 			};
 		}
+
+		ToolBar GetToolbarByName(string name) {
+
+			if (string.Equals(codeToolBar.Name, name) | string.Equals("Editor", name)) {
+				return codeToolBar;
+			} else {
+				return toolBar;
+			}
+		}
+
 		#endregion
 		
 		#region Main Menu extensibility
@@ -260,7 +282,7 @@ namespace ICSharpCode.ILSpy
 			HandleCommandLineArguments(App.CommandLineArguments);
 			
 			if (assemblyList.GetAssemblies().Length == 0
-			    && assemblyList.ListName == AssemblyListManager.DefaultListName)
+				&& assemblyList.ListName == AssemblyListManager.DefaultListName)
 			{
 				LoadInitialAssemblies();
 			}
@@ -533,8 +555,8 @@ namespace ICSharpCode.ILSpy
 					return;
 			}
 			this.TextView.SaveToDisk(this.CurrentLanguage,
-			                         this.SelectedNodes,
-			                         new DecompilationOptions() { FullDecompilation = true });
+									 this.SelectedNodes,
+									 new DecompilationOptions() { FullDecompilation = true });
 		}
 		
 		public void RefreshDecompiledView()
