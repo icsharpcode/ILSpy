@@ -211,29 +211,33 @@ namespace ICSharpCode.ILSpy
 					result = new SearchResult { Name = "Search aborted, more than 1000 results found." };
 					cts.Cancel();
 				}
+				int insertPos = 0;
+				while (insertPos < this.Results.Count && result.Quality <= this.Results[insertPos].Quality) {
+					insertPos++;
+				}
+
 				dispatcher.BeginInvoke(
 					DispatcherPriority.Normal,
-					new Action(delegate { this.Results.Insert(this.Results.Count - 1, result); }));
+					new Action(delegate { this.Results.Insert(insertPos, result); }));
 				cts.Token.ThrowIfCancellationRequested();
-			}
-			
-			bool IsMatch(string text)
-			{
-				if (text.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
-					return true;
-				else
-					return false;
 			}
 			
 			void PerformSearch(TypeDefinition type)
 			{
-				if (searchMode == SearchMode_Type && IsMatch(type.Name)) {
+				int matchQuality = -1;
+				Func<string, bool> isMatch = s => {
+					matchQuality = ICSharpCode.AvalonEdit.CodeCompletion.CompletionList.GetMatchQuality(s, searchTerm, allowSubstringMatches: true);
+					return matchQuality > -1;
+				};
+
+				if (searchMode == SearchMode_Type && isMatch(type.Name)) {
 					AddResult(new SearchResult {
 					          	Member = type,
 					          	Image = TypeTreeNode.GetIcon(type),
 					          	Name = language.TypeToString(type, includeNamespace: false),
 					          	LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
-					          	Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
+					          	Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace,
+					          	Quality = matchQuality
 					          });
 				}
 				
@@ -245,46 +249,50 @@ namespace ICSharpCode.ILSpy
 					return;
 				
 				foreach (FieldDefinition field in type.Fields) {
-					if (IsMatch(field.Name)) {
+					if (isMatch(field.Name)) {
 						AddResult(new SearchResult {
 						          	Member = field,
 						          	Image = FieldTreeNode.GetIcon(field),
 						          	Name = field.Name,
 						          	LocationImage = TypeTreeNode.GetIcon(type),
-						          	Location = language.TypeToString(type, includeNamespace: true)
+						          	Location = language.TypeToString(type, includeNamespace: true),
+						          	Quality = matchQuality
 						          });
 					}
 				}
 				foreach (PropertyDefinition property in type.Properties) {
-					if (IsMatch(property.Name)) {
+					if (isMatch(property.Name)) {
 						AddResult(new SearchResult {
 						          	Member = property,
 						          	Image = PropertyTreeNode.GetIcon(property),
 						          	Name = property.Name,
 						          	LocationImage = TypeTreeNode.GetIcon(type),
-						          	Location = language.TypeToString(type, includeNamespace: true)
+						          	Location = language.TypeToString(type, includeNamespace: true),
+						          	Quality = matchQuality
 						          });
 					}
 				}
 				foreach (EventDefinition ev in type.Events) {
-					if (IsMatch(ev.Name)) {
+					if (isMatch(ev.Name)) {
 						AddResult(new SearchResult {
 						          	Member = ev,
 						          	Image = EventTreeNode.GetIcon(ev),
 						          	Name = ev.Name,
 						          	LocationImage = TypeTreeNode.GetIcon(type),
-						          	Location = language.TypeToString(type, includeNamespace: true)
+						          	Location = language.TypeToString(type, includeNamespace: true),
+						          	Quality = matchQuality
 						          });
 					}
 				}
 				foreach (MethodDefinition method in type.Methods) {
-					if (IsMatch(method.Name)) {
+					if (isMatch(method.Name)) {
 						AddResult(new SearchResult {
 						          	Member = method,
 						          	Image = MethodTreeNode.GetIcon(method),
 						          	Name = method.Name,
 						          	LocationImage = TypeTreeNode.GetIcon(type),
-						          	Location = language.TypeToString(type, includeNamespace: true)
+						          	Location = language.TypeToString(type, includeNamespace: true),
+						          	Quality = matchQuality
 						          });
 					}
 				}
@@ -299,6 +307,7 @@ namespace ICSharpCode.ILSpy
 			}
 			
 			public MemberReference Member { get; set; }
+			public int Quality { get; set; }
 			
 			public string Location { get; set; }
 			public string Name { get; set; }
