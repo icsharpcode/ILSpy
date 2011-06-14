@@ -498,7 +498,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			StartNode(arrayCreateExpression);
 			WriteKeyword("new");
 			arrayCreateExpression.Type.AcceptVisitor(this, data);
-			WriteCommaSeparatedListInBrackets(arrayCreateExpression.Arguments);
+			arrayCreateExpression.ArraySpecifier.AcceptVisitor(this, data);
 			foreach (var specifier in arrayCreateExpression.AdditionalArraySpecifiers)
 				specifier.AcceptVisitor(this, data);
 			arrayCreateExpression.Initializer.AcceptVisitor(this, data);
@@ -2134,6 +2134,13 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 			WriteToken("]", ArraySpecifier.Roles.RBracket);
 			return EndNode(arraySpecifier);
+		}
+
+		public virtual object VisitArrayDimensionsSpecifier(ArrayDimensionsSpecifier arrayDimensionsSpecifier, object data)
+		{
+			StartNode(arrayDimensionsSpecifier);
+			WriteCommaSeparatedListInBrackets(arrayDimensionsSpecifier.Arguments);
+			return EndNode(arrayDimensionsSpecifier);
 		}
 		
 		public object VisitPrimitiveType(PrimitiveType primitiveType, object data)

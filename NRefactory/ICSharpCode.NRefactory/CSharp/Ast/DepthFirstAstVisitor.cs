@@ -579,6 +579,11 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			return VisitChildren (arraySpecifier, data);
 		}
+
+		public virtual S VisitArrayDimensionsSpecifier(ArrayDimensionsSpecifier arrayDimensionsSpecifier, T data)
+		{
+			return VisitChildren(arrayDimensionsSpecifier, data);
+		}
 		
 		public virtual S VisitNamedArgumentExpression (NamedArgumentExpression namedArgumentExpression, T data)
 		{

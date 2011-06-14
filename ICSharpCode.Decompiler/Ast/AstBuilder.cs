@@ -1481,6 +1481,7 @@ namespace ICSharpCode.Decompiler.Ast
 				ArrayType arrayType = argument.Type as ArrayType;
 				return new ArrayCreateExpression {
 					Type = ConvertType(arrayType != null ? arrayType.ElementType : argument.Type),
+					ArraySpecifier = new ArraySpecifier(arrayType.Rank),
 					Initializer = arrayInit
 				};
 			} else if (argument.Value is CustomAttributeArgument) {

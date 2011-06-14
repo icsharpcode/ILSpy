@@ -121,8 +121,37 @@ namespace ICSharpCode.NRefactory.CSharp
 	/// </summary>
 	public class ArraySpecifier : AstNode
 	{
-		public override NodeType NodeType {
-			get {
+		public static new readonly ArraySpecifier Null = new NullArraySpecifier();
+		class NullArraySpecifier : ArraySpecifier
+		{
+			public override bool IsNull
+			{
+				get
+				{
+					return true;
+				}
+			}
+
+			public NullArraySpecifier()
+				: base(1)
+			{
+			}
+
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+			{
+				return default(S);
+			}
+
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
+			{
+				return other == null || other.IsNull;
+			}
+		}
+
+		public override NodeType NodeType
+		{
+			get
+			{
 				return NodeType.Unknown;
 			}
 		}
@@ -173,6 +202,27 @@ namespace ICSharpCode.NRefactory.CSharp
 		public override string ToString()
 		{
 			return "[" + new string(',', this.Dimensions - 1) + "]";
+		}
+	}
+
+	public class ArrayDimensionsSpecifier : ArraySpecifier
+	{
+		public ArrayDimensionsSpecifier() { }
+
+		public ArrayDimensionsSpecifier(IList<Expression> dimensions) 
+			: base(dimensions.Count)
+		{
+			this.Arguments.AddRange(dimensions);
+		}
+
+		public AstNodeCollection<Expression> Arguments
+		{
+			get { return GetChildrenByRole(Roles.Argument); }
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			return visitor.VisitArrayDimensionsSpecifier(this, data);
 		}
 	}
 }

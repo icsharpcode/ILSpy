@@ -2259,12 +2259,17 @@ namespace ICSharpCode.NRefactory.CSharp
 				if (location != null)
 					result.AddChild (new CSharpTokenNode (Convert (location [0]), 1), ArrayCreateExpression.Roles.LBracket);
 				if (arrayCreationExpression.Arguments != null) {
-					var commaLocations = LocationsBag.GetLocations (arrayCreationExpression.Arguments);
+					var specifier = new ArrayDimensionsSpecifier();
+					result.ArraySpecifier = specifier;
+					var commaLocations = LocationsBag.GetLocations(arrayCreationExpression.Arguments);
 					for (int i = 0; i < arrayCreationExpression.Arguments.Count; i++) {
-						result.AddChild ((Expression)arrayCreationExpression.Arguments [i].Accept (this), ArrayCreateExpression.Roles.Argument);
+						specifier.AddChild((Expression)arrayCreationExpression.Arguments[i].Accept(this), ArrayCreateExpression.Roles.Argument);
 						if (commaLocations != null && i > 0)
-							result.AddChild (new CSharpTokenNode (Convert (commaLocations [commaLocations.Count - i]), 1), ArrayCreateExpression.Roles.Comma);
+							specifier.AddChild(new CSharpTokenNode(Convert(commaLocations[commaLocations.Count - i]), 1), ArrayCreateExpression.Roles.Comma);
 					}
+				} else
+				{
+					result.ArraySpecifier = new ArraySpecifier(arrayCreationExpression.Rank.Dimension);
 				}
 				var next = arrayCreationExpression.Rank.Next;
 				while (next != null) {

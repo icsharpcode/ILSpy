@@ -491,7 +491,12 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			throw new NotImplementedException();
 		}
-		
+
+		public virtual S VisitArrayDimensionsSpecifier(ArrayDimensionsSpecifier arrayDimensionsSpecifier, T data)
+		{
+			throw new NotImplementedException();
+		}
+
 		public virtual S VisitPrimitiveType(PrimitiveType primitiveType, T data)
 		{
 			throw new NotImplementedException();
