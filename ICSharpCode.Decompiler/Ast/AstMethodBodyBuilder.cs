@@ -358,10 +358,11 @@ namespace ICSharpCode.Decompiler.Ast
 							ct.ArraySpecifiers.MoveTo(ace.AdditionalArraySpecifiers);
 						}
 						if (byteCode.Code == ILCode.InitArray) {
+							ace.ArraySpecifier = new ArraySpecifier(1);
 							ace.Initializer = new ArrayInitializerExpression();
 							ace.Initializer.Elements.AddRange(args);
 						} else {
-							ace.Arguments.Add(arg1);
+							ace.ArraySpecifier = new ArrayDimensionsSpecifier(new[] { arg1 });
 						}
 						return ace;
 					}
@@ -377,7 +378,7 @@ namespace ICSharpCode.Decompiler.Ast
 							ace.Initializer = new ArrayInitializerExpression();
 							var first = ace.AdditionalArraySpecifiers.First();
 							first.Remove();
-							ace.Arguments.AddRange(Enumerable.Repeat(0, first.Dimensions).Select(i => new EmptyExpression()));
+							ace.ArraySpecifier = new ArraySpecifier(first.Dimensions);
 						}
 						var newArgs = new List<Expression>();
 						foreach (var arrayDimension in arrayType.Dimensions.Skip(1).Reverse())
@@ -698,10 +699,11 @@ namespace ICSharpCode.Decompiler.Ast
 							ComposedType ct = AstBuilder.ConvertType((ArrayType)declaringType) as ComposedType;
 							if (ct != null && ct.ArraySpecifiers.Count >= 1) {
 								var ace = new Ast.ArrayCreateExpression();
-								ct.ArraySpecifiers.First().Remove();
+								var first = ct.ArraySpecifiers.First();
+								first.Remove();
+								ace.ArraySpecifier = new ArrayDimensionsSpecifier(args);
 								ct.ArraySpecifiers.MoveTo(ace.AdditionalArraySpecifiers);
 								ace.Type = ct;
-								ace.Arguments.AddRange(args);
 								return ace;
 							}
 						}

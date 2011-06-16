@@ -8,6 +8,7 @@ namespace ICSharpCode.NRefactory.CSharp
 	/// </summary>
 	public class ArrayCreateExpression : Expression
 	{
+		public readonly static Role<ArraySpecifier> ArraySpecifierRole = new Role<ArraySpecifier>("ArraySpecifierRole", ArraySpecifier.Null);
 		public readonly static Role<ArraySpecifier> AdditionalArraySpecifierRole = new Role<ArraySpecifier>("AdditionalArraySpecifier");
 		public readonly static Role<ArrayInitializerExpression> InitializerRole = new Role<ArrayInitializerExpression>("Initializer", ArrayInitializerExpression.Null);
 		
@@ -16,8 +17,10 @@ namespace ICSharpCode.NRefactory.CSharp
 			set { SetChildByRole (Roles.Type, value); }
 		}
 		
-		public AstNodeCollection<Expression> Arguments {
-			get { return GetChildrenByRole (Roles.Argument); }
+		public ArraySpecifier ArraySpecifier
+		{
+			get { return GetChildByRole(ArraySpecifierRole); }
+			set { SetChildByRole(ArraySpecifierRole, value); }
 		}
 		
 		/// <summary>
@@ -41,7 +44,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ArrayCreateExpression o = other as ArrayCreateExpression;
-			return o != null && this.Type.DoMatch(o.Type, match) && this.Arguments.DoMatch(o.Arguments, match) && this.AdditionalArraySpecifiers.DoMatch(o.AdditionalArraySpecifiers, match) && this.Initializer.DoMatch(o.Initializer, match);
+			return o != null && this.Type.DoMatch(o.Type, match) && this.ArraySpecifier.DoMatch(o.ArraySpecifier, match) && this.AdditionalArraySpecifiers.DoMatch(o.AdditionalArraySpecifiers, match) && this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}
 }

@@ -459,7 +459,7 @@ public class InitializerTests
 
 	public void MultidimensionalInit()
 	{
-		int[,] expr_09 = new int[, ]
+		int[,] expr_09 = new int[,]
 		{
 
 	        {
@@ -580,7 +580,7 @@ public class InitializerTests
 	{
 		int[][,] array = new int[][,]
 		{
-	        new int[, ]
+	        new int[,]
 	            {
 
 	                {
@@ -612,7 +612,7 @@ public class InitializerTests
 					}
 
 	            },
-	        new int[, ]
+	        new int[,]
 	            {
 
 	                {
@@ -644,7 +644,7 @@ public class InitializerTests
 					}
 
 	            },
-	        new int[, ]
+	        new int[,]
 	            {
 
 	                {
@@ -675,7 +675,7 @@ public class InitializerTests
 						0
 					}
 	            },
-	        new int[, ]
+	        new int[,]
 	            {
 
 	                {
@@ -714,7 +714,7 @@ public class InitializerTests
 	{
 		int[][,,] array = new int[][,,]
 		{
-			new int[, , ]
+			new int[,,]
 			{
 				{
 					{
@@ -752,7 +752,7 @@ public class InitializerTests
 				}
 			},
 
-			new int[, , ]
+			new int[,,]
 			{
 				{
 					{

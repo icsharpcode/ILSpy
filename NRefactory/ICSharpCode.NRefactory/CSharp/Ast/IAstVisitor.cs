@@ -118,6 +118,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		S VisitMemberType(MemberType memberType, T data);
 		S VisitComposedType(ComposedType composedType, T data);
 		S VisitArraySpecifier(ArraySpecifier arraySpecifier, T data);
+		S VisitArrayDimensionsSpecifier(ArrayDimensionsSpecifier arrayDimensionsSpecifier, T data);
 		S VisitPrimitiveType(PrimitiveType primitiveType, T data);
 		
 		S VisitComment(Comment comment, T data);
