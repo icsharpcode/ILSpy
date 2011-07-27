@@ -171,18 +171,45 @@ namespace ICSharpCode.ILSpy.XmlDoc
 			} else {
 				dotPos = key.LastIndexOf('.');
 			}
-			if (dotPos < 0) return null;
-			TypeDefinition type = FindType(module, key.Substring(2, dotPos - 2));
+			TypeDefinition type = null;
+			string subKey = key.Substring(2,dotPos -2);
+			while (dotPos > 0)
+			{
+				Debug.WriteLine("Looking for Type " + subKey);
+				type = FindType(module, subKey);
+				if (type != null) break;
+				dotPos = subKey.LastIndexOf('.');
+				if (dotPos < 0) return null;
+				subKey = subKey.Substring(0, dotPos);
+			}
+
 			if (type == null)
-				return null;
+			    return null;
+						
 			Debug.WriteLine("Searching in type " + type.FullName);
+			Debug.WriteLine("Looking for: " + key);
+			MemberReference partialMember = null;
 			foreach (MemberReference member in memberSelector(type)) {
 				string memberKey = GetKey(member);
 				Debug.WriteLine(memberKey);
+								
 				if (memberKey == key)
+				{
+					Debug.WriteLine("Found it: " + key);
 					return member;
+				}
+
+				if (partialMember == null && memberKey.StartsWith(key))
+					partialMember = member;
+
 			}
-			return null;
+			if (partialMember == null)
+				Debug.WriteLine("No partial matches found");
+			else
+				Debug.WriteLine("Partial Match found");
+						
+			// partialMember will be null if no partial matches we found, so it is safe to return in either case
+			return partialMember;
 		}
 		
 		static TypeDefinition FindType(ModuleDefinition module, string name)
