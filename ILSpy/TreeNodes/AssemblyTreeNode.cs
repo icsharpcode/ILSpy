@@ -41,7 +41,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	public sealed class AssemblyTreeNode : ILSpyTreeNode
 	{
 		readonly LoadedAssembly assembly;
-		readonly Dictionary<string, NamespaceTreeNode> namespaces = new Dictionary<string, NamespaceTreeNode>();
 
 		public AssemblyTreeNode(LoadedAssembly assembly)
 		{
@@ -102,8 +101,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		Dictionary<TypeDefinition, TypeTreeNode> typeDict = new Dictionary<TypeDefinition, TypeTreeNode>();
-
 		protected override void LoadChildren()
 		{
 			AssemblyDefinition assemblyDefinition = assembly.AssemblyDefinition;
@@ -111,28 +108,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				// if we crashed on loading, then we don't have any children
 				return;
 			}
-			ModuleDefinition mainModule = assemblyDefinition.MainModule;
 
-			this.Children.Add(new ReferenceFolderTreeNode(mainModule, this));
-			if (mainModule.HasResources)
-				this.Children.Add(new ResourceListTreeNode(mainModule));
-			foreach (NamespaceTreeNode ns in namespaces.Values) {
-				ns.Children.Clear();
-			}
-			foreach (TypeDefinition type in mainModule.Types.OrderBy(t => t.FullName)) {
-				NamespaceTreeNode ns;
-				if (!namespaces.TryGetValue(type.Namespace, out ns)) {
-					ns = new NamespaceTreeNode(type.Namespace);
-					namespaces[type.Namespace] = ns;
-				}
-				TypeTreeNode node = new TypeTreeNode(type, this);
-				typeDict[type] = node;
-				ns.Children.Add(node);
-			}
-			foreach (NamespaceTreeNode ns in namespaces.Values.OrderBy(n => n.Name)) {
-				if (ns.Children.Count > 0)
-					this.Children.Add(ns);
-			}
+            //Adds the module nodes
+            foreach (var module in assemblyDefinition.Modules)
+                this.Children.Add(new ModuleTreeNode(module, this));
 		}
 		
 		public override bool CanExpandRecursively {
@@ -147,11 +126,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (def == null)
 				return null;
 			EnsureLazyChildren();
-			TypeTreeNode node;
-			if (typeDict.TryGetValue(def, out node))
-				return node;
-			else
-				return null;
+            foreach (var node in this.Children.Cast<ModuleTreeNode>())
+            {
+                TypeTreeNode typeNode;
+                if ((typeNode = node.FindTypeNode(def)) != null)
+                    return typeNode;
+            }
+            return null;
 		}
 
 		/// <summary>
@@ -161,12 +142,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (string.IsNullOrEmpty(namespaceName))
 				return null;
-			EnsureLazyChildren();
-			NamespaceTreeNode node;
-			if (namespaces.TryGetValue(namespaceName, out node))
-				return node;
-			else
-				return null;
+            EnsureLazyChildren();
+            foreach (var node in this.Children.Cast<ModuleTreeNode>())
+            {
+                NamespaceTreeNode typeNode;
+                if ((typeNode = node.FindNamespaceNode(namespaceName)) != null)
+                    return typeNode;
+            }
+            return null;
 		}
 		
 		public override bool CanDrag(SharpTreeNode[] nodes)
