@@ -72,10 +72,44 @@ namespace ICSharpCode.ILSpy.VB
 		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
-				HashSet<string> directories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-				var files = WriteCodeFilesInProject(assembly.AssemblyDefinition, options, directories).ToList();
-				files.AddRange(WriteResourceFilesInProject(assembly, options, directories));
-				WriteProjectFile(new TextOutputWriter(output), files, assembly.AssemblyDefinition.MainModule);
+
+                //Checks if must create a solution
+                if (options.CreateSolution)
+                {
+                    //Solution directory
+                    var solutionDir = options.SaveAsProjectDirectory;
+
+                    //List of the project names and their guid
+                    List<Tuple<string, string>> projects = new List<Tuple<string, string>>();
+
+                    //For each module
+                    foreach (var module in assembly.AssemblyDefinition.Modules)
+                    {
+                        //Creates the project and the various files
+                        var projectDir = Path.Combine(solutionDir, TextView.DecompilerTextView.CleanUpName(Path.GetFileNameWithoutExtension(module.Name)));
+                        Directory.CreateDirectory(projectDir);
+                        options.SaveAsProjectDirectory = projectDir;
+                        HashSet<string> directories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                        var files = WriteCodeFilesInProject(module, options, directories).ToList();
+                        files.AddRange(WriteResourceFilesInProject(module, options, directories));
+                        using (var writer = new StreamWriter(Path.Combine(projectDir, Path.GetFileName(projectDir) + this.ProjectFileExtension), false, System.Text.Encoding.UTF8))
+                            projects.Add(Tuple.Create(
+                                Path.GetFileName(projectDir),
+                                "{" + WriteProjectFile(writer, files, module, options).ToString().ToUpperInvariant() + "}"
+                            ));
+                    }
+
+                    //Writes the solution
+                    WriteSolutionFile(new TextOutputWriter(output), Enumerable.Reverse(projects));
+                }
+                else
+                {
+                    HashSet<string> directories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    var files = assembly.AssemblyDefinition.Modules.SelectMany(m => WriteCodeFilesInProject(m, options, directories)).ToList();
+                    files.AddRange(assembly.AssemblyDefinition.Modules.SelectMany(m => WriteResourceFilesInProject(m, options, directories)));
+                    WriteProjectFile(new TextOutputWriter(output), files, assembly.AssemblyDefinition.MainModule, options);
+                }
+
 			} else {
 				base.DecompileAssembly(assembly, output, options);
 				output.WriteLine();
@@ -135,10 +169,49 @@ namespace ICSharpCode.ILSpy.VB
 			"System.Collections",
 			"System.Collections.Generic"
 		};
-		
+
+        #region WriteSolutionFile
+        private void WriteSolutionFile(TextWriter writer, IEnumerable<Tuple<string, string>> projects)
+        {
+            writer.WriteLine();
+            writer.WriteLine("Microsoft Visual Studio Solution File, Format Version 11.00");
+            writer.WriteLine("# Visual Studio 2010");
+            foreach (var proj in projects)
+            {
+                writer.WriteLine(
+                    "Project(\"{0}\") = \"{1}\", \"{1}\\{1}{2}\", \"{3}\"",
+                    "{F184B08F-C81C-45F6-A57F-5ABD9991F28F}",
+                    proj.Item1,
+                    this.ProjectFileExtension,
+                    proj.Item2
+                );
+                writer.WriteLine("EndProject");
+            }
+            writer.WriteLine("Global");
+            writer.WriteLine("    GlobalSection(SolutionConfigurationPlatforms) = preSolution");
+            writer.WriteLine("        Debug|Any CPU = Debug|Any CPU");
+            writer.WriteLine("        Release|Any CPU = Release|Any CPU");
+            writer.WriteLine("    EndGlobalSection");
+            writer.WriteLine("    GlobalSection(ProjectConfigurationPlatforms) = postSolution");
+            foreach (var proj in projects)
+            {
+                writer.WriteLine("        {0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU", proj.Item2);
+                writer.WriteLine("        {0}.Debug|Any CPU.Build.0 = Debug|Any CPU", proj.Item2);
+                writer.WriteLine("        {0}.Release|Any CPU.ActiveCfg = Release|Any CPU", proj.Item2);
+                writer.WriteLine("        {0}.Release|Any CPU.Build.0 = Release|Any CPU", proj.Item2);
+            }
+            writer.WriteLine("    EndGlobalSection");
+            writer.WriteLine("    GlobalSection(SolutionProperties) = preSolution");
+            writer.WriteLine("        HideSolutionNode = FALSE");
+            writer.WriteLine("    EndGlobalSection");
+            writer.WriteLine("EndGlobal");
+        }
+        #endregion
+
 		#region WriteProjectFile
-		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module)
+        Guid WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module, DecompilationOptions options)
 		{
+            Guid returnGuid;
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
 			string platformName;
 			switch (module.Architecture) {
@@ -165,7 +238,7 @@ namespace ICSharpCode.ILSpy.VB
 				w.WriteAttributeString("DefaultTargets", "Build");
 
 				w.WriteStartElement("PropertyGroup");
-				w.WriteElementString("ProjectGuid", Guid.NewGuid().ToString().ToUpperInvariant());
+                w.WriteElementString("ProjectGuid", "{" + (returnGuid = Guid.NewGuid()).ToString().ToUpperInvariant() + "}");
 
 				w.WriteStartElement("Configuration");
 				w.WriteAttributeString("Condition", " '$(Configuration)' == '' ");
@@ -183,13 +256,16 @@ namespace ICSharpCode.ILSpy.VB
 						break;
 					case ModuleKind.Console:
 						w.WriteElementString("OutputType", "Exe");
-						break;
+                        break;
+                    case ModuleKind.NetModule:
+                        w.WriteElementString("OutputType", "Module");
+                        break;
 					default:
 						w.WriteElementString("OutputType", "Library");
 						break;
 				}
 
-				w.WriteElementString("AssemblyName", module.Assembly.Name.Name);
+                w.WriteElementString("AssemblyName", Path.GetFileNameWithoutExtension(module.Name));
 				switch (module.Runtime) {
 					case TargetRuntime.Net_1_0:
 						w.WriteElementString("TargetFrameworkVersion", "v1.0");
@@ -217,7 +293,11 @@ namespace ICSharpCode.ILSpy.VB
 
 				w.WriteStartElement("PropertyGroup"); // Debug
 				w.WriteAttributeString("Condition", " '$(Configuration)' == 'Debug' ");
-				w.WriteElementString("OutputPath", "bin\\Debug\\");
+                w.WriteElementString("OutputPath",
+                    (options.CreateSolution && !module.IsMain ?
+                        "..\\" + TextView.DecompilerTextView.CleanUpName(Path.GetFileNameWithoutExtension(module.Assembly.MainModule.Name)) + "\\" :
+                        string.Empty) +
+                    "bin\\Debug\\");
 				w.WriteElementString("DebugSymbols", "true");
 				w.WriteElementString("DebugType", "full");
 				w.WriteElementString("Optimize", "false");
@@ -225,7 +305,11 @@ namespace ICSharpCode.ILSpy.VB
 
 				w.WriteStartElement("PropertyGroup"); // Release
 				w.WriteAttributeString("Condition", " '$(Configuration)' == 'Release' ");
-				w.WriteElementString("OutputPath", "bin\\Release\\");
+                w.WriteElementString("OutputPath",
+                    (options.CreateSolution && !module.IsMain ?
+                        "..\\" + TextView.DecompilerTextView.CleanUpName(Path.GetFileNameWithoutExtension(module.Assembly.MainModule.Name)) + "\\" :
+                        string.Empty) +
+                    "bin\\Release\\");
 				w.WriteElementString("DebugSymbols", "true");
 				w.WriteElementString("DebugType", "pdbonly");
 				w.WriteElementString("Optimize", "true");
@@ -261,12 +345,33 @@ namespace ICSharpCode.ILSpy.VB
 				}
 				w.WriteEndElement(); // </ItemGroup> (Imports)
 
+                //Links to the other modules of the solution (if present)
+                if (options.CreateSolution && module.IsMain)
+                {
+                    var otherModules = module.Assembly.Modules.Except(new[] { module }).ToArray();
+                    if (otherModules.Length > 0)
+                    {
+                        w.WriteStartElement("ItemGroup");
+                        foreach (var m in otherModules)
+                        {
+                            w.WriteStartElement("AddModules");
+                            w.WriteAttributeString("Include", "bin\\$(Configuration)\\" + m.Name);
+                            w.WriteEndElement();
+                        }
+                        w.WriteEndElement();
+                    }
+                }
+
 				w.WriteStartElement("Import");
 				w.WriteAttributeString("Project", "$(MSBuildToolsPath)\\Microsoft.VisualBasic.targets");
 				w.WriteEndElement();
 
 				w.WriteEndDocument();
 			}
+
+            //Returns the guid of the project
+            return returnGuid;
+
 		}
 		#endregion
 
@@ -280,9 +385,9 @@ namespace ICSharpCode.ILSpy.VB
 			return true;
 		}
 
-		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(AssemblyDefinition assembly, DecompilationOptions options, HashSet<string> directories)
+        IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(ModuleDefinition module, DecompilationOptions options, HashSet<string> directories)
 		{
-			var files = assembly.Modules.SelectMany(m => m.Types).Where(t => IncludeTypeWhenDecompilingProject(t, options)).GroupBy(
+            var files = module.Types.Where(t => IncludeTypeWhenDecompilingProject(t, options)).GroupBy(
 				delegate(TypeDefinition type) {
 					string file = TextView.DecompilerTextView.CleanUpName(type.Name) + this.FileExtension;
 					if (string.IsNullOrEmpty(type.Namespace)) {
@@ -300,11 +405,11 @@ namespace ICSharpCode.ILSpy.VB
 				new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
 				delegate(IGrouping<string, TypeDefinition> file) {
 					using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, file.Key))) {
-						AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: assembly.MainModule);
+						AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: module);
 						foreach (TypeDefinition type in file) {
 							codeDomBuilder.AddType(type);
 						}
-						RunTransformsAndGenerateCode(codeDomBuilder, new PlainTextOutput(w), options, assembly.MainModule);
+						RunTransformsAndGenerateCode(codeDomBuilder, new PlainTextOutput(w), options, module);
 					}
 				});
 			AstMethodBodyBuilder.PrintNumberOfUnhandledOpcodes();
@@ -313,11 +418,11 @@ namespace ICSharpCode.ILSpy.VB
 		#endregion
 
 		#region WriteResourceFilesInProject
-		IEnumerable<Tuple<string, string>> WriteResourceFilesInProject(LoadedAssembly assembly, DecompilationOptions options, HashSet<string> directories)
+        IEnumerable<Tuple<string, string>> WriteResourceFilesInProject(ModuleDefinition module, DecompilationOptions options, HashSet<string> directories)
 		{
 			AppDomain bamlDecompilerAppDomain = null;
 			try {
-				foreach (EmbeddedResource r in assembly.AssemblyDefinition.MainModule.Resources.OfType<EmbeddedResource>()) {
+				foreach (EmbeddedResource r in module.Resources.OfType<EmbeddedResource>()) {
 					string fileName;
 					Stream s = r.GetResourceStream();
 					s.Position = 0;
