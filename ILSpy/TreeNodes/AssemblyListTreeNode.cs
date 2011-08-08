@@ -171,9 +171,23 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					return decl.Children.OfType<TypeTreeNode>().FirstOrDefault(t => t.TypeDefinition == def && !t.IsHidden);
 				}
 			} else {
-                AssemblyTreeNode asm = FindAssemblyNode(def.Module.Assembly);
-                if (asm != null)
-                    return asm.FindTypeNode(def);
+                if (def.Module.Assembly == null) //def.Module.Assembly is null in secodary modules ...
+                {
+                    foreach (AssemblyTreeNode node in this.Children)
+                        if (node.LoadedAssembly.IsLoaded)
+                        {
+                            var t = node.FindTypeNode(def);
+                            if (t != null)
+                                return t;
+                        }
+                    return null;
+                }
+                else
+                {
+                    AssemblyTreeNode asm = FindAssemblyNode(def.Module.Assembly);
+                    if (asm != null)
+                        return asm.FindTypeNode(def);
+                }
 			}
 			return null;
 		}

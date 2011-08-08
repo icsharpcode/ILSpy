@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine("// Method begins at RVA 0x{0:x4}", method.RVA);
 			output.WriteLine("// Code size {0} (0x{0:x})", body.CodeSize);
 			output.WriteLine(".maxstack {0}", body.MaxStackSize);
-			if (method.DeclaringType.Module.Assembly.EntryPoint == method)
+			if (method.DeclaringType.Module.EntryPoint == method)
 				output.WriteLine (".entrypoint");
 			
 			if (method.Body.HasVariables) {

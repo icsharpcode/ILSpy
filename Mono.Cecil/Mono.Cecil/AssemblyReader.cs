@@ -553,10 +553,7 @@ namespace Mono.Cecil {
                     AssemblyResolver = module.AssemblyResolver
 				};
 
-                var m = ModuleDefinition.ReadModule(GetModuleFileName(name), parameters);
-                if (m.assembly == null)
-                    m.assembly = this.module.assembly;
-				modules.Add(m);
+                modules.Add(ModuleDefinition.ReadModule(GetModuleFileName(name), parameters));
 			}
 
 			return modules;
