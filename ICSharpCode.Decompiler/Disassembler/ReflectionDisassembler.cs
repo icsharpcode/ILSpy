@@ -1143,7 +1143,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine("// MVID: {0}", module.Mvid.ToString("B").ToUpperInvariant());
 			// TODO: imagebase, file alignment, stackreserve, subsystem
 			output.WriteLine(".corflags 0x{0:x} // {1}", module.Attributes, module.Attributes.ToString());
-			
+
+            output.WriteLine();
 			WriteAttributes(module.CustomAttributes);
 		}
 		
