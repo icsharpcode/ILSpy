@@ -166,10 +166,9 @@ namespace ICSharpCode.Decompiler.Ast
 			
 			ConvertCustomAttributes(astCompileUnit, assemblyDefinition, "assembly");
 			ConvertSecurityAttributes(astCompileUnit, assemblyDefinition, "assembly");
-			ConvertCustomAttributes(astCompileUnit, assemblyDefinition.MainModule, "module");
-			AddTypeForwarderAttributes(astCompileUnit, assemblyDefinition.MainModule, "assembly");
 			
 			if (!onlyAssemblyLevel) {
+                AddModule(assemblyDefinition.MainModule, true);
 				foreach (TypeDefinition typeDef in assemblyDefinition.MainModule.Types) {
 					// Skip the <Module> class
 					if (typeDef.Name == "<Module>") continue;
@@ -181,7 +180,27 @@ namespace ICSharpCode.Decompiler.Ast
 				}
 			}
 		}
-		
+
+        public void AddModule(ModuleDefinition module, bool onlyModuleLevel = false)
+        {
+            ConvertCustomAttributes(astCompileUnit, module, "module");
+            AddTypeForwarderAttributes(astCompileUnit, module, "assembly");
+
+            if (!onlyModuleLevel)
+            {
+                foreach (TypeDefinition typeDef in module.Types)
+                {
+                    // Skip the <Module> class
+                    if (typeDef.Name == "<Module>") continue;
+                    // Skip any hidden types
+                    if (AstBuilder.MemberIsHidden(typeDef, context.Settings))
+                        continue;
+
+                    AddType(typeDef);
+                }
+            }
+        }
+
 		void AddTypeForwarderAttributes(CompilationUnit astCompileUnit, ModuleDefinition module, string target)
 		{
 			if (!module.HasExportedTypes)

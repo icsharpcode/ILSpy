@@ -272,7 +272,7 @@ namespace ICSharpCode.ILSpy
 				output.WriteLine();
                 output.WriteLine("// Main module:");
                 ModuleDefinition mainModule = assembly.AssemblyDefinition.MainModule;
-                DecompileModule(mainModule, output, options);
+                WriteModuleAttributes(mainModule, output, options);
 				output.WriteLine();
 				
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
@@ -286,7 +286,7 @@ namespace ICSharpCode.ILSpy
 			OnDecompilationFinished(null);
 		}
 
-        public override void DecompileModule(ModuleDefinition module, ITextOutput output, DecompilationOptions options)
+        private void WriteModuleAttributes(ModuleDefinition module, ITextOutput output, DecompilationOptions options)
         {
             base.DecompileModule(module, output, options);
             if (module.EntryPoint != null)
@@ -328,6 +328,21 @@ namespace ICSharpCode.ILSpy
                 case TargetRuntime.Net_4_0:
                     output.WriteLine("// Runtime: .NET 4.0");
                     break;
+            }
+        }
+
+        public override void DecompileModule(ModuleDefinition module, ITextOutput output, DecompilationOptions options)
+        {
+            WriteModuleAttributes(module, output, options);
+
+            // don't automatically load additional assemblies when an assembly node is selected in the tree view
+            output.WriteLine();
+            using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad())
+            {
+                AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: module);
+                codeDomBuilder.AddModule(module, onlyModuleLevel: !options.FullDecompilation);
+                codeDomBuilder.RunTransformations(transformAbortCondition);
+                codeDomBuilder.GenerateCode(output);
             }
         }
 

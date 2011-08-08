@@ -113,43 +113,8 @@ namespace ICSharpCode.ILSpy.VB
 			} else {
 				base.DecompileAssembly(assembly, output, options);
 				output.WriteLine();
-				ModuleDefinition mainModule = assembly.AssemblyDefinition.MainModule;
-				if (mainModule.EntryPoint != null) {
-					output.Write("' Entry point: ");
-					output.WriteReference(mainModule.EntryPoint.DeclaringType.FullName + "." + mainModule.EntryPoint.Name, mainModule.EntryPoint);
-					output.WriteLine();
-				}
-				switch (mainModule.Architecture) {
-					case TargetArchitecture.I386:
-						if ((mainModule.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
-							WriteCommentLine(output, "Architecture: x86");
-						else
-							WriteCommentLine(output, "Architecture: AnyCPU");
-						break;
-					case TargetArchitecture.AMD64:
-						WriteCommentLine(output, "Architecture: x64");
-						break;
-					case TargetArchitecture.IA64:
-						WriteCommentLine(output, "Architecture: Itanium-64");
-						break;
-				}
-				if ((mainModule.Attributes & ModuleAttributes.ILOnly) == 0) {
-					WriteCommentLine(output, "This assembly contains unmanaged code.");
-				}
-				switch (mainModule.Runtime) {
-					case TargetRuntime.Net_1_0:
-						WriteCommentLine(output, "Runtime: .NET 1.0");
-						break;
-					case TargetRuntime.Net_1_1:
-						WriteCommentLine(output, "Runtime: .NET 1.1");
-						break;
-					case TargetRuntime.Net_2_0:
-						WriteCommentLine(output, "Runtime: .NET 2.0");
-						break;
-					case TargetRuntime.Net_4_0:
-						WriteCommentLine(output, "Runtime: .NET 4.0");
-						break;
-				}
+                WriteCommentLine(output, "Main module:");
+                WriteModuleAttributes(assembly.AssemblyDefinition.MainModule, output, options);
 				output.WriteLine();
 				
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
@@ -161,7 +126,66 @@ namespace ICSharpCode.ILSpy.VB
 			}
 			OnDecompilationFinished(null);
 		}
-		
+
+        private void WriteModuleAttributes(ModuleDefinition module, ITextOutput output, DecompilationOptions options)
+        {
+            base.DecompileModule(module, output, options);
+            if (module.EntryPoint != null)
+            {
+                output.Write("' Entry point: ");
+                output.WriteReference(module.EntryPoint.DeclaringType.FullName + "." + module.EntryPoint.Name, module.EntryPoint);
+                output.WriteLine();
+            }
+            switch (module.Architecture)
+            {
+                case TargetArchitecture.I386:
+                    if ((module.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
+                        output.WriteLine("' Architecture: x86");
+                    else
+                        output.WriteLine("' Architecture: AnyCPU");
+                    break;
+                case TargetArchitecture.AMD64:
+                    output.WriteLine("' Architecture: x64");
+                    break;
+                case TargetArchitecture.IA64:
+                    output.WriteLine("' Architecture: Itanium-64");
+                    break;
+            }
+            if ((module.Attributes & ModuleAttributes.ILOnly) == 0)
+            {
+                output.WriteLine("' This assembly contains unmanaged code.");
+            }
+            switch (module.Runtime)
+            {
+                case TargetRuntime.Net_1_0:
+                    output.WriteLine("' Runtime: .NET 1.0");
+                    break;
+                case TargetRuntime.Net_1_1:
+                    output.WriteLine("' Runtime: .NET 1.1");
+                    break;
+                case TargetRuntime.Net_2_0:
+                    output.WriteLine("' Runtime: .NET 2.0");
+                    break;
+                case TargetRuntime.Net_4_0:
+                    output.WriteLine("' Runtime: .NET 4.0");
+                    break;
+            }
+        }
+
+        public override void DecompileModule(ModuleDefinition module, ITextOutput output, DecompilationOptions options)
+        {
+            WriteModuleAttributes(module, output, options);
+
+            // don't automatically load additional assemblies when an assembly node is selected in the tree view
+            output.WriteLine();
+            using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad())
+            {
+                AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: module);
+                codeDomBuilder.AddModule(module, onlyModuleLevel: !options.FullDecompilation);
+                RunTransformsAndGenerateCode(codeDomBuilder, output, options, module);
+            }
+        }
+
 		static readonly string[] projectImports = new[] {
 			"System.Diagnostics",
 			"Microsoft.VisualBasic",
