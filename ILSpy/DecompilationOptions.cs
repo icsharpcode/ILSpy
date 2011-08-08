@@ -33,7 +33,13 @@ namespace ICSharpCode.ILSpy
 		/// If this option is false, language bindings are allowed to show the only headers of the decompiled element's children.
 		/// </summary>
 		public bool FullDecompilation { get; set; }
-		
+
+        /// <summary>
+        /// Gets whether a solution is requiredd to hold the various modules of an assembly.
+        /// If true, a new project will be created for each module.
+        /// </summary>
+        public bool CreateSolution { get; set; }
+
 		/// <summary>
 		/// Gets/Sets the directory into which the project is saved.
 		/// </summary>

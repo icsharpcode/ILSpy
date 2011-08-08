@@ -215,13 +215,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			Language language = this.Language;
 			if (string.IsNullOrEmpty(language.ProjectFileExtension))
 				return false;
+            this.EnsureLazyChildren();
+            var canCreateSolution = this.Children.OfType<ModuleTreeNode>().Count() > 1;
 			SaveFileDialog dlg = new SaveFileDialog();
-			dlg.FileName = DecompilerTextView.CleanUpName(assembly.ShortName) + language.ProjectFileExtension;
-			dlg.Filter = language.Name + " project|*" + language.ProjectFileExtension + "|" + language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
+            dlg.FileName = DecompilerTextView.CleanUpName(assembly.ShortName) + (canCreateSolution ? ".sln" : language.ProjectFileExtension);
+            dlg.Filter =
+                (canCreateSolution ? language.Name + " solution|*.sln|" : string.Empty) +
+                language.Name + " project|*" + language.ProjectFileExtension + "|" +
+                language.Name + " single file|*" + language.FileExtension + "|All files|*.*";
 			if (dlg.ShowDialog() == true) {
 				DecompilationOptions options = new DecompilationOptions();
 				options.FullDecompilation = true;
-				if (dlg.FilterIndex == 1) {
+                options.CreateSolution = canCreateSolution && dlg.FilterIndex == 1;
+				if (dlg.FilterIndex == 1 || (canCreateSolution && dlg.FilterIndex == 2)) {
 					options.SaveAsProjectDirectory = Path.GetDirectoryName(dlg.FileName);
 					foreach (string entry in Directory.GetFileSystemEntries(options.SaveAsProjectDirectory)) {
 						if (!string.Equals(entry, dlg.FileName, StringComparison.OrdinalIgnoreCase)) {
