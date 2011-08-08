@@ -270,43 +270,9 @@ namespace ICSharpCode.ILSpy
 			} else {
 				base.DecompileAssembly(assembly, output, options);
 				output.WriteLine();
-				ModuleDefinition mainModule = assembly.AssemblyDefinition.MainModule;
-				if (mainModule.EntryPoint != null) {
-					output.Write("// Entry point: ");
-					output.WriteReference(mainModule.EntryPoint.DeclaringType.FullName + "." + mainModule.EntryPoint.Name, mainModule.EntryPoint);
-					output.WriteLine();
-				}
-				switch (mainModule.Architecture) {
-					case TargetArchitecture.I386:
-						if ((mainModule.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
-							output.WriteLine("// Architecture: x86");
-						else
-							output.WriteLine("// Architecture: AnyCPU");
-						break;
-					case TargetArchitecture.AMD64:
-						output.WriteLine("// Architecture: x64");
-						break;
-					case TargetArchitecture.IA64:
-						output.WriteLine("// Architecture: Itanium-64");
-						break;
-				}
-				if ((mainModule.Attributes & ModuleAttributes.ILOnly) == 0) {
-					output.WriteLine("// This assembly contains unmanaged code.");
-				}
-				switch (mainModule.Runtime) {
-					case TargetRuntime.Net_1_0:
-						output.WriteLine("// Runtime: .NET 1.0");
-						break;
-					case TargetRuntime.Net_1_1:
-						output.WriteLine("// Runtime: .NET 1.1");
-						break;
-					case TargetRuntime.Net_2_0:
-						output.WriteLine("// Runtime: .NET 2.0");
-						break;
-					case TargetRuntime.Net_4_0:
-						output.WriteLine("// Runtime: .NET 4.0");
-						break;
-				}
+                output.WriteLine("// Main module:");
+                ModuleDefinition mainModule = assembly.AssemblyDefinition.MainModule;
+                DecompileModule(mainModule, output, options);
 				output.WriteLine();
 				
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
@@ -319,6 +285,51 @@ namespace ICSharpCode.ILSpy
 			}
 			OnDecompilationFinished(null);
 		}
+
+        public override void DecompileModule(ModuleDefinition module, ITextOutput output, DecompilationOptions options)
+        {
+            base.DecompileModule(module, output, options);
+            if (module.EntryPoint != null)
+            {
+                output.Write("// Entry point: ");
+                output.WriteReference(module.EntryPoint.DeclaringType.FullName + "." + module.EntryPoint.Name, module.EntryPoint);
+                output.WriteLine();
+            }
+            switch (module.Architecture)
+            {
+                case TargetArchitecture.I386:
+                    if ((module.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
+                        output.WriteLine("// Architecture: x86");
+                    else
+                        output.WriteLine("// Architecture: AnyCPU");
+                    break;
+                case TargetArchitecture.AMD64:
+                    output.WriteLine("// Architecture: x64");
+                    break;
+                case TargetArchitecture.IA64:
+                    output.WriteLine("// Architecture: Itanium-64");
+                    break;
+            }
+            if ((module.Attributes & ModuleAttributes.ILOnly) == 0)
+            {
+                output.WriteLine("// This assembly contains unmanaged code.");
+            }
+            switch (module.Runtime)
+            {
+                case TargetRuntime.Net_1_0:
+                    output.WriteLine("// Runtime: .NET 1.0");
+                    break;
+                case TargetRuntime.Net_1_1:
+                    output.WriteLine("// Runtime: .NET 1.1");
+                    break;
+                case TargetRuntime.Net_2_0:
+                    output.WriteLine("// Runtime: .NET 2.0");
+                    break;
+                case TargetRuntime.Net_4_0:
+                    output.WriteLine("// Runtime: .NET 4.0");
+                    break;
+            }
+        }
 
         #region WriteSolutionFile
         private void WriteSolutionFile(TextWriter writer, IEnumerable<Tuple<string, string>> projects)
