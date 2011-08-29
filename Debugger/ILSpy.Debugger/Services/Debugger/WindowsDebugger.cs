@@ -804,6 +804,7 @@ namespace ICSharpCode.ILSpy.Debugger.Services
 					DebugInformation.DebugStepInformation = null; // we do not need to step into/out
 					DebuggerService.RemoveCurrentLineMarker();
 					DebuggerService.JumpToCurrentLine(memberReference, line, 0, line, 0, ilOffset);
+          MainWindow.Instance.TextView.UnfoldAndScroll(line);
 				}
 				else {
 					StepIntoUnknownFrame(frame);
