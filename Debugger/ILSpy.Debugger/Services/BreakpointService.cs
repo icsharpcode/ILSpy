@@ -13,7 +13,7 @@ using ICSharpCode.ILSpy.Debugger.Bookmarks;
 using ICSharpCode.ILSpy.XmlDoc;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.ILAst;
-using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.NRefactory;
 
 #endregion
 
