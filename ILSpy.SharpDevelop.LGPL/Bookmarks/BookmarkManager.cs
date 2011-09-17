@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler;
+using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 using Mono.CSharp;
@@ -126,7 +127,7 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		
 		public static void ToggleBookmark(string typeName, int line,
 		                                  Predicate<BookmarkBase> canToggle,
-		                                  Func<AstLocation, BookmarkBase> bookmarkFactory)
+		                                  Func<TextLocation, BookmarkBase> bookmarkFactory)
 		{
 			foreach (BookmarkBase bookmark in GetBookmarks(typeName)) {
 				if (canToggle(bookmark) && bookmark.LineNumber == line) {
@@ -136,7 +137,7 @@ namespace ICSharpCode.ILSpy.Bookmarks
 			}
 			
 			// no bookmark at that line: create a new bookmark
-			BookmarkManager.AddMark(bookmarkFactory(new AstLocation(line, 0)));
+			BookmarkManager.AddMark(bookmarkFactory(new TextLocation(line, 0)));
 		}
 		
 		public static event BookmarkEventHandler Removed;

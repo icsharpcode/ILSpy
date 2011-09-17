@@ -54,7 +54,7 @@ namespace ICSharpCode.ILSpy.Debugger.Services
         || !int.TryParse((string)bookmarkNode.Attribute("functionToken"), out functionToken)
         || !int.TryParse((string)bookmarkNode.Attribute("line"), out line))
         return null;
-      var breakpoint = new BreakpointBookmark(mr, new AstLocation(line, 0), functionToken, range, 
+      var breakpoint = new BreakpointBookmark(mr, new TextLocation(line, 0), functionToken, range, 
                                             BreakpointAction.Break, DebugInformation.Language);
       breakpoint.IsEnabled = (bool)bookmarkNode.Attribute("enabled");
       return breakpoint;
