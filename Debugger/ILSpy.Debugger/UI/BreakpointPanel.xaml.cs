@@ -16,6 +16,7 @@ using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.Bookmarks;
 using ICSharpCode.ILSpy.Debugger.Bookmarks;
 using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.Debugger.Services;
 
 namespace ICSharpCode.ILSpy.Debugger.UI
 {
@@ -102,6 +103,12 @@ namespace ICSharpCode.ILSpy.Debugger.UI
     [ExportMainMenuCommand(Menu="_Debugger", Header="Show _Breakpoints", MenuCategory="View", MenuOrder=8)]
     public class BookmarkManagerPanelCommand : SimpleCommand
     {
+      public BookmarkManagerPanelCommand()
+      {
+        // (mis)use the fact that loaded on startup
+        BreakpointService.Initialize();
+      }
+
         public override void Execute(object parameter)
         {
             BreakpointPanel.Instance.Show();

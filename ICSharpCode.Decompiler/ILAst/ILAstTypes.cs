@@ -29,6 +29,7 @@ using Mono.Cecil;
 using Mono.Cecil.Cil;
 using Mono.CSharp;
 using Cecil = Mono.Cecil;
+using System.Globalization;
 
 namespace ICSharpCode.Decompiler.ILAst
 {
@@ -230,7 +231,21 @@ namespace ICSharpCode.Decompiler.ILAst
 		{
 			return string.Format("{0}-{1}", From.ToString("X"), To.ToString("X"));
 		}
-		
+
+    public static bool TryParse(string value, out ILRange result)
+    {
+      result = null;
+      string[] p = value.Split('-');
+      if (p == null || p.Length != 2)
+        return false;
+      ILRange ilr = new ILRange();
+      if (!int.TryParse(p[0], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ilr.From)
+        || !int.TryParse(p[1], NumberStyles.HexNumber, CultureInfo.InvariantCulture, out ilr.To))
+        return false;
+      result = ilr;
+      return true;
+    }
+
 		public static List<ILRange> OrderAndJoint(IEnumerable<ILRange> input)
 		{
 			if (input == null)

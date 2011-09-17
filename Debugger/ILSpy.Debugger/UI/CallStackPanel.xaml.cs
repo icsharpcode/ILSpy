@@ -229,11 +229,8 @@ namespace ICSharpCode.ILSpy.Debugger.UI
             if (null == selectedItem)
             	return;
             
-            var foundAssembly = MainWindow.Instance.CurrentAssemblyList.OpenAssembly(selectedItem.Frame.MethodInfo.DebugModule.FullPath);
-            if (null == foundAssembly || null == foundAssembly.AssemblyDefinition)
-                return;
-            
-			MemberReference mr = XmlDocKeyProvider.FindMemberByKey(foundAssembly.AssemblyDefinition.MainModule, "M:" + selectedItem.Name);
+			MemberReference mr = BreakpointService.ResolveMethod(selectedItem.Frame.MethodInfo.DebugModule.FullPath,
+        selectedItem.Name);
 			if (mr == null)
 				return;
 			MainWindow.Instance.JumpToReference(mr);

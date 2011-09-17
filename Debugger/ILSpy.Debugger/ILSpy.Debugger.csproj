@@ -86,6 +86,7 @@
     <Compile Include="Models\TreeModel\StackFrameNode.cs" />
     <Compile Include="Models\TreeModel\TreeNode.cs" />
     <Compile Include="Models\TreeModel\Utils.cs" />
+    <Compile Include="Services\BreakpointService.cs" />
     <Compile Include="Services\Debugger\DebuggerHelper.cs" />
     <Compile Include="Services\Debugger\ListHelper.cs" />
     <Compile Include="Services\Debugger\TypeResolverExtension.cs" />
@@ -105,11 +106,11 @@
       <DependentUpon>AttachToProcessWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\BreakpointPanel.xaml.cs" >
+    <Compile Include="UI\BreakpointPanel.xaml.cs">
       <DependentUpon>BreakpointPanel.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="UI\CallStackPanel.xaml.cs" >
+    <Compile Include="UI\CallStackPanel.xaml.cs">
       <DependentUpon>CallStackPanel.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
@@ -122,12 +123,7 @@
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Images" />
-    <Folder Include="Models\TreeModel" />
-    <Folder Include="Commands" />
-    <Folder Include="ToolTips" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Page Include="ToolTips\DebuggerTooltipControl.xaml" />
     <Page Include="ToolTips\PinControlsDictionary.xaml" />

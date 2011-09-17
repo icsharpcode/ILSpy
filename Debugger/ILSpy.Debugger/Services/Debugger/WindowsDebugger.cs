@@ -91,7 +91,6 @@ namespace ICSharpCode.ILSpy.Debugger.Services
 		
 		public WindowsDebugger()
 		{
-			
 		}
 		
 		#region IDebugger Members

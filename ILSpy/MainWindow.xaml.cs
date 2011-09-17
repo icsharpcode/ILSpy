@@ -369,6 +369,9 @@ namespace ICSharpCode.ILSpy
 				this.Title = "ILSpy";
 			else
 				this.Title = "ILSpy - " + assemblyList.ListName;
+      // activating another assembly list is a heavy change so trigger event
+      if (CurrentAssemblyListChanged != null)
+        CurrentAssemblyListChanged(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 		}
 
 		void assemblyList_Assemblies_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)

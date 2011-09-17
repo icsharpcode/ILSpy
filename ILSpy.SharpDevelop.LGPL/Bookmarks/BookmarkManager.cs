@@ -7,9 +7,38 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 using Mono.CSharp;
+using System.ComponentModel.Composition;
+using System.Xml.Linq;
+using System.Linq;
 
 namespace ICSharpCode.ILSpy.Bookmarks
 {
+  /// <summary>
+  /// Bookmark specializations may provide an exported implementation of this interface to support save and load for these bookmarks.
+  /// </summary>
+  public interface IBookmarkPersistence
+  {
+    XElement Save(BookmarkBase bookmark);
+    BookmarkBase Load(XElement bookmarkNode);
+  }
+
+  public interface IBookmarkPersistenceMetadata
+  {
+    Type SupportedType { get; }
+  }
+
+  [MetadataAttribute]
+  [AttributeUsage(AttributeTargets.Class, AllowMultiple = false)]
+  public class ExportBookmarkPersistenceAttribute : ExportAttribute, IBookmarkPersistenceMetadata
+  {
+    public ExportBookmarkPersistenceAttribute()
+      : base(typeof(IBookmarkPersistence))
+    {
+    }
+
+    public Type SupportedType { get; set; }
+  }
+
 	/// <summary>
 	/// Static class that maintains the list of bookmarks and breakpoints.
 	/// </summary>
@@ -112,5 +141,38 @@ namespace ICSharpCode.ILSpy.Bookmarks
 		
 		public static event BookmarkEventHandler Removed;
 		public static event BookmarkEventHandler Added;
-	}
+
+    #region persistence
+    [ImportMany(typeof(IBookmarkPersistence))]
+    public static IEnumerable<Lazy<IBookmarkPersistence, IBookmarkPersistenceMetadata>> PersistenceEntries { get; set; }
+
+    public static XElement SaveBookmarks()
+    {
+      XElement list = new XElement("List");
+      foreach (var b in BookmarkManager.Bookmarks)
+      {
+        var persistenceHandler = PersistenceEntries.FirstOrDefault(e => e.Metadata.SupportedType == b.GetType());
+        if (null == persistenceHandler)
+          continue;
+        var bookmarkNode = persistenceHandler.Value.Save(b);
+        bookmarkNode.SetAttributeValue("bookmarkType", b.GetType().Name);
+        list.Add(bookmarkNode);
+      }
+      return list;
+    }
+
+    public static void LoadBookmarks(XElement bookmarkList)
+    {
+      foreach (var bookmarkNode in bookmarkList.Elements("Bookmark"))
+      {
+        var persistenceHandler = 
+          PersistenceEntries.FirstOrDefault(e => e.Metadata.SupportedType.Name == (string)bookmarkNode.Attribute("bookmarkType"));
+        if (null == persistenceHandler)
+          continue;
+        BookmarkBase newMark = persistenceHandler.Value.Load(bookmarkNode);
+        AddMark(newMark);
+      }
+    }
+    #endregion
+  }
 }
