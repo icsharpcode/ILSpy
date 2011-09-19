@@ -14,70 +14,86 @@ using System.Windows.Media;
 
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.Bookmarks;
+using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.Debugger.Bookmarks;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.Debugger.Services;
 
 namespace ICSharpCode.ILSpy.Debugger.UI
 {
-    /// <summary>
-    /// Interaction logic for BreakpointPanel.xaml
-    /// </summary>
-    public partial class BreakpointPanel : UserControl, IPane
+  /// <summary>
+  /// Interaction logic for BreakpointPanel.xaml
+  /// </summary>
+  public partial class BreakpointPanel : UserControl, IPane
+  {
+    static BreakpointPanel s_instance;
+    
+    public static BreakpointPanel Instance
     {
-        static BreakpointPanel s_instance;
-        
-        public static BreakpointPanel Instance
-        {
-            get {
-                if (null == s_instance)
-                {
-					App.Current.VerifyAccess();
-                    s_instance = new BreakpointPanel();
-                }
-                return s_instance;
+        get {
+            if (null == s_instance)
+            {
+                App.Current.VerifyAccess();
+                s_instance = new BreakpointPanel();
             }
+            return s_instance;
         }
+    }
         
-        private BreakpointPanel()
-        {
-          InitializeComponent();
-        }
+    private BreakpointPanel()
+    {
+      InitializeComponent();
+    }
         
-		public void Show()
-		{
-			if (!IsVisible)
-			{
-                SetItemSource();
-                
-			    MainWindow.Instance.ShowInBottomPane("Breakpoints", this);
-			    
-                BookmarkManager.Added += delegate { SetItemSource(); };
-                BookmarkManager.Removed += delegate { SetItemSource(); };
-                DebuggerSettings.Instance.PropertyChanged += 
-                	delegate(object s, PropertyChangedEventArgs e) { if (e.PropertyName == "ShowAllBookmarks") SetItemSource(); };
-			}
-		}
-		
-		private void SetItemSource()
-		{
-          	view.ItemsSource = null;
-          	if (DebuggerSettings.Instance.ShowAllBookmarks)
-				view.ItemsSource = BookmarkManager.Bookmarks;
-          	else
-          		view.ItemsSource = BookmarkManager.Bookmarks.Where(b => b is BreakpointBookmark);
-		}
+    public void Show()
+    {
+      if (!IsVisible)
+      {
+        SetItemSource();
+              
+        MainWindow.Instance.ShowInBottomPane("Breakpoints", this);
+  
+        BookmarkManager.Added += delegate { SetItemSource(); };
+        BookmarkManager.Removed += delegate { SetItemSource(); };
+        DebuggerSettings.Instance.PropertyChanged += 
+          delegate(object s, PropertyChangedEventArgs e) { if (e.PropertyName == "ShowAllBookmarks") SetItemSource(); };
+      }
+    }
+    
+    private void SetItemSource()
+    {
+      view.ItemsSource = null;
+      if (DebuggerSettings.Instance.ShowAllBookmarks)
+        view.ItemsSource = BookmarkManager.Bookmarks;
+      else
+        view.ItemsSource = BookmarkManager.Bookmarks.Where(b => b is BreakpointBookmark);
+      Sort();
+    }
+    
+    private void Sort()
+    {
+      // BreakpointPanel doesn't use SortableGridViewColumn to sort since should not happen on a specific column 
+      // nor should the column or direction change.
+      // Additional SortableGridViewColumndoes not update order when adding or removing content.
+      ICollectionView dataView =
+        CollectionViewSource.GetDefaultView(view.ItemsSource);
+
+      dataView.SortDescriptions.Clear();
+      SortDescription sd = new SortDescription("MemberReference.FullName", ListSortDirection.Ascending);
+      dataView.SortDescriptions.Add(sd);
+      dataView.Refresh();
+    }
         
         public void Closed()
         {
-        	BookmarkManager.Added -= delegate { SetItemSource(); };
-        	BookmarkManager.Removed -= delegate { SetItemSource(); };
-        	DebuggerSettings.Instance.PropertyChanged -= 
-        		delegate(object s, PropertyChangedEventArgs e) { if (e.PropertyName == "ShowAllBookmarks") SetItemSource(); };
+          BookmarkManager.Added -= delegate { SetItemSource(); };
+          BookmarkManager.Removed -= delegate { SetItemSource(); };
+          DebuggerSettings.Instance.PropertyChanged -= 
+            delegate(object s, PropertyChangedEventArgs e) { if (e.PropertyName == "ShowAllBookmarks") SetItemSource(); };
         }
         
-		void view_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-		{
+    void view_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
             if (MouseButton.Left != e.ChangedButton)
                 return;
             var selectedItem = view.SelectedItem as BookmarkBase;
@@ -86,7 +102,7 @@ namespace ICSharpCode.ILSpy.Debugger.UI
             MainWindow.Instance.JumpToReference(selectedItem.MemberReference);
             MainWindow.Instance.TextView.UnfoldAndScroll(selectedItem.LineNumber);
             e.Handled = true;
-		}
+    }
         
         void view_KeyUp(object sender, KeyEventArgs e)
         {
