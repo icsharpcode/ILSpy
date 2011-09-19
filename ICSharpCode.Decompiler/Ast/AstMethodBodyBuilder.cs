@@ -50,16 +50,11 @@ namespace ICSharpCode.Decompiler.Ast
 		/// <param name="context">Decompilation context.</param>
 		/// <param name="parameters">Parameter declarations of the method being decompiled.
 		/// These are used to update the parameter names when the decompiler generates names for the parameters.</param>
-		/// <param name="localVariables">Local variables storage that will be filled/updated with the local variables.</param>
 		/// <returns>Block for the method body</returns>
 		public static BlockStatement CreateMethodBody(MethodDefinition methodDef,
 		                                              DecompilerContext context,
-		                                              IEnumerable<ParameterDeclaration> parameters = null,
-		                                              ConcurrentDictionary<int, IEnumerable<ILVariable>> localVariables = null)
+		                                              IEnumerable<ParameterDeclaration> parameters = null)
 		{
-			if (localVariables == null)
-				localVariables = new ConcurrentDictionary<int, IEnumerable<ILVariable>>();
-			
 			MethodDefinition oldCurrentMethod = context.CurrentMethod;
 			Debug.Assert(oldCurrentMethod == null || oldCurrentMethod == methodDef);
 			context.CurrentMethod = methodDef;
@@ -69,10 +64,10 @@ namespace ICSharpCode.Decompiler.Ast
 				builder.context = context;
 				builder.typeSystem = methodDef.Module.TypeSystem;
 				if (Debugger.IsAttached) {
-					return builder.CreateMethodBody(parameters, localVariables);
+					return builder.CreateMethodBody(parameters);
 				} else {
 					try {
-						return builder.CreateMethodBody(parameters, localVariables);
+						return builder.CreateMethodBody(parameters);
 					} catch (OperationCanceledException) {
 						throw;
 					} catch (Exception ex) {
@@ -84,13 +79,11 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 		}
 		
-		public BlockStatement CreateMethodBody(IEnumerable<ParameterDeclaration> parameters,
-		                                       ConcurrentDictionary<int, IEnumerable<ILVariable>> localVariables)
+		public BlockStatement CreateMethodBody(IEnumerable<ParameterDeclaration> parameters)
 		{
-			if (methodDef.Body == null) return null;
-			
-			if (localVariables == null)
-				throw new ArgumentException("localVariables must be instantiated");
+			if (methodDef.Body == null) {
+				return null;
+			}
 			
 			context.CancellationToken.ThrowIfCancellationRequested();
 			ILBlock ilMethod = new ILBlock();
@@ -102,10 +95,10 @@ namespace ICSharpCode.Decompiler.Ast
 			bodyGraph.Optimize(context, ilMethod);
 			context.CancellationToken.ThrowIfCancellationRequested();
 			
-			var allVariables = ilMethod.GetSelfAndChildrenRecursive<ILExpression>().Select(e => e.Operand as ILVariable)
+			var localVariables = ilMethod.GetSelfAndChildrenRecursive<ILExpression>().Select(e => e.Operand as ILVariable)
 				.Where(v => v != null && !v.IsParameter).Distinct();
 			Debug.Assert(context.CurrentMethod == methodDef);
-			NameVariables.AssignNamesToVariables(context, astBuilder.Parameters, allVariables, ilMethod);
+			NameVariables.AssignNamesToVariables(context, astBuilder.Parameters, localVariables, ilMethod);
 			
 			if (parameters != null) {
 				foreach (var pair in (from p in parameters
@@ -132,9 +125,7 @@ namespace ICSharpCode.Decompiler.Ast
 				astBlock.Statements.InsertBefore(insertionPoint, newVarDecl);
 			}
 			
-			// store the variables - used for debugger
-			int token = methodDef.MetadataToken.ToInt32();
-			localVariables.AddOrUpdate(token, allVariables, (key, oldValue) => allVariables);
+			astBlock.AddAnnotation(new MemberMapping(methodDef));
 			
 			return astBlock;
 		}
@@ -430,7 +421,13 @@ namespace ICSharpCode.Decompiler.Ast
 				case ILCode.CompoundAssignment:
 					{
 						CastExpression cast = arg1 as CastExpression;
-						BinaryOperatorExpression boe = (BinaryOperatorExpression)(cast != null ? cast.Expression : arg1);
+						var boe = cast != null ? (BinaryOperatorExpression)cast.Expression : arg1 as BinaryOperatorExpression;
+						// AssignmentExpression doesn't support overloaded operators so they have to be processed to BinaryOperatorExpression
+						if (boe == null) {
+							var tmp = new ParenthesizedExpression(arg1);
+							ReplaceMethodCallsWithOperators.ProcessInvocationExpression((InvocationExpression)arg1);
+							boe = (BinaryOperatorExpression)tmp.Expression;
+						}
 						var assignment = new Ast.AssignmentExpression {
 							Left = boe.Left.Detach(),
 							Operator = ReplaceMethodCallsWithOperators.GetAssignmentOperatorForBinaryOperator(boe.Operator),
@@ -449,17 +446,25 @@ namespace ICSharpCode.Decompiler.Ast
 					#endregion
 					#region Comparison
 					case ILCode.Ceq: return new Ast.BinaryOperatorExpression(arg1, BinaryOperatorType.Equality, arg2);
+					case ILCode.Cne: return new Ast.BinaryOperatorExpression(arg1, BinaryOperatorType.InEquality, arg2);
 					case ILCode.Cgt: return new Ast.BinaryOperatorExpression(arg1, BinaryOperatorType.GreaterThan, arg2);
 					case ILCode.Cgt_Un: {
 						// can also mean Inequality, when used with object references
 						TypeReference arg1Type = byteCode.Arguments[0].InferredType;
-						if (arg1Type != null && !arg1Type.IsValueType)
-							return new Ast.BinaryOperatorExpression(arg1, BinaryOperatorType.InEquality, arg2);
-						else
-							return new Ast.BinaryOperatorExpression(arg1, BinaryOperatorType.GreaterThan, arg2);
+						if (arg1Type != null && !arg1Type.IsValueType) goto case ILCode.Cne;
+						goto case ILCode.Cgt;
 					}
+					case ILCode.Cle_Un: {
+						// can also mean Equality, when used with object references
+						TypeReference arg1Type = byteCode.Arguments[0].InferredType;
+						if (arg1Type != null && !arg1Type.IsValueType) goto case ILCode.Ceq;
+						goto case ILCode.Cle;
+					}
+					case ILCode.Cle: return new Ast.BinaryOperatorExpression(arg1, BinaryOperatorType.LessThanOrEqual, arg2);
+					case ILCode.Cge_Un:
+					case ILCode.Cge: return new Ast.BinaryOperatorExpression(arg1, BinaryOperatorType.GreaterThanOrEqual, arg2);
+					case ILCode.Clt_Un:
 					case ILCode.Clt:    return new Ast.BinaryOperatorExpression(arg1, BinaryOperatorType.LessThan, arg2);
-					case ILCode.Clt_Un: return new Ast.BinaryOperatorExpression(arg1, BinaryOperatorType.LessThan, arg2);
 					#endregion
 					#region Logical
 					case ILCode.LogicNot:   return new Ast.UnaryOperatorExpression(UnaryOperatorType.Not, arg1);
@@ -709,21 +714,40 @@ namespace ICSharpCode.Decompiler.Ast
 								return ace;
 							}
 						}
-						var oce = new Ast.ObjectCreateExpression();
 						if (declaringType.IsAnonymousType()) {
 							MethodDefinition ctor = ((MethodReference)operand).Resolve();
 							if (methodDef != null) {
-								oce.Initializer = new ArrayInitializerExpression();
+								AnonymousTypeCreateExpression atce = new AnonymousTypeCreateExpression();
+								bool allNamesCanBeInferred = true;
 								for (int i = 0; i < args.Count; i++) {
-									oce.Initializer.Elements.Add(
-										new NamedExpression {
-											Identifier = ctor.Parameters[i].Name,
-											Expression = args[i]
-										});
+									string inferredName;
+									if (args[i] is IdentifierExpression)
+										inferredName = ((IdentifierExpression)args[i]).Identifier;
+									else if (args[i] is MemberReferenceExpression)
+										inferredName = ((MemberReferenceExpression)args[i]).MemberName;
+									else
+										inferredName = null;
+									
+									if (inferredName != ctor.Parameters[i].Name) {
+										allNamesCanBeInferred = false;
+										break;
+									}
 								}
+								if (allNamesCanBeInferred) {
+									atce.Initializers.AddRange(args);
+								} else {
+									for (int i = 0; i < args.Count; i++) {
+										atce.Initializers.Add(
+											new NamedExpression {
+												Identifier = ctor.Parameters[i].Name,
+												Expression = args[i]
+											});
+									}
+								}
+								return atce;
 							}
-							return oce;
 						}
+						var oce = new Ast.ObjectCreateExpression();
 						oce.Type = AstBuilder.ConvertType(declaringType);
 						oce.Arguments.AddRange(args);
 						return oce.WithAnnotation(operand);
@@ -801,8 +825,12 @@ namespace ICSharpCode.Decompiler.Ast
 					}
 				case ILCode.InitializedObject:
 					return new InitializedObjectExpression();
+				case ILCode.Wrap:
+					return arg1.WithAnnotation(PushNegation.LiftedOperatorAnnotation);
 				case ILCode.AddressOf:
 					return MakeRef(arg1);
+				case ILCode.NullableOf:
+				case ILCode.ValueOf: return arg1;
 				default:
 					throw new Exception("Unknown OpCode: " + byteCode.Code);
 			}

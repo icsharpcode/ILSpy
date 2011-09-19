@@ -125,7 +125,6 @@ namespace ICSharpCode.ILSpy.VB
 					RunTransformsAndGenerateCode(codeDomBuilder, output, options, assembly.AssemblyDefinition.MainModule);
 				}
 			}
-			OnDecompilationFinished(null);
 		}
 		
 		static readonly string[] projectImports = new[] {
@@ -237,7 +236,6 @@ namespace ICSharpCode.ILSpy.VB
 					if (r.Name != "mscorlib") {
 						w.WriteStartElement("Reference");
 						w.WriteAttributeString("Include", r.Name);
-						// TODO: RequiredTargetFramework
 						w.WriteEndElement();
 					}
 				}
