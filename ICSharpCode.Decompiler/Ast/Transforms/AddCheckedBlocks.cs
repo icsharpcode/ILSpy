@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 						result.CostInCheckedContext += new Cost(10000, 0);
 				}
 				// Embed this node in an checked/unchecked expression:
-				if (expr.Parent is ExpressionStatement) {
+				if (expr.Parent is ExpressionStatement || expr.Parent is ObjectCreateExpression || expr.Parent is ArrayCreateExpression) {
 					// We cannot use checked/unchecked for top-level-expressions.
 					// However, we could try converting a compound assignment (checked(a+=b);) or unary operator (checked(a++);)
 					// back to its old form.
