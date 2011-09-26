@@ -112,6 +112,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
             //Adds the module nodes
             foreach (var module in assemblyDefinition.Modules)
                 this.Children.Add(new ModuleTreeNode(module, this));
+
+            //If there's only one module, expand it
+            if (this.Children.Count == 1)
+                this.Children[0].IsExpanded = true;
 		}
 		
 		public override bool CanExpandRecursively {
