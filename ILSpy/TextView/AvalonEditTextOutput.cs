@@ -22,11 +22,13 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Windows;
+
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler;
+using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TextView
 {
@@ -45,7 +47,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	sealed class DefinitionLookup
 	{
-		Dictionary<object, int> definitions = new Dictionary<object, int>();
+		internal Dictionary<object, int> definitions = new Dictionary<object, int>();
 		
 		public int GetDefinitionPosition(object definition)
 		{
@@ -92,7 +94,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>Embedded UIElements, see <see cref="UIElementGenerator"/>.</summary>
 		internal readonly List<KeyValuePair<int, Lazy<UIElement>>> UIElements = new List<KeyValuePair<int, Lazy<UIElement>>>();
 		
-		List<MemberMapping> memberMappings = new List<MemberMapping>();
+		internal readonly List<MemberMapping> DebuggerMemberMappings = new List<MemberMapping>();
 		
 		public AvalonEditTextOutput()
 		{
@@ -122,13 +124,9 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 		
 		public ICSharpCode.NRefactory.TextLocation Location {
-			get { 
+			get {
 				return new ICSharpCode.NRefactory.TextLocation(lineNumber, b.Length - lastLineStart + 1 + (needsIndent ? indent : 0));
 			}
-		}
-		
-		public IList<MemberMapping> MemberMappings {
-			get { return memberMappings; }
 		}
 		
 		#region Text Document
@@ -208,14 +206,14 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 		
-		public void WriteDefinition(string text, object definition)
+		public void WriteDefinition(string text, object definition, bool isLocal)
 		{
 			WriteIndent();
 			int start = this.TextLength;
 			b.Append(text);
 			int end = this.TextLength;
 			this.DefinitionLookup.AddDefinition(definition, this.TextLength);
-			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = definition, IsLocal = true, IsLocalTarget = true });
+			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = definition, IsLocal = isLocal, IsLocalTarget = true });
 		}
 		
 		public void WriteReference(string text, object reference, bool isLocal)
@@ -256,7 +254,7 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		public void AddDebuggerMemberMapping(MemberMapping memberMapping)
 		{
-			memberMappings.Add(memberMapping);
+			DebuggerMemberMappings.Add(memberMapping);
 		}
 	}
 }

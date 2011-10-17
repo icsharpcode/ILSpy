@@ -357,6 +357,24 @@ namespace ICSharpCode.ILSpy.TextView
 				foldingManager.UpdateFoldings(textOutput.Foldings.OrderBy(f => f.StartOffset), -1);
 				Debug.WriteLine("  Updating folding: {0}", w.Elapsed); w.Restart();
 			}
+			
+			// update debugger info
+			DebugInformation.CodeMappings = textOutput.DebuggerMemberMappings.ToDictionary(m => m.MetadataToken);
+			
+			// update class bookmarks
+			var document = textEditor.Document;
+			manager.Bookmarks.Clear();
+			foreach (var pair in textOutput.DefinitionLookup.definitions) {
+				MemberReference member = pair.Key as MemberReference;
+				int offset = pair.Value;
+				if (member != null) {
+					int line = document.GetLocation(offset).Line;
+					if (member is TypeDefinition)
+						manager.Bookmarks.Add(new TypeBookmark(member, line));
+					else
+						manager.Bookmarks.Add(new MemberBookmark(member, line));
+				}
+			}
 		}
 		#endregion
 		
@@ -465,7 +483,7 @@ namespace ICSharpCode.ILSpy.TextView
 					if (DebugInformation.CodeMappings == null || !DebugInformation.CodeMappings.ContainsKey(token))
 						return;
 					
-					DebugInformation.CodeMappings[token].GetInstructionByTokenAndOffset(token, ilOffset, out member, out line);
+					DebugInformation.CodeMappings[token].GetInstructionByTokenAndOffset(ilOffset, out member, out line);
 					
 					// update marker
 					DebuggerService.JumpToCurrentLine(member, line, 0, line, 0, ilOffset);
@@ -529,15 +547,7 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		void DecompileNodes(DecompilationContext context, ITextOutput textOutput)
 		{
-			// reset data
-			DebugInformation.CodeMappings = null;
-			DebugInformation.LocalVariables = null;
-			DebugInformation.DecompiledMemberReferences = null;
-			// set the language
-			DebugInformation.Language = MainWindow.Instance.sessionSettings.FilterSettings.Language.Name.StartsWith("IL") ? DecompiledLanguages.IL : DecompiledLanguages.CSharp;
-			
 			var nodes = context.TreeNodes;
-			context.Language.DecompileFinished += Language_DecompileFinished;
 			for (int i = 0; i < nodes.Length; i++) {
 				if (i > 0)
 					textOutput.WriteLine();
@@ -545,34 +555,7 @@ namespace ICSharpCode.ILSpy.TextView
 				context.Options.CancellationToken.ThrowIfCancellationRequested();
 				nodes[i].Decompile(context.Language, textOutput, context.Options);
 			}
-			context.Language.DecompileFinished -= Language_DecompileFinished;
 		}
-		
-		void Language_DecompileFinished(object sender, DecompileEventArgs e)
-		{
-			if (e != null) {
-				manager.UpdateClassMemberBookmarks(e.AstNodes, typeof(TypeBookmark), typeof(MemberBookmark));
-				if (iconMargin.DecompiledMembers == null) {
-					iconMargin.DecompiledMembers = new List<MemberReference>();
-				}
-				iconMargin.DecompiledMembers.AddRange(e.DecompiledMemberReferences.Values.AsEnumerable());
-				
-				// debugger info
-				if (DebugInformation.CodeMappings == null) {
-					DebugInformation.CodeMappings = e.CodeMappings;
-					DebugInformation.LocalVariables = e.LocalVariables;
-					DebugInformation.DecompiledMemberReferences = e.DecompiledMemberReferences;
-				} else {
-					DebugInformation.CodeMappings.AddRange(e.CodeMappings);
-					DebugInformation.DecompiledMemberReferences.AddRange(e.DecompiledMemberReferences);
-					if (e.LocalVariables != null)
-						DebugInformation.LocalVariables.AddRange(e.LocalVariables);
-				}
-			} else {
-				manager.UpdateClassMemberBookmarks(null, typeof(TypeBookmark), typeof(MemberBookmark));
-			}
-		}
-
 		#endregion
 		
 		#region WriteOutputLengthExceededMessage
@@ -617,7 +600,7 @@ namespace ICSharpCode.ILSpy.TextView
 				ClearLocalReferenceMarks();
 				if (references != null) {
 					foreach (var r in references) {
-						if (r.Reference == reference) {
+						if (reference.Equals(r.Reference)) {
 							var mark = textMarkerService.Create(r.StartOffset, r.Length);
 							mark.BackgroundColor = r.IsLocalTarget ? Colors.LightSeaGreen : Colors.GreenYellow;
 							localReferenceMarks.Add(mark);

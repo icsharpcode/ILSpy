@@ -35,68 +35,43 @@ namespace ICSharpCode.ILSpy.Bookmarks
 	/// </summary>
 	public class MemberBookmark : IBookmark
 	{
-		AstNode node;
+		MemberReference member;
 		
-		public AstNode Node {
+		public MemberReference Member {
 			get {
-				return node;
+				return member;
 			}
 		}
 		
-		public MemberBookmark(AstNode node)
+		public MemberBookmark(MemberReference member, int line)
 		{
-			this.node = node;
+			this.member = member;
+			LineNumber = line;
 		}
 		
 		public virtual ImageSource Image {
 			get {
-				var attrNode = (AttributedNode)node;
-				if (node is EnumMemberDeclaration)
-					return GetMemberOverlayedImage(attrNode, MemberIcon.EnumValue);
+				if (member is FieldDefinition)
+					return TreeNodes.FieldTreeNode.GetIcon((FieldDefinition)member);
 				
-				if (node is FieldDeclaration)
-					return GetMemberOverlayedImage(attrNode, MemberIcon.Field);
+				if (member is PropertyDefinition)
+					return TreeNodes.PropertyTreeNode.GetIcon((PropertyDefinition)member);
 				
-				if (node is PropertyDeclaration)
-					return GetMemberOverlayedImage(attrNode, MemberIcon.Property);
+				if (member is EventDefinition)
+					return TreeNodes.EventTreeNode.GetIcon((EventDefinition)member);
 				
-				if (node is EventDeclaration || node is CustomEventDeclaration)
-					return GetMemberOverlayedImage(attrNode, MemberIcon.Event);
+				if (member is MethodDefinition)
+					return TreeNodes.MethodTreeNode.GetIcon((MethodDefinition)member);
 				
-				if (node is IndexerDeclaration) 
-					return GetMemberOverlayedImage(attrNode, MemberIcon.Indexer);
+				if (member is TypeDefinition)
+					return TreeNodes.TypeTreeNode.GetIcon((TypeDefinition)member);
 				
-				if (node is OperatorDeclaration)
-					return GetMemberOverlayedImage(attrNode, MemberIcon.Operator);
-				
-				if (node is ConstructorDeclaration || node is DestructorDeclaration)
-					return GetMemberOverlayedImage(attrNode, MemberIcon.Constructor);
-				
-				return GetMemberOverlayedImage(attrNode, MemberIcon.Method);
+				return null;
 			}
-		}
-		
-		ImageSource GetMemberOverlayedImage(AttributedNode attrNode, MemberIcon icon)
-		{
-			switch (attrNode.Modifiers & Modifiers.VisibilityMask) {
-				case Modifiers.Protected:
-					return Images.GetIcon(icon, AccessOverlayIcon.Protected, (attrNode.Modifiers & Modifiers.Static) == Modifiers.Static);
-				case Modifiers.Private:
-					return Images.GetIcon(icon, AccessOverlayIcon.Private, (attrNode.Modifiers & Modifiers.Static) == Modifiers.Static);
-				case Modifiers.Internal:
-					return Images.GetIcon(icon, AccessOverlayIcon.Internal, (attrNode.Modifiers & Modifiers.Static) == Modifiers.Static);
-			}
-			
-			return Images.GetIcon(icon, AccessOverlayIcon.Public, (attrNode.Modifiers & Modifiers.Static) == Modifiers.Static);
 		}
 		
 		public int LineNumber {
-			get {
-				//var t = node.Annotation<TextOutputLocation>();
-				//if (t != null)
-				//	return t.Line;
-				return 0;
-			}
+			get; private set;
 		}
 		
 		public virtual void MouseDown(MouseButtonEventArgs e)
@@ -123,49 +98,18 @@ namespace ICSharpCode.ILSpy.Bookmarks
 	
 	public class TypeBookmark : MemberBookmark
 	{
-		public TypeBookmark(AstNode node) : base (node)
+		public TypeBookmark(MemberReference member, int line) : base (member, line)
 		{
 		}
 		
 		public override ImageSource Image {
 			get {
-				var attrNode = (AttributedNode)Node;
-				
-				if (Node is DelegateDeclaration)
-					return GetTypeOverlayedImage(attrNode, TypeIcon.Delegate);
-				
-				if (Node is TypeDeclaration) {
-					var n = Node as TypeDeclaration;
-					switch (n.ClassType)
-					{
-						case ClassType.Enum:
-							return GetTypeOverlayedImage(attrNode, TypeIcon.Enum);
-						case ClassType.Struct:
-							return GetTypeOverlayedImage(attrNode, TypeIcon.Struct);
-						case ClassType.Interface:
-							return GetTypeOverlayedImage(attrNode, TypeIcon.Interface);
-					}
+				if (Member is TypeDefinition) {
+					return TreeNodes.TypeTreeNode.GetIcon((TypeDefinition)Member);
 				}
 				
-				if ((attrNode.Modifiers & Modifiers.Static) == Modifiers.Static)
-					return GetTypeOverlayedImage(attrNode, TypeIcon.StaticClass);
-				
-				return GetTypeOverlayedImage(attrNode, TypeIcon.Class);
+				return null;
 			}
-		}
-		
-		ImageSource GetTypeOverlayedImage(AttributedNode attrNode, TypeIcon icon)
-		{
-			switch (attrNode.Modifiers & Modifiers.VisibilityMask) {
-				case Modifiers.Protected:
-					return Images.GetIcon(icon, AccessOverlayIcon.Protected);
-				case Modifiers.Private:
-					return Images.GetIcon(icon, AccessOverlayIcon.Private);
-				case Modifiers.Internal:
-					return Images.GetIcon(icon, AccessOverlayIcon.Internal);
-			}
-			
-			return Images.GetIcon(icon, AccessOverlayIcon.Public);
 		}
 	}
 }

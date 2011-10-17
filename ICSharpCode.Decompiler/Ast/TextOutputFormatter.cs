@@ -33,6 +33,8 @@ namespace ICSharpCode.Decompiler.Ast
 		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
 		int braceLevelWithinType = -1;
 		bool inDocumentationComment = false;
+		bool firstUsingDeclaration;
+		bool lastUsingDeclaration;
 		
 		public TextOutputFormatter(ITextOutput output)
 		{
@@ -43,6 +45,12 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		public void WriteIdentifier(string identifier)
 		{
+			var definition = GetCurrentDefinition();
+			if (definition != null) {
+				output.WriteDefinition(identifier, definition, false);
+				return;
+			}
+			
 			object memberRef = GetCurrentMemberReference();
 
 			if (memberRef != null) {
@@ -50,7 +58,7 @@ namespace ICSharpCode.Decompiler.Ast
 				return;
 			}
 
-			var definition = GetCurrentLocalDefinition();
+			definition = GetCurrentLocalDefinition();
 			if (definition != null) {
 				output.WriteDefinition(identifier, definition);
 				return;
@@ -60,6 +68,11 @@ namespace ICSharpCode.Decompiler.Ast
 			if (memberRef != null) {
 				output.WriteReference(identifier, memberRef, true);
 				return;
+			}
+
+			if (firstUsingDeclaration) {
+				output.MarkFoldStart(defaultCollapsed: true);
+				firstUsingDeclaration = false;
 			}
 
 			output.Write(identifier);
@@ -86,6 +99,15 @@ namespace ICSharpCode.Decompiler.Ast
 				//    return variable.OriginalVariable;
 				return variable;
 			}
+
+			var gotoStatement = node as GotoStatement;
+			if (gotoStatement != null)
+			{
+				var method = nodeStack.Select(nd => nd.Annotation<MethodReference>()).FirstOrDefault(mr => mr != null);
+				if (method != null)
+					return method.ToString() + gotoStatement.Label;
+			}
+
 			return null;
 		}
 
@@ -109,6 +131,30 @@ namespace ICSharpCode.Decompiler.Ast
 				}
 			}
 
+			var label = node as LabelStatement;
+			if (label != null)
+			{
+				var method = nodeStack.Select(nd => nd.Annotation<MethodReference>()).FirstOrDefault(mr => mr != null);
+				if (method != null)
+					return method.ToString() + label.Label;
+			}
+
+			return null;
+		}
+		
+		object GetCurrentDefinition()
+		{
+			if (nodeStack == null || nodeStack.Count == 0)
+				return null;
+			
+			var node = nodeStack.Peek();			
+			if (IsDefinition(node))
+				return node.Annotation<MemberReference>();
+			
+			var fieldDef = node.Parent.Annotation<FieldDefinition>();
+			if (fieldDef != null)
+				return node.Parent.Annotation<MemberReference>();
+
 			return null;
 		}
 		
@@ -121,7 +167,8 @@ namespace ICSharpCode.Decompiler.Ast
 		{
 			// Attach member reference to token only if there's no identifier in the current node.
 			MemberReference memberRef = GetCurrentMemberReference();
-			if (memberRef != null && nodeStack.Peek().GetChildByRole(AstNode.Roles.Identifier).IsNull)
+			var node = nodeStack.Peek();
+			if (memberRef != null && node.GetChildByRole(AstNode.Roles.Identifier).IsNull)
 				output.WriteReference(token, memberRef);
 			else
 				output.Write(token);
@@ -166,6 +213,10 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		public void NewLine()
 		{
+			if (lastUsingDeclaration) {
+				output.MarkFoldEnd();
+				lastUsingDeclaration = false;
+			}
 			output.WriteLine();
 		}
 		
@@ -204,6 +255,15 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		public void StartNode(AstNode node)
 		{
+			if (nodeStack.Count == 0) {
+				if (IsUsingDeclaration(node)) {
+					firstUsingDeclaration = !IsUsingDeclaration(node.PrevSibling);
+					lastUsingDeclaration = !IsUsingDeclaration(node.NextSibling);
+				} else {
+					firstUsingDeclaration = false;
+					lastUsingDeclaration = false;
+				}
+			}
 			nodeStack.Push(node);
 			startLocations.Push(output.Location);
 			
@@ -214,6 +274,11 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 		}
 		
+		private bool IsUsingDeclaration(AstNode node)
+		{
+			return node is UsingDeclaration || node is UsingAliasDeclaration;
+		}
+
 		public void EndNode(AstNode node)
 		{
 			if (nodeStack.Pop() != node)
@@ -243,6 +308,19 @@ namespace ICSharpCode.Decompiler.Ast
 				output.AddDebuggerMemberMapping(currentMemberMapping);
 				currentMemberMapping = parentMemberMappings.Pop();
 			}
+		}
+		
+		private static bool IsDefinition(AstNode node)
+		{
+			return 
+				node is FieldDeclaration ||
+				node is ConstructorDeclaration ||
+				node is DestructorDeclaration || 
+				node is EventDeclaration ||
+				node is DelegateDeclaration ||
+				node is OperatorDeclaration||
+				node is MemberDeclaration ||
+				node is TypeDeclaration;
 		}
 	}
 }

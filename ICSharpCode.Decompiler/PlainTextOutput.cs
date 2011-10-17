@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler
 			column = 1;
 		}
 		
-		public void WriteDefinition(string text, object definition)
+		public void WriteDefinition(string text, object definition, bool isLocal)
 		{
 			Write(text);
 		}
