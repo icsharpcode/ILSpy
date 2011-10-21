@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 using System.Collections.Generic;
 using ICSharpCode.TreeView;
 using Mono.Cecil;
@@ -26,14 +27,28 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 	/// <summary>
 	/// Base class for entity nodes.
 	/// </summary>
-	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IMemberTreeNode
-	{
+  public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IMemberTreeNode
+  {
 		public abstract MemberReference Member { get; }
 		
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
 			e.Handled = true;
-			MainWindow.Instance.JumpToReference(this.Member);
+			// Find which member is referenced
+      Action<bool> action = null;
+      if (null != Parent && Parent is AnalyzerTreeNode)
+      {
+        var referencedMember = ((AnalyzerTreeNode)Parent).GetMemberReference() as MemberReference;
+        if (null != referencedMember)
+        {
+          action = (s) =>
+          {
+            if (s)
+              MainWindow.Instance.TextView.MarkReferences(referencedMember);
+          };
+        }
+      }
+			MainWindow.Instance.JumpToReference(this.Member, action);
 		}
 		
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
@@ -49,5 +64,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				});
 			return true;
 		}
+
+    internal override object GetMemberReference()
+    {
+      return Member;
+    }
 	}
 }

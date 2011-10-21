@@ -485,8 +485,23 @@ namespace ICSharpCode.ILSpy
 			return path.ToArray();
 		}
 		
-		public void JumpToReference(object reference)
+		public void JumpToReference(object reference, Action<bool> jumpFinished = null)
 		{
+      Action<bool> oneShotAction = null;
+      ILSpyTreeNode selectedNode = null;
+      if (null != jumpFinished)
+      {
+        // set up a one shot action to mark the referenced element in output window
+        // this action will only be executed if selection in assembly tree view changes 
+        oneShotAction = (s) =>
+        {
+          TextView.DecompileFinished -= oneShotAction;
+          jumpFinished(s);
+        };
+        TextView.DecompileFinished += oneShotAction;
+        if (SelectedNodes.Count() == 1)
+          selectedNode = SelectedNodes.Single();
+      }
 			if (reference is TypeReference) {
 				SelectNode(assemblyListTreeNode.FindTypeNode(((TypeReference)reference).Resolve()));
 			} else if (reference is MethodReference) {
@@ -506,7 +521,13 @@ namespace ICSharpCode.ILSpy
 				} catch {
 					
 				}
+        return;
 			}
+      if (null != selectedNode && selectedNode == MainWindow.Instance.SelectedNodes.Single())
+      {
+        // selection did not change so execute action immediately
+        oneShotAction(true);
+      }
 		}
 		#endregion
 		

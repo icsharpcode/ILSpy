@@ -25,7 +25,7 @@ using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedTypeExposedByTreeNode : AnalyzerSearchTreeNode
+  internal sealed class AnalyzedTypeExposedByTreeNode : AnalyzerReferencingSearchTreeNode
 	{
 		private readonly TypeDefinition analyzedType;
 

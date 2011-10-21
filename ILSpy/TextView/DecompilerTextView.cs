@@ -459,10 +459,21 @@ namespace ICSharpCode.ILSpy.TextView
 						ShowOutput(output);
 						isDecompilationOk = false;
 					} finally {
-						this.UpdateDebugUI(isDecompilationOk);
+						this.OnDecompileFinished(isDecompilationOk);
 					}
 					decompiledNodes = context.TreeNodes;
 				});
+		}
+		
+		public event Action<bool> DecompileFinished;
+		
+		void OnDecompileFinished(bool isDecompilationOk)
+		{
+		  var handler = DecompileFinished;
+		  if (null != handler)
+		    handler(isDecompilationOk);
+      // TODO: this should be handled through DecompileFinished handler on IconBarMargin 
+      UpdateDebugUI(isDecompilationOk);
 		}
 		
 		void UpdateDebugUI(bool isDecompilationOk)
@@ -597,16 +608,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			object reference = referenceSegment.Reference;
 			if (referenceSegment.IsLocal) {
-				ClearLocalReferenceMarks();
-				if (references != null) {
-					foreach (var r in references) {
-						if (reference.Equals(r.Reference)) {
-							var mark = textMarkerService.Create(r.StartOffset, r.Length);
-							mark.BackgroundColor = r.IsLocalTarget ? Colors.LightSeaGreen : Colors.GreenYellow;
-							localReferenceMarks.Add(mark);
-						}
-					}
-				}
+        MarkReferences(reference);
 				return;
 			}
 			if (definitionLookup != null) {
@@ -624,6 +626,23 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			MainWindow.Instance.JumpToReference(reference);
 		}
+
+    public void MarkReferences(object reference)
+    {
+      ClearLocalReferenceMarks();
+      if (references != null)
+      {
+        foreach (var r in references)
+        {
+          if (reference.Equals(r.Reference))
+          {
+            var mark = textMarkerService.Create(r.StartOffset, r.Length);
+            mark.BackgroundColor = r.IsLocalTarget ? Colors.LightSeaGreen : Colors.GreenYellow;
+            localReferenceMarks.Add(mark);
+          }
+        }
+      }
+    }
 
 		void ClearLocalReferenceMarks()
 		{

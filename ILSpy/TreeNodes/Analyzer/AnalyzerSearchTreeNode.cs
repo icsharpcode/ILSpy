@@ -64,4 +64,15 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return true;
 		}
 	}
+
+  /// <summary>
+  /// base class for analyzer nodes that search for referencing elements like AnalyzedMethodUsedByTreeNode or AnalyzedTypeInstantiationsTreeNode.
+  /// </summary>
+  public abstract class AnalyzerReferencingSearchTreeNode : AnalyzerSearchTreeNode
+  {
+    internal override object GetMemberReference()
+    {
+      return ((AnalyzerTreeNode)Parent).GetMemberReference();
+    }
+  }
 }
