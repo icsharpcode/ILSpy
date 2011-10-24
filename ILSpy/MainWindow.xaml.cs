@@ -485,35 +485,50 @@ namespace ICSharpCode.ILSpy
 			return path.ToArray();
 		}
 		
+		public ILSpyTreeNode FindTreeNode(object reference)
+		{
+			if (reference is TypeReference) {
+				return assemblyListTreeNode.FindTypeNode(((TypeReference)reference).Resolve());
+			} else if (reference is MethodReference) {
+				return assemblyListTreeNode.FindMethodNode(((MethodReference)reference).Resolve());
+			} else if (reference is FieldReference) {
+				return assemblyListTreeNode.FindFieldNode(((FieldReference)reference).Resolve());
+			} else if (reference is PropertyReference) {
+				return assemblyListTreeNode.FindPropertyNode(((PropertyReference)reference).Resolve());
+			} else if (reference is EventReference) {
+				return assemblyListTreeNode.FindEventNode(((EventReference)reference).Resolve());
+			} else if (reference is AssemblyDefinition) {
+				return assemblyListTreeNode.FindAssemblyNode((AssemblyDefinition)reference);
+			} else {
+				return null;
+			}
+		}
+		
 		public void JumpToReference(object reference, Action<bool> jumpFinished = null)
 		{
-      Action<bool> oneShotAction = null;
-      ILSpyTreeNode selectedNode = null;
-      if (null != jumpFinished)
-      {
-        // set up a one shot action to mark the referenced element in output window
-        // this action will only be executed if selection in assembly tree view changes 
-        oneShotAction = (s) =>
+			ILSpyTreeNode treeNode = FindTreeNode(reference);
+			if (treeNode != null) {
+        Action<bool> oneShotAction = null;
+        ILSpyTreeNode selectedNode = null;
+        if (null != jumpFinished)
         {
-          TextView.DecompileFinished -= oneShotAction;
-          jumpFinished(s);
-        };
-        TextView.DecompileFinished += oneShotAction;
-        if (SelectedNodes.Count() == 1)
-          selectedNode = SelectedNodes.Single();
-      }
-			if (reference is TypeReference) {
-				SelectNode(assemblyListTreeNode.FindTypeNode(((TypeReference)reference).Resolve()));
-			} else if (reference is MethodReference) {
-				SelectNode(assemblyListTreeNode.FindMethodNode(((MethodReference)reference).Resolve()));
-			} else if (reference is FieldReference) {
-				SelectNode(assemblyListTreeNode.FindFieldNode(((FieldReference)reference).Resolve()));
-			} else if (reference is PropertyReference) {
-				SelectNode(assemblyListTreeNode.FindPropertyNode(((PropertyReference)reference).Resolve()));
-			} else if (reference is EventReference) {
-				SelectNode(assemblyListTreeNode.FindEventNode(((EventReference)reference).Resolve()));
-			} else if (reference is AssemblyDefinition) {
-				SelectNode(assemblyListTreeNode.FindAssemblyNode((AssemblyDefinition)reference));
+          // set up a one shot action
+          // this action will only be executed if selection in assembly tree view changes 
+          oneShotAction = (s) =>
+          {
+            TextView.DecompileFinished -= oneShotAction;
+            jumpFinished(s);
+          };
+          TextView.DecompileFinished += oneShotAction;
+          if (SelectedNodes.Count() == 1)
+            selectedNode = SelectedNodes.Single();
+        }
+				SelectNode(treeNode);
+        if (null != selectedNode && selectedNode == MainWindow.Instance.SelectedNodes.Single())
+        {
+          // selection did not change so execute action immediately
+          oneShotAction(true);
+        }
 			} else if (reference is Mono.Cecil.Cil.OpCode) {
 				string link = "http://msdn.microsoft.com/library/system.reflection.emit.opcodes." + ((Mono.Cecil.Cil.OpCode)reference).Code.ToString().ToLowerInvariant() + ".aspx";
 				try {
@@ -521,13 +536,7 @@ namespace ICSharpCode.ILSpy
 				} catch {
 					
 				}
-        return;
 			}
-      if (null != selectedNode && selectedNode == MainWindow.Instance.SelectedNodes.Single())
-      {
-        // selection did not change so execute action immediately
-        oneShotAction(true);
-      }
 		}
 		#endregion
 		
