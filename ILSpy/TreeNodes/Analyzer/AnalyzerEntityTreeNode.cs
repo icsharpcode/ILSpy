@@ -17,8 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
+
+using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
 using Mono.Cecil;
 
@@ -35,16 +37,15 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			e.Handled = true;
 			// Find which member is referenced
-      Action<bool> action = null;
+      EventHandler<DecompileFinishedEventArgs> action = null;
       if (null != Parent && Parent is AnalyzerTreeNode)
       {
         var referencedMember = ((AnalyzerTreeNode)Parent).GetMemberReference() as MemberReference;
         if (null != referencedMember)
         {
-          action = (s) =>
+          action = (s, a) =>
           {
-            if (s)
-              MainWindow.Instance.TextView.MarkReferences(referencedMember);
+            MainWindow.Instance.TextView.MarkReferences(referencedMember);
           };
         }
       }
