@@ -227,7 +227,7 @@ namespace ICSharpCode.AvalonEdit.CodeCompletion
 			
 			var matchingItems =
 				from item in listToFilter
-				let quality = GetMatchQuality(item.Text, query)
+				let quality = GetMatchQuality(item.Text, query, allowSubstringMatches: IsFiltering)
 				where quality > 0
 				select new { Item = item, Quality = quality };
 			
@@ -269,7 +269,7 @@ namespace ICSharpCode.AvalonEdit.CodeCompletion
 			int bestQuality = -1;
 			double bestPriority = 0;
 			for (int i = 0; i < completionData.Count; ++i) {
-				int quality = GetMatchQuality(completionData[i].Text, query);
+				int quality = GetMatchQuality(completionData[i].Text, query, allowSubstringMatches: IsFiltering);
 				if (quality < 0)
 					continue;
 				
@@ -312,7 +312,7 @@ namespace ICSharpCode.AvalonEdit.CodeCompletion
 			}
 		}
 
-		int GetMatchQuality(string itemText, string query)
+		public static int GetMatchQuality(string itemText, string query, bool allowSubstringMatches)
 		{
 			if (itemText == null)
 				throw new ArgumentNullException("itemText", "ICompletionData.Text returned null");
@@ -323,8 +323,8 @@ namespace ICSharpCode.AvalonEdit.CodeCompletion
 			// 		6 = match start case sensitive
 			//		5 = match start
 			//		4 = match CamelCase when length of query is 1 or 2 characters
-			// 		3 = match substring case sensitive
-			//		2 = match sustring
+			// 		3 = match substring case sensitive (only if allowSubstringMatches == true)
+			//		2 = match substring                (dito)
 			//		1 = match CamelCase
 			//		-1 = no match
 			if (query == itemText)
@@ -343,8 +343,7 @@ namespace ICSharpCode.AvalonEdit.CodeCompletion
 				if (camelCaseMatch == true) return 4;
 			}
 			
-			// search by substring, if filtering (i.e. new behavior) turned on
-			if (IsFiltering) {
+			if (allowSubstringMatches) {
 				if (itemText.IndexOf(query, StringComparison.InvariantCulture) >= 0)
 					return 3;
 				if (itemText.IndexOf(query, StringComparison.InvariantCultureIgnoreCase) >= 0)
