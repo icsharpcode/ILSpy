@@ -118,6 +118,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case MethodAttributes.FamORAssem:
 					return AccessOverlayIcon.Protected;
 				case MethodAttributes.Private:
+				case MethodAttributes.ReuseSlot:
 					return AccessOverlayIcon.Private;
 				default:
 					throw new NotSupportedException();
