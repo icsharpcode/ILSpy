@@ -550,10 +550,10 @@ namespace Mono.Cecil {
 				var parameters = new ReaderParameters {
 					ReadingMode = module.ReadingMode,
 					SymbolReaderProvider = module.SymbolReaderProvider,
+                    AssemblyResolver = module.AssemblyResolver
 				};
 
-				modules.Add (ModuleDefinition.ReadModule (
-					GetModuleFileName (name), parameters));
+                modules.Add(ModuleDefinition.ReadModule(GetModuleFileName(name), parameters));
 			}
 
 			return modules;

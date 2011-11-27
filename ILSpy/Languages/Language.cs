@@ -96,6 +96,11 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
+        public virtual void DecompileModule(ModuleDefinition module, ITextOutput output, DecompilationOptions options)
+        {
+            WriteCommentLine(output, module.Name);
+        }
+
 		public virtual void WriteCommentLine(ITextOutput output, string comment)
 		{
 			output.WriteLine("// " + comment);

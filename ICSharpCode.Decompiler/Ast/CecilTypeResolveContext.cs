@@ -44,9 +44,9 @@ namespace ICSharpCode.Decompiler.Ast
 			this.namespaces = module.Types.Select(t => t.Namespace).Distinct().ToArray();
 			
 			List<IAttribute> assemblyAttributes = new List<IAttribute>();
-			foreach (var attr in module.Assembly.CustomAttributes) {
-				assemblyAttributes.Add(loader.ReadAttribute(attr));
-			}
+			if(module.Assembly != null)
+                foreach (var attr in module.Assembly.CustomAttributes)
+                    assemblyAttributes.Add(loader.ReadAttribute(attr));
 			this.AssemblyAttributes = assemblyAttributes.AsReadOnly();
 		}
 		

@@ -117,14 +117,28 @@ namespace ICSharpCode.ILSpy
 				rd.WriteAssemblyReferences(assembly.AssemblyDefinition.MainModule);
 			rd.WriteAssemblyHeader(assembly.AssemblyDefinition);
 			output.WriteLine();
-			rd.WriteModuleHeader(assembly.AssemblyDefinition.MainModule);
 			if (options.FullDecompilation) {
-				output.WriteLine();
-				output.WriteLine();
-				rd.WriteModuleContents(assembly.AssemblyDefinition.MainModule);
+                foreach (var m in assembly.AssemblyDefinition.Modules)
+                    DecompileModule(m, output, options);
 			}
 		}
-		
+
+        public override void DecompileModule(ModuleDefinition module, ITextOutput output, DecompilationOptions options)
+        {
+            output.WriteLine("// " + module.Name);
+            output.WriteLine();
+
+            ReflectionDisassembler rd = new ReflectionDisassembler(output, detectControlStructure, options.CancellationToken);
+            rd.WriteModuleHeader(module);
+            if (options.FullDecompilation)
+            {
+                output.WriteLine();
+                output.WriteLine();
+                rd.WriteModuleContents(module);
+            }
+            OnDecompilationFinished(null);
+        }
+
 		public override string TypeToString(TypeReference t, bool includeNamespace, ICustomAttributeProvider attributeProvider)
 		{
 			PlainTextOutput output = new PlainTextOutput();

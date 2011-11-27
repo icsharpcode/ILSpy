@@ -251,7 +251,7 @@ namespace ICSharpCode.ILSpy
 						if (asm == null)
 							continue;
 						CancellationToken cancellationToken = cts.Token;
-						foreach (TypeDefinition type in asm.MainModule.Types) {
+						foreach (TypeDefinition type in asm.Modules.SelectMany(m => m.Types)) {
 							cancellationToken.ThrowIfCancellationRequested();
 							PerformSearch(type);
 						}
