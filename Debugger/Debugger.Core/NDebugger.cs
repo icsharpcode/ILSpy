@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using Debugger.Interop;
 using Debugger.Interop.CorDebug;
+using Debugger.Interop.ICLRRuntimeInfo;
 using Microsoft.Win32;
 
 namespace Debugger
@@ -192,11 +193,51 @@ namespace Debugger
 				return process;
 			}
 		}
-		
+
+		private static ICLRRuntimeInfo GetRuntime(IEnumUnknown runtimes, String version)
+		{
+			var clrRuntimeInfos = new Object[1];
+			UInt32 fetchedNum;
+			do
+			{
+				runtimes.Next(Convert.ToUInt32(clrRuntimeInfos.Length), clrRuntimeInfos, out fetchedNum);
+
+				foreach (ICLRRuntimeInfo clrRuntimeInfo in clrRuntimeInfos)
+				{
+					// version not specified we return the first one
+					if (String.IsNullOrEmpty(version))
+					{
+						return clrRuntimeInfo;
+					}
+
+					var stringBuilder = new StringBuilder(16);
+					var stringBuilderLength = Convert.ToUInt32(stringBuilder.Capacity);
+					clrRuntimeInfo.GetVersionString(stringBuilder, ref stringBuilderLength);
+					if (stringBuilder.ToString().StartsWith(version, StringComparison.Ordinal))
+					{
+						return clrRuntimeInfo;
+					}
+				}
+			} while (fetchedNum == clrRuntimeInfos.Length);
+
+			return null;
+		}
+
 		public Process Attach(System.Diagnostics.Process existingProcess)		
 		{
+			var clrMetaHost = NativeMethods.CLRCreateInstance(ref NativeMethods.CLSID_CLRMetaHost, ref NativeMethods.IID_ICLRMetaHost);
+			var clrRuntimeInfoEnum = clrMetaHost.EnumerateLoadedRuntimes(existingProcess.Handle);
+
+			//Get only the first runtime - we're not handling the multi-runtime case
+			var clrRuntimeInfos=new ICLRRuntimeInfo[1];
+			uint fetchedNum;
+			clrRuntimeInfoEnum.Next(1, clrRuntimeInfos, out fetchedNum);
+			if (fetchedNum!=1) throw new System.Exception("No loaded runtime");
+			//Get the runtime's version
+			var version =ICLRRuntimeInfoExtensionMethods.GetVersion(clrRuntimeInfos[0]);
+			
 			string mainModule = existingProcess.MainModule.FileName;
-			InitDebugger(GetProgramVersion(mainModule));
+			InitDebugger(version);
 			ICorDebugProcess corDebugProcess = corDebug.DebugActiveProcess((uint)existingProcess.Id, 0);
 			// TODO: Can we get the acutal working directory?
 			Process process = new Process(this, corDebugProcess, Path.GetDirectoryName(mainModule));

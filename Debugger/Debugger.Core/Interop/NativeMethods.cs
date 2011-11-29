@@ -22,6 +22,11 @@ namespace Debugger.Interop
 		
 		[DllImport("mscoree.dll", CharSet=CharSet.Unicode)]
 		public static extern int GetRequestedRuntimeVersion(string exeFilename, [Out, MarshalAs(UnmanagedType.LPWStr)] StringBuilder pVersion, Int32 cchBuffer, out Int32 dwLength);
+		
+		public static Guid CLSID_CLRMetaHost = new Guid("9280188D-0E8E-4867-B30C-7FA83884E8DE");
+		public static Guid IID_ICLRMetaHost = new Guid("D332DB9E-B9B3-4125-8207-A14884F53216");
+		[DllImport("mscoree.dll", CharSet = CharSet.Unicode, PreserveSig = false)]
+		public static extern ICLRMetaHost.ICLRMetaHost CLRCreateInstance(ref Guid clsid, ref Guid riid);
 	}
 }
 
