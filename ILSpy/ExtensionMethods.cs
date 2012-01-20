@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using ICSharpCode.Decompiler;
+using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {
@@ -31,6 +33,19 @@ namespace ICSharpCode.ILSpy
 			foreach (T item in items)
 				if (!list.Contains(item))
 					list.Add(item);
+		}
+
+		public static bool IsCustomAttribute(this TypeDefinition type)
+		{
+			while (type.FullName != "System.Object") {
+				var resolvedBaseType = type.BaseType.Resolve();
+				if (resolvedBaseType == null)
+					return false;
+				if (resolvedBaseType.FullName == "System.Attribute")
+					return true;
+				type = resolvedBaseType;
+			}
+			return false;
 		}
 	}
 }

@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.Controls
 			InitializeComponent();
 			// set size to fit decompiler window
 			// TODO: there should be a more transparent way to do this
-			MaxWidth = maxSize.Width;
+			Width = maxSize.Width;
 			MaxHeight = maxSize.Height;
 			resourceListView.ItemsSource = strings;
 		}

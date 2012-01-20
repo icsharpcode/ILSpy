@@ -7,6 +7,7 @@
 // Dual licensed under the terms of the MIT X11 or GNU GPL
 //
 // Copyright (c) 2010 Novell, Inc (http://www.novell.com)
+// Copyright 2011 Xamarin Inc
 //
 
 using System;
@@ -178,8 +179,13 @@ namespace Mono.CSharp
 		{
 			return null;
 		}
-		
+
 		public virtual object Visit (EmptyExpression emptyExpression)
+		{
+			return null;
+		}
+		
+		public virtual object Visit (ErrorExpression errorExpression)
 		{
 			return null;
 		}
@@ -195,72 +201,65 @@ namespace Mono.CSharp
 			return null;
 		}
 
-
 		public virtual object Visit (While whileStatement)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (For forStatement)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (StatementExpression statementExpression)
 		{
 			return null;
 		}
 
+		public virtual object Visit (StatementErrorExpression errorStatement)
+		{
+			return null;
+		}
 
 		public virtual object Visit (Return returnStatement)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (Goto gotoStatement)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (LabeledStatement labeledStatement)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (GotoDefault gotoDefault)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (GotoCase gotoCase)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (Throw throwStatement)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (Break breakStatement)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (Continue continueStatement)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (Block blockStatement)
 		{
@@ -282,18 +281,15 @@ namespace Mono.CSharp
 			return null;
 		}
 
-
 		public virtual object Visit (Unchecked uncheckedStatement)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (Checked checkedStatement)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (Unsafe unsafeStatement)
 		{
@@ -311,7 +307,6 @@ namespace Mono.CSharp
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (TryCatch tryCatchStatement)
 		{
@@ -334,6 +329,11 @@ namespace Mono.CSharp
 		}
 
 		public virtual object Visit (YieldBreak yieldBreakStatement)
+		{
+			return null;
+		}
+		
+		public virtual object Visit (InvalidStatementExpression invalidStatementExpression)
 		{
 			return null;
 		}
@@ -434,7 +434,6 @@ namespace Mono.CSharp
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (Conditional conditionalExpression)
 		{
@@ -628,6 +627,11 @@ namespace Mono.CSharp
 		}
 		
 		public virtual object Visit (MakeRefExpr makeRefExpr)
+		{
+			return null;
+		}
+
+		public virtual object Visit (Await awaitExpr)
 		{
 			return null;
 		}

@@ -18,7 +18,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 		TypeKind GetTypeKindForAstType(CSharp.AstType type);
 		TypeCode ResolveExpression(CSharp.Expression expression);
 		bool? IsReferenceType(CSharp.Expression expression);
-		ITypeResolveContext ResolveContext { get; }
+		//ITypeResolveContext ResolveContext { get; }
 		IType ResolveType(AstType type, TypeDeclaration entity = null);
 	}
 	
@@ -1116,7 +1116,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				Condition = new NamedNode(
 					"condition",
 					new CSharp.BinaryOperatorExpression {
-						Left = new NamedNode("ident", new CSharp.IdentifierExpression()),
+						Left = new NamedNode("ident", new CSharp.IdentifierExpression(Pattern.AnyString)),
 						Operator = CSharp.BinaryOperatorType.Any,
 						Right = new AnyNode("endExpr")
 					}),
@@ -1624,7 +1624,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			
 			foreach (var type in current.ImplementsTypes) {
 				var resolved = provider.ResolveType(type, current);
-				var found = resolved.GetMembers(provider.ResolveContext, m => m.EntityType == EntityType.Method && m.Name == result.Name.Name);
+				var found = resolved.GetMembers(m => m.EntityType == EntityType.Method && m.Name == result.Name.Name);
 				if (found.FirstOrDefault() != null) {
 					result.ImplementsClause.Add(new InterfaceMemberSpecifier((AstType)type.Clone(), found.FirstOrDefault().Name));
 				}
@@ -1640,7 +1640,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			
 			foreach (var type in current.ImplementsTypes) {
 				var resolved = provider.ResolveType(type, current);
-				var found = resolved.GetMembers(provider.ResolveContext, m => m.EntityType == EntityType.Event && m.Name == result.Name.Name);
+				var found = resolved.GetMembers(m => m.EntityType == EntityType.Event && m.Name == result.Name.Name);
 				if (found.FirstOrDefault() != null) {
 					result.ImplementsClause.Add(new InterfaceMemberSpecifier((AstType)type.Clone(), found.FirstOrDefault().Name));
 				}
@@ -1675,7 +1675,8 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				Right = new NamedNode(
 					"modifier",
 					new CSharp.MemberReferenceExpression() {
-						Target = new CSharp.IdentifierExpression("CharSet")
+						Target = new CSharp.IdentifierExpression("CharSet"),
+						MemberName = Pattern.AnyString
 					})
 			};
 			
@@ -2037,16 +2038,22 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			return EndNode(primitiveType, new PrimitiveType(typeName));
 		}
 		
-		public AstNode VisitComment(CSharp.Comment comment, object data)
+		public AstNode VisitComment (CSharp.Comment comment, object data)
 		{
-			var c = new Comment(comment.Content, comment.CommentType == CSharp.CommentType.Documentation);
+			var c = new Comment (comment.Content, comment.CommentType == CSharp.CommentType.Documentation);
 			
 			if (comment.CommentType == CSharp.CommentType.MultiLine)
-				throw new NotImplementedException();
+				throw new NotImplementedException ();
 			
-			return EndNode(comment, c);
+			return EndNode (comment, c);
 		}
 		
+		public AstNode VisitPreProcessorDirective (CSharp.PreProcessorDirective preProcessorDirective, object data)
+		{
+			// TODO
+			return null;
+		}
+
 		public AstNode VisitTypeParameterDeclaration(CSharp.TypeParameterDeclaration typeParameterDeclaration, object data)
 		{
 			var param = new TypeParameterDeclaration() {
@@ -2056,7 +2063,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			
 			var constraint = typeParameterDeclaration.Parent
 				.GetChildrenByRole(CSharp.AstNode.Roles.Constraint)
-				.SingleOrDefault(c => c.TypeParameter == typeParameterDeclaration.Name);
+				.SingleOrDefault(c => c.TypeParameter.Identifier == typeParameterDeclaration.Name);
 			
 			if (constraint != null)
 				ConvertNodes(constraint.BaseTypes, param.Constraints);

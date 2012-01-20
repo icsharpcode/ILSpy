@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.Ast
 			Ast.BlockStatement astBlock = new BlockStatement();
 			if (block != null) {
 				foreach(ILNode node in block.GetChildren()) {
-					astBlock.AddRange(TransformNode(node));
+					astBlock.Statements.AddRange(TransformNode(node));
 				}
 			}
 			return astBlock;
@@ -864,7 +864,8 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		static readonly AstNode objectInitializerPattern = new AssignmentExpression(
 			new MemberReferenceExpression {
-				Target = new InitializedObjectExpression()
+				Target = new InitializedObjectExpression(),
+				MemberName = Pattern.AnyString
 			}.WithName("left"),
 			new AnyNode("right")
 		);
@@ -998,6 +999,7 @@ namespace ICSharpCode.Decompiler.Ast
 				// This is equivalent to 'target = new ValueType(args);'.
 				ObjectCreateExpression oce = new ObjectCreateExpression();
 				oce.Type = AstBuilder.ConvertType(cecilMethod.DeclaringType);
+				oce.AddAnnotation(cecilMethod);
 				AdjustArgumentsForMethodCall(cecilMethod, methodArgs);
 				oce.Arguments.AddRange(methodArgs);
 				return new AssignmentExpression(target, oce);

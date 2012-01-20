@@ -73,28 +73,35 @@ namespace ICSharpCode.Decompiler.Ast
 				if (settings.AnonymousMethods && method.Name.StartsWith("<", StringComparison.Ordinal) && method.IsCompilerGenerated())
 					return true;
 			}
+
 			TypeDefinition type = member as TypeDefinition;
-			if (type != null && type.DeclaringType != null) {
-				if (settings.AnonymousMethods && type.Name.StartsWith("<>c__DisplayClass", StringComparison.Ordinal) && type.IsCompilerGenerated())
-					return true;
-				if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
-					return true;
-			} else if (type != null && type.IsCompilerGenerated()) {
-				if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
-					return true;
-				if (type.IsAnonymousType())
-					return true;
+			if (type != null) {
+				if (type.DeclaringType != null) {
+					if (settings.AnonymousMethods && type.Name.StartsWith("<>c__DisplayClass", StringComparison.Ordinal) && type.IsCompilerGenerated())
+						return true;
+					if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
+						return true;
+				} else if (type.IsCompilerGenerated()) {
+					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+						return true;
+					if (type.IsAnonymousType())
+						return true;
+				}
 			}
+			
 			FieldDefinition field = member as FieldDefinition;
-			if (field != null && field.IsCompilerGenerated()) {
-				if (settings.AnonymousMethods && field.Name.StartsWith("CS$<>", StringComparison.Ordinal))
-					return true;
-				if (settings.AutomaticProperties && field.Name.StartsWith("<", StringComparison.Ordinal) && field.Name.EndsWith("BackingField", StringComparison.Ordinal))
+			if (field != null) {
+				if (field.IsCompilerGenerated()) {
+					if (settings.AnonymousMethods && field.Name.StartsWith("CS$<>", StringComparison.Ordinal))
+						return true;
+					if (settings.AutomaticProperties && field.Name.StartsWith("<", StringComparison.Ordinal) && field.Name.EndsWith("BackingField", StringComparison.Ordinal))
+						return true;
+				}
+				// event-fields are not [CompilerGenerated]
+				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
 					return true;
 			}
-			// event-fields are not [CompilerGenerated]
-			if (field != null && settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
-				return true;
+			
 			return false;
 		}
 		
@@ -797,7 +804,7 @@ namespace ICSharpCode.Decompiler.Ast
 		{
 			foreach (var gp in genericParameters) {
 				Constraint c = new Constraint();
-				c.TypeParameter = CleanName(gp.Name);
+				c.TypeParameter = new SimpleType(CleanName(gp.Name));
 				// class/struct must be first
 				if (gp.HasReferenceTypeConstraint)
 					c.BaseTypes.Add(new PrimitiveType("class"));

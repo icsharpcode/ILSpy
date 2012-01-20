@@ -109,20 +109,20 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.GeneralScope
 					TypeParameters = { new TypeParameterDeclaration { Name = "T" } },
 					Constraints = {
 						new Constraint {
-							TypeParameter = "T",
+							TypeParameter = new SimpleType ("T"),
 							BaseTypes = { new SimpleType("IMyInterface") }
 						}
 					}});
 		}
 		
-		[Test, Ignore ("Mono parser bug.")]
-		public void ComplexGenericClassTypeDeclarationTest()
+		[Test]
+		public void ComplexGenericInterfaceTypeDeclarationTest()
 		{
 			ParseUtilCSharp.AssertGlobal(
-				"public class Generic<in T, out S> : System.IComparable where S : G<T[]>, new() where  T : MyNamespace.IMyInterface",
+				"public interface Generic<in T, out S> : System.IComparable where S : G<T[]>, new() where  T : MyNamespace.IMyInterface {}",
 				new TypeDeclaration {
 					Modifiers = Modifiers.Public,
-					ClassType = ClassType.Class,
+					ClassType = ClassType.Interface,
 					Name = "Generic",
 					TypeParameters = {
 						new TypeParameterDeclaration { Variance = VarianceModifier.Contravariant, Name = "T" },
@@ -136,7 +136,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.GeneralScope
 					},
 					Constraints = {
 						new Constraint {
-							TypeParameter = "S",
+							TypeParameter = new SimpleType ("S"),
 							BaseTypes = {
 								new SimpleType {
 									Identifier = "G",
@@ -146,7 +146,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.GeneralScope
 							}
 						},
 						new Constraint {
-							TypeParameter = "T",
+							TypeParameter = new SimpleType ("T"),
 							BaseTypes = {
 								new MemberType {
 									Target = new SimpleType("MyNamespace"),
@@ -240,7 +240,7 @@ public abstract class MyClass : MyBase, Interface1, My.Test.Interface2
 					},
 					Constraints = {
 						new Constraint {
-							TypeParameter = "where",
+							TypeParameter = new SimpleType ("where"),
 							BaseTypes = {
 								new SimpleType {
 									Identifier = "partial",
@@ -302,6 +302,68 @@ public abstract class MyClass : MyBase, Interface1, My.Test.Interface2
 			TypeDeclaration td = ParseUtilCSharp.ParseGlobal<TypeDeclaration>("enum MyEnum : short { }");
 			Assert.AreEqual("MyEnum", td.Name);
 			Assert.AreEqual("short", ((PrimitiveType)td.BaseTypes.Single()).Keyword);
+		}
+		
+		[Test, Ignore("Mono parser crash")]
+		public void EnumWithIncorrectNewlineAfterIntegerLiteral()
+		{
+			ParseUtilCSharp.AssertGlobal(
+				"enum DisplayFlags { D = 4\r\r\n}",
+				new TypeDeclaration {
+					ClassType = ClassType.Enum,
+					Name = "DisplayFlags",
+					Members = {
+						new EnumMemberDeclaration {
+							Name = "D",
+							Initializer = new PrimitiveExpression(4)
+						}
+					}});
+		}
+		
+		[Test]
+		public void EnumWithCommaAtEnd()
+		{
+			TypeDeclaration td = ParseUtilCSharp.ParseGlobal<TypeDeclaration>("enum MyEnum { A, }");
+			Assert.AreEqual(
+				new Role[] {
+					AstNode.Roles.Keyword,
+					AstNode.Roles.Identifier,
+					AstNode.Roles.LBrace,
+					TypeDeclaration.MemberRole,
+					AstNode.Roles.Comma,
+					AstNode.Roles.RBrace
+				}, td.Children.Select(c => c.Role).ToArray());
+		}
+		
+		[Test]
+		public void EnumWithCommaAndSemicolonAtEnd()
+		{
+			TypeDeclaration td = ParseUtilCSharp.ParseGlobal<TypeDeclaration>("enum MyEnum { A, };");
+			Assert.AreEqual(
+				new Role[] {
+					AstNode.Roles.Keyword,
+					AstNode.Roles.Identifier,
+					AstNode.Roles.LBrace,
+					TypeDeclaration.MemberRole,
+					AstNode.Roles.Comma,
+					AstNode.Roles.RBrace,
+					AstNode.Roles.Semicolon
+				}, td.Children.Select(c => c.Role).ToArray());
+		}
+		
+		[Test, Ignore("Parser bug (incorrectly creates a comma at the end of the enum)")]
+		public void EnumWithSemicolonAtEnd()
+		{
+			TypeDeclaration td = ParseUtilCSharp.ParseGlobal<TypeDeclaration>("enum MyEnum { A };");
+			Assert.AreEqual(
+				new Role[] {
+					AstNode.Roles.Keyword,
+					AstNode.Roles.Identifier,
+					AstNode.Roles.LBrace,
+					TypeDeclaration.MemberRole,
+					AstNode.Roles.RBrace,
+					AstNode.Roles.Semicolon
+				}, td.Children.Select(c => c.Role).ToArray());
 		}
 	}
 }
