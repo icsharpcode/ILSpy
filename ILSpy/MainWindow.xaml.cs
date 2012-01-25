@@ -31,7 +31,6 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
-
 using ICSharpCode.ILSpy.Debugger;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -78,11 +77,14 @@ namespace ICSharpCode.ILSpy
 			this.Icon = new BitmapImage(new Uri("pack://application:,,,/ILSpy;component/images/ILSpy.ico"));
 			
 			this.DataContext = sessionSettings;
-			this.Left = sessionSettings.WindowBounds.Left;
-			this.Top = sessionSettings.WindowBounds.Top;
-			this.Width = sessionSettings.WindowBounds.Width;
-			this.Height = sessionSettings.WindowBounds.Height;
-			// TODO: validate bounds (maybe a monitor was removed...)
+			
+			// Validate and Set Window Bounds
+			Rect bounds = sessionSettings.WindowBounds;
+			if(System.Windows.Forms.Screen.AllScreens.Any(screen => screen.WorkingArea.Contains((int)bounds.Left, (int)bounds.Top)))
+				SetWindowBounds(bounds);
+			else
+				SetWindowBounds(SessionSettings.DefaultWindowBounds);
+			
 			this.WindowState = sessionSettings.WindowState;
 			
 			InitializeComponent();
@@ -100,6 +102,14 @@ namespace ICSharpCode.ILSpy
 			ContextMenuProvider.Add(treeView);
 			
 			this.Loaded += new RoutedEventHandler(MainWindow_Loaded);
+		}
+		
+		void SetWindowBounds(Rect bounds)
+		{
+			this.Left = bounds.Left;
+			this.Top = bounds.Top;
+			this.Width = bounds.Width;
+			this.Height = bounds.Height;
 		}
 		
 		#region Toolbar extensibility
