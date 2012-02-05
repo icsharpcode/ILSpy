@@ -255,6 +255,16 @@ namespace ICSharpCode.ILSpy
 							}
 						}
 					}
+				} else if(args.NavigateTo.StartsWith("L:", StringComparison.Ordinal)){
+					string libraryName = args.NavigateTo.Substring(2);
+					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
+						AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(asm);
+						if (asmNode != null && asmNode.Text.ToString() == libraryName) {
+							found = true;
+							SelectNode(asmNode);
+							break;							
+						}
+					}
 				} else {
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
 						AssemblyDefinition def = asm.AssemblyDefinition;
@@ -270,7 +280,7 @@ namespace ICSharpCode.ILSpy
 				}
 				if (!found) {
 					AvalonEditTextOutput output = new AvalonEditTextOutput();
-					output.Write("Cannot find " + args.NavigateTo);
+					output.Write("Cannot find " + args.NavigateTo );
 					decompilerTextView.ShowText(output);
 				}
 			}
