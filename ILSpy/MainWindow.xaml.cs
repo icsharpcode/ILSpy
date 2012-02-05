@@ -280,7 +280,7 @@ namespace ICSharpCode.ILSpy
 				}
 				if (!found) {
 					AvalonEditTextOutput output = new AvalonEditTextOutput();
-					output.Write("Cannot find " + args.NavigateTo );
+					output.Write(string.Format("Cannot find '{0}' in command line specified assemblies.", args.NavigateTo ));
 					decompilerTextView.ShowText(output);
 				}
 			}
