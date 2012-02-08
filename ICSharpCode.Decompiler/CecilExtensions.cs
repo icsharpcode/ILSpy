@@ -215,16 +215,38 @@ namespace ICSharpCode.Decompiler
 				return true;
 			return IsCompilerGeneratedOrIsInCompilerGeneratedClass(member.DeclaringType);
 		}
+
+		public static TypeReference GetEnumUnderlyingType(this TypeDefinition type)
+		{
+			if (!type.IsEnum)
+				throw new ArgumentException("Type must be an enum", "type");
+
+			var fields = type.Fields;
+
+			for (int i = 0; i < fields.Count; i++)
+			{
+				var field = fields[i];
+				if (!field.IsStatic)
+					return field.FieldType;
+			}
+
+			throw new NotSupportedException();
+		}
 		
 		public static bool IsAnonymousType(this TypeReference type)
 		{
 			if (type == null)
 				return false;
-			if (string.IsNullOrEmpty(type.Namespace) && type.Name.StartsWith("<>", StringComparison.Ordinal) && type.Name.Contains("AnonymousType")) {
+			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName() && (type.Name.Contains("AnonType") || type.Name.Contains("AnonymousType"))) {
 				TypeDefinition td = type.Resolve();
 				return td != null && td.IsCompilerGenerated();
 			}
 			return false;
+		}
+
+		public static bool HasGeneratedName(this MemberReference member)
+		{
+			return member.Name.StartsWith("<", StringComparison.Ordinal);
 		}
 		
 		public static bool ContainsAnonymousType(this TypeReference type)
