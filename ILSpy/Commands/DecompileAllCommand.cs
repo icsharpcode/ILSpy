@@ -37,29 +37,45 @@ namespace ICSharpCode.ILSpy
 		{
 			MainWindow.Instance.TextView.RunWithCancellation(ct => Task<AvalonEditTextOutput>.Factory.StartNew(() => {
 				AvalonEditTextOutput output = new AvalonEditTextOutput();
-				Parallel.ForEach(MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct }, delegate(LoadedAssembly asm) {
-					if (!asm.HasLoadError) {
-						Stopwatch w = Stopwatch.StartNew();
-						Exception exception = null;
-						using (var writer = new System.IO.StreamWriter("c:\\temp\\decompiled\\" + asm.ShortName + ".cs")) {
-							try {
-								new CSharpLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), new DecompilationOptions { FullDecompilation = true, CancellationToken = ct });
+				try
+				{
+					Parallel.ForEach(MainWindow.Instance.CurrentAssemblyList.GetAssemblies(), new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount, CancellationToken = ct }, delegate(LoadedAssembly asm)
+					{
+						if (!asm.HasLoadError)
+						{
+							Stopwatch w = Stopwatch.StartNew();
+							Exception exception = null;
+							using (var writer = new System.IO.StreamWriter("c:\\temp\\decompiled\\" + asm.ShortName + ".cs"))
+							{
+								try
+								{
+									new CSharpLanguage().DecompileAssembly(asm, new Decompiler.PlainTextOutput(writer), new DecompilationOptions { FullDecompilation = true, CancellationToken = ct });
+								}
+								catch (Exception ex)
+								{
+									writer.WriteLine(ex.ToString());
+									exception = ex;
+								}
 							}
-							catch (Exception ex) {
-								writer.WriteLine(ex.ToString());
-								exception = ex;
+							lock (output)
+							{
+								output.Write(asm.ShortName + " - " + w.Elapsed);
+								if (exception != null)
+								{
+									output.Write(" - ");
+									output.Write(exception.GetType().Name);
+								}
+								output.WriteLine();
 							}
 						}
-						lock (output) {
-							output.Write(asm.ShortName + " - " + w.Elapsed);
-							if (exception != null) {
-								output.Write(" - ");
-								output.Write(exception.GetType().Name);
-							}
-							output.WriteLine();
-						}
-					}
-				});
+					});
+				}
+				catch (OperationCanceledException)
+				{
+					// All actions share a CancellationToken and the OperationCanceledException is also thrown by the enclosing loop
+					output.Write("You canceled decompilation.");
+					output.WriteLine();
+				}
 				return output;
 			}), task => MainWindow.Instance.TextView.ShowText(task.Result));
 		}

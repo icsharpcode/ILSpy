@@ -450,7 +450,9 @@ namespace ICSharpCode.ILSpy.TextView
 						AvalonEditTextOutput output = new AvalonEditTextOutput();
 						if (ex is OutputLengthExceededException) {
 							WriteOutputLengthExceededMessage(output, context, outputLengthLimit == DefaultOutputLengthLimit);
-						} else {
+            } else if (ex is OperationCanceledException) {
+              WriteDecompileCanceledMessage(output, context);
+            } else {
 							output.WriteLine(ex.ToString());
 						}
 						ShowOutput(output);
@@ -586,9 +588,28 @@ namespace ICSharpCode.ILSpy.TextView
 			output.WriteLine();
 		}
 		#endregion
-		
-		#region JumpToReference
-		/// <summary>
+
+    #region WriteDecompileCanceledMessage
+    /// <summary>
+    /// Creates a message that the decompiler was canceled.
+    /// The message contains a button that allows re-trying.
+    /// </summary>
+    void WriteDecompileCanceledMessage(ISmartTextOutput output, DecompilationContext context)
+    {
+      output.WriteLine("You canceled decompilation.");
+      output.WriteLine();
+      output.AddButton(
+        Images.ViewCode, "Retry",
+        delegate
+        {
+          DoDecompile(context, DefaultOutputLengthLimit);
+        });
+      output.WriteLine();
+    }
+    #endregion
+
+    #region JumpToReference
+    /// <summary>
 		/// Jumps to the definition referred to by the <see cref="ReferenceSegment"/>.
 		/// </summary>
 		internal void JumpToReference(ReferenceSegment referenceSegment)
