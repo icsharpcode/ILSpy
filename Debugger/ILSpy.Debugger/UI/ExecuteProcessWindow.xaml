@@ -8,6 +8,14 @@
 	ShowInTaskbar="False"
 	Height="250"
 	Width="596">
+    <Window.CommandBindings>
+        <CommandBinding Command="Open" Executed="ExecuteButton_Click" />
+        <CommandBinding Command="Close" Executed="CancelButton_Click" />
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="Close" />
+        <KeyBinding Key="Return" Command="Open" />
+    </Window.InputBindings>
 	<Grid
 		Height="217">
 		<Grid.RowDefinitions>

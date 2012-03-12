@@ -10,7 +10,15 @@
 	ShowInTaskbar="False"
 	Height="300"
 	Width="596">
-	<Grid>
+    <Window.CommandBindings>
+        <CommandBinding Command="Open" Executed="AttachButton_Click" />
+        <CommandBinding Command="Close" Executed="CancelButton_Click" />
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="Close" />
+        <KeyBinding Key="Return" Command="Open" />
+    </Window.InputBindings>
+    <Grid>
 		<Grid.RowDefinitions>
 			<RowDefinition
 				Height="1.8*" />
