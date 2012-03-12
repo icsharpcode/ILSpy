@@ -33,9 +33,9 @@
 			Margin="19.5,28.5,0,0"
 			Width="92"
 			Height="25" />
-		<TextBox HorizontalAlignment="Right"
+		<TextBox HorizontalAlignment="Left"
 			VerticalAlignment="Top"
-			Margin="0,28,72,0"
+			Margin="133.5,28,72,0"
 			Width="368"
 			Height="25"
 			Name="pathTextBox" />
