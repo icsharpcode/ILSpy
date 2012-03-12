@@ -25,12 +25,9 @@
 			Margin="19.5,28.5,0,0"
 			Width="92"
 			Height="25" />
-		<TextBox
-			Grid.Column="0"
-			Grid.Row="0"
-			HorizontalAlignment="Right"
+		<TextBox HorizontalAlignment="Right"
 			VerticalAlignment="Top"
-			Margin="0,28.5,84.5,0"
+			Margin="0,28,72,0"
 			Width="368"
 			Height="25"
 			Name="pathTextBox" />
