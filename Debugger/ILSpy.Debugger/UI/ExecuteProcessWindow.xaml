@@ -8,6 +8,14 @@
 	ShowInTaskbar="False"
 	Height="250"
 	Width="596">
+    <Window.CommandBindings>
+        <CommandBinding Command="Open" Executed="ExecuteButton_Click" />
+        <CommandBinding Command="Close" Executed="CancelButton_Click" />
+    </Window.CommandBindings>
+    <Window.InputBindings>
+        <KeyBinding Key="Escape" Command="Close" />
+        <KeyBinding Key="Return" Command="Open" />
+    </Window.InputBindings>
 	<Grid
 		Height="217">
 		<Grid.RowDefinitions>
@@ -25,12 +33,9 @@
 			Margin="19.5,28.5,0,0"
 			Width="92"
 			Height="25" />
-		<TextBox
-			Grid.Column="0"
-			Grid.Row="0"
-			HorizontalAlignment="Right"
+		<TextBox HorizontalAlignment="Left"
 			VerticalAlignment="Top"
-			Margin="0,28.5,84.5,0"
+			Margin="133.5,28,72,0"
 			Width="368"
 			Height="25"
 			Name="pathTextBox" />
