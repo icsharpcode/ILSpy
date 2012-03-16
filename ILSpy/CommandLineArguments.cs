@@ -18,10 +18,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace ICSharpCode.ILSpy
 {
-	sealed class CommandLineArguments
+	internal sealed class CommandLineArguments
 	{
 		// see /doc/Command Line.txt for details
 		public List<string> AssembliesToLoad = new List<string>();
@@ -29,6 +30,9 @@ namespace ICSharpCode.ILSpy
 		public string NavigateTo;
 		public string Language;
 		public bool NoActivate;
+		public string ExecuteAssembly;
+		public string AssemblyArguments;
+		public string AssemblyWorkingDirectory;
 		
 		public CommandLineArguments(IEnumerable<string> arguments)
 		{
@@ -46,9 +50,18 @@ namespace ICSharpCode.ILSpy
 						this.Language = arg.Substring("/language:".Length);
 					else if (arg.Equals("/noActivate", StringComparison.OrdinalIgnoreCase))
 						this.NoActivate = true;
+					else if (arg.StartsWith("/executeassembly:", StringComparison.OrdinalIgnoreCase))
+						this.ExecuteAssembly = arg.Substring("/executeassembly:".Length);
+					else if (arg.StartsWith("/assemblyarguments:", StringComparison.OrdinalIgnoreCase))
+						this.AssemblyArguments = arg.Substring("/assemblyarguments:".Length);
+					else if (arg.StartsWith("/assemblyworkingdirectory:", StringComparison.OrdinalIgnoreCase))
+						this.AssemblyWorkingDirectory = arg.Substring("/assemblyworkingdirectory:".Length);
 				} else {
 					this.AssembliesToLoad.Add(arg);
 				}
+			}
+			if (ExecuteAssembly != null && AssemblyWorkingDirectory == null) {
+				AssemblyWorkingDirectory = Directory.GetParent(ExecuteAssembly).FullName;
 			}
 		}
 	}

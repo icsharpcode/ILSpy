@@ -32,6 +32,7 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ICSharpCode.ILSpy.Debugger;
+using ICSharpCode.ILSpy.Debugger.Services;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.XmlDoc;
@@ -257,6 +258,16 @@ namespace ICSharpCode.ILSpy
 		
 		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args)
 		{
+			if (args.ExecuteAssembly != null) {
+				OpenFiles(new []{ args.ExecuteAssembly });
+				//DebuggerService.CurrentDebugger.BreakAtBeginning = DebuggerSettings.Instance.BreakAtBeginning;
+				DebuggerService.CurrentDebugger.Start(new ProcessStartInfo
+				{
+					FileName = args.ExecuteAssembly,
+					WorkingDirectory = args.AssemblyWorkingDirectory,
+					Arguments = args.AssemblyArguments
+				});
+			}
 			if (args.NavigateTo != null) {
 				bool found = false;
 				if (args.NavigateTo.StartsWith("N:", StringComparison.Ordinal)) {
