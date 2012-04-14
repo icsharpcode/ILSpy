@@ -7,6 +7,7 @@
 //
 // Copyright 2001, 2002, 2003 Ximian, Inc.
 // Copyright 2003-2009 Novell, Inc.
+// Copyright 2011 Xamarin Inc
 //
 // Completion* classes derive from ExpressionStatement as this allows
 // them to pass through the parser in many conditions that require
@@ -77,11 +78,9 @@ namespace Mono.CSharp {
 		{
 			var results = new List<string> ();
 
-			AppendResults (results, Prefix, ec.Module.Evaluator.GetVarNames ());
-			AppendResults (results, Prefix, ec.CurrentMemberDefinition.Parent.NamespaceEntry.CompletionGetTypesStartingWith (Prefix));
-			AppendResults (results, Prefix, ec.Module.Evaluator.GetUsingList ());
-			
-			throw new CompletionResult (Prefix, results.ToArray ());
+			ec.CurrentMemberDefinition.GetCompletionStartingWith (Prefix, results);
+
+			throw new CompletionResult (Prefix, results.Distinct ().Select (l => l.Substring (Prefix.Length)).ToArray ());
 		}
 
 		protected override void CloneTo (CloneContext clonectx, Expression t)
@@ -120,7 +119,7 @@ namespace Mono.CSharp {
 
 			TypeSpec expr_type = expr_resolved.Type;
 			if (expr_type.IsPointer || expr_type.Kind == MemberKind.Void || expr_type == InternalType.NullLiteral || expr_type == InternalType.AnonymousMethod) {
-				Unary.Error_OperatorCannotBeApplied (ec, loc, ".", expr_type);
+				expr_resolved.Error_OperatorCannotBeApplied (ec, loc, ".", expr_type);
 				return null;
 			}
 
@@ -139,17 +138,9 @@ namespace Mono.CSharp {
 				else
 					namespaced_partial = nexpr.Name + "." + partial_name;
 
-#if false
-				Console.WriteLine ("Workign with: namespaced partial {0}", namespaced_partial);
-				foreach (var x in ec.TypeContainer.NamespaceEntry.CompletionGetTypesStartingWith (ec.TypeContainer, namespaced_partial)){
-					Console.WriteLine ("    {0}", x);
-				}
-#endif
-
-				CompletionSimpleName.AppendResults (
-					results,
-					partial_name, 
-					ec.CurrentMemberDefinition.Parent.NamespaceEntry.CompletionGetTypesStartingWith (namespaced_partial));
+				ec.CurrentMemberDefinition.GetCompletionStartingWith (namespaced_partial, results);
+				if (partial_name != null)
+					results = results.Select (l => l.Substring (partial_name.Length)).ToList ();
 			} else {
 				var r = MemberCache.GetCompletitionMembers (ec, expr_type, partial_name).Select (l => l.Name);
 				AppendResults (results, partial_name, r);

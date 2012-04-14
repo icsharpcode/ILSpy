@@ -25,7 +25,6 @@ using System.Linq;
 using System.Resources;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Xaml;
 using System.Xml;
 
 using ICSharpCode.Decompiler;
@@ -174,7 +173,7 @@ namespace ICSharpCode.ILSpy
 			public void Run(AstNode compilationUnit)
 			{
 				foreach (var child in compilationUnit.Children) {
-					if (child is AttributedNode) {
+					if (child is EntityDeclaration) {
 						if (child.Annotation<FieldDefinition>() != field)
 							child.Remove();
 					}
@@ -221,6 +220,44 @@ namespace ICSharpCode.ILSpy
 			astBuilder.GenerateCode(output);
 		}
 
+		public static string GetPlatformDisplayName(ModuleDefinition module)
+		{
+			switch (module.Architecture) {
+				case TargetArchitecture.I386:
+					if ((module.Attributes & ModuleAttributes.Preferred32Bit) == ModuleAttributes.Preferred32Bit)
+						return "AnyCPU (32-bit preferred)";
+					else if ((module.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
+						return "x86";
+					else
+						return "AnyCPU (64-bit preferred)";
+				case TargetArchitecture.AMD64:
+					return "x64";
+				case TargetArchitecture.IA64:
+					return "Itanium";
+				default:
+					return module.Architecture.ToString();
+			}
+		}
+		
+		public static string GetPlatformName(ModuleDefinition module)
+		{
+			switch (module.Architecture) {
+				case TargetArchitecture.I386:
+					if ((module.Attributes & ModuleAttributes.Preferred32Bit) == ModuleAttributes.Preferred32Bit)
+						return "AnyCPU";
+					else if ((module.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
+						return "x86";
+					else
+						return "AnyCPU";
+				case TargetArchitecture.AMD64:
+					return "x64";
+				case TargetArchitecture.IA64:
+					return "Itanium";
+				default:
+					return module.Architecture.ToString();
+			}
+		}
+		
 		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
@@ -237,20 +274,7 @@ namespace ICSharpCode.ILSpy
 					output.WriteReference(mainModule.EntryPoint.DeclaringType.FullName + "." + mainModule.EntryPoint.Name, mainModule.EntryPoint);
 					output.WriteLine();
 				}
-				switch (mainModule.Architecture) {
-					case TargetArchitecture.I386:
-						if ((mainModule.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
-							output.WriteLine("// Architecture: x86");
-						else
-							output.WriteLine("// Architecture: AnyCPU");
-						break;
-					case TargetArchitecture.AMD64:
-						output.WriteLine("// Architecture: x64");
-						break;
-					case TargetArchitecture.IA64:
-						output.WriteLine("// Architecture: Itanium-64");
-						break;
-				}
+				output.WriteLine("// Architecture: " + GetPlatformDisplayName(mainModule));
 				if ((mainModule.Attributes & ModuleAttributes.ILOnly) == 0) {
 					output.WriteLine("// This assembly contains unmanaged code.");
 				}
@@ -284,23 +308,7 @@ namespace ICSharpCode.ILSpy
 		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module)
 		{
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
-			string platformName;
-			switch (module.Architecture) {
-				case TargetArchitecture.I386:
-					if ((module.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
-						platformName = "x86";
-					else
-						platformName = "AnyCPU";
-					break;
-				case TargetArchitecture.AMD64:
-					platformName = "x64";
-					break;
-				case TargetArchitecture.IA64:
-					platformName = "Itanium";
-					break;
-				default:
-					throw new NotSupportedException("Invalid value for TargetArchitecture");
-			}
+			string platformName = GetPlatformName(module);
 			using (XmlTextWriter w = new XmlTextWriter(writer)) {
 				w.Formatting = Formatting.Indented;
 				w.WriteStartDocument();
@@ -451,8 +459,8 @@ namespace ICSharpCode.ILSpy
 		#region WriteResourceFilesInProject
 		IEnumerable<Tuple<string, string>> WriteResourceFilesInProject(LoadedAssembly assembly, DecompilationOptions options, HashSet<string> directories)
 		{
-			AppDomain bamlDecompilerAppDomain = null;
-			try {
+			//AppDomain bamlDecompilerAppDomain = null;
+			//try {
 				foreach (EmbeddedResource r in assembly.AssemblyDefinition.MainModule.Resources.OfType<EmbeddedResource>()) {
 					string fileName;
 					Stream s = r.GetResourceStream();
@@ -503,11 +511,11 @@ namespace ICSharpCode.ILSpy
 					}
 					yield return Tuple.Create("EmbeddedResource", fileName);
 				}
-			}
-			finally {
-				if (bamlDecompilerAppDomain != null)
-					AppDomain.Unload(bamlDecompilerAppDomain);
-			}
+			//}
+			//finally {
+			//    if (bamlDecompilerAppDomain != null)
+			//        AppDomain.Unload(bamlDecompilerAppDomain);
+			//}
 		}
 
 		string GetFileNameForResource(string fullName, HashSet<string> directories)
@@ -568,7 +576,7 @@ namespace ICSharpCode.ILSpy
 					((ComposedType)astType).PointerRank--;
 			}
 
-			astType.AcceptVisitor(new CSharpOutputVisitor(w, new CSharpFormattingOptions()), null);
+			astType.AcceptVisitor(new CSharpOutputVisitor(w, FormattingOptionsFactory.CreateAllman()));
 			return w.ToString();
 		}
 
@@ -621,7 +629,7 @@ namespace ICSharpCode.ILSpy
 			if (showAllMembers || !DecompilerSettingsPanel.CurrentDecompilerSettings.AnonymousMethods)
 				return member;
 			else
-				return ICSharpCode.ILSpy.TreeNodes.Analyzer.Helpers.GetOriginalCodeLocation(member);
+				return TreeNodes.Analyzer.Helpers.GetOriginalCodeLocation(member);
 		}
 
 		public override string GetTooltip(MemberReference member)

@@ -31,7 +31,8 @@ namespace ICSharpCode.NRefactory.CSharp
 {
 	/// <summary>
 	/// name = expression
-	/// This isn't the same as 'assign' even if it has the same syntax. This expression is used in object initializers.
+	/// This isn't the same as 'assign' even though it has the same syntax.
+	/// This expression is used in object initializers and for named attribute arguments [Attr(FieldName = value)].
 	/// </summary>
 	public class NamedExpression : Expression
 	{
@@ -50,7 +51,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				return GetChildByRole (Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole(Roles.Identifier, CSharp.Identifier.Create (value, TextLocation.Empty));
+				SetChildByRole(Roles.Identifier, CSharp.Identifier.Create (value));
 			}
 		}
 		
@@ -72,7 +73,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			set { SetChildByRole (Roles.Expression, value); }
 		}
 		
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data = default(T))
+		public override void AcceptVisitor (IAstVisitor visitor)
+		{
+			visitor.VisitNamedExpression (this);
+		}
+			
+		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		{
+			return visitor.VisitNamedExpression (this);
+		}
+		
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitNamedExpression(this, data);
 		}

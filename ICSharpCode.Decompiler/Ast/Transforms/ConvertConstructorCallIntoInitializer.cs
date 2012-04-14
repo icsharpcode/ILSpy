@@ -60,7 +60,10 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		
 		static readonly ExpressionStatement fieldInitializerPattern = new ExpressionStatement {
 			Expression = new AssignmentExpression {
-				Left = new NamedNode("fieldAccess", new MemberReferenceExpression { Target = new ThisReferenceExpression() }),
+				Left = new NamedNode("fieldAccess", new MemberReferenceExpression { 
+				                     	Target = new ThisReferenceExpression(),
+				                     	MemberName = Pattern.AnyString
+				                     }),
 				Operator = AssignmentOperatorType.Assign,
 				Right = new AnyNode("initializer")
 			}
@@ -120,7 +123,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					if (allSame) {
 						foreach (var ctor in instanceCtorsNotChainingWithThis)
 							ctor.Body.First().Remove();
-						fieldOrEventDecl.GetChildrenByRole(AstNode.Roles.Variable).Single().Initializer = initializer.Detach();
+						fieldOrEventDecl.GetChildrenByRole(Roles.Variable).Single().Initializer = initializer.Detach();
 					}
 				} while (allSame);
 			}

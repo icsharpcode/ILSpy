@@ -22,8 +22,7 @@ using ICSharpCode.NRefactory.TypeSystem.Implementation;
 
 namespace ICSharpCode.NRefactory.TypeSystem
 {
-	[Serializable]
-	public sealed class PointerType : TypeWithElementType, ISupportsInterning
+	public sealed class PointerType : TypeWithElementType
 	{
 		public PointerType(IType elementType) : base(elementType)
 		{
@@ -39,9 +38,8 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			}
 		}
 		
-		public override bool? IsReferenceType(ITypeResolveContext context)
-		{
-			return null;
+		public override bool? IsReferenceType {
+			get { return null; }
 		}
 		
 		public override int GetHashCode()
@@ -69,20 +67,9 @@ namespace ICSharpCode.NRefactory.TypeSystem
 				return new PointerType(e);
 		}
 		
-		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)
+		public override ITypeReference ToTypeReference()
 		{
-			elementType = provider.Intern(elementType);
-		}
-		
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			return elementType.GetHashCode() ^ 91725811;
-		}
-		
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			PointerType o = other as PointerType;
-			return o != null && this.elementType == o.elementType;
+			return new PointerTypeReference(elementType.ToTypeReference());
 		}
 	}
 	
@@ -110,14 +97,6 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		public override string ToString()
 		{
 			return elementType.ToString() + "*";
-		}
-		
-		public static ITypeReference Create(ITypeReference elementType)
-		{
-			if (elementType is IType)
-				return new PointerType((IType)elementType);
-			else
-				return new PointerTypeReference(elementType);
 		}
 		
 		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)

@@ -185,8 +185,22 @@ namespace Mono.CompilerServices.SymbolWriter
 		public readonly int Row;
 		public readonly int File;
 		public readonly int Offset;
-		public readonly bool IsHidden;
+		public readonly bool IsHidden;	// Obsolete is never used
 		#endregion
+
+		public sealed class LocationComparer : IComparer<LineNumberEntry>
+		{
+			public static readonly LocationComparer Default = new LocationComparer ();
+
+			public int Compare (LineNumberEntry l1, LineNumberEntry l2)
+			{
+				return l1.Row == l2.Row ?
+					l1.Offset.CompareTo (l2.Offset) :
+					l1.Row.CompareTo (l2.Row);
+			}
+		}
+
+		public static readonly LineNumberEntry Null = new LineNumberEntry (0, 0, 0);
 
 		public LineNumberEntry (int file, int row, int offset)
 			: this (file, row, offset, false)
@@ -199,37 +213,6 @@ namespace Mono.CompilerServices.SymbolWriter
 			this.Offset = offset;
 			this.IsHidden = is_hidden;
 		}
-
-		public static LineNumberEntry Null = new LineNumberEntry (0, 0, 0);
-
-		private class OffsetComparerClass : IComparer<LineNumberEntry>
-		{
-			public int Compare (LineNumberEntry l1, LineNumberEntry l2)
-			{
-				if (l1.Offset < l2.Offset)
-					return -1;
-				else if (l1.Offset > l2.Offset)
-					return 1;
-				else
-					return 0;
-			}
-		}
-
-		private class RowComparerClass : IComparer<LineNumberEntry>
-		{
-			public int Compare (LineNumberEntry l1, LineNumberEntry l2)
-			{
-				if (l1.Row < l2.Row)
-					return -1;
-				else if (l1.Row > l2.Row)
-					return 1;
-				else
-					return 0;
-			}
-		}
-
-		public static readonly IComparer<LineNumberEntry> OffsetComparer = new OffsetComparerClass ();
-		public static readonly IComparer<LineNumberEntry> RowComparer = new RowComparerClass ();
 
 		public override string ToString ()
 		{
@@ -700,6 +683,12 @@ namespace Mono.CompilerServices.SymbolWriter
 			this.hash = checksum;
 		}
 
+		public byte[] Checksum {
+			get {
+				return hash;
+			}
+		}
+
 		internal void WriteData (MyBinaryWriter bw)
 		{
 			DataOffset = (int) bw.BaseStream.Position;
@@ -931,9 +920,7 @@ namespace Mono.CompilerServices.SymbolWriter
 						   (opcode <= DW_LNE_MONO__extensions_end)) {
 						; // reserved for future extensions
 					} else {
-						throw new MonoSymbolFileException (
-							"Unknown extended opcode {0:x} in LNT ({1})",
-							opcode, file.FileName);
+						throw new MonoSymbolFileException ("Unknown extended opcode {0:x}", opcode);
 					}
 
 					br.BaseStream.Position = end_pos;
@@ -1123,7 +1110,7 @@ namespace Mono.CompilerServices.SymbolWriter
 			}
 		}
 		
-		void CheckLineNumberTable (LineNumberEntry[] line_numbers)
+		static void CheckLineNumberTable (LineNumberEntry[] line_numbers)
 		{
 			int last_offset = -1;
 			int last_row = -1;

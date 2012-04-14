@@ -6,7 +6,8 @@
 //   Marek Safar (marek.safar@gmail.com)
 //
 // Dual licensed under the terms of the MIT X11 or GNU GPL
-// Copyright 2003-2008 Novell, Inc.
+// Copyright 2003-2011 Novell, Inc.
+// Copyright 2011 Xamarin Inc
 //
 
 using System;
@@ -119,10 +120,14 @@ namespace Mono.CSharp
 			ml.AddressOf (ec, mode);
 		}
 
-		public Argument EmitToField (EmitContext ec)
+		public Argument EmitToField (EmitContext ec, bool cloneResult)
 		{
 			var res = Expr.EmitToField (ec);
-			return res == Expr ? this : new Argument (res, ArgType);
+			if (cloneResult && res != Expr)
+				return new Argument (res, ArgType);
+
+			Expr = res;
+			return this;
 		}
 
 		public string GetSignatureForError ()
@@ -257,7 +262,7 @@ namespace Mono.CSharp
 			{
 				foreach (var a in ordered) {
 					if (prepareAwait)
-						a.EmitToField (ec);
+						a.EmitToField (ec, false);
 					else
 						a.EmitToVariable (ec);
 				}
@@ -439,7 +444,7 @@ namespace Mono.CSharp
 			LocalTemporary lt;
 			foreach (Argument a in args) {
 				if (prepareAwait) {
-					dups.Add (a.EmitToField (ec));
+					dups.Add (a.EmitToField (ec, true));
 					continue;
 				}
 				

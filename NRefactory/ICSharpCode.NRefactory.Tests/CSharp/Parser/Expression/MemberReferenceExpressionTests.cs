@@ -33,7 +33,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.Expression
 			);
 		}
 		
-		[Test, Ignore("parser is broken and produces IdentifierExpression instead of PrimitiveType")]
+		[Test]
 		public void ShortMaxValueTest()
 		{
 			ParseUtilCSharp.AssertExpression(
@@ -42,7 +42,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.Expression
 			);
 		}
 		
-		[Test, Ignore("Parsing of @-identifiers is broken")]
+		[Test]
 		public void IdentShortMaxValueTest()
 		{
 			ParseUtilCSharp.AssertExpression(
@@ -67,6 +67,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.Expression
 				"Namespace.Subnamespace.SomeClass<string>.myField",
 				new MemberReferenceExpression {
 					Target = new IdentifierExpression("Namespace").Member("Subnamespace"),
+					MemberName = "SomeClass",
 					TypeArguments = { new PrimitiveType("string") }
 				}.Member("myField")
 			);
@@ -81,7 +82,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.Expression
 						MemberName = "Namespace"
 					}.Member("Subnamespace").Member ("SomeClass");
 			
-			target.AddChild (new PrimitiveType("string"), MemberReferenceExpression.Roles.TypeArgument);
+			target.AddChild (new PrimitiveType("string"), Roles.TypeArgument);
 			
 			ParseUtilCSharp.AssertExpression(
 				"global::Namespace.Subnamespace.SomeClass<string>.myField",

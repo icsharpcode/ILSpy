@@ -7,12 +7,15 @@
     <OutputType>Library</OutputType>
     <RootNamespace>ICSharpCode.NRefactory.VB</RootNamespace>
     <AssemblyName>ICSharpCode.NRefactory.VB</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\ICSharpCode.NRefactory.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>False</DelaySign>
+    <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -44,6 +47,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\ICSharpCode.NRefactory\Properties\GlobalAssemblyInfo.cs">
+      <Link>Properties\GlobalAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Ast\AstNode.cs" />
     <Compile Include="Ast\AstNodeCollection.cs" />
     <Compile Include="Ast\Comment.cs" />
@@ -179,20 +185,9 @@
     <Compile Include="Visitors\CSharpToVBConverterVisitor.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Ast" />
-    <Folder Include="Ast\General" />
-    <Folder Include="Ast\GlobalScope" />
-    <Folder Include="Ast\Expressions" />
-    <Folder Include="Ast\TypeMembers" />
-    <Folder Include="Ast\Statements" />
-    <Folder Include="Ast\TypeName" />
-    <Folder Include="Lexer" />
-    <Folder Include="Lexer\Special" />
-    <Folder Include="OutputVisitor" />
-    <Folder Include="Parser" />
-    <Folder Include="PrettyPrinter" />
-    <Folder Include="PrettyPrinter\VBNet" />
-    <Folder Include="Visitors" />
+    <Folder Include="Ast\" />
+    <Folder Include="Lexer\" />
+    <Folder Include="PrettyPrinter\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Lexer\ExpressionFinder.atg">

@@ -115,7 +115,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		
 		internal static bool IsAnonymousMethod(DecompilerContext context, MethodDefinition method)
 		{
-			if (method == null || !(method.Name.StartsWith("<", StringComparison.Ordinal) || method.Name.Contains("$")))
+			if (method == null || !(method.HasGeneratedName() || method.Name.Contains("$")))
 				return false;
 			if (!(method.IsCompilerGenerated() || IsPotentialClosure(context, method.DeclaringType)))
 				return false;
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		
 		static readonly ExpressionStatement displayClassAssignmentPattern =
 			new ExpressionStatement(new AssignmentExpression(
-				new NamedNode("variable", new IdentifierExpression()),
+				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
 				new ObjectCreateExpression { Type = new AnyNode("type") }
 			));
 		
@@ -348,7 +348,10 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					// "variableName.MemberName = right;"
 					ExpressionStatement closureFieldAssignmentPattern = new ExpressionStatement(
 						new AssignmentExpression(
-							new NamedNode("left", new MemberReferenceExpression { Target = new IdentifierExpression(variable.Name) }),
+							new NamedNode("left", new MemberReferenceExpression { 
+							              	Target = new IdentifierExpression(variable.Name),
+							              	MemberName = Pattern.AnyString
+							              }),
 							new AnyNode("right")
 						)
 					);

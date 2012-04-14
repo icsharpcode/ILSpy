@@ -29,12 +29,10 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Xml;
 using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
-using ICSharpCode.ILSpy.Bookmarks;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
@@ -223,7 +221,7 @@ namespace ICSharpCode.ILSpy
 				XElement s = spySettings["UpdateSettings"];
 				this.automaticUpdateCheckEnabled = (bool?)s.Element("AutomaticUpdateCheckEnabled") ?? true;
 				try {
-					this.LastSuccessfulUpdateCheck = (DateTime?)s.Element("LastSuccessfulUpdateCheck");
+					this.lastSuccessfulUpdateCheck = (DateTime?)s.Element("LastSuccessfulUpdateCheck");
 				} catch (FormatException) {
 					// avoid crashing on settings files invalid due to
 					// https://github.com/icsharpcode/ILSpy/issues/closed/#issue/2

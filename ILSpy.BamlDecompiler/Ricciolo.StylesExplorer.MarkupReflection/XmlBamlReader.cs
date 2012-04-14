@@ -689,7 +689,9 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				bool isNotKey = (identifier > 0xe8);
 				if (isNotKey)
 					identifier = (short)(identifier - 0xe8);
-				ResourceName resource = (ResourceName) KnownInfo.KnownResourceTable[(int)identifier];
+				ResourceName resource;
+				if (!KnownInfo.KnownResourceTable.TryGetValue(identifier, out resource))
+					throw new ArgumentException("Cannot find resource name " + identifier);
 				if (!isNotKey)
 					return new ResourceName(resource.Name + "Key");
 				return resource;
@@ -968,7 +970,8 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					string recordName = this.stringTable[identifier];
 					if (recordName != "Key") throw new NotSupportedException(recordName);
 					pd = new PropertyDeclaration(recordName, XamlTypeDeclaration);
-
+					if (keys == null)
+						keys = new List<KeyMapping>();
 					keys.Add(new KeyMapping(text) { Position = -1 });
 					break;
 			}
@@ -1020,7 +1023,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				if (mappingToChange == null)
 					throw new InvalidOperationException("Cannot find mapping");
 
-				@namespace = String.Format("{0};assembly={1}", @namespace, GetAssembly(mappingToChange.AssemblyId).Replace(" ", ""));
+				@namespace = String.Format("{0};assembly={1}", @namespace, mappingToChange.Assembly.Replace(" ", ""));
 				mappingToChange.XmlNamespace = @namespace;
 			}
 			namespaces.Add(new XmlNamespace(prefix, @namespace));
@@ -1247,18 +1250,16 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		XmlPIMapping FindByClrNamespaceAndAssemblyId(TypeDeclaration declaration)
 		{
-			return FindByClrNamespaceAndAssemblyId(declaration.Namespace, declaration.AssemblyId);
+			return FindByClrNamespaceAndAssemblyName(declaration.Namespace, declaration.Assembly);
 		}
-
-		XmlPIMapping FindByClrNamespaceAndAssemblyId(string clrNamespace, int assemblyId)
+		
+		XmlPIMapping FindByClrNamespaceAndAssemblyName(string clrNamespace, string assemblyName)
 		{
-			if (clrNamespace == XamlTypeDeclaration.Namespace && assemblyId == XamlTypeDeclaration.AssemblyId)
-				return new XmlPIMapping(XmlPIMapping.XamlNamespace, 0, clrNamespace);
-
-			for (int x = 0; x < Mappings.Count; x++)
-			{
+			if (clrNamespace == XamlTypeDeclaration.Namespace && assemblyName == XamlTypeDeclaration.Assembly)
+				return new XmlPIMapping(XmlPIMapping.XamlNamespace, assemblyName, clrNamespace);
+			for (int x = 0; x < Mappings.Count; x++) {
 				XmlPIMapping xp = Mappings[x];
-				if (xp.AssemblyId == assemblyId && String.CompareOrdinal(xp.ClrNamespace, clrNamespace) == 0)
+				if (string.Equals(xp.Assembly, assemblyName, StringComparison.Ordinal) && string.Equals(xp.ClrNamespace, clrNamespace, StringComparison.Ordinal))
 					return xp;
 			}
 
@@ -1271,7 +1272,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			string clrNamespace = reader.ReadString();
 			short assemblyId = reader.ReadInt16();
 
-			Mappings.Add(new XmlPIMapping(xmlNamespace, assemblyId, clrNamespace));
+			Mappings.Add(new XmlPIMapping(xmlNamespace, GetAssembly(assemblyId), clrNamespace));
 		}
 
 		void ReadContentProperty()
@@ -1409,7 +1410,9 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				resource = GetTypeExtension(typeIdentifier);
 			else if (isStaticType) {
 				object name = GetResourceName(typeIdentifier);
-				if (name is ResourceName)
+				if (name == null)
+					resource = null;
+				else if (name is ResourceName)
 					resource = GetStaticExtension(((ResourceName)name).Name);
 				else if (name is PropertyDeclaration)
 					resource = GetStaticExtension(FormatPropertyDeclaration(((PropertyDeclaration)name), true, false, false));
@@ -1452,7 +1455,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		string FormatTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
-			XmlPIMapping mapping = FindByClrNamespaceAndAssemblyId(typeDeclaration.Namespace, typeDeclaration.AssemblyId);
+			XmlPIMapping mapping = FindByClrNamespaceAndAssemblyName(typeDeclaration.Namespace, typeDeclaration.Assembly);
 			string prefix = (mapping != null) ? this.LookupPrefix(mapping.XmlNamespace, false) : null;
 			string name = typeDeclaration.Name;
 			if (name.EndsWith("Extension"))
@@ -1479,7 +1482,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			bool differentType = ((propertyDeclaration.DeclaringType != propertyDeclaration.DeclaringType || !isDescendant));
 
 			if (withPrefix) {
-				XmlPIMapping mapping = FindByClrNamespaceAndAssemblyId(propertyDeclaration.DeclaringType.Namespace, propertyDeclaration.DeclaringType.AssemblyId);
+				XmlPIMapping mapping = FindByClrNamespaceAndAssemblyName(propertyDeclaration.DeclaringType.Namespace, propertyDeclaration.DeclaringType.Assembly);
 				string prefix = (mapping != null) ? this.LookupPrefix(mapping.XmlNamespace, false) : null;
 
 				if (!String.IsNullOrEmpty(prefix)) {
@@ -1515,11 +1518,14 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		object GetStaticResource(short identifier)
 		{
-			if (identifier < keys[currentKey - 1].StaticResources.Count)
-				return keys[currentKey - 1].StaticResources[(int)identifier];
-
+			int keyIndex = currentKey - 1;
+			while (keyIndex >= 0 && !keys[keyIndex].HasStaticResources)
+				keyIndex--;
+			if (keyIndex >= 0 && identifier < keys[keyIndex].StaticResources.Count)
+				return keys[keyIndex].StaticResources[(int)identifier];
+//			Debug.WriteLine(string.Format("Cannot find StaticResource: {0}", identifier));
 //			return "???" + identifier + "???";
-			throw new ArgumentException("Cannot find StaticResource", "identifier");
+			throw new ArgumentException("Cannot find StaticResource: " + identifier, "identifier");
 		}
 
 		void ReadTextWithConverter()
@@ -1542,11 +1548,11 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			{
 				string name = fullName.Substring(length + 1);
 				string namespaceName = fullName.Substring(0, length);
-				declaration = new TypeDeclaration(this, this.Resolver, name, namespaceName, assemblyId, false);
+				declaration = new TypeDeclaration(this, this.Resolver, name, namespaceName, assemblyId);
 			}
 			else
 			{
-				declaration = new TypeDeclaration(this, this.Resolver, fullName, string.Empty, assemblyId, false);
+				declaration = new TypeDeclaration(this, this.Resolver, fullName, string.Empty, assemblyId);
 			}
 			this.typeTable.Add(typeId, declaration);
 		}
@@ -1579,14 +1585,13 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			return declaration;
 		}
 		
-		TypeDeclaration GetKnownTypeDeclarationByName(string name)
+		TypeDeclaration GetKnownTypeDeclarationByName(string assemblyQualifiedName)
 		{
 			foreach (var type in KnownInfo.KnownTypeTable) {
-				if (name == type.AssemblyQualifiedName)
+				if (assemblyQualifiedName == type.AssemblyQualifiedName)
 					return type;
 			}
-			
-			throw new NotSupportedException("Type '" + name + "' not found!");
+			return new ResolverTypeDeclaration(_resolver, assemblyQualifiedName);
 		}
 
 		internal string GetAssembly(short identifier)
@@ -1616,8 +1621,8 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					declaration = ((XmlBamlProperty)node).PropertyDeclaration.DeclaringType;
 					TypeDeclaration elementDeclaration = this.readingElements.Peek().TypeDeclaration;
 
-					XmlPIMapping propertyMapping = FindByClrNamespaceAndAssemblyId(declaration) ?? XmlPIMapping.Presentation;
-					XmlPIMapping elementMapping = FindByClrNamespaceAndAssemblyId(elementDeclaration) ?? XmlPIMapping.Presentation;
+					XmlPIMapping propertyMapping = FindByClrNamespaceAndAssemblyId(declaration) ?? XmlPIMapping.GetPresentationMapping(GetAssembly);
+					XmlPIMapping elementMapping = FindByClrNamespaceAndAssemblyId(elementDeclaration) ?? XmlPIMapping.GetPresentationMapping(GetAssembly);
 					
 					if (((XmlBamlProperty)node).PropertyDeclaration.Name == "Name" &&
 					    _resolver.IsLocalAssembly(((XmlBamlProperty)node).Parent.TypeDeclaration.Assembly))
@@ -1634,7 +1639,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 				XmlPIMapping mapping = FindByClrNamespaceAndAssemblyId(declaration);
 				if (mapping == null)
-					mapping = XmlPIMapping.Presentation;
+					mapping = XmlPIMapping.GetPresentationMapping(GetAssembly);
 
 				return mapping.XmlNamespace;
 			}

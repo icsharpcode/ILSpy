@@ -18,8 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Windows;
-using System.Windows.Markup;
+using ICSharpCode.Decompiler;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
@@ -35,55 +34,18 @@ namespace ICSharpCode.ILSpy
 				if (!list.Contains(item))
 					list.Add(item);
 		}
-		
-		/// <summary>
-		/// Sets the value of a dependency property on <paramref name="targetObject"/> using a markup extension.
-		/// </summary>
-		/// <remarks>This method does not support markup extensions like x:Static that depend on
-		/// having a XAML file as context.</remarks>
-		public static void SetValueToExtension(this DependencyObject targetObject, DependencyProperty property, MarkupExtension markupExtension)
+
+		public static bool IsCustomAttribute(this TypeDefinition type)
 		{
-			// This method was copied from ICSharpCode.Core.Presentation (with permission to switch license to X11)
-			
-			if (targetObject == null)
-				throw new ArgumentNullException("targetObject");
-			if (property == null)
-				throw new ArgumentNullException("property");
-			if (markupExtension == null)
-				throw new ArgumentNullException("markupExtension");
-			
-			var serviceProvider = new SetValueToExtensionServiceProvider(targetObject, property);
-			targetObject.SetValue(property, markupExtension.ProvideValue(serviceProvider));
-		}
-		
-		sealed class SetValueToExtensionServiceProvider : IServiceProvider, IProvideValueTarget
-		{
-			// This class was copied from ICSharpCode.Core.Presentation (with permission to switch license to X11)
-			
-			readonly DependencyObject targetObject;
-			readonly DependencyProperty targetProperty;
-			
-			public SetValueToExtensionServiceProvider(DependencyObject targetObject, DependencyProperty property)
-			{
-				this.targetObject = targetObject;
-				this.targetProperty = property;
+			while (type.FullName != "System.Object") {
+				var resolvedBaseType = type.BaseType.Resolve();
+				if (resolvedBaseType == null)
+					return false;
+				if (resolvedBaseType.FullName == "System.Attribute")
+					return true;
+				type = resolvedBaseType;
 			}
-			
-			public object GetService(Type serviceType)
-			{
-				if (serviceType == typeof(IProvideValueTarget))
-					return this;
-				else
-					return null;
-			}
-			
-			public object TargetObject {
-				get { return targetObject; }
-			}
-			
-			public object TargetProperty {
-				get { return targetProperty; }
-			}
+			return false;
 		}
 	}
 }

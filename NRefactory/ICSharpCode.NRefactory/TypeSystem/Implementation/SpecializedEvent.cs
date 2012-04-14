@@ -27,16 +27,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 	{
 		readonly IEvent eventDefinition;
 		
-		public SpecializedEvent(IType declaringType, IEvent eventDefinition)
-			: base(declaringType, eventDefinition)
+		public SpecializedEvent(IEvent eventDefinition, TypeParameterSubstitution substitution)
+			: base(eventDefinition)
 		{
-			this.eventDefinition = eventDefinition;
-		}
-		
-		internal SpecializedEvent(IType declaringType, IEvent eventDefinition, TypeVisitor substitution, ITypeResolveContext context)
-			: base(declaringType, eventDefinition, substitution, context)
-		{
-			this.eventDefinition = eventDefinition;
+			AddSubstitution(substitution);
+			this.eventDefinition = (IEvent)base.MemberDefinition;
 		}
 		
 		public bool CanAdd {
@@ -51,16 +46,18 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get { return eventDefinition.CanInvoke; }
 		}
 		
-		public IAccessor AddAccessor {
-			get { return eventDefinition.AddAccessor; }
+		IMethod addAccessor, removeAccessor, invokeAccessor;
+		
+		public IMethod AddAccessor {
+			get { return WrapAccessor(ref this.addAccessor, eventDefinition.AddAccessor); }
 		}
 		
-		public IAccessor RemoveAccessor {
-			get { return eventDefinition.RemoveAccessor; }
+		public IMethod RemoveAccessor {
+			get { return WrapAccessor(ref this.removeAccessor, eventDefinition.RemoveAccessor); }
 		}
 		
-		public IAccessor InvokeAccessor {
-			get { return eventDefinition.InvokeAccessor; }
+		public IMethod InvokeAccessor {
+			get { return WrapAccessor(ref this.invokeAccessor, eventDefinition.InvokeAccessor); }
 		}
 	}
 }

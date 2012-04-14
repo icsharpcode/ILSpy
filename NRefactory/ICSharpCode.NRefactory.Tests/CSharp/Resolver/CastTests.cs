@@ -29,9 +29,17 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 	[TestFixture]
 	public class CastTests : ResolverTestBase
 	{
+		CSharpResolver resolver;
+		
+		public override void SetUp()
+		{
+			base.SetUp();
+			resolver = new CSharpResolver(compilation);
+		}
+		
 		void TestCast(Type targetType, ResolveResult input, Conversion expectedConversion)
 		{
-			IType type = targetType.ToTypeReference().Resolve(context);
+			IType type = compilation.FindType(targetType);
 			ResolveResult rr = resolver.ResolveCast(type, input);
 			AssertType(targetType, rr);
 			Assert.AreEqual(typeof(ConversionResolveResult), rr.GetType());
@@ -55,8 +63,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			TestCast(typeof(int), MakeResult(typeof(int?)), Conversion.ExplicitNullableConversion);
 			TestCast(typeof(int?), MakeResult(typeof(int)), Conversion.ImplicitNullableConversion);
 			
-			TestCast(typeof(int?), MakeResult(typeof(long?)), Conversion.ExplicitNullableConversion);
-			TestCast(typeof(long?), MakeResult(typeof(int?)), Conversion.ImplicitNullableConversion);
+			TestCast(typeof(int?), MakeResult(typeof(long?)), Conversion.ExplicitLiftedNumericConversion);
+			TestCast(typeof(long?), MakeResult(typeof(int?)), Conversion.ImplicitLiftedNumericConversion);
 		}
 		
 		[Test]
@@ -73,10 +81,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		[Test]
 		public void OverflowingCast()
 		{
-			resolver.CheckForOverflow = false;
-			AssertConstant(uint.MaxValue, resolver.ResolveCast(ResolveType(typeof(uint)), MakeConstant(-1.6)));
-			resolver.CheckForOverflow = true;
-			AssertError(typeof(uint), resolver.ResolveCast(ResolveType(typeof(uint)), MakeConstant(-1.6)));
+			AssertConstant(uint.MaxValue, resolver.WithCheckForOverflow(false).ResolveCast(ResolveType(typeof(uint)), MakeConstant(-1.6)));
+			AssertError(typeof(uint), resolver.WithCheckForOverflow(true).ResolveCast(ResolveType(typeof(uint)), MakeConstant(-1.6)));
 		}
 		
 		[Test]
@@ -88,8 +94,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		[Test]
 		public void OverflowingCastToEnum()
 		{
-			resolver.CheckForOverflow = true;
-			AssertError(typeof(StringComparison), resolver.ResolveCast(ResolveType(typeof(StringComparison)), MakeConstant(long.MaxValue)));
+			AssertError(typeof(StringComparison), resolver.WithCheckForOverflow(true).ResolveCast(ResolveType(typeof(StringComparison)), MakeConstant(long.MaxValue)));
 		}
 	}
 }

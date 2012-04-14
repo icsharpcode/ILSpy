@@ -17,9 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Concurrent;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using ICSharpCode.ILSpy.Options;
@@ -35,7 +33,7 @@ namespace ICSharpCode.ILSpy
 		readonly Task<AssemblyDefinition> assemblyTask;
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
-		string shortName;
+		readonly string shortName;
 		
 		public LoadedAssembly(AssemblyList assemblyList, string fileName)
 		{
@@ -183,7 +181,7 @@ namespace ICSharpCode.ILSpy
 		{
 			if (name == null)
 				throw new ArgumentNullException("name");
-			if ((name.Attributes & (AssemblyAttributes)0x0200) != 0) {
+			if (name.IsWindowsRuntime) {
 				return assemblyList.winRTMetadataLookupCache.GetOrAdd(name.Name, LookupWinRTMetadata);
 			} else {
 				return assemblyList.assemblyLookupCache.GetOrAdd(name.FullName, LookupReferencedAssemblyInternal);

@@ -37,7 +37,7 @@ namespace Mono.CSharp
 		//
 		// A scope type parameters either VAR or MVAR
 		//
-		TypeParameter[] CurrentTypeParameters { get; }
+		TypeParameters CurrentTypeParameters { get; }
 
 		//
 		// A member definition of the context. For partial types definition use
@@ -393,7 +393,7 @@ namespace Mono.CSharp
 			get { return MemberContext.CurrentType; }
 		}
 
-		public TypeParameter[] CurrentTypeParameters {
+		public TypeParameters CurrentTypeParameters {
 			get { return MemberContext.CurrentTypeParameters; }
 		}
 
@@ -469,10 +469,19 @@ namespace Mono.CSharp
 			if (CurrentAnonymousMethod == null)
 				return false;
 
-			// FIXME: IsIterator is too aggressive, we should capture only if child
-			// block contains yield
-			if (CurrentAnonymousMethod.IsIterator || CurrentAnonymousMethod is AsyncInitializer)
-				return true;
+			//
+			// Capture only if this or any of child blocks contain yield
+			// or it's a parameter
+			//
+			if (CurrentAnonymousMethod.IsIterator)
+				return local.IsParameter || CurrentBlock.Explicit.HasYield;
+
+			//
+			// Capture only if this or any of child blocks contain await
+			// or it's a parameter
+			//
+			if (CurrentAnonymousMethod is AsyncInitializer)
+				return local.IsParameter || CurrentBlock.Explicit.HasAwait;
 
 			return local.Block.ParametersBlock != CurrentBlock.ParametersBlock.Original;
 		}
@@ -577,10 +586,10 @@ namespace Mono.CSharp
 
 		Dictionary<string, SourceFile> all_source_files;
 
-		public CompilerContext (CompilerSettings settings, Report report)
+		public CompilerContext (CompilerSettings settings, ReportPrinter reportPrinter)
 		{
 			this.settings = settings;
-			this.report = report;
+			this.report = new Report (this, reportPrinter);
 			this.builtin_types = new BuiltinTypes ();
 			this.TimeReporter = DisabledTimeReporter;
 		}
@@ -611,7 +620,7 @@ namespace Mono.CSharp
 			}
 		}
 
-		public List<CompilationSourceFile> SourceFiles {
+		public List<SourceFile> SourceFiles {
 			get {
 				return settings.SourceFiles;
 			}
@@ -637,7 +646,7 @@ namespace Mono.CSharp
 
 			string path;
 			if (!Path.IsPathRooted (name)) {
-				string root = Path.GetDirectoryName (comp_unit.FullPathName);
+				string root = Path.GetDirectoryName (comp_unit.SourceFile.FullPathName);
 				path = Path.Combine (root, name);
 			} else
 				path = name;
@@ -646,7 +655,8 @@ namespace Mono.CSharp
 			if (all_source_files.TryGetValue (path, out retval))
 				return retval;
 
-			retval = Location.AddFile (name, path);
+			retval = new SourceFile (name, path, all_source_files.Count + 1);
+			Location.AddFile (retval);
 			all_source_files.Add (path, retval);
 			return retval;
 		}
@@ -671,6 +681,8 @@ namespace Mono.CSharp
 			///   the ConstantCheckState flag.
 			/// </summary>
 			CheckedScope = 1 << 0,
+
+			AccurateDebugInfo = 1 << 1,
 
 			OmitDebugInfo = 1 << 2,
 

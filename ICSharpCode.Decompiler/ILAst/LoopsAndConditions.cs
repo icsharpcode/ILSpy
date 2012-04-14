@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.ILAst
 				// Find all branches
 				foreach(ILLabel target in node.GetSelfAndChildrenRecursive<ILExpression>(e => e.IsBranch()).SelectMany(e => e.GetBranchTargets())) {
 					ControlFlowNode destination;
-					// Labels which are out of out scope will not be int the collection
+					// Labels which are out of out scope will not be in the collection
 					// Insert self edge only if we are sure we are a loop
 					if (labelToCfNode.TryGetValue(target, out destination) && (destination != source || target == node.Body.FirstOrDefault())) {
 						ControlFlowEdge edge = new ControlFlowEdge(source, destination, JumpType.Normal);
@@ -228,15 +228,10 @@ namespace ICSharpCode.Decompiler.ILAst
 			// Do not modify entry data
 			scope = new HashSet<ControlFlowNode>(scope);
 			
-			HashSet<ControlFlowNode> agenda  = new HashSet<ControlFlowNode>();
-			agenda.Add(entryNode);
-			while(agenda.Any()) {
-				ControlFlowNode node = agenda.First();
-				// Attempt for a good order
-				while(agenda.Contains(node.ImmediateDominator)) {
-					node = node.ImmediateDominator;
-				}
-				agenda.Remove(node);
+			Stack<ControlFlowNode> agenda  = new Stack<ControlFlowNode>();
+			agenda.Push(entryNode);
+			while(agenda.Count > 0) {
+				ControlFlowNode node = agenda.Pop();
 				
 				// Find a block that represents a simple condition
 				if (scope.Contains(node)) {
@@ -364,18 +359,12 @@ namespace ICSharpCode.Decompiler.ILAst
 							labelToCfNode.TryGetValue(falseLabel, out falseTarget);
 							
 							// Pull in the conditional code
-							HashSet<ControlFlowNode> frontiers = new HashSet<ControlFlowNode>();
-							if (trueTarget != null)
-								frontiers.UnionWith(trueTarget.DominanceFrontier.Except(new [] { trueTarget }));
-							if (falseTarget != null)
-								frontiers.UnionWith(falseTarget.DominanceFrontier.Except(new [] { falseTarget }));
-							
-							if (trueTarget != null && !frontiers.Contains(trueTarget)) {
+							if (trueTarget != null && HasSingleEdgeEnteringBlock(trueTarget)) {
 								HashSet<ControlFlowNode> content = FindDominatedNodes(scope, trueTarget);
 								scope.ExceptWith(content);
 								ilCond.TrueBlock.Body.AddRange(FindConditions(content, trueTarget));
 							}
-							if (falseTarget != null && !frontiers.Contains(falseTarget)) {
+							if (falseTarget != null && HasSingleEdgeEnteringBlock(falseTarget)) {
 								HashSet<ControlFlowNode> content = FindDominatedNodes(scope, falseTarget);
 								scope.ExceptWith(content);
 								ilCond.FalseBlock.Body.AddRange(FindConditions(content, falseTarget));
@@ -390,9 +379,9 @@ namespace ICSharpCode.Decompiler.ILAst
 					}
 				}
 
-				// Using the dominator tree should ensure we find the the widest loop first
-				foreach(var child in node.DominatorTreeChildren) {
-					agenda.Add(child);
+				// depth-first traversal of dominator tree
+				for (int i = node.DominatorTreeChildren.Count - 1; i >= 0; i--) {
+					agenda.Push(node.DominatorTreeChildren[i]);
 				}
 			}
 			
@@ -402,6 +391,11 @@ namespace ICSharpCode.Decompiler.ILAst
 			}
 			
 			return result;
+		}
+		
+		static bool HasSingleEdgeEnteringBlock(ControlFlowNode node)
+		{
+			return node.Incoming.Count(edge => !node.Dominates(edge.Source)) == 1;
 		}
 		
 		static HashSet<ControlFlowNode> FindDominatedNodes(HashSet<ControlFlowNode> scope, ControlFlowNode head)

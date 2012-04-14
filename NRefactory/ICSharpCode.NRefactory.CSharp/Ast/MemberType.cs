@@ -28,6 +28,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ICSharpCode.NRefactory.CSharp.TypeSystem;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.NRefactory.CSharp
 {
@@ -35,7 +37,15 @@ namespace ICSharpCode.NRefactory.CSharp
 	{
 		public static readonly Role<AstType> TargetRole = new Role<AstType>("Target", AstType.Null);
 		
-		public bool IsDoubleColon { get; set; }
+		bool isDoubleColon;
+		
+		public bool IsDoubleColon {
+			get { return isDoubleColon; }
+			set {
+				ThrowIfFrozen();
+				isDoubleColon = value;
+			}
+		}
 		
 		public AstType Target {
 			get { return GetChildByRole(TargetRole); }
@@ -47,7 +57,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				return GetChildByRole (Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value, TextLocation.Empty));
+				SetChildByRole (Roles.Identifier, Identifier.Create (value));
 			}
 		}
 		
@@ -87,7 +97,17 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 		}
 		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data = default(T))
+		public override void AcceptVisitor (IAstVisitor visitor)
+		{
+			visitor.VisitMemberType (this);
+		}
+		
+		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		{
+			return visitor.VisitMemberType (this);
+		}
+		
+		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitMemberType (this, data);
 		}
@@ -113,6 +133,28 @@ namespace ICSharpCode.NRefactory.CSharp
 				b.Append('>');
 			}
 			return b.ToString();
+		}
+		
+		public override ITypeReference ToTypeReference(SimpleNameLookupMode lookupMode = SimpleNameLookupMode.Type)
+		{
+			TypeOrNamespaceReference t;
+			if (this.IsDoubleColon) {
+				SimpleType st = this.Target as SimpleType;
+				if (st != null) {
+					t = new AliasNamespaceReference(st.Identifier);
+				} else {
+					t = null;
+				}
+			} else {
+				t = this.Target.ToTypeReference(lookupMode) as TypeOrNamespaceReference;
+			}
+			if (t == null)
+				return SpecialType.UnknownType;
+			var typeArguments = new List<ITypeReference>();
+			foreach (var ta in this.TypeArguments) {
+				typeArguments.Add(ta.ToTypeReference(lookupMode));
+			}
+			return new MemberTypeOrNamespaceReference(t, this.MemberName, typeArguments);
 		}
 	}
 }

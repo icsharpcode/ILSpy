@@ -26,16 +26,14 @@ using System.Windows;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
-using ICSharpCode.AvalonEdit.Utils;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// A text segment that references some object. Used for hyperlinks in the editor.
 	/// </summary>
-	sealed class ReferenceSegment : TextSegment
+	public sealed class ReferenceSegment : TextSegment
 	{
 		public object Reference;
 		public bool IsLocal;

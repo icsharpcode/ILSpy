@@ -19,6 +19,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using Mono.Cecil;
+using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy
 {
@@ -32,7 +33,7 @@ namespace ICSharpCode.ILSpy
 		public const string DotNet35List = ".NET 3.5";
 		public const string ASPDotNetMVC3List = "ASP.NET (MVC3)";
 
-		AssemblyListManager manager;
+		readonly AssemblyListManager manager;
 
 		public OpenListDialog()
 		{
@@ -179,6 +180,12 @@ namespace ICSharpCode.ILSpy
 			if (listView.SelectedItem != null)
 				manager.DeleteList(listView.SelectedItem.ToString());
 		}
+
+    private void listView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+    {
+      if (e.ChangedButton == MouseButton.Left && listView.SelectedItem != null)
+        this.DialogResult = true;
+    }
 
 	}
 }

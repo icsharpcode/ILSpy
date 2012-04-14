@@ -18,18 +18,24 @@
     <ApplicationIcon>Images\ILSpy.ico</ApplicationIcon>
     <RunCodeAnalysis>False</RunCodeAnalysis>
     <StartArguments>/separate</StartArguments>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\NRefactory\ICSharpCode.NRefactory.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>False</DelaySign>
+    <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>x86</PlatformTarget>
     <RegisterForComInterop>False</RegisterForComInterop>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <BaseAddress>4194304</BaseAddress>
+    <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <RegisterForComInterop>False</RegisterForComInterop>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <BaseAddress>4194304</BaseAddress>
+    <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -67,6 +73,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
@@ -100,9 +107,14 @@
     <Compile Include="Commands\ExitCommand.cs" />
     <Compile Include="Commands\CommandWrapper.cs" />
     <Compile Include="Commands\OpenListCommand.cs" />
+    <Compile Include="Controls\MarkupExtensions.cs" />
+    <Compile Include="Controls\ResourceObjectTable.xaml.cs">
+      <DependentUpon>ResourceObjectTable.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Controls\DockedPane.cs" />
     <Compile Include="Commands\DecompileAllCommand.cs" />
     <Compile Include="Commands\ExportCommandAttribute.cs" />
+    <Compile Include="Controls\ExtensionMethods.cs" />
     <Compile Include="Controls\SearchBox.cs" />
     <Compile Include="Controls\SortableGridViewColumn.cs" />
     <Compile Include="CreateListDialog.xaml.cs">
@@ -116,6 +128,7 @@
     <Compile Include="GacInterop.cs" />
     <Compile Include="GuessFileType.cs" />
     <Compile Include="ContextMenuEntry.cs" />
+    <Compile Include="DecompileEventArgs.cs" />
     <Compile Include="Languages\ILAstLanguage.cs" />
     <Compile Include="Languages\ILLanguage.cs" />
     <Compile Include="ILSpySettings.cs" />
@@ -165,6 +178,8 @@
     </Compile>
     <Compile Include="Commands\SimpleCommand.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzeContextMenuEntry.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedAssemblyTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedAttributeAppliedToTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedEventOverridesTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedEventTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedInterfacePropertyImplementedByTreeNode.cs" />
@@ -224,6 +239,7 @@
     <Resource Include="Images\Breakpoint.png" />
     <Resource Include="Images\CurrentLine.png" />
     <Resource Include="Images\DisabledBreakpoint.png" />
+    <None Include="Properties\app.config.template" />
     <None Include="Properties\AssemblyInfo.template.cs" />
     <Compile Include="Properties\WPFAssemblyInfo.cs" />
     <Compile Include="MainWindow.xaml.cs">
@@ -265,6 +281,9 @@
     <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Controls\ResourceObjectTable.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Controls\ResourceStringTable.xaml" />
     <Page Include="Controls\SearchBoxStyle.xaml">
       <DependentUpon>SearchBox.cs</DependentUpon>
@@ -327,6 +346,7 @@
     <Resource Include="Images\OverlayPrivate.png" />
     <Resource Include="Images\OverlayProtected.png" />
     <Resource Include="Images\OverlayProtectedInternal.png" />
+    <Resource Include="Images\OverlayCompilerControlled.png" />
     <Resource Include="Images\OverlayStatic.png" />
     <Resource Include="Images\VirtualMethod.png" />
     <Resource Include="Images\PInvokeMethod.png" />
@@ -369,18 +389,12 @@
       <Name>ICSharpCode.TreeView</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="VB" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Resource Include="Images\ResourceXml.png" />
     <Resource Include="Images\ResourceXsd.png" />
     <Resource Include="Images\ResourceXslt.png" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="AvalonEdit" />
-    <Folder Include="Bookmarks" />
-    <Folder Include="Options" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
 using NUnit.Framework;
 
@@ -28,6 +29,14 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 	[TestFixture]
 	public unsafe class UnaryOperatorTests : ResolverTestBase
 	{
+		CSharpResolver resolver;
+		
+		public override void SetUp()
+		{
+			base.SetUp();
+			resolver = new CSharpResolver(compilation);
+		}
+		
 		[Test]
 		public void TestAddressOf()
 		{
@@ -61,6 +70,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			TestOperator(UnaryOperatorType.Increment, MakeResult(typeof(byte)),
 			             Conversion.IdentityConversion, typeof(byte));
+			
+			TestOperator(UnaryOperatorType.PostIncrement, MakeResult(typeof(char)),
+			             Conversion.IdentityConversion, typeof(char));
+			
+			TestOperator(UnaryOperatorType.PostIncrement, MakeResult(typeof(float)),
+			             Conversion.IdentityConversion, typeof(float));
+			
+			TestOperator(UnaryOperatorType.PostIncrement, MakeResult(typeof(decimal)),
+			             Conversion.IdentityConversion, typeof(decimal));
 			
 			TestOperator(UnaryOperatorType.Decrement, MakeResult(typeof(ulong)),
 			             Conversion.IdentityConversion, typeof(ulong));
@@ -133,8 +151,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		[Test]
 		public void TestUnaryMinusCheckedOverflow()
 		{
-			resolver.CheckForOverflow = true;
-			AssertError(typeof(int), resolver.ResolveUnaryOperator(UnaryOperatorType.Minus, MakeConstant(-2147483648)));
+			AssertError(typeof(int), resolver.WithCheckForOverflow(true).ResolveUnaryOperator(UnaryOperatorType.Minus, MakeConstant(-2147483648)));
 		}
 		
 		[Test]
@@ -203,6 +220,41 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			AssertConstant(~StringComparison.CurrentCultureIgnoreCase, resolver.ResolveUnaryOperator(UnaryOperatorType.BitNot, MakeConstant(StringComparison.CurrentCultureIgnoreCase)));
 			AssertType(typeof(StringComparison), resolver.ResolveUnaryOperator(UnaryOperatorType.BitNot, MakeResult(typeof(StringComparison))));
 			AssertType(typeof(StringComparison?), resolver.ResolveUnaryOperator(UnaryOperatorType.BitNot, MakeResult(typeof(StringComparison?))));
+		}
+		
+		[Test]
+		public void IntMinValue()
+		{
+			// int:
+			AssertConstant(-2147483648, Resolve("class A { object x = $-2147483648$; }"));
+			AssertConstant(-/**/2147483648, Resolve("class A { object x = $-/**/2147483648$; }"));
+			// long:
+			AssertConstant(-2147483648L, Resolve("class A { object x = $-2147483648L$; }"));
+			AssertConstant(-(2147483648), Resolve("class A { object x = $-(2147483648)$; }"));
+		}
+		
+		[Test]
+		public void LongMinValue()
+		{
+			// long:
+			AssertConstant(-9223372036854775808, Resolve("class A { object x = $-9223372036854775808$; }"));
+			// compiler error:
+			AssertError(typeof(ulong), Resolve("class A { object x = $-(9223372036854775808)$; }"));
+		}
+		
+		[Test]
+		public void IsLiftedProperty()
+		{
+			string program = @"
+class Test {
+	static void Inc() {
+		int? a = 0;
+		a = $-a$;
+	}
+}";
+			var irr = Resolve<OperatorResolveResult>(program);
+			Assert.IsFalse(irr.IsError);
+			Assert.IsTrue(irr.IsLiftedOperator);
 		}
 	}
 }

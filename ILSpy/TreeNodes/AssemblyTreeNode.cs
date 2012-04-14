@@ -18,14 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
@@ -102,7 +98,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		Dictionary<TypeDefinition, TypeTreeNode> typeDict = new Dictionary<TypeDefinition, TypeTreeNode>();
+		readonly Dictionary<TypeDefinition, TypeTreeNode> typeDict = new Dictionary<TypeDefinition, TypeTreeNode>();
 
 		protected override void LoadChildren()
 		{
@@ -259,22 +255,26 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "_Remove", Icon = "images/Delete.png")]
+	[ExportContextMenuEntryAttribute(Header = "_Remove", Icon = "images/Delete.png")]
 	sealed class RemoveAssembly : IContextMenuEntry
 	{
-		public bool IsVisible(SharpTreeNode[] selectedNodes)
+		public bool IsVisible(TextViewContext context)
 		{
-			return selectedNodes.All(n => n is AssemblyTreeNode);
+			if (context.SelectedTreeNodes == null)
+				return false;
+			return context.SelectedTreeNodes.All(n => n is AssemblyTreeNode);
 		}
 
-		public bool IsEnabled(SharpTreeNode[] selectedNodes)
+		public bool IsEnabled(TextViewContext context)
 		{
 			return true;
 		}
 
-		public void Execute(SharpTreeNode[] selectedNodes)
+		public void Execute(TextViewContext context)
 		{
-			foreach (var node in selectedNodes) {
+			if (context.SelectedTreeNodes == null)
+				return;
+			foreach (var node in context.SelectedTreeNodes) {
 				node.Delete();
 			}
 		}

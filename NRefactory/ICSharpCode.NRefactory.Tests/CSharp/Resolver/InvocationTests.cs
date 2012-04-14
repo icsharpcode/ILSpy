@@ -60,9 +60,9 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			Assert.AreEqual("System.String", result.TargetType.FullName);
 			Assert.AreEqual(1, result.Parameters.Count);
 			Assert.AreEqual("b", result.Parameters[0].Name);
-			Assert.AreEqual("System.String", result.Parameters[0].Type.Resolve(context).ReflectionName);
+			Assert.AreEqual("System.String", result.Parameters[0].Type.ReflectionName);
 			
-			Assert.AreSame(SharedTypes.UnknownType, result.Type);
+			Assert.AreSame(SpecialType.UnknownType, result.Type);
 		}
 		
 		[Test]
@@ -304,8 +304,8 @@ class DerivedClass : MiddleClass {
 			
 			var m = (SpecializedMethod)rr.Member;
 			Assert.AreEqual("X", m.TypeArguments.Single().Name);
-			Assert.AreEqual("T", m.Parameters[0].Type.Resolve(context).Name);
-			Assert.AreEqual("X", m.Parameters[1].Type.Resolve(context).Name);
+			Assert.AreEqual("T", m.Parameters[0].Type.Name);
+			Assert.AreEqual("X", m.Parameters[1].Type.Name);
 		}
 		
 		[Test]
@@ -474,6 +474,70 @@ class A {
 			var rr = Resolve<CSharpInvocationResolveResult>(program);
 			Assert.IsFalse(rr.IsError);
 			Assert.AreEqual("ILeft.Method", rr.Member.FullName);
+		}
+		
+		[Test]
+		public void AcceptVisitor()
+		{
+			string program = @"
+interface IVisitor<in T, out S> { }
+class Test : IVisitor<object, object> {
+	void M() {
+		$Accept(this, null)$;
+	}
+	S Accept<T, S>(IVisitor<T, S> v, T input) { }
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			var typeArguments = ((SpecializedMethod)rr.Member).TypeArguments;
+			Assert.AreEqual("System.Object", typeArguments[0].ReflectionName);
+			Assert.AreEqual("System.Object", typeArguments[1].ReflectionName);
+		}
+		
+		[Test]
+		public void FirstParameterToExtensionMethod()
+		{
+			string program = @"
+public class X {}
+public static class Ex {
+	public static void F(this X x, int y, int z) {}
+}
+class C {
+	public void M() {
+		X a = null;
+		int b = 0, c = 0;
+		$a.F(b, c)$;
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.That(rr.IsExtensionMethodInvocation, Is.True);
+			Assert.That(rr.Arguments[0], Is.InstanceOf<LocalResolveResult>());
+			Assert.That(((LocalResolveResult)rr.Arguments[0]).Variable.Name, Is.EqualTo("a"));
+			Assert.That(rr.Arguments[1], Is.InstanceOf<LocalResolveResult>());
+			Assert.That(((LocalResolveResult)rr.Arguments[1]).Variable.Name, Is.EqualTo("b"));
+			Assert.That(rr.Arguments[2], Is.InstanceOf<LocalResolveResult>());
+			Assert.That(((LocalResolveResult)rr.Arguments[2]).Variable.Name, Is.EqualTo("c"));
+			
+			Assert.That(rr.TargetResult, Is.InstanceOf<TypeResolveResult>());
+		}
+		
+		[Test]
+		public void BaseInvocation()
+		{
+			string program = @"
+class B {
+	public virtual void F(int x, int y) {}
+}
+class D : B {
+	public override void F(int x, int y) {}
+	public void M() {
+		$base.F(0, 1)$;
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.IsFalse(rr.IsVirtualCall);
 		}
 	}
 }

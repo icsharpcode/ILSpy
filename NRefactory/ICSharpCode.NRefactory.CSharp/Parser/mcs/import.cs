@@ -169,7 +169,8 @@ namespace Mono.CSharp
 					break;
 				default:
 					// Ignore private fields (even for error reporting) to not require extra dependencies
-					if (IgnorePrivateMembers || HasAttribute (CustomAttributeData.GetCustomAttributes (fi), "CompilerGeneratedAttribute", CompilerServicesNamespace))
+					if ((IgnorePrivateMembers && !declaringType.IsStruct) ||
+						HasAttribute (CustomAttributeData.GetCustomAttributes (fi), "CompilerGeneratedAttribute", CompilerServicesNamespace))
 						return null;
 
 					mod = Modifiers.PRIVATE;
@@ -911,7 +912,7 @@ namespace Mono.CSharp
 		// Test for a custom attribute type match. Custom attributes are not really predefined globaly 
 		// they can be assembly specific therefore we do check based on names only
 		//
-		public bool HasAttribute (IList<CustomAttributeData> attributesData, string attrName, string attrNamespace)
+		public static bool HasAttribute (IList<CustomAttributeData> attributesData, string attrName, string attrNamespace)
 		{
 			if (attributesData.Count == 0)
 				return false;
@@ -1743,6 +1744,12 @@ namespace Mono.CSharp
 			}
 		}
 
+		bool ITypeDefinition.IsPartial {
+			get {
+				return false;
+			}
+		}
+
 		public override string Name {
 			get {
 				if (name == null) {
@@ -1887,7 +1894,13 @@ namespace Mono.CSharp
 					if ((t.Attributes & TypeAttributes.VisibilityMask) == TypeAttributes.NestedPrivate && importer.IgnorePrivateMembers)
 						continue;
 
-					imported = importer.CreateNestedType (t, declaringType);
+					try {
+						imported = importer.CreateNestedType (t, declaringType);
+					} catch (Exception e) {
+						throw new InternalErrorException (e, "Could not import nested type `{0}' from `{1}'",
+							t.FullName, declaringType.MemberDefinition.DeclaringAssembly.FullName);
+					}
+
 					cache.AddMemberImported (imported);
 				}
 
@@ -1933,7 +1946,7 @@ namespace Mono.CSharp
 								continue;
 
 							// Ignore compiler generated methods
-							if (importer.HasAttribute (CustomAttributeData.GetCustomAttributes (mb), "CompilerGeneratedAttribute", MetadataImporter.CompilerServicesNamespace))
+							if (MetadataImporter.HasAttribute (CustomAttributeData.GetCustomAttributes (mb), "CompilerGeneratedAttribute", MetadataImporter.CompilerServicesNamespace))
 								continue;
 						}
 
@@ -2058,6 +2071,12 @@ namespace Mono.CSharp
 		public IAssemblyDefinition DeclaringAssembly {
 			get {
 				throw new NotImplementedException ();
+			}
+		}
+
+		bool ITypeDefinition.IsPartial {
+			get {
+				return false;
 			}
 		}
 

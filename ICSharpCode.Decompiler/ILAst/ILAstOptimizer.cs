@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		JoinBasicBlocks,
 		SimplifyLogicNot,
 		SimplifyShiftOperators,
-		TransformDecimalCtorToConstant,
+		TypeConversionSimplifications,
 		SimplifyLdObjAndStObj,
 		SimplifyCustomShortCircuit,
 		SimplifyLiftedOperators,
@@ -143,9 +143,8 @@ namespace ICSharpCode.Decompiler.ILAst
 					if (abortBeforeStep == ILAstOptimizationStep.SimplifyShiftOperators) return;
 					modified |= block.RunOptimization(SimplifyShiftOperators);
 
-					if (abortBeforeStep == ILAstOptimizationStep.TransformDecimalCtorToConstant) return;
-					modified |= block.RunOptimization(TransformDecimalCtorToConstant);
-					modified |= block.RunOptimization(SimplifyLdcI4ConvI8);
+					if (abortBeforeStep == ILAstOptimizationStep.TypeConversionSimplifications) return;
+					modified |= block.RunOptimization(TypeConversionSimplifications);
 					
 					if (abortBeforeStep == ILAstOptimizationStep.SimplifyLdObjAndStObj) return;
 					modified |= block.RunOptimization(SimplifyLdObjAndStObj);
@@ -851,6 +850,17 @@ namespace ICSharpCode.Decompiler.ILAst
 		{
 			if (!collection.Remove(key))
 				throw new Exception("The key was not found in the dictionary");
+		}
+		
+		public static bool ContainsReferenceTo(this ILExpression expr, ILVariable v)
+		{
+			if (expr.Operand == v)
+				return true;
+			foreach (var arg in expr.Arguments) {
+				if (ContainsReferenceTo(arg, v))
+					return true;
+			}
+			return false;
 		}
 	}
 }

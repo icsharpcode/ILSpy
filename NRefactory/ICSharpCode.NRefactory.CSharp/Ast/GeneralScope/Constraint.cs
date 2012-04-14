@@ -36,29 +36,37 @@ namespace ICSharpCode.NRefactory.CSharp
 	/// </remarks>
 	public class Constraint : AstNode
 	{
-		public readonly static Role<CSharpTokenNode> ColonRole = TypeDeclaration.ColonRole;
-		public readonly static Role<AstType> BaseTypeRole = TypeDeclaration.BaseTypeRole;
-		
 		public override NodeType NodeType {
 			get {
 				return NodeType.Unknown;
 			}
 		}
 		
-		public string TypeParameter {
+		public SimpleType TypeParameter {
 			get {
-				return GetChildByRole (Roles.Identifier).Name;
+				return GetChildByRole (Roles.ConstraintTypeParameter);
 			}
 			set {
-				SetChildByRole(Roles.Identifier, Identifier.Create (value, TextLocation.Empty));
+				SetChildByRole(Roles.ConstraintTypeParameter, value);
 			}
 		}
 		
 		public AstNodeCollection<AstType> BaseTypes {
-			get { return GetChildrenByRole (BaseTypeRole); }
+			get {
+				return GetChildrenByRole(Roles.BaseType); }
 		}
 		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data = default(T))
+		public override void AcceptVisitor (IAstVisitor visitor)
+		{
+			visitor.VisitConstraint (this);
+		}
+			
+		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		{
+			return visitor.VisitConstraint (this);
+		}
+		
+		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitConstraint (this, data);
 		}
@@ -66,7 +74,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			Constraint o = other as Constraint;
-			return o != null && MatchString(this.TypeParameter, o.TypeParameter) && this.BaseTypes.DoMatch(o.BaseTypes, match);
+			return o != null && this.TypeParameter.DoMatch (o.TypeParameter, match) && this.BaseTypes.DoMatch(o.BaseTypes, match);
 		}
 	}
 }
