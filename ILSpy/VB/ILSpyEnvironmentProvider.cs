@@ -35,21 +35,8 @@ namespace ICSharpCode.ILSpy.VB
 				return "";
 			}
 		}
-		
-		ITypeResolveContext context;
-		
-		CecilLoader loader = new CecilLoader(false);
-		
-		public ILSpyEnvironmentProvider(ITypeResolveContext context)
-		{
-			this.context = context;
-		}
-		
-		public ITypeResolveContext ResolveContext {
-			get {
-				return context;
-			}
-		}
+
+		readonly CecilLoader loader = new CecilLoader(false);
 		
 		public string GetTypeNameForAttribute(ICSharpCode.NRefactory.CSharp.Attribute attribute)
 		{
@@ -61,6 +48,7 @@ namespace ICSharpCode.ILSpy.VB
 		
 		public IType ResolveType(NRefactory.VB.Ast.AstType type, NRefactory.VB.Ast.TypeDeclaration entity = null)
 		{
+			/*
 			var annotation = type.Annotation<TypeReference>();
 			if (annotation == null )
 				return null;
@@ -71,7 +59,8 @@ namespace ICSharpCode.ILSpy.VB
 				current = loader.ReadTypeReference(typeInfo).Resolve(context).GetDefinition();
 			}
 			
-			return loader.ReadTypeReference(annotation, entity: current).Resolve(context);
+			return loader.ReadTypeReference(annotation, entity: current).Resolve(context);*/
+			return SpecialType.UnknownType;
 		}
 		
 		public TypeKind GetTypeKindForAstType(ICSharpCode.NRefactory.CSharp.AstType type)
@@ -111,7 +100,6 @@ namespace ICSharpCode.ILSpy.VB
 				case "System.String":
 					return TypeCode.String;
 				default:
-					
 					break;
 			}
 			

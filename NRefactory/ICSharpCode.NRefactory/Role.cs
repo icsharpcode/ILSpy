@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Threading;
 
 namespace ICSharpCode.NRefactory
 {
@@ -25,19 +26,47 @@ namespace ICSharpCode.NRefactory
 	/// </summary>
 	public abstract class Role
 	{
-		internal Role() {} // don't allow NRefactory consumers to derive from Role
+		public const int RoleIndexBits = 9;
+		
+		static readonly Role[] roles = new Role[1 << RoleIndexBits];
+		static int nextRoleIndex = 0;
+		
+		readonly uint index;
+		
+		[CLSCompliant(false)]
+		public uint Index {
+			get { return index; }
+		}
+		
+		// don't allow NRefactory consumers to derive from Role
+		internal Role()
+		{
+			this.index = (uint)Interlocked.Increment(ref nextRoleIndex);
+			if (this.index >= roles.Length)
+				throw new InvalidOperationException("");
+			roles[this.index] = this;
+		}
 		
 		/// <summary>
 		/// Gets whether the specified node is valid in this role.
 		/// </summary>
 		public abstract bool IsValid(object node);
+		
+		/// <summary>
+		/// Gets the role with the specified index.
+		/// </summary>
+		[CLSCompliant(false)]
+		public static Role GetByIndex(uint index)
+		{
+			return roles[index];
+		}
 	}
 	
 	/// <summary>
 	/// Represents the role a node plays within its parent.
 	/// All nodes with this role have type T.
 	/// </summary>
-	public sealed class Role<T> : Role where T : class
+	public class Role<T> : Role where T : class
 	{
 		readonly string name; // helps with debugging the AST
 		readonly T nullObject;
@@ -48,7 +77,7 @@ namespace ICSharpCode.NRefactory
 		/// </summary>
 		/// <remarks>
 		/// Roles used for non-collections should always have a null object, so that no AST property returns null.
-		/// However, roles used for collections only may leave out the null object.
+		/// However, if a role used for collections only, it may leave out the null object.
 		/// </remarks>
 		public T NullObject {
 			get { return nullObject; }
@@ -66,10 +95,12 @@ namespace ICSharpCode.NRefactory
 			this.name = name;
 		}
 		
-		public Role(string name, T nullObject = null)
+		public Role(string name, T nullObject)
 		{
 			if (name == null)
 				throw new ArgumentNullException("name");
+			if (nullObject == null)
+				throw new ArgumentNullException ("nullObject");
 			this.nullObject = nullObject;
 			this.name = name;
 		}

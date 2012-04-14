@@ -21,27 +21,15 @@ namespace Mono.CSharp {
 	//
 	public class Report
 	{
-		/// <summary>  
-		///   Whether warnings should be considered errors
-		/// </summary>
-		public bool WarningsAreErrors;
-		List<int> warnings_as_error;
-		List<int> warnings_only;
-
 		public const int RuntimeErrorId = 10000;
 
-		//
-		// Keeps track of the warnings that we are ignoring
-		//
-		HashSet<int> warning_ignore_table;
-
 		Dictionary<int, WarningRegions> warning_regions_table;
-
-		int warning_level;
 
 		ReportPrinter printer;
 
 		int reporting_disabled;
+
+		readonly CompilerSettings settings;
 		
 		/// <summary>
 		/// List of symbols related to reported error/warning. You have to fill it before error/warning is reported.
@@ -59,7 +47,7 @@ namespace Mono.CSharp {
 			612, 618, 626, 628, 642, 649, 652, 657, 658, 659, 660, 661, 665, 672, 675, 693,
 			728,
 			809, 824,
-			1030, 1058, 1066,
+			1030, 1058, 1060, 1066,
 			1522, 1570, 1571, 1572, 1573, 1574, 1580, 1581, 1584, 1587, 1589, 1590, 1591, 1592,
 			1607, 1616, 1633, 1634, 1635, 1685, 1690, 1691, 1692, 1695, 1696, 1699,
 			1700, 1701, 1702, 1709, 1711, 1717, 1718, 1720, 1735,
@@ -67,18 +55,21 @@ namespace Mono.CSharp {
 			2002, 2023, 2029,
 			3000, 3001, 3002, 3003, 3005, 3006, 3007, 3008, 3009,
 			3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019,
-			3021, 3022, 3023, 3024, 3026, 3027
+			3021, 3022, 3023, 3024, 3026, 3027,
+			4014
 		};
 
 		static HashSet<int> AllWarningsHashSet;
 
-		public Report (ReportPrinter printer)
+		public Report (CompilerContext context, ReportPrinter printer)
 		{
+			if (context == null)
+				throw new ArgumentNullException ("settings");
 			if (printer == null)
 				throw new ArgumentNullException ("printer");
 
+			this.settings = context.Settings;
 			this.printer = printer;
-			warning_level = 4;
 		}
 
 		public void DisableReporting ()
@@ -107,6 +98,9 @@ namespace Mono.CSharp {
 			case LanguageVersion.V_4:
 				version = "4.0";
 				break;
+			case LanguageVersion.V_5:
+				version = "5.0";
+				break;
 			default:
 				throw new InternalErrorException ("Invalid feature version", compiler.Settings.Version);
 			}
@@ -121,44 +115,6 @@ namespace Mono.CSharp {
 			Error (1644, loc,
 				"Feature `{0}' is not supported in Mono mcs1 compiler. Consider using the `gmcs' compiler instead",
 				feature);
-		}
-		
-		bool IsWarningEnabled (int code, int level, Location loc)
-		{
-			if (WarningLevel < level)
-				return false;
-
-			if (IsWarningDisabledGlobally (code))
-				return false;
-
-			if (warning_regions_table == null || loc.IsNull)
-				return true;
-
-			WarningRegions regions;
-			if (!warning_regions_table.TryGetValue (loc.File, out regions))
-				return true;
-
-			return regions.IsWarningEnabled (code, loc.Row);
-		}
-
-		public bool IsWarningDisabledGlobally (int code)
-		{
-			return warning_ignore_table != null && warning_ignore_table.Contains (code);
-		}
-
-		bool IsWarningAsError (int code)
-		{
-			bool is_error = WarningsAreErrors;
-
-			// Check specific list
-			if (warnings_as_error != null)
-				is_error |= warnings_as_error.Contains (code);
-
-			// Ignore excluded warnings
-			if (warnings_only != null && warnings_only.Contains (code))
-				is_error = false;
-
-			return is_error;
 		}
 		        
 		public void RuntimeMissingSupport (Location loc, string feature) 
@@ -214,44 +170,6 @@ namespace Mono.CSharp {
 			extra_information.Add (msg);
 		}
 
-		public void AddWarningAsError (string warningId)
-		{
-			int id;
-			try {
-				id = int.Parse (warningId);
-			} catch {
-				CheckWarningCode (warningId, Location.Null);
-				return;
-			}
-
-			if (!CheckWarningCode (id, Location.Null))
-				return;
-
-			if (warnings_as_error == null)
-				warnings_as_error = new List<int> ();
-			
-			warnings_as_error.Add (id);
-		}
-
-		public void RemoveWarningAsError (string warningId)
-		{
-			int id;
-			try {
-				id = int.Parse (warningId);
-			} catch {
-				CheckWarningCode (warningId, Location.Null);
-				return;
-			}
-
-			if (!CheckWarningCode (id, Location.Null))
-				return;
-
-			if (warnings_only == null)
-				warnings_only = new List<int> ();
-
-			warnings_only.Add (id);
-		}
-
 		public bool CheckWarningCode (string code, Location loc)
 		{
 			Warning (1691, 1, loc, "`{0}' is not a valid warning number", code);
@@ -297,11 +215,17 @@ namespace Mono.CSharp {
 			if (reporting_disabled > 0)
 				return;
 
-			if (!IsWarningEnabled (code, level, loc))
+			if (!settings.IsWarningEnabled (code, level))
 				return;
 
+			if (warning_regions_table != null && !loc.IsNull) {
+				WarningRegions regions;
+				if (warning_regions_table.TryGetValue (loc.File, out regions) && !regions.IsWarningEnabled (code, loc.Row))
+					return;
+			}
+
 			AbstractMessage msg;
-			if (IsWarningAsError (code)) {
+			if (settings.IsWarningAsError (code)) {
 				message = "Warning as Error: " + message;
 				msg = new ErrorMessage (code, loc, message, extra_information);
 			} else {
@@ -309,7 +233,7 @@ namespace Mono.CSharp {
 			}
 
 			extra_information.Clear ();
-			printer.Print (msg);
+			printer.Print (msg, settings.ShowFullPaths);
 		}
 
 		public void Warning (int code, int level, Location loc, string format, string arg)
@@ -362,7 +286,13 @@ namespace Mono.CSharp {
 			ErrorMessage msg = new ErrorMessage (code, loc, error, extra_information);
 			extra_information.Clear ();
 
-			printer.Print (msg);
+			printer.Print (msg, settings.ShowFullPaths);
+
+			if (settings.Stacktrace)
+				Console.WriteLine (FriendlyStackTrace (new StackTrace (true)));
+
+			if (printer.ErrorsCount == settings.FatalCounter)
+				throw new FatalException (msg.Text);
 		}
 
 		public void Error (int code, Location loc, string format, string arg)
@@ -417,28 +347,11 @@ namespace Mono.CSharp {
 			get { return printer; }
 		}
 
-		public void SetIgnoreWarning (int code)
-		{
-			if (warning_ignore_table == null)
-				warning_ignore_table = new HashSet<int> ();
-
-			warning_ignore_table.Add (code);
-		}
-
 		public ReportPrinter SetPrinter (ReportPrinter printer)
 		{
 			ReportPrinter old = this.printer;
 			this.printer = printer;
 			return old;
-		}
-
-		public int WarningLevel {
-			get {
-				return warning_level;
-			}
-			set {
-				warning_level = value;
-			}
 		}
 
 		[Conditional ("MCS_DEBUG")]
@@ -495,7 +408,42 @@ namespace Mono.CSharp {
 			sb.Append (")");
 			return sb.ToString ();
 		}
-*/ 
+*/
+		static string FriendlyStackTrace (StackTrace t)
+		{
+			StringBuilder sb = new StringBuilder ();
+
+			bool foundUserCode = false;
+
+			for (int i = 0; i < t.FrameCount; i++) {
+				StackFrame f = t.GetFrame (i);
+				var mb = f.GetMethod ();
+
+				if (!foundUserCode && mb.ReflectedType == typeof (Report))
+					continue;
+
+				foundUserCode = true;
+
+				sb.Append ("\tin ");
+
+				if (f.GetFileLineNumber () > 0)
+					sb.AppendFormat ("(at {0}:{1}) ", f.GetFileName (), f.GetFileLineNumber ());
+
+				sb.AppendFormat ("{0}.{1} (", mb.ReflectedType.Name, mb.Name);
+
+				bool first = true;
+				foreach (var pi in mb.GetParameters ()) {
+					if (!first)
+						sb.Append (", ");
+					first = false;
+
+					sb.Append (pi.ParameterType.FullName);
+				}
+				sb.Append (")\n");
+			}
+
+			return sb.ToString ();
+		}
 	}
 
 	public abstract class AbstractMessage
@@ -609,17 +557,8 @@ namespace Mono.CSharp {
 	{
 		#region Properties
 
-		public int FatalCounter { get; set; }
-
 		public int ErrorsCount { get; protected set; }
-	
-		public bool ShowFullPaths { get; set; }
-
-		//
-		// Whether to dump a stack trace on errors. 
-		//
-		public bool Stacktrace { get; set; }
-
+		
 		public int WarningsCount { get; private set; }
 	
 		//
@@ -637,23 +576,20 @@ namespace Mono.CSharp {
 			return txt;
 		}
 
-		public virtual void Print (AbstractMessage msg)
+		public virtual void Print (AbstractMessage msg, bool showFullPath)
 		{
 			if (msg.IsWarning) {
 				++WarningsCount;
 			} else {
 				++ErrorsCount;
-
-				if (ErrorsCount == FatalCounter)
-					throw new Exception (msg.Text);
 			}
 		}
 
-		protected void Print (AbstractMessage msg, TextWriter output)
+		protected void Print (AbstractMessage msg, TextWriter output, bool showFullPath)
 		{
 			StringBuilder txt = new StringBuilder ();
 			if (!msg.Location.IsNull) {
-				if (ShowFullPaths)
+				if (showFullPath)
 					txt.Append (msg.Location.ToStringFullName ());
 				else
 					txt.Append (msg.Location.ToString ());
@@ -706,7 +642,9 @@ namespace Mono.CSharp {
 		//
 		List<AbstractMessage> merged_messages;
 
-		public override void Print (AbstractMessage msg)
+		bool showFullPaths;
+
+		public override void Print (AbstractMessage msg, bool showFullPath)
 		{
 			//
 			// This line is useful when debugging recorded messages
@@ -718,7 +656,8 @@ namespace Mono.CSharp {
 
 			session_messages.Add (msg);
 
-			base.Print (msg);
+			this.showFullPaths = showFullPath;
+			base.Print (msg, showFullPath);
 		}
 
 		public void EndSession ()
@@ -792,7 +731,7 @@ namespace Mono.CSharp {
 
 			bool error_msg = false;
 			foreach (AbstractMessage msg in messages_to_print) {
-				dest.Print (msg);
+				dest.Print (msg, showFullPaths);
 				error_msg |= !msg.IsWarning;
 			}
 
@@ -809,10 +748,10 @@ namespace Mono.CSharp {
 			this.writer = writer;
 		}
 
-		public override void Print (AbstractMessage msg)
+		public override void Print (AbstractMessage msg, bool showFullPath)
 		{
-			Print (msg, writer);
-			base.Print (msg);
+			Print (msg, writer, showFullPath);
+			base.Print (msg, showFullPath);
 		}
 	}
 
@@ -929,60 +868,6 @@ namespace Mono.CSharp {
 
 			return txt;
 		}
-
-		static string FriendlyStackTrace (StackTrace t)
-		{		
-			StringBuilder sb = new StringBuilder ();
-			
-			bool foundUserCode = false;
-			
-			for (int i = 0; i < t.FrameCount; i++) {
-				StackFrame f = t.GetFrame (i);
-				var mb = f.GetMethod ();
-				
-				if (!foundUserCode && mb.ReflectedType == typeof (Report))
-					continue;
-				
-				foundUserCode = true;
-				
-				sb.Append ("\tin ");
-				
-				if (f.GetFileLineNumber () > 0)
-					sb.AppendFormat ("(at {0}:{1}) ", f.GetFileName (), f.GetFileLineNumber ());
-				
-				sb.AppendFormat ("{0}.{1} (", mb.ReflectedType.Name, mb.Name);
-				
-				bool first = true;
-				foreach (var pi in mb.GetParameters ()) {
-					if (!first)
-						sb.Append (", ");
-					first = false;
-
-					sb.Append (pi.ParameterType.FullName);
-				}
-				sb.Append (")\n");
-			}
-	
-			return sb.ToString ();
-		}
-
-		public override void Print (AbstractMessage msg)
-		{
-			base.Print (msg);
-
-			if (Stacktrace)
-				Console.WriteLine (FriendlyStackTrace (new StackTrace (true)));
-		}
-
-		public static string FriendlyStackTrace (Exception e)
-		{
-			return FriendlyStackTrace (new StackTrace (e, true));
-		}
-
-		public static void StackTrace ()
-		{
-			Console.WriteLine (FriendlyStackTrace (new StackTrace (true)));
-		}
 	}
 
 	class TimeReporter
@@ -996,7 +881,6 @@ namespace Mono.CSharp {
 			ReferencesImporting,
 			PredefinedTypesInit,
 			ModuleDefinitionTotal,
-			UsingResolve,
 			EmitTotal,
 			CloseTypes,
 			Resouces,
@@ -1055,7 +939,6 @@ namespace Mono.CSharp {
 				{ TimerType.ReferencesImporting, "Referenced assemblies importing" },
 				{ TimerType.PredefinedTypesInit, "Predefined types initialization" },
 				{ TimerType.ModuleDefinitionTotal, "Module definition" },
-				{ TimerType.UsingResolve, "Top-level usings resolve" },
 				{ TimerType.EmitTotal, "Resolving and emitting members blocks" },
 				{ TimerType.CloseTypes, "Module types closed" },
 				{ TimerType.Resouces, "Embedding resources" },
@@ -1107,6 +990,14 @@ namespace Mono.CSharp {
 		
 		public InternalErrorException (Exception e, Location loc)
 			: base (loc.ToString (), e)
+		{
+		}
+	}
+
+	class FatalException : Exception
+	{
+		public FatalException (string message)
+			: base (message)
 		{
 		}
 	}
@@ -1199,13 +1090,13 @@ namespace Mono.CSharp {
 			regions.Add (new EnableAll (line));
 		}
 
-		public void WarningEnable (Location location, int code, Report Report)
+		public void WarningEnable (Location location, int code, CompilerContext context)
 		{
-			if (!Report.CheckWarningCode (code, location))
+			if (!context.Report.CheckWarningCode (code, location))
 				return;
 
-			if (Report.IsWarningDisabledGlobally (code))
-				Report.Warning (1635, 1, location, "Cannot restore warning `CS{0:0000}' because it was disabled globally", code);
+			if (context.Settings.IsWarningDisabledGlobally (code))
+				context.Report.Warning (1635, 1, location, "Cannot restore warning `CS{0:0000}' because it was disabled globally", code);
 
 			regions.Add (new Enable (location.Row, code));
 		}

@@ -68,7 +68,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return Images.GetIcon(MemberIcon.Field, GetOverlayIcon(field.Attributes), field.IsStatic);
 		}
 
-		private static bool IsDecimalConstant(Mono.Cecil.FieldDefinition field)
+		private static bool IsDecimalConstant(FieldDefinition field)
 		{
 			var fieldType = field.FieldType;
 			if (fieldType.Name == "Decimal" && fieldType.Namespace == "System") {
@@ -93,10 +93,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case FieldAttributes.FamANDAssem:
 					return AccessOverlayIcon.Internal;
 				case FieldAttributes.Family:
-				case FieldAttributes.FamORAssem:
 					return AccessOverlayIcon.Protected;
-				default:
+				case FieldAttributes.FamORAssem:
+					return AccessOverlayIcon.ProtectedInternal;
+				case FieldAttributes.Private:
 					return AccessOverlayIcon.Private;
+				case FieldAttributes.CompilerControlled:
+					return AccessOverlayIcon.CompilerControlled;
+				default:
+					throw new NotSupportedException();
 			}
 		}
 

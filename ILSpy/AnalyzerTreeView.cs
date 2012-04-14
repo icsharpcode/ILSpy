@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Linq;
+using System.Windows;
 using ICSharpCode.ILSpy.TreeNodes.Analyzer;
 using ICSharpCode.TreeView;
 
@@ -28,7 +29,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Analyzer tree view.
 	/// </summary>
-	public partial class AnalyzerTreeView : SharpTreeView, IPane
+	public class AnalyzerTreeView : SharpTreeView, IPane
 	{
 		static AnalyzerTreeView instance;
 
@@ -48,6 +49,7 @@ namespace ICSharpCode.ILSpy
 		{
 			this.ShowRoot = false;
 			this.Root = new AnalyzerRootNode { Language = MainWindow.Instance.CurrentLanguage };
+			this.BorderThickness = new Thickness(0);
 			ContextMenuProvider.Add(this);
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
 		}
@@ -81,6 +83,23 @@ namespace ICSharpCode.ILSpy
 			this.Root.Children.Add(node);
 			this.SelectedItem = node;
 			this.FocusNode(node);
+		}
+		
+		public void ShowOrFocus(AnalyzerTreeNode node)
+		{
+			if (node is AnalyzerEntityTreeNode) {
+				var an = node as AnalyzerEntityTreeNode;
+				var found = this.Root.Children.OfType<AnalyzerEntityTreeNode>().FirstOrDefault(n => n.Member == an.Member);
+				if (found != null) {
+					Show();
+					
+					found.IsExpanded = true;
+					this.SelectedItem = found;
+					this.FocusNode(found);
+					return;
+				}
+			}
+			Show(node);
 		}
 
 		void IPane.Closed()

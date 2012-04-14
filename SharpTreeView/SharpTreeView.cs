@@ -135,11 +135,11 @@ namespace ICSharpCode.TreeView
 				this.ItemsSource = flattener;
 			}
 		}
-		
+
 		void flattener_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
-			// Deselect nodes that are being hidden
-			if (e.Action == NotifyCollectionChangedAction.Remove) {
+			// Deselect nodes that are being hidden, if any remain in the tree
+			if (e.Action == NotifyCollectionChangedAction.Remove && Items.Count > 0) {
 				List<SharpTreeNode> selectedOldItems = null;
 				foreach (SharpTreeNode node in e.OldItems) {
 					if (node.IsSelected) {
@@ -151,11 +151,13 @@ namespace ICSharpCode.TreeView
 				if (selectedOldItems != null) {
 					var list = SelectedItems.Cast<SharpTreeNode>().Except(selectedOldItems).ToList();
 					SetSelectedItems(list);
+					if (SelectedItem == null) {
+						// if we removed all selected nodes, then move the focus to the node 
+						// preceding the first of the old selected nodes
+						SelectedIndex = Math.Max(0, e.OldStartingIndex - 1);
+						FocusNode((SharpTreeNode)SelectedItem);
+					}
 				}
-				// reset the focus to the previous node
-				SelectedIndex = Math.Max(0, e.OldStartingIndex - 1);
-				if (SelectedItem != null)
-					FocusNode((SharpTreeNode)SelectedItem);
 			}
 		}
 		
@@ -174,6 +176,10 @@ namespace ICSharpCode.TreeView
 			base.PrepareContainerForItemOverride(element, item);
 			SharpTreeViewItem container = element as SharpTreeViewItem;
 			container.ParentTreeView = this;
+			// Make sure that the line renderer takes into account the new bound data
+			if (container.NodeView != null) {
+				container.NodeView.LinesRenderer.InvalidateVisual();
+			}
 		}
 		
 		bool doNotScrollOnExpanding;

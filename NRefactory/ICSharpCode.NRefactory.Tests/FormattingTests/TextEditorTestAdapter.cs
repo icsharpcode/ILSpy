@@ -7,37 +7,16 @@ using ICSharpCode.NRefactory.Editor;
 using NUnit.Framework;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
 
-namespace ICSharpCode.NRefactory.FormattingTests
+namespace ICSharpCode.NRefactory.CSharp.FormattingTests
 {
 	public abstract class TestBase
 	{
-		static IActionFactory factory = new TestFactory ();
-		
-		class TestTextReplaceAction : TextReplaceAction
-		{
-			public TestTextReplaceAction (int offset, int removedChars, string insertedText) : base (offset, removedChars, insertedText)
-			{
-			}
-			
-			public override void Perform (Script script)
-			{
-			}
-		}
-		
-		class TestFactory : AbstractActionFactory
-		{
-			public override TextReplaceAction CreateTextReplaceAction (int offset, int removedChars, string insertedText)
-			{
-				return new TestTextReplaceAction (offset, removedChars, insertedText);
-			}
-		}
-		
-		static string ApplyChanges (string text, List<TextReplaceAction> changes)
+		/*public static string ApplyChanges (string text, List<TextReplaceAction> changes)
 		{
 			changes.Sort ((x, y) => y.Offset.CompareTo (x.Offset));
 			StringBuilder b = new StringBuilder(text);
 			foreach (var change in changes) {
-//				Console.WriteLine ("---- apply:" + change);
+				//Console.WriteLine ("---- apply:" + change);
 //				Console.WriteLine (adapter.Text);
 				if (change.Offset > b.Length)
 					continue;
@@ -47,36 +26,49 @@ namespace ICSharpCode.NRefactory.FormattingTests
 //			Console.WriteLine ("---result:");
 //			Console.WriteLine (adapter.Text);
 			return b.ToString();
+		}*/
+		
+		protected static IDocument GetResult (CSharpFormattingOptions policy, string input, FormattingMode mode = FormattingMode.OnTheFly)
+		{
+			input = NormalizeNewlines (input);
+			var document = new StringBuilderDocument (input);
+			var options = new TextEditorOptions ();
+			options.EolMarker = "\n";
+			var visitor = new AstFormattingVisitor (policy, document, options);
+			visitor.FormattingMode = mode;
+			var compilationUnit = new CSharpParser ().Parse (document, "test.cs");
+			compilationUnit.AcceptVisitor (visitor);
+			visitor.ApplyChanges();
+			return document;
 		}
 		
-		protected static IDocument GetResult (CSharpFormattingOptions policy, string input)
+		protected static IDocument Test (CSharpFormattingOptions policy, string input, string expectedOutput, FormattingMode mode = FormattingMode.OnTheFly)
 		{
-			var adapter = new ReadOnlyDocument (input);
-			var visitor = new AstFormattingVisitor (policy, adapter, factory);
-			
-			var compilationUnit = new CSharpParser ().Parse (new StringReader (input));
-			compilationUnit.AcceptVisitor (visitor, null);
-			
-			return new ReadOnlyDocument(ApplyChanges (input, visitor.Changes));
-		}
-		
-		protected static IDocument Test (CSharpFormattingOptions policy, string input, string expectedOutput)
-		{
-			IDocument doc = GetResult(policy, input);
+			expectedOutput = NormalizeNewlines(expectedOutput);
+			IDocument doc = GetResult(policy, input, mode);
 			if (expectedOutput != doc.Text) {
 				Console.WriteLine (doc.Text);
 			}
 			Assert.AreEqual (expectedOutput, doc.Text);
 			return doc;
 		}
-
-		protected static void Continue (CSharpFormattingOptions policy, IDocument document, string expectedOutput)
+		
+		protected static string NormalizeNewlines(string input)
 		{
-			var visitior = new AstFormattingVisitor (policy, document, factory);
-			
-			var compilationUnit = new CSharpParser ().Parse (new StringReader (document.Text));
-			compilationUnit.AcceptVisitor (visitior, null);
-			string newText = ApplyChanges (document.Text, visitior.Changes);
+			return input.Replace("\r\n", "\n");
+		}
+
+		protected static void Continue (CSharpFormattingOptions policy, IDocument document, string expectedOutput, FormattingMode formattingMode = FormattingMode.OnTheFly)
+		{
+			expectedOutput = NormalizeNewlines (expectedOutput);
+			var options = new TextEditorOptions ();
+			options.EolMarker = "\n";
+			var visitior = new AstFormattingVisitor (policy, document, options);
+			visitior.FormattingMode = formattingMode;
+			var compilationUnit = new CSharpParser ().Parse (document, "test.cs");
+			compilationUnit.AcceptVisitor (visitior);
+			visitior.ApplyChanges();
+			string newText = document.Text;
 			if (expectedOutput != newText) {
 				Console.WriteLine (newText);
 			}

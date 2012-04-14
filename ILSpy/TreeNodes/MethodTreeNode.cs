@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		MethodDefinition method;
+		readonly MethodDefinition method;
 
 		public MethodDefinition MethodDefinition
 		{
@@ -115,10 +115,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case MethodAttributes.FamANDAssem:
 					return AccessOverlayIcon.Internal;
 				case MethodAttributes.Family:
-				case MethodAttributes.FamORAssem:
 					return AccessOverlayIcon.Protected;
+				case MethodAttributes.FamORAssem:
+					return AccessOverlayIcon.ProtectedInternal;
 				case MethodAttributes.Private:
 					return AccessOverlayIcon.Private;
+				case MethodAttributes.CompilerControlled:
+					return AccessOverlayIcon.CompilerControlled;
 				default:
 					throw new NotSupportedException();
 			}

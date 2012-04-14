@@ -33,6 +33,12 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		}
 		
 		[Test]
+		public void InsideClassBody()
+		{
+			Assert.IsNull(ResolveAtLocation("class Test { $ }"));
+		}
+		
+		[Test]
 		public void UsingDeclarationNamespace()
 		{
 			var rr = ResolveAtLocation<NamespaceResolveResult>("using $System;");
@@ -55,7 +61,7 @@ class A { void M() {
 	Console.W$riteLine(1);
 }}");
 			Assert.AreEqual("System.Console.WriteLine", rr.Member.FullName);
-			Assert.AreEqual("System.Int32", rr.Member.Parameters[0].Type.Resolve(context).FullName);
+			Assert.AreEqual("System.Int32", rr.Member.Parameters[0].Type.FullName);
 		}
 		
 		[Test]
@@ -68,10 +74,10 @@ class A { void M() {
 			Assert.AreEqual("System.Int32", rr.Type.FullName);
 		}
 		
-		[Test, Ignore("Parser returns incorrect positions")]
+		[Test]
 		public void BaseCtorCall()
 		{
-			var rr = ResolveAtLocation<InvocationResolveResult>(@"using System;
+			var rr = ResolveAtLocation<CSharpInvocationResolveResult>(@"using System;
 class A { public A() : ba$se() {} }");
 			Assert.AreEqual("System.Object..ctor", rr.Member.FullName);
 		}
@@ -116,6 +122,15 @@ class A { public A() : ba$se() {} }");
 		{
 			var rr = ResolveAtLocation<MemberResolveResult>("public class A { event EventHandler Test, Te$st2; }");
 			Assert.AreEqual("Test2", rr.Member.Name);
+		}
+		
+		[Test]
+		public void Indexer()
+		{
+			var rr = ResolveAtLocation<CSharpInvocationResolveResult>(
+				"using System.Collections.Generic;" +
+				"public class A { int M(List<int> a) { return a$[1]; } }");
+			Assert.AreEqual(EntityType.Indexer, rr.Member.EntityType);
 		}
 	}
 }

@@ -18,17 +18,29 @@
 
 using System;
 using System.Diagnostics.Contracts;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.NRefactory.TypeSystem
 {
+	public interface IUnresolvedEvent : IUnresolvedMember
+	{
+		bool CanAdd { get; }
+		bool CanRemove { get; }
+		bool CanInvoke { get; }
+		
+		IUnresolvedMethod AddAccessor { get; }
+		IUnresolvedMethod RemoveAccessor { get; }
+		IUnresolvedMethod InvokeAccessor { get; }
+	}
+	
 	public interface IEvent : IMember
 	{
 		bool CanAdd { get; }
 		bool CanRemove { get; }
 		bool CanInvoke { get; }
 		
-		IAccessor AddAccessor { get; }
-		IAccessor RemoveAccessor { get; }
-		IAccessor InvokeAccessor { get; }
+		IMethod AddAccessor { get; }
+		IMethod RemoveAccessor { get; }
+		IMethod InvokeAccessor { get; }
 	}
 }

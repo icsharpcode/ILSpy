@@ -17,14 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.ComponentModel.Composition;
 using System.IO;
-using System.Windows.Controls;
-using System.Windows.Media.Imaging;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.TextView;
 using Microsoft.Win32;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -38,7 +34,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text
 		{
-			get { return key.ToString(); }
+			get { return this.key; }
 		}
 
 		public override object Icon
@@ -68,9 +64,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (var factory in App.CompositionContainer.GetExportedValues<IResourceNodeFactory>()) {
 				result = factory.CreateNode(key, data);
 				if (result != null)
-					break;
+					return result;
 			}
-			return result ?? new ResourceEntryNode(key, data as Stream);
+			var streamData = data as Stream;
+			if(streamData !=null)
+				result =  new ResourceEntryNode(key, data as Stream);
+
+			return result;
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

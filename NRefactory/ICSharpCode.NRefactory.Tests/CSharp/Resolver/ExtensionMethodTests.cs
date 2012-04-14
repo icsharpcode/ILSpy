@@ -53,18 +53,18 @@ namespace XN {
 			
 			mrr = Resolve<CSharpInvocationResolveResult>(program.Replace("$", "$a.F(1)$"));
 			Assert.AreEqual("XN.XC.F", mrr.Member.FullName);
-			Assert.AreEqual("System.Int32", mrr.Member.Parameters[1].Type.Resolve(context).FullName);
+			Assert.AreEqual("System.Int32", mrr.Member.Parameters[1].Type.FullName);
 			
 			mrr = Resolve<CSharpInvocationResolveResult>(program.Replace("$", "$a.F(\"text\")$"));
 			Assert.AreEqual("XN.XC.F", mrr.Member.FullName);
-			Assert.AreEqual("System.String", mrr.Member.Parameters[1].Type.Resolve(context).FullName);
+			Assert.AreEqual("System.String", mrr.Member.Parameters[1].Type.FullName);
 			
 			mrr = Resolve<CSharpInvocationResolveResult>(program.Replace("$", "$b.F(1)$"));
 			Assert.AreEqual("B.F", mrr.Member.FullName);
 			
 			mrr = Resolve<CSharpInvocationResolveResult>(program.Replace("$", "$b.F(\"text\")$"));
 			Assert.AreEqual("XN.XC.F", mrr.Member.FullName);
-			Assert.AreEqual("System.String", mrr.Member.Parameters[1].Type.Resolve(context).FullName);
+			Assert.AreEqual("System.String", mrr.Member.Parameters[1].Type.FullName);
 			
 			mrr = Resolve<CSharpInvocationResolveResult>(program.Replace("$", "$c.F(1)$"));
 			Assert.AreEqual("C.F", mrr.Member.FullName);
@@ -100,6 +100,23 @@ public static class XC {
 			mrr = Resolve<CSharpInvocationResolveResult>(program.Replace("$", "$args.Filter(delegate { return true; })$"));
 			Assert.AreEqual("XC.Filter", mrr.Member.FullName);
 			Assert.AreEqual("System.Collections.Generic.IEnumerable`1[[System.String]]", mrr.Type.ReflectionName);
+		}
+		
+		[Test]
+		public void FirstIsEligibleExtensionMethod()
+		{
+			string program = @"using System; using System.Collections.Generic;
+public static class XC {
+	$public static TSource First<TSource>(this IEnumerable<TSource> source) {}$
+}
+";
+			var mrr = Resolve<MemberResolveResult>(program);
+			var targetType = compilation.FindType(typeof(string[]));
+			IType[] inferredTypes;
+			bool isEligible = CSharpResolver.IsEligibleExtensionMethod(targetType, (IMethod)mrr.Member, true, out inferredTypes);
+			Assert.IsTrue(isEligible);
+			Assert.AreEqual(1, inferredTypes.Length);
+			Assert.AreEqual("System.String", inferredTypes[0].ReflectionName);
 		}
 	}
 }

@@ -24,57 +24,36 @@ using System.Threading;
 namespace ICSharpCode.NRefactory.Utils
 {
 	/// <summary>
-	/// Allows caching values for a specific resolve context.
-	/// A CacheManager consists of two dictionaries: one for shared instances (shared among all threads working with that resolve context),
-	/// and one for thread-local instances.
-	/// Additionally, it provides a Dispose() event that can be used to clear any external caches when
-	/// leaving the "using (var ctx = context.Synchronize())" block.
+	/// Allows caching values for a specific compilation.
+	/// A CacheManager consists of a for shared instances (shared among all threads working with that resolve context).
 	/// </summary>
 	/// <remarks>This class is thread-safe</remarks>
-	public sealed class CacheManager : IDisposable
+	public sealed class CacheManager
 	{
 		readonly ConcurrentDictionary<object, object> sharedDict = new ConcurrentDictionary<object, object>(ReferenceComparer.Instance);
-		readonly ThreadLocal<Dictionary<object, object>> localDict = new ThreadLocal<Dictionary<object, object>>(() => new Dictionary<object, object>(ReferenceComparer.Instance));
+		// There used to be a thread-local dictionary here, but I removed it as it was causing memory
+		// leaks in some use cases.
 		
 		public object GetShared(object key)
 		{
-			object val;
-			sharedDict.TryGetValue(key, out val);
-			return val;
+			object value;
+			sharedDict.TryGetValue(key, out value);
+			return value;
 		}
 		
-		public void SetShared(object key, object val)
+		public object GetOrAddShared(object key, Func<object, object> valueFactory)
 		{
-			sharedDict[key] = val;
+			return sharedDict.GetOrAdd(key, valueFactory);
 		}
 		
-		public object GetThreadLocal(object key)
+		public object GetOrAddShared(object key, object value)
 		{
-			object val;
-			localDict.Value.TryGetValue(key, out val);
-			return val;
+			return sharedDict.GetOrAdd(key, value);
 		}
 		
-		public void SetThreadLocal(object key, object val)
+		public void SetShared(object key, object value)
 		{
-			localDict.Value[key] = val;
-		}
-		
-		public event EventHandler Disposed;
-		
-		/// <summary>
-		/// Invokes the <see cref="Disposed"/> event.
-		/// </summary>
-		public void Dispose()
-		{
-			sharedDict.Clear();
-			localDict.Dispose(); // dispose the ThreadLocal<T>
-			// TODO: test whether this frees the referenced value on all threads
-			
-			// fire Disposed() only once by removing the old event handlers
-			EventHandler disposed = Interlocked.Exchange(ref Disposed, null);
-			if (disposed != null)
-				disposed(this, EventArgs.Empty);
+			sharedDict[key] = value;
 		}
 	}
 }

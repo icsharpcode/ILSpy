@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.NRefactory.Utils;
+using System.Linq;
 
 namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 {
@@ -27,10 +27,16 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 	[Serializable]
 	public sealed class GetClassTypeReference : ITypeReference, ISupportsInterning
 	{
+		IAssemblyReference assembly;
 		string nameSpace, name;
 		int typeParameterCount;
-		// [NonSerialized] volatile CachedResult v_cachedResult;
 		
+		/// <summary>
+		/// Creates a new GetClassTypeReference that searches a top-level type.
+		/// </summary>
+		/// <param name="nameSpace">The namespace name containing the type, e.g. "System.Collections.Generic".</param>
+		/// <param name="name">The name of the type, e.g. "List".</param>
+		/// <param name="typeParameterCount">The number of type parameters, (e.g. 1 for List&lt;T&gt;).</param>
 		public GetClassTypeReference(string nameSpace, string name, int typeParameterCount)
 		{
 			if (nameSpace == null)
@@ -42,63 +48,62 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			this.typeParameterCount = typeParameterCount;
 		}
 		
-		public GetClassTypeReference(string fullTypeName, int typeParameterCount)
+		/// <summary>
+		/// Creates a new GetClassTypeReference that searches a top-level type in the specified assembly.
+		/// </summary>
+		/// <param name="assembly">A reference to the assembly containing this type.
+		/// If this parameter is null, the GetClassTypeReference will search in all assemblies belonging to the ICompilation.</param>
+		/// <param name="nameSpace">The namespace name containing the type, e.g. "System.Collections.Generic".</param>
+		/// <param name="name">The name of the type, e.g. "List".</param>
+		/// <param name="typeParameterCount">The number of type parameters, (e.g. 1 for List&lt;T&gt;).</param>
+		public GetClassTypeReference(IAssemblyReference assembly, string nameSpace, string name, int typeParameterCount)
 		{
-			if (fullTypeName == null)
-				throw new ArgumentNullException("fullTypeName");
-			int pos = fullTypeName.LastIndexOf('.');
-			if (pos < 0) {
-				nameSpace = string.Empty;
-				name = fullTypeName;
-			} else {
-				nameSpace = fullTypeName.Substring(0, pos);
-				name = fullTypeName.Substring(pos + 1);
-			}
+			if (nameSpace == null)
+				throw new ArgumentNullException("nameSpace");
+			if (name == null)
+				throw new ArgumentNullException("name");
+			this.assembly = assembly;
+			this.nameSpace = nameSpace;
+			this.name = name;
 			this.typeParameterCount = typeParameterCount;
 		}
 		
+		public IAssemblyReference Assembly { get { return assembly; } }
 		public string Namespace { get { return nameSpace; } }
 		public string Name { get { return name; } }
 		public int TypeParameterCount { get { return typeParameterCount; } }
-		
-		/*
-		sealed class CachedResult
-		{
-			public readonly CacheManager CacheManager;
-			public readonly IType Result;
-			
-			public CachedResult(CacheManager cacheManager, IType result)
-			{
-				this.CacheManager = cacheManager;
-				this.Result = result;
-			}
-		}
-		 */
 		
 		public IType Resolve(ITypeResolveContext context)
 		{
 			if (context == null)
 				throw new ArgumentNullException("context");
 			
-//			CacheManager cache = context.CacheManager;
-//			if (cache != null) {
-//				IType cachedType = cache.GetShared(this) as IType;
-//				if (cachedType != null)
-//					return cachedType;
-//			}
-			
-			IType type = context.GetTypeDefinition(nameSpace, name, typeParameterCount, StringComparer.Ordinal) ?? SharedTypes.UnknownType;
-//			if (cache != null)
-//				cache.SetShared(this, type);
-			return type;
+			IType type = null;
+			if (assembly == null) {
+				var compilation = context.Compilation;
+				foreach (var asm in new[] { context.CurrentAssembly }.Concat(compilation.Assemblies)) {
+					if (asm != null) {
+						type = asm.GetTypeDefinition(nameSpace, name, typeParameterCount);
+						if (type != null)
+							return type;
+					}
+				}
+			} else {
+				IAssembly asm = assembly.Resolve(context);
+				if (asm != null) {
+					type = asm.GetTypeDefinition(nameSpace, name, typeParameterCount);
+				}
+			}
+			return type ?? new UnknownType(nameSpace, name, typeParameterCount);
 		}
 		
 		public override string ToString()
 		{
+			string asmSuffix = (assembly != null ? ", " + assembly.ToString() : null);
 			if (typeParameterCount == 0)
-				return BuildQualifiedName(nameSpace, name);
+				return BuildQualifiedName(nameSpace, name) + asmSuffix;
 			else
-				return BuildQualifiedName(nameSpace, name) + "`" + typeParameterCount;
+				return BuildQualifiedName(nameSpace, name) + "`" + typeParameterCount + asmSuffix;
 		}
 		
 		static string BuildQualifiedName (string name1, string name2)
@@ -112,19 +117,22 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)
 		{
+			assembly = provider.Intern(assembly);
 			nameSpace = provider.Intern(nameSpace);
 			name = provider.Intern(name);
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return nameSpace.GetHashCode() ^ name.GetHashCode() ^ typeParameterCount;
+			unchecked {
+				return 33 * assembly.GetHashCode() + 27 * nameSpace.GetHashCode() + name.GetHashCode() + typeParameterCount;
+			}
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			GetClassTypeReference o = other as GetClassTypeReference;
-			return o != null && name == o.name && nameSpace == o.nameSpace && typeParameterCount == o.typeParameterCount;
+			return o != null && assembly == o.assembly && name == o.name && nameSpace == o.nameSpace && typeParameterCount == o.typeParameterCount;
 		}
 	}
 }

@@ -17,43 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.ILAst;
-using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {
-	/// <summary>
-	/// Decompilation event arguments.
-	/// </summary>
-	[Obsolete]
-	public sealed class DecompileEventArgs : EventArgs
-	{
-		/// <summary>
-		/// Gets ot sets the code mappings
-		/// </summary>
-		public Dictionary<int, List<MemberMapping>> CodeMappings { get; internal set; }
-		
-		/// <summary>
-		/// Gets or sets the local variables.
-		/// </summary>
-		public ConcurrentDictionary<int, IEnumerable<ILVariable>> LocalVariables { get; internal set; }
-		
-		/// <summary>
-		/// Gets the list of MembeReferences that are decompiled (TypeDefinitions, MethodDefinitions, etc)
-		/// </summary>
-		public Dictionary<int, MemberReference> DecompiledMemberReferences { get; internal set; }
-		
-		/// <summary>
-		/// Gets (or internal sets) the AST nodes.
-		/// </summary>
-		public IEnumerable<AstNode> AstNodes { get; internal set; }
-	}
-	
 	/// <summary>
 	/// Base class for language-specific decompiler implementations.
 	/// </summary>
@@ -119,7 +89,7 @@ namespace ICSharpCode.ILSpy
 		{
 			WriteCommentLine(output, assembly.FileName);
 			var name = assembly.AssemblyDefinition.Name;
-			if ((name.Attributes & (AssemblyAttributes)0x0200) != 0) {
+			if (name.IsWindowsRuntime) {
 				WriteCommentLine(output, name.Name + " [WinRT]");
 			} else {
 				WriteCommentLine(output, name.FullName);

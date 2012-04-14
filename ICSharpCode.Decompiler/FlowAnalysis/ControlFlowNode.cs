@@ -253,8 +253,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			StringWriter writer = new StringWriter();
 			switch (NodeType) {
 				case ControlFlowNodeType.Normal:
-					int endOffset = End.GetEndOffset();
-					writer.Write("Block #{0}: IL_{1:x4} to IL_{2:x4}", BlockIndex, Start.Offset, endOffset);
+					writer.Write("Block #{0}", BlockIndex);
+					if (Start != null)
+						writer.Write(": IL_{0:x4}", Start.Offset);
+					if (End != null)
+						writer.Write(" to IL_{0:x4}", End.GetEndOffset());
 					break;
 				case ControlFlowNodeType.CatchHandler:
 				case ControlFlowNodeType.FinallyOrFaultHandler:
@@ -276,6 +279,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			foreach (Instruction inst in this.Instructions) {
 				writer.WriteLine();
 				Disassembler.DisassemblerHelpers.WriteTo(inst, new PlainTextOutput(writer));
+			}
+			if (UserData != null) {
+				writer.WriteLine();
+				writer.Write(UserData.ToString());
 			}
 			return writer.ToString();
 		}

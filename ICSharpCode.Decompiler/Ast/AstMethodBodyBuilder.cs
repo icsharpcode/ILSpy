@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.Ast
 			Ast.BlockStatement astBlock = new BlockStatement();
 			if (block != null) {
 				foreach(ILNode node in block.GetChildren()) {
-					astBlock.AddRange(TransformNode(node));
+					astBlock.Statements.AddRange(TransformNode(node));
 				}
 			}
 			return astBlock;
@@ -175,11 +175,21 @@ namespace ICSharpCode.Decompiler.Ast
 				};
 			} else if (node is ILSwitch) {
 				ILSwitch ilSwitch = (ILSwitch)node;
+				if (TypeAnalysis.IsBoolean(ilSwitch.Condition.InferredType) && (
+					from cb in ilSwitch.CaseBlocks
+					where cb.Values != null
+					from val in cb.Values
+					select val
+				).Any(val => val != 0 && val != 1))
+				{
+					// If switch cases contain values other then 0 and 1, force the condition to be non-boolean
+					ilSwitch.Condition.ExpectedType = typeSystem.Int32;
+				}
 				SwitchStatement switchStmt = new SwitchStatement() { Expression = (Expression)TransformExpression(ilSwitch.Condition) };
 				foreach (var caseBlock in ilSwitch.CaseBlocks) {
 					SwitchSection section = new SwitchSection();
 					if (caseBlock.Values != null) {
-						section.CaseLabels.AddRange(caseBlock.Values.Select(i => new CaseLabel() { Expression = AstBuilder.MakePrimitive(i, ilSwitch.Condition.InferredType) }));
+						section.CaseLabels.AddRange(caseBlock.Values.Select(i => new CaseLabel() { Expression = AstBuilder.MakePrimitive(i, ilSwitch.Condition.ExpectedType ?? ilSwitch.Condition.InferredType) }));
 					} else {
 						section.CaseLabels.Add(new CaseLabel());
 					}
@@ -521,6 +531,10 @@ namespace ICSharpCode.Decompiler.Ast
 				case ILCode.Conv_Ovf_U2_Un:
 				case ILCode.Conv_Ovf_U4_Un:
 				case ILCode.Conv_Ovf_U8_Un:
+				case ILCode.Conv_Ovf_I:
+				case ILCode.Conv_Ovf_U:
+				case ILCode.Conv_Ovf_I_Un:
+				case ILCode.Conv_Ovf_U_Un:
 					{
 						// conversion was handled by Convert() function using the info from type analysis
 						CastExpression cast = arg1 as CastExpression;
@@ -529,15 +543,15 @@ namespace ICSharpCode.Decompiler.Ast
 						}
 						return arg1;
 					}
-					case ILCode.Conv_Ovf_I:     return arg1.CastTo(typeof(IntPtr)); // TODO
-					case ILCode.Conv_Ovf_U:     return arg1.CastTo(typeof(UIntPtr));
-					case ILCode.Conv_Ovf_I_Un:  return arg1.CastTo(typeof(IntPtr));
-					case ILCode.Conv_Ovf_U_Un:  return arg1.CastTo(typeof(UIntPtr));
-					case ILCode.Castclass:      return arg1.CastTo(operandAsTypeRef);
 				case ILCode.Unbox_Any:
 					// unboxing does not require a cast if the argument was an isinst instruction
 					if (arg1 is AsExpression && byteCode.Arguments[0].Code == ILCode.Isinst && TypeAnalysis.IsSameType(operand as TypeReference, byteCode.Arguments[0].Operand as TypeReference))
 						return arg1;
+					else
+						goto case ILCode.Castclass;
+				case ILCode.Castclass:
+					if ((byteCode.Arguments[0].InferredType != null && byteCode.Arguments[0].InferredType.IsGenericParameter) || ((Cecil.TypeReference)operand).IsGenericParameter)
+						return arg1.CastTo(new PrimitiveType("object")).CastTo(operandAsTypeRef);
 					else
 						return arg1.CastTo(operandAsTypeRef);
 				case ILCode.Isinst:
@@ -860,7 +874,8 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		static readonly AstNode objectInitializerPattern = new AssignmentExpression(
 			new MemberReferenceExpression {
-				Target = new InitializedObjectExpression()
+				Target = new InitializedObjectExpression(),
+				MemberName = Pattern.AnyString
 			}.WithName("left"),
 			new AnyNode("right")
 		);
@@ -994,6 +1009,7 @@ namespace ICSharpCode.Decompiler.Ast
 				// This is equivalent to 'target = new ValueType(args);'.
 				ObjectCreateExpression oce = new ObjectCreateExpression();
 				oce.Type = AstBuilder.ConvertType(cecilMethod.DeclaringType);
+				oce.AddAnnotation(cecilMethod);
 				AdjustArgumentsForMethodCall(cecilMethod, methodArgs);
 				oce.Arguments.AddRange(methodArgs);
 				return new AssignmentExpression(target, oce);

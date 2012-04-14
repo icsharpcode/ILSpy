@@ -92,6 +92,11 @@ namespace Mono.Cecil {
 			set { attributes = attributes.SetAttributes ((uint) AssemblyAttributes.Retargetable, value); }
 		}
 
+		public bool IsWindowsRuntime {
+			get { return attributes.GetAttributes ((uint) AssemblyAttributes.WindowsRuntime); }
+			set { attributes = attributes.SetAttributes ((uint) AssemblyAttributes.WindowsRuntime, value); }
+		}
+
 		public byte [] PublicKey {
 			get { return public_key; }
 			set {
@@ -203,22 +208,22 @@ namespace Mono.Cecil {
 				if (parts.Length != 2)
 					throw new ArgumentException ("Malformed name");
 
-				switch (parts [0]) {
-				case "Version":
+				switch (parts [0].ToLowerInvariant ()) {
+				case "version":
 					name.Version = new Version (parts [1]);
 					break;
-				case "Culture":
+				case "culture":
 					name.Culture = parts [1];
 					break;
-				case "PublicKeyToken":
-					string pk_token = parts [1];
+				case "publickeytoken":
+					var pk_token = parts [1];
 					if (pk_token == "null")
 						break;
 
 					name.PublicKeyToken = new byte [pk_token.Length / 2];
-					for (int j = 0; j < name.PublicKeyToken.Length; j++) {
+					for (int j = 0; j < name.PublicKeyToken.Length; j++)
 						name.PublicKeyToken [j] = Byte.Parse (pk_token.Substring (j * 2, 2), NumberStyles.HexNumber);
-					}
+
 					break;
 				}
 			}

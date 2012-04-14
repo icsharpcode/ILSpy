@@ -9,6 +9,7 @@
 //
 // Copyright 2001, 2002 Ximian, Inc (http://www.ximian.com)
 // Copyright 2003-2008 Novell, Inc.
+// Copyright 2011 Xamarin Inc
 //
 
 using System;
@@ -66,7 +67,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public TypeParameter[] CurrentTypeParameters {
+		public TypeParameters CurrentTypeParameters {
 			get {
 				throw new NotImplementedException ();
 			}
@@ -128,7 +129,7 @@ namespace Mono.CSharp {
 		/// <summary>
 		///   The container for this PendingImplementation
 		/// </summary>
-		readonly TypeContainer container;
+		readonly TypeDefinition container;
 		
 		/// <summary>
 		///   This is the array of TypeAndMethods that describes the pending implementations
@@ -136,7 +137,7 @@ namespace Mono.CSharp {
 		/// </summary>
 		TypeAndMethods [] pending_implementations;
 
-		PendingImplementation (TypeContainer container, MissingInterfacesInfo[] missing_ifaces, MethodSpec[] abstract_methods, int total)
+		PendingImplementation (TypeDefinition container, MissingInterfacesInfo[] missing_ifaces, MethodSpec[] abstract_methods, int total)
 		{
 			var type_builder = container.Definition;
 			
@@ -188,7 +189,7 @@ namespace Mono.CSharp {
 
 		static readonly MissingInterfacesInfo [] EmptyMissingInterfacesInfo = new MissingInterfacesInfo [0];
 		
-		static MissingInterfacesInfo [] GetMissingInterfaces (TypeContainer container)
+		static MissingInterfacesInfo [] GetMissingInterfaces (TypeDefinition container)
 		{
 			//
 			// Notice that Interfaces will only return the interfaces that the Type
@@ -232,7 +233,7 @@ namespace Mono.CSharp {
 		// Register method implementations are either abstract methods
 		// flagged as such on the base class or interface methods
 		//
-		static public PendingImplementation GetPendingImplementations (TypeContainer container)
+		static public PendingImplementation GetPendingImplementations (TypeDefinition container)
 		{
 			TypeSpec b = container.BaseType;
 
@@ -304,11 +305,10 @@ namespace Mono.CSharp {
 							//
 							// First check exact modifiers match
 							//
-							const Parameter.Modifier ref_out = Parameter.Modifier.REF | Parameter.Modifier.OUT;
-							if ((cp[pi].ModFlags & ref_out) == (tp[pi].ModFlags & ref_out))
+							if ((cp[pi].ModFlags & Parameter.Modifier.RefOutMask) == (tp[pi].ModFlags & Parameter.Modifier.RefOutMask))
 								continue;
 
-							if ((cp[pi].ModFlags & tp[pi].ModFlags & Parameter.Modifier.ISBYREF) != 0) {
+							if (((cp[pi].ModFlags | tp[pi].ModFlags) & Parameter.Modifier.RefOutMask) == Parameter.Modifier.RefOutMask) {
 								ref_only_difference = true;
 								continue;
 							}
@@ -442,7 +442,7 @@ namespace Mono.CSharp {
 						optional = tm.optional;
 					}
 
-					if (op == Operation.Lookup && name.Left != null && ambiguousCandidate == null) {
+					if (op == Operation.Lookup && name.ExplicitInterface != null && ambiguousCandidate == null) {
 						ambiguousCandidate = m;
 						continue;
 					}
@@ -507,7 +507,7 @@ namespace Mono.CSharp {
 			}
 
 			int top = param.Count;
-			var ec = new EmitContext (new ProxyMethodContext (container), proxy.GetILGenerator (), null);
+			var ec = new EmitContext (new ProxyMethodContext (container), proxy.GetILGenerator (), null, null);
 			ec.EmitThis ();
 			// TODO: GetAllParametersArguments
 			for (int i = 0; i < top; i++)
@@ -556,8 +556,7 @@ namespace Mono.CSharp {
 						//
 						// First check exact ref/out match
 						//
-						const Parameter.Modifier ref_out = Parameter.Modifier.REF | Parameter.Modifier.OUT;
-						if ((parameters.FixedParameters[i].ModFlags & ref_out) == (candidate_param.FixedParameters[i].ModFlags & ref_out))
+						if ((parameters.FixedParameters[i].ModFlags & Parameter.Modifier.RefOutMask) == (candidate_param.FixedParameters[i].ModFlags & Parameter.Modifier.RefOutMask))
 							continue;
 
 						modifiers_match = false;
@@ -565,7 +564,7 @@ namespace Mono.CSharp {
 						//
 						// Different in ref/out only
 						//
-						if ((parameters.FixedParameters[i].ModFlags & candidate_param.FixedParameters[i].ModFlags & Parameter.Modifier.ISBYREF) != 0) {
+						if ((parameters.FixedParameters[i].ModFlags & Parameter.Modifier.RefOutMask) != (candidate_param.FixedParameters[i].ModFlags & Parameter.Modifier.RefOutMask)) {
 							if (similar_candidate == null) {
 								if (!candidate.IsPublic)
 									break;
@@ -598,6 +597,10 @@ namespace Mono.CSharp {
 
 					if (!TypeSpecComparer.Override.IsEqual (mi.ReturnType, base_method.ReturnType))
 						return false;
+
+					if (mi.IsGeneric && !Method.CheckImplementingMethodConstraints (container, base_method, mi)) {
+						return true;
+					}
 				}
 
 				if (base_method != null) {
@@ -686,7 +689,7 @@ namespace Mono.CSharp {
 							if (candidate.IsStatic) {
 								Report.Error (736, container.Location,
 									"`{0}' does not implement interface member `{1}' and the best implementing candidate `{2}' is static",
-									container.GetSignatureForError (), mi.GetSignatureForError (), TypeManager.CSharpSignature (candidate));
+									container.GetSignatureForError (), mi.GetSignatureForError (), candidate.GetSignatureForError ());
 							} else if ((candidate.Modifiers & Modifiers.PUBLIC) == 0) {
 								Report.Error (737, container.Location,
 									"`{0}' does not implement interface member `{1}' and the best implementing candidate `{2}' in not public",
@@ -694,8 +697,8 @@ namespace Mono.CSharp {
 							} else {
 								Report.Error (738, container.Location,
 									"`{0}' does not implement interface member `{1}' and the best implementing candidate `{2}' return type `{3}' does not match interface member return type `{4}'",
-									container.GetSignatureForError (), mi.GetSignatureForError (), TypeManager.CSharpSignature (candidate),
-									TypeManager.CSharpName (candidate.ReturnType), TypeManager.CSharpName (mi.ReturnType));
+									container.GetSignatureForError (), mi.GetSignatureForError (), candidate.GetSignatureForError (),
+									candidate.ReturnType.GetSignatureForError (), mi.ReturnType.GetSignatureForError ());
 							}
 						} else {
 							Report.Error (535, container.Location, "`{0}' does not implement interface member `{1}'",

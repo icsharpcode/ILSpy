@@ -18,7 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+
 using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.NRefactory.Semantics
@@ -32,44 +34,64 @@ namespace ICSharpCode.NRefactory.Semantics
 		readonly bool isConstant;
 		readonly object constantValue;
 		readonly ResolveResult targetResult;
+		readonly bool isVirtualCall;
 		
-		public MemberResolveResult(ResolveResult targetResult, IMember member, IType returnType) : base(returnType)
-		{
-			if (member == null)
-				throw new ArgumentNullException("member");
-			this.targetResult = targetResult;
-			this.member = member;
-		}
-		
-		public MemberResolveResult(ResolveResult targetResult, IMember member, IType returnType, object constantValue) : base(returnType)
-		{
-			if (member == null)
-				throw new ArgumentNullException("member");
-			this.targetResult = targetResult;
-			this.member = member;
-			this.isConstant = true;
-			this.constantValue = constantValue;
-		}
-		
-		public MemberResolveResult(ResolveResult targetResult, IMember member, ITypeResolveContext context) 
-			: base(member.EntityType == EntityType.Constructor ? member.DeclaringType : member.ReturnType.Resolve(context))
+		public MemberResolveResult(ResolveResult targetResult, IMember member)
+			: base(member.EntityType == EntityType.Constructor ? member.DeclaringType : member.ReturnType)
 		{
 			this.targetResult = targetResult;
 			this.member = member;
+			var thisRR = targetResult as ThisResolveResult;
+			this.isVirtualCall = member.IsOverridable && !(thisRR != null && thisRR.CausesNonVirtualInvocation);
+			
 			IField field = member as IField;
 			if (field != null) {
 				isConstant = field.IsConst;
 				if (isConstant)
-					constantValue = field.ConstantValue.Resolve(context).ConstantValue;
+					constantValue = field.ConstantValue;
 			}
+		}
+		
+		public MemberResolveResult(ResolveResult targetResult, IMember member, bool isVirtualCall)
+			: base(member.EntityType == EntityType.Constructor ? member.DeclaringType : member.ReturnType)
+		{
+			this.targetResult = targetResult;
+			this.member = member;
+			this.isVirtualCall = isVirtualCall;
+			IField field = member as IField;
+			if (field != null) {
+				isConstant = field.IsConst;
+				if (isConstant)
+					constantValue = field.ConstantValue;
+			}
+		}
+		
+		public MemberResolveResult(ResolveResult targetResult, IMember member, IType returnType, bool isConstant, object constantValue)
+			: base(returnType)
+		{
+			this.targetResult = targetResult;
+			this.member = member;
+			this.isConstant = isConstant;
+			this.constantValue = constantValue;
 		}
 		
 		public ResolveResult TargetResult {
 			get { return targetResult; }
 		}
 		
+		/// <summary>
+		/// Gets the member.
+		/// This property never returns null.
+		/// </summary>
 		public IMember Member {
 			get { return member; }
+		}
+		
+		/// <summary>
+		/// Gets whether this MemberResolveResult is a virtual call.
+		/// </summary>
+		public bool IsVirtualCall {
+			get { return isVirtualCall; }
 		}
 		
 		public override bool IsCompileTimeConstant {
@@ -90,7 +112,7 @@ namespace ICSharpCode.NRefactory.Semantics
 		
 		public override string ToString()
 		{
-			return string.Format("[{0} {1}]", GetType().Name, member);
+			return string.Format(CultureInfo.InvariantCulture, "[{0} {1}]", GetType().Name, member);
 		}
 		
 		public override DomRegion GetDefinitionRegion()

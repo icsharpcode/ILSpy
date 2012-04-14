@@ -17,22 +17,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using ICSharpCode.Decompiler.ILAst;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.Utils;
@@ -191,8 +185,8 @@ namespace ICSharpCode.ILSpy
 			readonly Dispatcher dispatcher;
 			readonly CancellationTokenSource cts = new CancellationTokenSource();
 			readonly LoadedAssembly[] assemblies;
-			readonly string searchTerm;
-			int searchMode;
+			readonly string[] searchTerm;
+			readonly int searchMode;
 			readonly Language language;
 			public readonly ObservableCollection<SearchResult> Results = new ObservableCollection<SearchResult>();
 			int resultCount;
@@ -204,7 +198,7 @@ namespace ICSharpCode.ILSpy
 			{
 				this.dispatcher = Dispatcher.CurrentDispatcher;
 				this.assemblies = assemblies;
-				this.searchTerm = searchTerm;
+				this.searchTerm = searchTerm.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries);
 				this.language = language;
 				this.searchMode = searchMode;
 				
@@ -220,29 +214,32 @@ namespace ICSharpCode.ILSpy
 			{
 				try {
 					if (searchMode == SearchMode_Literal) {
-						CSharpParser parser = new CSharpParser();
-						PrimitiveExpression pe = parser.ParseExpression(new StringReader(searchTerm)) as PrimitiveExpression;
-						if (pe != null && pe.Value != null) {
-							TypeCode peValueType = Type.GetTypeCode(pe.Value.GetType());
-							switch (peValueType) {
-								case TypeCode.Byte:
-								case TypeCode.SByte:
-								case TypeCode.Int16:
-								case TypeCode.UInt16:
-								case TypeCode.Int32:
-								case TypeCode.UInt32:
-								case TypeCode.Int64:
-								case TypeCode.UInt64:
-									searchTermLiteralType = TypeCode.Int64;
-									searchTermLiteralValue = CSharpPrimitiveCast.Cast(TypeCode.Int64, pe.Value, false);
-									break;
-								case TypeCode.Single:
-								case TypeCode.Double:
-								case TypeCode.String:
-									searchTermLiteralType = peValueType;
-									searchTermLiteralValue = pe.Value;
-									break;
-							}
+			      if (1 == searchTerm.Length)
+			      {
+  						CSharpParser parser = new CSharpParser();
+  						PrimitiveExpression pe = parser.ParseExpression(new StringReader(searchTerm[0])) as PrimitiveExpression;
+  						if (pe != null && pe.Value != null) {
+  							TypeCode peValueType = Type.GetTypeCode(pe.Value.GetType());
+  							switch (peValueType) {
+  								case TypeCode.Byte:
+  								case TypeCode.SByte:
+  								case TypeCode.Int16:
+  								case TypeCode.UInt16:
+  								case TypeCode.Int32:
+  								case TypeCode.UInt32:
+  								case TypeCode.Int64:
+  								case TypeCode.UInt64:
+  									searchTermLiteralType = TypeCode.Int64;
+  									searchTermLiteralValue = CSharpPrimitiveCast.Cast(TypeCode.Int64, pe.Value, false);
+  									break;
+  								case TypeCode.Single:
+  								case TypeCode.Double:
+  								case TypeCode.String:
+  									searchTermLiteralType = peValueType;
+  									searchTermLiteralValue = pe.Value;
+  									break;
+  							}
+						  }
 						}
 					}
 					
@@ -279,10 +276,12 @@ namespace ICSharpCode.ILSpy
 			
 			bool IsMatch(string text)
 			{
-				if (text.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
-					return true;
-				else
-					return false;
+			  for (int i = 0; i < searchTerm.Length; ++i) {
+			    // How to handle overlapping matches?
+			    if (text.IndexOf(searchTerm[i], StringComparison.OrdinalIgnoreCase) < 0)
+			      return false;
+			  }
+  			return true;
 			}
 			
 			void PerformSearch(TypeDefinition type)

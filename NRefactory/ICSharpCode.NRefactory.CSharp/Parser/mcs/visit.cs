@@ -2,11 +2,12 @@
 // visit.cs: Visitors for parsed dom
 //
 // Authors: Mike Krüger (mkrueger@novell.com)
-//			Marek Safar (marek.safar@gmail.com)
+//          Marek Safar (marek.safar@gmail.com)
 //
 // Dual licensed under the terms of the MIT X11 or GNU GPL
 //
 // Copyright (c) 2010 Novell, Inc (http://www.novell.com)
+// Copyright 2011 Xamarin Inc
 //
 
 using System;
@@ -21,80 +22,49 @@ namespace Mono.CSharp
 		}
 
 		public virtual void Visit (ModuleContainer mc)
-		{/*
-			if (mc.Delegates != null) {
-				foreach (TypeContainer tc in mc.Delegates) {
-					tc.Accept (this);
-				}
-			}*/
-			if (mc.Types != null) {
-				foreach (TypeContainer tc in mc.Types) {
-					tc.Accept (this);
-				}
+		{
+			foreach (var container in mc.Containers) {
+				container.Accept (this);
 			}
 		}
 
-		void VisitTypeContainer (TypeContainer tc)
+		void VisitTypeDefinition (TypeDefinition tc)
 		{
-			foreach (MemberCore member in tc.OrderedAllMembers) {
+			foreach (var member in tc.Members) {
 				member.Accept (this);
 			}
 		}
-		
-		protected void VisitNamespaceUsings (UsingsBag.Namespace nspace)
-		{
-			foreach (object u in nspace.usings) {
-				if (u is UsingsBag.Using) {
-					((UsingsBag.Using)u).Accept (this);
-				} else {
-					((UsingsBag.AliasUsing)u).Accept (this);
-				}
-			}
-		}
-		
-		protected void VisitNamespaceBody (UsingsBag.Namespace nspace)
-		{
-			foreach (object member in nspace.members) {
-				if (member is MemberCore) {
-					((MemberCore)member).Accept (this);
-				} else {
-					((UsingsBag.Namespace)member).Accept (this);
-				}
-			}
-		}
-		
-		public virtual void Visit (UsingsBag.Namespace nspace)
-		{
-			VisitNamespaceUsings (nspace);
-			VisitNamespaceBody (nspace);
-		}
-		
-		public virtual void Visit (UsingsBag.Using u)
-		{
-		}
-		
-		public virtual void Visit (UsingsBag.AliasUsing aliasUsing)
+
+		public virtual void Visit (NamespaceContainer ns)
 		{
 		}
 
-		public virtual void Visit (UsingsBag.ExternAlias externAlias)
+		public virtual void Visit (UsingNamespace un)
 		{
 		}
 
+		public virtual void Visit (UsingAliasNamespace uan)
+		{
+		}
+		
+		public virtual void Visit (UsingExternAlias uea)
+		{
+		}
+		
 		public virtual void Visit (Class c)
 		{
-			VisitTypeContainer (c);
+			VisitTypeDefinition (c);
 		}
 
 		public virtual void Visit (Struct s)
 		{
-			VisitTypeContainer (s);
+			VisitTypeDefinition (s);
 		}
 
 
 		public virtual void Visit (Interface i)
 		{
-			VisitTypeContainer (i);
+			VisitTypeDefinition (i);
 		}
 
 		public virtual void Visit (Delegate d)
@@ -103,7 +73,7 @@ namespace Mono.CSharp
 
 		public virtual void Visit (Enum e)
 		{
-			VisitTypeContainer (e);
+			VisitTypeDefinition (e);
 		}
 
 		public virtual void Visit (FixedField f)
@@ -178,8 +148,13 @@ namespace Mono.CSharp
 		{
 			return null;
 		}
-		
+
 		public virtual object Visit (EmptyExpression emptyExpression)
+		{
+			return null;
+		}
+		
+		public virtual object Visit (ErrorExpression errorExpression)
 		{
 			return null;
 		}
@@ -195,72 +170,65 @@ namespace Mono.CSharp
 			return null;
 		}
 
-
 		public virtual object Visit (While whileStatement)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (For forStatement)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (StatementExpression statementExpression)
 		{
 			return null;
 		}
 
+		public virtual object Visit (StatementErrorExpression errorStatement)
+		{
+			return null;
+		}
 
 		public virtual object Visit (Return returnStatement)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (Goto gotoStatement)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (LabeledStatement labeledStatement)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (GotoDefault gotoDefault)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (GotoCase gotoCase)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (Throw throwStatement)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (Break breakStatement)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (Continue continueStatement)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (Block blockStatement)
 		{
@@ -282,18 +250,15 @@ namespace Mono.CSharp
 			return null;
 		}
 
-
 		public virtual object Visit (Unchecked uncheckedStatement)
 		{
 			return null;
 		}
 
-
 		public virtual object Visit (Checked checkedStatement)
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (Unsafe unsafeStatement)
 		{
@@ -311,7 +276,6 @@ namespace Mono.CSharp
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (TryCatch tryCatchStatement)
 		{
@@ -334,6 +298,11 @@ namespace Mono.CSharp
 		}
 
 		public virtual object Visit (YieldBreak yieldBreakStatement)
+		{
+			return null;
+		}
+		
+		public virtual object Visit (InvalidStatementExpression invalidStatementExpression)
 		{
 			return null;
 		}
@@ -434,7 +403,6 @@ namespace Mono.CSharp
 		{
 			return null;
 		}
-
 
 		public virtual object Visit (Conditional conditionalExpression)
 		{
@@ -628,6 +596,11 @@ namespace Mono.CSharp
 		}
 		
 		public virtual object Visit (MakeRefExpr makeRefExpr)
+		{
+			return null;
+		}
+
+		public virtual object Visit (Await awaitExpr)
 		{
 			return null;
 		}

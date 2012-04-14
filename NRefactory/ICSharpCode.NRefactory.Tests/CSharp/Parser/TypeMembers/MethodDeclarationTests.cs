@@ -149,7 +149,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 					Parameters = { new ParameterDeclaration(new SimpleType("T"), "a") },
 					Constraints = {
 						new Constraint {
-							TypeParameter = "T",
+							TypeParameter = new SimpleType ("T"),
 							BaseTypes = { new SimpleType("ISomeInterface") }
 						}
 					},
@@ -167,6 +167,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 ",
 				new TypeDeclaration {
 					ClassType = ClassType.Interface,
+					Name = "MyInterface",
 					Members = {
 						new MethodDeclaration {
 							ReturnType = new SimpleType("T"),
@@ -175,7 +176,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 							Parameters = { new ParameterDeclaration(new SimpleType("T"), "a") },
 							Constraints = {
 								new Constraint {
-									TypeParameter = "T",
+									TypeParameter = new SimpleType ("T"),
 									BaseTypes = { new SimpleType("ISomeInterface") }
 								}
 							}
@@ -192,6 +193,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 ",
 				new TypeDeclaration {
 					ClassType = ClassType.Interface,
+					Name = "MyInterface",
 					Members = {
 						new MethodDeclaration {
 							ReturnType = new PrimitiveType("void"),
@@ -200,7 +202,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 							Parameters = { new ParameterDeclaration(new SimpleType("T"), "a") },
 							Constraints = {
 								new Constraint {
-									TypeParameter = "T",
+									TypeParameter = new SimpleType ("T"),
 									BaseTypes = { new SimpleType("ISomeInterface") }
 								}
 							}
@@ -208,9 +210,9 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 		}
 		
 		[Test]
-		public void ShadowingMethodInInterface()
+		public void ShadowingMethodInInterface ()
 		{
-			ParseUtilCSharp.AssertGlobal(
+			ParseUtilCSharp.AssertGlobal (
 				@"interface MyInterface : IDisposable {
 	new void Dispose();
 }
@@ -279,6 +281,30 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 				});
 		}
 		
+		[Test, Ignore("Parser bug: constraints added in wrong order")]
+		public void GenericMethodWithMultipleConstraints()
+		{
+			ParseUtilCSharp.AssertTypeMember(
+				"void MyMethod<A, B>() where A : IA where B : IB {} ",
+				new MethodDeclaration {
+					ReturnType = new PrimitiveType("void"),
+					Name = "MyMethod",
+					TypeParameters = {
+						new TypeParameterDeclaration { Name = "A" },
+						new TypeParameterDeclaration { Name = "B" }
+					},
+					Constraints = {
+						new Constraint {
+							TypeParameter = new SimpleType("A"),
+							BaseTypes = { new SimpleType("IA") }
+						},
+						new Constraint {
+							TypeParameter = new SimpleType("B"),
+							BaseTypes = { new SimpleType("IB") }
+						}
+					}});
+		}
+		
 		[Test]
 		public void IncompleteConstraintsTest()
 		{
@@ -288,7 +314,9 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 			Assert.AreEqual("a", md.Name);
 			Assert.AreEqual(1, md.TypeParameters.Count);
 			Assert.AreEqual("T", md.TypeParameters.Single().Name);
-			Assert.AreEqual(0, md.Constraints.Count());
+			Assert.AreEqual(1, md.Constraints.Count());
+			Assert.AreEqual(0, md.Constraints.First ().BaseTypes.Count());
+			
 		}
 		
 		[Test]
@@ -356,7 +384,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 					}});
 		}
 		
-		[Test, Ignore("async/await not yet supported")]
+		[Test]
 		public void AsyncMethod()
 		{
 			ParseUtilCSharp.AssertTypeMember(
@@ -369,7 +397,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 				});
 		}
 		
-		[Test, Ignore("async/await not yet supported")]
+		[Test, Ignore("parser bug, reported upstream.")]
 		public void AsyncAsyncAsync()
 		{
 			ParseUtilCSharp.AssertTypeMember(

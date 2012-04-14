@@ -29,6 +29,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		readonly TextWriter textWriter;
 		int indentation;
 		bool needsIndent = true;
+		bool isAtStartOfLine = true;
 
 		public int Indentation {
 			get {
@@ -53,18 +54,21 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			WriteIndentation();
 			textWriter.Write(ident);
+			isAtStartOfLine = false;
 		}
 		
 		public void WriteKeyword(string keyword)
 		{
 			WriteIndentation();
 			textWriter.Write(keyword);
+			isAtStartOfLine = false;
 		}
 		
 		public void WriteToken(string token)
 		{
 			WriteIndentation();
 			textWriter.Write(token);
+			isAtStartOfLine = false;
 		}
 		
 		public void Space()
@@ -76,37 +80,40 @@ namespace ICSharpCode.NRefactory.CSharp
 		public void OpenBrace(BraceStyle style)
 		{
 			switch (style) {
-			case BraceStyle.DoNotChange:
-			case BraceStyle.EndOfLine:
-				WriteIndentation();
-				textWriter.Write(' ');
-				textWriter.Write('{');
-				break;
-			case BraceStyle.EndOfLineWithoutSpace:
-				WriteIndentation();
-				textWriter.Write('{');
-				break;
-			case BraceStyle.NextLine:
-				NewLine ();
-				WriteIndentation();
-				textWriter.Write('{');
-				break;
-				
-			case BraceStyle.NextLineShifted:
-				NewLine ();
-				Indent();
-				WriteIndentation();
-				textWriter.Write('{');
-				NewLine();
-				return;
-			case BraceStyle.NextLineShifted2:
-				NewLine ();
-				Indent();
-				WriteIndentation();
-				textWriter.Write('{');
-				break;
-			default:
-				throw new ArgumentOutOfRangeException ();
+				case BraceStyle.DoNotChange:
+				case BraceStyle.EndOfLine:
+				case BraceStyle.BannerStyle:
+					WriteIndentation();
+					if (!isAtStartOfLine)
+						textWriter.Write(' ');
+					textWriter.Write('{');
+					break;
+				case BraceStyle.EndOfLineWithoutSpace:
+					WriteIndentation();
+					textWriter.Write('{');
+					break;
+				case BraceStyle.NextLine:
+					if (!isAtStartOfLine)
+						NewLine();
+					WriteIndentation();
+					textWriter.Write('{');
+					break;
+					
+				case BraceStyle.NextLineShifted:
+					NewLine ();
+					Indent();
+					WriteIndentation();
+					textWriter.Write('{');
+					NewLine();
+					return;
+				case BraceStyle.NextLineShifted2:
+					NewLine ();
+					Indent();
+					WriteIndentation();
+					textWriter.Write('{');
+					break;
+				default:
+					throw new ArgumentOutOfRangeException ();
 			}
 			Indent();
 			NewLine();
@@ -115,31 +122,35 @@ namespace ICSharpCode.NRefactory.CSharp
 		public void CloseBrace(BraceStyle style)
 		{
 			switch (style) {
-			case BraceStyle.DoNotChange:
-			case BraceStyle.EndOfLine:
-			case BraceStyle.EndOfLineWithoutSpace:
-			case BraceStyle.NextLine:
-				Unindent();
-				WriteIndentation();
-				textWriter.Write('}');
-				break;
-			case BraceStyle.NextLineShifted:
-				WriteIndentation();
-				textWriter.Write('}');
-				Unindent();
-				break;
-			case BraceStyle.NextLineShifted2:
-				Unindent();
-				WriteIndentation();
-				textWriter.Write('}');
-				Unindent();
-				break;
-			default:
-				throw new ArgumentOutOfRangeException ();
+				case BraceStyle.DoNotChange:
+				case BraceStyle.EndOfLine:
+				case BraceStyle.EndOfLineWithoutSpace:
+				case BraceStyle.NextLine:
+					Unindent();
+					WriteIndentation();
+					textWriter.Write('}');
+					isAtStartOfLine = false;
+					break;
+				case BraceStyle.BannerStyle:
+				case BraceStyle.NextLineShifted:
+					WriteIndentation();
+					textWriter.Write('}');
+					isAtStartOfLine = false;
+					Unindent();
+					break;
+				case BraceStyle.NextLineShifted2:
+					Unindent();
+					WriteIndentation();
+					textWriter.Write('}');
+					isAtStartOfLine = false;
+					Unindent();
+					break;
+				default:
+					throw new ArgumentOutOfRangeException ();
 			}
 		}
 		
-		void WriteIndentation()
+		protected void WriteIndentation()
 		{
 			if (needsIndent) {
 				needsIndent = false;
@@ -153,6 +164,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			textWriter.WriteLine();
 			needsIndent = true;
+			isAtStartOfLine = true;
 		}
 		
 		public void Indent()
@@ -172,21 +184,48 @@ namespace ICSharpCode.NRefactory.CSharp
 				case CommentType.SingleLine:
 					textWriter.Write("//");
 					textWriter.WriteLine(content);
+					needsIndent = true;
+					isAtStartOfLine = true;
 					break;
 				case CommentType.MultiLine:
 					textWriter.Write("/*");
 					textWriter.Write(content);
 					textWriter.Write("*/");
+					isAtStartOfLine = false;
 					break;
 				case CommentType.Documentation:
 					textWriter.Write("///");
 					textWriter.WriteLine(content);
+					needsIndent = true;
+					isAtStartOfLine = true;
+					break;
+				default:
+					textWriter.Write(content);
 					break;
 			}
 		}
 		
+		public void WritePreProcessorDirective(PreProcessorDirectiveType type, string argument)
+		{
+			// pre-processor directive must start on its own line
+			if (!isAtStartOfLine)
+				NewLine();
+			WriteIndentation();
+			textWriter.Write('#');
+			textWriter.Write(type.ToString().ToLowerInvariant());
+			if (!string.IsNullOrEmpty(argument)) {
+				textWriter.Write(' ');
+				textWriter.Write(argument);
+			}
+			NewLine();
+		}
+		
 		public virtual void StartNode(AstNode node)
 		{
+			// Write out the indentation, so that overrides of this method
+			// can rely use the current output length to identify the position of the node
+			// in the output.
+			WriteIndentation();
 		}
 		
 		public virtual void EndNode(AstNode node)

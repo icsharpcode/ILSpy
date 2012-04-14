@@ -9,8 +9,7 @@
     <AssemblyName>ILSpy.Debugger.Plugin</AssemblyName>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
     <WarningLevel>4</WarningLevel>
@@ -122,12 +121,7 @@
       <SubType>Code</SubType>
     </Compile>
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Images" />
-    <Folder Include="Models\TreeModel" />
-    <Folder Include="Commands" />
-    <Folder Include="ToolTips" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <Page Include="ToolTips\DebuggerTooltipControl.xaml" />
     <Page Include="ToolTips\PinControlsDictionary.xaml" />
@@ -244,6 +238,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\application-x-executable.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Break.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

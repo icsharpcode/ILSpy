@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.Ast
 		{
 			AstNode node = nodeStack.Peek();
 			MemberReference memberRef = node.Annotation<MemberReference>();
-			if (memberRef == null && node.Role == AstNode.Roles.TargetExpression && (node.Parent is InvocationExpression || node.Parent is ObjectCreateExpression)) {
+			if (memberRef == null && node.Role == Roles.TargetExpression && (node.Parent is InvocationExpression || node.Parent is ObjectCreateExpression)) {
 				memberRef = node.Parent.Annotation<MemberReference>();
 			}
 			return memberRef;
@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.Ast
 			if (nodeStack == null || nodeStack.Count == 0)
 				return null;
 			
-			var node = nodeStack.Peek();			
+			var node = nodeStack.Peek();
 			if (IsDefinition(node))
 				return node.Annotation<MemberReference>();
 			
@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler.Ast
 			// Attach member reference to token only if there's no identifier in the current node.
 			MemberReference memberRef = GetCurrentMemberReference();
 			var node = nodeStack.Peek();
-			if (memberRef != null && node.GetChildByRole(AstNode.Roles.Identifier).IsNull)
+			if (memberRef != null && node.GetChildByRole(Roles.Identifier).IsNull)
 				output.WriteReference(token, memberRef);
 			else
 				output.Write(token);
@@ -246,7 +246,22 @@ namespace ICSharpCode.Decompiler.Ast
 					}
 					output.WriteLine();
 					break;
+				default:
+					output.Write(content);
+					break;
 			}
+		}
+		
+		public void WritePreProcessorDirective(PreProcessorDirectiveType type, string argument)
+		{
+			// pre-processor directive must start on its own line
+			output.Write('#');
+			output.Write(type.ToString().ToLowerInvariant());
+			if (!string.IsNullOrEmpty(argument)) {
+				output.Write(' ');
+				output.Write(argument);
+			}
+			output.WriteLine();
 		}
 		
 		Stack<TextLocation> startLocations = new Stack<TextLocation>();
@@ -266,6 +281,9 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 			nodeStack.Push(node);
 			startLocations.Push(output.Location);
+			
+			if (node is EntityDeclaration && node.Annotation<MemberReference>() != null && node.GetChildByRole(Roles.Identifier).IsNull)
+				output.WriteDefinition("", node.Annotation<MemberReference>(), false);
 			
 			MemberMapping mapping = node.Annotation<MemberMapping>();
 			if (mapping != null) {
@@ -312,15 +330,7 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		private static bool IsDefinition(AstNode node)
 		{
-			return 
-				node is FieldDeclaration ||
-				node is ConstructorDeclaration ||
-				node is DestructorDeclaration || 
-				node is EventDeclaration ||
-				node is DelegateDeclaration ||
-				node is OperatorDeclaration||
-				node is MemberDeclaration ||
-				node is TypeDeclaration;
+			return node is EntityDeclaration;
 		}
 	}
 }

@@ -29,17 +29,27 @@ using System.Linq;
 
 namespace ICSharpCode.NRefactory.CSharp
 {
-	
 	public class CSharpModifierToken : CSharpTokenNode
 	{
 		Modifiers modifier;
 		
 		public Modifiers Modifier {
 			get { return modifier; }
-			set {
-				this.tokenLength = GetModifierName(value).Length;
-				this.modifier = value;
+			set { 
+				ThrowIfFrozen();
+				this.modifier = value; 
 			}
+		}
+		
+		protected override int TokenLength {
+			get {
+				return GetModifierName (modifier).Length;
+			}
+		}
+		
+		public override string GetText (CSharpFormattingOptions formattingOptions = null)
+		{
+			return GetModifierName (Modifier);
 		}
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
@@ -57,6 +67,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			Modifiers.Abstract, Modifiers.Virtual, Modifiers.Sealed, Modifiers.Static, Modifiers.Override,
 			Modifiers.Readonly, Modifiers.Volatile,
 			Modifiers.Extern, Modifiers.Partial, Modifiers.Const,
+			Modifiers.Async,
 			Modifiers.Any
 		};
 		
@@ -64,7 +75,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			get { return allModifiers; }
 		}
 		
-		public CSharpModifierToken (TextLocation location, Modifiers modifier) : base (location, 0)
+		public CSharpModifierToken (TextLocation location, Modifiers modifier) : base (location)
 		{
 			this.Modifier = modifier;
 		}
@@ -104,8 +115,10 @@ namespace ICSharpCode.NRefactory.CSharp
 					return "volatile";
 				case Modifiers.Unsafe:
 					return "unsafe";
+				case Modifiers.Async:
+					return "async";
 				case Modifiers.Any:
-					// even though it's used for patterns only, it needs to be in this list to be usable in the AST
+					// even though it's used for pattern matching only, 'any' needs to be in this list to be usable in the AST
 					return "any";
 				default:
 					throw new NotSupportedException("Invalid value for Modifiers");

@@ -284,6 +284,28 @@ namespace Mono.CSharp
 			}
 		}
 
+		//
+		// Whether a type is unmanaged. This is used by the unsafe code
+		//
+		public bool IsUnmanaged {
+			get {
+				if (IsPointer)
+					return ((ElementTypeSpec) this).Element.IsUnmanaged;
+
+				var ds = MemberDefinition as TypeDefinition;
+				if (ds != null)
+					return ds.IsUnmanagedType ();
+
+				if (Kind == MemberKind.Void)
+					return true;
+
+				if (IsNested && DeclaringType.IsGenericOrParentIsGeneric)
+					return false;
+
+				return IsValueType (this);
+			}
+		}
+
 		public MemberCache MemberCache {
 			get {
 				if (cache == null || (state & StateFlags.PendingMemberCacheMembers) != 0)
@@ -338,6 +360,58 @@ namespace Mono.CSharp
 			}
 
 			return false;
+		}
+
+		//
+		// Special version used during type definition
+		//
+		public bool AddInterfaceDefined (TypeSpec iface)
+		{
+			if (!AddInterface (iface))
+				return false;
+
+			//
+			// We can get into a situation where a type is inflated before
+			// its interfaces are resoved. Consider this situation
+			//
+			// class A<T> : X<A<int>>, IFoo {}
+			//
+			// When resolving base class of X`1 we inflate context type A`1
+			// All this happens before we even hit IFoo resolve. Without
+			// additional expansion any inside usage of A<T> would miss IFoo
+			// interface because it comes from early inflated TypeSpec
+			//
+			if (inflated_instances != null) {
+				foreach (var inflated in inflated_instances) {
+					inflated.Value.AddInterface (iface);
+				}
+			}
+
+			return true;
+		}
+
+		//
+		// Returns all type arguments, usefull for nested types
+		//
+		public static TypeSpec[] GetAllTypeArguments (TypeSpec type)
+		{
+			IList<TypeSpec> targs = TypeSpec.EmptyTypes;
+
+			do {
+				if (type.Arity > 0) {
+					if (targs.Count == 0) {
+						targs = type.TypeArguments;
+					} else {
+						var list = targs as List<TypeSpec> ?? new List<TypeSpec> (targs);
+						list.AddRange (type.TypeArguments);
+						targs = list;
+					}
+				}
+
+				type = type.declaringType;
+			} while (type != null);
+
+			return targs as TypeSpec[] ?? ((List<TypeSpec>) targs).ToArray ();
 		}
 
 		public AttributeUsageAttribute GetAttributeUsage (PredefinedAttribute pa)
@@ -987,8 +1061,7 @@ namespace Mono.CSharp
 					if (!IsEqual (a.Types[i], b.Types[i]))
 						return false;
 
-					const Parameter.Modifier ref_out = Parameter.Modifier.REF | Parameter.Modifier.OUT;
-					if ((a.FixedParameters[i].ModFlags & ref_out) != (b.FixedParameters[i].ModFlags & ref_out))
+					if ((a.FixedParameters[i].ModFlags & Parameter.Modifier.RefOutMask) != (b.FixedParameters[i].ModFlags & Parameter.Modifier.RefOutMask))
 						return false;
 				}
 
@@ -1229,6 +1302,7 @@ namespace Mono.CSharp
 	{
 		IAssemblyDefinition DeclaringAssembly { get; }
 		string Namespace { get; }
+		bool IsPartial { get; }
 		int TypeParametersCount { get; }
 		TypeParameterSpec[] TypeParameters { get; }
 
@@ -1247,14 +1321,9 @@ namespace Mono.CSharp
 		public static readonly InternalType NullLiteral = new InternalType ("null");
 		public static readonly InternalType FakeInternalType = new InternalType ("<fake$type>");
 		public static readonly InternalType Namespace = new InternalType ("<namespace>");
+		public static readonly InternalType ErrorType = new InternalType ("<error>");
 
 		readonly string name;
-
-		InternalType (string name, MemberCache cache)
-			: this (name)
-		{
-			this.cache = cache;
-		}
 
 		InternalType (string name)
 			: base (MemberKind.InternalCompilerType, null, null, null, Modifiers.PUBLIC)
@@ -1282,6 +1351,12 @@ namespace Mono.CSharp
 		}
 
 		bool IMemberDefinition.IsImported {
+			get {
+				return false;
+			}
+		}
+
+		bool ITypeDefinition.IsPartial {
 			get {
 				return false;
 			}
@@ -1398,6 +1473,12 @@ namespace Mono.CSharp
 		#region Properties
 
 		public TypeSpec Element { get; private set; }
+
+		bool ITypeDefinition.IsPartial {
+			get {
+				return false;
+			}
+		}
 
 		public override string Name {
 			get {

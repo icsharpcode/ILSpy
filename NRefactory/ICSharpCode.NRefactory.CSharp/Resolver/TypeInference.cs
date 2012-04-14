@@ -49,8 +49,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 	/// </summary>
 	public sealed class TypeInference
 	{
-		readonly ITypeResolveContext context;
-		readonly Conversions conversions;
+		readonly ICompilation compilation;
+		readonly CSharpConversions conversions;
 		TypeInferenceAlgorithm algorithm = TypeInferenceAlgorithm.CSharp4;
 		
 		// determines the maximum generic nesting level; necessary to avoid infinite recursion in 'Improved' mode.
@@ -58,12 +58,20 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		int nestingLevel;
 		
 		#region Constructor
-		public TypeInference(ITypeResolveContext context, Conversions conversions = null)
+		public TypeInference(ICompilation compilation)
 		{
-			if (context == null)
-				throw new ArgumentNullException("context");
-			this.context = context;
-			this.conversions = conversions ?? Conversions.Get(context);
+			if (compilation == null)
+				throw new ArgumentNullException("compilation");
+			this.compilation = compilation;
+			this.conversions = CSharpConversions.Get(compilation);
+		}
+		
+		internal TypeInference(ICompilation compilation, CSharpConversions conversions)
+		{
+			Debug.Assert(compilation != null);
+			Debug.Assert(conversions != null);
+			this.compilation = compilation;
+			this.conversions = conversions;
 		}
 		#endregion
 		
@@ -78,7 +86,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		
 		TypeInference CreateNestedInstance()
 		{
-			TypeInference c = new TypeInference(context, conversions);
+			TypeInference c = new TypeInference(compilation, conversions);
 			c.algorithm = algorithm;
 			c.nestingLevel = nestingLevel + 1;
 			return c;
@@ -141,8 +149,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				
 				Log.Unindent();
 				Log.WriteLine("  Type inference finished " + (success ? "successfully" : "with errors") + ": " +
-				              "M<" + string.Join(", ", this.typeParameters.Select(tp => tp.FixedTo ?? SharedTypes.UnknownType)) + ">");
-				return this.typeParameters.Select(tp => tp.FixedTo ?? SharedTypes.UnknownType).ToArray();
+				              "M<" + string.Join(", ", this.typeParameters.Select(tp => tp.FixedTo ?? SpecialType.UnknownType)) + ">");
+				return this.typeParameters.Select(tp => tp.FixedTo ?? SpecialType.UnknownType).ToArray();
 			} finally {
 				Reset();
 			}
@@ -188,7 +196,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			success = true;
 			for (int i = 0; i < result.Length; i++) {
 				success &= Fix(this.typeParameters[i]);
-				result[i] = this.typeParameters[i].FixedTo ?? SharedTypes.UnknownType;
+				result[i] = this.typeParameters[i].FixedTo ?? SpecialType.UnknownType;
 			}
 			Reset();
 			return result;
@@ -263,8 +271,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					}
 				}
 				
-				IType U = Ei.Type;
-				if (U != SharedTypes.UnknownType) {
+				if (IsValidType(Ei.Type)) {
 					if (Ti is ByReferenceType) {
 						MakeExactInference(Ei.Type, Ti);
 					} else {
@@ -272,6 +279,11 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					}
 				}
 			}
+		}
+		
+		static bool IsValidType(IType type)
+		{
+			return type.Kind != TypeKind.Unknown && type.Kind != TypeKind.Null;
 		}
 		
 		bool PhaseTwo()
@@ -348,7 +360,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				if (m != null) {
 					IType[] inputTypes = new IType[m.Parameters.Count];
 					for (int i = 0; i < inputTypes.Length; i++) {
-						inputTypes[i] = m.Parameters[i].Type.Resolve(context);
+						inputTypes[i] = m.Parameters[i].Type;
 					}
 					return inputTypes;
 				}
@@ -360,10 +372,10 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			// C# 4.0 spec: §7.5.2.4 Output types
 			LambdaResolveResult lrr = e as LambdaResolveResult;
-			if (lrr != null && lrr.IsImplicitlyTyped || e is MethodGroupResolveResult) {
+			if (lrr != null || e is MethodGroupResolveResult) {
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null) {
-					return new[] { m.ReturnType.Resolve(context) };
+					return new[] { m.ReturnType };
 				}
 			}
 			return emptyTypeArray;
@@ -465,14 +477,14 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 						TypeParameterSubstitution substitution = GetSubstitutionForFixedTPs();
 						IType[] inferredParameterTypes = new IType[m.Parameters.Count];
 						for (int i = 0; i < inferredParameterTypes.Length; i++) {
-							IType parameterType = m.Parameters[i].Type.Resolve(context);
+							IType parameterType = m.Parameters[i].Type;
 							inferredParameterTypes[i] = parameterType.AcceptVisitor(substitution);
 						}
 						inferredReturnType = lrr.GetInferredReturnType(inferredParameterTypes);
 					} else {
 						inferredReturnType = lrr.GetInferredReturnType(null);
 					}
-					MakeLowerBoundInference(inferredReturnType, m.ReturnType.Resolve(context));
+					MakeLowerBoundInference(inferredReturnType, m.ReturnType);
 					return;
 				}
 			}
@@ -488,8 +500,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					TypeParameterSubstitution substitution = GetSubstitutionForFixedTPs();
 					for (int i = 0; i < args.Length; i++) {
 						IParameter param = m.Parameters[i];
-						IType parameterType = param.Type.Resolve(context);
-						parameterType = parameterType.AcceptVisitor(substitution);
+						IType parameterType = param.Type.AcceptVisitor(substitution);
 						if ((param.IsRef || param.IsOut) && parameterType.Kind == TypeKind.ByReference) {
 							parameterType = ((ByReferenceType)parameterType).ElementType;
 							args[i] = new ByReferenceResolveResult(parameterType, param.IsOut);
@@ -497,18 +508,19 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 							args[i] = new ResolveResult(parameterType);
 						}
 					}
-					var or = mgrr.PerformOverloadResolution(context, args,
+					var or = mgrr.PerformOverloadResolution(compilation,
+					                                        args,
 					                                        allowExtensionMethods: false,
 					                                        allowExpandingParams: false);
 					if (or.FoundApplicableCandidate && or.BestCandidateAmbiguousWith == null) {
-						IType returnType = or.BestCandidate.ReturnType.Resolve(context);
-						MakeLowerBoundInference(returnType, m.ReturnType.Resolve(context));
+						IType returnType = or.GetBestCandidateWithSubstitutedTypeArguments().ReturnType;
+						MakeLowerBoundInference(returnType, m.ReturnType);
 					}
 				}
 				return;
 			}
 			// Otherwise, if E is an expression with type U, then a lower-bound inference is made from U to T.
-			if (e.Type != SharedTypes.UnknownType) {
+			if (IsValidType(e.Type)) {
 				MakeLowerBoundInference(e.Type, t);
 			}
 		}
@@ -517,7 +529,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			IType[] fixedTypes = new IType[typeParameters.Length];
 			for (int i = 0; i < fixedTypes.Length; i++) {
-				fixedTypes[i] = typeParameters[i].FixedTo ?? SharedTypes.UnknownType;
+				fixedTypes[i] = typeParameters[i].FixedTo ?? SpecialType.UnknownType;
 			}
 			return new TypeParameterSubstitution(classTypeArguments, fixedTypes);
 		}
@@ -534,7 +546,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			if (m == null)
 				return;
 			for (int i = 0; i < e.Parameters.Count && i < m.Parameters.Count; i++) {
-				MakeExactInference(e.Parameters[i].Type.Resolve(context), m.Parameters[i].Type.Resolve(context));
+				MakeExactInference(e.Parameters[i].Type, m.Parameters[i].Type);
 			}
 		}
 		#endregion
@@ -621,14 +633,14 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			if (arrU != null && arrV != null && arrU.Dimensions == arrV.Dimensions) {
 				MakeLowerBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
-			} else if (arrU != null && IsIEnumerableCollectionOrList(pV) && arrU.Dimensions == 1) {
+			} else if (arrU != null && IsGenericInterfaceImplementedByArray(pV) && arrU.Dimensions == 1) {
 				MakeLowerBoundInference(arrU.ElementType, pV.GetTypeArgument(0));
 				return;
 			}
 			// Handle parameterized types:
 			if (pV != null) {
 				ParameterizedType uniqueBaseType = null;
-				foreach (IType baseU in U.GetAllBaseTypes(context)) {
+				foreach (IType baseU in U.GetAllBaseTypes()) {
 					ParameterizedType pU = baseU as ParameterizedType;
 					if (pU != null && object.Equals(pU.GetDefinition(), pV.GetDefinition()) && pU.TypeParameterCount == pV.TypeParameterCount) {
 						if (uniqueBaseType == null)
@@ -642,7 +654,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					for (int i = 0; i < uniqueBaseType.TypeParameterCount; i++) {
 						IType Ui = uniqueBaseType.GetTypeArgument(i);
 						IType Vi = pV.GetTypeArgument(i);
-						if (Ui.IsReferenceType(context) == true) {
+						if (Ui.IsReferenceType == true) {
 							// look for variance
 							ITypeParameter Xi = pV.GetDefinition().TypeParameters[i];
 							switch (Xi.Variance) {
@@ -666,14 +678,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			}
 		}
 		
-		static bool IsIEnumerableCollectionOrList(ParameterizedType rt)
+		static bool IsGenericInterfaceImplementedByArray(ParameterizedType rt)
 		{
 			if (rt == null || rt.TypeParameterCount != 1)
 				return false;
 			switch (rt.GetDefinition().FullName) {
-				case "System.Collections.Generic.IList":
-				case "System.Collections.Generic.ICollection":
 				case "System.Collections.Generic.IEnumerable":
+				case "System.Collections.Generic.ICollection":
+				case "System.Collections.Generic.IList":
+				case "System.Collections.Generic.IReadOnlyList":
 					return true;
 				default:
 					return false;
@@ -705,14 +718,14 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			if (arrV != null && arrU != null && arrU.Dimensions == arrV.Dimensions) {
 				MakeUpperBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
-			} else if (arrV != null && IsIEnumerableCollectionOrList(pU) && arrV.Dimensions == 1) {
+			} else if (arrV != null && IsGenericInterfaceImplementedByArray(pU) && arrV.Dimensions == 1) {
 				MakeUpperBoundInference(pU.GetTypeArgument(0), arrV.ElementType);
 				return;
-			}
+ 			}
 			// Handle parameterized types:
 			if (pU != null) {
 				ParameterizedType uniqueBaseType = null;
-				foreach (IType baseV in V.GetAllBaseTypes(context)) {
+				foreach (IType baseV in V.GetAllBaseTypes()) {
 					ParameterizedType pV = baseV as ParameterizedType;
 					if (pV != null && object.Equals(pU.GetDefinition(), pV.GetDefinition()) && pU.TypeParameterCount == pV.TypeParameterCount) {
 						if (uniqueBaseType == null)
@@ -726,7 +739,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					for (int i = 0; i < uniqueBaseType.TypeParameterCount; i++) {
 						IType Ui = pU.GetTypeArgument(i);
 						IType Vi = uniqueBaseType.GetTypeArgument(i);
-						if (Ui.IsReferenceType(context) == true) {
+						if (Ui.IsReferenceType == true) {
 							// look for variance
 							ITypeParameter Xi = pU.GetDefinition().TypeParameters[i];
 							switch (Xi.Variance) {
@@ -785,86 +798,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			}
 			Log.WriteCollection("GetBestCommonType() for ", expressions);
 			try {
-				this.typeParameters = new TP[1] { new TP(DummyTypeParameter.Instance) };
+				ITypeParameter tp = DummyTypeParameter.GetMethodTypeParameter(0);
+				this.typeParameters = new TP[1] { new TP(tp) };
 				foreach (ResolveResult r in expressions) {
-					MakeOutputTypeInference(r, DummyTypeParameter.Instance);
+					MakeOutputTypeInference(r, tp);
 				}
 				success = Fix(typeParameters[0]);
-				return typeParameters[0].FixedTo ?? SharedTypes.UnknownType;
+				return typeParameters[0].FixedTo ?? SpecialType.UnknownType;
 			} finally {
 				Reset();
-			}
-		}
-		
-		sealed class DummyTypeParameter : AbstractType, ITypeParameter
-		{
-			public static readonly DummyTypeParameter Instance = new DummyTypeParameter();
-			
-			public override string Name {
-				get { return "X"; }
-			}
-			
-			public override bool? IsReferenceType(ITypeResolveContext context)
-			{
-				return null;
-			}
-			
-			public override int GetHashCode()
-			{
-				return 0;
-			}
-			
-			public override bool Equals(IType other)
-			{
-				return this == other;
-			}
-			
-			int ITypeParameter.Index {
-				get { return 0; }
-			}
-			
-			IList<IAttribute> ITypeParameter.Attributes {
-				get { return EmptyList<IAttribute>.Instance; }
-			}
-			
-			EntityType ITypeParameter.OwnerType {
-				get { return EntityType.Method; }
-			}
-			
-			IList<ITypeReference> ITypeParameter.Constraints {
-				get { return EmptyList<ITypeReference>.Instance; }
-			}
-			
-			bool ITypeParameter.HasDefaultConstructorConstraint {
-				get { return false; }
-			}
-			
-			bool ITypeParameter.HasReferenceTypeConstraint {
-				get { return false; }
-			}
-			
-			bool ITypeParameter.HasValueTypeConstraint {
-				get { return false; }
-			}
-			
-			VarianceModifier ITypeParameter.Variance {
-				get { return VarianceModifier.Invariant; }
-			}
-			
-			bool IFreezable.IsFrozen {
-				get { return true; }
-			}
-			
-			void IFreezable.Freeze()
-			{
-			}
-			
-			DomRegion ITypeParameter.Region {
-				get { return DomRegion.Empty; }
-			}
-			
-			public override TypeKind Kind {
-				get { return TypeKind.TypeParameter; }
 			}
 		}
 		#endregion
@@ -893,7 +835,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		static IType GetFirstTypePreferNonInterfaces(IList<IType> result)
 		{
 			return result.FirstOrDefault(c => c.Kind != TypeKind.Interface)
-				?? result.FirstOrDefault() ?? SharedTypes.UnknownType;
+				?? result.FirstOrDefault() ?? SpecialType.UnknownType;
 		}
 		
 		IList<IType> FindTypesInBounds(IList<IType> lowerBounds, IList<IType> upperBounds)
@@ -913,12 +855,12 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			
 			// First try the Fixing algorithm from the C# spec (§7.5.2.11)
 			List<IType> candidateTypes = lowerBounds.Union(upperBounds)
-				.Where(c => lowerBounds.All(b => conversions.ImplicitConversion(b, c)))
-				.Where(c => upperBounds.All(b => conversions.ImplicitConversion(c, b)))
+				.Where(c => lowerBounds.All(b => conversions.ImplicitConversion(b, c).IsValid))
+				.Where(c => upperBounds.All(b => conversions.ImplicitConversion(c, b).IsValid))
 				.ToList(); // evaluate the query only once
 			
 			candidateTypes = candidateTypes.Where(
-				c => candidateTypes.All(o => conversions.ImplicitConversion(c, o))
+				c => candidateTypes.All(o => conversions.ImplicitConversion(c, o).IsValid)
 			).ToList();
 			// If the specified algorithm produces a single candidate, we return
 			// that candidate.
@@ -935,21 +877,21 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			List<ITypeDefinition> candidateTypeDefinitions;
 			if (lowerBounds.Count > 0) {
 				// Find candidates by using the lower bounds:
-				var hashSet = new HashSet<ITypeDefinition>(lowerBounds[0].GetAllBaseTypeDefinitions(context));
+				var hashSet = new HashSet<ITypeDefinition>(lowerBounds[0].GetAllBaseTypeDefinitions());
 				for (int i = 1; i < lowerBounds.Count; i++) {
-					hashSet.IntersectWith(lowerBounds[i].GetAllBaseTypeDefinitions(context));
+					hashSet.IntersectWith(lowerBounds[i].GetAllBaseTypeDefinitions());
 				}
 				candidateTypeDefinitions = hashSet.ToList();
 			} else {
 				// Find candidates by looking at all classes in the project:
-				candidateTypeDefinitions = context.GetAllTypes().ToList();
+				candidateTypeDefinitions = compilation.GetAllTypeDefinitions().ToList();
 			}
 			
 			// Now filter out candidates that violate the upper bounds:
 			foreach (IType ub in upperBounds) {
 				ITypeDefinition ubDef = ub.GetDefinition();
 				if (ubDef != null) {
-					candidateTypeDefinitions.RemoveAll(c => !c.IsDerivedFrom(ubDef, context));
+					candidateTypeDefinitions.RemoveAll(c => !c.IsDerivedFrom(ubDef));
 				}
 			}
 			
@@ -979,9 +921,9 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					// if there were lower bounds, we aim for the most specific candidate:
 					
 					// if this candidate isn't made redundant by an existing, more specific candidate:
-					if (!candidateTypes.Any(c => c.GetDefinition().IsDerivedFrom(candidateDef, context))) {
+					if (!candidateTypes.Any(c => c.GetDefinition().IsDerivedFrom(candidateDef))) {
 						// remove all existing candidates made redundant by this candidate:
-						candidateTypes.RemoveAll(c => candidateDef.IsDerivedFrom(c.GetDefinition(), context));
+						candidateTypes.RemoveAll(c => candidateDef.IsDerivedFrom(c.GetDefinition()));
 						// add new candidate
 						candidateTypes.Add(candidate);
 					}
@@ -989,9 +931,9 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					// if there only were upper bounds, we aim for the least specific candidate:
 					
 					// if this candidate isn't made redundant by an existing, less specific candidate:
-					if (!candidateTypes.Any(c => candidateDef.IsDerivedFrom(c.GetDefinition(), context))) {
+					if (!candidateTypes.Any(c => candidateDef.IsDerivedFrom(c.GetDefinition()))) {
 						// remove all existing candidates made redundant by this candidate:
-						candidateTypes.RemoveAll(c => c.GetDefinition().IsDerivedFrom(candidateDef, context));
+						candidateTypes.RemoveAll(c => c.GetDefinition().IsDerivedFrom(candidateDef));
 						// add new candidate
 						candidateTypes.Add(candidate);
 					}
