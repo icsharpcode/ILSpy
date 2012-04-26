@@ -85,6 +85,7 @@
     <Compile Include="Models\TreeModel\StackFrameNode.cs" />
     <Compile Include="Models\TreeModel\TreeNode.cs" />
     <Compile Include="Models\TreeModel\Utils.cs" />
+    <Compile Include="Services\BreakpointService.cs" />
     <Compile Include="Services\Debugger\DebuggerHelper.cs" />
     <Compile Include="Services\Debugger\ListHelper.cs" />
     <Compile Include="Services\Debugger\TypeResolverExtension.cs" />
