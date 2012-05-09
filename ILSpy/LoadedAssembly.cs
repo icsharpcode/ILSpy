@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Represents an assembly loaded into ILSpy.
 	/// </summary>
-	public sealed class LoadedAssembly
+	public sealed class LoadedAssembly : IComparable, IComparable<LoadedAssembly>
 	{
 		readonly Task<AssemblyDefinition> assemblyTask;
 		readonly AssemblyList assemblyList;
@@ -257,5 +257,17 @@ namespace ICSharpCode.ILSpy
 		{
 			assemblyTask.Wait();
 		}
-	}
+
+        int IComparable<LoadedAssembly>.CompareTo(LoadedAssembly other)
+        {
+            return this.shortName.CompareTo(other.shortName);
+        }
+
+        int IComparable.CompareTo(object obj)
+        {
+            if (obj is LoadedAssembly)
+                return this.shortName.CompareTo(((LoadedAssembly)obj).shortName);
+            return this.shortName.CompareTo(obj.ToString());
+        }
+    }
 }
