@@ -99,7 +99,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (TypeDefinition nestedType in type.NestedTypes.OrderBy(m => m.Name)) {
 				this.Children.Add(new TypeTreeNode(nestedType, parentAssemblyNode));
 			}
-			foreach (FieldDefinition field in type.Fields.OrderBy(m => m.Name)) {
+
+			foreach (FieldDefinition field in type.Fields.Where(m => m.IsLiteral).OrderBy(m => m.Name)) {
+				this.Children.Add(new FieldTreeNode(field));
+			}
+			foreach (FieldDefinition field in type.Fields.Where(m => m.IsInitOnly).OrderBy(m => m.Name)) {
+				this.Children.Add(new FieldTreeNode(field));
+			}
+			foreach (FieldDefinition field in type.Fields.Where(m => !(m.IsLiteral || m.IsInitOnly)).OrderBy(m => m.Name)) {
 				this.Children.Add(new FieldTreeNode(field));
 			}
 			
