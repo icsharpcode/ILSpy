@@ -1,3 +1,5 @@
+markdown: rdiscount
+
 # GitHub enforces these three options:
 safe: true
 lsi: false
