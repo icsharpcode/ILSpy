@@ -1,0 +1,4 @@
+# GitHub enforces these three options:
+safe: true
+lsi: false
+pygments: true

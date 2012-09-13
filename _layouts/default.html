@@ -1,0 +1,40 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>{{ page.title }}</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>{{ page.title }}</h1>
+        <p>{{ page.subtitle }}</p>
+        <p class="view"><a href="https://github.com/icsharpcode/ILSpy">View the Project on GitHub <small>icsharpcode/ILSpy</small></a></p>
+        <ul>
+          <li><a href="{{page.binaryDownload}}">Download <strong>Binaries</strong></a></li>
+          <li><a href="{{page.sourceDownload}}">Download <strong>Source</strong></a></li>
+          <li><a href="https://github.com/icsharpcode/ILSpy">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        {{ content }}
+      </section>
+    </div>
+    <footer>
+      <p>Project maintained by <a href="https://github.com/icsharpcode">icsharpcode</a></p>
+      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
+    
+  </body>
+</html>
