@@ -16,7 +16,7 @@ Important links:
 
 * [Discussion forum](http://community.sharpdevelop.net/forums/69.aspx)
 * [Issue Tracker](https://github.com/icsharpcode/ILSpy/issues)
-* [ILSpy plugin list](http://wiki.sharpdevelop.net/ILSpy%20Plugins.ashx)
+* [ILSpy plugin list](https://github.com/icsharpcode/ILSpy/wiki/Plugins)
 * [Build server](http://build.sharpdevelop.net/BuildArtefacts/#ILSpyMaster)
 
 
@@ -55,7 +55,7 @@ Want to know when major new features are added? When a new stable version is rel
 * BAML to XAML decompiler
 * Save Assembly as C# Project
 * Find usage of field/method
-* Extensible via [plugins](http://wiki.sharpdevelop.net/ILSpy%20Plugins.ashx) (MEF)
+* Extensible via [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins) (MEF)
 * Assembly Lists  
 
 
