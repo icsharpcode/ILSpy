@@ -39,9 +39,9 @@
 			Command="Search"
 			Executed="SearchCommandExecuted" />
 	</Window.CommandBindings>
-	<DockPanel>
+	<DockPanel Background="#EFEFF2">
 		<!-- Main menu -->
-		<Menu DockPanel.Dock="Top" Name="mainMenu" Height="23">
+		<Menu DockPanel.Dock="Top" Name="mainMenu" Height="23" Padding="3 3 0 0">
 			<MenuItem Header="_File" /> <!-- contents of file menu are added using MEF -->
 			<MenuItem Header="_View">
 				<MenuItem Header="Show _internal types and members" IsCheckable="True" IsChecked="{Binding FilterSettings.ShowInternalApi}">
@@ -54,6 +54,7 @@
 		<!-- ToolBar -->
 		<ToolBar
 			Name="toolBar"
+			Background="Transparent"
 			DockPanel.Dock="Top" ToolBarTray.IsLocked="True">
 			<ToolBar.Resources>
 				<!-- Make images transparent if menu command is disabled -->
@@ -114,6 +115,7 @@
 				ShowRoot="False"
 				AllowDropOrder="True"
 				AllowDrop="True" 
+				ShowLines="False"
 				BorderThickness="0,1,1,1" Visibility="Visible" />
 			<GridSplitter
 				Grid.ZIndex="1"
