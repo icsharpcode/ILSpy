@@ -124,7 +124,7 @@ namespace ICSharpCode.ILSpy
 				if (cancelFetchThread)
 					break;
 				if (fullNames.Add(r.FullName)) { // filter duplicates
-					var file = GacInterop.FindAssemblyInNetGac(r);
+					var file = GacInterop.FindAssemblyInNetGacOrWinMetadata(r);
 					if (file != null) {
 						var entry = new GacEntry(r, file);
 						UpdateProgressBar(pg => { pg.Value = pg.Value + 1; AddNewEntry(entry); });
