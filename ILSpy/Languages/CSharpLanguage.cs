@@ -289,7 +289,7 @@ namespace ICSharpCode.ILSpy
 						output.WriteLine("// Runtime: .NET 2.0");
 						break;
 					case TargetRuntime.Net_4_0:
-						output.WriteLine("// Runtime: .NET 4.0");
+						output.WriteLine(assembly.IsNet45() ? "// Runtime: .NET 4.5" : "// Runtime: .NET 4.0");
 						break;
 				}
 				output.WriteLine();
