@@ -160,7 +160,7 @@ namespace ICSharpCode.ILSpy.Debugger.Services
 					// COMException: The requested operation requires elevation. (Exception from HRESULT: 0x800702E4)
 					// COMException: The directory name is invalid. (Exception from HRESULT: 0x8007010B)
 					// BadImageFormatException:  is not a valid Win32 application. (Exception from HRESULT: 0x800700C1)
-					// UnauthorizedAccessException: Отказано в доступе. (Исключение из HRESULT: 0x80070005 (E_ACCESSDENIED))
+					// UnauthorizedAccessException: Access is denied. (Exception from HRESULT: 0x80070005 (E_ACCESSDENIED))
 					if (e is COMException || e is BadImageFormatException || e is UnauthorizedAccessException) {
 						string msg = "CannotStartProcess";
 						msg += " " + e.Message;
