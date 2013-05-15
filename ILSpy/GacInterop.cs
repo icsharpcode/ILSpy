@@ -90,24 +90,31 @@ namespace ICSharpCode.ILSpy
 		static readonly string[] gac_paths = { Fusion.GetGacPath(false), Fusion.GetGacPath(true) };
 		static readonly string[] gacs = { "GAC_MSIL", "GAC_32", "GAC" };
 		static readonly string[] prefixes = { string.Empty, "v4.0_" };
+		static readonly string winmetadata_path = Environment.ExpandEnvironmentVariables(@"%SystemRoot%\System32\WinMetadata");
 		
 		/// <summary>
 		/// Gets the file name for an assembly stored in the GAC.
 		/// </summary>
-		public static string FindAssemblyInNetGac (AssemblyNameReference reference)
+		public static string FindAssemblyInNetGacOrWinMetadata (AssemblyNameReference reference)
 		{
 			// without public key, it can't be in the GAC
-			if (reference.PublicKeyToken == null)
-				return null;
-			
-			for (int i = 0; i < 2; i++) {
-				for (int j = 0; j < gacs.Length; j++) {
-					var gac = Path.Combine (gac_paths [i], gacs [j]);
-					var file = GetAssemblyFile (reference, prefixes [i], gac);
-					if (File.Exists (file))
-						return file;
+			if (reference.PublicKeyToken != null)
+			{
+				for (int i = 0; i < 2; i++)
+				{
+					for (int j = 0; j < gacs.Length; j++)
+					{
+						var gac = Path.Combine(gac_paths[i], gacs[j]);
+						var file = GetAssemblyFile(reference, prefixes[i], gac);
+						if (File.Exists(file))
+							return file;
+					}
 				}
 			}
+
+			var winmd = Path.Combine(winmetadata_path, reference.Name + ".winmd");
+			if (File.Exists(winmd))
+				return winmd;
 
 			return null;
 		}

@@ -219,7 +219,7 @@ namespace ICSharpCode.ILSpy
 			}
 			
 			var name = AssemblyNameReference.Parse(fullName);
-			string file = GacInterop.FindAssemblyInNetGac(name);
+			string file = GacInterop.FindAssemblyInNetGacOrWinMetadata(name);
 			if (file == null) {
 				string dir = Path.GetDirectoryName(this.fileName);
 				if (File.Exists(Path.Combine(dir, name.Name + ".dll")))
