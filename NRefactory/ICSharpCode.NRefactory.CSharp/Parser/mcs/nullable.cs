@@ -494,7 +494,7 @@ namespace Mono.CSharp.Nullable
 			ec.MarkLabel (end_label);
 		}
 
-		Expression LiftExpression (ResolveContext ec, Expression expr)
+		static Expression LiftExpression (ResolveContext ec, Expression expr)
 		{
 			var lifted_type = new NullableType (expr.Type, expr.Location);
 			if (lifted_type.ResolveAsType (ec) == null)
@@ -539,8 +539,8 @@ namespace Mono.CSharp.Nullable
 		Expression user_operator;
 		MethodSpec wrap_ctor;
 
-		public LiftedBinaryOperator (Binary.Operator op, Expression left, Expression right, Location loc)
-			: base (op, left, right, loc)
+		public LiftedBinaryOperator (Binary.Operator op, Expression left, Expression right)
+			: base (op, left, right)
 		{
 		}
 
@@ -583,7 +583,7 @@ namespace Mono.CSharp.Nullable
 			Constant c = new BoolConstant (ec.BuiltinTypes, Oper == Operator.Inequality, loc);
 
 			if ((Oper & Operator.EqualityMask) != 0) {
-				ec.Report.Warning (472, 2, loc, "The result of comparing value type `{0}' with null is `{1}'",
+				ec.Report.Warning (472, 2, loc, "The result of comparing value type `{0}' with null is always `{1}'",
 					TypeManager.CSharpName (expr.Type), c.GetValueAsLiteral ());
 			} else {
 				ec.Report.Warning (464, 2, loc, "The result of comparing type `{0}' with null is always `{1}'",
@@ -860,7 +860,7 @@ namespace Mono.CSharp.Nullable
 				if (lifted_type == null)
 					return null;
 
-				if (left is UserCast || left is TypeCast)
+				if (left is UserCast || left is EmptyCast || left is OpcodeCast)
 					left.Type = lifted_type;
 				else
 					left = EmptyCast.Create (left, lifted_type);
@@ -875,7 +875,7 @@ namespace Mono.CSharp.Nullable
 				if (r is ReducedExpression)
 					r = ((ReducedExpression) r).OriginalExpression;
 
-				if (r is UserCast || r is TypeCast)
+				if (r is UserCast || r is EmptyCast || r is OpcodeCast)
 					r.Type = lifted_type;
 				else
 					right = EmptyCast.Create (right, lifted_type);
@@ -1000,20 +1000,24 @@ namespace Mono.CSharp.Nullable
 	{
 		Expression left, right;
 		Unwrap unwrap;
-		
-		public Expression Left {
-			get { return this.left; }
-		}
 
-		public Expression Right {
-			get { return this.right; }
-		}
-
-		public NullCoalescingOperator (Expression left, Expression right, Location loc)
+		public NullCoalescingOperator (Expression left, Expression right)
 		{
 			this.left = left;
 			this.right = right;
-			this.loc = loc;
+			this.loc = left.Location;
+		}
+
+		public Expression LeftExpression {
+			get {
+ 				return left;
+ 			}
+		}
+
+		public Expression RightExpression {
+			get {
+ 				return right;
+ 			}
 		}
 		
 		public override Expression CreateExpressionTree (ResolveContext ec)

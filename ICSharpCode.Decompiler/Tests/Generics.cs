@@ -107,4 +107,59 @@ public static class Generics
 		// Tests references to inner classes in generic classes
 		return d.Keys.GetEnumerator();
 	}
+	
+	public static bool IsString<T>(T input)
+	{
+		return input is string;
+	}
+	
+	public static string AsString<T>(T input)
+	{
+		return input as string;
+	}
+	
+	public static string CastToString<T>(T input)
+	{
+		return (string)((object)input);
+	}
+	
+	public static T CastFromString<T>(string input)
+	{
+		return (T)((object)input);
+	}
+	
+	public static bool IsInt<T>(T input)
+	{
+		return input is int;
+	}
+	
+	public static int CastToInt<T>(T input)
+	{
+		return (int)((object)input);
+	}
+	
+	public static T CastFromInt<T>(int input)
+	{
+		return (T)((object)input);
+	}
+	
+	public static bool IsNullableInt<T>(T input)
+	{
+		return input is int?;
+	}
+	
+	public static int? AsNullableInt<T>(T input)
+	{
+		return input as int?;
+	}
+	
+	public static int? CastToNullableInt<T>(T input)
+	{
+		return (int?)((object)input);
+	}
+	
+	public static T CastFromNullableInt<T>(int? input)
+	{
+		return (T)((object)input);
+	}
 }

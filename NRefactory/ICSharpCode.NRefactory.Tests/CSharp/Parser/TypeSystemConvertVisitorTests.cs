@@ -18,8 +18,11 @@
 
 using System;
 using System.IO;
+using System.Linq;
+using ICSharpCode.NRefactory.Documentation;
 using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.NRefactory.TypeSystem.TestCase;
 using ICSharpCode.NRefactory.Utils;
 using NUnit.Framework;
 
@@ -39,16 +42,43 @@ namespace ICSharpCode.NRefactory.CSharp.Parser
 			const string fileName = "TypeSystemTests.TestCase.cs";
 			
 			CSharpParser parser = new CSharpParser();
-			CompilationUnit cu;
+			SyntaxTree syntaxTree;
 			using (Stream s = typeof(TypeSystemTests).Assembly.GetManifestResourceStream(typeof(TypeSystemTests), fileName)) {
-				cu = parser.Parse(s, fileName);
+				syntaxTree = parser.Parse(s, fileName);
 			}
 			
-			var parsedFile = cu.ToTypeSystem();
+			var unresolvedFile = syntaxTree.ToTypeSystem();
 			return new CSharpProjectContent()
-				.UpdateProjectContent(null, parsedFile)
+				.AddOrUpdateFiles(unresolvedFile)
 				.AddAssemblyReferences(new[] { CecilLoaderTests.Mscorlib })
 				.SetAssemblyName(typeof(TypeSystemTests).Assembly.GetName().Name);
+		}
+		
+		[Test]
+		public void ConvertStandaloneTypeReference()
+		{
+			var typeRef = new MemberType(new SimpleType("System"), "Array").ToTypeReference();
+			Assert.AreEqual(compilation.FindType(KnownTypeCode.Array), typeRef.Resolve(compilation.TypeResolveContext));
+		}
+		
+		[Test]
+		public void PartialMethodWithImplementation()
+		{
+			var t = compilation.FindType(typeof(PartialClass));
+			var methods = t.GetMethods(m => m.Name == "PartialMethodWithImplementation").ToList();
+			Assert.AreEqual(2, methods.Count);
+			var method1 = methods.Single(m => m.Parameters[0].Type.FullName == "System.Int32");
+			var method2 = methods.Single(m => m.Parameters[0].Type.FullName == "System.String");
+			Assert.AreEqual(2, method1.Parts.Count);
+			Assert.AreEqual(2, method2.Parts.Count);
+		}
+		
+		[Test]
+		public void PartialMethodWithoutImplementation()
+		{
+			var t = compilation.FindType(typeof(PartialClass));
+			var method = t.GetMethods(m => m.Name == "PartialMethodWithoutImplementation").Single();
+			Assert.AreEqual(1, method.Parts.Count);
 		}
 	}
 	

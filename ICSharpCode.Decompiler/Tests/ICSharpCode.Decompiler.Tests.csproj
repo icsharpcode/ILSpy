@@ -7,7 +7,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>ICSharpCode.Decompiler.Tests</RootNamespace>
     <AssemblyName>ICSharpCode.Decompiler.Tests</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
@@ -15,6 +15,7 @@
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <NoWarn>67,169,1058,728,1720,649</NoWarn>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -62,9 +63,14 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Async.cs" />
     <Compile Include="CallOverloadedMethod.cs" />
     <Compile Include="CheckedUnchecked.cs" />
+    <Compile Include="ControlFlow.cs" />
+    <Compile Include="DoubleConstants.cs" />
     <Compile Include="ExpressionTrees.cs" />
+    <None Include="IL\SequenceOfNestedIfs.Output.cs" />
+    <Compile Include="IL\ILTests.cs" />
     <Compile Include="LiftedOperators.cs" />
     <Compile Include="CustomShortCircuitOperators.cs" />
     <Compile Include="Helpers\CodeAssert.cs" />
@@ -77,6 +83,10 @@
     <Compile Include="UnsafeCode.cs" />
     <Compile Include="Types\S_TypeDeclarations.cs" />
     <Compile Include="YieldReturn.cs" />
+    <None Include="IL\SequenceOfNestedIfs.dll" />
+    <None Include="IL\SequenceOfNestedIfs.il" />
+    <None Include="IL\StackTests.exe" />
+    <None Include="IL\StackTests.il" />
     <None Include="packages.config" />
     <None Include="Types\S_EnumSamples.cs" />
     <None Include="CustomAttributes\S_AssemblyCustomAttribute.cs" />
@@ -117,10 +127,11 @@
       <Name>ICSharpCode.Decompiler</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="IL" />
+  </ItemGroup>
   <ItemGroup>
     <None Include="BooleanConsumedAsInteger.il" />
-    <None Include="StackTests\StackTests.il" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

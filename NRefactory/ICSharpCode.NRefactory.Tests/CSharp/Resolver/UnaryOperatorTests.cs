@@ -71,6 +71,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			TestOperator(UnaryOperatorType.Increment, MakeResult(typeof(byte)),
 			             Conversion.IdentityConversion, typeof(byte));
 			
+			TestOperator(UnaryOperatorType.PostIncrement, MakeResult(typeof(char)),
+			             Conversion.IdentityConversion, typeof(char));
+			
+			TestOperator(UnaryOperatorType.PostIncrement, MakeResult(typeof(float)),
+			             Conversion.IdentityConversion, typeof(float));
+			
+			TestOperator(UnaryOperatorType.PostIncrement, MakeResult(typeof(decimal)),
+			             Conversion.IdentityConversion, typeof(decimal));
+			
 			TestOperator(UnaryOperatorType.Decrement, MakeResult(typeof(ulong)),
 			             Conversion.IdentityConversion, typeof(ulong));
 			
@@ -213,6 +222,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			AssertType(typeof(StringComparison?), resolver.ResolveUnaryOperator(UnaryOperatorType.BitNot, MakeResult(typeof(StringComparison?))));
 		}
 		
+		[Ignore("Broken on mcs")]
 		[Test]
 		public void IntMinValue()
 		{
@@ -231,6 +241,38 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			AssertConstant(-9223372036854775808, Resolve("class A { object x = $-9223372036854775808$; }"));
 			// compiler error:
 			AssertError(typeof(ulong), Resolve("class A { object x = $-(9223372036854775808)$; }"));
+		}
+		
+		[Test]
+		public void IsLiftedProperty()
+		{
+			string program = @"
+class Test {
+	static void Inc() {
+		int? a = 0;
+		a = $-a$;
+	}
+}";
+			var irr = Resolve<OperatorResolveResult>(program);
+			Assert.IsFalse(irr.IsError);
+			Assert.IsTrue(irr.IsLiftedOperator);
+		}
+		
+		[Test]
+		public void UShortEnumNegation()
+		{
+			string program = @"
+class Test {
+	enum UShortEnum : ushort { Three = 3 }
+	static void Inc() {
+		checked { // even in checked context, the implicit cast back to enum is unchecked
+			var a = $~UShortEnum.Three$;
+		}
+	}
+}";
+			var rr = Resolve<ConstantResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.AreEqual(unchecked( (ushort)~3 ), rr.ConstantValue);
 		}
 	}
 }

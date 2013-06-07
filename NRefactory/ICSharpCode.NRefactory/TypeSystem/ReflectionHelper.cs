@@ -48,6 +48,10 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Retrieves the specified type in this compilation.
 		/// Returns <see cref="SpecialType.UnknownType"/> if the type cannot be found in this compilation.
 		/// </summary>
+		/// <remarks>
+		/// This method cannot be used with open types; all type parameters will be substituted
+		/// with <see cref="SpecialType.UnknownType"/>.
+		/// </remarks>
 		public static IType FindType(this ICompilation compilation, Type type)
 		{
 			return type.ToTypeReference().Resolve(compilation.TypeResolveContext);
@@ -57,6 +61,8 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Retrieves the specified type in this compilation.
 		/// Returns <see cref="SpecialType.UnknownType"/> if the type cannot be found in this compilation.
 		/// </summary>
+		[Obsolete("Use ReflectionHelper.ParseReflectionName(reflectionTypeName).Resolve(compilation.TypeResolveContext) instead. " +
+		          "Make sure to read the ParseReflectionName() documentation for caveats.")]
 		public static IType FindType(this ICompilation compilation, string reflectionTypeName)
 		{
 			return ParseReflectionName(reflectionTypeName).Resolve(compilation.TypeResolveContext);
@@ -69,6 +75,12 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// </summary>
 		/// <param name="type">The type to be converted.</param>
 		/// <returns>Returns the type reference.</returns>
+		/// <remarks>
+		/// If the type is open (contains type parameters '`0' or '``0'),
+		/// an <see cref="ITypeResolveContext"/> with the appropriate CurrentTypeDefinition/CurrentMember is required
+		/// to resolve the type reference.
+		/// For closed types, the root type resolve context for the compilation is sufficient.
+		/// </remarks>
 		public static ITypeReference ToTypeReference(this Type type)
 		{
 			if (type == null)
@@ -194,8 +206,18 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Parses a reflection name into a type reference.
 		/// </summary>
 		/// <param name="reflectionTypeName">The reflection name of the type.</param>
-		/// <exception cref="ReflectionNameParseException">The syntax of the reflection type name is invalid</exception>
 		/// <returns>A type reference that represents the reflection name.</returns>
+		/// <exception cref="ReflectionNameParseException">The syntax of the reflection type name is invalid</exception>
+		/// <remarks>
+		/// If the type is open (contains type parameters '`0' or '``0'),
+		/// an <see cref="ITypeResolveContext"/> with the appropriate CurrentTypeDefinition/CurrentMember is required
+		/// to resolve the reference to the ITypeParameter.
+		/// For looking up closed, assembly qualified type names, the root type resolve context for the compilation
+		/// is sufficient.
+		/// When looking up a type name that isn't assembly qualified, the type reference will look in
+		/// <see cref="ITypeResolveContext.CurrentAssembly"/> first, and if the type is not found there,
+		/// it will look in all other assemblies of the compilation.
+		/// </remarks>
 		public static ITypeReference ParseReflectionName(string reflectionTypeName)
 		{
 			if (reflectionTypeName == null)
@@ -227,6 +249,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		{
 			if (pos == reflectionTypeName.Length)
 				throw new ReflectionNameParseException(pos, "Unexpected end");
+			ITypeReference reference;
 			if (reflectionTypeName[pos] == '`') {
 				// type parameter reference
 				pos++;
@@ -236,23 +259,25 @@ namespace ICSharpCode.NRefactory.TypeSystem
 					// method type parameter reference
 					pos++;
 					int index = ReadTypeParameterCount(reflectionTypeName, ref pos);
-					return new TypeParameterReference(EntityType.Method, index);
+					reference = new TypeParameterReference(EntityType.Method, index);
 				} else {
 					// class type parameter reference
 					int index = ReadTypeParameterCount(reflectionTypeName, ref pos);
-					return new TypeParameterReference(EntityType.TypeDefinition, index);
+					reference = new TypeParameterReference(EntityType.TypeDefinition, index);
 				}
+			} else {
+				// not a type parameter reference: read the actual type name
+				int tpc;
+				string typeName = ReadTypeName(reflectionTypeName, ref pos, out tpc);
+				string assemblyName = SkipAheadAndReadAssemblyName(reflectionTypeName, pos);
+				reference = CreateGetClassTypeReference(assemblyName, typeName, tpc);
 			}
-			// not a type parameter reference: read the actual type name
-			int tpc;
-			string typeName = ReadTypeName(reflectionTypeName, ref pos, out tpc);
-			string assemblyName = SkipAheadAndReadAssemblyName(reflectionTypeName, pos);
-			ITypeReference reference = CreateGetClassTypeReference(assemblyName, typeName, tpc);
 			// read type suffixes
 			while (pos < reflectionTypeName.Length) {
 				switch (reflectionTypeName[pos++]) {
 					case '+':
-						typeName = ReadTypeName(reflectionTypeName, ref pos, out tpc);
+						int tpc;
+						string typeName = ReadTypeName(reflectionTypeName, ref pos, out tpc);
 						reference = new NestedTypeReference(reference, typeName, tpc);
 						break;
 					case '*':
@@ -267,7 +292,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 							throw new ReflectionNameParseException(pos, "Unexpected end");
 						if (reflectionTypeName[pos] == '[') {
 							// it's a generic type
-							List<ITypeReference> typeArguments = new List<ITypeReference>(tpc);
+							List<ITypeReference> typeArguments = new List<ITypeReference>();
 							pos++;
 							typeArguments.Add(ParseReflectionName(reflectionTypeName, ref pos));
 							if (pos < reflectionTypeName.Length && reflectionTypeName[pos] == ']')
@@ -333,7 +358,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			if (assemblyName != null) {
 				assemblyReference = new DefaultAssemblyReference(assemblyName);
 			} else {
-				assemblyReference = DefaultAssemblyReference.CurrentAssembly;
+				assemblyReference = null;
 			}
 			int pos = typeName.LastIndexOf('.');
 			if (pos < 0)
@@ -390,7 +415,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			return typeName;
 		}
 		
-		static int ReadTypeParameterCount(string reflectionTypeName, ref int pos)
+		internal static int ReadTypeParameterCount(string reflectionTypeName, ref int pos)
 		{
 			int startPos = pos;
 			while (pos < reflectionTypeName.Length) {

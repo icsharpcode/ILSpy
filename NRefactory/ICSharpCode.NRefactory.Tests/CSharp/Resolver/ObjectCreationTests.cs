@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
 using NUnit.Framework;
@@ -43,7 +44,7 @@ class A {
 		}
 		
 		[Test]
-		public void NonExistingClass()
+		public void NonExistingClass ()
 		{
 			string program = @"class A {
 	void Method() {
@@ -51,7 +52,8 @@ class A {
 	}
 }
 ";
-			ResolveResult result = Resolve<ErrorResolveResult>(program);
+			ResolveResult result = Resolve (program);
+			Assert.IsTrue (result.IsError);
 			Assert.AreSame(SpecialType.UnknownType, result.Type);
 		}
 		
@@ -171,8 +173,9 @@ class B {
 			MemberResolveResult result = Resolve<MemberResolveResult>(program);
 			Assert.AreEqual("Point.X", result.Member.FullName);
 		}
-		
-		[Test, Ignore("Parser returns incorrect positions")]
+
+		[Ignore("Broken")]
+		[Test]
 		public void CollectionInitializerTest()
 		{
 			string program = @"using System.Collections.Generic;
@@ -185,7 +188,8 @@ class B {
 			Assert.AreEqual("System.Collections.Generic.List.Add", result.Member.FullName);
 		}
 		
-		[Test, Ignore("Parser returns incorrect positions")]
+		[Ignore("Broken on mcs/mac os x")]
+		[Test]
 		public void DictionaryInitializerTest()
 		{
 			string program = @"using System.Collections.Generic;
@@ -231,6 +235,86 @@ class B : A { protected B(int y) {} }";
 			Assert.IsTrue(result.IsError);
 			Assert.AreEqual(OverloadResolutionErrors.Inaccessible, result.OverloadResolutionErrors);
 			Assert.AreEqual("B..ctor", result.Member.FullName); // should still find member even if it's not accessible
+		}
+		
+		[Test]
+		public void ComplexObjectInitializer()
+		{
+			string program = @"using System;
+using System.Collections.Generic;
+struct Point { public int X, Y; }
+class Test {
+	public Point Pos;
+	public List<string> List = new List<string>();
+	public Dictionary<string, int> Dict = new Dictionary<string, int>();
+	
+	static object M() {
+		return $new Test {
+			Pos = { X = 1, Y = 2 },
+			List = { ""Hello"", ""World"" },
+			Dict = { { ""A"", 1 } }
+		}$;
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.AreEqual("Test..ctor", rr.Member.FullName);
+			Assert.AreEqual("Test", rr.Type.ReflectionName);
+			Assert.AreEqual(5, rr.InitializerStatements.Count);
+		}
+		
+		[Test]
+		public void CreateGeneric()
+		{
+			string program = @"using System;
+class Test<T> where T : new() {
+	object x = $new T()$;
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.AreEqual(TypeKind.TypeParameter, rr.Type.Kind);
+			Assert.AreEqual(TypeKind.TypeParameter, rr.Member.DeclaringType.Kind);
+		}
+		
+		[Test]
+		public void CreateDelegateFromMethodGroup()
+		{
+			string program = @"using System;
+delegate void D(int i);
+class C {
+	void M(int y) {
+		D d = $new D(M)$;
+	}
+}";
+			var rr = Resolve<ConversionResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.IsTrue(rr.Conversion.IsIdentityConversion);
+			var rr2 = (ConversionResolveResult)rr.Input;
+			Assert.IsFalse(rr2.IsError);
+			Assert.IsTrue(rr2.Conversion.IsMethodGroupConversion);
+			
+			Assert.AreEqual("C.M", rr2.Conversion.Method.FullName);
+			var mgrr = (MethodGroupResolveResult)rr2.Input;
+			Assert.IsInstanceOf<ThisResolveResult>(mgrr.TargetResult);
+		}
+		
+		[Test]
+		public void CreateDelegateFromDelegate()
+		{
+			string program = @"using System;
+delegate void D1(int i);
+delegate void D2(int i);
+class C {
+	void M(D1 d1) {
+		D2 d2 = $new D2(d1)$;
+	}
+}";
+			var rr = Resolve<ConversionResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.IsTrue(rr.Conversion.IsMethodGroupConversion);
+			Assert.AreEqual("D1.Invoke", rr.Conversion.Method.FullName);
+			var mgrr = (MethodGroupResolveResult)rr.Input;
+			Assert.IsInstanceOf<LocalResolveResult>(mgrr.TargetResult);
 		}
 	}
 }

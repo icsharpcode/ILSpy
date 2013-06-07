@@ -120,10 +120,14 @@ namespace Mono.CSharp
 			ml.AddressOf (ec, mode);
 		}
 
-		public Argument EmitToField (EmitContext ec)
+		public Argument EmitToField (EmitContext ec, bool cloneResult)
 		{
 			var res = Expr.EmitToField (ec);
-			return res == Expr ? this : new Argument (res, ArgType);
+			if (cloneResult && res != Expr)
+				return new Argument (res, ArgType);
+
+			Expr = res;
+			return this;
 		}
 
 		public string GetSignatureForError ()
@@ -258,7 +262,7 @@ namespace Mono.CSharp
 			{
 				foreach (var a in ordered) {
 					if (prepareAwait)
-						a.EmitToField (ec);
+						a.EmitToField (ec, false);
 					else
 						a.EmitToVariable (ec);
 				}
@@ -316,20 +320,20 @@ namespace Mono.CSharp
 
 				if (a.Expr is Constant) {
 					info_flags = new Binary (Binary.Operator.BitwiseOr, info_flags,
-						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "Constant", loc), loc);
+						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "Constant", loc));
 				} else if (a.ArgType == Argument.AType.Ref) {
 					info_flags = new Binary (Binary.Operator.BitwiseOr, info_flags,
-						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "IsRef", loc), loc);
+						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "IsRef", loc));
 					info_flags = new Binary (Binary.Operator.BitwiseOr, info_flags,
-						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "UseCompileTimeType", loc), loc);
+						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "UseCompileTimeType", loc));
 				} else if (a.ArgType == Argument.AType.Out) {
 					info_flags = new Binary (Binary.Operator.BitwiseOr, info_flags,
-						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "IsOut", loc), loc);
+						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "IsOut", loc));
 					info_flags = new Binary (Binary.Operator.BitwiseOr, info_flags,
-						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "UseCompileTimeType", loc), loc);
+						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "UseCompileTimeType", loc));
 				} else if (a.ArgType == Argument.AType.DynamicTypeName) {
 					info_flags = new Binary (Binary.Operator.BitwiseOr, info_flags,
-						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "IsStaticType", loc), loc);
+						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "IsStaticType", loc));
 				}
 
 				var arg_type = a.Expr.Type;
@@ -350,14 +354,14 @@ namespace Mono.CSharp
 					}
 
 					info_flags = new Binary (Binary.Operator.BitwiseOr, info_flags,
-						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "UseCompileTimeType", loc), loc);
+						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "UseCompileTimeType", loc));
 				}
 
 				string named_value;
 				NamedArgument na = a as NamedArgument;
 				if (na != null) {
 					info_flags = new Binary (Binary.Operator.BitwiseOr, info_flags,
-						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "NamedArgument", loc), loc);
+						new MemberAccess (new MemberAccess (binder, info_flags_enum, loc), "NamedArgument", loc));
 
 					named_value = na.Name;
 				} else {
@@ -440,7 +444,7 @@ namespace Mono.CSharp
 			LocalTemporary lt;
 			foreach (Argument a in args) {
 				if (prepareAwait) {
-					dups.Add (a.EmitToField (ec));
+					dups.Add (a.EmitToField (ec, true));
 					continue;
 				}
 				

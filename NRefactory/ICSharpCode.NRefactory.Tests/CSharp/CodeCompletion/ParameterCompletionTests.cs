@@ -1,4 +1,4 @@
-//
+﻿//
 // ParameterCompletionTests.cs
 //
 // Author:
@@ -55,12 +55,19 @@ namespace ICSharpCode.NRefactory.CSharp.CodeCompletion
 			{
 				public IEnumerable<IMethod> Data { get; set; }
 				#region IParameterDataProvider implementation
-				public string GetMethodMarkup (int overload, string[] parameterMarkup, int currentParameter)
+				public int StartOffset { get { return 0; } }
+				
+				public string GetHeading (int overload, string[] parameterDescription, int currentParameter)
 				{
 					return "";
 				}
 
-				public string GetParameterMarkup (int overload, int paramIndex)
+				public string GetDescription (int overload, int currentParameter)
+				{
+					return "";
+				}
+
+				public string GetParameterDescription (int overload, int paramIndex)
 				{
 					return "";
 				}
@@ -71,7 +78,12 @@ namespace ICSharpCode.NRefactory.CSharp.CodeCompletion
 					return method.Parameters.Count;
 				}
 
-				public int OverloadCount {
+				public bool AllowParameterList (int overload)
+				{
+					return false;
+				}
+
+				public int Count {
 					get {
 						return Data.Count ();
 					}
@@ -82,13 +94,21 @@ namespace ICSharpCode.NRefactory.CSharp.CodeCompletion
 			class IndexerProvider : IParameterDataProvider
 			{
 				public IEnumerable<IProperty> Data { get; set; }
+				
 				#region IParameterDataProvider implementation
-				public string GetMethodMarkup (int overload, string[] parameterMarkup, int currentParameter)
+				public int StartOffset { get { return 0; } }
+
+				public string GetHeading (int overload, string[] parameterDescription, int currentParameter)
 				{
 					return "";
 				}
 
-				public string GetParameterMarkup (int overload, int paramIndex)
+				public string GetDescription (int overload, int currentParameter)
+				{
+					return "";
+				}
+
+				public string GetParameterDescription (int overload, int paramIndex)
 				{
 					return "";
 				}
@@ -99,7 +119,12 @@ namespace ICSharpCode.NRefactory.CSharp.CodeCompletion
 					return method.Parameters.Count;
 				}
 
-				public int OverloadCount {
+				public bool AllowParameterList (int overload)
+				{
+					return false;
+				}
+
+				public int Count {
 					get {
 						return Data.Count ();
 					}
@@ -108,16 +133,22 @@ namespace ICSharpCode.NRefactory.CSharp.CodeCompletion
 			}
 			
 			
-			
 			class ArrayProvider : IParameterDataProvider
 			{
 				#region IParameterDataProvider implementation
-				public string GetMethodMarkup (int overload, string[] parameterMarkup, int currentParameter)
+				public int StartOffset { get { return 0; } }
+
+				public string GetHeading (int overload, string[] parameterDescription, int currentParameter)
 				{
 					return "";
 				}
 
-				public string GetParameterMarkup (int overload, int paramIndex)
+				public string GetDescription (int overload, int currentParameter)
+				{
+					return "";
+				}
+
+				public string GetParameterDescription (int overload, int paramIndex)
 				{
 					return "";
 				}
@@ -127,7 +158,12 @@ namespace ICSharpCode.NRefactory.CSharp.CodeCompletion
 					return 1;
 				}
 
-				public int OverloadCount {
+				public bool AllowParameterList (int overload)
+				{
+					return false;
+				}
+
+				public int Count {
 					get {
 						return 1;
 					}
@@ -135,89 +171,128 @@ namespace ICSharpCode.NRefactory.CSharp.CodeCompletion
 				#endregion
 			}
 			
-			#region IParameterCompletionDataFactory implementation
-			public IParameterDataProvider CreateConstructorProvider (ICSharpCode.NRefactory.TypeSystem.IType type)
+			class TypeParameterDataProvider : IParameterDataProvider
 			{
-				
+				public IEnumerable<IType> Data { get; set; }
+				#region IParameterDataProvider implementation
+				public int StartOffset { get { return 0; } }
+
+				public string GetHeading (int overload, string[] parameterDescription, int currentParameter)
+				{
+					return "";
+				}
+
+				public string GetDescription (int overload, int currentParameter)
+				{
+					return "";
+				}
+
+				public string GetParameterDescription (int overload, int paramIndex)
+				{
+					return "";
+				}
+
+				public int GetParameterCount (int overload)
+				{
+					var data = Data.ElementAt (overload);
+					return data.TypeParameterCount;
+				}
+
+				public bool AllowParameterList (int overload)
+				{
+					return false;
+				}
+
+				public int Count {
+					get {
+						return Data.Count ();
+					}
+				}
+				#endregion
+			}
+			
+			#region IParameterCompletionDataFactory implementation
+			public IParameterDataProvider CreateConstructorProvider(int startOffset, ICSharpCode.NRefactory.TypeSystem.IType type)
+			{
+				Assert.IsTrue(type.Kind != TypeKind.Unknown);
 				return new Provider () {
 					Data = type.GetConstructors (m => m.Accessibility == Accessibility.Public)
 				};
 			}
 
-			public IParameterDataProvider CreateMethodDataProvider (ICSharpCode.NRefactory.CSharp.Resolver.MethodGroupResolveResult par1)
+			public IParameterDataProvider CreateMethodDataProvider (int startOffset, IEnumerable<IMethod> methods)
 			{
 				return new Provider () {
-					Data = par1.Methods
+					Data = methods
 				};
 			}
 
-			public IParameterDataProvider CreateMethodDataProvider (ICSharpCode.NRefactory.TypeSystem.IMethod method)
+			public IParameterDataProvider CreateDelegateDataProvider(int startOffset, ICSharpCode.NRefactory.TypeSystem.IType type)
 			{
-				return new Provider () {
-					Data = new [] { method }
-				};
-			}
-
-			public IParameterDataProvider CreateDelegateDataProvider (ICSharpCode.NRefactory.TypeSystem.IType type)
-			{
+				Assert.IsTrue(type.Kind != TypeKind.Unknown);
 				return new Provider () {
 					Data = new [] { type.GetDelegateInvokeMethod () }
 				};
 			}
 			
-			public IParameterDataProvider CreateIndexerParameterDataProvider (IType type, AstNode resolvedNode)
+			public IParameterDataProvider CreateIndexerParameterDataProvider(int startOffset, IType type, AstNode resolvedNode)
 			{
+				Assert.IsTrue(type.Kind != TypeKind.Unknown);
 				if (type.Kind == TypeKind.Array)
 					return new ArrayProvider ();
 				return new IndexerProvider () {
 					Data = type.GetProperties (p => p.IsIndexer)
 				};
 			}
+			
+			public IParameterDataProvider CreateTypeParameterDataProvider (int startOffset, IEnumerable<IType> types)
+			{
+				return new TypeParameterDataProvider () {
+					Data = types
+				};
+			}
 			#endregion
 		}
 		
-		internal static IParameterDataProvider CreateProvider (string text)
+		internal static IParameterDataProvider CreateProvider(string text)
 		{
 			string parsedText;
 			string editorText;
-			int cursorPosition = text.IndexOf ('$');
-			int endPos = text.IndexOf ('$', cursorPosition + 1);
-			if (endPos == -1)
-				parsedText = editorText = text.Substring (0, cursorPosition) + text.Substring (cursorPosition + 1);
-			else {
-				parsedText = text.Substring (0, cursorPosition) + new string (' ', endPos - cursorPosition) + text.Substring (endPos + 1);
-				editorText = text.Substring (0, cursorPosition) + text.Substring (cursorPosition + 1, endPos - cursorPosition - 1) + text.Substring (endPos + 1);
+			int cursorPosition = text.IndexOf('$');
+			int endPos = text.IndexOf('$', cursorPosition + 1);
+			if (endPos == -1) {
+				parsedText = editorText = text.Substring(0, cursorPosition) + text.Substring(cursorPosition + 1);
+			} else {
+				parsedText = text.Substring(0, cursorPosition) + new string(' ', endPos - cursorPosition) + text.Substring(endPos + 1);
+				editorText = text.Substring(0, cursorPosition) + text.Substring(cursorPosition + 1, endPos - cursorPosition - 1) + text.Substring(endPos + 1);
 				cursorPosition = endPos - 1; 
 			}
-			var doc = new ReadOnlyDocument (editorText);
+			var doc = new ReadOnlyDocument(editorText);
 			
-			IProjectContent pctx = new CSharpProjectContent ();
-			pctx = pctx.AddAssemblyReferences (new [] { CecilLoaderTests.Mscorlib, CecilLoaderTests.SystemCore });
+			IProjectContent pctx = new CSharpProjectContent();
+			pctx = pctx.AddAssemblyReferences(new [] { CecilLoaderTests.Mscorlib, CecilLoaderTests.SystemCore });
 			
-			var compilationUnit = new CSharpParser ().Parse (parsedText, "program.cs");
+			var syntaxTree = new CSharpParser().Parse(parsedText, "program.cs");
+			syntaxTree.Freeze();
 			
-			var parsedFile = compilationUnit.ToTypeSystem ();
-			pctx = pctx.UpdateProjectContent (null, parsedFile);
-			var cmp = pctx.CreateCompilation ();
-			var loc = doc.GetLocation (cursorPosition);
+			var unresolvedFile = syntaxTree.ToTypeSystem();
+			pctx = pctx.AddOrUpdateFiles(unresolvedFile);
+			var cmp = pctx.CreateCompilation();
+			var loc = doc.GetLocation(cursorPosition);
 			
-			var engine = new CSharpParameterCompletionEngine (doc, new TestFactory (pctx));
 			
-			var rctx = new CSharpTypeResolveContext (cmp.MainAssembly);
-			rctx = rctx.WithUsingScope (parsedFile.GetUsingScope (loc).Resolve (cmp));
-			var curDef = parsedFile.GetInnermostTypeDefinition (loc);
+			var rctx = new CSharpTypeResolveContext(cmp.MainAssembly);
+			rctx = rctx.WithUsingScope(unresolvedFile.GetUsingScope(loc).Resolve(cmp));
+			var curDef = unresolvedFile.GetInnermostTypeDefinition(loc);
 			if (curDef != null) {
-				rctx = rctx.WithCurrentTypeDefinition (curDef.Resolve (rctx).GetDefinition ());
-				var curMember = parsedFile.GetMember (loc);
-				if (curMember != null)
-					rctx = rctx.WithCurrentMember (curMember.CreateResolved (rctx));
+				rctx = rctx.WithCurrentTypeDefinition(curDef.Resolve(rctx).GetDefinition());
+				var curMember = unresolvedFile.GetMember(loc);
+				if (curMember != null) {
+					rctx = rctx.WithCurrentMember(curMember.CreateResolved(rctx));
+				}
 			}
-			engine.ctx = rctx;
-			
-			engine.CSharpParsedFile = parsedFile;
-			engine.ProjectContent = pctx;
-			engine.Unit = compilationUnit;
-			
+			var mb = new DefaultCompletionContextProvider(doc, unresolvedFile);
+			var engine = new CSharpParameterCompletionEngine (doc, mb, new TestFactory (pctx), pctx, rctx);
 			return engine.GetParameterDataProvider (cursorPosition, doc.GetCharAt (cursorPosition - 1));
 		}
 		
@@ -253,7 +328,7 @@ class AClass
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (2, provider.OverloadCount);
+			Assert.AreEqual (2, provider.Count);
 		}
 
 		/// <summary>
@@ -275,7 +350,7 @@ class Test
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
 		}
 
 		/// <summary>
@@ -296,7 +371,7 @@ class Test
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount, "There should be one overload");
+			Assert.AreEqual (1, provider.Count, "There should be one overload");
 			Assert.AreEqual (1, provider.GetParameterCount(0), "Parameter 'start' should exist");
 		}
 
@@ -315,7 +390,7 @@ class Test
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
 		}
 
 		/// <summary>
@@ -340,7 +415,7 @@ class AClass
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
 		}
 		
 		/// <summary>
@@ -365,7 +440,7 @@ class TestClass
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
 		}
 	
 		
@@ -376,7 +451,8 @@ class TestClass
 		public void TestBug434701 ()
 		{
 			IParameterDataProvider provider = CreateProvider (
-@"class TestAttribute : System.Attribute
+@"namespace Test {
+class TestAttribute : System.Attribute
 {
 	public Test (int a)
 	{
@@ -386,9 +462,10 @@ class TestClass
 $[Test ($
 class AClass
 {
+}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
 		}
 		
 		/// <summary>
@@ -421,7 +498,7 @@ class AClass
 
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
 			Assert.AreEqual (1, provider.GetParameterCount(0), "Parameter 'test' should exist");
 		}
 		
@@ -442,7 +519,7 @@ class TestClass
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
 		}
 		
 		[Test()]
@@ -459,7 +536,7 @@ class TestClass
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
 		}
 		
 		[Test()]
@@ -476,7 +553,7 @@ class TestClass
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
 		}
 		
 		
@@ -496,7 +573,66 @@ class TestClass
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
+		}
+		
+		/// Bug 3307 - Chained linq methods do not work correctly
+		[Test()]
+		public void TestBug3307 ()
+		{
+			var provider = CreateProvider (
+@"using System;
+using System.Linq;
+
+class TestClass
+{
+	public static void Main (string[] args)
+	{
+		$args.Select ($
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.IsTrue (provider.Count > 0);
+		}
+		
+		[Test()]
+		public void TestBug3307FollowUp ()
+		{
+			var provider = CodeCompletionBugTests.CreateProvider (
+@"using System;
+using System.Linq;
+
+public class MainClass
+{
+	static void TestMe (Action<int> act)
+	{
+	}
+	
+	public static void Main (string[] args)
+	{
+		$TestMe (x$
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.IsFalse (provider.AutoSelect, "auto select enabled !");
+		}
+		
+		[Test()]
+		public void TestBug3307FollowUp2 ()
+		{
+			var provider = CodeCompletionBugTests.CreateProvider (
+@"using System;
+using System.Linq;
+
+public class MainClass
+{
+	public static void Main (string[] args)
+	{
+		$args.Select (x$
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.IsFalse (provider.AutoSelect, "auto select enabled !");
 		}
 		
 		[Test()]
@@ -513,7 +649,7 @@ class A
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (1, provider.OverloadCount);
+			Assert.AreEqual (1, provider.Count);
 		}
 		
 		
@@ -540,9 +676,306 @@ namespace Test
 	}
 }");
 			Assert.IsNotNull (provider, "provider was not created.");
-			Assert.AreEqual (2, provider.OverloadCount);
+			Assert.AreEqual (2, provider.Count);
+		}
+		
+		[Test()]
+		public void TestTypeParameter ()
+		{
+			IParameterDataProvider provider = CreateProvider (
+@"using System;
+
+namespace Test 
+{
+	class A
+	{
+		void Method ()
+		{
+			$Action<$
+		}
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (16, provider.Count);
+		}
+		
+		[Test()]
+		public void TestSecondTypeParameter ()
+		{
+			IParameterDataProvider provider = CreateProvider (
+@"using System;
+
+namespace Test 
+{
+	class A
+	{
+		void Method ()
+		{
+			$Action<string,$
+		}
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (16, provider.Count);
+		}
+		
+		[Ignore("TODO")]
+		[Test()]
+		public void TestMethodTypeParameter ()
+		{
+			IParameterDataProvider provider = CreateProvider (
+@"using System;
+
+namespace Test 
+{
+	class A
+	{
+		void TestMethod<T, S>()
+		{
 		}
 
+		void Method ()
+		{
+			$TestMethod<$
+		}
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (1, provider.Count);
+		}
+		
+		[Ignore("TODO")]
+		[Test()]
+		public void TestSecondMethodTypeParameter ()
+		{
+			IParameterDataProvider provider = CreateProvider (
+@"using System;
+
+namespace Test 
+{
+	class A
+	{
+		void TestMethod<T, S>()
+		{
+		}
+
+		void Method ()
+		{
+			$TestMethod<string,$
+		}
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (1, provider.Count);
+		}		
 	
+		[Test()]
+		public void TestArrayParameter ()
+		{
+			var provider = CreateProvider (
+@"
+class TestClass
+{
+	public void Method()
+	{
+		int[,,,] arr;
+		$arr[$
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (1, provider.Count);
+		}
+		
+		[Test()]
+		public void TestSecondArrayParameter ()
+		{
+			var provider = CreateProvider (
+@"
+class TestClass
+{
+	public void Method()
+	{
+		int[,,,] arr;
+		$arr[5,$
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (1, provider.Count);
+		}
+		
+		[Ignore("TODO!")]
+		[Test()]
+		public void TestTypeParameterInBaseType ()
+		{
+			IParameterDataProvider provider = CreateProvider (
+@"using System;
+
+namespace Test 
+{
+	$class A : Tuple<$
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (16, provider.Count);
+		}
+		
+		
+		[Test()]
+		public void TestBaseConstructorCall ()
+		{
+			IParameterDataProvider provider = CreateProvider (
+@"class Base
+{
+	public Base (int i)
+	{
+			
+	}
+	public Base (int i, string s)
+	{
+			
+	}
+}
+
+namespace Test 
+{
+	class A : Base
+	{
+		$public A () : base($
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (2, provider.Count);
+		}
+		
+		[Test()]
+		public void TestThisConstructorCall ()
+		{
+			IParameterDataProvider provider = CreateProvider (
+@"class Base
+{
+	public Base (int i)
+	{
+			
+	}
+	public Base (int i, string s)
+	{
+			
+	}
+}
+
+namespace Test 
+{
+	class A : Base
+	{
+		public A (int a, int b) : base(a) {}
+
+		$public A () : this($
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (1, provider.Count);
+		}
+		
+		/// <summary>
+		/// Bug 3645 - [New Resolver]Parameter completion shows all static and non-static overloads
+		/// </summary>
+		[Test()]
+		public void TestBug3645 ()
+		{
+			IParameterDataProvider provider = CreateProvider (
+@"class Main
+{
+	public static void FooBar (string str)
+	{
+	}
+	
+	public void FooBar (int i)
+	{
+		
+	}
+	
+	public static void Main (string[] args)
+	{
+		$FooBar ($
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (1, provider.Count);
+		}
+
+		/// <summary>
+		/// Bug 3991 - constructor argument completion not working for attributes applied to methods or parameters
+		/// </summary>
+		[Test()]
+		public void TestBug3991()
+		{
+			IParameterDataProvider provider = CreateProvider(
+@"using System;
+namespace Test
+{
+	class TestClass
+	{
+		[Obsolete$($]
+		TestClass()
+		{
+		}
+	}
+}
+");
+			Assert.IsNotNull(provider, "provider was not created.");
+			Assert.Greater(provider.Count, 0);
+		}
+
+		/// <summary>
+		/// Bug 4087 - code completion handles object and collection initializers (braces) incorrectly in method calls
+		/// </summary>
+		[Test()]
+		public void TestBug4087()
+		{
+			IParameterDataProvider provider = CreateProvider(
+@"using System;
+class TestClass
+{
+	TestClass()
+	{
+		$Console.WriteLine (new int[]{ 4, 5,$
+	}
+}
+");
+			Assert.IsTrue (provider == null || provider.Count == 0);
+		}
+
+		/// <summary>
+		/// Bug 4927 - [New Resolver] Autocomplete shows non-static methods when using class name
+		/// </summary>
+		[Test()]
+		public void TestBug4927 ()
+		{
+			IParameterDataProvider provider = CreateProvider (
+@"
+public class A
+{
+  // static method
+  public static void Method(string someParameter, object anotherParameter)
+  {
+  }
+
+  // instance method
+  public void Method()
+  {
+  }
+}
+
+
+public class B
+{
+  public static void Main()
+  {
+    $A.Method($
+  }
+}
+");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.AreEqual (1, provider.Count);
+		}
 	}
 }

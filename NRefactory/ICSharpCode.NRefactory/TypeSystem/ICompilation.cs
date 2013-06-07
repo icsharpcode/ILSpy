@@ -35,13 +35,19 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		ITypeResolveContext TypeResolveContext { get; }
 		
 		/// <summary>
+		/// Gets the list of all assemblies in the compilation.
+		/// </summary>
+		IList<IAssembly> Assemblies { get; }
+		
+		/// <summary>
 		/// Gets the referenced assemblies.
-		/// This list does not include the current assembly.
+		/// This list does not include the main assembly.
 		/// </summary>
 		IList<IAssembly> ReferencedAssemblies { get; }
 		
 		/// <summary>
 		/// Gets the root namespace of this compilation.
+		/// This is a merged .
 		/// </summary>
 		INamespace RootNamespace { get; }
 		

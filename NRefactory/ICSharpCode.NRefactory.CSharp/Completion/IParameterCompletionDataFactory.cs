@@ -27,20 +27,21 @@ using System;
 using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.NRefactory.Completion;
 using ICSharpCode.NRefactory.CSharp.Resolver;
+using System.Collections.Generic;
 
 namespace ICSharpCode.NRefactory.CSharp.Completion
 {
 	public interface IParameterCompletionDataFactory
 	{
-		IParameterDataProvider CreateConstructorProvider (IType type);
+		IParameterDataProvider CreateConstructorProvider (int startOffset, IType type);
 
-		IParameterDataProvider CreateMethodDataProvider (MethodGroupResolveResult par1);
+		IParameterDataProvider CreateMethodDataProvider (int startOffset, IEnumerable<IMethod> methods);
 
-		IParameterDataProvider CreateMethodDataProvider (IMethod method);
-
-		IParameterDataProvider CreateDelegateDataProvider (IType type);
+		IParameterDataProvider CreateDelegateDataProvider (int startOffset, IType type);
 		
-		IParameterDataProvider CreateIndexerParameterDataProvider (IType type, AstNode resolvedNode);
+		IParameterDataProvider CreateIndexerParameterDataProvider (int startOffset, IType type, AstNode resolvedNode);
+		
+		IParameterDataProvider CreateTypeParameterDataProvider (int startOffset, IEnumerable<IType> types);
 	}
 	
 }

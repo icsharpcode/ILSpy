@@ -64,9 +64,8 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 		
 		public INamespace Namespace {
 			get {
-				INamespace result = this.@namespace;
+				INamespace result = LazyInit.VolatileRead(ref this.@namespace);
 				if (result != null) {
-					LazyInit.ReadBarrier();
 					return result;
 				} else {
 					if (parentContext.CurrentUsingScope != null) {
@@ -90,16 +89,15 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 		
 		public IList<INamespace> Usings {
 			get {
-				var result = this.usings;
+				var result = LazyInit.VolatileRead(ref this.usings);
 				if (result != null) {
-					LazyInit.ReadBarrier();
 					return result;
 				} else {
 					result = new List<INamespace>();
 					CSharpResolver resolver = new CSharpResolver(parentContext.WithUsingScope(this));
 					foreach (var u in usingScope.Usings) {
 						INamespace ns = u.ResolveNamespace(resolver);
-						if (ns != null)
+						if (ns != null && !result.Contains(ns))
 							result.Add(ns);
 					}
 					return LazyInit.GetOrSet(ref this.usings, new ReadOnlyCollection<INamespace>(result));
@@ -111,9 +109,8 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 		
 		public IList<KeyValuePair<string, ResolveResult>> UsingAliases {
 			get {
-				var result = this.usingAliases;
+				var result = LazyInit.VolatileRead(ref this.usingAliases);
 				if (result != null) {
-					LazyInit.ReadBarrier();
 					return result;
 				} else {
 					CSharpResolver resolver = new CSharpResolver(parentContext.WithUsingScope(this));
@@ -173,6 +170,10 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 			
 			IEnumerable<ITypeDefinition> INamespace.Types {
 				get { return EmptyList<ITypeDefinition>.Instance; }
+			}
+			
+			IEnumerable<IAssembly> INamespace.ContributingAssemblies {
+				get { return EmptyList<IAssembly>.Instance; }
 			}
 			
 			ICompilation IResolved.Compilation {

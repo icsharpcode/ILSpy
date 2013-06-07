@@ -24,13 +24,8 @@ namespace Mono.CSharp {
 		//    A list of Parameters (explicitly typed parameters)
 		//    An ImplicitLambdaParameter
 		//
-		public LambdaExpression (bool isAsync, Location loc)
-			: base (isAsync, loc)
-		{
-		}
-
 		public LambdaExpression (Location loc)
-			: this (false, loc)
+			: base (loc)
 		{
 		}
 
@@ -86,7 +81,7 @@ namespace Mono.CSharp {
 			TypeSpec [] ptypes = new TypeSpec [Parameters.Count];
 			for (int i = 0; i < d_params.Count; i++) {
 				// D has no ref or out parameters
-				if ((d_params.FixedParameters [i].ModFlags & Parameter.Modifier.ISBYREF) != 0)
+				if ((d_params.FixedParameters[i].ModFlags & Parameter.Modifier.RefOutMask) != 0)
 					return null;
 
 				TypeSpec d_param = d_params.Types [i];
@@ -196,7 +191,7 @@ namespace Mono.CSharp {
 			return Expr.CreateExpressionTree (ec);
 		}
 
-		public override void Emit (EmitContext ec)
+		protected override void DoEmit (EmitContext ec)
 		{
 			if (statement != null) {
 				statement.EmitStatement (ec);
@@ -208,7 +203,7 @@ namespace Mono.CSharp {
 				return;
 			}
 
-			base.Emit (ec);
+			base.DoEmit (ec);
 		}
 
 		protected override bool DoResolve (BlockContext ec)

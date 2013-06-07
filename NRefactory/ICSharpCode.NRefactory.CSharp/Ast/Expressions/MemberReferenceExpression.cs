@@ -34,8 +34,16 @@ namespace ICSharpCode.NRefactory.CSharp
 	public class MemberReferenceExpression : Expression
 	{
 		public Expression Target {
-			get { return GetChildByRole (Roles.TargetExpression); }
-			set { SetChildByRole(Roles.TargetExpression, value); }
+			get {
+				return GetChildByRole(Roles.TargetExpression);
+			}
+			set {
+				SetChildByRole(Roles.TargetExpression, value);
+			}
+		}
+
+		public CSharpTokenNode DotToken {
+			get { return GetChildByRole (Roles.Dot); }
 		}
 		
 		public string MemberName {
@@ -43,7 +51,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				return GetChildByRole (Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole (Roles.Identifier, Identifier.Create (value, TextLocation.Empty));
+				SetChildByRole (Roles.Identifier, Identifier.Create (value));
 			}
 		}
 		
@@ -87,7 +95,17 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 		}	
 		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data = default(T))
+		public override void AcceptVisitor (IAstVisitor visitor)
+		{
+			visitor.VisitMemberReferenceExpression (this);
+		}
+			
+		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		{
+			return visitor.VisitMemberReferenceExpression (this);
+		}
+		
+		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitMemberReferenceExpression (this, data);
 		}

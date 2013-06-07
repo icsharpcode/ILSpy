@@ -102,7 +102,7 @@ namespace Mono.CSharp {
 	/// <summary>
 	///   Enumeration container
 	/// </summary>
-	public class Enum : TypeContainer
+	public class Enum : TypeDefinition
 	{
 		//
 		// Implicit enum member initializer, used when no constant value is provided
@@ -162,11 +162,10 @@ namespace Mono.CSharp {
 			Modifiers.INTERNAL |
 			Modifiers.PRIVATE;
 
-		readonly TypeExpr underlying_type_expr;
+		readonly FullNamedExpression underlying_type_expr;
 
-		public Enum (NamespaceContainer ns, DeclSpace parent, TypeExpression type,
-			     Modifiers mod_flags, MemberName name, Attributes attrs)
-			: base (ns, parent, name, attrs, MemberKind.Enum)
+		public Enum (TypeContainer parent, FullNamedExpression type, Modifiers mod_flags, MemberName name, Attributes attrs)
+			: base (parent, name, attrs, MemberKind.Enum)
 		{
 			underlying_type_expr = type;
 			var accmods = IsTopLevel ? Modifiers.INTERNAL : Modifiers.PRIVATE;
@@ -182,7 +181,7 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public TypeExpr BaseTypeExpression {
+		public FullNamedExpression BaseTypeExpression {
 			get {
 				return underlying_type_expr;
 			}
@@ -190,8 +189,7 @@ namespace Mono.CSharp {
 
 		protected override TypeAttributes TypeAttr {
 			get {
-				return ModifiersExtensions.TypeAttr (ModFlags, IsTopLevel) |
-					TypeAttributes.Class | TypeAttributes.Sealed | base.TypeAttr;
+				return base.TypeAttr | TypeAttributes.Class | TypeAttributes.Sealed;
 			}
 		}
 
@@ -216,7 +214,7 @@ namespace Mono.CSharp {
 				return;
 			}
 
-			AddConstant (em);
+			AddMember (em);
 		}
 
 		public static void Error_1008 (Location loc, Report Report)
@@ -225,27 +223,25 @@ namespace Mono.CSharp {
 				"Type byte, sbyte, short, ushort, int, uint, long or ulong expected");
 		}
 
-		protected override bool DefineNestedTypes ()
+		protected override void DoDefineContainer ()
 		{
 			((EnumSpec) spec).UnderlyingType = underlying_type_expr == null ? Compiler.BuiltinTypes.Int : underlying_type_expr.Type;
 
 			TypeBuilder.DefineField (UnderlyingValueField, UnderlyingType.GetMetaInfo (),
 				FieldAttributes.Public | FieldAttributes.SpecialName | FieldAttributes.RTSpecialName);
 
-			return true;
+			DefineBaseTypes ();
 		}
 
 		protected override bool DoDefineMembers ()
 		{
-			if (constants != null) {
-				for (int i = 0; i < constants.Count; ++i) {
-					EnumMember em = (EnumMember) constants [i];
-					if (em.Initializer == null) {
-						em.Initializer = new ImplicitInitializer (em, i == 0 ? null : (EnumMember) constants[i - 1]);
-					}
-
-					em.Define ();
+			for (int i = 0; i < Members.Count; ++i) {
+				EnumMember em = (EnumMember) Members[i];
+				if (em.Initializer == null) {
+					em.Initializer = new ImplicitInitializer (em, i == 0 ? null : (EnumMember) Members[i - 1]);
 				}
+
+				em.Define ();
 			}
 
 			return true;

@@ -18,8 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
-using System.Text;
 using ICSharpCode.NRefactory.Utils;
 
 namespace ICSharpCode.NRefactory.TypeSystem.Implementation
@@ -95,6 +95,10 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get { return compilation; }
 		}
 		
+		public IEnumerable<IAssembly> ContributingAssemblies {
+			get { return namespaces.SelectMany(ns => ns.ContributingAssemblies); }
+		}
+		
 		public IEnumerable<INamespace> ChildNamespaces {
 			get { return GetChildNamespaces().Values; }
 		}
@@ -110,9 +114,8 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		Dictionary<string, INamespace> GetChildNamespaces()
 		{
-			var result = this.childNamespaces;
+			var result = LazyInit.VolatileRead(ref this.childNamespaces);
 			if (result != null) {
-				LazyInit.ReadBarrier();
 				return result;
 			} else {
 				result = new Dictionary<string, INamespace>(compilation.NameComparer);
@@ -129,9 +132,13 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			foreach (var ns in namespaces) {
 				ITypeDefinition typeDef = ns.GetTypeDefinition(name, typeParameterCount);
 				if (typeDef != null) {
-					if (typeDef.IsPublic || (typeDef.IsInternal && typeDef.ParentAssembly.InternalsVisibleTo(compilation.MainAssembly))) {
+					if (typeDef.IsPublic) {
 						// Prefer accessible types over non-accessible types.
 						return typeDef;
+						// || (typeDef.IsInternal && typeDef.ParentAssembly.InternalsVisibleTo(...))
+						// We can't call InternalsVisibleTo() here as we don't know the correct 'current' assembly,
+						// and using the main assembly can cause a stack overflow if there
+						// are internal assembly attributes.
 					}
 					anyTypeDef = typeDef;
 				}
@@ -141,7 +148,8 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			return string.Format("[MergedNamespace {0}{1} (from {2} assemblies)]", externAlias != null ? externAlias + "::" : null, this.FullName, this.namespaces.Length);
+			return string.Format(CultureInfo.InvariantCulture, "[MergedNamespace {0}{1} (from {2} assemblies)]",
+			                     externAlias != null ? externAlias + "::" : null, this.FullName, this.namespaces.Length);
 		}
 	}
 }

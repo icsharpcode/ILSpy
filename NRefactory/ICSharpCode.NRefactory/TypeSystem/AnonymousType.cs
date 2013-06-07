@@ -42,12 +42,38 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			this.compilation = compilation;
 			this.unresolvedProperties = properties.ToArray();
 			var context = new SimpleTypeResolveContext(compilation.MainAssembly);
-			this.resolvedProperties = new ProjectedList<ITypeResolveContext, IUnresolvedProperty, IProperty>(context, unresolvedProperties, (c, p) => (IProperty)p.CreateResolved(c));
+			this.resolvedProperties = new ProjectedList<ITypeResolveContext, IUnresolvedProperty, IProperty>(context, unresolvedProperties, (c, p) => new AnonymousTypeProperty(p, c, this));
+		}
+		
+		sealed class AnonymousTypeProperty : DefaultResolvedProperty, IEntity
+		{
+			readonly AnonymousType declaringType;
+			
+			public AnonymousTypeProperty(IUnresolvedProperty unresolved, ITypeResolveContext parentContext, AnonymousType declaringType)
+				: base(unresolved, parentContext)
+			{
+				this.declaringType = declaringType;
+			}
+			
+			IType IEntity.DeclaringType {
+				get { return declaringType; }
+			}
+			
+			public override bool Equals(object obj)
+			{
+				AnonymousTypeProperty p = obj as AnonymousTypeProperty;
+				return p != null && this.Name == p.Name && declaringType.Equals(p.declaringType);
+			}
+			
+			public override int GetHashCode()
+			{
+				return declaringType.GetHashCode() ^ unchecked(27 * this.Name.GetHashCode());
+			}
 		}
 		
 		public override ITypeReference ToTypeReference()
 		{
-			throw new NotSupportedException();
+			return new AnonymousTypeReference(unresolvedProperties);
 		}
 		
 		public override string Name {
@@ -90,6 +116,32 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			}
 		}
 		
+		public override IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		{
+			for (int i = 0; i < unresolvedProperties.Length; i++) {
+				if (unresolvedProperties[i].CanGet) {
+					if (filter == null || filter(unresolvedProperties[i].Getter))
+						yield return resolvedProperties[i].Getter;
+				}
+				if (unresolvedProperties[i].CanSet) {
+					if (filter == null || filter(unresolvedProperties[i].Setter))
+						yield return resolvedProperties[i].Setter;
+				}
+			}
+		}
+		
+		public override int GetHashCode()
+		{
+			unchecked {
+				int hashCode = resolvedProperties.Count;
+				foreach (var p in resolvedProperties) {
+					hashCode *= 31;
+					hashCode += p.Name.GetHashCode() ^ p.ReturnType.GetHashCode();
+				}
+				return hashCode;
+			}
+		}
+		
 		public override bool Equals(IType other)
 		{
 			AnonymousType o = other as AnonymousType;
@@ -102,6 +154,27 @@ namespace ICSharpCode.NRefactory.TypeSystem
 					return false;
 			}
 			return true;
+		}
+	}
+	
+	/// <summary>
+	/// Anonymous type reference.
+	/// </summary>
+	[Serializable]
+	public class AnonymousTypeReference : ITypeReference
+	{
+		readonly IUnresolvedProperty[] unresolvedProperties;
+		
+		public AnonymousTypeReference(IUnresolvedProperty[] properties)
+		{
+			if (properties == null)
+				throw new ArgumentNullException("properties");
+			this.unresolvedProperties = properties;
+		}
+		
+		public IType Resolve(ITypeResolveContext context)
+		{
+			return new AnonymousType(context.Compilation, unresolvedProperties);
 		}
 	}
 }

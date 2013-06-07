@@ -94,6 +94,12 @@ namespace Mono.CSharp {
 
 		#region Properties
 
+		public List<FullNamedExpression> TypeExpressions {
+			get {
+				return constraints;
+			}
+		}
+
 		public Location Location {
 			get {
 				return loc;
@@ -360,15 +366,24 @@ namespace Mono.CSharp {
 		GenericTypeParameterBuilder builder;
 		TypeParameterSpec spec;
 
-		public TypeParameter (DeclSpace parent, int index, MemberName name, Constraints constraints, Attributes attrs, Variance variance)
-			: base (parent, name, attrs)
+		public TypeParameter (int index, MemberName name, Constraints constraints, Attributes attrs, Variance variance)
+			: base (null, name, attrs)
 		{
 			this.constraints = constraints;
 			this.spec = new TypeParameterSpec (null, index, this, SpecialConstraint.None, variance, null);
 		}
 
-		public TypeParameter (TypeParameterSpec spec, DeclSpace parent, TypeSpec parentSpec, MemberName name, Attributes attrs)
-			: base (parent, name, attrs)
+		//
+		// Used by parser
+		//
+		public TypeParameter (MemberName name, Attributes attrs, Variance variance)
+			: base (null, name, attrs)
+		{
+			this.spec = new TypeParameterSpec (null, -1, this, SpecialConstraint.None, variance, null);
+		}
+
+		public TypeParameter (TypeParameterSpec spec, TypeSpec parentSpec, MemberName name, Attributes attrs)
+			: base (null, name, attrs)
 		{
 			this.spec = new TypeParameterSpec (parentSpec, spec.DeclaredPosition, spec.MemberDefinition, spec.SpecialConstraint, spec.Variance, null) {
 				BaseType = spec.BaseType,
@@ -385,6 +400,15 @@ namespace Mono.CSharp {
 			}
 		}
 
+		public Constraints Constraints {
+			get {
+				return constraints;
+			}
+			set {
+				constraints = value;
+			}
+		}
+
 		public IAssemblyDefinition DeclaringAssembly {
 			get	{
 				return Module.DeclaringAssembly;
@@ -398,9 +422,21 @@ namespace Mono.CSharp {
 			}
 		}
 
+		bool ITypeDefinition.IsPartial {
+			get {
+				return false;
+			}
+		}
+
 		public bool IsMethodTypeParameter {
 			get {
 				return spec.IsMethodOwned;
+			}
+		}
+
+		public string Name {
+			get {
+				return MemberName.Name;
 			}
 		}
 
@@ -440,12 +476,6 @@ namespace Mono.CSharp {
 			}
 		}
 
-		public Constraints Constraints {
-			get {
-				return this.constraints;
-			}
-		}
-
 		#endregion
 
 		//
@@ -455,7 +485,7 @@ namespace Mono.CSharp {
 		// already have constraints they become our constraints. If we already
 		// have constraints, we must check that they're the same.
 		//
-		public bool AddPartialConstraints (TypeContainer part, TypeParameter tp)
+		public bool AddPartialConstraints (TypeDefinition part, TypeParameter tp)
 		{
 			if (builder == null)
 				throw new InvalidOperationException ();
@@ -493,9 +523,9 @@ namespace Mono.CSharp {
 				constraints.CheckGenericConstraints (this, obsoleteCheck);
 		}
 
-		public TypeParameter CreateHoistedCopy (TypeContainer declaringType, TypeSpec declaringSpec)
+		public TypeParameter CreateHoistedCopy (TypeSpec declaringSpec)
 		{
-			return new TypeParameter (spec, declaringType, declaringSpec, MemberName, null);
+			return new TypeParameter (spec, declaringSpec, MemberName, null);
 		}
 
 		public override bool Define ()
@@ -509,11 +539,13 @@ namespace Mono.CSharp {
 		// with SRE (by calling `DefineGenericParameters()' on the TypeBuilder /
 		// MethodBuilder).
 		//
-		public void Define (GenericTypeParameterBuilder type, TypeSpec declaringType)
+		public void Define (GenericTypeParameterBuilder type, TypeSpec declaringType, TypeContainer parent)
 		{
 			if (builder != null)
 				throw new InternalErrorException ();
 
+			// Needed to get compiler reference
+			this.Parent = parent;
 			this.builder = type;
 			spec.DeclaringType = declaringType;
 			spec.SetMetaInfo (type);
@@ -625,16 +657,6 @@ namespace Mono.CSharp {
 			return true;
 		}
 
-		public static TypeParameter FindTypeParameter (TypeParameter[] tparams, string name)
-		{
-			foreach (var tp in tparams) {
-				if (tp.Name == name)
-					return tp;
-			}
-
-			return null;
-		}
-
 		public override bool IsClsComplianceRequired ()
 		{
 			return false;
@@ -645,6 +667,14 @@ namespace Mono.CSharp {
 			if (constraints != null)
 				constraints.VerifyClsCompliance (Report);
 		}
+
+		public void WarningParentNameConflict (TypeParameter conflict)
+		{
+			conflict.Report.SymbolRelatedToPreviousError (conflict.Location, null);
+			conflict.Report.Warning (693, 3, Location,
+				"Type parameter `{0}' has the same name as the type parameter from outer type `{1}'",
+				GetSignatureForError (), conflict.CurrentType.GetSignatureForError ());
+		}
 	}
 
 	[System.Diagnostics.DebuggerDisplay ("{DisplayDebugInfo()}")]
@@ -654,7 +684,7 @@ namespace Mono.CSharp {
 
 		Variance variance;
 		SpecialConstraint spec;
-		readonly int tp_pos;
+		int tp_pos;
 		TypeSpec[] targs;
 		TypeSpec[] ifaces_defined;
 
@@ -684,6 +714,9 @@ namespace Mono.CSharp {
 			get {
 				return tp_pos;
 			}
+			set {
+				tp_pos = value;
+			}
 		}
 
 		public bool HasSpecialConstructor {
@@ -701,6 +734,12 @@ namespace Mono.CSharp {
 		public bool HasSpecialStruct {
 			get {
 				return (spec & SpecialConstraint.Struct) != 0;
+			}
+		}
+
+		public bool HasAnyTypeConstraint {
+			get {
+				return (spec & (SpecialConstraint.Class | SpecialConstraint.Struct)) != 0 || ifaces != null || targs != null || HasTypeConstraint;
 			}
 		}
 
@@ -918,15 +957,8 @@ namespace Mono.CSharp {
 
 		public override string GetSignatureForDocumentation ()
 		{
-			int c = 0;
-			var type = DeclaringType;
-			while (type != null && type.DeclaringType != null) {
-				type = type.DeclaringType;
-				c += type.MemberDefinition.TypeParametersCount;
-			}
-
 			var prefix = IsMethodOwned ? "``" : "`";
-			return prefix + (c + DeclaredPosition);
+			return prefix + DeclaredPosition;
 		}
 
 		public override string GetSignatureForError ()
@@ -1200,6 +1232,30 @@ namespace Mono.CSharp {
 			return false;
 		}
 
+		public static bool HasAnyTypeParameterTypeConstrained (IGenericMethodDefinition md)
+		{
+			var tps = md.TypeParameters;
+			for (int i = 0; i < md.TypeParametersCount; ++i) {
+				if (tps[i].HasAnyTypeConstraint) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
+		public static bool HasAnyTypeParameterConstrained (IGenericMethodDefinition md)
+		{
+			var tps = md.TypeParameters;
+			for (int i = 0; i < md.TypeParametersCount; ++i) {
+				if (tps[i].IsConstrained) {
+					return true;
+				}
+			}
+
+			return false;
+		}
+
 		public override TypeSpec Mutate (TypeParameterMutator mutator)
 		{
 			return mutator.Mutate (this);
@@ -1364,13 +1420,13 @@ namespace Mono.CSharp {
 	//
 	public class TypeParameterMutator
 	{
-		readonly TypeParameter[] mvar;
-		readonly TypeParameter[] var;
+		readonly TypeParameters mvar;
+		readonly TypeParameters var;
 		Dictionary<TypeSpec, TypeSpec> mutated_typespec;
 
-		public TypeParameterMutator (TypeParameter[] mvar, TypeParameter[] var)
+		public TypeParameterMutator (TypeParameters mvar, TypeParameters var)
 		{
-			if (mvar.Length != var.Length)
+			if (mvar.Count != var.Count)
 				throw new ArgumentException ();
 
 			this.mvar = mvar;
@@ -1379,7 +1435,7 @@ namespace Mono.CSharp {
 
 		#region Properties
 
-		public TypeParameter[] MethodTypeParameters {
+		public TypeParameters MethodTypeParameters {
 			get {
 				return mvar;
 			}
@@ -1416,7 +1472,7 @@ namespace Mono.CSharp {
 
 		public TypeParameterSpec Mutate (TypeParameterSpec tp)
 		{
-			for (int i = 0; i < mvar.Length; ++i) {
+			for (int i = 0; i < mvar.Count; ++i) {
 				if (mvar[i].Type == tp)
 					return var[i].Type;
 			}
@@ -1462,7 +1518,9 @@ namespace Mono.CSharp {
 			if (targs == null)
 				throw new ArgumentNullException ("targs");
 
-//			this.state = openType.state;
+			this.state &= ~SharedStateFlags;
+			this.state |= (openType.state & SharedStateFlags);
+
 			this.context = context;
 			this.open_type = openType;
 			this.targs = targs;
@@ -1811,9 +1869,13 @@ namespace Mono.CSharp {
 				return;
 			}
 
-			var tc = open_type.MemberDefinition as TypeContainer;
-			if (tc != null && !tc.HasMembersDefined)
-				throw new InternalErrorException ("Inflating MemberCache with undefined members");
+			var tc = open_type.MemberDefinition as TypeDefinition;
+			if (tc != null && !tc.HasMembersDefined) {
+				//
+				// Inflating MemberCache with undefined members
+				//
+				return;
+			}
 
 			if ((state & StateFlags.PendingBaseTypeInflate) != 0) {
 				BaseType = inflator.Inflate (open_type.BaseType);
@@ -1879,12 +1941,6 @@ namespace Mono.CSharp {
 			args.Add (type);
 		}
 
-		// TODO: Kill this monster
-		public TypeParameterName[] GetDeclarations ()
-		{
-			return args.ConvertAll (i => (TypeParameterName) i).ToArray ();
-		}
-
 		/// <summary>
 		///   We may only be used after Resolve() is called and return the fully
 		///   resolved types.
@@ -1909,6 +1965,12 @@ namespace Mono.CSharp {
 			get {
 				return false;
 			}
+		}
+
+		public List<FullNamedExpression> TypeExpressions {
+			get {
+				return this.args;
+ 			}
 		}
 
 		public string GetSignatureForError()
@@ -1998,32 +2060,106 @@ namespace Mono.CSharp {
 		}
 	}
 
-	public class TypeParameterName : SimpleName
+	public class TypeParameters
 	{
-		Attributes attributes;
-		Variance variance;
+		List<TypeParameter> names;
+		TypeParameterSpec[] types;
 
-		public TypeParameterName (string name, Attributes attrs, Location loc)
-			: this (name, attrs, Variance.None, loc)
+		public TypeParameters ()
 		{
+			names = new List<TypeParameter> ();
 		}
 
-		public TypeParameterName (string name, Attributes attrs, Variance variance, Location loc)
-			: base (name, loc)
+		public TypeParameters (int count)
 		{
-			attributes = attrs;
-			this.variance = variance;
+			names = new List<TypeParameter> (count);
 		}
 
-		public Attributes OptAttributes {
+		#region Properties
+
+		public int Count {
 			get {
-				return attributes;
+				return names.Count;
 			}
 		}
 
-		public Variance Variance {
+		public TypeParameterSpec[] Types {
 			get {
-				return variance;
+				return types;
+			}
+		}
+
+		#endregion
+
+		public void Add (TypeParameter tparam)
+		{
+			names.Add (tparam);
+		}
+
+		public void Add (TypeParameters tparams)
+		{
+			names.AddRange (tparams.names);
+		}
+
+		public void Define (GenericTypeParameterBuilder[] buiders, TypeSpec declaringType, int parentOffset, TypeContainer parent)
+		{
+			types = new TypeParameterSpec[Count];
+			for (int i = 0; i < types.Length; ++i) {
+				var tp = names[i];
+
+				tp.Define (buiders[i + parentOffset], declaringType, parent);
+				types[i] = tp.Type;
+				types[i].DeclaredPosition = i + parentOffset;
+
+				if (tp.Variance != Variance.None && !(declaringType != null && (declaringType.Kind == MemberKind.Interface || declaringType.Kind == MemberKind.Delegate))) {
+					parent.Compiler.Report.Error (1960, tp.Location, "Variant type parameters can only be used with interfaces and delegates");
+				}
+			}
+		}
+
+		public TypeParameter this[int index] {
+			get {
+				return names [index];
+			}
+			set {
+				names[index] = value;
+			}
+		}
+
+		public TypeParameter Find (string name)
+		{
+			foreach (var tp in names) {
+				if (tp.Name == name)
+					return tp;
+			}
+
+			return null;
+		}
+
+		public string[] GetAllNames ()
+		{
+			return names.Select (l => l.Name).ToArray ();
+		}
+
+		public string GetSignatureForError ()
+		{
+			StringBuilder sb = new StringBuilder ();
+			for (int i = 0; i < Count; ++i) {
+				if (i > 0)
+					sb.Append (',');
+
+				var name = names[i];
+				if (name != null)
+					sb.Append (name.GetSignatureForError ());
+			}
+
+			return sb.ToString ();
+		}
+
+		public void VerifyClsCompliance ()
+		{
+			foreach (var tp in names) {
+				tp.VerifyClsCompliance ();
 			}
 		}
 	}
@@ -2046,10 +2182,6 @@ namespace Mono.CSharp {
 			this.open_type = open_type;
 			loc = l;
 			this.args = args;
-		}
-
-		public TypeArguments TypeArguments {
-			get { return args; }
 		}
 
 		public override string GetSignatureForError ()
@@ -2122,28 +2254,13 @@ namespace Mono.CSharp {
 	struct ConstraintChecker
 	{
 		IMemberContext mc;
-		bool ignore_inferred_dynamic;
 		bool recursive_checks;
 
 		public ConstraintChecker (IMemberContext ctx)
 		{
 			this.mc = ctx;
-			ignore_inferred_dynamic = false;
 			recursive_checks = false;
 		}
-
-		#region Properties
-
-		public bool IgnoreInferredDynamic {
-			get {
-				return ignore_inferred_dynamic;
-			}
-			set {
-				ignore_inferred_dynamic = value;
-			}
-		}
-
-		#endregion
 
 		//
 		// Checks the constraints of open generic type against type
@@ -2189,14 +2306,11 @@ namespace Mono.CSharp {
 
 		//
 		// Checks all type arguments againts type parameters constraints
-		// NOTE: It can run in probing mode when `mc' is null
+		// NOTE: It can run in probing mode when `this.mc' is null
 		//
 		public bool CheckAll (MemberSpec context, TypeSpec[] targs, TypeParameterSpec[] tparams, Location loc)
 		{
 			for (int i = 0; i < tparams.Length; i++) {
-				if (ignore_inferred_dynamic && targs[i].BuiltinType == BuiltinTypeSpec.Type.Dynamic)
-					continue;
-
 				var targ = targs[i];
 				if (!CheckConstraint (context, targ, tparams [i], loc))
 					return false;
@@ -2242,15 +2356,6 @@ namespace Mono.CSharp {
 			// Check the class constraint
 			//
 			if (tparam.HasTypeConstraint) {
-				var dep = tparam.BaseType.GetMissingDependencies ();
-				if (dep != null) {
-					if (mc == null)
-						return false;
-
-					ImportedTypeDefinition.Error_MissingDependency (mc, dep, loc);
-					ok = false;
-				}
-
 				if (!CheckConversion (mc, context, atype, tparam, tparam.BaseType, loc)) {
 					if (mc == null)
 						return false;
@@ -2264,19 +2369,6 @@ namespace Mono.CSharp {
 			//
 			if (tparam.Interfaces != null) {
 				foreach (TypeSpec iface in tparam.Interfaces) {
-					var dep = iface.GetMissingDependencies ();
-					if (dep != null) {
-						if (mc == null)
-							return false;
-
-						ImportedTypeDefinition.Error_MissingDependency (mc, dep, loc);
-						ok = false;
-
-						// return immediately to avoid duplicate errors because we are scanning
-						// expanded interface list
-						return false;
-					}
-
 					if (!CheckConversion (mc, context, atype, tparam, iface, loc)) {
 						if (mc == null)
 							return false;
@@ -2366,14 +2458,6 @@ namespace Mono.CSharp {
 					return true;
 			}
 
-			//
-			// When partial/full type inference finds a dynamic type argument delay
-			// the constraint check to runtime, it can succeed for real underlying
-			// dynamic type
-			//
-			if (ignore_inferred_dynamic && HasDynamicTypeArgument (ttype.TypeArguments))
-				return true;
-
 			if (mc != null) {
 				mc.Module.Compiler.Report.SymbolRelatedToPreviousError (tparam);
 				if (atype.IsGenericParameter) {
@@ -2406,7 +2490,7 @@ namespace Mono.CSharp {
 			return false;
 		}
 
-		bool HasDefaultConstructor (TypeSpec atype)
+		static bool HasDefaultConstructor (TypeSpec atype)
 		{
 			var tp = atype as TypeParameterSpec;
 			if (tp != null) {
@@ -2426,121 +2510,6 @@ namespace Mono.CSharp {
 				BindingRestriction.DeclaredOnly | BindingRestriction.InstanceOnly);
 
 			return found != null && (found.Modifiers & Modifiers.PUBLIC) != 0;
-		}
-	}
-
-	/// <summary>
-	///   A generic method definition.
-	/// </summary>
-	public class GenericMethod : DeclSpace
-	{
-		ParametersCompiled parameters;
-
-		public GenericMethod (NamespaceContainer ns, DeclSpace parent, MemberName name,
-				      FullNamedExpression return_type, ParametersCompiled parameters)
-			: base (ns, parent, name, null)
-		{
-			this.parameters = parameters;
-		}
-
-		public GenericMethod (NamespaceContainer ns, DeclSpace parent, MemberName name, TypeParameter[] tparams,
-					  FullNamedExpression return_type, ParametersCompiled parameters)
-			: this (ns, parent, name, return_type, parameters)
-		{
-			this.type_params = tparams;
-		}
-
-		public override TypeParameter[] CurrentTypeParameters {
-			get {
-				return base.type_params;
-			}
-		}
-
-		protected override TypeAttributes TypeAttr {
-			get {
-				throw new NotSupportedException ();
-			}
-		}
-
-		public override void DefineType ()
-		{
-			throw new Exception ();
-		}
-
-		public override void ApplyAttributeBuilder (Attribute a, MethodSpec ctor, byte[] cdata, PredefinedAttributes pa)
-		{
-			throw new NotSupportedException ();
-		}
-
-		public override bool Define ()
-		{
-			throw new NotSupportedException ();
-		}
-
-		/// <summary>
-		///   Define and resolve the type parameters.
-		///   We're called from Method.Define().
-		/// </summary>
-		public bool Define (MethodOrOperator m)
-		{
-			TypeParameterName[] names = MemberName.TypeArguments.GetDeclarations ();
-			string[] snames = new string [names.Length];
-			var block = m.Block;
-			for (int i = 0; i < names.Length; i++) {
-				string type_argument_name = names[i].Name;
-
-				if (block == null) {
-					int idx = parameters.GetParameterIndexByName (type_argument_name);
-					if (idx >= 0) {
-						var b = m.Block;
-						if (b == null)
-							b = new ToplevelBlock (Compiler, Location);
-
-						b.Error_AlreadyDeclaredTypeParameter (type_argument_name, parameters[i].Location);
-					}
-				} else {
-					INamedBlockVariable variable = null;
-					block.GetLocalName (type_argument_name, m.Block, ref variable);
-					if (variable != null)
-						variable.Block.Error_AlreadyDeclaredTypeParameter (type_argument_name, variable.Location);
-				}
-
-				snames[i] = type_argument_name;
-			}
-
-			GenericTypeParameterBuilder[] gen_params = m.MethodBuilder.DefineGenericParameters (snames);
-			for (int i = 0; i < TypeParameters.Length; i++)
-				TypeParameters [i].Define (gen_params [i], null);
-
-			return true;
-		}
-
-		public void EmitAttributes ()
-		{
-			if (OptAttributes != null)
-				OptAttributes.Emit ();
-		}
-
-		public override string GetSignatureForError ()
-		{
-			return base.GetSignatureForError () + parameters.GetSignatureForError ();
-		}
-
-		public override AttributeTargets AttributeTargets {
-			get {
-				return AttributeTargets.Method | AttributeTargets.ReturnValue;
-			}
-		}
-
-		public override string DocCommentHeader {
-			get { return "M:"; }
-		}
-
-		public new void VerifyClsCompliance ()
-		{
-			foreach (TypeParameter tp in TypeParameters) {
-				tp.VerifyClsCompliance ();
-			}
 		}
 	}
 
@@ -2875,16 +2844,17 @@ namespace Mono.CSharp {
 				if (!u.IsArray)
 					return 0;
 
-				// TODO MemberCache: GetMetaInfo ()
-				if (u.GetMetaInfo ().GetArrayRank () != v.GetMetaInfo ().GetArrayRank ())
+				var ac_u = (ArrayContainer) u;
+				var ac_v = (ArrayContainer) v;
+				if (ac_u.Rank != ac_v.Rank)
 					return 0;
 
-				return ExactInference (TypeManager.GetElementType (u), TypeManager.GetElementType (v));
+				return ExactInference (ac_u.Element, ac_v.Element);
 			}
 
 			// If V is constructed type and U is constructed type
 			if (TypeManager.IsGenericType (v)) {
-				if (!TypeManager.IsGenericType (u))
+				if (!TypeManager.IsGenericType (u) || v.MemberDefinition != u.MemberDefinition)
 					return 0;
 
 				TypeSpec [] ga_u = TypeManager.GetTypeArguments (u);

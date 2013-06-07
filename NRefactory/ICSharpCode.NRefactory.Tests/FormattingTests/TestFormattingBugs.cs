@@ -1,4 +1,4 @@
-﻿// 
+// 
 // TestFormattingBugs.cs
 //  
 // Author:
@@ -29,7 +29,7 @@ using System.IO;
 using NUnit.Framework;
 using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.NRefactory.FormattingTests
+namespace ICSharpCode.NRefactory.CSharp.FormattingTests
 {
 	[TestFixture()]
 	public class TestFormattingBugs : TestBase
@@ -38,10 +38,10 @@ namespace ICSharpCode.NRefactory.FormattingTests
 		/// Bug 325187 - Bug in smart indent
 		/// </summary>
 		[Test()]
-		public void TestBug325187 ()
+		public void TestBug325187()
 		{
-			CSharpFormattingOptions policy = new CSharpFormattingOptions ();
-			policy.PlaceElseOnNewLine = true;
+			CSharpFormattingOptions policy = FormattingOptionsFactory.CreateMono();
+			policy.ElseNewLinePlacement = NewLinePlacement.NewLine;
 			
 			TestStatementFormatting (policy,
 @"foreach (int i in myints)
@@ -62,7 +62,7 @@ Console.WriteLine (""Bad indent"");",
 		[Test()]
 		public void TestBug415469 ()
 		{
-			CSharpFormattingOptions policy = new CSharpFormattingOptions ();
+			CSharpFormattingOptions policy = FormattingOptionsFactory.CreateMono ();
 			
 			TestStatementFormatting (policy,
 @"switch (condition) {
@@ -86,7 +86,7 @@ case CONDITION2:
 		[Test()]
 		public void TestBug540043 ()
 		{
-			CSharpFormattingOptions policy = new CSharpFormattingOptions ();
+			CSharpFormattingOptions policy = FormattingOptionsFactory.CreateMono ();
 			
 			TestStatementFormatting (policy,
 @"using (IDisposable a = null)
@@ -105,7 +105,7 @@ using (IDisposable b = null) {
 		[Test()]
 		public void TestBug655635 ()
 		{
-			CSharpFormattingOptions policy = new CSharpFormattingOptions ();
+			CSharpFormattingOptions policy = FormattingOptionsFactory.CreateMono ();
 			
 			TestStatementFormatting (policy,
 @"try {
@@ -134,6 +134,8 @@ using (IDisposable b = null) {
 			int end = result.GetOffset (result.LineCount - 1, 1);
 			string text = result.GetText (start, end - start).Trim ();
 			expectedOutput = NormalizeNewlines(expectedOutput).Replace ("\n", "\n\t\t");
+			if (expectedOutput != text)
+				Console.WriteLine (text);
 			Assert.AreEqual (expectedOutput, text);
 		}
 
@@ -143,7 +145,7 @@ using (IDisposable b = null) {
 		[Test()]
 		public void TestBug659675 ()
 		{
-			CSharpFormattingOptions policy = new CSharpFormattingOptions ();
+			CSharpFormattingOptions policy = FormattingOptionsFactory.CreateMono ();
 			TestStatementFormatting (policy, "@string=@int;", "@string = @int;");
 		}
 		
@@ -153,7 +155,7 @@ using (IDisposable b = null) {
 		[Test()]
 		public void TestBug670213 ()
 		{
-			CSharpFormattingOptions policy = new CSharpFormattingOptions ();
+			CSharpFormattingOptions policy = FormattingOptionsFactory.CreateMono ();
 			policy.MethodBraceStyle = BraceStyle.EndOfLine;
 			
 			Test (policy, @"class Test
@@ -176,7 +178,7 @@ using (IDisposable b = null) {
 		[Test()]
 		public void TestBug677261 ()
 		{
-			CSharpFormattingOptions policy = new CSharpFormattingOptions ();
+			CSharpFormattingOptions policy = FormattingOptionsFactory.CreateMono ();
 			policy.ConstructorBraceStyle = BraceStyle.EndOfLine;
 			
 			Test (policy, @"class Test
@@ -192,6 +194,117 @@ using (IDisposable b = null) {
 }");
 		}
 		
+		/// <summary>
+		/// Bug 3586 -Format code is removing try { code blocks
+		/// </summary>
+		[Test()]
+		public void TestBug3586 ()
+		{
+			var policy = FormattingOptionsFactory.CreateMono ();
+			policy.ConstructorBraceStyle = BraceStyle.EndOfLine;
+			
+			Test (policy, @"public class A
+{
+	public object GetValue ()
+        {
+            try
+            {
+foo ();
+            }
+            catch
+            {
+            }
+        }
+}",
+@"public class A
+{
+	public object GetValue ()
+	{
+		try {
+			foo ();
+		} catch {
+		}
+	}
+}");
+		}
+
+        /// <summary>
+        /// Bug GH35 - Formatter issues with if/else statements and // comments
+        /// </summary>
+        [Ignore]
+        public void TestBugGH35()
+        {
+            var policy = FormattingOptionsFactory.CreateMono ();
+            policy.ConstructorBraceStyle = BraceStyle.EndOfLine;
+
+            Test(policy, @"public class A : B
+{
+    public void Test()
+    {
+        // Comment before
+        if (conditionA) {
+            DoSomething();
+        }
+        // Comment before else ends up incorporating it
+        else if (conditionB) {
+            DoSomethingElse();
+        }
+    }
+}",
+@"public class A : B
+{
+	public void Test()
+	{
+		// Comment before
+		if (conditionA) {
+			DoSomething();
+		}
+		// Comment before else ends up incorporating it
+		else if (conditionB) {
+			DoSomethingElse();
+		}
+	}
+}");
+        }
+
+        /// <summary>
+        /// Bug GH35a - Formatter issues with if/else statements and // comments else variant
+        /// </summary>
+        [Ignore]
+        public void TestBugGH35a()
+        {
+            var policy = FormattingOptionsFactory.CreateMono ();
+            policy.ConstructorBraceStyle = BraceStyle.EndOfLine;
+
+            Test(policy, @"public class A : B
+{
+    public void Test()
+    {
+        // Comment before
+        if (conditionA) {
+            DoSomething();
+        }
+        // Comment before else ends up incorporating it
+        else (conditionB) {
+            DoSomethingElse();
+        }
+    }
+}",
+@"public class A : B
+{
+	public void Test()
+	{
+		// Comment before
+		if (conditionA) {
+			DoSomething();
+		}
+		// Comment before else ends up incorporating it
+		else (conditionB) {
+			DoSomethingElse();
+		}
+	}
+}");
+        }
 	}
 }
 

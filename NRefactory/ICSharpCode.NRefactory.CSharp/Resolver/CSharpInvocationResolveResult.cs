@@ -25,7 +25,8 @@ using ICSharpCode.NRefactory.TypeSystem;
 namespace ICSharpCode.NRefactory.CSharp.Resolver
 {
 	/// <summary>
-	/// Represents the result of a method invocation.
+	/// Represents the result of a method, constructor or indexer invocation.
+	/// Provides additional C#-specific information for InvocationResolveResult.
 	/// </summary>
 	public class CSharpInvocationResolveResult : InvocationResolveResult
 	{
@@ -46,11 +47,6 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// </summary>
 		public readonly bool IsExpandedForm;
 		
-		/// <summary>
-		/// Gets whether this is a lifted operator invocation.
-		/// </summary>
-		public readonly bool IsLiftedOperatorInvocation;
-		
 		readonly IList<int> argumentToParameterMap;
 		
 		public CSharpInvocationResolveResult(
@@ -59,15 +55,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			OverloadResolutionErrors overloadResolutionErrors = OverloadResolutionErrors.None,
 			bool isExtensionMethodInvocation = false,
 			bool isExpandedForm = false,
-			bool isLiftedOperatorInvocation = false,
 			bool isDelegateInvocation = false,
-			IList<int> argumentToParameterMap = null)
-			: base(targetResult, member, arguments)
+			IList<int> argumentToParameterMap = null,
+			IList<ResolveResult> initializerStatements = null
+		)
+			: base(targetResult, member, arguments, initializerStatements)
 		{
 			this.OverloadResolutionErrors = overloadResolutionErrors;
 			this.IsExtensionMethodInvocation = isExtensionMethodInvocation;
 			this.IsExpandedForm = isExpandedForm;
-			this.IsLiftedOperatorInvocation = isLiftedOperatorInvocation;
 			this.IsDelegateInvocation = isDelegateInvocation;
 			this.argumentToParameterMap = argumentToParameterMap;
 		}
@@ -100,10 +96,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					mappedTo = IsExpandedForm ? Math.Min(i, results.Length - 1) : i;
 				
 				if (mappedTo >= 0 && mappedTo < results.Length) {
-					if (IsExpandedForm && mappedTo == results.Length - 1)
+					if (IsExpandedForm && mappedTo == results.Length - 1) {
 						paramsArguments.Add(Arguments[i]);
-					else
-						results[mappedTo] = Arguments[i];
+					} else {
+						var narr = Arguments[i] as NamedArgumentResolveResult;
+						if (narr != null)
+							results[mappedTo] = narr.Argument;
+						else
+							results[mappedTo] = Arguments[i];
+					}
 				}
 			}
 			if (IsExpandedForm)

@@ -28,9 +28,14 @@ namespace ICSharpCode.NRefactory.Editor
 	public interface IDocument : ITextSource, IServiceProvider
 	{
 		/// <summary>
+		/// Creates an immutable snapshot of this document.
+		/// </summary>
+		IDocument CreateDocumentSnapshot();
+		
+		/// <summary>
 		/// Gets/Sets the text of the whole document..
 		/// </summary>
-		new string Text { get; set; } // hides TextBuffer.Text to add the setter
+		new string Text { get; set; } // hides ITextSource.Text to add the setter
 		
 		/// <summary>
 		/// This event is called directly before a change is applied to the document.
@@ -109,12 +114,36 @@ namespace ICSharpCode.NRefactory.Editor
 		/// </summary>
 		/// <param name="offset">The offset at which the text is inserted.</param>
 		/// <param name="text">The new text.</param>
+		/// <remarks>
+		/// Anchors positioned exactly at the insertion offset will move according to their movement type.
+		/// For AnchorMovementType.Default, they will move behind the inserted text.
+		/// The caret will also move behind the inserted text.
+		/// </remarks>
+		void Insert(int offset, ITextSource text);
+		
+		/// <summary>
+		/// Inserts text.
+		/// </summary>
+		/// <param name="offset">The offset at which the text is inserted.</param>
+		/// <param name="text">The new text.</param>
 		/// <param name="defaultAnchorMovementType">
 		/// Anchors positioned exactly at the insertion offset will move according to the anchor's movement type.
 		/// For AnchorMovementType.Default, they will move according to the movement type specified by this parameter.
 		/// The caret will also move according to the <paramref name="defaultAnchorMovementType"/> parameter.
 		/// </param>
 		void Insert(int offset, string text, AnchorMovementType defaultAnchorMovementType);
+		
+		/// <summary>
+		/// Inserts text.
+		/// </summary>
+		/// <param name="offset">The offset at which the text is inserted.</param>
+		/// <param name="text">The new text.</param>
+		/// <param name="defaultAnchorMovementType">
+		/// Anchors positioned exactly at the insertion offset will move according to the anchor's movement type.
+		/// For AnchorMovementType.Default, they will move according to the movement type specified by this parameter.
+		/// The caret will also move according to the <paramref name="defaultAnchorMovementType"/> parameter.
+		/// </param>
+		void Insert(int offset, ITextSource text, AnchorMovementType defaultAnchorMovementType);
 		
 		/// <summary>
 		/// Removes text.
@@ -130,6 +159,14 @@ namespace ICSharpCode.NRefactory.Editor
 		/// <param name="length">The length of the text to be replaced.</param>
 		/// <param name="newText">The new text.</param>
 		void Replace(int offset, int length, string newText);
+		
+		/// <summary>
+		/// Replaces text.
+		/// </summary>
+		/// <param name="offset">The starting offset of the text to be replaced.</param>
+		/// <param name="length">The length of the text to be replaced.</param>
+		/// <param name="newText">The new text.</param>
+		void Replace(int offset, int length, ITextSource newText);
 		
 		/// <summary>
 		/// Make the document combine the following actions into a single

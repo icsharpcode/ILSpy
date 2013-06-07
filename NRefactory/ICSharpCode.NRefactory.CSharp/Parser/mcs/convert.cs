@@ -330,17 +330,40 @@ namespace Mono.CSharp {
 					return TypeSpecComparer.Variant.IsEqual (expr_type, target_type) || expr_type.ImplementsInterface (target_type, true);
 
 				return target_type.BuiltinType == BuiltinTypeSpec.Type.Object || target_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic;
-			}
 
-			//
-			// from the null literal to any reference-type.
-			//
-			if (expr_type == InternalType.NullLiteral) {
-				// Exlude internal compiler types
-				if (target_type.Kind == MemberKind.InternalCompilerType)
-					return target_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic;
+			case MemberKind.InternalCompilerType:
+				//
+				// from the null literal to any reference-type.
+				//
+				if (expr_type == InternalType.NullLiteral) {
+					// Exlude internal compiler types
+					if (target_type.Kind == MemberKind.InternalCompilerType)
+						return target_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic;
 
-				return TypeSpec.IsReferenceType (target_type);
+					return TypeSpec.IsReferenceType (target_type);
+				}
+
+				//
+				// Implicit dynamic conversion
+				//
+				if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
+					switch (target_type.Kind) {
+					case MemberKind.ArrayType:
+					case MemberKind.Class:
+					case MemberKind.Delegate:
+					case MemberKind.Interface:
+					case MemberKind.TypeParameter:
+						return true;
+					}
+
+					// dynamic to __arglist
+					if (target_type == InternalType.Arglist)
+						return true;
+
+					return false;
+				}
+
+				break;
 			}
 
 			return false;
@@ -470,6 +493,11 @@ namespace Mono.CSharp {
 		public static Expression ImplicitNumericConversion (Expression expr, TypeSpec target_type)
 		{
 			return ImplicitNumericConversion (expr, expr.Type, target_type);
+		}
+
+		public static bool ImplicitNumericConversionExists (TypeSpec expr_type, TypeSpec target_type)
+		{
+			return ImplicitNumericConversion (null, expr_type, target_type) != null;
 		}
 
 		static Expression ImplicitNumericConversion (Expression expr, TypeSpec expr_type, TypeSpec target_type)
@@ -773,22 +801,16 @@ namespace Mono.CSharp {
 				return i.IsZeroInteger;
 			}
 
-			// Implicit dynamic conversion
+			//
+			// Implicit dynamic conversion for remaining value types. It should probably
+			// go somewhere else
+			//
 			if (expr_type.BuiltinType == BuiltinTypeSpec.Type.Dynamic) {
 				switch (target_type.Kind) {
-				case MemberKind.ArrayType:
-				case MemberKind.Class:
 				case MemberKind.Struct:
-				case MemberKind.Delegate:
 				case MemberKind.Enum:
-				case MemberKind.Interface:
-				case MemberKind.TypeParameter:
 					return true;
 				}
-
-				// dynamic to __arglist
-				if (target_type == InternalType.Arglist)
-					return true;
 
 				return false;
 			}
@@ -1173,7 +1195,7 @@ namespace Mono.CSharp {
 			if (s_x != source_type) {
 				var c = source as Constant;
 				if (c != null) {
-					source = c.TryReduce (ec, s_x, loc);
+					source = c.TryReduce (ec, s_x);
 				} else {
 					source = implicitOnly ?
 						ImplicitConversionStandard (ec, source_type_expr, s_x, loc) :
@@ -1315,8 +1337,7 @@ namespace Mono.CSharp {
 				try {
 					c = c.ConvertImplicitly (target_type);
 				} catch {
-					Console.WriteLine ("Conversion error happened in line {0}", loc);
-					throw;
+					throw new InternalErrorException ("Conversion error", loc);
 				}
 				if (c != null)
 					return c;
@@ -1401,7 +1422,7 @@ namespace Mono.CSharp {
 			if (e != null)
 				return e;
 
-			source.Error_ValueCannotBeConverted (ec, loc, target_type, false);
+			source.Error_ValueCannotBeConverted (ec, target_type, false);
 			return null;
 		}
 
@@ -2081,7 +2102,7 @@ namespace Mono.CSharp {
 			if (ec.IsUnsafe && expr.Type.IsPointer && target_type.IsPointer && ((PointerContainer)expr.Type).Element.Kind == MemberKind.Void)
 				return EmptyCast.Create (expr, target_type);
 
-			expr.Error_ValueCannotBeConverted (ec, l, target_type, true);
+			expr.Error_ValueCannotBeConverted (ec, target_type, true);
 			return null;
 		}
 
@@ -2144,7 +2165,7 @@ namespace Mono.CSharp {
 			if (e != null)
 				return e;			
 
-			expr.Error_ValueCannotBeConverted (ec, loc, target_type, true);
+			expr.Error_ValueCannotBeConverted (ec, target_type, true);
 			return null;
 		}
 	}

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
+using ICSharpCode.NRefactory.Documentation;
 
 namespace ICSharpCode.NRefactory.TypeSystem
 {
@@ -53,7 +54,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Gets the parsed file in which this entity is defined.
 		/// Returns null if this entity wasn't parsed from source code (e.g. loaded from a .dll with CecilLoader).
 		/// </summary>
-		IParsedFile ParsedFile { get; }
+		IUnresolvedFile UnresolvedFile { get; }
 		
 		/// <summary>
 		/// Gets the attributes on this entity.
@@ -137,7 +138,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// <summary>
 		/// Gets the documentation for this entity.
 		/// </summary>
-		string Documentation { get; }
+		DocumentationComment Documentation { get; }
 		
 		/// <summary>
 		/// Gets whether this entity is static.

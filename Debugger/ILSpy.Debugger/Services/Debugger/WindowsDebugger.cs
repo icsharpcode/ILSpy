@@ -348,8 +348,10 @@ namespace ICSharpCode.ILSpy.Debugger.Services
 				MessageBox.Show(errorCannotStepNoActiveFunction, "StepOver");
 			} else {
 				var frame = GetStackFrame();
-				if (frame != null)
+				if (frame != null) {
 					frame.AsyncStepOver();
+					//Utils.DoEvents(frame.Process);
+				}
 			}
 		}
 		
@@ -793,7 +795,9 @@ namespace ICSharpCode.ILSpy.Debugger.Services
 		public void JumpToCurrentLine()
 		{
 			if (debuggedProcess != null &&  debuggedProcess.SelectedThread != null) {
-				
+
+				MainWindow.Instance.Activate();
+
 				// use most recent stack frame because we don't have the symbols
 				var frame = debuggedProcess.SelectedThread.MostRecentStackFrame;
 				
@@ -836,6 +840,8 @@ namespace ICSharpCode.ILSpy.Debugger.Services
 				TypeDefinition nestedTypeDef = null;
 				
 				foreach (var assembly in DebugInformation.LoadedAssemblies) {
+					if (null == assembly)
+						continue;
 					if ((assembly.FullName.StartsWith("System") || assembly.FullName.StartsWith("Microsoft") || assembly.FullName.StartsWith("mscorlib")) &&
 					    !assembly.Name.Version.ToString().StartsWith(debuggeeVersion))
 						continue;

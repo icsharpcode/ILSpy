@@ -210,9 +210,9 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 		}
 		
 		[Test]
-		public void ShadowingMethodInInterface()
+		public void ShadowingMethodInInterface ()
 		{
-			ParseUtilCSharp.AssertGlobal(
+			ParseUtilCSharp.AssertGlobal (
 				@"interface MyInterface : IDisposable {
 	new void Dispose();
 }
@@ -281,6 +281,30 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 				});
 		}
 		
+		[Test, Ignore("Parser bug: constraints added in wrong order")]
+		public void GenericMethodWithMultipleConstraints()
+		{
+			ParseUtilCSharp.AssertTypeMember(
+				"void MyMethod<A, B>() where A : IA where B : IB {} ",
+				new MethodDeclaration {
+					ReturnType = new PrimitiveType("void"),
+					Name = "MyMethod",
+					TypeParameters = {
+						new TypeParameterDeclaration { Name = "A" },
+						new TypeParameterDeclaration { Name = "B" }
+					},
+					Constraints = {
+						new Constraint {
+							TypeParameter = new SimpleType("A"),
+							BaseTypes = { new SimpleType("IA") }
+						},
+						new Constraint {
+							TypeParameter = new SimpleType("B"),
+							BaseTypes = { new SimpleType("IB") }
+						}
+					}});
+		}
+		
 		[Test]
 		public void IncompleteConstraintsTest()
 		{
@@ -290,7 +314,9 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 			Assert.AreEqual("a", md.Name);
 			Assert.AreEqual(1, md.TypeParameters.Count);
 			Assert.AreEqual("T", md.TypeParameters.Single().Name);
-			Assert.AreEqual(0, md.Constraints.Count());
+			Assert.AreEqual(1, md.Constraints.Count());
+			Assert.AreEqual(0, md.Constraints.First ().BaseTypes.Count());
+			
 		}
 		
 		[Test]
@@ -304,6 +330,19 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.TypeMembers
 			Assert.AreEqual(ParameterModifier.This, md.Parameters.First().ParameterModifier);
 			Assert.AreEqual("string", ((PrimitiveType)md.Parameters.First().Type).Keyword);
 			Assert.IsTrue(md.IsExtensionMethod);
+		}
+		
+		[Test]
+		public void ExtensionMethodWithAttributeTest()
+		{
+			MethodDeclaration md = ParseUtilCSharp.ParseTypeMember<MethodDeclaration>(
+				"public static int ToInt32([Attr] this string s) { return int.Parse(s); }"
+			);
+			Assert.AreEqual("ToInt32", md.Name);
+			Assert.IsTrue(md.IsExtensionMethod);
+			Assert.AreEqual("s", md.Parameters.Single().Name);
+			Assert.AreEqual(KnownTypeCode.String, ((PrimitiveType)md.Parameters.Single().Type).KnownTypeCode);
+			Assert.AreEqual(1, md.Parameters.Single().Attributes.Count);
 		}
 		
 		[Test]

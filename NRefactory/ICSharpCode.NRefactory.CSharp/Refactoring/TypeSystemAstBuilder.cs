@@ -39,9 +39,6 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		/// <summary>
 		/// Creates a new TypeSystemAstBuilder.
 		/// </summary>
-		/// <param name="context">
-		/// Context used for resolving types.
-		/// </param>
 		public TypeSystemAstBuilder()
 		{
 			InitProperties();
@@ -61,45 +58,71 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		}
 		
 		/// <summary>
+		/// Specifies whether the ast builder should add annotations to type references.
+		/// The default value is <c>false</c>.
+		/// </summary>
+		public bool AddAnnotations { get; set; }
+		
+		/// <summary>
 		/// Controls the accessibility modifiers are shown.
+		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool ShowAccessibility { get; set; }
 		
 		/// <summary>
 		/// Controls the non-accessibility modifiers are shown.
+		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool ShowModifiers { get; set; }
 		
 		/// <summary>
 		/// Controls whether base type references are shown.
+		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool ShowBaseTypes { get; set; }
 		
 		/// <summary>
 		/// Controls whether type parameter declarations are shown.
+		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool ShowTypeParameters { get; set; }
 		
 		/// <summary>
 		/// Controls whether contraints on type parameter declarations are shown.
 		/// Has no effect if ShowTypeParameters is false.
+		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool ShowTypeParameterConstraints { get; set; }
 		
 		/// <summary>
 		/// Controls whether the names of parameters are shown.
+		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool ShowParameterNames { get; set; }
 		
 		/// <summary>
 		/// Controls whether to show default values of optional parameters, and the values of constant fields.
+		/// The default value is <c>true</c>.
 		/// </summary>
 		public bool ShowConstantValues { get; set; }
 		
 		/// <summary>
 		/// Controls whether to use fully-qualified type names or short type names.
+		/// The default value is <c>false</c>.
 		/// </summary>
 		public bool AlwaysUseShortTypeNames { get; set; }
+		
+		/// <summary>
+		/// Controls whether to generate a body that throws a <c>System.NotImplementedException</c>.
+		/// The default value is <c>false</c>.
+		/// </summary>
+		public bool GenerateBody { get; set; }
+		
+		/// <summary>
+		/// Controls whether to generate custom events.
+		/// The default value is <c>false</c>.
+		/// </summary>
+		public bool UseCustomEvents { get; set; }
 		#endregion
 		
 		#region Convert Type
@@ -107,6 +130,27 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
+			AstType astType = ConvertTypeHelper(type);
+			if (AddAnnotations)
+				astType.AddAnnotation(type);
+			return astType;
+		}
+		
+		public AstType ConvertType(string ns, string name, int typeParameterCount = 0)
+		{
+			if (resolver != null) {
+				foreach (var asm in resolver.Compilation.Assemblies) {
+					var def = asm.GetTypeDefinition(ns, name, typeParameterCount);
+					if (def != null) {
+						return ConvertType(def);
+					}
+				}
+			}
+			return new MemberType(new SimpleType(ns), name);
+		}
+		
+		AstType ConvertTypeHelper(IType type)
+		{
 			TypeWithElementType typeWithElementType = type as TypeWithElementType;
 			if (typeWithElementType != null) {
 				if (typeWithElementType is PointerType) {
@@ -190,7 +234,6 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 				AddTypeArguments(shortResult, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
 				return shortResult;
 			}
-			
 			MemberType result = new MemberType();
 			if (typeDef.DeclaringTypeDefinition != null) {
 				// Handle nested types
@@ -242,7 +285,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		void AddTypeArguments(AstType result, IList<IType> typeArguments, int startIndex, int endIndex)
 		{
 			for (int i = startIndex; i < endIndex; i++) {
-				result.AddChild(ConvertType(typeArguments[i]), AstType.Roles.TypeArgument);
+				result.AddChild(ConvertType(typeArguments[i]), Roles.TypeArgument);
 			}
 		}
 		
@@ -320,8 +363,25 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 				return new TypeOfExpression(ConvertType(((TypeOfResolveResult)rr).Type));
 			} else if (rr is ArrayCreateResolveResult) {
 				ArrayCreateResolveResult acrr = (ArrayCreateResolveResult)rr;
-				AstType type = ConvertType(acrr.Type);
-				throw new NotImplementedException();
+				ArrayCreateExpression ace = new ArrayCreateExpression();
+				ace.Type = ConvertType(acrr.Type);
+				ComposedType composedType = ace.Type as ComposedType;
+				if (composedType != null) {
+					composedType.ArraySpecifiers.MoveTo(ace.AdditionalArraySpecifiers);
+					if (!composedType.HasNullableSpecifier && composedType.PointerRank == 0)
+						ace.Type = composedType.BaseType;
+				}
+				
+				if (acrr.SizeArguments != null && acrr.InitializerElements == null) {
+					ace.AdditionalArraySpecifiers.FirstOrNullObject().Remove();
+					ace.Arguments.AddRange(acrr.SizeArguments.Select(ConvertConstantValue));
+				}
+				if (acrr.InitializerElements != null) {
+					ArrayInitializerExpression initializer = new ArrayInitializerExpression();
+					initializer.Elements.AddRange(acrr.InitializerElements.Select(ConvertConstantValue));
+					ace.Initializer = initializer;
+				}
+				return ace;
 			} else if (rr.IsCompileTimeConstant) {
 				return ConvertConstantValue(rr.Type, rr.ConstantValue);
 			} else {
@@ -371,7 +431,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		#endregion
 		
 		#region Convert Entity
-		public AstNode ConvertEntity(IEntity entity)
+		public EntityDeclaration ConvertEntity(IEntity entity)
 		{
 			if (entity == null)
 				throw new ArgumentNullException("entity");
@@ -399,7 +459,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			}
 		}
 		
-		AttributedNode ConvertTypeDefinition(ITypeDefinition typeDefinition)
+		EntityDeclaration ConvertTypeDefinition(ITypeDefinition typeDefinition)
 		{
 			Modifiers modifiers = ModifierFromAccessibility(typeDefinition.Accessibility);
 			if (this.ShowModifiers) {
@@ -419,27 +479,31 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			switch (typeDefinition.Kind) {
 				case TypeKind.Struct:
 					classType = ClassType.Struct;
+					modifiers &= ~Modifiers.Sealed;
 					break;
 				case TypeKind.Enum:
 					classType = ClassType.Enum;
+					modifiers &= ~Modifiers.Sealed;
 					break;
 				case TypeKind.Interface:
 					classType = ClassType.Interface;
+					modifiers &= ~Modifiers.Abstract;
 					break;
 				case TypeKind.Delegate:
 					IMethod invoke = typeDefinition.GetDelegateInvokeMethod();
-					if (invoke != null)
+					if (invoke != null) {
 						return ConvertDelegate(invoke, modifiers);
-					else
+					} else {
 						goto default;
+					}
 				default:
 					classType = ClassType.Class;
 					break;
 			}
 			
-			TypeDeclaration decl = new TypeDeclaration();
-			decl.Modifiers = modifiers;
+			var decl = new TypeDeclaration();
 			decl.ClassType = classType;
+			decl.Modifiers = modifiers;
 			decl.Name = typeDefinition.Name;
 			
 			int outerTypeParameterCount = (typeDefinition.DeclaringTypeDefinition == null) ? 0 : typeDefinition.DeclaringTypeDefinition.TypeParameterCount;
@@ -471,7 +535,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			ITypeDefinition d = invokeMethod.DeclaringTypeDefinition;
 			
 			DelegateDeclaration decl = new DelegateDeclaration();
-			decl.Modifiers = modifiers;
+			decl.Modifiers = modifiers & ~Modifiers.Sealed;
 			decl.ReturnType = ConvertType(invokeMethod.ReturnType);
 			decl.Name = d.Name;
 			
@@ -495,7 +559,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			return decl;
 		}
 		
-		AstNode ConvertField(IField field)
+		FieldDeclaration ConvertField(IField field)
 		{
 			FieldDeclaration decl = new FieldDeclaration();
 			if (ShowModifiers) {
@@ -518,12 +582,25 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			return decl;
 		}
 		
-		Accessor ConvertAccessor(IAccessor accessor)
+		BlockStatement GenerateBodyBlock()
+		{
+			if (GenerateBody) {
+				return new BlockStatement {
+					new ThrowStatement(new ObjectCreateExpression(ConvertType("System", "NotImplementedException")))
+				};
+			} else {
+				return BlockStatement.Null;
+			}
+		}
+		
+		Accessor ConvertAccessor(IMethod accessor, Accessibility ownerAccessibility)
 		{
 			if (accessor == null)
 				return Accessor.Null;
 			Accessor decl = new Accessor();
-			decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
+			if (accessor.Accessibility != ownerAccessibility)
+				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
+			decl.Body = GenerateBodyBlock();
 			return decl;
 		}
 		
@@ -533,8 +610,8 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			decl.Modifiers = GetMemberModifiers(property);
 			decl.ReturnType = ConvertType(property.ReturnType);
 			decl.Name = property.Name;
-			decl.Getter = ConvertAccessor(property.Getter);
-			decl.Setter = ConvertAccessor(property.Setter);
+			decl.Getter = ConvertAccessor(property.Getter, property.Accessibility);
+			decl.Setter = ConvertAccessor(property.Setter, property.Accessibility);
 			return decl;
 		}
 		
@@ -546,18 +623,28 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			foreach (IParameter p in indexer.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
 			}
-			decl.Getter = ConvertAccessor(indexer.Getter);
-			decl.Setter = ConvertAccessor(indexer.Setter);
+			decl.Getter = ConvertAccessor(indexer.Getter, indexer.Accessibility);
+			decl.Setter = ConvertAccessor(indexer.Setter, indexer.Accessibility);
 			return decl;
 		}
 		
-		EventDeclaration ConvertEvent(IEvent ev)
+		EntityDeclaration ConvertEvent(IEvent ev)
 		{
-			EventDeclaration decl = new EventDeclaration();
-			decl.Modifiers = GetMemberModifiers(ev);
-			decl.ReturnType = ConvertType(ev.ReturnType);
-			decl.Variables.Add(new VariableInitializer(ev.Name));
-			return decl;
+			if (this.UseCustomEvents) {
+				CustomEventDeclaration decl = new CustomEventDeclaration();
+				decl.Modifiers = GetMemberModifiers(ev);
+				decl.ReturnType = ConvertType(ev.ReturnType);
+				decl.Name = ev.Name;
+				decl.AddAccessor    = ConvertAccessor(ev.AddAccessor, ev.Accessibility);
+				decl.RemoveAccessor = ConvertAccessor(ev.RemoveAccessor, ev.Accessibility);
+				return decl;
+			} else {
+				EventDeclaration decl = new EventDeclaration();
+				decl.Modifiers = GetMemberModifiers(ev);
+				decl.ReturnType = ConvertType(ev.ReturnType);
+				decl.Variables.Add(new VariableInitializer(ev.Name));
+				return decl;
+			}
 		}
 		
 		MethodDeclaration ConvertMethod(IMethod method)
@@ -576,6 +663,8 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			foreach (IParameter p in method.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
 			}
+			if (method.IsExtensionMethod && decl.Parameters.Any() && decl.Parameters.First().ParameterModifier == ParameterModifier.None)
+				decl.Parameters.First().ParameterModifier = ParameterModifier.This;
 			
 			if (this.ShowTypeParameters && this.ShowTypeParameterConstraints && !method.IsOverride && !method.IsExplicitInterfaceImplementation) {
 				foreach (ITypeParameter tp in method.TypeParameters) {
@@ -584,10 +673,11 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 						decl.Constraints.Add(constraint);
 				}
 			}
+			decl.Body = GenerateBodyBlock();
 			return decl;
 		}
 		
-		AstNode ConvertOperator(IMethod op)
+		EntityDeclaration ConvertOperator(IMethod op)
 		{
 			OperatorType? opType = OperatorDeclaration.GetOperatorType(op.Name);
 			if (opType == null)
@@ -600,6 +690,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			foreach (IParameter p in op.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
 			}
+			decl.Body = GenerateBodyBlock();
 			return decl;
 		}
 		
@@ -611,6 +702,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			foreach (IParameter p in ctor.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
 			}
+			decl.Body = GenerateBodyBlock();
 			return decl;
 		}
 		
@@ -618,6 +710,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		{
 			DestructorDeclaration decl = new DestructorDeclaration();
 			decl.Name = dtor.DeclaringTypeDefinition.Name;
+			decl.Body = GenerateBodyBlock();
 			return decl;
 		}
 		#endregion
@@ -646,12 +739,13 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		
 		Modifiers GetMemberModifiers(IMember member)
 		{
-			Modifiers m = ModifierFromAccessibility(member.Accessibility);
+			bool isInterfaceMember = member.DeclaringType.Kind == TypeKind.Interface;
+			Modifiers m = isInterfaceMember ? Modifiers.None : ModifierFromAccessibility(member.Accessibility);
 			if (this.ShowModifiers) {
 				if (member.IsStatic) {
 					m |= Modifiers.Static;
 				} else {
-					if (member.IsAbstract)
+					if (member.IsAbstract && !isInterfaceMember)
 						m |= Modifiers.Abstract;
 					if (member.IsOverride)
 						m |= Modifiers.Override;

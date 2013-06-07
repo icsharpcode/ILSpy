@@ -61,6 +61,62 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			return tps[index];
 		}
 		
+		sealed class NormalizeMethodTypeParametersVisitor : TypeVisitor
+		{
+			public override IType VisitTypeParameter(ITypeParameter type)
+			{
+				if (type.OwnerType == EntityType.Method) {
+					return DummyTypeParameter.GetMethodTypeParameter(type.Index);
+				} else {
+					return base.VisitTypeParameter(type);
+				}
+			}
+		}
+		sealed class NormalizeClassTypeParametersVisitor : TypeVisitor
+		{
+			public override IType VisitTypeParameter(ITypeParameter type)
+			{
+				if (type.OwnerType == EntityType.TypeDefinition) {
+					return DummyTypeParameter.GetClassTypeParameter(type.Index);
+				} else {
+					return base.VisitTypeParameter(type);
+				}
+			}
+		}
+		
+		static readonly NormalizeMethodTypeParametersVisitor normalizeMethodTypeParameters = new NormalizeMethodTypeParametersVisitor();
+		static readonly NormalizeClassTypeParametersVisitor normalizeClassTypeParameters = new NormalizeClassTypeParametersVisitor();
+		
+		/// <summary>
+		/// Replaces all occurrences of method type parameters in the given type
+		/// by normalized type parameters. This allows comparing parameter types from different
+		/// generic methods.
+		/// </summary>
+		public static IType NormalizeMethodTypeParameters(IType type)
+		{
+			return type.AcceptVisitor(normalizeMethodTypeParameters);
+		}
+		
+		/// <summary>
+		/// Replaces all occurrences of class type parameters in the given type
+		/// by normalized type parameters. This allows comparing parameter types from different
+		/// generic methods.
+		/// </summary>
+		public static IType NormalizeClassTypeParameters(IType type)
+		{
+			return type.AcceptVisitor(normalizeClassTypeParameters);
+		}
+		
+		/// <summary>
+		/// Replaces all occurrences of class and method type parameters in the given type
+		/// by normalized type parameters. This allows comparing parameter types from different
+		/// generic methods.
+		/// </summary>
+		public static IType NormalizeAllTypeParameters(IType type)
+		{
+			return type.AcceptVisitor(normalizeClassTypeParameters).AcceptVisitor(normalizeMethodTypeParameters);
+		}
+		
 		readonly EntityType ownerType;
 		readonly int index;
 		
@@ -71,7 +127,20 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		}
 		
 		public override string Name {
-			get { return "!" + index; }
+			get {
+				return (ownerType == EntityType.Method ? "!!" : "!") + index;
+			}
+		}
+		
+		public override string ReflectionName {
+			get {
+				return (ownerType == EntityType.Method ? "``" : "`") + index;
+			}
+		}
+		
+		public override string ToString()
+		{
+			return ReflectionName + " (dummy)";
 		}
 		
 		public override bool? IsReferenceType {
@@ -85,6 +154,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		public override ITypeReference ToTypeReference()
 		{
 			return new TypeParameterReference(ownerType, index);
+		}
+		
+		public override IType AcceptVisitor(TypeVisitor visitor)
+		{
+			return visitor.VisitTypeParameter(this);
 		}
 		
 		public int Index {

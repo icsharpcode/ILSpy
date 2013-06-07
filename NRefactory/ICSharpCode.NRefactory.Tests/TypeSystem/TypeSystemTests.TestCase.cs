@@ -44,6 +44,15 @@ namespace ICSharpCode.NRefactory.TypeSystem.TestCase
 	public class ParamsAttribute : Attribute
 	{
 		public ParamsAttribute(params object[] x) {}
+		
+		[Params(Property = new string[] { "a", "b" })]
+		public string[] Property { get; set; }
+	}
+	
+	[Double(1)]
+	public class DoubleAttribute : Attribute
+	{
+		public DoubleAttribute(double val) {}
 	}
 	
 	public unsafe class DynamicTest
@@ -63,6 +72,14 @@ namespace ICSharpCode.NRefactory.TypeSystem.TestCase
 	{
 		public void TestMethod<K, V>(string param) where V: K where K: IComparable<V> {}
 		public void GetIndex<T>(T element) where T : IEquatable<T> {}
+		
+		public NestedEnum EnumField;
+		
+		public A Property { get; set; }
+		
+		public enum NestedEnum {
+			EnumMember
+		}
 	}
 	
 	public class PropertyTest
@@ -71,7 +88,9 @@ namespace ICSharpCode.NRefactory.TypeSystem.TestCase
 		
 		public object PropertyWithPrivateSetter { get; private set; }
 		
-		public string this[int index] { get { return "Test"; } }
+		public object PropertyWithoutSetter { get { return null; } }
+		
+		public string this[int index] { get { return "Test"; } set {} }
 	}
 	
 	public enum MyEnum : short
@@ -97,6 +116,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.TestCase
 	public struct MyStructWithCtor
 	{
 		public MyStructWithCtor(int a) {}
+	}
+	
+	public class MyClassWithCtor
+	{
+		private MyClassWithCtor(int a) {}
 	}
 	
 	[Serializable]
@@ -146,10 +170,161 @@ namespace ICSharpCode.NRefactory.TypeSystem.TestCase
 	
 	public class OuterGeneric<X>
 	{
-		public class Inner {}
+		public class Inner {
+			public OuterGeneric<X> referenceToOuter;
+			public Inner(OuterGeneric<X> referenceToOuter) {}
+		}
 		
 		public OuterGeneric<X>.Inner Field1;
 		public Inner Field2;
 		public OuterGeneric<OuterGeneric<X>.Inner>.Inner Field3;
+	}
+	
+	public class ExplicitDisposableImplementation : IDisposable
+	{
+		void IDisposable.Dispose() {}
+	}
+	
+	public interface IGenericInterface<T>
+	{
+		void Test<S>(T a, S b) where S : T;
+		void Test<S>(T a, ref S b);
+	}
+	
+	public class ExplicitGenericInterfaceImplementation : IGenericInterface<string>
+	{
+		void IGenericInterface<string>.Test<T>(string a, T b) {}
+		void IGenericInterface<string>.Test<T>(string a, ref T b) {}
+	}
+	
+	public interface IGenericInterfaceWithUnifiableMethods<T, S>
+	{
+		void Test(T a);
+		void Test(S a);
+	}
+	
+	public class ImplementationOfUnifiedMethods : IGenericInterfaceWithUnifiableMethods<int, int>
+	{
+		public void Test(int a) {}
+	}
+	
+	public class ExplicitGenericInterfaceImplementationWithUnifiableMethods<T, S> : IGenericInterfaceWithUnifiableMethods<T, S>
+	{
+		void IGenericInterfaceWithUnifiableMethods<T, S>.Test(T a) {}
+		void IGenericInterfaceWithUnifiableMethods<T, S>.Test(S a) {}
+	}
+	
+	public partial class PartialClass
+	{
+		partial void PartialMethodWithImplementation(int a);
+		
+		partial void PartialMethodWithImplementation(System.Int32 a)
+		{
+		}
+		
+		partial void PartialMethodWithImplementation(string a);
+		
+		partial void PartialMethodWithImplementation(System.String a)
+		{
+		}
+		
+		partial void PartialMethodWithoutImplementation();
+	}
+	
+	public class ClassWithStaticAndNonStaticMembers
+	{
+		public static event System.EventHandler Event1 { add {} remove{} }
+		public event System.EventHandler Event2 { add {} remove{} }
+		#pragma warning disable 67
+		public static event System.EventHandler Event3;
+		public event System.EventHandler Event4;
+
+		public static int Prop1 { get { return 0; } set {} }
+		public int Prop2 { get { return 0; } set {} }
+		public static int Prop3 { get; set; }
+		public int Prop4 { get; set; }
+	}
+
+	public interface IInterfaceWithProperty {
+		int Prop { get; set; }
+	}
+
+	public class ClassWithVirtualProperty {
+		public virtual int Prop { get; set; }
+	}
+	
+	public class ClassThatOverridesAndSealsVirtualProperty : ClassWithVirtualProperty {
+		public sealed override int Prop { get; set; }
+	}
+
+	public class ClassThatImplementsProperty : IInterfaceWithProperty {
+		public int Prop { get; set; }
+	}
+
+	public class ClassThatImplementsPropertyExplicitly : IInterfaceWithProperty {
+		int IInterfaceWithProperty.Prop { get; set; }
+	}
+
+	public interface IInterfaceWithIndexers {
+		int this[int x] { get; set; }
+		int this[string x] { get; set; }
+		int this[int x, int y] { get; set; }
+	}
+
+	public interface IGenericInterfaceWithIndexer<T> {
+		int this[T x] { get; set; }
+	}
+
+	public class ClassThatImplementsIndexers : IInterfaceWithIndexers, IGenericInterfaceWithIndexer<int> {
+		public int this[int x] { get { return 0; } set {} }
+		public int this[string x] { get { return 0; } set {} }
+		public int this[int x, int y] { get { return 0; } set {} }
+	}
+
+	public class ClassThatImplementsIndexersExplicitly : IInterfaceWithIndexers, IGenericInterfaceWithIndexer<int> {
+		int IInterfaceWithIndexers.this[int x] { get { return 0; } set {} }
+		int IGenericInterfaceWithIndexer<int>.this[int x] { get { return 0; } set {} }
+		int IInterfaceWithIndexers.this[string x] { get { return 0; } set {} }
+		int IInterfaceWithIndexers.this[int x, int y] { get { return 0; } set {} }
+	}
+
+	public interface IHasEvent {
+		event EventHandler Event;
+	}
+
+	public class ClassThatImplementsEvent : IHasEvent {
+		public event EventHandler Event;
+	}
+
+	public class ClassThatImplementsEventWithCustomAccessors : IHasEvent {
+		public event EventHandler Event { add {} remove {} }
+	}
+
+	public class ClassThatImplementsEventExplicitly : IHasEvent {
+		event EventHandler IHasEvent.Event { add {} remove {} }
+	}
+
+	public interface IShadowTestBase {
+		void Method();
+		int this[int i] { get; set; }
+		int Prop { get; set; }
+		event EventHandler Evt;
+	}
+
+	public interface IShadowTestDerived : IShadowTestBase {
+		new void Method();
+		new int this[int i] { get; set; }
+		new int Prop { get; set; }
+		new event EventHandler Evt;
+	}
+	
+	public static class StaticClass {}
+	public abstract class AbstractClass {}
+	
+	public class IndexerNonDefaultName {
+		[IndexerName("Foo")]
+		public int this[int index] {
+			get { return 0; }
+		}
 	}
 }

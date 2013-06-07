@@ -17,8 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
 
 namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 {
@@ -71,7 +72,30 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			this.DeclaringTypeDefinition = declaringTypeDefinition;
 			this.namespaceName = declaringTypeDefinition.Namespace;
 			this.Name = name;
-			this.ParsedFile = declaringTypeDefinition.ParsedFile;
+			this.UnresolvedFile = declaringTypeDefinition.UnresolvedFile;
+		}
+		
+		protected override void FreezeInternal()
+		{
+			base.FreezeInternal();
+			baseTypes = FreezableHelper.FreezeList(baseTypes);
+			typeParameters = FreezableHelper.FreezeListAndElements(typeParameters);
+			nestedTypes = FreezableHelper.FreezeListAndElements(nestedTypes);
+			members = FreezableHelper.FreezeListAndElements(members);
+		}
+		
+		public override object Clone()
+		{
+			var copy = (DefaultUnresolvedTypeDefinition)base.Clone();
+			if (baseTypes != null)
+				copy.baseTypes = new List<ITypeReference>(baseTypes);
+			if (typeParameters != null)
+				copy.typeParameters = new List<IUnresolvedTypeParameter>(typeParameters);
+			if (nestedTypes != null)
+				copy.nestedTypes = new List<IUnresolvedTypeDefinition>(nestedTypes);
+			if (members != null)
+				copy.members = new List<IUnresolvedMember>(members);
+			return copy;
 		}
 		
 		public TypeKind Kind {
@@ -110,7 +134,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get { return namespaceName; }
 			set {
 				if (value == null)
-					throw new ArgumentNullException();
+					throw new ArgumentNullException("value");
 				ThrowIfFrozen();
 				namespaceName = value;
 			}
@@ -121,18 +145,18 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				IUnresolvedTypeDefinition declaringTypeDef = this.DeclaringTypeDefinition;
 				if (declaringTypeDef != null) {
 					if (this.TypeParameters.Count > declaringTypeDef.TypeParameters.Count) {
-						return declaringTypeDef.ReflectionName + "+" + this.Name + "`" + (this.TypeParameters.Count - declaringTypeDef.TypeParameters.Count).ToString();
+						return declaringTypeDef.ReflectionName + "+" + this.Name + "`" + (this.TypeParameters.Count - declaringTypeDef.TypeParameters.Count).ToString(CultureInfo.InvariantCulture);
 					} else {
 						return declaringTypeDef.ReflectionName + "+" + this.Name;
 					}
 				} else if (string.IsNullOrEmpty(namespaceName)) {
 					if (this.TypeParameters.Count > 0)
-						return this.Name + "`" + this.TypeParameters.Count.ToString();
+						return this.Name + "`" + this.TypeParameters.Count.ToString(CultureInfo.InvariantCulture);
 					else
 						return this.Name;
 				} else {
 					if (this.TypeParameters.Count > 0)
-						return namespaceName + "." + this.Name + "`" + this.TypeParameters.Count.ToString();
+						return namespaceName + "." + this.Name + "`" + this.TypeParameters.Count.ToString(CultureInfo.InvariantCulture);
 					else
 						return namespaceName + "." + this.Name;
 				}

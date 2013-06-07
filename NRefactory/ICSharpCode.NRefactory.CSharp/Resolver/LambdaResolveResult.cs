@@ -25,6 +25,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 {
 	/// <summary>
 	/// Represents an anonymous method or lambda expression.
+	/// Note: the lambda has no type.
+	/// To retrieve the delegate type, look at the anonymous function conversion.
 	/// </summary>
 	public abstract class LambdaResolveResult : ResolveResult
 	{
@@ -69,10 +71,10 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// Gets whether the lambda body is valid for the given parameter types and return type.
 		/// </summary>
 		/// <returns>
-		/// Produces a <see cref="Conversion.AnonymousFunctionConversion"/> if the lambda is valid;
+		/// Produces a conversion with <see cref="Conversion.IsAnonymousFunctionConversion"/>=<c>true</c> if the lambda is valid;
 		/// otherwise returns <see cref="Conversion.None"/>.
 		/// </returns>
-		public abstract Conversion IsValid(IType[] parameterTypes, IType returnType, Conversions conversions);
+		public abstract Conversion IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions);
 		
 		/// <summary>
 		/// Gets the resolve result for the lambda body.

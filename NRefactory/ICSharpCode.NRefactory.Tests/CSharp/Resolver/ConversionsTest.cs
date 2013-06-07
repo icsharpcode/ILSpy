@@ -19,7 +19,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
+using ICSharpCode.NRefactory.CSharp.TypeSystem;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.NRefactory.TypeSystem.Implementation;
@@ -33,16 +33,14 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 	using C = Conversion;
 	
 	[TestFixture]
-	public unsafe class ConversionsTest
+	public unsafe class ConversionsTest : ResolverTestBase
 	{
-		ICompilation compilation;
-		Conversions conversions;
+		CSharpConversions conversions;
 		
-		[SetUp]
-		public void SetUp()
+		public override void SetUp()
 		{
-			compilation = new SimpleCompilation(CecilLoaderTests.Mscorlib);
-			conversions = new Conversions(compilation);
+			base.SetUp();
+			conversions = new CSharpConversions(compilation);
 		}
 		
 		Conversion ImplicitConversion(Type from, Type to)
@@ -50,13 +48,6 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			IType from2 = compilation.FindType(from);
 			IType to2 = compilation.FindType(to);
 			return conversions.ImplicitConversion(from2, to2);
-		}
-		
-		Conversion ExplicitConversion(Type from, Type to)
-		{
-			IType from2 = compilation.FindType(from);
-			IType to2 = compilation.FindType(to);
-			return conversions.ExplicitConversion(from2, to2);
 		}
 		
 		[Test]
@@ -75,8 +66,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		[Test]
 		public void DynamicIdentityConversions()
 		{
-			Assert.AreEqual(C.IdentityConversion, ImplicitConversion(typeof(object), typeof(ReflectionHelper.Dynamic)));
-			Assert.AreEqual(C.IdentityConversion, ImplicitConversion(typeof(ReflectionHelper.Dynamic), typeof(object)));
+			Assert.AreEqual(C.IdentityConversion, ImplicitConversion(typeof(object), typeof(dynamic)));
+			Assert.AreEqual(C.IdentityConversion, ImplicitConversion(typeof(dynamic), typeof(object)));
 		}
 		
 		[Test]
@@ -108,29 +99,39 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		}
 		
 		[Test]
+		public void EnumerationConversion()
+		{
+			ResolveResult zero = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 0);
+			ResolveResult one = new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 1);
+			C implicitEnumerationConversion = C.EnumerationConversion(true, false);
+			Assert.AreEqual(implicitEnumerationConversion, conversions.ImplicitConversion(zero, compilation.FindType(typeof(StringComparison))));
+			Assert.AreEqual(C.None, conversions.ImplicitConversion(one, compilation.FindType(typeof(StringComparison))));
+		}
+		
+		[Test]
 		public void NullableConversions()
 		{
-			Assert.AreEqual(C.ImplicitNullableConversion, ImplicitConversion(typeof(char), typeof(ushort?)));
-			Assert.AreEqual(C.None,                       ImplicitConversion(typeof(byte), typeof(char?)));
-			Assert.AreEqual(C.ImplicitNullableConversion, ImplicitConversion(typeof(int), typeof(long?)));
-			Assert.AreEqual(C.None,                       ImplicitConversion(typeof(long), typeof(int?)));
-			Assert.AreEqual(C.ImplicitNullableConversion, ImplicitConversion(typeof(int), typeof(float?)));
-			Assert.AreEqual(C.None                      , ImplicitConversion(typeof(bool), typeof(float?)));
-			Assert.AreEqual(C.ImplicitNullableConversion, ImplicitConversion(typeof(float), typeof(double?)));
-			Assert.AreEqual(C.None,                       ImplicitConversion(typeof(float), typeof(decimal?)));
+			Assert.AreEqual(C.ImplicitLiftedNumericConversion, ImplicitConversion(typeof(char), typeof(ushort?)));
+			Assert.AreEqual(C.None,                            ImplicitConversion(typeof(byte), typeof(char?)));
+			Assert.AreEqual(C.ImplicitLiftedNumericConversion, ImplicitConversion(typeof(int), typeof(long?)));
+			Assert.AreEqual(C.None,                            ImplicitConversion(typeof(long), typeof(int?)));
+			Assert.AreEqual(C.ImplicitLiftedNumericConversion, ImplicitConversion(typeof(int), typeof(float?)));
+			Assert.AreEqual(C.None                           , ImplicitConversion(typeof(bool), typeof(float?)));
+			Assert.AreEqual(C.ImplicitLiftedNumericConversion, ImplicitConversion(typeof(float), typeof(double?)));
+			Assert.AreEqual(C.None,                            ImplicitConversion(typeof(float), typeof(decimal?)));
 		}
 		
 		[Test]
 		public void NullableConversions2()
 		{
-			Assert.AreEqual(C.ImplicitNullableConversion, ImplicitConversion(typeof(char?), typeof(ushort?)));
-			Assert.AreEqual(C.None,                       ImplicitConversion(typeof(byte?), typeof(char?)));
-			Assert.AreEqual(C.ImplicitNullableConversion, ImplicitConversion(typeof(int?), typeof(long?)));
-			Assert.AreEqual(C.None,                       ImplicitConversion(typeof(long?), typeof(int?)));
-			Assert.AreEqual(C.ImplicitNullableConversion, ImplicitConversion(typeof(int?), typeof(float?)));
-			Assert.AreEqual(C.None,                       ImplicitConversion(typeof(bool?), typeof(float?)));
-			Assert.AreEqual(C.ImplicitNullableConversion, ImplicitConversion(typeof(float?), typeof(double?)));
-			Assert.AreEqual(C.None,                       ImplicitConversion(typeof(float?), typeof(decimal?)));
+			Assert.AreEqual(C.ImplicitLiftedNumericConversion, ImplicitConversion(typeof(char?), typeof(ushort?)));
+			Assert.AreEqual(C.None,                            ImplicitConversion(typeof(byte?), typeof(char?)));
+			Assert.AreEqual(C.ImplicitLiftedNumericConversion, ImplicitConversion(typeof(int?), typeof(long?)));
+			Assert.AreEqual(C.None,                            ImplicitConversion(typeof(long?), typeof(int?)));
+			Assert.AreEqual(C.ImplicitLiftedNumericConversion, ImplicitConversion(typeof(int?), typeof(float?)));
+			Assert.AreEqual(C.None,                            ImplicitConversion(typeof(bool?), typeof(float?)));
+			Assert.AreEqual(C.ImplicitLiftedNumericConversion, ImplicitConversion(typeof(float?), typeof(double?)));
+			Assert.AreEqual(C.None,                            ImplicitConversion(typeof(float?), typeof(decimal?)));
 		}
 		
 		[Test]
@@ -157,12 +158,24 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		}
 		
 		[Test]
-		public void SimpleDynamicConversions()
+		public void ConversionToDynamic()
 		{
 			Assert.AreEqual(C.ImplicitReferenceConversion, ImplicitConversion(typeof(string),  typeof(dynamic)));
-			Assert.AreEqual(C.ImplicitDynamicConversion,   ImplicitConversion(typeof(dynamic), typeof(string)));
 			Assert.AreEqual(C.BoxingConversion,            ImplicitConversion(typeof(int),     typeof(dynamic)));
-			Assert.AreEqual(C.ImplicitDynamicConversion,   ImplicitConversion(typeof(dynamic), typeof(int)));
+		}
+		
+		[Test]
+		public void ConversionFromDynamic()
+		{
+			// There is no conversion from the type 'dynamic' to other types (except the identity conversion to object).
+			// Such conversions only exists from dynamic expression.
+			// This is an important distinction for type inference (see TypeInferenceTests.IEnumerableCovarianceWithDynamic)
+			Assert.AreEqual(C.None, ImplicitConversion(typeof(dynamic), typeof(string)));
+			Assert.AreEqual(C.None, ImplicitConversion(typeof(dynamic), typeof(int)));
+			
+			var dynamicRR = new ResolveResult(SpecialType.Dynamic);
+			Assert.AreEqual(C.ImplicitDynamicConversion, conversions.ImplicitConversion(dynamicRR, compilation.FindType(typeof(string))));
+			Assert.AreEqual(C.ImplicitDynamicConversion, conversions.ImplicitConversion(dynamicRR, compilation.FindType(typeof(int))));
 		}
 		
 		[Test]
@@ -231,16 +244,6 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			Assert.AreEqual(C.ImplicitPointerConversion, ImplicitConversion(typeof(Null), typeof(int*)));
 			Assert.AreEqual(C.ImplicitPointerConversion, ImplicitConversion(typeof(int*), typeof(void*)));
-		}
-		
-		[Test]
-		public void ExplicitPointerConversion()
-		{
-			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(int*), typeof(short)));
-			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(short), typeof(void*)));
-			
-			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(void*), typeof(int*)));
-			Assert.AreEqual(C.ExplicitPointerConversion, ExplicitConversion(typeof(long*), typeof(byte*)));
 		}
 		
 		[Test]
@@ -335,7 +338,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		public void UserDefinedImplicitConversion()
 		{
 			Conversion c = ImplicitConversion(typeof(DateTime), typeof(DateTimeOffset));
-			Assert.IsTrue(c.IsImplicitConversion && c.IsUserDefined);
+			Assert.IsTrue(c.IsImplicit && c.IsUserDefined);
 			Assert.AreEqual("System.DateTimeOffset.op_Implicit", c.Method.FullName);
 			
 			Assert.AreEqual(C.None, ImplicitConversion(typeof(DateTimeOffset), typeof(DateTime)));
@@ -345,19 +348,23 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		public void UserDefinedImplicitNullableConversion()
 		{
 			// User-defined conversion followed by nullable conversion
-			Assert.IsTrue(ImplicitConversion(typeof(DateTime), typeof(DateTimeOffset?)));
+			Conversion c = ImplicitConversion(typeof(DateTime), typeof(DateTimeOffset?));
+			Assert.IsTrue(c.IsValid && c.IsUserDefined);
+			Assert.IsFalse(c.IsLifted);
 			// Lifted user-defined conversion
-			Assert.IsTrue(ImplicitConversion(typeof(DateTime?), typeof(DateTimeOffset?)));
+			c = ImplicitConversion(typeof(DateTime?), typeof(DateTimeOffset?));
+			Assert.IsTrue(c.IsValid && c.IsUserDefined && c.IsLifted);
 			// User-defined conversion doesn't drop the nullability
-			Assert.IsFalse(ImplicitConversion(typeof(DateTime?), typeof(DateTimeOffset)));
+			c = ImplicitConversion(typeof(DateTime?), typeof(DateTimeOffset));
+			Assert.IsFalse(c.IsValid);
 		}
 		
-		Conversion IntegerLiteralConversion(object value, Type to)
+		bool IntegerLiteralConversion(object value, Type to)
 		{
 			IType fromType = compilation.FindType(value.GetType());
 			ConstantResolveResult crr = new ConstantResolveResult(fromType, value);
 			IType to2 = compilation.FindType(to);
-			return conversions.ImplicitConversion(crr, to2);
+			return conversions.ImplicitConversion(crr, to2).IsValid;
 		}
 		
 		[Test]
@@ -500,13 +507,99 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 						b, new [] { new TypeParameterReference(EntityType.TypeDefinition, 0) }
 					) } ) }));
 			
-			ICompilation compilation = new SimpleCompilation(CecilLoaderTests.Mscorlib);
+			ICompilation compilation = TypeSystemHelper.CreateCompilation(a, b);
 			ITypeDefinition resolvedA = compilation.MainAssembly.GetTypeDefinition(a);
 			ITypeDefinition resolvedB = compilation.MainAssembly.GetTypeDefinition(b);
 			
-			IType type1 = new ParameterizedType(resolvedB, new[] { compilation.FindType(KnownTypeCode.Double) });
+			IType type1 = new ParameterizedType(resolvedB, new [] { compilation.FindType(KnownTypeCode.Double) });
 			IType type2 = new ParameterizedType(resolvedA, new [] { new ParameterizedType(resolvedB, new[] { compilation.FindType(KnownTypeCode.String) }) });
-			Assert.IsFalse(conversions.ImplicitConversion(type1, type2));
+			Assert.IsFalse(conversions.ImplicitConversion(type1, type2).IsValid);
 		}
+
+		[Test]
+		public void ImplicitTypeParameterConversion()
+		{
+			string program = @"using System;
+class Test {
+	public void M<T, U>(T t) where T : U {
+		U u = $t$;
+	}
+}";
+			Assert.AreEqual(C.BoxingConversion, GetConversion(program));
+		}
+		
+		[Test]
+		public void InvalidImplicitTypeParameterConversion()
+		{
+			string program = @"using System;
+class Test {
+	public void M<T, U>(T t) where U : T {
+		U u = $t$;
+	}
+}";
+			Assert.AreEqual(C.None, GetConversion(program));
+		}
+		
+		[Test]
+		public void ImplicitTypeParameterArrayConversion()
+		{
+			string program = @"using System;
+class Test {
+	public void M<T, U>(T[] t) where T : U {
+		U[] u = $t$;
+	}
+}";
+			// invalid, e.g. T=int[], U=object[]
+			Assert.AreEqual(C.None, GetConversion(program));
+		}
+		
+		[Test]
+		public void ImplicitTypeParameterConversionWithClassConstraint()
+		{
+			string program = @"using System;
+class Test {
+	public void M<T, U>(T t) where T : class, U where U : class {
+		U u = $t$;
+	}
+}";
+			Assert.AreEqual(C.ImplicitReferenceConversion, GetConversion(program));
+		}
+		
+		[Test]
+		public void ImplicitTypeParameterArrayConversionWithClassConstraint()
+		{
+			string program = @"using System;
+class Test {
+	public void M<T, U>(T[] t) where T : class, U where U : class {
+		U[] u = $t$;
+	}
+}";
+			Assert.AreEqual(C.ImplicitReferenceConversion, GetConversion(program));
+		}
+		
+		[Test]
+		public void ImplicitTypeParameterConversionWithClassConstraintOnlyOnT()
+		{
+			string program = @"using System;
+class Test {
+	public void M<T, U>(T t) where T : class, U {
+		U u = $t$;
+	}
+}";
+			Assert.AreEqual(C.ImplicitReferenceConversion, GetConversion(program));
+		}
+		
+		[Test]
+		public void ImplicitTypeParameterArrayConversionWithClassConstraintOnlyOnT()
+		{
+			string program = @"using System;
+class Test {
+	public void M<T, U>(T[] t) where T : class, U {
+		U[] u = $t$;
+	}
+}";
+			Assert.AreEqual(C.ImplicitReferenceConversion, GetConversion(program));
+		}
+		
 	}
 }

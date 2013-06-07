@@ -27,18 +27,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 	{
 		readonly IProperty propertyDefinition;
 		
-		public SpecializedProperty(IType declaringType, IProperty propertyDefinition)
-			: base(declaringType, propertyDefinition)
+		public SpecializedProperty(IProperty propertyDefinition, TypeParameterSubstitution substitution)
+			: base(propertyDefinition)
 		{
-			this.propertyDefinition = propertyDefinition;
-			Initialize(GetSubstitution(declaringType));
-		}
-		
-		internal SpecializedProperty(IType declaringType, IProperty propertyDefinition, TypeVisitor substitution)
-			: base(declaringType, propertyDefinition)
-		{
-			this.propertyDefinition = propertyDefinition;
-			Initialize(substitution);
+			AddSubstitution(substitution);
+			this.propertyDefinition = (IProperty)base.baseMember;
 		}
 		
 		public bool CanGet {
@@ -49,12 +42,14 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get { return propertyDefinition.CanSet; }
 		}
 		
-		public IAccessor Getter {
-			get { return propertyDefinition.Getter; }
+		IMethod getter, setter;
+		
+		public IMethod Getter {
+			get { return WrapAccessor(ref this.getter, propertyDefinition.Getter); }
 		}
 		
-		public IAccessor Setter {
-			get { return propertyDefinition.Setter; }
+		public IMethod Setter {
+			get { return WrapAccessor(ref this.setter, propertyDefinition.Setter); }
 		}
 		
 		public bool IsIndexer {

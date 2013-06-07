@@ -30,7 +30,6 @@ using System;
 using NUnit.Framework;
 using System.Diagnostics;
 
-
 namespace ICSharpCode.NRefactory.CSharp.CodeCompletion
 {
 	[TestFixture]
@@ -78,6 +77,106 @@ public class TestClass
 	private static int PrivStaticProperty { get; set; }
 	private static void PrivStaticMethod () { }
 ";
+		[Test()]
+		public void TestDerivedClassGeneralAccess ()
+		{
+			CodeCompletionBugTests.CombinedProviderTest(testClass + @"}
+// from
+class Test : TestClass {
+	public void Foo ()
+	{
+		$a$
+	}
+}", provider => {
+				Assert.IsNotNull (provider.Find ("PubField"), "'PubField' not found.");
+				Assert.IsNotNull (provider.Find ("PubProperty"), "'PubProperty' not found.");
+				Assert.IsNotNull (provider.Find ("PubMethod"), "'PubMethod' not found.");
+	
+				Assert.IsNotNull (provider.Find ("ProtField"), "'ProtField' not found.");
+				Assert.IsNotNull (provider.Find ("ProtProperty"), "'ProtProperty' not found.");
+				Assert.IsNotNull (provider.Find ("ProtMethod"), "'ProtMethod' not found.");
+	
+				Assert.IsNotNull (provider.Find ("ProtOrInternalField"), "'ProtOrInternalField' not found.");
+				Assert.IsNotNull (provider.Find ("ProtOrInternalProperty"), "'ProtOrInternalProperty' not found.");
+				Assert.IsNotNull (provider.Find ("ProtOrInternalMethod"), "'ProtOrInternalMethod' not found.");
+	
+				Assert.IsNotNull (provider.Find ("ProtAndInternalField"), "'ProtAndInternalField' not found.");
+				Assert.IsNotNull (provider.Find ("ProtAndInternalProperty"), "'ProtAndInternalProperty' not found.");
+				Assert.IsNotNull (provider.Find ("ProtAndInternalMethod"), "'ProtAndInternalMethod' not found.");
+	
+				Assert.IsNotNull (provider.Find ("InternalField"), "'InternalField' not found.");
+				Assert.IsNotNull (provider.Find ("InternalProperty"), "'InternalProperty' not found.");
+				Assert.IsNotNull (provider.Find ("InternalMethod"), "'InternalMethod' not found.");
+	
+				Assert.IsNotNull (provider.Find ("PubStaticField"), "'PubStaticField' not found.");
+				Assert.IsNotNull (provider.Find ("PubStaticProperty"), "'PubStaticProperty' not found.");
+				Assert.IsNotNull (provider.Find ("PubStaticMethod"), "'PubStaticMethod' not found.");
+				
+				Assert.IsNotNull (provider.Find ("ProtStaticField"), "'ProtStaticField' not found.");
+				Assert.IsNotNull (provider.Find ("ProtStaticProperty"), "'ProtStaticProperty' not found.");
+				Assert.IsNotNull (provider.Find ("ProtStaticMethod"), "'ProtStaticMethod' not found.");
+				
+				Assert.IsNull (provider.Find ("PrivField"), "'PrivField' found.");
+				Assert.IsNull (provider.Find ("PrivProperty"), "'PrivProperty' found.");
+				Assert.IsNull (provider.Find ("PrivMethod"), "'PrivMethod' found.");
+
+				Assert.IsNull (provider.Find ("PrivStaticField"), "'PrivStaticField' found.");
+				Assert.IsNull (provider.Find ("PrivStaticProperty"), "'PrivStaticProperty' found.");
+				Assert.IsNull (provider.Find ("PrivStaticMethod"), "'PrivStaticMethod' found.");
+			});
+		}
+	
+		[Test()]
+		public void TestDerivedClassMemberReferenceAccess ()
+		{
+			CodeCompletionBugTests.CombinedProviderTest(testClass + @"}
+// from
+class Test : TestClass {
+	public void Foo ()
+	{
+		$this.$
+	}
+}", provider => {
+				Assert.IsNotNull (provider.Find ("PubField"), "'PubField' not found.");
+				Assert.IsNotNull (provider.Find ("PubProperty"), "'PubProperty' not found.");
+				Assert.IsNotNull (provider.Find ("PubMethod"), "'PubMethod' not found.");
+	
+				Assert.IsNotNull (provider.Find ("ProtField"), "'ProtField' not found.");
+				Assert.IsNotNull (provider.Find ("ProtProperty"), "'ProtProperty' not found.");
+				Assert.IsNotNull (provider.Find ("ProtMethod"), "'ProtMethod' not found.");
+	
+				Assert.IsNotNull (provider.Find ("ProtOrInternalField"), "'ProtOrInternalField' not found.");
+				Assert.IsNotNull (provider.Find ("ProtOrInternalProperty"), "'ProtOrInternalProperty' not found.");
+				Assert.IsNotNull (provider.Find ("ProtOrInternalMethod"), "'ProtOrInternalMethod' not found.");
+	
+				Assert.IsNotNull (provider.Find ("ProtAndInternalField"), "'ProtAndInternalField' not found.");
+				Assert.IsNotNull (provider.Find ("ProtAndInternalProperty"), "'ProtAndInternalProperty' not found.");
+				Assert.IsNotNull (provider.Find ("ProtAndInternalMethod"), "'ProtAndInternalMethod' not found.");
+	
+				Assert.IsNotNull (provider.Find ("InternalField"), "'InternalField' not found.");
+				Assert.IsNotNull (provider.Find ("InternalProperty"), "'InternalProperty' not found.");
+				Assert.IsNotNull (provider.Find ("InternalMethod"), "'InternalMethod' not found.");
+	
+//				Assert.IsNotNull (provider.Find ("PubStaticField"), "'PubStaticField' not found.");
+//				Assert.IsNotNull (provider.Find ("PubStaticProperty"), "'PubStaticProperty' not found.");
+//				Assert.IsNotNull (provider.Find ("PubStaticMethod"), "'PubStaticMethod' not found.");
+//				
+//				Assert.IsNotNull (provider.Find ("ProtStaticField"), "'ProtStaticField' not found.");
+//				Assert.IsNotNull (provider.Find ("ProtStaticProperty"), "'ProtStaticProperty' not found.");
+//				Assert.IsNotNull (provider.Find ("ProtStaticMethod"), "'ProtStaticMethod' not found.");
+//				
+				Assert.IsNull (provider.Find ("PrivField"), "'PrivField' found.");
+				Assert.IsNull (provider.Find ("PrivProperty"), "'PrivProperty' found.");
+				Assert.IsNull (provider.Find ("PrivMethod"), "'PrivMethod' found.");
+
+				Assert.IsNull (provider.Find ("PrivStaticField"), "'PrivStaticField' found.");
+				Assert.IsNull (provider.Find ("PrivStaticProperty"), "'PrivStaticProperty' found.");
+				Assert.IsNull (provider.Find ("PrivStaticMethod"), "'PrivStaticMethod' found.");
+			});
+		}
+	
+
+
 		[Test()]
 		public void TestNonStaticClassAccess ()
 		{
@@ -1078,7 +1177,28 @@ class TestClass
 			Assert.IsNotNull (provider.Find ("InnerEnumTest.TestEnum.B"), "enum 'InnerEnumTest.TestEnum.B' not found.");
 			Assert.IsNotNull (provider.Find ("InnerEnumTest.TestEnum.C"), "enum 'InnerEnumTest.TestEnum.C' not found.");
 		}
-		
+
+		[Test()]
+		public void TestEnumInBinaryOperatorExpression ()
+		{
+			CodeCompletionBugTests.CombinedProviderTest (
+@"
+[Flags]
+public enum TestEnum { A, B, C}
+
+class TestClass
+{
+	public void Foo ()
+	{
+		$TestEnum test = TestEnum.A | T$
+	}
+}", provider => {
+			Assert.IsNotNull (provider.Find ("TestEnum"), "enum 'TestEnum' not found.");
+			Assert.IsNotNull (provider.Find ("TestEnum.A"), "enum 'TestEnum.A' not found.");
+			Assert.IsNotNull (provider.Find ("TestEnum.B"), "enum 'TestEnum.B' not found.");
+			Assert.IsNotNull (provider.Find ("TestEnum.C"), "enum 'TestEnum.C' not found.");
+			});
+		}
 		
 		[Test()]
 		public void TestPrimimitiveTypeCompletionString ()
@@ -1125,9 +1245,8 @@ public static void Query(MySqlConnection conn, string database, string table)
 			Assert.IsNotNull (provider, "provider == null");
 			Assert.IsNotNull (provider.Find ("WriteLine"), "method 'WriteLine' not found.");
 		}
-		
 		[Test()]
-		public void TestAttributeContext ()
+		public void TestAttributeContextClass ()
 		{
 			var provider = CodeCompletionBugTests.CreateProvider (@"
 using System;
@@ -1137,6 +1256,38 @@ class Test {
 }");
 			Assert.IsNotNull (provider, "provider == null");
 			Assert.IsNotNull (provider.Find ("Obsolete"), "attribute 'Obsolete' not found.");
+			Assert.IsNotNull (provider.Find ("Serializable"), "attribute 'Serializable' not found.");
+		}
+		
+		[Test()]
+		public void TestAttributeContextInNamespace ()
+		{
+			var provider = CodeCompletionBugTests.CreateProvider (@"
+using System;
+
+namespace Test {
+	$[O$
+	class Test {
+	}
+}
+");
+			Assert.IsNotNull (provider, "provider == null");
+			Assert.IsNotNull (provider.Find ("Obsolete"), "attribute 'Obsolete' not found.");
+			Assert.IsNotNull (provider.Find ("Serializable"), "attribute 'Serializable' not found.");
+		}
+		
+		[Test()]
+		public void TestAttributeContextMember ()
+		{
+			var provider = CodeCompletionBugTests.CreateProvider (@"
+using System;
+
+class Test {
+	$[O$
+}");
+			Assert.IsNotNull (provider, "provider == null");
+			Assert.IsNotNull (provider.Find ("Obsolete"), "attribute 'Obsolete' not found.");
+			Assert.IsNotNull (provider.Find ("Serializable"), "attribute 'Serializable' not found.");
 		}
 		
 		[Test()]
@@ -1166,5 +1317,33 @@ $$
 			Assert.IsNotNull (provider.Find ("Test"), "class 'Test' not found.");
 		}
 		
+		[Test()]
+		public void TestAttributeContextParameterCompletion ()
+		{
+			var provider = CodeCompletionBugTests.CreateProvider (@"$[Obsolete(System.$");
+			Assert.IsNotNull (provider, "provider == null");
+			Assert.IsNotNull (provider.Find ("Console"), "'Console' not found.");
+		}
+		
+		
+		/// <summary>
+		/// Bug 3320 - Constants accessed by class name do not show in completion list
+		/// </summary>
+		[Test()]
+		public void TestBug3320 ()
+		{
+			CodeCompletionBugTests.CombinedProviderTest (@"
+public class Foo
+{
+    public const int Bar = 5;
+
+    public void DoStuff()
+    {
+        $Foo.$
+    } 
+}", provider => {
+				Assert.IsNotNull (provider.Find ("Bar"), "'Bar' not found.");
+			});
+		}
 	}
 }

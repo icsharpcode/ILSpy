@@ -1,4 +1,4 @@
-// 
+﻿// 
 // MainWindow.cs
 //  
 // Author:
@@ -29,7 +29,6 @@ using Gtk;
 using System.IO;
 using System.Text;
 using System.Reflection;
-using Mono.TextEditor;
 using ICSharpCode.NRefactory.CSharp.Resolver;
 using ICSharpCode.NRefactory.Semantics;
 using System.Collections.Generic;
@@ -46,8 +45,8 @@ namespace ICSharpCode.NRefactory.GtkDemo
 	{
 		TreeStore store = new TreeStore (typeof (string), typeof (string), typeof (AstNode), typeof (Pixbuf));
 		Dictionary<AstNode, TreeIter> iterDict = new Dictionary<AstNode, TreeIter> ();
-		TextEditor editor = new TextEditor ();
-		CompilationUnit unit;
+//		TextEditor editor = new TextEditor ();
+		SyntaxTree unit;
 		
 		Pixbuf comment = new Pixbuf (typeof (MainWindow).Assembly, "comment.png");
 		Pixbuf classPixbuf = new Pixbuf (typeof (MainWindow).Assembly, "class.png");
@@ -76,20 +75,25 @@ namespace ICSharpCode.NRefactory.GtkDemo
 			this.treeviewNodes.AppendColumn ("ResolveResult", new CellRendererText (), "text", 1);
 			this.treeviewNodes.Selection.Changed += SelectionChanged;
 //			this.treeviewNodes.HeadersVisible = false;
-			this.scrolledwindow1.Child = editor;
-			this.scrolledwindow1.Child.ShowAll ();
-			this.editor.Document.MimeType = "text/x-csharp";
-			this.editor.Options.FontName = "Mono 14";
-			this.editor.Caret.PositionChanged += HandlePositionChanged;
-			this.editor.Text = File.ReadAllText ("/Users/mike/work/NRefactory/ICSharpCode.NRefactory.GtkDemo/CSharpDemo.cs");
+			this.textview1.ModifyFont (Pango.FontDescription.FromString ("Mono 14"));
+			this.textview1.MoveCursor += HandleMoveCursor;
+			string path = System.IO.Path.Combine (System.IO.Path.GetDirectoryName (Assembly.GetExecutingAssembly ().Location), "CSharpDemo.cs");
+			this.textview1.Buffer.Text = File.ReadAllText (path);
 			buttonParse.Clicked += HandleClicked;
 			buttonGenerate.Clicked += CSharpGenerateCodeButtonClick;
 			HandleClicked (this, EventArgs.Empty);
 		}
-
-		void HandlePositionChanged (object sender, DocumentLocationEventArgs e)
+		protected override void OnDestroyed ()
 		{
-			var node = unit.GetNodeAt (editor.Caret.Line, editor.Caret.Column);
+			base.OnDestroyed ();
+			Application.Quit ();
+		}
+		
+		void HandleMoveCursor (object o, MoveCursorArgs args)
+		{
+			int cp = textview1.Buffer.CursorPosition;
+			var textIter = textview1.Buffer.GetIterAtOffset (cp);
+			var node = unit.GetNodeAt (textIter.Line + 1, textIter.LineOffset + 1);
 			if (node == null)
 				return;
 			TreeIter iter;
@@ -104,10 +108,7 @@ namespace ICSharpCode.NRefactory.GtkDemo
 
 		void CSharpGenerateCodeButtonClick(object sender, EventArgs e)
 		{
-			var w = new StringWriter();
-			var output = new CSharpOutputVisitor (w, new CSharpFormattingOptions());
-			unit.AcceptVisitor (output, null);
-			editor.Text = w.ToString();
+			this.textview1.Buffer.Text = unit.GetText();
 		}
 		
 		void SelectionChanged (object sender, EventArgs e)
@@ -119,13 +120,16 @@ namespace ICSharpCode.NRefactory.GtkDemo
 			var node = store.GetValue (iter, 2) as AstNode;
 			if (node == null)
 				return;
-			this.editor.Caret.PositionChanged -= HandlePositionChanged;
-			this.editor.SetCaretTo (node.StartLocation.Line, node.StartLocation.Column);
-			this.editor.SetSelection (node.StartLocation.Line, node.StartLocation.Column, node.EndLocation.Line, node.EndLocation.Column);
-			this.editor.Caret.PositionChanged += HandlePositionChanged;
+			this.textview1.MoveCursor -= HandleMoveCursor;
+			var textIter = this.textview1.Buffer.GetIterAtLineOffset (node.StartLocation.Line - 1, node.StartLocation.Column - 1);
+			this.textview1.ScrollToIter (textIter, 0, false, 0, 0);
+			this.textview1.Buffer.PlaceCursor (textIter);
+			this.textview1.Buffer.SelectRange (textIter, this.textview1.Buffer.GetIterAtLineOffset (node.EndLocation.Line -1, node.EndLocation.Column - 1));
+			this.textview1.MoveCursor += HandleMoveCursor;
 		}
-		
-		public void ShowUnit (CompilationUnit unit, CSharpAstResolver visitor)
+
+
+		public void ShowUnit (SyntaxTree unit, CSharpAstResolver visitor)
 		{
 			this.unit = unit;
 			store.Clear ();
@@ -143,7 +147,7 @@ namespace ICSharpCode.NRefactory.GtkDemo
 				return comment;
 			if (child is PreProcessorDirective)
 				return comment;
-			if (child is AttributedNode)
+			if (child is EntityDeclaration)
 				return classPixbuf;
 			if (child is CSharpTokenNode)
 				return tokenPixbuf;
@@ -217,16 +221,16 @@ namespace ICSharpCode.NRefactory.GtkDemo
 		void HandleClicked (object sender, EventArgs e)
 		{
 			var parser = new CSharpParser ();
-			var unit = parser.Parse (editor.Text, "dummy.cs");
+			var unit = parser.Parse (textview1.Buffer.Text, "dummy.cs");
 			
-			var parsedFile = unit.ToTypeSystem();
+			var unresolvedFile = unit.ToTypeSystem();
 			
 			IProjectContent project = new CSharpProjectContent ();
-			project = project.UpdateProjectContent (null, parsedFile);
+			project = project.AddOrUpdateFiles (unresolvedFile);
 			project = project.AddAssemblyReferences (builtInLibs.Value);
 			
 			
-			CSharpAstResolver resolver = new CSharpAstResolver(project.CreateCompilation (), unit, parsedFile);
+			CSharpAstResolver resolver = new CSharpAstResolver(project.CreateCompilation (), unit, unresolvedFile);
 			ShowUnit (unit, resolver);
 			
 		}

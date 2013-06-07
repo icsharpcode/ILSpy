@@ -24,7 +24,7 @@ namespace ICSharpCode.NRefactory.Editor
 {
 	/// <summary>
 	/// A read-only view on a (potentially mutable) text source.
-	/// The IDocument interfaces derives from this interface.
+	/// The IDocument interface derives from this interface.
 	/// </summary>
 	public interface ITextSource
 	{
@@ -67,6 +67,7 @@ namespace ICSharpCode.NRefactory.Editor
 		/// <summary>
 		/// Gets the whole text as string.
 		/// </summary>
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods")]
 		string Text { get; }
 		
 		/// <summary>
@@ -94,6 +95,25 @@ namespace ICSharpCode.NRefactory.Editor
 		string GetText(ISegment segment);
 		
 		/// <summary>
+		/// Writes the text from this document into the TextWriter.
+		/// </summary>
+		void WriteTextTo(TextWriter writer);
+		
+		/// <summary>
+		/// Writes the text from this document into the TextWriter.
+		/// </summary>
+		void WriteTextTo(TextWriter writer, int offset, int length);
+		
+		/// <summary>
+		/// Gets the index of the first occurrence of the character in the specified array.
+		/// </summary>
+		/// <param name="c">Character to search for</param>
+		/// <param name="startIndex">Start index of the area to search.</param>
+		/// <param name="count">Length of the area to search.</param>
+		/// <returns>The first index where the character was found; or -1 if no occurrence was found.</returns>
+		int IndexOf(char c, int startIndex, int count);
+		
+		/// <summary>
 		/// Gets the index of the first occurrence of any character in the specified array.
 		/// </summary>
 		/// <param name="anyOf">Characters to search for</param>
@@ -113,6 +133,17 @@ namespace ICSharpCode.NRefactory.Editor
 		int IndexOf(string searchText, int startIndex, int count, StringComparison comparisonType);
 		
 		/// <summary>
+		/// Gets the index of the last occurrence of the specified character in this text source.
+		/// </summary>
+		/// <param name="c">The search character</param>
+		/// <param name="startIndex">Start index of the area to search.</param>
+		/// <param name="count">Length of the area to search.</param>
+		/// <returns>The last index where the search term was found; or -1 if no occurrence was found.</returns>
+		/// <remarks>The search proceeds backwards from (startIndex+count) to startIndex.
+		/// This is different than the meaning of the parameters on string.LastIndexOf!</remarks>
+		int LastIndexOf(char c, int startIndex, int count);
+		
+		/// <summary>
 		/// Gets the index of the last occurrence of the specified search text in this text source.
 		/// </summary>
 		/// <param name="searchText">The search text</param>
@@ -120,6 +151,8 @@ namespace ICSharpCode.NRefactory.Editor
 		/// <param name="count">Length of the area to search.</param>
 		/// <param name="comparisonType">String comparison to use.</param>
 		/// <returns>The last index where the search term was found; or -1 if no occurrence was found.</returns>
+		/// <remarks>The search proceeds backwards from (startIndex+count) to startIndex.
+		/// This is different than the meaning of the parameters on string.LastIndexOf!</remarks>
 		int LastIndexOf(string searchText, int startIndex, int count, StringComparison comparisonType);
 		
 		/* What about:
@@ -145,7 +178,7 @@ namespace ICSharpCode.NRefactory.Editor
 	/// <remarks>
 	/// Verions can be used to efficiently detect whether a document has changed and needs reparsing;
 	/// or even to implement incremental parsers.
-	/// It is a separate class from ITextBuffer to allow the GC to collect the text buffer while
+	/// It is a separate class from ITextSource to allow the GC to collect the text source while
 	/// the version checkpoint is still in use.
 	/// </remarks>
 	public interface ITextSourceVersion
@@ -177,6 +210,6 @@ namespace ICSharpCode.NRefactory.Editor
 		/// Calculates where the offset has moved in the other buffer version.
 		/// </summary>
 		/// <exception cref="ArgumentException">Raised if 'other' belongs to a different document than this checkpoint.</exception>
-		int MoveOffsetTo(ITextSourceVersion other, int oldOffset, AnchorMovementType movement);
+		int MoveOffsetTo(ITextSourceVersion other, int oldOffset, AnchorMovementType movement = AnchorMovementType.Default);
 	}
 }

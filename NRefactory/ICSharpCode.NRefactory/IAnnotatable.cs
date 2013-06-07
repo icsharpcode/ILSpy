@@ -78,6 +78,10 @@ namespace ICSharpCode.NRefactory
 		void RemoveAnnotations(Type type);
 	}
 	
+	/// <summary>
+	/// Base class used to implement the IAnnotatable interface.
+	/// This implementation is thread-safe.
+	/// </summary>
 	[Serializable]
 	public abstract class AbstractAnnotatable : IAnnotatable
 	{
@@ -85,9 +89,22 @@ namespace ICSharpCode.NRefactory
 		// or to an AnnotationList.
 		// Once it is pointed at an AnnotationList, it will never change (this allows thread-safety support by locking the list)
 		
-		[CLSCompliant(false)]
-		[NonSerialized]
-		protected object annotations;
+		object annotations;
+		
+		/// <summary>
+		/// Clones all annotations.
+		/// This method is intended to be called by Clone() implementations in derived classes.
+		/// <code>
+		/// AstNode copy = (AstNode)MemberwiseClone();
+		/// copy.CloneAnnotations();
+		/// </code>
+		/// </summary>
+		protected void CloneAnnotations()
+		{
+			ICloneable cloneable = annotations as ICloneable;
+			if (cloneable != null)
+				annotations = cloneable.Clone();
+		}
 		
 		sealed class AnnotationList : List<object>, ICloneable
 		{

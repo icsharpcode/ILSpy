@@ -674,6 +674,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public void DisassembleField(FieldDefinition field)
 		{
 			output.WriteDefinition(".field ", field);
+			if (field.HasLayoutInfo) {
+				output.Write("[" + field.Offset + "] ");
+			}
 			WriteEnum(field.Attributes & FieldAttributes.FieldAccessMask, fieldVisibility);
 			const FieldAttributes hasXAttributes = FieldAttributes.HasDefault | FieldAttributes.HasFieldMarshal | FieldAttributes.HasFieldRVA;
 			WriteFlags(field.Attributes & ~(FieldAttributes.FieldAccessMask | hasXAttributes), fieldAttributes);
@@ -809,6 +812,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ TypeAttributes.SpecialName, "specialname" },
 			{ TypeAttributes.Import, "import" },
 			{ TypeAttributes.Serializable, "serializable" },
+			{ TypeAttributes.WindowsRuntime, "windowsruntime" },
 			{ TypeAttributes.BeforeFieldInit, "beforefieldinit" },
 			{ TypeAttributes.HasSecurity, null },
 		};
@@ -1075,7 +1079,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 		
 		public void WriteAssemblyHeader(AssemblyDefinition asm)
 		{
-			output.Write(".assembly " + DisassemblerHelpers.Escape(asm.Name.Name));
+			output.Write(".assembly ");
+			if (asm.Name.IsWindowsRuntime)
+				output.Write("windowsruntime ");
+			output.Write(DisassemblerHelpers.Escape(asm.Name.Name));
 			OpenBlock(false);
 			WriteAttributes(asm.CustomAttributes);
 			WriteSecurityDeclarations(asm);
@@ -1103,7 +1110,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine(".module extern {0}", DisassemblerHelpers.Escape(mref.Name));
 			}
 			foreach (var aref in module.AssemblyReferences) {
-				output.Write(".assembly extern {0}", DisassemblerHelpers.Escape(aref.Name));
+				output.Write(".assembly extern ");
+				if (aref.IsWindowsRuntime)
+					output.Write("windowsruntime ");
+				output.Write(DisassemblerHelpers.Escape(aref.Name));
 				OpenBlock(false);
 				if (aref.PublicKeyToken != null) {
 					output.Write(".publickeytoken = ");

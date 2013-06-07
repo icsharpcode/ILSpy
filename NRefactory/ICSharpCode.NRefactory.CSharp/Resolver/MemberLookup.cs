@@ -65,6 +65,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// </summary>
 		public bool IsProtectedAccessAllowed(IType targetType)
 		{
+			if (targetType.Kind == TypeKind.TypeParameter)
+				targetType = ((ITypeParameter)targetType).EffectiveBaseClass;
 			ITypeDefinition typeDef = targetType.GetDefinition();
 			if (typeDef == null)
 				return false;
@@ -503,7 +505,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 						}
 					}
 				} else if (!classLookupGroup.MethodsAreHidden) {
-					foreach (IMethod classMethod in classLookupGroup.Methods) {
+					foreach (var classMethod in classLookupGroup.Methods) {
 						// Hide all non-methods from interface types, and all methods with the same signature
 						// as a method in this class type.
 						foreach (var interfaceLookupGroup in lookupGroups) {
@@ -569,6 +571,10 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					return new AmbiguousTypeResolveResult(resultGroup.NestedTypes[0]);
 				else
 					return new TypeResolveResult(resultGroup.NestedTypes[0]);
+			}
+			
+			if (resultGroup.NonMethod.IsStatic && targetResolveResult is ThisResolveResult) {
+				targetResolveResult = new TypeResolveResult(targetResolveResult.Type);
 			}
 			
 			if (lookupGroups.Count > 1) {

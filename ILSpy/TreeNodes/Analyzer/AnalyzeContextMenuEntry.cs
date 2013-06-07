@@ -18,22 +18,27 @@
 
 using System;
 using System.Linq;
+using System.Windows;
 using ICSharpCode.TreeView;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	[ExportContextMenuEntry(Header = "Analyze", Icon = "images/Search.png")]
+	[ExportContextMenuEntryAttribute(Header = "Analyze", Icon = "images/Search.png")]
 	internal sealed class AnalyzeContextMenuEntry : IContextMenuEntry
 	{
-		public bool IsVisible(SharpTreeNode[] selectedNodes)
+		public bool IsVisible(TextViewContext context)
 		{
-			return selectedNodes.All(n => n is IMemberTreeNode);
+			if (context.SelectedTreeNodes == null)
+				return context.Reference != null && context.Reference.Reference is MemberReference;
+			return context.SelectedTreeNodes.All(n => n is IMemberTreeNode);
 		}
 
-		public bool IsEnabled(SharpTreeNode[] selectedNodes)
+		public bool IsEnabled(TextViewContext context)
 		{
-			foreach (IMemberTreeNode node in selectedNodes) {
+			if (context.SelectedTreeNodes == null)
+				return context.Reference != null && context.Reference.Reference is MemberReference;
+			foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
 				if (!(node.Member is TypeDefinition
 				      || node.Member is FieldDefinition
 				      || node.Member is MethodDefinition
@@ -45,32 +50,38 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return true;
 		}
 
-		public void Execute(SharpTreeNode[] selectedNodes)
+		public void Execute(TextViewContext context)
 		{
-			// TODO: figure out when equivalent nodes are already present
-			// and focus those instead.
-			foreach (IMemberTreeNode node in selectedNodes) {
-				Analyze(node.Member);
+			if (context.SelectedTreeNodes != null) {
+				foreach (IMemberTreeNode node in context.SelectedTreeNodes) {
+					Analyze(node.Member);
+				}
+			} else if (context.Reference != null && context.Reference.Reference is MemberReference) {
+				if (context.Reference.Reference is MemberReference)
+					Analyze((MemberReference)context.Reference.Reference);
+				// TODO: implement support for other references: ParameterReference, etc.
 			}
 		}
 
 		public static void Analyze(MemberReference member)
 		{
-			TypeDefinition type = member as TypeDefinition;
+			TypeDefinition type = null;
+			if (member is TypeReference)
+				type = ((TypeReference)member).Resolve();
 			if (type != null)
-				AnalyzerTreeView.Instance.Show(new AnalyzedTypeTreeNode(type));
+				AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedTypeTreeNode(type.Resolve()));
 			FieldDefinition field = member as FieldDefinition;
 			if (field != null)
-				AnalyzerTreeView.Instance.Show(new AnalyzedFieldTreeNode(field));
+				AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedFieldTreeNode(field));
 			MethodDefinition method = member as MethodDefinition;
 			if (method != null)
-				AnalyzerTreeView.Instance.Show(new AnalyzedMethodTreeNode(method));
+				AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedMethodTreeNode(method));
 			var propertyAnalyzer = AnalyzedPropertyTreeNode.TryCreateAnalyzer(member);
 			if (propertyAnalyzer != null)
-				AnalyzerTreeView.Instance.Show(propertyAnalyzer);
+				AnalyzerTreeView.Instance.ShowOrFocus(propertyAnalyzer);
 			var eventAnalyzer = AnalyzedEventTreeNode.TryCreateAnalyzer(member);
 			if (eventAnalyzer != null)
-				AnalyzerTreeView.Instance.Show(eventAnalyzer);
+				AnalyzerTreeView.Instance.ShowOrFocus(eventAnalyzer);
 		}
 	}
 }

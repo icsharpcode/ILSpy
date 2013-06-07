@@ -37,7 +37,7 @@ namespace Mono.CSharp {
 			return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode (obj);
 		}
 	}
-
+#if !NET_4_0 && !MONODROID
 	public class Tuple<T1, T2> : IEquatable<Tuple<T1, T2>>
 	{
 		public Tuple (T1 item1, T2 item2)
@@ -107,6 +107,7 @@ namespace Mono.CSharp {
 			return new Tuple<T1, T2, T3> (item1, item2, item3);
 		}
 	}
+#endif
 
 	static class ArrayComparer
 	{
@@ -126,7 +127,7 @@ namespace Mono.CSharp {
 			return true;
 		}
 	}
-
+	#if !FULL_AST
 	/// <summary>
 	///   This is an arbitrarily seekable StreamReader wrapper.
 	///
@@ -136,21 +137,23 @@ namespace Mono.CSharp {
 	/// </summary>
 	public class SeekableStreamReader : IDisposable
 	{
+		public const int DefaultReadAheadSize = 2048;
+
 		StreamReader reader;
 		Stream stream;
 
-		static char[] buffer;
+		char[] buffer;
 		int read_ahead_length;	// the length of read buffer
 		int buffer_start;       // in chars
 		int char_count;         // count of filled characters in buffer[]
 		int pos;                // index into buffer[]
 
-		public SeekableStreamReader (Stream stream, Encoding encoding)
+		public SeekableStreamReader (Stream stream, Encoding encoding, char[] sharedBuffer = null)
 		{
 			this.stream = stream;
+			this.buffer = sharedBuffer;
 
-			const int default_read_ahead = 2048;
-			InitializeStream (default_read_ahead);
+			InitializeStream (DefaultReadAheadSize);
 			reader = new StreamReader (stream, encoding, true);
 		}
 
@@ -237,7 +240,14 @@ namespace Mono.CSharp {
 
 			return pos < char_count;
 		}
-
+		
+		public char GetChar (int position)
+		{
+			if (buffer_start <= position && position < buffer.Length)
+				return buffer[position];
+			return '\0';
+		}
+		
 		public char[] ReadChars (int fromPosition, int toPosition)
 		{
 			char[] chars = new char[toPosition - fromPosition];
@@ -266,7 +276,7 @@ namespace Mono.CSharp {
 			return buffer [pos++];
 		}
 	}
-
+#endif
 	public class UnixUtils {
 		[System.Runtime.InteropServices.DllImport ("libc", EntryPoint="isatty")]
 		extern static int _isatty (int fd);

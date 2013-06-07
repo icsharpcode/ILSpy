@@ -256,7 +256,7 @@ namespace ICSharpCode.NRefactory.VB
 			}
 			
 			if (!typeDeclaration.InheritsType.IsNull || typeDeclaration.ImplementsTypes.Any())
-			NewLine();
+				NewLine();
 			
 			WriteMembers(typeDeclaration.Members);
 			
@@ -397,6 +397,8 @@ namespace ICSharpCode.NRefactory.VB
 		{
 			StartNode(primitiveExpression);
 			
+			if (lastWritten == LastWritten.KeywordOrIdentifier)
+				Space();
 			WritePrimitiveValue(primitiveExpression.Value);
 			
 			return EndNode(primitiveExpression);
@@ -1291,6 +1293,8 @@ namespace ICSharpCode.NRefactory.VB
 			WriteIdentifier(variableIdentifier.Name.Name);
 			if (variableIdentifier.HasNullableSpecifier)
 				WriteToken("?", VariableIdentifier.Roles.QuestionMark);
+			if (variableIdentifier.ArraySizeSpecifiers.Count > 0)
+				WriteCommaSeparatedListInParenthesis(variableIdentifier.ArraySizeSpecifiers, false);
 			WriteArraySpecifiers(variableIdentifier.ArraySpecifiers);
 			
 			return EndNode(variableIdentifier);
@@ -1646,10 +1650,12 @@ namespace ICSharpCode.NRefactory.VB
 			foreach (var specifier in arrayCreateExpression.AdditionalArraySpecifiers) {
 				specifier.AcceptVisitor(this, data);
 			}
-			if (!arrayCreateExpression.Initializer.IsNull) {
+			if (lastWritten != LastWritten.Whitespace)
 				Space();
-				WriteToken("=", ArrayCreateExpression.Roles.Assign);
-				Space();
+			if (arrayCreateExpression.Initializer.IsNull) {
+				WriteToken("{", ArrayInitializerExpression.Roles.LBrace);
+				WriteToken("}", ArrayInitializerExpression.Roles.RBrace);
+			} else {
 				arrayCreateExpression.Initializer.AcceptVisitor(this, data);
 			}
 			return EndNode(arrayCreateExpression);
@@ -1963,6 +1969,7 @@ namespace ICSharpCode.NRefactory.VB
 			WriteKeyword("For");
 			WriteKeyword("Each");
 			forEachStatement.Variable.AcceptVisitor(this, data);
+			Space();
 			WriteKeyword("In");
 			forEachStatement.InExpression.AcceptVisitor(this, data);
 			NewLine();
@@ -2182,6 +2189,8 @@ namespace ICSharpCode.NRefactory.VB
 			
 			variableInitializer.Identifier.AcceptVisitor(this, data);
 			if (!variableInitializer.Type.IsNull) {
+				if (lastWritten != LastWritten.Whitespace)
+					Space();
 				WriteKeyword("As");
 				variableInitializer.Type.AcceptVisitor(this, data);
 			}
@@ -2200,6 +2209,8 @@ namespace ICSharpCode.NRefactory.VB
 			StartNode(variableDeclaratorWithTypeAndInitializer);
 			
 			WriteCommaSeparatedList(variableDeclaratorWithTypeAndInitializer.Identifiers);
+			if (lastWritten != LastWritten.Whitespace)
+				Space();
 			WriteKeyword("As");
 			variableDeclaratorWithTypeAndInitializer.Type.AcceptVisitor(this, data);
 			if (!variableDeclaratorWithTypeAndInitializer.Initializer.IsNull) {
@@ -2217,6 +2228,8 @@ namespace ICSharpCode.NRefactory.VB
 			StartNode(variableDeclaratorWithObjectCreation);
 			
 			WriteCommaSeparatedList(variableDeclaratorWithObjectCreation.Identifiers);
+			if (lastWritten != LastWritten.Whitespace)
+				Space();
 			WriteKeyword("As");
 			variableDeclaratorWithObjectCreation.Initializer.AcceptVisitor(this, data);
 			
@@ -2653,6 +2666,22 @@ namespace ICSharpCode.NRefactory.VB
 			WriteCommaSeparatedList(groupJoinQueryOperator.IntoExpressions);
 			
 			return EndNode(groupJoinQueryOperator);
+		}
+		
+		public object VisitAddRemoveHandlerStatement(AddRemoveHandlerStatement addRemoveHandlerStatement, object data)
+		{
+			StartNode(addRemoveHandlerStatement);
+			
+			if (addRemoveHandlerStatement.IsAddHandler)
+				WriteKeyword("AddHandler");
+			else
+				WriteKeyword("RemoveHandler");
+			
+			addRemoveHandlerStatement.EventExpression.AcceptVisitor(this, data);
+			Comma(addRemoveHandlerStatement.DelegateExpression);
+			addRemoveHandlerStatement.DelegateExpression.AcceptVisitor(this, data);
+			
+			return EndNode(addRemoveHandlerStatement);
 		}
 	}
 }

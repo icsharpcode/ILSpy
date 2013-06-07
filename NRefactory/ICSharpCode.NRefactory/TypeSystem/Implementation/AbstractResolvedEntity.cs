@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using ICSharpCode.NRefactory.Documentation;
 
 namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 {
@@ -64,9 +65,9 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get { return parentContext.CurrentAssembly; }
 		}
 		
-		public IList<IAttribute> Attributes { get; private set; }
+		public IList<IAttribute> Attributes { get; protected set; }
 		
-		public virtual string Documentation {
+		public virtual DocumentationComment Documentation {
 			get {
 				IDocumentationProvider provider = FindDocumentation(parentContext);
 				if (provider != null)

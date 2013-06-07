@@ -53,9 +53,11 @@ namespace ICSharpCode.ILSpy.Options
 			DecompilerSettings s = new DecompilerSettings();
 			s.AnonymousMethods = (bool?)e.Attribute("anonymousMethods") ?? s.AnonymousMethods;
 			s.YieldReturn = (bool?)e.Attribute("yieldReturn") ?? s.YieldReturn;
+			s.AsyncAwait = (bool?)e.Attribute("asyncAwait") ?? s.AsyncAwait;
 			s.QueryExpressions = (bool?)e.Attribute("queryExpressions") ?? s.QueryExpressions;
 			s.UseDebugSymbols = (bool?)e.Attribute("useDebugSymbols") ?? s.UseDebugSymbols;
 			s.ShowXmlDocumentation = (bool?)e.Attribute("xmlDoc") ?? s.ShowXmlDocumentation;
+			s.FoldBraces = (bool?)e.Attribute("foldBraces") ?? s.FoldBraces;
 			return s;
 		}
 		
@@ -65,9 +67,11 @@ namespace ICSharpCode.ILSpy.Options
 			XElement section = new XElement("DecompilerSettings");
 			section.SetAttributeValue("anonymousMethods", s.AnonymousMethods);
 			section.SetAttributeValue("yieldReturn", s.YieldReturn);
+			section.SetAttributeValue("asyncAwait", s.AsyncAwait);
 			section.SetAttributeValue("queryExpressions", s.QueryExpressions);
 			section.SetAttributeValue("useDebugSymbols", s.UseDebugSymbols);
 			section.SetAttributeValue("xmlDoc", s.ShowXmlDocumentation);
+			section.SetAttributeValue("foldBraces", s.FoldBraces);
 			
 			XElement existingElement = root.Element("DecompilerSettings");
 			if (existingElement != null)

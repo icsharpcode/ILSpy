@@ -183,57 +183,48 @@ namespace Mono.CompilerServices.SymbolWriter
 	{
 		#region This is actually written to the symbol file
 		public readonly int Row;
+		public int Column;
 		public readonly int File;
 		public readonly int Offset;
-		public readonly bool IsHidden;
+		public readonly bool IsHidden;	// Obsolete is never used
 		#endregion
 
-		public LineNumberEntry (int file, int row, int offset)
-			: this (file, row, offset, false)
-		{ }
+		public sealed class LocationComparer : IComparer<LineNumberEntry>
+		{
+			public static readonly LocationComparer Default = new LocationComparer ();
 
-		public LineNumberEntry (int file, int row, int offset, bool is_hidden)
+			public int Compare (LineNumberEntry l1, LineNumberEntry l2)
+			{
+				return l1.Row == l2.Row ?
+					l1.Column.CompareTo (l2.Column) :
+					l1.Row.CompareTo (l2.Row);
+			}
+		}
+
+		public static readonly LineNumberEntry Null = new LineNumberEntry (0, 0, 0, 0);
+
+		public LineNumberEntry (int file, int row, int column, int offset)
+			: this (file, row, offset, column, false)
+		{
+		}
+
+		public LineNumberEntry (int file, int row, int offset)
+			: this (file, row, -1, offset, false)
+		{
+		}
+
+		public LineNumberEntry (int file, int row, int column, int offset, bool is_hidden)
 		{
 			this.File = file;
 			this.Row = row;
+			this.Column = column;
 			this.Offset = offset;
 			this.IsHidden = is_hidden;
 		}
 
-		public static LineNumberEntry Null = new LineNumberEntry (0, 0, 0);
-
-		private class OffsetComparerClass : IComparer<LineNumberEntry>
-		{
-			public int Compare (LineNumberEntry l1, LineNumberEntry l2)
-			{
-				if (l1.Offset < l2.Offset)
-					return -1;
-				else if (l1.Offset > l2.Offset)
-					return 1;
-				else
-					return 0;
-			}
-		}
-
-		private class RowComparerClass : IComparer<LineNumberEntry>
-		{
-			public int Compare (LineNumberEntry l1, LineNumberEntry l2)
-			{
-				if (l1.Row < l2.Row)
-					return -1;
-				else if (l1.Row > l2.Row)
-					return 1;
-				else
-					return 0;
-			}
-		}
-
-		public static readonly IComparer<LineNumberEntry> OffsetComparer = new OffsetComparerClass ();
-		public static readonly IComparer<LineNumberEntry> RowComparer = new RowComparerClass ();
-
 		public override string ToString ()
 		{
-			return String.Format ("[Line {0}:{1}:{2}]", File, Row, Offset);
+			return String.Format ("[Line {0}:{1,2}:{3}]", File, Row, Column, Offset);
 		}
 	}
 
@@ -692,12 +683,17 @@ namespace Mono.CompilerServices.SymbolWriter
 			creating = true;
 		}
 
-		public SourceFileEntry (MonoSymbolFile file, string file_name,
-					byte[] guid, byte[] checksum)
+		public SourceFileEntry (MonoSymbolFile file, string file_name, byte[] guid, byte[] checksum)
 			: this (file, file_name)
 		{
 			this.guid = guid;
 			this.hash = checksum;
+		}
+
+		public byte[] Checksum {
+			get {
+				return hash;
+			}
 		}
 
 		internal void WriteData (MyBinaryWriter bw)
@@ -705,13 +701,15 @@ namespace Mono.CompilerServices.SymbolWriter
 			DataOffset = (int) bw.BaseStream.Position;
 			bw.Write (file_name);
 
-			if (guid == null) {
-				guid = Guid.NewGuid ().ToByteArray ();
+			if (guid == null)
+				guid = new byte[16];
+
+			if (hash == null) {
 				try {
-					using (FileStream fs = new FileStream (file_name, FileMode.Open, FileAccess.Read)) {
-						MD5 md5 = MD5.Create ();
-						hash = md5.ComputeHash (fs);
-					}
+				    using (FileStream fs = new FileStream (file_name, FileMode.Open, FileAccess.Read)) {
+				        MD5 md5 = MD5.Create ();
+				        hash = md5.ComputeHash (fs);
+				    }
 				} catch {
 					hash = new byte [16];
 				}
@@ -802,7 +800,6 @@ namespace Mono.CompilerServices.SymbolWriter
 		public const int Default_LineRange = 8;
 		public const byte Default_OpcodeBase = 9;
 
-		public const bool SuppressDuplicates = true;
 #endregion
 
 		public const byte DW_LNS_copy = 1;
@@ -833,7 +830,7 @@ namespace Mono.CompilerServices.SymbolWriter
 			this._line_numbers = lines;
 		}
 
-		internal void Write (MonoSymbolFile file, MyBinaryWriter bw)
+		internal void Write (MonoSymbolFile file, MyBinaryWriter bw, bool readColumnsInfo)
 		{
 			int start = (int) bw.BaseStream.Position;
 
@@ -842,11 +839,6 @@ namespace Mono.CompilerServices.SymbolWriter
 			for (int i = 0; i < LineNumbers.Length; i++) {
 				int line_inc = LineNumbers [i].Row - last_line;
 				int offset_inc = LineNumbers [i].Offset - last_offset;
-
-				if (SuppressDuplicates && (i+1 < LineNumbers.Length)) {
-					if (LineNumbers [i+1].Equals (LineNumbers [i]))
-						continue;
-				}
 
 				if (LineNumbers [i].File != last_file) {
 					bw.Write (DW_LNS_set_file);
@@ -895,17 +887,23 @@ namespace Mono.CompilerServices.SymbolWriter
 			bw.Write ((byte) 1);
 			bw.Write (DW_LNE_end_sequence);
 
+			for (int i = 0; i < LineNumbers.Length; i++) {
+				var ln = LineNumbers [i];
+				if (ln.Row >= 0)
+					bw.WriteLeb128 (ln.Column);
+			}
+
 			file.ExtendedLineNumberSize += (int) bw.BaseStream.Position - start;
 		}
 
-		internal static LineNumberTable Read (MonoSymbolFile file, MyBinaryReader br)
+		internal static LineNumberTable Read (MonoSymbolFile file, MyBinaryReader br, bool readColumnsInfo)
 		{
 			LineNumberTable lnt = new LineNumberTable (file);
-			lnt.DoRead (file, br);
+			lnt.DoRead (file, br, readColumnsInfo);
 			return lnt;
 		}
 
-		void DoRead (MonoSymbolFile file, MyBinaryReader br)
+		void DoRead (MonoSymbolFile file, MyBinaryReader br, bool includesColumns)
 		{
 			var lines = new List<LineNumberEntry> ();
 
@@ -922,7 +920,7 @@ namespace Mono.CompilerServices.SymbolWriter
 					if (opcode == DW_LNE_end_sequence) {
 						if (modified)
 							lines.Add (new LineNumberEntry (
-								stm_file, stm_line, stm_offset, is_hidden));
+								stm_file, stm_line, -1, stm_offset, is_hidden));
 						break;
 					} else if (opcode == DW_LNE_MONO_negate_is_hidden) {
 						is_hidden = !is_hidden;
@@ -931,9 +929,7 @@ namespace Mono.CompilerServices.SymbolWriter
 						   (opcode <= DW_LNE_MONO__extensions_end)) {
 						; // reserved for future extensions
 					} else {
-						throw new MonoSymbolFileException (
-							"Unknown extended opcode {0:x} in LNT ({1})",
-							opcode, file.FileName);
+						throw new MonoSymbolFileException ("Unknown extended opcode {0:x}", opcode);
 					}
 
 					br.BaseStream.Position = end_pos;
@@ -942,7 +938,7 @@ namespace Mono.CompilerServices.SymbolWriter
 					switch (opcode) {
 					case DW_LNS_copy:
 						lines.Add (new LineNumberEntry (
-							stm_file, stm_line, stm_offset, is_hidden));
+							stm_file, stm_line, -1, stm_offset, is_hidden));
 						modified = false;
 						break;
 					case DW_LNS_advance_pc:
@@ -972,13 +968,20 @@ namespace Mono.CompilerServices.SymbolWriter
 					stm_offset += opcode / LineRange;
 					stm_line += LineBase + (opcode % LineRange);
 					lines.Add (new LineNumberEntry (
-						stm_file, stm_line, stm_offset, is_hidden));
+						stm_file, stm_line, -1, stm_offset, is_hidden));
 					modified = false;
 				}
 			}
 
-			_line_numbers = new LineNumberEntry [lines.Count];
-			lines.CopyTo (_line_numbers, 0);
+			_line_numbers = lines.ToArray ();
+
+			if (includesColumns) {
+				for (int i = 0; i < _line_numbers.Length; ++i) {
+					var ln = _line_numbers[i];
+					if (ln.Row >= 0)
+						ln.Column = br.ReadLeb128 ();
+				}
+			}
 		}
 
 		public bool GetMethodBounds (out LineNumberEntry start, out LineNumberEntry end)
@@ -1035,7 +1038,8 @@ namespace Mono.CompilerServices.SymbolWriter
 		[Flags]
 		public enum Flags
 		{
-			LocalNamesAmbiguous	= 1
+			LocalNamesAmbiguous	= 1,
+			ColumnsInfoIncluded = 1 << 1
 		}
 
 		public const int Size = 12;
@@ -1123,7 +1127,7 @@ namespace Mono.CompilerServices.SymbolWriter
 			}
 		}
 		
-		void CheckLineNumberTable (LineNumberEntry[] line_numbers)
+		static void CheckLineNumberTable (LineNumberEntry[] line_numbers)
 		{
 			int last_offset = -1;
 			int last_row = -1;
@@ -1189,7 +1193,7 @@ namespace Mono.CompilerServices.SymbolWriter
 			}
 
 			LineNumberTableOffset = (int) bw.BaseStream.Position;
-			lnt.Write (file, bw);
+			lnt.Write (file, bw, (flags & Flags.ColumnsInfoIncluded) != 0);
 
 			DataOffset = (int) bw.BaseStream.Position;
 
@@ -1217,7 +1221,7 @@ namespace Mono.CompilerServices.SymbolWriter
 				long old_pos = reader.BaseStream.Position;
 				reader.BaseStream.Position = LineNumberTableOffset;
 
-				lnt = LineNumberTable.Read (SymbolFile, reader);
+				lnt = LineNumberTable.Read (SymbolFile, reader, (flags & Flags.ColumnsInfoIncluded) != 0);
 
 				reader.BaseStream.Position = old_pos;
 				return lnt;

@@ -31,6 +31,62 @@ namespace ICSharpCode.NRefactory.CSharp.CodeCompletion
 {
 	public class ObjectInitializerTests : TestBase
 	{
+		[Test()]
+		public void TestArrayInitializerStart ()
+		{
+			CodeCompletionBugTests.CombinedProviderTest (
+@"using System;
+
+class MyTest
+{
+	public void Test ()
+	{
+		$new [] { M$
+	}
+}
+", provider => {
+				Assert.IsNotNull (provider.Find ("Tuple"), "class 'MyTest' not found.");
+			});
+		}
+		
+		[Test()]
+		public void TestArrayInitializerSimple ()
+		{
+			CodeCompletionBugTests.CombinedProviderTest (
+@"using System;
+
+class MyTest
+{
+	public void Test ()
+	{
+		$new [] { Tuple.$
+	}
+}
+", provider => {
+				Assert.IsNotNull (provider.Find ("Create"), "method 'Create' not found.");
+			});
+		}
+		
+		/// <summary>
+		/// Bug 432727 - No completion if no constructor
+		/// </summary>
+		[Test()]
+		public void TestArrayInitializerParameterContext ()
+		{
+			var provider = ParameterCompletionTests.CreateProvider (
+@"using System;
+
+class MyTest
+{
+	public void Test ()
+	{
+		$new [] { Tuple.Create($
+	}
+}");
+			Assert.IsNotNull (provider, "provider was not created.");
+			Assert.Greater (provider.Count, 1);
+		}
+		
 		/// <summary>
 		/// Bug 487236 - Object initializer completion uses wrong type
 		/// </summary>
@@ -48,7 +104,7 @@ class MyTest
 {
 	public void Test ()
 	{
-		$var x = new A () { $
+		$new A () { $
 	}
 }
 ");
@@ -184,7 +240,7 @@ public class O
 class test {
 	public void testcc ()
 	{
-		foo f = new foo () {
+		new foo () {
 			$b$
 		};
 	}
@@ -264,6 +320,274 @@ class MyTest
 			Assert.IsNotNull (provider.Find ("Str"), "field 'Str' not found.");
 			});
 		}
+		
+		/// <summary>
+		/// Bug 2434 - Object-Initializer Intellisense broken when using constructor arguments
+		/// </summary>
+		[Test()]
+		public void TestBug2434 ()
+		{
+			CodeCompletionBugTests.CombinedProviderTest (
+@"
+class User
+{
+  public User() {}
+  public User(int id) { }
+
+  public string Id { get; set; }
+  public string Name { get; set; }
+}
+
+class MyTest
+{
+	static string Str = ""hello"";
+
+	public void Test ()
+	{
+		$new User(12) { 
+			N$
 	}
+}
+", provider => {
+			Assert.IsNotNull (provider.Find ("Id"), "Property 'Id' not found.");
+			Assert.IsNotNull (provider.Find ("Name"), "Property 'Name' not found.");
+			});
+		}
+		
+		[Test()]
+		public void TestBug2434Case2 ()
+		{
+			CodeCompletionBugTests.CombinedProviderTest (
+@"
+class User
+{
+  public User() {}
+  public User(int id) { }
+
+  public string Id { get; set; }
+  public string Name { get; set; }
+}
+
+class MyTest
+{
+	static string Str = ""hello"";
+
+	public void Test ()
+	{
+		string myString;
+
+		$new User(12) { 
+			Name = S$
+	}
+}
+", provider => {
+				Assert.IsNull (provider.Find ("Id"), "Property 'Id' found.");
+				Assert.IsNull (provider.Find ("Name"), "Property 'Name' found.");
+				Assert.IsNotNull (provider.Find ("Str"), "Field 'Str' not found.");
+				Assert.IsNotNull (provider.Find ("myString"), "Local 'myString' not found.");
+			});
+		}
+		
+		[Test()]
+		public void TestNewKeywordInInitializer ()
+		{
+			CodeCompletionBugTests.CombinedProviderTest (
+@"using System;
+
+class O
+{
+	public int Int { get; set; }
+	public object Obj { get; set; }
+}
+
+class Test
+{
+	public void Method ()
+	{
+		$var foo = new O() { Int = 5, Obj = n$
+	}
+}
+", (provider) => {
+				Assert.IsNotNull (provider.Find ("new"), "keyword 'new' not found.");
+			});
+		}
+		
+		[Test()]
+		public void TestCollectionInitializer()
+		{
+			CodeCompletionBugTests.CombinedProviderTest(
+@"using System;
+using System.Collections.Generic;
+
+class Test
+{
+	public void Method ()
+	{
+		new List<Test> () {
+			$n$
+		};
+	}
+}
+", (provider) => {
+				Assert.IsNotNull(provider.Find("new"), "keyword 'new' not found.");
+			});
+		}
+
+
+		/// <summary>
+		/// Bug 4284 - NewResolver does not offer completion for properties in constructor initialization (edit)
+		/// </summary>
+		[Test()]
+		public void TestBug4284()
+		{
+			// only affects ctrl+space completion.
+			var provider = CodeCompletionBugTests.CreateCtrlSpaceProvider(
+@"public class ClassName
+{
+	public int Foo { get; set; }
+}
+class MainClass
+{
+	void Method ()
+	{
+		var stuff = new ClassName  {
+			$
+		};
+	}
+}
+");
+			Assert.IsNotNull(provider.Find("Foo"), "'Foo' not found.");
+		}
+
+		[Test()]
+		public void TestArrayInitializerObjectCreation()
+		{
+			CodeCompletionBugTests.CombinedProviderTest(
+@"using System;
+using System.Collections.Generic;
+
+class MyTest
+{
+	public void Test ()
+	{
+		$new IEnumerable<string>[] { new L$
+	}
+}
+", provider => {
+				Assert.IsNotNull(provider.Find("List<string>"), "class 'List<string>' not found.");
+			}
+			);
+		}
+
+		[Test()]
+		public void TestArrayInitializerObjectCreationNarrowing()
+		{
+			CodeCompletionBugTests.CombinedProviderTest(
+@"using System;
+using System.Collections.Generic;
+class MyList : List<IEnumerable<string>> {}
+class MyTest
+{
+	public void Test ()
+	{
+		$new MyList { new L$
+	}
+}
+", provider => {
+				Assert.IsNotNull(provider.Find("List<string>"), "class 'List<string>' not found.");
+			}
+			);
+		}
+
+		[Test()]
+		public void TestObjectCreationEnumerable()
+		{
+			CodeCompletionBugTests.CombinedProviderTest(
+@"using System;
+using System.Collections.Generic;
+class MyList : List<IEnumerable<string>> { public bool MyProp {get;set; } }
+class MyTest
+{
+	public void Test ()
+	{
+		$new MyList { n$
+	}
+}
+", provider => {
+				Assert.IsNotNull(provider.Find("new"), "'new' not found.");
+				Assert.IsNotNull(provider.Find("MyProp"), "'MyProp' not found.");
+			}
+			);
+		}
+
+		[Test()]
+		public void TestObjectCreationForbiddenInArrayInitializers()
+		{
+			CodeCompletionBugTests.CombinedProviderTest(
+@"using System;
+using System.Collections.Generic;
+class MyList : List<IEnumerable<string>> { public bool MyProp {get;set; } }
+class MyTest
+{
+	public void Test ()
+	{
+		$new MyList { new List<string> (), n$
+	}
+}
+", provider => {
+				Assert.IsNotNull(provider.Find("new"), "'new' not found.");
+				Assert.IsNull(provider.Find("MyProp"), "'MyProp' found.");
+			}
+			);
+		}
+
+		[Test()]
+		public void TestArrayInitializersForbiddenInObjectCreation()
+		{
+			CodeCompletionBugTests.CombinedProviderTest(
+@"using System;
+using System.Collections.Generic;
+class MyList : List<IEnumerable<string>> { public bool MyProp {get;set; }  public bool MyProp2 {get;set; }  }
+class MyTest
+{
+	public void Test ()
+	{
+		$new MyList { MyProp = true, n$
+	}
+}
+", provider => {
+				Assert.IsNull(provider.Find("new"), "'new' found.");
+				Assert.IsNotNull(provider.Find("MyProp2"), "'MyProp2' not found.");
+			}
+			);
+		}
+
+		/// <summary>
+		/// Bug 5126 - Multiple projects including the same files don't update their typesystem properly
+		/// </summary>
+		[Test()]
+		public void TestBug5126()
+		{
+			CodeCompletionBugTests.CombinedProviderTest(
+@"using System;
+using System.Collections.Generic;
+class MyList { public bool MyProp {get;set; }  public bool MyProp2 {get;set; }  }
+class MyTest
+{
+	public void Test ()
+	{
+		$new MyList { n$
+	}
+}
+", provider => {
+				Assert.IsNull(provider.Find("new"), "'new' found.");
+				Assert.IsNotNull(provider.Find("MyProp"), "'MyProp' not found.");
+				Assert.IsNotNull(provider.Find("MyProp2"), "'MyProp2' not found.");
+			}
+			);
+		}
+
+	}
+
 }
 

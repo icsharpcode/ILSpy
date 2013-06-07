@@ -304,54 +304,53 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 				return DefiniteAssignmentStatus.PotentiallyAssigned;
 		}
 		
-		void ChangeNodeStatus(DefiniteAssignmentNode node, DefiniteAssignmentStatus inputStatus)
+		void ChangeNodeStatus (DefiniteAssignmentNode node, DefiniteAssignmentStatus inputStatus)
 		{
 			if (node.NodeStatus == inputStatus)
 				return;
 			node.NodeStatus = inputStatus;
 			DefiniteAssignmentStatus outputStatus;
 			switch (node.Type) {
-				case ControlFlowNodeType.StartNode:
-				case ControlFlowNodeType.BetweenStatements:
-					if (node.NextStatement is IfElseStatement) {
-						// Handle if-else as a condition node
+			case ControlFlowNodeType.StartNode:
+			case ControlFlowNodeType.BetweenStatements:
+				if (node.NextStatement is IfElseStatement) {
+					// Handle if-else as a condition node
 						goto case ControlFlowNodeType.LoopCondition;
-					}
-					if (inputStatus == DefiniteAssignmentStatus.DefinitelyAssigned) {
-						// There isn't any way to un-assign variables, so we don't have to check the expression
-						// if the status already is definitely assigned.
-						outputStatus = DefiniteAssignmentStatus.DefinitelyAssigned;
-					} else {
-						outputStatus = CleanSpecialValues(node.NextStatement.AcceptVisitor(visitor, inputStatus));
-					}
-					break;
-				case ControlFlowNodeType.EndNode:
-					outputStatus = inputStatus;
-					if (node.PreviousStatement.Role == TryCatchStatement.FinallyBlockRole
-					    && (outputStatus == DefiniteAssignmentStatus.DefinitelyAssigned || outputStatus == DefiniteAssignmentStatus.PotentiallyAssigned))
-					{
-						TryCatchStatement tryFinally = (TryCatchStatement)node.PreviousStatement.Parent;
-						// Changing the status on a finally block potentially changes the status of all edges leaving that finally block:
-						foreach (ControlFlowEdge edge in allNodes.SelectMany(n => n.Outgoing)) {
-							if (edge.IsLeavingTryFinally && edge.TryFinallyStatements.Contains(tryFinally)) {
-								DefiniteAssignmentStatus s = edgeStatus[edge];
-								if (s == DefiniteAssignmentStatus.PotentiallyAssigned) {
-									ChangeEdgeStatus(edge, outputStatus);
-								}
+				}
+				if (inputStatus == DefiniteAssignmentStatus.DefinitelyAssigned) {
+					// There isn't any way to un-assign variables, so we don't have to check the expression
+					// if the status already is definitely assigned.
+					outputStatus = DefiniteAssignmentStatus.DefinitelyAssigned;
+				} else {
+					outputStatus = CleanSpecialValues (node.NextStatement.AcceptVisitor (visitor, inputStatus));
+				}
+				break;
+			case ControlFlowNodeType.EndNode:
+				outputStatus = inputStatus;
+				if (node.PreviousStatement.Role == TryCatchStatement.FinallyBlockRole
+					&& (outputStatus == DefiniteAssignmentStatus.DefinitelyAssigned || outputStatus == DefiniteAssignmentStatus.PotentiallyAssigned)) {
+					TryCatchStatement tryFinally = (TryCatchStatement)node.PreviousStatement.Parent;
+					// Changing the status on a finally block potentially changes the status of all edges leaving that finally block:
+					foreach (ControlFlowEdge edge in allNodes.SelectMany(n => n.Outgoing)) {
+						if (edge.IsLeavingTryFinally && edge.TryFinallyStatements.Contains (tryFinally)) {
+							DefiniteAssignmentStatus s = edgeStatus [edge];
+							if (s == DefiniteAssignmentStatus.PotentiallyAssigned) {
+								ChangeEdgeStatus (edge, outputStatus);
 							}
 						}
 					}
+				}
+				break;
+			case ControlFlowNodeType.LoopCondition:
+				ForeachStatement foreachStmt = node.NextStatement as ForeachStatement;
+				if (foreachStmt != null) {
+					outputStatus = CleanSpecialValues (foreachStmt.InExpression.AcceptVisitor (visitor, inputStatus));
+					if (foreachStmt.VariableName == this.variableName)
+						outputStatus = DefiniteAssignmentStatus.DefinitelyAssigned;
 					break;
-				case ControlFlowNodeType.LoopCondition:
-					ForeachStatement foreachStmt = node.NextStatement as ForeachStatement;
-					if (foreachStmt != null) {
-						outputStatus = CleanSpecialValues(foreachStmt.InExpression.AcceptVisitor(visitor, inputStatus));
-						if (foreachStmt.VariableName == this.variableName)
-							outputStatus = DefiniteAssignmentStatus.DefinitelyAssigned;
-						break;
-					} else {
-						Debug.Assert(node.NextStatement is IfElseStatement || node.NextStatement is WhileStatement || node.NextStatement is ForStatement || node.NextStatement is DoWhileStatement);
-						Expression condition = node.NextStatement.GetChildByRole(AstNode.Roles.Condition);
+				} else {
+					Debug.Assert (node.NextStatement is IfElseStatement || node.NextStatement is WhileStatement || node.NextStatement is ForStatement || node.NextStatement is DoWhileStatement);
+					Expression condition = node.NextStatement.GetChildByRole (Roles.Condition);
 						if (condition.IsNull)
 							outputStatus = inputStatus;
 						else
@@ -444,7 +443,7 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 				// the special values are valid as output only, not as input
 				Debug.Assert(data == CleanSpecialValues(data));
 				DefiniteAssignmentStatus status = data;
-				foreach (AstNode child in node.Children) {
+				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
 					analysis.analysisCancellationToken.ThrowIfCancellationRequested();
 					
 					Debug.Assert(!(child is Statement)); // statements are visited with the CFG, not with the visitor pattern
@@ -722,7 +721,7 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 					}
 					
 					DefiniteAssignmentStatus afterTrue = conditionalExpression.TrueExpression.AcceptVisitor(this, beforeTrue);
-					DefiniteAssignmentStatus afterFalse = conditionalExpression.TrueExpression.AcceptVisitor(this, beforeFalse);
+					DefiniteAssignmentStatus afterFalse = conditionalExpression.FalseExpression.AcceptVisitor(this, beforeFalse);
 					return MergeStatus(CleanSpecialValues(afterTrue), CleanSpecialValues(afterFalse));
 				}
 			}

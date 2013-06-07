@@ -67,6 +67,18 @@ namespace ILSpy.BamlDecompiler.Tests
 			RunTest("cases/dictionary1");
 		}
 		
+		[Test]
+		public void MarkupExtension()
+		{
+			RunTest("cases/markupextension");
+		}
+		
+		[Test]
+		public void SimplePropertyElement()
+		{
+			RunTest("cases/simplepropertyelement");
+		}
+		
 		#region RunTest
 		void RunTest(string name)
 		{

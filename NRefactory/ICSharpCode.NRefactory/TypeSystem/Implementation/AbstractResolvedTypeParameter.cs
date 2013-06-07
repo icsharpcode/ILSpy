@@ -18,8 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
+using System.Globalization;
+
 using ICSharpCode.NRefactory.Utils;
 
 namespace ICSharpCode.NRefactory.TypeSystem.Implementation
@@ -43,7 +43,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			this.compilation = owner.Compilation;
 			this.ownerType = owner.EntityType;
 			this.index = index;
-			this.name = name ?? ((this.OwnerType == EntityType.Method ? "!!" : "!") + index.ToString());
+			this.name = name ?? ((this.OwnerType == EntityType.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 			this.region = region;
 			this.variance = variance;
@@ -56,7 +56,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			this.compilation = compilation;
 			this.ownerType = ownerType;
 			this.index = index;
-			this.name = name ?? ((this.OwnerType == EntityType.Method ? "!!" : "!") + index.ToString());
+			this.name = name ?? ((this.OwnerType == EntityType.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
 			this.attributes = attributes ?? EmptyList<IAttribute>.Instance;
 			this.region = region;
 			this.variance = variance;
@@ -198,7 +198,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		public string ReflectionName {
 			get {
-				return (this.OwnerType == EntityType.Method ? "``" : "`") + index.ToString();
+				return (this.OwnerType == EntityType.Method ? "``" : "`") + index.ToString(CultureInfo.InvariantCulture);
 			}
 		}
 		
@@ -232,29 +232,12 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			return EmptyList<IType>.Instance;
 		}
 		
-		static readonly IUnresolvedMethod dummyConstructor = CreateDummyConstructor();
-		
-		static IUnresolvedMethod CreateDummyConstructor()
-		{
-			var m = new DefaultUnresolvedMethod {
-				EntityType = EntityType.Constructor,
-				Name = ".ctor",
-				Accessibility = Accessibility.Public,
-				IsSynthetic = true,
-				ReturnType = KnownTypeReference.Void
-			};
-			m.Freeze();
-			return m;
-		}
-		
 		public IEnumerable<IMethod> GetConstructors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.IgnoreInheritedMembers)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
 				if (this.HasDefaultConstructorConstraint || this.HasValueTypeConstraint) {
-					if (filter == null || filter(dummyConstructor)) {
-						var resolvedCtor = (IMethod)dummyConstructor.CreateResolved(compilation.TypeResolveContext);
-						IMethod m = new SpecializedMethod(this, resolvedCtor, EmptyList<IType>.Instance);
-						return new [] { m };
+					if (filter == null || filter(DefaultUnresolvedMethod.DummyConstructor)) {
+						return new [] { DefaultResolvedMethod.GetDummyConstructor(compilation, this) };
 					}
 				}
 				return EmptyList<IMethod>.Instance;
@@ -311,6 +294,14 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				return GetMembersHelper.GetMembers(this, FilterNonStatic(filter), options);
 		}
 		
+		public IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
+		{
+			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers)
+				return EmptyList<IMethod>.Instance;
+			else
+				return GetMembersHelper.GetAccessors(this, FilterNonStatic(filter), options);
+		}
+		
 		static Predicate<T> FilterNonStatic<T>(Predicate<T> filter) where T : class, IUnresolvedMember
 		{
 			if (filter == null)
@@ -336,7 +327,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		public override string ToString()
 		{
-			return this.ReflectionName;
+			return this.ReflectionName + " (owner=" + owner + ")";
 		}
 	}
 }

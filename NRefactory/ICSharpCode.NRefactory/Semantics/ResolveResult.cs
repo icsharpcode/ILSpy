@@ -29,7 +29,7 @@ namespace ICSharpCode.NRefactory.Semantics
 	/// </summary>
 	public class ResolveResult
 	{
-		IType type;
+		readonly IType type;
 		
 		public ResolveResult(IType type)
 		{
@@ -38,6 +38,8 @@ namespace ICSharpCode.NRefactory.Semantics
 			this.type = type;
 		}
 		
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Naming", "CA1721:PropertyNamesShouldNotMatchGetMethods",
+		                                                 Justification = "Unrelated to object.GetType()")]
 		public IType Type {
 			get { return type; }
 		}
@@ -67,6 +69,11 @@ namespace ICSharpCode.NRefactory.Semantics
 		public virtual DomRegion GetDefinitionRegion()
 		{
 			return DomRegion.Empty;
+		}
+		
+		public virtual ResolveResult ShallowClone()
+		{
+			return (ResolveResult)MemberwiseClone();
 		}
 	}
 }

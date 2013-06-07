@@ -72,32 +72,19 @@ namespace ICSharpCode.ILSpy.VB
 		{
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
 				HashSet<string> directories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-				var files = WriteCodeFilesInProject(assembly.AssemblyDefinition, options, directories).ToList();
+				var files = WriteCodeFilesInProject(assembly.ModuleDefinition, options, directories).ToList();
 				files.AddRange(WriteResourceFilesInProject(assembly, options, directories));
-				WriteProjectFile(new TextOutputWriter(output), files, assembly.AssemblyDefinition.MainModule);
+				WriteProjectFile(new TextOutputWriter(output), files, assembly.ModuleDefinition);
 			} else {
 				base.DecompileAssembly(assembly, output, options);
 				output.WriteLine();
-				ModuleDefinition mainModule = assembly.AssemblyDefinition.MainModule;
+				ModuleDefinition mainModule = assembly.ModuleDefinition;
 				if (mainModule.EntryPoint != null) {
 					output.Write("' Entry point: ");
 					output.WriteReference(mainModule.EntryPoint.DeclaringType.FullName + "." + mainModule.EntryPoint.Name, mainModule.EntryPoint);
 					output.WriteLine();
 				}
-				switch (mainModule.Architecture) {
-					case TargetArchitecture.I386:
-						if ((mainModule.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
-							WriteCommentLine(output, "Architecture: x86");
-						else
-							WriteCommentLine(output, "Architecture: AnyCPU");
-						break;
-					case TargetArchitecture.AMD64:
-						WriteCommentLine(output, "Architecture: x64");
-						break;
-					case TargetArchitecture.IA64:
-						WriteCommentLine(output, "Architecture: Itanium-64");
-						break;
-				}
+				WriteCommentLine(output, "Architecture: " + CSharpLanguage.GetPlatformDisplayName(mainModule));
 				if ((mainModule.Attributes & ModuleAttributes.ILOnly) == 0) {
 					WriteCommentLine(output, "This assembly contains unmanaged code.");
 				}
@@ -119,9 +106,9 @@ namespace ICSharpCode.ILSpy.VB
 				
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
 				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
-					AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: assembly.AssemblyDefinition.MainModule);
-					codeDomBuilder.AddAssembly(assembly.AssemblyDefinition, onlyAssemblyLevel: !options.FullDecompilation);
-					RunTransformsAndGenerateCode(codeDomBuilder, output, options, assembly.AssemblyDefinition.MainModule);
+					AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: assembly.ModuleDefinition);
+					codeDomBuilder.AddAssembly(assembly.ModuleDefinition, onlyAssemblyLevel: !options.FullDecompilation);
+					RunTransformsAndGenerateCode(codeDomBuilder, output, options, assembly.ModuleDefinition);
 				}
 			}
 		}
@@ -138,23 +125,7 @@ namespace ICSharpCode.ILSpy.VB
 		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module)
 		{
 			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
-			string platformName;
-			switch (module.Architecture) {
-				case TargetArchitecture.I386:
-					if ((module.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
-						platformName = "x86";
-					else
-						platformName = "AnyCPU";
-					break;
-				case TargetArchitecture.AMD64:
-					platformName = "x64";
-					break;
-				case TargetArchitecture.IA64:
-					platformName = "Itanium";
-					break;
-				default:
-					throw new NotSupportedException("Invalid value for TargetArchitecture");
-			}
+			string platformName = CSharpLanguage.GetPlatformName(module);
 			using (XmlTextWriter w = new XmlTextWriter(writer)) {
 				w.Formatting = Formatting.Indented;
 				w.WriteStartDocument();
@@ -277,9 +248,9 @@ namespace ICSharpCode.ILSpy.VB
 			return true;
 		}
 
-		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(AssemblyDefinition assembly, DecompilationOptions options, HashSet<string> directories)
+		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(ModuleDefinition module, DecompilationOptions options, HashSet<string> directories)
 		{
-			var files = assembly.MainModule.Types.Where(t => IncludeTypeWhenDecompilingProject(t, options)).GroupBy(
+			var files = module.Types.Where(t => IncludeTypeWhenDecompilingProject(t, options)).GroupBy(
 				delegate(TypeDefinition type) {
 					string file = TextView.DecompilerTextView.CleanUpName(type.Name) + this.FileExtension;
 					if (string.IsNullOrEmpty(type.Namespace)) {
@@ -297,11 +268,11 @@ namespace ICSharpCode.ILSpy.VB
 				new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
 				delegate(IGrouping<string, TypeDefinition> file) {
 					using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, file.Key))) {
-						AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: assembly.MainModule);
+						AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: module);
 						foreach (TypeDefinition type in file) {
 							codeDomBuilder.AddType(type);
 						}
-						RunTransformsAndGenerateCode(codeDomBuilder, new PlainTextOutput(w), options, assembly.MainModule);
+						RunTransformsAndGenerateCode(codeDomBuilder, new PlainTextOutput(w), options, module);
 					}
 				});
 			AstMethodBodyBuilder.PrintNumberOfUnhandledOpcodes();
@@ -314,7 +285,7 @@ namespace ICSharpCode.ILSpy.VB
 		{
 			//AppDomain bamlDecompilerAppDomain = null;
 			//try {
-				foreach (EmbeddedResource r in assembly.AssemblyDefinition.MainModule.Resources.OfType<EmbeddedResource>()) {
+				foreach (EmbeddedResource r in assembly.ModuleDefinition.Resources.OfType<EmbeddedResource>()) {
 					string fileName;
 					Stream s = r.GetResourceStream();
 					s.Position = 0;
@@ -335,8 +306,8 @@ namespace ICSharpCode.ILSpy.VB
 								Stream entryStream = (Stream)pair.Value;
 								entryStream.Position = 0;
 								if (fileName.EndsWith(".baml", StringComparison.OrdinalIgnoreCase)) {
-									MemoryStream ms = new MemoryStream();
-									entryStream.CopyTo(ms);
+									//MemoryStream ms = new MemoryStream();
+									//entryStream.CopyTo(ms);
 									// TODO implement extension point
 //									var decompiler = Baml.BamlResourceEntryNode.CreateBamlDecompilerInAppDomain(ref bamlDecompilerAppDomain, assembly.FileName);
 //									string xaml = null;
@@ -435,8 +406,10 @@ namespace ICSharpCode.ILSpy.VB
 		{
 			astBuilder.RunTransformations(transformAbortCondition);
 			if (options.DecompilerSettings.ShowXmlDocumentation)
-				AddXmlDocTransform.Run(astBuilder.CompilationUnit);
-			var unit = astBuilder.CompilationUnit.AcceptVisitor(new CSharpToVBConverterVisitor(new ILSpyEnvironmentProvider()), null);
+				AddXmlDocTransform.Run(astBuilder.SyntaxTree);
+			var csharpUnit = astBuilder.SyntaxTree;
+			csharpUnit.AcceptVisitor(new NRefactory.CSharp.InsertParenthesesVisitor() { InsertParenthesesForReadability = true });
+			var unit = csharpUnit.AcceptVisitor(new CSharpToVBConverterVisitor(new ILSpyEnvironmentProvider()), null);
 			var outputFormatter = new VBTextOutputFormatter(output);
 			var formattingPolicy = new VBFormattingOptions();
 			unit.AcceptVisitor(new OutputVisitor(outputFormatter, formattingPolicy), null);
@@ -451,6 +424,7 @@ namespace ICSharpCode.ILSpy.VB
 			if (isSingleMember)
 				settings.UsingDeclarations = false;
 			settings.IntroduceIncrementAndDecrement = false;
+			settings.MakeAssignmentExpressions = false;
 			settings.QueryExpressions = false;
 			settings.AlwaysGenerateExceptionVariableForCatchBlocks = true;
 			return new AstBuilder(

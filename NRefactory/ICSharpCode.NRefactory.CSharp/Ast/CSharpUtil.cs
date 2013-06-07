@@ -51,30 +51,12 @@ namespace ICSharpCode.NRefactory.CSharp
 			
 			if (condition is BinaryOperatorExpression) {
 				var bOp = (BinaryOperatorExpression)condition;
-				switch (bOp.Operator) {
-				case BinaryOperatorType.GreaterThan:
-					bOp.Operator = BinaryOperatorType.LessThanOrEqual;
-					return bOp;
-				case BinaryOperatorType.GreaterThanOrEqual:
-					bOp.Operator = BinaryOperatorType.LessThan;
-					return bOp;
-				case BinaryOperatorType.Equality:
-					bOp.Operator = BinaryOperatorType.InEquality;
-					return bOp;
-				case BinaryOperatorType.InEquality:
-					bOp.Operator = BinaryOperatorType.Equality;
-					return bOp;
-				case BinaryOperatorType.LessThan:
-					bOp.Operator = BinaryOperatorType.GreaterThanOrEqual;
-					return bOp;
-				case BinaryOperatorType.LessThanOrEqual:
-					bOp.Operator = BinaryOperatorType.GreaterThan;
-					return bOp;
-				default:
+				var negatedOp = NegateRelationalOperator (bOp.Operator);
+				if (negatedOp == BinaryOperatorType.Any)
 					return new UnaryOperatorExpression (UnaryOperatorType.Not, new ParenthesizedExpression (condition));
-				}
+				bOp.Operator = negatedOp;
+				return bOp;
 			}
-			
 			if (condition is ConditionalExpression) {
 				var cEx = condition as ConditionalExpression;
 				cEx.Condition = InvertCondition (cEx.Condition);
@@ -83,12 +65,36 @@ namespace ICSharpCode.NRefactory.CSharp
 			if (condition is PrimitiveExpression) {
 				var pex = condition as PrimitiveExpression;
 				if (pex.Value is bool) {
-					pex.Value = !((bool)pex.Value);
-					return pex; 
+					return new PrimitiveExpression (!((bool)pex.Value)); 
 				}
 			}
 			
 			return new UnaryOperatorExpression (UnaryOperatorType.Not, condition);
+		}
+
+		/// <summary>
+		/// Get negation of the specified relational operator
+		/// </summary>
+		/// <returns>
+		/// negation of the specified relational operator, or BinaryOperatorType.Any if it's not a relational operator
+		/// </returns>
+		public static BinaryOperatorType NegateRelationalOperator (BinaryOperatorType op)
+		{
+			switch (op) {
+				case BinaryOperatorType.GreaterThan:
+					return BinaryOperatorType.LessThanOrEqual;
+				case BinaryOperatorType.GreaterThanOrEqual:
+					return BinaryOperatorType.LessThan;
+				case BinaryOperatorType.Equality:
+					return BinaryOperatorType.InEquality;
+				case BinaryOperatorType.InEquality:
+					return BinaryOperatorType.Equality;
+				case BinaryOperatorType.LessThan:
+					return BinaryOperatorType.GreaterThanOrEqual;
+				case BinaryOperatorType.LessThanOrEqual:
+					return BinaryOperatorType.GreaterThan;
+			}
+			return BinaryOperatorType.Any;
 		}
 	}
 }

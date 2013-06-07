@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.IO;
 using System.Linq;
 using NUnit.Framework;
 
@@ -46,6 +47,26 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.GeneralScope
 			Assert.AreEqual("N1", ns.Name);
 			
 			Assert.AreEqual("N2", ns.Children.OfType<NamespaceDeclaration>().Single().Name);
+		}
+		
+		[Test]
+		public void ExternAliasTest()
+		{
+			string program = "extern alias X; extern alias Y; using X::System; namespace TestNamespace { extern alias Z; using Y::System; }";
+			var syntaxTree = new CSharpParser().Parse(program, "code.cs");
+			Assert.AreEqual(
+				new Type[] {
+					typeof(ExternAliasDeclaration),
+					typeof(ExternAliasDeclaration),
+					typeof(UsingDeclaration),
+					typeof(NamespaceDeclaration)
+				}, syntaxTree.Children.Select(c => c.GetType()).ToArray());
+			var namespaceMembers = ((NamespaceDeclaration)syntaxTree.LastChild).Members;
+			Assert.AreEqual(
+				new Type[] {
+					typeof(ExternAliasDeclaration),
+					typeof(UsingDeclaration)
+				}, namespaceMembers.Select(c => c.GetType()).ToArray());
 		}
 	}
 }

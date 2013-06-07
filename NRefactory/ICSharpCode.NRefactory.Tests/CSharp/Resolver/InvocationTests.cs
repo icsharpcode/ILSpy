@@ -493,5 +493,247 @@ class Test : IVisitor<object, object> {
 			Assert.AreEqual("System.Object", typeArguments[0].ReflectionName);
 			Assert.AreEqual("System.Object", typeArguments[1].ReflectionName);
 		}
+		
+		[Test]
+		public void FirstParameterToExtensionMethod()
+		{
+			string program = @"
+public class X {}
+public static class Ex {
+	public static void F(this X x, int y, int z) {}
+}
+class C {
+	public void M() {
+		X a = null;
+		int b = 0, c = 0;
+		$a.F(b, c)$;
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.That(rr.IsExtensionMethodInvocation, Is.True);
+			Assert.That(rr.Arguments[0], Is.InstanceOf<LocalResolveResult>());
+			Assert.That(((LocalResolveResult)rr.Arguments[0]).Variable.Name, Is.EqualTo("a"));
+			Assert.That(rr.Arguments[1], Is.InstanceOf<LocalResolveResult>());
+			Assert.That(((LocalResolveResult)rr.Arguments[1]).Variable.Name, Is.EqualTo("b"));
+			Assert.That(rr.Arguments[2], Is.InstanceOf<LocalResolveResult>());
+			Assert.That(((LocalResolveResult)rr.Arguments[2]).Variable.Name, Is.EqualTo("c"));
+			
+			Assert.That(rr.TargetResult, Is.InstanceOf<TypeResolveResult>());
+		}
+		
+		[Test]
+		public void BaseInvocation()
+		{
+			string program = @"
+class B {
+	public virtual void F(int x, int y) {}
+}
+class D : B {
+	public override void F(int x, int y) {}
+	public void M() {
+		$base.F(0, 1)$;
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.IsFalse(rr.IsVirtualCall);
+		}
+		
+		[Test]
+		public void NamedArgument()
+		{
+			string program = @"
+class Test {
+	public void F(int x) {}
+	public void Test() {
+		F($x: 0$);
+	}
+}";
+			var narr = Resolve<NamedArgumentResolveResult>(program);
+			Assert.IsInstanceOf<ConstantResolveResult>(narr.Argument);
+			Assert.AreEqual("x", narr.ParameterName);
+			Assert.AreEqual("Test.F", narr.Member.FullName);
+			Assert.AreSame(narr.Member.Parameters.Single(), narr.Parameter);
+		}
+		
+		[Test]
+		public void NamedArgumentInInvocation()
+		{
+			string program = @"
+class Test {
+	public void F(int x) {}
+	public void Test() {
+		$F(x: 0)$;
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsInstanceOf<NamedArgumentResolveResult>(rr.Arguments.Single());
+			var narr = (NamedArgumentResolveResult)rr.Arguments.Single();
+			Assert.IsInstanceOf<ConstantResolveResult>(narr.Argument);
+			Assert.AreEqual("x", narr.ParameterName);
+			Assert.AreEqual("Test.F", narr.Member.FullName);
+			Assert.AreSame(narr.Member.Parameters.Single(), narr.Parameter);
+			
+			// but GetArgumentsForCall() should directly return the constant:
+			Assert.IsInstanceOf<ConstantResolveResult>(rr.GetArgumentsForCall().Single());
+		}
+		
+		[Test]
+		public void UnknownNamedArgument()
+		{
+			string program = @"
+class Test {
+	public void F(int x) {}
+	public void Test() {
+		F($y: 0$);
+	}
+}";
+			var narr = Resolve<NamedArgumentResolveResult>(program);
+			Assert.IsInstanceOf<ConstantResolveResult>(narr.Argument);
+			Assert.AreEqual("y", narr.ParameterName);
+			Assert.IsNull(narr.Parameter);
+		}
+		
+		[Test]
+		public void NamedArgumentInMissingMethod()
+		{
+			string program = @"
+class Test {
+	public void Test() {
+		Missing($x: 0$);
+	}
+}";
+			var narr = Resolve<NamedArgumentResolveResult>(program);
+			Assert.IsInstanceOf<ConstantResolveResult>(narr.Argument);
+			Assert.AreEqual("x", narr.ParameterName);
+			Assert.IsNull(narr.Parameter);
+		}
+		
+		[Test]
+		public void GenericMethodInvocationWithConstraintMismatch()
+		{
+			string program = @"
+interface IA
+{
+}
+class Test
+{
+    void F()
+    {
+        string o = null;
+        $M(o)$;
+    }
+
+    void M<T>(T arg) where T : IA
+    {
+    }
+    void M(object arg) {
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.AreEqual(OverloadResolutionErrors.MethodConstraintsNotSatisfied, rr.OverloadResolutionErrors);
+			Assert.IsTrue(rr.IsError);
+		}
+
+		[Test]
+		public void MethodCanBeInvokedWithNullableTypeArgument1() {
+			string program = @"
+public class C {
+	static T F<T>() {
+		return default(T);
+	}
+
+	void M() {
+		$F<int?>()$;
+	}
+}";
+
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+		}
+
+		[Test]
+		public void MethodCanBeInvokedWithNullableTypeArgument2() {
+			string program = @"
+public class C {
+	static T F<T>(T t) {
+		return default(T);
+	}
+
+	void M() {
+		$F((int?)null)$;
+	}
+}";
+
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+		}
+
+		[Test]
+		public void MethodCanBeInvokedWithNullableTypeArgument3() {
+			string program = @"
+public class C {
+	static T F<T, U>() where T : U {
+		return default(T);
+	}
+
+	void M() {
+		$F<int?, object>()$;
+	}
+}";
+
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+		}
+		
+		[Test]
+		public void MethodWithStructContraintCanBeInvokedWithValueType() {
+			string program = @"
+public class C {
+	static T F<T>() where T : struct {
+		return default(T);
+	}
+
+	void M() {
+		$F<int>()$;
+	}
+}";
+
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+		}
+		
+		[Test]
+		public void MethodWithStructContraintCannotBeInvokedWithNullableValueType() {
+			string program = @"
+public class C {
+	static T F<T>() where T : struct {
+		return default(T);
+	}
+
+	void M() {
+		$F<int?>()$;
+	}
+}";
+
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsTrue(rr.IsError);
+			Assert.AreEqual(OverloadResolutionErrors.MethodConstraintsNotSatisfied, rr.OverloadResolutionErrors);
+		}
+		
+		[Test]
+		public void CanConstructGenericTypeWithNullableTypeArgument() {
+			string program = @"
+public class X<T> {}
+public class C {
+	void M() {
+		$new X<int?>()$;
+	}
+}";
+
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+		}
 	}
 }

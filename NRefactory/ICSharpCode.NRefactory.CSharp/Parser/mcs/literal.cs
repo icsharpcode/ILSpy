@@ -50,7 +50,7 @@ namespace Mono.CSharp
 		{
 		}
 
-		public override void Error_ValueCannotBeConverted (ResolveContext ec, Location loc, TypeSpec t, bool expl)
+		public override void Error_ValueCannotBeConverted (ResolveContext ec, TypeSpec t, bool expl)
 		{
 			if (t.IsGenericParameter) {
 				ec.Report.Error(403, loc,
@@ -65,7 +65,7 @@ namespace Mono.CSharp
 				return;
 			}
 
-			base.Error_ValueCannotBeConverted (ec, loc, t, expl);
+			base.Error_ValueCannotBeConverted (ec, t, expl);
 		}
 
 		public override string GetValueAsLiteral ()
@@ -95,8 +95,13 @@ namespace Mono.CSharp
 		}
 
 #if FULL_AST
-		char[] ILiteralConstant.ParsedValue { get; set; }
+		public char[] ParsedValue { get; set; }
 #endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
 	}
 
 	public class CharLiteral : CharConstant, ILiteralConstant
@@ -111,8 +116,13 @@ namespace Mono.CSharp
 		}
 
 #if FULL_AST
-		char[] ILiteralConstant.ParsedValue { get; set; }
+		public char[] ParsedValue { get; set; }
 #endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
 	}
 
 	public class IntLiteral : IntConstant, ILiteralConstant
@@ -143,8 +153,13 @@ namespace Mono.CSharp
 		}
 
 #if FULL_AST
-		char[] ILiteralConstant.ParsedValue { get; set; }
+		public char[] ParsedValue { get; set; }
 #endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
 	}
 
 	public class UIntLiteral : UIntConstant, ILiteralConstant
@@ -159,8 +174,13 @@ namespace Mono.CSharp
 		}
 
 #if FULL_AST
-		char[] ILiteralConstant.ParsedValue { get; set; }
+		public char[] ParsedValue { get; set; }
 #endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
 	}
 
 	public class LongLiteral : LongConstant, ILiteralConstant
@@ -175,8 +195,13 @@ namespace Mono.CSharp
 		}
 
 #if FULL_AST
-		char[] ILiteralConstant.ParsedValue { get; set; }
+		public char[] ParsedValue { get; set; }
 #endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
 	}
 
 	public class ULongLiteral : ULongConstant, ILiteralConstant
@@ -191,8 +216,13 @@ namespace Mono.CSharp
 		}
 
 #if FULL_AST
-		char[] ILiteralConstant.ParsedValue { get; set; }
+		public char[] ParsedValue { get; set; }
 #endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
 	}
 
 	public class FloatLiteral : FloatConstant, ILiteralConstant
@@ -207,8 +237,13 @@ namespace Mono.CSharp
 		}
 
 #if FULL_AST
-		char[] ILiteralConstant.ParsedValue { get; set; }
+		public char[] ParsedValue { get; set; }
 #endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
 	}
 
 	public class DoubleLiteral : DoubleConstant, ILiteralConstant
@@ -218,7 +253,7 @@ namespace Mono.CSharp
 		{
 		}
 
-		public override void Error_ValueCannotBeConverted (ResolveContext ec, Location loc, TypeSpec target, bool expl)
+		public override void Error_ValueCannotBeConverted (ResolveContext ec, TypeSpec target, bool expl)
 		{
 			if (target.BuiltinType == BuiltinTypeSpec.Type.Float) {
 				Error_664 (ec, loc, "float", "f");
@@ -230,7 +265,7 @@ namespace Mono.CSharp
 				return;
 			}
 
-			base.Error_ValueCannotBeConverted (ec, loc, target, expl);
+			base.Error_ValueCannotBeConverted (ec, target, expl);
 		}
 
 		static void Error_664 (ResolveContext ec, Location loc, string type, string suffix)
@@ -245,8 +280,13 @@ namespace Mono.CSharp
 		}
 
 #if FULL_AST
-		char[] ILiteralConstant.ParsedValue { get; set; }
+		public char[] ParsedValue { get; set; }
 #endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
 	}
 
 	public class DecimalLiteral : DecimalConstant, ILiteralConstant
@@ -261,8 +301,13 @@ namespace Mono.CSharp
 		}
 
 #if FULL_AST
-		char[] ILiteralConstant.ParsedValue { get; set; }
+		public char[] ParsedValue { get; set; }
 #endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
 	}
 
 	public class StringLiteral : StringConstant, ILiteralConstant
@@ -277,7 +322,12 @@ namespace Mono.CSharp
 		}
 
 #if FULL_AST
-		char[] ILiteralConstant.ParsedValue { get; set; }
+		public char[] ParsedValue { get; set; }
 #endif
+
+		public override object Accept (StructuralVisitor visitor)
+		{
+			return visitor.Visit (this);
+		}
 	}
 }

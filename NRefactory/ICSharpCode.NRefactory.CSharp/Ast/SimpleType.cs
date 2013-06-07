@@ -28,6 +28,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ICSharpCode.NRefactory.CSharp.Resolver;
+using ICSharpCode.NRefactory.CSharp.TypeSystem;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.NRefactory.CSharp
 {
@@ -44,7 +47,16 @@ namespace ICSharpCode.NRefactory.CSharp
 				}
 			}
 			
-			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data = default(T))
+			public override void AcceptVisitor (IAstVisitor visitor)
+			{
+			}
+				
+			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+			{
+				return default (T);
+			}
+			
+			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 			{
 				return default (S);
 			}
@@ -52,6 +64,11 @@ namespace ICSharpCode.NRefactory.CSharp
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
+			}
+			
+			public override ITypeReference ToTypeReference(NameLookupMode lookupMode)
+			{
+				return SpecialType.UnknownType;
 			}
 		}
 		#endregion
@@ -92,7 +109,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				return GetChildByRole (Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole (Roles.Identifier, CSharp.Identifier.Create (value, TextLocation.Empty));
+				SetChildByRole (Roles.Identifier, CSharp.Identifier.Create (value));
 			}
 		}
 		
@@ -109,7 +126,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			get { return GetChildrenByRole (Roles.TypeArgument); }
 		}
 		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data = default(T))
+		public override void AcceptVisitor (IAstVisitor visitor)
+		{
+			visitor.VisitSimpleType (this);
+		}
+			
+		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		{
+			return visitor.VisitSimpleType (this);
+		}
+		
+		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitSimpleType (this, data);
 		}
@@ -129,6 +156,19 @@ namespace ICSharpCode.NRefactory.CSharp
 				b.Append('>');
 			}
 			return b.ToString();
+		}
+		
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode = NameLookupMode.Type)
+		{
+			var typeArguments = new List<ITypeReference>();
+			foreach (var ta in this.TypeArguments) {
+				typeArguments.Add(ta.ToTypeReference(lookupMode));
+			}
+			if (typeArguments.Count == 0 && string.IsNullOrEmpty(this.Identifier)) {
+				// empty SimpleType is used for typeof(List<>).
+				return SpecialType.UnboundTypeArgument;
+			}
+			return new SimpleTypeOrNamespaceReference(this.Identifier, typeArguments, lookupMode);
 		}
 	}
 }

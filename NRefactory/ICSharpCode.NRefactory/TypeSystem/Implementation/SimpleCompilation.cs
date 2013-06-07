@@ -18,8 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
 using ICSharpCode.NRefactory.Utils;
 
 namespace ICSharpCode.NRefactory.TypeSystem.Implementation
@@ -34,6 +32,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		readonly CacheManager cacheManager = new CacheManager();
 		readonly KnownTypeCache knownTypeCache;
 		readonly IAssembly mainAssembly;
+		readonly IList<IAssembly> assemblies;
 		readonly IList<IAssembly> referencedAssemblies;
 		INamespace rootNamespace;
 		
@@ -63,12 +62,17 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			this.solutionSnapshot = solutionSnapshot;
 			this.context = new SimpleTypeResolveContext(this);
 			this.mainAssembly = mainAssembly.Resolve(context);
+			List<IAssembly> assemblies = new List<IAssembly>();
+			assemblies.Add(this.mainAssembly);
 			List<IAssembly> referencedAssemblies = new List<IAssembly>();
 			foreach (var asmRef in assemblyReferences) {
 				IAssembly asm = asmRef.Resolve(context);
-				if (asm != null)
+				if (asm != null && !assemblies.Contains(asm))
+					assemblies.Add(asm);
+				if (asm != null && !referencedAssemblies.Contains(asm))
 					referencedAssemblies.Add(asm);
 			}
+			this.assemblies = assemblies.AsReadOnly();
 			this.referencedAssemblies = referencedAssemblies.AsReadOnly();
 			this.knownTypeCache = new KnownTypeCache(this);
 		}
@@ -78,6 +82,14 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				if (mainAssembly == null)
 					throw new InvalidOperationException("Compilation isn't initialized yet");
 				return mainAssembly;
+			}
+		}
+		
+		public IList<IAssembly> Assemblies {
+			get {
+				if (assemblies == null)
+					throw new InvalidOperationException("Compilation isn't initialized yet");
+				return assemblies;
 			}
 		}
 		
@@ -95,9 +107,8 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		public INamespace RootNamespace {
 			get {
-				INamespace ns = this.rootNamespace;
+				INamespace ns = LazyInit.VolatileRead(ref this.rootNamespace);
 				if (ns != null) {
-					LazyInit.ReadBarrier();
 					return ns;
 				} else {
 					if (referencedAssemblies == null)
@@ -137,6 +148,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		public ISolutionSnapshot SolutionSnapshot {
 			get { return solutionSnapshot; }
+		}
+		
+		public override string ToString()
+		{
+			return "[SimpleCompilation " + mainAssembly.AssemblyName + "]";
 		}
 	}
 }

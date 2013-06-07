@@ -83,15 +83,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return !assembly.HasLoadError; }
 		}
 
-		void OnAssemblyLoaded(Task<AssemblyDefinition> assemblyTask)
+		void OnAssemblyLoaded(Task<ModuleDefinition> moduleTask)
 		{
 			// change from "Loading" icon to final icon
 			RaisePropertyChanged("Icon");
 			RaisePropertyChanged("ExpandedIcon");
-			if (assemblyTask.IsFaulted) {
+			if (moduleTask.IsFaulted) {
 				RaisePropertyChanged("ShowExpander"); // cannot expand assemblies with load error
 				// observe the exception so that the Task's finalizer doesn't re-throw it
-				try { assemblyTask.Wait(); }
+				try { moduleTask.Wait(); }
 				catch (AggregateException) { }
 			} else {
 				RaisePropertyChanged("Text"); // shortname might have changed
@@ -102,20 +102,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			AssemblyDefinition assemblyDefinition = assembly.AssemblyDefinition;
-			if (assemblyDefinition == null) {
+			ModuleDefinition moduleDefinition = assembly.ModuleDefinition;
+			if (moduleDefinition == null) {
 				// if we crashed on loading, then we don't have any children
 				return;
 			}
-			ModuleDefinition mainModule = assemblyDefinition.MainModule;
 
-			this.Children.Add(new ReferenceFolderTreeNode(mainModule, this));
-			if (mainModule.HasResources)
-				this.Children.Add(new ResourceListTreeNode(mainModule));
+			this.Children.Add(new ReferenceFolderTreeNode(moduleDefinition, this));
+			if (moduleDefinition.HasResources)
+				this.Children.Add(new ResourceListTreeNode(moduleDefinition));
 			foreach (NamespaceTreeNode ns in namespaces.Values) {
 				ns.Children.Clear();
 			}
-			foreach (TypeDefinition type in mainModule.Types.OrderBy(t => t.FullName)) {
+			foreach (TypeDefinition type in moduleDefinition.Types.OrderBy(t => t.FullName)) {
 				NamespaceTreeNode ns;
 				if (!namespaces.TryGetValue(type.Namespace, out ns)) {
 					ns = new NamespaceTreeNode(type.Namespace);
@@ -255,22 +254,26 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntry(Header = "_Remove", Icon = "images/Delete.png")]
+	[ExportContextMenuEntryAttribute(Header = "_Remove", Icon = "images/Delete.png")]
 	sealed class RemoveAssembly : IContextMenuEntry
 	{
-		public bool IsVisible(SharpTreeNode[] selectedNodes)
+		public bool IsVisible(TextViewContext context)
 		{
-			return selectedNodes.All(n => n is AssemblyTreeNode);
+			if (context.SelectedTreeNodes == null)
+				return false;
+			return context.SelectedTreeNodes.All(n => n is AssemblyTreeNode);
 		}
 
-		public bool IsEnabled(SharpTreeNode[] selectedNodes)
+		public bool IsEnabled(TextViewContext context)
 		{
 			return true;
 		}
 
-		public void Execute(SharpTreeNode[] selectedNodes)
+		public void Execute(TextViewContext context)
 		{
-			foreach (var node in selectedNodes) {
+			if (context.SelectedTreeNodes == null)
+				return;
+			foreach (var node in context.SelectedTreeNodes) {
 				node.Delete();
 			}
 		}

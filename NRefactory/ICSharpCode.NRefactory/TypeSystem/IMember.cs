@@ -20,13 +20,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.NRefactory.TypeSystem.Implementation;
 
 namespace ICSharpCode.NRefactory.TypeSystem
 {
 	/// <summary>
 	/// Method/field/property/event.
 	/// </summary>
-	public interface IUnresolvedMember : IUnresolvedEntity
+	public interface IUnresolvedMember : IUnresolvedEntity, IMemberReference
 	{
 		/// <summary>
 		/// Gets the return type of this member.
@@ -43,7 +44,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// <summary>
 		/// Gets the interfaces that are explicitly implemented by this member.
 		/// </summary>
-		IList<IMemberReference> InterfaceImplementations { get; }
+		IList<IMemberReference> ExplicitInterfaceImplementations { get; }
 		
 		/// <summary>
 		/// Gets if the member is virtual. Is true only if the "virtual" modifier was used, but non-virtual
@@ -61,14 +62,47 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// </summary>
 		bool IsOverridable { get; }
 		
+		/// <summary>
+		/// Resolves the member.
+		/// </summary>
+		/// <param name="context">
+		/// Context for looking up the member. The context must specify the current assembly.
+		/// A <see cref="SimpleTypeResolveContext"/> that specifies the current assembly is sufficient.
+		/// </param>
+		/// <returns>
+		/// Returns the resolved member, or <c>null</c> if the member could not be found.
+		/// </returns>
+		new IMember Resolve(ITypeResolveContext context);
+		
+		/// <summary>
+		/// Creates the resolved member.
+		/// </summary>
+		/// <param name="context">
+		/// The language-specific context that includes the parent type definition.
+		/// <see cref="IUnresolvedTypeDefinition.CreateResolveContext"/>
+		/// </param>
 		IMember CreateResolved(ITypeResolveContext context);
 	}
 	
 	public interface IMemberReference
 	{
 		/// <summary>
+		/// Gets the declaring type reference for the member.
+		/// </summary>
+		ITypeReference DeclaringTypeReference { get; }
+		
+		/// <summary>
 		/// Resolves the member.
 		/// </summary>
+		/// <param name="context">
+		/// Context to use for resolving this member reference.
+		/// Which kind of context is required depends on the which kind of member reference this is;
+		/// please consult the documentation of the method that was used to create this member reference,
+		/// or that of the class implementing this method.
+		/// </param>
+		/// <returns>
+		/// Returns the resolved member, or <c>null</c> if the member could not be found.
+		/// </returns>
 		IMember Resolve(ITypeResolveContext context);
 	}
 	
@@ -85,15 +119,27 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		IMember MemberDefinition { get; }
 		
 		/// <summary>
+		/// Gets the unresolved member instance from which this member was created.
+		/// This property may return <c>null</c> for special members that do not have a corresponding unresolved member instance.
+		/// </summary>
+		/// <remarks>
+		/// For specialized members, this property returns the unresolved member for the original member definition.
+		/// For partial methods, this property returns the implementing partial method declaration, if one exists, and the
+		/// defining partial method declaration otherwise.
+		/// For the members used to represent the built-in C# operators like "operator +(int, int);", this property returns <c>null</c>.
+		/// </remarks>
+		IUnresolvedMember UnresolvedMember { get; }
+		
+		/// <summary>
 		/// Gets the return type of this member.
-		/// This property never returns null.
+		/// This property never returns <c>null</c>.
 		/// </summary>
 		IType ReturnType { get; }
 		
 		/// <summary>
 		/// Gets the interface members implemented by this member (both implicitly and explicitly).
 		/// </summary>
-		IList<IMember> InterfaceImplementations { get; }
+		IList<IMember> ImplementedInterfaceMembers { get; }
 		
 		/// <summary>
 		/// Gets whether this member is explicitly implementing an interface.
@@ -119,6 +165,10 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// <summary>
 		/// Creates a member reference that can be used to rediscover this member in another compilation.
 		/// </summary>
+		/// <remarks>
+		/// If this member is specialized using open generic types, the resulting member reference will need to be looked up in an appropriate generic context.
+		/// Otherwise, the main resolve context of a compilation is sufficient.
+		/// </remarks>
 		IMemberReference ToMemberReference();
 	}
 }

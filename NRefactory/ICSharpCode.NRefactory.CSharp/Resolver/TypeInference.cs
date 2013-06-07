@@ -50,7 +50,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 	public sealed class TypeInference
 	{
 		readonly ICompilation compilation;
-		readonly Conversions conversions;
+		readonly CSharpConversions conversions;
 		TypeInferenceAlgorithm algorithm = TypeInferenceAlgorithm.CSharp4;
 		
 		// determines the maximum generic nesting level; necessary to avoid infinite recursion in 'Improved' mode.
@@ -63,10 +63,10 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			if (compilation == null)
 				throw new ArgumentNullException("compilation");
 			this.compilation = compilation;
-			this.conversions = Conversions.Get(compilation);
+			this.conversions = CSharpConversions.Get(compilation);
 		}
 		
-		internal TypeInference(ICompilation compilation, Conversions conversions)
+		internal TypeInference(ICompilation compilation, CSharpConversions conversions)
 		{
 			Debug.Assert(compilation != null);
 			Debug.Assert(conversions != null);
@@ -372,7 +372,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			// C# 4.0 spec: §7.5.2.4 Output types
 			LambdaResolveResult lrr = e as LambdaResolveResult;
-			if (lrr != null && lrr.IsImplicitlyTyped || e is MethodGroupResolveResult) {
+			if (lrr != null || e is MethodGroupResolveResult) {
 				IMethod m = GetDelegateOrExpressionTreeSignature(t);
 				if (m != null) {
 					return new[] { m.ReturnType };
@@ -510,10 +510,9 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					}
 					var or = mgrr.PerformOverloadResolution(compilation,
 					                                        args,
-					                                        allowExtensionMethods: false,
 					                                        allowExpandingParams: false);
 					if (or.FoundApplicableCandidate && or.BestCandidateAmbiguousWith == null) {
-						IType returnType = or.BestCandidate.ReturnType;
+						IType returnType = or.GetBestCandidateWithSubstitutedTypeArguments().ReturnType;
 						MakeLowerBoundInference(returnType, m.ReturnType);
 					}
 				}
@@ -633,7 +632,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			if (arrU != null && arrV != null && arrU.Dimensions == arrV.Dimensions) {
 				MakeLowerBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
-			} else if (arrU != null && IsIEnumerableCollectionOrList(pV) && arrU.Dimensions == 1) {
+			} else if (arrU != null && IsGenericInterfaceImplementedByArray(pV) && arrU.Dimensions == 1) {
 				MakeLowerBoundInference(arrU.ElementType, pV.GetTypeArgument(0));
 				return;
 			}
@@ -678,14 +677,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			}
 		}
 		
-		static bool IsIEnumerableCollectionOrList(ParameterizedType rt)
+		static bool IsGenericInterfaceImplementedByArray(ParameterizedType rt)
 		{
 			if (rt == null || rt.TypeParameterCount != 1)
 				return false;
 			switch (rt.GetDefinition().FullName) {
-				case "System.Collections.Generic.IList":
-				case "System.Collections.Generic.ICollection":
 				case "System.Collections.Generic.IEnumerable":
+				case "System.Collections.Generic.ICollection":
+				case "System.Collections.Generic.IList":
+				case "System.Collections.Generic.IReadOnlyList":
 					return true;
 				default:
 					return false;
@@ -717,10 +717,10 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			if (arrV != null && arrU != null && arrU.Dimensions == arrV.Dimensions) {
 				MakeUpperBoundInference(arrU.ElementType, arrV.ElementType);
 				return;
-			} else if (arrV != null && IsIEnumerableCollectionOrList(pU) && arrV.Dimensions == 1) {
+			} else if (arrV != null && IsGenericInterfaceImplementedByArray(pU) && arrV.Dimensions == 1) {
 				MakeUpperBoundInference(pU.GetTypeArgument(0), arrV.ElementType);
 				return;
-			}
+ 			}
 			// Handle parameterized types:
 			if (pU != null) {
 				ParameterizedType uniqueBaseType = null;
@@ -854,12 +854,12 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			
 			// First try the Fixing algorithm from the C# spec (§7.5.2.11)
 			List<IType> candidateTypes = lowerBounds.Union(upperBounds)
-				.Where(c => lowerBounds.All(b => conversions.ImplicitConversion(b, c)))
-				.Where(c => upperBounds.All(b => conversions.ImplicitConversion(c, b)))
+				.Where(c => lowerBounds.All(b => conversions.ImplicitConversion(b, c).IsValid))
+				.Where(c => upperBounds.All(b => conversions.ImplicitConversion(c, b).IsValid))
 				.ToList(); // evaluate the query only once
 			
 			candidateTypes = candidateTypes.Where(
-				c => candidateTypes.All(o => conversions.ImplicitConversion(c, o))
+				c => candidateTypes.All(o => conversions.ImplicitConversion(c, o).IsValid)
 			).ToList();
 			// If the specified algorithm produces a single candidate, we return
 			// that candidate.

@@ -132,13 +132,29 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 						else
 							substitution = new TypeParameterSubstitution(null, methodTypeArguments);
 					}
-					yield return new SpecializedMethod(baseType, m, methodTypeArguments, substitution);
+					yield return new SpecializedMethod(m, substitution);
 				}
 			} else {
 				foreach (IMethod m in declaredMethods) {
 					yield return m;
 				}
 			}
+		}
+		#endregion
+		
+		#region GetAccessors
+		public static IEnumerable<IMethod> GetAccessors(IType type, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		{
+			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
+				return GetAccessorsImpl(type, filter, options);
+			} else {
+				return type.GetNonInterfaceBaseTypes().SelectMany(t => GetAccessorsImpl(t, filter, options));
+			}
+		}
+		
+		static IEnumerable<IMethod> GetAccessorsImpl(IType baseType, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		{
+			return GetConstructorsOrAccessorsImpl(baseType, baseType.GetAccessors(filter, options | declaredMembers), filter, options);
 		}
 		#endregion
 		
@@ -154,17 +170,21 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		static IEnumerable<IMethod> GetConstructorsImpl(IType baseType, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
 		{
-			IEnumerable<IMethod> declaredCtors = baseType.GetConstructors(filter, options | declaredMembers);
+			return GetConstructorsOrAccessorsImpl(baseType, baseType.GetConstructors(filter, options | declaredMembers), filter, options);
+		}
+		
+		static IEnumerable<IMethod> GetConstructorsOrAccessorsImpl(IType baseType, IEnumerable<IMethod> declaredMembers, Predicate<IUnresolvedMethod> filter, GetMemberOptions options)
+		{
 			if ((options & GetMemberOptions.ReturnMemberDefinitions) == GetMemberOptions.ReturnMemberDefinitions) {
-				return declaredCtors;
+				return declaredMembers;
 			}
 			
 			ParameterizedType pt = baseType as ParameterizedType;
 			if (pt != null) {
 				var substitution = pt.GetSubstitution();
-				return declaredCtors.Select(m => new SpecializedMethod(pt, m, null, substitution));
+				return declaredMembers.Select(m => new SpecializedMethod(m, substitution) { DeclaringType = pt });
 			} else {
-				return declaredCtors;
+				return declaredMembers;
 			}
 		}
 		#endregion
@@ -189,7 +209,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			ParameterizedType pt = baseType as ParameterizedType;
 			if (pt != null) {
 				var substitution = pt.GetSubstitution();
-				return declaredProperties.Select(m => new SpecializedProperty(pt, m, substitution));
+				return declaredProperties.Select(m => new SpecializedProperty(m, substitution) { DeclaringType = pt });
 			} else {
 				return declaredProperties;
 			}
@@ -216,7 +236,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			ParameterizedType pt = baseType as ParameterizedType;
 			if (pt != null) {
 				var substitution = pt.GetSubstitution();
-				return declaredFields.Select(m => new SpecializedField(pt, m, substitution));
+				return declaredFields.Select(m => new SpecializedField(m, substitution) { DeclaringType = pt });
 			} else {
 				return declaredFields;
 			}
@@ -243,7 +263,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			ParameterizedType pt = baseType as ParameterizedType;
 			if (pt != null) {
 				var substitution = pt.GetSubstitution();
-				return declaredEvents.Select(m => new SpecializedEvent(pt, m, substitution));
+				return declaredEvents.Select(m => new SpecializedEvent(m, substitution) { DeclaringType = pt });
 			} else {
 				return declaredEvents;
 			}

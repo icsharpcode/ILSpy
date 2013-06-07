@@ -19,10 +19,10 @@
 using System;
 using System.IO;
 using System.Linq;
-
 using ICSharpCode.NRefactory.CSharp.TypeSystem;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.NRefactory.TypeSystem.Implementation;
 using NUnit.Framework;
 
 namespace ICSharpCode.NRefactory.CSharp.Resolver
@@ -38,13 +38,13 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			lookup = new MemberLookup(null, compilation.MainAssembly);
 		}
 		
-		CSharpParsedFile Parse(string program)
+		CSharpUnresolvedFile Parse(string program)
 		{
-			CompilationUnit cu = new CSharpParser().Parse(new StringReader(program), "test.cs");
-			CSharpParsedFile parsedFile = cu.ToTypeSystem();
-			project = project.UpdateProjectContent(null, parsedFile);
+			SyntaxTree syntaxTree = SyntaxTree.Parse(program, "test.cs");
+			CSharpUnresolvedFile unresolvedFile = syntaxTree.ToTypeSystem();
+			project = project.AddOrUpdateFiles(unresolvedFile);
 			compilation = project.CreateCompilation();
-			return parsedFile;
+			return unresolvedFile;
 		}
 		
 		[Test]
@@ -60,8 +60,8 @@ class Middle : Base {
 class Derived : Middle {
 	public override void Method() {}
 }";
-			var parsedFile = Parse(program);
-			ITypeDefinition derived = compilation.MainAssembly.GetTypeDefinition(parsedFile.TopLevelTypeDefinitions[2]);
+			var unresolvedFile = Parse(program);
+			ITypeDefinition derived = compilation.MainAssembly.GetTypeDefinition(unresolvedFile.TopLevelTypeDefinitions[2]);
 			var rr = lookup.Lookup(new ResolveResult(derived), "Method", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
 			Assert.AreEqual(2, rr.MethodsGroupedByDeclaringType.Count());
 			
@@ -87,8 +87,8 @@ class Derived : Base<int> {
 	public override void Method(int a) {}
 	public override void Method(string a) {}
 }";
-			var parsedFile = Parse(program);
-			ITypeDefinition derived = compilation.MainAssembly.GetTypeDefinition(parsedFile.TopLevelTypeDefinitions[1]);
+			var unresolvedFile = Parse(program);
+			ITypeDefinition derived = compilation.MainAssembly.GetTypeDefinition(unresolvedFile.TopLevelTypeDefinitions[1]);
 			var rr = lookup.Lookup(new ResolveResult(derived), "Method", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
 			Assert.AreEqual(2, rr.MethodsGroupedByDeclaringType.Count());
 			
@@ -115,8 +115,8 @@ class Base {
 class Derived : Base {
 	public override void Method<S>(S a) {}
 }";
-			var parsedFile = Parse(program);
-			ITypeDefinition derived = compilation.MainAssembly.GetTypeDefinition(parsedFile.TopLevelTypeDefinitions[1]);
+			var unresolvedFile = Parse(program);
+			ITypeDefinition derived = compilation.MainAssembly.GetTypeDefinition(unresolvedFile.TopLevelTypeDefinitions[1]);
 			var rr = lookup.Lookup(new ResolveResult(derived), "Method", EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
 			Assert.AreEqual(1, rr.MethodsGroupedByDeclaringType.Count());
 			
@@ -125,6 +125,87 @@ class Derived : Base {
 			Assert.AreEqual(1, baseGroup.Count);
 			Assert.AreEqual("Derived.Method", baseGroup[0].FullName);
 			Assert.AreEqual("``0", baseGroup[0].Parameters[0].Type.ReflectionName);
+		}
+		
+		[Test]
+		public void InstanceFieldImplicitThis()
+		{
+			string program = @"class Test {
+	public int Field;
+	int M() { return $Field$; }
+}";
+			var rr = Resolve<MemberResolveResult>(program);
+			Assert.AreEqual("Test.Field", rr.Member.FullName);
+			Assert.IsTrue(rr.TargetResult is ThisResolveResult);
+		}
+		
+		[Test]
+		public void InstanceFieldExplicitThis()
+		{
+			string program = @"class Test {
+	public int Field;
+	int M() { return $this.Field$; }
+}";
+			var rr = Resolve<MemberResolveResult>(program);
+			Assert.AreEqual("Test.Field", rr.Member.FullName);
+			Assert.IsTrue(rr.TargetResult is ThisResolveResult);
+		}
+		
+		[Test]
+		public void StaticField()
+		{
+			string program = @"class Test {
+	public static int Field;
+	int M() { return $Field$; }
+}";
+			var rr = Resolve<MemberResolveResult>(program);
+			Assert.AreEqual("Test.Field", rr.Member.FullName);
+			Assert.IsTrue(rr.TargetResult is TypeResolveResult);
+		}
+		
+		[Test]
+		public void InstanceMethodImplicitThis()
+		{
+			string program = @"using System;
+class Test {
+	void F() {}
+	public void M() {
+		$F()$;
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.AreEqual("Test.F", rr.Member.FullName);
+			Assert.IsInstanceOf<ThisResolveResult>(rr.TargetResult);
+		}
+		
+		[Test]
+		public void InstanceMethodExplicitThis()
+		{
+			string program = @"using System;
+class Test {
+	void F() {}
+	public void M() {
+		$this.F()$;
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.AreEqual("Test.F", rr.Member.FullName);
+			Assert.IsInstanceOf<ThisResolveResult>(rr.TargetResult);
+		}
+		
+		[Test]
+		public void StaticMethod()
+		{
+			string program = @"using System;
+class Test {
+	static void F() {}
+	public void M() {
+		$F()$;
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.AreEqual("Test.F", rr.Member.FullName);
+			Assert.IsInstanceOf<TypeResolveResult>(rr.TargetResult);
 		}
 		
 		[Test]
@@ -276,6 +357,104 @@ class Derived : Base {
 			var rr = Resolve<MemberResolveResult>(program);
 			Assert.IsFalse(rr.IsError);
 			Assert.AreEqual("Base.X", rr.Member.FullName);
+		}
+		
+		[Test]
+		public void ProtectedMemberViaTypeParameter()
+		{
+			string program = @"using System;
+class Base
+{
+	protected void Test() {}
+	public void Test(int a = 0) {}
+}
+class Derived<T> : Base where T : Derived<T>
+{
+	void M(Derived<T> a, Base b, T c) {
+		a.Test(); // calls Test()
+		b.Test(); // calls Test(int)
+		c.Test(); // calls Test()
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program.Replace("a.Test()", "$a.Test()$"));
+			Assert.IsFalse(rr.IsError);
+			Assert.AreEqual(0, rr.Member.Parameters.Count);
+			
+			rr = Resolve<CSharpInvocationResolveResult>(program.Replace("b.Test()", "$b.Test()$"));
+			Assert.IsFalse(rr.IsError);
+			Assert.AreEqual(1, rr.Member.Parameters.Count);
+			
+			rr = Resolve<CSharpInvocationResolveResult>(program.Replace("c.Test()", "$c.Test()$"));
+			Assert.IsFalse(rr.IsError);
+			Assert.AreEqual(0, rr.Member.Parameters.Count);
+		}
+		
+		[Test]
+		public void MethodGroupConversionForGenericMethodHasSpecializedMethod()
+		{
+			string program = @"using System;
+class TestClass {
+	void F<T>(T x) {}
+	public void M() {
+		System.Action<int> f;
+		f = $F$;
+	}
+}";
+			var conversion = GetConversion(program);
+			Assert.IsTrue(conversion.IsValid);
+			Assert.IsTrue(conversion.IsMethodGroupConversion);
+			Assert.IsInstanceOf<SpecializedMethod>(conversion.Method);
+			Assert.AreEqual(
+				new[] { "System.Int32" },
+				((SpecializedMethod)conversion.Method).TypeArguments.Select(t => t.ReflectionName).ToArray());
+		}
+		
+		[Test]
+		public void PartialMethod_WithoutImplementation()
+		{
+			string program = @"using System;
+class TestClass {
+	$partial void M();$
+}";
+			var mrr = Resolve<MemberResolveResult>(program);
+			Assert.AreEqual("TestClass.M", mrr.Member.FullName);
+		}
+		
+		[Test]
+		public void PartialMethod_Declaration()
+		{
+			string program = @"using System;
+class TestClass {
+	$partial void M();$
+	
+	partial void M() {}
+}";
+			var mrr = Resolve<MemberResolveResult>(program);
+			Assert.AreEqual("TestClass.M", mrr.Member.FullName);
+		}
+		
+		[Test]
+		public void PartialMethod_Implementation()
+		{
+			string program = @"using System;
+class TestClass {
+	partial void M();
+	
+	$partial void M() {}$
+}";
+			var mrr = Resolve<MemberResolveResult>(program);
+			Assert.AreEqual("TestClass.M", mrr.Member.FullName);
+		}
+		
+		[Test]
+		public void MembersWithoutWhitespace()
+		{
+			string program = @"using System;
+class TestClass {
+	void A();$void B();$void C();
+}";
+			var mrr = Resolve<MemberResolveResult>(program);
+			Assert.AreEqual("TestClass.B", mrr.Member.FullName);
 		}
 	}
 }

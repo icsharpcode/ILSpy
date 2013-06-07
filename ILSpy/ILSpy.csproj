@@ -15,7 +15,7 @@
     <NoStdLib>False</NoStdLib>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <ApplicationIcon>Images\ILSpy.ico</ApplicationIcon>
+    <ApplicationIcon>Images\ILSpy-Large.ico</ApplicationIcon>
     <RunCodeAnalysis>False</RunCodeAnalysis>
     <StartArguments>/separate</StartArguments>
     <SignAssembly>True</SignAssembly>
@@ -28,12 +28,14 @@
     <RegisterForComInterop>False</RegisterForComInterop>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <BaseAddress>4194304</BaseAddress>
+    <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
     <RegisterForComInterop>False</RegisterForComInterop>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <BaseAddress>4194304</BaseAddress>
+    <FileAlignment>4096</FileAlignment>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -71,6 +73,7 @@
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
     <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
@@ -174,6 +177,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Commands\SimpleCommand.cs" />
+    <Compile Include="TextView\FoldingCommands.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzeContextMenuEntry.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedAssemblyTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedAttributeAppliedToTreeNode.cs" />
@@ -199,6 +203,7 @@
     <Compile Include="TreeNodes\FilterResult.cs" />
     <Compile Include="TreeNodes\IMemberTreeNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\CursorResourceEntryNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\IconResourceEntryNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\ImageResourceEntryNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\XmlResourceNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\IResourceNodeFactory.cs" />

@@ -17,12 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Globalization;
 using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.NRefactory.Semantics
 {
 	/// <summary>
-	/// Represents a local variable.
+	/// Represents a local variable or parameter.
 	/// </summary>
 	public class LocalResolveResult : ResolveResult
 	{
@@ -65,7 +66,7 @@ namespace ICSharpCode.NRefactory.Semantics
 		
 		public override string ToString()
 		{
-			return string.Format("[LocalResolveResult {0}]", variable);
+			return string.Format(CultureInfo.InvariantCulture, "[LocalResolveResult {0}]", variable);
 		}
 		
 		public override DomRegion GetDefinitionRegion()

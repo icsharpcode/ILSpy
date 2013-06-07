@@ -26,14 +26,14 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 	[Serializable]
 	public sealed class DefaultAssemblyReference : IAssemblyReference, ISupportsInterning
 	{
-		public static IAssemblyReference CurrentAssembly = new CurrentAssemblyReference();
-		public static IAssemblyReference Corlib = new DefaultAssemblyReference("mscorlib");
+		public static readonly IAssemblyReference CurrentAssembly = new CurrentAssemblyReference();
+		public static readonly IAssemblyReference Corlib = new DefaultAssemblyReference("mscorlib");
 		
 		string shortName;
 		
 		public DefaultAssemblyReference(string assemblyName)
 		{
-			int pos = assemblyName.IndexOf(',');
+			int pos = assemblyName != null ? assemblyName.IndexOf(',') : -1;
 			if (pos >= 0)
 				shortName = assemblyName.Substring(0, pos);
 			else
@@ -45,13 +45,10 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			IAssembly current = context.CurrentAssembly;
 			if (current != null && string.Equals(shortName, current.AssemblyName, StringComparison.OrdinalIgnoreCase))
 				return current;
-			foreach (IAssembly asm in context.Compilation.ReferencedAssemblies) {
+			foreach (IAssembly asm in context.Compilation.Assemblies) {
 				if (string.Equals(shortName, asm.AssemblyName, StringComparison.OrdinalIgnoreCase))
 					return asm;
 			}
-			IAssembly main = context.Compilation.MainAssembly;
-			if (string.Equals(shortName, main.AssemblyName, StringComparison.OrdinalIgnoreCase))
-				return main;
 			return null;
 		}
 		

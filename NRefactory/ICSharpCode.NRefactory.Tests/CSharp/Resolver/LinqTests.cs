@@ -17,8 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.NRefactory.TypeSystem.Implementation;
 using NUnit.Framework;
 
 namespace ICSharpCode.NRefactory.CSharp.Resolver
@@ -101,8 +103,8 @@ class TestClass {
 	}
 }
 ";
-			var rr = Resolve<CSharpInvocationResolveResult>(program);
-			Assert.AreEqual("System.Linq.Enumerable.Select", rr.Member.FullName);
+			var rr = Resolve<ConversionResolveResult>(program);
+			Assert.IsTrue(rr.Conversion.IsIdentityConversion);
 			Assert.AreEqual("System.Collections.Generic.IEnumerable", rr.Type.FullName);
 			Assert.AreEqual("System.Int32", ((ParameterizedType)rr.Type).TypeArguments[0].FullName);
 		}
@@ -112,7 +114,7 @@ class TestClass {
 		{
 			string program = @"using System;
 class TestClass { static void M() {
-	$(from a in new XYZ() select a.ToUpper())$.ToString();
+	(from a in new XYZ() $select a.ToUpper()$).ToString();
 }}
 class XYZ {
 	public int Select<U>(Func<string, U> f) { return 42; }
@@ -265,7 +267,7 @@ class TestClass {
 			Assert.AreEqual("System.Collections.Generic.IEnumerable`1[[System.String]]", rr.Type.ReflectionName);
 		}
 		
-		[Test, Ignore("Parser bug (incorrect position), but also resolver bug (handles Select as a separate call when it's combined into the GroupJoin)")]
+		[Test]
 		public void GroupJoinWithCustomMethod()
 		{
 			string program = @"using System;
@@ -296,7 +298,7 @@ class TestClass
 {
 	static void M(string[] args)
 	{
-		var q = $(from a in new XYZ() join b in args on a equals b into g select g.ToUpper())$;
+		var q = (from a in new XYZ() $join b in args on a equals b into g$ select g.ToUpper());
 	}
 }
 class XYZ
@@ -332,6 +334,63 @@ class TestClass
 }";
 			var rr = Resolve<LocalResolveResult>(program);
 			Assert.AreEqual("System.String", rr.Type.FullName);
+		}
+		
+		[Test]
+		public void SelectManyInvocation()
+		{
+			string program = @"using System; using System.Linq;
+class TestClass
+{
+	static void M(string[] args)
+	{
+		var query = from w in args $from c in w$ select c - '0';
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.AreEqual("SelectMany", rr.Member.Name);
+			Assert.AreEqual(3, rr.Member.Parameters.Count);
+			var typeArguments = ((SpecializedMethod)rr.Member).TypeArguments;
+			Assert.AreEqual(3, typeArguments.Count);
+			Assert.AreEqual("System.String", typeArguments[0].ReflectionName, "TSource");
+			Assert.AreEqual("System.Char", typeArguments[1].ReflectionName, "TCollection");
+			Assert.AreEqual("System.Int32", typeArguments[2].ReflectionName, "TResult");
+		}
+		
+		[Test]
+		public void SelectManyInvocationWithTransparentIdentifier()
+		{
+			string program = @"using System; using System.Linq;
+class TestClass
+{
+	static void M(string[] args)
+	{
+		var query = from w in args $from c in w$ orderby c select c - '0';
+	}
+}";
+			var rr = Resolve<CSharpInvocationResolveResult>(program);
+			Assert.IsFalse(rr.IsError);
+			Assert.AreEqual("SelectMany", rr.Member.Name);
+			Assert.AreEqual(3, rr.Member.Parameters.Count);
+			var typeArguments = ((SpecializedMethod)rr.Member).TypeArguments;
+			Assert.AreEqual(3, typeArguments.Count);
+			Assert.AreEqual("System.String", typeArguments[0].ReflectionName, "TSource");
+			Assert.AreEqual("System.Char", typeArguments[1].ReflectionName, "TCollection");
+			Assert.AreEqual(TypeKind.Anonymous, typeArguments[2].Kind, "TResult");
+		}
+		
+		[Test]
+		public void FromClauseDoesNotResolveToSourceVariable()
+		{
+			string program = @"using System; using System.Linq;
+class TestClass {
+	static void M(string[] args) {
+		var query = $from w in args$ select int.Parse(w);
+	}}";
+			var rr = Resolve<ConversionResolveResult>(program);
+			Assert.AreEqual("System.String[]", rr.Type.ReflectionName);
+			Assert.AreEqual(Conversion.IdentityConversion, rr.Conversion);
 		}
 	}
 }

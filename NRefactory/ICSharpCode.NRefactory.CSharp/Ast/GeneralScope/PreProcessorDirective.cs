@@ -46,7 +46,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		Line = 12
 	}
 	
-	public class PreProcessorDirective : AstNode, IRelocatable
+	public class PreProcessorDirective : AstNode
 	{
 		public override NodeType NodeType {
 			get {
@@ -86,23 +86,30 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 		}
 		
-		public PreProcessorDirective (PreProcessorDirectiveType type, TextLocation startLocation, TextLocation endLocation)
+		public PreProcessorDirective(PreProcessorDirectiveType type, TextLocation startLocation, TextLocation endLocation)
 		{
 			this.Type = type;
 			this.startLocation = startLocation;
 			this.endLocation = endLocation;
 		}
-		
-		#region IRelocationable implementation
-		void IRelocatable.SetStartLocation (TextLocation startLocation)
-		{
-			int lineDelta = startLocation.Line - this.startLocation.Line;
-			endLocation = new TextLocation (endLocation.Line + lineDelta, lineDelta != 0 ? endLocation.Column : endLocation.Column + startLocation.Column - this.startLocation.Column);
-			this.startLocation = startLocation;
-		}
-		#endregion
 
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data = default(T))
+		public PreProcessorDirective(PreProcessorDirectiveType type, string argument = null)
+		{
+			this.Type = type;
+			this.Argument = argument;
+		}
+
+		public override void AcceptVisitor (IAstVisitor visitor)
+		{
+			visitor.VisitPreProcessorDirective (this);
+		}
+			
+		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		{
+			return visitor.VisitPreProcessorDirective (this);
+		}
+
+		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitPreProcessorDirective (this, data);
 		}

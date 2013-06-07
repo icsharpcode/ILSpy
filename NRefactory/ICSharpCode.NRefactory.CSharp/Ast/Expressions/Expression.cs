@@ -41,7 +41,16 @@ namespace ICSharpCode.NRefactory.CSharp
 				}
 			}
 			
-			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data = default(T))
+			public override void AcceptVisitor (IAstVisitor visitor)
+			{
+			}
+			
+			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+			{
+				return default (T);
+			}
+			
+			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 			{
 				return default (S);
 			}
@@ -72,7 +81,17 @@ namespace ICSharpCode.NRefactory.CSharp
 				get { return NodeType.Pattern; }
 			}
 			
-			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data = default(T))
+			public override void AcceptVisitor (IAstVisitor visitor)
+			{
+				visitor.VisitPatternPlaceholder(this, child);
+			}
+				
+			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+			{
+				return visitor.VisitPatternPlaceholder(this, child);
+			}
+			
+			public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 			{
 				return visitor.VisitPatternPlaceholder(this, child, data);
 			}
@@ -202,29 +221,14 @@ namespace ICSharpCode.NRefactory.CSharp
 			return new CastExpression { Type = type,  Expression = this };
 		}
 		
-		public CastExpression CastTo(Type type)
-		{
-			return new CastExpression { Type = AstType.Create(type),  Expression = this };
-		}
-		
 		public AsExpression CastAs(AstType type)
 		{
 			return new AsExpression { Type = type,  Expression = this };
 		}
 		
-		public AsExpression CastAs(Type type)
-		{
-			return new AsExpression { Type = AstType.Create(type),  Expression = this };
-		}
-		
 		public IsExpression IsType(AstType type)
 		{
 			return new IsExpression { Type = type,  Expression = this };
-		}
-		
-		public IsExpression IsType(Type type)
-		{
-			return new IsExpression { Type = AstType.Create(type),  Expression = this };
 		}
 		#endregion
 	}

@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -37,16 +37,16 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.GeneralScope
 			Assert.AreEqual(0, ns.Members.Count);
 			
 			Assert.AreEqual(new Role[] {
-			                	AstNode.Roles.Keyword,
-			                	AstNode.Roles.Identifier,
-			                	AstNode.Roles.LBrace,
-			                	AstNode.Roles.PreProcessorDirective,
-			                	AstNode.Roles.Comment,
-			                	AstNode.Roles.PreProcessorDirective,
-			                	AstNode.Roles.RBrace
+			                	Roles.NamespaceKeyword,
+			                	Roles.Identifier,
+			                	Roles.LBrace,
+			                	Roles.PreProcessorDirective,
+			                	Roles.Comment,
+			                	Roles.PreProcessorDirective,
+			                	Roles.RBrace
 			                }, ns.Children.Select(c => c.Role).ToArray());
 			
-			var pp = ns.GetChildrenByRole(AstNode.Roles.PreProcessorDirective);
+			var pp = ns.GetChildrenByRole(Roles.PreProcessorDirective);
 			
 			Assert.AreEqual(PreProcessorDirectiveType.If, pp.First().Type);
 			Assert.IsFalse(pp.First().Take);
@@ -54,7 +54,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.GeneralScope
 			Assert.AreEqual(new TextLocation(2, 2), pp.First().StartLocation);
 			Assert.AreEqual(new TextLocation(2, 15), pp.First().EndLocation);
 			
-			var comment = ns.GetChildByRole(AstNode.Roles.Comment);
+			var comment = ns.GetChildByRole(Roles.Comment);
 			Assert.AreEqual(CommentType.InactiveCode, comment.CommentType);
 			Assert.AreEqual(new TextLocation(3, 1), comment.StartLocation);
 			Assert.AreEqual(new TextLocation(4, 2), comment.EndLocation);
@@ -66,6 +66,7 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.GeneralScope
 			Assert.AreEqual(new TextLocation(4, 8), pp.Last().EndLocation);
 		}
 		
+		[Ignore("Fixme!")]
 		[Test]
 		public void NestedInactiveIf()
 		{
@@ -82,20 +83,21 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.GeneralScope
 			Assert.AreEqual(0, ns.Members.Count);
 			
 			Assert.AreEqual(new Role[] {
-			                	AstNode.Roles.Keyword,
-			                	AstNode.Roles.Identifier,
-			                	AstNode.Roles.LBrace,
-			                	AstNode.Roles.PreProcessorDirective,
-			                	AstNode.Roles.Comment,
-			                	AstNode.Roles.PreProcessorDirective,
-			                	AstNode.Roles.Comment,
-			                	AstNode.Roles.PreProcessorDirective,
-			                	AstNode.Roles.Comment,
-			                	AstNode.Roles.PreProcessorDirective,
-			                	AstNode.Roles.RBrace
+			                	Roles.NamespaceKeyword,
+			                	Roles.Identifier,
+			                	Roles.LBrace,
+			                	Roles.PreProcessorDirective,
+			                	Roles.Comment,
+			                	Roles.PreProcessorDirective,
+			                	Roles.Comment,
+			                	Roles.PreProcessorDirective,
+			                	Roles.Comment,
+			                	Roles.PreProcessorDirective,
+			                	Roles.RBrace
 			                }, ns.Children.Select(c => c.Role).ToArray());
 		}
 		
+		[Ignore("Fixme!")]
 		[Test]
 		public void CommentOnEndOfIfDirective()
 		{
@@ -108,19 +110,20 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.GeneralScope
 			Assert.AreEqual(0, ns.Members.Count);
 			
 			Assert.AreEqual(new Role[] {
-			                	AstNode.Roles.Keyword,
-			                	AstNode.Roles.Identifier,
-			                	AstNode.Roles.LBrace,
-			                	AstNode.Roles.PreProcessorDirective,
-			                	AstNode.Roles.Comment,
-			                	AstNode.Roles.Comment,
-			                	AstNode.Roles.PreProcessorDirective,
-			                	AstNode.Roles.RBrace
+			                	Roles.NamespaceKeyword,
+			                	Roles.Identifier,
+			                	Roles.LBrace,
+			                	Roles.PreProcessorDirective,
+			                	Roles.Comment,
+			                	Roles.Comment,
+			                	Roles.PreProcessorDirective,
+			                	Roles.RBrace
 			                }, ns.Children.Select(c => c.Role).ToArray());
-			Assert.AreEqual(CommentType.SingleLine, ns.GetChildrenByRole(AstNode.Roles.Comment).First().CommentType);
-			Assert.AreEqual(CommentType.InactiveCode, ns.GetChildrenByRole(AstNode.Roles.Comment).Last().CommentType);
+			Assert.AreEqual(CommentType.SingleLine, ns.GetChildrenByRole(Roles.Comment).First().CommentType);
+			Assert.AreEqual(CommentType.InactiveCode, ns.GetChildrenByRole(Roles.Comment).Last().CommentType);
 		}
 		
+		[Ignore("Fixme!")]
 		[Test]
 		public void PragmaWarning()
 		{
@@ -128,6 +131,138 @@ namespace ICSharpCode.NRefactory.CSharp.Parser.GeneralScope
 			var ppd = ParseUtilCSharp.ParseGlobal<PreProcessorDirective>(program);
 			Assert.AreEqual(PreProcessorDirectiveType.Pragma, ppd.Type);
 			Assert.AreEqual("warning disable 809", ppd.Argument);
+		}
+		
+		const string elifProgram = @"
+#if AAA
+class A { }
+#elif BBB
+class B { }
+#endif";
+		
+		[Test]
+		[Ignore("parser bug (missing comment node)")]
+		public void ElifBothFalse()
+		{
+			CSharpParser parser = new CSharpParser();
+			var syntaxTree = parser.Parse(elifProgram, "elif.cs");
+			Assert.IsFalse(parser.HasErrors);
+			
+			Assert.AreEqual(new Role[] {
+			                	Roles.PreProcessorDirective,
+			                	Roles.Comment,
+			                	Roles.PreProcessorDirective,
+			                	Roles.Comment,
+			                	Roles.PreProcessorDirective
+			                }, syntaxTree.Children.Select(c => c.Role).ToArray());
+			var aaa = syntaxTree.GetChildrenByRole(Roles.PreProcessorDirective).ElementAt(0);
+			Assert.IsFalse(aaa.Take);
+			Assert.AreEqual(PreProcessorDirectiveType.If, aaa.Type);
+			Assert.AreEqual("AAA", aaa.Argument);
+			
+			var bbb = syntaxTree.GetChildrenByRole(Roles.PreProcessorDirective).ElementAt(1);
+			Assert.IsFalse(bbb.Take);
+			Assert.AreEqual(PreProcessorDirectiveType.Elif, bbb.Type);
+			Assert.AreEqual("BBB", bbb.Argument);
+		}
+		
+		[Test]
+		[Ignore("parser bug (bbb.Take is true, should be false)")]
+		public void ElifBothTrue()
+		{
+			CSharpParser parser = new CSharpParser();
+			parser.CompilerSettings.ConditionalSymbols.Add("AAA");
+			var syntaxTree = parser.Parse(elifProgram, "elif.cs");
+			Assert.IsFalse(parser.HasErrors);
+			
+			Assert.AreEqual(new Role[] {
+			                	Roles.PreProcessorDirective,
+			                	NamespaceDeclaration.MemberRole,
+			                	Roles.PreProcessorDirective,
+			                	Roles.Comment,
+			                	Roles.PreProcessorDirective
+			                }, syntaxTree.Children.Select(c => c.Role).ToArray());
+			var aaa = syntaxTree.GetChildrenByRole(Roles.PreProcessorDirective).ElementAt(0);
+			Assert.IsTrue(aaa.Take);
+			Assert.AreEqual(PreProcessorDirectiveType.If, aaa.Type);
+			Assert.AreEqual("AAA", aaa.Argument);
+			
+			var bbb = syntaxTree.GetChildrenByRole(Roles.PreProcessorDirective).ElementAt(1);
+			Assert.IsFalse(bbb.Take);
+			Assert.AreEqual(PreProcessorDirectiveType.Elif, bbb.Type);
+			Assert.AreEqual("BBB", bbb.Argument);
+		}
+		
+		[Test]
+		[Ignore("parser bug (bbb.Take is true, should be false)")]
+		public void ElifFirstTaken()
+		{
+			CSharpParser parser = new CSharpParser();
+			parser.CompilerSettings.ConditionalSymbols.Add("AAA");
+			var syntaxTree = parser.Parse(elifProgram, "elif.cs");
+			Assert.IsFalse(parser.HasErrors);
+			
+			Assert.AreEqual(new Role[] {
+			                	Roles.PreProcessorDirective,
+			                	NamespaceDeclaration.MemberRole,
+			                	Roles.PreProcessorDirective,
+			                	Roles.Comment,
+			                	Roles.PreProcessorDirective
+			                }, syntaxTree.Children.Select(c => c.Role).ToArray());
+			var aaa = syntaxTree.GetChildrenByRole(Roles.PreProcessorDirective).ElementAt(0);
+			Assert.IsTrue(aaa.Take);
+			Assert.AreEqual(PreProcessorDirectiveType.If, aaa.Type);
+			Assert.AreEqual("AAA", aaa.Argument);
+			
+			var bbb = syntaxTree.GetChildrenByRole(Roles.PreProcessorDirective).ElementAt(1);
+			Assert.IsFalse(bbb.Take);
+			Assert.AreEqual(PreProcessorDirectiveType.Elif, bbb.Type);
+			Assert.AreEqual("BBB", bbb.Argument);
+		}
+		
+		[Test]
+		public void ElifSecondTaken()
+		{
+			CSharpParser parser = new CSharpParser();
+			parser.CompilerSettings.ConditionalSymbols.Add("BBB");
+			var syntaxTree = parser.Parse(elifProgram, "elif.cs");
+			Assert.IsFalse(parser.HasErrors);
+			
+			Assert.AreEqual(new Role[] {
+			                	Roles.PreProcessorDirective,
+			                	Roles.Comment,
+			                	Roles.PreProcessorDirective,
+			                	NamespaceDeclaration.MemberRole,
+			                	Roles.PreProcessorDirective
+			                }, syntaxTree.Children.Select(c => c.Role).ToArray());
+			var aaa = syntaxTree.GetChildrenByRole(Roles.PreProcessorDirective).ElementAt(0);
+			Assert.IsFalse(aaa.Take);
+			Assert.AreEqual(PreProcessorDirectiveType.If, aaa.Type);
+			Assert.AreEqual("AAA", aaa.Argument);
+			
+			var bbb = syntaxTree.GetChildrenByRole(Roles.PreProcessorDirective).ElementAt(1);
+			Assert.IsTrue(bbb.Take);
+			Assert.AreEqual(PreProcessorDirectiveType.Elif, bbb.Type);
+			Assert.AreEqual("BBB", bbb.Argument);
+		}
+		
+		[Test]
+		[Ignore("parser bug (BBB is missing)")]
+		public void ConditionalSymbolTest()
+		{
+			const string program = @"// Test
+#if AAA
+#undef AAA
+#define CCC
+#else
+#define DDD
+#endif
+class C {}";
+			CSharpParser parser = new CSharpParser();
+			parser.CompilerSettings.ConditionalSymbols.Add("AAA");
+			parser.CompilerSettings.ConditionalSymbols.Add("BBB");
+			var syntaxTree = parser.Parse(program, "elif.cs");
+			Assert.AreEqual(new[] { "BBB", "CCC" }, syntaxTree.ConditionalSymbols);
 		}
 	}
 }

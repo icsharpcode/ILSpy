@@ -30,7 +30,13 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Gets the assembly name (short name).
 		/// </summary>
 		string AssemblyName { get; }
-		
+
+		/// <summary>
+		/// Gets the path to the assembly location. 
+		/// For projects it is the same as the output path.
+		/// </summary>
+		string Location { get; }
+
 		/// <summary>
 		/// Gets the list of all assembly attributes in the project.
 		/// </summary>
@@ -100,11 +106,6 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// </summary>
 		/// <remarks>This method uses ordinal name comparison, not the compilation's name comparer.</remarks>
 		ITypeDefinition GetTypeDefinition(string ns, string name, int typeParameterCount);
-		
-		/// <summary>
-		/// Gets the type definition for the specified unresolved type.
-		/// </summary>
-		ITypeDefinition GetTypeDefinition(IUnresolvedTypeDefinition unresolved);
 		
 		/// <summary>
 		/// Gets all non-nested types in the assembly.

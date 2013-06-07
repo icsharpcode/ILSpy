@@ -36,6 +36,8 @@ namespace ICSharpCode.Decompiler.Ast
 		bool firstUsingDeclaration;
 		bool lastUsingDeclaration;
 		
+		public bool FoldBraces = false;
+		
 		public TextOutputFormatter(ITextOutput output)
 		{
 			if (output == null)
@@ -82,7 +84,9 @@ namespace ICSharpCode.Decompiler.Ast
 		{
 			AstNode node = nodeStack.Peek();
 			MemberReference memberRef = node.Annotation<MemberReference>();
-			if (memberRef == null && node.Role == AstNode.Roles.TargetExpression && (node.Parent is InvocationExpression || node.Parent is ObjectCreateExpression)) {
+			if ((node.Role == Roles.Type && node.Parent is ObjectCreateExpression) ||
+				(memberRef == null && node.Role == Roles.TargetExpression && (node.Parent is InvocationExpression || node.Parent is ObjectCreateExpression)))
+			{
 				memberRef = node.Parent.Annotation<MemberReference>();
 			}
 			return memberRef;
@@ -114,6 +118,9 @@ namespace ICSharpCode.Decompiler.Ast
 		object GetCurrentLocalDefinition()
 		{
 			AstNode node = nodeStack.Peek();
+			if (node is Identifier && node.Parent != null)
+				node = node.Parent;
+			
 			var parameterDef = node.Annotation<ParameterDefinition>();
 			if (parameterDef != null)
 				return parameterDef;
@@ -126,14 +133,11 @@ namespace ICSharpCode.Decompiler.Ast
 					//if (variable.OriginalVariable != null)
 					//    return variable.OriginalVariable;
 					return variable;
-				} else {
-
 				}
 			}
 
 			var label = node as LabelStatement;
-			if (label != null)
-			{
+			if (label != null) {
 				var method = nodeStack.Select(nd => nd.Annotation<MethodReference>()).FirstOrDefault(mr => mr != null);
 				if (method != null)
 					return method.ToString() + label.Label;
@@ -148,19 +152,22 @@ namespace ICSharpCode.Decompiler.Ast
 				return null;
 			
 			var node = nodeStack.Peek();
+			if (node is Identifier)
+				node = node.Parent;
 			if (IsDefinition(node))
 				return node.Annotation<MemberReference>();
 			
-			var fieldDef = node.Parent.Annotation<FieldDefinition>();
-			if (fieldDef != null)
-				return node.Parent.Annotation<MemberReference>();
-
 			return null;
 		}
 		
 		public void WriteKeyword(string keyword)
 		{
-			output.Write(keyword);
+			MemberReference memberRef = GetCurrentMemberReference();
+			var node = nodeStack.Peek();
+			if (memberRef != null && node is ConstructorInitializer)
+				output.WriteReference(keyword, memberRef);
+			else
+				output.Write(keyword);
 		}
 		
 		public void WriteToken(string token)
@@ -168,7 +175,7 @@ namespace ICSharpCode.Decompiler.Ast
 			// Attach member reference to token only if there's no identifier in the current node.
 			MemberReference memberRef = GetCurrentMemberReference();
 			var node = nodeStack.Peek();
-			if (memberRef != null && node.GetChildByRole(AstNode.Roles.Identifier).IsNull)
+			if (memberRef != null && node.GetChildByRole(Roles.Identifier).IsNull)
 				output.WriteReference(token, memberRef);
 			else
 				output.Write(token);
@@ -183,7 +190,7 @@ namespace ICSharpCode.Decompiler.Ast
 		{
 			if (braceLevelWithinType >= 0 || nodeStack.Peek() is TypeDeclaration)
 				braceLevelWithinType++;
-			if (nodeStack.OfType<BlockStatement>().Count() <= 1) {
+			if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces) {
 				output.MarkFoldStart(defaultCollapsed: braceLevelWithinType == 1);
 			}
 			output.WriteLine();
@@ -195,7 +202,7 @@ namespace ICSharpCode.Decompiler.Ast
 		{
 			output.Unindent();
 			output.Write('}');
-			if (nodeStack.OfType<BlockStatement>().Count() <= 1)
+			if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces)
 				output.MarkFoldEnd();
 			if (braceLevelWithinType >= 0)
 				braceLevelWithinType--;
@@ -282,6 +289,9 @@ namespace ICSharpCode.Decompiler.Ast
 			nodeStack.Push(node);
 			startLocations.Push(output.Location);
 			
+			if (node is EntityDeclaration && node.Annotation<MemberReference>() != null && node.GetChildByRole(Roles.Identifier).IsNull)
+				output.WriteDefinition("", node.Annotation<MemberReference>(), false);
+			
 			MemberMapping mapping = node.Annotation<MemberMapping>();
 			if (mapping != null) {
 				parentMemberMappings.Push(currentMemberMapping);
@@ -327,15 +337,9 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		private static bool IsDefinition(AstNode node)
 		{
-			return
-				node is FieldDeclaration ||
-				node is ConstructorDeclaration ||
-				node is DestructorDeclaration ||
-				node is EventDeclaration ||
-				node is DelegateDeclaration ||
-				node is OperatorDeclaration||
-				node is MemberDeclaration ||
-				node is TypeDeclaration;
+			return node is EntityDeclaration
+				|| (node is VariableInitializer && node.Parent is FieldDeclaration)
+				|| node is FixedVariableInitializer;
 		}
 	}
 }

@@ -35,6 +35,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		InlineVariables,
 		CopyPropagation,
 		YieldReturn,
+		AsyncAwait,
 		PropertyAccessInstructions,
 		SplitToMovableBlocks,
 		TypeInference,
@@ -44,7 +45,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		JoinBasicBlocks,
 		SimplifyLogicNot,
 		SimplifyShiftOperators,
-		TransformDecimalCtorToConstant,
+		TypeConversionSimplifications,
 		SimplifyLdObjAndStObj,
 		SimplifyCustomShortCircuit,
 		SimplifyLiftedOperators,
@@ -107,6 +108,10 @@ namespace ICSharpCode.Decompiler.ILAst
 			
 			if (abortBeforeStep == ILAstOptimizationStep.YieldReturn) return;
 			YieldReturnDecompiler.Run(context, method);
+			AsyncDecompiler.RunStep1(context, method);
+			
+			if (abortBeforeStep == ILAstOptimizationStep.AsyncAwait) return;
+			AsyncDecompiler.RunStep2(context, method);
 			
 			if (abortBeforeStep == ILAstOptimizationStep.PropertyAccessInstructions) return;
 			IntroducePropertyAccessInstructions(method);
@@ -143,9 +148,8 @@ namespace ICSharpCode.Decompiler.ILAst
 					if (abortBeforeStep == ILAstOptimizationStep.SimplifyShiftOperators) return;
 					modified |= block.RunOptimization(SimplifyShiftOperators);
 
-					if (abortBeforeStep == ILAstOptimizationStep.TransformDecimalCtorToConstant) return;
-					modified |= block.RunOptimization(TransformDecimalCtorToConstant);
-					modified |= block.RunOptimization(SimplifyLdcI4ConvI8);
+					if (abortBeforeStep == ILAstOptimizationStep.TypeConversionSimplifications) return;
+					modified |= block.RunOptimization(TypeConversionSimplifications);
 					
 					if (abortBeforeStep == ILAstOptimizationStep.SimplifyLdObjAndStObj) return;
 					modified |= block.RunOptimization(SimplifyLdObjAndStObj);
@@ -166,11 +170,15 @@ namespace ICSharpCode.Decompiler.ILAst
 					modified |= block.RunOptimization(TransformObjectInitializers);
 					
 					if (abortBeforeStep == ILAstOptimizationStep.MakeAssignmentExpression) return;
-					modified |= block.RunOptimization(MakeAssignmentExpression);
+					if (context.Settings.MakeAssignmentExpressions) {
+						modified |= block.RunOptimization(MakeAssignmentExpression);
+					}
 					modified |= block.RunOptimization(MakeCompoundAssignments);
 					
 					if (abortBeforeStep == ILAstOptimizationStep.IntroducePostIncrement) return;
-					modified |= block.RunOptimization(IntroducePostIncrement);
+					if (context.Settings.IntroduceIncrementAndDecrement) {
+						modified |= block.RunOptimization(IntroducePostIncrement);
+					}
 					
 					if (abortBeforeStep == ILAstOptimizationStep.InlineExpressionTreeParameterDeclarations) return;
 					if (context.Settings.ExpressionTrees) {
@@ -221,11 +229,13 @@ namespace ICSharpCode.Decompiler.ILAst
 			new ILInlining(method).InlineAllVariables();
 			
 			if (abortBeforeStep == ILAstOptimizationStep.CachedDelegateInitialization) return;
-			foreach(ILBlock block in method.GetSelfAndChildrenRecursive<ILBlock>()) {
-				for (int i = 0; i < block.Body.Count; i++) {
-					// TODO: Move before loops
-					CachedDelegateInitializationWithField(block, ref i);
-					CachedDelegateInitializationWithLocal(block, ref i);
+			if (context.Settings.AnonymousMethods) {
+				foreach(ILBlock block in method.GetSelfAndChildrenRecursive<ILBlock>()) {
+					for (int i = 0; i < block.Body.Count; i++) {
+						// TODO: Move before loops
+						CachedDelegateInitializationWithField(block, ref i);
+						CachedDelegateInitializationWithLocal(block, ref i);
+					}
 				}
 			}
 			
@@ -257,7 +267,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		/// Ignore arguments of 'leave'
 		/// </summary>
 		/// <param name="method"></param>
-		void RemoveRedundantCode(ILBlock method)
+		internal static void RemoveRedundantCode(ILBlock method)
 		{
 			Dictionary<ILLabel, int> labelRefCount = new Dictionary<ILLabel, int>();
 			foreach (ILLabel target in method.GetSelfAndChildrenRecursive<ILExpression>(e => e.IsBranch()).SelectMany(e => e.GetBranchTargets())) {
@@ -287,7 +297,13 @@ namespace ICSharpCode.Decompiler.ILAst
 							prevExpr.ILRanges.AddRange(((ILExpression)body[i]).ILRanges);
 						// Ignore pop
 					} else {
-						newBody.Add(body[i]);
+						ILLabel label = body[i] as ILLabel;
+						if (label != null) {
+							if (labelRefCount.GetOrDefault(label) > 0)
+								newBody.Add(label);
+						} else {
+							newBody.Add(body[i]);
+						}
 					}
 				}
 				block.Body = newBody;
@@ -851,6 +867,17 @@ namespace ICSharpCode.Decompiler.ILAst
 		{
 			if (!collection.Remove(key))
 				throw new Exception("The key was not found in the dictionary");
+		}
+		
+		public static bool ContainsReferenceTo(this ILExpression expr, ILVariable v)
+		{
+			if (expr.Operand == v)
+				return true;
+			foreach (var arg in expr.Arguments) {
+				if (ContainsReferenceTo(arg, v))
+					return true;
+			}
+			return false;
 		}
 	}
 }

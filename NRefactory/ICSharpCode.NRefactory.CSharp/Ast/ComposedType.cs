@@ -27,13 +27,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.NRefactory.CSharp
 {
 	public class ComposedType : AstType
 	{
-		public static readonly Role<CSharpTokenNode> NullableRole = new Role<CSharpTokenNode>("Nullable", CSharpTokenNode.Null);
-		public static readonly Role<CSharpTokenNode> PointerRole = new Role<CSharpTokenNode>("Pointer", CSharpTokenNode.Null);
+		public static readonly TokenRole NullableRole = new TokenRole("?");
+		public static readonly TokenRole PointerRole = new TokenRole("*");
 		public static readonly Role<ArraySpecifier> ArraySpecifierRole = new Role<ArraySpecifier>("ArraySpecifier");
 		
 		public AstType BaseType {
@@ -46,7 +47,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				return !GetChildByRole(NullableRole).IsNull;
 			}
 			set {
-				SetChildByRole(NullableRole, value ? new CSharpTokenNode(TextLocation.Empty, 1) : null);
+				SetChildByRole(NullableRole, value ? new CSharpTokenNode(TextLocation.Empty) : null);
 			}
 		}
 		
@@ -63,7 +64,7 @@ namespace ICSharpCode.NRefactory.CSharp
 					d--;
 				}
 				while (d < value) {
-					InsertChildBefore(GetChildByRole(PointerRole), new CSharpTokenNode(TextLocation.Empty, 1), PointerRole);
+					InsertChildBefore(GetChildByRole(PointerRole), new CSharpTokenNode(TextLocation.Empty), PointerRole);
 					d++;
 				}
 			}
@@ -73,7 +74,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			get { return GetChildrenByRole (ArraySpecifierRole); }
 		}
 		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data = default(T))
+		public override void AcceptVisitor (IAstVisitor visitor)
+		{
+			visitor.VisitComposedType (this);
+		}
+			
+		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		{
+			return visitor.VisitComposedType (this);
+		}
+		
+		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitComposedType (this, data);
 		}
@@ -114,6 +125,22 @@ namespace ICSharpCode.NRefactory.CSharp
 			InsertChildBefore(this.ArraySpecifiers.FirstOrDefault(), new ArraySpecifier(dimensions), ArraySpecifierRole);
 			return this;
 		}
+		
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode = NameLookupMode.Type)
+		{
+			ITypeReference t = this.BaseType.ToTypeReference(lookupMode);
+			if (this.HasNullableSpecifier) {
+				t = NullableType.Create(t);
+			}
+			int pointerRank = this.PointerRank;
+			for (int i = 0; i < pointerRank; i++) {
+				t = new PointerTypeReference(t);
+			}
+			foreach (var a in this.ArraySpecifiers.Reverse()) {
+				t = new ArrayTypeReference(t, a.Dimensions);
+			}
+			return t;
+		}
 	}
 	
 	/// <summary>
@@ -149,7 +176,7 @@ namespace ICSharpCode.NRefactory.CSharp
 					d--;
 				}
 				while (d < value) {
-					InsertChildBefore(GetChildByRole(Roles.Comma), new CSharpTokenNode(TextLocation.Empty, 1), Roles.Comma);
+					InsertChildBefore(GetChildByRole(Roles.Comma), new CSharpTokenNode(TextLocation.Empty), Roles.Comma);
 					d++;
 				}
 			}
@@ -159,7 +186,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			get { return GetChildByRole (Roles.RBracket); }
 		}
 		
-		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data = default(T))
+		public override void AcceptVisitor (IAstVisitor visitor)
+		{
+			visitor.VisitArraySpecifier (this);
+		}
+			
+		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		{
+			return visitor.VisitArraySpecifier (this);
+		}
+		
+		public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitArraySpecifier(this, data);
 		}

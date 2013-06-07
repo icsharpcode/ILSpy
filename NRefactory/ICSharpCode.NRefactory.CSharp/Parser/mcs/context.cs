@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 
 namespace Mono.CSharp
 {
@@ -37,7 +38,7 @@ namespace Mono.CSharp
 		//
 		// A scope type parameters either VAR or MVAR
 		//
-		TypeParameter[] CurrentTypeParameters { get; }
+		TypeParameters CurrentTypeParameters { get; }
 
 		//
 		// A member definition of the context. For partial types definition use
@@ -393,7 +394,7 @@ namespace Mono.CSharp
 			get { return MemberContext.CurrentType; }
 		}
 
-		public TypeParameter[] CurrentTypeParameters {
+		public TypeParameters CurrentTypeParameters {
 			get { return MemberContext.CurrentTypeParameters; }
 		}
 
@@ -481,7 +482,7 @@ namespace Mono.CSharp
 			// or it's a parameter
 			//
 			if (CurrentAnonymousMethod is AsyncInitializer)
-				return CurrentBlock.Explicit.HasAwait;
+				return local.IsParameter || CurrentBlock.Explicit.HasAwait;
 
 			return local.Block.ParametersBlock != CurrentBlock.ParametersBlock.Original;
 		}
@@ -586,10 +587,10 @@ namespace Mono.CSharp
 
 		Dictionary<string, SourceFile> all_source_files;
 
-		public CompilerContext (CompilerSettings settings, Report report)
+		public CompilerContext (CompilerSettings settings, ReportPrinter reportPrinter)
 		{
 			this.settings = settings;
-			this.report = report;
+			this.report = new Report (this, reportPrinter);
 			this.builtin_types = new BuiltinTypes ();
 			this.TimeReporter = DisabledTimeReporter;
 		}
@@ -620,7 +621,7 @@ namespace Mono.CSharp
 			}
 		}
 
-		public List<CompilationSourceFile> SourceFiles {
+		public List<SourceFile> SourceFiles {
 			get {
 				return settings.SourceFiles;
 			}
@@ -646,7 +647,7 @@ namespace Mono.CSharp
 
 			string path;
 			if (!Path.IsPathRooted (name)) {
-				string root = Path.GetDirectoryName (comp_unit.FullPathName);
+				string root = Path.GetDirectoryName (comp_unit.SourceFile.FullPathName);
 				path = Path.Combine (root, name);
 			} else
 				path = name;
@@ -655,7 +656,8 @@ namespace Mono.CSharp
 			if (all_source_files.TryGetValue (path, out retval))
 				return retval;
 
-			retval = Location.AddFile (name, path);
+			retval = new SourceFile (name, path, all_source_files.Count + 1);
+			Location.AddFile (retval);
 			all_source_files.Add (path, retval);
 			return retval;
 		}
@@ -680,6 +682,8 @@ namespace Mono.CSharp
 			///   the ConstantCheckState flag.
 			/// </summary>
 			CheckedScope = 1 << 0,
+
+			AccurateDebugInfo = 1 << 1,
 
 			OmitDebugInfo = 1 << 2,
 
@@ -725,6 +729,30 @@ namespace Mono.CSharp
 		public FlagsHandle With (Options options, bool enable)
 		{
 			return new FlagsHandle (this, options, enable ? options : 0);
+		}
+	}
+
+	//
+	// Parser session objects. We could recreate all these objects for each parser
+	// instance but the best parser performance the session object can be reused
+	//
+	public class ParserSession
+	{
+		MD5 md5;
+
+		public readonly char[] StreamReaderBuffer = new char[SeekableStreamReader.DefaultReadAheadSize * 2];
+		public readonly Dictionary<char[], string>[] Identifiers = new Dictionary<char[], string>[Tokenizer.MaxIdentifierLength + 1];
+		public readonly List<Parameter> ParametersStack = new List<Parameter> (4);
+		public readonly char[] IDBuilder = new char[Tokenizer.MaxIdentifierLength];
+		public readonly char[] NumberBuilder = new char[Tokenizer.MaxNumberLength];
+
+		public LocationsBag LocationsBag { get; set; }
+		public bool UseJayGlobalArrays { get; set; }
+		public Tokenizer.LocatedToken[] LocatedTokens { get; set; }
+
+		public MD5 GetChecksumAlgorithm ()
+		{
+			return md5 ?? (md5 = MD5.Create ());
 		}
 	}
 }

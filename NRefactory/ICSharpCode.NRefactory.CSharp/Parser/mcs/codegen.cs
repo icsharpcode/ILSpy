@@ -12,6 +12,7 @@
 
 using System;
 using System.Collections.Generic;
+using Mono.CompilerServices.SymbolWriter;
 
 #if STATIC
 using MetaType = IKVM.Reflection.Type;
@@ -76,11 +77,15 @@ namespace Mono.CSharp
 		
 		readonly IMemberContext member_context;
 
+		readonly SourceMethodBuilder methodSymbols;
+
 		DynamicSiteClass dynamic_site_container;
 
 		Label? return_label;
 
-		public EmitContext (IMemberContext rc, ILGenerator ig, TypeSpec return_type)
+		List<IExpressionCleanup> epilogue_expressions;
+
+		public EmitContext (IMemberContext rc, ILGenerator ig, TypeSpec return_type, SourceMethodBuilder methodSymbols)
 		{
 			this.member_context = rc;
 			this.ig = ig;
@@ -88,6 +93,14 @@ namespace Mono.CSharp
 
 			if (rc.Module.Compiler.Settings.Checked)
 				flags |= Options.CheckedScope;
+
+			if (methodSymbols != null) {
+				this.methodSymbols = methodSymbols;
+				if (!rc.Module.Compiler.Settings.Optimize)
+					flags |= Options.AccurateDebugInfo;
+			} else {
+				flags |= Options.OmitDebugInfo;
+			}
 
 #if STATIC
 			ig.__CleverExceptionBlockAssistance ();
@@ -112,12 +125,24 @@ namespace Mono.CSharp
 			get { return member_context.CurrentType; }
 		}
 
-		public TypeParameter[] CurrentTypeParameters {
-			get { return member_context.CurrentTypeParameters; }
+		public TypeParameters CurrentTypeParameters {
+		    get { return member_context.CurrentTypeParameters; }
 		}
 
 		public MemberCore CurrentTypeDefinition {
 			get { return member_context.CurrentMemberDefinition; }
+		}
+
+		public bool EmitAccurateDebugInfo {
+			get {
+				return (flags & Options.AccurateDebugInfo) != 0;
+			}
+		}
+
+		public bool HasMethodSymbolBuilder {
+			get {
+				return methodSymbols != null;
+			}
 		}
 
 		public bool HasReturnLabel {
@@ -173,7 +198,24 @@ namespace Mono.CSharp
 			}
 		}
 
+		public List<IExpressionCleanup> StatementEpilogue {
+			get {
+				return epilogue_expressions;
+			}
+		}
+
 		#endregion
+
+		public void AddStatementEpilog (IExpressionCleanup cleanupExpression)
+		{
+			if (epilogue_expressions == null) {
+				epilogue_expressions = new List<IExpressionCleanup> ();
+			} else if (epilogue_expressions.Contains (cleanupExpression)) {
+				return;
+			}
+
+			epilogue_expressions.Add (cleanupExpression);
+		}
 
 		public void AssertEmptyStack ()
 		{
@@ -188,17 +230,30 @@ namespace Mono.CSharp
 		///   This is called immediately before emitting an IL opcode to tell the symbol
 		///   writer to which source line this opcode belongs.
 		/// </summary>
-		public void Mark (Location loc)
+		public bool Mark (Location loc)
 		{
-			if (!SymbolWriter.HasSymbolWriter || HasSet (Options.OmitDebugInfo) || loc.IsNull)
-				return;
+			if ((flags & Options.OmitDebugInfo) != 0)
+				return false;
 
-			SymbolWriter.MarkSequencePoint (ig, loc);
+			if (loc.IsNull || methodSymbols == null)
+				return false;
+
+			var sf = loc.SourceFile;
+			if (sf.IsHiddenLocation (loc))
+				return false;
+
+#if NET_4_0
+			methodSymbols.MarkSequencePoint (ig.ILOffset, sf.SourceFileEntry, loc.Row, loc.Column, false);
+#endif
+			return true;
 		}
 
 		public void DefineLocalVariable (string name, LocalBuilder builder)
 		{
-			SymbolWriter.DefineLocalVariable (name, builder);
+			if ((flags & Options.OmitDebugInfo) != 0)
+				return;
+
+			methodSymbols.AddLocal (builder.LocalIndex, name);
 		}
 
 		public void BeginCatchBlock (TypeSpec type)
@@ -218,7 +273,12 @@ namespace Mono.CSharp
 
 		public void BeginScope ()
 		{
-			SymbolWriter.OpenScope(ig);
+			if ((flags & Options.OmitDebugInfo) != 0)
+				return;
+
+#if NET_4_0
+			methodSymbols.StartBlock (CodeBlockEntry.Type.Lexical, ig.ILOffset);
+#endif
 		}
 
 		public void EndExceptionBlock ()
@@ -228,7 +288,12 @@ namespace Mono.CSharp
 
 		public void EndScope ()
 		{
-			SymbolWriter.CloseScope(ig);
+			if ((flags & Options.OmitDebugInfo) != 0)
+				return;
+
+#if NET_4_0
+			methodSymbols.EndBlock (ig.ILOffset);
+#endif
 		}
 
 		//
@@ -238,12 +303,11 @@ namespace Mono.CSharp
 		{
 			if (dynamic_site_container == null) {
 				var mc = member_context.CurrentMemberDefinition as MemberBase;
-				dynamic_site_container = new DynamicSiteClass (CurrentTypeDefinition.Parent.PartialContainer, mc, CurrentTypeParameters);
+				dynamic_site_container = new DynamicSiteClass (CurrentTypeDefinition.Parent.PartialContainer, mc, member_context.CurrentTypeParameters);
 
 				CurrentTypeDefinition.Module.AddCompilerGeneratedClass (dynamic_site_container);
-				dynamic_site_container.CreateType ();
-				dynamic_site_container.DefineType ();
-				dynamic_site_container.ResolveTypeParameters ();
+				dynamic_site_container.CreateContainer ();
+				dynamic_site_container.DefineContainer ();
 				dynamic_site_container.Define ();
 
 				var inflator = new TypeParameterInflator (Module, CurrentType, TypeParameterSpec.EmptyTypes, TypeSpec.EmptyTypes);
@@ -771,6 +835,17 @@ namespace Mono.CSharp
 			ig.Emit (OpCodes.Ldarg_0);
 		}
 
+		public void EmitEpilogue ()
+		{
+			if (epilogue_expressions == null)
+				return;
+
+			foreach (var e in epilogue_expressions)
+				e.EmitCleanup (this);
+
+			epilogue_expressions = null;
+		}
+
 		/// <summary>
 		///   Returns a temporary storage for a variable of type t as 
 		///   a local variable in the current body.
@@ -866,13 +941,13 @@ namespace Mono.CSharp
 		public void Emit (EmitContext ec, MethodSpec method, Arguments Arguments, Location loc)
 		{
 			// Speed up the check by not doing it on not allowed targets
-			if (method.ReturnType.Kind == MemberKind.Void && method.IsConditionallyExcluded (ec.Module.Compiler, loc))
+			if (method.ReturnType.Kind == MemberKind.Void && method.IsConditionallyExcluded (ec.MemberContext, loc))
 				return;
 
-			EmitPredefined (ec, method, Arguments);
+			EmitPredefined (ec, method, Arguments, loc);
 		}
 
-		public void EmitPredefined (EmitContext ec, MethodSpec method, Arguments Arguments)
+		public void EmitPredefined (EmitContext ec, MethodSpec method, Arguments Arguments, Location? loc = null)
 		{
 			Expression instance_copy = null;
 
@@ -929,6 +1004,18 @@ namespace Mono.CSharp
 
 			if (call_op == OpCodes.Callvirt && (InstanceExpression.Type.IsGenericParameter || InstanceExpression.Type.IsStruct)) {
 				ec.Emit (OpCodes.Constrained, InstanceExpression.Type);
+			}
+
+			if (loc != null) {
+				//
+				// Emit explicit sequence point for expressions like Foo.Bar () to help debugger to
+				// break at right place when LHS expression can be stepped-into
+				//
+				// TODO: The list is probably not comprehensive, need to do more testing
+				//
+				if (InstanceExpression is PropertyExpr || InstanceExpression is Invocation || InstanceExpression is IndexerExpr ||
+					InstanceExpression is New || InstanceExpression is DelegateInvocation)
+					ec.Mark (loc.Value);
 			}
 
 			//
@@ -1021,9 +1108,11 @@ namespace Mono.CSharp
 				return false;
 
 			//
-			// It's non-virtual and will never be null
+			// It's non-virtual and will never be null and it can be determined
+			// whether it's known value or reference type by verifier
 			//
-			if (!method.IsVirtual && (instance is This || instance is New || instance is ArrayCreation || instance is DelegateCreation))
+			if (!method.IsVirtual && (instance is This || instance is New || instance is ArrayCreation || instance is DelegateCreation) &&
+				!instance.Type.IsGenericParameter)
 				return false;
 
 			return true;

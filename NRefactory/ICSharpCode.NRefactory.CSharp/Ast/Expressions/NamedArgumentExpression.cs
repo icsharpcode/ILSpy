@@ -30,22 +30,22 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 		}
 		
-		public NamedArgumentExpression(string identifier, Expression expression)
+		public NamedArgumentExpression(string name, Expression expression)
 		{
-			this.Identifier = identifier;
+			this.Name = name;
 			this.Expression = expression;
 		}
 		
-		public string Identifier {
+		public string Name {
 			get {
 				return GetChildByRole (Roles.Identifier).Name;
 			}
 			set {
-				SetChildByRole(Roles.Identifier, CSharp.Identifier.Create (value, TextLocation.Empty));
+				SetChildByRole(Roles.Identifier, CSharp.Identifier.Create (value));
 			}
 		}
 		
-		public Identifier IdentifierToken {
+		public Identifier NameToken {
 			get {
 				return GetChildByRole (Roles.Identifier);
 			}
@@ -63,7 +63,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			set { SetChildByRole (Roles.Expression, value); }
 		}
 		
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data = default(T))
+		public override void AcceptVisitor (IAstVisitor visitor)
+		{
+			visitor.VisitNamedArgumentExpression (this);
+		}
+			
+		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
+		{
+			return visitor.VisitNamedArgumentExpression (this);
+		}
+		
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
 		{
 			return visitor.VisitNamedArgumentExpression(this, data);
 		}
@@ -71,7 +81,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			NamedArgumentExpression o = other as NamedArgumentExpression;
-			return o != null && MatchString(this.Identifier, o.Identifier) && this.Expression.DoMatch(o.Expression, match);
+			return o != null && MatchString(this.Name, o.Name) && this.Expression.DoMatch(o.Expression, match);
 		}
 	}
 }

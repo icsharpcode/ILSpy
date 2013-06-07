@@ -47,6 +47,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="..\ICSharpCode.NRefactory\Properties\GlobalAssemblyInfo.cs">
+      <Link>Properties\GlobalAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="Ast\AstNode.cs" />
     <Compile Include="Ast\AstNodeCollection.cs" />
     <Compile Include="Ast\Comment.cs" />
@@ -100,6 +103,7 @@
     <Compile Include="Ast\GlobalScope\OptionStatement.cs" />
     <Compile Include="Ast\Identifier.cs" />
     <Compile Include="Ast\INullable.cs" />
+    <Compile Include="Ast\Statements\AddRemoveHandlerStatement.cs" />
     <Compile Include="Ast\Statements\BlockStatement.cs" />
     <Compile Include="Ast\Statements\ContinueStatement.cs" />
     <Compile Include="Ast\Statements\DoLoopStatement.cs" />

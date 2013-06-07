@@ -33,13 +33,13 @@ namespace ICSharpCode.NRefactory.CSharp.Parser
 		public static T ParseGlobal<T>(string code, bool expectErrors = false) where T : AstNode
 		{
 			CSharpParser parser = new CSharpParser();
-			CompilationUnit cu = parser.Parse(new StringReader(code), "parsed.cs");
+			SyntaxTree syntaxTree = parser.Parse(code);
 			
-			if (parser.HasErrors)
-				parser.ErrorPrinter.Errors.ForEach (err => Console.WriteLine (err.Message));
+			foreach (var error in parser.Errors)
+				Console.WriteLine (error.Message);
 			Assert.AreEqual(expectErrors, parser.HasErrors, "HasErrors");
 			
-			AstNode node = cu.Children.Single();
+			AstNode node = syntaxTree.Children.Single();
 			Type type = typeof(T);
 			Assert.IsTrue(type.IsAssignableFrom(node.GetType()), String.Format("Parsed node was {0} instead of {1} ({2})", node.GetType(), type, node));
 			return (T)node;
@@ -56,10 +56,10 @@ namespace ICSharpCode.NRefactory.CSharp.Parser
 		public static T ParseStatement<T>(string stmt, bool expectErrors = false) where T : AstNode
 		{
 			CSharpParser parser = new CSharpParser();
-			var statements = parser.ParseStatements(new StringReader(stmt));
+			var statements = parser.ParseStatements(stmt);
 			
-			if (parser.HasErrors)
-				parser.ErrorPrinter.Errors.ForEach (err => Console.WriteLine (err.Message));
+			foreach (var error in parser.Errors)
+				Console.WriteLine (error.Message);
 			Assert.AreEqual(expectErrors, parser.HasErrors, "HasErrors");
 			
 			AstNode statement = statements.Single();
@@ -79,10 +79,10 @@ namespace ICSharpCode.NRefactory.CSharp.Parser
 		public static T ParseExpression<T>(string expr, bool expectErrors = false) where T : AstNode
 		{
 			CSharpParser parser = new CSharpParser();
-			AstNode parsedExpression = parser.ParseExpression(new StringReader(expr));
+			AstNode parsedExpression = parser.ParseExpression(expr);
 			
-			if (parser.HasErrors)
-				parser.ErrorPrinter.Errors.ForEach (err => Console.WriteLine (err.Message));
+			foreach (var error in parser.Errors)
+				Console.WriteLine (error.Message);
 			Assert.AreEqual(expectErrors, parser.HasErrors, "HasErrors");
 			if (expectErrors && parsedExpression == null)
 				return default (T);
@@ -99,33 +99,51 @@ namespace ICSharpCode.NRefactory.CSharp.Parser
 			}
 		}
 		
-		public static T ParseTypeMember<T>(string expr, bool expectErrors = false) where T : AttributedNode
+		public static T ParseTypeMember<T>(string expr, bool expectErrors = false) where T : EntityDeclaration
 		{
 			CSharpParser parser = new CSharpParser();
-			var members = parser.ParseTypeMembers(new StringReader(expr));
-			if (parser.HasErrors)
-				parser.ErrorPrinter.Errors.ForEach (err => Console.WriteLine (err.Message));
+			var members = parser.ParseTypeMembers(expr);
+			foreach (var error in parser.Errors)
+				Console.WriteLine (error.Message);
 			Assert.AreEqual(expectErrors, parser.HasErrors, "HasErrors");
-			
-			AttributedNode m = members.Single();
+			EntityDeclaration m = members.Single();
 			Type type = typeof(T);
 			Assert.IsTrue(type.IsAssignableFrom(m.GetType()), String.Format("Parsed member was {0} instead of {1} ({2})", m.GetType(), type, m));
 			return (T)m;
 		}
 		
-		public static void AssertTypeMember(string code, CSharp.AttributedNode expectedMember)
+		public static void AssertTypeMember(string code, CSharp.EntityDeclaration expectedMember)
 		{
-			var member = ParseTypeMember<CSharp.AttributedNode>(code);
+			var member = ParseTypeMember<CSharp.EntityDeclaration>(code);
 			if (!expectedMember.IsMatch(member)) {
 				Assert.Fail("Expected '{0}' but was '{1}'", ToCSharp(expectedMember), ToCSharp(member));
 			}
 		}
 		
+		public static DocumentationReference ParseDocumentationReference(string cref, bool expectErrors = false)
+		{
+			CSharpParser parser = new CSharpParser();
+			var parsedExpression = parser.ParseDocumentationReference(cref);
+			
+			foreach (var error in parser.Errors)
+				Console.WriteLine (error.Message);
+			Assert.AreEqual(expectErrors, parser.HasErrors, "HasErrors");
+			if (expectErrors && parsedExpression == null)
+				return null;
+			return parsedExpression;
+		}
+		
+		public static void AssertDocumentationReference(string cref, CSharp.DocumentationReference expectedExpr)
+		{
+			var expr = ParseDocumentationReference(cref);
+			if (!expectedExpr.IsMatch(expr)) {
+				Assert.Fail("Expected '{0}' but was '{1}'", ToCSharp(expectedExpr), ToCSharp(expr));
+			}
+		}
+		
 		static string ToCSharp(AstNode node)
 		{
-			StringWriter w = new StringWriter();
-			node.AcceptVisitor(new CSharpOutputVisitor(w, new CSharpFormattingOptions()), null);
-			return w.ToString();
+			return node.GetText();
 		}
 	}
 }

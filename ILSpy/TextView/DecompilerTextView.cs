@@ -33,7 +33,6 @@ using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using System.Xml;
-
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
@@ -41,6 +40,7 @@ using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using ICSharpCode.AvalonEdit.Rendering;
+using ICSharpCode.AvalonEdit.Search;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Bookmarks;
@@ -121,6 +121,7 @@ namespace ICSharpCode.ILSpy.TextView
 			
 			// Bookmarks context menu
 			IconMarginActionsProvider.Add(iconMargin);
+			textEditor.TextArea.DefaultInputHandler.NestedInputHandlers.Add(new SearchInputHandler(textEditor.TextArea));
 			
 			this.Loaded += new RoutedEventHandler(DecompilerTextView_Loaded);
 		}
@@ -181,7 +182,7 @@ namespace ICSharpCode.ILSpy.TextView
 			TextViewPosition? position = textEditor.TextArea.TextView.GetPosition(e.GetPosition(textEditor.TextArea.TextView) + textEditor.TextArea.TextView.ScrollOffset);
 			if (position == null)
 				return;
-			int offset = textEditor.Document.GetOffset(position.Value);
+			int offset = textEditor.Document.GetOffset(position.Value.Location);
 			ReferenceSegment seg = referenceElementGenerator.References.FindSegmentsContaining(offset).FirstOrDefault();
 			if (seg == null)
 				return;
@@ -261,7 +262,13 @@ namespace ICSharpCode.ILSpy.TextView
 					if (currentCancellationTokenSource == myCancellationTokenSource) {
 						currentCancellationTokenSource = null;
 						waitAdorner.Visibility = Visibility.Collapsed;
-						taskCompleted(task);
+						if (task.IsCanceled) {
+							AvalonEditTextOutput output = new AvalonEditTextOutput();
+							output.WriteLine("The operation was canceled.");
+							ShowOutput(output);
+						} else {
+							taskCompleted(task);
+						}
 					} else {
 						try {
 							task.Wait();
@@ -479,8 +486,9 @@ namespace ICSharpCode.ILSpy.TextView
 					MemberReference member;
 					if (DebugInformation.CodeMappings == null || !DebugInformation.CodeMappings.ContainsKey(token))
 						return;
-					
-					DebugInformation.CodeMappings[token].GetInstructionByTokenAndOffset(ilOffset, out member, out line);
+
+					if (!DebugInformation.CodeMappings[token].GetInstructionByTokenAndOffset(ilOffset, out member, out line))
+						return;
 					
 					// update marker
 					DebuggerService.JumpToCurrentLine(member, line, 0, line, 0, ilOffset);
@@ -519,10 +527,12 @@ namespace ICSharpCode.ILSpy.TextView
 							DecompileNodes(context, textOutput);
 							textOutput.PrepareDocument();
 							tcs.SetResult(textOutput);
+						} catch (OutputLengthExceededException ex) {
+							tcs.SetException(ex);
 						} catch (AggregateException ex) {
 							tcs.SetException(ex);
-						} catch (OperationCanceledException ex) {
-							tcs.SetException(ex);
+						} catch (OperationCanceledException) {
+							tcs.SetCanceled();
 						}
 					} else
 						#endif
@@ -533,6 +543,8 @@ namespace ICSharpCode.ILSpy.TextView
 							DecompileNodes(context, textOutput);
 							textOutput.PrepareDocument();
 							tcs.SetResult(textOutput);
+						} catch (OperationCanceledException) {
+							tcs.SetCanceled();
 						} catch (Exception ex) {
 							tcs.SetException(ex);
 						}
@@ -585,7 +597,7 @@ namespace ICSharpCode.ILSpy.TextView
 			output.WriteLine();
 		}
 		#endregion
-		
+
 		#region JumpToReference
 		/// <summary>
 		/// Jumps to the definition referred to by the <see cref="ReferenceSegment"/>.
@@ -716,9 +728,9 @@ namespace ICSharpCode.ILSpy.TextView
 						output.AddButton(null, "Open Explorer", delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 						output.WriteLine();
 						tcs.SetResult(output);
+					} catch (OperationCanceledException) {
+						tcs.SetCanceled();
 						#if DEBUG
-					} catch (OperationCanceledException ex) {
-						tcs.SetException(ex);
 					} catch (AggregateException ex) {
 						tcs.SetException(ex);
 						#else
@@ -749,6 +761,20 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 		#endregion
 
+		internal ReferenceSegment GetReferenceSegmentAtMousePosition()
+		{
+			TextViewPosition? position = GetPositionFromMousePosition();
+			if (position == null)
+				return null;
+			int offset = textEditor.Document.GetOffset(position.Value.Location);
+			return referenceElementGenerator.References.FindSegmentsContaining(offset).FirstOrDefault();
+		}
+		
+		internal TextViewPosition? GetPositionFromMousePosition()
+		{
+			return textEditor.TextArea.TextView.GetPosition(Mouse.GetPosition(textEditor.TextArea.TextView) + textEditor.TextArea.TextView.ScrollOffset);
+		}
+		
 		public DecompilerTextViewState GetState()
 		{
 			if (decompiledNodes == null)
@@ -787,6 +813,13 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			// scroll to
 			textEditor.ScrollTo(lineNumber, 0);
+		}
+		
+		public FoldingManager FoldingManager
+		{
+			get {
+				return foldingManager;
+			}
 		}
 		#endregion
 	}

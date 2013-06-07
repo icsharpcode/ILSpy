@@ -27,7 +27,13 @@ namespace ICSharpCode.NRefactory.Editor
 	[Serializable]
 	public class StringTextSource : ITextSource
 	{
+		/// <summary>
+		/// Gets a text source containing the empty string.
+		/// </summary>
+		public static readonly StringTextSource Empty = new StringTextSource(string.Empty);
+		
 		readonly string text;
+		readonly ITextSourceVersion version;
 		
 		/// <summary>
 		/// Creates a new StringTextSource with the given text.
@@ -39,8 +45,20 @@ namespace ICSharpCode.NRefactory.Editor
 			this.text = text;
 		}
 		
-		ITextSourceVersion ITextSource.Version {
-			get { return null; }
+		/// <summary>
+		/// Creates a new StringTextSource with the given text.
+		/// </summary>
+		public StringTextSource(string text, ITextSourceVersion version)
+		{
+			if (text == null)
+				throw new ArgumentNullException("text");
+			this.text = text;
+			this.version = version;
+		}
+		
+		/// <inheritdoc/>
+		public ITextSourceVersion Version {
+			get { return version; }
 		}
 		
 		/// <inheritdoc/>
@@ -56,7 +74,7 @@ namespace ICSharpCode.NRefactory.Editor
 		/// <inheritdoc/>
 		public ITextSource CreateSnapshot()
 		{
-			return this; // StringTextBuffer is immutable
+			return this; // StringTextSource is immutable
 		}
 		
 		/// <inheritdoc/>
@@ -75,6 +93,18 @@ namespace ICSharpCode.NRefactory.Editor
 		public TextReader CreateReader(int offset, int length)
 		{
 			return new StringReader(text.Substring(offset, length));
+		}
+		
+		/// <inheritdoc/>
+		public void WriteTextTo(TextWriter writer)
+		{
+			writer.Write(text);
+		}
+		
+		/// <inheritdoc/>
+		public void WriteTextTo(TextWriter writer, int offset, int length)
+		{
+			writer.Write(text.Substring(offset, length));
 		}
 		
 		/// <inheritdoc/>
@@ -98,6 +128,12 @@ namespace ICSharpCode.NRefactory.Editor
 		}
 		
 		/// <inheritdoc/>
+		public int IndexOf(char c, int startIndex, int count)
+		{
+			return text.IndexOf(c, startIndex, count);
+		}
+		
+		/// <inheritdoc/>
 		public int IndexOfAny(char[] anyOf, int startIndex, int count)
 		{
 			return text.IndexOfAny(anyOf, startIndex, count);
@@ -110,9 +146,15 @@ namespace ICSharpCode.NRefactory.Editor
 		}
 		
 		/// <inheritdoc/>
+		public int LastIndexOf(char c, int startIndex, int count)
+		{
+			return text.LastIndexOf(c, startIndex + count - 1, count);
+		}
+		
+		/// <inheritdoc/>
 		public int LastIndexOf(string searchText, int startIndex, int count, StringComparison comparisonType)
 		{
-			return text.LastIndexOf(searchText, startIndex, count, comparisonType);
+			return text.LastIndexOf(searchText, startIndex + count - 1, count, comparisonType);
 		}
 	}
 }
