@@ -62,6 +62,10 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Interop\ICLRRuntimeInfoExtensionMethods.cs" />
+    <Compile Include="Interop\ICLRMetaHost.cs" />
+    <Compile Include="Interop\ICLRRuntimeInfo.cs" />
+    <Compile Include="Interop\IEnumUnknown.cs" />
     <Compile Include="Interop\MTA2STA.cs" />
     <Compile Include="ManagedCallback.cs" />
     <Compile Include="ManagedCallbackProxy.cs" />

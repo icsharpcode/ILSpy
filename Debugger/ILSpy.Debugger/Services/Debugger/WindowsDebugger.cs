@@ -10,6 +10,7 @@ using System.Windows;
 using System.Windows.Media;
 
 using Debugger;
+using Debugger.Interop;
 using Debugger.Interop.CorPublish;
 using Debugger.MetaData;
 using ICSharpCode.Decompiler;
@@ -161,13 +162,19 @@ namespace ICSharpCode.ILSpy.Debugger.Services
 					// COMException: The directory name is invalid. (Exception from HRESULT: 0x8007010B)
 					// BadImageFormatException:  is not a valid Win32 application. (Exception from HRESULT: 0x800700C1)
 					// UnauthorizedAccessException: Отказано в доступе. (Исключение из HRESULT: 0x80070005 (E_ACCESSDENIED))
+					// COMException: CORDBG_E_UNCOMPATIBLE_PLATFORMS (0x80131c30) 
 					if (e is COMException || e is BadImageFormatException || e is UnauthorizedAccessException) {
 						string msg = "CannotStartProcess";
 						msg += " " + e.Message;
 						// TODO: Remove
-						if (e is COMException && ((uint)((COMException)e).ErrorCode == 0x80070032)) {
-							msg += Environment.NewLine + Environment.NewLine;
-							msg += "64-bit debugging is not supported.  Please set Project -> Project Options... -> Compiling -> Target CPU to 32bit.";
+						if (e is COMException)
+						{
+							var errorCode=unchecked((uint)((COMException)e).ErrorCode);
+							if (errorCode == 0x80070032 || errorCode==0x80131c30)
+							{
+								msg += Environment.NewLine + Environment.NewLine;
+								msg += "64-bit debugging is not supported.  Please set Project -> Project Options... -> Compiling -> Target CPU to 32bit.";
+							}
 						}
 						MessageBox.Show(msg);
 						
