@@ -332,7 +332,7 @@ namespace ICSharpCode.Decompiler.ILAst
 				if (!byteCode.Code.IsUnconditionalControlFlow()) {
 					if (exceptionHandlerStarts.Contains(byteCode.Next)) {
 						// Do not fall though down to exception handler
-						// It is invalid IL as per ECMA-335 §12.4.2.8.1, but some obfuscators produce it
+						// It is invalid IL as per ECMA-335 ï¿½12.4.2.8.1, but some obfuscators produce it
 					} else {
 						branchTargets.Add(byteCode.Next);
 					}
@@ -417,7 +417,7 @@ namespace ICSharpCode.Decompiler.ILAst
 			// I belive it is safe to just remove it
 			body.RemoveAll(b => b.StackBefore == null);
 			
-			// Genertate temporary variables to replace stack
+			// Generate temporary variables to replace stack
 			foreach(ByteCode byteCode in body) {
 				int argIdx = 0;
 				int popCount = byteCode.PopCount ?? byteCode.StackBefore.Length;
