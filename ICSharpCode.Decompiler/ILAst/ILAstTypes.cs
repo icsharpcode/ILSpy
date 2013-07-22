@@ -519,16 +519,32 @@ namespace ICSharpCode.Decompiler.ILAst
 	{
 		public class CaseBlock: ILBlock
 		{
-			public List<int> Values;  // null for the default case
+			internal bool _IsDefault;
+			public List<int> Values;
+
+			public bool IsDefault {
+				get {
+					return _IsDefault || (Values == null) || (Values.Count == 0);
+				}
+				set {
+					if ((Values == null) || (Values.Count == 0)) {
+						if (!value)
+							throw new Exception("This case has no values so it must be default");
+					}
+
+					_IsDefault = value;
+				}
+			}
 			
 			public override void WriteTo(ITextOutput output)
 			{
+				if (IsDefault)
+					output.WriteLine("default:");
+
 				if (this.Values != null) {
 					foreach (int i in this.Values) {
 						output.WriteLine("case {0}:", i);
 					}
-				} else {
-					output.WriteLine("default:");
 				}
 				output.Indent();
 				base.WriteTo(output);

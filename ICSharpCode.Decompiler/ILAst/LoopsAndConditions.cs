@@ -310,22 +310,30 @@ namespace ICSharpCode.Decompiler.ILAst
 							// Heuristis to determine if we want to use fallthough as default case
 							if (fallTarget != null && !frontiers.Contains(fallTarget)) {
 								HashSet<ControlFlowNode> content = FindDominatedNodes(scope, fallTarget);
-								if (content.Any()) {
-									var caseBlock = new ILSwitch.CaseBlock() { EntryGoto = new ILExpression(ILCode.Br, fallLabel) };
-									ilSwitch.CaseBlocks.Add(caseBlock);
-									block.Body.RemoveTail(ILCode.Br);
-									
-									scope.ExceptWith(content);
-									caseBlock.Body.AddRange(FindConditions(content, fallTarget));
-									// Add explicit break which should not be used by default, but the goto removal might decide to use it
-									caseBlock.Body.Add(new ILBasicBlock() {
-										Body = {
+								// HACK: content being an empty set doesn't mean that there isn't a default fallthrough.
+								// The fallthrough could be at the end of a block.
+								// if (content.Any()) {
+								var caseBlock = new ILSwitch.CaseBlock() {
+									IsDefault = true,
+									EntryGoto = new ILExpression(ILCode.Br, fallLabel)
+								};
+
+								ilSwitch.CaseBlocks.Add(caseBlock);
+								block.Body.RemoveTail(ILCode.Br);
+
+								scope.ExceptWith(content);
+								caseBlock.Body.AddRange(FindConditions(content, fallTarget));
+								// Add explicit break which should not be used by default, but the goto removal might decide to use it
+								caseBlock.Body.Add(new ILBasicBlock() {
+									Body = {
 											new ILLabel() { Name = "SwitchBreak_" + (nextLabelIndex++) },
 											new ILExpression(ILCode.LoopOrSwitchBreak, null)
 										}
-									});
-								}
+								});
+								// }
 							}
+
+							AnointDefaultSwitchCases(ilSwitch);
 						}
 						
 						// Two-way branch
@@ -392,8 +400,40 @@ namespace ICSharpCode.Decompiler.ILAst
 			
 			return result;
 		}
-		
-		static bool HasSingleEdgeEnteringBlock(ControlFlowNode node)
+
+		/// <summary>
+		/// Responsible for detecting switch cases with values that are actually also the default case
+		/// </summary>
+		static void AnointDefaultSwitchCases (ILSwitch swtch) {
+			var defaultCase = swtch.CaseBlocks.FirstOrDefault((cse) => cse.IsDefault);
+			if (defaultCase == null)
+				return;
+
+			var lastBlock = defaultCase.Body.LastOrDefault() as ILBasicBlock;
+			if (
+				(lastBlock != null) &&
+				(lastBlock.Body.Count == 2) &&
+				(lastBlock.Body[0] is ILLabel) &&
+				(lastBlock.Body[1] is ILExpression) &&
+				(((ILExpression)lastBlock.Body[1]).Code == ILCode.LoopOrSwitchBreak)
+			) {
+				// This is a delegating default case. Ensure the target is another case in this switch block.
+				var targetCase = swtch.CaseBlocks.FirstOrDefault(
+					(cse) => (
+						(cse.EntryGoto.Operand == defaultCase.EntryGoto.Operand) &&
+						(cse != defaultCase)
+					)
+				);
+
+				if (targetCase != null) {
+					// The target is another case in this switch block, so fold the current case into that one.
+					swtch.CaseBlocks.Remove(defaultCase);
+					targetCase.IsDefault = true;
+				}
+			}
+		}
+
+		static bool HasSingleEdgeEnteringBlock (ControlFlowNode node)
 		{
 			return node.Incoming.Count(edge => !node.Dominates(edge.Source)) == 1;
 		}
