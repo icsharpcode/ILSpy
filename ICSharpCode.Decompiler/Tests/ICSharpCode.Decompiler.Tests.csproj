@@ -69,6 +69,7 @@
     <Compile Include="ControlFlow.cs" />
     <Compile Include="DoubleConstants.cs" />
     <Compile Include="ExpressionTrees.cs" />
+    <None Include="ILSpy.sln" />
     <None Include="IL\SequenceOfNestedIfs.Output.cs" />
     <Compile Include="IL\ILTests.cs" />
     <Compile Include="LiftedOperators.cs" />

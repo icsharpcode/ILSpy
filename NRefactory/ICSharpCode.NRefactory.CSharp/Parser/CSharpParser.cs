@@ -3747,8 +3747,29 @@ namespace ICSharpCode.NRefactory.CSharp
 		public SyntaxTree Parse (TextReader reader, string fileName = "")
 		{
 			return Parse(new StringTextSource (reader.ReadToEnd ()), fileName);
-		}
-
+		}		
+		
+//		public SyntaxTree Parse (ITextSource textSource, string fileName, int lineModifier = 0)
+//		{
+//			return Parse (textSource.CreateReader (), fileName, lineModifier);
+//		}
+//		
+//		public SyntaxTree Parse (TextReader reader, string fileName, int lineModifier = 0)
+//		{
+//			// TODO: can we optimize this to avoid the text->stream->text roundtrip?
+//			using (MemoryStream stream = new MemoryStream ()) {
+//				StreamWriter w = new StreamWriter (stream, Encoding.UTF8);
+//				char[] buffer = new char[2048];
+//				int read;
+//				while ((read = reader.ReadBlock(buffer, 0, buffer.Length)) > 0)
+//					w.Write (buffer, 0, read);
+//				w.Flush (); // we can't close the StreamWriter because that would also close the MemoryStream
+//				stream.Position = 0;
+//				
+//				return Parse (stream, fileName, lineModifier);
+//			}
+//		}
+		
 		/// <summary>
 		/// Converts a Mono.CSharp syntax tree into an NRefactory syntax tree.
 		/// </summary>
@@ -3888,6 +3909,18 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 			return Enumerable.Empty<EntityDeclaration> ();
 		}
+
+//		public IEnumerable<EntityDeclaration> ParseTypeMembers (TextReader reader, int lineModifier = 0)
+//		{
+//			string code = "unsafe partial class MyClass { " + Environment.NewLine + reader.ReadToEnd () + "}";
+//			var cu = Parse (new StringReader (code), "parsed.cs", lineModifier - 1);
+//			if (cu == null)
+//				return Enumerable.Empty<EntityDeclaration> ();
+//			var td = cu.Children.FirstOrDefault () as TypeDeclaration;
+//			if (td != null)
+//				return td.Members;
+//			return Enumerable.Empty<EntityDeclaration> ();
+//		}
 		
 		public IEnumerable<Statement> ParseStatements (string code)
 		{
@@ -3909,6 +3942,16 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 			return Enumerable.Empty<Statement> ();
 		}
+//		
+//		public IEnumerable<Statement> ParseStatements (TextReader reader, int lineModifier = 0)
+//		{
+//			string code = "void M() { " + Environment.NewLine + reader.ReadToEnd () + "}";
+//			var members = ParseTypeMembers (new StringReader (code), lineModifier - 1);
+//			var method = members.FirstOrDefault () as MethodDeclaration;
+//			if (method != null && method.Body != null)
+//				return method.Body.Statements;
+//			return Enumerable.Empty<Statement> ();
+//		}
 		
 		public AstType ParseTypeReference (string code)
 		{
@@ -3936,6 +3979,17 @@ namespace ICSharpCode.NRefactory.CSharp
 				}
 			}
 			return Expression.Null;
+		}
+		
+		public AstNode ParseExpression (TextReader reader)
+		{
+			var es = ParseStatements (new StringReader ("tmp = " + Environment.NewLine + reader.ReadToEnd () + ";").ToString()).FirstOrDefault () as ExpressionStatement;
+			if (es != null) {
+				AssignmentExpression ae = es.Expression as AssignmentExpression;
+				if (ae != null)
+					return ae.Right;
+			}
+			return null;
 		}
 		
 		/*
