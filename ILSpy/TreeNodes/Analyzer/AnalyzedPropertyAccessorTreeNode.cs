@@ -35,5 +35,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			get { return name ?? base.Text; }
 		}
-	}
+
+    internal override object GetMemberReference()
+    {
+      // the referenced element is the property and not get/set methods
+      return ((AnalyzerTreeNode)Parent).GetMemberReference();
+    }
+  }
 }

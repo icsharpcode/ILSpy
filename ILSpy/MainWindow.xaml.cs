@@ -557,11 +557,21 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		
-		public void JumpToReference(object reference)
+		public void JumpToReference(object reference, EventHandler<DecompileFinishedEventArgs> jumpFinished = null)
 		{
 			ILSpyTreeNode treeNode = FindTreeNode(reference);
 			if (treeNode != null) {
+        if (null != jumpFinished)
+        {
+          nextDecompileAction = jumpFinished;
+        }
 				SelectNode(treeNode);
+        if (null != jumpFinished && null != nextDecompileAction)
+        {
+          // selection did not change so execute action immediately
+          nextDecompileAction = null;
+          jumpFinished(this, new DecompileFinishedEventArgs(this.CurrentLanguage, this.SelectedNodes));
+        }
 			} else if (reference is Mono.Cecil.Cil.OpCode) {
 				string link = "http://msdn.microsoft.com/library/system.reflection.emit.opcodes." + ((Mono.Cecil.Cil.OpCode)reference).Code.ToString().ToLowerInvariant() + ".aspx";
 				try {
@@ -633,9 +643,14 @@ namespace ICSharpCode.ILSpy
 		}
 
 		private bool ignoreDecompilationRequests;
+		
+		private EventHandler<DecompileFinishedEventArgs> nextDecompileAction;
 
 		private void DecompileSelectedNodes(DecompilerTextViewState state = null, bool recordHistory = true)
 		{
+		  EventHandler<DecompileFinishedEventArgs> decompilationAction = nextDecompileAction;
+		  nextDecompileAction = null;
+		  
 			if (ignoreDecompilationRequests)
 				return;
 
@@ -651,7 +666,8 @@ namespace ICSharpCode.ILSpy
 				if (node != null && node.View(decompilerTextView))
 					return;
 			}
-			decompilerTextView.Decompile(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
+			decompilerTextView.Decompile(this.CurrentLanguage, this.SelectedNodes, 
+			                             new DecompilationOptions() { TextViewState = state }, decompilationAction);
 		}
 		
 		void SaveCommandExecuted(object sender, ExecutedRoutedEventArgs e)

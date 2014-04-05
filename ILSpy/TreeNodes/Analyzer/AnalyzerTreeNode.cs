@@ -64,6 +64,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			}
 			base.OnChildrenChanged(e);
 		}
+
+    internal virtual object GetMemberReference()
+    {
+      return null;
+    }
 		
 		/// <summary>
 		/// Handles changes to the assembly list.

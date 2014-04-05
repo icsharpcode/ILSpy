@@ -27,7 +27,7 @@ using ICSharpCode.Decompiler.Ast;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedVirtualMethodUsedByTreeNode : AnalyzerSearchTreeNode
+  internal sealed class AnalyzedVirtualMethodUsedByTreeNode : AnalyzerReferencingSearchTreeNode
 	{
 		private readonly MethodDefinition analyzedMethod;
 		private ConcurrentDictionary<MethodDefinition, int> foundMethods;

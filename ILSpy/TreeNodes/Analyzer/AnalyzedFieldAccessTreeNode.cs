@@ -26,7 +26,7 @@ using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedFieldAccessTreeNode : AnalyzerSearchTreeNode
+  internal sealed class AnalyzedFieldAccessTreeNode : AnalyzerReferencingSearchTreeNode
 	{
 		private readonly bool showWrites; // true: show writes; false: show read access
 		private readonly FieldDefinition analyzedField;

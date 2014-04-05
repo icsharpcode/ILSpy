@@ -26,7 +26,7 @@ using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedEventFiredByTreeNode : AnalyzerSearchTreeNode
+  internal sealed class AnalyzedEventFiredByTreeNode : AnalyzerReferencingSearchTreeNode
 	{
 		private readonly EventDefinition analyzedEvent;
 		private readonly FieldDefinition eventBackingField;

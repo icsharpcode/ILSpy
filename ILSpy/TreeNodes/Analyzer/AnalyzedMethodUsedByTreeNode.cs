@@ -26,7 +26,7 @@ using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedMethodUsedByTreeNode : AnalyzerSearchTreeNode
+  internal sealed class AnalyzedMethodUsedByTreeNode : AnalyzerReferencingSearchTreeNode
 	{
 		private readonly MethodDefinition analyzedMethod;
 		private ConcurrentDictionary<MethodDefinition, int> foundMethods;

@@ -395,12 +395,13 @@ namespace ICSharpCode.ILSpy.TextView
 		/// Starts the decompilation of the given nodes.
 		/// The result is displayed in the text view.
 		/// </summary>
-		public void Decompile(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
+		public void Decompile(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options,
+		                      EventHandler<DecompileFinishedEventArgs> decompileFinished)
 		{
 			// Some actions like loading an assembly list cause several selection changes in the tree view,
 			// and each of those will start a decompilation action.
 			bool isDecompilationScheduled = this.nextDecompilationRun != null;
-			this.nextDecompilationRun = new DecompilationContext(language, treeNodes.ToArray(), options);
+			this.nextDecompilationRun = new DecompilationContext(language, treeNodes.ToArray(), options, decompileFinished);
 			if (!isDecompilationScheduled) {
 				Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(
 					delegate {
@@ -418,12 +419,15 @@ namespace ICSharpCode.ILSpy.TextView
 			public readonly ILSpy.Language Language;
 			public readonly ILSpyTreeNode[] TreeNodes;
 			public readonly DecompilationOptions Options;
+			public readonly EventHandler<DecompileFinishedEventArgs> DecompileFinished;
 			
-			public DecompilationContext(ILSpy.Language language, ILSpyTreeNode[] treeNodes, DecompilationOptions options)
+			public DecompilationContext(ILSpy.Language language, ILSpyTreeNode[] treeNodes, DecompilationOptions options, 
+			                            EventHandler<DecompileFinishedEventArgs> decompileFinished = null)
 			{
 				this.Language = language;
 				this.TreeNodes = treeNodes;
 				this.Options = options;
+				this.DecompileFinished = decompileFinished;
 			}
 		}
 		
@@ -463,10 +467,26 @@ namespace ICSharpCode.ILSpy.TextView
 						ShowOutput(output);
 						isDecompilationOk = false;
 					} finally {
-						this.UpdateDebugUI(isDecompilationOk);
+						this.OnDecompileFinished(isDecompilationOk, context);
 					}
 					decompiledNodes = context.TreeNodes;
 				});
+		}
+		
+		public event EventHandler<DecompileFinishedEventArgs> DecompileFinished;
+		
+		void OnDecompileFinished(bool isDecompilationOk, DecompilationContext context)
+		{
+		  if (isDecompilationOk) {
+        var args = new DecompileFinishedEventArgs(context.Language, context.TreeNodes);
+		    var handler = DecompileFinished;
+  		  if (null != handler)
+  		    handler(this, args);
+  			if (null != context.DecompileFinished)
+  			  context.DecompileFinished(this, args);
+		  }
+      // TODO: this should be handled through DecompileFinished handler on IconBarMargin 
+      UpdateDebugUI(isDecompilationOk);
 		}
 		
 		void UpdateDebugUI(bool isDecompilationOk)
@@ -606,16 +626,7 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			object reference = referenceSegment.Reference;
 			if (referenceSegment.IsLocal) {
-				ClearLocalReferenceMarks();
-				if (references != null) {
-					foreach (var r in references) {
-						if (reference.Equals(r.Reference)) {
-							var mark = textMarkerService.Create(r.StartOffset, r.Length);
-							mark.BackgroundColor = r.IsLocalTarget ? Colors.LightSeaGreen : Colors.GreenYellow;
-							localReferenceMarks.Add(mark);
-						}
-					}
-				}
+        MarkReferences(reference);
 				return;
 			}
 			if (definitionLookup != null) {
@@ -633,6 +644,23 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 			MainWindow.Instance.JumpToReference(reference);
 		}
+
+    public void MarkReferences(object reference)
+    {
+      ClearLocalReferenceMarks();
+      if (references != null)
+      {
+        foreach (var r in references)
+        {
+          if (reference.Equals(r.Reference))
+          {
+            var mark = textMarkerService.Create(r.StartOffset, r.Length);
+            mark.BackgroundColor = r.IsLocalTarget ? Colors.LightSeaGreen : Colors.GreenYellow;
+            localReferenceMarks.Add(mark);
+          }
+        }
+      }
+    }
 
 		void ClearLocalReferenceMarks()
 		{
@@ -845,5 +873,17 @@ namespace ICSharpCode.ILSpy.TextView
 				foreach (var folding in list)
 					folding.DefaultClosed = !ExpandedFoldings.Any(f => f.Item1 == folding.StartOffset && f.Item2 == folding.EndOffset);
 		}
+	}
+	
+	public class DecompileFinishedEventArgs : EventArgs
+	{
+	  public ILSpy.Language Language { get; private set; }
+	  public IEnumerable<ILSpyTreeNode> Decompilednodes { get; private set; }
+	  
+	  public DecompileFinishedEventArgs(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes)
+	  {
+	    this.Language = language;
+	    this.Decompilednodes = treeNodes;
+	  }
 	}
 }
