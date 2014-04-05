@@ -429,7 +429,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 						MemberReferenceExpression mre = (MemberReferenceExpression)identExpr.Parent;
 						AstNode replacement;
 						if (dict.TryGetValue(mre.Annotation<FieldReference>().ResolveWithinSameModule(), out replacement)) {
-							mre.ReplaceWith(replacement.Clone());
+							mre.ReplaceWith(replacement.Clone().CopyAnnotationsFrom(replacement));
 						}
 					}
 				}
