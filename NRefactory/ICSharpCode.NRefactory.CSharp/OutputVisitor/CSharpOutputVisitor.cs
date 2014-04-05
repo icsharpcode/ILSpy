@@ -1153,7 +1153,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				default:
 					if (char.IsControl(ch) || char.IsSurrogate(ch) ||
 					// print all uncommon white spaces as numbers
-						(char.IsWhiteSpace(ch) && ch != ' ')) {
+						(char.IsWhiteSpace(ch) && ch != ' ') || ch > 255 )  {
 						return "\\u" + ((int)ch).ToString("x4");
 					} else {
 						return ch.ToString();
