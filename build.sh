@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 pause(){
   read -n 1 -p "$1"
 }
