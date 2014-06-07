@@ -62,7 +62,7 @@ namespace ICSharpCode.AvalonEdit.Search
 		void RegisterCommands(ICollection<CommandBinding> commandBindings)
 		{
 			commandBindings.Add(new CommandBinding(ApplicationCommands.Find, ExecuteFind));
-			commandBindings.Add(new CommandBinding(SearchCommands.FindNext, ExecuteFindNext));
+			commandBindings.Add(new CommandBinding(SearchCommands.FindNext, ExecuteFindNext, CanExecuteFindNext));
 			commandBindings.Add(new CommandBinding(SearchCommands.FindPrevious, ExecuteFindPrevious));
 			commandBindings.Add(new CommandBinding(SearchCommands.CloseSearchPanel, ExecuteCloseSearchPanel));
 		}
@@ -97,5 +97,19 @@ namespace ICSharpCode.AvalonEdit.Search
 				panel.Close();
 			panel = null;
 		}
+
+        void CanExecuteFindNext(object sender, CanExecuteRoutedEventArgs e)
+        {
+            // If a search pattern has not been entered then allow the command to 
+            // route up the element tree. This allows any commands with the 
+            // same key gesture to be executed e.g. ILSpy search.
+            if (panel != null && !string.IsNullOrWhiteSpace(panel.SearchPattern))
+                e.CanExecute = true;
+            else
+            {
+                e.CanExecute = false;
+                e.ContinueRouting = true;
+            }
+        }
 	}
 }
