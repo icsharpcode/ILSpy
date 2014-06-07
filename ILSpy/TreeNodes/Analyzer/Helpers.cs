@@ -72,6 +72,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			if (type != null && type.DeclaringType != null && type.IsCompilerGenerated()) {
 				MethodDefinition constructor = GetTypeConstructor(type);
+                if (constructor == null) {
+                    return null;
+                }
 				return FindMethodUsageInType(type.DeclaringType, constructor);
 			}
 			return null;
