@@ -76,8 +76,7 @@ namespace ILSpy.BamlDecompiler
 			} else if (condition != null) {
 				result.Add(1, FindEvents(condition.FalseBlock));
 			}
-			*/
-			return result;
+			return result;*/
 		}
 		/*
 		EventRegistration[] FindEvents(ILBlock block)

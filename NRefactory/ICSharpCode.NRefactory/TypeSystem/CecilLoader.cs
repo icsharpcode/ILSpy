@@ -77,7 +77,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Gets/Sets the cancellation token used by the cecil loader.
 		/// </summary>
 		public CancellationToken CancellationToken { get; set; }
-		
+
 		/// <summary>
 		/// This delegate gets executed whenever an entity was loaded.
 		/// </summary>
@@ -87,6 +87,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Warning: if delay-loading is used and the type system is accessed by multiple threads,
 		/// the callback may be invoked concurrently on multiple threads.
 		/// </remarks>
+		[CLSCompliant(false)]
 		public Action<IUnresolvedEntity, MemberReference> OnEntityLoaded { get; set; }
 		
 		/// <summary>
