@@ -460,35 +460,16 @@ namespace ICSharpCode.ILSpy.TextView
 			
 			Thread thread = new Thread(new ThreadStart(
 				delegate {
-					#if DEBUG
-					if (System.Diagnostics.Debugger.IsAttached) {
-						try {
-							AvalonEditTextOutput textOutput = new AvalonEditTextOutput();
-							textOutput.LengthLimit = outputLengthLimit;
-							DecompileNodes(context, textOutput);
-							textOutput.PrepareDocument();
-							tcs.SetResult(textOutput);
-						} catch (OutputLengthExceededException ex) {
-							tcs.SetException(ex);
-						} catch (AggregateException ex) {
-							tcs.SetException(ex.InnerExceptions);
-						} catch (OperationCanceledException) {
-							tcs.SetCanceled();
-						}
-					} else
-						#endif
-					{
-						try {
-							AvalonEditTextOutput textOutput = new AvalonEditTextOutput();
-							textOutput.LengthLimit = outputLengthLimit;
-							DecompileNodes(context, textOutput);
-							textOutput.PrepareDocument();
-							tcs.SetResult(textOutput);
-						} catch (OperationCanceledException) {
-							tcs.SetCanceled();
-						} catch (Exception ex) {
-							tcs.SetException(ex);
-						}
+					try {
+						AvalonEditTextOutput textOutput = new AvalonEditTextOutput();
+						textOutput.LengthLimit = outputLengthLimit;
+						DecompileNodes(context, textOutput);
+						textOutput.PrepareDocument();
+						tcs.SetResult(textOutput);
+					} catch (OperationCanceledException) {
+						tcs.SetCanceled();
+					} catch (Exception ex) {
+						tcs.SetException(ex);
 					}
 				}));
 			thread.Start();

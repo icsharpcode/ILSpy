@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	enum OpCode
+	public enum OpCode
 	{
 		/// <summary>
 		/// A instruction that could not be decoded correctly.
@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Ignore the arguments and produce void. Used to prevent the end result of an instruction
 		/// from being pushed to the evaluation stack.
 		/// </summary>
-		Drop,
+		Void,
 		/// <summary>
 		/// Unary operator that expects an input of type I4.
 		/// Return 1 (of type I4) if the input value is 0. Otherwise, return 0 (of type I4).
@@ -43,9 +43,41 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		Add,
 		/// <summary>
+		/// Subtracts two numbers. <see cref="BinaryNumericInstruction"/>
+		/// </summary>
+		Sub,
+		/// <summary>
+		/// Multiplies two numbers. <see cref="BinaryNumericInstruction"/>
+		/// </summary>
+		Mul,
+		/// <summary>
+		/// Division. <see cref="BinaryNumericInstruction"/>
+		/// </summary>
+		Div,
+		/// <summary>
+		/// Division remainder. <see cref="BinaryNumericInstruction"/>
+		/// </summary>
+		Rem,
+		/// <summary>
+		/// Unary negation. <see cref="UnaryInstruction"/>
+		/// </summary>
+		Neg,
+		/// <summary>
 		/// Bitwise AND. <see cref="BinaryNumericInstruction"/>
 		/// </summary>
 		BitAnd,
+		/// <summary>
+		/// Bitwise OR. <see cref="BinaryNumericInstruction"/>
+		/// </summary>
+		BitOr,
+		/// <summary>
+		/// Bitwise XOR. <see cref="BinaryNumericInstruction"/>
+		/// </summary>
+		BitXor,
+		/// <summary>
+		/// Bitwise NOT. <see cref="UnaryNumericInstruction"/>
+		/// </summary>
+		BitNot,
 		/// <summary>
 		/// Retrieves the RuntimeArgumentHandle
 		/// </summary>
@@ -60,6 +92,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <see cref="BranchInstruction"/>
 		/// </summary>
 		Branch,
+		Leave,
 		/// <summary>
 		/// Breakpoint instruction.
 		/// </summary>
@@ -102,9 +135,66 @@ namespace ICSharpCode.Decompiler.IL
 		/// Call a method.
 		/// </summary>
 		Call,
+		/// <summary>
+		/// Call a method using virtual dispatch.
+		/// </summary>
+		CallVirt,
+		/// <summary>
+		/// Checks that the float on top of the stack is not NaN or infinite.
+		/// </summary>
 		Ckfinite,
+		/// <summary>
+		/// Numeric cast. <see cref="ConvInstruction"/>
+		/// </summary>
 		Conv,
-		Div,
+		/// <summary>
+		/// Loads the value of a variable. (ldarg/ldloc)
+		/// <see cref="LoadVarInstruction"/>
+		/// </summary>
 		LoadVar,
+		/// <summary>
+		/// Loads the address of a variable as managed ref. (ldarga/ldloca)
+		/// <see cref="LoadVarInstruction"/>
+		/// </summary>
+		LoadVarAddress,
+		/// <summary>
+		/// Stores a value into a variable. (starg/stloc)
+		/// <see cref="StoreVarInstruction"/>
+		/// </summary>
+		StoreVar,
+		/// <summary>
+		/// Loads a constant string. <see cref="ConstantStringInstruction"/>
+		/// </summary>
+		LdStr,
+		/// <summary>
+		/// Loads a constant 32-bit integer. <see cref="ConstantI4Instruction"/>
+		/// </summary>
+		LdcI4,
+		/// <summary>
+		/// Loads a constant 64-bit integer. <see cref="ConstantI8Instruction"/>
+		/// </summary>
+		LdcI8,
+		/// <summary>
+		/// Loads a constant floating point number. <see cref="ConstantFloatInstruction"/>
+		/// </summary>
+		LdcF,
+		/// <summary>
+		/// Loads a null reference.
+		/// </summary>
+		LdNull,
+		/// <summary>
+		/// Returns from the current method or lambda.
+		/// <see cref="UnaryInstruction"/> or <see cref="SimpleInstruction"/>, depending on whether
+		/// the method has return type void.
+		/// </summary>
+		Ret,
+		/// <summary>
+		/// Shift left. <see cref="BinaryNumericInstruction"/>
+		/// </summary>
+		Shl,
+		/// <summary>
+		/// Shift right. <see cref="BinaryNumericInstruction"/>
+		/// </summary>
+		Shr,
 	}
 }

@@ -373,6 +373,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 
+		public static void WriteOperand(ITextOutput writer, long val)
+		{
+			writer.Write(ToInvariantCultureString(val));
+		}
+
 		public static void WriteOperand(ITextOutput writer, float val)
 		{
 			if (val == 0) {

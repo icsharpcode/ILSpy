@@ -1,4 +1,5 @@
-﻿using Mono.Cecil;
+﻿using ICSharpCode.Decompiler.Disassembler;
+using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		static ILInstruction[] InitOperands(MethodReference mr)
 		{
-			ILInstruction[] operands = new ILInstruction[mr.Parameters.Count];
+			ILInstruction[] operands = new ILInstruction[mr.GetPopAmount()];
 			for (int i = 0; i < operands.Length; i++) {
 				operands[i] = Pop;
 			}
@@ -33,5 +34,25 @@ namespace ICSharpCode.Decompiler.IL
 		/// Returns null if no 'constrained.' prefix exists for this call.
 		/// </summary>
 		public TypeReference ConstrainedTo;
+
+		public override void WriteTo(ITextOutput output)
+		{
+			if (ConstrainedTo != null) {
+				output.Write("constrained.");
+				ConstrainedTo.WriteTo(output, ILNameSyntax.ShortTypeName);
+			}
+			if (IsTail)
+				output.Write("tail.");
+			output.Write(OpCode);
+			output.Write(' ');
+			Method.WriteTo(output);
+			output.Write('(');
+			for (int i = 0; i < Operands.Length; i++) {
+				if (i > 0)
+					output.Write(", ");
+				Operands[i].WriteTo(output);
+			}
+			output.Write(')');
+		}
 	}
 }

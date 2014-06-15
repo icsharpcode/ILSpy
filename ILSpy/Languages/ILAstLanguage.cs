@@ -15,34 +15,29 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-/*
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.ILAst;
+using ICSharpCode.Decompiler.IL;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {
-	#if DEBUG
+#if DEBUG
 	/// <summary>
 	/// Represents the ILAst "language" used for debugging purposes.
 	/// </summary>
-	sealed class ILAstLanguage : Language
+	abstract class ILAstLanguage(string name) : Language
 	{
-		string name;
 		bool inlineVariables = true;
-		ILAstOptimizationStep? abortBeforeStep;
-		
-		public override string Name {
-			get {
-				return name;
-			}
-		}
-		
+		//ILAstOptimizationStep? abortBeforeStep;
+
+		public override string Name { get; } = name;
+		/*
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			if (!method.HasBody) {
@@ -82,32 +77,50 @@ namespace ICSharpCode.ILSpy
 				node.WriteTo(output);
 				output.WriteLine();
 			}
-		}
-		
+	}*/
+
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
 		{
-			yield return new ILAstLanguage { name = "ILAst (unoptimized)", inlineVariables = false };
-			string nextName = "ILAst (variable splitting)";
-			foreach (ILAstOptimizationStep step in Enum.GetValues(typeof(ILAstOptimizationStep))) {
-				yield return new ILAstLanguage { name = nextName, abortBeforeStep = step };
-				nextName = "ILAst (after " + step + ")";
-				
-			}
+			yield return new TypedIL();
+			//yield return new ILAstLanguage { name = "ILAst (unoptimized)", inlineVariables = false };
+			//string nextName = "ILAst (variable splitting)";
+			//foreach (ILAstOptimizationStep step in Enum.GetValues(typeof(ILAstOptimizationStep))) {
+			//	yield return new ILAstLanguage { name = nextName, abortBeforeStep = step };
+			//	nextName = "ILAst (after " + step + ")";
+			//}
 		}
-		
-		public override string FileExtension {
-			get {
+
+		public override string FileExtension
+		{
+			get
+			{
 				return ".il";
 			}
 		}
-		
+
 		public override string TypeToString(TypeReference t, bool includeNamespace, ICustomAttributeProvider attributeProvider = null)
 		{
 			PlainTextOutput output = new PlainTextOutput();
 			t.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
 			return output.ToString();
 		}
-	}
-	#endif
+
+		class TypedIL() : ILAstLanguage("Typed IL")
+		{
+			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+			{
+				base.DecompileMethod(method, output, options);
+				if (!method.HasBody)
+					return;
+				ILReader reader = new ILReader(method.Body);
+				foreach (var inst in reader.ReadInstructions()) {
+					output.WriteDefinition("IL_" + inst.ILRange.Start.ToString("x2"), inst.ILRange.Start);
+					output.Write(": ");
+					inst.WriteTo(output);
+					output.WriteLine();
+				}
+			}
+		}
+    }
+#endif
 }
-*/

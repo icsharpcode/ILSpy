@@ -11,7 +11,7 @@ namespace ICSharpCode.Decompiler
 	/// Represents a half-open interval.
 	/// The start position is inclusive; but the end position is exclusive.
 	/// </summary>
-	struct Interval
+	public struct Interval
 	{
 		public static readonly Interval Empty = new Interval(0, 0);
 

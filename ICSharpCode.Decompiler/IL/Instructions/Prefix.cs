@@ -18,18 +18,4 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		bool IsVolatile { get; set; }
 	}
-
-	[Flags]
-	enum NoPrefixFlags : byte
-	{
-		None = 0,
-		TypeCheck = 0x01,
-		RangeCheck = 0x02,
-		NullCheck = 0x04,
-	}
-
-	interface ISupportsNoPrefix
-	{
-		NoPrefixFlags NoPrefix { get; set; }
-	}
 }

@@ -20,6 +20,11 @@ namespace ICSharpCode.Decompiler.IL
 			return ImmutableArray.Create(result);
 		}*/
 
+		public static int GetPopAmount(this MethodReference methodRef)
+		{
+			return methodRef.Parameters.Count + (methodRef.HasThis ? 1 : 0);
+		}
+
 		public static StackType GetStackType(this TypeReference typeRef)
 		{
 			return typeRef.SkipModifiers().MetadataType.GetStackType();

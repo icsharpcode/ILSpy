@@ -19,12 +19,33 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public readonly StackType OpType = opType;
 		public readonly OverflowMode OverflowMode = overflowMode;
+
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.WriteSuffix(OverflowMode);
+			output.Write(' ');
+			output.Write(OpType);
+			Left.WriteTo(output);
+			output.Write(", ");
+			Right.WriteTo(output);
+			output.Write(')');
+		}
 	}
 
 	class BinaryComparisonInstruction(OpCode opCode, StackType opType)
 		: BinaryInstruction(opCode)
 	{
 		public readonly StackType OpType = opType;
+
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write("{0}.{1}(", OpCode, OpType);
+			Left.WriteTo(output);
+			output.Write(", ");
+			Right.WriteTo(output);
+			output.Write(')');
+		}
 	}
 
 	public enum OverflowMode : byte

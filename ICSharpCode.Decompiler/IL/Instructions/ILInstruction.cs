@@ -9,7 +9,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// Represents a decoded IL instruction
 	/// </summary>
-	abstract class ILInstruction(public readonly OpCode OpCode)
+	public abstract class ILInstruction(public readonly OpCode OpCode)
 	{
 		public static readonly ILInstruction Nop = new SimpleInstruction(OpCode.Nop);
 		public static readonly ILInstruction Pop = new SimpleInstruction(OpCode.Pop);
@@ -25,5 +25,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// left after the pop operations.
 		/// </summary>
 		public abstract bool IsPeeking { get; }
+
+		public abstract void WriteTo(ITextOutput output);
 	}
 }

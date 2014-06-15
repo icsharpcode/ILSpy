@@ -78,7 +78,9 @@
     <Compile Include="IL\ILReader.cs" />
     <Compile Include="IL\ILTypeExtensions.cs" />
     <Compile Include="IL\ILVariable.cs" />
+    <Compile Include="IL\InstructionOutputExtensions.cs" />
     <Compile Include="IL\Instructions\BinaryInstruction.cs" />
+    <Compile Include="IL\Instructions\Block.cs" />
     <Compile Include="IL\Instructions\BranchInstruction.cs" />
     <Compile Include="IL\Instructions\CallInstruction.cs" />
     <Compile Include="IL\Instructions\ILInstruction.cs" />

@@ -87,14 +87,13 @@ namespace ICSharpCode.ILSpy
 			
 			compositionContainer = new CompositionContainer(catalog);
 			
-			Languages.Initialize(compositionContainer);
-			
 			if (!System.Diagnostics.Debugger.IsAttached) {
 				AppDomain.CurrentDomain.UnhandledException += ShowErrorBox;
 				Dispatcher.CurrentDispatcher.UnhandledException += Dispatcher_UnhandledException;
 			}
 			TaskScheduler.UnobservedTaskException += DotNet40_UnobservedTaskException;
-			
+			Languages.Initialize(compositionContainer);
+
 			EventManager.RegisterClassHandler(typeof(Window),
 			                                  Hyperlink.RequestNavigateEvent,
 			                                  new RequestNavigateEventHandler(Window_RequestNavigate));

@@ -12,6 +12,13 @@ namespace ICSharpCode.Decompiler.IL
 	class BranchInstruction(OpCode opCode, public int TargetILOffset) : ILInstruction(opCode)
 	{
 		public override bool IsPeeking { get { return false; } }
+
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode.ToString());
+			output.Write(' ');
+			output.WriteReference(CecilExtensions.OffsetToString(TargetILOffset), TargetILOffset, isLocal: true);
+		}
 	}
 
 	/// <summary>
@@ -21,5 +28,13 @@ namespace ICSharpCode.Decompiler.IL
 	class ConditionalBranchInstruction(public ILInstruction Condition, int targetILOffset) : BranchInstruction(OpCode.ConditionalBranch, targetILOffset)
 	{
 		public override bool IsPeeking { get { return Condition.IsPeeking; } }
+
+		public override void WriteTo(ITextOutput output)
+		{
+			base.WriteTo(output);
+			output.Write('(');
+			Condition.WriteTo(output);
+			output.Write(')');
+		}
 	}
 }

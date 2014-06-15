@@ -33,7 +33,8 @@ using Mono.Collections.Generic;
 
 namespace Mono.Cecil.Cil {
 
-	public sealed class MethodBody : IVariableDefinitionProvider {
+	public sealed class MethodBody : IVariableDefinitionProvider
+	{
 
 		readonly internal MethodDefinition method;
 
@@ -49,90 +50,103 @@ namespace Mono.Cecil.Cil {
 		internal Collection<VariableDefinition> variables;
 		Scope scope;
 
-		public MethodDefinition Method {
+		public MethodDefinition Method
+		{
 			get { return method; }
 		}
 
-		public int MaxStackSize {
+		public int MaxStackSize
+		{
 			get { return max_stack_size; }
 			set { max_stack_size = value; }
 		}
 
-		public int CodeSize {
+		public int CodeSize
+		{
 			get { return code_size; }
 		}
 
-		public bool InitLocals {
+		public bool InitLocals
+		{
 			get { return init_locals; }
 			set { init_locals = value; }
 		}
 
-		public MetadataToken LocalVarToken {
+		public MetadataToken LocalVarToken
+		{
 			get { return local_var_token; }
 			set { local_var_token = value; }
 		}
 
-		public Collection<Instruction> Instructions {
-			get { return instructions ?? (instructions = new InstructionCollection ()); }
+		public Collection<Instruction> Instructions
+		{
+			get { return instructions ?? (instructions = new InstructionCollection()); }
 		}
 
-		public bool HasExceptionHandlers {
-			get { return !exceptions.IsNullOrEmpty (); }
+		public bool HasExceptionHandlers
+		{
+			get { return !exceptions.IsNullOrEmpty(); }
 		}
 
-		public Collection<ExceptionHandler> ExceptionHandlers {
-			get { return exceptions ?? (exceptions = new Collection<ExceptionHandler> ()); }
+		public Collection<ExceptionHandler> ExceptionHandlers
+		{
+			get { return exceptions ?? (exceptions = new Collection<ExceptionHandler>()); }
 		}
 
-		public bool HasVariables {
-			get { return !variables.IsNullOrEmpty (); }
+		public bool HasVariables
+		{
+			get { return !variables.IsNullOrEmpty(); }
 		}
 
-		public Collection<VariableDefinition> Variables {
-			get { return variables ?? (variables = new VariableDefinitionCollection ()); }
+		public Collection<VariableDefinition> Variables
+		{
+			get { return variables ?? (variables = new VariableDefinitionCollection()); }
 		}
 
-		public Scope Scope {
+		public Scope Scope
+		{
 			get { return scope; }
 			set { scope = value; }
 		}
 
-		public ParameterDefinition ThisParameter {
-			get {
+		public ParameterDefinition ThisParameter
+		{
+			get
+			{
 				if (method == null || method.DeclaringType == null)
-					throw new NotSupportedException ();
+					throw new NotSupportedException();
 
 				if (!method.HasThis)
 					return null;
 
 				if (this_parameter == null)
-					Interlocked.CompareExchange (ref this_parameter, ThisParameterFor (method), null);
+					Interlocked.CompareExchange(ref this_parameter, ThisParameterFor(method), null);
 
 				return this_parameter;
 			}
 		}
 
-		static ParameterDefinition ThisParameterFor (MethodDefinition method)
+		static ParameterDefinition ThisParameterFor(MethodDefinition method)
 		{
 			var declaring_type = method.DeclaringType;
 			var type = declaring_type.IsValueType || declaring_type.IsPrimitive
-				? new PointerType (declaring_type)
+				? new PointerType(declaring_type)
 				: declaring_type as TypeReference;
 
-			return new ParameterDefinition (type, method);
+			return new ParameterDefinition(type, method);
 		}
 
-		public MethodBody (MethodDefinition method)
+		public MethodBody(MethodDefinition method)
 		{
 			this.method = method;
 		}
 
-		public ILProcessor GetILProcessor ()
+		public ILProcessor GetILProcessor()
 		{
-			return new ILProcessor (this);
+			return new ILProcessor(this);
 		}
 
-		public BlobReader GetILReader ()
+		public BlobReader GetILReader()
 		{
 			return code_reader;
 		}
@@ -144,7 +158,12 @@ namespace Mono.Cecil.Cil {
 				return reader.LookupToken(t);
 			});
 		}
-    }
+
+		public string LookupStringToken(MetadataToken token)
+		{
+			return method.Module.Image.UserStringHeap.Read(token.RID);
+		}
+	}
 
 	public interface IVariableDefinitionProvider {
 		bool HasVariables { get; }

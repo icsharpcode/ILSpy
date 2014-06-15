@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Disassembler;
 using Mono.Cecil;
+using System.ComponentModel.Composition;
 
 namespace ICSharpCode.ILSpy
 {
@@ -31,14 +32,10 @@ namespace ICSharpCode.ILSpy
 	/// Currently comes in two versions:
 	/// flat IL (detectControlStructure=false) and structured IL (detectControlStructure=true).
 	/// </remarks>
+	[Export(typeof(Language))]
 	public class ILLanguage : Language
 	{
-		private readonly bool detectControlStructure;
-		
-		public ILLanguage(bool detectControlStructure)
-		{
-			this.detectControlStructure = detectControlStructure;
-		}
+		private readonly bool detectControlStructure = true;
 		
 		public override string Name {
 			get { return "IL"; }
