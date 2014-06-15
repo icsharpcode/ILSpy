@@ -189,6 +189,12 @@ namespace Microsoft.Cci.Pdb {
       offset += len;
     }
 
+    internal string ReadBString(int len) {
+      var result = Encoding.UTF8.GetString(buffer, offset, len);
+      offset += len;
+      return result;
+    }
+
     internal void ReadCString(out string value) {
       int len = 0;
       while (offset + len < buffer.Length && buffer[offset + len] != 0) {

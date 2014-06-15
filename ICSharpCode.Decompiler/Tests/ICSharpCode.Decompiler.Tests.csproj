@@ -50,8 +50,7 @@
       <HintPath>..\..\packages\DiffLib.1.0.0.55\lib\net35-Client\DiffLib.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>.\nunit.framework.dll</HintPath>
+      <HintPath>..\..\packages\NUnit.2.6.3\lib\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -63,51 +62,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Async.cs" />
-    <Compile Include="CallOverloadedMethod.cs" />
-    <Compile Include="CheckedUnchecked.cs" />
-    <Compile Include="ControlFlow.cs" />
-    <Compile Include="DoubleConstants.cs" />
-    <Compile Include="ExpressionTrees.cs" />
-    <None Include="IL\SequenceOfNestedIfs.Output.cs" />
-    <Compile Include="IL\ILTests.cs" />
-    <Compile Include="LiftedOperators.cs" />
-    <Compile Include="CustomShortCircuitOperators.cs" />
-    <Compile Include="Helpers\CodeAssert.cs" />
-    <Compile Include="IncrementDecrement.cs" />
-    <Compile Include="PInvoke.cs" />
-    <Compile Include="QueryExpressions.cs" />
-    <Compile Include="Switch.cs" />
-    <Compile Include="TypeAnalysisTests.cs" />
-    <Compile Include="UndocumentedExpressions.cs" />
-    <Compile Include="UnsafeCode.cs" />
-    <Compile Include="Types\S_TypeDeclarations.cs" />
-    <Compile Include="YieldReturn.cs" />
-    <None Include="IL\SequenceOfNestedIfs.dll" />
-    <None Include="IL\SequenceOfNestedIfs.il" />
-    <None Include="IL\StackTests.exe" />
-    <None Include="IL\StackTests.il" />
     <None Include="packages.config" />
-    <None Include="Types\S_EnumSamples.cs" />
-    <None Include="CustomAttributes\S_AssemblyCustomAttribute.cs" />
-    <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
-    <Compile Include="Types\S_TypeMemberDeclarations.cs" />
-    <Compile Include="Types\EnumTests.cs" />
-    <Compile Include="Types\TypeTests.cs" />
-    <Compile Include="DelegateConstruction.cs" />
-    <None Include="CustomAttributes\S_CustomAttributes.cs" />
-    <Compile Include="Loops.cs" />
-    <Compile Include="PropertiesAndEvents.cs" />
-    <None Include="CustomAttributes\S_CustomAttributeSamples.cs" />
-    <Compile Include="CodeSampleFileParser.cs" />
-    <Compile Include="CustomAttributes\CustomAttributeTests.cs" />
-    <Compile Include="DecompilerTestBase.cs" />
-    <Compile Include="InitializerTests.cs" />
-    <Compile Include="ExceptionHandling.cs" />
-    <Compile Include="Generics.cs" />
-    <Compile Include="MultidimensionalArray.cs" />
-    <Compile Include="TestRunner.cs" />
-    <Compile Include="ValueTypes.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\Mono.Cecil\Mono.Cecil.csproj">
@@ -128,10 +83,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="IL" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="BooleanConsumedAsInteger.il" />
+    <Compile Include="Helpers\CodeAssert.cs" />
+    <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

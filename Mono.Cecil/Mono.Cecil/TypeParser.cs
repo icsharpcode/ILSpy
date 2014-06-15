@@ -173,13 +173,7 @@ namespace Mono.Cecil {
 				return;
 			}
 
-#if !CF
-			Array.Resize (ref array, array.Length + 1);
-#else
-			var copy = new T [array.Length + 1];
-			Array.Copy (array, copy, array.Length);
-			array = copy;
-#endif
+			array = array.Resize (array.Length + 1);
 			array [array.Length - 1] = item;
 		}
 

@@ -20,6 +20,11 @@ namespace Mono.Cecil.Tests {
 		}
 	}
 
+	class Platform {
+
+		public static bool OnMono { get { return typeof (object).Assembly.GetType ("Mono.Runtime") != null; } }
+	}
+
 	abstract class CompilationService {
 
 		Dictionary<string, CompilationResult> files = new Dictionary<string, CompilationResult> ();
@@ -77,11 +82,9 @@ namespace Mono.Cecil.Tests {
 			return Path.Combine (tmp_cecil, Path.GetFileName (file_name) + ".dll");
 		}
 
-		static bool OnMono { get { return typeof (object).Assembly.GetType ("Mono.Runtime") != null; } }
-
 		public static void Verify (string name)
 		{
-			var output = OnMono ? ShellService.PEDump (name) : ShellService.PEVerify (name);
+			var output = Platform.OnMono ? ShellService.PEDump (name) : ShellService.PEVerify (name);
 			if (output.ExitCode != 0)
 				Assert.Fail (output.ToString ());
 		}
@@ -216,7 +219,11 @@ namespace Mono.Cecil.Tests {
 
 		public static ProcessOutput ILAsm (string source, string output)
 		{
-			return RunProcess ("ilasm", "/nologo", "/dll", "/out:" + Quote (output), Quote (source));
+			var ilasm = "ilasm";
+			if (!Platform.OnMono)
+				ilasm = NetFrameworkTool ("ilasm");
+
+			return RunProcess (ilasm, "/nologo", "/dll", "/out:" + Quote (output), Quote (source));
 		}
 
 		static string Quote (string file)
@@ -226,12 +233,36 @@ namespace Mono.Cecil.Tests {
 
 		public static ProcessOutput PEVerify (string source)
 		{
-			return RunProcess ("peverify", "/nologo", Quote (source));
+			return RunProcess (WinSdkTool ("peverify"), "/nologo", Quote (source));
 		}
 
 		public static ProcessOutput PEDump (string source)
 		{
 			return RunProcess ("pedump", "--verify code,metadata", Quote (source));
+		}
+
+		static string NetFrameworkTool (string tool)
+		{
+			return Path.Combine (
+				Path.GetDirectoryName (typeof (object).Assembly.Location),
+				tool + ".exe");
+		}
+
+		static string WinSdkTool (string tool)
+		{
+			var sdks = new [] {
+				@"Microsoft SDKs\Windows\v8.1A\bin\NETFX 4.5.1 Tools",
+				@"Microsoft SDKs\Windows\v8.0A\bin\NETFX 4.0 Tools",
+				@"Microsoft SDKs\Windows\v7.0A\Bin",
+			};
+
+			foreach (var sdk in sdks) {
+				var exe = Path.Combine (Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), sdk, tool + ".exe");
+				if (File.Exists(exe))
+					return exe;
+			}
+
+			return tool;
 		}
 	}
 }

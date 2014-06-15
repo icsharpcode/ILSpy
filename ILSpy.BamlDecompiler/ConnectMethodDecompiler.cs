@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.ILAst;
 using Mono.Cecil;
 
 namespace ILSpy.BamlDecompiler
@@ -52,7 +51,9 @@ namespace ILSpy.BamlDecompiler
 			
 			if (def == null)
 				return result;
-			
+
+			throw new NotImplementedException();
+			/*
 			// decompile method and optimize the switch
 			ILBlock ilMethod = new ILBlock();
 			ILAstBuilder astBuilder = new ILAstBuilder();
@@ -75,10 +76,10 @@ namespace ILSpy.BamlDecompiler
 			} else if (condition != null) {
 				result.Add(1, FindEvents(condition.FalseBlock));
 			}
-			
+			*/
 			return result;
 		}
-
+		/*
 		EventRegistration[] FindEvents(ILBlock block)
 		{
 			var events = new List<EventRegistration>();
@@ -167,6 +168,6 @@ namespace ILSpy.BamlDecompiler
 			}
 			
 			return false;
-		}
+		}*/
 	}
 }

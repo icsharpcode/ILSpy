@@ -323,5 +323,23 @@ namespace ICSharpCode.Decompiler
 			}
 			return false;
 		}
+
+		public static bool IsUnconditionalBranch(this OpCode opcode)
+		{
+			if (opcode.OpCodeType == OpCodeType.Prefix)
+				return false;
+			switch (opcode.FlowControl) {
+				case FlowControl.Branch:
+				case FlowControl.Throw:
+				case FlowControl.Return:
+					return true;
+				case FlowControl.Next:
+				case FlowControl.Call:
+				case FlowControl.Cond_Branch:
+					return false;
+				default:
+					throw new NotSupportedException(opcode.FlowControl.ToString());
+			}
+		}
 	}
 }

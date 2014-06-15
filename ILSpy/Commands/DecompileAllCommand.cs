@@ -24,7 +24,7 @@ using System.Threading.Tasks;
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
-{
+{/*
 	[ExportMainMenuCommand(Menu = "_File", Header = "DEBUG -- Decompile All", MenuCategory = "Open", MenuOrder = 2.5)]
 	sealed class DecompileAllCommand : SimpleCommand
 	{
@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy
 				return output;
 			}, ct)).Then(output => MainWindow.Instance.TextView.ShowText(output)).HandleExceptions();
 		}
-	}
+	}*/
 }
 
 #endif

@@ -27,7 +27,6 @@ using System.Threading.Tasks;
 using System.Xml;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.Decompiler.Ast.Transforms;
 using ICSharpCode.ILSpy.XmlDoc;
 using ICSharpCode.NRefactory.TypeSystem;

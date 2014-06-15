@@ -287,13 +287,19 @@ namespace Mono.Cecil {
 			get {
 				if (importer == null)
 					Interlocked.CompareExchange (ref importer, new MetadataImporter (this), null);
+
 				return importer;
 			}
 		}
 #endif
 
 		public IAssemblyResolver AssemblyResolver {
-			get { return assembly_resolver ?? (assembly_resolver = new DefaultAssemblyResolver ()); }
+			get {
+				if (assembly_resolver == null)
+					Interlocked.CompareExchange (ref assembly_resolver, new DefaultAssemblyResolver (), null);
+
+				return assembly_resolver;
+			}
 		}
 
 		public IMetadataResolver MetadataResolver {
@@ -309,6 +315,7 @@ namespace Mono.Cecil {
 			get {
 				if (type_system == null)
 					Interlocked.CompareExchange (ref type_system, TypeSystem.CreateTypeSystem (this), null);
+
 				return type_system;
 			}
 		}
@@ -636,89 +643,57 @@ namespace Mono.Cecil {
 				throw new ArgumentException ();
 		}
 
+		static ImportGenericContext GenericContextFor (IGenericParameterProvider context)
+		{
+			return context != null ? new ImportGenericContext (context) : default (ImportGenericContext);
+		}
+
 #if !CF
+
 		public TypeReference Import (Type type)
 		{
-			CheckType (type);
-
-			return MetadataImporter.ImportType (type, null, ImportGenericKind.Definition);
+			return Import (type, null);
 		}
 
-		public TypeReference Import (Type type, TypeReference context)
-		{
-			return Import (type, (IGenericParameterProvider) context);
-		}
-
-		public TypeReference Import (Type type, MethodReference context)
-		{
-			return Import (type, (IGenericParameterProvider) context);
-		}
-
-		TypeReference Import (Type type, IGenericParameterProvider context)
+		public TypeReference Import (Type type, IGenericParameterProvider context)
 		{
 			CheckType (type);
 			CheckContext (context, this);
 
 			return MetadataImporter.ImportType (
 				type,
-				(IGenericContext) context,
-				context != null
-					? ImportGenericKind.Open
-					: ImportGenericKind.Definition);
+				GenericContextFor (context),
+				context != null ? ImportGenericKind.Open : ImportGenericKind.Definition);
 		}
 
 		public FieldReference Import (SR.FieldInfo field)
 		{
-			CheckField (field);
-
-			return MetadataImporter.ImportField (field, null);
+			return Import (field, null);
 		}
 
-		public FieldReference Import (SR.FieldInfo field, TypeReference context)
-		{
-			return Import (field, (IGenericParameterProvider) context);
-		}
-
-		public FieldReference Import (SR.FieldInfo field, MethodReference context)
-		{
-			return Import (field, (IGenericParameterProvider) context);
-		}
-
-		FieldReference Import (SR.FieldInfo field, IGenericParameterProvider context)
+		public FieldReference Import (SR.FieldInfo field, IGenericParameterProvider context)
 		{
 			CheckField (field);
 			CheckContext (context, this);
 
-			return MetadataImporter.ImportField (field, (IGenericContext) context);
+			return MetadataImporter.ImportField (field, GenericContextFor (context));
 		}
 
 		public MethodReference Import (SR.MethodBase method)
 		{
 			CheckMethod (method);
 
-			return MetadataImporter.ImportMethod (method, null, ImportGenericKind.Definition);
+			return MetadataImporter.ImportMethod (method, default (ImportGenericContext), ImportGenericKind.Definition);
 		}
 
-		public MethodReference Import (SR.MethodBase method, TypeReference context)
-		{
-			return Import (method, (IGenericParameterProvider) context);
-		}
-
-		public MethodReference Import (SR.MethodBase method, MethodReference context)
-		{
-			return Import (method, (IGenericParameterProvider) context);
-		}
-
-		MethodReference Import (SR.MethodBase method, IGenericParameterProvider context)
+		public MethodReference Import (SR.MethodBase method, IGenericParameterProvider context)
 		{
 			CheckMethod (method);
 			CheckContext (context, this);
 
 			return MetadataImporter.ImportMethod (method,
-				(IGenericContext) context,
-				context != null
-					? ImportGenericKind.Open
-					: ImportGenericKind.Definition);
+				GenericContextFor (context),
+				context != null ? ImportGenericKind.Open : ImportGenericKind.Definition);
 		}
 #endif
 
@@ -729,20 +704,10 @@ namespace Mono.Cecil {
 			if (type.Module == this)
 				return type;
 
-			return MetadataImporter.ImportType (type, null);
+			return MetadataImporter.ImportType (type, default (ImportGenericContext));
 		}
 
-		public TypeReference Import (TypeReference type, TypeReference context)
-		{
-			return Import (type, (IGenericParameterProvider) context);
-		}
-
-		public TypeReference Import (TypeReference type, MethodReference context)
-		{
-			return Import (type, (IGenericParameterProvider) context);
-		}
-
-		TypeReference Import (TypeReference type, IGenericParameterProvider context)
+		public TypeReference Import (TypeReference type, IGenericParameterProvider context)
 		{
 			CheckType (type);
 
@@ -751,7 +716,7 @@ namespace Mono.Cecil {
 
 			CheckContext (context, this);
 
-			return MetadataImporter.ImportType (type, (IGenericContext) context);
+			return MetadataImporter.ImportType (type, GenericContextFor (context));
 		}
 
 		public FieldReference Import (FieldReference field)
@@ -761,20 +726,10 @@ namespace Mono.Cecil {
 			if (field.Module == this)
 				return field;
 
-			return MetadataImporter.ImportField (field, null);
+			return MetadataImporter.ImportField (field, default (ImportGenericContext));
 		}
 
-		public FieldReference Import (FieldReference field, TypeReference context)
-		{
-			return Import (field, (IGenericParameterProvider) context);
-		}
-
-		public FieldReference Import (FieldReference field, MethodReference context)
-		{
-			return Import (field, (IGenericParameterProvider) context);
-		}
-
-		FieldReference Import (FieldReference field, IGenericParameterProvider context)
+		public FieldReference Import (FieldReference field, IGenericParameterProvider context)
 		{
 			CheckField (field);
 
@@ -783,30 +738,15 @@ namespace Mono.Cecil {
 
 			CheckContext (context, this);
 
-			return MetadataImporter.ImportField (field, (IGenericContext) context);
+			return MetadataImporter.ImportField (field, GenericContextFor (context));
 		}
 
 		public MethodReference Import (MethodReference method)
 		{
-			CheckMethod (method);
-
-			if (method.Module == this)
-				return method;
-
-			return MetadataImporter.ImportMethod (method, null);
+			return Import (method, null);
 		}
 
-		public MethodReference Import (MethodReference method, TypeReference context)
-		{
-			return Import (method, (IGenericParameterProvider) context);
-		}
-
-		public MethodReference Import (MethodReference method, MethodReference context)
-		{
-			return Import (method, (IGenericParameterProvider) context);
-		}
-
-		MethodReference Import (MethodReference method, IGenericParameterProvider context)
+		public MethodReference Import (MethodReference method, IGenericParameterProvider context)
 		{
 			CheckMethod (method);
 
@@ -815,7 +755,7 @@ namespace Mono.Cecil {
 
 			CheckContext (context, this);
 
-			return MetadataImporter.ImportMethod (method, (IGenericContext) context);
+			return MetadataImporter.ImportMethod (method, GenericContextFor (context));
 		}
 
 #endif

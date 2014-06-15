@@ -8,13 +8,14 @@ namespace Mono.Cecil.Tests {
 	[TestFixture]
 	public class MdbTests : BaseTestFixture {
 
-		[TestModule ("hello.exe", SymbolReaderProvider = typeof (MdbReaderProvider), SymbolWriterProvider = typeof (MdbWriterProvider))]
-		public void Main (ModuleDefinition module)
+		[Test]
+		public void Main ()
 		{
-			var type = module.GetType ("Program");
-			var main = type.GetMethod ("Main");
+			TestModule ("hello.exe", module => {
+				var type = module.GetType ("Program");
+				var main = type.GetMethod ("Main");
 
-			AssertCode (@"
+				AssertCode (@"
 	.locals init (System.Int32 i)
 	.line 7,7:0,0 'C:\sources\cecil\symbols\Mono.Cecil.Mdb\Test\Resources\assemblies\hello.cs'
 	IL_0000: ldc.i4.0
@@ -40,6 +41,7 @@ namespace Mono.Cecil.Tests {
 	IL_001c: ldc.i4.0
 	IL_001d: ret
 ", main);
+			}, symbolReaderProvider: typeof(MdbReaderProvider), symbolWriterProvider: typeof(MdbWriterProvider));
 		}
 
 		static void AssertCode (string expected, MethodDefinition method)

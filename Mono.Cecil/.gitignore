@@ -8,3 +8,4 @@ obj
 *.nupkg
 **/test-results/*
 *Resharper*
+Mono.Cecil.sln.ide*

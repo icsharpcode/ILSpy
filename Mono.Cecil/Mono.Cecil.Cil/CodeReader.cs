@@ -144,6 +144,7 @@ namespace Mono.Cecil.Cil {
 			if (code_size < 0 || buffer.Length <= (uint) (code_size + position))
 				code_size = 0;
 
+			body.code_reader = new BlobReader(buffer, position, code_size);
 			var end = start + code_size;
 			var instructions = body.instructions = new InstructionCollection ((code_size + 1) / 2);
 

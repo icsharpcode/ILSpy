@@ -448,12 +448,7 @@ namespace ICSharpCode.ILSpy
 				typeof(System.Windows.Markup.MarkupExtension).Assembly,
 				typeof(System.Windows.Rect).Assembly,
 				typeof(System.Windows.UIElement).Assembly,
-				typeof(System.Windows.FrameworkElement).Assembly,
-				typeof(ICSharpCode.TreeView.SharpTreeView).Assembly,
-				typeof(Mono.Cecil.AssemblyDefinition).Assembly,
-				typeof(ICSharpCode.AvalonEdit.TextEditor).Assembly,
-				typeof(ICSharpCode.Decompiler.Ast.AstBuilder).Assembly,
-				typeof(MainWindow).Assembly
+				typeof(System.Windows.FrameworkElement).Assembly
 			};
 			foreach (System.Reflection.Assembly asm in initialAssemblies)
 				assemblyList.OpenAssembly(asm.Location);

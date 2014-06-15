@@ -57,9 +57,26 @@ namespace Mono.Cecil {
 			get { return member; }
 		}
 
+		public IMetadataScope Scope {
+			get {
+				var type = member as TypeReference;
+				if (type != null)
+					return type.Scope;
+
+				var declaring_type = member.DeclaringType;
+				if (declaring_type != null)
+					return declaring_type.Scope;
+
+				throw new NotSupportedException ();
+			}
+		}
+
 		public ResolutionException (MemberReference member)
 			: base ("Failed to resolve " + member.FullName)
 		{
+			if (member == null)
+				throw new ArgumentNullException ("member");
+
 			this.member = member;
 		}
 

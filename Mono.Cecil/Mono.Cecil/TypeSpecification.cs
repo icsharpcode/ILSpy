@@ -42,16 +42,17 @@ namespace Mono.Cecil {
 
 		public override string Name {
 			get { return element_type.Name; }
-			set { throw new NotSupportedException (); }
+			set { throw new InvalidOperationException (); }
 		}
 
 		public override string Namespace {
 			get { return element_type.Namespace; }
-			set { throw new NotSupportedException (); }
+			set { throw new InvalidOperationException (); }
 		}
 
 		public override IMetadataScope Scope {
 			get { return element_type.Scope; }
+			set { throw new InvalidOperationException (); }
 		}
 
 		public override ModuleDefinition Module {

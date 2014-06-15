@@ -9,17 +9,19 @@ namespace Mono.Cecil.Tests {
 	[TestFixture]
 	public class AssemblyTests : BaseTestFixture {
 
-		[TestModule ("hello.exe")]
-		public void Name (ModuleDefinition module)
+		[Test]
+		public void Name ()
 		{
-			var name = module.Assembly.Name;
+			TestModule ("hello.exe", module => {
+				var name = module.Assembly.Name;
 
-			Assert.IsNotNull (name);
+				Assert.IsNotNull (name);
 
-			Assert.AreEqual ("hello", name.Name);
-			Assert.AreEqual (string.Empty, name.Culture);
-			Assert.AreEqual (new Version (0, 0, 0, 0), name.Version);
-			Assert.AreEqual (AssemblyHashAlgorithm.SHA1, name.HashAlgorithm);
+				Assert.AreEqual ("hello", name.Name);
+				Assert.AreEqual (string.Empty, name.Culture);
+				Assert.AreEqual (new Version (0, 0, 0, 0), name.Version);
+				Assert.AreEqual (AssemblyHashAlgorithm.SHA1, name.HashAlgorithm);
+			});
 		}
 
 		[Test]

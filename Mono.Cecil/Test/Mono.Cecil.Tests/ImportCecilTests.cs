@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -218,6 +219,69 @@ namespace Mono.Cecil.Tests {
 			var method = module.Import (generic.GetMethod ("Method"));
 
 			Assert.AreEqual ("T Mono.Cecil.Tests.ImportCecilTests/Generic`1::Method(T)", method.FullName);
+		}
+
+		public class ContextGeneric1Method2<G1>
+		{
+			public G1 GenericMethod<R1, S1> (R1 r, S1 s)
+			{
+				return default (G1);
+			}
+		}
+
+		public class ContextGeneric2Method1<G2, H2>
+		{
+			public R2 GenericMethod<R2> (G2 g, H2 h)
+			{
+				return default (R2);
+			}
+		}
+
+		public class NestedGenericsA<A>
+		{
+			public class NestedGenericsB<B>
+			{
+				public class NestedGenericsC<C>
+				{
+					public A GenericMethod (B b, C c)
+					{
+						return default (A);
+					}
+				}
+			}
+		}
+
+		[Test]
+		public void ContextGenericTest ()
+		{
+			var module = ModuleDefinition.ReadModule (typeof (ContextGeneric1Method2<>).Module.FullyQualifiedName);
+			// by mixing open generics with 2 & 1 parameters, we make sure the right context is used (because otherwise, an exception will be thrown)
+			var type = typeof (ContextGeneric1Method2<>).MakeGenericType (typeof (ContextGeneric2Method1<,>));
+			var meth = type.GetMethod ("GenericMethod");
+			var imported_type = module.Import (type);
+			var method = module.Import (meth, imported_type);
+			Assert.AreEqual ("G1 Mono.Cecil.Tests.ImportCecilTests/ContextGeneric1Method2`1<Mono.Cecil.Tests.ImportCecilTests/ContextGeneric2Method1`2<G2,H2>>::GenericMethod<R1,S1>(R1,S1)", method.FullName);
+
+			// and the other way around
+			type = typeof (ContextGeneric2Method1<,>).MakeGenericType (typeof (ContextGeneric1Method2<>), typeof (IList<>));
+			meth = type.GetMethod ("GenericMethod");
+			imported_type = module.Import (type);
+			method = module.Import (meth, imported_type);
+			Assert.AreEqual ("R2 Mono.Cecil.Tests.ImportCecilTests/ContextGeneric2Method1`2<Mono.Cecil.Tests.ImportCecilTests/ContextGeneric1Method2`1<G1>,System.Collections.Generic.IList`1<T>>::GenericMethod<R2>(G2,H2)", method.FullName);
+
+			// not sure about this one
+			type = typeof (NestedGenericsA<string>.NestedGenericsB<int>.NestedGenericsC<float>);
+			meth = type.GetMethod ("GenericMethod");
+			imported_type = module.Import (type);
+			method = module.Import (meth, imported_type);
+			Assert.AreEqual ("A Mono.Cecil.Tests.ImportCecilTests/NestedGenericsA`1/NestedGenericsB`1/NestedGenericsC`1<System.String,System.Int32,System.Single>::GenericMethod(B,C)", method.FullName);
+
+			// We need both the method & type !
+			type = typeof (Generic<>).MakeGenericType (typeof (string));
+			meth = type.GetMethod ("ComplexGenericMethod");
+			imported_type = module.Import (type);
+			method = module.Import (meth, imported_type);
+			Assert.AreEqual ("Mono.Cecil.Tests.ImportCecilTests/Generic`1<TS> Mono.Cecil.Tests.ImportCecilTests/Generic`1<System.String>::ComplexGenericMethod<TS>(T,TS)", method.FullName);
 		}
 
 		delegate void Emitter (ModuleDefinition module, MethodBody body);

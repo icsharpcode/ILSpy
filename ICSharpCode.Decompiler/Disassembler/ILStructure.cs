@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using ICSharpCode.Decompiler.FlowAnalysis;
 using Mono.Cecil.Cil;
 
 namespace ICSharpCode.Decompiler.Disassembler
@@ -51,39 +50,39 @@ namespace ICSharpCode.Decompiler.Disassembler
 		/// </summary>
 		Filter
 	}
-	
+
 	/// <summary>
 	/// An IL structure.
 	/// </summary>
 	public class ILStructure
 	{
 		public readonly ILStructureType Type;
-		
+
 		/// <summary>
 		/// Start position of the structure.
 		/// </summary>
 		public readonly int StartOffset;
-		
+
 		/// <summary>
 		/// End position of the structure. (exclusive)
 		/// </summary>
 		public readonly int EndOffset;
-		
+
 		/// <summary>
 		/// The exception handler associated with the Try, Filter or Handler block.
 		/// </summary>
 		public readonly ExceptionHandler ExceptionHandler;
-		
+
 		/// <summary>
 		/// The loop's entry point.
 		/// </summary>
 		public readonly Instruction LoopEntryPoint;
-		
+
 		/// <summary>
 		/// The list of child structures.
 		/// </summary>
 		public readonly List<ILStructure> Children = new List<ILStructure>();
-		
+
 		public ILStructure(MethodBody body)
 			: this(ILStructureType.Root, 0, body.CodeSize)
 		{
@@ -106,10 +105,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 					// We found a backward branch. This is a potential loop.
 					// Check that is has only one entry point:
 					Instruction entryPoint = null;
-					
+
 					// entry point is first instruction in loop if prev inst isn't an unconditional branch
 					Instruction prev = allBranches[i].Value.Previous;
-					if (prev != null && !OpCodeInfo.IsUnconditionalBranch(prev.OpCode))
+					if (prev != null && !prev.OpCode.IsUnconditionalBranch())
 						entryPoint = allBranches[i].Value;
 					
 					bool multipleEntryPoints = false;
@@ -131,7 +130,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			SortChildren();
 		}
-		
+
 		public ILStructure(ILStructureType type, int startOffset, int endOffset, ExceptionHandler handler = null)
 		{
 			Debug.Assert(startOffset < endOffset);
@@ -140,7 +139,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.EndOffset = endOffset;
 			this.ExceptionHandler = handler;
 		}
-		
+
 		public ILStructure(ILStructureType type, int startOffset, int endOffset, Instruction loopEntryPoint)
 		{
 			Debug.Assert(startOffset < endOffset);
@@ -149,13 +148,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.EndOffset = endOffset;
 			this.LoopEntryPoint = loopEntryPoint;
 		}
-		
+
 		bool AddNestedStructure(ILStructure newStructure)
 		{
 			// special case: don't consider the loop-like structure of "continue;" statements to be nested loops
 			if (this.Type == ILStructureType.Loop && newStructure.Type == ILStructureType.Loop && newStructure.StartOffset == this.StartOffset)
 				return false;
-			
+
 			// use <= for end-offset comparisons because both end and EndOffset are exclusive
 			Debug.Assert(StartOffset <= newStructure.StartOffset && newStructure.EndOffset <= EndOffset);
 			foreach (ILStructure child in this.Children) {
@@ -181,7 +180,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.Children.Add(newStructure);
 			return true;
 		}
-		
+
 		/// <summary>
 		/// Finds all branches. Returns list of source offset->target offset mapping.
 		/// Multiple entries for the same source offset are possible (switch statements).
@@ -204,14 +203,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			return result;
 		}
-		
+
 		void SortChildren()
 		{
 			Children.Sort((a, b) => a.StartOffset.CompareTo(b.StartOffset));
 			foreach (ILStructure child in Children)
 				child.SortChildren();
 		}
-		
+
 		/// <summary>
 		/// Gets the innermost structure containing the specified offset.
 		/// </summary>

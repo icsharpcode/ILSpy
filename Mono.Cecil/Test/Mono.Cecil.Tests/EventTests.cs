@@ -10,57 +10,61 @@ namespace Mono.Cecil.Tests {
 	[TestFixture]
 	public class EventTests : BaseTestFixture {
 
-		[TestCSharp ("Events.cs")]
-		public void AbstractMethod (ModuleDefinition module)
+		[Test]
+		public void AbstractMethod ()
 		{
-			var type = module.GetType ("Foo");
+			TestCSharp ("Events.cs", module => {
+				var type = module.GetType ("Foo");
 
-			Assert.IsTrue (type.HasEvents);
+				Assert.IsTrue (type.HasEvents);
 
-			var events = type.Events;
+				var events = type.Events;
 
-			Assert.AreEqual (1, events.Count);
+				Assert.AreEqual (1, events.Count);
 
-			var @event = events [0];
+				var @event = events [0];
 
-			Assert.IsNotNull (@event);
-			Assert.AreEqual ("Bar", @event.Name);
-			Assert.IsNotNull (@event.EventType);
-			Assert.AreEqual ("Pan", @event.EventType.FullName);
+				Assert.IsNotNull (@event);
+				Assert.AreEqual ("Bar", @event.Name);
+				Assert.IsNotNull (@event.EventType);
+				Assert.AreEqual ("Pan", @event.EventType.FullName);
 
-			Assert.IsNotNull (@event.AddMethod);
-			Assert.AreEqual (MethodSemanticsAttributes.AddOn, @event.AddMethod.SemanticsAttributes);
-			Assert.IsNotNull (@event.RemoveMethod);
-			Assert.AreEqual (MethodSemanticsAttributes.RemoveOn, @event.RemoveMethod.SemanticsAttributes);
+				Assert.IsNotNull (@event.AddMethod);
+				Assert.AreEqual (MethodSemanticsAttributes.AddOn, @event.AddMethod.SemanticsAttributes);
+				Assert.IsNotNull (@event.RemoveMethod);
+				Assert.AreEqual (MethodSemanticsAttributes.RemoveOn, @event.RemoveMethod.SemanticsAttributes);
+			});
 		}
 
-		[TestIL ("others.il")]
-		public void OtherMethod (ModuleDefinition module)
+		[Test]
+		public void OtherMethod ()
 		{
-			var type = module.GetType ("Others");
+			TestIL ("others.il", module => {
+				var type = module.GetType ("Others");
 
-			Assert.IsTrue (type.HasEvents);
+				Assert.IsTrue (type.HasEvents);
 
-			var events = type.Events;
+				var events = type.Events;
 
-			Assert.AreEqual (1, events.Count);
+				Assert.AreEqual (1, events.Count);
 
-			var @event = events [0];
+				var @event = events [0];
 
-			Assert.IsNotNull (@event);
-			Assert.AreEqual ("Handler", @event.Name);
-			Assert.IsNotNull (@event.EventType);
-			Assert.AreEqual ("System.EventHandler", @event.EventType.FullName);
+				Assert.IsNotNull (@event);
+				Assert.AreEqual ("Handler", @event.Name);
+				Assert.IsNotNull (@event.EventType);
+				Assert.AreEqual ("System.EventHandler", @event.EventType.FullName);
 
-			Assert.IsTrue (@event.HasOtherMethods);
+				Assert.IsTrue (@event.HasOtherMethods);
 
-			Assert.AreEqual (2, @event.OtherMethods.Count);
+				Assert.AreEqual (2, @event.OtherMethods.Count);
 
-			var other = @event.OtherMethods [0];
-			Assert.AreEqual ("dang_Handler", other.Name);
+				var other = @event.OtherMethods [0];
+				Assert.AreEqual ("dang_Handler", other.Name);
 
-			other = @event.OtherMethods [1];
-			Assert.AreEqual ("fang_Handler", other.Name);
+				other = @event.OtherMethods [1];
+				Assert.AreEqual ("fang_Handler", other.Name);
+			});
 		}
 	}
 }

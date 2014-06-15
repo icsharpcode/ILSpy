@@ -15,7 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-
+/*
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -28,7 +28,6 @@ using System.Threading.Tasks;
 using System.Xml;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.Decompiler.Ast.Transforms;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.XmlDoc;
@@ -696,3 +695,4 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 }
+*/

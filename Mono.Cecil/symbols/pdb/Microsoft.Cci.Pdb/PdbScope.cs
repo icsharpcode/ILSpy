@@ -80,7 +80,7 @@ namespace Microsoft.Cci.Pdb {
             }
 
           case SYM.S_MANSLOT:
-            slots[slot++] = new PdbSlot(bits, out typind);
+            slots[slot++] = new PdbSlot(bits);
             bits.Position = stop;
             break;
 

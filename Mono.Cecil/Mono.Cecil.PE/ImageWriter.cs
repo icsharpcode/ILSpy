@@ -58,6 +58,7 @@ namespace Mono.Cecil.PE {
 		internal const RVA text_rva = 0x2000;
 
 		readonly bool pe64;
+		readonly bool has_reloc;
 		readonly uint time_stamp;
 
 		internal Section text;
@@ -71,11 +72,12 @@ namespace Mono.Cecil.PE {
 		{
 			this.module = module;
 			this.metadata = metadata;
-			this.pe64 = module.Architecture != TargetArchitecture.I386;
+			this.pe64 = module.Architecture == TargetArchitecture.AMD64 || module.Architecture == TargetArchitecture.IA64;
+			this.has_reloc = module.Architecture == TargetArchitecture.I386;
 			this.GetDebugHeader ();
 			this.GetWin32Resources ();
 			this.text_map = BuildTextMap ();
-			this.sections = (ushort) (pe64 ? 1 : 2); // text + reloc
+			this.sections = (ushort) (has_reloc ? 2 : 1); // text + reloc?
 			this.time_stamp = (uint) DateTime.UtcNow.Subtract (new DateTime (1970, 1, 1)).TotalSeconds;
 		}
 
@@ -133,7 +135,7 @@ namespace Mono.Cecil.PE {
 				previous = rsrc;
 			}
 
-			if (!pe64)
+			if (has_reloc)
 				reloc = CreateSection (".reloc", 12u, previous);
 		}
 
@@ -213,6 +215,8 @@ namespace Mono.Cecil.PE {
 				return 0x8664;
 			case TargetArchitecture.IA64:
 				return 0x0200;
+			case TargetArchitecture.ARMv7:
+				return 0x01c4;
 			}
 
 			throw new NotSupportedException ();
@@ -398,7 +402,7 @@ namespace Mono.Cecil.PE {
 
 			// ImportAddressTable
 
-			if (!pe64) {
+			if (has_reloc) {
 				WriteRVA (text_map.GetRVA (TextSegment.ImportHintNameTable));
 				WriteRVA (0);
 			}
@@ -453,7 +457,7 @@ namespace Mono.Cecil.PE {
 				WriteDebugDirectory ();
 			}
 
-			if (pe64)
+			if (!has_reloc)
 				return;
 
 			// ImportDirectory
@@ -696,7 +700,7 @@ namespace Mono.Cecil.PE {
 
 			map.AddMap (TextSegment.DebugDirectory, debug_dir_len, 4);
 
-			if (pe64) {
+			if (!has_reloc) {
 				var start = map.GetNextRVA (TextSegment.DebugDirectory);
 				map.AddMap (TextSegment.ImportDirectory, new Range (start, 0));
 				map.AddMap (TextSegment.ImportHintNameTable, new Range (start, 0));

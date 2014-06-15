@@ -275,7 +275,7 @@ namespace Mono.Cecil.Tests {
 
 			var generic_field = module.Import (generic_list_foo_open_field, foo_def);
 
-			Assert.AreEqual ("TFoo Mono.Cecil.Tests.ImportReflectionTests/Generic`1<System.Collections.Generic.List`1<TFoo>>::Field",
+			Assert.AreEqual ("T Mono.Cecil.Tests.ImportReflectionTests/Generic`1<System.Collections.Generic.List`1<TFoo>>::Field",
 				generic_field.FullName);
 		}
 
@@ -291,7 +291,7 @@ namespace Mono.Cecil.Tests {
 
 			var generic_method = module.Import (generic_list_foo_open_method, foo_def);
 
-			Assert.AreEqual ("TFoo Mono.Cecil.Tests.ImportReflectionTests/Generic`1<System.Collections.Generic.List`1<TFoo>>::Method(TFoo)",
+			Assert.AreEqual ("T Mono.Cecil.Tests.ImportReflectionTests/Generic`1<System.Collections.Generic.List`1<TFoo>>::Method(T)",
 				generic_method.FullName);
 		}
 

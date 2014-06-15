@@ -92,8 +92,6 @@ namespace ICSharpCode.ILSpy.TextView
 		/// <summary>Embedded UIElements, see <see cref="UIElementGenerator"/>.</summary>
 		internal readonly List<KeyValuePair<int, Lazy<UIElement>>> UIElements = new List<KeyValuePair<int, Lazy<UIElement>>>();
 		
-		internal readonly List<MemberMapping> DebuggerMemberMappings = new List<MemberMapping>();
-		
 		public AvalonEditTextOutput()
 		{
 		}
@@ -248,11 +246,6 @@ namespace ICSharpCode.ILSpy.TextView
 					throw new InvalidOperationException("Only one UIElement is allowed for each position in the document");
 				this.UIElements.Add(new KeyValuePair<int, Lazy<UIElement>>(this.TextLength, new Lazy<UIElement>(element)));
 			}
-		}
-		
-		public void AddDebuggerMemberMapping(MemberMapping memberMapping)
-		{
-			DebuggerMemberMappings.Add(memberMapping);
 		}
 	}
 }

@@ -11,17 +11,18 @@ namespace Mono.Cecil.Tests {
 	[TestFixture]
 	public class MethodBodyTests : BaseTestFixture {
 
-		[TestIL ("hello.il")]
-		public void MultiplyMethod (ModuleDefinition module)
+		[Test]
+		public void MultiplyMethod ()
 		{
-			var foo = module.GetType ("Foo");
-			Assert.IsNotNull (foo);
+			TestIL ("hello.il", module => {
+				var foo = module.GetType ("Foo");
+				Assert.IsNotNull (foo);
 
-			var bar = foo.GetMethod ("Bar");
-			Assert.IsNotNull (bar);
-			Assert.IsTrue (bar.IsIL);
+				var bar = foo.GetMethod ("Bar");
+				Assert.IsNotNull (bar);
+				Assert.IsTrue (bar.IsIL);
 
-			AssertCode (@"
+				AssertCode (@"
 	.locals init (System.Int32 V_0)
 	IL_0000: ldarg.0
 	IL_0001: ldarg.1
@@ -31,35 +32,39 @@ namespace Mono.Cecil.Tests {
 	IL_0005: call System.Void Foo::Baz(System.Int32)
 	IL_000a: ret
 ", bar);
+			});
 		}
 
-		[TestIL ("hello.il")]
-		public void PrintStringEmpty (ModuleDefinition module)
+		[Test]
+		public void PrintStringEmpty ()
 		{
-			var foo = module.GetType ("Foo");
-			Assert.IsNotNull (foo);
+			TestIL ("hello.il", module => {
+				var foo = module.GetType ("Foo");
+				Assert.IsNotNull (foo);
 
-			var print_empty = foo.GetMethod ("PrintEmpty");
-			Assert.IsNotNull (print_empty);
+				var print_empty = foo.GetMethod ("PrintEmpty");
+				Assert.IsNotNull (print_empty);
 
-			AssertCode (@"
+				AssertCode (@"
 	.locals ()
 	IL_0000: ldsfld System.String System.String::Empty
 	IL_0005: call System.Void System.Console::WriteLine(System.String)
 	IL_000a: ret
 ", print_empty);
+			});
 		}
 
-		[TestModule ("libhello.dll")]
-		public void Branch (ModuleDefinition module)
+		[Test]
+		public void Branch ()
 		{
-			var lib = module.GetType ("Library");
-			Assert.IsNotNull (lib);
+			TestModule ("libhello.dll", module => {
+				var lib = module.GetType ("Library");
+				Assert.IsNotNull (lib);
 
-			var method = lib.GetMethod ("GetHelloString");
-			Assert.IsNotNull (method);
+				var method = lib.GetMethod ("GetHelloString");
+				Assert.IsNotNull (method);
 
-			AssertCode (@"
+				AssertCode (@"
 	.locals init (System.String V_0)
 	IL_0000: nop
 	IL_0001: ldstr ""hello world of tomorrow""
@@ -68,18 +73,20 @@ namespace Mono.Cecil.Tests {
 	IL_0009: ldloc.0
 	IL_000a: ret
 ", method);
+			});
 		}
 
-		[TestModule ("switch.exe")]
-		public void Switch (ModuleDefinition module)
+		[Test]
+		public void Switch ()
 		{
-			var program = module.GetType ("Program");
-			Assert.IsNotNull (program);
+			TestModule ("switch.exe", module => {
+				var program = module.GetType ("Program");
+				Assert.IsNotNull (program);
 
-			var method = program.GetMethod ("Main");
-			Assert.IsNotNull (method);
+				var method = program.GetMethod ("Main");
+				Assert.IsNotNull (method);
 
-			AssertCode (@"
+				AssertCode (@"
 	.locals init (System.Int32 V_0)
 	IL_0000: ldarg.0
 	IL_0001: ldlen
@@ -112,32 +119,36 @@ namespace Mono.Cecil.Tests {
 	IL_0038: ldc.i4.s 42
 	IL_003a: ret
 ", method);
+			});
 		}
 
-		[TestIL ("methodspecs.il")]
-		public void MethodSpec (ModuleDefinition module)
+		[Test]
+		public void MethodSpec ()
 		{
-			var tamtam = module.GetType ("Tamtam");
+			TestIL ("methodspecs.il", module => {
+				var tamtam = module.GetType ("Tamtam");
 
-			var bar = tamtam.GetMethod ("Bar");
-			Assert.IsNotNull (bar);
+				var bar = tamtam.GetMethod ("Bar");
+				Assert.IsNotNull (bar);
 
-			AssertCode (@"
+				AssertCode (@"
 	.locals ()
 	IL_0000: ldc.i4.2
 	IL_0001: call System.Void Tamtam::Foo<System.Int32>(TFoo)
 	IL_0006: ret
 ", bar);
+			});
 		}
 
-		[TestModule ("catch.exe")]
-		public void NestedTryCatchFinally (ModuleDefinition module)
+		[Test]
+		public void NestedTryCatchFinally ()
 		{
-			var program = module.GetType ("Program");
-			var main = program.GetMethod ("Main");
-			Assert.IsNotNull (main);
+			TestModule ("catch.exe", module => {
+				var program = module.GetType ("Program");
+				var main = program.GetMethod ("Main");
+				Assert.IsNotNull (main);
 
-			AssertCode (@"
+				AssertCode (@"
 	.locals ()
 	IL_0000: call System.Void Program::Foo()
 	IL_0005: leave.s IL_000d
@@ -159,16 +170,18 @@ namespace Mono.Cecil.Tests {
 	.try IL_0000 to IL_000f catch System.Exception handler IL_0017 to IL_001f
 	.try IL_0000 to IL_0021 finally handler IL_0021 to IL_0027
 ", main);
+			});
 		}
 
-		[TestModule ("fptr.exe", Verify = false)]
-		public void FunctionPointersAndCallSites (ModuleDefinition module)
+		[Test]
+		public void FunctionPointersAndCallSites ()
 		{
-			var type = module.Types [0];
-			var start = type.GetMethod ("Start");
-			Assert.IsNotNull (start);
+			TestModule ("fptr.exe", module => {
+				var type = module.Types [0];
+				var start = type.GetMethod ("Start");
+				Assert.IsNotNull (start);
 
-			AssertCode (@"
+				AssertCode (@"
 	.locals init ()
 	IL_0000: ldc.i4.1
 	IL_0001: call method System.Int32 *(System.Int32) MakeDecision::Decide()
@@ -184,25 +197,28 @@ namespace Mono.Cecil.Tests {
 	IL_002b: call System.Void System.Console::WriteLine(System.Int32)
 	IL_0030: ret
 ", start);
+			}, verify: false);
 		}
 
-		[TestIL ("hello.il")]
-		public void ThisParameter (ModuleDefinition module)
+		[Test]
+		public void ThisParameter ()
 		{
-			var type = module.GetType ("Foo");
-			var method = type.GetMethod ("Gazonk");
+			TestIL ("hello.il", module => {
+				var type = module.GetType ("Foo");
+				var method = type.GetMethod ("Gazonk");
 
-			Assert.IsNotNull (method);
+				Assert.IsNotNull (method);
 
-			AssertCode (@"
+				AssertCode (@"
 	.locals ()
 	IL_0000: ldarg 0
 	IL_0004: pop
 	IL_0005: ret
 ", method);
 
-			Assert.AreEqual (method.Body.ThisParameter.ParameterType, type);
-			Assert.AreEqual (method.Body.ThisParameter, method.Body.Instructions [0].Operand);
+				Assert.AreEqual (method.Body.ThisParameter.ParameterType, type);
+				Assert.AreEqual (method.Body.ThisParameter, method.Body.Instructions [0].Operand);
+			});
 		}
 
 		[Test]
@@ -253,32 +269,38 @@ namespace Mono.Cecil.Tests {
 			Assert.IsFalse (type.IsPointer);
 		}
 
-		[TestIL ("hello.il")]
-		public void FilterMaxStack (ModuleDefinition module)
+		[Test]
+		public void FilterMaxStack ()
 		{
-			var type = module.GetType ("Foo");
-			var method = type.GetMethod ("TestFilter");
+			TestIL ("hello.il", module => {
+				var type = module.GetType ("Foo");
+				var method = type.GetMethod ("TestFilter");
 
-			Assert.IsNotNull (method);
-			Assert.AreEqual (2, method.Body.MaxStackSize);
+				Assert.IsNotNull (method);
+				Assert.AreEqual (2, method.Body.MaxStackSize);
+			});
 		}
 
-		[TestModule ("iterator.exe")]
-		public void Iterator (ModuleDefinition module)
+		[Test]
+		public void Iterator ()
 		{
-			var method = module.GetType ("Program").GetMethod ("GetLittleArgs");
-			Assert.IsNotNull (method.Body);
+			TestModule ("iterator.exe", module => {
+				var method = module.GetType ("Program").GetMethod ("GetLittleArgs");
+				Assert.IsNotNull (method.Body);
+			});
 		}
 
-		[TestCSharp ("CustomAttributes.cs")]
-		public void LoadString (ModuleDefinition module)
+		[Test]
+		public void LoadString ()
 		{
-			var type = module.GetType ("FooAttribute");
-			var get_fiou = type.GetMethod ("get_Fiou");
-			Assert.IsNotNull (get_fiou);
+			TestCSharp ("CustomAttributes.cs", module => {
+				var type = module.GetType ("FooAttribute");
+				var get_fiou = type.GetMethod ("get_Fiou");
+				Assert.IsNotNull (get_fiou);
 
-			var ldstr = get_fiou.Body.Instructions.Where (i => i.OpCode == OpCodes.Ldstr).First ();
-			Assert.AreEqual ("fiou", ldstr.Operand);
+				var ldstr = get_fiou.Body.Instructions.Where (i => i.OpCode == OpCodes.Ldstr).First ();
+				Assert.AreEqual ("fiou", ldstr.Operand);
+			});
 		}
 
 		static void AssertCode (string expected, MethodDefinition method)

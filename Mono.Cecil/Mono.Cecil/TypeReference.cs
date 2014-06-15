@@ -147,6 +147,15 @@ namespace Mono.Cecil {
 
 				return scope;
 			}
+			set {
+				var declaring_type = this.DeclaringType;
+				if (declaring_type != null) {
+					declaring_type.Scope = value;
+					return;
+				}
+
+				scope = value;
+			}
 		}
 
 		public bool IsNested {

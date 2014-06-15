@@ -65,13 +65,13 @@ namespace Mono.Cecil {
 		internal Dictionary<MetadataToken, uint> FieldMarshals;
 		internal Dictionary<MetadataToken, Row<ElementType, uint>> Constants;
 		internal Dictionary<uint, MetadataToken []> Overrides;
-		internal Dictionary<MetadataToken, Range> CustomAttributes;
-		internal Dictionary<MetadataToken, Range> SecurityDeclarations;
+		internal Dictionary<MetadataToken, Range []> CustomAttributes;
+		internal Dictionary<MetadataToken, Range []> SecurityDeclarations;
 		internal Dictionary<uint, Range> Events;
 		internal Dictionary<uint, Range> Properties;
 		internal Dictionary<uint, Row<MethodSemanticsAttributes, MetadataToken>> Semantics;
 		internal Dictionary<uint, Row<PInvokeAttributes, uint, uint>> PInvokes;
-		internal Dictionary<MetadataToken, Range> GenericParameters;
+		internal Dictionary<MetadataToken, Range []> GenericParameters;
 		internal Dictionary<uint, MetadataToken []> GenericConstraints;
 
 		static Dictionary<string, Row<ElementType, bool>> primitive_value_types;
@@ -302,9 +302,9 @@ namespace Mono.Cecil {
 			Events.Remove (type.token.RID);
 		}
 
-		public bool TryGetGenericParameterRange (IGenericParameterProvider owner, out Range range)
+		public bool TryGetGenericParameterRanges (IGenericParameterProvider owner, out Range [] ranges)
 		{
-			return GenericParameters.TryGetValue (owner.MetadataToken, out range);
+			return GenericParameters.TryGetValue (owner.MetadataToken, out ranges);
 		}
 
 		public void RemoveGenericParameterRange (IGenericParameterProvider owner)
@@ -312,9 +312,9 @@ namespace Mono.Cecil {
 			GenericParameters.Remove (owner.MetadataToken);
 		}
 
-		public bool TryGetCustomAttributeRange (ICustomAttributeProvider owner, out Range range)
+		public bool TryGetCustomAttributeRanges (ICustomAttributeProvider owner, out Range [] ranges)
 		{
-			return CustomAttributes.TryGetValue (owner.MetadataToken, out range);
+			return CustomAttributes.TryGetValue (owner.MetadataToken, out ranges);
 		}
 
 		public void RemoveCustomAttributeRange (ICustomAttributeProvider owner)
@@ -322,9 +322,9 @@ namespace Mono.Cecil {
 			CustomAttributes.Remove (owner.MetadataToken);
 		}
 
-		public bool TryGetSecurityDeclarationRange (ISecurityDeclarationProvider owner, out Range range)
+		public bool TryGetSecurityDeclarationRanges (ISecurityDeclarationProvider owner, out Range [] ranges)
 		{
-			return SecurityDeclarations.TryGetValue (owner.MetadataToken, out range);
+			return SecurityDeclarations.TryGetValue (owner.MetadataToken, out ranges);
 		}
 
 		public void RemoveSecurityDeclarationRange (ISecurityDeclarationProvider owner)

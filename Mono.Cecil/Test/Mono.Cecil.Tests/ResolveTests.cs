@@ -211,6 +211,21 @@ namespace Mono.Cecil.Tests {
 			Assert.IsNotNull (resolver.Resolve (reference));
 		}
 
+		[Test]
+		public void ResolvePortableClassLibraryReference ()
+		{
+			var resolver = new DefaultAssemblyResolver ();
+			var parameters = new ReaderParameters { AssemblyResolver = resolver };
+			var pcl = GetResourceModule ("PortableClassLibrary.dll", parameters);
+
+			foreach (var reference in pcl.AssemblyReferences) {
+				Assert.IsTrue (reference.IsRetargetable);
+				var assembly = resolver.Resolve (reference);
+				Assert.IsNotNull (assembly);
+				Assert.AreEqual (typeof (object).Assembly.GetName ().Version, assembly.Name.Version);
+			}
+		}
+
 		static TRet GetReference<TDel, TRet> (TDel code)
 		{
 			var @delegate = code as Delegate;

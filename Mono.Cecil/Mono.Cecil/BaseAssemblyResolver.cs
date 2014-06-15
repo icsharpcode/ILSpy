@@ -150,6 +150,13 @@ namespace Mono.Cecil {
 				return assembly;
 
 #if !SILVERLIGHT && !CF
+			if (name.IsRetargetable) {
+				// if the reference is retargetable, zero it
+				name = new AssemblyNameReference (name.Name, new Version (0, 0, 0, 0)) {
+					PublicKeyToken = Empty<byte>.Array,
+				};
+			}
+
 			var framework_dir = Path.GetDirectoryName (typeof (object).Module.FullyQualifiedName);
 
 			if (IsZero (name.Version)) {

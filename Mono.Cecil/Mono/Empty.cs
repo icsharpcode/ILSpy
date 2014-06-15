@@ -26,6 +26,7 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
+using System;
 using Mono.Collections.Generic;
 
 namespace Mono {
@@ -48,6 +49,19 @@ namespace Mono.Cecil {
 		public static bool IsNullOrEmpty<T> (this Collection<T> self)
 		{
 			return self == null || self.size == 0;
+		}
+
+		public static T [] Resize<T> (this T [] self, int length)
+		{
+#if !CF
+			Array.Resize (ref self, length);
+#else
+			var copy = new T [length];
+			Array.Copy (self, copy, self.Length);
+			self = copy;
+#endif
+
+			return self;
 		}
 	}
 }

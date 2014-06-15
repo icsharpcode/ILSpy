@@ -42,6 +42,7 @@ namespace Mono.Cecil.Cil {
 		internal int code_size;
 		internal bool init_locals;
 		internal MetadataToken local_var_token;
+		internal BlobReader code_reader;
 
 		internal Collection<Instruction> instructions;
 		internal Collection<ExceptionHandler> exceptions;
@@ -130,7 +131,20 @@ namespace Mono.Cecil.Cil {
 		{
 			return new ILProcessor (this);
 		}
-	}
+
+		public BlobReader GetILReader ()
+		{
+			return code_reader;
+		}
+
+		public IMetadataTokenProvider LookupToken(MetadataToken token)
+		{
+			return method.Module.Read(token, (t, reader) => {
+				reader.context = method;
+				return reader.LookupToken(t);
+			});
+		}
+    }
 
 	public interface IVariableDefinitionProvider {
 		bool HasVariables { get; }

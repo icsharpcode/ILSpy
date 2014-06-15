@@ -124,8 +124,8 @@ namespace Mono.Cecil {
 		}
 
 		public bool IsRuntimeSpecialName {
-			get { return attributes.GetAttributes ((ushort) FieldAttributes.RTSpecialName); }
-			set { attributes = attributes.SetAttributes ((ushort) FieldAttributes.RTSpecialName, value); }
+			get { return attributes.GetAttributes ((ushort) EventAttributes.RTSpecialName); }
+			set { attributes = attributes.SetAttributes ((ushort) EventAttributes.RTSpecialName, value); }
 		}
 
 		#endregion

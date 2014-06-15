@@ -22,6 +22,7 @@ namespace Microsoft.Cci.Pdb {
 
     internal uint token;
     internal uint slotToken;
+    internal uint tokenOfMethodWhoseUsingInfoAppliesToThisMethod;
     //internal string name;
     //internal string module;
     //internal ushort flags;
@@ -40,6 +41,7 @@ namespace Microsoft.Cci.Pdb {
     internal IEnumerable<INamespaceScope>/*?*/ namespaceScopes;
     internal string/*?*/ iteratorClass;
     internal List<ILocalScope>/*?*/ iteratorScopes;
+    internal PdbSynchronizationInformation/*?*/ synchronizationInformation;
 
     private static string StripNamespace(string module) {
       int li = module.LastIndexOf('.');
@@ -267,6 +269,8 @@ namespace Microsoft.Cci.Pdb {
                     while (count-- > 0)
                       this.ReadCustomMetadata(bits);
                   }
+                } else if (name == "asyncMethodInfo") {
+                  this.synchronizationInformation = new PdbSynchronizationInformation(bits);
                 }
                 bits.Position = stop;
                 break;
@@ -294,8 +298,7 @@ namespace Microsoft.Cci.Pdb {
             }
 
           case SYM.S_MANSLOT:
-            uint typind;
-            slots[slot++] = new PdbSlot(bits, out typind);
+            slots[slot++] = new PdbSlot(bits);
             bits.Position = stop;
             break;
 
@@ -349,10 +352,11 @@ namespace Microsoft.Cci.Pdb {
       bits.ReadUInt32(out numberOfBytesInItem);
       switch (kind) {
         case 0: this.ReadUsingInfo(bits); break;
-        case 1: break; // this.ReadForwardInfo(bits); break;
+        case 1: this.ReadForwardInfo(bits); break;
         case 2: break; // this.ReadForwardedToModuleInfo(bits); break;
         case 3: this.ReadIteratorLocals(bits); break;
         case 4: this.ReadForwardIterator(bits); break;
+        case 5: break; //skip dynamic locals until cci is fixed https://roslyn.codeplex.com/workitem/54
         default: throw new PdbDebugException("Unknown custom metadata item kind: {0}", kind);
       }
       bits.Position = savedPosition+(int)numberOfBytesInItem;
@@ -378,8 +382,9 @@ namespace Microsoft.Cci.Pdb {
     //private void ReadForwardedToModuleInfo(BitAccess bits) {
     //}
 
-    //private void ReadForwardInfo(BitAccess bits) {
-    //}
+    private void ReadForwardInfo(BitAccess bits) {
+      bits.ReadUInt32(out this.tokenOfMethodWhoseUsingInfoAppliesToThisMethod);
+    }
 
     private void ReadUsingInfo(BitAccess bits) {
       ushort numberOfNamespaces;
@@ -449,4 +454,46 @@ namespace Microsoft.Cci.Pdb {
 
     //}
   }
+
+  internal class PdbSynchronizationInformation {
+    internal uint kickoffMethodToken;
+    internal uint generatedCatchHandlerIlOffset;
+    internal PdbSynchronizationPoint[] synchronizationPoints;
+
+    internal PdbSynchronizationInformation(BitAccess bits) {
+      uint asyncStepInfoCount;
+      bits.ReadUInt32(out this.kickoffMethodToken);
+      bits.ReadUInt32(out this.generatedCatchHandlerIlOffset);
+      bits.ReadUInt32(out asyncStepInfoCount);
+      this.synchronizationPoints = new PdbSynchronizationPoint[asyncStepInfoCount];
+      for (uint i = 0; i < asyncStepInfoCount; i += 1) {
+        this.synchronizationPoints[i] = new PdbSynchronizationPoint(bits);
+      }
+    }
+
+    public uint GeneratedCatchHandlerOffset {
+      get { return this.generatedCatchHandlerIlOffset; }
+    }
+  }
+
+  internal class PdbSynchronizationPoint {
+    internal uint synchronizeOffset;
+    internal uint continuationMethodToken;
+    internal uint continuationOffset;
+
+    internal PdbSynchronizationPoint(BitAccess bits) {
+      bits.ReadUInt32(out this.synchronizeOffset);
+      bits.ReadUInt32(out this.continuationMethodToken);
+      bits.ReadUInt32(out this.continuationOffset);
+    }
+
+    public uint SynchronizeOffset {
+      get { return this.synchronizeOffset; }
+    }
+
+    public uint ContinuationOffset {
+      get { return this.continuationOffset; }
+    }
+  }
+
 }

@@ -88,57 +88,71 @@ namespace Mono.Cecil.Tests {
 			Assert.AreEqual (1, heap [Table.AssemblyRef].Length);
 		}
 
-		[TestModule ("hello.x64.exe")]
-		public void X64Module (ModuleDefinition module)
+		[Test]
+		public void X64Module ()
 		{
-			Assert.AreEqual (TargetArchitecture.AMD64, module.Image.Architecture);
-			Assert.AreEqual (ModuleAttributes.ILOnly, module.Image.Attributes);
+			TestModule ("hello.x64.exe", module => {
+				Assert.AreEqual (TargetArchitecture.AMD64, module.Image.Architecture);
+				Assert.AreEqual (ModuleAttributes.ILOnly, module.Image.Attributes);
+			});
 		}
 
-		[TestModule ("hello.ia64.exe")]
-		public void IA64Module (ModuleDefinition module)
+		[Test]
+		public void IA64Module ()
 		{
-			Assert.AreEqual (TargetArchitecture.IA64, module.Image.Architecture);
-			Assert.AreEqual (ModuleAttributes.ILOnly, module.Image.Attributes);
+			TestModule ("hello.ia64.exe", module => {
+				Assert.AreEqual (TargetArchitecture.IA64, module.Image.Architecture);
+				Assert.AreEqual (ModuleAttributes.ILOnly, module.Image.Attributes);
+			});
 		}
 
-		[TestModule ("hello.x86.exe")]
-		public void X86Module (ModuleDefinition module)
+		[Test]
+		public void X86Module ()
 		{
-			Assert.AreEqual (TargetArchitecture.I386, module.Image.Architecture);
-			Assert.AreEqual (ModuleAttributes.ILOnly | ModuleAttributes.Required32Bit, module.Image.Attributes);
+			TestModule ("hello.x86.exe", module => {
+				Assert.AreEqual (TargetArchitecture.I386, module.Image.Architecture);
+				Assert.AreEqual (ModuleAttributes.ILOnly | ModuleAttributes.Required32Bit, module.Image.Attributes);
+			});
 		}
 
-		[TestModule ("hello.anycpu.exe")]
-		public void AnyCpuModule (ModuleDefinition module)
+		[Test]
+		public void AnyCpuModule ()
 		{
-			Assert.AreEqual (TargetArchitecture.I386, module.Image.Architecture);
-			Assert.AreEqual (ModuleAttributes.ILOnly, module.Image.Attributes);
+			TestModule ("hello.anycpu.exe", module => {
+				Assert.AreEqual (TargetArchitecture.I386, module.Image.Architecture);
+				Assert.AreEqual (ModuleAttributes.ILOnly, module.Image.Attributes);
+			});
 		}
 
-		[TestModule ("delay-signed.dll")]
-		public void DelaySignedAssembly (ModuleDefinition module)
+		[Test]
+		public void DelaySignedAssembly ()
 		{
-			Assert.IsNotNull (module.Assembly.Name.PublicKey);
-			Assert.AreNotEqual (0, module.Assembly.Name.PublicKey.Length);
-			Assert.AreNotEqual (ModuleAttributes.StrongNameSigned, module.Attributes & ModuleAttributes.StrongNameSigned);
-			Assert.AreNotEqual (0, module.Image.StrongName.VirtualAddress);
-			Assert.AreNotEqual (0, module.Image.StrongName.Size);
+			TestModule ("delay-signed.dll", module => {
+				Assert.IsNotNull (module.Assembly.Name.PublicKey);
+				Assert.AreNotEqual (0, module.Assembly.Name.PublicKey.Length);
+				Assert.AreNotEqual (ModuleAttributes.StrongNameSigned, module.Attributes & ModuleAttributes.StrongNameSigned);
+				Assert.AreNotEqual (0, module.Image.StrongName.VirtualAddress);
+				Assert.AreNotEqual (0, module.Image.StrongName.Size);
+			});
 		}
 
-		[TestModule ("wp7.dll", Verify = false)]
-		public void WindowsPhoneNonSignedAssembly (ModuleDefinition module)
+		[Test]
+		public void WindowsPhoneNonSignedAssembly ()
 		{
-			Assert.AreEqual (0, module.Assembly.Name.PublicKey.Length);
-			Assert.AreNotEqual (ModuleAttributes.StrongNameSigned, module.Attributes & ModuleAttributes.StrongNameSigned);
-			Assert.AreEqual (0, module.Image.StrongName.VirtualAddress);
-			Assert.AreEqual (0, module.Image.StrongName.Size);
+			TestModule ("wp7.dll", module => {
+				Assert.AreEqual (0, module.Assembly.Name.PublicKey.Length);
+				Assert.AreNotEqual (ModuleAttributes.StrongNameSigned, module.Attributes & ModuleAttributes.StrongNameSigned);
+				Assert.AreEqual (0, module.Image.StrongName.VirtualAddress);
+				Assert.AreEqual (0, module.Image.StrongName.Size);
+			}, verify: false);
 		}
 
-		[TestModule ("metro.exe", Verify = false)]
-		public void MetroAssembly (ModuleDefinition module)
+		[Test]
+		public void MetroAssembly ()
 		{
-			Assert.AreEqual (ModuleCharacteristics.AppContainer, module.Characteristics & ModuleCharacteristics.AppContainer);
+			TestModule ("metro.exe", module => {
+				Assert.AreEqual (ModuleCharacteristics.AppContainer, module.Characteristics & ModuleCharacteristics.AppContainer);
+			}, verify: false);
 		}
 	}
 }

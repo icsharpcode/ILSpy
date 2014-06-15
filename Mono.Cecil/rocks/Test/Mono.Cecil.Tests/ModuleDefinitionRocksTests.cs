@@ -9,10 +9,11 @@ namespace Mono.Cecil.Tests {
 	[TestFixture]
 	public class ModuleDefinitionRocksTests : BaseTestFixture {
 
-		[TestCSharp ("Types.cs")]
-		public void GetAllTypesTest (ModuleDefinition module)
+		[Test]
+		public void GetAllTypesTest ()
 		{
-			var sequence = new [] {
+			TestCSharp ("Types.cs", module => {
+				var sequence = new [] {
 				module.GetType ("<Module>"),
 				module.GetType ("Foo"),
 				module.GetType ("Foo/Bar"),
@@ -21,7 +22,8 @@ namespace Mono.Cecil.Tests {
 				module.GetType ("Pan"),
 			};
 
-			Assert.IsTrue (sequence.SequenceEqual (module.GetAllTypes ()));
+				Assert.IsTrue (sequence.SequenceEqual (module.GetAllTypes ()));
+			});
 		}
 	}
 }

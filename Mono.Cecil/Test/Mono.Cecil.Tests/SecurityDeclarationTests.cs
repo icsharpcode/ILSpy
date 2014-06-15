@@ -15,78 +15,82 @@ namespace Mono.Cecil.Tests {
 	[TestFixture]
 	public class SecurityDeclarationTests : BaseTestFixture {
 
-		[TestModule ("decsec-xml.dll")]
-		public void XmlSecurityDeclaration (ModuleDefinition module)
+		[Test]
+		public void XmlSecurityDeclaration ()
 		{
-			var type = module.GetType ("SubLibrary");
+			TestModule ("decsec-xml.dll", module => {
+				var type = module.GetType ("SubLibrary");
 
-			Assert.IsTrue (type.HasSecurityDeclarations);
+				Assert.IsTrue (type.HasSecurityDeclarations);
 
-			Assert.AreEqual (1, type.SecurityDeclarations.Count);
+				Assert.AreEqual (1, type.SecurityDeclarations.Count);
 
-			var declaration = type.SecurityDeclarations [0];
-			Assert.AreEqual (SecurityAction.Deny, declaration.Action);
+				var declaration = type.SecurityDeclarations [0];
+				Assert.AreEqual (SecurityAction.Deny, declaration.Action);
 
-			Assert.AreEqual (1, declaration.SecurityAttributes.Count);
+				Assert.AreEqual (1, declaration.SecurityAttributes.Count);
 
-			var attribute = declaration.SecurityAttributes [0];
+				var attribute = declaration.SecurityAttributes [0];
 
-			Assert.AreEqual ("System.Security.Permissions.PermissionSetAttribute", attribute.AttributeType.FullName);
+				Assert.AreEqual ("System.Security.Permissions.PermissionSetAttribute", attribute.AttributeType.FullName);
 
-			Assert.AreEqual (1, attribute.Properties.Count);
+				Assert.AreEqual (1, attribute.Properties.Count);
 
-			var named_argument = attribute.Properties [0];
+				var named_argument = attribute.Properties [0];
 
-			Assert.AreEqual ("XML", named_argument.Name);
+				Assert.AreEqual ("XML", named_argument.Name);
 
-			var argument = named_argument.Argument;
+				var argument = named_argument.Argument;
 
-			Assert.AreEqual ("System.String", argument.Type.FullName);
+				Assert.AreEqual ("System.String", argument.Type.FullName);
 
-			const string permission_set = "<PermissionSet class=\"System.Security.PermissionSe"
+				const string permission_set = "<PermissionSet class=\"System.Security.PermissionSe"
 				+ "t\"\r\nversion=\"1\">\r\n<IPermission class=\"System.Security.Permis"
 				+ "sions.SecurityPermission, mscorlib, Version=2.0.0.0, Culture"
 				+ "=neutral, PublicKeyToken=b77a5c561934e089\"\r\nversion=\"1\"\r\nFla"
 				+ "gs=\"UnmanagedCode\"/>\r\n</PermissionSet>\r\n";
 
-			Assert.AreEqual (permission_set, argument.Value);
+				Assert.AreEqual (permission_set, argument.Value);
+			});
 		}
 
-		[TestModule ("decsec1-xml.dll")]
-		public void XmlNet_1_1SecurityDeclaration (ModuleDefinition module)
+		[Test]
+		public void XmlNet_1_1SecurityDeclaration ()
 		{
-			var type = module.GetType ("SubLibrary");
+			TestModule ("decsec1-xml.dll", module => {
+				var type = module.GetType ("SubLibrary");
 
-			Assert.IsTrue (type.HasSecurityDeclarations);
+				Assert.IsTrue (type.HasSecurityDeclarations);
 
-			Assert.AreEqual (1, type.SecurityDeclarations.Count);
+				Assert.AreEqual (1, type.SecurityDeclarations.Count);
 
-			var declaration = type.SecurityDeclarations [0];
-			Assert.AreEqual (SecurityAction.Deny, declaration.Action);
+				var declaration = type.SecurityDeclarations [0];
+				Assert.AreEqual (SecurityAction.Deny, declaration.Action);
 
-			Assert.AreEqual (1, declaration.SecurityAttributes.Count);
+				Assert.AreEqual (1, declaration.SecurityAttributes.Count);
 
-			var attribute = declaration.SecurityAttributes [0];
+				var attribute = declaration.SecurityAttributes [0];
 
-			Assert.AreEqual ("System.Security.Permissions.PermissionSetAttribute", attribute.AttributeType.FullName);
+				Assert.AreEqual ("System.Security.Permissions.PermissionSetAttribute", attribute.AttributeType.FullName);
 
-			Assert.AreEqual (1, attribute.Properties.Count);
+				Assert.AreEqual (1, attribute.Properties.Count);
 
-			var named_argument = attribute.Properties [0];
+				var named_argument = attribute.Properties [0];
 
-			Assert.AreEqual ("XML", named_argument.Name);
+				Assert.AreEqual ("XML", named_argument.Name);
 
-			var argument = named_argument.Argument;
+				var argument = named_argument.Argument;
 
-			Assert.AreEqual ("System.String", argument.Type.FullName);
+				Assert.AreEqual ("System.String", argument.Type.FullName);
 
-			const string permission_set = "<PermissionSet class=\"System.Security.PermissionSe"
+				const string permission_set = "<PermissionSet class=\"System.Security.PermissionSe"
 				+ "t\"\r\nversion=\"1\">\r\n<IPermission class=\"System.Security.Permis"
 				+ "sions.SecurityPermission, mscorlib, Version=1.0.0.0, Culture"
 				+ "=neutral, PublicKeyToken=b77a5c561934e089\"\r\nversion=\"1\"\r\nFla"
 				+ "gs=\"UnmanagedCode\"/>\r\n</PermissionSet>\r\n";
 
-			Assert.AreEqual (permission_set, argument.Value);
+				Assert.AreEqual (permission_set, argument.Value);
+			});
 		}
 
 		[Test]
@@ -122,55 +126,59 @@ namespace Mono.Cecil.Tests {
 			Assert.AreEqual (permission_set, argument.Value);
 		}
 
-		[TestModule ("empty-decsec-att.dll")]
-		public void SecurityDeclarationWithoutAttributes (ModuleDefinition module)
+		[Test]
+		public void SecurityDeclarationWithoutAttributes ()
 		{
-			var type = module.GetType ("TestSecurityAction.ModalUITypeEditor");
-			var method = type.GetMethod ("GetEditStyle");
+			TestModule ("empty-decsec-att.dll", module => {
+				var type = module.GetType ("TestSecurityAction.ModalUITypeEditor");
+				var method = type.GetMethod ("GetEditStyle");
 
-			Assert.IsNotNull (method);
+				Assert.IsNotNull (method);
 
-			Assert.AreEqual (1, method.SecurityDeclarations.Count);
+				Assert.AreEqual (1, method.SecurityDeclarations.Count);
 
-			var declaration = method.SecurityDeclarations [0];
-			Assert.AreEqual (SecurityAction.LinkDemand, declaration.Action);
-			Assert.AreEqual (1, declaration.SecurityAttributes.Count);
+				var declaration = method.SecurityDeclarations [0];
+				Assert.AreEqual (SecurityAction.LinkDemand, declaration.Action);
+				Assert.AreEqual (1, declaration.SecurityAttributes.Count);
 
-			var attribute = declaration.SecurityAttributes [0];
-			Assert.AreEqual ("System.Security.Permissions.SecurityPermissionAttribute", attribute.AttributeType.FullName);
-			Assert.AreEqual (0, attribute.Fields.Count);
-			Assert.AreEqual (0, attribute.Properties.Count);
+				var attribute = declaration.SecurityAttributes [0];
+				Assert.AreEqual ("System.Security.Permissions.SecurityPermissionAttribute", attribute.AttributeType.FullName);
+				Assert.AreEqual (0, attribute.Fields.Count);
+				Assert.AreEqual (0, attribute.Properties.Count);
+			});
 		}
 
-		[TestModule ("decsec-att.dll")]
-		public void AttributeSecurityDeclaration (ModuleDefinition module)
+		[Test]
+		public void AttributeSecurityDeclaration ()
 		{
-			var type = module.GetType ("SubLibrary");
+			TestModule ("decsec-att.dll", module => {
+				var type = module.GetType ("SubLibrary");
 
-			Assert.IsTrue (type.HasSecurityDeclarations);
+				Assert.IsTrue (type.HasSecurityDeclarations);
 
-			Assert.AreEqual (1, type.SecurityDeclarations.Count);
+				Assert.AreEqual (1, type.SecurityDeclarations.Count);
 
-			var declaration = type.SecurityDeclarations [0];
-			Assert.AreEqual (SecurityAction.Deny, declaration.Action);
+				var declaration = type.SecurityDeclarations [0];
+				Assert.AreEqual (SecurityAction.Deny, declaration.Action);
 
-			Assert.AreEqual (1, declaration.SecurityAttributes.Count);
+				Assert.AreEqual (1, declaration.SecurityAttributes.Count);
 
-			var attribute = declaration.SecurityAttributes [0];
+				var attribute = declaration.SecurityAttributes [0];
 
-			Assert.AreEqual ("System.Security.Permissions.SecurityPermissionAttribute", attribute.AttributeType.FullName);
+				Assert.AreEqual ("System.Security.Permissions.SecurityPermissionAttribute", attribute.AttributeType.FullName);
 
-			Assert.AreEqual (1, attribute.Properties.Count);
+				Assert.AreEqual (1, attribute.Properties.Count);
 
-			var named_argument = attribute.Properties [0];
+				var named_argument = attribute.Properties [0];
 
-			Assert.AreEqual ("UnmanagedCode", named_argument.Name);
+				Assert.AreEqual ("UnmanagedCode", named_argument.Name);
 
-			var argument = named_argument.Argument;
+				var argument = named_argument.Argument;
 
-			Assert.AreEqual ("System.Boolean", argument.Type.FullName);
+				Assert.AreEqual ("System.Boolean", argument.Type.FullName);
 
-			Assert.AreEqual (true, argument.Value);
+				Assert.AreEqual (true, argument.Value);
+			});
 		}
 
 		static void AssertCustomAttributeArgument (string expected, CustomAttributeNamedArgument named_argument)
