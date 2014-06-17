@@ -24,6 +24,21 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override bool IsPeeking { get { return Operands.Length > 0 && Operands[0].IsPeeking; } }
 
+		public override bool NoResult
+		{
+			get
+			{
+				return Method.ReturnType.GetStackType() == StackType.Void;
+			}
+		}
+
+		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
+		{
+			for (int i = 0; i < Operands.Length; i++) {
+				Operands[i] = transformFunc(Operands[i]);
+			}
+		}
+
 		/// <summary>
 		/// Gets/Sets whether the call has the 'tail.' prefix.
 		/// </summary>

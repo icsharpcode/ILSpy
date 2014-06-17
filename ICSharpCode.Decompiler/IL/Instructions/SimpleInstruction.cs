@@ -7,29 +7,47 @@ using System.Threading.Tasks;
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
-	/// A simple instruction that does not pop any elements from the stack.
+	/// A simple instruction that does not have any arguments.
 	/// </summary>
-	class SimpleInstruction(OpCode opCode) : ILInstruction(opCode)
+	abstract class SimpleInstruction(OpCode opCode) : ILInstruction(opCode)
 	{
 		public override bool IsPeeking { get { return false; } }
 
-		public override void WriteTo(ITextOutput output)
+		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
 		{
-			output.Write(OpCode);
 		}
 	}
 
-	class PeekInstruction(OpCode opCode = OpCode.Peek) : ILInstruction(opCode)
+	class Nop() : SimpleInstruction(OpCode.Nop)
+	{
+		public override bool NoResult { get { return true; } }
+	}
+
+	class Pop() : SimpleInstruction(OpCode.Pop)
+	{
+	}
+
+	class Peek() : SimpleInstruction(OpCode.Peek)
 	{
 		public override bool IsPeeking { get { return true; } }
-
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-		}
 	}
 
-	class ConstantStringInstruction(public readonly string Value) : SimpleInstruction(OpCode.LdStr)
+	class Ckfinite() : SimpleInstruction(OpCode.Ckfinite)
+	{
+		public override bool IsPeeking { get { return true; } }
+		public override bool NoResult { get { return true; } }
+	}
+
+	class Arglist() : SimpleInstruction(OpCode.Arglist)
+	{
+	}
+
+	class DebugBreak() : SimpleInstruction(OpCode.DebugBreak)
+	{
+		public override bool NoResult { get { return true; } }
+	}
+
+	class ConstantString(public readonly string Value) : SimpleInstruction(OpCode.LdStr)
 	{
 		public override void WriteTo(ITextOutput output)
 		{
@@ -37,7 +55,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	class ConstantI4Instruction(public readonly int Value) : SimpleInstruction(OpCode.LdcI4)
+	class ConstantI4(public readonly int Value) : SimpleInstruction(OpCode.LdcI4)
 	{
 		public override void WriteTo(ITextOutput output)
 		{
@@ -45,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	class ConstantI8Instruction(public readonly long Value) : SimpleInstruction(OpCode.LdcI8)
+	class ConstantI8(public readonly long Value) : SimpleInstruction(OpCode.LdcI8)
 	{
 		public override void WriteTo(ITextOutput output)
 		{
@@ -53,11 +71,15 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	class ConstantFloatInstruction(public readonly double Value) : SimpleInstruction(OpCode.LdcI8)
+	class ConstantFloat(public readonly double Value) : SimpleInstruction(OpCode.LdcI8)
 	{
 		public override void WriteTo(ITextOutput output)
 		{
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
+	}
+
+	class ConstantNull() : SimpleInstruction(OpCode.LdNull)
+	{
 	}
 }

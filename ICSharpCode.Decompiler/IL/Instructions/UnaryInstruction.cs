@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	class UnaryInstruction(OpCode opCode) : ILInstruction(opCode)
+	abstract class UnaryInstruction(OpCode opCode) : ILInstruction(opCode)
 	{
 		public ILInstruction Operand = Pop;
 
-		public override bool IsPeeking { get { return Operand.IsPeeking; } }
+		public sealed override bool IsPeeking { get { return Operand.IsPeeking; } }
 
 		public override void WriteTo(ITextOutput output)
 		{
@@ -19,6 +19,16 @@ namespace ICSharpCode.Decompiler.IL
 			Operand.WriteTo(output);
 			output.Write(')');
 		}
+
+		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
+		{
+			Operand = transformFunc(Operand);
+		}
+	}
+
+	class VoidInstruction() : UnaryInstruction(OpCode.Void)
+	{
+		public override bool NoResult { get { return true; } }
 	}
 
 	class LogicNotInstruction() : UnaryInstruction(OpCode.LogicNot)

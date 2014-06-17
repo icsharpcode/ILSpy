@@ -83,6 +83,7 @@
     <Compile Include="IL\Instructions\Block.cs" />
     <Compile Include="IL\Instructions\BranchInstruction.cs" />
     <Compile Include="IL\Instructions\CallInstruction.cs" />
+    <Compile Include="IL\Instructions\FieldAccess.cs" />
     <Compile Include="IL\Instructions\ILInstruction.cs" />
     <Compile Include="IL\Instructions\OpCode.cs" />
     <Compile Include="IL\Instructions\Prefix.cs" />

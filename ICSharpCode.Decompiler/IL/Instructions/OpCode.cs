@@ -9,27 +9,25 @@ namespace ICSharpCode.Decompiler.IL
 	public enum OpCode
 	{
 		/// <summary>
-		/// A instruction that could not be decoded correctly.
-		/// Invalid instructions may appear in unreachable code.
-		/// </summary>
-		Invalid,
-		/// <summary>
 		/// No operation. Takes 0 arguments and returns void.
+		///  <see cref="IL.Nop"/>
 		/// </summary>
 		Nop,
 		/// <summary>
 		/// Pops the top of the evaluation stack and returns the value.
 		/// Does not correspond to any IL instruction, but encodes the implicit stack use by the IL instruction.
+		///  <see cref="IL.Pop"/>
 		/// </summary>
 		Pop,
 		/// <summary>
 		/// Peeks at the top of the evaluation stack and returns the value.
-		/// Corresponds to IL 'dup'.
+		/// Corresponds to IL 'dup'. <see cref="IL.Peek"/>
 		/// </summary>
 		Peek,
 		/// <summary>
 		/// Ignore the arguments and produce void. Used to prevent the end result of an instruction
 		/// from being pushed to the evaluation stack.
+		/// <see cref="VoidInstruction"/>
 		/// </summary>
 		Void,
 		/// <summary>
@@ -79,24 +77,24 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		BitNot,
 		/// <summary>
-		/// Retrieves the RuntimeArgumentHandle
+		/// Retrieves the RuntimeArgumentHandle. <see cref="IL.Arglist"/>
 		/// </summary>
 		Arglist,
 		/// <summary>
 		/// <c>if (cond) goto target;</c>
-		/// <see cref="ConditionalBranchInstruction"/>
+		/// <see cref="IL.ConditionalBranch"/>
 		/// </summary>
 		ConditionalBranch,
 		/// <summary>
 		/// <c>goto target;</c>
-		/// <see cref="BranchInstruction"/>
+		/// <see cref="IL.Branch"/>
 		/// </summary>
 		Branch,
 		Leave,
 		/// <summary>
 		/// Breakpoint instruction.
 		/// </summary>
-		Break,
+		DebugBreak,
 		/// <summary>
 		/// Compare equal.
 		/// Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.
@@ -149,33 +147,33 @@ namespace ICSharpCode.Decompiler.IL
 		Conv,
 		/// <summary>
 		/// Loads the value of a variable. (ldarg/ldloc)
-		/// <see cref="LoadVarInstruction"/>
+		/// <see cref="IL.LdLoc"/>
 		/// </summary>
-		LoadVar,
+		LdLoc,
 		/// <summary>
-		/// Loads the address of a variable as managed ref. (ldarga/ldloca)
-		/// <see cref="LoadVarInstruction"/>
+		/// Loads the address of a variable. (ldarga/ldloca)
+		/// <see cref="IL.LdLoca"/>
 		/// </summary>
-		LoadVarAddress,
+		LdLoca,
 		/// <summary>
 		/// Stores a value into a variable. (starg/stloc)
-		/// <see cref="StoreVarInstruction"/>
+		/// <see cref="IL.StLoc"/>
 		/// </summary>
-		StoreVar,
+		StLoc,
 		/// <summary>
-		/// Loads a constant string. <see cref="ConstantStringInstruction"/>
+		/// Loads a constant string. <see cref="ConstantString"/>
 		/// </summary>
 		LdStr,
 		/// <summary>
-		/// Loads a constant 32-bit integer. <see cref="ConstantI4Instruction"/>
+		/// Loads a constant 32-bit integer. <see cref="ConstantI4"/>
 		/// </summary>
 		LdcI4,
 		/// <summary>
-		/// Loads a constant 64-bit integer. <see cref="ConstantI8Instruction"/>
+		/// Loads a constant 64-bit integer. <see cref="ConstantI8"/>
 		/// </summary>
 		LdcI8,
 		/// <summary>
-		/// Loads a constant floating point number. <see cref="ConstantFloatInstruction"/>
+		/// Loads a constant floating point number. <see cref="ConstantFloat"/>
 		/// </summary>
 		LdcF,
 		/// <summary>
@@ -184,7 +182,7 @@ namespace ICSharpCode.Decompiler.IL
 		LdNull,
 		/// <summary>
 		/// Returns from the current method or lambda.
-		/// <see cref="UnaryInstruction"/> or <see cref="SimpleInstruction"/>, depending on whether
+		/// <see cref="IL.RetVoid"/> or <see cref="IL.Ret"/>, depending on whether
 		/// the method has return type void.
 		/// </summary>
 		Ret,
@@ -196,5 +194,29 @@ namespace ICSharpCode.Decompiler.IL
 		/// Shift right. <see cref="BinaryNumericInstruction"/>
 		/// </summary>
 		Shr,
+		/// <summary>
+		/// Load instance field. <see cref="LoadInstanceField"/>
+		/// </summary>
+		Ldfld,
+		/// <summary>
+		/// Load instance field address. <see cref="LoadInstanceField"/>
+		/// </summary>
+		Ldflda,
+		/// <summary>
+		/// Store to instance field. <see cref="StoreInstanceField"/>
+		/// </summary>
+		Stfld,
+		/// <summary>
+		/// Load static field. <see cref="LoadStaticField"/>
+		/// </summary>
+		Ldsfld,
+		/// <summary>
+		/// Load static field address. <see cref="LoadStaticField"/>
+		/// </summary>
+		Ldsflda,
+		/// <summary>
+		/// Store to static field. <see cref="StoreStaticField"/>
+		/// </summary>
+		Stsfld,
 	}
 }

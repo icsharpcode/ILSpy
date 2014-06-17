@@ -11,8 +11,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public abstract class ILInstruction(public readonly OpCode OpCode)
 	{
-		public static readonly ILInstruction Nop = new SimpleInstruction(OpCode.Nop);
-		public static readonly ILInstruction Pop = new SimpleInstruction(OpCode.Pop);
+		public static readonly ILInstruction Nop = new Nop();
+		public static readonly ILInstruction Pop = new Pop();
 
 		/// <summary>
 		/// Gets the ILRange for this instruction alone, ignoring the operands.
@@ -26,6 +26,30 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public abstract bool IsPeeking { get; }
 
-		public abstract void WriteTo(ITextOutput output);
+		/// <summary>
+		/// Gets whether the instruction produces no result.
+		/// Instructions without result may not be used as arguments to other instructions;
+		/// and do not result in a stack push when used as a top-level instruction within a block.
+		/// </summary>
+		public virtual bool NoResult
+		{
+			get { return false; }
+		}
+
+		/// <summary>
+		/// Gets whether the end point of this instruction is reachable from the start point.
+		/// Returns false if the instruction performs an unconditional branch, or always throws an exception.
+		/// </summary>
+		public virtual bool IsEndReachable
+		{
+			get { return true; }
+		}
+
+		public virtual void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+		}
+
+		public abstract void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc);
 	}
 }

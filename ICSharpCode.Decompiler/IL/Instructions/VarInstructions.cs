@@ -6,24 +6,25 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	class LoadVarInstruction(public readonly ILVariable Variable, OpCode opCode = OpCode.LoadVar) : ILInstruction(opCode)
+	class LdLoc(public readonly ILVariable Variable) : SimpleInstruction(OpCode.LdLoc)
 	{
-		public override bool IsPeeking { get { return false; } }
-
 		public override void WriteTo(ITextOutput output)
 		{
-			if (OpCode != OpCode.LoadVar) {
-				output.Write(OpCode);
-				output.Write(' ');
-			}
 			output.WriteReference(Variable.ToString(), Variable, isLocal: true);
 		}
 	}
 
-	class StoreVarInstruction(public readonly ILVariable Variable) : UnaryInstruction(OpCode.StoreVar)
+	class LdLoca(public readonly ILVariable Variable) : SimpleInstruction(OpCode.LdLoca)
 	{
-		public override bool IsPeeking { get { return false; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write("ref ");
+			output.WriteReference(Variable.ToString(), Variable, isLocal: true);
+		}
+	}
 
+	class StLoc(public readonly ILVariable Variable) : UnaryInstruction(OpCode.StLoc)
+	{
 		public override void WriteTo(ITextOutput output)
 		{
 			output.WriteReference(Variable.ToString(), Variable, isLocal: true);

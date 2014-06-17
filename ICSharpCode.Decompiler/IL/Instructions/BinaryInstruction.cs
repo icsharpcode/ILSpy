@@ -12,6 +12,12 @@ namespace ICSharpCode.Decompiler.IL
 		public ILInstruction Right = Pop;
 
 		public override bool IsPeeking { get { return Left.IsPeeking; } }
+
+		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
+		{
+			Left = transformFunc(Left);
+			Right = transformFunc(Right);
+		}
 	}
 
 	class BinaryNumericInstruction(OpCode opCode, StackType opType, OverflowMode overflowMode)
