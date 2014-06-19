@@ -58,6 +58,15 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Windows.Controls.DataVisualization.Toolkit">
+      <HintPath>..\..\packages\WPFToolkit.DataVisualization.3.5.50211.1\lib\System.Windows.Controls.DataVisualization.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Controls.Input.Toolkit">
+      <HintPath>..\..\packages\WPFToolkit.3.5.50211.1\lib\System.Windows.Controls.Input.Toolkit.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Windows.Controls.Layout.Toolkit">
+      <HintPath>..\..\packages\WPFToolkit.3.5.50211.1\lib\System.Windows.Controls.Layout.Toolkit.dll</HintPath>
+    </Reference>
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
@@ -68,6 +77,9 @@
     <Reference Include="WindowsBase">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="WPFToolkit">
+      <HintPath>..\..\packages\WPFToolkit.3.5.50211.1\lib\WPFToolkit.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cases\AttachedEvent.xaml.cs">
@@ -75,6 +87,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Cases\CustomControl.cs" />
+    <Compile Include="Cases\issue365.xaml.cs">
+      <DependentUpon>issue365.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Cases\MyControl.xaml.cs">
       <DependentUpon>MyControl.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -126,6 +141,10 @@
     <Page Include="Cases\AttachedEvent.xaml" />
     <Page Include="Cases\AvalonDockBrushes.xaml" />
     <Page Include="Cases\AvalonDockCommon.xaml" />
+    <Page Include="Cases\issue365.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Cases\MarkupExtension.xaml" />
     <Page Include="Cases\MyControl.xaml" />
     <Page Include="Cases\NamespacePrefix.xaml" />
@@ -138,6 +157,9 @@
     <Page Include="Cases\SimplePropertyElement.xaml" />
     <Page Include="Cases\Dictionary1.xaml" />
     <Page Include="Cases\Issue445.xaml" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>
