@@ -32,6 +32,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteSuffix(OverflowMode);
 			output.Write(' ');
 			output.Write(OpType);
+			output.Write('(');
 			Left.WriteTo(output);
 			output.Write(", ");
 			Right.WriteTo(output);
@@ -46,7 +47,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output)
 		{
-			output.Write("{0}.{1}(", OpCode, OpType);
+			output.Write(OpCode);
+			output.Write('.');
+			output.Write(OpType);
+			output.Write('(');
 			Left.WriteTo(output);
 			output.Write(", ");
 			Right.WriteTo(output);

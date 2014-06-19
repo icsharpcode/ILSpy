@@ -100,15 +100,21 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public void DisassembleMethod(MethodDefinition method)
 		{
+			DisassembleMethodHeader(method);
+			DisassembleMethodBlock(method);
+		}
+
+		public void DisassembleMethodHeader(MethodDefinition method)
+		{
 			// set current member
 			currentMember = method;
 
 			// write method header
 			output.WriteDefinition(".method ", method);
-			DisassembleMethodInternal(method);
+			DisassembleMethodHeaderInternal(method);
 		}
 
-		void DisassembleMethodInternal(MethodDefinition method)
+		void DisassembleMethodHeaderInternal(MethodDefinition method)
 		{
 			//    .method public hidebysig  specialname
 			//               instance default class [mscorlib]System.IO.TextWriter get_BaseWriter ()  cil managed
@@ -201,6 +207,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteFlags(method.ImplAttributes & ~(MethodImplAttributes.CodeTypeMask | MethodImplAttributes.ManagedMask), methodImpl);
 
 			output.Unindent();
+		}
+
+		void DisassembleMethodBlock(MethodDefinition method)
+		{
 			OpenBlock(defaultCollapsed: isInType);
 			WriteAttributes(method.CustomAttributes);
 			if (method.HasOverrides) {
@@ -216,7 +226,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteSecurityDeclarations(method);
 
 			if (method.HasBody) {
-				// create IL code mappings - used in debugger
 				methodBodyDisassembler.Disassemble(method.Body);
 			}
 

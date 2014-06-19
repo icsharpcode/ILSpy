@@ -10,7 +10,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output)
 		{
-			output.WriteReference(Variable.ToString(), Variable, isLocal: true);
+			Variable.WriteTo(output);
 		}
 	}
 
@@ -18,8 +18,8 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output)
 		{
-			output.Write("ref ");
-			output.WriteReference(Variable.ToString(), Variable, isLocal: true);
+			output.Write("ldloca ");
+			Variable.WriteTo(output);
 		}
 	}
 
@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output)
 		{
-			output.WriteReference(Variable.ToString(), Variable, isLocal: true);
+			Variable.WriteTo(output);
 			output.Write(" = ");
 			Operand.WriteTo(output);
 		}

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Mono.Cecil;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -50,6 +51,19 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
+	class IsInst(public readonly TypeReference Type) : UnaryInstruction(OpCode.IsInst)
+	{
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, Type);
+			output.Write('(');
+			Operand.WriteTo(output);
+			output.Write(')');
+		}
+	}
+
 	class ConvInstruction(
 		public readonly StackType FromType, public readonly PrimitiveType ToType, public readonly OverflowMode ConvMode
 	) : UnaryInstruction(OpCode.Conv)
@@ -68,3 +82,4 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 }
+ 

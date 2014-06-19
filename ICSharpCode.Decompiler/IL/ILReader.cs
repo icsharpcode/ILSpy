@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Mono.Cecil;
+using System.Collections;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public class ILReader(private Mono.Cecil.Cil.MethodBody body)
+	public class ILReader(private readonly Mono.Cecil.Cil.MethodBody body, private readonly CancellationToken cancellationToken)
 	{
 		internal static ILOpCode ReadOpCode(ref BlobReader reader)
 		{
@@ -25,11 +27,13 @@ namespace ICSharpCode.Decompiler.IL
 			return new MetadataToken(reader.ReadUInt32());
 		}
 
-		ImmutableArray<ILInstruction>.Builder instructionBuilder = ImmutableArray.CreateBuilder<ILInstruction>();
+        readonly TypeSystem typeSystem = body.Method.Module.TypeSystem;
 		BlobReader reader = body.GetILReader();
 		Stack<StackType> stack = new Stack<StackType>(body.MaxStackSize);
-		ILVariable[] parameterVariables;
-		ILVariable[] localVariables;
+		ILVariable[] parameterVariables = InitParameterVariables(body);
+		ILVariable[] localVariables = body.Variables.Select(v => new ILVariable(v)).ToArray();
+		BitArray isBranchTarget;
+		List<ILInstruction> instructionBuilder;
 
 		IMetadataTokenProvider ReadAndDecodeMetadataToken()
 		{
@@ -37,30 +41,41 @@ namespace ICSharpCode.Decompiler.IL
 			return body.LookupToken(token);
 		}
 
-		public ImmutableArray<ILInstruction> ReadInstructions()
+		static ILVariable[] InitParameterVariables(Mono.Cecil.Cil.MethodBody body)
 		{
-			//var body = method.GetBody();
-			//var methodSignature = new MethodSignature(method.Signature);
-			//var localVariableTypes = GetStackTypes(body.GetLocalVariableTypes(method.ContainingModule.metadata));
-			localVariables = body.Variables.Select(v => new ILVariable(v)).ToArray();
-			parameterVariables = body.Method.Parameters.Select(p => new ILVariable(p)).ToArray();
-			//var parameterTypes = GetStackTypes(methodSignature.ParameterTypes);
-			//var stack = new Stack<StackType>(body.MaxStack);
+			var parameterVariables = new ILVariable[body.Method.GetPopAmount()];
+			int paramIndex = 0;
+			if (body.Method.HasThis)
+				parameterVariables[paramIndex++] = new ILVariable(body.ThisParameter);
+			foreach (var p in body.Method.Parameters)
+				parameterVariables[paramIndex++] = new ILVariable(p);
+			Debug.Assert(paramIndex == parameterVariables.Length);
+			return parameterVariables;
+		}
 
+		void ReadInstructions(Dictionary<int, ImmutableArray<StackType>> outputStacks)
+		{
+			instructionBuilder = new List<ILInstruction>();
+			isBranchTarget = new BitArray(body.CodeSize);
+			stack.Clear();
 			// Dictionary that stores stacks for forward jumps
 			var branchStackDict = new Dictionary<int, ImmutableArray<StackType>>();
 
 			while (reader.Position < reader.Length) {
+				cancellationToken.ThrowIfCancellationRequested();
 				int start = reader.Position;
+				if (outputStacks != null)
+					outputStacks.Add(start, stack.ToImmutableArray());
 				ILInstruction decodedInstruction = DecodeInstruction();
 				decodedInstruction.ILRange = new Interval(start, reader.Position);
 				instructionBuilder.Add(decodedInstruction);
 				if ((var branch = decodedInstruction as Branch) != null) {
+					isBranchTarget[branch.TargetILOffset] = true;
 					if (branch.TargetILOffset >= reader.Position) {
 						branchStackDict[branch.TargetILOffset] = stack.ToImmutableArray();
 					}
 				}
-				if (IsUnconditionalBranch(decodedInstruction.OpCode)) {
+				if (!decodedInstruction.IsEndReachable) {
 					stack.Clear();
 					if (branchStackDict.TryGetValue(reader.Position, out var stackFromBranch)) {
 						for (int i = stackFromBranch.Length - 1; i >= 0; i--) {
@@ -69,12 +84,34 @@ namespace ICSharpCode.Decompiler.IL
 					}
 				}
 			}
-			return instructionBuilder.ToImmutable();
 		}
 
-		private bool IsUnconditionalBranch(OpCode opCode)
+		public void WriteTypedIL(ITextOutput output)
 		{
-			return opCode == OpCode.Branch || opCode == OpCode.Ret || opCode == OpCode.Leave;
+			var outputStacks = new Dictionary<int, ImmutableArray<StackType>>();
+			ReadInstructions(outputStacks);
+			foreach (var inst in instructionBuilder) {
+				output.Write("   [");
+				bool isFirstElement = true;
+				foreach (var element in outputStacks[inst.ILRange.Start]) {
+					if (isFirstElement)
+						isFirstElement = false;
+					else
+						output.Write(", ");
+					output.Write(element);
+				}
+				output.Write(']');
+				output.WriteLine();
+				if (isBranchTarget[inst.ILRange.Start])
+					output.Write('*');
+				else
+					output.Write(' ');
+				output.WriteDefinition("IL_" + inst.ILRange.Start.ToString("x4"), inst.ILRange.Start);
+				output.Write(": ");
+				inst.WriteTo(output);
+				output.WriteLine();
+			}
+			new Disassembler.MethodBodyDisassembler(output, false, cancellationToken).WriteExceptionHandlers(body);
 		}
 
 		ILInstruction DecodeInstruction()
@@ -287,7 +324,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldc_I4_6:
 				case ILOpCode.Ldc_I4_7:
 				case ILOpCode.Ldc_I4_8:
-					return LdcI4(ilOpCode - ILOpCode.Ldc_I4_0);
+					return LdcI4((int)ilOpCode - (int)ILOpCode.Ldc_I4_0);
 				case ILOpCode.Ldc_I4_S:
 					return LdcI4(reader.ReadSByte());
 				case ILOpCode.Ldnull:
@@ -298,17 +335,27 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldftn:
 					throw new NotImplementedException();
 				case ILOpCode.Ldind_I1:
+					return LdInd(typeSystem.SByte);
 				case ILOpCode.Ldind_I2:
+					return LdInd(typeSystem.Int16);
 				case ILOpCode.Ldind_I4:
+					return LdInd(typeSystem.Int32);
 				case ILOpCode.Ldind_I8:
+					return LdInd(typeSystem.Int64);
 				case ILOpCode.Ldind_U1:
+					return LdInd(typeSystem.Byte);
 				case ILOpCode.Ldind_U2:
+					return LdInd(typeSystem.UInt16);
 				case ILOpCode.Ldind_U4:
+					return LdInd(typeSystem.UInt32);
 				case ILOpCode.Ldind_R4:
+					return LdInd(typeSystem.Single);
 				case ILOpCode.Ldind_R8:
+					return LdInd(typeSystem.Double);
 				case ILOpCode.Ldind_I:
+					return LdInd(typeSystem.IntPtr);
 				case ILOpCode.Ldind_Ref:
-					throw new NotImplementedException();
+					return LdInd(typeSystem.Object);
 				case ILOpCode.Ldloc:
 					return Ldloc(reader.ReadUInt16());
 				case ILOpCode.Ldloc_S:
@@ -336,6 +383,8 @@ namespace ICSharpCode.Decompiler.IL
 					return BinaryNumeric(OpCode.Mul, OverflowMode.Ovf_Un);
 				case ILOpCode.Neg:
 					return UnaryNumeric(OpCode.Neg);
+				case ILOpCode.Newobj:
+					return DecodeCall(OpCode.NewObj);
 				case ILOpCode.Nop:
 					return new Nop();
 				case ILOpCode.Not:
@@ -350,7 +399,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Rem_Un:
 					return BinaryNumeric(OpCode.Rem, OverflowMode.Un);
 				case ILOpCode.Ret:
-					return Ret();
+					return Return();
 				case ILOpCode.Shl:
 					return Shift(OpCode.Shl);
 				case ILOpCode.Shr:
@@ -379,7 +428,16 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stloc_2:
 				case ILOpCode.Stloc_3:
 					return Stloc(ilOpCode - ILOpCode.Stloc_0);
-
+				case ILOpCode.Sub:
+					return BinaryNumeric(OpCode.Sub);
+				case ILOpCode.Sub_Ovf:
+					return BinaryNumeric(OpCode.Sub, OverflowMode.Ovf);
+				case ILOpCode.Sub_Ovf_Un:
+					return BinaryNumeric(OpCode.Sub, OverflowMode.Ovf_Un);
+				case ILOpCode.Switch:
+					throw new NotImplementedException();
+				case ILOpCode.Xor:
+					return BinaryNumeric(OpCode.BitXor);
 				case ILOpCode.Box:
 					throw new NotImplementedException();
 				case ILOpCode.Castclass:
@@ -389,7 +447,9 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Initobj:
 					throw new NotImplementedException();
 				case ILOpCode.Isinst:
-					throw new NotImplementedException();
+					stack.PopOrDefault();
+					stack.Push(StackType.O);
+					return new IsInst((TypeReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldelem:
 				case ILOpCode.Ldelem_I1:
 				case ILOpCode.Ldelem_I2:
@@ -465,13 +525,30 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stobj:
 					throw new NotImplementedException();
 				case ILOpCode.Throw:
-					throw new NotImplementedException();
+					stack.PopOrDefault();
+					return new ThrowInstruction();
 				case ILOpCode.Unbox:
-				case ILOpCode.Unbox_Any:
 					throw new NotImplementedException();
+				case ILOpCode.Unbox_Any:
+					return DecodeUnboxAny();
 				default:
 					throw new NotImplementedException(ilOpCode.ToString());
 			}
+		}
+
+		private ILInstruction DecodeUnboxAny()
+		{
+			TypeReference typeRef = (TypeReference)ReadAndDecodeMetadataToken();
+			stack.PopOrDefault();
+			stack.Push(typeRef.GetStackType());
+			return new UnboxAny(typeRef);
+		}
+
+		private ILInstruction LdInd(TypeReference typeRef)
+		{
+			stack.PopOrDefault();	// pointer
+			stack.Push(typeRef.GetStackType());
+			return new LoadIndirect(typeRef);
 		}
 
 		private ILInstruction Shift(OpCode opCode, OverflowMode overflowMode = OverflowMode.None)
@@ -482,12 +559,12 @@ namespace ICSharpCode.Decompiler.IL
 			return new BinaryNumericInstruction(opCode, valueType, overflowMode);
 		}
 
-		private ILInstruction Ret()
+		private ILInstruction Return()
 		{
 			if (body.Method.ReturnType.GetStackType() == StackType.Void)
-				return new RetVoid();
+				return new ReturnVoidInstruction();
 			else
-				return new Ret();
+				return new ReturnInstruction();
 		}
 
 		private ILInstruction UnaryNumeric(OpCode opCode)
@@ -595,17 +672,18 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction Conv(PrimitiveType targetType, OverflowMode mode)
 		{
 			StackType from = stack.PopOrDefault();
+			stack.Push(targetType.GetStackType());
 			return new ConvInstruction(from, targetType, mode);
 		}
 
 		ILInstruction DecodeCall(OpCode opCode)
 		{
 			var method = (MethodReference)ReadAndDecodeMetadataToken();
-			int numPopCalls = Math.Min(stack.Count, method.GetPopAmount());
-			for (int i = 0; i < numPopCalls; i++) {
+			var inst = new CallInstruction(opCode, method);
+			for (int i = 0; i < inst.Operands.Length; i++) {
 				stack.Pop();
 			}
-			var returnType = method.ReturnType.GetStackType();
+			var returnType = (opCode == OpCode.NewObj ? method.DeclaringType : method.ReturnType).GetStackType();
 			if (returnType != StackType.Void)
 				stack.Push(returnType);
 			return new CallInstruction(opCode, method);
@@ -629,29 +707,32 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			int start = reader.Position - 1;
 			var condition = Comparison(comparisonOpCodeForInts, comparisonOpCodeForFloats);
-			int target = start + (shortForm ? reader.ReadSByte() : reader.ReadInt32());
+			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
+			target += reader.Position;
 			condition.ILRange = new Interval(start, reader.Position);
 			if (negate) {
 				condition = new LogicNotInstruction { Operand = condition };
 			}
+			stack.PopOrDefault();
 			return new ConditionalBranch(condition, target);
 		}
 
 		ILInstruction DecodeConditionalBranch(bool shortForm, bool negate)
 		{
-			int start = reader.Position - 1;
-			int target = start + (shortForm ? reader.ReadSByte() : reader.ReadInt32());
+			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
+			target += reader.Position;
 			ILInstruction condition = ILInstruction.Pop;
 			if (negate) {
 				condition = new LogicNotInstruction { Operand = condition };
 			}
+			stack.PopOrDefault();
 			return new ConditionalBranch(condition, target);
 		}
 
 		ILInstruction DecodeUnconditionalBranch(bool shortForm, OpCode opCode)
 		{
-			int start = reader.Position - 1;
-			int target = start + (shortForm ? reader.ReadSByte() : reader.ReadInt32());
+			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
+			target += reader.Position;
 			return new Branch(opCode, target);
 		}
 

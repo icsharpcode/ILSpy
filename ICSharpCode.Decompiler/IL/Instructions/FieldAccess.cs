@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	class StoreInstanceField(FieldReference field, OpCode opCode = OpCode.Ldfld) : BinaryInstruction(opCode), ISupportsVolatilePrefix
+	class StoreInstanceField(FieldReference field, OpCode opCode = OpCode.Stfld) : BinaryInstruction(opCode), ISupportsVolatilePrefix
 	{
 		public readonly FieldReference Field = field;
 

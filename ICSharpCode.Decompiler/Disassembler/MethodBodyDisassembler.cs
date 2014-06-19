@@ -100,12 +100,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 					output.WriteLine();
 				}
-				if (method.Body.HasExceptionHandlers) {
+				WriteExceptionHandlers(body);
+			}
+		}
+
+		internal void WriteExceptionHandlers(MethodBody body)
+		{
+			if (body.HasExceptionHandlers) {
+				output.WriteLine();
+				foreach (var eh in body.ExceptionHandlers) {
+					eh.WriteTo(output);
 					output.WriteLine();
-					foreach (var eh in method.Body.ExceptionHandlers) {
-						eh.WriteTo(output);
-						output.WriteLine();
-					}
 				}
 			}
 		}

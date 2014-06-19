@@ -51,6 +51,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output)
 		{
+			output.Write("ldstr ");
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
 	}
@@ -59,6 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output)
 		{
+			output.Write("ldc.i4 ");
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
 	}
@@ -67,14 +69,16 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output)
 		{
+			output.Write("ldc.i8 ");
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
 	}
 
-	class ConstantFloat(public readonly double Value) : SimpleInstruction(OpCode.LdcI8)
+	class ConstantFloat(public readonly double Value) : SimpleInstruction(OpCode.LdcF)
 	{
 		public override void WriteTo(ITextOutput output)
 		{
+			output.Write("ldc.f ");
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
 	}

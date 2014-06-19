@@ -11,11 +11,14 @@ namespace ICSharpCode.Decompiler.IL
 	class CallInstruction(OpCode opCode, MethodReference methodReference) : ILInstruction(opCode)
 	{
 		public readonly MethodReference Method = methodReference;
-		public readonly ILInstruction[] Operands = InitOperands(methodReference);
+		public readonly ILInstruction[] Operands = InitOperands(opCode, methodReference);
 
-		static ILInstruction[] InitOperands(MethodReference mr)
+		static ILInstruction[] InitOperands(OpCode opCode, MethodReference mr)
 		{
-			ILInstruction[] operands = new ILInstruction[mr.GetPopAmount()];
+			int popCount = mr.Parameters.Count;
+			if (opCode != OpCode.NewObj && mr.HasThis)
+				popCount++;
+			ILInstruction[] operands = new ILInstruction[popCount];
 			for (int i = 0; i < operands.Length; i++) {
 				operands[i] = Pop;
 			}
@@ -28,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			get
 			{
-				return Method.ReturnType.GetStackType() == StackType.Void;
+				return OpCode != OpCode.NewObj && Method.ReturnType.GetStackType() == StackType.Void;
 			}
 		}
 

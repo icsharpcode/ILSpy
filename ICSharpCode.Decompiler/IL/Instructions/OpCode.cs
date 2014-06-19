@@ -182,7 +182,7 @@ namespace ICSharpCode.Decompiler.IL
 		LdNull,
 		/// <summary>
 		/// Returns from the current method or lambda.
-		/// <see cref="IL.RetVoid"/> or <see cref="IL.Ret"/>, depending on whether
+		/// <see cref="IL.ReturnVoidInstruction"/> or <see cref="IL.ReturnInstruction"/>, depending on whether
 		/// the method has return type void.
 		/// </summary>
 		Ret,
@@ -218,5 +218,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// Store to static field. <see cref="StoreStaticField"/>
 		/// </summary>
 		Stsfld,
+		/// <summary>
+		/// Test if object is instance of class or interface. <see cref="IL.IsInst"/>
+		/// </summary>
+		IsInst,
+		LdInd,
+		UnboxAny,
+		NewObj,
+		Throw,
 	}
 }

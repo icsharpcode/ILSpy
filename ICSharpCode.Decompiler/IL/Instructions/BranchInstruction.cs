@@ -56,12 +56,17 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	class RetVoid() : SimpleInstruction(OpCode.Ret)
+	class ReturnVoidInstruction() : SimpleInstruction(OpCode.Ret)
 	{
 		public override bool IsEndReachable { get { return false; } }
 	}
 
-	class Ret() : UnaryInstruction(OpCode.Ret)
+	class ReturnInstruction() : UnaryInstruction(OpCode.Ret)
+	{
+		public override bool IsEndReachable { get { return false; } }
+	}
+
+	class ThrowInstruction() : UnaryInstruction(OpCode.Throw)
 	{
 		public override bool IsEndReachable { get { return false; } }
 	}

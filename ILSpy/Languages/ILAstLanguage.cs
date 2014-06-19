@@ -105,6 +105,13 @@ namespace ICSharpCode.ILSpy
 			return output.ToString();
 		}
 
+		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		{
+			base.DecompileMethod(method, output, options);
+			new ReflectionDisassembler(output, false, options.CancellationToken).DisassembleMethodHeader(method);
+			output.WriteLine();
+        }
+
 		class TypedIL() : ILAstLanguage("Typed IL")
 		{
 			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
@@ -112,13 +119,8 @@ namespace ICSharpCode.ILSpy
 				base.DecompileMethod(method, output, options);
 				if (!method.HasBody)
 					return;
-				ILReader reader = new ILReader(method.Body);
-				foreach (var inst in reader.ReadInstructions()) {
-					output.WriteDefinition("IL_" + inst.ILRange.Start.ToString("x2"), inst.ILRange.Start);
-					output.Write(": ");
-					inst.WriteTo(output);
-					output.WriteLine();
-				}
+				ILReader reader = new ILReader(method.Body, options.CancellationToken);
+				reader.WriteTypedIL(output);
 			}
 		}
     }

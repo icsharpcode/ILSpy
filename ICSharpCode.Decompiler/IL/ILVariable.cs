@@ -16,14 +16,18 @@ namespace ICSharpCode.Decompiler.IL
 
 	class ILVariable(public readonly VariableKind Kind, public readonly TypeReference Type, public readonly int Index)
 	{
+		readonly object CecilObject;
+		
 		public ILVariable(VariableDefinition v)
 			: this(VariableKind.Local, v.VariableType, v.Index)
 		{
+			this.CecilObject = v;
 		}
 
 		public ILVariable(ParameterDefinition p)
 			: this(VariableKind.Parameter, p.ParameterType, p.Index)
 		{
+			this.CecilObject = p;
 		}
 
 		public override string ToString()
@@ -32,10 +36,17 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.Local:
 					return "V_" + Index.ToString();
 				case VariableKind.Parameter:
+					if (Index == -1)
+						return "this";
 					return "P_" + Index.ToString();
 				default:
 					return Kind.ToString();
 			}
+		}
+
+		internal void WriteTo(ITextOutput output)
+		{
+			output.WriteReference(this.ToString(), CecilObject ?? this, isLocal: true);
 		}
 	}
 }
