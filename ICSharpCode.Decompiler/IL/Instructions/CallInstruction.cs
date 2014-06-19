@@ -72,5 +72,33 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			output.Write(')');
 		}
+
+		public override InstructionFlags Flags
+		{
+			get
+			{
+				InstructionFlags flags = InstructionFlags.SideEffects | InstructionFlags.MayThrow;
+				for (int i = 0; i < Operands.Length; i++) {
+					flags |= Operands[i].Flags;
+				}
+				return flags;
+			}
+		}
+
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			InstructionFlags operandFlags = InstructionFlags.None;
+			for (int i = 0; i < Operands.Length - 1; i++) {
+				operandFlags |= Operands[i].Flags;
+			}
+			flagsBefore |= operandFlags & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop);
+			finished = true;
+			for (int i = Operands.Length - 1; i >= 0; i--) {
+				Operands[i] = Operands[i].Inline(flagsBefore, instructionStack, out finished);
+				if (!finished)
+					break;
+			}
+			return this;
+        }
 	}
 }

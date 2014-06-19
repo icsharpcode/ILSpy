@@ -226,5 +226,13 @@ namespace ICSharpCode.Decompiler.IL
 		UnboxAny,
 		NewObj,
 		Throw,
+		/// <summary>
+		/// A block of IL instructions. <see cref="IL.Block"/>
+		/// </summary>
+		Block,
+		/// <summary>
+		/// A container of IL blocks. <see cref="IL.BlockContainer"/>
+		/// </summary>
+		BlockContainer,
 	}
 }

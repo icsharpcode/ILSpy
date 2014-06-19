@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	class LoadStaticField(FieldReference field, OpCode opCode = OpCode.Ldsfld) : UnaryInstruction(opCode), ISupportsVolatilePrefix
+	class LoadStaticField(FieldReference field, OpCode opCode = OpCode.Ldsfld) : SimpleInstruction(opCode), ISupportsVolatilePrefix
 	{
 		public readonly FieldReference Field = field;
 
@@ -20,6 +20,11 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Field);
+		}
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.SideEffects; }
 		}
 	}
 
@@ -42,6 +47,11 @@ namespace ICSharpCode.Decompiler.IL
 			Operand.WriteTo(output);
 			output.Write(')');
 		}
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.SideEffects | Operand.Flags; }
+		}
 	}
 
 	class LoadInstanceField(FieldReference field, OpCode opCode = OpCode.Ldfld) : UnaryInstruction(opCode), ISupportsVolatilePrefix
@@ -60,6 +70,11 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('(');
 			Operand.WriteTo(output);
 			output.Write(')');
+		}
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.SideEffects | InstructionFlags.MayThrow | Operand.Flags; }
 		}
 	}
 
@@ -83,6 +98,11 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(", ");
 			Right.WriteTo(output);
 			output.Write(')');
+		}
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.SideEffects | InstructionFlags.MayThrow | Left.Flags | Right.Flags; }
 		}
 	}
 }

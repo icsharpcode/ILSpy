@@ -1,0 +1,85 @@
+The first step ICSharpCode.Decompiler performs to decompile a method is to
+translate the IL code into the 'ILAst'.
+
+An ILAst node (ILExpression in the code) usually has other nodes as arguments,
+and performs a computation with the result of those arguments.
+
+A result of a node is either
+ * a value (which can be computed on)
+ * void (which is invalid as an argument, but nodes in blocks may produce void results)
+ * a thrown exception (which stops further evaluation until a matching catch block)
+ * the execution of a branch instruction (which also stops evaluation until we reach the block container that contains the branch target)
+
+An ILAst node may also access the IL evaluation stack. When discussing this stack, we will use the notation
+[2, 1, ...] to mean the stack where the value '2' is on top.
+The IL evaluation stack is manipulated by the following instructions:
+ * Peek - returns value on top of stack as result, leaves stack unmodified
+ * Pop - returns value on top of stack as result, pops the value from the stack
+
+An IL block will evaluate all instructions contained in the block, and will implicitly push the result
+of every instruction to the stack (only if the result is a value).
+For example, starting with an empty stack [], execution of the block:
+	{
+		ldc.i4 1
+		ldc.i4 2
+	}
+will result in the stack [2, 1].
+
+Initially, every IL instruction is converted to a corresponding ILAst instruction that uses 'Pop' instructions as arguments.
+For example, IL 'sub' will become 'sub(pop, pop)'.
+
+This actually poses a problem for the ILAst semantics - we want evaluation as the arguments to happen
+left-to-right (as in C#). Yet, to correctly model the semantics of the IL 'sub' instruction, we need to
+pop all the arguments at once without reversing them.
+Starting with the stack [2, 1], the IL 'sub' instruction produces the result -1!
+But if we evaluated the pop instructions in the left-to-right order, we would get sub(2, 1) = +1.
+
+To demonstrate the effect of the evaluation order, we will use a squaring function with the side
+effect of logging the operation to the console:
+ 'int square(int val) { Console.WriteLine("{0} squared is {1}", val, val * val); return val*val; }':
+
+Now, the ILAst instruction 'add(square(2), square(3))' will produce the output
+	2 squared is 4
+	3 squared is 9
+and produces the result 13. Note that the evaluation here happens from left to right.
+
+However, consider the program:
+	'add(square(pop), square(pop))'
+starting with the stack [3, 2].
+We want our ILAst instruction to have the same effect as an IL instruction, essentially 'popping all the necessary values at once'.
+This means the expected result is the same as with 'add(square(2), square(3))'.
+Despite the square calls happening left-to-right, we need to execute the pop instructions right-to-left!
+
+Logically, we consider 'pop' to not really be an ILAst instruction, but more like a placeholder for filling in a stack value.
+Therefore, we define the semantics of ILAst instructions in two phases:
+  * Phase 1: a right-to-left pass replacing the 'pop' instructions with the values from the stack
+  * Phase 2: a left-to-right pass performing the actual evaluation.
+
+Things become even more tricky if we allow for inline blocks within expressions. These may occur for some C# language
+constructs like object initializers.
+For example, consider the ILAst for 'new List<int> { 1 }.Length':
+
+	call get_Length(
+		{	newobj List<int>()
+			call Add(peek, ldc.i4 1)
+		}) // inline blocks evaluate to the value they pushed onto the stack
+
+When evaluating the 'call get_Length' instruction, in phase 1 we cannot completely replace all
+'peek' and 'pop' instructions with values from the stack, because the List<int> object is not yet pushed to the stack.
+We use a simple solution to this problem: phase 1 does not traverse into blocks, and only replaces all peek/pop
+instructions reachable without entering a new block.
+When phase 2 of the call get_Length then actually evaluates the nested block, the block runs
+phase 1 for its first instruction, then phase 2 for the first instruction, then pushes the result (if its a value),
+and then starts the same process again at phase 1 for the second instruction.
+
+Note that this whole discussion was only necessary in order to have clear semantics for every possible ILAst.
+These tricky semantics are mostly irrelevant for the actual ILAsts occurring during decompilation.
+This is because initially all instructions start with their 'pop' placeholders being in a contiguous sequence
+at the beginning of their left-to-right evaluation order.
+Because the inlining step that takes an instruction from a block and uses it to replace the matching 'pop' placeholder
+in the following instruction has to put that instruction into the first 'pop' in phase1-order, it will always
+replace the right-most 'pop', which is the last 'pop' in phase-2 evaluation order. This means
+the remaining placeholders stay a contiguous sequence at the beginning of their left-to-right evaluation order.
+ 
+It does have some implications on inlining, though: we cannot inline blocks that look at more stack values
+than just the ones they push themselves.

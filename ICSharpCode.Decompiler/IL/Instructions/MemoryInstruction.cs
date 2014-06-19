@@ -1,4 +1,5 @@
-﻿using Mono.Cecil;
+﻿using ICSharpCode.Decompiler.Disassembler;
+using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -36,10 +37,15 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write("unaligned " + UnalignedPrefix + ".");
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, TypeReference);
+			TypeReference.WriteTo(output);
 			output.Write('(');
 			Operand.WriteTo(output);
 			output.Write(')');
+		}
+
+		public override InstructionFlags Flags
+		{
+			get { return Operand.Flags | InstructionFlags.SideEffects; }
 		}
 	}
 }

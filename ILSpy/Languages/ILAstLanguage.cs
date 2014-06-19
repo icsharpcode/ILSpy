@@ -82,6 +82,8 @@ namespace ICSharpCode.ILSpy
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
 		{
 			yield return new TypedIL();
+			yield return new BlockIL(false);
+			yield return new BlockIL(true);
 			//yield return new ILAstLanguage { name = "ILAst (unoptimized)", inlineVariables = false };
 			//string nextName = "ILAst (variable splitting)";
 			//foreach (ILAstOptimizationStep step in Enum.GetValues(typeof(ILAstOptimizationStep))) {
@@ -110,7 +112,8 @@ namespace ICSharpCode.ILSpy
 			base.DecompileMethod(method, output, options);
 			new ReflectionDisassembler(output, false, options.CancellationToken).DisassembleMethodHeader(method);
 			output.WriteLine();
-        }
+			output.WriteLine();
+		}
 
 		class TypedIL() : ILAstLanguage("Typed IL")
 		{
@@ -123,6 +126,18 @@ namespace ICSharpCode.ILSpy
 				reader.WriteTypedIL(output);
 			}
 		}
-    }
+
+		class BlockIL(private bool instructionInlining) : ILAstLanguage(instructionInlining ? "ILAst (blocks+inlining)" :  "ILAst (blocks)")
+		{
+			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+			{
+				base.DecompileMethod(method, output, options);
+				if (!method.HasBody)
+					return;
+				ILReader reader = new ILReader(method.Body, options.CancellationToken);
+				reader.WriteBlocks(output, instructionInlining);
+			}
+		}
+	}
 #endif
 }

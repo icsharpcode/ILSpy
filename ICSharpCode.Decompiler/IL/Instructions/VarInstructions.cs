@@ -12,6 +12,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Variable.WriteTo(output);
 		}
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.MayReadLocals; }
+		}
 	}
 
 	class LdLoca(public readonly ILVariable Variable) : SimpleInstruction(OpCode.LdLoca)
@@ -20,6 +25,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write("ldloca ");
 			Variable.WriteTo(output);
+		}
+
+		public override InstructionFlags Flags
+		{
+			get {
+				// the address of a local can be considered to be a constant
+				return InstructionFlags.None;
+			}
 		}
 	}
 
@@ -30,6 +43,11 @@ namespace ICSharpCode.Decompiler.IL
 			Variable.WriteTo(output);
 			output.Write(" = ");
 			Operand.WriteTo(output);
+		}
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.MayWriteLocals | Operand.Flags; }
 		}
 	}
 }

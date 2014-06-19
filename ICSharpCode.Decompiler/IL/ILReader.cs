@@ -114,6 +114,18 @@ namespace ICSharpCode.Decompiler.IL
 			new Disassembler.MethodBodyDisassembler(output, false, cancellationToken).WriteExceptionHandlers(body);
 		}
 
+		public void WriteBlocks(ITextOutput output, bool instructionInlining)
+		{
+			CreateBlocks(instructionInlining).WriteTo(output);
+        }
+
+		BlockContainer CreateBlocks(bool instructionInlining)
+		{
+			if (instructionBuilder == null)
+				ReadInstructions(null);
+			return new BlockBuilder(body, instructionInlining).CreateBlocks(instructionBuilder, isBranchTarget);
+        }
+
 		ILInstruction DecodeInstruction()
 		{
 			var ilOpCode = ReadOpCode(ref reader);

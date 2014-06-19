@@ -32,6 +32,17 @@ namespace ICSharpCode.Decompiler.IL
 		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
 		{
 		}
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.MayJump; }
+		}
+
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			finished = true;
+			return this;
+		}
 	}
 
 	/// <summary>
@@ -54,20 +65,46 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Condition = transformFunc(Condition);
 		}
+
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			Condition = Condition.Inline(flagsBefore, instructionStack, out finished);
+			return this;
+		}
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.MayJump | Condition.Flags; }
+		}
 	}
 
 	class ReturnVoidInstruction() : SimpleInstruction(OpCode.Ret)
 	{
 		public override bool IsEndReachable { get { return false; } }
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.MayJump; }
+		}
 	}
 
 	class ReturnInstruction() : UnaryInstruction(OpCode.Ret)
 	{
 		public override bool IsEndReachable { get { return false; } }
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.MayJump | Operand.Flags; }
+		}
 	}
 
 	class ThrowInstruction() : UnaryInstruction(OpCode.Throw)
 	{
 		public override bool IsEndReachable { get { return false; } }
+
+		public override InstructionFlags Flags
+		{
+			get { return InstructionFlags.MayJump | Operand.Flags; }
+		}
 	}
 }

@@ -55,26 +55,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (method.DeclaringType.Module.Assembly != null && method.DeclaringType.Module.Assembly.EntryPoint == method)
 				output.WriteLine(".entrypoint");
 
-			if (method.Body.HasVariables) {
-				output.Write(".locals ");
-				if (method.Body.InitLocals)
-					output.Write("init ");
-				output.WriteLine("(");
-				output.Indent();
-				foreach (var v in method.Body.Variables) {
-					output.WriteDefinition("[" + v.Index + "] ", v);
-					v.VariableType.WriteTo(output);
-					if (!string.IsNullOrEmpty(v.Name)) {
-						output.Write(' ');
-						output.Write(DisassemblerHelpers.Escape(v.Name));
-					}
-					if (v.Index + 1 < method.Body.Variables.Count)
-						output.Write(',');
-					output.WriteLine();
-				}
-				output.Unindent();
-				output.WriteLine(")");
-			}
+			DisassembleLocalsBlock(body);
 			output.WriteLine();
 
 			if (detectControlStructure && body.Instructions.Count > 0) {
@@ -101,6 +82,30 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.WriteLine();
 				}
 				WriteExceptionHandlers(body);
+			}
+		}
+
+		private void DisassembleLocalsBlock(MethodBody body)
+		{
+			if (body.HasVariables) {
+				output.Write(".locals ");
+				if (body.InitLocals)
+					output.Write("init ");
+				output.WriteLine("(");
+				output.Indent();
+				foreach (var v in body.Variables) {
+					output.WriteDefinition("[" + v.Index + "] ", v);
+					v.VariableType.WriteTo(output);
+					if (!string.IsNullOrEmpty(v.Name)) {
+						output.Write(' ');
+						output.Write(DisassemblerHelpers.Escape(v.Name));
+					}
+					if (v.Index + 1 < body.Variables.Count)
+						output.Write(',');
+					output.WriteLine();
+				}
+				output.Unindent();
+				output.WriteLine(")");
 			}
 		}
 

@@ -45,10 +45,21 @@ namespace ICSharpCode.Decompiler.IL
 			get { return true; }
 		}
 
+		public abstract InstructionFlags Flags { get; }
+
 		public virtual void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 		}
+
+		/// <summary>
+		/// Attempts inlining from the instruction stack into this instruction.
+		/// </summary>
+		/// <param name="flagsBefore">Combined instruction flags of the instructions
+		/// that the instructions getting inlined would get moved over.</param>
+		/// <param name="instructionStack">The instruction stack.</param>
+		/// <param name="finished">Receives 'true' if all open 'pop' or 'peek' placeholders were inlined into; false otherwise.</param>
+		internal abstract ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished);
 
 		public abstract void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc);
 	}

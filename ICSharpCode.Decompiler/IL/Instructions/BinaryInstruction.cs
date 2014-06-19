@@ -18,6 +18,15 @@ namespace ICSharpCode.Decompiler.IL
 			Left = transformFunc(Left);
 			Right = transformFunc(Right);
 		}
+
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			InstructionFlags flagsBeforeRight = flagsBefore | (Left.Flags & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop));
+            Right = Right.Inline(flagsBeforeRight, instructionStack, out finished);
+			if (finished)
+				Left = Left.Inline(flagsBefore, instructionStack, out finished);
+			return this;
+		}
 	}
 
 	class BinaryNumericInstruction(OpCode opCode, StackType opType, OverflowMode overflowMode)
@@ -38,6 +47,11 @@ namespace ICSharpCode.Decompiler.IL
 			Right.WriteTo(output);
 			output.Write(')');
 		}
+
+		public override InstructionFlags Flags
+		{
+			get { return Left.Flags | Right.Flags | InstructionFlags.MayThrow; }
+		}
 	}
 
 	class BinaryComparisonInstruction(OpCode opCode, StackType opType)
@@ -55,6 +69,11 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(", ");
 			Right.WriteTo(output);
 			output.Write(')');
+		}
+
+		public override InstructionFlags Flags
+		{
+			get { return Left.Flags | Right.Flags; }
 		}
 	}
 

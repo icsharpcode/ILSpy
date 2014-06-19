@@ -70,6 +70,7 @@
     <Compile Include="Disassembler\ILStructure.cs" />
     <Compile Include="Disassembler\MethodBodyDisassembler.cs" />
     <Compile Include="Disassembler\ReflectionDisassembler.cs" />
+    <Compile Include="IL\SemanticHelper.cs" />
     <Compile Include="IL\BlockBuilder.cs" />
     <Compile Include="IL\ILOpCodes.cs">
       <AutoGen>True</AutoGen>
@@ -79,6 +80,7 @@
     <Compile Include="IL\ILReader.cs" />
     <Compile Include="IL\ILTypeExtensions.cs" />
     <Compile Include="IL\ILVariable.cs" />
+    <Compile Include="IL\InstructionFlags.cs" />
     <Compile Include="IL\InstructionOutputExtensions.cs" />
     <Compile Include="IL\Instructions\BinaryInstruction.cs" />
     <Compile Include="IL\Instructions\Block.cs" />
