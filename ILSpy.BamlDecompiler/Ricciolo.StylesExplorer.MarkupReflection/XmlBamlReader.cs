@@ -1746,11 +1746,39 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				XmlBamlNode node = this.CurrentNode;
 				if (node is XmlBamlSimpleProperty)
 					return ((XmlBamlSimpleProperty)node).Value;
-				else if (node is XmlBamlProperty)
-					return ((XmlBamlProperty)node).Value.ToString();
-				else if (node is XmlBamlText)
+
+				if (node is XmlBamlProperty)
+				{
+					var text = ((XmlBamlProperty)node).Value.ToString();
+					if (text.Contains('{'))
+					{
+						if (text.StartsWith("{x:Type ") ||
+							text.StartsWith("{x:Static ") ||
+							text.StartsWith("{x:Null ") ||
+							text.StartsWith("{x:Array ") ||
+							text.StartsWith("{StaticResource ") ||
+							text.StartsWith("{DynamicResource ") ||
+							text.StartsWith("{Binding ") ||
+							text.StartsWith("{RelativeSource ") ||
+							text.StartsWith("{TemplateBinding ") ||
+							text.StartsWith("{ColorConvertedBitmap ") ||
+							text.StartsWith("{ComponentResourceKey ") ||
+							text.StartsWith("{ThemeDictionary "))
+						{
+							// ignore markup extensions, http://msdn.microsoft.com/en-us/library/ms747254(v=vs.110).aspx
+							return text;
+						}
+
+						return "{}" + text;
+					}
+
+					return text;
+				}
+
+				if (node is XmlBamlText)
 					return ((XmlBamlText)node).Text;
-				else if (node is XmlBamlElement)
+
+				if (node is XmlBamlElement)
 					return String.Empty;
 
 				return String.Empty;
