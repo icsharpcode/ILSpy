@@ -70,6 +70,7 @@
     <Compile Include="Disassembler\ILStructure.cs" />
     <Compile Include="Disassembler\MethodBodyDisassembler.cs" />
     <Compile Include="Disassembler\ReflectionDisassembler.cs" />
+    <Compile Include="IL\Instructions\ArrayInstructions.cs" />
     <Compile Include="IL\SemanticHelper.cs" />
     <Compile Include="IL\BlockBuilder.cs" />
     <Compile Include="IL\ILOpCodes.cs">

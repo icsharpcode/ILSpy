@@ -234,5 +234,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// A container of IL blocks. <see cref="IL.BlockContainer"/>
 		/// </summary>
 		BlockContainer,
+		/// <summary>
+		/// Returns the length of an array as 'native unsigned int'.
+		/// </summary>
+		LdLen,
 	}
 }

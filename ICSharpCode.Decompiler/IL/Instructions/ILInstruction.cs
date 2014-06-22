@@ -11,7 +11,6 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public abstract class ILInstruction(public readonly OpCode OpCode)
 	{
-		public static readonly ILInstruction Nop = new Nop();
 		public static readonly ILInstruction Pop = new Pop();
 
 		/// <summary>

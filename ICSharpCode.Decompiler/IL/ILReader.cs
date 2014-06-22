@@ -493,7 +493,9 @@ namespace ICSharpCode.Decompiler.IL
 					stack.PopOrDefault();
 					return new StoreInstanceField((FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldlen:
-					throw new NotImplementedException();
+					stack.PopOrDefault();
+					stack.Push(StackType.I);
+					return new LdLen();
 				case ILOpCode.Ldobj:
 					throw new NotImplementedException();
 				case ILOpCode.Ldsfld:
