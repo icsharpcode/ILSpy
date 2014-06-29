@@ -2,8 +2,8 @@
 layout: default
 title: ILSpy
 subtitle: .NET Decompiler
-binaryDownload: http://sourceforge.net/projects/sharpdevelop/files/ILSpy/2.0/ILSpy_Master_2.1.0.1603_RTW_Binaries.zip/download
-sourceDownload: http://sourceforge.net/projects/sharpdevelop/files/ILSpy/2.0/ILSpy_Master_2.1.0.1603_RTW_Source.zip/download
+binaryDownload: https://github.com/icsharpcode/ILSpy/releases/download/2.2/ILSpy_2.2.0.1706_Binaries.zip
+sourceDownload: https://github.com/icsharpcode/ILSpy/releases/download/2.2/ILSpy_2.2.0.1706_Source.zip
 ---
 
 ILSpy is the open-source .NET assembly browser and decompiler.
@@ -25,6 +25,7 @@ Important links:
 Want to know when major new features are added? When a new stable version is released?
 [Follow us on Twitter!](http://twitter.com/ilspy)
 
+* 6/29/2014 [Version 2.2](http://community.sharpdevelop.net/blogs/danielgrunwald/archive/2014/06/29/ilspy-2-2-release.aspx)
 * 6/3/2012 [Version 2.1](http://community.sharpdevelop.net/blogs/christophwille/archive/2012/06/03/ilspy-2-1-async-await-decompilation-support.aspx)
 * 4/15/2012 [Version 2.0](http://community.sharpdevelop.net/blogs/christophwille/archive/2012/04/15/ilspy-2-0-final.aspx)
 * 2/16/2012 [2.0 Beta](http://community.sharpdevelop.net/blogs/danielgrunwald/archive/2012/02/16/ilspy-2-0-beta-1.aspx)
