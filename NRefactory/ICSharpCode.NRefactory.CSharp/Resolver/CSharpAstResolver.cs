@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -166,7 +166,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				try {
 					ResolveResult rr = resolveVisitor.GetResolveResult(node);
 					if (rr == null)
-						Debug.Fail (node.GetType () + " resolved to null.", node.StartLocation + ":'" + node.GetText () + "'");
+						Debug.Fail (node.GetType () + " resolved to null.", node.StartLocation + ":'" + node.ToString () + "'");
 					return rr;
 				} finally {
 					resolveVisitor.cancellationToken = CancellationToken.None;
@@ -231,7 +231,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		ResolveVisitor.ConversionWithTargetType GetConversionWithTargetType(Expression expr, CancellationToken cancellationToken)
 		{
 			if (expr == null || expr.IsNull)
-				throw new ArgumentNullException("expr");
+				return new ResolveVisitor.ConversionWithTargetType(Conversion.None, SpecialType.UnknownType);
 			lock (resolveVisitor) {
 				InitResolver();
 				resolveVisitor.cancellationToken = cancellationToken;
@@ -244,7 +244,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		}
 		
 		/// <summary>
-		/// Gets the expected type for the specified node. This is the type being that a node is being converted to.
+		/// Gets the expected type for the specified node. This is the type that a node is being converted to.
 		/// </summary>
 		public IType GetExpectedType(Expression expr, CancellationToken cancellationToken = default(CancellationToken))
 		{

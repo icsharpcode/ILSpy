@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -18,16 +18,44 @@
 
 using System;
 using System.Globalization;
+using ICSharpCode.NRefactory.Utils;
 
 namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 {
 	[Serializable]
-	public sealed class TypeParameterReference : ITypeReference, ISupportsInterning
+	public sealed class TypeParameterReference : ITypeReference, ISymbolReference
 	{
-		readonly EntityType ownerType;
-		readonly int index;
+		static readonly TypeParameterReference[] classTypeParameterReferences = new TypeParameterReference[8];
+		static readonly TypeParameterReference[] methodTypeParameterReferences = new TypeParameterReference[8];
 		
-		public TypeParameterReference(EntityType ownerType, int index)
+		/// <summary>
+		/// Creates a type parameter reference.
+		/// For common type parameter references, this method may return a shared instance.
+		/// </summary>
+		public static TypeParameterReference Create(SymbolKind ownerType, int index)
+		{
+			if (index >= 0 && index < 8 && (ownerType == SymbolKind.TypeDefinition || ownerType == SymbolKind.Method)) {
+				TypeParameterReference[] arr = (ownerType == SymbolKind.TypeDefinition) ? classTypeParameterReferences : methodTypeParameterReferences;
+				TypeParameterReference result = LazyInit.VolatileRead(ref arr[index]);
+				if (result == null) {
+					result = LazyInit.GetOrSet(ref arr[index], new TypeParameterReference(ownerType, index));
+				}
+				return result;
+			} else {
+				return new TypeParameterReference(ownerType, index);
+			}
+		}
+		
+		readonly SymbolKind ownerType;
+		readonly int index;
+
+		public int Index {
+			get {
+				return index;
+			}
+		}
+
+		public TypeParameterReference(SymbolKind ownerType, int index)
 		{
 			this.ownerType = ownerType;
 			this.index = index;
@@ -35,13 +63,13 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		public IType Resolve(ITypeResolveContext context)
 		{
-			if (ownerType == EntityType.Method) {
+			if (ownerType == SymbolKind.Method) {
 				IMethod method = context.CurrentMember as IMethod;
 				if (method != null && index < method.TypeParameters.Count) {
 					return method.TypeParameters[index];
 				}
 				return DummyTypeParameter.GetMethodTypeParameter(index);
-			} else if (ownerType == EntityType.TypeDefinition) {
+			} else if (ownerType == SymbolKind.TypeDefinition) {
 				ITypeDefinition typeDef = context.CurrentTypeDefinition;
 				if (typeDef != null && index < typeDef.TypeParameters.Count) {
 					return typeDef.TypeParameters[index];
@@ -52,24 +80,14 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			}
 		}
 		
-		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)
+		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
 		{
-		}
-		
-		int ISupportsInterning.GetHashCodeForInterning()
-		{
-			return index * 33 + (int)ownerType;
-		}
-		
-		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
-		{
-			TypeParameterReference r = other as TypeParameterReference;
-			return r != null && index == r.index && ownerType == r.ownerType;
+			return Resolve(context) as ISymbol;
 		}
 		
 		public override string ToString()
 		{
-			if (ownerType == EntityType.Method)
+			if (ownerType == SymbolKind.Method)
 				return "!!" + index.ToString(CultureInfo.InvariantCulture);
 			else
 				return "!" + index.ToString(CultureInfo.InvariantCulture);

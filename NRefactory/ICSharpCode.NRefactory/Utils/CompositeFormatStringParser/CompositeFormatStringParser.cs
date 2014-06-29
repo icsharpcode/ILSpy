@@ -67,8 +67,8 @@ namespace ICSharpCode.NRefactory.Utils
 				if (i < format.Length && format [i] == '{') {
 					int formatItemStart = i;
 					int index;
-					int? alignment = null;
-					string argumentFormat = null;
+					int? alignment;
+					string argumentFormat;
 					var textSegmentErrors = new List<IFormatStringError>(GetErrors());
 
 					// Try to parse the parts of the format item
@@ -83,26 +83,30 @@ namespace ICSharpCode.NRefactory.Utils
 					CheckForMissingEndBrace (format, i, length);
 
 					// Check what we parsed
-					if (i == formatItemStart + 1 && (i == length || (i < length && format [i] != '}'))) {
+					if (i == formatItemStart + 1 && (i == length || (i < length && format[i] != '}'))) {
 						// There were no format item after all, this was just an
-						// unescaped left brace
+						// unescaped left brace, or the initial brace of an escape sequence
 						SetErrors(textSegmentErrors);
-						AddError (new DefaultFormatStringError {
-							Message = "Unescaped '{'",
-							StartLocation = formatItemStart,
-							EndLocation = formatItemStart + 1,
-							OriginalText = "{",
-							SuggestedReplacementText = "{{"
-						});
+						if (i >= length || format[i] != '{') {
+							AddError (new DefaultFormatStringError {
+								Message = "Unescaped '{'",
+								StartLocation = formatItemStart,
+								EndLocation = formatItemStart + 1,
+								OriginalText = "{",
+								SuggestedReplacementText = "{{"
+							});
+						}
 						continue;
-					} else if (formatItemStart - textStart > 0) {
+					}
+
+					if (formatItemStart - textStart > 0) {
 						// We have parsed a format item, end the text segment
 						var textSegment = new TextSegment (UnEscape (format.Substring (textStart, formatItemStart - textStart)));
 						textSegment.Errors = textSegmentErrors;
 						result.Segments.Add (textSegment);
 					}
 					
-					// Unclosed format items in fixed text gets advances i one step too far
+					// Unclosed format items in fixed text advances i one step too far
 					if (i < length && format [i] != '}')
 						--i;
 
@@ -242,20 +246,22 @@ namespace ICSharpCode.NRefactory.Utils
 			parsedCharacters = numberText.Length;
 			int numberLength = 0;
 			int? number = GetNumber (numberText, ref numberLength);
-			var endingChar = index + numberLength;
 			if (numberLength != parsedCharacters && fieldEnd < format.Length && delimiters.Contains (format [fieldEnd])) {
 				// Not the entire number field could be parsed
 				// The field actually ended as intended, so set the index to the end of the field
 				index = fieldEnd;
 				var suggestedNumber = (number ?? 0).ToString ();
 				AddInvalidNumberFormatError (numberFieldStart, format.Substring (numberFieldStart, index - numberFieldStart), suggestedNumber);
-			} else if (numberLength != parsedCharacters) {
-				// Not the entire number field could be parsed
-				// The field didn't end, it was cut off so we are missing an ending brace
-				index = endingChar;
-				AddMissingEndBraceError (index, index, "Missing ending '}'", "");
 			} else {
-				index = endingChar;
+				var endingChar = index + numberLength;
+				if (numberLength != parsedCharacters) {
+					// Not the entire number field could be parsed
+					// The field didn't end, it was cut off so we are missing an ending brace
+					index = endingChar;
+					AddMissingEndBraceError (index, index, "Missing ending '}'", "");
+				} else {
+					index = endingChar;
+				}
 			}
 			return number;
 		}

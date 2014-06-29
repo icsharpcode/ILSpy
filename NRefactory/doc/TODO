@@ -1,8 +1,7 @@
 ﻿
 Parser:
 - put newlines into the AST
-- add API to report errors
-- allow multithreaded parsing
+- eliminate the global lock
 
 Type System:
 - Reduce memory usage
@@ -11,11 +10,4 @@ Type System:
 Resolver:
 - Port all #D resolver unit tests to NR
 - Port all MD resolver unit tests to NR
-
-Features:
-- Code Completion
-- Extract Method refactoring
-
-For integration into SharpDevelop:
-- Review NR and DOM changes done in the timeframe
 

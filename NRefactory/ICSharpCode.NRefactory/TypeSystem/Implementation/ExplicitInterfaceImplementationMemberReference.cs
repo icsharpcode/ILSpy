@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -60,16 +60,21 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			if (interfaceMember == null)
 				return null;
 			IEnumerable<IMember> members;
-			if (interfaceMember.EntityType == EntityType.Accessor) {
+			if (interfaceMember.SymbolKind == SymbolKind.Accessor) {
 				members = declaringType.GetAccessors(
 					m => m.IsExplicitInterfaceImplementation,
 					GetMemberOptions.IgnoreInheritedMembers);
 			} else {
 				members = declaringType.GetMembers(
-					m => m.EntityType == interfaceMember.EntityType && m.IsExplicitInterfaceImplementation,
+					m => m.SymbolKind == interfaceMember.SymbolKind && m.IsExplicitInterfaceImplementation,
 					GetMemberOptions.IgnoreInheritedMembers);
 			}
 			return members.FirstOrDefault(m => m.ImplementedInterfaceMembers.Count == 1 && interfaceMember.Equals(m.ImplementedInterfaceMembers[0]));
+		}
+		
+		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
+		{
+			return Resolve(context);
 		}
 	}
 }

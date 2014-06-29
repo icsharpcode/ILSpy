@@ -65,6 +65,15 @@ namespace ICSharpCode.NRefactory.CSharp
 			set { ThrowIfFrozen(); commentType = value; }
 		}
 		
+		/// <summary>
+		/// Returns true if the <see cref="CommentType"/> is Documentation or MultiLineDocumentation.
+		/// </summary>
+		public bool IsDocumentation {
+			get {
+				return commentType == CommentType.Documentation || commentType == CommentType.MultiLineDocumentation;
+			}
+		}
+		
 		bool startsLine;
 		
 		public bool StartsLine {

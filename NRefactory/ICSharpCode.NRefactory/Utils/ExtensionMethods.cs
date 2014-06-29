@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -24,7 +24,7 @@ namespace ICSharpCode.NRefactory.Utils
 	/// <summary>
 	/// Contains extension methods for use within NRefactory.
 	/// </summary>
-	internal static class ExtensionMethods
+	static class ExtensionMethods
 	{
 		public static void AddRange<T>(this ICollection<T> target, IEnumerable<T> input)
 		{

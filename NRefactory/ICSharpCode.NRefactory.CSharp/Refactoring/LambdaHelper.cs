@@ -25,6 +25,7 @@
 // THE SOFTWARE.
 
 using System.Linq;
+using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.CSharp.Resolver;
 using ICSharpCode.NRefactory.TypeSystem;
 
@@ -34,25 +35,17 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 	{
 		public static IType GetLambdaReturnType(RefactoringContext context, LambdaExpression lambda)
 		{
-			var parent = lambda.Parent;
-			while (parent is ParenthesizedExpression)
-				parent = parent.Parent;
-
-			ITypeDefinition delegateTypeDef;
-			if (parent is InvocationExpression) {
-				var invocation = (InvocationExpression)parent;
-				var argIndex = invocation.Arguments.TakeWhile (arg => !arg.Contains (lambda.StartLocation)).Count ();
-				var resolveResult = (CSharpInvocationResolveResult)context.Resolve (invocation);
-				delegateTypeDef = resolveResult.Arguments [argIndex].Type.GetDefinition ();
-			} else {
-				delegateTypeDef = context.Resolve (parent).Type.GetDefinition ();
+			LambdaResolveResult rr = context.Resolve(lambda) as LambdaResolveResult;
+			if (rr == null)
+				return SpecialType.UnknownType;
+			if (rr.IsAsync) {
+				// Unpack Task<T>
+				if (rr.ReturnType.IsKnownType(KnownTypeCode.Task))
+					return context.Compilation.FindType(KnownTypeCode.Void);
+				else if (rr.ReturnType.IsKnownType(KnownTypeCode.TaskOfT) && rr.ReturnType.IsParameterized)
+					return rr.ReturnType.TypeArguments[0];
 			}
-			if (delegateTypeDef == null)
-				return null;
-			var invokeMethod = delegateTypeDef.GetMethods (m => m.Name == "Invoke").FirstOrDefault ();
-			if (invokeMethod == null)
-				return null;
-			return invokeMethod.ReturnType;
+			return rr.ReturnType;
 		}
 	}
 }

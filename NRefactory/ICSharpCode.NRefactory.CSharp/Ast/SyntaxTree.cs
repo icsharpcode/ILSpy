@@ -105,27 +105,34 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 		}
 		
-		public IEnumerable<TypeDeclaration> GetTypes(bool includeInnerTypes = false)
+		/// <summary>
+		/// Gets all defined types in this syntax tree.
+		/// </summary>
+		/// <returns>
+		/// A list containing <see cref="TypeDeclaration"/> or <see cref="DelegateDeclaration"/> nodes.
+		/// </returns>
+		public IEnumerable<EntityDeclaration> GetTypes(bool includeInnerTypes = false)
 		{
 			Stack<AstNode> nodeStack = new Stack<AstNode> ();
 			nodeStack.Push(this);
 			while (nodeStack.Count > 0) {
 				var curNode = nodeStack.Pop();
-				if (curNode is TypeDeclaration) {
-					yield return (TypeDeclaration)curNode;
+				if (curNode is TypeDeclaration || curNode is DelegateDeclaration) {
+					yield return (EntityDeclaration)curNode;
 				}
 				foreach (var child in curNode.Children) {
 					if (!(child is Statement || child is Expression) &&
-					    (child.Role != Roles.TypeMemberRole || (child is TypeDeclaration && includeInnerTypes)))
+					    (child.Role != Roles.TypeMemberRole || ((child is TypeDeclaration || child is DelegateDeclaration) && includeInnerTypes)))
 						nodeStack.Push (child);
 				}
 			}
 		}
+
 		
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			SyntaxTree o = other as SyntaxTree;
-			return o != null && GetChildrenByRole(MemberRole).DoMatch(o.GetChildrenByRole(MemberRole), match);
+			return o != null && this.Members.DoMatch(o.Members, match);
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -157,24 +164,28 @@ namespace ICSharpCode.NRefactory.CSharp
 		
 		public static SyntaxTree Parse (string program, string fileName = "", CompilerSettings settings = null, CancellationToken cancellationToken = default (CancellationToken))
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			var parser = new CSharpParser (settings);
 			return parser.Parse (program, fileName);
 		}
 		
 		public static SyntaxTree Parse (TextReader reader, string fileName = "", CompilerSettings settings = null, CancellationToken cancellationToken = default (CancellationToken))
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			var parser = new CSharpParser (settings);
 			return parser.Parse (reader, fileName);
 		}
 		
 		public static SyntaxTree Parse (Stream stream, string fileName = "", CompilerSettings settings = null, CancellationToken cancellationToken = default (CancellationToken))
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			var parser = new CSharpParser (settings);
 			return parser.Parse (stream, fileName);
 		}
 		
 		public static SyntaxTree Parse (ITextSource textSource, string fileName = "", CompilerSettings settings = null, CancellationToken cancellationToken = default (CancellationToken))
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			var parser = new CSharpParser (settings);
 			return parser.Parse (textSource, fileName);
 		}

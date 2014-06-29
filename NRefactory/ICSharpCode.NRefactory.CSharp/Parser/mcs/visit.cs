@@ -51,7 +51,11 @@ namespace Mono.CSharp
 		public virtual void Visit (UsingExternAlias uea)
 		{
 		}
-		
+
+		public virtual void Visit (CompilationSourceFile csf)
+		{
+		}
+
 		public virtual void Visit (Class c)
 		{
 			VisitTypeDefinition (c);
@@ -130,12 +134,12 @@ namespace Mono.CSharp
 			return null;
 		}
 		
-		public virtual object Visit (BlockVariableDeclaration blockVariableDeclaration)
+		public virtual object Visit (BlockVariable blockVariableDeclaration)
 		{
 			return null;
 		}
 		
-		public virtual object Visit (BlockConstantDeclaration blockConstantDeclaration)
+		public virtual object Visit (BlockConstant blockConstantDeclaration)
 		{
 			return null;
 		}
@@ -202,6 +206,11 @@ namespace Mono.CSharp
 		}
 
 		public virtual object Visit (LabeledStatement labeledStatement)
+		{
+			return null;
+		}
+
+		public virtual object Visit (SwitchLabel switchLabel)
 		{
 			return null;
 		}

@@ -41,7 +41,11 @@ namespace ICSharpCode.NRefactory.CSharp
 				return NodeType.Unknown;
 			}
 		}
-		
+
+		public CSharpTokenNode WhereKeyword {
+			get { return GetChildByRole (Roles.WhereKeyword); }
+		}
+
 		public SimpleType TypeParameter {
 			get {
 				return GetChildByRole (Roles.ConstraintTypeParameter);

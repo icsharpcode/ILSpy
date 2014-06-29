@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -38,8 +38,8 @@ namespace ICSharpCode.NRefactory.Semantics
 		readonly ResolveResult targetResult;
 		readonly bool isVirtualCall;
 		
-		public MemberResolveResult(ResolveResult targetResult, IMember member)
-			: base(member.EntityType == EntityType.Constructor ? member.DeclaringType : member.ReturnType)
+		public MemberResolveResult(ResolveResult targetResult, IMember member, IType returnTypeOverride = null)
+			: base(returnTypeOverride ?? ComputeType(member))
 		{
 			this.targetResult = targetResult;
 			this.member = member;
@@ -54,8 +54,8 @@ namespace ICSharpCode.NRefactory.Semantics
 			}
 		}
 		
-		public MemberResolveResult(ResolveResult targetResult, IMember member, bool isVirtualCall)
-			: base(member.EntityType == EntityType.Constructor ? member.DeclaringType : member.ReturnType)
+		public MemberResolveResult(ResolveResult targetResult, IMember member, bool isVirtualCall, IType returnTypeOverride = null)
+			: base(returnTypeOverride ?? ComputeType(member))
 		{
 			this.targetResult = targetResult;
 			this.member = member;
@@ -66,6 +66,19 @@ namespace ICSharpCode.NRefactory.Semantics
 				if (isConstant)
 					constantValue = field.ConstantValue;
 			}
+		}
+		
+		static IType ComputeType(IMember member)
+		{
+			switch (member.SymbolKind) {
+				case SymbolKind.Constructor:
+					return member.DeclaringType;
+				case SymbolKind.Field:
+					if (((IField)member).IsFixed)
+						return new PointerType(member.ReturnType);
+					break;
+			}
+			return member.ReturnType;
 		}
 		
 		public MemberResolveResult(ResolveResult targetResult, IMember member, IType returnType, bool isConstant, object constantValue)

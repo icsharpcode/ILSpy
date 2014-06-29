@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -48,9 +47,9 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		}
 		#endregion
 		
-		ITypeDefinition currentTypeDefinition;
-		IAssembly currentAssembly;
-		bool isInEnumMemberInitializer;
+		readonly ITypeDefinition currentTypeDefinition;
+		readonly IAssembly currentAssembly;
+		readonly bool isInEnumMemberInitializer;
 		
 		public MemberLookup(ITypeDefinition currentTypeDefinition, IAssembly currentAssembly, bool isInEnumMemberInitializer = false)
 		{
@@ -61,8 +60,20 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		
 		#region IsAccessible
 		/// <summary>
+		/// Gets whether access to protected instance members of the target expression is possible.
+		/// </summary>
+		public bool IsProtectedAccessAllowed(ResolveResult targetResolveResult)
+		{
+			return targetResolveResult is ThisResolveResult || IsProtectedAccessAllowed(targetResolveResult.Type);
+		}
+		
+		/// <summary>
 		/// Gets whether access to protected instance members of the target type is possible.
 		/// </summary>
+		/// <remarks>
+		/// This method does not consider the special case of the 'base' reference. If possible, use the
+		/// <c>IsProtectedAccessAllowed(ResolveResult)</c> overload instead.
+		/// </remarks>
 		public bool IsProtectedAccessAllowed(IType targetType)
 		{
 			if (targetType.Kind == TypeKind.TypeParameter)
@@ -84,7 +95,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// <param name="allowProtectedAccess">
 		/// Whether protected access to instance members is allowed.
 		/// True if the type of the reference is derived from the current class.
-		/// Protected static members may be accessibe even if false is passed for this parameter.
+		/// Protected static members may be accessible even if false is passed for this parameter.
 		/// </param>
 		public bool IsAccessible(IEntity entity, bool allowProtectedAccess)
 		{
@@ -125,7 +136,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			// For static members and type definitions, we do not require the qualifying reference
 			// to be derived from the current class (allowProtectedAccess).
-			if (entity.IsStatic || entity.EntityType == EntityType.TypeDefinition)
+			if (entity.IsStatic || entity.SymbolKind == SymbolKind.TypeDefinition)
 				allowProtectedAccess = true;
 			
 			for (var t = currentTypeDefinition; t != null; t = t.DeclaringTypeDefinition) {
@@ -138,6 +149,90 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					return true;
 			}
 			return false;
+		}
+		#endregion
+		
+		#region GetAccessibleMembers
+		/// <summary>
+		/// Retrieves all members that are accessible and not hidden (by being overridden or shadowed).
+		/// Returns both members and nested type definitions. Does not include extension methods.
+		/// </summary>
+		public IEnumerable<IEntity> GetAccessibleMembers(ResolveResult targetResolveResult)
+		{
+			if (targetResolveResult == null)
+				throw new ArgumentNullException("targetResolveResult");
+			
+			bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
+			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
+			
+			// maps the member name to the list of lookup groups
+			var lookupGroupDict = new Dictionary<string, List<LookupGroup>>();
+			
+			// This loop will handle base types before derived types.
+			// The loop performs three jobs:
+			// 1) It marks entries in lookup groups from base classes as removed when those members
+			//    are hidden by a derived class.
+			// 2) It adds a new lookup group with the members from a declaring type.
+			// 3) It replaces virtual members with the overridden version, placing the override in the
+			//    lookup group belonging to the base class.
+			foreach (IType type in targetResolveResult.Type.GetNonInterfaceBaseTypes()) {
+				
+				List<IEntity> entities = new List<IEntity>();
+				entities.AddRange(type.GetMembers(options: GetMemberOptions.IgnoreInheritedMembers));
+				if (!targetIsTypeParameter) {
+					var nestedTypes = type.GetNestedTypes(options: GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions);
+					// GetDefinition() might return null if some IType has a strange implementation of GetNestedTypes.
+					entities.AddRange(nestedTypes.Select(t => t.GetDefinition()).Where(td => td != null));
+				}
+				
+				foreach (var entityGroup in entities.GroupBy(e => e.Name)) {
+					
+					List<LookupGroup> lookupGroups = new List<LookupGroup>();
+					if (!lookupGroupDict.TryGetValue(entityGroup.Key, out lookupGroups))
+						lookupGroupDict.Add(entityGroup.Key, lookupGroups = new List<LookupGroup>());
+					
+					List<IType> newNestedTypes = null;
+					List<IParameterizedMember> newMethods = null;
+					IMember newNonMethod = null;
+					
+					IEnumerable<IType> typeBaseTypes = null;
+					
+					if (!targetIsTypeParameter) {
+						AddNestedTypes(type, entityGroup.OfType<IType>(), 0, lookupGroups, ref typeBaseTypes, ref newNestedTypes);
+					}
+					AddMembers(type, entityGroup.OfType<IMember>(), allowProtectedAccess, lookupGroups, false, ref typeBaseTypes, ref newMethods, ref newNonMethod);
+					
+					if (newNestedTypes != null || newMethods != null || newNonMethod != null)
+						lookupGroups.Add(new LookupGroup(type, newNestedTypes, newMethods, newNonMethod));
+				}
+			}
+			
+			foreach (List<LookupGroup> lookupGroups in lookupGroupDict.Values) {
+				// Remove interface members hidden by class members.
+				if (targetIsTypeParameter) {
+					// This can happen only with type parameters.
+					RemoveInterfaceMembersHiddenByClassMembers(lookupGroups);
+				}
+				
+				// Now report the results:
+				foreach (LookupGroup lookupGroup in lookupGroups) {
+					if (!lookupGroup.MethodsAreHidden) {
+						foreach (IMethod method in lookupGroup.Methods) {
+							yield return method;
+						}
+					}
+					if (!lookupGroup.NonMethodIsHidden) {
+						yield return lookupGroup.NonMethod;
+					}
+					if (lookupGroup.NestedTypes != null) {
+						foreach (IType type in lookupGroup.NestedTypes) {
+							ITypeDefinition typeDef = type.GetDefinition();
+							if (typeDef != null)
+								yield return typeDef;
+						}
+					}
+				}
+			}
 		}
 		#endregion
 		
@@ -249,12 +344,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			
 			bool targetIsTypeParameter = targetResolveResult.Type.Kind == TypeKind.TypeParameter;
 			
-			bool allowProtectedAccess = (targetResolveResult is ThisResolveResult || IsProtectedAccessAllowed(targetResolveResult.Type));
+			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
 			Predicate<ITypeDefinition> nestedTypeFilter = delegate(ITypeDefinition entity) {
 				return entity.Name == name && IsAccessible(entity, allowProtectedAccess);
 			};
 			Predicate<IUnresolvedMember> memberFilter = delegate(IUnresolvedMember entity) {
-				return entity.Name == name;
+				// NOTE: Atm destructors can be looked up with 'Finalize'
+				return entity.SymbolKind != SymbolKind.Indexer &&
+				       entity.SymbolKind != SymbolKind.Operator && 
+				       entity.Name == name;
 			};
 			
 			List<LookupGroup> lookupGroups = new List<LookupGroup>();
@@ -313,12 +411,13 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// <summary>
 		/// Looks up the indexers on the target type.
 		/// </summary>
-		public IList<MethodListWithDeclaringType> LookupIndexers(IType targetType)
+		public IList<MethodListWithDeclaringType> LookupIndexers(ResolveResult targetResolveResult)
 		{
-			if (targetType == null)
-				throw new ArgumentNullException("targetType");
+			if (targetResolveResult == null)
+				throw new ArgumentNullException("targetResolveResult");
 			
-			bool allowProtectedAccess = IsProtectedAccessAllowed(targetType);
+			IType targetType = targetResolveResult.Type;
+			bool allowProtectedAccess = IsProtectedAccessAllowed(targetResolveResult);
 			Predicate<IUnresolvedProperty> filter = p => p.IsIndexer;
 			
 			List<LookupGroup> lookupGroups = new List<LookupGroup>();
@@ -445,7 +544,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 								}
 							} else {
 								// If the member type matches, replace it with the override
-								if (lookupGroup.NonMethod != null && lookupGroup.NonMethod.EntityType == member.EntityType) {
+								if (lookupGroup.NonMethod != null && lookupGroup.NonMethod.SymbolKind == member.SymbolKind) {
 									lookupGroup.NonMethod = member;
 									replacedVirtualMemberWithOverride = true;
 									break;

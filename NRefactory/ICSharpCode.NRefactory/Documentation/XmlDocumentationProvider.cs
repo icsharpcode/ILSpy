@@ -1,4 +1,4 @@
-// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -24,7 +24,6 @@ using System.Runtime.Serialization;
 using System.Xml;
 using ICSharpCode.NRefactory.Editor;
 using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
 
 namespace ICSharpCode.NRefactory.Documentation
 {
@@ -53,13 +52,16 @@ namespace ICSharpCode.NRefactory.Documentation
 				this.entries = new KeyValuePair<string, string>[size];
 			}
 			
-			internal string Get(string key)
+			internal bool TryGet(string key, out string value)
 			{
 				foreach (var pair in entries) {
-					if (pair.Key == key)
-						return pair.Value;
+					if (pair.Key == key) {
+						value = pair.Value;
+						return true;
+					}
 				}
-				return null;
+				value = null;
+				return false;
 			}
 			
 			internal void Add(string key, string value)
@@ -100,14 +102,15 @@ namespace ICSharpCode.NRefactory.Documentation
 		XmlDocumentationCache cache = new XmlDocumentationCache();
 		
 		readonly string fileName;
-		DateTime lastWriteDate;
-		IndexEntry[] index; // SORTED array of index entries
+		volatile IndexEntry[] index; // SORTED array of index entries
 		
 		#region Constructor / Redirection support
 		/// <summary>
 		/// Creates a new XmlDocumentationProvider.
 		/// </summary>
 		/// <param name="fileName">Name of the .xml file.</param>
+		/// <exception cref="IOException">Error reading from XML file (or from redirected file)</exception>
+		/// <exception cref="XmlException">Invalid XML file</exception>
 		public XmlDocumentationProvider(string fileName)
 		{
 			if (fileName == null)
@@ -126,6 +129,7 @@ namespace ICSharpCode.NRefactory.Documentation
 							Debug.WriteLine("XmlDoc " + fileName + " is redirecting to " + redirectionTarget);
 							using (FileStream redirectedFs = new FileStream(redirectionTarget, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
 								using (XmlTextReader redirectedXmlReader = new XmlTextReader(redirectedFs)) {
+									redirectedXmlReader.XmlResolver = null; // no DTD resolving
 									this.fileName = redirectionTarget;
 									ReadXmlDoc(redirectedXmlReader);
 								}
@@ -147,7 +151,7 @@ namespace ICSharpCode.NRefactory.Documentation
 			corSysDir = AppendDirectorySeparator(corSysDir);
 			
 			var fileName = target.Replace ("%PROGRAMFILESDIR%", programFilesDir)
-			                     .Replace ("%CORSYSDIR%", corSysDir);
+				.Replace ("%CORSYSDIR%", corSysDir);
 			if (!Path.IsPathRooted (fileName))
 				fileName = Path.Combine (Path.GetDirectoryName (xmlFileName), fileName);
 			return LookupLocalizedXmlDoc(fileName);
@@ -201,7 +205,7 @@ namespace ICSharpCode.NRefactory.Documentation
 		#region Load / Create Index
 		void ReadXmlDoc(XmlTextReader reader)
 		{
-			lastWriteDate = File.GetLastWriteTimeUtc(fileName);
+			//lastWriteDate = File.GetLastWriteTimeUtc(fileName);
 			// Open up a second file stream for the line<->position mapping
 			using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
 				LinePositionMapper linePosMapper = new LinePositionMapper(fs);
@@ -216,7 +220,7 @@ namespace ICSharpCode.NRefactory.Documentation
 					}
 				}
 				indexList.Sort();
-				this.index = indexList.ToArray();
+				this.index = indexList.ToArray(); // volatile write
 			}
 		}
 		
@@ -259,11 +263,28 @@ namespace ICSharpCode.NRefactory.Documentation
 							int pos = linePosMapper.GetPositionForLine(reader.LineNumber) + Math.Max(reader.LinePosition - 2, 0);
 							string memberAttr = reader.GetAttribute("name");
 							if (memberAttr != null)
-								indexList.Add(new IndexEntry(memberAttr.GetHashCode(), pos));
+								indexList.Add(new IndexEntry(GetHashCode(memberAttr), pos));
 							reader.Skip();
 						}
 						break;
 				}
+			}
+		}
+		
+		/// <summary>
+		/// Hash algorithm used for the index.
+		/// This is a custom implementation so that old index files work correctly
+		/// even when the .NET string.GetHashCode implementation changes
+		/// (e.g. due to .NET 4.5 hash randomization)
+		/// </summary>
+		static int GetHashCode(string key)
+		{
+			unchecked {
+				int h = 0;
+				foreach (char c in key) {
+					h = (h << 5) - h + c;
+				}
+				return h;
 			}
 		}
 		#endregion
@@ -276,8 +297,13 @@ namespace ICSharpCode.NRefactory.Documentation
 		{
 			if (key == null)
 				throw new ArgumentNullException("key");
-			
-			int hashcode = key.GetHashCode();
+			return GetDocumentation(key, true);
+		}
+		
+		string GetDocumentation(string key, bool allowReload)
+		{
+			int hashcode = GetHashCode(key);
+			var index = this.index; // read volatile field
 			// index is sorted, so we can use binary search
 			int m = Array.BinarySearch(index, new IndexEntry(hashcode, 0));
 			if (m < 0)
@@ -289,19 +315,49 @@ namespace ICSharpCode.NRefactory.Documentation
 			
 			XmlDocumentationCache cache = this.cache;
 			lock (cache) {
-				string val = cache.Get(key);
-				if (val == null) {
-					// go through all items that have the correct hash
-					while (++m < index.Length && index[m].HashCode == hashcode) {
-						val = LoadDocumentation(key, index[m].PositionInFile);
-						if (val != null)
-							break;
+				string val;
+				if (!cache.TryGet(key, out val)) {
+					try {
+						// go through all items that have the correct hash
+						while (++m < index.Length && index[m].HashCode == hashcode) {
+							val = LoadDocumentation(key, index[m].PositionInFile);
+							if (val != null)
+								break;
+						}
+						// cache the result (even if it is null)
+						cache.Add(key, val);
+					} catch (IOException) {
+						// may happen if the documentation file was deleted/is inaccessible/changed (EndOfStreamException)
+						return allowReload ? ReloadAndGetDocumentation(key) : null;
+					} catch (XmlException) {
+						// may happen if the documentation file was changed so that the file position no longer starts on a valid XML element
+						return allowReload ? ReloadAndGetDocumentation(key) : null;
 					}
-					// cache the result (even if it is null)
-					cache.Add(key, val);
 				}
 				return val;
 			}
+		}
+		
+		string ReloadAndGetDocumentation(string key)
+		{
+			try {
+				// Reload the index
+				using (FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read | FileShare.Delete)) {
+					using (XmlTextReader xmlReader = new XmlTextReader(fs)) {
+						xmlReader.XmlResolver = null; // no DTD resolving
+						xmlReader.MoveToContent();
+						ReadXmlDoc(xmlReader);
+					}
+				}
+			} catch (IOException) {
+				// Ignore errors on reload; IEntity.Documentation callers aren't prepared to handle exceptions
+				this.index = new IndexEntry[0]; // clear index to avoid future load attempts
+				return null;
+			} catch (XmlException) {
+				this.index = new IndexEntry[0]; // clear index to avoid future load attempts
+				return null;				
+			}
+			return GetDocumentation(key, allowReload: false); // prevent infinite reload loops
 		}
 		#endregion
 		

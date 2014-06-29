@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -125,7 +125,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				for (int i = 0; i < this.typeParameters.Length; i++) {
 					if (i != typeParameters[i].Index)
 						throw new ArgumentException("Type parameter has wrong index");
-					if (typeParameters[i].OwnerType != EntityType.Method)
+					if (typeParameters[i].OwnerType != SymbolKind.Method)
 						throw new ArgumentException("Type parameter must be owned by a method");
 					this.typeParameters[i] = new TP(typeParameters[i]);
 				}
@@ -207,6 +207,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			public readonly HashSet<IType> LowerBounds = new HashSet<IType>();
 			public readonly HashSet<IType> UpperBounds = new HashSet<IType>();
+			public IType ExactBound;
+			public bool MultipleDifferentExactBounds;
 			public readonly ITypeParameter TypeParameter;
 			public IType FixedTo;
 			
@@ -215,7 +217,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			}
 			
 			public bool HasBounds {
-				get { return LowerBounds.Count > 0 || UpperBounds.Count > 0; }
+				get { return LowerBounds.Count > 0 || UpperBounds.Count > 0 || ExactBound != null; }
 			}
 			
 			public TP(ITypeParameter typeParameter)
@@ -223,6 +225,16 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				if (typeParameter == null)
 					throw new ArgumentNullException("typeParameter");
 				this.TypeParameter = typeParameter;
+			}
+			
+			public void AddExactBound(IType type)
+			{
+				// Exact bounds need to stored separately, not just as Lower+Upper bounds,
+				// due to TypeInferenceTests.GenericArgumentImplicitlyConvertibleToAndFromAnotherTypeList (see #281)
+				if (ExactBound == null)
+					ExactBound = type;
+				else if (!ExactBound.Equals(type))
+					MultipleDifferentExactBounds = true;
 			}
 			
 			public override string ToString()
@@ -510,7 +522,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					}
 					var or = mgrr.PerformOverloadResolution(compilation,
 					                                        args,
-					                                        allowExpandingParams: false);
+					                                        allowExpandingParams: false, allowOptionalParameters: false);
 					if (or.FoundApplicableCandidate && or.BestCandidateAmbiguousWith == null) {
 						IType returnType = or.GetBestCandidateWithSubstitutedTypeArguments().ReturnType;
 						MakeLowerBoundInference(returnType, m.ReturnType);
@@ -563,8 +575,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			TP tp = GetTPForType(V);
 			if (tp != null && tp.IsFixed == false) {
 				Log.WriteLine(" Add exact bound '" + U + "' to " + tp);
-				tp.LowerBounds.Add(U);
-				tp.UpperBounds.Add(U);
+				tp.AddExactBound(U);
 				return;
 			}
 			// Handle by reference types:
@@ -624,6 +635,11 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				tp.LowerBounds.Add(U);
 				return;
 			}
+			// Handle nullable covariance:
+			if (NullableType.IsNullable(U) && NullableType.IsNullable(V)) {
+				MakeLowerBoundInference(NullableType.GetUnderlyingType(U), NullableType.GetUnderlyingType(V));
+				return;
+			}
 			
 			// Handle array types:
 			ArrayType arrU = U as ArrayType;
@@ -681,11 +697,12 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			if (rt == null || rt.TypeParameterCount != 1)
 				return false;
-			switch (rt.GetDefinition().FullName) {
-				case "System.Collections.Generic.IEnumerable":
-				case "System.Collections.Generic.ICollection":
-				case "System.Collections.Generic.IList":
-				case "System.Collections.Generic.IReadOnlyList":
+			switch (rt.GetDefinition().KnownTypeCode) {
+				case KnownTypeCode.IEnumerableOfT:
+				case KnownTypeCode.ICollectionOfT:
+				case KnownTypeCode.IListOfT:
+				case KnownTypeCode.IReadOnlyCollectionOfT:
+				case KnownTypeCode.IReadOnlyListOfT:
 					return true;
 				default:
 					return false;
@@ -720,7 +737,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			} else if (arrV != null && IsGenericInterfaceImplementedByArray(pU) && arrV.Dimensions == 1) {
 				MakeUpperBoundInference(pU.GetTypeArgument(0), arrV.ElementType);
 				return;
- 			}
+			}
 			// Handle parameterized types:
 			if (pU != null) {
 				ParameterizedType uniqueBaseType = null;
@@ -768,6 +785,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			Log.WriteLine(" Trying to fix " + tp);
 			Debug.Assert(!tp.IsFixed);
+			if (tp.ExactBound != null) {
+				// the exact bound will always be the result
+				tp.FixedTo = tp.ExactBound;
+				// check validity
+				if (tp.MultipleDifferentExactBounds)
+					return false;
+				return tp.LowerBounds.All(b => conversions.ImplicitConversion(b, tp.FixedTo).IsValid)
+					&& tp.UpperBounds.All(b => conversions.ImplicitConversion(tp.FixedTo, b).IsValid);
+			}
 			Log.Indent();
 			var types = CreateNestedInstance().FindTypesInBounds(tp.LowerBounds.ToArray(), tp.UpperBounds.ToArray());
 			Log.Unindent();
@@ -857,10 +883,16 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				.Where(c => lowerBounds.All(b => conversions.ImplicitConversion(b, c).IsValid))
 				.Where(c => upperBounds.All(b => conversions.ImplicitConversion(c, b).IsValid))
 				.ToList(); // evaluate the query only once
+
+			Log.WriteCollection("FindTypesInBound, Candidates=", candidateTypes);
 			
+			// According to the C# specification, we need to pick the most specific
+			// of the candidate types. (the type which has conversions to all others)
+			// However, csc actually seems to choose the least specific.
 			candidateTypes = candidateTypes.Where(
-				c => candidateTypes.All(o => conversions.ImplicitConversion(c, o).IsValid)
+				c => candidateTypes.All(o => conversions.ImplicitConversion(o, c).IsValid)
 			).ToList();
+
 			// If the specified algorithm produces a single candidate, we return
 			// that candidate.
 			// We also return the whole candidate list if we're not using the improved
@@ -916,8 +948,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				}
 				Log.WriteLine("Candidate type: " + candidate);
 				
-				if (lowerBounds.Count > 0) {
-					// if there were lower bounds, we aim for the most specific candidate:
+				if (upperBounds.Count == 0) {
+					// if there were only lower bounds, we aim for the most specific candidate:
 					
 					// if this candidate isn't made redundant by an existing, more specific candidate:
 					if (!candidateTypes.Any(c => c.GetDefinition().IsDerivedFrom(candidateDef))) {
@@ -927,7 +959,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 						candidateTypes.Add(candidate);
 					}
 				} else {
-					// if there only were upper bounds, we aim for the least specific candidate:
+					// if there were upper bounds, we aim for the least specific candidate:
 					
 					// if this candidate isn't made redundant by an existing, less specific candidate:
 					if (!candidateTypes.Any(c => candidateDef.IsDerivedFrom(c.GetDefinition()))) {

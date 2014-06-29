@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -84,8 +84,8 @@ namespace ICSharpCode.NRefactory.ConsistencyCheck
 			//return entity.FullName != "ICSharpCode.NRefactory.TypeSystem.Implementation.DefaultResolvedTypeDefinition.parts";
 		}
 		
-		Dictionary<EntityType, TimeSpan> timings = new Dictionary<EntityType, TimeSpan>();
-		Dictionary<EntityType, int> entityCount = new Dictionary<EntityType, int>();
+		Dictionary<SymbolKind, TimeSpan> timings = new Dictionary<SymbolKind, TimeSpan>();
+		Dictionary<SymbolKind, int> entityCount = new Dictionary<SymbolKind, int>();
 		
 		void TestFindReferences(IEntity entity)
 		{
@@ -119,10 +119,10 @@ namespace ICSharpCode.NRefactory.ConsistencyCheck
 					                        }, CancellationToken.None);
 				}
 				w.Stop();
-				if (timings.ContainsKey(entity.EntityType)) {
-					timings[entity.EntityType] += w.Elapsed;
+				if (timings.ContainsKey(entity.SymbolKind)) {
+					timings[entity.SymbolKind] += w.Elapsed;
 				} else {
-					timings[entity.EntityType] = w.Elapsed;
+					timings[entity.SymbolKind] = w.Elapsed;
 				}
 				
 				
@@ -151,10 +151,10 @@ namespace ICSharpCode.NRefactory.ConsistencyCheck
 				}
 			}
 			
-			if (entityCount.ContainsKey(entity.EntityType)) {
-				entityCount[entity.EntityType]++;
+			if (entityCount.ContainsKey(entity.SymbolKind)) {
+				entityCount[entity.SymbolKind]++;
 			} else {
-				entityCount[entity.EntityType] = 1;
+				entityCount[entity.SymbolKind] = 1;
 			}
 		}
 		

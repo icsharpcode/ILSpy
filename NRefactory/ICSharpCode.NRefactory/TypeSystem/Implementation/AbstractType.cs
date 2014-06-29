@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -58,11 +58,20 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		public virtual int TypeParameterCount {
 			get { return 0; }
 		}
-		
+
+		readonly static IList<IType> emptyTypeArguments = new IType[0];
+		public virtual IList<IType> TypeArguments {
+			get { return emptyTypeArguments; }
+		}
+
 		public virtual IType DeclaringType {
 			get { return null; }
 		}
-		
+
+		public virtual bool IsParameterized { 
+			get { return false; }
+		}
+
 		public virtual ITypeDefinition GetDefinition()
 		{
 			return null;
@@ -123,11 +132,21 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				.Concat(GetEvents(filter, options));
 		}
 		
-		public virtual IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter, GetMemberOptions options = GetMemberOptions.None)
+		public virtual IEnumerable<IMethod> GetAccessors(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			return EmptyList<IMethod>.Instance;
 		}
 		
+		public TypeParameterSubstitution GetSubstitution()
+		{
+			return TypeParameterSubstitution.Identity;
+		}
+		
+		public TypeParameterSubstitution GetSubstitution(IList<IType> methodTypeArguments)
+		{
+			return TypeParameterSubstitution.Identity;
+		}
+
 		public override sealed bool Equals(object obj)
 		{
 			return Equals(obj as IType);

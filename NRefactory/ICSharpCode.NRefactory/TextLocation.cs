@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.ComponentModel;
 using System.Globalization;
 
 namespace ICSharpCode.NRefactory
@@ -30,6 +31,7 @@ namespace ICSharpCode.NRefactory
 	/// <see cref="Editor.IDocument.GetOffset(TextLocation)"/> to convert between offsets and TextLocations.
 	/// </remarks>
 	[Serializable]
+	[TypeConverter(typeof(TextLocationConverter))]
 	public struct TextLocation : IComparable<TextLocation>, IEquatable<TextLocation>
 	{
 		/// <summary>
@@ -183,6 +185,39 @@ namespace ICSharpCode.NRefactory
 				return -1;
 			else
 				return 1;
+		}
+	}
+	
+	public class TextLocationConverter : TypeConverter
+	{
+		public override bool CanConvertFrom(ITypeDescriptorContext context, Type sourceType)
+		{
+			return sourceType == typeof(string) || base.CanConvertFrom(context, sourceType);
+		}
+		
+		public override bool CanConvertTo(ITypeDescriptorContext context, Type destinationType)
+		{
+			return destinationType == typeof(TextLocation) || base.CanConvertTo(context, destinationType);
+		}
+		
+		public override object ConvertFrom(ITypeDescriptorContext context, CultureInfo culture, object value)
+		{
+			if (value is string) {
+				string[] parts = ((string)value).Split(';', ',');
+				if (parts.Length == 2) {
+					return new TextLocation(int.Parse(parts[0]), int.Parse(parts[1]));
+				}
+			}
+			return base.ConvertFrom(context, culture, value);
+		}
+		
+		public override object ConvertTo(ITypeDescriptorContext context, CultureInfo culture, object value, Type destinationType)
+		{
+			if (value is TextLocation) {
+				var loc = (TextLocation)value;
+				return loc.Line + ";" + loc.Column;
+			}
+			return base.ConvertTo(context, culture, value, destinationType);
 		}
 	}
 }

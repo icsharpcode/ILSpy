@@ -27,6 +27,42 @@ using System;
 
 namespace ICSharpCode.NRefactory.CSharp
 {
+	[Obsolete("This class is obsolete. Remove all referencing code.")]
+	public class EmptyExpression : AstNode
+	{
+		#region implemented abstract members of AstNode
+
+		public override void AcceptVisitor(IAstVisitor visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
+		{
+			throw new NotImplementedException();
+		}
+
+		protected internal override bool DoMatch(AstNode other, ICSharpCode.NRefactory.PatternMatching.Match match)
+		{
+			throw new NotImplementedException();
+		}
+
+		public override NodeType NodeType {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+
+		#endregion
+
+
+	}
+
 	public class ErrorExpression : Expression
 	{
 		TextLocation location;
@@ -43,6 +79,11 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 		}
 
+		public string Error {
+			get;
+			private set;
+		}
+
 		public ErrorExpression ()
 		{
 		}
@@ -51,7 +92,18 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			this.location = location;
 		}
-		
+
+		public ErrorExpression (string error)
+		{
+			this.Error = error;
+		}
+
+		public ErrorExpression (string error, TextLocation location)
+		{
+			this.location = location;
+			this.Error = error;
+		}
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			// nothing

@@ -11,16 +11,18 @@
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <NoStdLib>False</NoStdLib>
     <WarningLevel>4</WarningLevel>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <ProductVersion>10.0.0</ProductVersion>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
+    <ProductVersion>8.0.30703</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <SignAssembly>True</SignAssembly>
+    <SignAssembly>true</SignAssembly>
     <AssemblyOriginatorKeyFile>..\ICSharpCode.NRefactory.snk</AssemblyOriginatorKeyFile>
     <DelaySign>False</DelaySign>
     <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
     <DocumentationFile>..\bin\$(Configuration)\ICSharpCode.NRefactory.CSharp.xml</DocumentationFile>
     <NoWarn>1591,1587,1570</NoWarn>
     <OutputPath>..\bin\$(Configuration)\</OutputPath>
+    <NoWin32Manifest>False</NoWin32Manifest>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -38,14 +40,18 @@
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE;FULL_AST;NET_4_0</DefineConstants>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>PdbOnly</DebugType>
-    <DebugSymbols>false</DebugSymbols>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <OutputPath>..\bin\Release\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>Full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <DebugSymbols>True</DebugSymbols>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <OutputPath>..\bin\Debug\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'net_4_5_Debug' ">
     <Optimize>False</Optimize>
@@ -54,8 +60,11 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'net_4_5_Debug|AnyCPU' ">
-    <DebugType>Full</DebugType>
-    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <DebugSymbols>True</DebugSymbols>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <OutputPath>..\bin\net_4_5_Debug\</OutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'net_4_5_Release' ">
     <Optimize>True</Optimize>
@@ -64,18 +73,16 @@
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'net_4_5_Release|AnyCPU' ">
-    <DebugType>PdbOnly</DebugType>
-    <DebugSymbols>false</DebugSymbols>
+    <DebugType>none</DebugType>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <OutputPath>..\bin\net_4_5_Release\</OutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Core">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
+    <Reference Include="System.Core" />
     <Reference Include="System.Xml" />
-    <Reference Include="System.Xml.Linq">
-      <RequiredTargetFramework>3.5</RequiredTargetFramework>
-    </Reference>
+    <Reference Include="System.Xml.Linq" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="..\ICSharpCode.NRefactory\Properties\GlobalAssemblyInfo.cs">
@@ -84,11 +91,13 @@
     <Compile Include="Analysis\ControlFlow.cs" />
     <Compile Include="Analysis\DefiniteAssignmentAnalysis.cs" />
     <Compile Include="Analysis\ReachabilityAnalysis.cs" />
+    <Compile Include="Analysis\SemanticHighlightingVisitor.cs" />
     <Compile Include="Ast\AstNode.cs" />
     <Compile Include="Ast\AstNodeCollection.cs" />
     <Compile Include="Ast\AstType.cs" />
     <Compile Include="Ast\DocumentationReference.cs" />
     <Compile Include="Ast\IdentifierExpressionBackreference.cs" />
+    <Compile Include="Ast\SyntaxExtensions.cs" />
     <Compile Include="Ast\SyntaxTree.cs" />
     <Compile Include="Ast\ComposedType.cs" />
     <Compile Include="Ast\CSharpModifierToken.cs" />
@@ -98,7 +107,9 @@
     <Compile Include="Ast\ErrorNode.cs" />
     <Compile Include="Ast\Expressions\AnonymousMethodExpression.cs" />
     <Compile Include="Ast\Expressions\AnonymousTypeCreateExpression.cs" />
-    <Compile Include="Ast\Expressions\ArrayCreateExpression.cs" />
+    <Compile Include="Ast\Expressions\ArrayCreateExpression.cs">
+      <DependentUpon>ArrayInitializerExpression.cs</DependentUpon>
+    </Compile>
     <Compile Include="Ast\Expressions\ArrayInitializerExpression.cs" />
     <Compile Include="Ast\Expressions\AsExpression.cs" />
     <Compile Include="Ast\Expressions\AssignmentExpression.cs" />
@@ -109,7 +120,6 @@
     <Compile Include="Ast\Expressions\ConditionalExpression.cs" />
     <Compile Include="Ast\Expressions\DefaultValueExpression.cs" />
     <Compile Include="Ast\Expressions\DirectionExpression.cs" />
-    <Compile Include="Ast\Expressions\EmptyExpression.cs" />
     <Compile Include="Ast\Expressions\Expression.cs" />
     <Compile Include="Ast\Expressions\IdentifierExpression.cs" />
     <Compile Include="Ast\Expressions\IndexerExpression.cs" />
@@ -150,7 +160,6 @@
     <Compile Include="Ast\Modifiers.cs" />
     <Compile Include="Ast\NodeType.cs" />
     <Compile Include="Ast\ObservableAstVisitor.cs" />
-    <Compile Include="Ast\old_ObservableAstVisitor.cs" />
     <Compile Include="Ast\PrimitiveType.cs" />
     <Compile Include="Ast\SimpleType.cs" />
     <Compile Include="Ast\Statements\BlockStatement.cs" />
@@ -195,14 +204,16 @@
     <Compile Include="Ast\TypeMembers\PropertyDeclaration.cs" />
     <Compile Include="Ast\TypeMembers\VariableInitializer.cs" />
     <Compile Include="CSharpProjectContent.cs" />
-    <Compile Include="Formatter\AstFormattingVisitor.cs" />
     <Compile Include="Formatter\CSharpFormattingOptions.cs" />
     <Compile Include="Formatter\Indent.cs" />
     <Compile Include="OutputVisitor\CodeDomConvertVisitor.cs" />
     <Compile Include="OutputVisitor\CSharpAmbience.cs" />
+    <Compile Include="OutputVisitor\InsertMissingTokensDecorator.cs" />
     <Compile Include="OutputVisitor\InsertParenthesesVisitor.cs" />
-    <Compile Include="OutputVisitor\IOutputFormatter.cs" />
+    <Compile Include="OutputVisitor\InsertRequiredSpacesDecorator.cs" />
     <Compile Include="OutputVisitor\CSharpOutputVisitor.cs" />
+    <Compile Include="OutputVisitor\InsertSpecialsDecorator.cs" />
+    <Compile Include="OutputVisitor\ITokenWriter.cs" />
     <Compile Include="OutputVisitor\TextWriterOutputFormatter.cs" />
     <Compile Include="Parser\CompilerSettings.cs" />
     <Compile Include="Parser\CSharpParser.cs" />
@@ -264,15 +275,16 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="QueryExpressionExpander.cs" />
     <Compile Include="Refactoring\DocumentScript.cs" />
+    <Compile Include="Refactoring\UsingHelper.cs" />
     <Compile Include="Refactoring\LambdaHelper.cs" />
     <Compile Include="Refactoring\PatternHelper.cs" />
     <Compile Include="Refactoring\RefactoringAstHelper.cs" />
     <Compile Include="Refactoring\RefactoringContext.cs" />
     <Compile Include="Refactoring\Script.cs" />
-    <Compile Include="Refactoring\TypeCompatibilityHelper.cs" />
     <Compile Include="Refactoring\TypeSystemAstBuilder.cs" />
     <Compile Include="Refactoring\VariableReferenceGraph.cs" />
     <Compile Include="Resolver\CompositeResolveVisitorNavigator.cs" />
+    <Compile Include="Resolver\AwaitResolveResult.cs" />
     <Compile Include="Resolver\DynamicInvocationResolveResult.cs" />
     <Compile Include="Resolver\DynamicMemberResolveResult.cs" />
     <Compile Include="Resolver\CSharpConversions.cs" />
@@ -281,6 +293,7 @@
     <Compile Include="Resolver\CSharpOperators.cs" />
     <Compile Include="Resolver\CSharpResolver.cs" />
     <Compile Include="Resolver\DetectSkippableNodesNavigator.cs" />
+    <Compile Include="Resolver\CastResolveResult.cs" />
     <Compile Include="Resolver\FindReferencedEntities.cs" />
     <Compile Include="Resolver\FindReferences.cs" />
     <Compile Include="Resolver\FindReferenceSearchScope.cs" />
@@ -292,9 +305,12 @@
     <Compile Include="Resolver\NodeListResolveVisitorNavigator.cs" />
     <Compile Include="Resolver\OverloadResolution.cs" />
     <Compile Include="Resolver\OverloadResolutionErrors.cs" />
+    <Compile Include="Resolver\RenameCallbackArguments.cs" />
     <Compile Include="Resolver\ResolveAtLocation.cs" />
     <Compile Include="Resolver\ResolveVisitor.cs" />
     <Compile Include="Resolver\TypeInference.cs" />
+    <Compile Include="Completion\ICompletionDataFactory.cs" />
+    <Compile Include="Completion\IParameterCompletionDataFactory.cs" />
     <Compile Include="NameLookupMode.cs" />
     <Compile Include="TypeSystem\AliasNamespaceReference.cs" />
     <Compile Include="TypeSystem\AttributeTypeReference.cs" />
@@ -314,6 +330,10 @@
     <Compile Include="TypeSystem\UsingScope.cs" />
     <Compile Include="Ast\GeneralScope\PreProcessorDirective.cs" />
     <Compile Include="Ast\Expressions\ErrorExpression.cs" />
+    <Compile Include="Completion\CompletionDataWrapper.cs" />
+    <Compile Include="Completion\CSharpCompletionEngine.cs" />
+    <Compile Include="Completion\CSharpCompletionEngineBase.cs" />
+    <Compile Include="Completion\CSharpParameterCompletionEngine.cs" />
     <Compile Include="Parser\mcs\module.cs" />
     <Compile Include="Parser\mcs\settings.cs" />
     <Compile Include="Parser\mcs\SourceMethodBuilder.cs" />
@@ -322,19 +342,53 @@
     <Compile Include="Refactoring\BaseRefactoringContext.cs" />
     <Compile Include="Refactoring\CodeIssue.cs" />
     <Compile Include="Refactoring\CodeAction.cs" />
-    <Compile Include="Refactoring\ICodeActionProvider.cs" />
-    <Compile Include="Refactoring\ICodeIssueProvider.cs" />
     <Compile Include="Refactoring\ContextActionAttribute.cs" />
     <Compile Include="Refactoring\IssueAttribute.cs" />
-    <Compile Include="Refactoring\Severity.cs" />
-    <Compile Include="Refactoring\IssueMarker.cs" />
     <Compile Include="Formatter\TextEditorOptions.cs" />
     <Compile Include="Formatter\GeneratedCodeSettings.cs" />
     <Compile Include="Ast\GeneralScope\NewLineNode.cs" />
     <Compile Include="Ast\GeneralScope\WhitespaceNode.cs" />
     <Compile Include="Ast\GeneralScope\TextNode.cs" />
     <Compile Include="Formatter\FormattingOptionsFactory.cs" />
+    <Compile Include="Completion\ICompletionContextProvider.cs" />
+    <Compile Include="Refactoring\NamingHelper.cs" />
     <Compile Include="Parser\SeekableStreamReader.cs" />
+    <Compile Include="Refactoring\LocalReferenceFinder.cs" />
+    <Compile Include="Resolver\AliasTypeResolveResult.cs" />
+    <Compile Include="Resolver\AliasNamespaceResolveResult.cs" />
+    <Compile Include="Resolver\ReducedExtensionMethod.cs" />
+    <Compile Include="Formatter\CSharpFormatter.cs" />
+    <Compile Include="Formatter\FormattingVisitor.cs" />
+    <Compile Include="Formatter\FormattingVisitor_TypeMembers.cs" />
+    <Compile Include="Formatter\FormattingVisitor_Global.cs" />
+    <Compile Include="Formatter\FormattingVisitor_Statements.cs" />
+    <Compile Include="Formatter\FormattingVisitor_Expressions.cs" />
+    <Compile Include="Formatter\FormattingChanges.cs" />
+    <Compile Include="IntroduceQueryExpressions.cs" />
+    <Compile Include="CombineQueryExpressions.cs" />
+    <Compile Include="Refactoring\CodeIssueProvider.cs" />
+    <Compile Include="Refactoring\CodeActionProvider.cs" />
+    <Compile Include="Refactoring\CommonSubIssues.cs" />
+    <Compile Include="PatternMatching\AnyType.cs" />
+    <Compile Include="Analysis\NullValueAnalysis.cs" />
+    <Compile Include="Analysis\NullValueStatus.cs" />
+    <Compile Include="Analysis\DeclarationSpace\LocalDeclarationSpace.cs" />
+    <Compile Include="Analysis\DeclarationSpace\LocalDeclarationSpaceVisitor.cs" />
+    <Compile Include="Refactoring\WordParser.cs" />
+    <Compile Include="Refactoring\TypeGuessing.cs" />
+    <Compile Include="Refactoring\FormatStringHelper.cs" />
+    <Compile Include="IndentEngine\CSharpIndentEngine.cs" />
+    <Compile Include="IndentEngine\CacheIndentEngine.cs" />
+    <Compile Include="IndentEngine\IDocumentIndentEngine.cs" />
+    <Compile Include="IndentEngine\IStateMachineIndentEngine.cs" />
+    <Compile Include="IndentEngine\IndentState.cs" />
+    <Compile Include="IndentEngine\TextPasteIndentEngine.cs" />
+    <Compile Include="IndentEngine\NullIStateMachineIndentEngine.cs" />
+    <Compile Include="Refactoring\CodeGenerationService.cs" />
+    <Compile Include="Formatter\FormattingVisitor_Query.cs" />
+    <Compile Include="Analysis\AnnotationNames.cs" />
+    <Compile Include="Formatter\ConstructFixer.cs" />
+    <Compile Include="Util\CloneableStack.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ICSharpCode.NRefactory\ICSharpCode.NRefactory.csproj">
@@ -358,5 +412,9 @@
   </ProjectExtensions>
   <ItemGroup>
     <None Include="Parser\mcs\cs-parser.jay" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="PatternMatching\" />
+    <Folder Include="IndentEngine\" />
   </ItemGroup>
 </Project>

@@ -25,27 +25,60 @@
 // THE SOFTWARE.
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ICSharpCode.NRefactory.CSharp
 {
-	public enum IndentType {
+	public enum IndentType
+	{
 		Block,
+		DoubleBlock,
 		Continuation,
-		Label
+		Alignment,
+		Label,
+		Empty
 	}
 
 	public class Indent
 	{
-		readonly Stack<IndentType> indentStack = new Stack<IndentType> ();
+		readonly CloneableStack<IndentType> indentStack = new CloneableStack<IndentType>();
 		readonly TextEditorOptions options;
-		
 		int curIndent;
+		int extraSpaces;
+		string indentString;
+
+		public int CurIndent {
+			get {
+				return curIndent;
+			}
+		}
 
 		public Indent(TextEditorOptions options)
 		{
 			this.options = options;
+			Reset();
 		}
 
+		Indent(Indent engine)
+		{
+			this.indentStack = engine.indentStack.Clone();
+			this.options = engine.options;
+			this.curIndent = engine.curIndent;
+			this.extraSpaces = engine.extraSpaces;
+			this.indentString = engine.indentString;
+		}
+
+		public Indent Clone()
+		{
+			return new Indent(this);
+		}
+
+		public void Reset()
+		{
+			curIndent = 0;
+			indentString = "";
+			indentStack.Clear();
+		}
 
 		public void Push(IndentType type)
 		{
@@ -54,10 +87,57 @@ namespace ICSharpCode.NRefactory.CSharp
 			Update();
 		}
 
+		public void Push(Indent indent)
+		{
+			foreach (var i in indent.indentStack)
+				Push(i);
+		}
+
 		public void Pop()
 		{
 			curIndent -= GetIndent(indentStack.Pop());
 			Update();
+		}
+
+		public bool PopIf(IndentType type)
+		{
+			if (Count > 0 && Peek() == type)
+			{
+				Pop();
+				return true;
+			}
+
+			return false;
+		}
+
+		public void PopWhile(IndentType type)
+		{
+			while (Count > 0 && Peek() == type)
+			{
+				Pop();
+			}
+		}
+
+		public bool PopTry()
+		{
+			if (Count > 0)
+			{
+				Pop();
+				return true;
+			}
+
+			return false;
+		}
+
+		public int Count {
+			get {
+				return indentStack.Count;
+			}
+		}
+
+		public IndentType Peek()
+		{
+			return indentStack.Peek();
 		}
 
 		int GetIndent(IndentType indentType)
@@ -65,10 +145,15 @@ namespace ICSharpCode.NRefactory.CSharp
 			switch (indentType) {
 				case IndentType.Block:
 					return options.IndentSize;
+				case IndentType.DoubleBlock:
+					return options.IndentSize * 2;
+				case IndentType.Alignment:
 				case IndentType.Continuation:
 					return options.ContinuationIndent;
 				case IndentType.Label:
 					return options.LabelIndent;
+				case IndentType.Empty:
+					return 0;
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
@@ -77,25 +162,25 @@ namespace ICSharpCode.NRefactory.CSharp
 		void Update()
 		{
 			if (options.TabsToSpaces) {
-				indentString = new string(' ', curIndent);
+				indentString = new string(' ', curIndent + ExtraSpaces);
 				return;
 			}
-			indentString = new string('\t', curIndent / options.TabSize) + new string(' ', curIndent % options.TabSize) + new string (' ', ExtraSpaces);
+			indentString = new string('\t', curIndent / options.TabSize) + new string(' ', curIndent % options.TabSize) + new string(' ', ExtraSpaces);
 		}
-
-		int extraSpaces;
 
 		public int ExtraSpaces {
 			get {
 				return extraSpaces;
 			}
 			set {
+				if (value < 0)
+					throw new ArgumentOutOfRangeException("ExtraSpaces >= 0 but was " + value);
 				extraSpaces = value;
 				Update();
 			}
 		}
 
-		string indentString;
+
 		public string IndentString {
 			get {
 				return indentString;
@@ -106,5 +191,56 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			return string.Format("[Indent: curIndent={0}]", curIndent);
 		}
+
+		public Indent GetIndentWithoutSpace ()
+		{
+			var result = new Indent(options);
+			foreach (var i in indentStack)
+					result.Push(i);
+			return result;
+		}
+
+		public static Indent ConvertFrom(string indentString, Indent correctIndent, TextEditorOptions options = null)
+		{
+			options = options ?? TextEditorOptions.Default;
+			var result = new Indent(options);
+
+			var indent = string.Concat(indentString.Where(c => c == ' ' || c == '\t'));
+			var indentTypes = new Stack<IndentType>(correctIndent.indentStack);
+
+			foreach (var _ in indent.TakeWhile(c => c == '\t'))
+			{
+				if (indentTypes.Count > 0)
+					result.Push(indentTypes.Pop());
+				else
+					result.Push(IndentType.Continuation);
+			}
+
+			result.ExtraSpaces = indent
+				.SkipWhile(c => c == '\t')
+				.TakeWhile(c => c == ' ')
+				.Count();
+
+			return result;
+		}
+
+		public void RemoveAlignment()
+		{
+			ExtraSpaces = 0;
+			if (Count > 0 && Peek() == IndentType.Alignment)
+				Pop();
+		}
+
+		public void SetAlignment(int i, bool forceSpaces = false)
+		{
+			var alignChars = Math.Max(0, i);
+			if (forceSpaces) {
+				ExtraSpaces = alignChars;
+				return;
+			}
+			RemoveAlignment();
+			Push(IndentType.Alignment);
+		}
+
 	}
 }

@@ -164,7 +164,7 @@ namespace ICSharpCode.NRefactory.CSharp
 					var curCat = GeneratedCodeMember.Unknown;
 					foreach (var mem in entities) {
 						if (mem.NextSibling is EntityDeclaration)
-							mem.Parent.InsertChildAfter (mem, new UnixNewLine (), Roles.NewLine);
+							mem.Parent.InsertChildAfter (mem, new NewLineNode (), Roles.NewLine);
 
 						var cat = GetCodeMemberCategory (mem);
 						if (cat == curCat)
@@ -181,9 +181,7 @@ namespace ICSharpCode.NRefactory.CSharp
 						mem.Parent.InsertChildBefore (mem, cmt2, Roles.Comment);
 						mem.Parent.InsertChildBefore (mem, cmt3, Roles.Comment);
 						if (cmt.PrevSibling is EntityDeclaration)
-							mem.Parent.InsertChildBefore (cmt, new UnixNewLine (), Roles.NewLine);
-
-						mem.Parent.InsertChildAfter (cmt3, new UnixNewLine (), Roles.NewLine);
+							mem.Parent.InsertChildBefore (cmt, new NewLineNode (), Roles.NewLine);
 					}
 				}
 			}

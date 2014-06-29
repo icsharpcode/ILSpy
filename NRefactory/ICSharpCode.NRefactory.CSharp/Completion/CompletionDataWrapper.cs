@@ -1,4 +1,4 @@
-// 
+﻿// 
 // CompletionDataWrapper.cs
 //  
 // Author:
@@ -32,7 +32,7 @@ using ICSharpCode.NRefactory.CSharp.Resolver;
 
 namespace ICSharpCode.NRefactory.CSharp.Completion
 {
-	class CompletionDataWrapper
+	public class CompletionDataWrapper
 	{
 		CSharpCompletionEngine completion;
 		List<ICompletionData> result = new List<ICompletionData> ();
@@ -48,6 +48,11 @@ namespace ICSharpCode.NRefactory.CSharp.Completion
 				return completion.factory;
 			}
 		}
+
+		internal bool AnonymousDelegateAdded {
+			get;
+			set;
+		}
 		
 		public CompletionDataWrapper (CSharpCompletionEngine completion)
 		{
@@ -60,17 +65,33 @@ namespace ICSharpCode.NRefactory.CSharp.Completion
 		}
 
 
-		public void AddCustom (string displayText, string description = null, string completionText = null)
+		public ICompletionData AddCustom (string displayText, string description = null, string completionText = null)
 		{
-			result.Add (Factory.CreateLiteralCompletionData (displayText, description, completionText));
+			var literalCompletionData = Factory.CreateLiteralCompletionData(displayText, description, completionText);
+			result.Add(literalCompletionData);
+			return literalCompletionData;
 		}
 		
 		HashSet<string> usedNamespaces = new HashSet<string> ();
+
+		bool IsAccessible(MemberLookup lookup, INamespace ns)
+		{
+			if (ns.Types.Any (t => lookup.IsAccessible (t, false)))
+				return true;
+			foreach (var child in ns.ChildNamespaces)
+				if (IsAccessible (lookup, child))
+					return true;
+			return false;
+		}
 		
-		public void AddNamespace (INamespace ns)
+		public void AddNamespace (MemberLookup lookup, INamespace ns)
 		{
 			if (usedNamespaces.Contains (ns.Name))
 				return;
+			if (!IsAccessible (lookup, ns)) {
+				usedNamespaces.Add (ns.Name);
+				return;
+			}
 			usedNamespaces.Add (ns.Name);
 			result.Add (Factory.CreateNamespaceCompletionData (ns));
 		}
@@ -80,24 +101,57 @@ namespace ICSharpCode.NRefactory.CSharp.Completion
 			result.Add (Factory.CreateLiteralCompletionData (alias));
 		}
 
+		Dictionary<string, ICompletionData> typeDisplayText = new Dictionary<string, ICompletionData> ();
+		Dictionary<IType, ICompletionData> addedTypes = new Dictionary<IType, ICompletionData> ();
 
-		HashSet<string> usedTypes = new HashSet<string> ();
-
-		public ICompletionData AddType(IType type, string shortType)
+		public ICompletionData AddConstructors(IType type, bool showFullName, bool isInAttributeContext = false)
 		{
-			if (type == null || string.IsNullOrEmpty(shortType) || usedTypes.Contains(shortType))
-				return null;
-			if (type.Name == "Void" && type.Namespace == "System")
-				return null;
+			return InternalAddType(type, showFullName, isInAttributeContext, true);
+		}
 
-			var def = type.GetDefinition ();
-			if (def != null && def.ParentAssembly != completion.ctx.CurrentAssembly && !def.IsBrowsable ())
-				return null;
+		public ICompletionData AddType(IType type, bool showFullName, bool isInAttributeContext = false)
+		{
+			return InternalAddType(type, showFullName, isInAttributeContext, false);
+		}
 
-			usedTypes.Add(shortType);
-			var iCompletionData = Factory.CreateTypeCompletionData(type, shortType);
-			result.Add(iCompletionData);
-			return iCompletionData;
+		ICompletionData InternalAddType(IType type, bool showFullName, bool isInAttributeContext, bool addConstrurs)
+		{
+			if (type == null)
+				throw new ArgumentNullException("type");
+			if (type.Name == "Void" && type.Namespace == "System" || type.Kind == TypeKind.Unknown)
+				return null;
+			if (addedTypes.ContainsKey (type))
+				return addedTypes[type];
+			usedNamespaces.Add(type.Name);
+			var def = type.GetDefinition();
+			if (def != null && def.ParentAssembly != completion.ctx.CurrentAssembly) {
+				switch (completion.EditorBrowsableBehavior) {
+					case EditorBrowsableBehavior.Ignore:
+						break;
+					case EditorBrowsableBehavior.Normal:
+						var state = def.GetEditorBrowsableState();
+						if (state != System.ComponentModel.EditorBrowsableState.Always)
+							return null;
+						break;
+					case EditorBrowsableBehavior.IncludeAdvanced:
+						if (!def.IsBrowsable())
+							return null;
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+			}
+			ICompletionData usedType;
+			var data = Factory.CreateTypeCompletionData(type, showFullName, isInAttributeContext, addConstrurs);
+			var text = data.DisplayText;
+			if (typeDisplayText.TryGetValue(text, out usedType)) {
+				usedType.AddOverload(data);
+				return usedType;
+			} 
+			typeDisplayText [text] = data;
+			result.Add(data);
+			addedTypes[type] = data;
+			return data;
 		}
 
 		Dictionary<string, List<ICompletionData>> data = new Dictionary<string, List<ICompletionData>> ();
@@ -134,30 +188,49 @@ namespace ICSharpCode.NRefactory.CSharp.Completion
 			result.Add (Factory.CreateVariableCompletionData (variable));
 		}
 
+		public void AddTypeImport(ITypeDefinition type, bool useFullName, bool addForTypeCreation)
+		{
+			result.Add(Factory.CreateImportCompletionData(type, useFullName, addForTypeCreation));
+		}
+
 		public ICompletionData AddMember (IMember member)
 		{
 			var newData = Factory.CreateEntityCompletionData (member);
 			
-			if (member.ParentAssembly != completion.ctx.CurrentAssembly && !member.IsBrowsable ())
-				return null;
-
+			if (member.ParentAssembly != completion.ctx.CurrentAssembly) {
+				switch (completion.EditorBrowsableBehavior) {
+					case EditorBrowsableBehavior.Ignore:
+						break;
+					case EditorBrowsableBehavior.Normal:
+						var state = member.GetEditorBrowsableState();
+						if (state != System.ComponentModel.EditorBrowsableState.Always)
+							return null;
+						break;
+					case EditorBrowsableBehavior.IncludeAdvanced:
+						if (!member.IsBrowsable())
+							return null;
+						break;
+					default:
+						throw new ArgumentOutOfRangeException();
+				}
+			}
 			string memberKey = newData.DisplayText;
 			if (memberKey == null)
 				return null;
 
-			if (member is IMember) {
-				newData.CompletionCategory = GetCompletionCategory (member.DeclaringTypeDefinition);
-			}
+			newData.CompletionCategory = GetCompletionCategory (member.DeclaringTypeDefinition);
+
 			List<ICompletionData> existingData;
 			data.TryGetValue (memberKey, out existingData);
-			
 			if (existingData != null) {
+				if (member.SymbolKind == SymbolKind.Field || member.SymbolKind == SymbolKind.Property || member.SymbolKind == SymbolKind.Event)
+					return null;
 				var a = member as IEntity;
 				foreach (var d in existingData) {
 					if (!(d is IEntityCompletionData))
 						continue;
 					var b = ((IEntityCompletionData)d).Entity;
-					if (a == null || b == null || a.EntityType == b.EntityType) {
+					if (a == null || b == null || a.SymbolKind == b.SymbolKind) {
 						d.AddOverload (newData);
 						return d;
 					} 
@@ -201,33 +274,53 @@ namespace ICSharpCode.NRefactory.CSharp.Completion
 				var compareCategory = other as TypeCompletionCategory;
 				if (compareCategory == null)
 					return -1;
-				
-				if (Type.ReflectionName == compareCategory.Type.ReflectionName)
-					return 0;
-				
-				if (Type.GetAllBaseTypes ().Any (t => t.ReflectionName == compareCategory.Type.ReflectionName))
-					return -1;
-				return 1;
+				int result;
+				if (Type.ReflectionName == compareCategory.Type.ReflectionName) {
+					result = 0;
+				} else if (Type.GetAllBaseTypes().Any(t => t.ReflectionName == compareCategory.Type.ReflectionName)) {
+					result = -1;
+				} else if (compareCategory.Type.GetAllBaseTypes().Any(t => t.ReflectionName == Type.ReflectionName)) {
+					result = 1;
+				} else {
+					var d = Type.GetDefinition ();
+					var ct = compareCategory.Type.GetDefinition();
+					if (ct.IsStatic && d.IsStatic) {
+						result = d.FullName.CompareTo (ct.FullName);
+					} else if (d.IsStatic) {
+						result = 1;
+					}else if (ct.IsStatic) {
+						result = -1;
+					} else {
+						result = 0;
+					}
+				}
+				return result;
 			}
 		}
 		HashSet<IType> addedEnums = new HashSet<IType> ();
-		public void AddEnumMembers (IType resolvedType, CSharpResolver state, string typeString)
+		public ICompletionData AddEnumMembers (IType resolvedType, CSharpResolver state)
 		{
 			if (addedEnums.Contains (resolvedType))
-				return;
+				return null;
 			addedEnums.Add (resolvedType);
-			if (typeString.Contains(".")) {
-				AddType(resolvedType, typeString);
-			}
+			var result = AddType(resolvedType, true);
 			foreach (var field in resolvedType.GetFields ()) {
 				if (field.IsPublic && (field.IsConst || field.IsStatic)) {
-					Result.Add(Factory.CreateEntityCompletionData(
-						field,
-						typeString + "." + field.Name
-						)
-					           );
+					Result.Add(Factory.CreateMemberCompletionData(resolvedType, field));
 				}
 			}
+			return result;
+		}
+		HashSet<string> anonymousSignatures = new HashSet<string> ();
+
+		public bool HasAnonymousDelegateAdded(string signature)
+		{
+			return anonymousSignatures.Contains(signature); 
+		}
+
+		public void AddAnonymousDelegateAdded(string signature)
+		{
+			anonymousSignatures.Add(signature); 
 		}
 	}
 }

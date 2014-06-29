@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -24,7 +24,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 	/// <summary>
 	/// Represents a resolved namespace.
 	/// </summary>
-	public interface INamespace : IResolved
+	public interface INamespace : ISymbol, ICompilationProvider
 	{
 		// No pointer back to unresolved namespace:
 		// multiple unresolved namespaces (from different assemblies) get
@@ -44,7 +44,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// <summary>
 		/// Gets the short name of this namespace (e.g. "Collections").
 		/// </summary>
-		string Name { get; }
+		new string Name { get; }
 		
 		/// <summary>
 		/// Gets the parent namespace.

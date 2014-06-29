@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -38,16 +38,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
+				visitor.VisitNullNode(this);
 			}
-				
+			
 			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
 			{
-				return default (T);
+				return visitor.VisitNullNode(this);
 			}
-		
+			
 			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 			{
-				return default (S);
+				return visitor.VisitNullNode(this, data);
 			}
 			
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
@@ -81,6 +82,72 @@ namespace ICSharpCode.NRefactory.CSharp
 			QueryExpression o = other as QueryExpression;
 			return o != null && !o.IsNull && this.Clauses.DoMatch(o.Clauses, match);
 		}
+
+		#region Builder methods
+		public override MemberReferenceExpression Member(string memberName)
+		{
+			return new MemberReferenceExpression { Target = this, MemberName = memberName };
+		}
+
+		public override IndexerExpression Indexer(IEnumerable<Expression> arguments)
+		{
+			IndexerExpression expr = new IndexerExpression();
+			expr.Target = new ParenthesizedExpression(this);
+			expr.Arguments.AddRange(arguments);
+			return expr;
+		}
+
+		public override IndexerExpression Indexer(params Expression[] arguments)
+		{
+			IndexerExpression expr = new IndexerExpression();
+			expr.Target = new ParenthesizedExpression(this);
+			expr.Arguments.AddRange(arguments);
+			return expr;
+		}
+
+		public override InvocationExpression Invoke(string methodName, IEnumerable<AstType> typeArguments, IEnumerable<Expression> arguments)
+		{
+			InvocationExpression ie = new InvocationExpression();
+			MemberReferenceExpression mre = new MemberReferenceExpression();
+			mre.Target = new ParenthesizedExpression(this);
+			mre.MemberName = methodName;
+			mre.TypeArguments.AddRange(typeArguments);
+			ie.Target = mre;
+			ie.Arguments.AddRange(arguments);
+			return ie;
+		}
+
+		public override InvocationExpression Invoke(IEnumerable<Expression> arguments)
+		{
+			InvocationExpression ie = new InvocationExpression();
+			ie.Target = new ParenthesizedExpression(this);
+			ie.Arguments.AddRange(arguments);
+			return ie;
+		}
+
+		public override InvocationExpression Invoke(params Expression[] arguments)
+		{
+			InvocationExpression ie = new InvocationExpression();
+			ie.Target = new ParenthesizedExpression(this);
+			ie.Arguments.AddRange(arguments);
+			return ie;
+		}
+
+		public override CastExpression CastTo(AstType type)
+		{
+			return new CastExpression { Type = type,  Expression = new ParenthesizedExpression(this) };
+		}
+
+		public override AsExpression CastAs(AstType type)
+		{
+			return new AsExpression { Type = type,  Expression = new ParenthesizedExpression(this) };
+		}
+
+		public override IsExpression IsType(AstType type)
+		{
+			return new IsExpression { Type = type,  Expression = new ParenthesizedExpression(this) };
+		}
+		#endregion
 	}
 	
 	public abstract class QueryClause : AstNode
@@ -118,6 +185,10 @@ namespace ICSharpCode.NRefactory.CSharp
 			set { SetChildByRole(PrecedingQueryRole, value); }
 		}
 		
+		public CSharpTokenNode IntoKeyword {
+			get { return GetChildByRole (IntoKeywordRole); }
+		}
+
 		public string Identifier {
 			get {
 				return GetChildByRole (Roles.Identifier).Name;
@@ -158,6 +229,10 @@ namespace ICSharpCode.NRefactory.CSharp
 		public static readonly TokenRole FromKeywordRole =  new TokenRole ("from");
 		public static readonly TokenRole InKeywordRole =  new TokenRole ("in");
 		
+		public CSharpTokenNode FromKeyword {
+			get { return GetChildByRole (FromKeywordRole); }
+		}
+
 		public AstType Type {
 			get { return GetChildByRole (Roles.Type); }
 			set { SetChildByRole (Roles.Type, value); }
@@ -176,6 +251,10 @@ namespace ICSharpCode.NRefactory.CSharp
 			get { return GetChildByRole(Roles.Identifier); }
 		}
 		
+		public CSharpTokenNode InKeyword {
+			get { return GetChildByRole (InKeywordRole); }
+		}
+
 		public Expression Expression {
 			get { return GetChildByRole (Roles.Expression); }
 			set { SetChildByRole (Roles.Expression, value); }

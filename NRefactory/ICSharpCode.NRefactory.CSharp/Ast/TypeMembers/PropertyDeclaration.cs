@@ -34,8 +34,8 @@ namespace ICSharpCode.NRefactory.CSharp
 		public static readonly Role<Accessor> GetterRole = new Role<Accessor>("Getter", Accessor.Null);
 		public static readonly Role<Accessor> SetterRole = new Role<Accessor>("Setter", Accessor.Null);
 		
-		public override EntityType EntityType {
-			get { return EntityType.Property; }
+		public override SymbolKind SymbolKind {
+			get { return SymbolKind.Property; }
 		}
 		
 		/// <summary>

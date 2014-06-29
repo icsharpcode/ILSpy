@@ -1,4 +1,22 @@
-﻿using System;
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Globalization;
@@ -29,8 +47,7 @@ namespace ICSharpCode.NRefactory.CSharp {
 
 	public class QueryExpressionExpander {
 		class Visitor : DepthFirstAstVisitor<AstNode> {
-			int currentTransparentParameter;
-			const string TransparentParameterNameTemplate = "<>x{0}";
+			internal IEnumerator<string> TransparentIdentifierNamePicker;
 
 			protected override AstNode VisitChildren(AstNode node) {
 				List<AstNode> newChildren = null;
@@ -104,6 +121,15 @@ namespace ICSharpCode.NRefactory.CSharp {
 				expressions[orig] = newExpr;
 			}
 
+			internal static IEnumerable<string> FallbackTransparentIdentifierNamePicker()
+			{
+				const string TransparentParameterNameTemplate = "x{0}";
+				int currentTransparentParameter = 0;
+				for (;;) {
+					yield return string.Format(CultureInfo.InvariantCulture, TransparentParameterNameTemplate, currentTransparentParameter++);
+				}
+			}
+
 			ParameterDeclaration CreateParameterForCurrentRangeVariable() {
 				var param = new ParameterDeclaration();
 
@@ -114,7 +140,12 @@ namespace ICSharpCode.NRefactory.CSharp {
 					param.AddChild(clonedRangeVariable, Roles.Identifier);
 				}
 				else {
-					param.AddChild(Identifier.Create(string.Format(CultureInfo.InvariantCulture, TransparentParameterNameTemplate, currentTransparentParameter++)), Roles.Identifier);
+					if (!TransparentIdentifierNamePicker.MoveNext()) {
+						TransparentIdentifierNamePicker = FallbackTransparentIdentifierNamePicker().GetEnumerator();
+						TransparentIdentifierNamePicker.MoveNext();
+					}
+					string name = TransparentIdentifierNamePicker.Current;
+					param.AddChild(Identifier.Create(name), Roles.Identifier);
 				}
 				return param;
 			}
@@ -122,14 +153,14 @@ namespace ICSharpCode.NRefactory.CSharp {
 			LambdaExpression CreateLambda(IList<ParameterDeclaration> parameters, Expression body) {
 				var result = new LambdaExpression();
 				if (parameters.Count > 1)
-					result.AddChild(new CSharpTokenNode(TextLocation.Empty), Roles.LPar);
+					result.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.LPar), Roles.LPar);
 				result.AddChild(parameters[0], Roles.Parameter);
 				for (int i = 1; i < parameters.Count; i++) {
-					result.AddChild(new CSharpTokenNode(TextLocation.Empty), Roles.Comma);
+					result.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
 					result.AddChild(parameters[i], Roles.Parameter);
 				}
 				if (parameters.Count > 1)
-					result.AddChild(new CSharpTokenNode(TextLocation.Empty), Roles.RPar);
+					result.AddChild(new CSharpTokenNode(TextLocation.Empty, Roles.RPar), Roles.RPar);
 				result.AddChild(body, LambdaExpression.BodyRole);
 
 				return result;
@@ -191,19 +222,45 @@ namespace ICSharpCode.NRefactory.CSharp {
 				return prev;
 			}
 
+			static bool NeedsToBeParenthesized(Expression expr)
+			{
+				UnaryOperatorExpression unary = expr as UnaryOperatorExpression;
+				if (unary != null) {
+					if (unary.Operator == UnaryOperatorType.PostIncrement || unary.Operator == UnaryOperatorType.PostDecrement) {
+						return false;
+					}
+					return true;
+				}
+			
+				if (expr is BinaryOperatorExpression || expr is ConditionalExpression || expr is AssignmentExpression) {
+					return true;
+				}
+
+				return false;
+			}
+
+			static Expression ParenthesizeIfNeeded(Expression expr)
+			{
+				return NeedsToBeParenthesized(expr) ? new ParenthesizedExpression(expr.Clone()) : expr;
+			}
+
 			public override AstNode VisitQueryFromClause(QueryFromClause queryFromClause) {
 				if (currentResult == null) {
 					AddFirstMemberToCurrentTransparentType(queryFromClause.IdentifierToken);
 					if (queryFromClause.Type.IsNull) {
-						return VisitNested(queryFromClause.Expression, null);
+						return VisitNested(ParenthesizeIfNeeded(queryFromClause.Expression), null);
 					}
 					else {
-						return VisitNested(queryFromClause.Expression, null).Invoke("Cast", new[] { queryFromClause.Type.Clone() }, new Expression[0]);
+						return VisitNested(ParenthesizeIfNeeded(queryFromClause.Expression), null).Invoke("Cast", new[] { queryFromClause.Type.Clone() }, new Expression[0]);
 					}
 				}
 				else {
 					var innerSelectorParam = CreateParameterForCurrentRangeVariable();
-					var innerSelector = CreateLambda(new[] { innerSelectorParam }, VisitNested(queryFromClause.Expression, innerSelectorParam));
+					var lambdaContent = VisitNested(queryFromClause.Expression, innerSelectorParam);
+					if (!queryFromClause.Type.IsNull) {
+						lambdaContent = lambdaContent.Invoke("Cast", new[] { queryFromClause.Type.Clone() }, new Expression[0]);
+					}
+					var innerSelector = CreateLambda(new[] { innerSelectorParam }, lambdaContent);
 
 					var clonedIdentifier = (Identifier)queryFromClause.IdentifierToken.Clone();
 
@@ -243,6 +300,9 @@ namespace ICSharpCode.NRefactory.CSharp {
 			public override AstNode VisitQueryJoinClause(QueryJoinClause queryJoinClause) {
 				Expression resultSelectorBody = null;
 				var inExpression = VisitNested(queryJoinClause.InExpression, null);
+				if (!queryJoinClause.Type.IsNull) {
+					inExpression = inExpression.Invoke("Cast", new[] { queryJoinClause.Type.Clone() }, EmptyList<Expression>.Instance);
+				}
 				var key1SelectorFirstParam = CreateParameterForCurrentRangeVariable();
 				var key1Selector = CreateLambda(new[] { key1SelectorFirstParam }, VisitNested(queryJoinClause.OnExpression, key1SelectorFirstParam));
 				var key2Param = CreateParameter(Identifier.Create(queryJoinClause.JoinIdentifier));
@@ -341,9 +401,11 @@ namespace ICSharpCode.NRefactory.CSharp {
 		/// Expands all occurances of query patterns in the specified node. Returns a clone of the node with all query patterns expanded, or null if there was no query pattern to expand.
 		/// </summary>
 		/// <param name="node"></param>
+		/// <param name="transparentIdentifierNamePicker">A sequence of names to use for transparent identifiers. Once the sequence is over, a fallback name generator is used</param> 
 		/// <returns></returns>
-		public QueryExpressionExpansionResult ExpandQueryExpressions(AstNode node) {
+		public QueryExpressionExpansionResult ExpandQueryExpressions(AstNode node, IEnumerable<string> transparentIdentifierNamePicker) {
 			var visitor = new Visitor();
+			visitor.TransparentIdentifierNamePicker = transparentIdentifierNamePicker.GetEnumerator();
 			var astNode = node.AcceptVisitor(visitor);
 			if (astNode != null) {
 				astNode.Freeze();
@@ -352,6 +414,17 @@ namespace ICSharpCode.NRefactory.CSharp {
 			else {
 				return null;
 			}
+		}
+
+		
+		/// <summary>
+		/// Expands all occurances of query patterns in the specified node. Returns a clone of the node with all query patterns expanded, or null if there was no query pattern to expand.
+		/// </summary>
+		/// <param name="node"></param>
+		/// <returns></returns>
+		public QueryExpressionExpansionResult ExpandQueryExpressions(AstNode node)
+		{
+			return ExpandQueryExpressions(node, Enumerable.Empty<string>());
 		}
 	}
 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -74,25 +74,41 @@ namespace ICSharpCode.NRefactory.Semantics
 		/// </summary>
 		public static readonly Conversion TryCast = new BuiltinConversion(false, 9);
 		
-		public static Conversion UserDefinedImplicitConversion(IMethod operatorMethod, bool isLifted)
+		[Obsolete("Use UserDefinedConversion() instead")]
+		public static Conversion UserDefinedImplicitConversion(IMethod operatorMethod, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted)
 		{
 			if (operatorMethod == null)
 				throw new ArgumentNullException("operatorMethod");
-			return new UserDefinedConversion(true, operatorMethod, isLifted);
+			return new UserDefinedConv(true, operatorMethod, conversionBeforeUserDefinedOperator, conversionAfterUserDefinedOperator, isLifted, false);
 		}
 		
-		public static Conversion UserDefinedExplicitConversion(IMethod operatorMethod, bool isLifted)
+		[Obsolete("Use UserDefinedConversion() instead")]
+		public static Conversion UserDefinedExplicitConversion(IMethod operatorMethod, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted)
 		{
 			if (operatorMethod == null)
 				throw new ArgumentNullException("operatorMethod");
-			return new UserDefinedConversion(false, operatorMethod, isLifted);
+			return new UserDefinedConv(false, operatorMethod, conversionBeforeUserDefinedOperator, conversionAfterUserDefinedOperator, isLifted, false);
 		}
 		
-		public static Conversion MethodGroupConversion(IMethod chosenMethod, bool isVirtualMethodLookup)
+		public static Conversion UserDefinedConversion(IMethod operatorMethod, bool isImplicit, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted = false, bool isAmbiguous = false)
+		{
+			if (operatorMethod == null)
+				throw new ArgumentNullException("operatorMethod");
+			return new UserDefinedConv(isImplicit, operatorMethod, conversionBeforeUserDefinedOperator, conversionAfterUserDefinedOperator, isLifted, isAmbiguous);
+		}
+		
+		public static Conversion MethodGroupConversion(IMethod chosenMethod, bool isVirtualMethodLookup, bool delegateCapturesFirstArgument)
 		{
 			if (chosenMethod == null)
 				throw new ArgumentNullException("chosenMethod");
-			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup);
+			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup, delegateCapturesFirstArgument, isValid: true);
+		}
+		
+		public static Conversion InvalidMethodGroupConversion(IMethod chosenMethod, bool isVirtualMethodLookup, bool delegateCapturesFirstArgument)
+		{
+			if (chosenMethod == null)
+				throw new ArgumentNullException("chosenMethod");
+			return new MethodGroupConv(chosenMethod, isVirtualMethodLookup, delegateCapturesFirstArgument, isValid: false);
 		}
 		#endregion
 		
@@ -255,17 +271,27 @@ namespace ICSharpCode.NRefactory.Semantics
 			}
 		}
 		
-		sealed class UserDefinedConversion : Conversion
+		sealed class UserDefinedConv : Conversion
 		{
 			readonly IMethod method;
 			readonly bool isLifted;
+			readonly Conversion conversionBeforeUserDefinedOperator;
+			readonly Conversion conversionAfterUserDefinedOperator;
 			readonly bool isImplicit;
+			readonly bool isValid;
 			
-			public UserDefinedConversion(bool isImplicit, IMethod method, bool isLifted)
+			public UserDefinedConv(bool isImplicit, IMethod method, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted, bool isAmbiguous)
 			{
 				this.method = method;
 				this.isLifted = isLifted;
+				this.conversionBeforeUserDefinedOperator = conversionBeforeUserDefinedOperator;
+				this.conversionAfterUserDefinedOperator = conversionAfterUserDefinedOperator;
 				this.isImplicit = isImplicit;
+				this.isValid = !isAmbiguous;
+			}
+			
+			public override bool IsValid {
+				get { return isValid; }
 			}
 			
 			public override bool IsImplicit {
@@ -284,25 +310,34 @@ namespace ICSharpCode.NRefactory.Semantics
 				get { return true; }
 			}
 			
+			public override Conversion ConversionBeforeUserDefinedOperator {
+				get { return conversionBeforeUserDefinedOperator; }
+			}
+		
+			public override Conversion ConversionAfterUserDefinedOperator {
+				get { return conversionAfterUserDefinedOperator; }
+			}
+
 			public override IMethod Method {
 				get { return method; }
 			}
 			
 			public override bool Equals(Conversion other)
 			{
-				UserDefinedConversion o = other as UserDefinedConversion;
-				return o != null && isLifted == o.isLifted && isImplicit == o.isImplicit && method.Equals(o.method);
+				UserDefinedConv o = other as UserDefinedConv;
+				return o != null && isLifted == o.isLifted && isImplicit == o.isImplicit && isValid == o.isValid && method.Equals(o.method);
 			}
 			
 			public override int GetHashCode()
 			{
-				return unchecked(method.GetHashCode() * (isLifted ? 31 : 27) * (isImplicit ? 71 : 61));
+				return unchecked(method.GetHashCode() + (isLifted ? 31 : 27) + (isImplicit ? 71 : 61) + (isValid ? 107 : 109));
 			}
 			
 			public override string ToString()
 			{
 				return (isImplicit ? "implicit" : "explicit")
 					+ (isLifted ? " lifted" : "")
+					+ (isValid ? "" : " ambiguous")
 					+ "user-defined conversion (" + method + ")";
 			}
 		}
@@ -311,11 +346,19 @@ namespace ICSharpCode.NRefactory.Semantics
 		{
 			readonly IMethod method;
 			readonly bool isVirtualMethodLookup;
+			readonly bool delegateCapturesFirstArgument;
+			readonly bool isValid;
 			
-			public MethodGroupConv(IMethod method, bool isVirtualMethodLookup)
+			public MethodGroupConv(IMethod method, bool isVirtualMethodLookup, bool delegateCapturesFirstArgument, bool isValid)
 			{
 				this.method = method;
 				this.isVirtualMethodLookup = isVirtualMethodLookup;
+				this.delegateCapturesFirstArgument = delegateCapturesFirstArgument;
+				this.isValid = isValid;
+			}
+			
+			public override bool IsValid {
+				get { return isValid; }
 			}
 			
 			public override bool IsImplicit {
@@ -330,6 +373,10 @@ namespace ICSharpCode.NRefactory.Semantics
 				get { return isVirtualMethodLookup; }
 			}
 			
+			public override bool DelegateCapturesFirstArgument {
+				get { return delegateCapturesFirstArgument; }
+			}
+
 			public override IMethod Method {
 				get { return method; }
 			}
@@ -427,7 +474,21 @@ namespace ICSharpCode.NRefactory.Semantics
 		public virtual bool IsUserDefined {
 			get { return false; }
 		}
+
+		/// <summary>
+		/// The conversion that is applied to the input before the user-defined conversion operator is invoked.
+		/// </summary>
+		public virtual Conversion ConversionBeforeUserDefinedOperator {
+			get { return null; }
+		}
 		
+		/// <summary>
+		/// The conversion that is applied to the result of the user-defined conversion operator.
+		/// </summary>
+		public virtual Conversion ConversionAfterUserDefinedOperator {
+			get { return null; }
+		}
+
 		/// <summary>
 		/// Gets whether this conversion is a boxing conversion.
 		/// </summary>
@@ -463,6 +524,16 @@ namespace ICSharpCode.NRefactory.Semantics
 			get { return false; }
 		}
 		
+		/// <summary>
+		/// For method-group conversions, gets whether the conversion captures the first argument.
+		/// 
+		/// For instance methods, this property always returns true for C# method-group conversions.
+		/// For static methods, this property returns true for method-group conversions of an extension method performed on an instance (eg. <c>Func&lt;int&gt; f = myEnumerable.Single</c>).
+		/// </summary>
+		public virtual bool DelegateCapturesFirstArgument {
+			get { return false; }
+		}
+
 		/// <summary>
 		/// Gets whether this conversion is an anonymous function conversion.
 		/// </summary>

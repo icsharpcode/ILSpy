@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -37,7 +37,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 	/// the type arguments.
 	/// </remarks>
 	[Serializable]
-	public sealed class ParameterizedType : IType
+	public sealed class ParameterizedType : IType, ICompilationProvider
 	{
 		readonly ITypeDefinition genericType;
 		readonly IType[] typeArguments;
@@ -57,8 +57,8 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			for (int i = 0; i < this.typeArguments.Length; i++) {
 				if (this.typeArguments[i] == null)
 					throw new ArgumentNullException("typeArguments[" + i + "]");
-				IResolved r = this.typeArguments[i] as IResolved;
-				if (r != null && r.Compilation != genericType.Compilation)
+				ICompilationProvider p = this.typeArguments[i] as ICompilationProvider;
+				if (p != null && p.Compilation != genericType.Compilation)
 					throw new InvalidOperationException("Cannot parameterize a type with type arguments from a different compilation.");
 			}
 		}
@@ -137,12 +137,18 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			return ReflectionName;
 		}
 		
-		public ReadOnlyCollection<IType> TypeArguments {
+		public IList<IType> TypeArguments {
 			get {
-				return Array.AsReadOnly(typeArguments);
+				return typeArguments;
 			}
 		}
-		
+
+		public bool IsParameterized { 
+			get {
+				return true;
+			}
+		}
+
 		/// <summary>
 		/// Same as 'parameterizedType.TypeArguments[index]', but is a bit more efficient (doesn't require the read-only wrapper).
 		/// </summary>
@@ -327,10 +333,10 @@ namespace ICSharpCode.NRefactory.TypeSystem
 				if (ta != null)
 					ta[i] = r;
 			}
-			if (ta == null)
+			if (def == genericType && ta == null)
 				return this;
 			else
-				return new ParameterizedType(def, ta);
+				return new ParameterizedType(def, ta ?? typeArguments);
 		}
 	}
 	
@@ -341,8 +347,8 @@ namespace ICSharpCode.NRefactory.TypeSystem
 	[Serializable]
 	public sealed class ParameterizedTypeReference : ITypeReference, ISupportsInterning
 	{
-		ITypeReference genericType;
-		ITypeReference[] typeArguments;
+		readonly ITypeReference genericType;
+		readonly ITypeReference[] typeArguments;
 		
 		public ParameterizedTypeReference(ITypeReference genericType, IEnumerable<ITypeReference> typeArguments)
 		{
@@ -400,14 +406,6 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			}
 			b.Append(']');
 			return b.ToString();
-		}
-		
-		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)
-		{
-			genericType = provider.Intern(genericType);
-			for (int i = 0; i < typeArguments.Length; i++) {
-				typeArguments[i] = provider.Intern(typeArguments[i]);
-			}
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()

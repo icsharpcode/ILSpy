@@ -37,8 +37,8 @@ namespace ICSharpCode.NRefactory.CSharp
 			get { return NodeType.TypeDeclaration; }
 		}
 		
-		public override EntityType EntityType {
-			get { return EntityType.TypeDefinition; }
+		public override SymbolKind SymbolKind {
+			get { return SymbolKind.TypeDefinition; }
 		}
 		
 		public CSharpTokenNode DelegateToken {

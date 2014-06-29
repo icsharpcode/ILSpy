@@ -75,5 +75,15 @@ namespace ICSharpCode.NRefactory.CSharp
 			WhileStatement o = other as WhileStatement;
 			return o != null && this.Condition.DoMatch(o.Condition, match) && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match);
 		}
+
+		public WhileStatement()
+		{
+		}
+
+		public WhileStatement(Expression condition, Statement embeddedStatement)
+		{
+			this.Condition = condition;
+			this.EmbeddedStatement = embeddedStatement;
+		}
 	}
 }

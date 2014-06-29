@@ -47,8 +47,8 @@ namespace ICSharpCode.NRefactory.CSharp
 			get { return NodeType.TypeDeclaration; }
 		}
 		
-		public override EntityType EntityType {
-			get { return EntityType.TypeDefinition; }
+		public override SymbolKind SymbolKind {
+			get { return SymbolKind.TypeDefinition; }
 		}
 		
 		ClassType classType;
@@ -78,8 +78,24 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 		}
 
+		public CSharpTokenNode LChevronToken {
+			get { return GetChildByRole (Roles.LChevron); }
+		}
+
 		public AstNodeCollection<TypeParameterDeclaration> TypeParameters {
 			get { return GetChildrenByRole (Roles.TypeParameter); }
+		}
+
+		public CSharpTokenNode RChevronToken {
+			get { return GetChildByRole (Roles.RChevron); }
+		}
+
+
+
+		public CSharpTokenNode ColonToken {
+			get {
+				return GetChildByRole(Roles.Colon);
+			}
 		}
 		
 		public AstNodeCollection<AstType> BaseTypes {
@@ -93,7 +109,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		public CSharpTokenNode LBraceToken {
 			get { return GetChildByRole (Roles.LBrace); }
 		}
-		
+
 		public AstNodeCollection<EntityDeclaration> Members {
 			get { return GetChildrenByRole (Roles.TypeMemberRole); }
 		}

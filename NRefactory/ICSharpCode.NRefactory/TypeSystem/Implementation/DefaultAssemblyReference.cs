@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -27,9 +27,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 	public sealed class DefaultAssemblyReference : IAssemblyReference, ISupportsInterning
 	{
 		public static readonly IAssemblyReference CurrentAssembly = new CurrentAssemblyReference();
+		
+		[Obsolete("The corlib is not always called 'mscorlib' (as returned by this property), but might be 'System.Runtime'.")]
 		public static readonly IAssemblyReference Corlib = new DefaultAssemblyReference("mscorlib");
 		
-		string shortName;
+		readonly string shortName;
 		
 		public DefaultAssemblyReference(string assemblyName)
 		{
@@ -55,11 +57,6 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		public override string ToString()
 		{
 			return shortName;
-		}
-		
-		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)
-		{
-			shortName = provider.Intern(shortName);
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()

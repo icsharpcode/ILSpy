@@ -65,7 +65,7 @@ namespace Mono.CSharp {
 			AParametersCollection d_params = Delegate.GetParameters (delegateType);
 
 			if (HasExplicitParameters) {
-				if (!VerifyExplicitParameters (ec, delegateType, d_params))
+				if (!VerifyExplicitParameters (ec, tic, delegateType, d_params))
 					return null;
 
 				return Parameters;
@@ -75,7 +75,7 @@ namespace Mono.CSharp {
 			// If L has an implicitly typed parameter list we make implicit parameters explicit
 			// Set each parameter of L is given the type of the corresponding parameter in D
 			//
-			if (!VerifyParameterCompatibility (ec, delegateType, d_params, ec.IsInProbingMode))
+			if (!VerifyParameterCompatibility (ec, tic, delegateType, d_params, ec.IsInProbingMode))
 				return null;
 
 			TypeSpec [] ptypes = new TypeSpec [Parameters.Count];
@@ -182,7 +182,7 @@ namespace Mono.CSharp {
 		ExpressionStatement statement;
 
 		public ContextualReturn (Expression expr)
-			: base (expr, expr.Location)
+			: base (expr, expr.StartLocation)
 		{
 		}
 

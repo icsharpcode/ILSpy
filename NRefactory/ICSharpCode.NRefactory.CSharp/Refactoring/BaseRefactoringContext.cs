@@ -36,6 +36,8 @@ using ICSharpCode.NRefactory.Editor;
 using System.ComponentModel.Design;
 using ICSharpCode.NRefactory.CSharp.Analysis;
 using ICSharpCode.NRefactory.Utils;
+using System.Collections.Generic;
+using ICSharpCode.NRefactory.Analysis;
 
 namespace ICSharpCode.NRefactory.CSharp.Refactoring
 {
@@ -47,6 +49,13 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		public virtual bool Supports(Version version)
 		{
 			return true;
+		}
+
+		/// <summary>
+		/// Gets the default namespace which should be defined in this file.
+		/// </summary>
+		public abstract string DefaultNamespace {
+			get;
 		}
 
 		/// <summary>
@@ -83,10 +92,18 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			get { return resolver.Compilation; }
 		}
 
+		/// <summary>
+		/// Gets the type graph for the current compilation.
+		/// </summary>
+		public virtual TypeGraph TypeGraph {
+			get { return new TypeGraph(Compilation.Assemblies); }
+		}
+		
 		public BaseRefactoringContext (ICSharpCode.NRefactory.CSharp.Resolver.CSharpAstResolver resolver, System.Threading.CancellationToken cancellationToken)
 		{
 			this.resolver = resolver;
 			this.cancellationToken = cancellationToken;
+			this.referenceFinder = new LocalReferenceFinder(resolver);
 		}
 
 
@@ -120,6 +137,12 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		{
 			return resolver.GetConversion(expression, cancellationToken);
 		}
+		
+		public TypeSystemAstBuilder CreateTypeSystemAstBuilder(AstNode node)
+		{
+			var csResolver = resolver.GetResolverStateBefore(node);
+			return new TypeSystemAstBuilder(csResolver);
+		}
 		#endregion
 
 		#region Code Analyzation
@@ -143,12 +166,15 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		/// <param name="statement">
 		/// The statement to start the analysis.
 		/// </param>
+		/// <param name="recursiveDetectorVisitor">
+		/// TODO.
+		/// </param>
 		/// <returns>
 		/// The reachability analysis object.
 		/// </returns>
-		public ReachabilityAnalysis CreateReachabilityAnalysis (Statement statement)
+		public ReachabilityAnalysis CreateReachabilityAnalysis (Statement statement, ReachabilityAnalysis.RecursiveDetectorVisitor recursiveDetectorVisitor = null)
 		{
-			return ReachabilityAnalysis.Create (statement, resolver, CancellationToken);
+			return ReachabilityAnalysis.Create (statement, resolver, recursiveDetectorVisitor, CancellationToken);
 		}
 
 		/// <summary>
@@ -161,7 +187,101 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		{
 			return new CompositeFormatStringParser().Parse(source);
 		}
+
+		LocalReferenceFinder referenceFinder;
+
+		public IList<ReferenceResult> FindReferences(AstNode rootNode, IVariable variable)
+		{
+			return referenceFinder.FindReferences(rootNode, variable);
+		}
+
 		#endregion
+
+
+		#region Naming
+		public virtual string GetNameProposal (string name, TextLocation loc, bool camelCase = true)
+		{
+			string baseName = (camelCase ? char.ToLower (name [0]) : char.ToUpper (name [0])) + name.Substring (1);
+
+			var type = RootNode.GetNodeAt<TypeDeclaration>(loc);
+			if (type == null)
+				return baseName;
+
+			int number = -1;
+			string proposedName;
+			do {
+				proposedName = AppendNumberToName (baseName, number++);
+			} while (type.Members.Select (m => m.GetChildByRole (Roles.Identifier)).Any (n => n.Name == proposedName));
+			return proposedName;
+		}
+		
+		public virtual string GetLocalNameProposal (string name, TextLocation loc, bool camelCase = true)
+		{
+			string baseName = (camelCase ? char.ToLower (name [0]) : char.ToUpper (name [0])) + name.Substring (1);
+			var node = RootNode.GetNodeAt(loc);
+			if (node == null)
+				return baseName;
+			
+			var context = GetResolverStateBefore (node);
+			int number = -1;
+			string proposedName;
+			do {
+				proposedName = AppendNumberToName (baseName, number++);
+			} while (!(context.ResolveSimpleName (proposedName, EmptyList<IType>.Instance) is UnknownIdentifierResolveResult));
+			return proposedName;
+		}
+
+		static string AppendNumberToName (string baseName, int number)
+		{
+			return baseName + (number > 0 ? (number + 1).ToString () : "");
+		}
+		#endregion
+
+		#region Text stuff
+		public virtual TextEditorOptions TextEditorOptions {
+			get {
+				return TextEditorOptions.Default;
+			}
+		}
+
+		public virtual bool IsSomethingSelected {
+			get {
+				return SelectionStart != TextLocation.Empty;
+			}
+		}
+
+		public virtual string SelectedText {
+			get { return string.Empty; }
+		}
+
+		public virtual TextLocation SelectionStart {
+			get {
+				return TextLocation.Empty;
+			}
+		}
+
+		public virtual TextLocation SelectionEnd {
+			get {
+				return TextLocation.Empty;
+			}
+		}
+
+		public abstract int GetOffset (TextLocation location);
+
+		public abstract IDocumentLine GetLineByOffset (int offset);
+
+		public int GetOffset (int line, int col)
+		{
+			return GetOffset (new TextLocation (line, col));
+		}
+
+		public abstract TextLocation GetLocation (int offset);
+
+		public abstract string GetText (int offset, int length);
+
+		public abstract string GetText (ISegment segment);
+		#endregion
+
 
 		/// <summary>
 		/// Translates the english input string to the context language.
@@ -175,13 +295,14 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		}
 
 		#region IServiceProvider implementation
-		readonly ServiceContainer services = new ServiceContainer();
+		IServiceContainer services = new ServiceContainer();
 		
 		/// <summary>
 		/// Gets a service container used to associate services with this context.
 		/// </summary>
-		public ServiceContainer Services {
+		public IServiceContainer Services {
 			get { return services; }
+			protected set { services = value; }
 		}
 		
 		/// <summary>

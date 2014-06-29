@@ -1,4 +1,4 @@
-// 
+﻿// 
 // InspectionIssue.cs
 //
 // Author:
@@ -26,6 +26,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ICSharpCode.NRefactory.Refactoring;
 
 namespace ICSharpCode.NRefactory.CSharp.Refactoring
 {
@@ -66,50 +67,115 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			private set;
 		}
 
+		List<Type> actionProvider = new List<Type>();
+		public List<Type> ActionProvider {
+			get {
+				return actionProvider;
+			}
+			set {
+				actionProvider = value;
+			}
+		}
+
+		/// <summary>
+		/// Gets or sets the Issue marker which should be used to mark this issue in the editor.
+		/// It's up to the editor implementation if and how this info is used.
+		/// </summary>
+		public IssueMarker IssueMarker {
+			get;
+			set;
+		}
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ICSharpCode.NRefactory.CSharp.Refactoring.CodeIssue"/> class.
 		/// </summary>
-		/// <param name='description'>
-		/// The desription of the issue.
-		/// </param>
-		/// <param name='start'>
-		/// The issue start location.
-		/// </param>
-		/// <param name='end'>
-		/// the issue end location.
-		/// </param>
-		/// <param name='actions'>
-		/// A list of potential solutions for the issue.
-		/// </param>
-		public CodeIssue(string description, TextLocation start, TextLocation end, IEnumerable<CodeAction> actions = null)
+		public CodeIssue(TextLocation start, TextLocation end, string issueDescription)
 		{
-			Description = description;
+			if (issueDescription == null)
+				throw new ArgumentNullException("issueDescription");
+			Description = issueDescription;
 			Start = start;
 			End = end;
-			if (actions != null)
-				Actions = actions.ToArray();
-			else
-				Actions = EmptyList<CodeAction>.Instance;
+			Actions = EmptyList<CodeAction>.Instance;
+			IssueMarker = IssueMarker.WavedLine;
 		}
-		
+
 		/// <summary>
 		/// Initializes a new instance of the <see cref="ICSharpCode.NRefactory.CSharp.Refactoring.CodeIssue"/> class.
 		/// </summary>
-		/// <param name='description'>
-		/// The desription of the issue.
-		/// </param>
-		/// <param name='start'>
-		/// The issue start location.
-		/// </param>
-		/// <param name='end'>
-		/// the issue end location.
-		/// </param>
-		/// <param name='action'>
-		/// A potential solution for the issue.
-		/// </param>
-		public CodeIssue(string description, TextLocation start, TextLocation end, CodeAction action) : this (description, start, end, action != null ? new [] { action } : null)
+		public CodeIssue(TextLocation start, TextLocation end, string issueDescription, IEnumerable<CodeAction> actions) : this(start, end, issueDescription)
 		{
+			if (actions != null)
+				Actions = actions.ToArray();
 		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ICSharpCode.NRefactory.CSharp.Refactoring.CodeIssue"/> class.
+		/// </summary>
+		public CodeIssue(TextLocation start, TextLocation end, string issueDescription, params CodeAction[] actions) : this(start, end, issueDescription)
+		{
+			if (actions != null)
+				Actions = actions;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ICSharpCode.NRefactory.CSharp.Refactoring.CodeIssue"/> class.
+		/// </summary>
+		public CodeIssue(TextLocation start, TextLocation end, string issueDescription, string actionDescription, Action<Script> fix) : this(start, end, issueDescription)
+		{
+			if (actionDescription == null)
+				throw new ArgumentNullException("actionDescription");
+			if (fix == null)
+				throw new ArgumentNullException("fix");
+			this.Actions = new [] { new CodeAction(actionDescription, fix, start, end) };
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ICSharpCode.NRefactory.CSharp.Refactoring.CodeIssue"/> class.
+		/// </summary>
+		public CodeIssue(AstNode node, string issueDescription)
+		{
+			if (node == null)
+				throw new ArgumentNullException("node");
+			if (issueDescription == null)
+				throw new ArgumentNullException("issueDescription");
+			Description = issueDescription;
+			Start = node.StartLocation;
+			End = node.EndLocation;
+			Actions = EmptyList<CodeAction>.Instance;
+			IssueMarker = IssueMarker.WavedLine;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ICSharpCode.NRefactory.CSharp.Refactoring.CodeIssue"/> class.
+		/// </summary>
+		public CodeIssue(AstNode node, string issueDescription, IEnumerable<CodeAction> actions) : this(node, issueDescription)
+		{
+			if (actions != null)
+				Actions = actions.ToArray();
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ICSharpCode.NRefactory.CSharp.Refactoring.CodeIssue"/> class.
+		/// </summary>
+		public CodeIssue(AstNode node, string issueDescription, params CodeAction[] actions) : this(node, issueDescription)
+		{
+			if (actions != null)
+				Actions = actions;
+		}
+
+		/// <summary>
+		/// Initializes a new instance of the <see cref="ICSharpCode.NRefactory.CSharp.Refactoring.CodeIssue"/> class.
+		/// </summary>
+		public CodeIssue(AstNode node, string issueDescription, string actionDescription, Action<Script> fix) : this(node, issueDescription)
+		{
+			if (actionDescription == null)
+				throw new ArgumentNullException("actionDescription");
+			if (fix == null)
+				throw new ArgumentNullException("fix");
+			this.Actions = new [] { new CodeAction(actionDescription, fix, node) };
+		}
+
 	}
 }
 

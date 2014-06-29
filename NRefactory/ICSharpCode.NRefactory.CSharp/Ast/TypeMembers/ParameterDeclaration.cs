@@ -88,7 +88,11 @@ namespace ICSharpCode.NRefactory.CSharp
 				SetChildByRole (Roles.Identifier, value);
 			}
 		}
-		
+
+		public CSharpTokenNode AssignToken {
+			get { return GetChildByRole (Roles.Assign); }
+		}
+
 		public Expression DefaultExpression {
 			get { return GetChildByRole (Roles.Expression); }
 			set { SetChildByRole (Roles.Expression, value); }
@@ -126,6 +130,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			Type = type;
 			Name = name;
 			ParameterModifier = modifier;
+		}
+
+		public ParameterDeclaration(string name, ParameterModifier modifier = ParameterModifier.None)
+		{
+			Name = name;
+			ParameterModifier = modifier;
+		}
+
+		public new ParameterDeclaration Clone()
+		{
+			return (ParameterDeclaration)base.Clone();
 		}
 	}
 }

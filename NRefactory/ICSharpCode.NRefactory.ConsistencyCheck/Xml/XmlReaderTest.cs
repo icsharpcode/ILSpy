@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -34,21 +34,23 @@ namespace ICSharpCode.NRefactory.ConsistencyCheck.Xml
 	{
 		public static void Run(string fileName)
 		{
+			bool includeAttributes = true;
 			var textSource = new StringTextSource(File.ReadAllText(fileName));
 			using (var textReader = textSource.CreateReader()) {
 				using (var xmlReader = new XmlTextReader(textReader)) {
-					Run(xmlReader);
+					Run(xmlReader, includeAttributes);
 				}
 			}
 			var doc = new AXmlParser().Parse(textSource);
 			using (var xmlReader = doc.CreateReader()) {
-				Run(xmlReader);
+				Run(xmlReader, includeAttributes);
 			}
 			var xmlDocument = new XmlDocument();
 			xmlDocument.Load(doc.CreateReader());
 			xmlDocument.Save(Path.Combine(Program.TempPath, "savedXmlDocument.xml"));
 			var xDocument = XDocument.Load(doc.CreateReader());
 			xDocument.Save(Path.Combine(Program.TempPath, "savedXDocument.xml"));
+			File.WriteAllText(Path.Combine(Program.TempPath, "inputDocument.xml"), textSource.Text);
 		}
 		
 		static string CSV(IEnumerable<string> input)
@@ -57,11 +59,11 @@ namespace ICSharpCode.NRefactory.ConsistencyCheck.Xml
 		}
 		
 		static readonly string[] ignoredProperties = {
-			"NameTable", "CanResolveEntity", "CanReadBinaryContent", "CanReadValueChunk", "EOF", "ValueType",
-			"SchemaInfo", "IsDefault", "BaseURI", "Settings"
+			"NameTable", "CanResolveEntity", "CanReadBinaryContent", "CanReadValueChunk", "ValueType",
+			"SchemaInfo", "BaseURI", "Settings"
 		};
 		
-		public static void Run(XmlReader reader)
+		public static void Run(XmlReader reader, bool includeAttributes, bool includeAttributeValues = true)
 		{
 			using (StreamWriter output = File.CreateText(Path.Combine(Program.TempPath, reader.GetType().Name + "-output.csv"))) {
 				var properties = typeof(XmlReader).GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -70,6 +72,16 @@ namespace ICSharpCode.NRefactory.ConsistencyCheck.Xml
 				output.WriteLine(CSV(properties.Select(p => p.Name)));
 				do {
 					output.WriteLine(CSV(properties.Select(p => ToString(p.GetValue(reader, null)))));
+					if (includeAttributes && reader.HasAttributes) {
+						for (int i = 0; i < reader.AttributeCount; i++) {
+							reader.MoveToAttribute(i);
+							output.WriteLine(CSV(properties.Select(p => ToString(p.GetValue(reader, null)))));
+							if (includeAttributeValues) {
+								reader.ReadAttributeValue();
+								output.WriteLine(CSV(properties.Select(p => ToString(p.GetValue(reader, null)))));
+							}
+						}
+					}
 				} while (reader.Read());
 				output.WriteLine(CSV(properties.Select(p => ToString(p.GetValue(reader, null)))));
 			}
@@ -77,14 +89,7 @@ namespace ICSharpCode.NRefactory.ConsistencyCheck.Xml
 		
 		static string ToString(object val)
 		{
-			if (val == null)
-				return "null";
-			else if (val is string)
-				return "\"" + CSharpOutputVisitor.ConvertString((string)val) + "\"";
-			else if (val is char)
-				return "'" + CSharpOutputVisitor.ConvertChar((char)val) + "'";
-			else
-				return val.ToString();
+			return TextWriterTokenWriter.PrintPrimitiveValue(val);
 		}
 	}
 }

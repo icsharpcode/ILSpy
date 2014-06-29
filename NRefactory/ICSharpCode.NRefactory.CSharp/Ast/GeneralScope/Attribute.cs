@@ -43,11 +43,19 @@ namespace ICSharpCode.NRefactory.CSharp
 			get { return GetChildByRole (Roles.Type); }
 			set { SetChildByRole (Roles.Type, value); }
 		}
-		
+
+		public CSharpTokenNode LParToken {
+			get { return GetChildByRole (Roles.LPar); }
+		}
+
 		public AstNodeCollection<Expression> Arguments {
 			get { return base.GetChildrenByRole (Roles.Argument); }
 		}
-		
+
+		public CSharpTokenNode RParToken {
+			get { return GetChildByRole (Roles.RPar); }
+		}
+
 		// HasArgumentList == false: [Empty]
 		public bool HasArgumentList {
 			get;
@@ -74,13 +82,12 @@ namespace ICSharpCode.NRefactory.CSharp
 			Attribute o = other as Attribute;
 			return o != null && this.Type.DoMatch (o.Type, match) && this.Arguments.DoMatch (o.Arguments, match);
 		}
-		
-		public override string ToString ()
+
+		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
 			if (IsNull)
 				return "Null";
-			else
-				return GetText();
+			return base.ToString(formattingOptions);
 		}
 	}
 }

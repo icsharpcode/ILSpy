@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -80,7 +80,21 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Gets the number of type parameters.
 		/// </summary>
 		int TypeParameterCount { get; }
-		
+
+		/// <summary>
+		/// Gets the type arguments passed to this type.
+		/// If this type is a generic type definition that is not parameterized, this property returns the type parameters,
+		/// as if the type was parameterized with its own type arguments (<c>class C&lt;T&gt; { C&lt;T&gt; field; }</c>).
+		/// 
+		/// NOTE: The type will change to IReadOnlyList&lt;IType&gt; in future versions.
+		/// </summary>
+		IList<IType> TypeArguments { get; }
+
+		/// <summary>
+		/// If true the type represents an instance of a generic type.
+		/// </summary>
+		bool IsParameterized { get; }
+
 		/// <summary>
 		/// Calls ITypeVisitor.Visit for this type.
 		/// </summary>
@@ -110,6 +124,22 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Otherwise, the main resolve context of a compilation is sufficient.
 		/// </remarks>
 		ITypeReference ToTypeReference();
+
+		/// <summary>
+		/// Gets a type visitor that performs the substitution of class type parameters with the type arguments
+		/// of this parameterized type.
+		/// Returns TypeParameterSubstitution.Identity if the type is not parametrized.
+		/// </summary>
+		TypeParameterSubstitution GetSubstitution();
+		
+		/// <summary>
+		/// Gets a type visitor that performs the substitution of class type parameters with the type arguments
+		/// of this parameterized type,
+		/// and also substitutes method type parameters with the specified method type arguments.
+		/// Returns TypeParameterSubstitution.Identity if the type is not parametrized.
+		/// </summary>
+		TypeParameterSubstitution GetSubstitution(IList<IType> methodTypeArguments);
+
 		
 		/// <summary>
 		/// Gets inner classes (including inherited inner classes).

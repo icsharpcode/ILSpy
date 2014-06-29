@@ -47,7 +47,13 @@ namespace ICSharpCode.NRefactory.CSharp
 				return !GetChildByRole(NullableRole).IsNull;
 			}
 			set {
-				SetChildByRole(NullableRole, value ? new CSharpTokenNode(TextLocation.Empty) : null);
+				SetChildByRole(NullableRole, value ? new CSharpTokenNode(TextLocation.Empty, null) : null);
+			}
+		}
+
+		public CSharpTokenNode NullableSpecifierToken {
+			get {
+				return GetChildByRole(NullableRole);
 			}
 		}
 		
@@ -64,7 +70,7 @@ namespace ICSharpCode.NRefactory.CSharp
 					d--;
 				}
 				while (d < value) {
-					InsertChildBefore(GetChildByRole(PointerRole), new CSharpTokenNode(TextLocation.Empty), PointerRole);
+					InsertChildBefore(GetChildByRole(PointerRole), new CSharpTokenNode(TextLocation.Empty, PointerRole), PointerRole);
 					d++;
 				}
 			}
@@ -73,12 +79,16 @@ namespace ICSharpCode.NRefactory.CSharp
 		public AstNodeCollection<ArraySpecifier> ArraySpecifiers {
 			get { return GetChildrenByRole (ArraySpecifierRole); }
 		}
+
+		public AstNodeCollection<CSharpTokenNode> PointerTokens {
+			get { return GetChildrenByRole (PointerRole); }
+		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitComposedType (this);
 		}
-			
+		
 		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
 		{
 			return visitor.VisitComposedType (this);
@@ -92,10 +102,12 @@ namespace ICSharpCode.NRefactory.CSharp
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ComposedType o = other as ComposedType;
-			return o != null && this.HasNullableSpecifier == o.HasNullableSpecifier && this.PointerRank == o.PointerRank && this.ArraySpecifiers.DoMatch(o.ArraySpecifiers, match);
+			return o != null && this.HasNullableSpecifier == o.HasNullableSpecifier && this.PointerRank == o.PointerRank
+				&& this.BaseType.DoMatch(o.BaseType, match)
+				&& this.ArraySpecifiers.DoMatch(o.ArraySpecifiers, match);
 		}
-		
-		public override string ToString()
+
+		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
 			StringBuilder b = new StringBuilder();
 			b.Append(this.BaseType.ToString());
@@ -126,18 +138,20 @@ namespace ICSharpCode.NRefactory.CSharp
 			return this;
 		}
 		
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode = NameLookupMode.Type)
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
 		{
-			ITypeReference t = this.BaseType.ToTypeReference(lookupMode);
+			if (interningProvider == null)
+				interningProvider = InterningProvider.Dummy;
+			ITypeReference t = this.BaseType.ToTypeReference(lookupMode, interningProvider);
 			if (this.HasNullableSpecifier) {
-				t = NullableType.Create(t);
+				t = interningProvider.Intern(NullableType.Create(t));
 			}
 			int pointerRank = this.PointerRank;
 			for (int i = 0; i < pointerRank; i++) {
-				t = new PointerTypeReference(t);
+				t = interningProvider.Intern(new PointerTypeReference(t));
 			}
 			foreach (var a in this.ArraySpecifiers.Reverse()) {
-				t = new ArrayTypeReference(t, a.Dimensions);
+				t = interningProvider.Intern(new ArrayTypeReference(t, a.Dimensions));
 			}
 			return t;
 		}
@@ -176,7 +190,7 @@ namespace ICSharpCode.NRefactory.CSharp
 					d--;
 				}
 				while (d < value) {
-					InsertChildBefore(GetChildByRole(Roles.Comma), new CSharpTokenNode(TextLocation.Empty), Roles.Comma);
+					InsertChildBefore(GetChildByRole(Roles.Comma), new CSharpTokenNode(TextLocation.Empty, Roles.Comma), Roles.Comma);
 					d++;
 				}
 			}
@@ -190,7 +204,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			visitor.VisitArraySpecifier (this);
 		}
-			
+		
 		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
 		{
 			return visitor.VisitArraySpecifier (this);
@@ -206,8 +220,8 @@ namespace ICSharpCode.NRefactory.CSharp
 			ArraySpecifier o = other as ArraySpecifier;
 			return o != null && this.Dimensions == o.Dimensions;
 		}
-		
-		public override string ToString()
+
+		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
 			return "[" + new string(',', this.Dimensions - 1) + "]";
 		}

@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -37,6 +37,9 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// <summary>
 		/// Gets the list of all assemblies in the compilation.
 		/// </summary>
+		/// <remarks>
+		/// This main assembly is the first entry in the list.
+		/// </remarks>
 		IList<IAssembly> Assemblies { get; }
 		
 		/// <summary>
@@ -47,13 +50,21 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		
 		/// <summary>
 		/// Gets the root namespace of this compilation.
-		/// This is a merged .
+		/// This is a merged version of the root namespaces of all assemblies.
 		/// </summary>
+		/// <remarks>
+		/// This always is the namespace without a name - it's unrelated to the 'root namespace' project setting.
+		/// </remarks>
 		INamespace RootNamespace { get; }
 		
 		/// <summary>
 		/// Gets the root namespace for a given extern alias.
 		/// </summary>
+		/// <remarks>
+		/// If <paramref name="alias"/> is <c>null</c> or an empty string, this method
+		/// returns the global root namespace.
+		/// If no alias with the specified name exists, this method returns null.
+		/// </remarks>
 		INamespace GetNamespaceForExternAlias(string alias);
 		
 		IType FindType(KnownTypeCode typeCode);
@@ -69,8 +80,12 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		CacheManager CacheManager { get; }
 	}
 	
-	public interface IResolved
+	public interface ICompilationProvider
 	{
+		/// <summary>
+		/// Gets the parent compilation.
+		/// This property never returns null.
+		/// </summary>
 		ICompilation Compilation { get; }
 	}
 }

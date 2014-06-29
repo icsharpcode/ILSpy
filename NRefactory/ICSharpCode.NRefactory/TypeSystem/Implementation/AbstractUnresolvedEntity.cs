@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -39,7 +39,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		internal RareFields rareFields;
 		
 		// 1 byte per enum + 2 bytes for flags
-		EntityType entityType;
+		SymbolKind symbolKind;
 		Accessibility accessibility;
 		internal BitVector16 flags;
 		
@@ -54,6 +54,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		internal const ushort FlagAddDefaultConstructorIfRequired = 0x0040;
 		internal const ushort FlagHasExtensionMethods = 0x0080;
 		internal const ushort FlagHasNoExtensionMethods = 0x0100;
+		internal const ushort FlagPartialTypeDefinition = 0x0200;
 		// flags for AbstractUnresolvedMember:
 		internal const ushort FlagExplicitInterfaceImplementation = 0x0040;
 		internal const ushort FlagVirtual = 0x0080;
@@ -61,10 +62,12 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		// flags for DefaultField:
 		internal const ushort FlagFieldIsReadOnly = 0x1000;
 		internal const ushort FlagFieldIsVolatile = 0x2000;
+		internal const ushort FlagFieldIsFixedSize = 0x4000;
 		// flags for DefaultMethod:
 		internal const ushort FlagExtensionMethod = 0x1000;
 		internal const ushort FlagPartialMethod = 0x2000;
 		internal const ushort FlagHasBody = 0x4000;
+		internal const ushort FlagAsyncMethod = 0x8000;
 		
 		public bool IsFrozen {
 			get { return flags[FlagFrozen]; }
@@ -85,7 +88,13 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				rareFields.FreezeInternal();
 		}
 		
-		public virtual void ApplyInterningProvider(IInterningProvider provider)
+		/// <summary>
+		/// Uses the specified interning provider to intern
+		/// strings and lists in this entity.
+		/// This method does not test arbitrary objects to see if they implement ISupportsInterning;
+		/// instead we assume that those are interned immediately when they are created (before they are added to this entity).
+		/// </summary>
+		public virtual void ApplyInterningProvider(InterningProvider provider)
 		{
 			if (provider == null)
 				throw new ArgumentNullException("provider");
@@ -124,7 +133,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			{
 			}
 			
-			public virtual void ApplyInterningProvider(IInterningProvider provider)
+			public virtual void ApplyInterningProvider(InterningProvider provider)
 			{
 			}
 			
@@ -139,11 +148,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			FreezableHelper.ThrowIfFrozen(this);
 		}
 		
-		public EntityType EntityType {
-			get { return entityType; }
+		public SymbolKind SymbolKind {
+			get { return symbolKind; }
 			set {
 				ThrowIfFrozen();
-				entityType = value;
+				symbolKind = value;
 			}
 		}
 		

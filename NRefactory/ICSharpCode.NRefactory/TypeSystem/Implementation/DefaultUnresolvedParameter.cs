@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -18,8 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
-
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.Utils;
 
@@ -146,29 +146,35 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get { return this.DefaultValue != null; }
 		}
 		
-		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)
-		{
-			if (!IsFrozen) {
-				name = provider.Intern(name);
-				type = provider.Intern(type);
-				attributes = provider.InternList(attributes);
-				defaultValue = provider.Intern(defaultValue);
-			}
-		}
-		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return type.GetHashCode() ^ name.GetHashCode()
-				^ (attributes != null ? attributes.GetHashCode() : 0)
-				^ (defaultValue != null ? defaultValue.GetHashCode() : 0)
-				^ region.GetHashCode() ^ flags;
+			unchecked {
+				int hashCode = 1919191 ^ (flags & ~1);
+				hashCode *= 31;
+				hashCode += type.GetHashCode();
+				hashCode *= 31;
+				hashCode += name.GetHashCode();
+				if (attributes != null) {
+					foreach (var attr in attributes)
+						hashCode ^= attr.GetHashCode ();
+				}
+				if (defaultValue != null)
+					hashCode ^= defaultValue.GetHashCode ();
+				return hashCode;
+			}
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
+			// compare everything except for the IsFrozen flag
 			DefaultUnresolvedParameter p = other as DefaultUnresolvedParameter;
-			return p != null && type == p.type && attributes == p.attributes && name == p.name
-				&& defaultValue == p.defaultValue && region == p.region && flags == p.flags;
+			return p != null && type == p.type && name == p.name &&
+				defaultValue == p.defaultValue && region == p.region && (flags & ~1) == (p.flags & ~1) && ListEquals(attributes, p.attributes);
+		}
+		
+		static bool ListEquals(IList<IUnresolvedAttribute> list1, IList<IUnresolvedAttribute> list2)
+		{
+			return (list1 ?? EmptyList<IUnresolvedAttribute>.Instance).SequenceEqual(list2 ?? EmptyList<IUnresolvedAttribute>.Instance);
 		}
 		
 		public override string ToString()
@@ -189,6 +195,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			}
 			return b.ToString();
 		}
+
+		static bool IsOptionalAttribute (IType attributeType)
+		{
+			return attributeType.Name == "OptionalAttribute" && attributeType.Namespace == "System.Runtime.InteropServices";
+		}
 		
 		public IParameter CreateResolvedParameter(ITypeResolveContext context)
 		{
@@ -204,8 +215,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 					IsParams = this.IsParams
 				};
 			} else {
-				return new DefaultParameter(type.Resolve(context), name, region,
-				                            attributes.CreateResolvedAttributes(context), IsRef, IsOut, IsParams);
+				var owner = context.CurrentMember as IParameterizedMember;
+				var resolvedAttributes = attributes.CreateResolvedAttributes (context);
+				bool isOptional = resolvedAttributes != null && resolvedAttributes.Any (a => IsOptionalAttribute (a.AttributeType));
+				return new DefaultParameter (type.Resolve (context), name, owner, region,
+				                             resolvedAttributes, IsRef, IsOut, IsParams, isOptional);
 			}
 		}
 		
@@ -220,6 +234,8 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				this.context = context;
 			}
 			
+			SymbolKind ISymbol.SymbolKind { get { return SymbolKind.Parameter; } }
+			public IParameterizedMember Owner { get { return context.CurrentMember as IParameterizedMember; } }
 			public IType Type { get; internal set; }
 			public string Name { get; internal set; }
 			public DomRegion Region { get; internal set; }
@@ -235,18 +251,24 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			public object ConstantValue {
 				get {
 					ResolveResult rr = LazyInit.VolatileRead(ref this.resolvedDefaultValue);
-					if (rr != null) {
-						return rr.ConstantValue;
-					} else {
+					if (rr == null) {
 						rr = defaultValue.Resolve(context);
-						return LazyInit.GetOrSet(ref this.resolvedDefaultValue, rr).ConstantValue;
+						LazyInit.GetOrSet(ref this.resolvedDefaultValue, rr);
 					}
+					return rr.ConstantValue;
 				}
 			}
 			
 			public override string ToString()
 			{
 				return DefaultParameter.ToString(this);
+			}
+
+			public ISymbolReference ToReference()
+			{
+				if (Owner == null)
+					return new ParameterReference(Type.ToTypeReference(), Name, Region, IsRef, IsOut, IsParams, true, ConstantValue);
+				return new OwnedParameterReference(Owner.ToReference(), Owner.Parameters.IndexOf(this));
 			}
 		}
 	}

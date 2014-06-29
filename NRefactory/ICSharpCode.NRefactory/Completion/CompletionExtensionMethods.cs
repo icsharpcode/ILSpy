@@ -47,9 +47,8 @@ namespace ICSharpCode.NRefactory.Completion
 
 			var browsableState = entity.Attributes.FirstOrDefault(attr => attr.AttributeType.Name == "EditorBrowsableAttribute" && attr.AttributeType.Namespace == "System.ComponentModel");
 			if (browsableState != null && browsableState.PositionalArguments.Count == 1) {
-				try {
-					return (System.ComponentModel.EditorBrowsableState)browsableState.PositionalArguments [0].ConstantValue;
-				} catch (Exception) {}
+				if (browsableState.PositionalArguments [0].ConstantValue is int)
+					return (System.ComponentModel.EditorBrowsableState)(int)browsableState.PositionalArguments [0].ConstantValue;
 			}
 			return System.ComponentModel.EditorBrowsableState.Always;
 		}

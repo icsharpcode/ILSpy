@@ -78,8 +78,8 @@ namespace ICSharpCode.NRefactory.CSharp
 			var o = other as ErrorNode;
 			return o != null;
 		}
-		
-		public override string ToString ()
+
+		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
 			return "[ErrorNode]";
 		}

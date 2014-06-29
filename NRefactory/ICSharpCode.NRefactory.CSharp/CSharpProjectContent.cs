@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -31,6 +31,7 @@ namespace ICSharpCode.NRefactory.CSharp
 	public class CSharpProjectContent : IProjectContent
 	{
 		string assemblyName;
+		string fullAssemblyName;
 		string projectFileName;
 		string location;
 		Dictionary<string, IUnresolvedFile> unresolvedFiles;
@@ -48,6 +49,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		protected CSharpProjectContent(CSharpProjectContent pc)
 		{
 			this.assemblyName = pc.assemblyName;
+			this.fullAssemblyName = pc.fullAssemblyName;
 			this.projectFileName = pc.projectFileName;
 			this.location = pc.location;
 			this.unresolvedFiles = new Dictionary<string, IUnresolvedFile>(pc.unresolvedFiles, Platform.FileNameComparer);
@@ -69,6 +71,10 @@ namespace ICSharpCode.NRefactory.CSharp
 		
 		public string AssemblyName {
 			get { return assemblyName; }
+		}
+
+		public string FullAssemblyName {
+			get { return fullAssemblyName; }
 		}
 
 		public string Location {
@@ -128,10 +134,16 @@ namespace ICSharpCode.NRefactory.CSharp
 			return new CSharpProjectContent(this);
 		}
 		
+		/// <summary>
+		/// Sets both the short and the full assembly names.
+		/// </summary>
+		/// <param name="newAssemblyName">New full assembly name.</param>
 		public IProjectContent SetAssemblyName(string newAssemblyName)
 		{
 			CSharpProjectContent pc = Clone();
-			pc.assemblyName = newAssemblyName;
+			pc.fullAssemblyName = newAssemblyName;
+			int pos = newAssemblyName != null ? newAssemblyName.IndexOf(',') : -1;
+			pc.assemblyName = pos < 0 ? newAssemblyName : newAssemblyName.Substring(0, pos);
 			return pc;
 		}
 		

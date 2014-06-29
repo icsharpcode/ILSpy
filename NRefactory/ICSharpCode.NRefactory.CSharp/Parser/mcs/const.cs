@@ -100,10 +100,10 @@ namespace Mono.CSharp {
 		{
 			if (t.IsGenericParameter) {
 				Report.Error (1959, loc,
-					"Type parameter `{0}' cannot be declared const", TypeManager.CSharpName (t));
+					"Type parameter `{0}' cannot be declared const", t.GetSignatureForError ());
 			} else {
 				Report.Error (283, loc,
-					"The type `{0}' cannot be declared const", TypeManager.CSharpName (t));
+					"The type `{0}' cannot be declared const", t.GetSignatureForError ());
 			}
 		}
 

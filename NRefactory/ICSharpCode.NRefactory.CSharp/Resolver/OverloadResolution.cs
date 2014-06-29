@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -101,16 +101,14 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			{
 				this.Member = member;
 				this.IsExpandedForm = isExpanded;
-				IMethod method = member as IMethod;
-				if (method != null && method.TypeParameters.Count > 0) {
-					// For generic methods, go back to the original parameters
-					// (without any type parameter substitution, not even class type parameters)
-					// We'll re-substitute them as part of RunTypeInference().
-					method = (IMethod)method.MemberDefinition;
-					this.Parameters = method.Parameters;
-					this.TypeParameters = method.TypeParameters;
-				} else {
-					this.Parameters = member.Parameters;
+				IParameterizedMember memberDefinition = (IParameterizedMember)member.MemberDefinition;
+				// For specificialized methods, go back to the original parameters:
+				// (without any type parameter substitution, not even class type parameters)
+				// We'll re-substitute them as part of RunTypeInference().
+				this.Parameters = memberDefinition.Parameters;
+				IMethod methodDefinition = memberDefinition as IMethod;
+				if (methodDefinition != null && methodDefinition.TypeParameters.Count > 0) {
+					this.TypeParameters = methodDefinition.TypeParameters;
 				}
 				this.ParameterTypes = new IType[this.Parameters.Count];
 			}
@@ -155,6 +153,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			
 			this.conversions = conversions ?? CSharpConversions.Get(compilation);
 			this.AllowExpandingParams = true;
+			this.AllowOptionalParameters = true;
 		}
 		#endregion
 		
@@ -173,6 +172,13 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// The default value is true.
 		/// </summary>
 		public bool AllowExpandingParams { get; set; }
+		
+		/// <summary>
+		/// Gets/Sets whether optional parameters may be left at their default value.
+		/// The default value is true.
+		/// If this property is set to false, optional parameters will be treated like regular parameters.
+		/// </summary>
+		public bool AllowOptionalParameters { get; set; }
 		
 		/// <summary>
 		/// Gets/Sets whether ConversionResolveResults created by this OverloadResolution
@@ -243,7 +249,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// <returns>True if the calculation was successful, false if the candidate should be removed without reporting an error</returns>
 		bool CalculateCandidate(Candidate candidate)
 		{
-			if (!ResolveParameterTypes(candidate))
+			if (!ResolveParameterTypes(candidate, false))
 				return false;
 			MapCorrespondingParameters(candidate);
 			RunTypeInference(candidate);
@@ -252,10 +258,18 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			return true;
 		}
 		
-		bool ResolveParameterTypes(Candidate candidate)
+		bool ResolveParameterTypes(Candidate candidate, bool useSpecializedParameters)
 		{
 			for (int i = 0; i < candidate.Parameters.Count; i++) {
-				IType type = candidate.Parameters[i].Type;
+				IType type;
+				if (useSpecializedParameters) {
+					// Use the parameter type of the specialized non-generic method or indexer
+					Debug.Assert(!candidate.IsGenericMethod);
+					type = candidate.Member.Parameters[i].Type;
+				} else {
+					// Use the type of the original formal parameter
+					type = candidate.Parameters[i].Type;
+				}
 				if (candidate.IsExpandedForm && i == candidate.Parameters.Count - 1) {
 					ArrayType arrayType = type as ArrayType;
 					if (arrayType != null && arrayType.Dimensions == 1)
@@ -364,12 +378,13 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		#region RunTypeInference
 		void RunTypeInference(Candidate candidate)
 		{
-			IMethod method = candidate.Member as IMethod;
-			if (method == null || method.TypeParameters.Count == 0) {
+			if (candidate.TypeParameters == null) {
 				if (explicitlyGivenTypeArguments != null) {
 					// method does not expect type arguments, but was given some
 					candidate.AddError(OverloadResolutionErrors.WrongNumberOfTypeArguments);
 				}
+				// Grab new parameter types:
+				ResolveParameterTypes(candidate, true);
 				return;
 			}
 			ParameterizedType parameterizedDeclaringType = candidate.Member.DeclaringType as ParameterizedType;
@@ -381,12 +396,12 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			}
 			// The method is generic:
 			if (explicitlyGivenTypeArguments != null) {
-				if (explicitlyGivenTypeArguments.Length == method.TypeParameters.Count) {
+				if (explicitlyGivenTypeArguments.Length == candidate.TypeParameters.Count) {
 					candidate.InferredTypes = explicitlyGivenTypeArguments;
 				} else {
 					candidate.AddError(OverloadResolutionErrors.WrongNumberOfTypeArguments);
 					// wrong number of type arguments given, so truncate the list or pad with UnknownType
-					candidate.InferredTypes = new IType[method.TypeParameters.Count];
+					candidate.InferredTypes = new IType[candidate.TypeParameters.Count];
 					for (int i = 0; i < candidate.InferredTypes.Length; i++) {
 						if (i < explicitlyGivenTypeArguments.Length)
 							candidate.InferredTypes[i] = explicitlyGivenTypeArguments[i];
@@ -451,12 +466,11 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			if ((candidate.Errors & OverloadResolutionErrors.TypeInferenceFailed) != 0)
 				return OverloadResolutionErrors.None;
 			
-			IMethod method = candidate.Member as IMethod;
-			if (method == null || method.TypeParameters.Count == 0)
+			if (candidate.TypeParameters == null || candidate.TypeParameters.Count == 0)
 				return OverloadResolutionErrors.None; // the method isn't generic
 			var substitution = GetSubstitution(candidate);
-			for (int i = 0; i < method.TypeParameters.Count; i++) {
-				if (!ValidateConstraints(method.TypeParameters[i], substitution.MethodTypeArguments[i], substitution))
+			for (int i = 0; i < candidate.TypeParameters.Count; i++) {
+				if (!ValidateConstraints(candidate.TypeParameters[i], substitution.MethodTypeArguments[i], substitution))
 					return OverloadResolutionErrors.MethodConstraintsNotSatisfied;
 			}
 			return OverloadResolutionErrors.None;
@@ -543,7 +557,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				if (candidate.IsExpandedForm && i == argumentCountPerParameter.Length - 1)
 					continue; // any number of arguments is fine for the params-array
 				if (argumentCountPerParameter[i] == 0) {
-					if (candidate.Parameters[i].IsOptional)
+					if (this.AllowOptionalParameters && candidate.Parameters[i].IsOptional)
 						candidate.HasUnmappedOptionalParameters = true;
 					else
 						candidate.AddError(OverloadResolutionErrors.MissingArgumentForRequiredParameter);
@@ -577,7 +591,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					if (!(c == Conversion.IdentityConversion || c == Conversion.ImplicitReferenceConversion || c == Conversion.BoxingConversion))
 						candidate.AddError(OverloadResolutionErrors.ArgumentTypeMismatch);
 				} else {
-					if (!c.IsValid && parameterType.Kind != TypeKind.Unknown)
+					if ((!c.IsValid && !c.IsUserDefined && !c.IsMethodGroupConversion) && parameterType.Kind != TypeKind.Unknown)
 						candidate.AddError(OverloadResolutionErrors.ArgumentTypeMismatch);
 				}
 			}
@@ -872,7 +886,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					// Wrap argument in ConversionResolveResult
 					IType parameterType = bestCandidate.ParameterTypes[parameterIndex];
 					if (parameterType.Kind != TypeKind.Unknown) {
-						if (arguments[i].IsCompileTimeConstant && conversions[i] != Conversion.None) {
+						if (arguments[i].IsCompileTimeConstant && conversions[i].IsValid && !conversions[i].IsUserDefined) {
 							argument = new CSharpResolver(compilation).WithCheckForOverflow(CheckForOverflow).ResolveCast(parameterType, argument);
 						} else {
 							argument = new ConversionResolveResult(parameterType, argument, conversions[i], CheckForOverflow);
@@ -898,7 +912,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				return null;
 			IMethod method = bestCandidate.Member as IMethod;
 			if (method != null && method.TypeParameters.Count > 0) {
-				return new SpecializedMethod((IMethod)method.MemberDefinition, GetSubstitution(bestCandidate));
+				return ((IMethod)method.MemberDefinition).Specialize(GetSubstitution(bestCandidate));
 			} else {
 				return bestCandidate.Member;
 			}
@@ -906,14 +920,9 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		
 		TypeParameterSubstitution GetSubstitution(Candidate candidate)
 		{
-			SpecializedMethod sm = candidate.Member as SpecializedMethod;
-			if (sm != null) {
-				// Do not compose the substitutions, but merge them.
-				// This is required for InvocationTests.SubstituteClassAndMethodTypeParametersAtOnce
-				return new TypeParameterSubstitution(sm.Substitution.ClassTypeArguments, candidate.InferredTypes);
-			} else {
-				return new TypeParameterSubstitution(null, candidate.InferredTypes);
-			}
+			// Do not compose the substitutions, but merge them.
+			// This is required for InvocationTests.SubstituteClassAndMethodTypeParametersAtOnce
+			return new TypeParameterSubstitution(candidate.Member.Substitution.ClassTypeArguments, candidate.InferredTypes);
 		}
 		
 		/// <summary>
@@ -925,13 +934,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// <param name="initializerStatements">
 		/// Statements for Objects/Collections initializer.
 		/// <see cref="InvocationResolveResult.InitializerStatements"/>
+		/// <param name="returnTypeOverride">
+		/// If not null, use this instead of the ReturnType of the member as the type of the created resolve result.
 		/// </param>
-		public CSharpInvocationResolveResult CreateResolveResult(ResolveResult targetResolveResult, IList<ResolveResult> initializerStatements = null)
+		public CSharpInvocationResolveResult CreateResolveResult(ResolveResult targetResolveResult, IList<ResolveResult> initializerStatements = null, IType returnTypeOverride = null)
 		{
 			IParameterizedMember member = GetBestCandidateWithSubstitutedTypeArguments();
 			if (member == null)
 				throw new InvalidOperationException();
-			
+
 			return new CSharpInvocationResolveResult(
 				this.IsExtensionMethodInvocation ? new TypeResolveResult(member.DeclaringType) : targetResolveResult,
 				member,
@@ -941,7 +952,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				this.BestCandidateIsExpandedForm,
 				isDelegateInvocation: false,
 				argumentToParameterMap: this.GetArgumentToParameterMap(),
-				initializerStatements: initializerStatements);
+				initializerStatements: initializerStatements,
+				returnTypeOverride: returnTypeOverride);
 		}
 		#endregion
 	}

@@ -45,16 +45,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
+				visitor.VisitNullNode(this);
 			}
 			
 			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
 			{
-				return default (T);
+				return visitor.VisitNullNode(this);
 			}
 			
 			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 			{
-				return default (S);
+				return visitor.VisitNullNode(this, data);
 			}
 			
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
@@ -67,8 +68,24 @@ namespace ICSharpCode.NRefactory.CSharp
 			get { return NodeType.Unknown; }
 		}
 		
-		public override EntityType EntityType {
-			get { return EntityType.Method; }
+		public override SymbolKind SymbolKind {
+			get { return SymbolKind.Method; }
+		}
+		
+		/// <summary>
+		/// Gets the 'get'/'set'/'add'/'remove' keyword
+		/// </summary>
+		public CSharpTokenNode Keyword {
+			get {
+				for (AstNode child = this.FirstChild; child != null; child = child.NextSibling) {
+					if (child.Role == PropertyDeclaration.GetKeywordRole || child.Role == PropertyDeclaration.SetKeywordRole
+					    || child.Role == CustomEventDeclaration.AddKeywordRole || child.Role == CustomEventDeclaration.RemoveKeywordRole)
+					{
+						return (CSharpTokenNode)child;
+					}
+				}
+				return CSharpTokenNode.Null;
+			}
 		}
 		
 		public BlockStatement Body {

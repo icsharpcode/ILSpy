@@ -44,22 +44,23 @@ namespace ICSharpCode.NRefactory.CSharp
 				}
 			}
 			
-			public NullCSharpTokenNode () : base (TextLocation.Empty)
+			public NullCSharpTokenNode () : base (TextLocation.Empty, null)
 			{
 			}
 			
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
+				visitor.VisitNullNode(this);
 			}
-				
+			
 			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
 			{
-				return default (T);
+				return visitor.VisitNullNode(this);
 			}
 			
 			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 			{
-				return default (S);
+				return visitor.VisitNullNode(this, data);
 			}
 			
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
@@ -80,12 +81,10 @@ namespace ICSharpCode.NRefactory.CSharp
 				return startLocation;
 			}
 		}
-		
-		protected virtual int TokenLength {
+
+		int TokenLength {
 			get {
-				if (!(Role is TokenRole))
-					return 0;
-				return ((TokenRole)Role).Length;
+				return TokenRole.TokenLengths [(int)(this.flags >> AstNodeFlagsUsedBits)];
 			}
 		}
 		
@@ -94,17 +93,17 @@ namespace ICSharpCode.NRefactory.CSharp
 				return new TextLocation (StartLocation.Line, StartLocation.Column + TokenLength);
 			}
 		}
-		
-		public CSharpTokenNode (TextLocation location)
+
+		public CSharpTokenNode (TextLocation location, TokenRole role)
 		{
 			this.startLocation = location;
+			if (role != null)
+				this.flags |= role.TokenIndex << AstNodeFlagsUsedBits;
 		}
-		
-		public override string GetText (CSharpFormattingOptions formattingOptions = null)
+
+		public override string ToString(CSharpFormattingOptions formattingOptions)
 		{
-			if (!(Role is TokenRole))
-				return null;
-			return ((TokenRole)Role).Token;
+			return TokenRole.Tokens [(int)(this.flags >> AstNodeFlagsUsedBits)];
 		}
 
 		public override void AcceptVisitor (IAstVisitor visitor)
@@ -126,11 +125,6 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			CSharpTokenNode o = other as CSharpTokenNode;
 			return o != null && !o.IsNull && !(o is CSharpModifierToken);
-		}
-		
-		public override string ToString ()
-		{
-			return string.Format ("[CSharpTokenNode: StartLocation={0}, EndLocation={1}, Role={2}]", StartLocation, EndLocation, Role);
 		}
 	}
 }

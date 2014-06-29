@@ -84,6 +84,16 @@ namespace ICSharpCode.NRefactory.CSharp
 			DoWhileStatement o = other as DoWhileStatement;
 			return o != null && this.EmbeddedStatement.DoMatch(o.EmbeddedStatement, match) && this.Condition.DoMatch(o.Condition, match);
 		}
+
+		public DoWhileStatement()
+		{
+		}
+
+		public DoWhileStatement(Expression condition, Statement embeddedStatement)
+		{
+			this.Condition = condition;
+			this.EmbeddedStatement = embeddedStatement;
+		}
 	}
 }
 

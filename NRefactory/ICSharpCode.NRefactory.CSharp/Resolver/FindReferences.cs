@@ -1,4 +1,4 @@
-// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
 using ICSharpCode.NRefactory.CSharp.TypeSystem;
 using ICSharpCode.NRefactory.Semantics;
@@ -71,6 +72,8 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// to the virtual method slot.
 		/// </summary>
 		public bool WholeVirtualSlot { get; set; }
+		
+		//public bool FindAllOverloads { get; set; }
 		
 		/// <summary>
 		/// Specifies whether to look for references in documentation comments.
@@ -148,6 +151,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			internal ICompilation declarationCompilation;
 			internal Accessibility accessibility;
 			internal ITypeDefinition topLevelTypeDefinition;
+			internal string fileName;
 			
 			IResolveVisitorNavigator IFindReferenceSearchScope.GetNavigator(ICompilation compilation, FoundReferenceCallback callback)
 			{
@@ -175,6 +179,10 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			
 			ITypeDefinition IFindReferenceSearchScope.TopLevelTypeDefinition {
 				get { return topLevelTypeDefinition; }
+			}
+			
+			string IFindReferenceSearchScope.FileName {
+				get { return fileName; }
 			}
 		}
 		
@@ -218,71 +226,109 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		#endregion
 		
 		#region GetSearchScopes
-		public IList<IFindReferenceSearchScope> GetSearchScopes(IEntity entity)
+		public IList<IFindReferenceSearchScope> GetSearchScopes(ISymbol symbol)
 		{
-			if (entity == null)
-				throw new ArgumentNullException("entity");
-			if (entity is IMember)
-				entity = NormalizeMember((IMember)entity);
-			Accessibility effectiveAccessibility = GetEffectiveAccessibility(entity);
-			ITypeDefinition topLevelTypeDefinition = entity.DeclaringTypeDefinition;
-			while (topLevelTypeDefinition != null && topLevelTypeDefinition.DeclaringTypeDefinition != null)
-				topLevelTypeDefinition = topLevelTypeDefinition.DeclaringTypeDefinition;
+			if (symbol == null)
+				throw new ArgumentNullException("symbol");
+			switch (symbol.SymbolKind) {
+				case SymbolKind.Namespace:
+					return new[] { GetSearchScopeForNamespace((INamespace)symbol) };
+				case SymbolKind.TypeParameter:
+					return new[] { GetSearchScopeForTypeParameter((ITypeParameter)symbol) };
+			}
 			SearchScope scope;
 			SearchScope additionalScope = null;
-			switch (entity.EntityType) {
-				case EntityType.TypeDefinition:
-					scope = FindTypeDefinitionReferences((ITypeDefinition)entity, this.FindTypeReferencesEvenIfAliased, out additionalScope);
-					break;
-				case EntityType.Field:
-					if (entity.DeclaringTypeDefinition != null && entity.DeclaringTypeDefinition.Kind == TypeKind.Enum)
-						scope = FindMemberReferences(entity, m => new FindEnumMemberReferences((IField)m));
-					else
-						scope = FindMemberReferences(entity, m => new FindFieldReferences((IField)m));
-					break;
-				case EntityType.Property:
-					scope = FindMemberReferences(entity, m => new FindPropertyReferences((IProperty)m));
-					if (entity.Name == "Current")
-						additionalScope = FindEnumeratorCurrentReferences((IProperty)entity);
-					break;
-				case EntityType.Event:
-					scope = FindMemberReferences(entity, m => new FindEventReferences((IEvent)m));
-					break;
-				case EntityType.Method:
-					scope = GetSearchScopeForMethod((IMethod)entity);
-					break;
-				case EntityType.Indexer:
-					scope = FindIndexerReferences((IProperty)entity);
-					break;
-				case EntityType.Operator:
-					scope = GetSearchScopeForOperator((IMethod)entity);
-					break;
-				case EntityType.Constructor:
-					IMethod ctor = (IMethod)entity;
-					scope = FindObjectCreateReferences(ctor);
-					additionalScope = FindChainedConstructorReferences(ctor);
-					break;
-				case EntityType.Destructor:
-					scope = GetSearchScopeForDestructor((IMethod)entity);
-					break;
-				default:
-					throw new ArgumentException("Unknown entity type " + entity.EntityType);
+			IEntity entity = null;
+
+			if (symbol.SymbolKind == SymbolKind.Variable) {
+				var variable = (IVariable) symbol;
+				scope = GetSearchScopeForLocalVariable(variable);
+			} else if (symbol.SymbolKind == SymbolKind.Parameter) {
+				var par = (IParameter)symbol;
+				scope = GetSearchScopeForParameter(par);
+				entity = par.Owner;
+			} else {
+				entity = symbol as IEntity;
+				if (entity == null)
+					throw new NotSupportedException("Unsupported symbol type");
+				if (entity is IMember)
+					entity = NormalizeMember((IMember)entity);
+				switch (entity.SymbolKind) {
+					case SymbolKind.TypeDefinition:
+						scope = FindTypeDefinitionReferences((ITypeDefinition)entity, this.FindTypeReferencesEvenIfAliased, out additionalScope);
+						break;
+					case SymbolKind.Field:
+						if (entity.DeclaringTypeDefinition != null && entity.DeclaringTypeDefinition.Kind == TypeKind.Enum)
+							scope = FindMemberReferences(entity, m => new FindEnumMemberReferences((IField)m));
+						else
+							scope = FindMemberReferences(entity, m => new FindFieldReferences((IField)m));
+						break;
+					case SymbolKind.Property:
+						scope = FindMemberReferences(entity, m => new FindPropertyReferences((IProperty)m));
+						if (entity.Name == "Current")
+							additionalScope = FindEnumeratorCurrentReferences((IProperty)entity);
+						else if (entity.Name == "IsCompleted")
+							additionalScope = FindAwaiterIsCompletedReferences((IProperty)entity);
+						break;
+					case SymbolKind.Event:
+						scope = FindMemberReferences(entity, m => new FindEventReferences((IEvent)m));
+						break;
+					case SymbolKind.Method:
+						scope = GetSearchScopeForMethod((IMethod)entity);
+						break;
+					case SymbolKind.Indexer:
+						scope = FindIndexerReferences((IProperty)entity);
+						break;
+					case SymbolKind.Operator:
+						scope = GetSearchScopeForOperator((IMethod)entity);
+						break;
+					case SymbolKind.Constructor:
+						IMethod ctor = (IMethod)entity;
+						scope = FindObjectCreateReferences(ctor);
+						additionalScope = FindChainedConstructorReferences(ctor);
+						break;
+					case SymbolKind.Destructor:
+						scope = GetSearchScopeForDestructor((IMethod)entity);
+						break;
+					default:
+						throw new ArgumentException("Unknown entity type " + entity.SymbolKind);
+				}
 			}
+			var effectiveAccessibility = entity != null ? GetEffectiveAccessibility(entity) : Accessibility.Private;
+			var topLevelTypeDefinition = GetTopLevelTypeDefinition(entity);
+
 			if (scope.accessibility == Accessibility.None)
 				scope.accessibility = effectiveAccessibility;
-			scope.declarationCompilation = entity.Compilation;
+			scope.declarationCompilation = entity != null ? entity.Compilation : null;
 			scope.topLevelTypeDefinition = topLevelTypeDefinition;
 			scope.findReferences = this;
 			if (additionalScope != null) {
 				if (additionalScope.accessibility == Accessibility.None)
 					additionalScope.accessibility = effectiveAccessibility;
-				additionalScope.declarationCompilation = entity.Compilation;
+				additionalScope.declarationCompilation = scope.declarationCompilation;
 				additionalScope.topLevelTypeDefinition = topLevelTypeDefinition;
 				additionalScope.findReferences = this;
 				return new[] { scope, additionalScope };
 			} else {
 				return new[] { scope };
 			}
+		}
+
+		public IList<IFindReferenceSearchScope> GetSearchScopes(IEnumerable<ISymbol> symbols)
+		{
+			if (symbols == null)
+				throw new ArgumentNullException("symbols");
+			return symbols.SelectMany(GetSearchScopes).ToList();
+		}
+		
+		static ITypeDefinition GetTopLevelTypeDefinition(IEntity entity)
+		{
+			if (entity == null)
+				return null;
+			ITypeDefinition topLevelTypeDefinition = entity.DeclaringTypeDefinition;
+			while (topLevelTypeDefinition != null && topLevelTypeDefinition.DeclaringTypeDefinition != null)
+				topLevelTypeDefinition = topLevelTypeDefinition.DeclaringTypeDefinition;
+			return topLevelTypeDefinition;
 		}
 		#endregion
 		
@@ -333,7 +379,10 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 						return pc.Files.OfType<CSharpUnresolvedFile>();
 				}
 			} else {
-				return pc.Files.OfType<CSharpUnresolvedFile>();
+				if (searchScope.FileName == null)
+					return pc.Files.OfType<CSharpUnresolvedFile>();
+				else
+					return pc.Files.OfType<CSharpUnresolvedFile>().Where(f => f.FileName == searchScope.FileName);
 			}
 		}
 		
@@ -348,6 +397,36 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		#endregion
 		
 		#region FindReferencesInFile
+		/// <summary>
+		/// Finds all references in the given file.
+		/// </summary>
+		/// <param name="searchScope">The search scope for which to look.</param>
+		/// <param name="resolver">AST resolver for the file to search in.</param>
+		/// <param name="callback">Callback used to report the references that were found.</param>
+		/// <param name="cancellationToken">CancellationToken that may be used to cancel the operation.</param>
+		public void FindReferencesInFile(IFindReferenceSearchScope searchScope, CSharpAstResolver resolver,
+		                                 FoundReferenceCallback callback, CancellationToken cancellationToken)
+		{
+			if (resolver == null)
+				throw new ArgumentNullException("resolver");
+			FindReferencesInFile(searchScope, resolver.UnresolvedFile, (SyntaxTree)resolver.RootNode, resolver.Compilation, callback, cancellationToken);
+		}
+		
+		/// <summary>
+		/// Finds all references in the given file.
+		/// </summary>
+		/// <param name="searchScopes">The search scopes for which to look.</param>
+		/// <param name="resolver">AST resolver for the file to search in.</param>
+		/// <param name="callback">Callback used to report the references that were found.</param>
+		/// <param name="cancellationToken">CancellationToken that may be used to cancel the operation.</param>
+		public void FindReferencesInFile(IList<IFindReferenceSearchScope> searchScopes, CSharpAstResolver resolver,
+		                                 FoundReferenceCallback callback, CancellationToken cancellationToken)
+		{
+			if (resolver == null)
+				throw new ArgumentNullException("resolver");
+			FindReferencesInFile(searchScopes, resolver.UnresolvedFile, (SyntaxTree)resolver.RootNode, resolver.Compilation, callback, cancellationToken);
+		}
+		
 		/// <summary>
 		/// Finds all references in the given file.
 		/// </summary>
@@ -379,8 +458,6 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			if (searchScopes == null)
 				throw new ArgumentNullException("searchScopes");
-			if (unresolvedFile == null)
-				throw new ArgumentNullException("unresolvedFile");
 			if (syntaxTree == null)
 				throw new ArgumentNullException("syntaxTree");
 			if (compilation == null)
@@ -411,6 +488,79 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				if (frn != null)
 					frn.NavigatorDone(resolver, cancellationToken);
 			}
+		}
+		#endregion
+		
+		#region RenameReferencesInFile
+
+		public static AstNode GetNodeToReplace(AstNode node)
+		{
+			if (node is ConstructorInitializer)
+				return null;
+			if (node is ObjectCreateExpression)
+				node = ((ObjectCreateExpression)node).Type;
+
+			if (node is InvocationExpression)
+				node = ((InvocationExpression)node).Target;
+
+			if (node is MemberReferenceExpression)
+				node = ((MemberReferenceExpression)node).MemberNameToken;
+
+			if (node is SimpleType)
+				node = ((SimpleType)node).IdentifierToken;
+
+			if (node is MemberType)
+				node = ((MemberType)node).MemberNameToken;
+
+			if (node is NamespaceDeclaration) {
+//				var nsd = ((NamespaceDeclaration)node);
+//				node = nsd.Identifiers.LastOrDefault (n => n.Name == memberName) ?? nsd.Identifiers.FirstOrDefault ();
+//				if (node == null)
+				return null;
+			}
+
+			if (node is TypeDeclaration)
+				node = ((TypeDeclaration)node).NameToken;
+			if (node is DelegateDeclaration)
+				node = ((DelegateDeclaration)node).NameToken;
+
+			if (node is EntityDeclaration)
+				node = ((EntityDeclaration)node).NameToken;
+
+			if (node is ParameterDeclaration)
+				node = ((ParameterDeclaration)node).NameToken;
+			if (node is ConstructorDeclaration)
+				node = ((ConstructorDeclaration)node).NameToken;
+			if (node is DestructorDeclaration)
+				node = ((DestructorDeclaration)node).NameToken;
+			if (node is NamedArgumentExpression)
+				node = ((NamedArgumentExpression)node).NameToken;
+			if (node is NamedExpression)
+				node = ((NamedExpression)node).NameToken;
+			if (node is VariableInitializer)
+				node = ((VariableInitializer)node).NameToken;
+
+			if (node is IdentifierExpression) {
+				node = ((IdentifierExpression)node).IdentifierToken;
+			}
+			return node;
+		}
+
+		public void RenameReferencesInFile(IList<IFindReferenceSearchScope> searchScopes, string newName, CSharpAstResolver resolver,
+		                                   Action<RenameCallbackArguments> callback, Action<Error> errorCallback, CancellationToken cancellationToken = default (CancellationToken))
+		{
+			FindReferencesInFile(
+				searchScopes,
+				resolver,
+				delegate(AstNode astNode, ResolveResult result) {
+					var nodeToReplace = GetNodeToReplace(astNode);
+					if (nodeToReplace == null) {
+						errorCallback (new Error (ErrorType.Error, "no node to replace found."));
+						return;
+					}
+					callback (new RenameCallbackArguments(nodeToReplace, Identifier.Create(newName)));
+				},
+				cancellationToken);
 		}
 		#endregion
 		
@@ -561,6 +711,13 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			referencedMember = NormalizeMember(referencedMember);
 			if (member.Equals(referencedMember))
 				return true;
+			if (FindCallsThroughInterface && member.DeclaringTypeDefinition != null && member.DeclaringTypeDefinition.Kind == TypeKind.Interface) {
+				if (FindOnlySpecializedReferences) {
+					return referencedMember.ImplementedInterfaceMembers.Contains(member);
+				} else {
+					return referencedMember.ImplementedInterfaceMembers.Any(m => m.MemberDefinition.Equals(member));
+				}
+			}
 			if (!isVirtualCall)
 				return false;
 			bool isInterfaceCall = referencedMember.DeclaringTypeDefinition != null && referencedMember.DeclaringTypeDefinition.Kind == TypeKind.Interface;
@@ -589,13 +746,14 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			return false;
 		}
 		
+		/*
 		bool PerformVirtualLookup(IMember member, IMember referencedMember)
 		{
 			if (FindCallsThroughVirtualBaseMethod && member.IsOverride && !WholeVirtualSlot)
 				return true;
 			var typeDef = referencedMember.DeclaringTypeDefinition;
 			return FindCallsThroughInterface && typeDef != null && typeDef.Kind == TypeKind.Interface;
-		}
+		}*/
 		
 		sealed class FindFieldReferences : FindMemberReferencesNavigator
 		{
@@ -661,6 +819,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					return imported != null ? new FindEnumeratorCurrentReferencesNavigator(imported) : null;
 				});
 		}
+
+		SearchScope FindAwaiterIsCompletedReferences(IProperty property)
+		{
+			return new SearchScope(
+				delegate(ICompilation compilation) {
+					IProperty imported = compilation.Import(property);
+					return imported != null ? new FindAwaiterIsCompletedReferencesNavigator(imported) : null;
+				});
+		}
 		
 		sealed class FindEnumeratorCurrentReferencesNavigator : FindReferenceNavigator
 		{
@@ -680,6 +847,27 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			{
 				ForEachResolveResult ferr = rr as ForEachResolveResult;
 				return ferr != null && ferr.CurrentProperty != null && findReferences.IsMemberMatch(property, ferr.CurrentProperty, true);
+			}
+		}
+
+		sealed class FindAwaiterIsCompletedReferencesNavigator : FindReferenceNavigator
+		{
+			IProperty property;
+			
+			public FindAwaiterIsCompletedReferencesNavigator(IProperty property)
+			{
+				this.property = property;
+			}
+			
+			internal override bool CanMatch(AstNode node)
+			{
+				return node is UnaryOperatorExpression;
+			}
+			
+			internal override bool IsMatch(ResolveResult rr)
+			{
+				AwaitResolveResult arr = rr as AwaitResolveResult;
+				return arr != null && arr.IsCompletedProperty != null && findReferences.IsMemberMatch(property, arr.IsCompletedProperty, true);
 			}
 		}
 		#endregion
@@ -723,6 +911,12 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				case "GetEnumerator":
 				case "MoveNext":
 					specialNodeType = typeof(ForeachStatement);
+					break;
+				case "GetAwaiter":
+				case "GetResult":
+				case "OnCompleted":
+				case "UnsafeOnCompleted":
+					specialNodeType = typeof(UnaryOperatorExpression);
 					break;
 				default:
 					specialNodeType = null;
@@ -793,6 +987,12 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					if (ferr != null) {
 						return IsMatch(ferr.GetEnumeratorCall)
 							|| (ferr.MoveNextMethod != null && findReferences.IsMemberMatch(method, ferr.MoveNextMethod, true));
+					}
+					var arr = rr as AwaitResolveResult;
+					if (arr != null) {
+						return IsMatch(arr.GetAwaiterInvocation)
+							|| (arr.GetResultMethod != null && findReferences.IsMemberMatch(method, arr.GetResultMethod, true))
+							|| (arr.OnCompletedMethod != null && findReferences.IsMemberMatch(method, arr.OnCompletedMethod, true));
 					}
 				}
 				var mrr = rr as MemberResolveResult;
@@ -1038,7 +1238,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			internal override bool IsMatch(ResolveResult rr)
 			{
 				ConversionResolveResult crr = rr as ConversionResolveResult;
-				return crr != null && crr.Conversion.IsUserDefined 
+				return crr != null && crr.Conversion.IsUserDefined
 					&& findReferences.IsMemberMatch(op, crr.Conversion.Method, crr.Conversion.IsVirtualMethodLookup);
 			}
 		}
@@ -1186,6 +1386,17 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			FindReferencesInFile(searchScope, unresolvedFile, syntaxTree, compilation, callback, cancellationToken);
 		}
 		
+		SearchScope GetSearchScopeForLocalVariable(IVariable variable)
+		{
+			var scope = new SearchScope (
+				delegate {
+					return new FindLocalReferencesNavigator(variable);
+				}
+			);
+			scope.fileName = variable.Region.FileName;
+			return scope;
+		}
+		
 		class FindLocalReferencesNavigator : FindReferenceNavigator
 		{
 			readonly IVariable variable;
@@ -1230,8 +1441,9 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// <param name="compilation">The compilation.</param>
 		/// <param name="callback">Callback used to report the references that were found.</param>
 		/// <param name="cancellationToken">Cancellation token that may be used to cancel the operation.</param>
+		[Obsolete("Use GetSearchScopes(typeParameter) instead")]
 		public void FindTypeParameterReferences(IType typeParameter, CSharpUnresolvedFile unresolvedFile, SyntaxTree syntaxTree,
-		                                ICompilation compilation, FoundReferenceCallback callback, CancellationToken cancellationToken)
+		                                        ICompilation compilation, FoundReferenceCallback callback, CancellationToken cancellationToken)
 		{
 			if (typeParameter == null)
 				throw new ArgumentNullException("typeParameter");
@@ -1243,6 +1455,17 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			FindReferencesInFile(searchScope, unresolvedFile, syntaxTree, compilation, callback, cancellationToken);
 		}
 		
+		SearchScope GetSearchScopeForTypeParameter(ITypeParameter tp)
+		{
+			var searchScope = new SearchScope(c => new FindTypeParameterReferencesNavigator(tp));
+			var compilationProvider = tp as ICompilationProvider;
+			if (compilationProvider != null)
+				searchScope.declarationCompilation = compilationProvider.Compilation;
+			searchScope.topLevelTypeDefinition = GetTopLevelTypeDefinition(tp.Owner);
+			searchScope.accessibility = Accessibility.Private;
+			return searchScope;
+		}
+
 		class FindTypeParameterReferencesNavigator : FindReferenceNavigator
 		{
 			readonly ITypeParameter typeParameter;
@@ -1267,6 +1490,120 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			{
 				var lrr = rr as TypeResolveResult;
 				return lrr != null && lrr.Type.Kind == TypeKind.TypeParameter && ((ITypeParameter)lrr.Type).Region == typeParameter.Region;
+			}
+		}
+		#endregion
+		
+		#region Find Namespace References
+		SearchScope GetSearchScopeForNamespace(INamespace ns)
+		{
+			var scope = new SearchScope (
+				delegate (ICompilation compilation) {
+					return new FindNamespaceNavigator (ns);
+				}
+			);
+			return scope;
+		}
+
+		sealed class FindNamespaceNavigator : FindReferenceNavigator
+		{
+			readonly INamespace ns;
+
+			public FindNamespaceNavigator (INamespace ns)
+			{
+				this.ns = ns;
+			}
+
+			internal override bool CanMatch(AstNode node)
+			{
+				var nsd = node as NamespaceDeclaration;
+				if (nsd != null && nsd.FullName.StartsWith(ns.FullName, StringComparison.Ordinal))
+					return true;
+
+				var ud = node as UsingDeclaration;
+				if (ud != null && ud.Namespace == ns.FullName)
+					return true;
+
+				var st = node as SimpleType;
+				if (st != null && st.Identifier == ns.Name)
+					return !st.AncestorsAndSelf.TakeWhile (n => n is AstType).Any (m => m.Role == NamespaceDeclaration.NamespaceNameRole);
+
+				var mt = node as MemberType;
+				if (mt != null && mt.MemberName == ns.Name)
+					return !mt.AncestorsAndSelf.TakeWhile (n => n is AstType).Any (m => m.Role == NamespaceDeclaration.NamespaceNameRole);
+
+				var identifer = node as IdentifierExpression;
+				if (identifer != null && identifer.Identifier == ns.Name)
+					return true;
+
+				var mrr = node as MemberReferenceExpression;
+				if (mrr != null && mrr.MemberName == ns.Name)
+					return true;
+
+
+				return false;
+			}
+
+			internal override bool IsMatch(ResolveResult rr)
+			{
+				var nsrr = rr as NamespaceResolveResult;
+				return nsrr != null && nsrr.NamespaceName.StartsWith(ns.FullName, StringComparison.Ordinal);
+			}
+		}
+		#endregion
+		
+		#region Find Parameter References
+
+		SearchScope GetSearchScopeForParameter(IParameter parameter)
+		{
+			var scope = new SearchScope (
+				delegate {
+					return new FindParameterReferencesNavigator (parameter);
+				}
+			);
+			if (parameter.Owner == null) {
+				scope.fileName = parameter.Region.FileName;
+			}
+			return scope;
+		}
+
+		class FindParameterReferencesNavigator : FindReferenceNavigator
+		{
+			readonly IParameter parameter;
+
+			public FindParameterReferencesNavigator(IParameter parameter)
+			{
+				this.parameter = parameter;
+			}
+
+			internal override bool CanMatch(AstNode node)
+			{
+				var expr = node as IdentifierExpression;
+				if (expr != null)
+					return expr.TypeArguments.Count == 0 && parameter.Name == expr.Identifier;
+				var vi = node as VariableInitializer;
+				if (vi != null)
+					return vi.Name == parameter.Name;
+				var pd = node as ParameterDeclaration;
+				if (pd != null)
+					return pd.Name == parameter.Name;
+				var id = node as Identifier;
+				if (id != null)
+					return id.Name == parameter.Name;
+				var nae = node as NamedArgumentExpression;
+				if (nae != null)
+					return nae.Name == parameter.Name;
+				return false;
+			}
+
+			internal override bool IsMatch(ResolveResult rr)
+			{
+				var lrr = rr as LocalResolveResult;
+				if (lrr != null)
+					return lrr.Variable.Name == parameter.Name && lrr.Variable.Region == parameter.Region;
+
+				var nar = rr as NamedArgumentResolveResult;
+				return nar != null && nar.Parameter.Name == parameter.Name && nar.Parameter.Region == parameter.Region;
 			}
 		}
 		#endregion

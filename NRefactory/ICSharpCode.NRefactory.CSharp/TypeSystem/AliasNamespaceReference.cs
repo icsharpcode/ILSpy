@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -31,7 +31,7 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 	/// by <see cref="MemberTypeOrNamespaceReference"/>.
 	/// </remarks>
 	[Serializable]
-	public class AliasNamespaceReference : TypeOrNamespaceReference
+	public sealed class AliasNamespaceReference : TypeOrNamespaceReference, ISupportsInterning
 	{
 		readonly string identifier;
 		
@@ -51,9 +51,26 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 			return resolver.ResolveAlias(identifier);
 		}
 		
+		public override IType ResolveType(CSharpResolver resolver)
+		{
+			// alias cannot refer to types
+			return SpecialType.UnknownType;
+		}
+		
 		public override string ToString()
 		{
 			return identifier + "::";
+		}
+		
+		int ISupportsInterning.GetHashCodeForInterning()
+		{
+			return identifier.GetHashCode();
+		}
+		
+		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
+		{
+			AliasNamespaceReference anr = other as AliasNamespaceReference;
+			return anr != null && this.identifier == anr.identifier;
 		}
 	}
 }

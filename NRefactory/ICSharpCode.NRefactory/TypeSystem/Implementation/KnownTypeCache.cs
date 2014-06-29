@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -48,12 +48,13 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			KnownTypeReference typeRef = KnownTypeReference.Get(typeCode);
 			if (typeRef == null)
 				return SpecialType.UnknownType;
+			var typeName = new TopLevelTypeName(typeRef.Namespace, typeRef.Name, typeRef.TypeParameterCount);
 			foreach (IAssembly asm in compilation.Assemblies) {
-				var typeDef = asm.GetTypeDefinition(typeRef.Namespace, typeRef.Name, typeRef.TypeParameterCount);
+				var typeDef = asm.GetTypeDefinition(typeName);
 				if (typeDef != null)
 					return typeDef;
 			}
-			return new UnknownType(typeRef.Namespace, typeRef.Name, typeRef.TypeParameterCount);
+			return new UnknownType(typeName);
 		}
 	}
 }

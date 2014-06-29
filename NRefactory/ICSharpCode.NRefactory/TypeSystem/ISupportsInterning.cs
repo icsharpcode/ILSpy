@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -22,15 +22,10 @@ namespace ICSharpCode.NRefactory.TypeSystem
 {
 	/// <summary>
 	/// Interface for TypeSystem objects that support interning.
-	/// See <see cref="IInterningProvider"/> for more information.
+	/// See <see cref="InterningProvider"/> for more information.
 	/// </summary>
 	public interface ISupportsInterning
 	{
-		/// <summary>
-		/// Interns child objects and strings.
-		/// </summary>
-		void PrepareForInterning(IInterningProvider provider);
-		
 		/// <summary>
 		/// Gets a hash code for interning.
 		/// </summary>

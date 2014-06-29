@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -172,7 +172,18 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		public IList<IParameter> Parameters { get; private set; }
 		public IList<IAttribute> ReturnTypeAttributes { get; private set; }
 		public IList<ITypeParameter> TypeParameters { get; private set; }
+
+		public IList<IType> TypeArguments {
+			get {
+				// ToList() call is necessary because IList<> isn't covariant
+				return TypeParameters.ToList<IType>();
+			}
+		}
 		
+		bool IMethod.IsParameterized {
+			get { return false; }
+		}
+
 		public bool IsExtensionMethod { get; private set; }
 		
 		public IList<IUnresolvedMethod> Parts {
@@ -192,11 +203,15 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		public bool IsOperator {
 			get { return ((IUnresolvedMethod)unresolved).IsOperator; }
 		}
-			
+		
 		public bool IsPartial {
 			get { return ((IUnresolvedMethod)unresolved).IsPartial; }
 		}
-		
+
+		public bool IsAsync {
+			get { return ((IUnresolvedMethod)unresolved).IsAsync; }
+		}
+
 		public bool HasBody {
 			get { return ((IUnresolvedMethod)unresolved).HasBody; }
 		}
@@ -204,10 +219,14 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		public bool IsAccessor {
 			get { return ((IUnresolvedMethod)unresolved).AccessorOwner != null; }
 		}
-		
-		public IMember AccessorOwner {
-			get { 
-				var reference = ((IUnresolvedMethod)unresolved).AccessorOwner; 
+
+		IMethod IMethod.ReducedFrom {
+			get { return null; }
+		}
+
+		public virtual IMember AccessorOwner {
+			get {
+				var reference = ((IUnresolvedMethod)unresolved).AccessorOwner;
 				if (reference != null)
 					return reference.Resolve(context);
 				else
@@ -215,25 +234,46 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			}
 		}
 		
-		public override IMemberReference ToMemberReference()
+		public override ISymbolReference ToReference()
 		{
 			var declTypeRef = this.DeclaringType.ToTypeReference();
 			if (IsExplicitInterfaceImplementation && ImplementedInterfaceMembers.Count == 1) {
-				return new ExplicitInterfaceImplementationMemberReference(declTypeRef, ImplementedInterfaceMembers[0].ToMemberReference());
+				return new ExplicitInterfaceImplementationMemberReference(declTypeRef, ImplementedInterfaceMembers[0].ToReference());
 			} else {
 				return new DefaultMemberReference(
-					this.EntityType, declTypeRef, this.Name, this.TypeParameters.Count,
+					this.SymbolKind, declTypeRef, this.Name, this.TypeParameters.Count,
 					this.Parameters.Select(p => p.Type.ToTypeReference()).ToList());
 			}
+		}
+		
+		public override IMemberReference ToMemberReference()
+		{
+			return (IMemberReference)ToReference();
+		}
+		
+		public override IMember Specialize(TypeParameterSubstitution substitution)
+		{
+			if (TypeParameterSubstitution.Identity.Equals(substitution))
+				return this;
+			return new SpecializedMethod(this, substitution);
+		}
+		
+		IMethod IMethod.Specialize(TypeParameterSubstitution substitution)
+		{
+			if (TypeParameterSubstitution.Identity.Equals(substitution))
+				return this;
+			return new SpecializedMethod(this, substitution);
 		}
 		
 		public override string ToString()
 		{
 			StringBuilder b = new StringBuilder("[");
-			b.Append(this.EntityType);
+			b.Append(this.SymbolKind);
 			b.Append(' ');
-			b.Append(this.DeclaringType.ReflectionName);
-			b.Append('.');
+			if (this.DeclaringType.Kind != TypeKind.Unknown) {
+				b.Append(this.DeclaringType.ReflectionName);
+				b.Append('.');
+			}
 			b.Append(this.Name);
 			if (this.TypeParameters.Count > 0) {
 				b.Append("``");

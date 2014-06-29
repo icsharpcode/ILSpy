@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2011-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -41,7 +41,10 @@ namespace ICSharpCode.NRefactory.PatternMatching
 		
 		public override bool DoMatch(INode other, Match match)
 		{
-			return match.Get(referencedGroupName).Last().IsMatch(other);
+			var last = match.Get (referencedGroupName).Last ();
+			if (last == null && other == null)
+				return true;
+			return last.IsMatch(other);
 		}
 	}
 }

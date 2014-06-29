@@ -47,11 +47,7 @@ namespace Mono.CompilerServices.SymbolWriter
 		string filename;
 		
 		private SourceMethodBuilder current_method;
-#if NET_2_1
-		System.Collections.Stack current_method_stack = new System.Collections.Stack ();
-#else
 		Stack<SourceMethodBuilder> current_method_stack = new Stack<SourceMethodBuilder> ();
-#endif
 
 		public MonoSymbolWriter (string filename)
 		{

@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -31,8 +31,8 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// <summary>
 		/// Get the type of this type parameter's owner.
 		/// </summary>
-		/// <returns>EntityType.TypeDefinition or EntityType.Method</returns>
-		EntityType OwnerType { get; }
+		/// <returns>SymbolKind.TypeDefinition or SymbolKind.Method</returns>
+		SymbolKind OwnerType { get; }
 		
 		/// <summary>
 		/// Gets the index of the type parameter in the type parameter list of the owning method/class.
@@ -60,13 +60,13 @@ namespace ICSharpCode.NRefactory.TypeSystem
 	/// <summary>
 	/// Type parameter of a generic class/method.
 	/// </summary>
-	public interface ITypeParameter : IType
+	public interface ITypeParameter : IType, ISymbol
 	{
 		/// <summary>
 		/// Get the type of this type parameter's owner.
 		/// </summary>
-		/// <returns>EntityType.TypeDefinition or EntityType.Method</returns>
-		EntityType OwnerType { get; }
+		/// <returns>SymbolKind.TypeDefinition or SymbolKind.Method</returns>
+		SymbolKind OwnerType { get; }
 		
 		/// <summary>
 		/// Gets the owning method/class.
@@ -83,6 +83,11 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Gets the index of the type parameter in the type parameter list of the owning method/class.
 		/// </summary>
 		int Index { get; }
+		
+		/// <summary>
+		/// Gets the name of the type parameter.
+		/// </summary>
+		new string Name { get; }
 		
 		/// <summary>
 		/// Gets the list of attributes declared on this type parameter.
@@ -107,7 +112,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// <summary>
 		/// Gets the effective interface set of this type parameter.
 		/// </summary>
-		IList<IType> EffectiveInterfaceSet { get; }
+		ICollection<IType> EffectiveInterfaceSet { get; }
 		
 		/// <summary>
 		/// Gets if the type parameter has the 'new()' constraint.

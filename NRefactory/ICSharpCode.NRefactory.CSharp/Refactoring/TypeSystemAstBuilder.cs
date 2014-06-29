@@ -1,5 +1,20 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under MIT license (for details please see \doc\license.txt)
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.Collections.Generic;
@@ -55,6 +70,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			this.ShowTypeParameterConstraints = true;
 			this.ShowParameterNames = true;
 			this.ShowConstantValues = true;
+			this.UseAliases = true;
 		}
 		
 		/// <summary>
@@ -88,7 +104,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		public bool ShowTypeParameters { get; set; }
 		
 		/// <summary>
-		/// Controls whether contraints on type parameter declarations are shown.
+		/// Controls whether constraints on type parameter declarations are shown.
 		/// Has no effect if ShowTypeParameters is false.
 		/// The default value is <c>true</c>.
 		/// </summary>
@@ -123,6 +139,18 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		/// The default value is <c>false</c>.
 		/// </summary>
 		public bool UseCustomEvents { get; set; }
+
+		/// <summary>
+		/// Controls if unbound type argument names are inserted in the ast or not.
+		/// The default value is <c>false</c>.
+		/// </summary>
+		public bool ConvertUnboundTypeArguments { get; set;}
+
+		/// <summary>
+		/// Controls if aliases should be used inside the type name or not.
+		/// The default value is <c>true</c>.
+		/// </summary>
+		public bool UseAliases { get; set;}
 		#endregion
 		
 		#region Convert Type
@@ -136,17 +164,27 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			return astType;
 		}
 		
-		public AstType ConvertType(string ns, string name, int typeParameterCount = 0)
+		public AstType ConvertType(FullTypeName fullTypeName)
 		{
 			if (resolver != null) {
 				foreach (var asm in resolver.Compilation.Assemblies) {
-					var def = asm.GetTypeDefinition(ns, name, typeParameterCount);
+					var def = asm.GetTypeDefinition(fullTypeName);
 					if (def != null) {
 						return ConvertType(def);
 					}
 				}
 			}
-			return new MemberType(new SimpleType(ns), name);
+			TopLevelTypeName top = fullTypeName.TopLevelTypeName;
+			AstType type;
+			if (string.IsNullOrEmpty(top.Namespace)) {
+				type = new SimpleType(top.Name);
+			} else {
+				type = new SimpleType(top.Namespace).MemberType(top.Name);
+			}
+			for (int i = 0; i < fullTypeName.NestingLevel; i++) {
+				type = type.MemberType(fullTypeName.GetNestedTypeName(i));
+			}
+			return type;
 		}
 		
 		AstType ConvertTypeHelper(IType type)
@@ -202,11 +240,13 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			
 			if (resolver != null) {
 				// Look if there's an alias to the target type
-				for (ResolvedUsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent) {
-					foreach (var pair in usingScope.UsingAliases) {
-						if (pair.Value is TypeResolveResult) {
-							if (TypeMatches(pair.Value.Type, typeDef, typeArguments))
-								return new SimpleType(pair.Key);
+				if (UseAliases) {
+					for (ResolvedUsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent) {
+						foreach (var pair in usingScope.UsingAliases) {
+							if (pair.Value is TypeResolveResult) {
+								if (TypeMatches(pair.Value.Type, typeDef, typeArguments))
+									return new SimpleType(pair.Key);
+							}
 						}
 					}
 				}
@@ -220,18 +260,21 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 				} else {
 					localTypeArguments = EmptyList<IType>.Instance;
 				}
-				TypeResolveResult trr = resolver.ResolveSimpleName(typeDef.Name, localTypeArguments) as TypeResolveResult;
-				if (trr != null && !trr.IsError && TypeMatches(trr.Type, typeDef, typeArguments)) {
-					// We can use the short type name
-					SimpleType shortResult = new SimpleType(typeDef.Name);
-					AddTypeArguments(shortResult, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
-					return shortResult;
+				ResolveResult rr = resolver.ResolveSimpleName(typeDef.Name, localTypeArguments);
+				TypeResolveResult trr = rr as TypeResolveResult;
+				if (trr != null || (localTypeArguments.Count == 0 && resolver.IsVariableReferenceWithSameType(rr, typeDef.Name, out trr))) {
+					if (!trr.IsError && TypeMatches(trr.Type, typeDef, typeArguments)) {
+						// We can use the short type name
+						SimpleType shortResult = new SimpleType(typeDef.Name);
+						AddTypeArguments(shortResult, typeDef, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
+						return shortResult;
+					}
 				}
 			}
 			
 			if (AlwaysUseShortTypeNames) {
 				var shortResult = new SimpleType(typeDef.Name);
-				AddTypeArguments(shortResult, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
+				AddTypeArguments(shortResult, typeDef, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
 				return shortResult;
 			}
 			MemberType result = new MemberType();
@@ -248,7 +291,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 				}
 			}
 			result.MemberName = typeDef.Name;
-			AddTypeArguments(result, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
+			AddTypeArguments(result, typeDef, typeArguments, outerTypeParameterCount, typeDef.TypeParameterCount);
 			return result;
 		}
 		
@@ -279,43 +322,51 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		/// Adds type arguments to the result type.
 		/// </summary>
 		/// <param name="result">The result AST node (a SimpleType or MemberType)</param>
+		/// <param name="typeDef">The type definition that owns the type parameters</param>
 		/// <param name="typeArguments">The list of type arguments</param>
 		/// <param name="startIndex">Index of first type argument to add</param>
 		/// <param name="endIndex">Index after last type argument to add</param>
-		void AddTypeArguments(AstType result, IList<IType> typeArguments, int startIndex, int endIndex)
+		void AddTypeArguments(AstType result, ITypeDefinition typeDef, IList<IType> typeArguments, int startIndex, int endIndex)
 		{
+			Debug.Assert(endIndex <= typeDef.TypeParameterCount);
 			for (int i = startIndex; i < endIndex; i++) {
-				result.AddChild(ConvertType(typeArguments[i]), Roles.TypeArgument);
+				if (ConvertUnboundTypeArguments && typeArguments[i].Kind == TypeKind.UnboundTypeArgument) {
+					result.AddChild(new SimpleType(typeDef.TypeParameters[i].Name), Roles.TypeArgument);
+				} else {
+					result.AddChild(ConvertType(typeArguments[i]), Roles.TypeArgument);
+				}
 			}
 		}
 		
-		AstType ConvertNamespace(string ns)
+		public AstType ConvertNamespace(string namespaceName)
 		{
 			if (resolver != null) {
 				// Look if there's an alias to the target namespace
-				for (ResolvedUsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent) {
-					foreach (var pair in usingScope.UsingAliases) {
-						NamespaceResolveResult nrr = pair.Value as NamespaceResolveResult;
-						if (nrr != null && nrr.NamespaceName == ns)
-							return new SimpleType(pair.Key);
+				if (UseAliases) {
+					for (ResolvedUsingScope usingScope = resolver.CurrentUsingScope; usingScope != null; usingScope = usingScope.Parent) {
+						foreach (var pair in usingScope.UsingAliases) {
+							NamespaceResolveResult nrr = pair.Value as NamespaceResolveResult;
+							if (nrr != null && nrr.NamespaceName == namespaceName)
+								return new SimpleType(pair.Key);
+						}
 					}
 				}
 			}
 			
-			int pos = ns.LastIndexOf('.');
+			int pos = namespaceName.LastIndexOf('.');
 			if (pos < 0) {
-				if (IsValidNamespace(ns)) {
-					return new SimpleType(ns);
+				if (IsValidNamespace(namespaceName)) {
+					return new SimpleType(namespaceName);
 				} else {
 					return new MemberType {
 						Target = new SimpleType("global"),
 						IsDoubleColon = true,
-						MemberName = ns
+						MemberName = namespaceName
 					};
 				}
 			} else {
-				string parentNamespace = ns.Substring(0, pos);
-				string localNamespace = ns.Substring(pos + 1);
+				string parentNamespace = namespaceName.Substring(0, pos);
+				string localNamespace = namespaceName.Substring(pos + 1);
 				return new MemberType {
 					Target = ConvertNamespace(parentNamespace),
 					MemberName = localNamespace
@@ -359,8 +410,14 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		{
 			if (rr == null)
 				throw new ArgumentNullException("rr");
+			if (rr is ConversionResolveResult) {
+				// unpack ConversionResolveResult if necessary
+				// (e.g. a boxing conversion or string->object reference conversion)
+				rr = ((ConversionResolveResult)rr).Input;
+			}
+			
 			if (rr is TypeOfResolveResult) {
-				return new TypeOfExpression(ConvertType(((TypeOfResolveResult)rr).Type));
+				return new TypeOfExpression(ConvertType(rr.Type));
 			} else if (rr is ArrayCreateResolveResult) {
 				ArrayCreateResolveResult acrr = (ArrayCreateResolveResult)rr;
 				ArrayCreateExpression ace = new ArrayCreateExpression();
@@ -385,7 +442,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			} else if (rr.IsCompileTimeConstant) {
 				return ConvertConstantValue(rr.Type, rr.ConstantValue);
 			} else {
-				return new EmptyExpression();
+				return new ErrorExpression();
 			}
 		}
 		
@@ -399,11 +456,82 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 				else
 					return new DefaultValueExpression(ConvertType(type));
 			} else if (type.Kind == TypeKind.Enum) {
-				return new CastExpression(ConvertType(type), ConvertConstantValue(type.GetDefinition().EnumUnderlyingType, constantValue));
+				return ConvertEnumValue(type, (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false));
 			} else {
 				return new PrimitiveExpression(constantValue);
 			}
 		}
+		
+		bool IsFlagsEnum(ITypeDefinition type)
+		{
+			IType flagsAttributeType = type.Compilation.FindType(typeof(System.FlagsAttribute));
+			return type.GetAttribute(flagsAttributeType) != null;
+		}
+		
+		Expression ConvertEnumValue(IType type, long val)
+		{
+			ITypeDefinition enumDefinition = type.GetDefinition();
+			TypeCode enumBaseTypeCode = ReflectionHelper.GetTypeCode(enumDefinition.EnumUnderlyingType);
+			foreach (IField field in enumDefinition.Fields) {
+				if (field.IsConst && object.Equals(CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false), val))
+					return ConvertType(type).Member(field.Name);
+			}
+			if (IsFlagsEnum(enumDefinition)) {
+				long enumValue = val;
+				Expression expr = null;
+				long negatedEnumValue = ~val;
+				// limit negatedEnumValue to the appropriate range
+				switch (enumBaseTypeCode) {
+					case TypeCode.Byte:
+					case TypeCode.SByte:
+						negatedEnumValue &= byte.MaxValue;
+						break;
+					case TypeCode.Int16:
+					case TypeCode.UInt16:
+						negatedEnumValue &= ushort.MaxValue;
+						break;
+					case TypeCode.Int32:
+					case TypeCode.UInt32:
+						negatedEnumValue &= uint.MaxValue;
+						break;
+				}
+				Expression negatedExpr = null;
+				foreach (IField field in enumDefinition.Fields.Where(fld => fld.IsConst)) {
+					long fieldValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
+					if (fieldValue == 0)
+						continue;	// skip None enum value
+
+					if ((fieldValue & enumValue) == fieldValue) {
+						var fieldExpression = ConvertType(type).Member(field.Name);
+						if (expr == null)
+							expr = fieldExpression;
+						else
+							expr = new BinaryOperatorExpression(expr, BinaryOperatorType.BitwiseOr, fieldExpression);
+
+						enumValue &= ~fieldValue;
+					}
+					if ((fieldValue & negatedEnumValue) == fieldValue) {
+						var fieldExpression = ConvertType(type).Member(field.Name);
+						if (negatedExpr == null)
+							negatedExpr = fieldExpression;
+						else
+							negatedExpr = new BinaryOperatorExpression(negatedExpr, BinaryOperatorType.BitwiseOr, fieldExpression);
+
+						negatedEnumValue &= ~fieldValue;
+					}
+				}
+				if (enumValue == 0 && expr != null) {
+					if (!(negatedEnumValue == 0 && negatedExpr != null && negatedExpr.Descendants.Count() < expr.Descendants.Count())) {
+						return expr;
+					}
+				}
+				if (negatedEnumValue == 0 && negatedExpr != null) {
+					return new UnaryOperatorExpression(UnaryOperatorType.BitNot, negatedExpr);
+				}
+			}
+			return new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false)).CastTo(ConvertType(type));
+		}
+		
 		#endregion
 		
 		#region Convert Parameter
@@ -431,37 +559,64 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		#endregion
 		
 		#region Convert Entity
+		public AstNode ConvertSymbol(ISymbol symbol)
+		{
+			if (symbol == null)
+				throw new ArgumentNullException("symbol");
+			switch (symbol.SymbolKind) {
+				case SymbolKind.Namespace:
+					return ConvertNamespaceDeclaration((INamespace)symbol);
+				case SymbolKind.Variable:
+					return ConvertVariable((IVariable)symbol);
+				case SymbolKind.Parameter:
+					return ConvertParameter((IParameter)symbol);
+				case SymbolKind.TypeParameter:
+					return ConvertTypeParameter((ITypeParameter)symbol);
+				default:
+					IEntity entity = symbol as IEntity;
+					if (entity != null)
+						return ConvertEntity(entity);
+					throw new ArgumentException("Invalid value for SymbolKind: " + symbol.SymbolKind);
+			}
+		}
+		
 		public EntityDeclaration ConvertEntity(IEntity entity)
 		{
 			if (entity == null)
 				throw new ArgumentNullException("entity");
-			switch (entity.EntityType) {
-				case EntityType.TypeDefinition:
+			switch (entity.SymbolKind) {
+				case SymbolKind.TypeDefinition:
 					return ConvertTypeDefinition((ITypeDefinition)entity);
-				case EntityType.Field:
+				case SymbolKind.Field:
 					return ConvertField((IField)entity);
-				case EntityType.Property:
+				case SymbolKind.Property:
 					return ConvertProperty((IProperty)entity);
-				case EntityType.Indexer:
+				case SymbolKind.Indexer:
 					return ConvertIndexer((IProperty)entity);
-				case EntityType.Event:
+				case SymbolKind.Event:
 					return ConvertEvent((IEvent)entity);
-				case EntityType.Method:
+				case SymbolKind.Method:
 					return ConvertMethod((IMethod)entity);
-				case EntityType.Operator:
+				case SymbolKind.Operator:
 					return ConvertOperator((IMethod)entity);
-				case EntityType.Constructor:
+				case SymbolKind.Constructor:
 					return ConvertConstructor((IMethod)entity);
-				case EntityType.Destructor:
+				case SymbolKind.Destructor:
 					return ConvertDestructor((IMethod)entity);
+				case SymbolKind.Accessor:
+					IMethod accessor = (IMethod)entity;
+					return ConvertAccessor(accessor, accessor.AccessorOwner != null ? accessor.AccessorOwner.Accessibility : Accessibility.None);
 				default:
-					throw new ArgumentException("Invalid value for EntityType: " + entity.EntityType);
+					throw new ArgumentException("Invalid value for SymbolKind: " + entity.SymbolKind);
 			}
 		}
 		
 		EntityDeclaration ConvertTypeDefinition(ITypeDefinition typeDefinition)
 		{
-			Modifiers modifiers = ModifierFromAccessibility(typeDefinition.Accessibility);
+			Modifiers modifiers = Modifiers.None;
+			if (this.ShowAccessibility) {
+				modifiers |= ModifierFromAccessibility(typeDefinition.Accessibility);
+			}
 			if (this.ShowModifiers) {
 				if (typeDefinition.IsStatic) {
 					modifiers |= Modifiers.Static;
@@ -586,7 +741,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		{
 			if (GenerateBody) {
 				return new BlockStatement {
-					new ThrowStatement(new ObjectCreateExpression(ConvertType("System", "NotImplementedException")))
+					new ThrowStatement(new ObjectCreateExpression(ConvertType(new TopLevelTypeName("System", "NotImplementedException", 0))))
 				};
 			} else {
 				return BlockStatement.Null;
@@ -598,7 +753,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			if (accessor == null)
 				return Accessor.Null;
 			Accessor decl = new Accessor();
-			if (accessor.Accessibility != ownerAccessibility)
+			if (this.ShowAccessibility && accessor.Accessibility != ownerAccessibility)
 				decl.Modifiers = ModifierFromAccessibility(accessor.Accessibility);
 			decl.Body = GenerateBodyBlock();
 			return decl;
@@ -651,6 +806,8 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		{
 			MethodDeclaration decl = new MethodDeclaration();
 			decl.Modifiers = GetMemberModifiers(method);
+			if (method.IsAsync && ShowModifiers)
+				decl.Modifiers |= Modifiers.Async;
 			decl.ReturnType = ConvertType(method.ReturnType);
 			decl.Name = method.Name;
 			
@@ -663,7 +820,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			foreach (IParameter p in method.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
 			}
-			if (method.IsExtensionMethod && decl.Parameters.Any() && decl.Parameters.First().ParameterModifier == ParameterModifier.None)
+			if (method.IsExtensionMethod && method.ReducedFrom == null && decl.Parameters.Any() && decl.Parameters.First().ParameterModifier == ParameterModifier.None)
 				decl.Parameters.First().ParameterModifier = ParameterModifier.This;
 			
 			if (this.ShowTypeParameters && this.ShowTypeParameterConstraints && !method.IsOverride && !method.IsExplicitInterfaceImplementation) {
@@ -698,7 +855,8 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		{
 			ConstructorDeclaration decl = new ConstructorDeclaration();
 			decl.Modifiers = GetMemberModifiers(ctor);
-			decl.Name = ctor.DeclaringTypeDefinition.Name;
+			if (ctor.DeclaringTypeDefinition != null)
+				decl.Name = ctor.DeclaringTypeDefinition.Name;
 			foreach (IParameter p in ctor.Parameters) {
 				decl.Parameters.Add(ConvertParameter(p));
 			}
@@ -709,17 +867,16 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		DestructorDeclaration ConvertDestructor(IMethod dtor)
 		{
 			DestructorDeclaration decl = new DestructorDeclaration();
-			decl.Name = dtor.DeclaringTypeDefinition.Name;
+			if (dtor.DeclaringTypeDefinition != null)
+				decl.Name = dtor.DeclaringTypeDefinition.Name;
 			decl.Body = GenerateBodyBlock();
 			return decl;
 		}
 		#endregion
 		
 		#region Convert Modifiers
-		Modifiers ModifierFromAccessibility(Accessibility accessibility)
+		public static Modifiers ModifierFromAccessibility(Accessibility accessibility)
 		{
-			if (!this.ShowAccessibility)
-				return Modifiers.None;
 			switch (accessibility) {
 				case Accessibility.Private:
 					return Modifiers.Private;
@@ -740,7 +897,10 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		Modifiers GetMemberModifiers(IMember member)
 		{
 			bool isInterfaceMember = member.DeclaringType.Kind == TypeKind.Interface;
-			Modifiers m = isInterfaceMember ? Modifiers.None : ModifierFromAccessibility(member.Accessibility);
+			Modifiers m = Modifiers.None;
+			if (this.ShowAccessibility && !isInterfaceMember) {
+				m |= ModifierFromAccessibility(member.Accessibility);
+			}
 			if (this.ShowModifiers) {
 				if (member.IsStatic) {
 					m |= Modifiers.Static;
@@ -812,5 +972,10 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			return decl;
 		}
 		#endregion
+		
+		NamespaceDeclaration ConvertNamespaceDeclaration(INamespace ns)
+		{
+			return new NamespaceDeclaration(ns.FullName);
+		}
 	}
 }

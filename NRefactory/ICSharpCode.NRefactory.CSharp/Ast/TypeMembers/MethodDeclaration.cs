@@ -30,8 +30,8 @@ namespace ICSharpCode.NRefactory.CSharp
 {
 	public class MethodDeclaration : EntityDeclaration
 	{
-		public override EntityType EntityType {
-			get { return EntityType.Method; }
+		public override SymbolKind SymbolKind {
+			get { return SymbolKind.Method; }
 		}
 		
 		/// <summary>

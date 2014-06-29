@@ -65,6 +65,11 @@ namespace ICSharpCode.NRefactory.Completion
 		string GetParameterDescription (int overload, int paramIndex);
 		
 		/// <summary>
+		/// Gets the name of the parameter.
+		/// </summary>
+		string GetParameterName (int overload, int currentParameter);
+
+		/// <summary>
 		/// Returns the number of parameters of the specified method
 		/// </summary>
 		int GetParameterCount (int overload);

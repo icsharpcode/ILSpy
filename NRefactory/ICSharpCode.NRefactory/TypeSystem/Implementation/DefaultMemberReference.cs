@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -33,21 +33,21 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 	[Serializable]
 	public sealed class DefaultMemberReference : IMemberReference, ISupportsInterning
 	{
-		EntityType entityType;
-		ITypeReference typeReference;
-		string name;
-		int typeParameterCount;
-		IList<ITypeReference> parameterTypes;
+		readonly SymbolKind symbolKind;
+		readonly ITypeReference typeReference;
+		readonly string name;
+		readonly int typeParameterCount;
+		readonly IList<ITypeReference> parameterTypes;
 		
-		public DefaultMemberReference(EntityType entityType, ITypeReference typeReference, string name, int typeParameterCount = 0, IList<ITypeReference> parameterTypes = null)
+		public DefaultMemberReference(SymbolKind symbolKind, ITypeReference typeReference, string name, int typeParameterCount = 0, IList<ITypeReference> parameterTypes = null)
 		{
 			if (typeReference == null)
 				throw new ArgumentNullException("typeReference");
 			if (name == null)
 				throw new ArgumentNullException("name");
-			if (typeParameterCount != 0 && entityType != EntityType.Method)
+			if (typeParameterCount != 0 && symbolKind != SymbolKind.Method)
 				throw new ArgumentException("Type parameter count > 0 is only supported for methods.");
-			this.entityType = entityType;
+			this.symbolKind = symbolKind;
 			this.typeReference = typeReference;
 			this.name = name;
 			this.typeParameterCount = typeParameterCount;
@@ -62,18 +62,18 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		{
 			IType type = typeReference.Resolve(context);
 			IEnumerable<IMember> members;
-			if (entityType == EntityType.Accessor) {
+			if (symbolKind == SymbolKind.Accessor) {
 				members = type.GetAccessors(
 					m => m.Name == name && !m.IsExplicitInterfaceImplementation,
 					GetMemberOptions.IgnoreInheritedMembers);
-			} else if (entityType == EntityType.Method) {
+			} else if (symbolKind == SymbolKind.Method) {
 				members = type.GetMethods(
-					m => m.Name == name && m.EntityType == EntityType.Method
+					m => m.Name == name && m.SymbolKind == SymbolKind.Method
 					&& m.TypeParameters.Count == typeParameterCount && !m.IsExplicitInterfaceImplementation,
 					GetMemberOptions.IgnoreInheritedMembers);
 			} else {
 				members = type.GetMembers(
-					m => m.Name == name && m.EntityType == entityType && !m.IsExplicitInterfaceImplementation,
+					m => m.Name == name && m.SymbolKind == symbolKind && !m.IsExplicitInterfaceImplementation,
 					GetMemberOptions.IgnoreInheritedMembers);
 			}
 			var resolvedParameterTypes = parameterTypes.Resolve(context);
@@ -99,22 +99,20 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			return null;
 		}
 		
-		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)
+		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
 		{
-			typeReference = provider.Intern(typeReference);
-			name = provider.Intern(name);
-			parameterTypes = provider.InternList(parameterTypes);
+			return ((IMemberReference)this).Resolve(context);
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()
 		{
-			return (int)entityType ^ typeReference.GetHashCode() ^ name.GetHashCode() ^ parameterTypes.GetHashCode();
+			return (int)symbolKind ^ typeReference.GetHashCode() ^ name.GetHashCode() ^ parameterTypes.GetHashCode();
 		}
 		
 		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
 		{
 			DefaultMemberReference o = other as DefaultMemberReference;
-			return o != null && entityType == o.entityType && typeReference == o.typeReference && name == o.name && parameterTypes == o.parameterTypes;
+			return o != null && symbolKind == o.symbolKind && typeReference == o.typeReference && name == o.name && parameterTypes == o.parameterTypes;
 		}
 	}
 }

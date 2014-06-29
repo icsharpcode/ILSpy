@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -53,15 +53,21 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			node = syntaxTree.GetNodeAt(location);
 			if (node == null || node is ArrayInitializerExpression)
 				return null;
+			if (node.Parent is UsingAliasDeclaration && node.Role == UsingAliasDeclaration.AliasRole) {
+				var r = new CSharpAstResolver(compilation.Value, syntaxTree, unresolvedFile);
+				return r.Resolve(((UsingAliasDeclaration)node.Parent).Import, cancellationToken);
+			}
 			if (CSharpAstResolver.IsUnresolvableNode(node)) {
 				if (node is Identifier) {
 					node = node.Parent;
 				} else if (node.NodeType == NodeType.Token) {
-					if (node.Parent is IndexerExpression || node.Parent is ConstructorInitializer) {
-						Console.WriteLine (2);
+					if (node.Parent is IndexerExpression || node.Parent is ConstructorInitializer || node.Role == IndexerDeclaration.ThisKeywordRole) {
 						// There's no other place where one could hover to see the indexer's tooltip,
 						// so we need to resolve it when hovering over the '[' or ']'.
 						// For constructor initializer, the same applies to the 'base'/'this' token.
+						node = node.Parent;
+					} else if (node.Parent is BinaryOperatorExpression || node.Parent is UnaryOperatorExpression) {
+						// Resolve user-defined operator
 						node = node.Parent;
 					} else {
 						return null;
@@ -82,13 +88,15 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					return null;
 				}
 			}
+
 			if (node == null)
 				return null;
-			
 			if (node.Parent is ObjectCreateExpression && node.Role == Roles.Type) {
 				node = node.Parent;
+			} else if (node is ThisReferenceExpression && node.Parent is IndexerExpression) {
+				node = node.Parent;
 			}
-			
+
 			InvocationExpression parentInvocation = null;
 			if ((node is IdentifierExpression || node is MemberReferenceExpression || node is PointerReferenceExpression) && node.Role != Roles.Argument) {
 				// we also need to resolve the invocation
@@ -98,10 +106,19 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			// TODO: I think we should provide an overload so that an existing CSharpAstResolver can be reused
 			CSharpAstResolver resolver = new CSharpAstResolver(compilation.Value, syntaxTree, unresolvedFile);
 			ResolveResult rr = resolver.Resolve(node, cancellationToken);
-			if (rr is MethodGroupResolveResult && parentInvocation != null)
-				return resolver.Resolve(parentInvocation);
-			else
-				return rr;
+			MethodGroupResolveResult mgrr = rr as MethodGroupResolveResult;
+			if (mgrr != null) {
+				// For method groups, resolve the parent invocation instead.
+				if (parentInvocation != null)
+					return resolver.Resolve(parentInvocation);
+				if (node is Expression) {
+					// If it's not an invocation, try if it's a conversion to a delegate type:
+					Conversion c = resolver.GetConversion((Expression)node, cancellationToken);
+					if (c.IsMethodGroupConversion)
+						return new MemberResolveResult(mgrr.TargetResult, c.Method);
+				}
+			}
+			return rr;
 		}
 	}
 }

@@ -1,4 +1,4 @@
-// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -41,16 +41,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
+				visitor.VisitNullNode(this);
 			}
 			
 			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
 			{
-				return default (T);
+				return visitor.VisitNullNode(this);
 			}
 			
 			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 			{
-				return default (S);
+				return visitor.VisitNullNode(this, data);
 			}
 			
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
@@ -58,7 +59,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				return other == null || other.IsNull;
 			}
 			
-			public override ITypeReference ToTypeReference(NameLookupMode lookupMode)
+			public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider)
 			{
 				return SpecialType.UnknownType;
 			}
@@ -99,7 +100,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				return visitor.VisitPatternPlaceholder (this, child, data);
 			}
 			
-			public override ITypeReference ToTypeReference(NameLookupMode lookupMode)
+			public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider)
 			{
 				throw new NotSupportedException();
 			}
@@ -126,6 +127,31 @@ namespace ICSharpCode.NRefactory.CSharp
 		}
 		
 		/// <summary>
+		/// Gets whether this type is a SimpleType "var".
+		/// </summary>
+		public bool IsVar()
+		{
+			SimpleType st = this as SimpleType;
+			return st != null && st.Identifier == "var" && st.TypeArguments.Count == 0;
+		}
+		
+		/// <summary>
+		/// Create an ITypeReference for this AstType.
+		/// Uses the context (ancestors of this node) to determine the correct <see cref="NameLookupMode"/>.
+		/// </summary>
+		/// <remarks>
+		/// The resulting type reference will read the context information from the
+		/// <see cref="ITypeResolveContext"/>:
+		/// For resolving type parameters, the CurrentTypeDefinition/CurrentMember is used.
+		/// For resolving simple names, the current namespace and usings from the CurrentUsingScope
+		/// (on CSharpTypeResolveContext only) is used.
+		/// </remarks>
+		public ITypeReference ToTypeReference(InterningProvider interningProvider = null)
+		{
+			return ToTypeReference(GetNameLookupMode(), interningProvider);
+		}
+		
+		/// <summary>
 		/// Create an ITypeReference for this AstType.
 		/// </summary>
 		/// <remarks>
@@ -135,7 +161,27 @@ namespace ICSharpCode.NRefactory.CSharp
 		/// For resolving simple names, the current namespace and usings from the CurrentUsingScope
 		/// (on CSharpTypeResolveContext only) is used.
 		/// </remarks>
-		public abstract ITypeReference ToTypeReference(NameLookupMode lookupMode = NameLookupMode.Type);
+		public abstract ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null);
+		
+		/// <summary>
+		/// Gets the name lookup mode from the context (looking at the ancestors of this <see cref="AstType"/>).
+		/// </summary>
+		public NameLookupMode GetNameLookupMode()
+		{
+			AstType outermostType = this;
+			while (outermostType.Parent is AstType)
+				outermostType = (AstType)outermostType.Parent;
+			
+			if (outermostType.Parent is UsingDeclaration || outermostType.Parent is UsingAliasDeclaration) {
+				return NameLookupMode.TypeInUsingDeclaration;
+			} else if (outermostType.Role == Roles.BaseType) {
+				// Use BaseTypeReference for a type's base type, and for a constraint on a type.
+				// Do not use it for a constraint on a method.
+				if (outermostType.Parent is TypeDeclaration || (outermostType.Parent is Constraint && outermostType.Parent.Parent is TypeDeclaration))
+					return NameLookupMode.BaseTypeReference;
+			}
+			return NameLookupMode.Type;
+		}
 		
 		/// <summary>
 		/// Creates a pointer type from this type by nesting it in a <see cref="ComposedType"/>.
@@ -214,6 +260,21 @@ namespace ICSharpCode.NRefactory.CSharp
 		public InvocationExpression Invoke(string methodName, IEnumerable<AstType> typeArguments, IEnumerable<Expression> arguments)
 		{
 			return new TypeReferenceExpression { Type = this }.Invoke(methodName, typeArguments, arguments);
+		}
+		
+		/// <summary>
+		/// Creates a simple AstType from a dotted name.
+		/// Does not support generics, arrays, etc. - just simple dotted names,
+		/// e.g. namespace names.
+		/// </summary>
+		public static AstType Create(string dottedName)
+		{
+			string[] parts = dottedName.Split('.');
+			AstType type = new SimpleType(parts[0]);
+			for (int i = 1; i < parts.Length; i++) {
+				type = new MemberType(type, parts[i]);
+			}
+			return type;
 		}
 	}
 }

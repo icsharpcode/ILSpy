@@ -226,7 +226,7 @@ namespace Mono.CSharp {
 						continue;
 
 					if (list is MemberSpec[]) {
-						list = new List<MemberSpec> () { list [0] };
+						list = new List<MemberSpec> { list [0] };
 						member_hash[entry.Key] = list;
 					}
 
@@ -239,6 +239,8 @@ namespace Mono.CSharp {
 		// Member-cache does not contain base members but it does
 		// contain all base interface members, so the Lookup code
 		// can use simple inheritance rules.
+		//
+		// Does not work recursively because of generic interfaces
 		//
 		public void AddInterface (TypeSpec iface)
 		{
@@ -258,18 +260,19 @@ namespace Mono.CSharp {
 				}
 
 				foreach (var ce in entry.Value) {
+					//
+					// When two or more different base interfaces implemenent common
+					// interface
+					//
+					// I : IA, IFoo
+					// IA : IFoo
+					//
 					if (list.Contains (ce))
 						continue;
 
 					if (AddInterfaceMember (ce, ref list))
 						member_hash[entry.Key] = list;
 				}
-			}
-
-			// Add also all base interfaces
-			if (iface.Interfaces != null) {
-				foreach (var base_iface in iface.Interfaces)
-					AddInterface (base_iface);
 			}
 		}
 
@@ -296,13 +299,14 @@ namespace Mono.CSharp {
 			if (member.Kind == MemberKind.Operator) {
 				var dt = member.DeclaringType;
 
+
 				//
 				// Some core types have user operators but they cannot be used like normal
 				// user operators as they are predefined and therefore having different
 				// rules (e.g. binary operators) by not setting the flag we hide them for
 				// user conversions
 				//
-				if (!BuiltinTypeSpec.IsPrimitiveType (dt)) {
+				if (!BuiltinTypeSpec.IsPrimitiveType (dt) || dt.BuiltinType == BuiltinTypeSpec.Type.Char) {
 					switch (dt.BuiltinType) {
 					case BuiltinTypeSpec.Type.String:
 					case BuiltinTypeSpec.Type.Delegate:
@@ -331,7 +335,7 @@ namespace Mono.CSharp {
 					member_hash[name] = list;
 			} else {
 				if (list.Count == 1) {
-					list = new List<MemberSpec> () { list[0] };
+					list = new List<MemberSpec> { list[0] };
 					member_hash[name] = list;
 				}
 
@@ -386,7 +390,7 @@ namespace Mono.CSharp {
 			}
 
 			if (existing.Count == 1) {
-				existing = new List<MemberSpec> () { existing[0], member };
+				existing = new List<MemberSpec> { existing[0], member };
 				return true;
 			}
 
@@ -460,6 +464,7 @@ namespace Mono.CSharp {
 			IList<MemberSpec> applicable;
 			TypeSpec best_match = null;
 			do {
+#if !FULL_AOT_RUNTIME
 				// TODO: Don't know how to handle this yet
 				// When resolving base type of nested type, parent type must have
 				// base type resolved to scan full hierarchy correctly
@@ -468,6 +473,7 @@ namespace Mono.CSharp {
 				var tc = container.MemberDefinition as TypeContainer;
 				if (tc != null)
 					tc.DefineContainer ();
+#endif
 
 				if (container.MemberCacheTypes.member_hash.TryGetValue (name, out applicable)) {
 					for (int i = applicable.Count - 1; i >= 0; i--) {
@@ -498,7 +504,7 @@ namespace Mono.CSharp {
 		//
 		// Looks for extension methods with defined name and extension type
 		//
-		public List<MethodSpec> FindExtensionMethods (IMemberContext invocationContext, TypeSpec extensionType, string name, int arity)
+		public List<MethodSpec> FindExtensionMethods (IMemberContext invocationContext, string name, int arity)
 		{
 			IList<MemberSpec> entries;
 			if (!member_hash.TryGetValue (name, out entries))
@@ -560,11 +566,7 @@ namespace Mono.CSharp {
 					for (int i = 0; i < applicable.Count; ++i) {
 						var entry = applicable [i];
 
-						if ((entry.Modifiers & Modifiers.PRIVATE) != 0)
-							continue;
-
-						if ((entry.Modifiers & Modifiers.AccessibilityMask) == Modifiers.INTERNAL &&
-							!entry.DeclaringType.MemberDefinition.IsInternalAsPublic (member.Module.DeclaringAssembly))
+						if ((entry.Modifiers & Modifiers.PUBLIC) == 0 && !entry.IsAccessible (member))
 							continue;
 
 						//
@@ -696,6 +698,14 @@ namespace Mono.CSharp {
 						continue;
 
 					//
+					// Ignore user private fields for definite assignment. This is sort of unexpected but
+					// rationale is to have consistent results when using reference assemblies which don't
+					// include any private fields and full assemblies
+					//
+					if ((name_entry.Modifiers & (Modifiers.PRIVATE | Modifiers.BACKING_FIELD)) == Modifiers.PRIVATE)
+						continue;
+
+					//
 					// Fixed size buffers are not subject to definite assignment checking
 					//
 					if (name_entry is FixedFieldSpec || name_entry is ConstSpec)
@@ -791,13 +801,14 @@ namespace Mono.CSharp {
 			while (true) {
 				foreach (var entry in abstract_type.MemberCache.member_hash) {
 					foreach (var name_entry in entry.Value) {
-						if ((name_entry.Modifiers & (Modifiers.ABSTRACT | Modifiers.OVERRIDE)) != Modifiers.ABSTRACT)
+						if ((name_entry.Modifiers & Modifiers.ABSTRACT) == 0)
 							continue;
 
-						if (name_entry.Kind != MemberKind.Method)
+						var ms = name_entry as MethodSpec;
+						if (ms == null)
 							continue;
 
-						abstract_methods.Add ((MethodSpec) name_entry);
+						abstract_methods.Add (ms);
 					}
 				}
 
@@ -905,7 +916,7 @@ namespace Mono.CSharp {
 		public static IList<MemberSpec> GetUserOperator (TypeSpec container, Operator.OpType op, bool declaredOnly)
 		{
 			IList<MemberSpec> found = null;
-
+			bool shared_list = true;
 			IList<MemberSpec> applicable;
 			do {
 				var mc = container.MemberCache;
@@ -935,10 +946,13 @@ namespace Mono.CSharp {
 									found = new List<MemberSpec> ();
 									found.Add (applicable[i]);
 								} else {
-									var prev = found as List<MemberSpec>;
-									if (prev == null) {
+									List<MemberSpec> prev;
+									if (shared_list) {
+										shared_list = false;
 										prev = new List<MemberSpec> (found.Count + 1);
 										prev.AddRange (found);
+									} else {
+										prev = (List<MemberSpec>) found;
 									}
 
 									prev.Add (applicable[i]);
@@ -947,12 +961,16 @@ namespace Mono.CSharp {
 						} else {
 							if (found == null) {
 								found = applicable;
+								shared_list = true;
 							} else {
-								var merged = found as List<MemberSpec>;
-								if (merged == null) {
+								List<MemberSpec> merged;
+								if (shared_list) {
+									shared_list = false;
 									merged = new List<MemberSpec> (found.Count + applicable.Count);
 									merged.AddRange (found);
 									found = merged;
+								} else {
+									merged = (List<MemberSpec>) found;
 								}
 
 								merged.AddRange (applicable);
@@ -1434,9 +1452,12 @@ namespace Mono.CSharp {
 									"A partial method declaration and partial method implementation must be both `static' or neither");
 							}
 
-							Report.SymbolRelatedToPreviousError (ce);
-							Report.Error (764, member.Location,
-								"A partial method declaration and partial method implementation must be both `unsafe' or neither");
+							if ((method_a.ModFlags & Modifiers.UNSAFE) != (method_b.ModFlags & Modifiers.UNSAFE)) {
+								Report.SymbolRelatedToPreviousError (ce);
+								Report.Error (764, member.Location,
+									"A partial method declaration and partial method implementation must be both `unsafe' or neither");
+							}
+
 							return false;
 						}
 

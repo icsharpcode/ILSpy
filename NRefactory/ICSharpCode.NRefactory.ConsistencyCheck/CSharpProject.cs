@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -84,7 +84,7 @@ namespace ICSharpCode.NRefactory.ConsistencyCheck
 			this.CompilerSettings.AllowUnsafeBlocks = GetBoolProperty(msbuildProject, "AllowUnsafeBlocks") ?? false;
 			this.CompilerSettings.CheckForOverflow = GetBoolProperty(msbuildProject, "CheckForOverflowUnderflow") ?? false;
 			string defineConstants = msbuildProject.GetPropertyValue("DefineConstants");
-			foreach (string symbol in defineConstants.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries))
+			foreach (string symbol in defineConstants.Split(new char[] { ';', ',' }, StringSplitOptions.RemoveEmptyEntries))
 				this.CompilerSettings.ConditionalSymbols.Add(symbol.Trim());
 			
 			// Initialize the unresolved type system
@@ -126,7 +126,10 @@ namespace ICSharpCode.NRefactory.ConsistencyCheck
 			projectInstance.Build("ResolveAssemblyReferences", new [] { new ConsoleLogger(LoggerVerbosity.Minimal) });
 			var items = projectInstance.GetItems("_ResolveAssemblyReferenceResolvedFiles");
 			string baseDirectory = Path.GetDirectoryName(this.FileName);
-			return items.Select(i => Path.Combine(baseDirectory, i.GetMetadataValue("Identity")));
+			var result = items.Select(i => Path.Combine(baseDirectory, i.GetMetadataValue("Identity"))).ToList();
+			if (!result.Any(t => t.Contains("mscorlib") || t.Contains("System.Runtime")))
+				result.Add(typeof(object).Assembly.Location);
+			return result;
 		}
 		
 		static bool? GetBoolProperty(Microsoft.Build.Evaluation.Project p, string propertyName)

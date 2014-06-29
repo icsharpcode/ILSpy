@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -47,6 +47,12 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// Gets the top-level entity that defines the search scope.
 		/// </summary>
 		ITypeDefinition TopLevelTypeDefinition { get; }
+		
+		/// <summary>
+		/// Gets the file name that defines the search scope.
+		/// If null, all files are searched.
+		/// </summary>
+		string FileName { get; }
 		
 		/// <summary>
 		/// Creates a navigator that can find references to this entity and reports

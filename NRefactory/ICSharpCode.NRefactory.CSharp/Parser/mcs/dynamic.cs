@@ -13,7 +13,7 @@ using System;
 using System.Linq;
 using SLE = System.Linq.Expressions;
 
-#if NET_4_0 || MONODROID
+#if NET_4_0 || MOBILE_DYNAMIC
 using System.Dynamic;
 #endif
 
@@ -63,7 +63,7 @@ namespace Mono.CSharp
 	//
 	public class RuntimeValueExpression : Expression, IDynamicAssign, IMemoryLocation
 	{
-#if !NET_4_0 && !MONODROID
+#if !NET_4_0 && !MOBILE_DYNAMIC
 		public class DynamicMetaObject
 		{
 			public TypeSpec RuntimeType;
@@ -146,7 +146,7 @@ namespace Mono.CSharp
 			return base.MakeExpression (ctx);
 #else
 
-#if NET_4_0 || MONODROID
+#if NET_4_0 || MOBILE_DYNAMIC
 				if (type.IsStruct && !obj.Expression.Type.IsValueType)
 					return SLE.Expression.Unbox (obj.Expression, type.GetMetaInfo ());
 
@@ -181,7 +181,7 @@ namespace Mono.CSharp
 			return this;
 		}
 
-#if NET_4_0 || MONODROID
+#if NET_4_0 || MOBILE_DYNAMIC
 		public override SLE.Expression MakeExpression (BuilderContext ctx)
 		{
 #if STATIC
@@ -224,8 +224,8 @@ namespace Mono.CSharp
 		//
 		protected class BinderFlags : EnumConstant
 		{
-			DynamicExpressionStatement statement;
-			CSharpBinderFlags flags;
+			readonly DynamicExpressionStatement statement;
+			readonly CSharpBinderFlags flags;
 
 			public BinderFlags (CSharpBinderFlags flags, DynamicExpressionStatement statement)
 				: base (statement.loc)
@@ -391,7 +391,7 @@ namespace Mono.CSharp
 			if (!has_ref_out_argument) {
 				string d_name = isStatement ? "Action" : "Func";
 
-				TypeExpr te = null;
+				TypeSpec te = null;
 				Namespace type_ns = module.GlobalRootNamespace.GetNamespace ("System", true);
 				if (type_ns != null) {
 					te = type_ns.LookupType (module, d_name, dyn_args_count + default_args, LookupMode.Normal, loc);
@@ -412,9 +412,9 @@ namespace Mono.CSharp
 						targs[targs.Length - 1] = new TypeExpression (t, loc);
 					}
 
-					del_type = new GenericTypeExpr (te.Type, new TypeArguments (targs), loc);
+					del_type = new GenericTypeExpr (te, new TypeArguments (targs), loc);
 					if (targs_for_instance != null)
-						del_type_instance_access = new GenericTypeExpr (te.Type, new TypeArguments (targs_for_instance), loc);
+						del_type_instance_access = new GenericTypeExpr (te, new TypeArguments (targs_for_instance), loc);
 					else
 						del_type_instance_access = del_type;
 				}
@@ -447,8 +447,17 @@ namespace Mono.CSharp
 				d.CreateContainer ();
 				d.DefineContainer ();
 				d.Define ();
+				d.PrepareEmit ();
 
 				site.AddTypeContainer (d);
+
+				//
+				// Add new container to inflated site container when the
+				// member cache already exists
+				//
+				if (site.CurrentType is InflatedTypeSpec && index > 0)
+					site.CurrentType.MemberCache.AddMember (d.CurrentType);
+
 				del_type = new TypeExpression (d.CurrentType, loc);
 				if (targs_for_instance != null) {
 					del_type_instance_access = null;
@@ -531,6 +540,11 @@ namespace Mono.CSharp
 			}
 		}
 
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			arguments.FlowAnalysis (fc);
+		}
+
 		public static MemberAccess GetBinderNamespace (Location loc)
 		{
 			return new MemberAccess (new MemberAccess (
@@ -610,6 +624,11 @@ namespace Mono.CSharp
 			using (ec.With (BuilderContext.Options.OmitDebugInfo, true)) {
 				stmt.Emit (ec);
 			}
+		}
+
+		public override void FlowAnalysis (FlowAnalysisContext fc)
+		{
+			invoke.FlowAnalysis (fc);
 		}
 	}
 

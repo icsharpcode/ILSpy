@@ -36,8 +36,8 @@ namespace ICSharpCode.NRefactory.CSharp
 			get { return GetChildByRole (TildeRole); }
 		}
 		
-		public override EntityType EntityType {
-			get { return EntityType.Destructor; }
+		public override SymbolKind SymbolKind {
+			get { return SymbolKind.Destructor; }
 		}
 		
 		public CSharpTokenNode LParToken {

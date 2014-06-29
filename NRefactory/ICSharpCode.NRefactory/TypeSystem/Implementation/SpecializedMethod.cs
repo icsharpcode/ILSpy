@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -33,20 +33,16 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 	{
 		readonly IMethod methodDefinition;
 		readonly ITypeParameter[] specializedTypeParameters;
-		readonly bool genericMethodIsSpecialized;
+		readonly bool isParameterized;
 		readonly TypeParameterSubstitution substitutionWithoutSpecializedTypeParameters;
 		
 		public SpecializedMethod(IMethod methodDefinition, TypeParameterSubstitution substitution)
 			: base(methodDefinition)
 		{
-			SpecializedMethod specializedMethodDefinition = methodDefinition as SpecializedMethod;
-			if (specializedMethodDefinition != null)
-				this.genericMethodIsSpecialized = specializedMethodDefinition.genericMethodIsSpecialized;
-			
-			// The base ctor might have unpacked a SpecializedMember
-			// (in case we are specializing an already-specialized method)
-			methodDefinition = (IMethod)base.baseMember;
+			if (substitution == null)
+				throw new ArgumentNullException("substitution");
 			this.methodDefinition = methodDefinition;
+			this.isParameterized = substitution.MethodTypeArguments != null;
 			if (methodDefinition.TypeParameters.Count > 0) {
 				// The method is generic, so we need to specialize the type parameters
 				// (for specializing the constraints, and also to set the correct Owner)
@@ -54,7 +50,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				for (int i = 0; i < specializedTypeParameters.Length; i++) {
 					specializedTypeParameters[i] = new SpecializedTypeParameter(methodDefinition.TypeParameters[i], this);
 				}
-				if (!genericMethodIsSpecialized) {
+				if (!isParameterized) {
 					// Add substitution that replaces the base method's type parameters with our specialized version
 					// but do this only if the type parameters on the baseMember have not already been substituted
 					substitutionWithoutSpecializedTypeParameters = this.Substitution;
@@ -71,8 +67,6 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				// in this case.
 				substitutionWithoutSpecializedTypeParameters = this.Substitution;
 			}
-			if (substitution != null && substitution.MethodTypeArguments != null && methodDefinition.TypeParameters.Count > 0)
-				this.genericMethodIsSpecialized = true;
 			if (specializedTypeParameters != null) {
 				// Set the substitution on the type parameters to the final composed substitution
 				foreach (var tp in specializedTypeParameters.OfType<SpecializedTypeParameter>()) {
@@ -82,13 +76,12 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			}
 		}
 		
-		/// <summary>
-		/// Gets the type arguments passed to this method.
-		/// If only the type parameters for the class were specified and the generic method
-		/// itself is not specialized yet, this property will return an empty list.
-		/// </summary>
 		public IList<IType> TypeArguments {
-			get { return genericMethodIsSpecialized ? this.Substitution.MethodTypeArguments : EmptyList<IType>.Instance; }
+			get { return this.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance; }
+		}
+		
+		public bool IsParameterized {
+			get { return isParameterized; }
 		}
 		
 		public IList<IUnresolvedMethod> Parts {
@@ -125,6 +118,10 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get { return methodDefinition.IsPartial; }
 		}
 		
+		public bool IsAsync {
+			get { return methodDefinition.IsAsync; }
+		}
+		
 		public bool HasBody {
 			get { return methodDefinition.HasBody; }
 		}
@@ -132,7 +129,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		public bool IsAccessor {
 			get { return methodDefinition.IsAccessor; }
 		}
-		
+
+		public IMethod ReducedFrom {
+			get { return null; }
+		}
+
 		IMember accessorOwner;
 		
 		public IMember AccessorOwner {
@@ -141,7 +142,10 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				if (result != null) {
 					return result;
 				} else {
-					result = SpecializedMember.Create(methodDefinition.AccessorOwner, this.Substitution);
+					var ownerDefinition = methodDefinition.AccessorOwner;
+					if (ownerDefinition == null)
+						return null;
+					result = ownerDefinition.Specialize(this.Substitution);
 					return LazyInit.GetOrSet(ref accessorOwner, result);
 				}
 			}
@@ -149,11 +153,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				accessorOwner = value;
 			}
 		}
-		
-		public override IMemberReference ToMemberReference()
+
+		public override IMemberReference ToReference()
 		{
 			// Pass the MethodTypeArguments to the SpecializingMemberReference only if
-			// the generic method itself is specialized, not if the generic method is only
+			// the generic method itself is parameterized, not if the generic method is only
 			// specialized with class type arguments.
 			
 			// This is necessary due to this part of the ToMemberReference() contract:
@@ -163,14 +167,19 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			// This means that if the method itself isn't specialized,
 			// we must not include TypeParameterReferences for the specialized type parameters
 			// in the resulting member reference.
-			if (genericMethodIsSpecialized) {
+			if (isParameterized) {
 				return new SpecializingMemberReference(
-					baseMember.ToMemberReference(),
+					baseMember.ToReference(),
 					ToTypeReference(base.Substitution.ClassTypeArguments),
 					ToTypeReference(base.Substitution.MethodTypeArguments));
 			} else {
-				return base.ToMemberReference();
+				return base.ToReference();
 			}
+		}
+		
+		public override IMemberReference ToMemberReference()
+		{
+			return ToReference();
 		}
 		
 		public override bool Equals(object obj)
@@ -186,6 +195,16 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			unchecked {
 				return 1000000013 * baseMember.GetHashCode() + 1000000009 * substitutionWithoutSpecializedTypeParameters.GetHashCode();
 			}
+		}
+
+		public override IMember Specialize(TypeParameterSubstitution newSubstitution)
+		{
+			return methodDefinition.Specialize(TypeParameterSubstitution.Compose(newSubstitution, substitutionWithoutSpecializedTypeParameters));
+		}
+		
+		IMethod IMethod.Specialize(TypeParameterSubstitution newSubstitution)
+		{
+			return methodDefinition.Specialize(TypeParameterSubstitution.Compose(newSubstitution, substitutionWithoutSpecializedTypeParameters));
 		}
 		
 		public override string ToString()

@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -35,7 +35,7 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 	[Serializable]
 	public sealed class AttributeTypeReference : ITypeReference, ISupportsInterning
 	{
-		ITypeReference withoutSuffix, withSuffix;
+		readonly ITypeReference withoutSuffix, withSuffix;
 		
 		public AttributeTypeReference(ITypeReference withoutSuffix, ITypeReference withSuffix)
 		{
@@ -73,12 +73,6 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 		public override string ToString()
 		{
 			return withoutSuffix.ToString() + "[Attribute]";
-		}
-		
-		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)
-		{
-			withoutSuffix = provider.Intern(withoutSuffix);
-			withSuffix = provider.Intern(withSuffix);
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()

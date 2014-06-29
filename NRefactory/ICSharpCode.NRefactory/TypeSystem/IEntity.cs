@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -31,7 +31,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// <summary>
 		/// Gets the entity type.
 		/// </summary>
-		EntityType EntityType { get; }
+		SymbolKind SymbolKind { get; }
 		
 		/// <summary>
 		/// Gets the complete entity region (including header+body)
@@ -93,12 +93,18 @@ namespace ICSharpCode.NRefactory.TypeSystem
 	/// <summary>
 	/// Represents a resolved entity.
 	/// </summary>
-	public interface IEntity : IResolved, INamedElement, IHasAccessibility
+	public interface IEntity : ISymbol, ICompilationProvider, INamedElement, IHasAccessibility
 	{
 		/// <summary>
 		/// Gets the entity type.
 		/// </summary>
+		[Obsolete("Use the SymbolKind property instead.")]
 		EntityType EntityType { get; }
+		
+		/// <summary>
+		/// Gets the short name of the entity.
+		/// </summary>
+		new string Name { get; }
 		
 		/// <summary>
 		/// Gets the complete entity region (including header+body)
@@ -160,6 +166,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		
 		/// <summary>
 		/// Gets whether this member is declared to be shadowing another member with the same name.
+		/// (C# 'new' keyword)
 		/// </summary>
 		bool IsShadowing { get; }
 		

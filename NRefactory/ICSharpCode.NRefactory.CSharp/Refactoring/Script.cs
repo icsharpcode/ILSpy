@@ -25,10 +25,15 @@
 // THE SOFTWARE.
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using ICSharpCode.NRefactory.Editor;
 using ICSharpCode.NRefactory.TypeSystem;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Text;
+using Mono.CSharp;
+using ITypeDefinition = ICSharpCode.NRefactory.TypeSystem.ITypeDefinition;
 
 namespace ICSharpCode.NRefactory.CSharp.Refactoring
 {
@@ -70,7 +75,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		
 		readonly CSharpFormattingOptions formattingOptions;
 		readonly TextEditorOptions options;
-		Dictionary<AstNode, ISegment> segmentsForInsertedNodes = new Dictionary<AstNode, ISegment>();
+		readonly Dictionary<AstNode, ISegment> segmentsForInsertedNodes = new Dictionary<AstNode, ISegment>();
 		
 		protected Script(CSharpFormattingOptions formattingOptions, TextEditorOptions options)
 		{
@@ -103,8 +108,12 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		/// on every <see cref="Replace(int,int,string)"/> call.
 		/// </returns>
 		protected abstract ISegment CreateTrackedSegment(int offset, int length);
-		
-		protected ISegment GetSegment(AstNode node)
+
+		/// <summary>
+		/// Gets the current text segment of the specified AstNode.
+		/// </summary>
+		/// <param name="node">The node to get the segment for.</param>
+		public ISegment GetSegment(AstNode node)
 		{
 			ISegment segment;
 			if (segmentsForInsertedNodes.TryGetValue(node, out segment))
@@ -143,37 +152,210 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			get { return options; }
 		}
 		
-		public void InsertBefore(AstNode node, AstNode insertNode)
+		public void InsertBefore(AstNode node, AstNode newNode)
 		{
 			var startOffset = GetCurrentOffset(new TextLocation(node.StartLocation.Line, 1));
-			var output = OutputNode (GetIndentLevelAt (startOffset), insertNode);
+			var output = OutputNode (GetIndentLevelAt (startOffset), newNode);
 			string text = output.Text;
-			if (!(insertNode is Expression || insertNode is AstType))
+			if (!(newNode is Expression || newNode is AstType))
 				text += Options.EolMarker;
 			InsertText(startOffset, text);
 			output.RegisterTrackedSegments(this, startOffset);
+			CorrectFormatting (node, newNode);
 		}
 
-		public void InsertAfter(AstNode node, AstNode insertNode)
+		public void InsertAfter(AstNode node, AstNode newNode)
 		{
-			var indentOffset = GetCurrentOffset(new TextLocation(node.StartLocation.Line, 1));
-			var output = OutputNode (GetIndentLevelAt (indentOffset), insertNode);
-			string text = output.Text;
-			if (!(insertNode is Expression || insertNode is AstType))
-				text = Options.EolMarker + text;
-			var insertOffset = GetCurrentOffset(node.EndLocation);
-			InsertText(insertOffset, text);
-			output.RegisterTrackedSegments(this, insertOffset);
+            var indentLevel = IndentLevelFor(node);
+            var output = OutputNode(indentLevel, newNode);
+            string text =  PrefixFor(node, newNode) + output.Text;
+
+            var insertOffset = GetCurrentOffset(node.EndLocation);
+            InsertText(insertOffset, text);
+            output.RegisterTrackedSegments(this, insertOffset);
+            CorrectFormatting (node, newNode);
 		}
 
-		public void AddTo(BlockStatement bodyStatement, AstNode insertNode)
+	    private int IndentLevelFor(AstNode node)
+	    {
+            if (!DoesInsertingAfterRequireNewline(node))
+	            return 0;
+	        
+            return GetIndentLevelAt(GetCurrentOffset(new TextLocation(node.StartLocation.Line, 1)));
+	    }
+
+	    bool DoesInsertingAfterRequireNewline(AstNode node)
+	    {
+            if (node is Expression)
+                return false;
+
+            if (node is AstType)
+                return false;
+
+	        if (node is ParameterDeclaration)
+	            return false;
+
+	        var token = node as CSharpTokenNode;
+	        if (token != null && token.Role == Roles.LPar)
+	            return false;
+	        
+	        return true;
+	    }
+
+	    private string PrefixFor(AstNode node, AstNode newNode)
+	    {
+	        if (DoesInsertingAfterRequireNewline(node))
+	            return Options.EolMarker;
+
+	        if (newNode is ParameterDeclaration && node is ParameterDeclaration)
+	            //todo: worry about adding characters to the document without matching AstNode's. 
+	            return ", ";
+
+	        return String.Empty;
+	    }
+
+	    public void AddTo(BlockStatement bodyStatement, AstNode newNode)
 		{
 			var startOffset = GetCurrentOffset(bodyStatement.LBraceToken.EndLocation);
-			var output = OutputNode(1 + GetIndentLevelAt(startOffset), insertNode, true);
+			var output = OutputNode(1 + GetIndentLevelAt(startOffset), newNode, true);
 			InsertText(startOffset, output.Text);
 			output.RegisterTrackedSegments(this, startOffset);
+			CorrectFormatting (null, newNode);
+		}
+	
+		public void AddTo(TypeDeclaration typeDecl, EntityDeclaration entityDecl)
+		{
+			var startOffset = GetCurrentOffset(typeDecl.LBraceToken.EndLocation);
+			var output = OutputNode(1 + GetIndentLevelAt(startOffset), entityDecl, true);
+			InsertText(startOffset, output.Text);
+			output.RegisterTrackedSegments(this, startOffset);
+			CorrectFormatting (null, entityDecl);
 		}
 		
+		/// <summary>
+		/// Changes the modifier of a given entity declaration.
+		/// </summary>
+		/// <param name="entity">The entity.</param>
+		/// <param name="modifiers">The new modifiers.</param>
+		public void ChangeModifier(EntityDeclaration entity, Modifiers modifiers)
+		{
+			var dummyEntity = new MethodDeclaration ();
+			dummyEntity.Modifiers = modifiers;
+
+			int offset;
+			int endOffset;
+
+			if (entity.ModifierTokens.Any ()) {
+				offset = GetCurrentOffset(entity.ModifierTokens.First ().StartLocation);
+				endOffset = GetCurrentOffset(entity.ModifierTokens.Last ().GetNextSibling (s => s.Role != Roles.NewLine && s.Role != Roles.Whitespace).StartLocation);
+			} else {
+				var child = entity.FirstChild;
+				while (child.NodeType == NodeType.Whitespace ||
+				       child.Role == EntityDeclaration.AttributeRole ||
+				       child.Role == Roles.NewLine) {
+					child = child.NextSibling;
+				}
+				offset = endOffset = GetCurrentOffset(child.StartLocation);
+			}
+
+			var sb = new StringBuilder();
+			foreach (var modifier in dummyEntity.ModifierTokens) {
+				sb.Append(modifier.ToString());
+				sb.Append(' ');
+			}
+
+			Replace(offset, endOffset - offset, sb.ToString());
+		}
+
+		public void ChangeModifier(ParameterDeclaration param, ParameterModifier modifier)
+		{
+			var child = param.FirstChild;
+			Func<AstNode, bool> pred = s => s.Role == ParameterDeclaration.RefModifierRole || s.Role == ParameterDeclaration.OutModifierRole || s.Role == ParameterDeclaration.ParamsModifierRole || s.Role == ParameterDeclaration.ThisModifierRole;
+			if (!pred(child))
+				child = child.GetNextSibling(pred); 
+
+			int offset;
+			int endOffset;
+
+			if (child != null) {
+				offset = GetCurrentOffset(child.StartLocation);
+				endOffset = GetCurrentOffset(child.GetNextSibling (s => s.Role != Roles.NewLine && s.Role != Roles.Whitespace).StartLocation);
+			} else {
+				offset = endOffset = GetCurrentOffset(param.Type.StartLocation);
+			}
+			string modString;
+			switch (modifier) {
+				case ParameterModifier.None:
+					modString = "";
+					break;
+				case ParameterModifier.Ref:
+					modString = "ref ";
+					break;
+				case ParameterModifier.Out:
+					modString = "out ";
+					break;
+				case ParameterModifier.Params:
+					modString = "params ";
+					break;
+				case ParameterModifier.This:
+					modString = "this ";
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+			Replace(offset, endOffset - offset, modString);
+		}
+
+		/// <summary>
+		/// Changes the base types of a type declaration.
+		/// </summary>
+		/// <param name="type">The type declaration to modify.</param>
+		/// <param name="baseTypes">The new base types.</param>
+		public void ChangeBaseTypes(TypeDeclaration type, IEnumerable<AstType> baseTypes)
+		{
+			var dummyType = new TypeDeclaration();
+			dummyType.BaseTypes.AddRange(baseTypes);
+
+			int offset;
+			int endOffset;
+			var sb = new StringBuilder();
+
+			if (type.BaseTypes.Any ()) {
+				offset = GetCurrentOffset(type.ColonToken.StartLocation);
+				endOffset = GetCurrentOffset(type.BaseTypes.Last ().EndLocation);
+			} else {
+				sb.Append(' ');
+				if (type.TypeParameters.Any()) {
+					offset = endOffset = GetCurrentOffset(type.RChevronToken.EndLocation);
+				} else {
+					offset = endOffset = GetCurrentOffset(type.NameToken.EndLocation);
+				}
+			}
+
+			if (dummyType.BaseTypes.Any()) {
+				sb.Append(": ");
+				sb.Append(string.Join(", ", dummyType.BaseTypes));
+			}
+
+			Replace(offset, endOffset - offset, sb.ToString());
+			FormatText(type);
+		}
+
+
+		/// <summary>
+		/// Adds an attribute section to a given entity.
+		/// </summary>
+		/// <param name="entity">The entity to add the attribute to.</param>
+		/// <param name="attr">The attribute to add.</param>
+		public void AddAttribute(EntityDeclaration entity, AttributeSection attr)
+		{
+			var node = entity.FirstChild;
+			while (node.NodeType == NodeType.Whitespace || node.Role == Roles.Attribute) {
+				node = node.NextSibling;
+			}
+			InsertBefore(node, attr);
+		}
+
 		public virtual Task Link (params AstNode[] nodes)
 		{
 			// Default implementation: do nothing
@@ -183,6 +365,11 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			var tcs = new TaskCompletionSource<object>();
 			tcs.SetResult(null);
 			return tcs.Task;
+		}
+
+		public virtual Task Link (IEnumerable<AstNode> nodes)
+		{
+			return Link(nodes.ToArray());
 		}
 		
 		public void Replace (AstNode node, AstNode replaceWith)
@@ -196,17 +383,72 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			output.TrimStart ();
 			Replace (startOffset, segment.Length, output.Text);
 			output.RegisterTrackedSegments(this, startOffset);
+			CorrectFormatting (node, node);
+		}
+
+		List<AstNode> nodesToFormat = new List<AstNode> ();
+
+		void CorrectFormatting(AstNode node, AstNode newNode)
+		{
+			if (node is Identifier || node is IdentifierExpression || node is CSharpTokenNode || node is AstType)
+				return;
+			if (node == null || node.Parent is BlockStatement) {
+				nodesToFormat.Add (newNode); 
+			} else {
+				nodesToFormat.Add ((node.Parent != null && (node.Parent is Statement || node.Parent is Expression || node.Parent is VariableInitializer)) ? node.Parent : newNode); 
+			}
 		}
 		
 		public abstract void Remove (AstNode node, bool removeEmptyLine = true);
+
+		/// <summary>
+		/// Safely removes an attribue from it's section (removes empty sections).
+		/// </summary>
+		/// <param name="attr">The attribute to be removed.</param>
+		public void RemoveAttribute(Attribute attr)
+		{
+			AttributeSection section = (AttributeSection)attr.Parent;
+			if (section.Attributes.Count == 1) {
+				Remove(section);
+				return;
+			}
+
+			var newSection = (AttributeSection)section.Clone();
+			int i = 0;
+			foreach (var a in section.Attributes) {
+				if (a == attr)
+					break;
+				i++;
+			}
+			newSection.Attributes.Remove (newSection.Attributes.ElementAt (i));
+			Replace(section, newSection);
+		}
 		
-		public abstract void FormatText (AstNode node);
-		
+		public abstract void FormatText (IEnumerable<AstNode> nodes);
+
+		public void FormatText (params AstNode[] nodes)
+		{
+			FormatText ((IEnumerable<AstNode>)nodes);
+		}
+
 		public virtual void Select (AstNode node)
 		{
 			// default implementation: do nothing
 			// Derived classes are supposed to set the text editor's selection
 		}
+
+		public virtual void Select (TextLocation start, TextLocation end)
+		{
+			// default implementation: do nothing
+			// Derived classes are supposed to set the text editor's selection
+		}
+
+		public virtual void Select (int startOffset, int endOffset)
+		{
+			// default implementation: do nothing
+			// Derived classes are supposed to set the text editor's selection
+		}
+
 		
 		public enum InsertPosition
 		{
@@ -216,24 +458,26 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			End
 		}
 		
-		public virtual Task InsertWithCursor(string operation, InsertPosition defaultPosition, IEnumerable<AstNode> node)
+		public virtual Task<Script> InsertWithCursor(string operation, InsertPosition defaultPosition, IList<AstNode> nodes)
 		{
 			throw new NotImplementedException();
 		}
 		
-		public virtual Task InsertWithCursor(string operation, ITypeDefinition parentType, IEnumerable<AstNode> node)
+		public virtual Task<Script> InsertWithCursor(string operation, ITypeDefinition parentType, Func<Script, RefactoringContext, IList<AstNode>> nodeCallback)
 		{
 			throw new NotImplementedException();
 		}
 		
-		public Task InsertWithCursor(string operation, InsertPosition defaultPosition, params AstNode[] nodes)
+		public Task<Script> InsertWithCursor(string operation, InsertPosition defaultPosition, params AstNode[] nodes)
 		{
-			return InsertWithCursor(operation, defaultPosition, (IEnumerable<AstNode>)nodes);
+			return InsertWithCursor(operation, defaultPosition, (IList<AstNode>)nodes);
 		}
-		
-		public Task InsertWithCursor(string operation, ITypeDefinition parentType, params AstNode[] nodes)
+
+		public Task<Script> InsertWithCursor(string operation, ITypeDefinition parentType, Func<Script, RefactoringContext, AstNode> nodeCallback)
 		{
-			return InsertWithCursor(operation, parentType, (IEnumerable<AstNode>)nodes);
+			return InsertWithCursor(operation, parentType, (Func<Script, RefactoringContext, IList<AstNode>>)delegate (Script s, RefactoringContext ctx) {
+				return new AstNode[] { nodeCallback(s, ctx) };
+			});
 		}
 		
 		protected virtual int GetIndentLevelAt (int offset)
@@ -241,16 +485,24 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			return 0;
 		}
 		
-		sealed class SegmentTrackingOutputFormatter : TextWriterOutputFormatter
+		sealed class SegmentTrackingTokenWriter : TextWriterTokenWriter
 		{
 			internal List<KeyValuePair<AstNode, Segment>> NewSegments = new List<KeyValuePair<AstNode, Segment>>();
-			Stack<int> startOffsets = new Stack<int>();
+			readonly Stack<int> startOffsets = new Stack<int>();
 			readonly StringWriter stringWriter;
 			
-			public SegmentTrackingOutputFormatter (StringWriter stringWriter)
+			public SegmentTrackingTokenWriter(StringWriter stringWriter)
 				: base(stringWriter)
 			{
 				this.stringWriter = stringWriter;
+			}
+			
+			public override void WriteIdentifier (Identifier identifier)
+			{
+				int startOffset = stringWriter.GetStringBuilder ().Length;
+				int endOffset = startOffset + (identifier.Name ?? "").Length + (identifier.IsVerbatim ? 1 : 0);
+				NewSegments.Add(new KeyValuePair<AstNode, Segment>(identifier, new Segment(startOffset, endOffset - startOffset)));
+				base.WriteIdentifier (identifier);
 			}
 			
 			public override void StartNode (AstNode node)
@@ -271,7 +523,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		protected NodeOutput OutputNode(int indentLevel, AstNode node, bool startWithNewLine = false)
 		{
 			var stringWriter = new StringWriter ();
-			var formatter = new SegmentTrackingOutputFormatter (stringWriter);
+			var formatter = new SegmentTrackingTokenWriter(stringWriter);
 			formatter.Indentation = indentLevel;
 			formatter.IndentationString = Options.TabsToSpaces ? new string (' ', Options.IndentSize) : "\t";
 			stringWriter.NewLine = Options.EolMarker;
@@ -280,14 +532,13 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			var visitor = new CSharpOutputVisitor (formatter, formattingOptions);
 			node.AcceptVisitor (visitor);
 			string text = stringWriter.ToString().TrimEnd();
-			
 			return new NodeOutput(text, formatter.NewSegments);
 		}
 		
 		protected class NodeOutput
 		{
 			string text;
-			List<KeyValuePair<AstNode, Segment>> newSegments;
+			readonly List<KeyValuePair<AstNode, Segment>> newSegments;
 			int trimmedLength;
 			
 			internal NodeOutput(string text, List<KeyValuePair<AstNode, Segment>> newSegments)
@@ -325,46 +576,25 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		}
 		
 		/// <summary>
-		/// Renames the specified entity.
+		/// Renames the specified symbol.
 		/// </summary>
-		/// <param name='entity'>
-		/// The Entity to rename
+		/// <param name='symbol'>
+		/// The symbol to rename
 		/// </param>
 		/// <param name='name'>
 		/// The new name, if null the user is prompted for a new name.
 		/// </param>
-		public virtual void Rename(IEntity entity, string name = null)
+		public virtual void Rename(ISymbol symbol, string name = null)
 		{
 		}
 		
-		/// <summary>
-		/// Renames the specified entity.
-		/// </summary>
-		/// <param name='type'>
-		/// The Entity to rename
-		/// </param>
-		/// <param name='name'>
-		/// The new name, if null the user is prompted for a new name.
-		/// </param>
-		public virtual void RenameTypeParameter (IType type, string name = null)
+		public virtual void DoGlobalOperationOn(IEnumerable<IEntity> entities, Action<RefactoringContext, Script, IEnumerable<AstNode>> callback, string operationDescription = null)
 		{
 		}
-		
-		/// <summary>
-		/// Renames the specified variable.
-		/// </summary>
-		/// <param name='variable'>
-		/// The Variable to rename
-		/// </param>
-		/// <param name='name'>
-		/// The new name, if null the user is prompted for a new name.
-		/// </param>
-		public virtual void Rename(IVariable variable, string name = null)
-		{
-		}
-		
+
 		public virtual void Dispose()
 		{
+			FormatText (nodesToFormat);
 		}
 		
 		public enum NewTypeContext {
@@ -393,5 +623,29 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		{
 		}
 	}
-}
 
+	static class ExtMethods
+	{
+		public static void ContinueScript (this Task task, Action act)
+		{
+			if (task.IsCompleted) {
+				act();
+			} else {
+				task.ContinueWith(delegate {
+					act();
+				}, TaskScheduler.FromCurrentSynchronizationContext());
+			}
+		}
+
+		public static void ContinueScript (this Task<Script> task, Action<Script> act)
+		{
+			if (task.IsCompleted) {
+				act(task.Result);
+			} else {
+				task.ContinueWith(delegate {
+					act(task.Result);
+				}, TaskScheduler.FromCurrentSynchronizationContext());
+			}
+		}
+	}
+}

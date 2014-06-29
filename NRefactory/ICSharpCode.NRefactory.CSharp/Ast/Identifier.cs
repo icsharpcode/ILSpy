@@ -41,16 +41,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
+				visitor.VisitNullNode(this);
 			}
 			
 			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
 			{
-				return default (T);
+				return visitor.VisitNullNode(this);
 			}
 			
 			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 			{
-				return default (S);
+				return visitor.VisitNullNode(this, data);
 			}
 			
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
@@ -81,6 +82,12 @@ namespace ICSharpCode.NRefactory.CSharp
 			get {
 				return startLocation;
 			}
+		}
+		
+		internal void SetStartLocation(TextLocation value)
+		{
+			ThrowIfFrozen();
+			this.startLocation = value;
 		}
 		
 		const uint verbatimBit = 1u << AstNodeFlagsUsedBits;
@@ -127,7 +134,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			if (string.IsNullOrEmpty(name))
 				return Identifier.Null;
 			if (name[0] == '@')
-				return new Identifier (name.Substring (1), location) { IsVerbatim = true };
+				return new Identifier (name.Substring (1), new TextLocation (location.Line, location.Column + 1)) { IsVerbatim = true };
 			else
 				return new Identifier (name, location);
 		}

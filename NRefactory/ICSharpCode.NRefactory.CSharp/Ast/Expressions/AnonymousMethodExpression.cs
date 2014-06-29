@@ -48,7 +48,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		bool hasParameterList;
 		
 		public bool HasParameterList {
-			get { return hasParameterList; }
+			get { return hasParameterList || Parameters.Any(); }
 			set { ThrowIfFrozen(); hasParameterList = value; }
 		}
 		
@@ -80,6 +80,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		public AnonymousMethodExpression (BlockStatement body, IEnumerable<ParameterDeclaration> parameters = null)
 		{
 			if (parameters != null) {
+				hasParameterList = true;
 				foreach (var parameter in parameters) {
 					AddChild (parameter, Roles.Parameter);
 				}

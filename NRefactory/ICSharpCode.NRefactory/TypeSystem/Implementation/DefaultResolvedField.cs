@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using ICSharpCode.NRefactory.Semantics;
+using ICSharpCode.NRefactory.Utils;
 
 namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 {
@@ -46,20 +47,41 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		public bool IsConst {
 			get { return ((IUnresolvedField)unresolved).IsConst; }
 		}
-		
+
+		public bool IsFixed {
+			get { return ((IUnresolvedField)unresolved).IsFixed; }
+		}
+
 		public object ConstantValue {
 			get {
 				ResolveResult rr = this.constantValue;
 				if (rr == null) {
-					IConstantValue unresolvedCV = ((IUnresolvedField)unresolved).ConstantValue;
-					if (unresolvedCV != null)
-						rr = unresolvedCV.Resolve(context);
-					else
-						rr = ErrorResolveResult.UnknownError;
-					this.constantValue = rr;
+					using (var busyLock = BusyManager.Enter(this)) {
+						if (!busyLock.Success)
+							return null;
+
+						IConstantValue unresolvedCV = ((IUnresolvedField)unresolved).ConstantValue;
+						if (unresolvedCV != null)
+							rr = unresolvedCV.Resolve(context);
+						else
+							rr = ErrorResolveResult.UnknownError;
+						this.constantValue = rr;
+					}
 				}
 				return rr.ConstantValue;
 			}
+		}
+		
+		public override IMember Specialize(TypeParameterSubstitution substitution)
+		{
+			if (TypeParameterSubstitution.Identity.Equals(substitution))
+				return this;
+			return new SpecializedField(this, substitution);
+		}
+		
+		IMemberReference IField.ToReference()
+		{
+			return (IMemberReference)ToReference();
 		}
 	}
 }

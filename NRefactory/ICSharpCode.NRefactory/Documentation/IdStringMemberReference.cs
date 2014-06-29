@@ -1,4 +1,4 @@
-// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -37,21 +37,21 @@ namespace ICSharpCode.NRefactory.Documentation
 		
 		bool CanMatch(IUnresolvedMember member)
 		{
-			switch (member.EntityType) {
-				case EntityType.Field:
+			switch (member.SymbolKind) {
+				case SymbolKind.Field:
 					return memberType == 'F';
-				case EntityType.Property:
-				case EntityType.Indexer:
+				case SymbolKind.Property:
+				case SymbolKind.Indexer:
 					return memberType == 'P';
-				case EntityType.Event:
+				case SymbolKind.Event:
 					return memberType == 'E';
-				case EntityType.Method:
-				case EntityType.Operator:
-				case EntityType.Constructor:
-				case EntityType.Destructor:
+				case SymbolKind.Method:
+				case SymbolKind.Operator:
+				case SymbolKind.Constructor:
+				case SymbolKind.Destructor:
 					return memberType == 'M';
 				default:
-					throw new NotSupportedException(member.EntityType.ToString());
+					throw new NotSupportedException(member.SymbolKind.ToString());
 			}
 		}
 		
@@ -67,6 +67,11 @@ namespace ICSharpCode.NRefactory.Documentation
 					return member;
 			}
 			return null;
+		}
+		
+		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
+		{
+			return Resolve(context);
 		}
 	}
 }

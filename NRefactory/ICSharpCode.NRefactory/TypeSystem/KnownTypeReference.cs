@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,8 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
 
 namespace ICSharpCode.NRefactory.TypeSystem
 {
@@ -27,7 +25,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 	/// </summary>
 	public enum KnownTypeCode
 	{
-		// Note: DefaultResolvedTypeDefinition uses (KnownTypeCode)-1 as special value for "not yet calculated"
+		// Note: DefaultResolvedTypeDefinition uses (KnownTypeCode)-1 as special value for "not yet calculated".
 		// The order of type codes at the beginning must correspond to those in System.TypeCode.
 		
 		/// <summary>
@@ -109,6 +107,8 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		IList,
 		/// <summary><c>System.Collections.Generic.IList{T}</c></summary>
 		IListOfT,
+		/// <summary><c>System.Collections.Generic.IReadOnlyCollection{T}</c></summary>
+		IReadOnlyCollectionOfT,
 		/// <summary><c>System.Collections.Generic.IReadOnlyList{T}</c></summary>
 		IReadOnlyListOfT,
 		/// <summary><c>System.Threading.Tasks.Task</c></summary>
@@ -118,7 +118,11 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// <summary><c>System.Nullable{T}</c></summary>
 		NullableOfT,
 		/// <summary><c>System.IDisposable</c></summary>
-		IDisposable
+		IDisposable,
+		/// <summary><c>System.Runtime.CompilerServices.INotifyCompletion</c></summary>
+		INotifyCompletion,
+		/// <summary><c>System.Runtime.CompilerServices.ICriticalNotifyCompletion</c></summary>
+		ICriticalNotifyCompletion,
 	}
 	
 	/// <summary>
@@ -127,7 +131,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 	[Serializable]
 	public sealed class KnownTypeReference : ITypeReference
 	{
-		internal const int KnownTypeCodeCount = (int)KnownTypeCode.IDisposable + 1;
+		internal const int KnownTypeCodeCount = (int)KnownTypeCode.ICriticalNotifyCompletion + 1;
 		
 		static readonly KnownTypeReference[] knownTypeReferences = new KnownTypeReference[KnownTypeCodeCount] {
 			null, // None
@@ -169,11 +173,14 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			new KnownTypeReference(KnownTypeCode.IList,          "System.Collections", "IList"),
 			new KnownTypeReference(KnownTypeCode.IListOfT,       "System.Collections.Generic", "IList", 1),
 
+			new KnownTypeReference(KnownTypeCode.IReadOnlyCollectionOfT, "System.Collections.Generic", "IReadOnlyCollection", 1),
 			new KnownTypeReference(KnownTypeCode.IReadOnlyListOfT, "System.Collections.Generic", "IReadOnlyList", 1),
 			new KnownTypeReference(KnownTypeCode.Task,        "System.Threading.Tasks", "Task"),
 			new KnownTypeReference(KnownTypeCode.TaskOfT,     "System.Threading.Tasks", "Task", 1, baseType: KnownTypeCode.Task),
 			new KnownTypeReference(KnownTypeCode.NullableOfT, "System", "Nullable", 1, baseType: KnownTypeCode.ValueType),
 			new KnownTypeReference(KnownTypeCode.IDisposable, "System", "IDisposable"),
+			new KnownTypeReference(KnownTypeCode.INotifyCompletion, "System.Runtime.CompilerServices", "INotifyCompletion"),
+			new KnownTypeReference(KnownTypeCode.ICriticalNotifyCompletion, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion"),
 		};
 		
 		/// <summary>
@@ -366,6 +373,11 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		public static readonly KnownTypeReference IListOfT = Get(KnownTypeCode.IListOfT);
 		
 		/// <summary>
+		/// Gets a type reference pointing to the <c>System.Collections.Generic.IReadOnlyCollection{T}</c> type.
+		/// </summary>
+		public static readonly KnownTypeReference IReadOnlyCollectionOfT = Get(KnownTypeCode.IReadOnlyCollectionOfT);
+		
+		/// <summary>
 		/// Gets a type reference pointing to the <c>System.Collections.Generic.IReadOnlyList{T}</c> type.
 		/// </summary>
 		public static readonly KnownTypeReference IReadOnlyListOfT = Get(KnownTypeCode.IReadOnlyListOfT);
@@ -389,7 +401,17 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Gets a type reference pointing to the <c>System.IDisposable</c> type.
 		/// </summary>
 		public static readonly KnownTypeReference IDisposable = Get(KnownTypeCode.IDisposable);
-		
+
+		/// <summary>
+		/// Gets a type reference pointing to the <c>System.Runtime.CompilerServices.INotifyCompletion</c> type.
+		/// </summary>
+		public static readonly KnownTypeReference INotifyCompletion = Get(KnownTypeCode.INotifyCompletion);
+
+		/// <summary>
+		/// Gets a type reference pointing to the <c>System.Runtime.CompilerServices.ICriticalNotifyCompletion</c> type.
+		/// </summary>
+		public static readonly KnownTypeReference ICriticalNotifyCompletion = Get(KnownTypeCode.ICriticalNotifyCompletion);
+
 		readonly KnownTypeCode knownTypeCode;
 		readonly string namespaceName;
 		readonly string name;

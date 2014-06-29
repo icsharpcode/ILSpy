@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -32,10 +32,9 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		ITypeReference returnType = SpecialType.UnknownType;
 		IList<IMemberReference> interfaceImplementations;
 		
-		public override void ApplyInterningProvider(IInterningProvider provider)
+		public override void ApplyInterningProvider(InterningProvider provider)
 		{
 			base.ApplyInterningProvider(provider);
-			returnType = provider.Intern(returnType);
 			interfaceImplementations = provider.InternList(interfaceImplementations);
 		}
 		
@@ -150,7 +149,12 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			ITypeReference interfaceTypeReference = null;
 			if (this.IsExplicitInterfaceImplementation && this.ExplicitInterfaceImplementations.Count == 1)
 				interfaceTypeReference = this.ExplicitInterfaceImplementations[0].DeclaringTypeReference;
-			return Resolve(ExtendContextForType(context, this.DeclaringTypeDefinition), this.EntityType, this.Name, interfaceTypeReference);
+			return Resolve(ExtendContextForType(context, this.DeclaringTypeDefinition), this.SymbolKind, this.Name, interfaceTypeReference);
+		}
+		
+		ISymbol ISymbolReference.Resolve(ITypeResolveContext context)
+		{
+			return ((IUnresolvedMember)this).Resolve(context);
 		}
 		
 		protected static ITypeResolveContext ExtendContextForType(ITypeResolveContext assemblyContext, IUnresolvedTypeDefinition typeDef)
@@ -167,7 +171,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		}
 		
 		public static IMember Resolve(ITypeResolveContext context,
-		                              EntityType entityType,
+		                              SymbolKind symbolKind,
 		                              string name,
 		                              ITypeReference explicitInterfaceTypeReference = null,
 		                              IList<string> typeParameterNames = null,
@@ -185,7 +189,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 					foreach (IMember member in context.CurrentTypeDefinition.Members) {
 						if (member.IsExplicitInterfaceImplementation)
 							continue;
-						if (IsNonGenericMatch(member, entityType, name, parameterTypes))
+						if (IsNonGenericMatch(member, symbolKind, name, parameterTypes))
 							return member;
 					}
 				} else {
@@ -195,7 +199,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 							continue;
 						if (member.ImplementedInterfaceMembers.Count != 1)
 							continue;
-						if (IsNonGenericMatch(member, entityType, name, parameterTypes)) {
+						if (IsNonGenericMatch(member, symbolKind, name, parameterTypes)) {
 							if (explicitInterfaceType.Equals(member.ImplementedInterfaceMembers[0].DeclaringType))
 								return member;
 						}
@@ -205,7 +209,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				// generic member
 				// In this case, we must specify the correct context for resolving the parameter types
 				foreach (IMethod method in context.CurrentTypeDefinition.Methods) {
-					if (method.EntityType != entityType)
+					if (method.SymbolKind != symbolKind)
 						continue;
 					if (method.Name != name)
 						continue;
@@ -233,9 +237,9 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			return null;
 		}
 		
-		static bool IsNonGenericMatch(IMember member, EntityType entityType, string name, IList<IType> parameterTypes)
+		static bool IsNonGenericMatch(IMember member, SymbolKind symbolKind, string name, IList<IType> parameterTypes)
 		{
-			if (member.EntityType != entityType)
+			if (member.SymbolKind != symbolKind)
 				return false;
 			if (member.Name != name)
 				return false;

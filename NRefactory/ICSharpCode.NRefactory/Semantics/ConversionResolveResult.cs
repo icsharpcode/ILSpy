@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -26,7 +26,7 @@ namespace ICSharpCode.NRefactory.Semantics
 	/// Represents an implicit or explicit type conversion.
 	/// <c>conversionResolveResult.Input.Type</c> is the source type;
 	/// <c>conversionResolveResult.Type</c> is the target type.
-	/// The <see cref="Conversion"/> property provides details about the type of conversion.
+	/// The <see cref="Conversion"/> property provides details about the kind of conversion.
 	/// </summary>
 	public class ConversionResolveResult : ResolveResult
 	{
@@ -63,5 +63,6 @@ namespace ICSharpCode.NRefactory.Semantics
 		{
 			return new [] { Input };
 		}
+
 	}
 }

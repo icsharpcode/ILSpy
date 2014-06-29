@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -43,7 +43,7 @@ namespace ICSharpCode.NRefactory
 		{
 			this.index = (uint)Interlocked.Increment(ref nextRoleIndex);
 			if (this.index >= roles.Length)
-				throw new InvalidOperationException("");
+				throw new InvalidOperationException("Too many roles");
 			roles[this.index] = this;
 		}
 		

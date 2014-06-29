@@ -93,7 +93,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		
 		public MemberReferenceExpression (Expression target, string memberName, params AstType[] arguments) : this (target, memberName, (IEnumerable<AstType>)arguments)
 		{
-		}	
+		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{

@@ -47,7 +47,7 @@ namespace ICSharpCode.NRefactory.Utils
 		#endregion
 		
 		#region Constants
-		const int magic = 0x71D28A5D;
+		const int magic = 0x71D28A5E;
 		
 		const byte Type_ReferenceType = 1;
 		const byte Type_ValueType = 2;
@@ -289,6 +289,7 @@ namespace ICSharpCode.NRefactory.Utils
 					Type type = sType.Type;
 					if (type.IsGenericTypeDefinition || type.HasElementType)
 						continue;
+					writer.Write(FastSerializerVersionAttribute.GetVersionNumber(type));
 					if (type.IsPrimitive || typeof(ISerializable).IsAssignableFrom(type)) {
 						writer.Write(byte.MaxValue);
 					} else {
@@ -812,6 +813,10 @@ namespace ICSharpCode.NRefactory.Utils
 					Type type = this.Types[i];
 					if (type.IsGenericTypeDefinition || type.HasElementType)
 						continue;
+					int versionNumber = Reader.ReadInt32();
+					if (versionNumber != FastSerializerVersionAttribute.GetVersionNumber(type))
+						throw new SerializationException("Type '" + type.FullName + "' was serialized with version " + versionNumber + ", but is version " + FastSerializerVersionAttribute.GetVersionNumber(type));
+					
 					bool isCustomSerialization = typeof(ISerializable).IsAssignableFrom(type);
 					bool typeIsSpecial = type.IsPrimitive || isCustomSerialization;
 					
@@ -819,10 +824,10 @@ namespace ICSharpCode.NRefactory.Utils
 					if (serializedFieldCount == byte.MaxValue) {
 						// special type
 						if (!typeIsSpecial)
-							throw new SerializationException("Type " + type + " was serialized as special type, but isn't special now.");
+							throw new SerializationException("Type '" + type.FullName + "' was serialized as special type, but isn't special now.");
 					} else {
 						if (typeIsSpecial)
-							throw new SerializationException("Type " + type.FullName + " wasn't serialized as special type, but is special now.");
+							throw new SerializationException("Type '" + type.FullName + "' wasn't serialized as special type, but is special now.");
 						
 						var availableFields = GetSerializableFields(this.Types[i]);
 						if (availableFields.Count != serializedFieldCount)
@@ -1330,6 +1335,37 @@ namespace ICSharpCode.NRefactory.Utils
 		static void Log(string format, params object[] args)
 		{
 			Debug.WriteLine(format, args);
+		}
+	}
+	
+	/// <summary>
+	/// Specifies the version of the class.
+	/// The <see cref="FastSerializer"/> will refuse to deserialize an instance that was stored by
+	/// a different version of the class than the current one.
+	/// </summary>
+	[AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct | AttributeTargets.Enum)]
+	public class FastSerializerVersionAttribute : Attribute
+	{
+		readonly int versionNumber;
+		
+		public FastSerializerVersionAttribute(int versionNumber)
+		{
+			this.versionNumber = versionNumber;
+		}
+		
+		public int VersionNumber {
+			get {
+				return versionNumber;
+			}
+		}
+		
+		internal static int GetVersionNumber(Type type)
+		{
+			var arr = type.GetCustomAttributes(typeof(FastSerializerVersionAttribute), false);
+			if (arr.Length == 0)
+				return 0;
+			else
+				return ((FastSerializerVersionAttribute)arr[0]).VersionNumber;
 		}
 	}
 }

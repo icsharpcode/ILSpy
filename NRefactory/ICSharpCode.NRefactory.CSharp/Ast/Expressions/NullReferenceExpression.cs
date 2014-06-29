@@ -1,6 +1,6 @@
 ﻿// 
 // NullReferenceExpression.cs
-//  
+//
 // Author:
 //       Mike Krüger <mkrueger@novell.com>
 // 
@@ -38,6 +38,12 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 		}
 		
+		internal void SetStartLocation(TextLocation value)
+		{
+			ThrowIfFrozen();
+			this.location = value;
+		}
+		
 		public override TextLocation EndLocation {
 			get {
 				return new TextLocation (location.Line, location.Column + "null".Length);
@@ -57,7 +63,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			visitor.VisitNullReferenceExpression (this);
 		}
-			
+		
 		public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
 		{
 			return visitor.VisitNullReferenceExpression (this);

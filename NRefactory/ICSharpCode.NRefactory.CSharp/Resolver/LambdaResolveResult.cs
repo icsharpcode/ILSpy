@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -60,12 +60,23 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		/// <summary>
 		/// Gets the return type inferred when the parameter types are inferred to be <paramref name="parameterTypes"/>
 		/// </summary>
+		/// <remarks>
+		/// This method determines the return type inferred from the lambda body, which is used as part of C# type inference.
+		/// Use the <see cref="ReturnType"/> property to retrieve the actual return type as determined by the target delegate type.
+		/// </remarks>
 		public abstract IType GetInferredReturnType(IType[] parameterTypes);
 		
 		/// <summary>
 		/// Gets the list of parameters.
 		/// </summary>
 		public abstract IList<IParameter> Parameters { get; }
+		
+		/// <summary>
+		/// Gets the return type of the lambda.
+		/// 
+		/// If the lambda is async, the return type includes <code>Task&lt;T&gt;</code>
+		/// </summary>
+		public abstract IType ReturnType { get; }
 		
 		/// <summary>
 		/// Gets whether the lambda body is valid for the given parameter types and return type.

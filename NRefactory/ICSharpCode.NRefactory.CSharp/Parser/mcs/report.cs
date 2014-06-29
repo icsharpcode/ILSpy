@@ -56,7 +56,9 @@ namespace Mono.CSharp {
 			3000, 3001, 3002, 3003, 3005, 3006, 3007, 3008, 3009,
 			3010, 3011, 3012, 3013, 3014, 3015, 3016, 3017, 3018, 3019,
 			3021, 3022, 3023, 3024, 3026, 3027,
-			4014
+			4014, 4024, 4025, 4026,
+			7035, 7080, 7081, 7082, 7095,
+			8009,
 		};
 
 		static HashSet<int> AllWarningsHashSet;
@@ -550,6 +552,8 @@ namespace Mono.CSharp {
 	//
 	public abstract class ReportPrinter
 	{
+		protected HashSet<ITypeDefinition> reported_missing_definitions;
+
 		#region Properties
 
 		public int ErrorsCount { get; protected set; }
@@ -605,6 +609,22 @@ namespace Mono.CSharp {
 			}
 		}
 
+		//
+		// Tracks reported missing types. It needs to be session specific 
+		// because we can run in probing mode
+		//
+		public bool MissingTypeReported (ITypeDefinition typeDefinition)
+		{
+			if (reported_missing_definitions == null)
+				reported_missing_definitions = new HashSet<ITypeDefinition> ();
+
+			if (reported_missing_definitions.Contains (typeDefinition))
+				return true;
+
+			reported_missing_definitions.Add (typeDefinition);
+			return false;
+		}
+
 		public void Reset ()
 		{
 			// HACK: Temporary hack for broken repl flow
@@ -649,7 +669,7 @@ namespace Mono.CSharp {
 			//
 			// This line is useful when debugging recorded messages
 			//
-			// Console.WriteLine ("RECORDING: {0}", msg.ToString ());
+			// Console.WriteLine ("RECORDING: {0}", msg.Text);
 
 			if (session_messages == null)
 				session_messages = new List<AbstractMessage> ();
@@ -733,6 +753,11 @@ namespace Mono.CSharp {
 			foreach (AbstractMessage msg in messages_to_print) {
 				dest.Print (msg, showFullPaths);
 				error_msg |= !msg.IsWarning;
+			}
+
+			if (reported_missing_definitions != null) {
+				foreach (var missing in reported_missing_definitions)
+					dest.MissingTypeReported (missing);
 			}
 
 			return error_msg;
@@ -931,7 +956,7 @@ namespace Mono.CSharp {
 			if (timers == null)
 				return;
 
-			Dictionary<TimerType, string> timer_names = new Dictionary<TimerType,string> () {
+			Dictionary<TimerType, string> timer_names = new Dictionary<TimerType,string> {
 				{ TimerType.ParseTotal, "Parsing source files" },
 				{ TimerType.AssemblyBuilderSetup, "Assembly builder setup" },
 				{ TimerType.CreateTypeTotal, "Compiled types created" },
@@ -1030,7 +1055,7 @@ namespace Mono.CSharp {
 
 			public override bool IsEnabled (int code, bool previous)
 			{
-				return this.code == code ? false : previous;
+				return this.code != code && previous;
 			}
 		}
 
@@ -1056,7 +1081,7 @@ namespace Mono.CSharp {
 
 			public override bool IsEnabled(int code, bool previous)
 			{
-				return this.code == code ? true : previous;
+				return this.code == code || previous;
 			}
 		}
 

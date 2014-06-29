@@ -115,46 +115,35 @@ namespace ICSharpCode.NRefactory.CSharp
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			MemberType o = other as MemberType;
-			return o != null && this.IsDoubleColon == o.IsDoubleColon && MatchString(this.MemberName, o.MemberName) && this.Target.DoMatch(o.Target, match);
+			return o != null && this.IsDoubleColon == o.IsDoubleColon
+				&& MatchString(this.MemberName, o.MemberName) && this.Target.DoMatch(o.Target, match)
+				&& this.TypeArguments.DoMatch(o.TypeArguments, match);
 		}
-		
-		public override string ToString()
+
+		public override ITypeReference ToTypeReference(NameLookupMode lookupMode, InterningProvider interningProvider = null)
 		{
-			StringBuilder b = new StringBuilder();
-			b.Append(this.Target);
-			if (IsDoubleColon)
-				b.Append("::");
-			else
-				b.Append('.');
-			b.Append(this.MemberName);
-			if (this.TypeArguments.Any()) {
-				b.Append('<');
-				b.Append(string.Join(", ", this.TypeArguments));
-				b.Append('>');
-			}
-			return b.ToString();
-		}
-		
-		public override ITypeReference ToTypeReference(NameLookupMode lookupMode = NameLookupMode.Type)
-		{
+			if (interningProvider == null)
+				interningProvider = InterningProvider.Dummy;
+			
 			TypeOrNamespaceReference t;
 			if (this.IsDoubleColon) {
 				SimpleType st = this.Target as SimpleType;
 				if (st != null) {
-					t = new AliasNamespaceReference(st.Identifier);
+					t = interningProvider.Intern(new AliasNamespaceReference(interningProvider.Intern(st.Identifier)));
 				} else {
 					t = null;
 				}
 			} else {
-				t = this.Target.ToTypeReference(lookupMode) as TypeOrNamespaceReference;
+				t = this.Target.ToTypeReference(lookupMode, interningProvider) as TypeOrNamespaceReference;
 			}
 			if (t == null)
 				return SpecialType.UnknownType;
 			var typeArguments = new List<ITypeReference>();
 			foreach (var ta in this.TypeArguments) {
-				typeArguments.Add(ta.ToTypeReference(lookupMode));
+				typeArguments.Add(ta.ToTypeReference(lookupMode, interningProvider));
 			}
-			return new MemberTypeOrNamespaceReference(t, this.MemberName, typeArguments, lookupMode);
+			string memberName = interningProvider.Intern(this.MemberName);
+			return interningProvider.Intern(new MemberTypeOrNamespaceReference(t, memberName, interningProvider.InternList(typeArguments), lookupMode));
 		}
 	}
 }

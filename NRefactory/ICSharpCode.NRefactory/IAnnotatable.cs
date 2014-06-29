@@ -1,4 +1,4 @@
-// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -105,7 +105,7 @@ namespace ICSharpCode.NRefactory
 			if (cloneable != null)
 				annotations = cloneable.Clone();
 		}
-		
+
 		sealed class AnnotationList : List<object>, ICloneable
 		{
 			// There are two uses for this custom list type:
@@ -181,7 +181,7 @@ namespace ICSharpCode.NRefactory
 			AnnotationList list = oldAnnotations as AnnotationList;
 			if (list != null) {
 				lock (list)
-					list.RemoveAll (obj => type.IsInstanceOfType (obj));
+					list.RemoveAll(type.IsInstanceOfType);
 			} else if (type.IsInstanceOfType (oldAnnotations)) {
 				if (Interlocked.CompareExchange (ref this.annotations, null, oldAnnotations) != oldAnnotations) {
 					// Operation failed (some other thread wrote to this.annotations first)

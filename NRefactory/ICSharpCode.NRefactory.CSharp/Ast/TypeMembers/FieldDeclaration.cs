@@ -24,18 +24,34 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System;
+using System.ComponentModel;
 using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.NRefactory.CSharp
 {
 	public class FieldDeclaration : EntityDeclaration
 	{
-		public override EntityType EntityType {
-			get { return EntityType.Field; }
+		public override SymbolKind SymbolKind {
+			get { return SymbolKind.Field; }
 		}
 		
 		public AstNodeCollection<VariableInitializer> Variables {
 			get { return GetChildrenByRole (Roles.Variable); }
+		}
+		
+		// Hide .Name and .NameToken from users; the actual field names
+		// are stored in the VariableInitializer.
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		public override string Name {
+			get { return string.Empty; }
+			set { throw new NotSupportedException(); }
+		}
+		
+		[EditorBrowsable(EditorBrowsableState.Never)]
+		public override Identifier NameToken {
+			get { return Identifier.Null; }
+			set { throw new NotSupportedException(); }
 		}
 		
 		public override void AcceptVisitor (IAstVisitor visitor)

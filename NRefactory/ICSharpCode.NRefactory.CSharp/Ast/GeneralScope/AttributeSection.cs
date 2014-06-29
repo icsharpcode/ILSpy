@@ -135,7 +135,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			AttributeSection o = other as AttributeSection;
-			return o != null && this.AttributeTarget == o.AttributeTarget && this.Attributes.DoMatch(o.Attributes, match);
+			return o != null && MatchString(this.AttributeTarget, o.AttributeTarget) && this.Attributes.DoMatch(o.Attributes, match);
 		}
 		
 		public AttributeSection()
@@ -170,18 +170,5 @@ namespace ICSharpCode.NRefactory.CSharp
 //					throw new NotSupportedException("Invalid value for AttributeTarget");
 //			}
 //		}
-	}
-	
-	public enum AttributeTarget {
-		None,
-		Assembly,
-		Module,
-		
-		Type,
-		Param,
-		Field,
-		Return,
-		Method,
-		Unknown
 	}
 }

@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -22,6 +22,7 @@ using System.Collections.ObjectModel;
 using ICSharpCode.NRefactory.CSharp.Resolver;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.NRefactory.TypeSystem.Implementation;
 using ICSharpCode.NRefactory.Utils;
 
 namespace ICSharpCode.NRefactory.CSharp.TypeSystem
@@ -32,9 +33,9 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 	[Serializable]
 	public sealed class MemberTypeOrNamespaceReference : TypeOrNamespaceReference, ISupportsInterning
 	{
-		TypeOrNamespaceReference target;
-		string identifier;
-		IList<ITypeReference> typeArguments;
+		readonly TypeOrNamespaceReference target;
+		readonly string identifier;
+		readonly IList<ITypeReference> typeArguments;
 		readonly NameLookupMode lookupMode;
 		
 		public MemberTypeOrNamespaceReference(TypeOrNamespaceReference target, string identifier, IList<ITypeReference> typeArguments, NameLookupMode lookupMode = NameLookupMode.Type)
@@ -58,7 +59,11 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 		}
 		
 		public IList<ITypeReference> TypeArguments {
-			get { return new ReadOnlyCollection<ITypeReference>(typeArguments); }
+			get { return typeArguments; }
+		}
+		
+		public NameLookupMode LookupMode {
+			get { return lookupMode; }
 		}
 		
 		/// <summary>
@@ -67,7 +72,7 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 		/// </summary>
 		public MemberTypeOrNamespaceReference AddSuffix(string suffix)
 		{
-			return new MemberTypeOrNamespaceReference(target, identifier + suffix, typeArguments);
+			return new MemberTypeOrNamespaceReference(target, identifier + suffix, typeArguments, lookupMode);
 		}
 		
 		public override ResolveResult Resolve(CSharpResolver resolver)
@@ -76,14 +81,13 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 			if (targetRR.IsError)
 				return targetRR;
 			IList<IType> typeArgs = typeArguments.Resolve(resolver.CurrentTypeResolveContext);
-			using (var busyLock = BusyManager.Enter(this)) {
-				if (busyLock.Success) {
-					return resolver.ResolveMemberAccess(targetRR, identifier, typeArgs, lookupMode);
-				} else {
-					// This can happen for "class Test : $Test.Base$ { public class Base {} }":
-					return ErrorResolveResult.UnknownError; // don't cache this error
-				}
-			}
+			return resolver.ResolveMemberAccess(targetRR, identifier, typeArgs, lookupMode);
+		}
+		
+		public override IType ResolveType(CSharpResolver resolver)
+		{
+			TypeResolveResult trr = Resolve(resolver) as TypeResolveResult;
+			return trr != null ? trr.Type : new UnknownType(null, identifier, typeArguments.Count);
 		}
 		
 		public override string ToString()
@@ -92,13 +96,6 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 				return target.ToString() + "." + identifier;
 			else
 				return target.ToString() + "." + identifier + "<" + string.Join(",", typeArguments) + ">";
-		}
-		
-		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)
-		{
-			target = provider.Intern(target);
-			identifier = provider.Intern(identifier);
-			typeArguments = provider.InternList(typeArguments);
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()

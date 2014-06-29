@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -25,7 +25,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 	/// <summary>
 	/// Represents an array type.
 	/// </summary>
-	public sealed class ArrayType : TypeWithElementType
+	public sealed class ArrayType : TypeWithElementType, ICompilationProvider
 	{
 		readonly int dimensions;
 		readonly ICompilation compilation;
@@ -38,10 +38,18 @@ namespace ICSharpCode.NRefactory.TypeSystem
 				throw new ArgumentOutOfRangeException("dimensions", dimensions, "dimensions must be positive");
 			this.compilation = compilation;
 			this.dimensions = dimensions;
+			
+			ICompilationProvider p = elementType as ICompilationProvider;
+			if (p != null && p.Compilation != compilation)
+				throw new InvalidOperationException("Cannot create an array type using a different compilation from the element type.");
 		}
 		
 		public override TypeKind Kind {
 			get { return TypeKind.Array; }
+		}
+		
+		public ICompilation Compilation {
+			get { return compilation; }
 		}
 		
 		public int Dimensions {
@@ -147,8 +155,8 @@ namespace ICSharpCode.NRefactory.TypeSystem
 	[Serializable]
 	public sealed class ArrayTypeReference : ITypeReference, ISupportsInterning
 	{
-		ITypeReference elementType;
-		int dimensions;
+		readonly ITypeReference elementType;
+		readonly int dimensions;
 		
 		public ArrayTypeReference(ITypeReference elementType, int dimensions = 1)
 		{
@@ -176,11 +184,6 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		public override string ToString()
 		{
 			return elementType.ToString() + "[" + new string(',', dimensions - 1) + "]";
-		}
-		
-		void ISupportsInterning.PrepareForInterning(IInterningProvider provider)
-		{
-			elementType = provider.Intern(elementType);
 		}
 		
 		int ISupportsInterning.GetHashCodeForInterning()

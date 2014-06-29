@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -58,6 +58,25 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			IFreezable f = item as IFreezable;
 			if (f != null)
 				f.Freeze();
+		}
+		
+		public static T FreezeAndReturn<T>(T item) where T : IFreezable
+		{
+			item.Freeze();
+			return item;
+		}
+		
+		/// <summary>
+		/// If the item is not frozen, this method creates and returns a frozen clone.
+		/// If the item is already frozen, it is returned without creating a clone.
+		/// </summary>
+		public static T GetFrozenClone<T>(T item) where T : IFreezable, ICloneable
+		{
+			if (!item.IsFrozen) {
+				item = (T)item.Clone();
+				item.Freeze();
+			}
+			return item;
 		}
 	}
 

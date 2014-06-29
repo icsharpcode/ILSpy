@@ -44,10 +44,18 @@ namespace ICSharpCode.NRefactory.CSharp
 			set { ThrowIfFrozen(); isAsync = value; }
 		}
 		
+		public CSharpTokenNode LParToken {
+			get { return GetChildByRole (Roles.LPar); }
+		}
+
 		public AstNodeCollection<ParameterDeclaration> Parameters {
 			get { return GetChildrenByRole (Roles.Parameter); }
 		}
 		
+		public CSharpTokenNode RParToken {
+			get { return GetChildByRole (Roles.RPar); }
+		}
+
 		public CSharpTokenNode ArrowToken {
 			get { return GetChildByRole (ArrowRole); }
 		}

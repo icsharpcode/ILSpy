@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -36,7 +36,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		string name;
 		DomRegion region;
 		
-		EntityType ownerType;
+		SymbolKind ownerType;
 		VarianceModifier variance;
 		BitVector16 flags;
 		const ushort FlagFrozen                       = 0x0001;
@@ -55,16 +55,17 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		protected virtual void FreezeInternal()
 		{
 			attributes = FreezableHelper.FreezeListAndElements(attributes);
+			constraints = FreezableHelper.FreezeList(constraints);
 		}
 		
-		public DefaultUnresolvedTypeParameter(EntityType ownerType, int index, string name = null)
+		public DefaultUnresolvedTypeParameter(SymbolKind ownerType, int index, string name = null)
 		{
 			this.ownerType = ownerType;
 			this.index = index;
-			this.name = name ?? ((ownerType == EntityType.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
+			this.name = name ?? ((ownerType == SymbolKind.Method ? "!!" : "!") + index.ToString(CultureInfo.InvariantCulture));
 		}
 		
-		public EntityType OwnerType {
+		public SymbolKind OwnerType {
 			get { return ownerType; }
 		}
 		
@@ -94,7 +95,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		string INamedElement.ReflectionName {
 			get {
-				if (ownerType == EntityType.Method)
+				if (ownerType == SymbolKind.Method)
 					return "``" + index.ToString(CultureInfo.InvariantCulture);
 				else
 					return "`" + index.ToString(CultureInfo.InvariantCulture);
@@ -157,12 +158,28 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			}
 		}
 		
+		/// <summary>
+		/// Uses the specified interning provider to intern
+		/// strings and lists in this entity.
+		/// This method does not test arbitrary objects to see if they implement ISupportsInterning;
+		/// instead we assume that those are interned immediately when they are created (before they are added to this entity).
+		/// </summary>
+		public virtual void ApplyInterningProvider(InterningProvider provider)
+		{
+			if (provider == null)
+				throw new ArgumentNullException("provider");
+			FreezableHelper.ThrowIfFrozen(this);
+			name = provider.Intern(name);
+			attributes = provider.InternList(attributes);
+			constraints = provider.InternList(constraints);
+		}
+		
 		public virtual ITypeParameter CreateResolvedTypeParameter(ITypeResolveContext context)
 		{
 			IEntity owner = null;
-			if (this.OwnerType == EntityType.Method) {
+			if (this.OwnerType == SymbolKind.Method) {
 				owner = context.CurrentMember as IMethod;
-			} else if (this.OwnerType == EntityType.TypeDefinition) {
+			} else if (this.OwnerType == SymbolKind.TypeDefinition) {
 				owner = context.CurrentTypeDefinition;
 			}
 			if (owner == null)

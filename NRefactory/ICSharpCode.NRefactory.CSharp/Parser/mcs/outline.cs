@@ -29,8 +29,6 @@
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 
-#if !NET_2_1
-
 using System;
 using System.Reflection;
 using System.Collections;
@@ -90,7 +88,9 @@ public class Outline {
 			OutlineParams (method.GetParameters ());
 			o.Write (")");
 
+#if NET_2_0
 			WriteGenericConstraints (t.GetGenericArguments ());
+#endif			
 	
 			o.WriteLine (";"); 
 			return;
@@ -119,9 +119,9 @@ public class Outline {
 			if (underlyingType != typeof (int))
 				o.Write (" : {0}", FormatType (underlyingType));
 		}
-
+#if NET_2_0
 		WriteGenericConstraints (t.GetGenericArguments ());
-
+#endif		
 		o.WriteLine (" {");
 		o.Indent++;
 
@@ -396,11 +396,15 @@ public class Outline {
 		}
 
 		o.Write (mi.Name);
+#if NET_2_0
 		o.Write (FormatGenericParams (mi.GetGenericArguments ()));
+#endif
 		o.Write (" (");
 		OutlineParams (mi.GetParameters ());
 		o.Write (")");
+#if NET_2_0
 		WriteGenericConstraints (mi.GetGenericArguments ());
+#endif
 		o.Write (";");
 	}
 	
@@ -559,6 +563,7 @@ public class Outline {
                 }
 	}
 
+#if NET_2_0
 	string FormatGenericParams (Type [] args)
 	{
 		StringBuilder sb = new StringBuilder ();
@@ -574,6 +579,7 @@ public class Outline {
 		sb.Append (">");
 		return sb.ToString ();
 	}
+#endif
 
 	// TODO: fine tune this so that our output is less verbose. We need to figure
 	// out a way to do this while not making things confusing.
@@ -673,7 +679,9 @@ public class Outline {
 	void GetTypeName (StringBuilder sb, Type t)
 	{
 		sb.Append (RemoveGenericArity (t.Name));
+#if NET_2_0
 		sb.Append (FormatGenericParams (t.GetGenericArguments ()));
+#endif
 	}
 
 	string GetFullName (Type t)
@@ -685,10 +693,12 @@ public class Outline {
 
 	void GetFullName_recursed (StringBuilder sb, Type t, bool recursed)
 	{
+#if NET_2_0
 		if (t.IsGenericParameter) {
 			sb.Append (t.Name);
 			return;
 		}
+#endif
 
 		if (t.DeclaringType != null) {
 			GetFullName_recursed (sb, t.DeclaringType, true);
@@ -706,6 +716,7 @@ public class Outline {
 		GetTypeName (sb, t);
 	}
 
+#if NET_2_0
 	void WriteGenericConstraints (Type [] args)
 	{
 
@@ -761,6 +772,7 @@ public class Outline {
 			}
 		}
 	}
+#endif
  
 	string OperatorFromName (string name)
 	{
@@ -1024,5 +1036,3 @@ public class Comparer : IComparer  {
 	}
 }
 }
-
-#endif

@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -94,8 +94,9 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 					return result;
 				}
 				result = new List<IAttribute>();
+				var context = parentContext.WithCurrentTypeDefinition(this);
 				foreach (IUnresolvedTypeDefinition part in parts) {
-					ITypeResolveContext parentContextForPart = part.CreateResolveContext(parentContext);
+					ITypeResolveContext parentContextForPart = part.CreateResolveContext(context);
 					foreach (var attr in part.Attributes) {
 						result.Add(attr.CreateResolvedAttribute(parentContextForPart));
 					}
@@ -110,8 +111,13 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get { return parts; }
 		}
 		
+		public SymbolKind SymbolKind {
+			get { return parts[0].SymbolKind; }
+		}
+		
+		[Obsolete("Use the SymbolKind property instead.")]
 		public EntityType EntityType {
-			get { return parts[0].EntityType; }
+			get { return (EntityType)parts[0].SymbolKind; }
 		}
 		
 		public virtual TypeKind Kind {
@@ -325,7 +331,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			}
 			if (addDefaultConstructorIfRequired) {
 				TypeKind kind = this.Kind;
-				if (kind == TypeKind.Class && !this.IsStatic && !unresolvedMembers.Any(m => m.EntityType == EntityType.Constructor && !m.IsStatic)
+				if (kind == TypeKind.Class && !this.IsStatic && !unresolvedMembers.Any(m => m.SymbolKind == SymbolKind.Constructor && !m.IsStatic)
 				    || kind == TypeKind.Enum || kind == TypeKind.Struct)
 				{
 					contextPerMember.Add(parts[0].CreateResolveContext(parentContext).WithCurrentTypeDefinition(this));
@@ -344,7 +350,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get {
 				var members = GetMemberList();
 				for (int i = 0; i < members.unresolvedMembers.Length; i++) {
-					if (members.unresolvedMembers[i].EntityType == EntityType.Field)
+					if (members.unresolvedMembers[i].SymbolKind == SymbolKind.Field)
 						yield return (IField)members[i];
 				}
 			}
@@ -367,9 +373,9 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get {
 				var members = GetMemberList();
 				for (int i = 0; i < members.unresolvedMembers.Length; i++) {
-					switch (members.unresolvedMembers[i].EntityType) {
-						case EntityType.Property:
-						case EntityType.Indexer:
+					switch (members.unresolvedMembers[i].SymbolKind) {
+						case SymbolKind.Property:
+						case SymbolKind.Indexer:
 							yield return (IProperty)members[i];
 							break;
 					}
@@ -381,7 +387,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			get {
 				var members = GetMemberList();
 				for (int i = 0; i < members.unresolvedMembers.Length; i++) {
-					if (members.unresolvedMembers[i].EntityType == EntityType.Event)
+					if (members.unresolvedMembers[i].SymbolKind == SymbolKind.Event)
 						yield return (IEvent)members[i];
 				}
 			}
@@ -395,9 +401,9 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				KnownTypeCode result = this.knownTypeCode;
 				if (result == (KnownTypeCode)(-1)) {
 					result = KnownTypeCode.None;
+					ICompilation compilation = this.Compilation;
 					for (int i = 0; i < KnownTypeReference.KnownTypeCodeCount; i++) {
-						KnownTypeReference r = KnownTypeReference.Get((KnownTypeCode)i);
-						if (r != null && r.Resolve(parentContext) == this) {
+						if (compilation.FindType((KnownTypeCode)i) == this) {
 							result = (KnownTypeCode)i;
 							break;
 						}
@@ -471,6 +477,10 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			return Methods.Any(m => m.IsExtensionMethod);
 		}
 		
+		public bool IsPartial {
+			get { return parts.Length > 1 || parts[0].IsPartial; }
+		}
+		
 		public bool? IsReferenceType {
 			get {
 				switch (this.Kind) {
@@ -492,7 +502,18 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		public int TypeParameterCount {
 			get { return parts[0].TypeParameters.Count; }
 		}
-		
+
+		public IList<IType> TypeArguments {
+			get {
+				// ToList() call is necessary because IList<> isn't covariant
+				return TypeParameters.ToList<IType>();
+			}
+		}
+
+		public bool IsParameterized {
+			get { return false; }
+		}
+
 		#region DirectBaseTypes
 		IList<IType> directBaseTypes;
 		
@@ -501,9 +522,19 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				IList<IType> result = LazyInit.VolatileRead(ref this.directBaseTypes);
 				if (result != null) {
 					return result;
-				} else {
-					result = CalculateDirectBaseTypes();
-					return LazyInit.GetOrSet(ref this.directBaseTypes, result);
+				}
+				using (var busyLock = BusyManager.Enter(this)) {
+					if (busyLock.Success) {
+						result = CalculateDirectBaseTypes();
+						return LazyInit.GetOrSet(ref this.directBaseTypes, result);
+					} else {
+						// This can happen for "class Test : $Test.Base$ { public class Base {} }"
+						// and also for the valid code
+						// "class Test : Base<Test.Inner> { public class Inner {} }"
+						
+						// Don't cache the error!
+						return EmptyList<IType>.Instance;
+					}
 				}
 			}
 		}
@@ -564,6 +595,10 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		public string Namespace {
 			get { return parts[0].Namespace; }
+		}
+		
+		public FullTypeName FullTypeName {
+			get { return parts[0].FullTypeName; }
 		}
 		
 		public DomRegion Region {
@@ -675,6 +710,11 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			}
 		}
 		
+		ISymbolReference ISymbol.ToReference()
+		{
+			return (ISymbolReference)ToTypeReference();
+		}
+		
 		public IEnumerable<IType> GetNestedTypes(Predicate<ITypeDefinition> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			const GetMemberOptions opt = GetMemberOptions.IgnoreInheritedMembers | GetMemberOptions.ReturnMemberDefinitions;
@@ -779,7 +819,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				using (var busyLock = BusyManager.Enter(this)) {
 					if (busyLock.Success) {
 						return coClass.GetConstructors(filter, options)
-							.Select(m => new SpecializedMethod(m, TypeParameterSubstitution.Identity) { DeclaringType = this });
+							.Select(m => new SpecializedMethod(m, m.Substitution) { DeclaringType = this });
 					}
 				}
 				return EmptyList<IMethod>.Instance;
@@ -900,6 +940,16 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		}
 		#endregion
 		
+		public TypeParameterSubstitution GetSubstitution()
+		{
+			return TypeParameterSubstitution.Identity;
+		}
+		
+		public TypeParameterSubstitution GetSubstitution(IList<IType> methodTypeArguments)
+		{
+			return TypeParameterSubstitution.Identity;
+		}
+
 		public bool Equals(IType other)
 		{
 			return this == other;

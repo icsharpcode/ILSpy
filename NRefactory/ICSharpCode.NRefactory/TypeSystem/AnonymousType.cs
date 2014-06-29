@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -45,7 +45,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			this.resolvedProperties = new ProjectedList<ITypeResolveContext, IUnresolvedProperty, IProperty>(context, unresolvedProperties, (c, p) => new AnonymousTypeProperty(p, c, this));
 		}
 		
-		sealed class AnonymousTypeProperty : DefaultResolvedProperty, IEntity
+		sealed class AnonymousTypeProperty : DefaultResolvedProperty
 		{
 			readonly AnonymousType declaringType;
 			
@@ -55,7 +55,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 				this.declaringType = declaringType;
 			}
 			
-			IType IEntity.DeclaringType {
+			public override IType DeclaringType {
 				get { return declaringType; }
 			}
 			
@@ -68,6 +68,41 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			public override int GetHashCode()
 			{
 				return declaringType.GetHashCode() ^ unchecked(27 * this.Name.GetHashCode());
+			}
+			
+			protected override IMethod CreateResolvedAccessor(IUnresolvedMethod unresolvedAccessor)
+			{
+				return new AnonymousTypeAccessor(unresolvedAccessor, context, this);
+			}
+		}
+		
+		sealed class AnonymousTypeAccessor : DefaultResolvedMethod
+		{
+			readonly AnonymousTypeProperty owner;
+			
+			public AnonymousTypeAccessor(IUnresolvedMethod unresolved, ITypeResolveContext parentContext, AnonymousTypeProperty owner)
+				: base(unresolved, parentContext, isExtensionMethod: false)
+			{
+				this.owner = owner;
+			}
+			
+			public override IMember AccessorOwner {
+				get { return owner; }
+			}
+			
+			public override IType DeclaringType {
+				get { return owner.DeclaringType; }
+			}
+			
+			public override bool Equals(object obj)
+			{
+				AnonymousTypeAccessor p = obj as AnonymousTypeAccessor;
+				return p != null && this.Name == p.Name && owner.DeclaringType.Equals(p.owner.DeclaringType);
+			}
+			
+			public override int GetHashCode()
+			{
+				return owner.DeclaringType.GetHashCode() ^ unchecked(27 * this.Name.GetHashCode());
 			}
 		}
 		
@@ -82,6 +117,12 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		
 		public override TypeKind Kind {
 			get { return TypeKind.Anonymous; }
+		}
+
+		public override IEnumerable<IType> DirectBaseTypes {
+			get {
+				yield return compilation.FindType(KnownTypeCode.Object);
+			}
 		}
 		
 		public override bool? IsReferenceType {

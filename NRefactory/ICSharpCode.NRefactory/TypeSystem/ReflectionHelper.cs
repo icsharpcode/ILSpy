@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -56,17 +56,6 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		{
 			return type.ToTypeReference().Resolve(compilation.TypeResolveContext);
 		}
-		
-		/// <summary>
-		/// Retrieves the specified type in this compilation.
-		/// Returns <see cref="SpecialType.UnknownType"/> if the type cannot be found in this compilation.
-		/// </summary>
-		[Obsolete("Use ReflectionHelper.ParseReflectionName(reflectionTypeName).Resolve(compilation.TypeResolveContext) instead. " +
-		          "Make sure to read the ParseReflectionName() documentation for caveats.")]
-		public static IType FindType(this ICompilation compilation, string reflectionTypeName)
-		{
-			return ParseReflectionName(reflectionTypeName).Resolve(compilation.TypeResolveContext);
-		}
 		#endregion
 		
 		#region Type.ToTypeReference()
@@ -106,9 +95,9 @@ namespace ICSharpCode.NRefactory.TypeSystem
 				return new ByReferenceTypeReference(ToTypeReference(type.GetElementType()));
 			} else if (type.IsGenericParameter) {
 				if (type.DeclaringMethod != null) {
-					return new TypeParameterReference(EntityType.Method, type.GenericParameterPosition);
+					return TypeParameterReference.Create(SymbolKind.Method, type.GenericParameterPosition);
 				} else {
-					return new TypeParameterReference(EntityType.TypeDefinition, type.GenericParameterPosition);
+					return TypeParameterReference.Create(SymbolKind.TypeDefinition, type.GenericParameterPosition);
 				}
 			} else if (type.DeclaringType != null) {
 				if (type == typeof(Dynamic))
@@ -218,6 +207,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// <see cref="ITypeResolveContext.CurrentAssembly"/> first, and if the type is not found there,
 		/// it will look in all other assemblies of the compilation.
 		/// </remarks>
+		/// <seealso cref="FullTypeName(string)"/>
 		public static ITypeReference ParseReflectionName(string reflectionTypeName)
 		{
 			if (reflectionTypeName == null)
@@ -259,11 +249,11 @@ namespace ICSharpCode.NRefactory.TypeSystem
 					// method type parameter reference
 					pos++;
 					int index = ReadTypeParameterCount(reflectionTypeName, ref pos);
-					reference = new TypeParameterReference(EntityType.Method, index);
+					reference = TypeParameterReference.Create(SymbolKind.Method, index);
 				} else {
 					// class type parameter reference
 					int index = ReadTypeParameterCount(reflectionTypeName, ref pos);
-					reference = new TypeParameterReference(EntityType.TypeDefinition, index);
+					reference = TypeParameterReference.Create(SymbolKind.TypeDefinition, index);
 				}
 			} else {
 				// not a type parameter reference: read the actual type name

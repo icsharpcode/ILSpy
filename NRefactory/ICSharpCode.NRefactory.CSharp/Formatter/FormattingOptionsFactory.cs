@@ -1,4 +1,4 @@
-// 
+﻿// 
 // FormattingOptionsFactory.cs
 //  
 // Author:
@@ -43,9 +43,9 @@ namespace ICSharpCode.NRefactory.CSharp
 		/// <summary>
 		/// Creates mono indent style CSharpFormatting options.
 		/// </summary>
-		public static CSharpFormattingOptions CreateMono ()
+		public static CSharpFormattingOptions CreateMono()
 		{
-			return new CSharpFormattingOptions () {
+			return new CSharpFormattingOptions {
 				IndentNamespaceBody = true,
 				IndentClassBody = true,
 				IndentInterfaceBody = true,
@@ -58,6 +58,8 @@ namespace ICSharpCode.NRefactory.CSharp
 				IndentSwitchBody = false,
 				IndentCaseBody = true,
 				IndentBreakStatements = true,
+				IndentPreprocessorDirectives = true,
+				IndentBlocksInsideExpressions = false,
 				NamespaceBraceStyle = BraceStyle.NextLine,
 				ClassBraceStyle = BraceStyle.NextLine,
 				InterfaceBraceStyle = BraceStyle.NextLine,
@@ -71,9 +73,9 @@ namespace ICSharpCode.NRefactory.CSharp
 				PropertyBraceStyle = BraceStyle.EndOfLine,
 				PropertyGetBraceStyle = BraceStyle.EndOfLine,
 				PropertySetBraceStyle = BraceStyle.EndOfLine,
-				AllowPropertyGetBlockInline = true,
-				AllowPropertySetBlockInline = true,
-	
+				SimpleGetBlockFormatting = PropertyFormatting.AllowOneLine,
+				SimpleSetBlockFormatting = PropertyFormatting.AllowOneLine,
+
 				EventBraceStyle = BraceStyle.EndOfLine,
 				EventAddBraceStyle = BraceStyle.EndOfLine,
 				EventRemoveBraceStyle = BraceStyle.EndOfLine,
@@ -82,12 +84,14 @@ namespace ICSharpCode.NRefactory.CSharp
 				StatementBraceStyle = BraceStyle.EndOfLine,
 	
 				ElseNewLinePlacement = NewLinePlacement.SameLine,
+				ElseIfNewLinePlacement = NewLinePlacement.SameLine,
 				CatchNewLinePlacement = NewLinePlacement.SameLine,
 				FinallyNewLinePlacement = NewLinePlacement.SameLine,
 				WhileNewLinePlacement = NewLinePlacement.SameLine,
 				ArrayInitializerWrapping = Wrapping.WrapIfTooLong,
 				ArrayInitializerBraceStyle = BraceStyle.EndOfLine,
-	
+				AllowOneLinedArrayInitialziers = true,
+
 				SpaceBeforeMethodCallParentheses = true,
 				SpaceBeforeMethodDeclarationParentheses = true,
 				SpaceBeforeConstructorDeclarationParentheses = true,
@@ -147,9 +151,10 @@ namespace ICSharpCode.NRefactory.CSharp
 				SpaceAfterForSemicolon = true,
 				SpaceAfterTypecast = false,
 				
-				AlignEmbeddedIfStatements = true,
-				AlignEmbeddedUsingStatements = true,
-				PropertyFormatting = PropertyFormatting.AllowOneLine,
+				AlignEmbeddedStatements = true,
+				SimplePropertyFormatting = PropertyFormatting.AllowOneLine,
+				AutoPropertyFormatting = PropertyFormatting.AllowOneLine,
+				EmptyLineFormatting = EmptyLineFormatting.DoNotIndent,
 				SpaceBeforeMethodDeclarationParameterComma = false,
 				SpaceAfterMethodDeclarationParameterComma = true,
 				SpaceAfterDelegateDeclarationParameterComma = true,
@@ -162,35 +167,36 @@ namespace ICSharpCode.NRefactory.CSharp
 				SpaceWithinIndexerDeclarationBracket = false,
 				SpaceBeforeIndexerDeclarationParameterComma = false,
 				SpaceInNamedArgumentAfterDoubleColon = true,
+				RemoveEndOfLineWhiteSpace = true,
 			
 				SpaceAfterIndexerDeclarationParameterComma = true,
 				
-				BlankLinesBeforeUsings = 0,
-				BlankLinesAfterUsings = 1,
+				MinimumBlankLinesBeforeUsings = 0,
+				MinimumBlankLinesAfterUsings = 1,
+				UsingPlacement = UsingPlacement.TopOfFile,
 				
-				
-				BlankLinesBeforeFirstDeclaration = 0,
-				BlankLinesBetweenTypes = 1,
-				BlankLinesBetweenFields = 0,
-				BlankLinesBetweenEventFields = 0,
-				BlankLinesBetweenMembers = 1,
-	
+				MinimumBlankLinesBeforeFirstDeclaration = 0,
+				MinimumBlankLinesBetweenTypes = 1,
+				MinimumBlankLinesBetweenFields = 0,
+				MinimumBlankLinesBetweenEventFields = 0,
+				MinimumBlankLinesBetweenMembers = 1,
+				MinimumBlankLinesAroundRegion = 1,
+				MinimumBlankLinesInsideRegion = 1,
+				AlignToFirstIndexerArgument = false,
+				AlignToFirstIndexerDeclarationParameter = true,
+				AlignToFirstMethodCallArgument = false,
+				AlignToFirstMethodDeclarationParameter = true,
 				KeepCommentsAtFirstColumn = true,
 				ChainedMethodCallWrapping = Wrapping.DoNotChange,
 				MethodCallArgumentWrapping = Wrapping.DoNotChange,
-				NewLineAferMethodCallOpenParentheses = true,
-				MethodCallClosingParenthesesOnNewLine = true,
+				NewLineAferMethodCallOpenParentheses = NewLinePlacement.DoNotCare,
+				MethodCallClosingParenthesesOnNewLine = NewLinePlacement.DoNotCare,
 
 				IndexerArgumentWrapping = Wrapping.DoNotChange,
-				NewLineAferIndexerOpenBracket = false,
-				IndexerClosingBracketOnNewLine = false,
+				NewLineAferIndexerOpenBracket = NewLinePlacement.DoNotCare,
+				IndexerClosingBracketOnNewLine = NewLinePlacement.DoNotCare,
 
-				IfElseBraceForcement = BraceForcement.DoNotChange,
-				ForBraceForcement = BraceForcement.DoNotChange,
-				ForEachBraceForcement = BraceForcement.DoNotChange,
-				WhileBraceForcement = BraceForcement.DoNotChange,
-				UsingBraceForcement = BraceForcement.DoNotChange,
-				FixedBraceForcement = BraceForcement.DoNotChange
+				NewLineBeforeNewQueryClause = NewLinePlacement.NewLine
 			};
 		}
 
@@ -200,12 +206,6 @@ namespace ICSharpCode.NRefactory.CSharp
 		public static CSharpFormattingOptions CreateSharpDevelop()
 		{
 			var baseOptions = CreateKRStyle();
-			baseOptions.IfElseBraceForcement = BraceForcement.AddBraces;
-			baseOptions.ForBraceForcement = BraceForcement.AddBraces;
-			baseOptions.ForEachBraceForcement = BraceForcement.AddBraces;
-			baseOptions.WhileBraceForcement = BraceForcement.AddBraces;
-			baseOptions.UsingBraceForcement = BraceForcement.AddBraces;
-			baseOptions.FixedBraceForcement = BraceForcement.AddBraces;
 			return baseOptions;
 		}
 
@@ -213,9 +213,9 @@ namespace ICSharpCode.NRefactory.CSharp
 		/// The K&R style, so named because it was used in Kernighan and Ritchie's book The C Programming Language,
 		/// is commonly used in C. It is less common for C++, C#, and others.
 		/// </summary>
-		public static CSharpFormattingOptions CreateKRStyle ()
+		public static CSharpFormattingOptions CreateKRStyle()
 		{
-			return new CSharpFormattingOptions () {
+			return new CSharpFormattingOptions() {
 				IndentNamespaceBody = true,
 				IndentClassBody = true,
 				IndentInterfaceBody = true,
@@ -228,7 +228,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				IndentSwitchBody = true,
 				IndentCaseBody = true,
 				IndentBreakStatements = true,
-
+				IndentPreprocessorDirectives = true,
 				NamespaceBraceStyle = BraceStyle.NextLine,
 				ClassBraceStyle = BraceStyle.NextLine,
 				InterfaceBraceStyle = BraceStyle.NextLine,
@@ -241,8 +241,8 @@ namespace ICSharpCode.NRefactory.CSharp
 				PropertyBraceStyle = BraceStyle.EndOfLine,
 				PropertyGetBraceStyle = BraceStyle.EndOfLine,
 				PropertySetBraceStyle = BraceStyle.EndOfLine,
-				AllowPropertyGetBlockInline = true,
-				AllowPropertySetBlockInline = true,
+				SimpleGetBlockFormatting = PropertyFormatting.AllowOneLine,
+				SimpleSetBlockFormatting = PropertyFormatting.AllowOneLine,
 	
 				EventBraceStyle = BraceStyle.EndOfLine,
 				EventAddBraceStyle = BraceStyle.EndOfLine,
@@ -252,6 +252,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				StatementBraceStyle = BraceStyle.EndOfLine,
 	
 				ElseNewLinePlacement = NewLinePlacement.SameLine,
+				ElseIfNewLinePlacement = NewLinePlacement.SameLine,
 				CatchNewLinePlacement = NewLinePlacement.SameLine,
 				FinallyNewLinePlacement = NewLinePlacement.SameLine,
 				WhileNewLinePlacement = NewLinePlacement.SameLine,
@@ -262,8 +263,11 @@ namespace ICSharpCode.NRefactory.CSharp
 				SpaceBeforeMethodDeclarationParentheses = false,
 				SpaceBeforeConstructorDeclarationParentheses = false,
 				SpaceBeforeDelegateDeclarationParentheses = false,
+				SpaceBeforeIndexerDeclarationBracket = false,
 				SpaceAfterMethodCallParameterComma = true,
 				SpaceAfterConstructorDeclarationParameterComma = true,
+				NewLineBeforeConstructorInitializerColon = NewLinePlacement.NewLine,
+				NewLineAfterConstructorInitializerColon = NewLinePlacement.SameLine,
 				
 				SpaceBeforeNewParentheses = false,
 				SpacesWithinNewParentheses = false,
@@ -308,9 +312,10 @@ namespace ICSharpCode.NRefactory.CSharp
 				SpaceAfterConditionalOperatorCondition = true,
 				SpaceBeforeConditionalOperatorSeparator = true,
 				SpaceAfterConditionalOperatorSeparator = true,
-	
+				SpaceBeforeArrayDeclarationBrackets = false,
+
 				SpacesWithinBrackets = false,
-				SpacesBeforeBrackets = true,
+				SpacesBeforeBrackets = false,
 				SpaceBeforeBracketComma = false,
 				SpaceAfterBracketComma = true,
 						
@@ -318,9 +323,10 @@ namespace ICSharpCode.NRefactory.CSharp
 				SpaceAfterForSemicolon = true,
 				SpaceAfterTypecast = false,
 				
-				AlignEmbeddedIfStatements = true,
-				AlignEmbeddedUsingStatements = true,
-				PropertyFormatting = PropertyFormatting.AllowOneLine,
+				AlignEmbeddedStatements = true,
+				SimplePropertyFormatting = PropertyFormatting.AllowOneLine,
+				AutoPropertyFormatting = PropertyFormatting.AllowOneLine,
+				EmptyLineFormatting = EmptyLineFormatting.DoNotIndent,
 				SpaceBeforeMethodDeclarationParameterComma = false,
 				SpaceAfterMethodDeclarationParameterComma = true,
 				SpaceAfterDelegateDeclarationParameterComma = true,
@@ -329,38 +335,35 @@ namespace ICSharpCode.NRefactory.CSharp
 				SpaceBeforeLocalVariableDeclarationComma = false,
 				SpaceAfterLocalVariableDeclarationComma = true,
 				
-				SpaceBeforeIndexerDeclarationBracket = true,
 				SpaceWithinIndexerDeclarationBracket = false,
 				SpaceBeforeIndexerDeclarationParameterComma = false,
 				SpaceInNamedArgumentAfterDoubleColon = true,
 			
 				SpaceAfterIndexerDeclarationParameterComma = true,
+				RemoveEndOfLineWhiteSpace = true,
 				
-				BlankLinesBeforeUsings = 0,
-				BlankLinesAfterUsings = 1,
+				MinimumBlankLinesBeforeUsings = 0,
+				MinimumBlankLinesAfterUsings = 1,
 
-				BlankLinesBeforeFirstDeclaration = 0,
-				BlankLinesBetweenTypes = 1,
-				BlankLinesBetweenFields = 0,
-				BlankLinesBetweenEventFields = 0,
-				BlankLinesBetweenMembers = 1,
+				MinimumBlankLinesBeforeFirstDeclaration = 0,
+				MinimumBlankLinesBetweenTypes = 1,
+				MinimumBlankLinesBetweenFields = 0,
+				MinimumBlankLinesBetweenEventFields = 0,
+				MinimumBlankLinesBetweenMembers = 1,
+				MinimumBlankLinesAroundRegion = 1,
+				MinimumBlankLinesInsideRegion = 1,
 	
 				KeepCommentsAtFirstColumn = true,
 				ChainedMethodCallWrapping = Wrapping.DoNotChange,
 				MethodCallArgumentWrapping = Wrapping.DoNotChange,
-				NewLineAferMethodCallOpenParentheses = true,
-				MethodCallClosingParenthesesOnNewLine = true,
+				NewLineAferMethodCallOpenParentheses = NewLinePlacement.DoNotCare,
+				MethodCallClosingParenthesesOnNewLine = NewLinePlacement.DoNotCare,
 
 				IndexerArgumentWrapping = Wrapping.DoNotChange,
-				NewLineAferIndexerOpenBracket = false,
-				IndexerClosingBracketOnNewLine = false,
+				NewLineAferIndexerOpenBracket = NewLinePlacement.DoNotCare,
+				IndexerClosingBracketOnNewLine = NewLinePlacement.DoNotCare,
 
-				IfElseBraceForcement = BraceForcement.DoNotChange,
-				ForBraceForcement = BraceForcement.DoNotChange,
-				ForEachBraceForcement = BraceForcement.DoNotChange,
-				WhileBraceForcement = BraceForcement.DoNotChange,
-				UsingBraceForcement = BraceForcement.DoNotChange,
-				FixedBraceForcement = BraceForcement.DoNotChange
+				NewLineBeforeNewQueryClause = NewLinePlacement.NewLine
 			};
 		}
 
@@ -380,9 +383,19 @@ namespace ICSharpCode.NRefactory.CSharp
 			baseOptions.EventRemoveBraceStyle = BraceStyle.NextLine;
 			baseOptions.StatementBraceStyle = BraceStyle.NextLine;
 			baseOptions.ArrayInitializerBraceStyle = BraceStyle.NextLine;
+
+			baseOptions.CatchNewLinePlacement = NewLinePlacement.NewLine;
+			baseOptions.ElseNewLinePlacement = NewLinePlacement.NewLine;
+			baseOptions.ElseIfNewLinePlacement = NewLinePlacement.SameLine;
+
+			baseOptions.FinallyNewLinePlacement = NewLinePlacement.NewLine;
+			baseOptions.WhileNewLinePlacement = NewLinePlacement.DoNotCare;
+			baseOptions.ArrayInitializerWrapping = Wrapping.DoNotChange;
+			baseOptions.IndentBlocksInsideExpressions = true;
+
 			return baseOptions;
 		}
-	
+
 		/// <summary>
 		/// The Whitesmiths style, also called Wishart style to a lesser extent, is less common today than the previous three. It was originally used in the documentation for the first commercial C compiler, the Whitesmiths Compiler.
 		/// </summary>
@@ -407,6 +420,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			baseOptions.EventAddBraceStyle = BraceStyle.NextLineShifted;
 			baseOptions.EventRemoveBraceStyle = BraceStyle.NextLineShifted;
 			baseOptions.StatementBraceStyle = BraceStyle.NextLineShifted;
+			baseOptions.IndentBlocksInsideExpressions = true;
 			return baseOptions;
 		}
 
@@ -427,7 +441,6 @@ namespace ICSharpCode.NRefactory.CSharp
 			baseOptions.StatementBraceStyle = BraceStyle.NextLineShifted2;
 			return baseOptions;
 		}
-
 	}
 }
 

@@ -39,28 +39,30 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 {
 	public abstract class RefactoringContext : BaseRefactoringContext
 	{
-		public RefactoringContext(CSharpAstResolver resolver, CancellationToken cancellationToken) : base  (resolver, cancellationToken)
+		public RefactoringContext(CSharpAstResolver resolver, CancellationToken cancellationToken) : base (resolver, cancellationToken)
 		{
+
 		}
 
 		public abstract TextLocation Location { get; }
 		
-		public TypeSystemAstBuilder CreateTypeSytemAstBuilder()
+		public TypeSystemAstBuilder CreateTypeSystemAstBuilder()
 		{
-			var csResolver = Resolver.GetResolverStateBefore(GetNode());
+			var astNode = GetNode() ?? RootNode.GetNodeAt(Location) ?? RootNode;
+			var csResolver = Resolver.GetResolverStateBefore(astNode);
 			return new TypeSystemAstBuilder(csResolver);
 		}
 		
 		public virtual AstType CreateShortType (IType fullType)
 		{
-			var builder = CreateTypeSytemAstBuilder();
+			var builder = CreateTypeSystemAstBuilder();
 			return builder.ConvertType(fullType);
 		}
 		
 		public virtual AstType CreateShortType(string ns, string name, int typeParameterCount = 0)
 		{
-			var builder = CreateTypeSytemAstBuilder();
-			return builder.ConvertType(ns, name, typeParameterCount);
+			var builder = CreateTypeSystemAstBuilder();
+			return builder.ConvertType(new TopLevelTypeName(ns, name, typeParameterCount));
 		}
 
 		public virtual IEnumerable<AstNode> GetSelectedNodes()
@@ -87,71 +89,18 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			return RootNode.GetNodeAt<T> (Location);
 		}
 		
-		#region Text stuff
-		public virtual TextEditorOptions TextEditorOptions {
-			get {
-				return TextEditorOptions.Default;
-			}
-		}
-		
-		public virtual bool IsSomethingSelected {
-			get {
-				return SelectionStart != TextLocation.Empty;
-			}
-		}
-		
-		public virtual string SelectedText {
-			get { return string.Empty; }
-		}
-		
-		public virtual TextLocation SelectionStart {
-			get {
-				return TextLocation.Empty;
-			}
-		}
-		
-		public virtual TextLocation SelectionEnd {
-			get {
-				return TextLocation.Empty;
-			}
-		}
-
-		public abstract int GetOffset (TextLocation location);
-
-		public abstract IDocumentLine GetLineByOffset (int offset);
-		
-		public int GetOffset (int line, int col)
+		public CSharpTypeResolveContext GetTypeResolveContext()
 		{
-			return GetOffset (new TextLocation (line, col));
+			if (UnresolvedFile != null)
+				return UnresolvedFile.GetTypeResolveContext(Compilation, Location);
+			else
+				return null;
 		}
-
-		public abstract TextLocation GetLocation (int offset);
-
-		public abstract string GetText (int offset, int length);
-
-		public abstract string GetText (ISegment segment);
-		#endregion
 
 		#region Naming
 		public virtual string GetNameProposal (string name, bool camelCase = true)
 		{
-			string baseName = (camelCase ? char.ToLower (name [0]) : char.ToUpper (name [0])) + name.Substring (1);
-			
-			var type = GetNode<TypeDeclaration> ();
-			if (type == null)
-				return baseName;
-			
-			int number = -1;
-			string proposedName;
-			do {
-				proposedName = AppendNumberToName (baseName, number++);
-			} while (type.Members.Select (m => m.GetChildByRole (Roles.Identifier)).Any (n => n.Name == proposedName));
-			return proposedName;
-		}
-		
-		static string AppendNumberToName (string baseName, int number)
-		{
-			return baseName + (number > 0 ? (number + 1).ToString () : "");
+			return GetNameProposal(name, Location, camelCase);
 		}
 		#endregion
 	}

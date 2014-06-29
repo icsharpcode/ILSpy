@@ -40,7 +40,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		public CSharpTokenNode SemicolonToken {
 			get { return GetChildByRole (Roles.Semicolon); }
 		}
-		
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitBreakStatement (this);

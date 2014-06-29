@@ -44,6 +44,10 @@ namespace ICSharpCode.NRefactory.CSharp
 			if (leave != null)
 				leave(node);
 		}
+
+		void IAstVisitor.VisitNullNode(AstNode nullNode)
+		{
+		}
 		
 		public event Action<SyntaxTree> EnterSyntaxTree, LeaveSyntaxTree;
 		
@@ -840,13 +844,6 @@ namespace ICSharpCode.NRefactory.CSharp
 		void IAstVisitor.VisitNamedExpression(NamedExpression namedExpression)
 		{
 			Visit(EnterNamedExpression, LeaveNamedExpression, namedExpression);
-		}
-		
-		public event Action<EmptyExpression> EnterEmptyExpression, LeaveEmptyExpression;
-		
-		void IAstVisitor.VisitEmptyExpression(EmptyExpression emptyExpression)
-		{
-			Visit(EnterEmptyExpression, LeaveEmptyExpression, emptyExpression);
 		}
 		
 		void IAstVisitor.VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern)

@@ -46,11 +46,12 @@ namespace Mono.CSharp
 		PROPERTY_CUSTOM 		= 0x10000,
 
 		PARTIAL					= 0x20000,
-		DEFAULT_ACCESS_MODIFER	= 0x40000,
+		DEFAULT_ACCESS_MODIFIER	= 0x40000,
 		METHOD_EXTENSION		= 0x80000,
 		COMPILER_GENERATED		= 0x100000,
 		BACKING_FIELD			= 0x200000,
 		DEBUGGER_HIDDEN			= 0x400000,
+		DEBUGGER_STEP_THROUGH	= 0x800000,
 
 		AccessibilityMask = PUBLIC | PROTECTED | INTERNAL | PRIVATE,
 		AllowedExplicitImplFlags = UNSAFE | EXTERN,
@@ -255,14 +256,14 @@ namespace Mono.CSharp
 				if ((mod & Modifiers.AccessibilityMask) == 0) {
 					mod |= def_access;
 					if (def_access != 0)
-						mod |= Modifiers.DEFAULT_ACCESS_MODIFER;
+						mod |= Modifiers.DEFAULT_ACCESS_MODIFIER;
 					return mod;
 				}
 
 				return mod;
 			}
 
-			for (i = 1; i <= (int) Modifiers.TOP; i <<= 1) {
+			for (i = 1; i < (int) Modifiers.TOP; i <<= 1) {
 				if ((i & invalid_flags) == 0)
 					continue;
 

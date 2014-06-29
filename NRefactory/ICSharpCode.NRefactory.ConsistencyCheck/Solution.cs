@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -82,7 +82,7 @@ namespace ICSharpCode.NRefactory.ConsistencyCheck
 		/// </summary>
 		public IUnresolvedAssembly LoadAssembly(string assemblyFileName)
 		{
-			return assemblyDict.GetOrAdd(assemblyFileName, file => new CecilLoader().LoadAssemblyFile(file));
+			return assemblyDict.GetOrAdd(assemblyFileName, file => AssemblyLoader.Create().LoadAssemblyFile(file));
 		}
 	}
 }

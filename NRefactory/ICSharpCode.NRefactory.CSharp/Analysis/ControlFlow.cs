@@ -1,4 +1,4 @@
-// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -26,6 +26,7 @@ using ICSharpCode.NRefactory.CSharp.TypeSystem;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.NRefactory.Utils;
 
 namespace ICSharpCode.NRefactory.CSharp.Analysis
 {
@@ -248,6 +249,8 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 		#region Create*Node
 		ControlFlowNode CreateStartNode(Statement statement)
 		{
+			if (statement.IsNull)
+				return null;
 			ControlFlowNode node = CreateNode(null, statement, ControlFlowNodeType.StartNode);
 			nodes.Add(node);
 			return node;
@@ -294,6 +297,8 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 		/// <returns>The constant value of the expression; or null if the expression is not a constant.</returns>
 		ResolveResult EvaluateConstant(Expression expr)
 		{
+			if (expr.IsNull)
+				return null;
 			if (EvaluateOnlyPrimitiveConstants) {
 				if (!(expr is PrimitiveExpression || expr is NullReferenceExpression))
 					return null;
@@ -336,6 +341,8 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 			
 			internal ControlFlowEdge Connect(ControlFlowNode from, ControlFlowNode to, ControlFlowEdgeType type = ControlFlowEdgeType.Normal)
 			{
+				if (from == null || to == null)
+					return null;
 				ControlFlowEdge edge = builder.CreateEdge(from, to, type);
 				from.Outgoing.Add(edge);
 				to.Incoming.Add(edge);
@@ -354,8 +361,8 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 			
 			protected override ControlFlowNode VisitChildren(AstNode node, ControlFlowNode data)
 			{
-				// We have overrides for all possible expressions and should visit expressions only.
-				throw new NotImplementedException();
+				// We have overrides for all possible statements and should visit statements only.
+				throw new NotSupportedException();
 			}
 			
 			public override ControlFlowNode VisitBlockStatement(BlockStatement blockStatement, ControlFlowNode data)
@@ -406,22 +413,20 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 			public override ControlFlowNode VisitIfElseStatement(IfElseStatement ifElseStatement, ControlFlowNode data)
 			{
 				bool? cond = builder.EvaluateCondition(ifElseStatement.Condition);
+				
 				ControlFlowNode trueBegin = builder.CreateStartNode(ifElseStatement.TrueStatement);
 				if (cond != false)
 					Connect(data, trueBegin, ControlFlowEdgeType.ConditionTrue);
 				ControlFlowNode trueEnd = ifElseStatement.TrueStatement.AcceptVisitor(this, trueBegin);
-				ControlFlowNode falseEnd;
-				if (ifElseStatement.FalseStatement.IsNull) {
-					falseEnd = null;
-				} else {
-					ControlFlowNode falseBegin = builder.CreateStartNode(ifElseStatement.FalseStatement);
-					if (cond != true)
-						Connect(data, falseBegin, ControlFlowEdgeType.ConditionFalse);
-					falseEnd = ifElseStatement.FalseStatement.AcceptVisitor(this, falseBegin);
-				}
+				
+				ControlFlowNode falseBegin = builder.CreateStartNode(ifElseStatement.FalseStatement);
+				if (cond != true)
+					Connect(data, falseBegin, ControlFlowEdgeType.ConditionFalse);
+				ControlFlowNode falseEnd = ifElseStatement.FalseStatement.AcceptVisitor(this, falseBegin);
+				// (if no else statement exists, both falseBegin and falseEnd will be null)
+				
 				ControlFlowNode end = builder.CreateEndNode(ifElseStatement);
-				if (trueEnd != null)
-					Connect(trueEnd, end);
+				Connect(trueEnd, end);
 				if (falseEnd != null) {
 					Connect(falseEnd, end);
 				} else if (cond != true) {
@@ -599,8 +604,7 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 				
 				ControlFlowNode bodyStart = builder.CreateStartNode(forStatement.EmbeddedStatement);
 				ControlFlowNode bodyEnd = forStatement.EmbeddedStatement.AcceptVisitor(this, bodyStart);
-				if (bodyEnd != null)
-					Connect(bodyEnd, iteratorStart);
+				Connect(bodyEnd, iteratorStart);
 				
 				breakTargets.Pop();
 				continueTargets.Pop();
@@ -742,6 +746,58 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 				ControlFlowNode bodyEnd = HandleEmbeddedStatement(fixedStatement.EmbeddedStatement, data);
 				return CreateConnectedEndNode(fixedStatement, bodyEnd);
 			}
+		}
+		
+		/// <summary>
+		/// Debugging helper that exports a control flow graph.
+		/// </summary>
+		public static GraphVizGraph ExportGraph(IList<ControlFlowNode> nodes)
+		{
+			GraphVizGraph g = new GraphVizGraph();
+			GraphVizNode[] n = new GraphVizNode[nodes.Count];
+			Dictionary<ControlFlowNode, int> dict = new Dictionary<ControlFlowNode, int>();
+			for (int i = 0; i < n.Length; i++) {
+				dict.Add(nodes[i], i);
+				n[i] = new GraphVizNode(i);
+				string name = "#" + i + " = ";
+				switch (nodes[i].Type) {
+					case ControlFlowNodeType.StartNode:
+					case ControlFlowNodeType.BetweenStatements:
+						name += nodes[i].NextStatement.DebugToString();
+						break;
+					case ControlFlowNodeType.EndNode:
+						name += "End of " + nodes[i].PreviousStatement.DebugToString();
+						break;
+					case ControlFlowNodeType.LoopCondition:
+						name += "Condition in " + nodes[i].NextStatement.DebugToString();
+						break;
+					default:
+						name += "?";
+						break;
+				}
+				n[i].label = name;
+				g.AddNode(n[i]);
+			}
+			for (int i = 0; i < n.Length; i++) {
+				foreach (ControlFlowEdge edge in nodes[i].Outgoing) {
+					GraphVizEdge ge = new GraphVizEdge(i, dict[edge.To]);
+					if (edge.IsLeavingTryFinally)
+						ge.style = "dashed";
+					switch (edge.Type) {
+						case ControlFlowEdgeType.ConditionTrue:
+							ge.color = "green";
+							break;
+						case ControlFlowEdgeType.ConditionFalse:
+							ge.color = "red";
+							break;
+						case ControlFlowEdgeType.Jump:
+							ge.color = "blue";
+							break;
+					}
+					g.AddEdge(ge);
+				}
+			}
+			return g;
 		}
 	}
 }

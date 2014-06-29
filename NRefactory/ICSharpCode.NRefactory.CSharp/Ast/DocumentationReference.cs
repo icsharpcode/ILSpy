@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -29,29 +29,29 @@ namespace ICSharpCode.NRefactory.CSharp
 		public static readonly Role<AstType> DeclaringTypeRole = new Role<AstType>("DeclaringType", AstType.Null);
 		public static readonly Role<AstType> ConversionOperatorReturnTypeRole = new Role<AstType>("ConversionOperatorReturnType", AstType.Null);
 		
-		EntityType entityType;
+		SymbolKind symbolKind;
 		OperatorType operatorType;
 		bool hasParameterList;
 		
 		/// <summary>
 		/// Gets/Sets the entity type.
 		/// Possible values are:
-		///   <c>EntityType.Operator</c> for operators,
-		///   <c>EntityType.Indexer</c> for indexers,
-		///   <c>EntityType.TypeDefinition</c> for references to primitive types,
-		///   and <c>EntityType.None</c> for everything else.
+		///   <c>SymbolKind.Operator</c> for operators,
+		///   <c>SymbolKind.Indexer</c> for indexers,
+		///   <c>SymbolKind.TypeDefinition</c> for references to primitive types,
+		///   and <c>SymbolKind.None</c> for everything else.
 		/// </summary>
-		public EntityType EntityType {
-			get { return entityType; }
+		public SymbolKind SymbolKind {
+			get { return symbolKind; }
 			set {
 				ThrowIfFrozen();
-				entityType = value;
+				symbolKind = value;
 			}
 		}
 		
 		/// <summary>
 		/// Gets/Sets the operator type.
-		/// This property is only used when EntityType==Operator.
+		/// This property is only used when SymbolKind==Operator.
 		/// </summary>
 		public OperatorType OperatorType {
 			get { return operatorType; }
@@ -86,7 +86,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		
 		/// <summary>
 		/// Gets/sets the member name.
-		/// This property is only used when EntityType==None.
+		/// This property is only used when SymbolKind==None.
 		/// </summary>
 		public string MemberName {
 			get { return GetChildByRole(Roles.Identifier).Name; }
@@ -95,7 +95,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		
 		/// <summary>
 		/// Gets/Sets the return type of conversion operators.
-		/// This property is only used when EntityType==Operator and OperatorType is explicit or implicit.
+		/// This property is only used when SymbolKind==Operator and OperatorType is explicit or implicit.
 		/// </summary>
 		public AstType ConversionOperatorReturnType {
 			get { return GetChildByRole(ConversionOperatorReturnTypeRole); }
@@ -113,16 +113,16 @@ namespace ICSharpCode.NRefactory.CSharp
 		protected internal override bool DoMatch(AstNode other, ICSharpCode.NRefactory.PatternMatching.Match match)
 		{
 			DocumentationReference o = other as DocumentationReference;
-			if (!(o != null && this.EntityType == o.EntityType && this.HasParameterList == o.HasParameterList))
+			if (!(o != null && this.SymbolKind == o.SymbolKind && this.HasParameterList == o.HasParameterList))
 				return false;
-			if (this.EntityType == EntityType.Operator) {
+			if (this.SymbolKind == SymbolKind.Operator) {
 				if (this.OperatorType != o.OperatorType)
 					return false;
 				if (this.OperatorType == OperatorType.Implicit || this.OperatorType == OperatorType.Explicit) {
 					if (!this.ConversionOperatorReturnType.DoMatch(o.ConversionOperatorReturnType, match))
 						return false;
 				}
-			} else if (this.EntityType == EntityType.None) {
+			} else if (this.SymbolKind == SymbolKind.None) {
 				if (!MatchString(this.MemberName, o.MemberName))
 					return false;
 				if (!this.TypeArguments.DoMatch(o.TypeArguments, match))

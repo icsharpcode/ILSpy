@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -27,6 +27,21 @@ namespace ICSharpCode.NRefactory.Utils
 		{
 			return new KeyComparer<TElement, TKey>(keySelector, Comparer<TKey>.Default, EqualityComparer<TKey>.Default);
 		}
+		
+		public static KeyComparer<TElement, TKey> Create<TElement, TKey>(Func<TElement, TKey> keySelector, IComparer<TKey> comparer, IEqualityComparer<TKey> equalityComparer)
+		{
+			return new KeyComparer<TElement, TKey>(keySelector, comparer, equalityComparer);
+		}
+		
+		public static IComparer<TElement> Create<TElement, TKey>(Func<TElement, TKey> keySelector, IComparer<TKey> comparer)
+		{
+			return new KeyComparer<TElement, TKey>(keySelector, comparer, EqualityComparer<TKey>.Default);
+		}
+		
+		public static IEqualityComparer<TElement> Create<TElement, TKey>(Func<TElement, TKey> keySelector, IEqualityComparer<TKey> equalityComparer)
+		{
+			return new KeyComparer<TElement, TKey>(keySelector, Comparer<TKey>.Default, equalityComparer);
+		}
 	}
 	
 	public class KeyComparer<TElement, TKey> : IComparer<TElement>, IEqualityComparer<TElement>
@@ -37,6 +52,12 @@ namespace ICSharpCode.NRefactory.Utils
 		
 		public KeyComparer(Func<TElement, TKey> keySelector, IComparer<TKey> keyComparer, IEqualityComparer<TKey> keyEqualityComparer)
 		{
+			if (keySelector == null)
+				throw new ArgumentNullException("keySelector");
+			if (keyComparer == null)
+				throw new ArgumentNullException("keyComparer");
+			if (keyEqualityComparer == null)
+				throw new ArgumentNullException("keyEqualityComparer");
 			this.keySelector = keySelector;
 			this.keyComparer = keyComparer;
 			this.keyEqualityComparer = keyEqualityComparer;

@@ -37,7 +37,7 @@ namespace Mono.CSharp {
 			return System.Runtime.CompilerServices.RuntimeHelpers.GetHashCode (obj);
 		}
 	}
-#if !NET_4_0 && !MONODROID
+#if !NET_4_0 && !MOBILE_DYNAMIC
 	public class Tuple<T1, T2> : IEquatable<Tuple<T1, T2>>
 	{
 		public Tuple (T1 item1, T2 item2)
@@ -127,7 +127,7 @@ namespace Mono.CSharp {
 			return true;
 		}
 	}
-	#if !FULL_AST
+#if !FULL_AST
 	/// <summary>
 	///   This is an arbitrarily seekable StreamReader wrapper.
 	///
@@ -137,7 +137,8 @@ namespace Mono.CSharp {
 	/// </summary>
 	public class SeekableStreamReader : IDisposable
 	{
-		public const int DefaultReadAheadSize = 2048;
+		public const int DefaultReadAheadSize =
+			4096 / 2;
 
 		StreamReader reader;
 		Stream stream;
@@ -277,6 +278,7 @@ namespace Mono.CSharp {
 		}
 	}
 #endif
+
 	public class UnixUtils {
 		[System.Runtime.InteropServices.DllImport ("libc", EntryPoint="isatty")]
 		extern static int _isatty (int fd);
@@ -323,6 +325,40 @@ namespace Mono.CSharp {
 			get {
 				return base_text;
 			}
+		}
+	}
+
+	struct TypeNameParser
+	{
+		internal static string Escape(string name)
+		{
+			if (name == null) {
+				return null;
+			}
+			StringBuilder sb = null;
+			for (int pos = 0; pos < name.Length; pos++) {
+				char c = name[pos];
+				switch (c) {
+					case '\\':
+					case '+':
+					case ',':
+					case '[':
+					case ']':
+					case '*':
+					case '&':
+						if (sb == null) {
+							sb = new StringBuilder(name, 0, pos, name.Length + 3);
+						}
+						sb.Append("\\").Append(c);
+						break;
+					default:
+						if (sb != null) {
+							sb.Append(c);
+						}
+						break;
+				}
+			}
+			return sb != null ? sb.ToString() : name;
 		}
 	}
 }

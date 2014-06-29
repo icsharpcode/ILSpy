@@ -32,8 +32,8 @@ namespace ICSharpCode.NRefactory.CSharp
 	{
 		public static readonly Role<ConstructorInitializer> InitializerRole = new Role<ConstructorInitializer>("Initializer", ConstructorInitializer.Null);
 		
-		public override EntityType EntityType {
-			get { return EntityType.Constructor; }
+		public override SymbolKind SymbolKind {
+			get { return SymbolKind.Constructor; }
 		}
 		
 		public CSharpTokenNode LParToken {
@@ -86,6 +86,7 @@ namespace ICSharpCode.NRefactory.CSharp
 	}
 	
 	public enum ConstructorInitializerType {
+		Any,
 		Base,
 		This
 	}
@@ -112,16 +113,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
+				visitor.VisitNullNode(this);
 			}
-				
+			
 			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
 			{
-				return default (T);
+				return visitor.VisitNullNode(this);
 			}
 			
 			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 			{
-				return default (S);
+				return visitor.VisitNullNode(this, data);
 			}
 			
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
@@ -139,6 +141,15 @@ namespace ICSharpCode.NRefactory.CSharp
 		public ConstructorInitializerType ConstructorInitializerType {
 			get;
 			set;
+		}
+		
+		public CSharpTokenNode Keyword {
+			get {
+				if (ConstructorInitializerType == ConstructorInitializerType.Base)
+					return GetChildByRole(BaseKeywordRole);
+				else
+					return GetChildByRole(ThisKeywordRole);
+			}
 		}
 		
 		public CSharpTokenNode LParToken {
@@ -171,7 +182,9 @@ namespace ICSharpCode.NRefactory.CSharp
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			ConstructorInitializer o = other as ConstructorInitializer;
-			return o != null && !o.IsNull && this.ConstructorInitializerType == o.ConstructorInitializerType && this.Arguments.DoMatch(o.Arguments, match);
+			return o != null && !o.IsNull 
+				&& (this.ConstructorInitializerType == ConstructorInitializerType.Any || this.ConstructorInitializerType == o.ConstructorInitializerType)
+				&& this.Arguments.DoMatch(o.Arguments, match);
 		}
 	}
 }

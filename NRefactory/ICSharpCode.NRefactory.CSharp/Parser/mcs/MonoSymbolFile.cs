@@ -130,24 +130,24 @@ namespace Mono.CompilerServices.SymbolWriter
 
 		public int NumLineNumbers;
 
-		internal MonoSymbolFile ()
+		public MonoSymbolFile ()
 		{
 			ot = new OffsetTable ();
 		}
 
-		internal int AddSource (SourceFileEntry source)
+		public int AddSource (SourceFileEntry source)
 		{
 			sources.Add (source);
 			return sources.Count;
 		}
 
-		internal int AddCompileUnit (CompileUnitEntry entry)
+		public int AddCompileUnit (CompileUnitEntry entry)
 		{
 			comp_units.Add (entry);
 			return comp_units.Count;
 		}
 
-		internal void AddMethod (MethodEntry entry)
+		public void AddMethod (MethodEntry entry)
 		{
 			methods.Add (entry);
 		}

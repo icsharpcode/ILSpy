@@ -42,6 +42,11 @@ namespace Mono.CSharp
 		public Expression Initializer { get; private set; }
 
 		#endregion
+
+		public virtual FullNamedExpression GetFieldTypeExpression (FieldBase field)
+		{
+			return new TypeExpression (field.MemberType, Name.Location); 
+		}
 	}
 
 	//
@@ -217,7 +222,9 @@ namespace Mono.CSharp
 			if (MemberType.IsStatic)
 				Error_VariableOfStaticClass (Location, GetSignatureForError (), MemberType, Report);
 
-			CheckBase ();
+			if (!IsCompilerGenerated)
+				CheckBase ();
+
 			IsTypePermitted ();
 		}
 
@@ -352,9 +359,9 @@ namespace Mono.CSharp
 			return fs;
 		}
 
-		public override List<TypeSpec> ResolveMissingDependencies ()
+		public override List<MissingTypeSpecReference> ResolveMissingDependencies (MemberSpec caller)
 		{
-			return memberType.ResolveMissingDependencies ();
+			return memberType.ResolveMissingDependencies (this);
 		}
 	}
 
@@ -364,7 +371,7 @@ namespace Mono.CSharp
 	public class FixedField : FieldBase
 	{
 		public const string FixedElementName = "FixedElementField";
-		static int GlobalCounter = 0;
+		static int GlobalCounter;
 
 		TypeBuilder fixed_buffer_type;
 
@@ -394,7 +401,7 @@ namespace Mono.CSharp
 
 		public override Constant ConvertInitializer (ResolveContext rc, Constant expr)
 		{
-			return expr.ImplicitConversionRequired (rc, rc.BuiltinTypes.Int, Location);
+			return expr.ImplicitConversionRequired (rc, rc.BuiltinTypes.Int);
 		}
 
 		public override bool Define ()
@@ -407,9 +414,8 @@ namespace Mono.CSharp
 					"`{0}': Fixed size buffers type must be one of the following: bool, byte, short, int, long, char, sbyte, ushort, uint, ulong, float or double",
 					GetSignatureForError ());
 			} else if (declarators != null) {
-				var t = new TypeExpression (MemberType, TypeExpression.Location);
 				foreach (var d in declarators) {
-					var f = new FixedField (Parent, t, ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
+					var f = new FixedField (Parent, d.GetFieldTypeExpression (this), ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
 					f.initializer = d.Initializer;
 					((ConstInitializer) f.initializer).Name = d.Name.Value;
 					f.Define ();
@@ -428,7 +434,7 @@ namespace Mono.CSharp
 			FieldBuilder = Parent.TypeBuilder.DefineField (Name, fixed_buffer_type, ModifiersExtensions.FieldAttr (ModFlags));
 
 			var element_spec = new FieldSpec (null, this, MemberType, ffield, ModFlags);
-			spec = new FixedFieldSpec (Parent.Definition, this, FieldBuilder, element_spec, ModFlags);
+			spec = new FixedFieldSpec (Module, Parent.Definition, this, FieldBuilder, element_spec, ModFlags);
 
 			Parent.MemberCache.AddMember (spec);
 			return true;
@@ -486,7 +492,7 @@ namespace Mono.CSharp
 
 			if (buffer_size > int.MaxValue / type_size) {
 				Report.Error (1664, Location, "Fixed size buffer `{0}' of length `{1}' and type `{2}' exceeded 2^31 limit",
-					GetSignatureForError (), buffer_size.ToString (), TypeManager.CSharpName (MemberType));
+					GetSignatureForError (), buffer_size.ToString (), MemberType.GetSignatureForError ());
 				return;
 			}
 
@@ -538,8 +544,8 @@ namespace Mono.CSharp
 	{
 		readonly FieldSpec element;
 
-		public FixedFieldSpec (TypeSpec declaringType, IMemberDefinition definition, FieldInfo info, FieldSpec element, Modifiers modifiers)
-			: base (declaringType, definition, element.MemberType, info, modifiers)
+		public FixedFieldSpec (ModuleContainer module, TypeSpec declaringType, IMemberDefinition definition, FieldInfo info, FieldSpec element, Modifiers modifiers)
+			: base (declaringType, definition, PointerContainer.MakeType (module, element.MemberType), info, modifiers)
 		{
 			this.element = element;
 
@@ -552,10 +558,10 @@ namespace Mono.CSharp
 				return element;
 			}
 		}
-
+		
 		public TypeSpec ElementType {
 			get {
-				return MemberType;
+				return element.MemberType;
 			}
 		}
 	}
@@ -645,8 +651,7 @@ namespace Mono.CSharp
 
 			if (declarators != null) {
 				foreach (var d in declarators) {
-					var t = new TypeExpression (MemberType, d.Name.Location);
-					var f = new Field (Parent, t, ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
+					var f = new Field (Parent, d.GetFieldTypeExpression (this), ModFlags, new MemberName (d.Name.Value, d.Name.Location), OptAttributes);
 					if (d.Initializer != null)
 						f.initializer = d.Initializer;
 
@@ -668,7 +673,7 @@ namespace Mono.CSharp
 			if ((ModFlags & Modifiers.VOLATILE) != 0) {
 				if (!CanBeVolatile ()) {
 					Report.Error (677, Location, "`{0}': A volatile field cannot be of the type `{1}'",
-						GetSignatureForError (), TypeManager.CSharpName (MemberType));
+						GetSignatureForError (), MemberType.GetSignatureForError ());
 				}
 
 				if ((ModFlags & Modifiers.READONLY) != 0) {
@@ -688,6 +693,41 @@ namespace Mono.CSharp
 			}
 
 			return true;
+		}
+	}
+
+	class PrimaryConstructorField : Field
+	{
+		//
+		// Proxy resolved parameter type expression to avoid type double resolve
+		// and problems with correct resolve context on partial classes
+		//
+		sealed class TypeExpressionFromParameter : TypeExpr
+		{
+			Parameter parameter;
+
+			public TypeExpressionFromParameter (Parameter parameter)
+			{
+				this.parameter = parameter;
+				eclass = ExprClass.Type;
+				loc = parameter.Location;
+			}
+
+			public override TypeSpec ResolveAsType (IMemberContext mc)
+			{
+				return parameter.Type;
+			}
+		}
+
+		public PrimaryConstructorField (TypeDefinition parent, Parameter parameter)
+			: base (parent, new TypeExpressionFromParameter (parameter), Modifiers.PRIVATE, new MemberName (parameter.Name, parameter.Location), null)
+		{
+			caching_flags |= Flags.IsUsed | Flags.IsAssigned;
+		}
+
+		public override string GetSignatureForError ()
+		{
+			return MemberName.Name;
 		}
 	}
 }

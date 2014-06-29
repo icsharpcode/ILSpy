@@ -45,7 +45,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			set { SetChildByRole (Roles.Identifier, value); }
 		}
 
-		public CSharpTokenNode Colon {
+		public CSharpTokenNode ColonToken {
 			get { return GetChildByRole (Roles.Colon); }
 		}
 		

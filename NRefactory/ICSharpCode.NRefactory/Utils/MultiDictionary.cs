@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -62,6 +62,15 @@ namespace ICSharpCode.NRefactory.Utils
 			return false;
 		}
 		
+		/// <summary>
+		/// Removes all entries with the specified key.
+		/// </summary>
+		/// <returns>Returns true if at least one entry was removed.</returns>
+		public bool RemoveAll(TKey key)
+		{
+			return dict.Remove(key);
+		}
+		
 		public void Clear()
 		{
 			dict.Clear();
@@ -81,8 +90,19 @@ namespace ICSharpCode.NRefactory.Utils
 			}
 		}
 		
+		/// <summary>
+		/// Returns the number of different keys.
+		/// </summary>
 		public int Count {
 			get { return dict.Count; }
+		}
+		
+		public ICollection<TKey> Keys {
+			get { return dict.Keys; }
+		}
+		
+		public IEnumerable<TValue> Values {
+			get { return dict.Values.SelectMany(list => list); }
 		}
 		
 		IEnumerable<TValue> ILookup<TKey, TValue>.this[TKey key] {

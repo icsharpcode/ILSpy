@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -40,7 +40,14 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Gets whether this field is a constant (C#-like const).
 		/// </summary>
 		bool IsConst { get; }
-		
+
+		/// <summary>
+		/// Gets whether this field is a fixed size buffer (C#-like fixed).
+		/// If this is true, then ConstantValue contains the size of the buffer.
+		/// </summary>
+		bool IsFixed { get; }
+
+
 		IConstantValue ConstantValue { get; }
 		
 		/// <summary>
@@ -80,5 +87,13 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		/// Gets whether this field is volatile.
 		/// </summary>
 		bool IsVolatile { get; }
+
+		/// <summary>
+		/// Gets whether this field is a fixed size buffer (C#-like fixed).
+		/// If this is true, then ConstantValue contains the size of the buffer.
+		/// </summary>
+		bool IsFixed { get; }
+		
+		new IMemberReference ToReference(); // solve ambiguity between IMember.ToReference() and IVariable.ToReference()
 	}
 }

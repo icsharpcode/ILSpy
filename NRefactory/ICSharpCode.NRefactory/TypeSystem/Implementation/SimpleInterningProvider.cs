@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -30,7 +30,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 	/// <summary>
 	/// Simple interning provider.
 	/// </summary>
-	public sealed class SimpleInterningProvider : IInterningProvider
+	public sealed class SimpleInterningProvider : InterningProvider
 	{
 		sealed class InterningComparer : IEqualityComparer<ISupportsInterning>
 		{
@@ -82,52 +82,54 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		Dictionary<ISupportsInterning, ISupportsInterning> supportsInternDict = new Dictionary<ISupportsInterning, ISupportsInterning>(new InterningComparer());
 		Dictionary<IEnumerable, IEnumerable> listDict = new Dictionary<IEnumerable, IEnumerable>(new ListComparer());
 		
-		int stackDepth = 0;
-		
-		public T Intern<T>(T obj) where T : class
+		public override ISupportsInterning Intern(ISupportsInterning obj)
 		{
 			if (obj == null)
 				return null;
-			ISupportsInterning s = obj as ISupportsInterning;
-			if (s != null) {
-				ISupportsInterning output;
-				//if (supportsInternDict.TryGetValue(s, out output)) {
-				//	obj = (T)output;
-				//} else {
-					s.PrepareForInterning(this);
-					if (supportsInternDict.TryGetValue(s, out output))
-						obj = (T)output;
-					else
-						supportsInternDict.Add(s, s);
-				//}
-			} else if (Type.GetTypeCode(obj.GetType()) >= TypeCode.Boolean) {
-				// Intern primitive types (and strings) by value
-				object output;
-				if (byValueDict.TryGetValue(obj, out output))
-					obj = (T)output;
-				else
-					byValueDict.Add(obj, obj);
+			
+			// ensure objects are frozen when we put them into the dictionary
+			// note that Freeze may change the hash code of the object
+			FreezableHelper.Freeze(obj);
+
+			ISupportsInterning output;
+			if (supportsInternDict.TryGetValue(obj, out output)) {
+				return output;
+			} else {
+				supportsInternDict.Add(obj, obj);
+				return obj;
 			}
-			stackDepth--;
-			return obj;
 		}
 		
-		public IList<T> InternList<T>(IList<T> list) where T : class
+		public override string Intern(string text)
+		{
+			if (text == null)
+				return null;
+			
+			object output;
+			if (byValueDict.TryGetValue(text, out output))
+				return (string)output;
+			else
+				return text;
+		}
+		
+		public override object InternValue(object obj)
+		{
+			if (obj == null)
+				return null;
+			
+			object output;
+			if (byValueDict.TryGetValue(obj, out output))
+				return output;
+			else
+				return obj;
+		}
+		
+		public override IList<T> InternList<T>(IList<T> list)
 		{
 			if (list == null)
 				return null;
-			for (int i = 0; i < list.Count; i++) {
-				T oldItem = list[i];
-				T newItem = Intern(oldItem);
-				if (oldItem != newItem) {
-					if (list.IsReadOnly) {
-						T[] array = new T[list.Count];
-						list.CopyTo(array, 0);
-						list = array;
-					}
-					list[i] = newItem;
-				}
-			}
+			if (list.Count == 0)
+				return EmptyList<T>.Instance;
 			if (!list.IsReadOnly)
 				list = new ReadOnlyCollection<T>(list);
 			IEnumerable output;

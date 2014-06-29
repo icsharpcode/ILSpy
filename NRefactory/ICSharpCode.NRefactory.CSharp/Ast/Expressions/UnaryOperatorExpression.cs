@@ -62,9 +62,10 @@ namespace ICSharpCode.NRefactory.CSharp
 		public CSharpTokenNode OperatorToken {
 			get { return GetChildByRole (GetOperatorRole (Operator)); }
 		}
-		
+
+		static Expression NoUnaryExpressionError = new ErrorExpression ("No unary expression");
 		public Expression Expression {
-			get { return GetChildByRole (Roles.Expression); }
+			get { return GetChildByRole (Roles.Expression) ?? NoUnaryExpressionError; }
 			set { SetChildByRole (Roles.Expression, value); }
 		}
 		

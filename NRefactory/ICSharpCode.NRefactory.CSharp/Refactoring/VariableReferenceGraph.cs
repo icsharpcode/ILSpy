@@ -28,6 +28,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.NRefactory.CSharp.Analysis;
 using ICSharpCode.NRefactory.CSharp.Resolver;
+using System.Threading;
 
 namespace ICSharpCode.NRefactory.CSharp.Refactoring
 {
@@ -57,6 +58,8 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 
 		public void AddNextNode (VariableReferenceNode node)
 		{
+			if (node == null)
+				return;
 			NextNodes.Add (node);
 			node.PreviousNodes.Add (this);
 		}
@@ -64,20 +67,38 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 
 	class VariableReferenceGraphBuilder
 	{
-		static ControlFlowGraphBuilder cfgBuilder = new ControlFlowGraphBuilder ();
-		static CfgVariableReferenceNodeBuilder cfgVrNodeBuilder = new CfgVariableReferenceNodeBuilder ();
+		ControlFlowGraphBuilder cfgBuilder = new ControlFlowGraphBuilder ();
+		CfgVariableReferenceNodeBuilder cfgVrNodeBuilder;
+		BaseRefactoringContext ctx;
 
-		public static VariableReferenceNode Build (ISet<AstNode> references, CSharpAstResolver resolver,
+		public VariableReferenceGraphBuilder(BaseRefactoringContext ctx)
+		{
+			this.ctx = ctx;
+			cfgVrNodeBuilder = new CfgVariableReferenceNodeBuilder (this);
+		}
+
+		public VariableReferenceNode Build (ISet<AstNode> references, CSharpAstResolver resolver,
 			Expression expression)
 		{
 			return ExpressionNodeCreationVisitor.CreateNode (references, resolver, new [] { expression });
 		}
 
-		public static VariableReferenceNode Build (Statement statement, ISet<AstNode> references,
+		public VariableReferenceNode Build (Statement statement, ISet<AstNode> references,
 			ISet<Statement> refStatements, BaseRefactoringContext context)
 		{
 			var cfg = cfgBuilder.BuildControlFlowGraph (statement, context.Resolver, context.CancellationToken);
+			if (cfg.Count == 0)
+				return new VariableReferenceNode ();
 			return cfgVrNodeBuilder.Build (cfg [0], references, refStatements, context.Resolver);
+		}
+
+		public VariableReferenceNode Build (Statement statement, ISet<AstNode> references,
+		                                           ISet<Statement> refStatements, CSharpAstResolver resolver, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			var cfg = cfgBuilder.BuildControlFlowGraph (statement, resolver, cancellationToken);
+			if (cfg.Count == 0)
+				return new VariableReferenceNode();
+			return cfgVrNodeBuilder.Build (cfg [0], references, refStatements, resolver);
 		}
 
 		class GetExpressionsVisitor : DepthFirstAstVisitor<IEnumerable<Expression>>
@@ -153,16 +174,26 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 				yield return yieldReturnStatement.Expression;
 			}
 
+			public override IEnumerable<Expression> VisitBlockStatement(BlockStatement blockStatement)
+			{
+				yield break;
+			}
 		}
 
 		class CfgVariableReferenceNodeBuilder
 		{
-			static GetExpressionsVisitor getExpr = new GetExpressionsVisitor ();
+			readonly VariableReferenceGraphBuilder variableReferenceGraphBuilder;
+			GetExpressionsVisitor getExpr = new GetExpressionsVisitor ();
 
 			ISet<AstNode> references;
 			ISet<Statement> refStatements;
 			CSharpAstResolver resolver;
 			Dictionary<ControlFlowNode, VariableReferenceNode> nodeDict;
+
+			public CfgVariableReferenceNodeBuilder(VariableReferenceGraphBuilder variableReferenceGraphBuilder)
+			{
+				this.variableReferenceGraphBuilder = variableReferenceGraphBuilder;
+			}
 
 			public VariableReferenceNode Build (ControlFlowNode startNode, ISet<AstNode> references,
 				ISet<Statement> refStatements, CSharpAstResolver resolver)
@@ -202,6 +233,8 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 				var node = new VariableReferenceNode ();
 				var cfNode = startNode;
 				while (true) {
+					if (variableReferenceGraphBuilder.ctx.CancellationToken.IsCancellationRequested)
+						return null;
 					if (nodeDict.ContainsKey (cfNode)) {
 						node.AddNextNode (nodeDict [cfNode]);
 						break;
@@ -216,18 +249,23 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 					}
 					nodeDict [cfNode] = node;
 
-					if (IsValidControlFlowNode (cfNode) && refStatements.Contains (cfNode.NextStatement))
+					if (IsValidControlFlowNode (cfNode) && refStatements.Contains (cfNode.NextStatement)) {
 						node = GetStatementEndNode (node, cfNode.NextStatement);
+					}
 
 					if (cfNode.Outgoing.Count == 1) {
 						cfNode = cfNode.Outgoing [0].To;
 					} else {
-						foreach (var e in cfNode.Outgoing)
+						foreach (var e in cfNode.Outgoing) {
 							node.AddNextNode (AddNode (e.To));
+						}
 						break;
 					}
 				}
-				return nodeDict [startNode];
+				VariableReferenceNode result;
+				if (!nodeDict.TryGetValue (startNode, out result))
+					return new VariableReferenceNode ();
+				return result;
 			}
 		}
 
@@ -258,9 +296,11 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			{
 				startNode = startNode ?? new VariableReferenceNode ();
 				endNode = startNode;
-				foreach (var expr in expressions) {
-					var visitor = CreateVisitor (references, resolver, expr, endNode);
-					endNode = visitor.endNode;
+				if (expressions != null) {
+					foreach (var expr in expressions) {
+						var visitor = CreateVisitor(references, resolver, expr, endNode);
+						endNode = visitor.endNode;
+					}
 				}
 				return startNode;
 			}
@@ -282,7 +322,6 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			}
 
 			#region Skipped Expressions
-
 			public override void VisitAnonymousMethodExpression (AnonymousMethodExpression anonymousMethodExpression)
 			{
 			}
@@ -324,10 +363,6 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			}
 
 			public override void VisitDefaultValueExpression (DefaultValueExpression defaultValueExpression)
-			{
-			}
-
-			public override void VisitEmptyExpression (EmptyExpression emptyExpression)
 			{
 			}
 

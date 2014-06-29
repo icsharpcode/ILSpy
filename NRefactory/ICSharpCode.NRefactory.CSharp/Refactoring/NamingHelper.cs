@@ -103,22 +103,29 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		/// <param name='type'>
 		/// The type of the variable.
 		/// </param>
-		public string GenerateVariableName(AstType type)
+		/// <param name='baseName'>
+		/// Suggested base name.
+		/// </param>
+		public string GenerateVariableName(AstType type, string baseName = null)
 		{
-			string firstSuggestion = null;
-			foreach (var name in NamingHelper.GenerateNameProposals(type)) {
-				firstSuggestion = firstSuggestion ?? name;
-				if (NameIsUnused(name)) {
-					usedVariableNames.Add(name);
-					return name;
+			if (baseName == null) {
+				foreach (var name in NamingHelper.GenerateNameProposals(type)) {
+					baseName = baseName ?? name;
+					if (NameIsUnused(name)) {
+						usedVariableNames.Add(name);
+						return name;
+					}
 				}
+			} else if (NameIsUnused(baseName)) {
+				return baseName;
 			}
+
 			// If we get here, all of the standard suggestions are already used.
 			// This will at least be the second variable named based on firstSuggestion, so start at 2
 			int counter = 2;
 			string proposedName;
 			do {
-				proposedName = firstSuggestion + counter++;
+				proposedName = baseName + counter++;
 			} while (!NameIsUnused(proposedName));
 			usedVariableNames.Add(proposedName);
 			return proposedName;
@@ -138,10 +145,13 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		/// <param name='type'>
 		/// The type of the variable.
 		/// </param>
-		public string GenerateVariableName(IType type)
+		/// <param name='baseName'>
+		/// Suggested base name.
+		/// </param>
+		public string GenerateVariableName(IType type, string baseName = null)
 		{
 			AstType astType = ToAstType(type);
-			return GenerateVariableName(astType);
+			return GenerateVariableName(astType, baseName);
 		}
 
 		AstType ToAstType(IType type)

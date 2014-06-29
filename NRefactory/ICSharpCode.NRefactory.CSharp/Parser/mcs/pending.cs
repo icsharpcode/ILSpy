@@ -192,17 +192,17 @@ namespace Mono.CSharp {
 		static MissingInterfacesInfo [] GetMissingInterfaces (TypeDefinition container)
 		{
 			//
-			// Notice that Interfaces will only return the interfaces that the Type
-			// is supposed to implement, not all the interfaces that the type implements.
+			// Interfaces will return all interfaces that the container
+			// implements including any inherited interfaces
 			//
 			var impl = container.Definition.Interfaces;
 
 			if (impl == null || impl.Count == 0)
 				return EmptyMissingInterfacesInfo;
 
-			MissingInterfacesInfo[] ret = new MissingInterfacesInfo[impl.Count];
+			var ret = new MissingInterfacesInfo[impl.Count];
 
-			for (int i = 0; i < impl.Count; i++)
+			for (int i = 0; i < ret.Length; i++)
 				ret [i] = new MissingInterfacesInfo (impl [i]);
 
 			// we really should not get here because Object doesnt implement any
@@ -534,10 +534,14 @@ namespace Mono.CSharp {
 			// about mismatch at return type when the check bellow rejects them
 			//
 			var parameters = mi.Parameters;
+			MethodSpec close_match = null;
+
 			while (true) {
 				var candidates = MemberCache.FindMembers (base_type, mi.Name, false);
-				if (candidates == null)
+				if (candidates == null) {
+					base_method = close_match;
 					return false;
+				}
 
 				MethodSpec similar_candidate = null;
 				foreach (var candidate in candidates) {
@@ -548,7 +552,7 @@ namespace Mono.CSharp {
 						continue;
 
 					var candidate_param = ((MethodSpec) candidate).Parameters;
-					if (!TypeSpecComparer.Override.IsSame (parameters.Types, candidate_param.Types))
+					if (!TypeSpecComparer.Override.IsEqual (parameters.Types, candidate_param.Types))
 						continue;
 
 					bool modifiers_match = true;
@@ -587,22 +591,32 @@ namespace Mono.CSharp {
 						continue;
 
 					//
-					// From this point on the candidate is used for detailed error reporting
+					// From this point the candidate is used for detailed error reporting
 					// because it's very close match to what we are looking for
 					//
-					base_method = (MethodSpec) candidate;
+					var m = (MethodSpec) candidate;
 
-					if (!candidate.IsPublic)
-						return false;
+					if (!m.IsPublic) {
+						if (close_match == null)
+							close_match = m;
 
-					if (!TypeSpecComparer.Override.IsEqual (mi.ReturnType, base_method.ReturnType))
-						return false;
+						continue;
+					}
 
-					if (mi.IsGeneric && !Method.CheckImplementingMethodConstraints (container, base_method, mi)) {
+					if (!TypeSpecComparer.Override.IsEqual (mi.ReturnType, m.ReturnType)) {
+						if (close_match == null)
+							close_match = m;
+
+						continue;
+					}
+						
+					base_method = m;
+
+					if (mi.IsGeneric && !Method.CheckImplementingMethodConstraints (container, m, mi)) {
 						return true;
 					}
 				}
-
+				
 				if (base_method != null) {
 					if (similar_candidate != null) {
 						Report.SymbolRelatedToPreviousError (similar_candidate);
@@ -617,8 +631,10 @@ namespace Mono.CSharp {
 				}
 
 				base_type = candidates[0].DeclaringType.BaseType;
-				if (base_type == null)
+				if (base_type == null) {
+					base_method = close_match;
 					return false;
+				}
 			}
 
 			if (!base_method.IsVirtual) {
@@ -673,7 +689,7 @@ namespace Mono.CSharp {
 						if (pending_implementations [i].optional)
 							continue;
 
-						MethodSpec candidate = null;
+						MethodSpec candidate;
 						if (base_implements_type || BaseImplements (type, mi, out candidate))
 							continue;
 
@@ -692,7 +708,7 @@ namespace Mono.CSharp {
 									container.GetSignatureForError (), mi.GetSignatureForError (), candidate.GetSignatureForError ());
 							} else if ((candidate.Modifiers & Modifiers.PUBLIC) == 0) {
 								Report.Error (737, container.Location,
-									"`{0}' does not implement interface member `{1}' and the best implementing candidate `{2}' in not public",
+									"`{0}' does not implement interface member `{1}' and the best implementing candidate `{2}' is not public",
 									container.GetSignatureForError (), mi.GetSignatureForError (), candidate.GetSignatureForError ());
 							} else {
 								Report.Error (738, container.Location,

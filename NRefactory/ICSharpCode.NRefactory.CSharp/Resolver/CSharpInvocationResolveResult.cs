@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -48,6 +48,20 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		public readonly bool IsExpandedForm;
 		
 		readonly IList<int> argumentToParameterMap;
+
+		/// <summary>
+		/// If IsExtensionMethodInvocation is true this property holds the reduced method.
+		/// </summary>
+		IMethod reducedMethod;
+		public IMethod ReducedMethod {
+			get {
+				if (!IsExtensionMethodInvocation)
+					return null;
+				if (reducedMethod == null && Member is IMethod)
+					reducedMethod = new ReducedExtensionMethod ((IMethod)Member);
+				return reducedMethod;
+			}
+		}
 		
 		public CSharpInvocationResolveResult(
 			ResolveResult targetResult, IParameterizedMember member,
@@ -57,9 +71,10 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 			bool isExpandedForm = false,
 			bool isDelegateInvocation = false,
 			IList<int> argumentToParameterMap = null,
-			IList<ResolveResult> initializerStatements = null
+			IList<ResolveResult> initializerStatements = null,
+			IType returnTypeOverride = null
 		)
-			: base(targetResult, member, arguments, initializerStatements)
+			: base(targetResult, member, arguments, initializerStatements, returnTypeOverride)
 		{
 			this.OverloadResolutionErrors = overloadResolutionErrors;
 			this.IsExtensionMethodInvocation = isExtensionMethodInvocation;
@@ -107,8 +122,12 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 					}
 				}
 			}
-			if (IsExpandedForm)
-				results[results.Length - 1] = new ArrayCreateResolveResult(Member.Parameters.Last().Type, null, paramsArguments.ToArray());
+			if (IsExpandedForm){
+				IType arrayType = Member.Parameters.Last().Type;
+				IType int32 = Member.Compilation.FindType(KnownTypeCode.Int32);
+				ResolveResult[] sizeArguments = { new ConstantResolveResult(int32, paramsArguments.Count) };
+				results[results.Length - 1] = new ArrayCreateResolveResult(arrayType, sizeArguments, paramsArguments);
+			}
 			
 			for (int i = 0; i < results.Length; i++) {
 				if (results[i] == null) {

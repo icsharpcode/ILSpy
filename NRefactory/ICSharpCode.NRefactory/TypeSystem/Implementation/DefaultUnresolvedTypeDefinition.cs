@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -38,7 +38,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		public DefaultUnresolvedTypeDefinition()
 		{
-			this.EntityType = EntityType.TypeDefinition;
+			this.SymbolKind = SymbolKind.TypeDefinition;
 		}
 		
 		public DefaultUnresolvedTypeDefinition(string fullName)
@@ -54,21 +54,21 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				name = fullName;
 			}
 
-			this.EntityType = EntityType.TypeDefinition;
+			this.SymbolKind = SymbolKind.TypeDefinition;
 			this.namespaceName = namespaceName;
 			this.Name = name;
 		}
 		
 		public DefaultUnresolvedTypeDefinition(string namespaceName, string name)
 		{
-			this.EntityType = EntityType.TypeDefinition;
+			this.SymbolKind = SymbolKind.TypeDefinition;
 			this.namespaceName = namespaceName;
 			this.Name = name;
 		}
 		
 		public DefaultUnresolvedTypeDefinition(IUnresolvedTypeDefinition declaringTypeDefinition, string name)
 		{
-			this.EntityType = EntityType.TypeDefinition;
+			this.SymbolKind = SymbolKind.TypeDefinition;
 			this.DeclaringTypeDefinition = declaringTypeDefinition;
 			this.namespaceName = declaringTypeDefinition.Namespace;
 			this.Name = name;
@@ -130,6 +130,14 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			}
 		}
 		
+		public bool IsPartial {
+			get { return flags[FlagPartialTypeDefinition]; }
+			set {
+				ThrowIfFrozen();
+				flags[FlagPartialTypeDefinition] = value;
+			}
+		}
+		
 		public override string Namespace {
 			get { return namespaceName; }
 			set {
@@ -142,23 +150,17 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		
 		public override string ReflectionName {
 			get {
+				return this.FullTypeName.ReflectionName;
+			}
+		}
+		
+		public FullTypeName FullTypeName {
+			get {
 				IUnresolvedTypeDefinition declaringTypeDef = this.DeclaringTypeDefinition;
 				if (declaringTypeDef != null) {
-					if (this.TypeParameters.Count > declaringTypeDef.TypeParameters.Count) {
-						return declaringTypeDef.ReflectionName + "+" + this.Name + "`" + (this.TypeParameters.Count - declaringTypeDef.TypeParameters.Count).ToString(CultureInfo.InvariantCulture);
-					} else {
-						return declaringTypeDef.ReflectionName + "+" + this.Name;
-					}
-				} else if (string.IsNullOrEmpty(namespaceName)) {
-					if (this.TypeParameters.Count > 0)
-						return this.Name + "`" + this.TypeParameters.Count.ToString(CultureInfo.InvariantCulture);
-					else
-						return this.Name;
+					return declaringTypeDef.FullTypeName.NestedType(this.Name, this.TypeParameters.Count - declaringTypeDef.TypeParameters.Count);
 				} else {
-					if (this.TypeParameters.Count > 0)
-						return namespaceName + "." + this.Name + "`" + this.TypeParameters.Count.ToString(CultureInfo.InvariantCulture);
-					else
-						return namespaceName + "." + this.Name;
+					return new TopLevelTypeName(namespaceName, this.Name, this.TypeParameters.Count);
 				}
 			}
 		}
@@ -226,7 +228,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				throw new ArgumentNullException("context");
 			if (context.CurrentAssembly == null)
 				throw new ArgumentException("An ITypeDefinition cannot be resolved in a context without a current assembly.");
-			return context.CurrentAssembly.GetTypeDefinition(this) 
+			return context.CurrentAssembly.GetTypeDefinition(this.FullTypeName)
 				?? (IType)new UnknownType(this.Namespace, this.Name, this.TypeParameters.Count);
 		}
 		

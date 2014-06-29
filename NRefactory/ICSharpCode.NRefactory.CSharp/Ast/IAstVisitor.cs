@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -59,8 +59,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		void VisitTypeReferenceExpression(TypeReferenceExpression typeReferenceExpression);
 		void VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression);
 		void VisitUncheckedExpression(UncheckedExpression uncheckedExpression);
-		void VisitEmptyExpression (EmptyExpression emptyExpression);
-		
+
 		void VisitQueryExpression(QueryExpression queryExpression);
 		void VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause);
 		void VisitQueryFromClause(QueryFromClause queryFromClause);
@@ -148,6 +147,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		void VisitCSharpTokenNode(CSharpTokenNode cSharpTokenNode);
 		void VisitIdentifier(Identifier identifier);
 		
+		void VisitNullNode(AstNode nullNode);
 		void VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern);
 	}
 	
@@ -190,8 +190,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		S VisitTypeReferenceExpression(TypeReferenceExpression typeReferenceExpression);
 		S VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression);
 		S VisitUncheckedExpression(UncheckedExpression uncheckedExpression);
-		S VisitEmptyExpression (EmptyExpression emptyExpression);
-		
+
 		S VisitQueryExpression(QueryExpression queryExpression);
 		S VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause);
 		S VisitQueryFromClause(QueryFromClause queryFromClause);
@@ -279,6 +278,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		S VisitCSharpTokenNode(CSharpTokenNode cSharpTokenNode);
 		S VisitIdentifier(Identifier identifier);
 		
+		S VisitNullNode(AstNode nullNode);
 		S VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern);
 	}
 	
@@ -321,8 +321,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		S VisitTypeReferenceExpression(TypeReferenceExpression typeReferenceExpression, T data);
 		S VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression, T data);
 		S VisitUncheckedExpression(UncheckedExpression uncheckedExpression, T data);
-		S VisitEmptyExpression (EmptyExpression emptyExpression, T data);
-		
+
 		S VisitQueryExpression(QueryExpression queryExpression, T data);
 		S VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause, T data);
 		S VisitQueryFromClause(QueryFromClause queryFromClause, T data);
@@ -410,6 +409,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		S VisitCSharpTokenNode(CSharpTokenNode cSharpTokenNode, T data);
 		S VisitIdentifier(Identifier identifier, T data);
 		
+		S VisitNullNode(AstNode nullNode, T data);
 		S VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern, T data);
 	}
 }

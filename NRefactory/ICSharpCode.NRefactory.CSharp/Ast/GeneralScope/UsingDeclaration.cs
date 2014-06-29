@@ -27,6 +27,7 @@
 using System;
 using System.Linq;
 using System.Text;
+using System.Collections.Generic;
 
 namespace ICSharpCode.NRefactory.CSharp
 {
@@ -54,7 +55,29 @@ namespace ICSharpCode.NRefactory.CSharp
 		}
 		
 		public string Namespace {
-			get { return this.Import.ToString(); }
+			get { return ConstructNamespace (Import); }
+		}
+
+		internal static string ConstructNamespace (AstType type)
+		{
+			var stack = new Stack<string>();
+			while (type is MemberType) {
+				var mt = (MemberType)type;
+				stack.Push(mt.MemberName);
+				type = mt.Target;
+				if (mt.IsDoubleColon) {
+					stack.Push("::");
+				} else {
+					stack.Push("."); 
+				}
+			}
+			if (type is SimpleType)
+				stack.Push(((SimpleType)type).Identifier);
+
+			var result = new StringBuilder();
+			while (stack.Count > 0)
+				result.Append(stack.Pop());
+			return result.ToString();
 		}
 		
 		public CSharpTokenNode SemicolonToken {
@@ -67,7 +90,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		
 		public UsingDeclaration (string nameSpace)
 		{
-			AddChild (new SimpleType (nameSpace), ImportRole);
+			AddChild (AstType.Create (nameSpace), ImportRole);
 		}
 		
 		public UsingDeclaration (AstType import)

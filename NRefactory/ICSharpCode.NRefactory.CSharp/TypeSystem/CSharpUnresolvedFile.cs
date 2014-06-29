@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -22,6 +22,7 @@ using ICSharpCode.NRefactory.Documentation;
 using ICSharpCode.NRefactory.Editor;
 using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.NRefactory.Utils;
 using System.Linq;
 
 namespace ICSharpCode.NRefactory.CSharp.TypeSystem
@@ -29,11 +30,14 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 	/// <summary>
 	/// Represents a file that was parsed and converted for the type system.
 	/// </summary>
-	[Serializable]
-	public sealed class CSharpUnresolvedFile : AbstractFreezable, IUnresolvedFile, IUnresolvedDocumentationProvider
+	[Serializable, FastSerializerVersion(TypeSystemConvertVisitor.version)]
+	public class CSharpUnresolvedFile : AbstractFreezable, IUnresolvedFile, IUnresolvedDocumentationProvider
 	{
-		readonly string fileName;
-		readonly UsingScope rootUsingScope;
+		// The 'FastSerializerVersion' attribute on CSharpUnresolvedFile must be incremented when fixing 
+		// bugs in the TypeSystemConvertVisitor
+		
+		string fileName = string.Empty;
+		readonly UsingScope rootUsingScope = new UsingScope();
 		IList<IUnresolvedTypeDefinition> topLevelTypeDefinitions = new List<IUnresolvedTypeDefinition>();
 		IList<IUnresolvedAttribute> assemblyAttributes = new List<IUnresolvedAttribute>();
 		IList<IUnresolvedAttribute> moduleAttributes = new List<IUnresolvedAttribute>();
@@ -51,26 +55,12 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 			usingScopes = FreezableHelper.FreezeListAndElements(usingScopes);
 		}
 		
-		public CSharpUnresolvedFile(string fileName)
-		{
-			if (fileName == null)
-				throw new ArgumentNullException("fileName");
-			this.fileName = fileName;
-			this.rootUsingScope = new UsingScope();
-		}
-		
-		public CSharpUnresolvedFile(string fileName, UsingScope rootUsingScope)
-		{
-			if (fileName == null)
-				throw new ArgumentNullException("fileName");
-			if (rootUsingScope == null)
-				throw new ArgumentNullException("rootUsingScope");
-			this.fileName = fileName;
-			this.rootUsingScope = rootUsingScope;
-		}
-		
 		public string FileName {
 			get { return fileName; }
+			set {
+				FreezableHelper.ThrowIfFrozen(this);
+				fileName = value ?? string.Empty;
+			}
 		}
 		
 		DateTime? lastWriteTime;
@@ -178,11 +168,6 @@ namespace ICSharpCode.NRefactory.CSharp.TypeSystem
 			return rctx;
 		}
 		
-		ITypeResolveContext IUnresolvedFile.GetTypeResolveContext (ICompilation compilation, TextLocation loc)
-		{
-			return GetTypeResolveContext (compilation, loc);
-		}
-
 		public ICSharpCode.NRefactory.CSharp.Resolver.CSharpResolver GetResolver (ICompilation compilation, TextLocation loc)
 		{
 			return new ICSharpCode.NRefactory.CSharp.Resolver.CSharpResolver (GetTypeResolveContext (compilation, loc));

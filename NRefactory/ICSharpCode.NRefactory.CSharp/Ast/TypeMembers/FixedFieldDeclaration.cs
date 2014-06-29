@@ -33,8 +33,8 @@ namespace ICSharpCode.NRefactory.CSharp
 		public static readonly TokenRole FixedKeywordRole = new TokenRole ("fixed");
 		public static readonly Role<FixedVariableInitializer> VariableRole = new Role<FixedVariableInitializer> ("FixedVariable");
 		
-		public override EntityType EntityType {
-			get { return EntityType.Field; }
+		public override SymbolKind SymbolKind {
+			get { return SymbolKind.Field; }
 		}
 		
 		public CSharpTokenNode FixedToken {

@@ -1,4 +1,4 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -38,19 +38,19 @@ namespace ICSharpCode.NRefactory.Documentation
 		public static string GetIdString(this IEntity entity)
 		{
 			StringBuilder b = new StringBuilder();
-			switch (entity.EntityType) {
-				case EntityType.TypeDefinition:
+			switch (entity.SymbolKind) {
+				case SymbolKind.TypeDefinition:
 					b.Append("T:");
 					AppendTypeName(b, (ITypeDefinition)entity, false);
 					return b.ToString();
-				case EntityType.Field:
+				case SymbolKind.Field:
 					b.Append("F:");
 					break;
-				case EntityType.Property:
-				case EntityType.Indexer:
+				case SymbolKind.Property:
+				case SymbolKind.Indexer:
 					b.Append("P:");
 					break;
-				case EntityType.Event:
+				case SymbolKind.Event:
 					b.Append("E:");
 					break;
 				default:
@@ -80,7 +80,7 @@ namespace ICSharpCode.NRefactory.Documentation
 				}
 				b.Append(')');
 			}
-			if (member.EntityType == EntityType.Operator && (member.Name == "op_Implicit" || member.Name == "op_Explicit")) {
+			if (member.SymbolKind == SymbolKind.Operator && (member.Name == "op_Implicit" || member.Name == "op_Explicit")) {
 				b.Append('~');
 				AppendTypeName(b, member.ReturnType, false);
 			}
@@ -110,7 +110,7 @@ namespace ICSharpCode.NRefactory.Documentation
 						b.Append(tp.Name);
 					} else {
 						b.Append('`');
-						if (tp.OwnerType == EntityType.Method)
+						if (tp.OwnerType == SymbolKind.Method)
 							b.Append('`');
 						b.Append(tp.Index);
 					}
@@ -285,11 +285,11 @@ namespace ICSharpCode.NRefactory.Documentation
 					// method type parameter reference
 					pos++;
 					int index = ReflectionHelper.ReadTypeParameterCount(reflectionTypeName, ref pos);
-					result = new TypeParameterReference(EntityType.Method, index);
+					result = TypeParameterReference.Create(SymbolKind.Method, index);
 				} else {
 					// class type parameter reference
 					int index = ReflectionHelper.ReadTypeParameterCount(reflectionTypeName, ref pos);
-					result = new TypeParameterReference(EntityType.TypeDefinition, index);
+					result = TypeParameterReference.Create(SymbolKind.TypeDefinition, index);
 				}
 			} else {
 				// not a type parameter reference: read the actual type name
@@ -360,6 +360,7 @@ namespace ICSharpCode.NRefactory.Documentation
 				} while (typeName[pos] == ',');
 				if (typeName[pos] != '}')
 					throw new ReflectionNameParseException(pos, "Expected '}'");
+				pos++;
 			}
 			return shortTypeName;
 		}

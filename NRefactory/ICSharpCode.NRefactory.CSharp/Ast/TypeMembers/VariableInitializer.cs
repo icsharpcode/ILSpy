@@ -41,16 +41,17 @@ namespace ICSharpCode.NRefactory.CSharp
 			
 			public override void AcceptVisitor (IAstVisitor visitor)
 			{
+				visitor.VisitNullNode(this);
 			}
-				
+			
 			public override T AcceptVisitor<T> (IAstVisitor<T> visitor)
 			{
-				return default (T);
+				return visitor.VisitNullNode(this);
 			}
 			
 			public override S AcceptVisitor<T, S> (IAstVisitor<T, S> visitor, T data)
 			{
-				return default (S);
+				return visitor.VisitNullNode(this, data);
 			}
 			
 			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
@@ -163,15 +164,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			return visitor.VisitVariableInitializer (this, data);
 		}
-		
-		public override string ToString()
-		{
-			if (this.Initializer.IsNull)
-				return "[VariableInitializer " + this.Name + "]";
-			else
-				return "[VariableInitializer " + this.Name + " = " + this.Initializer.ToString() + "]";
-		}
-		
+
 		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			VariableInitializer o = other as VariableInitializer;
