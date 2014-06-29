@@ -3960,7 +3960,12 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		{
 			return null;
 		}
-		
+
+		ResolveResult IAstVisitor<ResolveResult>.VisitErrorNode(AstNode errorNode)
+		{
+			return null;
+		}
+
 		ResolveResult IAstVisitor<ResolveResult>.VisitPatternPlaceholder(AstNode placeholder, ICSharpCode.NRefactory.PatternMatching.Pattern pattern)
 		{
 			return null;

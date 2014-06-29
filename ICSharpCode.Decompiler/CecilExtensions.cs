@@ -341,5 +341,10 @@ namespace ICSharpCode.Decompiler
 					throw new NotSupportedException(opcode.FlowControl.ToString());
 			}
 		}
+
+		public static ICSharpCode.NRefactory.TypeSystem.FullTypeName GetFullTypeName(this TypeDefinition typeDef)
+		{
+			return new ICSharpCode.NRefactory.TypeSystem.FullTypeName(typeDef.FullName);
+		}
 	}
 }

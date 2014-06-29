@@ -15,7 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-/*
+
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -28,11 +28,11 @@ using System.Threading.Tasks;
 using System.Xml;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Ast.Transforms;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.XmlDoc;
 using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
+using ICSharpCode.Decompiler.CSharp;
 
 namespace ICSharpCode.ILSpy
 {
@@ -44,13 +44,14 @@ namespace ICSharpCode.ILSpy
 	{
 		string name = "C#";
 		bool showAllMembers = false;
-		Predicate<IAstTransform> transformAbortCondition = null;
+		//Predicate<IAstTransform> transformAbortCondition = null;
 
 		public CSharpLanguage()
 		{
 		}
 
 		#if DEBUG
+		/*
 		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
 		{
 			DecompilerContext context = new DecompilerContext(ModuleDefinition.CreateModule("dummy", ModuleKind.Dll));
@@ -69,6 +70,7 @@ namespace ICSharpCode.ILSpy
 				showAllMembers = true
 			};
 		}
+		*/
 		#endif
 
 		public override string Name
@@ -89,6 +91,9 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
+			CSharpDecompiler decompiler = new CSharpDecompiler(method.Module);
+			output.WriteLine(decompiler.Decompile(method).ToString());
+			/*
 			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: method.DeclaringType, isSingleMember: true);
 			if (method.IsConstructor && !method.IsStatic && !method.DeclaringType.IsValueType) {
 				// also fields and other ctors so that the field initializers can be shown as such
@@ -97,9 +102,10 @@ namespace ICSharpCode.ILSpy
 			} else {
 				codeDomBuilder.AddMethod(method);
 				RunTransformsAndGenerateCode(codeDomBuilder, output, options);
-			}
+			}*/
 		}
 		
+		/*
 		class SelectCtorTransform : IAstTransform
 		{
 			readonly MethodDefinition ctorDef;
@@ -135,7 +141,9 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 		}
+		*/
 
+			/*
 		public override void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(property.DeclaringType, includeNamespace: true));
@@ -217,7 +225,7 @@ namespace ICSharpCode.ILSpy
 				AddXmlDocTransform.Run(astBuilder.SyntaxTree);
 			}
 			astBuilder.GenerateCode(output);
-		}
+		}*/
 
 		public static string GetPlatformDisplayName(ModuleDefinition module)
 		{
@@ -256,7 +264,7 @@ namespace ICSharpCode.ILSpy
 					return module.Architecture.ToString();
 			}
 		}
-		
+		/*
 		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
@@ -299,10 +307,10 @@ namespace ICSharpCode.ILSpy
 					codeDomBuilder.AddAssembly(assembly.ModuleDefinition, onlyAssemblyLevel: !options.FullDecompilation);
 					codeDomBuilder.RunTransformations(transformAbortCondition);
 					codeDomBuilder.GenerateCode(output);
-				}
-			}
+	}
+}
 		}
-
+		*/
 		#region WriteProjectFile
 		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module)
 		{
@@ -428,6 +436,7 @@ namespace ICSharpCode.ILSpy
 		#endregion
 
 		#region WriteCodeFilesInProject
+		/*
 		bool IncludeTypeWhenDecompilingProject(TypeDefinition type, DecompilationOptions options)
 		{
 			if (type.Name == "<Module>" || AstBuilder.MemberIsHidden(type, options.DecompilerSettings))
@@ -486,7 +495,7 @@ namespace ICSharpCode.ILSpy
 				});
 			AstMethodBodyBuilder.PrintNumberOfUnhandledOpcodes();
 			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(module, options, directories));
-		}
+		}*/
 		#endregion
 
 		#region WriteResourceFilesInProject
@@ -566,7 +575,7 @@ namespace ICSharpCode.ILSpy
 			return fileName;
 		}
 		#endregion
-
+		/*
 		AstBuilder CreateAstBuilder(DecompilationOptions options, ModuleDefinition currentModule = null, TypeDefinition currentType = null, bool isSingleMember = false)
 		{
 			if (currentModule == null)
@@ -612,7 +621,7 @@ namespace ICSharpCode.ILSpy
 			astType.AcceptVisitor(new CSharpOutputVisitor(w, FormattingOptionsFactory.CreateAllman()));
 			return w.ToString();
 		}
-
+		*/
 		public override string FormatPropertyName(PropertyDefinition property, bool? isIndexer)
 		{
 			if (property == null)
@@ -643,7 +652,7 @@ namespace ICSharpCode.ILSpy
 			} else
 				return property.Name;
 		}
-		
+		/*
 		public override string FormatTypeName(TypeDefinition type)
 		{
 			if (type == null)
@@ -656,7 +665,7 @@ namespace ICSharpCode.ILSpy
 		{
 			return showAllMembers || !AstBuilder.MemberIsHidden(member, new DecompilationOptions().DecompilerSettings);
 		}
-
+		*/
 		public override MemberReference GetOriginalCodeLocation(MemberReference member)
 		{
 			if (showAllMembers || !DecompilerSettingsPanel.CurrentDecompilerSettings.AnonymousMethods)
@@ -672,7 +681,7 @@ namespace ICSharpCode.ILSpy
 			EventDefinition ed = member as EventDefinition;
 			FieldDefinition fd = member as FieldDefinition;
 			if (md != null || pd != null || ed != null || fd != null) {
-				AstBuilder b = new AstBuilder(new DecompilerContext(member.Module) { Settings = new DecompilerSettings { UsingDeclarations = false } });
+				/*AstBuilder b = new AstBuilder(new DecompilerContext(member.Module) { Settings = new DecompilerSettings { UsingDeclarations = false } });
 				b.DecompileMethodBodies = false;
 				if (md != null)
 					b.AddMethod(md);
@@ -688,11 +697,10 @@ namespace ICSharpCode.ILSpy
 
 				StringWriter w = new StringWriter();
 				b.GenerateCode(new PlainTextOutput(w));
-				return Regex.Replace(w.ToString(), @"\s+", " ").TrimEnd();
+				return Regex.Replace(w.ToString(), @"\s+", " ").TrimEnd();*/
 			}
 
 			return base.GetTooltip(member);
 		}
 	}
 }
-*/

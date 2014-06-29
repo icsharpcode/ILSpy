@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.IL
 			CreateBlocks(instructionInlining).WriteTo(output);
         }
 
-		BlockContainer CreateBlocks(bool instructionInlining)
+		internal BlockContainer CreateBlocks(bool instructionInlining)
 		{
 			if (instructionBuilder == null)
 				ReadInstructions(null);
@@ -382,9 +382,11 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldloca_S:
 					return Ldloca(reader.ReadByte());
 				case ILOpCode.Leave:
-					return DecodeUnconditionalBranch(false, OpCode.Leave);
+					//return DecodeUnconditionalBranch(false, OpCode.Leave);
+					throw new NotImplementedException();
 				case ILOpCode.Leave_S:
-					return DecodeUnconditionalBranch(true, OpCode.Leave);
+					//return DecodeUnconditionalBranch(true, OpCode.Leave);
+					throw new NotImplementedException();
 				case ILOpCode.Localloc:
 					throw new NotImplementedException();
 				case ILOpCode.Mul:

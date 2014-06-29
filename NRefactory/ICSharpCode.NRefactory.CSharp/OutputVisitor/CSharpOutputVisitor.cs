@@ -2223,8 +2223,14 @@ namespace ICSharpCode.NRefactory.CSharp
 		void IAstVisitor.VisitNullNode(AstNode nullNode)
 		{
 		}
+
+		void IAstVisitor.VisitErrorNode(AstNode errorNode)
+		{
+			StartNode(errorNode);
+			EndNode(errorNode);
+		}
 		#endregion
-		
+
 		#region Pattern Nodes
 		public void VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern)
 		{

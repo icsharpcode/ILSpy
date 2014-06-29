@@ -90,7 +90,6 @@ namespace ICSharpCode.Decompiler.IL
 		/// <see cref="IL.Branch"/>
 		/// </summary>
 		Branch,
-		Leave,
 		/// <summary>
 		/// Breakpoint instruction.
 		/// </summary>
@@ -222,9 +221,21 @@ namespace ICSharpCode.Decompiler.IL
 		/// Test if object is instance of class or interface. <see cref="IL.IsInst"/>
 		/// </summary>
 		IsInst,
+		/// <summary>
+		/// Indirect load (ref/pointer dereference)
+		/// </summary>
 		LdInd,
+		/// <summary>
+		/// Unbox a value.
+		/// </summary>
 		UnboxAny,
+		/// <summary>
+		/// Creates an object instance and calls the constructor. <see cref="IL.CallInstruction"/>
+		/// </summary>
 		NewObj,
+		/// <summary>
+		/// Throws an exception. <see cref="IL.ThrowInstruction"/>
+		/// </summary>
 		Throw,
 		/// <summary>
 		/// A block of IL instructions. <see cref="IL.Block"/>

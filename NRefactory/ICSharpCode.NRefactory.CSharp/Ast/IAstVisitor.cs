@@ -148,6 +148,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		void VisitIdentifier(Identifier identifier);
 		
 		void VisitNullNode(AstNode nullNode);
+		void VisitErrorNode(AstNode errorNode);
 		void VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern);
 	}
 	
@@ -279,6 +280,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		S VisitIdentifier(Identifier identifier);
 		
 		S VisitNullNode(AstNode nullNode);
+		S VisitErrorNode(AstNode errorNode);
 		S VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern);
 	}
 	
@@ -410,6 +412,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		S VisitIdentifier(Identifier identifier, T data);
 		
 		S VisitNullNode(AstNode nullNode, T data);
+		S VisitErrorNode(AstNode errorNode, T data);
 		S VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern, T data);
 	}
 }

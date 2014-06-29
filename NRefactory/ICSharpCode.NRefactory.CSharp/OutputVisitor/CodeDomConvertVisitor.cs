@@ -218,7 +218,12 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			return null;
 		}
-		
+
+		CodeObject IAstVisitor<CodeObject>.VisitErrorNode(AstNode errorNode)
+		{
+			return null;
+		}
+
 		CodeObject IAstVisitor<CodeObject>.VisitAnonymousMethodExpression(AnonymousMethodExpression anonymousMethodExpression)
 		{
 			return MakeSnippetExpression(anonymousMethodExpression);
