@@ -84,7 +84,13 @@ namespace ILSpy.BamlDecompiler.Tests
 		{
 			RunTest("cases/issue445");
 		}
-		
+
+		[Test]
+		public void Issue365()
+		{
+			RunTest("cases/issue365");
+		}
+
 		[Test]
 		public void NamespacePrefix()
 		{
