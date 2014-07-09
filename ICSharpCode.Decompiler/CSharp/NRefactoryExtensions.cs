@@ -20,7 +20,7 @@ using System;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
 
-namespace ICSharpCode.Decompiler.Ast
+namespace ICSharpCode.Decompiler.CSharp
 {
 	static class NRefactoryExtensions
 	{

@@ -24,9 +24,17 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		/// <summary>
+		/// Gets the name of this block.
+		/// </summary>
+		public string Label
+		{
+			get { return Disassembler.DisassemblerHelpers.OffsetToString(this.ILRange.Start); }
+		}
+
 		public override void WriteTo(ITextOutput output)
 		{
-			output.WriteDefinition("Block " + Disassembler.DisassemblerHelpers.OffsetToString(this.ILRange.Start), this);
+			output.WriteDefinition("Block " + Label, this);
 			output.WriteLine(" {");
 			output.Indent();
 			foreach (var inst in Instructions) {

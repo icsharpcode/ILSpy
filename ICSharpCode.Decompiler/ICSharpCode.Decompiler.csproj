@@ -65,6 +65,7 @@
   <ItemGroup>
     <Compile Include="CSharp\CSharpDecompiler.cs" />
     <Compile Include="CSharp\ExpressionBuilder.cs" />
+    <Compile Include="CSharp\NRefactoryExtensions.cs" />
     <Compile Include="CSharp\StatementBuilder.cs" />
     <Compile Include="TypesHierarchyHelpers.cs" />
     <Compile Include="CecilExtensions.cs" />

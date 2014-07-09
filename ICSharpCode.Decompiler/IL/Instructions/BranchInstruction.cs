@@ -11,13 +11,17 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	class Branch(OpCode opCode, public int TargetILOffset) : ILInstruction(opCode)
 	{
+		public string TargetLabel {
+			get { return CecilExtensions.OffsetToString(TargetILOffset); }
+		}
+
 		public override bool IsPeeking { get { return false; } }
 
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode.ToString());
 			output.Write(' ');
-			output.WriteReference(CecilExtensions.OffsetToString(TargetILOffset), TargetILOffset, isLocal: true);
+			output.WriteReference(TargetLabel, TargetILOffset, isLocal: true);
 		}
 
 		public override bool IsEndReachable
