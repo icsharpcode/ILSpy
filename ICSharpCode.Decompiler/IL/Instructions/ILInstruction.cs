@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.Decompiler.CSharp;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -20,6 +21,20 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public Interval ILRange;
 
+		public abstract void WriteTo(ITextOutput output);
+
+		/// <summary>
+		/// Gets whether the end point of this instruction is reachable from the start point.
+		/// Returns false if the instruction performs an unconditional branch, or always throws an exception.
+		/// </summary>
+		public virtual bool IsEndReachable
+		{
+			get { return true; }
+		}
+
+		public abstract TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor);
+
+		/*
 		/// <summary>
 		/// Gets whether this instruction peeks at the top value of the stack.
 		/// If this instruction also pops elements from the stack, this property refers to the top value
@@ -63,5 +78,6 @@ namespace ICSharpCode.Decompiler.IL
 		internal abstract ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished);
 
 		public abstract void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc);
+		*/
 	}
 }

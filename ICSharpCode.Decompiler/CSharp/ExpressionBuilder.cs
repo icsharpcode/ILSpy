@@ -12,41 +12,46 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Translates from ILAst to C# expressions.
 	/// </summary>
-	class ExpressionBuilder(ICompilation compilation)
+	class ExpressionBuilder(ICompilation compilation) : ILVisitor<ExpressionBuilder.ConvertedExpression>
 	{
-		struct ConvertedExpression(Expression expression, IType type) {
+		private readonly ICompilation compilation = compilation;
+
+		internal struct ConvertedExpression(Expression expression, IType type) {
 			public readonly Expression Expression = expression;
 			public readonly IType Type = type;
 		}
 
 		public Expression Convert(ILInstruction inst)
 		{
-			var expr = TransformExpression(inst).Expression;
+			var expr = inst.AcceptVisitor(this).Expression;
 			expr.AddAnnotation(inst);
 			return expr;
 		}
 		
 		ConvertedExpression ConvertArgument(ILInstruction inst)
 		{
-			var cexpr = TransformExpression(inst);
+			var cexpr = inst.AcceptVisitor(this);
 			cexpr.Expression.AddAnnotation(inst);
 			return cexpr;
 		}
 
-		ConvertedExpression TransformExpression(ILInstruction inst)
+		protected internal override ConvertedExpression VisitLdcI4(LdcI4 inst)
 		{
-			switch (inst.OpCode) {
-				case OpCode.LdcI4:
-					return new ConvertedExpression(
-						new PrimitiveExpression(((ConstantI4)inst).Value),
-                        compilation.FindType(KnownTypeCode.Int32));
-				case OpCode.LogicNot:
-					return new ConvertedExpression(
-						new UnaryOperatorExpression(UnaryOperatorType.Not, ConvertCondition(((LogicNotInstruction)inst).Operand)),
+			return new ConvertedExpression(
+						new PrimitiveExpression(inst.Value),
+						compilation.FindType(KnownTypeCode.Int32));
+		}
+
+		protected internal override ConvertedExpression VisitLogicNot(LogicNot inst)
+		{
+			return new ConvertedExpression(
+						new UnaryOperatorExpression(UnaryOperatorType.Not, ConvertCondition(inst.Argument)),
 						compilation.FindType(KnownTypeCode.Boolean));
-				default:
-					return ErrorExpression("OpCode not supported: " + inst.OpCode);
-			}
+		}
+
+		protected override ConvertedExpression Default(ILInstruction inst)
+		{
+			return ErrorExpression("OpCode not supported: " + inst.OpCode);
 		}
 
 		static ConvertedExpression ErrorExpression(string message)

@@ -1,0 +1,212 @@
+﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+<#@ assembly name="System.Core" #>
+<#@ import namespace="System.Linq" #>
+<#@ import namespace="System.Text" #>
+<#@ import namespace="System.Collections.Generic" #>
+<#@ output extension=".cs" #>
+<#
+	OpCode[] opCodes = {
+		new OpCode("Nop", "No operation. Takes 0 arguments and returns void.", VoidResult, NoArguments),
+		new OpCode("Pop", "Pops the top of the evaluation stack and returns the value.", NoArguments, NonVoidResult),
+		new OpCode("Peek", "Peeks at the top of the evaluation stack and returns the value. Corresponds to IL 'dup'.", Peeking, NoArguments, NonVoidResult),
+		new OpCode("Void", "Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.", VoidResult, Unary),
+		new OpCode("BlockContainer", "A container of IL blocks.", VoidResult),
+		new OpCode("Block", "A block of IL instructions."),
+		new OpCode("LogicNot", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).", I4Result, Unary),
+		new OpCode("Add", "Adds two numbers.", BinaryNumeric),
+		new OpCode("Sub", "Subtracts two numbers", BinaryNumeric),
+		new OpCode("Mul", "Multiplies two numbers", BinaryNumeric),
+		new OpCode("Div", "Divides two numbers", BinaryNumeric, MayThrow),
+		new OpCode("Rem", "Division remainder", BinaryNumeric, MayThrow),
+		new OpCode("Neg", "Unary negation", Unary, NonVoidResult),
+		new OpCode("BitAnd", "Bitwise AND", BinaryNumeric),
+		new OpCode("BitOr", "Bitwise OR", BinaryNumeric),
+		new OpCode("BitXor", "Bitwise XOR", BinaryNumeric),
+		new OpCode("BitNot", "Bitwise NOT", Unary, NonVoidResult),
+		new OpCode("Arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, NonVoidResult),
+		new OpCode("ConditionalBranch", "<c>if (condition) goto target;</c>.", Unary, MayBranch, HasBranchTarget, VoidResult),
+		new OpCode("Branch", "<c>goto target;</c>.", NoArguments, UnconditionalBranch, MayBranch, HasBranchTarget),
+		new OpCode("DebugBreak", "Breakpoint instruction", NoArguments, VoidResult, SideEffect),
+		new OpCode("Ceq", "Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.", BinaryComparison),
+		new OpCode("Cgt", "Compare greater than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.", BinaryComparison),
+		new OpCode("Cgt_Un", "Compare greater than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.", BinaryComparison),
+		new OpCode("Clt", "Compare less than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.", BinaryComparison),
+		new OpCode("Clt_Un", "Compare less than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.", BinaryComparison),
+		new OpCode("Call", "Non-virtual method call.", Call),
+		new OpCode("CallVirt", "Virtual method call.", Call),
+		new OpCode("CkFinite", "Checks that the float on top of the stack is not NaN or infinite.", Peeking, NoArguments, MayThrow, VoidResult),
+		new OpCode("Conv", "Numeric cast.", Unary, NonVoidResult),
+		new OpCode("Ldloc", "Loads the value of a local variable. (ldarg/ldloc)", NoArguments, NonVoidResult, HasVariableOperand),
+		new OpCode("Ldloca", "Loads the address of a local variable. (ldarga/ldloca)", NoArguments, RefResult, HasVariableOperand),
+		new OpCode("Stloc", "Stores a value into a local variable. (starg/stloc)", Unary, VoidResult, HasVariableOperand),
+		new OpCode("LdStr", "Loads a constant string.", LoadConstant),
+		new OpCode("LdcI4", "Loads a constant 32-bit integer.", LoadConstant, I4Result),
+		new OpCode("LdcI8", "Loads a constant 64-bit integer.", LoadConstant, NonVoidResult),
+		new OpCode("LdcF", "Loads a constant floating-point number.", LoadConstant),
+		new OpCode("LdNull", "Loads the null reference.", LoadConstant),
+		new OpCode("Return", "Returns from the current method or lambda.", MayBranch, UnconditionalBranch),
+		new OpCode("Shl", "Shift left", BinaryNumeric),
+		new OpCode("Shr", "Shift right", BinaryNumeric),
+		
+		new OpCode("Ldfld", "Load instance field", Unary, MayThrow, SideEffect, NonVoidResult, HasFieldOperand),
+		new OpCode("Ldflda", "Load address of instance field", Unary, MayThrow, RefResult, HasFieldOperand),
+		new OpCode("Stfld", "Store value to instance field", Binary, SideEffect, MayThrow, VoidResult, HasFieldOperand),
+		new OpCode("Ldsfld", "Load static field", NoArguments, SideEffect, NonVoidResult, HasFieldOperand),
+		new OpCode("Ldsflda", "Load static field address", NoArguments, RefResult, HasFieldOperand),
+		new OpCode("Stsfld", "Store value to static field", Unary, SideEffect, VoidResult, HasFieldOperand),
+
+		new OpCode("IsInst", "Test if object is instance of class or interface.", Unary, NonVoidResult, HasTypeOperand),
+		new OpCode("LdInd", "Indirect load (ref/pointer dereference).", Unary, NonVoidResult, HasTypeOperand, SideEffect, MayThrow),
+		new OpCode("UnboxAny", "Unbox a value.", Unary, NonVoidResult, HasTypeOperand, SideEffect, MayThrow),
+		new OpCode("NewObj", "Creates an object instance and calls the constructor.", Call),
+		new OpCode("Throw", "Throws an exception.", Unary, MayThrow, UnconditionalBranch),
+		new OpCode("LdLen", "Returns the length of an array as 'native unsigned int'.", Unary, MayThrow, NonVoidResult),
+		
+		
+	};
+#>
+using System;
+using Mono.Cecil;
+
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>
+	/// Enum representing the type of an <see cref="ILInstruction"/>.
+	/// </summary>
+	public enum OpCode
+	{
+<#	foreach (OpCode opCode in opCodes) { #>
+		/// <summary><#=opCode.Description#></summary>
+		<#=opCode.Name#>,
+<#  } #>
+	}
+
+<#	foreach (OpCode opCode in opCodes) { #>
+	/// <summary><#=opCode.Description#></summary>
+	public sealed partial class <#=opCode.Name#>(<#=string.Join(", ", opCode.ConstructorParameters)#>) : <#=opCode.BaseClass#>(<#=string.Join(", ", opCode.BaseConstructorArguments)#>)
+	{
+<#=string.Join(Environment.NewLine, opCode.Members)#>
+		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		{
+			return visitor.Visit<#=opCode.Name#>(this);
+		}
+	}
+
+<#	} #>
+
+	
+	public abstract class ILVisitor<TReturn>
+	{
+		protected abstract TReturn Default(ILInstruction inst);
+		
+<#	foreach (OpCode opCode in opCodes) { #>
+		protected internal virtual TReturn Visit<#=opCode.Name#>(<#=opCode.Name#> inst)
+		{
+			return Default(inst);
+		}
+<#	} #>
+	}
+}
+
+<#+
+	class OpCode {
+		public readonly string Name;
+		public readonly string Description;
+
+		public OpCode(string name, string description, params Action<OpCode>[] traits)
+		{
+			this.Name = name;
+			this.Description = description;
+			this.BaseConstructorArguments.Add("OpCode." + name);
+			foreach (var trait in traits)
+				trait(this);
+		}
+
+		public List<string> ConstructorParameters = new List<string>();
+
+		public string BaseClass = "ILInstruction";
+		public List<string> BaseConstructorArguments = new List<string>();
+		public List<string> Members = new List<string>();
+	}
+
+	// Peeking trait: the instruction looks at the top-of-stack without popping
+	static Action<OpCode> Peeking = opCode => { };
+	
+	// VoidResult trait: the instruction has no result and is not usable as an argument
+	static Action<OpCode> VoidResult = opCode => { };
+
+	// NonVoidResult trait: the instruction has a result and is usable as an argument
+	static Action<OpCode> NonVoidResult = opCode => { };
+
+	// I4Result trait: the instruction results in StackType.I4. Implies NonVoidResult.
+	static Action<OpCode> I4Result = NonVoidResult;
+	
+	// RefResult trait: the instruction results in StackType.Ref. Implies NonVoidResult.
+	static Action<OpCode> RefResult = NonVoidResult;
+
+	// MayThrow trait: the instruction may throw exceptions
+	static Action<OpCode> MayThrow = opCode => {};
+	
+	// MayBranch trait: the instruction may cause control flow to branch (e.g. branch, conditionalbranch, return)
+	static Action<OpCode> MayBranch = opCode => {};
+	
+	// HasBranchTarget trait: the instruction has an explicit branch target offset
+	static Action<OpCode> HasBranchTarget = opCode => {};
+
+	// UnconditionalBranch trait: the instruction does not produce a result normally; it always branches or throws an exception. Implies VoidResult.
+	static Action<OpCode> UnconditionalBranch = opCode => {};
+	
+	// NoArguments trait: the instruction no arguments
+	static Action<OpCode> NoArguments = opCode => {
+		opCode.BaseClass = "SimpleInstruction";
+	};
+	
+	// Unary trait: the instruction has a single argument
+	static Action<OpCode> Unary = opCode => {
+		opCode.BaseClass = "UnaryInstruction";
+	};
+	
+	// Binary trait: the instruction has two arguments named 'Left' and 'Right'
+	static Action<OpCode> Binary = opCode => {
+		opCode.BaseClass = "BinaryInstruction";
+	};
+
+	// BinaryNumeric trait: the instruction is derived from BinaryNumericInstruction. Implies Binary and NonVoidResult; and implies MayThrow if the overflow mode is checked.
+	static Action<OpCode> BinaryNumeric = opCode => {
+		opCode.BaseClass = "BinaryNumericInstruction";
+		opCode.ConstructorParameters.Add("StackType opType");
+		opCode.ConstructorParameters.Add("OverflowMode overflowMode");
+		opCode.BaseConstructorArguments.Add("opType");
+		opCode.BaseConstructorArguments.Add("overflowMode");
+	};
+	
+	// BinaryNumeric trait: the instruction is derived from BinaryComparisonInstruction. Implies Binary and I4Result.
+	static Action<OpCode> BinaryComparison = opCode => {
+		opCode.BaseClass = "BinaryComparisonInstruction";
+		opCode.ConstructorParameters.Add("StackType opType");
+		opCode.BaseConstructorArguments.Add("opType");
+	};
+
+	// SideEffect trait: the instruction has a non-local side effect
+	static Action<OpCode> SideEffect = opCode => {};
+
+	// Call trait: the instruction performs a method call
+	static Action<OpCode> Call = opCode => {
+		opCode.BaseClass = "CallInstruction";
+		opCode.ConstructorParameters.Add("MethodReference method");
+		opCode.BaseConstructorArguments.Add("method");
+	};
+
+	// HasVariableOperand trait: the instruction refers to a local variable
+	static Action<OpCode> HasVariableOperand = opCode => {};
+	
+	static Action<OpCode> HasFieldOperand = opCode => {};
+
+	static Action<OpCode> HasTypeOperand = opCode => {};
+	
+	// LoadConstant trait: the instruction loads a compile-time constant. Implies NoArguments and NonVoidResult
+	static Action<OpCode> LoadConstant = opCode => {
+		NoArguments(opCode);
+		NonVoidResult(opCode);
+	};
+#>

@@ -9,37 +9,34 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
-	class StatementBuilder(ICompilation compilation)
+	class StatementBuilder(ICompilation compilation) : ILVisitor<Statement>
 	{
 		readonly ExpressionBuilder exprBuilder = new ExpressionBuilder(compilation);
 
 		public Statement Convert(ILInstruction inst)
 		{
-			switch (inst.OpCode) {
-				case OpCode.BlockContainer:
-					return ConvertBlockContainer((BlockContainer)inst);
-				case OpCode.Ret:
-					if (inst is ReturnVoidInstruction)
-						return new ReturnStatement().WithAnnotation(inst);
-					return new ReturnStatement(ConvertUnaryArg(inst)).WithAnnotation(inst);
-				case OpCode.Throw:
-					return new ThrowStatement(ConvertUnaryArg(inst)).WithAnnotation(inst);
-				case OpCode.ConditionalBranch:
-					return ConvertConditionalBranch((ConditionalBranch)inst);
-				default:
-					return new ExpressionStatement(exprBuilder.Convert(inst));
-			}
+			return inst.AcceptVisitor(this);
 		}
 
-		private Statement ConvertConditionalBranch(ConditionalBranch inst)
+		protected override Statement Default(ILInstruction inst)
+		{
+			return new ExpressionStatement(exprBuilder.Convert(inst));
+		}
+
+		protected internal override Statement VisitConditionalBranch(ConditionalBranch inst)
 		{
 			var condition = exprBuilder.ConvertCondition(inst.Condition);
 			return new IfElseStatement(condition, new GotoStatement(inst.TargetLabel));
 		}
 
-		private Expression ConvertUnaryArg(ILInstruction inst)
+		protected internal override Statement VisitBranch(Branch inst)
 		{
-			return exprBuilder.Convert(((UnaryInstruction)inst).Operand);
+			return new GotoStatement(inst.TargetLabel);
+		}
+
+		protected internal override Statement VisitBlockContainer(BlockContainer inst)
+		{
+			return ConvertBlockContainer(inst);
 		}
 
 		public BlockStatement ConvertBlockContainer(BlockContainer container)

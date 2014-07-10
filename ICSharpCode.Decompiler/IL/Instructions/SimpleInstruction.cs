@@ -9,9 +9,14 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// A simple instruction that does not have any arguments.
 	/// </summary>
-	abstract class SimpleInstruction(OpCode opCode) : ILInstruction(opCode)
+	public abstract class SimpleInstruction(OpCode opCode) : ILInstruction(opCode)
 	{
-		public override bool IsPeeking { get { return false; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+		}
+
+		/*public override bool IsPeeking { get { return false; } }
 
 		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
 		{
@@ -21,9 +26,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			finished = true; // Nothing to do, since we don't have arguments.
 			return this;
-		}
+		}*/
 	}
 
+	/*
 	class Nop() : SimpleInstruction(OpCode.Nop)
 	{
 		public override bool NoResult { get { return true; } }
@@ -159,5 +165,5 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			get { return InstructionFlags.None; }
 		}
-	}
+	}*/
 }

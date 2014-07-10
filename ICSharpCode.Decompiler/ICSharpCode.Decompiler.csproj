@@ -67,6 +67,17 @@
     <Compile Include="CSharp\ExpressionBuilder.cs" />
     <Compile Include="CSharp\NRefactoryExtensions.cs" />
     <Compile Include="CSharp\StatementBuilder.cs" />
+    <Compile Include="IL\Instructions.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Instructions.tt</DependentUpon>
+    </Compile>
+    <Compile Include="IL\Instructions\BinaryInstruction.cs" />
+    <Compile Include="IL\Instructions\Block.cs" />
+    <Compile Include="IL\Instructions\CallInstruction.cs" />
+    <Compile Include="IL\Instructions\ILInstruction.cs" />
+    <Compile Include="IL\Instructions\SimpleInstruction.cs" />
+    <Compile Include="IL\Instructions\UnaryInstruction.cs" />
     <Compile Include="TypesHierarchyHelpers.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />
@@ -85,8 +96,6 @@
     <Compile Include="IL\ILVariable.cs" />
     <Compile Include="IL\InstructionFlags.cs" />
     <Compile Include="IL\InstructionOutputExtensions.cs" />
-    <Compile Include="IL\Instructions\ILInstruction.cs" />
-    <Compile Include="IL\Instructions\OpCode.cs" />
     <Compile Include="IL\PrimitiveType.cs" />
     <Compile Include="IL\StackType.cs" />
     <Compile Include="Output\ITextOutput.cs" />
@@ -100,6 +109,10 @@
     <None Include="IL\ILOpCodes.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ILOpCodes.cs</LastGenOutput>
+    </None>
+    <None Include="IL\Instructions.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <LastGenOutput>Instructions.cs</LastGenOutput>
     </None>
     <None Include="packages.config" />
     <None Include="Properties\AssemblyInfo.template.cs" />

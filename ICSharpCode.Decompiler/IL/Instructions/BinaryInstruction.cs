@@ -6,11 +6,12 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	abstract class BinaryInstruction(OpCode opCode) : ILInstruction(opCode)
+	public abstract class BinaryInstruction(OpCode opCode) : ILInstruction(opCode)
 	{
 		public ILInstruction Left = Pop;
 		public ILInstruction Right = Pop;
 
+		/*
 		public override bool IsPeeking { get { return Left.IsPeeking; } }
 
 		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
@@ -26,10 +27,10 @@ namespace ICSharpCode.Decompiler.IL
 			if (finished)
 				Left = Left.Inline(flagsBefore, instructionStack, out finished);
 			return this;
-		}
+		}*/
 	}
 
-	class BinaryNumericInstruction(OpCode opCode, StackType opType, OverflowMode overflowMode)
+	public abstract class BinaryNumericInstruction(OpCode opCode, StackType opType, OverflowMode overflowMode)
 		: BinaryInstruction(opCode)
 	{
 		public readonly StackType OpType = opType;
@@ -47,14 +48,9 @@ namespace ICSharpCode.Decompiler.IL
 			Right.WriteTo(output);
 			output.Write(')');
 		}
-
-		public override InstructionFlags Flags
-		{
-			get { return Left.Flags | Right.Flags | InstructionFlags.MayThrow; }
-		}
 	}
 
-	class BinaryComparisonInstruction(OpCode opCode, StackType opType)
+	public abstract class BinaryComparisonInstruction(OpCode opCode, StackType opType)
 		: BinaryInstruction(opCode)
 	{
 		public readonly StackType OpType = opType;
@@ -69,11 +65,6 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(", ");
 			Right.WriteTo(output);
 			output.Write(')');
-		}
-
-		public override InstructionFlags Flags
-		{
-			get { return Left.Flags | Right.Flags; }
 		}
 	}
 

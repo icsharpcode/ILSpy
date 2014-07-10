@@ -8,20 +8,21 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	abstract class UnaryInstruction(OpCode opCode) : ILInstruction(opCode)
+	public abstract class UnaryInstruction(OpCode opCode) : ILInstruction(opCode)
 	{
-		public ILInstruction Operand = Pop;
+		public ILInstruction Argument = Pop;
 
-		public sealed override bool IsPeeking { get { return Operand.IsPeeking; } }
+		//public sealed override bool IsPeeking { get { return Operand.IsPeeking; } }
 
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 			output.Write('(');
-			Operand.WriteTo(output);
+			Argument.WriteTo(output);
 			output.Write(')');
 		}
 
+		/*
 		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
 		{
 			Operand = transformFunc(Operand);
@@ -31,9 +32,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Operand = Operand.Inline(flagsBefore, instructionStack, out finished);
 			return this;
-		}
+		}*/
 	}
 
+	/*
 	class VoidInstruction() : UnaryInstruction(OpCode.Void)
 	{
 		public override bool NoResult { get { return true; } }
@@ -111,6 +113,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			get { return Operand.Flags | InstructionFlags.MayThrow; }
 		}
-	}
+	}*/
 }
  

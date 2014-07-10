@@ -9,7 +9,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// A type for the purpose of stack analysis.
 	/// </summary>
-	enum StackType
+	public enum StackType
 	{
 		Unknown,
 		/// <summary>32-bit integer</summary>

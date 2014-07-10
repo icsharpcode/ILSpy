@@ -9,10 +9,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// A block of IL instructions.
 	/// </summary>
-	class Block() : ILInstruction(OpCode.Block)
+	partial class Block : ILInstruction
 	{
 		public readonly List<ILInstruction> Instructions = new List<ILInstruction>();
 
+		/*
 		public override bool IsPeeking { get { return Instructions.Count > 0 && Instructions[0].IsPeeking; } }
 
 		public override bool NoResult { get { return true; } }
@@ -23,6 +24,7 @@ namespace ICSharpCode.Decompiler.IL
 				Instructions[i] = transformFunc(Instructions[i]);
 			}
 		}
+		*/
 
 		/// <summary>
 		/// Gets the name of this block.
@@ -45,6 +47,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteLine("}");
 		}
 
+		/*
 		public override InstructionFlags Flags
 		{
 			get {
@@ -63,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL
 			else
 				finished = true;
 			return this;
-		}
+		}*/
 	}
 
 	/// <summary>
@@ -73,11 +76,12 @@ namespace ICSharpCode.Decompiler.IL
 	/// That means that viewed from the outside, the block container has a single entry point (but possibly multiple exit points),
 	/// and the same holds for every block within the container.
 	/// </summary>
-	class BlockContainer() : ILInstruction(OpCode.BlockContainer)
+	partial class BlockContainer : ILInstruction
 	{
 		public List<Block> Blocks = new List<Block>();
 		public Block EntryPoint { get { return Blocks[0]; } }
 
+		/*
 		public override bool IsPeeking { get { return EntryPoint.IsPeeking; } }
 
 		public override bool NoResult { get { return true; } }
@@ -89,6 +93,7 @@ namespace ICSharpCode.Decompiler.IL
 					throw new InvalidOperationException("Cannot replace blocks");
             }
 		}
+		*/
 
 		public override void WriteTo(ITextOutput output)
 		{
@@ -102,6 +107,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteLine("}");
 		}
 
+		/*
 		public override InstructionFlags Flags
 		{
 			get
@@ -118,6 +124,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			finished = false;
 			return this;
-		}
+		}*/
 	}
 }

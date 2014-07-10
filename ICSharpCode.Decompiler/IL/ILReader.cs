@@ -13,6 +13,9 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public class ILReader(Mono.Cecil.Cil.MethodBody body, CancellationToken cancellationToken)
 	{
+		private readonly Mono.Cecil.Cil.MethodBody body = body;
+		private readonly CancellationToken cancellationToken = cancellationToken;
+
 		internal static ILOpCode ReadOpCode(ref BlobReader reader)
 		{
 			byte b = reader.ReadByte();
@@ -222,7 +225,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Clt_Un:
 					return Comparison(OpCode.Clt_Un, OpCode.Clt_Un);
 				case ILOpCode.Ckfinite:
-					return new Ckfinite();
+					return new CkFinite();
 				case ILOpCode.Conv_I1:
 					return Conv(PrimitiveType.I1, OverflowMode.None);
 				case ILOpCode.Conv_I2:
@@ -341,7 +344,7 @@ namespace ICSharpCode.Decompiler.IL
 					return LdcI4(reader.ReadSByte());
 				case ILOpCode.Ldnull:
 					stack.Push(StackType.O);
-					return new ConstantNull();
+					return new LdNull();
 				case ILOpCode.Ldstr:
 					return DecodeLdstr();
 				case ILOpCode.Ldftn:
@@ -407,7 +410,7 @@ namespace ICSharpCode.Decompiler.IL
 					return BinaryNumeric(OpCode.BitOr);
 				case ILOpCode.Pop:
 					stack.PopOrDefault();
-					return new VoidInstruction();
+					return new Void();
 				case ILOpCode.Rem:
 					return BinaryNumeric(OpCode.Rem, OverflowMode.None);
 				case ILOpCode.Rem_Un:

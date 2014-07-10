@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	class CallInstruction(OpCode opCode, MethodReference methodReference) : ILInstruction(opCode)
+	public abstract class CallInstruction(OpCode opCode, MethodReference methodReference) : ILInstruction(opCode)
 	{
 		public readonly MethodReference Method = methodReference;
 		public readonly ILInstruction[] Operands = InitOperands(opCode, methodReference);
@@ -25,6 +25,7 @@ namespace ICSharpCode.Decompiler.IL
 			return operands;
 		}
 
+		/*
 		public override bool IsPeeking { get { return Operands.Length > 0 && Operands[0].IsPeeking; } }
 
 		public override bool NoResult
@@ -40,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL
 			for (int i = 0; i < Operands.Length; i++) {
 				Operands[i] = transformFunc(Operands[i]);
 			}
-		}
+		}*/
 
 		/// <summary>
 		/// Gets/Sets whether the call has the 'tail.' prefix.
@@ -73,6 +74,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 		}
 
+		/*
 		public override InstructionFlags Flags
 		{
 			get
@@ -99,6 +101,6 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 			return this;
-        }
+        }*/
 	}
 }
