@@ -12,9 +12,12 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Translates from ILAst to C# expressions.
 	/// </summary>
-	class ExpressionBuilder(private readonly ICompilation compilation)
+	class ExpressionBuilder(ICompilation compilation)
 	{
-		struct ConvertedExpression(public readonly Expression Expression, public readonly IType Type) { }
+		struct ConvertedExpression(Expression expression, IType type) {
+			public readonly Expression Expression = expression;
+			public readonly IType Type = type;
+		}
 
 		public Expression Convert(ILInstruction inst)
 		{

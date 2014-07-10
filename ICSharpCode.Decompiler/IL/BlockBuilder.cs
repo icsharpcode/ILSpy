@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	class BlockBuilder(private readonly Mono.Cecil.Cil.MethodBody body, bool instructionInlining)
+	class BlockBuilder(Mono.Cecil.Cil.MethodBody body, bool instructionInlining)
 	{
 		BlockContainer currentContainer;
 		Block currentBlock;

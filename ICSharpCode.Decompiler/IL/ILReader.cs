@@ -11,7 +11,7 @@ using System.Threading;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public class ILReader(private readonly Mono.Cecil.Cil.MethodBody body, private readonly CancellationToken cancellationToken)
+	public class ILReader(Mono.Cecil.Cil.MethodBody body, CancellationToken cancellationToken)
 	{
 		internal static ILOpCode ReadOpCode(ref BlobReader reader)
 		{

@@ -9,9 +9,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// Represents a decoded IL instruction
 	/// </summary>
-	public abstract class ILInstruction(public readonly OpCode OpCode)
+	public abstract class ILInstruction(OpCode opCode)
 	{
 		public static readonly ILInstruction Pop = new Pop();
+
+		public readonly OpCode OpCode = opCode;
 
 		/// <summary>
 		/// Gets the ILRange for this instruction alone, ignoring the operands.

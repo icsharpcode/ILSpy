@@ -14,8 +14,12 @@ namespace ICSharpCode.Decompiler.IL
 		Parameter,
 	}
 
-	class ILVariable(public readonly VariableKind Kind, public readonly TypeReference Type, public readonly int Index)
+	class ILVariable(VariableKind kind, TypeReference type, int index)
 	{
+		public readonly VariableKind Kind = kind;
+		public readonly TypeReference Type = type;
+		public readonly int Index = index;
+
 		readonly object CecilObject;
 		
 		public ILVariable(VariableDefinition v)
