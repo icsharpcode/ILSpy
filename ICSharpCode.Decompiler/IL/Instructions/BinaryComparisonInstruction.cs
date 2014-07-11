@@ -18,41 +18,39 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 namespace ICSharpCode.Decompiler.IL
 {
-	[Flags]
-	public enum InstructionFlags
+	public abstract class BinaryComparisonInstruction : BinaryInstruction
 	{
-		None = 0,
-		/// <summary>
-		/// The instruction may pop from the evaluation stack.
-		/// </summary>
-		MayPop   = 0x01,
-		MayPeek  = 0x02,
-		/// <summary>
-		/// The instruction may throw an exception.
-		/// </summary>
-		MayThrow = 0x04,
-		/// <summary>
-		/// The instruction may exit with a branch or return.
-		/// </summary>
-		MayBranch = 0x08,
-		/// <summary>
-		/// The instruction may read from local variables.
-		/// </summary>
-		MayReadLocals  = 0x10,
-		/// <summary>
-		/// The instruction may write to local variables.
-		/// </summary>
-		MayWriteLocals = 0x20,
-		/// <summary>
-		/// The instruction may have side effects, such as accessing heap memory,
-		/// performing system calls, writing to local variables through pointers, etc.
-		/// </summary>
-		SideEffects = 0x40,
+		public readonly StackType OpType;
+
+		protected BinaryComparisonInstruction(OpCode opCode, StackType opType) : base(opCode)
+		{
+			this.OpType = opType;
+		}
+
+		public sealed override StackType ResultType {
+			get {
+				return StackType.I4;
+			}
+		}
+
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('.');
+			output.Write(OpType);
+			output.Write('(');
+			Left.WriteTo(output);
+			output.Write(", ");
+			Right.WriteTo(output);
+			output.Write(')');
+		}
 	}
 }
+
+

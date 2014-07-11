@@ -1,4 +1,22 @@
-﻿using System;
+﻿// Copyright (c) 2014 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.IL
@@ -69,11 +87,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Numeric cast.</summary>
 		Conv,
 		/// <summary>Loads the value of a local variable. (ldarg/ldloc)</summary>
-		Ldloc,
+		LdLoc,
 		/// <summary>Loads the address of a local variable. (ldarga/ldloca)</summary>
-		Ldloca,
+		LdLoca,
 		/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
-		Stloc,
+		StLoc,
 		/// <summary>Loads a constant string.</summary>
 		LdStr,
 		/// <summary>Loads a constant 32-bit integer.</summary>
@@ -117,530 +135,762 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>No operation. Takes 0 arguments and returns void.</summary>
-	public sealed partial class Nop() : SimpleInstruction(OpCode.Nop)
+	public sealed partial class Nop : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Nop() : base(OpCode.Nop)
+		{
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNop(this);
 		}
 	}
 
 	/// <summary>Pops the top of the evaluation stack and returns the value.</summary>
-	public sealed partial class Pop() : SimpleInstruction(OpCode.Pop)
+	public sealed partial class Pop : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Pop(StackType resultType) : base(OpCode.Pop)
+		{
+			this.resultType = resultType;
+		}
+		StackType resultType;
+		public override StackType ResultType { get { return resultType; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitPop(this);
 		}
 	}
 
 	/// <summary>Peeks at the top of the evaluation stack and returns the value. Corresponds to IL 'dup'.</summary>
-	public sealed partial class Peek() : SimpleInstruction(OpCode.Peek)
+	public sealed partial class Peek : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Peek(StackType resultType) : base(OpCode.Peek)
+		{
+			this.resultType = resultType;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayPeek;
+		}
+		StackType resultType;
+		public override StackType ResultType { get { return resultType; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitPeek(this);
 		}
 	}
 
 	/// <summary>Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.</summary>
-	public sealed partial class Void() : UnaryInstruction(OpCode.Void)
+	public sealed partial class Void : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Void() : base(OpCode.Void)
+		{
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitVoid(this);
 		}
 	}
 
 	/// <summary>A container of IL blocks.</summary>
-	public sealed partial class BlockContainer() : ILInstruction(OpCode.BlockContainer)
+	public sealed partial class BlockContainer : ILInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public BlockContainer() : base(OpCode.BlockContainer)
+		{
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBlockContainer(this);
 		}
 	}
 
 	/// <summary>A block of IL instructions.</summary>
-	public sealed partial class Block() : ILInstruction(OpCode.Block)
+	public sealed partial class Block : ILInstruction
 	{
+		public Block() : base(OpCode.Block)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBlock(this);
 		}
 	}
 
 	/// <summary>Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).</summary>
-	public sealed partial class LogicNot() : UnaryInstruction(OpCode.LogicNot)
+	public sealed partial class LogicNot : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public LogicNot() : base(OpCode.LogicNot)
+		{
+		}
+		public override StackType ResultType { get { return StackType.I4; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLogicNot(this);
 		}
 	}
 
 	/// <summary>Adds two numbers.</summary>
-	public sealed partial class Add(StackType opType, OverflowMode overflowMode) : BinaryNumericInstruction(OpCode.Add, opType, overflowMode)
+	public sealed partial class Add : BinaryNumericInstruction
 	{
+		public Add(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Add, opType, resultType, overflowMode)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitAdd(this);
 		}
 	}
 
 	/// <summary>Subtracts two numbers</summary>
-	public sealed partial class Sub(StackType opType, OverflowMode overflowMode) : BinaryNumericInstruction(OpCode.Sub, opType, overflowMode)
+	public sealed partial class Sub : BinaryNumericInstruction
 	{
+		public Sub(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Sub, opType, resultType, overflowMode)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitSub(this);
 		}
 	}
 
 	/// <summary>Multiplies two numbers</summary>
-	public sealed partial class Mul(StackType opType, OverflowMode overflowMode) : BinaryNumericInstruction(OpCode.Mul, opType, overflowMode)
+	public sealed partial class Mul : BinaryNumericInstruction
 	{
+		public Mul(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Mul, opType, resultType, overflowMode)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitMul(this);
 		}
 	}
 
 	/// <summary>Divides two numbers</summary>
-	public sealed partial class Div(StackType opType, OverflowMode overflowMode) : BinaryNumericInstruction(OpCode.Div, opType, overflowMode)
+	public sealed partial class Div : BinaryNumericInstruction
 	{
+		public Div(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Div, opType, resultType, overflowMode)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitDiv(this);
 		}
 	}
 
 	/// <summary>Division remainder</summary>
-	public sealed partial class Rem(StackType opType, OverflowMode overflowMode) : BinaryNumericInstruction(OpCode.Rem, opType, overflowMode)
+	public sealed partial class Rem : BinaryNumericInstruction
 	{
+		public Rem(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Rem, opType, resultType, overflowMode)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitRem(this);
 		}
 	}
 
 	/// <summary>Unary negation</summary>
-	public sealed partial class Neg() : UnaryInstruction(OpCode.Neg)
+	public sealed partial class Neg : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Neg(StackType resultType) : base(OpCode.Neg)
+		{
+			this.resultType = resultType;
+		}
+		StackType resultType;
+		public override StackType ResultType { get { return resultType; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNeg(this);
 		}
 	}
 
 	/// <summary>Bitwise AND</summary>
-	public sealed partial class BitAnd(StackType opType, OverflowMode overflowMode) : BinaryNumericInstruction(OpCode.BitAnd, opType, overflowMode)
+	public sealed partial class BitAnd : BinaryNumericInstruction
 	{
+		public BitAnd(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.BitAnd, opType, resultType, overflowMode)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitAnd(this);
 		}
 	}
 
 	/// <summary>Bitwise OR</summary>
-	public sealed partial class BitOr(StackType opType, OverflowMode overflowMode) : BinaryNumericInstruction(OpCode.BitOr, opType, overflowMode)
+	public sealed partial class BitOr : BinaryNumericInstruction
 	{
+		public BitOr(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.BitOr, opType, resultType, overflowMode)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitOr(this);
 		}
 	}
 
 	/// <summary>Bitwise XOR</summary>
-	public sealed partial class BitXor(StackType opType, OverflowMode overflowMode) : BinaryNumericInstruction(OpCode.BitXor, opType, overflowMode)
+	public sealed partial class BitXor : BinaryNumericInstruction
 	{
+		public BitXor(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.BitXor, opType, resultType, overflowMode)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitXor(this);
 		}
 	}
 
 	/// <summary>Bitwise NOT</summary>
-	public sealed partial class BitNot() : UnaryInstruction(OpCode.BitNot)
+	public sealed partial class BitNot : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public BitNot(StackType resultType) : base(OpCode.BitNot)
+		{
+			this.resultType = resultType;
+		}
+		StackType resultType;
+		public override StackType ResultType { get { return resultType; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitNot(this);
 		}
 	}
 
 	/// <summary>Retrieves the RuntimeArgumentHandle.</summary>
-	public sealed partial class Arglist() : SimpleInstruction(OpCode.Arglist)
+	public sealed partial class Arglist : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Arglist() : base(OpCode.Arglist)
+		{
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitArglist(this);
 		}
 	}
 
 	/// <summary><c>if (condition) goto target;</c>.</summary>
-	public sealed partial class ConditionalBranch() : UnaryInstruction(OpCode.ConditionalBranch)
+	public sealed partial class ConditionalBranch : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public ConditionalBranch() : base(OpCode.ConditionalBranch)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayBranch;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitConditionalBranch(this);
 		}
 	}
 
 	/// <summary><c>goto target;</c>.</summary>
-	public sealed partial class Branch() : SimpleInstruction(OpCode.Branch)
+	public sealed partial class Branch : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Branch() : base(OpCode.Branch)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayBranch;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBranch(this);
 		}
 	}
 
 	/// <summary>Breakpoint instruction</summary>
-	public sealed partial class DebugBreak() : SimpleInstruction(OpCode.DebugBreak)
+	public sealed partial class DebugBreak : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public DebugBreak() : base(OpCode.DebugBreak)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitDebugBreak(this);
 		}
 	}
 
 	/// <summary>Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.</summary>
-	public sealed partial class Ceq(StackType opType) : BinaryComparisonInstruction(OpCode.Ceq, opType)
+	public sealed partial class Ceq : BinaryComparisonInstruction
 	{
+		public Ceq(StackType opType) : base(OpCode.Ceq, opType)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCeq(this);
 		}
 	}
 
 	/// <summary>Compare greater than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.</summary>
-	public sealed partial class Cgt(StackType opType) : BinaryComparisonInstruction(OpCode.Cgt, opType)
+	public sealed partial class Cgt : BinaryComparisonInstruction
 	{
+		public Cgt(StackType opType) : base(OpCode.Cgt, opType)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCgt(this);
 		}
 	}
 
 	/// <summary>Compare greater than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.</summary>
-	public sealed partial class Cgt_Un(StackType opType) : BinaryComparisonInstruction(OpCode.Cgt_Un, opType)
+	public sealed partial class Cgt_Un : BinaryComparisonInstruction
 	{
+		public Cgt_Un(StackType opType) : base(OpCode.Cgt_Un, opType)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCgt_Un(this);
 		}
 	}
 
 	/// <summary>Compare less than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.</summary>
-	public sealed partial class Clt(StackType opType) : BinaryComparisonInstruction(OpCode.Clt, opType)
+	public sealed partial class Clt : BinaryComparisonInstruction
 	{
+		public Clt(StackType opType) : base(OpCode.Clt, opType)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitClt(this);
 		}
 	}
 
 	/// <summary>Compare less than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.</summary>
-	public sealed partial class Clt_Un(StackType opType) : BinaryComparisonInstruction(OpCode.Clt_Un, opType)
+	public sealed partial class Clt_Un : BinaryComparisonInstruction
 	{
+		public Clt_Un(StackType opType) : base(OpCode.Clt_Un, opType)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitClt_Un(this);
 		}
 	}
 
 	/// <summary>Non-virtual method call.</summary>
-	public sealed partial class Call(MethodReference method) : CallInstruction(OpCode.Call, method)
+	public sealed partial class Call : CallInstruction
 	{
+		public Call(MethodReference method) : base(OpCode.Call, method)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCall(this);
 		}
 	}
 
 	/// <summary>Virtual method call.</summary>
-	public sealed partial class CallVirt(MethodReference method) : CallInstruction(OpCode.CallVirt, method)
+	public sealed partial class CallVirt : CallInstruction
 	{
+		public CallVirt(MethodReference method) : base(OpCode.CallVirt, method)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCallVirt(this);
 		}
 	}
 
 	/// <summary>Checks that the float on top of the stack is not NaN or infinite.</summary>
-	public sealed partial class CkFinite() : SimpleInstruction(OpCode.CkFinite)
+	public sealed partial class CkFinite : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public CkFinite() : base(OpCode.CkFinite)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayPeek | InstructionFlags.MayThrow;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCkFinite(this);
 		}
 	}
 
 	/// <summary>Numeric cast.</summary>
-	public sealed partial class Conv() : UnaryInstruction(OpCode.Conv)
+	public sealed partial class Conv : UnaryInstruction
 	{
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitConv(this);
 		}
 	}
 
 	/// <summary>Loads the value of a local variable. (ldarg/ldloc)</summary>
-	public sealed partial class Ldloc() : SimpleInstruction(OpCode.Ldloc)
+	public sealed partial class LdLoc : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public LdLoc() : base(OpCode.LdLoc)
 		{
-			return visitor.VisitLdloc(this);
+		}
+		public override StackType ResultType { get { return Variable.Type.ToStackType(); } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdLoc(this);
 		}
 	}
 
 	/// <summary>Loads the address of a local variable. (ldarga/ldloca)</summary>
-	public sealed partial class Ldloca() : SimpleInstruction(OpCode.Ldloca)
+	public sealed partial class LdLoca : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public LdLoca() : base(OpCode.LdLoca)
 		{
-			return visitor.VisitLdloca(this);
+		}
+		public override StackType ResultType { get { return StackType.Ref; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdLoca(this);
 		}
 	}
 
 	/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
-	public sealed partial class Stloc() : UnaryInstruction(OpCode.Stloc)
+	public sealed partial class StLoc : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public StLoc() : base(OpCode.StLoc)
 		{
-			return visitor.VisitStloc(this);
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitStLoc(this);
 		}
 	}
 
 	/// <summary>Loads a constant string.</summary>
-	public sealed partial class LdStr() : SimpleInstruction(OpCode.LdStr)
+	public sealed partial class LdStr : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public LdStr() : base(OpCode.LdStr)
+		{
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdStr(this);
 		}
 	}
 
 	/// <summary>Loads a constant 32-bit integer.</summary>
-	public sealed partial class LdcI4() : SimpleInstruction(OpCode.LdcI4)
+	public sealed partial class LdcI4 : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public LdcI4() : base(OpCode.LdcI4)
+		{
+		}
+		public override StackType ResultType { get { return StackType.I4; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcI4(this);
 		}
 	}
 
 	/// <summary>Loads a constant 64-bit integer.</summary>
-	public sealed partial class LdcI8() : SimpleInstruction(OpCode.LdcI8)
+	public sealed partial class LdcI8 : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public LdcI8() : base(OpCode.LdcI8)
+		{
+		}
+		public override StackType ResultType { get { return StackType.I8; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcI8(this);
 		}
 	}
 
 	/// <summary>Loads a constant floating-point number.</summary>
-	public sealed partial class LdcF() : SimpleInstruction(OpCode.LdcF)
+	public sealed partial class LdcF : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public LdcF() : base(OpCode.LdcF)
+		{
+		}
+		public override StackType ResultType { get { return StackType.F; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcF(this);
 		}
 	}
 
 	/// <summary>Loads the null reference.</summary>
-	public sealed partial class LdNull() : SimpleInstruction(OpCode.LdNull)
+	public sealed partial class LdNull : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public LdNull() : base(OpCode.LdNull)
+		{
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdNull(this);
 		}
 	}
 
 	/// <summary>Returns from the current method or lambda.</summary>
-	public sealed partial class Return() : ILInstruction(OpCode.Return)
+	public sealed partial class Return : ILInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Return() : base(OpCode.Return)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayBranch;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitReturn(this);
 		}
 	}
 
 	/// <summary>Shift left</summary>
-	public sealed partial class Shl(StackType opType, OverflowMode overflowMode) : BinaryNumericInstruction(OpCode.Shl, opType, overflowMode)
+	public sealed partial class Shl : BinaryNumericInstruction
 	{
+		public Shl(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Shl, opType, resultType, overflowMode)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitShl(this);
 		}
 	}
 
 	/// <summary>Shift right</summary>
-	public sealed partial class Shr(StackType opType, OverflowMode overflowMode) : BinaryNumericInstruction(OpCode.Shr, opType, overflowMode)
+	public sealed partial class Shr : BinaryNumericInstruction
 	{
+		public Shr(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Shr, opType, resultType, overflowMode)
+		{
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitShr(this);
 		}
 	}
 
 	/// <summary>Load instance field</summary>
-	public sealed partial class Ldfld() : UnaryInstruction(OpCode.Ldfld)
+	public sealed partial class Ldfld : UnaryInstruction
 	{
+		public Ldfld() : base(OpCode.Ldfld)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdfld(this);
 		}
 	}
 
 	/// <summary>Load address of instance field</summary>
-	public sealed partial class Ldflda() : UnaryInstruction(OpCode.Ldflda)
+	public sealed partial class Ldflda : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Ldflda() : base(OpCode.Ldflda)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override StackType ResultType { get { return StackType.Ref; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdflda(this);
 		}
 	}
 
 	/// <summary>Store value to instance field</summary>
-	public sealed partial class Stfld() : BinaryInstruction(OpCode.Stfld)
+	public sealed partial class Stfld : BinaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Stfld() : base(OpCode.Stfld)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStfld(this);
 		}
 	}
 
 	/// <summary>Load static field</summary>
-	public sealed partial class Ldsfld() : SimpleInstruction(OpCode.Ldsfld)
+	public sealed partial class Ldsfld : SimpleInstruction
 	{
+		public Ldsfld() : base(OpCode.Ldsfld)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect;
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdsfld(this);
 		}
 	}
 
 	/// <summary>Load static field address</summary>
-	public sealed partial class Ldsflda() : SimpleInstruction(OpCode.Ldsflda)
+	public sealed partial class Ldsflda : SimpleInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Ldsflda() : base(OpCode.Ldsflda)
+		{
+		}
+		public override StackType ResultType { get { return StackType.Ref; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdsflda(this);
 		}
 	}
 
 	/// <summary>Store value to static field</summary>
-	public sealed partial class Stsfld() : UnaryInstruction(OpCode.Stsfld)
+	public sealed partial class Stsfld : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Stsfld() : base(OpCode.Stsfld)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStsfld(this);
 		}
 	}
 
 	/// <summary>Test if object is instance of class or interface.</summary>
-	public sealed partial class IsInst() : UnaryInstruction(OpCode.IsInst)
+	public sealed partial class IsInst : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public IsInst() : base(OpCode.IsInst)
+		{
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitIsInst(this);
 		}
 	}
 
 	/// <summary>Indirect load (ref/pointer dereference).</summary>
-	public sealed partial class LdInd() : UnaryInstruction(OpCode.LdInd)
+	public sealed partial class LdInd : UnaryInstruction
 	{
+		public LdInd() : base(OpCode.LdInd)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdInd(this);
 		}
 	}
 
 	/// <summary>Unbox a value.</summary>
-	public sealed partial class UnboxAny() : UnaryInstruction(OpCode.UnboxAny)
+	public sealed partial class UnboxAny : UnaryInstruction
 	{
+		public UnboxAny() : base(OpCode.UnboxAny)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
 
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitUnboxAny(this);
 		}
 	}
 
 	/// <summary>Creates an object instance and calls the constructor.</summary>
-	public sealed partial class NewObj(MethodReference method) : CallInstruction(OpCode.NewObj, method)
+	public sealed partial class NewObj : CallInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public NewObj(MethodReference method) : base(OpCode.NewObj, method)
+		{
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNewObj(this);
 		}
 	}
 
 	/// <summary>Throws an exception.</summary>
-	public sealed partial class Throw() : UnaryInstruction(OpCode.Throw)
+	public sealed partial class Throw : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public Throw() : base(OpCode.Throw)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitThrow(this);
 		}
 	}
 
 	/// <summary>Returns the length of an array as 'native unsigned int'.</summary>
-	public sealed partial class LdLen() : UnaryInstruction(OpCode.LdLen)
+	public sealed partial class LdLen : UnaryInstruction
 	{
-
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+		public LdLen() : base(OpCode.LdLen)
+		{
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override StackType ResultType { get { return StackType.I; } }
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLen(this);
 		}
@@ -648,219 +898,219 @@ namespace ICSharpCode.Decompiler.IL
 
 
 	
-	public abstract class ILVisitor<TReturn>
+	public abstract class ILVisitor<T>
 	{
-		protected abstract TReturn Default(ILInstruction inst);
+		protected abstract T Default(ILInstruction inst);
 		
-		protected internal virtual TReturn VisitNop(Nop inst)
+		protected internal virtual T VisitNop(Nop inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitPop(Pop inst)
+		protected internal virtual T VisitPop(Pop inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitPeek(Peek inst)
+		protected internal virtual T VisitPeek(Peek inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitVoid(Void inst)
+		protected internal virtual T VisitVoid(Void inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitBlockContainer(BlockContainer inst)
+		protected internal virtual T VisitBlockContainer(BlockContainer inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitBlock(Block inst)
+		protected internal virtual T VisitBlock(Block inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLogicNot(LogicNot inst)
+		protected internal virtual T VisitLogicNot(LogicNot inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitAdd(Add inst)
+		protected internal virtual T VisitAdd(Add inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitSub(Sub inst)
+		protected internal virtual T VisitSub(Sub inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitMul(Mul inst)
+		protected internal virtual T VisitMul(Mul inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitDiv(Div inst)
+		protected internal virtual T VisitDiv(Div inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitRem(Rem inst)
+		protected internal virtual T VisitRem(Rem inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitNeg(Neg inst)
+		protected internal virtual T VisitNeg(Neg inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitBitAnd(BitAnd inst)
+		protected internal virtual T VisitBitAnd(BitAnd inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitBitOr(BitOr inst)
+		protected internal virtual T VisitBitOr(BitOr inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitBitXor(BitXor inst)
+		protected internal virtual T VisitBitXor(BitXor inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitBitNot(BitNot inst)
+		protected internal virtual T VisitBitNot(BitNot inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitArglist(Arglist inst)
+		protected internal virtual T VisitArglist(Arglist inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitConditionalBranch(ConditionalBranch inst)
+		protected internal virtual T VisitConditionalBranch(ConditionalBranch inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitBranch(Branch inst)
+		protected internal virtual T VisitBranch(Branch inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitDebugBreak(DebugBreak inst)
+		protected internal virtual T VisitDebugBreak(DebugBreak inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitCeq(Ceq inst)
+		protected internal virtual T VisitCeq(Ceq inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitCgt(Cgt inst)
+		protected internal virtual T VisitCgt(Cgt inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitCgt_Un(Cgt_Un inst)
+		protected internal virtual T VisitCgt_Un(Cgt_Un inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitClt(Clt inst)
+		protected internal virtual T VisitClt(Clt inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitClt_Un(Clt_Un inst)
+		protected internal virtual T VisitClt_Un(Clt_Un inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitCall(Call inst)
+		protected internal virtual T VisitCall(Call inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitCallVirt(CallVirt inst)
+		protected internal virtual T VisitCallVirt(CallVirt inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitCkFinite(CkFinite inst)
+		protected internal virtual T VisitCkFinite(CkFinite inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitConv(Conv inst)
+		protected internal virtual T VisitConv(Conv inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdloc(Ldloc inst)
+		protected internal virtual T VisitLdLoc(LdLoc inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdloca(Ldloca inst)
+		protected internal virtual T VisitLdLoca(LdLoca inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitStloc(Stloc inst)
+		protected internal virtual T VisitStLoc(StLoc inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdStr(LdStr inst)
+		protected internal virtual T VisitLdStr(LdStr inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdcI4(LdcI4 inst)
+		protected internal virtual T VisitLdcI4(LdcI4 inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdcI8(LdcI8 inst)
+		protected internal virtual T VisitLdcI8(LdcI8 inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdcF(LdcF inst)
+		protected internal virtual T VisitLdcF(LdcF inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdNull(LdNull inst)
+		protected internal virtual T VisitLdNull(LdNull inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitReturn(Return inst)
+		protected internal virtual T VisitReturn(Return inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitShl(Shl inst)
+		protected internal virtual T VisitShl(Shl inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitShr(Shr inst)
+		protected internal virtual T VisitShr(Shr inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdfld(Ldfld inst)
+		protected internal virtual T VisitLdfld(Ldfld inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdflda(Ldflda inst)
+		protected internal virtual T VisitLdflda(Ldflda inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitStfld(Stfld inst)
+		protected internal virtual T VisitStfld(Stfld inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdsfld(Ldsfld inst)
+		protected internal virtual T VisitLdsfld(Ldsfld inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdsflda(Ldsflda inst)
+		protected internal virtual T VisitLdsflda(Ldsflda inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitStsfld(Stsfld inst)
+		protected internal virtual T VisitStsfld(Stsfld inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitIsInst(IsInst inst)
+		protected internal virtual T VisitIsInst(IsInst inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdInd(LdInd inst)
+		protected internal virtual T VisitLdInd(LdInd inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitUnboxAny(UnboxAny inst)
+		protected internal virtual T VisitUnboxAny(UnboxAny inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitNewObj(NewObj inst)
+		protected internal virtual T VisitNewObj(NewObj inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitThrow(Throw inst)
+		protected internal virtual T VisitThrow(Throw inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual TReturn VisitLdLen(LdLen inst)
+		protected internal virtual T VisitLdLen(LdLen inst)
 		{
 			return Default(inst);
 		}

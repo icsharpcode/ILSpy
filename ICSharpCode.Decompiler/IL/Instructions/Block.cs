@@ -47,6 +47,15 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteLine("}");
 		}
 
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			foreach (var inst in Instructions) {
+				value = func(value, inst.AcceptVisitor(visitor));
+			}
+			return value;
+		}
+		
 		/*
 		public override InstructionFlags Flags
 		{
@@ -107,6 +116,15 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteLine("}");
 		}
 
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			foreach (var block in Blocks) {
+				value = func(value, block.AcceptVisitor(visitor));
+			}
+			return value;
+		}
+		
 		/*
 		public override InstructionFlags Flags
 		{

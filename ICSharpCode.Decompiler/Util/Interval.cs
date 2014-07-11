@@ -48,10 +48,15 @@ namespace ICSharpCode.Decompiler
 	/// <summary>
 	/// An immutable set of integers, that is implemented as a list of intervals.
 	/// </summary>
-	struct IntegerSet(ImmutableArray<Interval> intervals)
+	struct IntegerSet
 	{
-		public readonly ImmutableArray<Interval> Intervals = intervals;
+		public readonly ImmutableArray<Interval> Intervals;
 
+		public IntegerSet(ImmutableArray<Interval> intervals)
+		{
+			this.Intervals = intervals;
+		}
+		
 		public bool IsEmpty
 		{
 			get { return Intervals.IsDefaultOrEmpty; }

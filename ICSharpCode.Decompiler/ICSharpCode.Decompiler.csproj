@@ -19,7 +19,6 @@
     <AssemblyOriginatorKeyFile>..\NRefactory\ICSharpCode.NRefactory.snk</AssemblyOriginatorKeyFile>
     <DelaySign>False</DelaySign>
     <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
-    <LangVersion>experimental</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -72,12 +71,17 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Instructions.tt</DependentUpon>
     </Compile>
+    <Compile Include="IL\Instructions\BinaryComparisonInstruction.cs" />
     <Compile Include="IL\Instructions\BinaryInstruction.cs" />
+    <Compile Include="IL\Instructions\BinaryNumericInstruction.cs" />
     <Compile Include="IL\Instructions\Block.cs" />
     <Compile Include="IL\Instructions\CallInstruction.cs" />
+    <Compile Include="IL\Instructions\Conv.cs" />
     <Compile Include="IL\Instructions\ILInstruction.cs" />
+    <Compile Include="IL\Instructions\Return.cs" />
     <Compile Include="IL\Instructions\SimpleInstruction.cs" />
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
+    <Compile Include="IL\Visitors\CountPopInstructionsVisitor.cs" />
     <Compile Include="TypesHierarchyHelpers.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />
@@ -137,6 +141,9 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="IL\Visitors" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <Target Name="BeforeBuild">

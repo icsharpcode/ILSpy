@@ -1,16 +1,89 @@
-﻿using System;
+﻿// Copyright (c) 2014 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public abstract class BinaryInstruction(OpCode opCode) : ILInstruction(opCode)
+	public abstract class BinaryInstruction : ILInstruction
 	{
-		public ILInstruction Left = Pop;
-		public ILInstruction Right = Pop;
-
+		ILInstruction left = Pop;
+		ILInstruction right = Pop;
+		
+		protected BinaryInstruction(OpCode opCode) : base(opCode)
+		{
+		}
+		
+		public ILInstruction Left {
+			get { return left; }
+			set {
+				Debug.Assert(value.ResultType != StackType.Void);
+				left = value;
+				InvalidateFlags();
+			}
+		}
+		
+		public ILInstruction Right {
+			get { return right; }
+			set {
+				Debug.Assert(value.ResultType != StackType.Void);
+				right = value;
+				InvalidateFlags();
+			}
+		}
+		
+		internal override void CheckInvariant()
+		{
+			base.CheckInvariant();
+			Left.CheckInvariant();
+			Right.CheckInvariant();
+			Debug.Assert(Left.ResultType != StackType.Void);
+			Debug.Assert(Right.ResultType != StackType.Void);
+		}
+		
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			Left.WriteTo(output);
+			output.Write(", ");
+			Right.WriteTo(output);
+			output.Write(')');
+		}
+		
+		protected override InstructionFlags ComputeFlags()
+		{
+			return Left.Flags | Right.Flags;
+		}
+		
+		public sealed override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, Left.AcceptVisitor(visitor));
+			value = func(value, Right.AcceptVisitor(visitor));
+			return value;
+		}
+		
 		/*
 		public override bool IsPeeking { get { return Left.IsPeeking; } }
 
@@ -28,55 +101,5 @@ namespace ICSharpCode.Decompiler.IL
 				Left = Left.Inline(flagsBefore, instructionStack, out finished);
 			return this;
 		}*/
-	}
-
-	public abstract class BinaryNumericInstruction(OpCode opCode, StackType opType, OverflowMode overflowMode)
-		: BinaryInstruction(opCode)
-	{
-		public readonly StackType OpType = opType;
-		public readonly OverflowMode OverflowMode = overflowMode;
-
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-			output.WriteSuffix(OverflowMode);
-			output.Write(' ');
-			output.Write(OpType);
-			output.Write('(');
-			Left.WriteTo(output);
-			output.Write(", ");
-			Right.WriteTo(output);
-			output.Write(')');
-		}
-	}
-
-	public abstract class BinaryComparisonInstruction(OpCode opCode, StackType opType)
-		: BinaryInstruction(opCode)
-	{
-		public readonly StackType OpType = opType;
-
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-			output.Write('.');
-			output.Write(OpType);
-			output.Write('(');
-			Left.WriteTo(output);
-			output.Write(", ");
-			Right.WriteTo(output);
-			output.Write(')');
-		}
-	}
-
-	public enum OverflowMode : byte
-	{
-		/// <summary>Don't check for overflow, treat integers as signed.</summary>
-		None = 0,
-		/// <summary>Check for overflow, treat integers as signed.</summary>
-		Ovf = 1,
-		/// <summary>Don't check for overflow, treat integers as unsigned.</summary>
-		Un = 2,
-		/// <summary>Check for overflow, treat integers as unsigned.</summary>
-		Ovf_Un = 3
 	}
 }

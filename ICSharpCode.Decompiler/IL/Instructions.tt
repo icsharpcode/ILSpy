@@ -1,4 +1,22 @@
-﻿<#@ template debug="false" hostspecific="false" language="C#" #>
+﻿// Copyright (c) 2014 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+<#@ template debug="false" hostspecific="false" language="C#" #>
 <#@ assembly name="System.Core" #>
 <#@ import namespace="System.Linq" #>
 <#@ import namespace="System.Text" #>
@@ -6,61 +24,97 @@
 <#@ output extension=".cs" #>
 <#
 	OpCode[] opCodes = {
-		new OpCode("Nop", "No operation. Takes 0 arguments and returns void.", VoidResult, NoArguments),
-		new OpCode("Pop", "Pops the top of the evaluation stack and returns the value.", NoArguments, NonVoidResult),
-		new OpCode("Peek", "Peeks at the top of the evaluation stack and returns the value. Corresponds to IL 'dup'.", Peeking, NoArguments, NonVoidResult),
-		new OpCode("Void", "Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.", VoidResult, Unary),
+		new OpCode("Nop", "No operation. Takes 0 arguments and returns void.",
+			VoidResult, NoArguments),
+		new OpCode("Pop", "Pops the top of the evaluation stack and returns the value.",
+			NoArguments, ResultTypeParam),
+		new OpCode("Peek", "Peeks at the top of the evaluation stack and returns the value. Corresponds to IL 'dup'.",
+			Peeking, NoArguments, ResultTypeParam),
+		new OpCode("Void", "Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.",
+			VoidResult, Unary),
 		new OpCode("BlockContainer", "A container of IL blocks.", VoidResult),
 		new OpCode("Block", "A block of IL instructions."),
-		new OpCode("LogicNot", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).", I4Result, Unary),
+		new OpCode("LogicNot", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).",
+			ResultType("I4"), Unary),
 		new OpCode("Add", "Adds two numbers.", BinaryNumeric),
 		new OpCode("Sub", "Subtracts two numbers", BinaryNumeric),
 		new OpCode("Mul", "Multiplies two numbers", BinaryNumeric),
 		new OpCode("Div", "Divides two numbers", BinaryNumeric, MayThrow),
 		new OpCode("Rem", "Division remainder", BinaryNumeric, MayThrow),
-		new OpCode("Neg", "Unary negation", Unary, NonVoidResult),
+		new OpCode("Neg", "Unary negation", Unary, ResultTypeParam),
 		new OpCode("BitAnd", "Bitwise AND", BinaryNumeric),
 		new OpCode("BitOr", "Bitwise OR", BinaryNumeric),
 		new OpCode("BitXor", "Bitwise XOR", BinaryNumeric),
-		new OpCode("BitNot", "Bitwise NOT", Unary, NonVoidResult),
-		new OpCode("Arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, NonVoidResult),
-		new OpCode("ConditionalBranch", "<c>if (condition) goto target;</c>.", Unary, MayBranch, HasBranchTarget, VoidResult),
-		new OpCode("Branch", "<c>goto target;</c>.", NoArguments, UnconditionalBranch, MayBranch, HasBranchTarget),
-		new OpCode("DebugBreak", "Breakpoint instruction", NoArguments, VoidResult, SideEffect),
-		new OpCode("Ceq", "Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.", BinaryComparison),
-		new OpCode("Cgt", "Compare greater than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.", BinaryComparison),
-		new OpCode("Cgt_Un", "Compare greater than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.", BinaryComparison),
-		new OpCode("Clt", "Compare less than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.", BinaryComparison),
-		new OpCode("Clt_Un", "Compare less than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.", BinaryComparison),
+		new OpCode("BitNot", "Bitwise NOT", Unary, ResultTypeParam),
+		new OpCode("Arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
+		new OpCode("ConditionalBranch", "<c>if (condition) goto target;</c>.",
+			Unary, MayBranch, HasBranchTarget, VoidResult),
+		new OpCode("Branch", "<c>goto target;</c>.",
+			NoArguments, UnconditionalBranch, MayBranch, HasBranchTarget),
+		new OpCode("DebugBreak", "Breakpoint instruction",
+			NoArguments, VoidResult, SideEffect),
+		new OpCode("Ceq", "Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.",
+			BinaryComparison),
+		new OpCode("Cgt", "Compare greater than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.",
+			BinaryComparison),
+		new OpCode("Cgt_Un", "Compare greater than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.",
+			BinaryComparison),
+		new OpCode("Clt", "Compare less than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.",
+			BinaryComparison),
+		new OpCode("Clt_Un", "Compare less than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.",
+			BinaryComparison),
 		new OpCode("Call", "Non-virtual method call.", Call),
 		new OpCode("CallVirt", "Virtual method call.", Call),
-		new OpCode("CkFinite", "Checks that the float on top of the stack is not NaN or infinite.", Peeking, NoArguments, MayThrow, VoidResult),
-		new OpCode("Conv", "Numeric cast.", Unary, NonVoidResult),
-		new OpCode("Ldloc", "Loads the value of a local variable. (ldarg/ldloc)", NoArguments, NonVoidResult, HasVariableOperand),
-		new OpCode("Ldloca", "Loads the address of a local variable. (ldarga/ldloca)", NoArguments, RefResult, HasVariableOperand),
-		new OpCode("Stloc", "Stores a value into a local variable. (starg/stloc)", Unary, VoidResult, HasVariableOperand),
-		new OpCode("LdStr", "Loads a constant string.", LoadConstant),
-		new OpCode("LdcI4", "Loads a constant 32-bit integer.", LoadConstant, I4Result),
-		new OpCode("LdcI8", "Loads a constant 64-bit integer.", LoadConstant, NonVoidResult),
-		new OpCode("LdcF", "Loads a constant floating-point number.", LoadConstant),
-		new OpCode("LdNull", "Loads the null reference.", LoadConstant),
-		new OpCode("Return", "Returns from the current method or lambda.", MayBranch, UnconditionalBranch),
+		new OpCode("CkFinite", "Checks that the float on top of the stack is not NaN or infinite.",
+			Peeking, NoArguments, MayThrow, VoidResult),
+		new OpCode("Conv", "Numeric cast.",
+			Unary, CustomConstructor),
+		new OpCode("LdLoc", "Loads the value of a local variable. (ldarg/ldloc)",
+			NoArguments, HasVariableOperand, ResultType("Variable.Type.ToStackType()")),
+		new OpCode("LdLoca", "Loads the address of a local variable. (ldarga/ldloca)",
+			NoArguments, ResultType("Ref"), HasVariableOperand),
+		new OpCode("StLoc", "Stores a value into a local variable. (starg/stloc)",
+			Unary, VoidResult, HasVariableOperand),
+		new OpCode("LdStr", "Loads a constant string.",
+			LoadConstant, ResultType("O")),
+		new OpCode("LdcI4", "Loads a constant 32-bit integer.",
+			LoadConstant, ResultType("I4")),
+		new OpCode("LdcI8", "Loads a constant 64-bit integer.",
+			LoadConstant, ResultType("I8")),
+		new OpCode("LdcF", "Loads a constant floating-point number.",
+			LoadConstant, ResultType("F")),
+		new OpCode("LdNull", "Loads the null reference.",
+			LoadConstant, ResultType("O")),
+		new OpCode("Return", "Returns from the current method or lambda.",
+			MayBranch, UnconditionalBranch),
 		new OpCode("Shl", "Shift left", BinaryNumeric),
 		new OpCode("Shr", "Shift right", BinaryNumeric),
 		
-		new OpCode("Ldfld", "Load instance field", Unary, MayThrow, SideEffect, NonVoidResult, HasFieldOperand),
-		new OpCode("Ldflda", "Load address of instance field", Unary, MayThrow, RefResult, HasFieldOperand),
-		new OpCode("Stfld", "Store value to instance field", Binary, SideEffect, MayThrow, VoidResult, HasFieldOperand),
-		new OpCode("Ldsfld", "Load static field", NoArguments, SideEffect, NonVoidResult, HasFieldOperand),
-		new OpCode("Ldsflda", "Load static field address", NoArguments, RefResult, HasFieldOperand),
-		new OpCode("Stsfld", "Store value to static field", Unary, SideEffect, VoidResult, HasFieldOperand),
+		new OpCode("Ldfld", "Load instance field",
+			Unary, MayThrow, SideEffect, HasFieldOperand),
+		new OpCode("Ldflda", "Load address of instance field",
+			Unary, MayThrow, HasFieldOperand, ResultType("Ref")),
+		new OpCode("Stfld", "Store value to instance field",
+			Binary, SideEffect, MayThrow, VoidResult, HasFieldOperand),
+		new OpCode("Ldsfld", "Load static field",
+			NoArguments, SideEffect, HasFieldOperand),
+		new OpCode("Ldsflda", "Load static field address",
+			NoArguments, ResultType("Ref"), HasFieldOperand),
+		new OpCode("Stsfld", "Store value to static field",
+			Unary, SideEffect, VoidResult, HasFieldOperand),
 
-		new OpCode("IsInst", "Test if object is instance of class or interface.", Unary, NonVoidResult, HasTypeOperand),
-		new OpCode("LdInd", "Indirect load (ref/pointer dereference).", Unary, NonVoidResult, HasTypeOperand, SideEffect, MayThrow),
-		new OpCode("UnboxAny", "Unbox a value.", Unary, NonVoidResult, HasTypeOperand, SideEffect, MayThrow),
-		new OpCode("NewObj", "Creates an object instance and calls the constructor.", Call),
-		new OpCode("Throw", "Throws an exception.", Unary, MayThrow, UnconditionalBranch),
-		new OpCode("LdLen", "Returns the length of an array as 'native unsigned int'.", Unary, MayThrow, NonVoidResult),
+		new OpCode("IsInst", "Test if object is instance of class or interface.",
+			Unary, HasTypeOperand, ResultType("O")),
+		new OpCode("LdInd", "Indirect load (ref/pointer dereference).",
+			Unary, HasTypeOperand, SideEffect, MayThrow),
+		new OpCode("UnboxAny", "Unbox a value.",
+			Unary, HasTypeOperand, SideEffect, MayThrow),
+		new OpCode("NewObj", "Creates an object instance and calls the constructor.",
+			Call, ResultType("O")),
+		new OpCode("Throw", "Throws an exception.",
+			Unary, MayThrow, UnconditionalBranch),
+		new OpCode("LdLen", "Returns the length of an array as 'native unsigned int'.",
+			Unary, MayThrow, ResultType("I")),
 		
 		
 	};
@@ -83,10 +137,20 @@ namespace ICSharpCode.Decompiler.IL
 
 <#	foreach (OpCode opCode in opCodes) { #>
 	/// <summary><#=opCode.Description#></summary>
-	public sealed partial class <#=opCode.Name#>(<#=string.Join(", ", opCode.ConstructorParameters)#>) : <#=opCode.BaseClass#>(<#=string.Join(", ", opCode.BaseConstructorArguments)#>)
+	public sealed partial class <#=opCode.Name#> : <#=opCode.BaseClass#>
 	{
-<#=string.Join(Environment.NewLine, opCode.Members)#>
-		public override TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor)
+<#	if (opCode.GenerateConstructor) { #>
+		public <#=opCode.Name#>(<#=string.Join(", ", opCode.ConstructorParameters)#>) : base(<#=string.Join(", ", opCode.BaseConstructorArguments)#>)
+		{<#=Body(opCode.ConstructorBody)#>}
+<#	} #>
+<#	if (opCode.Flags.Count > 1) { #>
+		protected override InstructionFlags ComputeFlags()
+		{
+			return <#=string.Join(" | ", opCode.Flags)#>;
+		}
+<#	} #>
+<#=string.Join(Environment.NewLine, opCode.Members.Select(m => "\t\t" + m))#>
+		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.Visit<#=opCode.Name#>(this);
 		}
@@ -95,12 +159,12 @@ namespace ICSharpCode.Decompiler.IL
 <#	} #>
 
 	
-	public abstract class ILVisitor<TReturn>
+	public abstract class ILVisitor<T>
 	{
-		protected abstract TReturn Default(ILInstruction inst);
+		protected abstract T Default(ILInstruction inst);
 		
 <#	foreach (OpCode opCode in opCodes) { #>
-		protected internal virtual TReturn Visit<#=opCode.Name#>(<#=opCode.Name#> inst)
+		protected internal virtual T Visit<#=opCode.Name#>(<#=opCode.Name#> inst)
 		{
 			return Default(inst);
 		}
@@ -109,6 +173,19 @@ namespace ICSharpCode.Decompiler.IL
 }
 
 <#+
+	static string Body(List<string> statements)
+	{
+		StringBuilder b = new StringBuilder();
+		foreach (var st in statements) {
+			b.AppendLine();
+			b.Append("\t\t\t");
+			b.Append(st);
+		}
+		b.AppendLine();
+		b.Append("\t\t");
+		return b.ToString();
+	}
+
 	class OpCode {
 		public readonly string Name;
 		public readonly string Description;
@@ -122,39 +199,65 @@ namespace ICSharpCode.Decompiler.IL
 				trait(this);
 		}
 
+		public bool GenerateConstructor = true;
 		public List<string> ConstructorParameters = new List<string>();
+		public List<string> ConstructorBody = new List<string>();
 
 		public string BaseClass = "ILInstruction";
 		public List<string> BaseConstructorArguments = new List<string>();
 		public List<string> Members = new List<string>();
+		
+		public List<string> Flags = new List<string>() { "base.ComputeFlags()" };
+	}
+	
+	static Action<OpCode> CustomConstructor = opCode => {
+		opCode.GenerateConstructor = false;
+	};
+	
+	static Action<OpCode> HasFlag(string name)
+	{
+		return opCode => {
+			opCode.Flags.Add(name);
+		};
 	}
 
 	// Peeking trait: the instruction looks at the top-of-stack without popping
-	static Action<OpCode> Peeking = opCode => { };
+	static Action<OpCode> Peeking = HasFlag("InstructionFlags.MayPeek");
+	
+	// ResultType trait: the instruction has the specified result type.
+	static Action<OpCode> ResultType(string type)
+	{
+		if (!type.Contains("."))
+			type = "StackType." + type;
+		return opCode => {
+			opCode.Members.Add("public override StackType ResultType { get { return " + type + "; } }");
+		};
+	}
 	
 	// VoidResult trait: the instruction has no result and is not usable as an argument
-	static Action<OpCode> VoidResult = opCode => { };
+	static Action<OpCode> VoidResult = ResultType("Void");
 
-	// NonVoidResult trait: the instruction has a result and is usable as an argument
-	static Action<OpCode> NonVoidResult = opCode => { };
-
-	// I4Result trait: the instruction results in StackType.I4. Implies NonVoidResult.
-	static Action<OpCode> I4Result = NonVoidResult;
-	
-	// RefResult trait: the instruction results in StackType.Ref. Implies NonVoidResult.
-	static Action<OpCode> RefResult = NonVoidResult;
+	// ResultTypeParam trait: the instruction takes its result type as ctor parameter
+	static Action<OpCode> ResultTypeParam = opCode => {
+		opCode.ConstructorParameters.Add("StackType resultType");
+		opCode.ConstructorBody.Add("this.resultType = resultType;");
+		opCode.Members.Add("StackType resultType;");
+		opCode.Members.Add("public override StackType ResultType { get { return resultType; } }");
+	};
 
 	// MayThrow trait: the instruction may throw exceptions
-	static Action<OpCode> MayThrow = opCode => {};
+	static Action<OpCode> MayThrow = HasFlag("InstructionFlags.MayThrow");
 	
 	// MayBranch trait: the instruction may cause control flow to branch (e.g. branch, conditionalbranch, return)
-	static Action<OpCode> MayBranch = opCode => {};
+	static Action<OpCode> MayBranch = HasFlag("InstructionFlags.MayBranch");
 	
 	// HasBranchTarget trait: the instruction has an explicit branch target offset
 	static Action<OpCode> HasBranchTarget = opCode => {};
 
 	// UnconditionalBranch trait: the instruction does not produce a result normally; it always branches or throws an exception. Implies VoidResult.
-	static Action<OpCode> UnconditionalBranch = opCode => {};
+	static Action<OpCode> UnconditionalBranch = opCode => {
+		VoidResult(opCode);
+	};
 	
 	// NoArguments trait: the instruction no arguments
 	static Action<OpCode> NoArguments = opCode => {
@@ -175,8 +278,10 @@ namespace ICSharpCode.Decompiler.IL
 	static Action<OpCode> BinaryNumeric = opCode => {
 		opCode.BaseClass = "BinaryNumericInstruction";
 		opCode.ConstructorParameters.Add("StackType opType");
+		opCode.ConstructorParameters.Add("StackType resultType");
 		opCode.ConstructorParameters.Add("OverflowMode overflowMode");
 		opCode.BaseConstructorArguments.Add("opType");
+		opCode.BaseConstructorArguments.Add("resultType");
 		opCode.BaseConstructorArguments.Add("overflowMode");
 	};
 	
@@ -188,7 +293,7 @@ namespace ICSharpCode.Decompiler.IL
 	};
 
 	// SideEffect trait: the instruction has a non-local side effect
-	static Action<OpCode> SideEffect = opCode => {};
+	static Action<OpCode> SideEffect = HasFlag("InstructionFlags.SideEffect");
 
 	// Call trait: the instruction performs a method call
 	static Action<OpCode> Call = opCode => {
@@ -204,9 +309,8 @@ namespace ICSharpCode.Decompiler.IL
 
 	static Action<OpCode> HasTypeOperand = opCode => {};
 	
-	// LoadConstant trait: the instruction loads a compile-time constant. Implies NoArguments and NonVoidResult
+	// LoadConstant trait: the instruction loads a compile-time constant. Implies NoArguments.
 	static Action<OpCode> LoadConstant = opCode => {
 		NoArguments(opCode);
-		NonVoidResult(opCode);
 	};
 #>

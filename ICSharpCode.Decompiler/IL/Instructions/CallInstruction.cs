@@ -1,30 +1,143 @@
-﻿using ICSharpCode.Decompiler.Disassembler;
-using Mono.Cecil;
+﻿// Copyright (c) 2014 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Mono.Cecil;
+using ICSharpCode.Decompiler.Disassembler;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public abstract class CallInstruction(OpCode opCode, MethodReference methodReference) : ILInstruction(opCode)
+	public abstract class CallInstruction : ILInstruction
 	{
-		public readonly MethodReference Method = methodReference;
-		public readonly ILInstruction[] Operands = InitOperands(opCode, methodReference);
-
-		static ILInstruction[] InitOperands(OpCode opCode, MethodReference mr)
+		public struct ArgumentCollection : IReadOnlyList<ILInstruction>
 		{
-			int popCount = mr.Parameters.Count;
-			if (opCode != OpCode.NewObj && mr.HasThis)
-				popCount++;
-			ILInstruction[] operands = new ILInstruction[popCount];
-			for (int i = 0; i < operands.Length; i++) {
-				operands[i] = Pop;
+			readonly CallInstruction inst;
+			
+			public ArgumentCollection(CallInstruction inst)
+			{
+				this.inst = inst;
 			}
-			return operands;
+			
+			public int Count {
+				get { return inst.arguments.Length; }
+			}
+			
+			public ILInstruction this[int index] {
+				get { return inst.arguments[index]; }
+				set {
+					Debug.Assert(value.ResultType != StackType.Void);
+					inst.arguments[index] = value;
+					inst.InvalidateFlags();
+				}
+			}
+			
+			public ArgumentEnumerator GetEnumerator()
+			{
+				return new ArgumentEnumerator(inst.arguments);
+			}
+			
+			IEnumerator<ILInstruction> IEnumerable<ILInstruction>.GetEnumerator()
+			{
+				IEnumerable<ILInstruction> arguments = inst.arguments;
+				return arguments.GetEnumerator();
+			}
+			
+			System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+			{
+				return inst.arguments.GetEnumerator();
+			}
+		}
+		
+		public struct ArgumentEnumerator
+		{
+			readonly ILInstruction[] arguments;
+			int index;
+			
+			public ArgumentEnumerator(ILInstruction[] arguments)
+			{
+				this.arguments = arguments;
+			}
+			
+			public bool MoveNext()
+			{
+				return ++index < arguments.Length;
+			}
+			
+			public ILInstruction Current {
+				get { return arguments[index]; }
+			}
+		}
+		
+		readonly ILInstruction[] arguments;
+		public readonly MethodReference Method;
+		
+		public ArgumentCollection Arguments {
+			get { return new ArgumentCollection(this); }
+		}
+		
+		protected CallInstruction(OpCode opCode, MethodReference methodReference) : base(opCode)
+		{
+			this.Method = methodReference;
+			int popCount = methodReference.Parameters.Count;
+			if (opCode != OpCode.NewObj && methodReference.HasThis)
+				popCount++;
+			this.arguments = new ILInstruction[popCount];
+			for (int i = 0; i < arguments.Length; i++) {
+				arguments[i] = Pop;
+			}
+		}
+		
+		public override StackType ResultType {
+			get {
+				throw new NotImplementedException();
+			}
+		}
+		
+		internal override void CheckInvariant()
+		{
+			base.CheckInvariant();
+			foreach (var op in arguments) {
+				op.CheckInvariant();
+				Debug.Assert(op.ResultType != StackType.Void);
+			}
 		}
 
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			foreach (var op in arguments)
+				value = func(value, op.AcceptVisitor(visitor));
+			return value;
+		}
+		
+		protected override InstructionFlags ComputeFlags()
+		{
+			var flags = InstructionFlags.MayThrow | InstructionFlags.SideEffects;
+			foreach (var op in arguments)
+				flags |= op.Flags;
+			return flags;
+		}
+		
 		/*
 		public override bool IsPeeking { get { return Operands.Length > 0 && Operands[0].IsPeeking; } }
 
@@ -66,10 +179,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Method.WriteTo(output);
 			output.Write('(');
-			for (int i = 0; i < Operands.Length; i++) {
+			for (int i = 0; i < Arguments.Length; i++) {
 				if (i > 0)
 					output.Write(", ");
-				Operands[i].WriteTo(output);
+				Arguments[i].WriteTo(output);
 			}
 			output.Write(')');
 		}

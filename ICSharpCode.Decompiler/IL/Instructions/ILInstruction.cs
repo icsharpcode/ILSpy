@@ -1,5 +1,24 @@
-﻿using System;
+﻿// Copyright (c) 2014 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,12 +29,45 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// Represents a decoded IL instruction
 	/// </summary>
-	public abstract class ILInstruction(OpCode opCode)
+	public abstract class ILInstruction
 	{
 		public static readonly ILInstruction Pop = new Pop();
+		
+		public readonly OpCode OpCode;
+		
+		protected ILInstruction(OpCode opCode)
+		{
+			this.OpCode = opCode;
+		}
 
-		public readonly OpCode OpCode = opCode;
-
+		[Conditional("DEBUG")]
+		internal virtual void CheckInvariant()
+		{
+		}
+		
+		/// <summary>
+		/// Gets the stack type of the value produced by this instruction.
+		/// </summary>
+		public abstract StackType ResultType { get; }
+		
+		InstructionFlags flags = (InstructionFlags)-1;
+		
+		public InstructionFlags Flags {
+			get {
+				if (flags == (InstructionFlags)-1) {
+					flags = ComputeFlags();
+				}
+				return flags;
+			}
+		}
+		
+		protected void InvalidateFlags()
+		{
+			flags = (InstructionFlags)-1;
+		}
+		
+		protected abstract InstructionFlags ComputeFlags();
+		
 		/// <summary>
 		/// Gets the ILRange for this instruction alone, ignoring the operands.
 		/// </summary>
@@ -32,8 +84,17 @@ namespace ICSharpCode.Decompiler.IL
 			get { return true; }
 		}
 
-		public abstract TReturn AcceptVisitor<TReturn>(ILVisitor<TReturn> visitor);
-
+		public abstract T AcceptVisitor<T>(ILVisitor<T> visitor);
+		
+		/// <summary>
+		/// Computes an aggregate value over the direct children of this instruction.
+		/// </summary>
+		/// <param name="initial">The initial value used to initialize the accumulator.</param>
+		/// <param name="visitor">The visitor used to compute the value for the child instructions.</param>
+		/// <param name="func">The function that combines the accumulator with the computed child value.</param>
+		/// <returns>The final value in the accumulator.</returns>
+		public abstract TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func);
+		
 		/*
 		/// <summary>
 		/// Gets whether this instruction peeks at the top value of the stack.
