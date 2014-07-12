@@ -24,98 +24,101 @@
 <#@ output extension=".cs" #>
 <#
 	OpCode[] opCodes = {
-		new OpCode("Nop", "No operation. Takes 0 arguments and returns void.",
+		new OpCode("nop", "No operation. Takes 0 arguments and returns void.",
 			VoidResult, NoArguments),
-		new OpCode("Pop", "Pops the top of the evaluation stack and returns the value.",
+		new OpCode("pop", "Pops the top of the evaluation stack and returns the value.",
 			NoArguments, ResultTypeParam),
-		new OpCode("Peek", "Peeks at the top of the evaluation stack and returns the value. Corresponds to IL 'dup'.",
+		new OpCode("peek", "Peeks at the top of the evaluation stack and returns the value. Corresponds to IL 'dup'.",
 			Peeking, NoArguments, ResultTypeParam),
-		new OpCode("Void", "Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.",
+		new OpCode("void", "Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.",
 			VoidResult, Unary),
 		new OpCode("BlockContainer", "A container of IL blocks.", VoidResult, CustomConstructor),
 		new OpCode("Block", "A block of IL instructions.", CustomConstructor),
-		new OpCode("LogicNot", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).",
+		new OpCode("logic.not", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).",
 			ResultType("I4"), Unary),
-		new OpCode("Add", "Adds two numbers.", BinaryNumeric),
-		new OpCode("Sub", "Subtracts two numbers", BinaryNumeric),
-		new OpCode("Mul", "Multiplies two numbers", BinaryNumeric),
-		new OpCode("Div", "Divides two numbers", BinaryNumeric, MayThrow),
-		new OpCode("Rem", "Division remainder", BinaryNumeric, MayThrow),
-		new OpCode("BitAnd", "Bitwise AND", BinaryNumeric),
-		new OpCode("BitOr", "Bitwise OR", BinaryNumeric),
-		new OpCode("BitXor", "Bitwise XOR", BinaryNumeric),
-		new OpCode("BitNot", "Bitwise NOT", Unary),
-		new OpCode("Arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
-		new OpCode("ConditionalBranch", "<c>if (condition) goto target;</c>.",
-			BranchInstruction, CustomConstructor, CustomComputeFlags, MayBranch, VoidResult),
-		new OpCode("Branch", "<c>goto target;</c>.",
-			BranchInstruction, UnconditionalBranch, MayBranch),
-		new OpCode("DebugBreak", "Breakpoint instruction",
+		new OpCode("add", "Adds two numbers.", BinaryNumeric),
+		new OpCode("sub", "Subtracts two numbers", BinaryNumeric),
+		new OpCode("mul", "Multiplies two numbers", BinaryNumeric),
+		new OpCode("div", "Divides two numbers", BinaryNumeric, MayThrow),
+		new OpCode("rem", "Division remainder", BinaryNumeric, MayThrow),
+		new OpCode("bit.and", "Bitwise AND", BinaryNumeric),
+		new OpCode("bit.or", "Bitwise OR", BinaryNumeric),
+		new OpCode("bit.xor", "Bitwise XOR", BinaryNumeric),
+		new OpCode("bit.not", "Bitwise NOT", Unary),
+		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
+		//new OpCode("ConditionalBranch", "<c>if (condition) goto target;</c>.",
+		//	BranchInstruction, CustomConstructor, CustomComputeFlags, MayBranch, VoidResult),
+		new OpCode("br", "Unconditional branch. <c>goto target;</c>",
+			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch),
+		new OpCode("if", "If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c>",
+			CustomClassName("IfInstruction"), CustomConstructor),
+		new OpCode("debug.break", "Breakpoint instruction",
 			NoArguments, VoidResult, SideEffect),
-		new OpCode("Ceq", "Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.",
+		new OpCode("ceq", "Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.",
 			BinaryComparison),
-		new OpCode("Cgt", "Compare greater than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.",
+		new OpCode("cgt", "Compare greater than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.",
 			BinaryComparison),
-		new OpCode("Cgt_Un", "Compare greater than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.",
+		new OpCode("cgt.un", "Compare greater than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.",
+			CustomClassName("Cgt_Un"), BinaryComparison),
+		new OpCode("clt", "Compare less than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.",
 			BinaryComparison),
-		new OpCode("Clt", "Compare less than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.",
-			BinaryComparison),
-		new OpCode("Clt_Un", "Compare less than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.",
-			BinaryComparison),
-		new OpCode("Call", "Non-virtual method call.", Call),
-		new OpCode("CallVirt", "Virtual method call.", Call),
-		new OpCode("CkFinite", "Checks that the float on top of the stack is not NaN or infinite.",
+		new OpCode("clt.un", "Compare less than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.",
+			CustomClassName("Clt_Un"), BinaryComparison),
+		new OpCode("call", "Non-virtual method call.", Call),
+		new OpCode("callvirt", "Virtual method call.", 
+			CustomClassName("CallVirt"), Call),
+		new OpCode("ckfinite", "Checks that the float on top of the stack is not NaN or infinite.",
 			Peeking, NoArguments, MayThrow, VoidResult),
-		new OpCode("Conv", "Numeric cast.",
+		new OpCode("conv", "Numeric cast.",
 			Unary, CustomConstructor),
-		new OpCode("LdLoc", "Loads the value of a local variable. (ldarg/ldloc)",
-			NoArguments, HasVariableOperand, ResultType("variable.Type.GetStackType()")),
-		new OpCode("LdLoca", "Loads the address of a local variable. (ldarga/ldloca)",
-			NoArguments, ResultType("Ref"), HasVariableOperand),
-		new OpCode("StLoc", "Stores a value into a local variable. (starg/stloc)",
-			Unary, VoidResult, HasVariableOperand),
-		new OpCode("LdStr", "Loads a constant string.",
-			LoadConstant("string"), ResultType("O")),
-		new OpCode("LdcI4", "Loads a constant 32-bit integer.",
+		new OpCode("ldloc", "Loads the value of a local variable. (ldarg/ldloc)",
+			CustomClassName("LdLoc"), NoArguments, HasVariableOperand, ResultType("variable.Type.GetStackType()")),
+		new OpCode("ldloca", "Loads the address of a local variable. (ldarga/ldloca)",
+			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand),
+		new OpCode("stloc", "Stores a value into a local variable. (starg/stloc)",
+			CustomClassName("StLoc"), Unary, VoidResult, HasVariableOperand),
+		new OpCode("ldstr", "Loads a constant string.",
+			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),
+		new OpCode("ldc.i4", "Loads a constant 32-bit integer.",
 			LoadConstant("int"), ResultType("I4")),
-		new OpCode("LdcI8", "Loads a constant 64-bit integer.",
+		new OpCode("ldc.i8", "Loads a constant 64-bit integer.",
 			LoadConstant("long"), ResultType("I8")),
-		new OpCode("LdcF", "Loads a constant floating-point number.",
+		new OpCode("ldc.f", "Loads a constant floating-point number.",
 			LoadConstant("double"), ResultType("F")),
-		new OpCode("LdNull", "Loads the null reference.",
-			NoArguments, ResultType("O")),
-		new OpCode("Return", "Returns from the current method or lambda.",
-			CustomConstructor, MayBranch, UnconditionalBranch),
-		new OpCode("Shl", "Shift left", BinaryNumeric),
-		new OpCode("Shr", "Shift right", BinaryNumeric),
+		new OpCode("ldnull", "Loads the null reference.",
+			CustomClassName("LdNull"), NoArguments, ResultType("O")),
+		new OpCode("ret", "Returns from the current method or lambda.",
+			CustomClassName("Return"), CustomConstructor, MayBranch, UnconditionalBranch),
+		new OpCode("shl", "Shift left", BinaryNumeric),
+		new OpCode("shr", "Shift right", BinaryNumeric),
 		
-		new OpCode("Ldfld", "Load instance field",
-			Unary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow,
+		new OpCode("ldfld", "Load instance field",
+			CustomClassName("LdFld"), Unary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow,
 			HasFieldOperand, ResultType("field.FieldType.GetStackType()")),
-		new OpCode("Ldflda", "Load address of instance field",
-			Unary, MayThrow, HasFieldOperand, ResultType("Ref")),
-		new OpCode("Stfld", "Store value to instance field",
-			Binary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, VoidResult, HasFieldOperand),
-		new OpCode("Ldsfld", "Load static field",
-			NoArguments, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix,
+		new OpCode("ldflda", "Load address of instance field",
+			CustomClassName("LdFlda"), Unary, MayThrow, HasFieldOperand, ResultType("Ref")),
+		new OpCode("stfld", "Store value to instance field",
+			CustomClassName("StFld"), Binary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, VoidResult, HasFieldOperand),
+		new OpCode("ldsfld", "Load static field",
+			CustomClassName("LdsFld"), NoArguments, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix,
 			HasFieldOperand, ResultType("field.FieldType.GetStackType()")),
-		new OpCode("Ldsflda", "Load static field address",
-			NoArguments, ResultType("Ref"), HasFieldOperand),
-		new OpCode("Stsfld", "Store value to static field",
-			Unary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, VoidResult, HasFieldOperand),
+		new OpCode("ldsflda", "Load static field address",
+			CustomClassName("LdsFlda"), NoArguments, ResultType("Ref"), HasFieldOperand),
+		new OpCode("stsfld", "Store value to static field",
+			CustomClassName("StsFld"), Unary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, VoidResult, HasFieldOperand),
 
-		new OpCode("IsInst", "Test if object is instance of class or interface.",
-			Unary, HasTypeOperand, ResultType("type.GetStackType()")),
-		new OpCode("LdInd", "Indirect load (ref/pointer dereference).",
-			Unary, HasTypeOperand, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
-		new OpCode("UnboxAny", "Unbox a value.",
+		new OpCode("isinst", "Test if object is instance of class or interface.",
+			CustomClassName("IsInst"), Unary, HasTypeOperand, ResultType("type.GetStackType()")),
+		new OpCode("ldobj", "Indirect load (ref/pointer dereference).",
+			CustomClassName("LdObj"), Unary, HasTypeOperand, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
+		new OpCode("unbox.any", "Unbox a value.",
 			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("type.GetStackType()")),
-		new OpCode("NewObj", "Creates an object instance and calls the constructor.",
-			Call, ResultType("O")),
-		new OpCode("Throw", "Throws an exception.",
+		new OpCode("newobj", "Creates an object instance and calls the constructor.",
+			CustomClassName("NewObj"), Call, ResultType("O")),
+		new OpCode("throw", "Throws an exception.",
 			Unary, MayThrow, UnconditionalBranch),
-		new OpCode("LdLen", "Returns the length of an array as 'native unsigned int'.",
-			Unary, MayThrow, ResultType("I")),
+		new OpCode("ldlen", "Returns the length of an array as 'native unsigned int'.",
+			CustomClassName("LdLen"), Unary, MayThrow, ResultType("I")),
 		
 		
 	};
@@ -204,6 +207,15 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 	}
+	
+	partial class InstructionOutputExtensions
+	{
+		static readonly string[] originalOpCodeNames = {
+<#	foreach (OpCode opCode in opCodes) { #>
+			"<#=opCode.OriginalName#>",
+<#	} #>
+		};
+	}
 }
 
 <#+
@@ -221,16 +233,29 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	class OpCode {
-		public readonly string Name;
+		public readonly string OriginalName;
+		public string Name;
 		public readonly string Description;
 
-		public OpCode(string name, string description, params Action<OpCode>[] traits)
+		public OpCode(string originalName, string description, params Action<OpCode>[] traits)
 		{
-			this.Name = name;
+			this.OriginalName = originalName;
+			StringBuilder name = new StringBuilder();
+			bool nextUpper = true;
+			foreach (char c in originalName) {
+				if (c == '.')
+					nextUpper = true;
+				else if (nextUpper) {
+					name.Append(char.ToUpper(c));
+					nextUpper = false;
+				} else
+					name.Append(c);
+			}
+			this.Name = name.ToString();
 			this.Description = description;
-			this.BaseConstructorArguments.Add("OpCode." + name);
 			foreach (var trait in traits)
 				trait(this);
+			this.BaseConstructorArguments.Insert(0, "OpCode." + this.Name);
 		}
 
 		public bool GenerateConstructor = true;
@@ -244,6 +269,13 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public List<string> Flags = new List<string>();
 		public bool GenerateComputeFlags = true;
+	}
+	
+	static Action<OpCode> CustomClassName(string name)
+	{
+		return opCode => {
+			opCode.Name = name;
+		};
 	}
 	
 	static Action<OpCode> CustomConstructor = opCode => {
@@ -340,12 +372,6 @@ namespace ICSharpCode.Decompiler.IL
 	static Action<OpCode> BinaryComparison = opCode => {
 		Binary(opCode);
 		opCode.BaseClass = "BinaryComparisonInstruction";
-	};
-
-	static Action<OpCode> BranchInstruction = opCode => {
-		opCode.BaseClass = "BranchInstruction";
-		opCode.ConstructorParameters.Add("int targetILOffset");
-		opCode.BaseConstructorArguments.Add("targetILOffset");
 	};
 
 	// SideEffect trait: the instruction has a non-local side effect

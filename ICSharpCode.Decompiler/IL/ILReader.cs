@@ -89,16 +89,18 @@ namespace ICSharpCode.Decompiler.IL
 
 		void Warn(string message)
 		{
-			
+			Debug.Fail(message);
 		}
+		
+		// Dictionary that stores stacks for forward jumps
+		Dictionary<int, ImmutableArray<StackType>> branchStackDict = new Dictionary<int, ImmutableArray<StackType>>();
 		
 		void ReadInstructions(Dictionary<int, ImmutableArray<StackType>> outputStacks)
 		{
 			instructionBuilder = new List<ILInstruction>();
 			isBranchTarget = new BitArray(body.CodeSize);
 			stack.Clear();
-			// Dictionary that stores stacks for forward jumps
-			var branchStackDict = new Dictionary<int, ImmutableArray<StackType>>();
+			branchStackDict.Clear();
 
 			while (reader.Position < reader.Length) {
 				cancellationToken.ThrowIfCancellationRequested();
@@ -110,13 +112,6 @@ namespace ICSharpCode.Decompiler.IL
 					stack.Push(decodedInstruction.ResultType);
 				decodedInstruction.ILRange = new Interval(start, reader.Position);
 				instructionBuilder.Add(decodedInstruction);
-				BranchInstruction branch = decodedInstruction as BranchInstruction;
-				if (branch != null) {
-					isBranchTarget[branch.TargetILOffset] = true;
-					if (branch.TargetILOffset >= reader.Position) {
-						branchStackDict[branch.TargetILOffset] = stack.ToImmutableArray();
-					}
-				}
 				if (decodedInstruction.HasFlag(InstructionFlags.EndPointUnreachable)) {
 					stack.Clear();
 					ImmutableArray<StackType> stackFromBranch;
@@ -250,9 +245,9 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Bne_Un_S:
 					return DecodeComparisonBranch(true, OpCode.Ceq, OpCode.Ceq, true);
 				case ILOpCode.Br:
-					return DecodeUnconditionalBranch(false, OpCode.Branch);
+					return DecodeUnconditionalBranch(false);
 				case ILOpCode.Br_S:
-					return DecodeUnconditionalBranch(true, OpCode.Branch);
+					return DecodeUnconditionalBranch(true);
 				case ILOpCode.Break:
 					return new DebugBreak();
 				case ILOpCode.Brfalse:
@@ -280,7 +275,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Clt_Un:
 					return Comparison(OpCode.Clt_Un, OpCode.Clt_Un);
 				case ILOpCode.Ckfinite:
-					return new CkFinite();
+					return new Ckfinite();
 				case ILOpCode.Conv_I1:
 					return new Conv(Pop(), PrimitiveType.I1, OverflowMode.None);
 				case ILOpCode.Conv_I2:
@@ -404,27 +399,27 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldftn:
 					throw new NotImplementedException();
 				case ILOpCode.Ldind_I1:
-					return new LdInd(Pop(), typeSystem.SByte);
+					return new LdObj(Pop(), typeSystem.SByte);
 				case ILOpCode.Ldind_I2:
-					return new LdInd(Pop(), typeSystem.Int16);
+					return new LdObj(Pop(), typeSystem.Int16);
 				case ILOpCode.Ldind_I4:
-					return new LdInd(Pop(), typeSystem.Int32);
+					return new LdObj(Pop(), typeSystem.Int32);
 				case ILOpCode.Ldind_I8:
-					return new LdInd(Pop(), typeSystem.Int64);
+					return new LdObj(Pop(), typeSystem.Int64);
 				case ILOpCode.Ldind_U1:
-					return new LdInd(Pop(), typeSystem.Byte);
+					return new LdObj(Pop(), typeSystem.Byte);
 				case ILOpCode.Ldind_U2:
-					return new LdInd(Pop(), typeSystem.UInt16);
+					return new LdObj(Pop(), typeSystem.UInt16);
 				case ILOpCode.Ldind_U4:
-					return new LdInd(Pop(), typeSystem.UInt32);
+					return new LdObj(Pop(), typeSystem.UInt32);
 				case ILOpCode.Ldind_R4:
-					return new LdInd(Pop(), typeSystem.Single);
+					return new LdObj(Pop(), typeSystem.Single);
 				case ILOpCode.Ldind_R8:
-					return new LdInd(Pop(), typeSystem.Double);
+					return new LdObj(Pop(), typeSystem.Double);
 				case ILOpCode.Ldind_I:
-					return new LdInd(Pop(), typeSystem.IntPtr);
+					return new LdObj(Pop(), typeSystem.IntPtr);
 				case ILOpCode.Ldind_Ref:
-					return new LdInd(Pop(), typeSystem.Object);
+					return new LdObj(Pop(), typeSystem.Object);
 				case ILOpCode.Ldloc:
 					return Ldloc(reader.ReadUInt16());
 				case ILOpCode.Ldloc_S:
@@ -439,11 +434,9 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldloca_S:
 					return Ldloca(reader.ReadByte());
 				case ILOpCode.Leave:
-					//return DecodeUnconditionalBranch(false, OpCode.Leave);
-					throw new NotImplementedException();
+					return DecodeUnconditionalBranch(false, isLeave: true);
 				case ILOpCode.Leave_S:
-					//return DecodeUnconditionalBranch(true, OpCode.Leave);
-					throw new NotImplementedException();
+					return DecodeUnconditionalBranch(true, isLeave: true);
 				case ILOpCode.Localloc:
 					throw new NotImplementedException();
 				case ILOpCode.Mul:
@@ -534,9 +527,9 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldelema:
 					throw new NotImplementedException();
 				case ILOpCode.Ldfld:
-					return new Ldfld(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
+					return new LdFld(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldflda:
-					return new Ldflda(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
+					return new LdFlda(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Stfld:
 					throw new NotImplementedException();
 					//\return new Stfld(Pop(), Pop(), (FieldReference)ReadAndDecodeMetadataToken());
@@ -545,11 +538,11 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldobj:
 					throw new NotImplementedException();
 				case ILOpCode.Ldsfld:
-					return new Ldsfld((FieldReference)ReadAndDecodeMetadataToken());
+					return new LdsFld((FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldsflda:
-					return new Ldsflda((FieldReference)ReadAndDecodeMetadataToken());
+					return new LdsFlda((FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Stsfld:
-					return new Stsfld(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
+					return new StsFld(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldtoken:
 					throw new NotImplementedException();
 				case ILOpCode.Ldvirtftn:
@@ -719,7 +712,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (negate) {
 				condition = new LogicNot(condition);
 			}
-			return new ConditionalBranch(condition, target);
+			MarkBranchTarget(target);
+			return new IfInstruction(condition, new Branch(target));
 		}
 
 		ILInstruction DecodeConditionalBranch(bool shortForm, bool negate)
@@ -730,16 +724,31 @@ namespace ICSharpCode.Decompiler.IL
 			if (negate) {
 				condition = new LogicNot(condition);
 			}
-			return new ConditionalBranch(condition, target);
+			MarkBranchTarget(target);
+			return new IfInstruction(condition, new Branch(target));
 		}
 
-		ILInstruction DecodeUnconditionalBranch(bool shortForm, OpCode opCode)
+		ILInstruction DecodeUnconditionalBranch(bool shortForm, bool isLeave = false)
 		{
 			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
 			target += reader.Position;
-			return new Branch(target);
+			int popCount = 0;
+			if (isLeave) {
+				popCount = stack.Count;
+				stack.Clear();
+			}
+			MarkBranchTarget(target);
+			return new Branch(target) { PopCount = popCount };
 		}
 
+		void MarkBranchTarget(int targetILOffset)
+		{
+			isBranchTarget[targetILOffset] = true;
+			if (targetILOffset >= reader.Position) {
+				branchStackDict[targetILOffset] = stack.ToImmutableArray();
+			}
+		}
+		
 		ILInstruction BinaryNumeric(OpCode opCode, OverflowMode overflowMode = OverflowMode.None)
 		{
 			var right = Pop();

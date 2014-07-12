@@ -76,9 +76,10 @@
     <Compile Include="IL\Instructions\BinaryNumericInstruction.cs" />
     <Compile Include="IL\Instructions\Block.cs" />
     <Compile Include="IL\Instructions\BlockContainer.cs" />
-    <Compile Include="IL\Instructions\BranchInstruction.cs" />
+    <Compile Include="IL\Instructions\Branch.cs" />
     <Compile Include="IL\Instructions\CallInstruction.cs" />
     <Compile Include="IL\Instructions\Conv.cs" />
+    <Compile Include="IL\Instructions\IfInstruction.cs" />
     <Compile Include="IL\Instructions\ILInstruction.cs" />
     <Compile Include="IL\Instructions\InstructionCollection.cs" />
     <Compile Include="IL\Instructions\MemoryInstructions.cs" />

@@ -46,15 +46,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionStatement(exprBuilder.Convert(inst));
 		}
 
-		protected internal override Statement VisitConditionalBranch(ConditionalBranch inst)
+		protected internal override Statement VisitIfInstruction(IfInstruction inst)
 		{
 			var condition = exprBuilder.ConvertCondition(inst.Condition);
-			return new IfElseStatement(condition, new GotoStatement(inst.TargetLabel));
+			var trueStatement = Convert(inst.TrueInst);
+			var falseStatement = inst.FalseInst.OpCode == OpCode.Nop ? null : Convert(inst.FalseInst);
+			return new IfElseStatement(condition, trueStatement, falseStatement);
 		}
 
 		protected internal override Statement VisitBranch(Branch inst)
 		{
 			return new GotoStatement(inst.TargetLabel);
+		}
+		
+		protected internal override Statement VisitThrow(Throw inst)
+		{
+			return new ThrowStatement(exprBuilder.Convert(inst.Argument));
+		}
+		
+		protected internal override Statement VisitReturn(Return inst)
+		{
+			if (inst.Argument == null)
+				return new ReturnStatement();
+			return new ReturnStatement(exprBuilder.Convert(inst.Argument));
 		}
 
 		protected internal override Statement VisitBlockContainer(BlockContainer inst)

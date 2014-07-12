@@ -24,11 +24,11 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	static class InstructionOutputExtensions
+	static partial class InstructionOutputExtensions
 	{
 		public static void Write(this ITextOutput output, OpCode opCode)
 		{
-			output.Write(opCode.ToString().ToLowerInvariant());
+			output.Write(originalOpCodeNames[(int)opCode]);
 		}
 
 		public static void Write(this ITextOutput output, StackType stackType)

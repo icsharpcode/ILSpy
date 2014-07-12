@@ -60,10 +60,10 @@ namespace ICSharpCode.Decompiler.IL
 		BitNot,
 		/// <summary>Retrieves the RuntimeArgumentHandle.</summary>
 		Arglist,
-		/// <summary><c>if (condition) goto target;</c>.</summary>
-		ConditionalBranch,
-		/// <summary><c>goto target;</c>.</summary>
+		/// <summary>Unconditional branch. <c>goto target;</c></summary>
 		Branch,
+		/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
+		IfInstruction,
 		/// <summary>Breakpoint instruction</summary>
 		DebugBreak,
 		/// <summary>Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.</summary>
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Virtual method call.</summary>
 		CallVirt,
 		/// <summary>Checks that the float on top of the stack is not NaN or infinite.</summary>
-		CkFinite,
+		Ckfinite,
 		/// <summary>Numeric cast.</summary>
 		Conv,
 		/// <summary>Loads the value of a local variable. (ldarg/ldloc)</summary>
@@ -107,21 +107,21 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Shift right</summary>
 		Shr,
 		/// <summary>Load instance field</summary>
-		Ldfld,
+		LdFld,
 		/// <summary>Load address of instance field</summary>
-		Ldflda,
+		LdFlda,
 		/// <summary>Store value to instance field</summary>
-		Stfld,
+		StFld,
 		/// <summary>Load static field</summary>
-		Ldsfld,
+		LdsFld,
 		/// <summary>Load static field address</summary>
-		Ldsflda,
+		LdsFlda,
 		/// <summary>Store value to static field</summary>
-		Stsfld,
+		StsFld,
 		/// <summary>Test if object is instance of class or interface.</summary>
 		IsInst,
 		/// <summary>Indirect load (ref/pointer dereference).</summary>
-		LdInd,
+		LdObj,
 		/// <summary>Unbox a value.</summary>
 		UnboxAny,
 		/// <summary>Creates an object instance and calls the constructor.</summary>
@@ -363,22 +363,9 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary><c>if (condition) goto target;</c>.</summary>
-	public sealed partial class ConditionalBranch : BranchInstruction
+	/// <summary>Unconditional branch. <c>goto target;</c></summary>
+	public sealed partial class Branch : SimpleInstruction
 	{
-		public override StackType ResultType { get { return StackType.Void; } }
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitConditionalBranch(this);
-		}
-	}
-
-	/// <summary><c>goto target;</c>.</summary>
-	public sealed partial class Branch : BranchInstruction
-	{
-		public Branch(int targetILOffset) : base(OpCode.Branch, targetILOffset)
-		{
-		}
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
@@ -387,6 +374,16 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBranch(this);
+		}
+	}
+
+	/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
+	public sealed partial class IfInstruction : ILInstruction
+	{
+
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitIfInstruction(this);
 		}
 	}
 
@@ -499,9 +496,9 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Checks that the float on top of the stack is not NaN or infinite.</summary>
-	public sealed partial class CkFinite : SimpleInstruction
+	public sealed partial class Ckfinite : SimpleInstruction
 	{
-		public CkFinite() : base(OpCode.CkFinite)
+		public Ckfinite() : base(OpCode.Ckfinite)
 		{
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -511,7 +508,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.Void; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitCkFinite(this);
+			return visitor.VisitCkfinite(this);
 		}
 	}
 
@@ -714,9 +711,9 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Load instance field</summary>
-	public sealed partial class Ldfld : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class LdFld : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public Ldfld(ILInstruction argument, FieldReference field) : base(OpCode.Ldfld, argument)
+		public LdFld(ILInstruction argument, FieldReference field) : base(OpCode.LdFld, argument)
 		{
 			this.field = field;
 		}
@@ -734,14 +731,14 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitLdfld(this);
+			return visitor.VisitLdFld(this);
 		}
 	}
 
 	/// <summary>Load address of instance field</summary>
-	public sealed partial class Ldflda : UnaryInstruction
+	public sealed partial class LdFlda : UnaryInstruction
 	{
-		public Ldflda(ILInstruction argument, FieldReference field) : base(OpCode.Ldflda, argument)
+		public LdFlda(ILInstruction argument, FieldReference field) : base(OpCode.LdFlda, argument)
 		{
 			this.field = field;
 		}
@@ -755,14 +752,14 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.Ref; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitLdflda(this);
+			return visitor.VisitLdFlda(this);
 		}
 	}
 
 	/// <summary>Store value to instance field</summary>
-	public sealed partial class Stfld : BinaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class StFld : BinaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public Stfld(ILInstruction left, ILInstruction right, FieldReference field) : base(OpCode.Stfld, left, right)
+		public StFld(ILInstruction left, ILInstruction right, FieldReference field) : base(OpCode.StFld, left, right)
 		{
 			this.field = field;
 		}
@@ -780,14 +777,14 @@ namespace ICSharpCode.Decompiler.IL
 		public FieldReference Field { get { return field; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitStfld(this);
+			return visitor.VisitStFld(this);
 		}
 	}
 
 	/// <summary>Load static field</summary>
-	public sealed partial class Ldsfld : SimpleInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class LdsFld : SimpleInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public Ldsfld(FieldReference field) : base(OpCode.Ldsfld)
+		public LdsFld(FieldReference field) : base(OpCode.LdsFld)
 		{
 			this.field = field;
 		}
@@ -805,14 +802,14 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitLdsfld(this);
+			return visitor.VisitLdsFld(this);
 		}
 	}
 
 	/// <summary>Load static field address</summary>
-	public sealed partial class Ldsflda : SimpleInstruction
+	public sealed partial class LdsFlda : SimpleInstruction
 	{
-		public Ldsflda(FieldReference field) : base(OpCode.Ldsflda)
+		public LdsFlda(FieldReference field) : base(OpCode.LdsFlda)
 		{
 			this.field = field;
 		}
@@ -822,14 +819,14 @@ namespace ICSharpCode.Decompiler.IL
 		public FieldReference Field { get { return field; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitLdsflda(this);
+			return visitor.VisitLdsFlda(this);
 		}
 	}
 
 	/// <summary>Store value to static field</summary>
-	public sealed partial class Stsfld : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class StsFld : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public Stsfld(ILInstruction argument, FieldReference field) : base(OpCode.Stsfld, argument)
+		public StsFld(ILInstruction argument, FieldReference field) : base(OpCode.StsFld, argument)
 		{
 			this.field = field;
 		}
@@ -847,7 +844,7 @@ namespace ICSharpCode.Decompiler.IL
 		public FieldReference Field { get { return field; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitStsfld(this);
+			return visitor.VisitStsFld(this);
 		}
 	}
 
@@ -869,9 +866,9 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Indirect load (ref/pointer dereference).</summary>
-	public sealed partial class LdInd : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class LdObj : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public LdInd(ILInstruction argument, TypeReference type) : base(OpCode.LdInd, argument)
+		public LdObj(ILInstruction argument, TypeReference type) : base(OpCode.LdObj, argument)
 		{
 			this.type = type;
 		}
@@ -889,7 +886,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitLdInd(this);
+			return visitor.VisitLdObj(this);
 		}
 	}
 
@@ -1038,11 +1035,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitConditionalBranch(ConditionalBranch inst)
+		protected internal virtual T VisitBranch(Branch inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitBranch(Branch inst)
+		protected internal virtual T VisitIfInstruction(IfInstruction inst)
 		{
 			return Default(inst);
 		}
@@ -1078,7 +1075,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitCkFinite(CkFinite inst)
+		protected internal virtual T VisitCkfinite(Ckfinite inst)
 		{
 			return Default(inst);
 		}
@@ -1130,27 +1127,27 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitLdfld(Ldfld inst)
+		protected internal virtual T VisitLdFld(LdFld inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitLdflda(Ldflda inst)
+		protected internal virtual T VisitLdFlda(LdFlda inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitStfld(Stfld inst)
+		protected internal virtual T VisitStFld(StFld inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitLdsfld(Ldsfld inst)
+		protected internal virtual T VisitLdsFld(LdsFld inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitLdsflda(Ldsflda inst)
+		protected internal virtual T VisitLdsFlda(LdsFlda inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitStsfld(Stsfld inst)
+		protected internal virtual T VisitStsFld(StsFld inst)
 		{
 			return Default(inst);
 		}
@@ -1158,7 +1155,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitLdInd(LdInd inst)
+		protected internal virtual T VisitLdObj(LdObj inst)
 		{
 			return Default(inst);
 		}
@@ -1230,6 +1227,64 @@ namespace ICSharpCode.Decompiler.IL
 					throw new ArgumentException("opCode is not a binary comparison instruction");
 			}
 		}
+	}
+	
+	partial class InstructionOutputExtensions
+	{
+		static readonly string[] originalOpCodeNames = {
+			"nop",
+			"pop",
+			"peek",
+			"void",
+			"BlockContainer",
+			"Block",
+			"logic.not",
+			"add",
+			"sub",
+			"mul",
+			"div",
+			"rem",
+			"bit.and",
+			"bit.or",
+			"bit.xor",
+			"bit.not",
+			"arglist",
+			"br",
+			"if",
+			"debug.break",
+			"ceq",
+			"cgt",
+			"cgt.un",
+			"clt",
+			"clt.un",
+			"call",
+			"callvirt",
+			"ckfinite",
+			"conv",
+			"ldloc",
+			"ldloca",
+			"stloc",
+			"ldstr",
+			"ldc.i4",
+			"ldc.i8",
+			"ldc.f",
+			"ldnull",
+			"ret",
+			"shl",
+			"shr",
+			"ldfld",
+			"ldflda",
+			"stfld",
+			"ldsfld",
+			"ldsflda",
+			"stsfld",
+			"isinst",
+			"ldobj",
+			"unbox.any",
+			"newobj",
+			"throw",
+			"ldlen",
+		};
 	}
 }
 
