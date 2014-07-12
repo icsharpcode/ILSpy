@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using Mono.Cecil;
+using Cil = Mono.Cecil.Cil;
 using System.Collections;
 using System.Threading;
 
@@ -45,7 +46,7 @@ namespace ICSharpCode.Decompiler.IL
 			return new MetadataToken(reader.ReadUInt32());
 		}
 		
-		readonly Mono.Cecil.Cil.MethodBody body;
+		readonly Cil.MethodBody body;
 		readonly CancellationToken cancellationToken;
 		readonly TypeSystem typeSystem;
 
@@ -56,7 +57,7 @@ namespace ICSharpCode.Decompiler.IL
 		BitArray isBranchTarget;
 		List<ILInstruction> instructionBuilder;
 
-		public ILReader(Mono.Cecil.Cil.MethodBody body, CancellationToken cancellationToken)
+		public ILReader(Cil.MethodBody body, CancellationToken cancellationToken)
 		{
 			if (body == null)
 				throw new ArgumentNullException("body");
@@ -101,7 +102,23 @@ namespace ICSharpCode.Decompiler.IL
 			isBranchTarget = new BitArray(body.CodeSize);
 			stack.Clear();
 			branchStackDict.Clear();
-
+			
+			// Fill isBranchTarget and branchStackDict based on exception handlers
+			foreach (var eh in body.ExceptionHandlers) {
+				isBranchTarget[eh.TryStart.Offset] = true;
+				if (eh.FilterStart != null) {
+					isBranchTarget[eh.FilterStart.Offset] = true;
+					branchStackDict[eh.FilterStart.Offset] = ImmutableArray.Create(StackType.O);
+				}
+				if (eh.HandlerStart != null) {
+					isBranchTarget[eh.HandlerStart.Offset] = true;
+					if (eh.HandlerType == Cil.ExceptionHandlerType.Catch || eh.HandlerType == Cil.ExceptionHandlerType.Filter)
+						branchStackDict[eh.HandlerStart.Offset] = ImmutableArray.Create(StackType.O);
+					else
+						branchStackDict[eh.HandlerStart.Offset] = ImmutableArray<StackType>.Empty;
+				}
+			}
+			
 			while (reader.Position < reader.Length) {
 				cancellationToken.ThrowIfCancellationRequested();
 				int start = reader.Position;

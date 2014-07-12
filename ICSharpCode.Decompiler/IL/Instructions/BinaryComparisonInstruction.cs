@@ -30,9 +30,17 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected BinaryComparisonInstruction(OpCode opCode, ILInstruction left, ILInstruction right) : base(opCode, left, right)
 		{
-			// TODO this.OpType = opType;
+			this.OpType = ComputeOpType(left.ResultType, right.ResultType);
 		}
 
+		static StackType ComputeOpType(StackType left, StackType right)
+		{
+			if (left == StackType.I || right == StackType.I)
+				return StackType.I;
+			Debug.Assert(left == right);
+			return left;
+		}
+		
 		public sealed override StackType ResultType {
 			get {
 				return StackType.I4;

@@ -147,13 +147,17 @@ namespace ICSharpCode.Decompiler.IL
 		public <#=opCode.Name#>(<#=string.Join(", ", opCode.ConstructorParameters)#>) : base(<#=string.Join(", ", opCode.BaseConstructorArguments)#>)
 		{<#=Body(opCode.ConstructorBody)#>}
 <#	} #>
+<#=string.Join(Environment.NewLine, opCode.Members.Select(m => "\t\t" + m.Replace("\n", "\n\t\t")))#>
 <#	if (opCode.GenerateComputeFlags && opCode.Flags.Any(f => f != "base.ComputeFlags()")) { #>
 		protected override InstructionFlags ComputeFlags()
 		{
 			return <#=string.Join(" | ", opCode.Flags)#>;
 		}
 <#	} #>
-<#=string.Join(Environment.NewLine, opCode.Members.Select(m => "\t\t" + m.Replace("\n", "\n\t\t")))#>
+<#	if (opCode.GenerateWriteTo) { #>
+		public override void WriteTo(ITextOutput output)
+		{<#=Body(opCode.WriteToBody)#>}
+<#	} #>
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.Visit<#=opCode.Name#>(this);
@@ -219,7 +223,7 @@ namespace ICSharpCode.Decompiler.IL
 }
 
 <#+
-	static string Body(List<string> statements)
+	static string Body(IEnumerable<string> statements)
 	{
 		StringBuilder b = new StringBuilder();
 		foreach (var st in statements) {
@@ -269,6 +273,22 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public List<string> Flags = new List<string>();
 		public bool GenerateComputeFlags = true;
+		
+		public bool GenerateWriteTo = false;
+		public List<string> WriteOpCodePrefix = new List<string>();
+		public List<string> WriteOpCodeSuffix = new List<string>();
+		public List<string> WriteOperand = new List<string>();
+		public List<string> WriteArguments = new List<string>();
+		
+		public IEnumerable<string> WriteToBody {
+			get {
+				foreach (string line in WriteOpCodePrefix)
+					yield return line;
+				yield return "output.Write(OpCode);";
+				foreach (string line in WriteOpCodeSuffix.Concat(WriteOperand).Concat(WriteArguments))
+					yield return line;
+			}
+		}
 	}
 	
 	static Action<OpCode> CustomClassName(string name)
@@ -323,9 +343,6 @@ namespace ICSharpCode.Decompiler.IL
 	// MayBranch trait: the instruction may cause control flow to branch (e.g. branch, conditionalbranch, return)
 	static Action<OpCode> MayBranch = HasFlag("InstructionFlags.MayBranch");
 	
-	// HasBranchTarget trait: the instruction has an explicit branch target offset
-	static Action<OpCode> HasBranchTarget = opCode => {};
-
 	// UnconditionalBranch trait: the instruction does not produce a result normally; it always branches or throws an exception. Implies VoidResult.
 	static Action<OpCode> UnconditionalBranch = VoidResult + HasFlag("InstructionFlags.EndPointUnreachable");
 	
@@ -348,6 +365,9 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.Flags.Add("base.ComputeFlags()");
 		opCode.ConstructorParameters.Add("ILInstruction argument");
 		opCode.BaseConstructorArguments.Add("argument");
+		opCode.WriteArguments.Add("output.Write('(');");
+		opCode.WriteArguments.Add("Argument.WriteTo(output);");
+		opCode.WriteArguments.Add("output.Write(')');");
 	};
 	
 	// Binary trait: the instruction has two arguments named 'Left' and 'Right'
@@ -358,6 +378,11 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorParameters.Add("ILInstruction right");
 		opCode.BaseConstructorArguments.Add("left");
 		opCode.BaseConstructorArguments.Add("right");
+		opCode.WriteArguments.Add("output.Write('(');");
+		opCode.WriteArguments.Add("Left.WriteTo(output);");
+		opCode.WriteArguments.Add("output.Write(\", \");");
+		opCode.WriteArguments.Add("Right.WriteTo(output);");
+		opCode.WriteArguments.Add("output.Write(')');");
 	};
 
 	// BinaryNumeric trait: the instruction is derived from BinaryNumericInstruction. Implies Binary; and implies MayThrow if the overflow mode is checked.
@@ -366,12 +391,15 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.BaseClass = "BinaryNumericInstruction";
 		opCode.ConstructorParameters.Add("OverflowMode overflowMode");
 		opCode.BaseConstructorArguments.Add("overflowMode");
+		opCode.WriteOpCodeSuffix.Add("output.WriteSuffix(overflowMode);");
 	};
 	
 	// BinaryNumeric trait: the instruction is derived from BinaryComparisonInstruction. Implies Binary and I4Result.
 	static Action<OpCode> BinaryComparison = opCode => {
 		Binary(opCode);
 		opCode.BaseClass = "BinaryComparisonInstruction";
+		opCode.WriteOpCodeSuffix.Add("output.Write('.');");
+		opCode.WriteOpCodeSuffix.Add("output.Write(OpType);");
 	};
 
 	// SideEffect trait: the instruction has a non-local side effect
@@ -392,6 +420,9 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorBody.Add("this.variable = variable;");
 		opCode.Members.Add("/// <summary>Returns the variable operand.</summary>" + Environment.NewLine
 						+ "public ILVariable Variable { get { return variable; } }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOperand.Add("output.Write(' ');");
+		opCode.WriteOperand.Add("variable.WriteTo(output);");
 	};
 	
 	static Action<OpCode> HasFieldOperand = opCode => {
@@ -400,6 +431,9 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorBody.Add("this.field = field;");
 		opCode.Members.Add("/// <summary>Returns the field operand.</summary>" + Environment.NewLine
 						+ "public FieldReference Field { get { return field; } }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOperand.Add("output.Write(' ');");
+		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, field);");
 	};
 
 	static Action<OpCode> HasTypeOperand = opCode => {
@@ -408,6 +442,9 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorBody.Add("this.type = type;");
 		opCode.Members.Add("/// <summary>Returns the type operand.</summary>" + Environment.NewLine
 						+ "public TypeReference Type { get { return type; } }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOperand.Add("output.Write(' ');");
+		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, type);");
 	};
 	
 	// LoadConstant trait: the instruction loads a compile-time constant. Implies NoArguments.
@@ -418,12 +455,9 @@ namespace ICSharpCode.Decompiler.IL
 			opCode.ConstructorParameters.Add(operandType + " value");
 			opCode.Members.Add("public readonly " + operandType + " Value;");
 			opCode.ConstructorBody.Add("this.Value = value;");
-			opCode.Members.Add("public override void WriteTo(ITextOutput output)" + Environment.NewLine
-				+ "{" + Environment.NewLine
-				+ "\toutput.Write(OpCode);" + Environment.NewLine
-				+ "\toutput.Write(' ');" + Environment.NewLine
-				+ "\tDisassembler.DisassemblerHelpers.WriteOperand(output, Value);" + Environment.NewLine
-				+ "}");
+			opCode.GenerateWriteTo = true;
+			opCode.WriteOperand.Add("output.Write(' ');");
+			opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, Value);");
 		};
 	}
 	
@@ -431,11 +465,15 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.Interfaces.Add("ISupportsVolatilePrefix");
 		opCode.Members.Add("/// <summary>Gets/Sets whether the memory access is volatile.</summary>" + Environment.NewLine
 						+ "public bool IsVolatile { get; set; }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOpCodePrefix.Add("if (IsVolatile)" + Environment.NewLine + "\toutput.Write(\"volatile.\");");
 	};
 	
 	static Action<OpCode> SupportsUnalignedPrefix = opCode => {
 		opCode.Interfaces.Add("ISupportsUnalignedPrefix");
 		opCode.Members.Add("/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>" + Environment.NewLine
 						+ "public byte UnalignedPrefix { get; set; }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOpCodePrefix.Add("if (UnalignedPrefix > 0)" + Environment.NewLine + "\toutput.Write(\"unaligned(\" + UnalignedPrefix + \").\");");
 	};
 #>

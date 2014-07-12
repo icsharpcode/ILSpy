@@ -167,12 +167,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.resultType = resultType;
 		}
+		StackType resultType;
+		public override StackType ResultType { get { return resultType; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayPeek;
 		}
-		StackType resultType;
-		public override StackType ResultType { get { return resultType; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitPeek(this);
@@ -270,11 +270,11 @@ namespace ICSharpCode.Decompiler.IL
 		public Div(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.Div, left, right, overflowMode)
 		{
 		}
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitDiv(this);
@@ -287,11 +287,11 @@ namespace ICSharpCode.Decompiler.IL
 		public Rem(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.Rem, left, right, overflowMode)
 		{
 		}
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitRem(this);
@@ -366,11 +366,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Unconditional branch. <c>goto target;</c></summary>
 	public sealed partial class Branch : SimpleInstruction
 	{
+		public override StackType ResultType { get { return StackType.Void; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBranch(this);
@@ -393,11 +393,11 @@ namespace ICSharpCode.Decompiler.IL
 		public DebugBreak() : base(OpCode.DebugBreak)
 		{
 		}
+		public override StackType ResultType { get { return StackType.Void; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.SideEffect;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitDebugBreak(this);
@@ -501,11 +501,11 @@ namespace ICSharpCode.Decompiler.IL
 		public Ckfinite() : base(OpCode.Ckfinite)
 		{
 		}
+		public override StackType ResultType { get { return StackType.Void; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayPeek | InstructionFlags.MayThrow;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCkfinite(this);
@@ -533,6 +533,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Returns the variable operand.</summary>
 		public ILVariable Variable { get { return variable; } }
 		public override StackType ResultType { get { return variable.Type.GetStackType(); } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			variable.WriteTo(output);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLoc(this);
@@ -550,6 +556,12 @@ namespace ICSharpCode.Decompiler.IL
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
 		public ILVariable Variable { get { return variable; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			variable.WriteTo(output);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLoca(this);
@@ -567,6 +579,15 @@ namespace ICSharpCode.Decompiler.IL
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
 		public ILVariable Variable { get { return variable; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			variable.WriteTo(output);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStLoc(this);
@@ -581,13 +602,13 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly string Value;
+		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
-		public override StackType ResultType { get { return StackType.O; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdStr(this);
@@ -602,13 +623,13 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly int Value;
+		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
-		public override StackType ResultType { get { return StackType.I4; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcI4(this);
@@ -623,13 +644,13 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly long Value;
+		public override StackType ResultType { get { return StackType.I8; } }
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
-		public override StackType ResultType { get { return StackType.I8; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcI8(this);
@@ -644,13 +665,13 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly double Value;
+		public override StackType ResultType { get { return StackType.F; } }
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
-		public override StackType ResultType { get { return StackType.F; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcF(this);
@@ -673,11 +694,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Returns from the current method or lambda.</summary>
 	public sealed partial class Return : ILInstruction
 	{
+		public override StackType ResultType { get { return StackType.Void; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitReturn(this);
@@ -717,10 +738,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.field = field;
 		}
-		protected override InstructionFlags ComputeFlags()
-		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -729,6 +746,23 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Returns the field operand.</summary>
 		public FieldReference Field { get { return field; } }
 		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			if (IsVolatile)
+				output.Write("volatile.");
+			if (UnalignedPrefix > 0)
+				output.Write("unaligned(" + UnalignedPrefix + ").");
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdFld(this);
@@ -742,14 +776,23 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.field = field;
 		}
-		protected override InstructionFlags ComputeFlags()
-		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow;
-		}
 		readonly FieldReference field;
 		/// <summary>Returns the field operand.</summary>
 		public FieldReference Field { get { return field; } }
 		public override StackType ResultType { get { return StackType.Ref; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdFlda(this);
@@ -763,10 +806,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.field = field;
 		}
-		protected override InstructionFlags ComputeFlags()
-		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -775,6 +814,25 @@ namespace ICSharpCode.Decompiler.IL
 		readonly FieldReference field;
 		/// <summary>Returns the field operand.</summary>
 		public FieldReference Field { get { return field; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			if (IsVolatile)
+				output.Write("volatile.");
+			if (UnalignedPrefix > 0)
+				output.Write("unaligned(" + UnalignedPrefix + ").");
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+			output.Write('(');
+			Left.WriteTo(output);
+			output.Write(", ");
+			Right.WriteTo(output);
+			output.Write(')');
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStFld(this);
@@ -788,10 +846,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.field = field;
 		}
-		protected override InstructionFlags ComputeFlags()
-		{
-			return InstructionFlags.SideEffect;
-		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -800,6 +854,20 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Returns the field operand.</summary>
 		public FieldReference Field { get { return field; } }
 		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.SideEffect;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			if (IsVolatile)
+				output.Write("volatile.");
+			if (UnalignedPrefix > 0)
+				output.Write("unaligned(" + UnalignedPrefix + ").");
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdsFld(this);
@@ -817,6 +885,12 @@ namespace ICSharpCode.Decompiler.IL
 		readonly FieldReference field;
 		/// <summary>Returns the field operand.</summary>
 		public FieldReference Field { get { return field; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdsFlda(this);
@@ -830,10 +904,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.field = field;
 		}
-		protected override InstructionFlags ComputeFlags()
-		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect;
-		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -842,6 +912,23 @@ namespace ICSharpCode.Decompiler.IL
 		readonly FieldReference field;
 		/// <summary>Returns the field operand.</summary>
 		public FieldReference Field { get { return field; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			if (IsVolatile)
+				output.Write("volatile.");
+			if (UnalignedPrefix > 0)
+				output.Write("unaligned(" + UnalignedPrefix + ").");
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStsFld(this);
@@ -859,6 +946,15 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Returns the type operand.</summary>
 		public TypeReference Type { get { return type; } }
 		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitIsInst(this);
@@ -872,10 +968,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		protected override InstructionFlags ComputeFlags()
-		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-		}
 		readonly TypeReference type;
 		/// <summary>Returns the type operand.</summary>
 		public TypeReference Type { get { return type; } }
@@ -884,6 +976,23 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
 		public override StackType ResultType { get { return type.GetStackType(); } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			if (IsVolatile)
+				output.Write("volatile.");
+			if (UnalignedPrefix > 0)
+				output.Write("unaligned(" + UnalignedPrefix + ").");
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdObj(this);
@@ -897,14 +1006,23 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		protected override InstructionFlags ComputeFlags()
-		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-		}
 		readonly TypeReference type;
 		/// <summary>Returns the type operand.</summary>
 		public TypeReference Type { get { return type; } }
 		public override StackType ResultType { get { return type.GetStackType(); } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitUnboxAny(this);
@@ -930,11 +1048,11 @@ namespace ICSharpCode.Decompiler.IL
 		public Throw(ILInstruction argument) : base(OpCode.Throw, argument)
 		{
 		}
+		public override StackType ResultType { get { return StackType.Void; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitThrow(this);
@@ -947,11 +1065,11 @@ namespace ICSharpCode.Decompiler.IL
 		public LdLen(ILInstruction argument) : base(OpCode.LdLen, argument)
 		{
 		}
+		public override StackType ResultType { get { return StackType.I; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
-		public override StackType ResultType { get { return StackType.I; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLen(this);
