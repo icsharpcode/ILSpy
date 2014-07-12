@@ -43,22 +43,20 @@ namespace ICSharpCode.Decompiler.IL
 			return initial;
 		}
 		
+		public sealed override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+		}
+		
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.None;
 		}
 		
-		/*public override bool IsPeeking { get { return false; } }
-
-		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
-		{
-		}
-
 		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
 		{
 			finished = true; // Nothing to do, since we don't have arguments.
 			return this;
-		}*/
+		}
 	}
 
 	/*

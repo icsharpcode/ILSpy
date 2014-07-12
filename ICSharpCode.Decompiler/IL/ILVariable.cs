@@ -26,13 +26,13 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	enum VariableKind
+	public enum VariableKind
 	{
 		Local,
 		Parameter,
 	}
 
-	class ILVariable
+	public class ILVariable
 	{
 		public readonly VariableKind Kind;
 		public readonly TypeReference Type;

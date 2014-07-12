@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
@@ -24,139 +25,60 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public abstract class UnaryInstruction : ILInstruction
 	{
-		ILInstruction argument = Pop;
+		ILInstruction argument;
 		
 		public ILInstruction Argument {
 			get { return argument; }
 			set {
-				Debug.Assert(value.ResultType != StackType.Void);
-				argument = value;
-				InvalidateFlags();
+				ValidateArgument(value);
+				SetChildInstruction(ref argument, value);
 			}
 		}
 		
-		protected UnaryInstruction(OpCode opCode) : base(opCode)
+		protected UnaryInstruction(OpCode opCode, ILInstruction argument) : base(opCode)
 		{
+			this.Argument = argument;
 		}
 
-		internal override void CheckInvariant()
-		{
-			base.CheckInvariant();
-			Argument.CheckInvariant();
-			Debug.Assert(Argument.ResultType != StackType.Void);
-		}
-		
 		//public sealed override bool IsPeeking { get { return Operand.IsPeeking; } }
 
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 			output.Write('(');
-			Argument.WriteTo(output);
+			argument.WriteTo(output);
 			output.Write(')');
 		}
 		
 		public sealed override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
 		{
-			return func(initial, Argument.AcceptVisitor(visitor));
+			return func(initial, argument.AcceptVisitor(visitor));
+		}
+		
+		public sealed override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Argument = argument.AcceptVisitor(visitor);
+		}
+		
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			Argument = argument.Inline(flagsBefore, instructionStack, out finished);
+			return this;
 		}
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return Argument.Flags;
-		}
-		
-		/*
-		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
-		{
-			Operand = transformFunc(Operand);
-		}
-
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
-		{
-			Operand = Operand.Inline(flagsBefore, instructionStack, out finished);
-			return this;
-		}*/
-	}
-
-	/*
-	class VoidInstruction() : UnaryInstruction(OpCode.Void)
-	{
-		public override bool NoResult { get { return true; } }
-
-		public override InstructionFlags Flags
-		{
-			get { return Operand.Flags; }
+			return argument.Flags;
 		}
 	}
-
-	class LogicNotInstruction() : UnaryInstruction(OpCode.LogicNot)
+	
+	partial class BitNot
 	{
-		public override InstructionFlags Flags
-		{
-			get { return Operand.Flags; }
+		public override StackType ResultType {
+			get {
+				return Argument.ResultType;
+			}
 		}
 	}
-
-	class UnaryNumericInstruction(OpCode opCode, StackType opType) : UnaryInstruction(opCode)
-	{
-		public readonly StackType OpType = opType;
-
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-			output.Write(' ');
-			output.Write(OpType);
-			output.Write('(');
-			Operand.WriteTo(output);
-			output.Write(')');
-		}
-
-		public override InstructionFlags Flags
-		{
-			get { return Operand.Flags; }
-		}
-	}
-
-	class IsInst(public readonly TypeReference Type) : UnaryInstruction(OpCode.IsInst)
-	{
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-			output.Write(' ');
-			Type.WriteTo(output);
-			output.Write('(');
-			Operand.WriteTo(output);
-			output.Write(')');
-		}
-
-		public override InstructionFlags Flags
-		{
-			get { return Operand.Flags; }
-		}
-	}
-
-	class ConvInstruction(
-		public readonly StackType FromType, public readonly PrimitiveType ToType, public readonly OverflowMode ConvMode
-	) : UnaryInstruction(OpCode.Conv)
-	{
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-			output.WriteSuffix(ConvMode);
-			output.Write(' ');
-			output.Write(FromType);
-			output.Write("->");
-			output.Write(ToType);
-			output.Write('(');
-			Operand.WriteTo(output);
-			output.Write(')');
-		}
-
-		public override InstructionFlags Flags
-		{
-			get { return Operand.Flags | InstructionFlags.MayThrow; }
-		}
-	}*/
 }
  

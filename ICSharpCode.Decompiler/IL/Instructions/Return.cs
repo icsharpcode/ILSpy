@@ -17,24 +17,34 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class Return
 	{
+		ILInstruction argument;
+		
 		/// <summary>
 		/// The value to return. Null if this return statement is within a void method.
 		/// </summary>
-		public ILInstruction Argument = null;
-		
-		internal override void CheckInvariant()
-		{
-			base.CheckInvariant();
-			if (Argument != null) {
-				Argument.CheckInvariant();
-				Debug.Assert(Argument.ResultType != StackType.Void);
+		public ILInstruction Argument {
+			get { return argument; }
+			set { 
+				if (value != null)
+					ValidateArgument(value);
+				SetChildInstruction(ref argument, value);
 			}
+		}
+		
+		public Return() : base(OpCode.Return)
+		{
+		}
+		
+		public Return(ILInstruction argument) : base(OpCode.Return)
+		{
+			this.Argument = argument;
 		}
 		
 		public override void WriteTo(ITextOutput output)
@@ -50,9 +60,24 @@ namespace ICSharpCode.Decompiler.IL
 		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
 		{
 			TAccumulate value = initial;
-			if (Argument != null)
-				value = func(value, Argument.AcceptVisitor(visitor));
+			if (argument != null)
+				value = func(value, argument.AcceptVisitor(visitor));
 			return value;
+		}
+		
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			if (argument != null)
+				this.Argument = argument.AcceptVisitor(visitor);
+		}
+		
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			if (argument != null)
+				this.Argument = argument.Inline(flagsBefore, instructionStack, out finished);
+			else
+				finished = true;
+			return this;
 		}
 	}
 }

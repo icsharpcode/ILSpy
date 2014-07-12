@@ -37,21 +37,43 @@ namespace ICSharpCode.Decompiler.IL
 		Ovf_Un = 3
 	}
 	
-	public abstract class BinaryNumericInstruction : BinaryInstruction
+	public abstract partial class BinaryNumericInstruction : BinaryInstruction
 	{
-		public readonly StackType OpType;
-
 		public readonly OverflowMode OverflowMode;
 
 		readonly StackType resultType;
 
-		protected BinaryNumericInstruction(OpCode opCode, StackType opType, StackType resultType, OverflowMode overflowMode) : base(opCode)
+		protected BinaryNumericInstruction(OpCode opCode, ILInstruction left, ILInstruction right, OverflowMode overflowMode)
+			: base(opCode, left, right)
 		{
-			this.OpType = opType;
-			this.resultType = resultType;
 			this.OverflowMode = overflowMode;
+			this.resultType = ComputeResultType(opCode, left.ResultType, right.ResultType);
 		}
 
+		internal static StackType ComputeResultType(OpCode opCode, StackType left, StackType right)
+		{
+			// Based on Table 2: Binary Numeric Operations
+			// also works for Table 5: Integer Operations
+			// and for Table 7: Overflow Arithmetic Operations
+			if (left == right) {
+				return left;
+			}
+			if (left == StackType.Ref || right == StackType.Ref) {
+				if (left == StackType.Ref && right == StackType.Ref) {
+					// sub(&, &) = I
+					Debug.Assert(opCode == OpCode.Sub);
+					return StackType.I;
+				} else {
+					// add/sub with I or I4 and &
+					Debug.Assert(opCode == OpCode.Add || opCode == OpCode.Sub);
+					return StackType.Ref;
+				}
+			}
+			if (left == StackType.I || right == StackType.I)
+				return StackType.I;
+			return StackType.Unknown;
+		}
+		
 		public sealed override StackType ResultType {
 			get {
 				return resultType;
@@ -70,8 +92,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.WriteSuffix(OverflowMode);
-			output.Write(' ');
-			output.Write(OpType);
 			output.Write('(');
 			Left.WriteTo(output);
 			output.Write(", ");

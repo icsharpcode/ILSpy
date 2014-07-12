@@ -32,8 +32,8 @@
 			Peeking, NoArguments, ResultTypeParam),
 		new OpCode("Void", "Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.",
 			VoidResult, Unary),
-		new OpCode("BlockContainer", "A container of IL blocks.", VoidResult),
-		new OpCode("Block", "A block of IL instructions."),
+		new OpCode("BlockContainer", "A container of IL blocks.", VoidResult, CustomConstructor),
+		new OpCode("Block", "A block of IL instructions.", CustomConstructor),
 		new OpCode("LogicNot", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).",
 			ResultType("I4"), Unary),
 		new OpCode("Add", "Adds two numbers.", BinaryNumeric),
@@ -41,16 +41,15 @@
 		new OpCode("Mul", "Multiplies two numbers", BinaryNumeric),
 		new OpCode("Div", "Divides two numbers", BinaryNumeric, MayThrow),
 		new OpCode("Rem", "Division remainder", BinaryNumeric, MayThrow),
-		new OpCode("Neg", "Unary negation", Unary, ResultTypeParam),
 		new OpCode("BitAnd", "Bitwise AND", BinaryNumeric),
 		new OpCode("BitOr", "Bitwise OR", BinaryNumeric),
 		new OpCode("BitXor", "Bitwise XOR", BinaryNumeric),
-		new OpCode("BitNot", "Bitwise NOT", Unary, ResultTypeParam),
+		new OpCode("BitNot", "Bitwise NOT", Unary),
 		new OpCode("Arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
 		new OpCode("ConditionalBranch", "<c>if (condition) goto target;</c>.",
-			Unary, MayBranch, HasBranchTarget, VoidResult),
+			BranchInstruction, CustomConstructor, CustomComputeFlags, MayBranch, VoidResult),
 		new OpCode("Branch", "<c>goto target;</c>.",
-			NoArguments, UnconditionalBranch, MayBranch, HasBranchTarget),
+			BranchInstruction, UnconditionalBranch, MayBranch),
 		new OpCode("DebugBreak", "Breakpoint instruction",
 			NoArguments, VoidResult, SideEffect),
 		new OpCode("Ceq", "Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.",
@@ -70,45 +69,47 @@
 		new OpCode("Conv", "Numeric cast.",
 			Unary, CustomConstructor),
 		new OpCode("LdLoc", "Loads the value of a local variable. (ldarg/ldloc)",
-			NoArguments, HasVariableOperand, ResultType("Variable.Type.ToStackType()")),
+			NoArguments, HasVariableOperand, ResultType("variable.Type.GetStackType()")),
 		new OpCode("LdLoca", "Loads the address of a local variable. (ldarga/ldloca)",
 			NoArguments, ResultType("Ref"), HasVariableOperand),
 		new OpCode("StLoc", "Stores a value into a local variable. (starg/stloc)",
 			Unary, VoidResult, HasVariableOperand),
 		new OpCode("LdStr", "Loads a constant string.",
-			LoadConstant, ResultType("O")),
+			LoadConstant("string"), ResultType("O")),
 		new OpCode("LdcI4", "Loads a constant 32-bit integer.",
-			LoadConstant, ResultType("I4")),
+			LoadConstant("int"), ResultType("I4")),
 		new OpCode("LdcI8", "Loads a constant 64-bit integer.",
-			LoadConstant, ResultType("I8")),
+			LoadConstant("long"), ResultType("I8")),
 		new OpCode("LdcF", "Loads a constant floating-point number.",
-			LoadConstant, ResultType("F")),
+			LoadConstant("double"), ResultType("F")),
 		new OpCode("LdNull", "Loads the null reference.",
-			LoadConstant, ResultType("O")),
+			NoArguments, ResultType("O")),
 		new OpCode("Return", "Returns from the current method or lambda.",
-			MayBranch, UnconditionalBranch),
+			CustomConstructor, MayBranch, UnconditionalBranch),
 		new OpCode("Shl", "Shift left", BinaryNumeric),
 		new OpCode("Shr", "Shift right", BinaryNumeric),
 		
 		new OpCode("Ldfld", "Load instance field",
-			Unary, MayThrow, SideEffect, HasFieldOperand),
+			Unary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow,
+			HasFieldOperand, ResultType("field.FieldType.GetStackType()")),
 		new OpCode("Ldflda", "Load address of instance field",
 			Unary, MayThrow, HasFieldOperand, ResultType("Ref")),
 		new OpCode("Stfld", "Store value to instance field",
-			Binary, SideEffect, MayThrow, VoidResult, HasFieldOperand),
+			Binary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, VoidResult, HasFieldOperand),
 		new OpCode("Ldsfld", "Load static field",
-			NoArguments, SideEffect, HasFieldOperand),
+			NoArguments, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix,
+			HasFieldOperand, ResultType("field.FieldType.GetStackType()")),
 		new OpCode("Ldsflda", "Load static field address",
 			NoArguments, ResultType("Ref"), HasFieldOperand),
 		new OpCode("Stsfld", "Store value to static field",
-			Unary, SideEffect, VoidResult, HasFieldOperand),
+			Unary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, VoidResult, HasFieldOperand),
 
 		new OpCode("IsInst", "Test if object is instance of class or interface.",
-			Unary, HasTypeOperand, ResultType("O")),
+			Unary, HasTypeOperand, ResultType("type.GetStackType()")),
 		new OpCode("LdInd", "Indirect load (ref/pointer dereference).",
-			Unary, HasTypeOperand, SideEffect, MayThrow),
+			Unary, HasTypeOperand, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
 		new OpCode("UnboxAny", "Unbox a value.",
-			Unary, HasTypeOperand, SideEffect, MayThrow),
+			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("type.GetStackType()")),
 		new OpCode("NewObj", "Creates an object instance and calls the constructor.",
 			Call, ResultType("O")),
 		new OpCode("Throw", "Throws an exception.",
@@ -137,20 +138,20 @@ namespace ICSharpCode.Decompiler.IL
 
 <#	foreach (OpCode opCode in opCodes) { #>
 	/// <summary><#=opCode.Description#></summary>
-	public sealed partial class <#=opCode.Name#> : <#=opCode.BaseClass#>
+	public sealed partial class <#=opCode.Name#> : <#=string.Join(", ", new[]{opCode.BaseClass}.Concat(opCode.Interfaces))#>
 	{
 <#	if (opCode.GenerateConstructor) { #>
 		public <#=opCode.Name#>(<#=string.Join(", ", opCode.ConstructorParameters)#>) : base(<#=string.Join(", ", opCode.BaseConstructorArguments)#>)
 		{<#=Body(opCode.ConstructorBody)#>}
 <#	} #>
-<#	if (opCode.Flags.Count > 1) { #>
+<#	if (opCode.GenerateComputeFlags && opCode.Flags.Any(f => f != "base.ComputeFlags()")) { #>
 		protected override InstructionFlags ComputeFlags()
 		{
 			return <#=string.Join(" | ", opCode.Flags)#>;
 		}
 <#	} #>
-<#=string.Join(Environment.NewLine, opCode.Members.Select(m => "\t\t" + m))#>
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+<#=string.Join(Environment.NewLine, opCode.Members.Select(m => "\t\t" + m.Replace("\n", "\n\t\t")))#>
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.Visit<#=opCode.Name#>(this);
 		}
@@ -158,9 +159,12 @@ namespace ICSharpCode.Decompiler.IL
 
 <#	} #>
 
-	
+	/// <summary>
+	/// Base class for visitor pattern.
+	/// </summary>
 	public abstract class ILVisitor<T>
 	{
+		/// <summary>Called by Visit*() methods that were not overridden</summary>
 		protected abstract T Default(ILInstruction inst);
 		
 <#	foreach (OpCode opCode in opCodes) { #>
@@ -169,6 +173,36 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 <#	} #>
+	}
+	
+	partial class BinaryNumericInstruction
+	{
+		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, OverflowMode overflowMode)
+		{
+			switch (opCode) {
+<#	foreach (OpCode opCode in opCodes.Where(c => c.BaseClass == "BinaryNumericInstruction")) { #>
+				case OpCode.<#=opCode.Name#>:
+					return new <#=opCode.Name#>(left, right, overflowMode);
+<#	} #>
+				default:
+					throw new ArgumentException("opCode is not a binary numeric instruction");
+			}
+		}
+	}
+	
+	partial class BinaryComparisonInstruction
+	{
+		public static BinaryComparisonInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right)
+		{
+			switch (opCode) {
+<#	foreach (OpCode opCode in opCodes.Where(c => c.BaseClass == "BinaryComparisonInstruction")) { #>
+				case OpCode.<#=opCode.Name#>:
+					return new <#=opCode.Name#>(left, right);
+<#	} #>
+				default:
+					throw new ArgumentException("opCode is not a binary comparison instruction");
+			}
+		}
 	}
 }
 
@@ -179,7 +213,7 @@ namespace ICSharpCode.Decompiler.IL
 		foreach (var st in statements) {
 			b.AppendLine();
 			b.Append("\t\t\t");
-			b.Append(st);
+			b.Append(st.Replace("\n", "\n\t\t\t"));
 		}
 		b.AppendLine();
 		b.Append("\t\t");
@@ -204,14 +238,20 @@ namespace ICSharpCode.Decompiler.IL
 		public List<string> ConstructorBody = new List<string>();
 
 		public string BaseClass = "ILInstruction";
+		public List<string> Interfaces = new List<string>();
 		public List<string> BaseConstructorArguments = new List<string>();
 		public List<string> Members = new List<string>();
 		
-		public List<string> Flags = new List<string>() { "base.ComputeFlags()" };
+		public List<string> Flags = new List<string>();
+		public bool GenerateComputeFlags = true;
 	}
 	
 	static Action<OpCode> CustomConstructor = opCode => {
 		opCode.GenerateConstructor = false;
+	};
+	
+	static Action<OpCode> CustomComputeFlags = opCode => {
+		opCode.GenerateComputeFlags = false;
 	};
 	
 	static Action<OpCode> HasFlag(string name)
@@ -255,9 +295,15 @@ namespace ICSharpCode.Decompiler.IL
 	static Action<OpCode> HasBranchTarget = opCode => {};
 
 	// UnconditionalBranch trait: the instruction does not produce a result normally; it always branches or throws an exception. Implies VoidResult.
-	static Action<OpCode> UnconditionalBranch = opCode => {
-		VoidResult(opCode);
-	};
+	static Action<OpCode> UnconditionalBranch = VoidResult + HasFlag("InstructionFlags.EndPointUnreachable");
+	
+	static Action<OpCode> BaseClass(string name)
+	{
+		return opCode => {
+			opCode.BaseClass = name;
+			opCode.Flags.Add("base.ComputeFlags()");
+		};
+	}
 	
 	// NoArguments trait: the instruction no arguments
 	static Action<OpCode> NoArguments = opCode => {
@@ -267,34 +313,45 @@ namespace ICSharpCode.Decompiler.IL
 	// Unary trait: the instruction has a single argument
 	static Action<OpCode> Unary = opCode => {
 		opCode.BaseClass = "UnaryInstruction";
+		opCode.Flags.Add("base.ComputeFlags()");
+		opCode.ConstructorParameters.Add("ILInstruction argument");
+		opCode.BaseConstructorArguments.Add("argument");
 	};
 	
 	// Binary trait: the instruction has two arguments named 'Left' and 'Right'
 	static Action<OpCode> Binary = opCode => {
 		opCode.BaseClass = "BinaryInstruction";
+		opCode.Flags.Add("base.ComputeFlags()");
+		opCode.ConstructorParameters.Add("ILInstruction left");
+		opCode.ConstructorParameters.Add("ILInstruction right");
+		opCode.BaseConstructorArguments.Add("left");
+		opCode.BaseConstructorArguments.Add("right");
 	};
 
-	// BinaryNumeric trait: the instruction is derived from BinaryNumericInstruction. Implies Binary and NonVoidResult; and implies MayThrow if the overflow mode is checked.
+	// BinaryNumeric trait: the instruction is derived from BinaryNumericInstruction. Implies Binary; and implies MayThrow if the overflow mode is checked.
 	static Action<OpCode> BinaryNumeric = opCode => {
+		Binary(opCode);
 		opCode.BaseClass = "BinaryNumericInstruction";
-		opCode.ConstructorParameters.Add("StackType opType");
-		opCode.ConstructorParameters.Add("StackType resultType");
 		opCode.ConstructorParameters.Add("OverflowMode overflowMode");
-		opCode.BaseConstructorArguments.Add("opType");
-		opCode.BaseConstructorArguments.Add("resultType");
 		opCode.BaseConstructorArguments.Add("overflowMode");
 	};
 	
 	// BinaryNumeric trait: the instruction is derived from BinaryComparisonInstruction. Implies Binary and I4Result.
 	static Action<OpCode> BinaryComparison = opCode => {
+		Binary(opCode);
 		opCode.BaseClass = "BinaryComparisonInstruction";
-		opCode.ConstructorParameters.Add("StackType opType");
-		opCode.BaseConstructorArguments.Add("opType");
+	};
+
+	static Action<OpCode> BranchInstruction = opCode => {
+		opCode.BaseClass = "BranchInstruction";
+		opCode.ConstructorParameters.Add("int targetILOffset");
+		opCode.BaseConstructorArguments.Add("targetILOffset");
 	};
 
 	// SideEffect trait: the instruction has a non-local side effect
 	static Action<OpCode> SideEffect = HasFlag("InstructionFlags.SideEffect");
-
+	static Action<OpCode> MemoryAccess = SideEffect;
+	
 	// Call trait: the instruction performs a method call
 	static Action<OpCode> Call = opCode => {
 		opCode.BaseClass = "CallInstruction";
@@ -303,14 +360,50 @@ namespace ICSharpCode.Decompiler.IL
 	};
 
 	// HasVariableOperand trait: the instruction refers to a local variable
-	static Action<OpCode> HasVariableOperand = opCode => {};
+	static Action<OpCode> HasVariableOperand = opCode => {
+		opCode.ConstructorParameters.Add("ILVariable variable");
+		opCode.Members.Add("readonly ILVariable variable;");
+		opCode.ConstructorBody.Add("this.variable = variable;");
+		opCode.Members.Add("/// <summary>Returns the variable operand.</summary>" + Environment.NewLine
+						+ "public ILVariable Variable { get { return variable; } }");
+	};
 	
-	static Action<OpCode> HasFieldOperand = opCode => {};
+	static Action<OpCode> HasFieldOperand = opCode => {
+		opCode.ConstructorParameters.Add("FieldReference field");
+		opCode.Members.Add("readonly FieldReference field;");
+		opCode.ConstructorBody.Add("this.field = field;");
+		opCode.Members.Add("/// <summary>Returns the field operand.</summary>" + Environment.NewLine
+						+ "public FieldReference Field { get { return field; } }");
+	};
 
-	static Action<OpCode> HasTypeOperand = opCode => {};
+	static Action<OpCode> HasTypeOperand = opCode => {
+		opCode.ConstructorParameters.Add("TypeReference type");
+		opCode.Members.Add("readonly TypeReference type;");
+		opCode.ConstructorBody.Add("this.type = type;");
+		opCode.Members.Add("/// <summary>Returns the type operand.</summary>" + Environment.NewLine
+						+ "public TypeReference Type { get { return type; } }");
+	};
 	
 	// LoadConstant trait: the instruction loads a compile-time constant. Implies NoArguments.
-	static Action<OpCode> LoadConstant = opCode => {
-		NoArguments(opCode);
+	static Action<OpCode> LoadConstant(string operandType)
+	{
+		return opCode => {
+			NoArguments(opCode);
+			opCode.ConstructorParameters.Add(operandType + " value");
+			opCode.Members.Add("public readonly " + operandType + " Value;");
+			opCode.ConstructorBody.Add("this.Value = value;");
+		};
+	}
+	
+	static Action<OpCode> SupportsVolatilePrefix = opCode => {
+		opCode.Interfaces.Add("ISupportsVolatilePrefix");
+		opCode.Members.Add("/// <summary>Gets/Sets whether the memory access is volatile.</summary>" + Environment.NewLine
+						+ "public bool IsVolatile { get; set; }");
+	};
+	
+	static Action<OpCode> SupportsUnalignedPrefix = opCode => {
+		opCode.Interfaces.Add("ISupportsUnalignedPrefix");
+		opCode.Members.Add("/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>" + Environment.NewLine
+						+ "public byte UnalignedPrefix { get; set; }");
 	};
 #>

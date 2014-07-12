@@ -50,8 +50,6 @@ namespace ICSharpCode.Decompiler.IL
 		Div,
 		/// <summary>Division remainder</summary>
 		Rem,
-		/// <summary>Unary negation</summary>
-		Neg,
 		/// <summary>Bitwise AND</summary>
 		BitAnd,
 		/// <summary>Bitwise OR</summary>
@@ -141,7 +139,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNop(this);
 		}
@@ -156,7 +154,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		StackType resultType;
 		public override StackType ResultType { get { return resultType; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitPop(this);
 		}
@@ -171,11 +169,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayPeek;
+			return InstructionFlags.MayPeek;
 		}
 		StackType resultType;
 		public override StackType ResultType { get { return resultType; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitPeek(this);
 		}
@@ -184,11 +182,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.</summary>
 	public sealed partial class Void : UnaryInstruction
 	{
-		public Void() : base(OpCode.Void)
+		public Void(ILInstruction argument) : base(OpCode.Void, argument)
 		{
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitVoid(this);
 		}
@@ -197,11 +195,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>A container of IL blocks.</summary>
 	public sealed partial class BlockContainer : ILInstruction
 	{
-		public BlockContainer() : base(OpCode.BlockContainer)
-		{
-		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBlockContainer(this);
 		}
@@ -210,11 +205,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>A block of IL instructions.</summary>
 	public sealed partial class Block : ILInstruction
 	{
-		public Block() : base(OpCode.Block)
-		{
-		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBlock(this);
 		}
@@ -223,11 +215,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).</summary>
 	public sealed partial class LogicNot : UnaryInstruction
 	{
-		public LogicNot() : base(OpCode.LogicNot)
+		public LogicNot(ILInstruction argument) : base(OpCode.LogicNot, argument)
 		{
 		}
 		public override StackType ResultType { get { return StackType.I4; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLogicNot(this);
 		}
@@ -236,11 +228,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Adds two numbers.</summary>
 	public sealed partial class Add : BinaryNumericInstruction
 	{
-		public Add(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Add, opType, resultType, overflowMode)
+		public Add(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.Add, left, right, overflowMode)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitAdd(this);
 		}
@@ -249,11 +241,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Subtracts two numbers</summary>
 	public sealed partial class Sub : BinaryNumericInstruction
 	{
-		public Sub(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Sub, opType, resultType, overflowMode)
+		public Sub(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.Sub, left, right, overflowMode)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitSub(this);
 		}
@@ -262,11 +254,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Multiplies two numbers</summary>
 	public sealed partial class Mul : BinaryNumericInstruction
 	{
-		public Mul(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Mul, opType, resultType, overflowMode)
+		public Mul(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.Mul, left, right, overflowMode)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitMul(this);
 		}
@@ -275,7 +267,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Divides two numbers</summary>
 	public sealed partial class Div : BinaryNumericInstruction
 	{
-		public Div(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Div, opType, resultType, overflowMode)
+		public Div(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.Div, left, right, overflowMode)
 		{
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -283,7 +275,7 @@ namespace ICSharpCode.Decompiler.IL
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitDiv(this);
 		}
@@ -292,7 +284,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Division remainder</summary>
 	public sealed partial class Rem : BinaryNumericInstruction
 	{
-		public Rem(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Rem, opType, resultType, overflowMode)
+		public Rem(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.Rem, left, right, overflowMode)
 		{
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -300,35 +292,20 @@ namespace ICSharpCode.Decompiler.IL
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitRem(this);
-		}
-	}
-
-	/// <summary>Unary negation</summary>
-	public sealed partial class Neg : UnaryInstruction
-	{
-		public Neg(StackType resultType) : base(OpCode.Neg)
-		{
-			this.resultType = resultType;
-		}
-		StackType resultType;
-		public override StackType ResultType { get { return resultType; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitNeg(this);
 		}
 	}
 
 	/// <summary>Bitwise AND</summary>
 	public sealed partial class BitAnd : BinaryNumericInstruction
 	{
-		public BitAnd(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.BitAnd, opType, resultType, overflowMode)
+		public BitAnd(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.BitAnd, left, right, overflowMode)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitAnd(this);
 		}
@@ -337,11 +314,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Bitwise OR</summary>
 	public sealed partial class BitOr : BinaryNumericInstruction
 	{
-		public BitOr(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.BitOr, opType, resultType, overflowMode)
+		public BitOr(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.BitOr, left, right, overflowMode)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitOr(this);
 		}
@@ -350,11 +327,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Bitwise XOR</summary>
 	public sealed partial class BitXor : BinaryNumericInstruction
 	{
-		public BitXor(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.BitXor, opType, resultType, overflowMode)
+		public BitXor(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.BitXor, left, right, overflowMode)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitXor(this);
 		}
@@ -363,13 +340,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Bitwise NOT</summary>
 	public sealed partial class BitNot : UnaryInstruction
 	{
-		public BitNot(StackType resultType) : base(OpCode.BitNot)
+		public BitNot(ILInstruction argument) : base(OpCode.BitNot, argument)
 		{
-			this.resultType = resultType;
 		}
-		StackType resultType;
-		public override StackType ResultType { get { return resultType; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitNot(this);
 		}
@@ -382,41 +357,34 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.O; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitArglist(this);
 		}
 	}
 
 	/// <summary><c>if (condition) goto target;</c>.</summary>
-	public sealed partial class ConditionalBranch : UnaryInstruction
+	public sealed partial class ConditionalBranch : BranchInstruction
 	{
-		public ConditionalBranch() : base(OpCode.ConditionalBranch)
-		{
-		}
-		protected override InstructionFlags ComputeFlags()
-		{
-			return base.ComputeFlags() | InstructionFlags.MayBranch;
-		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitConditionalBranch(this);
 		}
 	}
 
 	/// <summary><c>goto target;</c>.</summary>
-	public sealed partial class Branch : SimpleInstruction
+	public sealed partial class Branch : BranchInstruction
 	{
-		public Branch() : base(OpCode.Branch)
+		public Branch(int targetILOffset) : base(OpCode.Branch, targetILOffset)
 		{
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayBranch;
+			return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBranch(this);
 		}
@@ -430,10 +398,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect;
+			return InstructionFlags.SideEffect;
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitDebugBreak(this);
 		}
@@ -442,11 +410,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.</summary>
 	public sealed partial class Ceq : BinaryComparisonInstruction
 	{
-		public Ceq(StackType opType) : base(OpCode.Ceq, opType)
+		public Ceq(ILInstruction left, ILInstruction right) : base(OpCode.Ceq, left, right)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCeq(this);
 		}
@@ -455,11 +423,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Compare greater than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.</summary>
 	public sealed partial class Cgt : BinaryComparisonInstruction
 	{
-		public Cgt(StackType opType) : base(OpCode.Cgt, opType)
+		public Cgt(ILInstruction left, ILInstruction right) : base(OpCode.Cgt, left, right)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCgt(this);
 		}
@@ -468,11 +436,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Compare greater than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.</summary>
 	public sealed partial class Cgt_Un : BinaryComparisonInstruction
 	{
-		public Cgt_Un(StackType opType) : base(OpCode.Cgt_Un, opType)
+		public Cgt_Un(ILInstruction left, ILInstruction right) : base(OpCode.Cgt_Un, left, right)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCgt_Un(this);
 		}
@@ -481,11 +449,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Compare less than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.</summary>
 	public sealed partial class Clt : BinaryComparisonInstruction
 	{
-		public Clt(StackType opType) : base(OpCode.Clt, opType)
+		public Clt(ILInstruction left, ILInstruction right) : base(OpCode.Clt, left, right)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitClt(this);
 		}
@@ -494,11 +462,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Compare less than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.</summary>
 	public sealed partial class Clt_Un : BinaryComparisonInstruction
 	{
-		public Clt_Un(StackType opType) : base(OpCode.Clt_Un, opType)
+		public Clt_Un(ILInstruction left, ILInstruction right) : base(OpCode.Clt_Un, left, right)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitClt_Un(this);
 		}
@@ -511,7 +479,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCall(this);
 		}
@@ -524,7 +492,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCallVirt(this);
 		}
@@ -538,10 +506,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayPeek | InstructionFlags.MayThrow;
+			return InstructionFlags.MayPeek | InstructionFlags.MayThrow;
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCkFinite(this);
 		}
@@ -551,7 +519,7 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class Conv : UnaryInstruction
 	{
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitConv(this);
 		}
@@ -560,11 +528,15 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Loads the value of a local variable. (ldarg/ldloc)</summary>
 	public sealed partial class LdLoc : SimpleInstruction
 	{
-		public LdLoc() : base(OpCode.LdLoc)
+		public LdLoc(ILVariable variable) : base(OpCode.LdLoc)
 		{
+			this.variable = variable;
 		}
-		public override StackType ResultType { get { return Variable.Type.ToStackType(); } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		readonly ILVariable variable;
+		/// <summary>Returns the variable operand.</summary>
+		public ILVariable Variable { get { return variable; } }
+		public override StackType ResultType { get { return variable.Type.GetStackType(); } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLoc(this);
 		}
@@ -573,11 +545,15 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Loads the address of a local variable. (ldarga/ldloca)</summary>
 	public sealed partial class LdLoca : SimpleInstruction
 	{
-		public LdLoca() : base(OpCode.LdLoca)
+		public LdLoca(ILVariable variable) : base(OpCode.LdLoca)
 		{
+			this.variable = variable;
 		}
 		public override StackType ResultType { get { return StackType.Ref; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		readonly ILVariable variable;
+		/// <summary>Returns the variable operand.</summary>
+		public ILVariable Variable { get { return variable; } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLoca(this);
 		}
@@ -586,11 +562,15 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
 	public sealed partial class StLoc : UnaryInstruction
 	{
-		public StLoc() : base(OpCode.StLoc)
+		public StLoc(ILInstruction argument, ILVariable variable) : base(OpCode.StLoc, argument)
 		{
+			this.variable = variable;
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		readonly ILVariable variable;
+		/// <summary>Returns the variable operand.</summary>
+		public ILVariable Variable { get { return variable; } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStLoc(this);
 		}
@@ -599,11 +579,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Loads a constant string.</summary>
 	public sealed partial class LdStr : SimpleInstruction
 	{
-		public LdStr() : base(OpCode.LdStr)
+		public LdStr(string value) : base(OpCode.LdStr)
 		{
+			this.Value = value;
 		}
+		public readonly string Value;
 		public override StackType ResultType { get { return StackType.O; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdStr(this);
 		}
@@ -612,11 +594,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Loads a constant 32-bit integer.</summary>
 	public sealed partial class LdcI4 : SimpleInstruction
 	{
-		public LdcI4() : base(OpCode.LdcI4)
+		public LdcI4(int value) : base(OpCode.LdcI4)
 		{
+			this.Value = value;
 		}
+		public readonly int Value;
 		public override StackType ResultType { get { return StackType.I4; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcI4(this);
 		}
@@ -625,11 +609,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Loads a constant 64-bit integer.</summary>
 	public sealed partial class LdcI8 : SimpleInstruction
 	{
-		public LdcI8() : base(OpCode.LdcI8)
+		public LdcI8(long value) : base(OpCode.LdcI8)
 		{
+			this.Value = value;
 		}
+		public readonly long Value;
 		public override StackType ResultType { get { return StackType.I8; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcI8(this);
 		}
@@ -638,11 +624,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Loads a constant floating-point number.</summary>
 	public sealed partial class LdcF : SimpleInstruction
 	{
-		public LdcF() : base(OpCode.LdcF)
+		public LdcF(double value) : base(OpCode.LdcF)
 		{
+			this.Value = value;
 		}
+		public readonly double Value;
 		public override StackType ResultType { get { return StackType.F; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcF(this);
 		}
@@ -655,7 +643,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.O; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdNull(this);
 		}
@@ -664,15 +652,12 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Returns from the current method or lambda.</summary>
 	public sealed partial class Return : ILInstruction
 	{
-		public Return() : base(OpCode.Return)
-		{
-		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayBranch;
+			return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitReturn(this);
 		}
@@ -681,11 +666,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Shift left</summary>
 	public sealed partial class Shl : BinaryNumericInstruction
 	{
-		public Shl(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Shl, opType, resultType, overflowMode)
+		public Shl(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.Shl, left, right, overflowMode)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitShl(this);
 		}
@@ -694,28 +679,36 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Shift right</summary>
 	public sealed partial class Shr : BinaryNumericInstruction
 	{
-		public Shr(StackType opType, StackType resultType, OverflowMode overflowMode) : base(OpCode.Shr, opType, resultType, overflowMode)
+		public Shr(ILInstruction left, ILInstruction right, OverflowMode overflowMode) : base(OpCode.Shr, left, right, overflowMode)
 		{
 		}
 
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitShr(this);
 		}
 	}
 
 	/// <summary>Load instance field</summary>
-	public sealed partial class Ldfld : UnaryInstruction
+	public sealed partial class Ldfld : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public Ldfld() : base(OpCode.Ldfld)
+		public Ldfld(ILInstruction argument, FieldReference field) : base(OpCode.Ldfld, argument)
 		{
+			this.field = field;
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
-
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
+		public bool IsVolatile { get; set; }
+		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
+		public byte UnalignedPrefix { get; set; }
+		readonly FieldReference field;
+		/// <summary>Returns the field operand.</summary>
+		public FieldReference Field { get { return field; } }
+		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdfld(this);
 		}
@@ -724,49 +717,69 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load address of instance field</summary>
 	public sealed partial class Ldflda : UnaryInstruction
 	{
-		public Ldflda() : base(OpCode.Ldflda)
+		public Ldflda(ILInstruction argument, FieldReference field) : base(OpCode.Ldflda, argument)
 		{
+			this.field = field;
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
+		readonly FieldReference field;
+		/// <summary>Returns the field operand.</summary>
+		public FieldReference Field { get { return field; } }
 		public override StackType ResultType { get { return StackType.Ref; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdflda(this);
 		}
 	}
 
 	/// <summary>Store value to instance field</summary>
-	public sealed partial class Stfld : BinaryInstruction
+	public sealed partial class Stfld : BinaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public Stfld() : base(OpCode.Stfld)
+		public Stfld(ILInstruction left, ILInstruction right, FieldReference field) : base(OpCode.Stfld, left, right)
 		{
+			this.field = field;
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
+		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
+		public bool IsVolatile { get; set; }
+		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
+		public byte UnalignedPrefix { get; set; }
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		readonly FieldReference field;
+		/// <summary>Returns the field operand.</summary>
+		public FieldReference Field { get { return field; } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStfld(this);
 		}
 	}
 
 	/// <summary>Load static field</summary>
-	public sealed partial class Ldsfld : SimpleInstruction
+	public sealed partial class Ldsfld : SimpleInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public Ldsfld() : base(OpCode.Ldsfld)
+		public Ldsfld(FieldReference field) : base(OpCode.Ldsfld)
 		{
+			this.field = field;
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect;
+			return InstructionFlags.SideEffect;
 		}
-
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
+		public bool IsVolatile { get; set; }
+		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
+		public byte UnalignedPrefix { get; set; }
+		readonly FieldReference field;
+		/// <summary>Returns the field operand.</summary>
+		public FieldReference Field { get { return field; } }
+		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdsfld(this);
 		}
@@ -775,28 +788,40 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load static field address</summary>
 	public sealed partial class Ldsflda : SimpleInstruction
 	{
-		public Ldsflda() : base(OpCode.Ldsflda)
+		public Ldsflda(FieldReference field) : base(OpCode.Ldsflda)
 		{
+			this.field = field;
 		}
 		public override StackType ResultType { get { return StackType.Ref; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		readonly FieldReference field;
+		/// <summary>Returns the field operand.</summary>
+		public FieldReference Field { get { return field; } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdsflda(this);
 		}
 	}
 
 	/// <summary>Store value to static field</summary>
-	public sealed partial class Stsfld : UnaryInstruction
+	public sealed partial class Stsfld : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public Stsfld() : base(OpCode.Stsfld)
+		public Stsfld(ILInstruction argument, FieldReference field) : base(OpCode.Stsfld, argument)
 		{
+			this.field = field;
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.SideEffect;
 		}
+		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
+		public bool IsVolatile { get; set; }
+		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
+		public byte UnalignedPrefix { get; set; }
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		readonly FieldReference field;
+		/// <summary>Returns the field operand.</summary>
+		public FieldReference Field { get { return field; } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStsfld(this);
 		}
@@ -805,28 +830,40 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Test if object is instance of class or interface.</summary>
 	public sealed partial class IsInst : UnaryInstruction
 	{
-		public IsInst() : base(OpCode.IsInst)
+		public IsInst(ILInstruction argument, TypeReference type) : base(OpCode.IsInst, argument)
 		{
+			this.type = type;
 		}
-		public override StackType ResultType { get { return StackType.O; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitIsInst(this);
 		}
 	}
 
 	/// <summary>Indirect load (ref/pointer dereference).</summary>
-	public sealed partial class LdInd : UnaryInstruction
+	public sealed partial class LdInd : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public LdInd() : base(OpCode.LdInd)
+		public LdInd(ILInstruction argument, TypeReference type) : base(OpCode.LdInd, argument)
 		{
+			this.type = type;
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
-
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
+		public bool IsVolatile { get; set; }
+		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
+		public byte UnalignedPrefix { get; set; }
+		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdInd(this);
 		}
@@ -835,15 +872,19 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Unbox a value.</summary>
 	public sealed partial class UnboxAny : UnaryInstruction
 	{
-		public UnboxAny() : base(OpCode.UnboxAny)
+		public UnboxAny(ILInstruction argument, TypeReference type) : base(OpCode.UnboxAny, argument)
 		{
+			this.type = type;
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
-
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitUnboxAny(this);
 		}
@@ -856,7 +897,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.O; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNewObj(this);
 		}
@@ -865,15 +906,15 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Throws an exception.</summary>
 	public sealed partial class Throw : UnaryInstruction
 	{
-		public Throw() : base(OpCode.Throw)
+		public Throw(ILInstruction argument) : base(OpCode.Throw, argument)
 		{
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow;
+			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitThrow(this);
 		}
@@ -882,7 +923,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Returns the length of an array as 'native unsigned int'.</summary>
 	public sealed partial class LdLen : UnaryInstruction
 	{
-		public LdLen() : base(OpCode.LdLen)
+		public LdLen(ILInstruction argument) : base(OpCode.LdLen, argument)
 		{
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -890,16 +931,19 @@ namespace ICSharpCode.Decompiler.IL
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
 		public override StackType ResultType { get { return StackType.I; } }
-		public sealed override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLen(this);
 		}
 	}
 
 
-	
+	/// <summary>
+	/// Base class for visitor pattern.
+	/// </summary>
 	public abstract class ILVisitor<T>
 	{
+		/// <summary>Called by Visit*() methods that were not overridden</summary>
 		protected abstract T Default(ILInstruction inst);
 		
 		protected internal virtual T VisitNop(Nop inst)
@@ -947,10 +991,6 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitRem(Rem inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitNeg(Neg inst)
 		{
 			return Default(inst);
 		}
@@ -1113,6 +1153,58 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal virtual T VisitLdLen(LdLen inst)
 		{
 			return Default(inst);
+		}
+	}
+	
+	partial class BinaryNumericInstruction
+	{
+		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, OverflowMode overflowMode)
+		{
+			switch (opCode) {
+				case OpCode.Add:
+					return new Add(left, right, overflowMode);
+				case OpCode.Sub:
+					return new Sub(left, right, overflowMode);
+				case OpCode.Mul:
+					return new Mul(left, right, overflowMode);
+				case OpCode.Div:
+					return new Div(left, right, overflowMode);
+				case OpCode.Rem:
+					return new Rem(left, right, overflowMode);
+				case OpCode.BitAnd:
+					return new BitAnd(left, right, overflowMode);
+				case OpCode.BitOr:
+					return new BitOr(left, right, overflowMode);
+				case OpCode.BitXor:
+					return new BitXor(left, right, overflowMode);
+				case OpCode.Shl:
+					return new Shl(left, right, overflowMode);
+				case OpCode.Shr:
+					return new Shr(left, right, overflowMode);
+				default:
+					throw new ArgumentException("opCode is not a binary numeric instruction");
+			}
+		}
+	}
+	
+	partial class BinaryComparisonInstruction
+	{
+		public static BinaryComparisonInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right)
+		{
+			switch (opCode) {
+				case OpCode.Ceq:
+					return new Ceq(left, right);
+				case OpCode.Cgt:
+					return new Cgt(left, right);
+				case OpCode.Cgt_Un:
+					return new Cgt_Un(left, right);
+				case OpCode.Clt:
+					return new Clt(left, right);
+				case OpCode.Clt_Un:
+					return new Clt_Un(left, right);
+				default:
+					throw new ArgumentException("opCode is not a binary comparison instruction");
+			}
 		}
 	}
 }

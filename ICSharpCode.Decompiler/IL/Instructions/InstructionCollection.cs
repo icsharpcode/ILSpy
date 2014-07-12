@@ -17,40 +17,49 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.ObjectModel;
+
 namespace ICSharpCode.Decompiler.IL
 {
-	public abstract partial class BinaryComparisonInstruction : BinaryInstruction
+	public sealed class InstructionCollection<T> : Collection<T> where T : ILInstruction
 	{
-		public readonly StackType OpType;
-
-		protected BinaryComparisonInstruction(OpCode opCode, ILInstruction left, ILInstruction right) : base(opCode, left, right)
+		readonly ILInstruction parentInstruction;
+		
+		public InstructionCollection(ILInstruction parentInstruction)
 		{
-			// TODO this.OpType = opType;
+			this.parentInstruction = parentInstruction;
 		}
-
-		public sealed override StackType ResultType {
-			get {
-				return StackType.I4;
-			}
-		}
-
-		public override void WriteTo(ITextOutput output)
+		
+		protected override void ClearItems()
 		{
-			output.Write(OpCode);
-			output.Write('.');
-			output.Write(OpType);
-			output.Write('(');
-			Left.WriteTo(output);
-			output.Write(", ");
-			Right.WriteTo(output);
-			output.Write(')');
+			foreach (var child in this)
+				parentInstruction.RemoveChildInstruction(child);
+			base.ClearItems();
+		}
+		
+		protected override void InsertItem(int index, T item)
+		{
+			if (item == null)
+				throw new ArgumentNullException("item");
+			parentInstruction.AddChildInstruction(item);
+			base.InsertItem(index, item);
+		}
+		
+		protected override void RemoveItem(int index)
+		{
+			parentInstruction.RemoveChildInstruction(this[index]);
+			base.RemoveItem(index);
+		}
+		
+		protected override void SetItem(int index, T item)
+		{
+			if (item == null)
+				throw new ArgumentNullException("item");
+			if (this[index] == item)
+				return;
+			parentInstruction.RemoveChildInstruction(this[index]);
+			parentInstruction.AddChildInstruction(item);
+			base.SetItem(index, item);
 		}
 	}
 }
-
-

@@ -29,82 +29,35 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public abstract class CallInstruction : ILInstruction
 	{
-		public struct ArgumentCollection : IReadOnlyList<ILInstruction>
+		public static CallInstruction Create(OpCode opCode, MethodReference method)
 		{
-			readonly CallInstruction inst;
-			
-			public ArgumentCollection(CallInstruction inst)
-			{
-				this.inst = inst;
-			}
-			
-			public int Count {
-				get { return inst.arguments.Length; }
-			}
-			
-			public ILInstruction this[int index] {
-				get { return inst.arguments[index]; }
-				set {
-					Debug.Assert(value.ResultType != StackType.Void);
-					inst.arguments[index] = value;
-					inst.InvalidateFlags();
-				}
-			}
-			
-			public ArgumentEnumerator GetEnumerator()
-			{
-				return new ArgumentEnumerator(inst.arguments);
-			}
-			
-			IEnumerator<ILInstruction> IEnumerable<ILInstruction>.GetEnumerator()
-			{
-				IEnumerable<ILInstruction> arguments = inst.arguments;
-				return arguments.GetEnumerator();
-			}
-			
-			System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-			{
-				return inst.arguments.GetEnumerator();
+			switch (opCode) {
+				case OpCode.Call:
+					return new Call(method);
+				case OpCode.CallVirt:
+					return new CallVirt(method);
+				case OpCode.NewObj:
+					return new NewObj(method);
+				default:
+					throw new ArgumentException("Not a valid call opcode");
 			}
 		}
-		
-		public struct ArgumentEnumerator
-		{
-			readonly ILInstruction[] arguments;
-			int index;
-			
-			public ArgumentEnumerator(ILInstruction[] arguments)
-			{
-				this.arguments = arguments;
-			}
-			
-			public bool MoveNext()
-			{
-				return ++index < arguments.Length;
-			}
-			
-			public ILInstruction Current {
-				get { return arguments[index]; }
-			}
-		}
-		
-		readonly ILInstruction[] arguments;
+
+		public readonly InstructionCollection<ILInstruction> Arguments;
 		public readonly MethodReference Method;
-		
-		public ArgumentCollection Arguments {
-			get { return new ArgumentCollection(this); }
-		}
 		
 		protected CallInstruction(OpCode opCode, MethodReference methodReference) : base(opCode)
 		{
 			this.Method = methodReference;
+			this.Arguments = new InstructionCollection<ILInstruction>(this);
+		}
+		
+		public static int GetPopCount(OpCode callCode, MethodReference methodReference)
+		{
 			int popCount = methodReference.Parameters.Count;
-			if (opCode != OpCode.NewObj && methodReference.HasThis)
+			if (callCode != OpCode.NewObj && methodReference.HasThis)
 				popCount++;
-			this.arguments = new ILInstruction[popCount];
-			for (int i = 0; i < arguments.Length; i++) {
-				arguments[i] = Pop;
-			}
+			return popCount;
 		}
 		
 		public override StackType ResultType {
@@ -113,49 +66,29 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		internal override void CheckInvariant()
-		{
-			base.CheckInvariant();
-			foreach (var op in arguments) {
-				op.CheckInvariant();
-				Debug.Assert(op.ResultType != StackType.Void);
-			}
-		}
-
 		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
 		{
 			TAccumulate value = initial;
-			foreach (var op in arguments)
+			foreach (var op in Arguments)
 				value = func(value, op.AcceptVisitor(visitor));
 			return value;
 		}
 		
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			for (int i = 0; i < Arguments.Count; i++) {
+				Arguments[i] = Arguments[i].AcceptVisitor(visitor);
+			}
+		}
+		
 		protected override InstructionFlags ComputeFlags()
 		{
-			var flags = InstructionFlags.MayThrow | InstructionFlags.SideEffects;
-			foreach (var op in arguments)
+			var flags = InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			foreach (var op in Arguments)
 				flags |= op.Flags;
 			return flags;
 		}
 		
-		/*
-		public override bool IsPeeking { get { return Operands.Length > 0 && Operands[0].IsPeeking; } }
-
-		public override bool NoResult
-		{
-			get
-			{
-				return OpCode != OpCode.NewObj && Method.ReturnType.GetStackType() == StackType.Void;
-			}
-		}
-
-		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
-		{
-			for (int i = 0; i < Operands.Length; i++) {
-				Operands[i] = transformFunc(Operands[i]);
-			}
-		}*/
-
 		/// <summary>
 		/// Gets/Sets whether the call has the 'tail.' prefix.
 		/// </summary>
@@ -179,7 +112,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Method.WriteTo(output);
 			output.Write('(');
-			for (int i = 0; i < Arguments.Length; i++) {
+			for (int i = 0; i < Arguments.Count; i++) {
 				if (i > 0)
 					output.Write(", ");
 				Arguments[i].WriteTo(output);
@@ -187,33 +120,20 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 		}
 
-		/*
-		public override InstructionFlags Flags
-		{
-			get
-			{
-				InstructionFlags flags = InstructionFlags.SideEffects | InstructionFlags.MayThrow;
-				for (int i = 0; i < Operands.Length; i++) {
-					flags |= Operands[i].Flags;
-				}
-				return flags;
-			}
-		}
-
 		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
 		{
 			InstructionFlags operandFlags = InstructionFlags.None;
-			for (int i = 0; i < Operands.Length - 1; i++) {
-				operandFlags |= Operands[i].Flags;
+			for (int i = 0; i < Arguments.Count - 1; i++) {
+				operandFlags |= Arguments[i].Flags;
 			}
 			flagsBefore |= operandFlags & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop);
 			finished = true;
-			for (int i = Operands.Length - 1; i >= 0; i--) {
-				Operands[i] = Operands[i].Inline(flagsBefore, instructionStack, out finished);
+			for (int i = Arguments.Count - 1; i >= 0; i--) {
+				Arguments[i] = Arguments[i].Inline(flagsBefore, instructionStack, out finished);
 				if (!finished)
 					break;
 			}
 			return this;
-        }*/
+		}
 	}
 }

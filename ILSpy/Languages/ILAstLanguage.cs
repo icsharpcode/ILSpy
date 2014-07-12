@@ -31,12 +31,19 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Represents the ILAst "language" used for debugging purposes.
 	/// </summary>
-	abstract class ILAstLanguage(string name) : Language
+	abstract class ILAstLanguage : Language
 	{
 		bool inlineVariables = true;
 		//ILAstOptimizationStep? abortBeforeStep;
 
-		public override string Name { get; } = name;
+		readonly string name;
+		
+		protected ILAstLanguage(string name)
+		{
+			this.name = name;
+		}
+		
+		public override string Name { get { return name; } }
 		/*
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
@@ -115,8 +122,10 @@ namespace ICSharpCode.ILSpy
 			output.WriteLine();
 		}
 
-		class TypedIL() : ILAstLanguage("Typed IL")
+		class TypedIL : ILAstLanguage
 		{
+			public TypedIL() : base("Typed IL") {}
+			
 			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
@@ -127,8 +136,15 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		class BlockIL(private bool instructionInlining) : ILAstLanguage(instructionInlining ? "ILAst (blocks+inlining)" :  "ILAst (blocks)")
+		class BlockIL : ILAstLanguage
 		{
+			readonly bool instructionInlining;
+			
+			public BlockIL(bool instructionInlining) : base(instructionInlining ? "ILAst (blocks+inlining)" :  "ILAst (blocks)")
+			{
+				this.instructionInlining = instructionInlining;
+			}
+			
 			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);

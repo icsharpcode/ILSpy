@@ -31,17 +31,23 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public abstract class ILInstruction
 	{
-		public static readonly ILInstruction Pop = new Pop();
-		
 		public readonly OpCode OpCode;
 		
 		protected ILInstruction(OpCode opCode)
 		{
 			this.OpCode = opCode;
 		}
-
+		
+		internal static void ValidateArgument(ILInstruction inst)
+		{
+			if (inst == null)
+				throw new ArgumentNullException("inst");
+			if (inst.ResultType == StackType.Void)
+				throw new ArgumentException("Argument must not be of type void", "inst");
+		}
+		
 		[Conditional("DEBUG")]
-		internal virtual void CheckInvariant()
+		internal void CheckInvariant()
 		{
 		}
 		
@@ -50,20 +56,39 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public abstract StackType ResultType { get; }
 		
-		InstructionFlags flags = (InstructionFlags)-1;
+		InstructionFlags flags = (InstructionFlags)(-1);
 		
 		public InstructionFlags Flags {
 			get {
-				if (flags == (InstructionFlags)-1) {
+				if (flags == (InstructionFlags)(-1)) {
 					flags = ComputeFlags();
 				}
 				return flags;
 			}
 		}
-		
-		protected void InvalidateFlags()
+
+		/// <summary>
+		/// Returns whether the instruction has at least one of the specified flags.
+		/// </summary>
+		public bool HasFlag(InstructionFlags flags)
 		{
-			flags = (InstructionFlags)-1;
+			return (this.Flags & flags) != 0;
+		}
+		
+		protected void SetChildInstruction(ref ILInstruction childPointer, ILInstruction newValue)
+		{
+			childPointer = newValue;
+			flags = (InstructionFlags)(-1);
+		}
+		
+		protected internal void AddChildInstruction(ILInstruction newChild)
+		{
+			flags = (InstructionFlags)(-1);
+		}
+		
+		protected internal void RemoveChildInstruction(ILInstruction newChild)
+		{
+			flags = (InstructionFlags)(-1);
 		}
 		
 		protected abstract InstructionFlags ComputeFlags();
@@ -74,15 +99,6 @@ namespace ICSharpCode.Decompiler.IL
 		public Interval ILRange;
 
 		public abstract void WriteTo(ITextOutput output);
-
-		/// <summary>
-		/// Gets whether the end point of this instruction is reachable from the start point.
-		/// Returns false if the instruction performs an unconditional branch, or always throws an exception.
-		/// </summary>
-		public virtual bool IsEndReachable
-		{
-			get { return true; }
-		}
 
 		public abstract T AcceptVisitor<T>(ILVisitor<T> visitor);
 		
@@ -95,6 +111,20 @@ namespace ICSharpCode.Decompiler.IL
 		/// <returns>The final value in the accumulator.</returns>
 		public abstract TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func);
 		
+		/// <summary>
+		/// Transforms the children of this instruction by applying the specified visitor.
+		/// </summary>
+		public abstract void TransformChildren(ILVisitor<ILInstruction> visitor);
+		
+		/// <summary>
+		/// Attempts inlining from the instruction stack into this instruction.
+		/// </summary>
+		/// <param name="flagsBefore">Combined instruction flags of the instructions
+		/// that the instructions getting inlined would get moved over.</param>
+		/// <param name="instructionStack">The instruction stack.</param>
+		/// <param name="finished">Receives 'true' if all open 'pop' or 'peek' placeholders were inlined into; false otherwise.</param>
+		internal abstract ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished);
+
 		/*
 		/// <summary>
 		/// Gets whether this instruction peeks at the top value of the stack.
@@ -128,15 +158,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 		}
-
-		/// <summary>
-		/// Attempts inlining from the instruction stack into this instruction.
-		/// </summary>
-		/// <param name="flagsBefore">Combined instruction flags of the instructions
-		/// that the instructions getting inlined would get moved over.</param>
-		/// <param name="instructionStack">The instruction stack.</param>
-		/// <param name="finished">Receives 'true' if all open 'pop' or 'peek' placeholders were inlined into; false otherwise.</param>
-		internal abstract ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished);
 
 		public abstract void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc);
 		*/

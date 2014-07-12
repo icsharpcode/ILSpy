@@ -53,6 +53,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// The instruction may have side effects, such as accessing heap memory,
 		/// performing system calls, writing to local variables through pointers, etc.
 		/// </summary>
-		SideEffects = 0x40,
+		SideEffect = 0x40,
+		/// <summary>
+		/// The instruction performs unconditional control flow, so that its endpoint is unreachable.
+		/// </summary>
+		EndPointUnreachable = 0x80,
 	}
 }

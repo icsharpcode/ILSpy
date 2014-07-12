@@ -22,15 +22,17 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class Conv : UnaryInstruction
 	{
-		public readonly StackType FromType;
-		public readonly PrimitiveType ToType;
+		public readonly PrimitiveType TargetType;
 		public readonly OverflowMode ConvMode;
 		
-		public Conv(StackType fromType, PrimitiveType toType, OverflowMode convMode) : base(OpCode.Conv)
+		public Conv(ILInstruction argument, PrimitiveType targetType, OverflowMode convMode) : base(OpCode.Conv, argument)
 		{
-			this.FromType = fromType;
-			this.ToType = toType;
+			this.TargetType = targetType;
 			this.ConvMode = convMode;
+		}
+		
+		public override StackType ResultType {
+			get { return TargetType.GetStackType(); }
 		}
 		
 		public override void WriteTo(ITextOutput output)
@@ -38,9 +40,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.WriteSuffix(ConvMode);
 			output.Write(' ');
-			output.Write(FromType);
+			output.Write(Argument.ResultType);
 			output.Write("->");
-			output.Write(ToType);
+			output.Write(TargetType);
 			output.Write('(');
 			Argument.WriteTo(output);
 			output.Write(')');

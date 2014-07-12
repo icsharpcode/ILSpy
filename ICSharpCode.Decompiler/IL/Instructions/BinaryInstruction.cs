@@ -27,38 +27,30 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public abstract class BinaryInstruction : ILInstruction
 	{
-		ILInstruction left = Pop;
-		ILInstruction right = Pop;
+		ILInstruction left;
+		ILInstruction right;
 		
-		protected BinaryInstruction(OpCode opCode) : base(opCode)
+		protected BinaryInstruction(OpCode opCode, ILInstruction left, ILInstruction right)
+			: base(opCode)
 		{
+			this.Left = left;
+			this.Right = right;
 		}
 		
 		public ILInstruction Left {
 			get { return left; }
 			set {
-				Debug.Assert(value.ResultType != StackType.Void);
-				left = value;
-				InvalidateFlags();
+				ValidateArgument(value);
+				SetChildInstruction(ref left, value);
 			}
 		}
 		
 		public ILInstruction Right {
 			get { return right; }
 			set {
-				Debug.Assert(value.ResultType != StackType.Void);
-				right = value;
-				InvalidateFlags();
+				ValidateArgument(value);
+				SetChildInstruction(ref right, value);
 			}
-		}
-		
-		internal override void CheckInvariant()
-		{
-			base.CheckInvariant();
-			Left.CheckInvariant();
-			Right.CheckInvariant();
-			Debug.Assert(Left.ResultType != StackType.Void);
-			Debug.Assert(Right.ResultType != StackType.Void);
 		}
 		
 		public override void WriteTo(ITextOutput output)
@@ -84,22 +76,19 @@ namespace ICSharpCode.Decompiler.IL
 			return value;
 		}
 		
-		/*
-		public override bool IsPeeking { get { return Left.IsPeeking; } }
-
-		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
+		public sealed override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
-			Left = transformFunc(Left);
-			Right = transformFunc(Right);
+			this.Left = left.AcceptVisitor(visitor);
+			this.Right = right.AcceptVisitor(visitor);
 		}
-
+		
 		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
 		{
 			InstructionFlags flagsBeforeRight = flagsBefore | (Left.Flags & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop));
-            Right = Right.Inline(flagsBeforeRight, instructionStack, out finished);
+			Right = Right.Inline(flagsBeforeRight, instructionStack, out finished);
 			if (finished)
 				Left = Left.Inline(flagsBefore, instructionStack, out finished);
 			return this;
-		}*/
+		}
 	}
 }

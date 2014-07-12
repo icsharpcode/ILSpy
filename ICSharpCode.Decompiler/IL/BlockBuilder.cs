@@ -28,10 +28,12 @@ namespace ICSharpCode.Decompiler.IL
 {
 	class BlockBuilder
 	{
+		readonly Mono.Cecil.Cil.MethodBody body;
 		readonly Stack<ILInstruction> instructionStack;
 		
 		public BlockBuilder(Mono.Cecil.Cil.MethodBody body, bool instructionInlining)
 		{
+			this.body = body;
 			this.instructionStack = (instructionInlining ? new Stack<ILInstruction>() : null);
 		}
 		
@@ -66,7 +68,7 @@ namespace ICSharpCode.Decompiler.IL
 							// so we can't inline them.
 							FlushInstructionStack();
 						}
-						if (inlinedInst.NoResult) {
+						if (inlinedInst.ResultType == StackType.Void) {
 							// We cannot directly push instructions onto the stack if they don't produce
 							// a result.
 							if (finished && instructionStack.Count > 0) {
@@ -87,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL
 							instructionStack.Push(inlinedInst);
 						}
 					}
-					if (!inst.IsEndReachable)
+					if (inst.HasFlag(InstructionFlags.EndPointUnreachable))
 						FinalizeCurrentBlock(inst.ILRange.End, fallthrough: false);
 				}
 			}
@@ -102,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL
 			FlushInstructionStack();
 			currentBlock.ILRange = new Interval(currentBlock.ILRange.Start, currentILOffset);
 			if (fallthrough)
-				currentBlock.Instructions.Add(new Branch(OpCode.Branch, currentILOffset));
+				currentBlock.Instructions.Add(new Branch(currentILOffset));
 			currentBlock = null;
 		}
 
