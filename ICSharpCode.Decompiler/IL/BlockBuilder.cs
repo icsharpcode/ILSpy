@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL
 					} else {
 						bool finished;
 						var inlinedInst = inst.Inline(InstructionFlags.None, instructionStack, out finished);
-						if (inlinedInst is Branch) {
+						if (inlinedInst.HasFlag(InstructionFlags.MayBranch)) {
 							// Values currently on the stack might be used on both sides of the branch,
 							// so we can't inline them.
 							FlushInstructionStack();

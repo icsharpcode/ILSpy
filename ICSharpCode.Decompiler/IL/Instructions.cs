@@ -584,6 +584,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly string Value;
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+		}
 		public override StackType ResultType { get { return StackType.O; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -599,6 +605,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly int Value;
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+		}
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -614,6 +626,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly long Value;
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+		}
 		public override StackType ResultType { get { return StackType.I8; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -629,6 +647,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 		}
 		public readonly double Value;
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+		}
 		public override StackType ResultType { get { return StackType.F; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{

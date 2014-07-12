@@ -62,7 +62,10 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override StackType ResultType {
 			get {
-				throw new NotImplementedException();
+				if (OpCode == OpCode.NewObj)
+					return Method.DeclaringType.GetStackType();
+				else
+					return Method.ReturnType.GetStackType();
 			}
 		}
 		

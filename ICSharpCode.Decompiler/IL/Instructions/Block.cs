@@ -16,19 +16,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Instructions = new InstructionCollection<ILInstruction>(this);
 		}
 		
-		/*
-		public override bool IsPeeking { get { return Instructions.Count > 0 && Instructions[0].IsPeeking; } }
-
-		public override bool NoResult { get { return true; } }
-
-		public override void TransformChildren(Func<ILInstruction, ILInstruction> transformFunc)
-		{
-			for (int i = 0; i < Instructions.Count; i++) {
-				Instructions[i] = transformFunc(Instructions[i]);
-			}
-		}
-		*/
-
 		public override StackType ResultType {
 			get {
 				return StackType.Void;

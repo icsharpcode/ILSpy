@@ -100,6 +100,13 @@ namespace ICSharpCode.Decompiler.IL
 
 		public abstract void WriteTo(ITextOutput output);
 
+		public override string ToString()
+		{
+			var output = new PlainTextOutput();
+			WriteTo(output);
+			return output.ToString();
+		}
+		
 		public abstract T AcceptVisitor<T>(ILVisitor<T> visitor);
 		
 		/// <summary>

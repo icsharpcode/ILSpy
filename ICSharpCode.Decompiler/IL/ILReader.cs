@@ -106,9 +106,11 @@ namespace ICSharpCode.Decompiler.IL
 				if (outputStacks != null)
 					outputStacks.Add(start, stack.ToImmutableArray());
 				ILInstruction decodedInstruction = DecodeInstruction();
+				if (decodedInstruction.ResultType != StackType.Void)
+					stack.Push(decodedInstruction.ResultType);
 				decodedInstruction.ILRange = new Interval(start, reader.Position);
 				instructionBuilder.Add(decodedInstruction);
-				Branch branch = decodedInstruction as Branch;
+				BranchInstruction branch = decodedInstruction as BranchInstruction;
 				if (branch != null) {
 					isBranchTarget[branch.TargetILOffset] = true;
 					if (branch.TargetILOffset >= reader.Position) {
@@ -396,7 +398,6 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldc_I4_S:
 					return new LdcI4(reader.ReadSByte());
 				case ILOpCode.Ldnull:
-					stack.Push(StackType.O);
 					return new LdNull();
 				case ILOpCode.Ldstr:
 					return DecodeLdstr();

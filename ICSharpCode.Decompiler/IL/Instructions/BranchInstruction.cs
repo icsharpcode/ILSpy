@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL
 				return condition;
 			}
 			set {
-				ValidateArgument(condition);
+				ValidateArgument(value);
 				SetChildInstruction(ref condition, value);
 			}
 		}

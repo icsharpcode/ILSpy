@@ -392,6 +392,12 @@ namespace ICSharpCode.Decompiler.IL
 			opCode.ConstructorParameters.Add(operandType + " value");
 			opCode.Members.Add("public readonly " + operandType + " Value;");
 			opCode.ConstructorBody.Add("this.Value = value;");
+			opCode.Members.Add("public override void WriteTo(ITextOutput output)" + Environment.NewLine
+				+ "{" + Environment.NewLine
+				+ "\toutput.Write(OpCode);" + Environment.NewLine
+				+ "\toutput.Write(' ');" + Environment.NewLine
+				+ "\tDisassembler.DisassemblerHelpers.WriteOperand(output, Value);" + Environment.NewLine
+				+ "}");
 		};
 	}
 	
