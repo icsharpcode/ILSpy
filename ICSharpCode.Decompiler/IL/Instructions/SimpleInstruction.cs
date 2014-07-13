@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.NRefactory;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -38,9 +39,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 		}
 		
-		public sealed override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			return initial;
+		public sealed override IEnumerable<ILInstruction> Children {
+			get {
+				return EmptyList<ILInstruction>.Instance;
+			}
 		}
 		
 		public sealed override void TransformChildren(ILVisitor<ILInstruction> visitor)

@@ -43,6 +43,7 @@ namespace ICSharpCode.Decompiler.IL
 		public BlockContainer CreateBlocks(List<ILInstruction> instructions, BitArray incomingBranches)
 		{
 			currentContainer = new BlockContainer();
+			currentContainer.AddRef(); // mark the root node
 
 			incomingBranches[0] = true;	// see entrypoint as incoming branch
 

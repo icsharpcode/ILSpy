@@ -70,11 +70,13 @@ namespace ICSharpCode.Decompiler.IL
 			return a;
 		}
 		
-		InstructionFlags flags = (InstructionFlags)(-1);
+		const InstructionFlags invalidFlags = (InstructionFlags)(-1);
+		
+		InstructionFlags flags = invalidFlags;
 		
 		public InstructionFlags Flags {
 			get {
-				if (flags == (InstructionFlags)(-1)) {
+				if (flags == invalidFlags) {
 					flags = ComputeFlags();
 				}
 				return flags;
@@ -89,20 +91,10 @@ namespace ICSharpCode.Decompiler.IL
 			return (this.Flags & flags) != 0;
 		}
 		
-		protected void SetChildInstruction(ref ILInstruction childPointer, ILInstruction newValue)
+		protected void InvalidateFlags()
 		{
-			childPointer = newValue;
-			flags = (InstructionFlags)(-1);
-		}
-		
-		protected internal void AddChildInstruction(ILInstruction newChild)
-		{
-			flags = (InstructionFlags)(-1);
-		}
-		
-		protected internal void RemoveChildInstruction(ILInstruction newChild)
-		{
-			flags = (InstructionFlags)(-1);
+			for (ILInstruction inst = this; inst != null && inst.flags != invalidFlags; inst = inst.parent)
+				inst.flags = invalidFlags;
 		}
 		
 		protected abstract InstructionFlags ComputeFlags();
@@ -130,13 +122,9 @@ namespace ICSharpCode.Decompiler.IL
 		public abstract T AcceptVisitor<T>(ILVisitor<T> visitor);
 		
 		/// <summary>
-		/// Computes an aggregate value over the direct children of this instruction.
+		/// Gets the child nodes of this instruction.
 		/// </summary>
-		/// <param name="initial">The initial value used to initialize the accumulator.</param>
-		/// <param name="visitor">The visitor used to compute the value for the child instructions.</param>
-		/// <param name="func">The function that combines the accumulator with the computed child value.</param>
-		/// <returns>The final value in the accumulator.</returns>
-		public abstract TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func);
+		public abstract IEnumerable<ILInstruction> Children { get; }
 		
 		/// <summary>
 		/// Transforms the children of this instruction by applying the specified visitor.
@@ -151,5 +139,84 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="instructionStack">The instruction stack.</param>
 		/// <param name="finished">Receives 'true' if all open 'pop' or 'peek' placeholders were inlined into; false otherwise.</param>
 		internal abstract ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished);
+		
+		/// <summary>
+		/// Number of parents that refer to this instruction and are connected to the root.
+		/// Usually is 0 for unconnected nodes and 1 for connected nodes, but may temporarily increase to 2
+		/// when the ILAst is re-arranged (e.g. within SetChildInstruction).
+		/// </summary>
+		byte refCount;
+		
+		internal void AddRef()
+		{
+			if (refCount++ == 0) {
+				Connected();
+			}
+		}
+		
+		internal void ReleaseRef()
+		{
+			Debug.Assert(refCount > 0);
+			if (--refCount == 0) {
+				Disconnected();
+			}
+		}
+		
+		protected bool IsConnected {
+			get { return refCount > 0; }
+		}
+		
+		protected virtual void Connected()
+		{
+			foreach (var child in Children)
+				child.AddRef();
+		}
+		
+		protected virtual void Disconnected()
+		{
+			foreach (var child in Children)
+				child.ReleaseRef();
+		}
+		
+		ILInstruction parent;
+		
+		/// <summary>
+		/// Gets the parent of this ILInstruction.
+		/// </summary>
+		public ILInstruction Parent {
+			get { return parent; }
+		}
+		
+		protected void SetChildInstruction(ref ILInstruction childPointer, ILInstruction newValue)
+		{
+			if (childPointer == newValue)
+				return;
+			if (refCount > 0) {
+				// The new value may be a subtree of the old value.
+				// We first call AddRef(), then ReleaseRef() to prevent the subtree
+				// that stays connected from receiving a Disconnected() notification followed by a Connected() notification.
+				newValue.AddRef();
+				childPointer.ReleaseRef();
+			}
+			childPointer = newValue;
+			newValue.parent = this;
+			InvalidateFlags();
+		}
+		
+		protected internal void AddChildInstruction(ILInstruction newChild)
+		{
+			if (refCount > 0)
+				newChild.AddRef();
+			newChild.parent = this;
+			InvalidateFlags();
+		}
+		
+		protected internal void RemoveChildInstruction(ILInstruction newChild)
+		{
+			if (refCount > 0)
+				newChild.ReleaseRef();
+			InvalidateFlags();
+		}
+		
 	}
 }

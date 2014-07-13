@@ -52,16 +52,11 @@ namespace ICSharpCode.Decompiler.IL
 			output.Unindent();
 			output.WriteLine("}");
 		}
-
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			foreach (var block in Blocks) {
-				value = func(value, block.AcceptVisitor(visitor));
-			}
-			return value;
+		
+		public override IEnumerable<ILInstruction> Children {
+			get { return Blocks; }
 		}
-
+		
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
 			foreach (var block in Blocks) {

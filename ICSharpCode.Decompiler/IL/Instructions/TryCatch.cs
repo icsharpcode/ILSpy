@@ -68,13 +68,12 @@ namespace ICSharpCode.Decompiler.IL
 			return this;
 		}
 		
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, tryBlock.AcceptVisitor(visitor));
-			foreach (var handler in CatchHandlers)
-				value = func(value, handler.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return tryBlock;
+				foreach (var handler in CatchHandlers)
+					yield return handler;
+			}
 		}
 		
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)

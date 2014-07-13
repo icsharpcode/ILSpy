@@ -184,11 +184,10 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.argument, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.argument.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.argument;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -236,12 +235,11 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.right, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.left.AcceptVisitor(visitor));
-			value = func(value, this.right.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.left;
+				yield return this.right;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -559,13 +557,12 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.falseInst, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.condition.AcceptVisitor(visitor));
-			value = func(value, this.trueInst.AcceptVisitor(visitor));
-			value = func(value, this.falseInst.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.condition;
+				yield return this.trueInst;
+				yield return this.falseInst;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -614,12 +611,11 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.body, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.filter.AcceptVisitor(visitor));
-			value = func(value, this.body.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.filter;
+				yield return this.body;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -664,12 +660,11 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.finallyBlock, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.tryBlock.AcceptVisitor(visitor));
-			value = func(value, this.finallyBlock.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.tryBlock;
+				yield return this.finallyBlock;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -706,12 +701,11 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.faultBlock, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.tryBlock.AcceptVisitor(visitor));
-			value = func(value, this.faultBlock.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.tryBlock;
+				yield return this.faultBlock;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -921,11 +915,10 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.value, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.value.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.value;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -1205,11 +1198,10 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.target, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.target.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.target;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -1267,11 +1259,10 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.target, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.target.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.target;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -1330,12 +1321,11 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.value, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.target.AcceptVisitor(visitor));
-			value = func(value, this.value.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.target;
+				yield return this.value;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -1456,11 +1446,10 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.value, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.value.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.value;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -1574,11 +1563,10 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.target, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.target.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.target;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -1645,12 +1633,11 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.value, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.target.AcceptVisitor(visitor));
-			value = func(value, this.value.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.target;
+				yield return this.value;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -1921,11 +1908,10 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.target, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.target.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.target;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
@@ -1979,12 +1965,11 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.index, value);
 			}
 		}
-		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			TAccumulate value = initial;
-			value = func(value, this.array.AcceptVisitor(visitor));
-			value = func(value, this.index.AcceptVisitor(visitor));
-			return value;
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.array;
+				yield return this.index;
+			}
 		}
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{

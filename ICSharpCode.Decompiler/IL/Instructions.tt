@@ -540,7 +540,9 @@ namespace ICSharpCode.Decompiler.IL
 					+ "}");
 			}
 			opCode.WriteArguments.Add("output.Write(')');");
-			StringBuilder b = new StringBuilder();
+			StringBuilder b;
+			/*
+			b = new StringBuilder();
 			b.AppendLine("public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)");
 			b.AppendLine("{");
 			b.AppendLine("\tTAccumulate value = initial;");
@@ -553,7 +555,22 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			b.AppendLine("\treturn value;");
 			b.Append("}");
+			opCode.Members.Add(b.ToString());*/
+			
+			b = new StringBuilder();
+			b.AppendLine("public override IEnumerable<ILInstruction> Children {");
+			b.AppendLine("\tget {");
+			foreach (var child in children) {
+				if (child.IsOptional) {
+					b.AppendLine("\t\tif (this." + child.Name + " != null)");
+					b.Append('\t');
+				}
+				b.AppendLine("\t\tyield return this." + child.Name + ";");
+			}
+			b.AppendLine("\t}");
+			b.Append("}");
 			opCode.Members.Add(b.ToString());
+			
 			b = new StringBuilder();
 			b.AppendLine("public override void TransformChildren(ILVisitor<ILInstruction> visitor)");
 			b.AppendLine("{");
