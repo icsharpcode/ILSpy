@@ -169,16 +169,16 @@ namespace ICSharpCode.Decompiler.IL
 			new Disassembler.MethodBodyDisassembler(output, false, cancellationToken).WriteExceptionHandlers(body);
 		}
 
-		public void WriteBlocks(ITextOutput output, bool instructionInlining)
-		{
-			CreateBlocks(instructionInlining).WriteTo(output);
-		}
-
-		internal BlockContainer CreateBlocks(bool instructionInlining)
+		public ILFunction CreateFunction(bool instructionInlining)
 		{
 			if (instructionBuilder == null)
 				ReadInstructions(null);
-			return new BlockBuilder(body, instructionInlining).CreateBlocks(instructionBuilder, isBranchTarget);
+			var container = new BlockBuilder(body, instructionInlining).CreateBlocks(instructionBuilder, isBranchTarget);
+			var function = new ILFunction(body.Method, container);
+			function.Variables.AddRange(parameterVariables);
+			function.Variables.AddRange(localVariables);
+			function.AddRef(); // mark the root node
+			return function;
 		}
 
 		ILInstruction Neg()

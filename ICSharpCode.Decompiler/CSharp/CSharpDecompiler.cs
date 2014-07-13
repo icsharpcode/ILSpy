@@ -102,8 +102,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var entityDecl = typeSystemAstBuilder.ConvertEntity(method);
 			if (methodDefinition.HasBody) {
 				var ilReader = new ILReader(methodDefinition.Body, CancellationToken);
-				var inst = ilReader.CreateBlocks(true);
-				var body = statementBuilder.ConvertAsBlock(inst);
+				var function = ilReader.CreateFunction(true);
+				var body = statementBuilder.ConvertAsBlock(function.Body);
 				body.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 				entityDecl.AddChild(body, Roles.Body);
 			}

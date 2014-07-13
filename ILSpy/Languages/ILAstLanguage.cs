@@ -99,10 +99,8 @@ namespace ICSharpCode.ILSpy
 			//}
 		}
 
-		public override string FileExtension
-		{
-			get
-			{
+		public override string FileExtension {
+			get {
 				return ".il";
 			}
 		}
@@ -151,7 +149,7 @@ namespace ICSharpCode.ILSpy
 				if (!method.HasBody)
 					return;
 				ILReader reader = new ILReader(method.Body, options.CancellationToken);
-				reader.WriteBlocks(output, instructionInlining);
+				reader.CreateFunction(instructionInlining).WriteTo(output);
 			}
 		}
 	}

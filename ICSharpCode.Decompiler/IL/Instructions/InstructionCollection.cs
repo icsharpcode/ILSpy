@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -60,6 +61,20 @@ namespace ICSharpCode.Decompiler.IL
 			parentInstruction.RemoveChildInstruction(this[index]);
 			parentInstruction.AddChildInstruction(item);
 			base.SetItem(index, item);
+		}
+		
+		public int RemoveAll(Predicate<T> predicate)
+		{
+			int removed = 0;
+			for (int i = 0; i < this.Count;) {
+				if (predicate(this[i])) {
+					RemoveAt(i);
+					removed++;
+				} else {
+					i++;
+				}
+			}
+			return removed;
 		}
 	}
 }

@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.Decompiler.Disassembler;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -78,10 +79,17 @@ namespace ICSharpCode.Decompiler.IL
 					return Kind.ToString();
 			}
 		}
-
+		
+		internal void WriteDefinitionTo(ITextOutput output)
+		{
+			output.WriteDefinition(this.Name, CecilObject ?? this, isLocal: true);
+			output.Write(" : ");
+			Type.WriteTo(output);
+		}
+		
 		internal void WriteTo(ITextOutput output)
 		{
-			output.WriteReference(this.ToString(), CecilObject ?? this, isLocal: true);
+			output.WriteReference(this.Name, CecilObject ?? this, isLocal: true);
 		}
 	}
 }

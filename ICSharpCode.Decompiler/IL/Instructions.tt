@@ -39,6 +39,10 @@
 			Peeking, NoArguments, ResultTypeParam),
 		new OpCode("void", "Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.",
 			VoidResult, Unary),
+		new OpCode("ILFunction", "A container of IL blocks.",
+			CustomChildren(new [] {
+				new ChildInfo("body")
+			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("O")),
 		new OpCode("BlockContainer", "A container of IL blocks.",
 			VoidResult, CustomConstructor, CustomVariableName("container")),
 		new OpCode("Block", "A block of IL instructions.",

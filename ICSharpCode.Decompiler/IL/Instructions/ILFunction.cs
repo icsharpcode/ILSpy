@@ -18,80 +18,51 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Mono.Cecil;
+using ICSharpCode.Decompiler.Disassembler;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	partial class Block : ILInstruction
+	partial class ILFunction
 	{
-		public readonly InstructionCollection<ILInstruction> Instructions;
+		public readonly MethodDefinition Method;
+		public readonly IList<ILVariable> Variables = new List<ILVariable>();
 		
-		public int IncomingEdgeCount;
-		
-		public Block() : base(OpCode.Block)
+		public ILFunction(MethodDefinition method, ILInstruction body) : base(OpCode.ILFunction)
 		{
-			this.Instructions = new InstructionCollection<ILInstruction>(this);
+			this.Body = body;
+			this.Method = method;
 		}
 		
-		public override StackType ResultType {
-			get {
-				return StackType.Void;
-			}
-		}
-		
-		/// <summary>
-		/// Gets the name of this block.
-		/// </summary>
-		public string Label
-		{
-			get { return Disassembler.DisassemblerHelpers.OffsetToString(this.ILRange.Start); }
-		}
-
 		public override void WriteTo(ITextOutput output)
 		{
-			output.Write("Block ");
-			output.WriteDefinition(Label, this);
-			if (Parent is BlockContainer)
-				output.Write(" (incoming: {0})", IncomingEdgeCount);
+			output.Write(OpCode);
+			output.Write(' ');
+			Method.WriteTo(output);
 			output.WriteLine(" {");
 			output.Indent();
-			foreach (var inst in Instructions) {
-				inst.WriteTo(output);
+			
+			foreach (var variable in Variables) {
+				variable.WriteDefinitionTo(output);
 				output.WriteLine();
 			}
+			output.WriteLine();
+			body.WriteTo(output);
+			
 			output.Unindent();
 			output.WriteLine("}");
 		}
 		
-		public override IEnumerable<ILInstruction> Children {
-			get { return Instructions; }
-		}
-		
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
-		{
-			for (int i = 0; i < Instructions.Count; i++) {
-				Instructions[i] = Instructions[i].AcceptVisitor(visitor);
-			}
-		}
-		
 		protected override InstructionFlags ComputeFlags()
 		{
-			var flags = InstructionFlags.None;
-			foreach (var inst in Instructions)
-				flags |= inst.Flags;
-			return flags;
-			
+			// Creating a lambda may throw OutOfMemoryException
+			return InstructionFlags.MayThrow;
 		}
 		
 		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
 		{
-			if (Instructions.Count > 0)
-				Instructions[0] = Instructions[0].Inline(flagsBefore, instructionStack, out finished);
-			else
-				finished = true;
+			// To the outside, lambda creation looks like a constant
+			finished = true;
 			return this;
 		}
 	}

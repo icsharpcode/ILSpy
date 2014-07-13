@@ -43,7 +43,6 @@ namespace ICSharpCode.Decompiler.IL
 		public BlockContainer CreateBlocks(List<ILInstruction> instructions, BitArray incomingBranches)
 		{
 			currentContainer = new BlockContainer();
-			currentContainer.AddRef(); // mark the root node
 
 			incomingBranches[0] = true;	// see entrypoint as incoming branch
 
@@ -95,6 +94,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			FinalizeCurrentBlock(body.CodeSize, fallthrough: false);
+			ConnectBranches(currentContainer);
 			return currentContainer;
 		}
 
@@ -116,6 +116,41 @@ namespace ICSharpCode.Decompiler.IL
 				currentBlock.Instructions.AddRange(instructionStack.Reverse());
 				instructionStack.Clear();
 			}
+		}
+		
+		Stack<BlockContainer> containerStack = new Stack<BlockContainer>();
+
+		void ConnectBranches(ILInstruction inst)
+		{
+			switch (inst.OpCode) {
+				case OpCode.Branch:
+					var branch = (Branch)inst;
+					branch.TargetBlock = FindBranchTarget(branch.TargetILOffset);
+					break;
+				case OpCode.BlockContainer:
+					var container = (BlockContainer)inst;
+					containerStack.Push(container);
+					container.EntryPoint.IncomingEdgeCount++; // count the entry edge
+					foreach (var block in container.Blocks)
+						ConnectBranches(block);
+					containerStack.Pop();
+					break;
+				default:
+					foreach (var child in inst.Children)
+						ConnectBranches(child);
+					break;
+			}
+		}
+
+		Block FindBranchTarget(int targetILOffset)
+		{
+			foreach (var container in containerStack) {
+				foreach (var block in container.Blocks) {
+					if (block.ILRange.Start == targetILOffset)
+						return block;
+				}
+			}
+			throw new InvalidOperationException("Could not find block for branch target");
 		}
 	}
 }

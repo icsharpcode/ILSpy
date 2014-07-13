@@ -36,6 +36,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.</summary>
 		Void,
 		/// <summary>A container of IL blocks.</summary>
+		ILFunction,
+		/// <summary>A container of IL blocks.</summary>
 		BlockContainer,
 		/// <summary>A block of IL instructions.</summary>
 		Block,
@@ -325,6 +327,33 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitVoid(this);
+		}
+	}
+
+	/// <summary>A container of IL blocks.</summary>
+	public sealed partial class ILFunction : ILInstruction
+	{
+		ILInstruction body;
+		public ILInstruction Body {
+			get { return this.body; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.body, value);
+			}
+		}
+		public override IEnumerable<ILInstruction> Children {
+			get {
+				yield return this.body;
+			}
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Body = this.body.AcceptVisitor(visitor);
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitILFunction(this);
 		}
 	}
 
@@ -2037,6 +2066,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitILFunction(ILFunction function)
+		{
+			return Default(function);
+		}
 		protected internal virtual T VisitBlockContainer(BlockContainer container)
 		{
 			return Default(container);
@@ -2362,6 +2395,7 @@ namespace ICSharpCode.Decompiler.IL
 			"pop",
 			"peek",
 			"void",
+			"ILFunction",
 			"BlockContainer",
 			"Block",
 			"logic.not",

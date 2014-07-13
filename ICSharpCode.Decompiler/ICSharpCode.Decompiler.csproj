@@ -79,6 +79,7 @@
     <Compile Include="IL\Instructions\CallInstruction.cs" />
     <Compile Include="IL\Instructions\Conv.cs" />
     <Compile Include="IL\Instructions\IfInstruction.cs" />
+    <Compile Include="IL\Instructions\ILFunction.cs" />
     <Compile Include="IL\Instructions\ILInstruction.cs" />
     <Compile Include="IL\Instructions\InstructionCollection.cs" />
     <Compile Include="IL\Instructions\MemoryInstructions.cs" />
@@ -87,6 +88,7 @@
     <Compile Include="IL\Instructions\TryCatch.cs" />
     <Compile Include="IL\Instructions\TryFinally.cs" />
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
+    <Compile Include="IL\TransformingVisitor.cs" />
     <Compile Include="TypesHierarchyHelpers.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />
