@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.IL
@@ -62,8 +63,18 @@ namespace ICSharpCode.Decompiler.IL
 		Arglist,
 		/// <summary>Unconditional branch. <c>goto target;</c></summary>
 		Branch,
+		/// <summary>Marks the end of an finally, fault or exception filter block.</summary>
+		EndFinally,
 		/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 		IfInstruction,
+		/// <summary>Try-catch statement</summary>
+		TryCatch,
+		/// <summary>Catch handler within a try-catch statement</summary>
+		TryCatchHandler,
+		/// <summary>Try-finally statement</summary>
+		TryFinally,
+		/// <summary>Try-fault statement</summary>
+		TryFault,
 		/// <summary>Breakpoint instruction</summary>
 		DebugBreak,
 		/// <summary>Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.</summary>
@@ -100,6 +111,14 @@ namespace ICSharpCode.Decompiler.IL
 		LdcF,
 		/// <summary>Loads the null reference.</summary>
 		LdNull,
+		/// <summary>Load method pointer</summary>
+		LdFtn,
+		/// <summary>Load method pointer</summary>
+		LdVirtFtn,
+		/// <summary>Loads runtime representation of metadata token</summary>
+		LdToken,
+		/// <summary>Allocates space in the stack frame</summary>
+		LocAlloc,
 		/// <summary>Returns from the current method or lambda.</summary>
 		Return,
 		/// <summary>Shift left</summary>
@@ -118,18 +137,137 @@ namespace ICSharpCode.Decompiler.IL
 		LdsFlda,
 		/// <summary>Store value to static field</summary>
 		StsFld,
+		/// <summary>Casts an object to a class.</summary>
+		CastClass,
 		/// <summary>Test if object is instance of class or interface.</summary>
 		IsInst,
 		/// <summary>Indirect load (ref/pointer dereference).</summary>
 		LdObj,
+		/// <summary>Indirect store (store to ref/pointer).</summary>
+		StObj,
+		/// <summary>Boxes a value.</summary>
+		Box,
+		/// <summary>Compute address inside box.</summary>
+		Unbox,
 		/// <summary>Unbox a value.</summary>
 		UnboxAny,
 		/// <summary>Creates an object instance and calls the constructor.</summary>
 		NewObj,
+		/// <summary>Initializes the value at an address.</summary>
+		InitObj,
+		/// <summary>Returns the default value for a type.</summary>
+		DefaultValue,
 		/// <summary>Throws an exception.</summary>
 		Throw,
+		/// <summary>Rethrows the current exception.</summary>
+		Rethrow,
+		/// <summary>Gets the size of a type in bytes.</summary>
+		SizeOf,
 		/// <summary>Returns the length of an array as 'native unsigned int'.</summary>
 		LdLen,
+		/// <summary>Load address of array element.</summary>
+		LdElema,
+	}
+
+	/// <summary>Instruction with a single argument</summary>
+	public abstract partial class UnaryInstruction : ILInstruction
+	{
+		protected UnaryInstruction(OpCode opCode, ILInstruction argument) : base(opCode)
+		{
+			this.Argument = argument;
+		}
+		ILInstruction argument;
+		public ILInstruction Argument {
+			get { return this.argument; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.argument, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.argument.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Argument = this.argument.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Argument = this.argument.Inline(flagsBefore, instructionStack, out finished);
+			return this;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return argument.Flags;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			this.argument.WriteTo(output);
+			output.Write(')');
+		}
+	}
+
+	/// <summary>Instruction with two arguments: Left and Right</summary>
+	public abstract partial class BinaryInstruction : ILInstruction
+	{
+		protected BinaryInstruction(OpCode opCode, ILInstruction left, ILInstruction right) : base(opCode)
+		{
+			this.Left = left;
+			this.Right = right;
+		}
+		ILInstruction left;
+		public ILInstruction Left {
+			get { return this.left; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.left, value);
+			}
+		}
+		ILInstruction right;
+		public ILInstruction Right {
+			get { return this.right; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.right, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.left.AcceptVisitor(visitor));
+			value = func(value, this.right.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Left = this.left.AcceptVisitor(visitor);
+			this.Right = this.right.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Right = this.right.Inline(flagsBefore | ((this.left.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), instructionStack, out finished);
+			if (finished)
+				this.Left = this.left.Inline(flagsBefore, instructionStack, out finished);
+			return this;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return left.Flags | right.Flags;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			this.left.WriteTo(output);
+			output.Write(", ");
+			this.right.WriteTo(output);
+			output.Write(')');
+		}
 	}
 
 	/// <summary>No operation. Takes 0 arguments and returns void.</summary>
@@ -377,13 +515,212 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
+	/// <summary>Marks the end of an finally, fault or exception filter block.</summary>
+	public sealed partial class EndFinally : SimpleInstruction
+	{
+		public EndFinally() : base(OpCode.EndFinally)
+		{
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitEndFinally(this);
+		}
+	}
+
 	/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 	public sealed partial class IfInstruction : ILInstruction
+	{
+		ILInstruction condition;
+		public ILInstruction Condition {
+			get { return this.condition; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.condition, value);
+			}
+		}
+		ILInstruction trueInst;
+		public ILInstruction TrueInst {
+			get { return this.trueInst; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.trueInst, value);
+			}
+		}
+		ILInstruction falseInst;
+		public ILInstruction FalseInst {
+			get { return this.falseInst; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.falseInst, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.condition.AcceptVisitor(visitor));
+			value = func(value, this.trueInst.AcceptVisitor(visitor));
+			value = func(value, this.falseInst.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Condition = this.condition.AcceptVisitor(visitor);
+			this.TrueInst = this.trueInst.AcceptVisitor(visitor);
+			this.FalseInst = this.falseInst.AcceptVisitor(visitor);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitIfInstruction(this);
+		}
+	}
+
+	/// <summary>Try-catch statement</summary>
+	public sealed partial class TryCatch : ILInstruction
 	{
 
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitIfInstruction(this);
+			return visitor.VisitTryCatch(this);
+		}
+	}
+
+	/// <summary>Catch handler within a try-catch statement</summary>
+	public sealed partial class TryCatchHandler : ILInstruction
+	{
+		public TryCatchHandler(ILInstruction filter, ILInstruction body, ILVariable variable) : base(OpCode.TryCatchHandler)
+		{
+			this.Filter = filter;
+			this.Body = body;
+			this.variable = variable;
+		}
+		ILInstruction filter;
+		public ILInstruction Filter {
+			get { return this.filter; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.filter, value);
+			}
+		}
+		ILInstruction body;
+		public ILInstruction Body {
+			get { return this.body; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.body, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.filter.AcceptVisitor(visitor));
+			value = func(value, this.body.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Filter = this.filter.AcceptVisitor(visitor);
+			this.Body = this.body.AcceptVisitor(visitor);
+		}
+		readonly ILVariable variable;
+		/// <summary>Returns the variable operand.</summary>
+		public ILVariable Variable { get { return variable; } }
+		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return filter.Flags | body.Flags;
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitTryCatchHandler(this);
+		}
+	}
+
+	/// <summary>Try-finally statement</summary>
+	public sealed partial class TryFinally : ILInstruction
+	{
+		public TryFinally(ILInstruction tryBlock, ILInstruction finallyBlock) : base(OpCode.TryFinally)
+		{
+			this.TryBlock = tryBlock;
+			this.FinallyBlock = finallyBlock;
+		}
+		ILInstruction tryBlock;
+		public ILInstruction TryBlock {
+			get { return this.tryBlock; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.tryBlock, value);
+			}
+		}
+		ILInstruction finallyBlock;
+		public ILInstruction FinallyBlock {
+			get { return this.finallyBlock; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.finallyBlock, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.tryBlock.AcceptVisitor(visitor));
+			value = func(value, this.finallyBlock.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.TryBlock = this.tryBlock.AcceptVisitor(visitor);
+			this.FinallyBlock = this.finallyBlock.AcceptVisitor(visitor);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitTryFinally(this);
+		}
+	}
+
+	/// <summary>Try-fault statement</summary>
+	public sealed partial class TryFault : ILInstruction
+	{
+		public TryFault(ILInstruction tryBlock, ILInstruction faultBlock) : base(OpCode.TryFault)
+		{
+			this.TryBlock = tryBlock;
+			this.FaultBlock = faultBlock;
+		}
+		ILInstruction tryBlock;
+		public ILInstruction TryBlock {
+			get { return this.tryBlock; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.tryBlock, value);
+			}
+		}
+		ILInstruction faultBlock;
+		public ILInstruction FaultBlock {
+			get { return this.faultBlock; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.faultBlock, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.tryBlock.AcceptVisitor(visitor));
+			value = func(value, this.faultBlock.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.TryBlock = this.tryBlock.AcceptVisitor(visitor);
+			this.FaultBlock = this.faultBlock.AcceptVisitor(visitor);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitTryFault(this);
 		}
 	}
 
@@ -569,23 +906,51 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
-	public sealed partial class StLoc : UnaryInstruction
+	public sealed partial class StLoc : ILInstruction
 	{
-		public StLoc(ILInstruction argument, ILVariable variable) : base(OpCode.StLoc, argument)
+		public StLoc(ILInstruction value, ILVariable variable) : base(OpCode.StLoc)
 		{
+			this.Value = value;
 			this.variable = variable;
+		}
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.value, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.value.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Value = this.value.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Value = this.value.Inline(flagsBefore, instructionStack, out finished);
+			return this;
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
 		public ILVariable Variable { get { return variable; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return value.Flags;
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
 			output.Write('(');
-			Argument.WriteTo(output);
+			this.value.WriteTo(output);
 			output.Write(')');
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
@@ -691,6 +1056,99 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
+	/// <summary>Load method pointer</summary>
+	public sealed partial class LdFtn : SimpleInstruction
+	{
+		public LdFtn(MethodReference method) : base(OpCode.LdFtn)
+		{
+			this.method = method;
+		}
+		readonly MethodReference method;
+		/// <summary>Returns the method operand.</summary>
+		public MethodReference Method { get { return method; } }
+		public override StackType ResultType { get { return StackType.I; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, method);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdFtn(this);
+		}
+	}
+
+	/// <summary>Load method pointer</summary>
+	public sealed partial class LdVirtFtn : UnaryInstruction
+	{
+		public LdVirtFtn(ILInstruction argument, MethodReference method) : base(OpCode.LdVirtFtn, argument)
+		{
+			this.method = method;
+		}
+		readonly MethodReference method;
+		/// <summary>Returns the method operand.</summary>
+		public MethodReference Method { get { return method; } }
+		public override StackType ResultType { get { return StackType.I; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, method);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdVirtFtn(this);
+		}
+	}
+
+	/// <summary>Loads runtime representation of metadata token</summary>
+	public sealed partial class LdToken : SimpleInstruction
+	{
+		public LdToken(MemberReference member) : base(OpCode.LdToken)
+		{
+			this.member = member;
+		}
+		readonly MemberReference member;
+		/// <summary>Returns the token operand.</summary>
+		public MemberReference Member { get { return member; } }
+		public override StackType ResultType { get { return StackType.O; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, member);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdToken(this);
+		}
+	}
+
+	/// <summary>Allocates space in the stack frame</summary>
+	public sealed partial class LocAlloc : UnaryInstruction
+	{
+		public LocAlloc(ILInstruction argument) : base(OpCode.LocAlloc, argument)
+		{
+		}
+		public override StackType ResultType { get { return StackType.I; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLocAlloc(this);
+		}
+	}
+
 	/// <summary>Returns from the current method or lambda.</summary>
 	public sealed partial class Return : ILInstruction
 	{
@@ -732,11 +1190,35 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Load instance field</summary>
-	public sealed partial class LdFld : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class LdFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public LdFld(ILInstruction argument, FieldReference field) : base(OpCode.LdFld, argument)
+		public LdFld(ILInstruction target, FieldReference field) : base(OpCode.LdFld)
 		{
+			this.Target = target;
 			this.field = field;
+		}
+		ILInstruction target;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.target, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.target.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Target = this.target.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			return this;
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
@@ -748,7 +1230,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			return target.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -760,7 +1242,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
 			output.Write('(');
-			Argument.WriteTo(output);
+			this.target.WriteTo(output);
 			output.Write(')');
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
@@ -770,11 +1252,35 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Load address of instance field</summary>
-	public sealed partial class LdFlda : UnaryInstruction
+	public sealed partial class LdFlda : ILInstruction
 	{
-		public LdFlda(ILInstruction argument, FieldReference field) : base(OpCode.LdFlda, argument)
+		public LdFlda(ILInstruction target, FieldReference field) : base(OpCode.LdFlda)
 		{
+			this.Target = target;
 			this.field = field;
+		}
+		ILInstruction target;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.target, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.target.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Target = this.target.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			return this;
 		}
 		readonly FieldReference field;
 		/// <summary>Returns the field operand.</summary>
@@ -782,7 +1288,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.Ref; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow;
+			return target.Flags | InstructionFlags.MayThrow;
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -790,7 +1296,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
 			output.Write('(');
-			Argument.WriteTo(output);
+			this.target.WriteTo(output);
 			output.Write(')');
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
@@ -800,11 +1306,48 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Store value to instance field</summary>
-	public sealed partial class StFld : BinaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class StFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public StFld(ILInstruction left, ILInstruction right, FieldReference field) : base(OpCode.StFld, left, right)
+		public StFld(ILInstruction target, ILInstruction value, FieldReference field) : base(OpCode.StFld)
 		{
+			this.Target = target;
+			this.Value = value;
 			this.field = field;
+		}
+		ILInstruction target;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.target, value);
+			}
+		}
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.value, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.target.AcceptVisitor(visitor));
+			value = func(value, this.value.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Target = this.target.AcceptVisitor(visitor);
+			this.Value = this.value.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), instructionStack, out finished);
+			if (finished)
+				this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			return this;
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
@@ -816,7 +1359,7 @@ namespace ICSharpCode.Decompiler.IL
 		public FieldReference Field { get { return field; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			return target.Flags | value.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -828,9 +1371,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
 			output.Write('(');
-			Left.WriteTo(output);
+			this.target.WriteTo(output);
 			output.Write(", ");
-			Right.WriteTo(output);
+			this.value.WriteTo(output);
 			output.Write(')');
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
@@ -898,11 +1441,35 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Store value to static field</summary>
-	public sealed partial class StsFld : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class StsFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public StsFld(ILInstruction argument, FieldReference field) : base(OpCode.StsFld, argument)
+		public StsFld(ILInstruction value, FieldReference field) : base(OpCode.StsFld)
 		{
+			this.Value = value;
 			this.field = field;
+		}
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.value, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.value.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Value = this.value.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Value = this.value.Inline(flagsBefore, instructionStack, out finished);
+			return this;
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
@@ -914,7 +1481,7 @@ namespace ICSharpCode.Decompiler.IL
 		public FieldReference Field { get { return field; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect;
+			return value.Flags | InstructionFlags.SideEffect;
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -926,12 +1493,42 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
 			output.Write('(');
-			Argument.WriteTo(output);
+			this.value.WriteTo(output);
 			output.Write(')');
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStsFld(this);
+		}
+	}
+
+	/// <summary>Casts an object to a class.</summary>
+	public sealed partial class CastClass : UnaryInstruction
+	{
+		public CastClass(ILInstruction argument, TypeReference type) : base(OpCode.CastClass, argument)
+		{
+			this.type = type;
+		}
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		public override StackType ResultType { get { return type.GetStackType(); } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitCastClass(this);
 		}
 	}
 
@@ -962,11 +1559,35 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Indirect load (ref/pointer dereference).</summary>
-	public sealed partial class LdObj : UnaryInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class LdObj : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public LdObj(ILInstruction argument, TypeReference type) : base(OpCode.LdObj, argument)
+		public LdObj(ILInstruction target, TypeReference type) : base(OpCode.LdObj)
 		{
+			this.Target = target;
 			this.type = type;
+		}
+		ILInstruction target;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.target, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.target.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Target = this.target.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			return this;
 		}
 		readonly TypeReference type;
 		/// <summary>Returns the type operand.</summary>
@@ -978,7 +1599,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			return target.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -990,12 +1611,149 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
 			output.Write('(');
-			Argument.WriteTo(output);
+			this.target.WriteTo(output);
 			output.Write(')');
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdObj(this);
+		}
+	}
+
+	/// <summary>Indirect store (store to ref/pointer).</summary>
+	public sealed partial class StObj : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	{
+		public StObj(ILInstruction target, ILInstruction value, TypeReference type) : base(OpCode.StObj)
+		{
+			this.Target = target;
+			this.Value = value;
+			this.type = type;
+		}
+		ILInstruction target;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.target, value);
+			}
+		}
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.value, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.target.AcceptVisitor(visitor));
+			value = func(value, this.value.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Target = this.target.AcceptVisitor(visitor);
+			this.Value = this.value.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), instructionStack, out finished);
+			if (finished)
+				this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			return this;
+		}
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
+		public bool IsVolatile { get; set; }
+		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
+		public byte UnalignedPrefix { get; set; }
+		public override StackType ResultType { get { return type.GetStackType(); } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return target.Flags | value.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			if (IsVolatile)
+				output.Write("volatile.");
+			if (UnalignedPrefix > 0)
+				output.Write("unaligned(" + UnalignedPrefix + ").");
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			this.target.WriteTo(output);
+			output.Write(", ");
+			this.value.WriteTo(output);
+			output.Write(')');
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitStObj(this);
+		}
+	}
+
+	/// <summary>Boxes a value.</summary>
+	public sealed partial class Box : UnaryInstruction
+	{
+		public Box(ILInstruction argument, TypeReference type) : base(OpCode.Box, argument)
+		{
+			this.type = type;
+		}
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		public override StackType ResultType { get { return StackType.O; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitBox(this);
+		}
+	}
+
+	/// <summary>Compute address inside box.</summary>
+	public sealed partial class Unbox : UnaryInstruction
+	{
+		public Unbox(ILInstruction argument, TypeReference type) : base(OpCode.Unbox, argument)
+		{
+			this.type = type;
+		}
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		public override StackType ResultType { get { return StackType.Ref; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitUnbox(this);
 		}
 	}
 
@@ -1042,6 +1800,55 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
+	/// <summary>Initializes the value at an address.</summary>
+	public sealed partial class InitObj : UnaryInstruction
+	{
+		public InitObj(ILInstruction argument, TypeReference type) : base(OpCode.InitObj, argument)
+		{
+			this.type = type;
+		}
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		public override StackType ResultType { get { return StackType.Void; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitInitObj(this);
+		}
+	}
+
+	/// <summary>Returns the default value for a type.</summary>
+	public sealed partial class DefaultValue : SimpleInstruction
+	{
+		public DefaultValue(TypeReference type) : base(OpCode.DefaultValue)
+		{
+			this.type = type;
+		}
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitDefaultValue(this);
+		}
+	}
+
 	/// <summary>Throws an exception.</summary>
 	public sealed partial class Throw : UnaryInstruction
 	{
@@ -1059,20 +1866,164 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Returns the length of an array as 'native unsigned int'.</summary>
-	public sealed partial class LdLen : UnaryInstruction
+	/// <summary>Rethrows the current exception.</summary>
+	public sealed partial class Rethrow : SimpleInstruction
 	{
-		public LdLen(ILInstruction argument) : base(OpCode.LdLen, argument)
+		public Rethrow() : base(OpCode.Rethrow)
 		{
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitRethrow(this);
+		}
+	}
+
+	/// <summary>Gets the size of a type in bytes.</summary>
+	public sealed partial class SizeOf : SimpleInstruction
+	{
+		public SizeOf(TypeReference type) : base(OpCode.SizeOf)
+		{
+			this.type = type;
+		}
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		public override StackType ResultType { get { return StackType.I4; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitSizeOf(this);
+		}
+	}
+
+	/// <summary>Returns the length of an array as 'native unsigned int'.</summary>
+	public sealed partial class LdLen : ILInstruction
+	{
+		public LdLen(ILInstruction target) : base(OpCode.LdLen)
+		{
+			this.Target = target;
+		}
+		ILInstruction target;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.target, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.target.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Target = this.target.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			return this;
 		}
 		public override StackType ResultType { get { return StackType.I; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow;
+			return target.Flags | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			this.target.WriteTo(output);
+			output.Write(')');
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLen(this);
+		}
+	}
+
+	/// <summary>Load address of array element.</summary>
+	public sealed partial class LdElema : ILInstruction
+	{
+		public LdElema(ILInstruction array, ILInstruction index, TypeReference type) : base(OpCode.LdElema)
+		{
+			this.Array = array;
+			this.Index = index;
+			this.type = type;
+		}
+		ILInstruction array;
+		public ILInstruction Array {
+			get { return this.array; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.array, value);
+			}
+		}
+		ILInstruction index;
+		public ILInstruction Index {
+			get { return this.index; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.index, value);
+			}
+		}
+		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
+		{
+			TAccumulate value = initial;
+			value = func(value, this.array.AcceptVisitor(visitor));
+			value = func(value, this.index.AcceptVisitor(visitor));
+			return value;
+		}
+		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			this.Array = this.array.AcceptVisitor(visitor);
+			this.Index = this.index.AcceptVisitor(visitor);
+		}
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			this.Index = this.index.Inline(flagsBefore | ((this.array.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), instructionStack, out finished);
+			if (finished)
+				this.Array = this.array.Inline(flagsBefore, instructionStack, out finished);
+			return this;
+		}
+		readonly TypeReference type;
+		/// <summary>Returns the type operand.</summary>
+		public TypeReference Type { get { return type; } }
+		public override StackType ResultType { get { return StackType.Ref; } }
+		/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>
+		public bool IsReadOnly { get; set; }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return array.Flags | index.Flags | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			if (IsReadOnly)
+				output.Write("readonly.");
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			this.array.WriteTo(output);
+			output.Write(", ");
+			this.index.WriteTo(output);
+			output.Write(')');
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdElema(this);
 		}
 	}
 
@@ -1101,13 +2052,13 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitBlockContainer(BlockContainer inst)
+		protected internal virtual T VisitBlockContainer(BlockContainer container)
 		{
-			return Default(inst);
+			return Default(container);
 		}
-		protected internal virtual T VisitBlock(Block inst)
+		protected internal virtual T VisitBlock(Block block)
 		{
-			return Default(inst);
+			return Default(block);
 		}
 		protected internal virtual T VisitLogicNot(LogicNot inst)
 		{
@@ -1157,7 +2108,27 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitEndFinally(EndFinally inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitIfInstruction(IfInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitTryCatch(TryCatch inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitTryCatchHandler(TryCatchHandler inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitTryFinally(TryFinally inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitTryFault(TryFault inst)
 		{
 			return Default(inst);
 		}
@@ -1233,6 +2204,22 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitLdFtn(LdFtn inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLdVirtFtn(LdVirtFtn inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLdToken(LdToken inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLocAlloc(LocAlloc inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitReturn(Return inst)
 		{
 			return Default(inst);
@@ -1269,11 +2256,27 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitCastClass(CastClass inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitIsInst(IsInst inst)
 		{
 			return Default(inst);
 		}
 		protected internal virtual T VisitLdObj(LdObj inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitStObj(StObj inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitBox(Box inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitUnbox(Unbox inst)
 		{
 			return Default(inst);
 		}
@@ -1285,11 +2288,31 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitInitObj(InitObj inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitDefaultValue(DefaultValue inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitThrow(Throw inst)
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitRethrow(Rethrow inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitSizeOf(SizeOf inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitLdLen(LdLen inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLdElema(LdElema inst)
 		{
 			return Default(inst);
 		}
@@ -1368,7 +2391,12 @@ namespace ICSharpCode.Decompiler.IL
 			"bit.not",
 			"arglist",
 			"br",
+			"endfinally",
 			"if",
+			"try.catch",
+			"try.catch.handler",
+			"try.finally",
+			"try.fault",
 			"debug.break",
 			"ceq",
 			"cgt",
@@ -1387,6 +2415,10 @@ namespace ICSharpCode.Decompiler.IL
 			"ldc.i8",
 			"ldc.f",
 			"ldnull",
+			"ldftn",
+			"ldvirtftn",
+			"ldtoken",
+			"localloc",
 			"ret",
 			"shl",
 			"shr",
@@ -1396,12 +2428,21 @@ namespace ICSharpCode.Decompiler.IL
 			"ldsfld",
 			"ldsflda",
 			"stsfld",
+			"castclass",
 			"isinst",
 			"ldobj",
+			"stobj",
+			"box",
+			"unbox",
 			"unbox.any",
 			"newobj",
+			"initobj",
+			"default.value",
 			"throw",
+			"rethrow",
+			"sizeof",
 			"ldlen",
+			"ldelema",
 		};
 	}
 }

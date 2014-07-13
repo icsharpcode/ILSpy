@@ -46,6 +46,12 @@ namespace ICSharpCode.Decompiler.IL
 				throw new ArgumentException("Argument must not be of type void", "inst");
 		}
 		
+		internal static void ValidateChild(ILInstruction inst)
+		{
+			if (inst == null)
+				throw new ArgumentNullException("inst");
+		}
+		
 		[Conditional("DEBUG")]
 		internal void CheckInvariant()
 		{
@@ -55,6 +61,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the stack type of the value produced by this instruction.
 		/// </summary>
 		public abstract StackType ResultType { get; }
+		
+		internal static StackType CommonResultType(StackType a, StackType b)
+		{
+			if (a == StackType.I || b == StackType.I)
+				return StackType.I;
+			Debug.Assert(a == b);
+			return a;
+		}
 		
 		InstructionFlags flags = (InstructionFlags)(-1);
 		

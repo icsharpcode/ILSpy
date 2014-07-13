@@ -1673,6 +1673,16 @@ namespace ICSharpCode.NRefactory.CSharp
 				Space(policy.SpacesWithinCatchParentheses);
 				RPar();
 			}
+			if (!catchClause.Condition.IsNull) {
+				Space();
+				WriteKeyword(CatchClause.IfKeywordRole);
+				Space(policy.SpaceBeforeIfParentheses);
+				LPar();
+				Space(policy.SpacesWithinIfParentheses);
+				catchClause.Condition.AcceptVisitor(this);
+				Space(policy.SpacesWithinIfParentheses);
+				RPar();
+			}
 			catchClause.Body.AcceptVisitor(this);
 			EndNode(catchClause);
 		}

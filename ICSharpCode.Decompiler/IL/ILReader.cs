@@ -204,7 +204,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Constrained:
 					return DecodeConstrainedCall();
 				case ILOpCode.Readonly:
-					throw new NotImplementedException(); // needs ldelema
+					return DecodeReadonly();
 				case ILOpCode.Tailcall:
 					return DecodeTailCall();
 				case ILOpCode.Unaligned:
@@ -368,9 +368,8 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Dup:
 					return new Peek(stack.Count > 0 ? stack.Peek() : StackType.Unknown);
 				case ILOpCode.Endfilter:
-					throw new NotImplementedException();
 				case ILOpCode.Endfinally:
-					throw new NotImplementedException();
+					return new EndFinally();
 				case ILOpCode.Initblk:
 					throw new NotImplementedException();
 				case ILOpCode.Jmp:
@@ -414,7 +413,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldstr:
 					return DecodeLdstr();
 				case ILOpCode.Ldftn:
-					throw new NotImplementedException();
+					return new LdFtn((MethodReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldind_I1:
 					return new LdObj(Pop(), typeSystem.SByte);
 				case ILOpCode.Ldind_I2:
@@ -455,7 +454,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Leave_S:
 					return DecodeUnconditionalBranch(true, isLeave: true);
 				case ILOpCode.Localloc:
-					throw new NotImplementedException();
+					return new LocAlloc(Pop());
 				case ILOpCode.Mul:
 					return BinaryNumeric(OpCode.Mul, OverflowMode.None);
 				case ILOpCode.Mul_Ovf:
@@ -519,13 +518,17 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Xor:
 					return BinaryNumeric(OpCode.BitXor);
 				case ILOpCode.Box:
-					throw new NotImplementedException();
+					return new Box(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Castclass:
-					throw new NotImplementedException();
+					return new CastClass(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Cpobj:
-					throw new NotImplementedException();
+					{
+						var type = (TypeReference)ReadAndDecodeMetadataToken();
+						var ld = new LdObj(Pop(), type);
+						return new StObj(Pop(), ld, type);
+					}
 				case ILOpCode.Initobj:
-					throw new NotImplementedException();
+					return new InitObj(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Isinst:
 					return new IsInst(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldelem:
@@ -542,14 +545,13 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldelem_Ref:
 					throw new NotImplementedException();
 				case ILOpCode.Ldelema:
-					throw new NotImplementedException();
+					return new LdElema(index: Pop(), array: Pop(), type: (TypeReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldfld:
 					return new LdFld(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldflda:
 					return new LdFlda(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Stfld:
-					throw new NotImplementedException();
-					//\return new Stfld(Pop(), Pop(), (FieldReference)ReadAndDecodeMetadataToken());
+					return new StFld(value: Pop(), target: Pop(), field: (FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldlen:
 					return new LdLen(Pop());
 				case ILOpCode.Ldobj:
@@ -561,9 +563,9 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stsfld:
 					return new StsFld(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldtoken:
-					throw new NotImplementedException();
+					return new LdToken((MemberReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldvirtftn:
-					throw new NotImplementedException();
+					return new LdVirtFtn(Pop(), (MethodReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Mkrefany:
 					throw new NotImplementedException();
 				case ILOpCode.Newarr:
@@ -573,9 +575,9 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Refanyval:
 					throw new NotImplementedException();
 				case ILOpCode.Rethrow:
-					throw new NotImplementedException();
+					return new Rethrow();
 				case ILOpCode.Sizeof:
-					throw new NotImplementedException();
+					return new SizeOf((TypeReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Stelem:
 				case ILOpCode.Stelem_I1:
 				case ILOpCode.Stelem_I2:
@@ -587,11 +589,11 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stelem_Ref:
 					throw new NotImplementedException();
 				case ILOpCode.Stobj:
-					throw new NotImplementedException();
+					return new StObj(value: Pop(), target: Pop(), type: (TypeReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Throw:
 					return new Throw(Pop());
 				case ILOpCode.Unbox:
-					throw new NotImplementedException();
+					return new Unbox(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Unbox_Any:
 					return new UnboxAny(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
 				default:
@@ -693,6 +695,17 @@ namespace ICSharpCode.Decompiler.IL
 				svp.IsVolatile = true;
 			else
 				Warn("Ignored invalid 'volatile' prefix");
+			return inst;
+		}
+		
+		private ILInstruction DecodeReadonly()
+		{
+			var inst = DecodeInstruction();
+			var ldelema = inst as LdElema;
+			if (ldelema != null)
+				ldelema.IsReadOnly = true;
+			else
+				Warn("Ignored invalid 'readonly' prefix");
 			return inst;
 		}
 

@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (methodDefinition.HasBody) {
 				var ilReader = new ILReader(methodDefinition.Body, CancellationToken);
 				var inst = ilReader.CreateBlocks(true);
-				var body = statementBuilder.ConvertBlockContainer(inst);
+				var body = statementBuilder.ConvertAsBlock(inst);
 				body.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 				entityDecl.AddChild(body, Roles.Body);
 			}

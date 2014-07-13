@@ -23,6 +23,13 @@
 <#@ import namespace="System.Collections.Generic" #>
 <#@ output extension=".cs" #>
 <#
+	OpCode[] baseClasses = {
+		new OpCode("UnaryInstruction", "Instruction with a single argument",
+			AbstractBaseClass, CustomArguments("argument")),
+		new OpCode("BinaryInstruction", "Instruction with two arguments: Left and Right",
+			AbstractBaseClass, CustomArguments("left", "right")),
+	};
+	
 	OpCode[] opCodes = {
 		new OpCode("nop", "No operation. Takes 0 arguments and returns void.",
 			VoidResult, NoArguments),
@@ -32,8 +39,10 @@
 			Peeking, NoArguments, ResultTypeParam),
 		new OpCode("void", "Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.",
 			VoidResult, Unary),
-		new OpCode("BlockContainer", "A container of IL blocks.", VoidResult, CustomConstructor),
-		new OpCode("Block", "A block of IL instructions.", CustomConstructor),
+		new OpCode("BlockContainer", "A container of IL blocks.",
+			VoidResult, CustomConstructor, CustomVariableName("container")),
+		new OpCode("Block", "A block of IL instructions.",
+			CustomConstructor, CustomVariableName("block")),
 		new OpCode("logic.not", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).",
 			ResultType("I4"), Unary),
 		new OpCode("add", "Adds two numbers.", BinaryNumeric),
@@ -46,12 +55,35 @@
 		new OpCode("bit.xor", "Bitwise XOR", BinaryNumeric),
 		new OpCode("bit.not", "Bitwise NOT", Unary),
 		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
-		//new OpCode("ConditionalBranch", "<c>if (condition) goto target;</c>.",
-		//	BranchInstruction, CustomConstructor, CustomComputeFlags, MayBranch, VoidResult),
 		new OpCode("br", "Unconditional branch. <c>goto target;</c>",
 			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch),
+		// TODO: get rid of endfinally, we can represent those with a normal branch to the end of the filter/finally block instead
+		new OpCode("endfinally", "Marks the end of an finally, fault or exception filter block.",
+			CustomClassName("EndFinally"), NoArguments, UnconditionalBranch, MayBranch),
 		new OpCode("if", "If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c>",
-			CustomClassName("IfInstruction"), CustomConstructor),
+			CustomClassName("IfInstruction"),
+			CustomChildren(new []{
+				new ChildInfo("condition") { IsArgument = true },
+				new ChildInfo("trueInst"),
+				new ChildInfo("falseInst"),
+			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
+		new OpCode("try.catch", "Try-catch statement",
+			CustomConstructor, CustomComputeFlags, CustomWriteTo),
+		new OpCode("try.catch.handler", "Catch handler within a try-catch statement",
+			CustomChildren(new [] {
+				new ChildInfo("filter") { IsArgument = true },
+				new ChildInfo("body"),
+			}), HasVariableOperand, CustomWriteTo, ResultType("Void")),
+		new OpCode("try.finally", "Try-finally statement",
+			CustomChildren(new [] {
+				new ChildInfo("tryBlock"),
+				new ChildInfo("finallyBlock"),
+			}), CustomWriteTo, CustomComputeFlags),
+		new OpCode("try.fault", "Try-fault statement",
+			CustomChildren(new [] {
+				new ChildInfo("tryBlock"),
+				new ChildInfo("faultBlock"),
+			}), CustomWriteTo, CustomComputeFlags),
 		new OpCode("debug.break", "Breakpoint instruction",
 			NoArguments, VoidResult, SideEffect),
 		new OpCode("ceq", "Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.",
@@ -76,7 +108,7 @@
 		new OpCode("ldloca", "Loads the address of a local variable. (ldarga/ldloca)",
 			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand),
 		new OpCode("stloc", "Stores a value into a local variable. (starg/stloc)",
-			CustomClassName("StLoc"), Unary, VoidResult, HasVariableOperand),
+			CustomClassName("StLoc"), CustomArguments("value"), VoidResult, HasVariableOperand),
 		new OpCode("ldstr", "Loads a constant string.",
 			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),
 		new OpCode("ldc.i4", "Loads a constant 32-bit integer.",
@@ -87,43 +119,75 @@
 			LoadConstant("double"), ResultType("F")),
 		new OpCode("ldnull", "Loads the null reference.",
 			CustomClassName("LdNull"), NoArguments, ResultType("O")),
+		new OpCode("ldftn", "Load method pointer",
+			CustomClassName("LdFtn"), NoArguments, HasMethodOperand, ResultType("I")),
+		new OpCode("ldvirtftn", "Load method pointer",
+			CustomClassName("LdVirtFtn"), Unary, HasMethodOperand, MayThrow, ResultType("I")),
+		new OpCode("ldtoken", "Loads runtime representation of metadata token",
+			CustomClassName("LdToken"), NoArguments, HasTokenOperand, ResultType("O")),
+		new OpCode("localloc", "Allocates space in the stack frame",
+			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
 		new OpCode("ret", "Returns from the current method or lambda.",
 			CustomClassName("Return"), CustomConstructor, MayBranch, UnconditionalBranch),
 		new OpCode("shl", "Shift left", BinaryNumeric),
 		new OpCode("shr", "Shift right", BinaryNumeric),
 		
 		new OpCode("ldfld", "Load instance field",
-			CustomClassName("LdFld"), Unary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow,
+			CustomClassName("LdFld"), CustomArguments("target"), MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow,
 			HasFieldOperand, ResultType("field.FieldType.GetStackType()")),
 		new OpCode("ldflda", "Load address of instance field",
-			CustomClassName("LdFlda"), Unary, MayThrow, HasFieldOperand, ResultType("Ref")),
+			CustomClassName("LdFlda"), CustomArguments("target"), MayThrow, HasFieldOperand, ResultType("Ref")),
 		new OpCode("stfld", "Store value to instance field",
-			CustomClassName("StFld"), Binary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, VoidResult, HasFieldOperand),
+			CustomClassName("StFld"), CustomArguments("target", "value"), MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, VoidResult, HasFieldOperand),
 		new OpCode("ldsfld", "Load static field",
 			CustomClassName("LdsFld"), NoArguments, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix,
 			HasFieldOperand, ResultType("field.FieldType.GetStackType()")),
 		new OpCode("ldsflda", "Load static field address",
 			CustomClassName("LdsFlda"), NoArguments, ResultType("Ref"), HasFieldOperand),
 		new OpCode("stsfld", "Store value to static field",
-			CustomClassName("StsFld"), Unary, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, VoidResult, HasFieldOperand),
+			CustomClassName("StsFld"), CustomArguments("value"), MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, VoidResult, HasFieldOperand),
 
+		new OpCode("castclass", "Casts an object to a class.",
+			CustomClassName("CastClass"), Unary, HasTypeOperand, MayThrow, ResultType("type.GetStackType()")),
 		new OpCode("isinst", "Test if object is instance of class or interface.",
 			CustomClassName("IsInst"), Unary, HasTypeOperand, ResultType("type.GetStackType()")),
 		new OpCode("ldobj", "Indirect load (ref/pointer dereference).",
-			CustomClassName("LdObj"), Unary, HasTypeOperand, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
+			CustomClassName("LdObj"), CustomArguments("target"), HasTypeOperand, MemoryAccess,
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
+		new OpCode("stobj", "Indirect store (store to ref/pointer).",
+			CustomClassName("StObj"), CustomArguments("target", "value"), HasTypeOperand, MemoryAccess,
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
+		
+		new OpCode("box", "Boxes a value.",
+			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("O")),
+		new OpCode("unbox", "Compute address inside box.",
+			Unary, HasTypeOperand, MayThrow, ResultType("Ref")),
 		new OpCode("unbox.any", "Unbox a value.",
 			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("type.GetStackType()")),
 		new OpCode("newobj", "Creates an object instance and calls the constructor.",
 			CustomClassName("NewObj"), Call, ResultType("O")),
+		new OpCode("initobj", "Initializes the value at an address.",
+			CustomClassName("InitObj"), Unary, HasTypeOperand, VoidResult),
+		new OpCode("default.value", "Returns the default value for a type.",
+			NoArguments, HasTypeOperand, ResultType("type.GetStackType()")),
 		new OpCode("throw", "Throws an exception.",
 			Unary, MayThrow, UnconditionalBranch),
+		new OpCode("rethrow", "Rethrows the current exception.",
+			NoArguments, MayThrow, UnconditionalBranch),
+		new OpCode("sizeof", "Gets the size of a type in bytes.",
+			CustomClassName("SizeOf"), NoArguments, HasTypeOperand, ResultType("I4")),
+		
 		new OpCode("ldlen", "Returns the length of an array as 'native unsigned int'.",
-			CustomClassName("LdLen"), Unary, MayThrow, ResultType("I")),
+			CustomClassName("LdLen"), CustomArguments("target"), MayThrow, ResultType("I")),
+		new OpCode("ldelema", "Load address of array element.",
+			CustomClassName("LdElema"), CustomArguments("array", "index"), HasTypeOperand,
+			MayThrow, ResultType("Ref"), SupportsReadonlyPrefix),
 		
 		
 	};
 #>
 using System;
+using System.Collections.Generic;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.IL
@@ -139,12 +203,12 @@ namespace ICSharpCode.Decompiler.IL
 <#  } #>
 	}
 
-<#	foreach (OpCode opCode in opCodes) { #>
+<#	foreach (OpCode opCode in baseClasses.Concat(opCodes)) { #>
 	/// <summary><#=opCode.Description#></summary>
-	public sealed partial class <#=opCode.Name#> : <#=string.Join(", ", new[]{opCode.BaseClass}.Concat(opCode.Interfaces))#>
+	<#=opCode.ClassModifiers#> partial class <#=opCode.Name#> : <#=string.Join(", ", new[]{opCode.BaseClass}.Concat(opCode.Interfaces))#>
 	{
 <#	if (opCode.GenerateConstructor) { #>
-		public <#=opCode.Name#>(<#=string.Join(", ", opCode.ConstructorParameters)#>) : base(<#=string.Join(", ", opCode.BaseConstructorArguments)#>)
+		<#=opCode.ConstructorModifier#> <#=opCode.Name#>(<#=string.Join(", ", opCode.ConstructorParameters)#>) : base(<#=string.Join(", ", opCode.BaseConstructorArguments)#>)
 		{<#=Body(opCode.ConstructorBody)#>}
 <#	} #>
 <#=string.Join(Environment.NewLine, opCode.Members.Select(m => "\t\t" + m.Replace("\n", "\n\t\t")))#>
@@ -158,10 +222,12 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output)
 		{<#=Body(opCode.WriteToBody)#>}
 <#	} #>
+<#	if (opCode.GenerateAcceptVisitor) { #>
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.Visit<#=opCode.Name#>(this);
 		}
+<#	} #>
 	}
 
 <#	} #>
@@ -175,9 +241,9 @@ namespace ICSharpCode.Decompiler.IL
 		protected abstract T Default(ILInstruction inst);
 		
 <#	foreach (OpCode opCode in opCodes) { #>
-		protected internal virtual T Visit<#=opCode.Name#>(<#=opCode.Name#> inst)
+		protected internal virtual T Visit<#=opCode.Name#>(<#=opCode.Name#> <#=opCode.VariableName#>)
 		{
-			return Default(inst);
+			return Default(<#=opCode.VariableName#>);
 		}
 <#	} #>
 	}
@@ -235,34 +301,45 @@ namespace ICSharpCode.Decompiler.IL
 		b.Append("\t\t");
 		return b.ToString();
 	}
+	
+	static string MakeName(string originalName)
+	{
+		StringBuilder name = new StringBuilder();
+		bool nextUpper = true;
+		foreach (char c in originalName) {
+			if (c == '.')
+				nextUpper = true;
+			else if (nextUpper) {
+				name.Append(char.ToUpper(c));
+				nextUpper = false;
+			} else
+				name.Append(c);
+		}
+		return name.ToString();
+	}
 
-	class OpCode {
+	class OpCode
+	{
 		public readonly string OriginalName;
 		public string Name;
 		public readonly string Description;
+		public string VariableName = "inst";
 
 		public OpCode(string originalName, string description, params Action<OpCode>[] traits)
 		{
 			this.OriginalName = originalName;
-			StringBuilder name = new StringBuilder();
-			bool nextUpper = true;
-			foreach (char c in originalName) {
-				if (c == '.')
-					nextUpper = true;
-				else if (nextUpper) {
-					name.Append(char.ToUpper(c));
-					nextUpper = false;
-				} else
-					name.Append(c);
-			}
-			this.Name = name.ToString();
+			this.Name = MakeName(originalName);
 			this.Description = description;
 			foreach (var trait in traits)
 				trait(this);
-			this.BaseConstructorArguments.Insert(0, "OpCode." + this.Name);
+			if (this.BaseConstructorArguments.FirstOrDefault() != "opCode")
+				this.BaseConstructorArguments.Insert(0, "OpCode." + this.Name);
 		}
 
+		public string ClassModifiers = "public sealed";
+		
 		public bool GenerateConstructor = true;
+		public string ConstructorModifier = "public";
 		public List<string> ConstructorParameters = new List<string>();
 		public List<string> ConstructorBody = new List<string>();
 
@@ -273,6 +350,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public List<string> Flags = new List<string>();
 		public bool GenerateComputeFlags = true;
+		
+		public bool GenerateAcceptVisitor = true;
 		
 		public bool GenerateWriteTo = false;
 		public List<string> WriteOpCodePrefix = new List<string>();
@@ -298,8 +377,19 @@ namespace ICSharpCode.Decompiler.IL
 		};
 	}
 	
+	static Action<OpCode> CustomVariableName(string name)
+	{
+		return opCode => {
+			opCode.VariableName = name;
+		};
+	}
+	
 	static Action<OpCode> CustomConstructor = opCode => {
 		opCode.GenerateConstructor = false;
+	};
+	
+	static Action<OpCode> CustomWriteTo = opCode => {
+		opCode.GenerateWriteTo = false;
 	};
 	
 	static Action<OpCode> CustomComputeFlags = opCode => {
@@ -402,6 +492,116 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.WriteOpCodeSuffix.Add("output.Write(OpType);");
 	};
 
+	static Action<OpCode> CustomArguments(params string[] arguments)
+	{
+		return CustomChildren(arguments.Select(arg => new ChildInfo(arg) { IsArgument = true}).ToArray(), generateInline: true);
+	}
+	
+	class ChildInfo
+	{
+		public readonly string PropertyName;
+		public readonly string Name;
+		public bool IsArgument;
+		public bool IsOptional;
+		
+		public ChildInfo(string name)
+		{
+			this.Name = name;
+			this.PropertyName = MakeName(name);
+		}
+	}
+	
+	static Action<OpCode> CustomChildren(ChildInfo[] children, bool generateInline = false)
+	{
+		return opCode => {
+			opCode.GenerateWriteTo = true;
+			opCode.WriteArguments.Add("output.Write('(');");
+			StringBuilder transformChildren = new StringBuilder();
+			for (int i = 0; i < children.Length; i++) {
+				string arg = children[i].Name;
+				string argProp = children[i].PropertyName;
+				opCode.Flags.Add(arg + ".Flags");
+				opCode.ConstructorParameters.Add("ILInstruction " + arg);
+				opCode.ConstructorBody.Add("this." + argProp + " = " + arg + ";");
+				if (i > 0)
+					opCode.WriteArguments.Add("output.Write(\", \");");
+				if (children[i].IsOptional)
+					opCode.WriteArguments.Add("if (this." + arg + " != null) this." + arg + ".WriteTo(output);");
+				else
+					opCode.WriteArguments.Add("this." + arg + ".WriteTo(output);");
+				opCode.Members.Add("ILInstruction " + arg + ";");
+				opCode.Members.Add("public ILInstruction " + argProp + " {" + Environment.NewLine
+					+ "\tget { return this." + arg + "; }" + Environment.NewLine
+					+ "\tset {" + Environment.NewLine
+					+ (children[i].IsOptional ? "\t\tif (value != null)" + Environment.NewLine + "\t" : "")
+					+ "\t\t" + (children[i].IsArgument ? "ValidateArgument" : "ValidateChild") + "(value);" + Environment.NewLine
+					+ "\t\tSetChildInstruction(ref this." + arg + ", value);" + Environment.NewLine
+					+ "\t}" + Environment.NewLine
+					+ "}");
+			}
+			opCode.WriteArguments.Add("output.Write(')');");
+			StringBuilder b = new StringBuilder();
+			b.AppendLine("public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)");
+			b.AppendLine("{");
+			b.AppendLine("\tTAccumulate value = initial;");
+			foreach (var child in children) {
+				if (child.IsOptional) {
+					b.AppendLine("\tif (this." + child.Name + " != null)");
+					b.Append('\t');
+				}
+				b.AppendLine("\tvalue = func(value, this." + child.Name + ".AcceptVisitor(visitor));");
+			}
+			b.AppendLine("\treturn value;");
+			b.Append("}");
+			opCode.Members.Add(b.ToString());
+			b = new StringBuilder();
+			b.AppendLine("public override void TransformChildren(ILVisitor<ILInstruction> visitor)");
+			b.AppendLine("{");
+			foreach (var child in children) {
+				if (child.IsOptional) {
+					b.AppendLine("\tif (this." + child.Name + " != null)");
+					b.Append('\t');
+				}
+				b.AppendLine("\tthis." + child.PropertyName + " = this." + child.Name + ".AcceptVisitor(visitor);");
+			}
+			b.Append("}");
+			opCode.Members.Add(b.ToString());
+			if (generateInline) {
+				b = new StringBuilder();
+				b.AppendLine("internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)");
+				b.AppendLine("{");
+				for (int i = children.Length - 1; i >= 0; i--) {
+					string arg = children[i].Name;
+					if (i < children.Length - 1) {
+						if (children[i].IsOptional)
+							b.AppendLine("\tif (finished && this." + arg + " != null)");
+						else
+							b.AppendLine("\tif (finished)");
+						b.Append("\t");
+					}
+					b.Append("\tthis." + MakeName(arg) + " = this." + arg + ".Inline(flagsBefore");
+					if (i > 0) {
+						b.Append(" | ((");
+						b.Append(string.Join(" | ", children.Take(i).Select(child2 => "this." + child2.Name + ".Flags")));
+						b.Append(") & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop))");
+					}
+					b.AppendLine(", instructionStack, out finished);");
+				}
+				b.AppendLine("\treturn this;");
+				b.Append("}");
+				opCode.Members.Add(b.ToString());
+			}
+		};
+	}
+
+	static Action<OpCode> AbstractBaseClass = opCode => {
+		opCode.GenerateAcceptVisitor = false;
+		opCode.ClassModifiers = "public abstract";
+		opCode.ConstructorModifier = "protected";
+		opCode.ConstructorParameters.Add("OpCode opCode");
+		opCode.BaseConstructorArguments.Add("opCode");
+	};
+
 	// SideEffect trait: the instruction has a non-local side effect
 	static Action<OpCode> SideEffect = HasFlag("InstructionFlags.SideEffect");
 	static Action<OpCode> MemoryAccess = SideEffect;
@@ -446,6 +646,28 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, type);");
 	};
+
+	static Action<OpCode> HasMethodOperand = opCode => {
+		opCode.ConstructorParameters.Add("MethodReference method");
+		opCode.Members.Add("readonly MethodReference method;");
+		opCode.ConstructorBody.Add("this.method = method;");
+		opCode.Members.Add("/// <summary>Returns the method operand.</summary>" + Environment.NewLine
+						+ "public MethodReference Method { get { return method; } }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOperand.Add("output.Write(' ');");
+		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, method);");
+	};
+	
+	static Action<OpCode> HasTokenOperand = opCode => {
+		opCode.ConstructorParameters.Add("MemberReference member");
+		opCode.Members.Add("readonly MemberReference member;");
+		opCode.ConstructorBody.Add("this.member = member;");
+		opCode.Members.Add("/// <summary>Returns the token operand.</summary>" + Environment.NewLine
+						+ "public MemberReference Member { get { return member; } }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOperand.Add("output.Write(' ');");
+		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, member);");
+	};
 	
 	// LoadConstant trait: the instruction loads a compile-time constant. Implies NoArguments.
 	static Action<OpCode> LoadConstant(string operandType)
@@ -475,5 +697,12 @@ namespace ICSharpCode.Decompiler.IL
 						+ "public byte UnalignedPrefix { get; set; }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOpCodePrefix.Add("if (UnalignedPrefix > 0)" + Environment.NewLine + "\toutput.Write(\"unaligned(\" + UnalignedPrefix + \").\");");
+	};
+	
+	static Action<OpCode> SupportsReadonlyPrefix = opCode => {
+		opCode.Members.Add("/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>" + Environment.NewLine
+						+ "public bool IsReadOnly { get; set; }");
+		opCode.GenerateWriteTo = true;
+		opCode.WriteOpCodePrefix.Add("if (IsReadOnly)" + Environment.NewLine + "\toutput.Write(\"readonly.\");");
 	};
 #>

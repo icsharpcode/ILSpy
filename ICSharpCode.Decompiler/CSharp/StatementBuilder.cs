@@ -41,6 +41,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			return inst.AcceptVisitor(this);
 		}
 
+		public BlockStatement ConvertAsBlock(ILInstruction inst)
+		{
+			Statement stmt = Convert(inst);
+			return stmt as BlockStatement ?? new BlockStatement { stmt };
+		}
+
 		protected override Statement Default(ILInstruction inst)
 		{
 			return new ExpressionStatement(exprBuilder.Convert(inst));
@@ -66,17 +72,58 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override Statement VisitReturn(Return inst)
 		{
-			if (inst.Argument == null)
+			if (inst.ReturnValue == null)
 				return new ReturnStatement();
-			return new ReturnStatement(exprBuilder.Convert(inst.Argument));
+			return new ReturnStatement(exprBuilder.Convert(inst.ReturnValue));
 		}
 
-		protected internal override Statement VisitBlockContainer(BlockContainer inst)
+		TryCatchStatement MakeTryCatch(ILInstruction tryBlock)
 		{
-			return ConvertBlockContainer(inst);
+			var tryBlockConverted = Convert(tryBlock);
+			var tryCatch = tryBlockConverted as TryCatchStatement;
+			if (tryCatch != null && tryCatch.FinallyBlock.IsNull)
+				return tryCatch; // extend existing try-catch
+			tryCatch = new TryCatchStatement();
+			tryCatch.TryBlock = tryBlockConverted as BlockStatement ?? new BlockStatement { tryBlockConverted };
+			return tryCatch;
+		}
+		
+		protected internal override Statement VisitTryCatch(TryCatch inst)
+		{
+			var tryCatch = new TryCatchStatement();
+			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
+			foreach (var handler in inst.CatchHandlers) {
+				var catchClause = new CatchClause();
+				if (handler.Variable != null) {
+					catchClause.Type = exprBuilder.ConvertType(handler.Variable.Type);
+					catchClause.VariableName = handler.Variable.Name;
+				}
+				catchClause.Condition = exprBuilder.ConvertCondition(handler.Filter);
+				catchClause.Body = ConvertAsBlock(handler.Body);
+				tryCatch.CatchClauses.Add(catchClause);
+			}
+			return tryCatch;
+		}
+		
+		protected internal override Statement VisitTryFinally(TryFinally inst)
+		{
+			var tryCatch = MakeTryCatch(inst.TryBlock);
+			tryCatch.FinallyBlock = ConvertAsBlock(inst.FinallyBlock);
+			return tryCatch;
+		}
+		
+		protected internal override Statement VisitTryFault(TryFault inst)
+		{
+			var tryCatch = new TryCatchStatement();
+			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
+			var faultBlock = ConvertAsBlock(inst.FaultBlock);
+			faultBlock.InsertChildAfter(null, new Comment("try-fault"), Roles.Comment);
+			faultBlock.Add(new ThrowStatement());
+			tryCatch.CatchClauses.Add(new CatchClause { Body = faultBlock });
+			return tryCatch;
 		}
 
-		public BlockStatement ConvertBlockContainer(BlockContainer container)
+		protected internal override Statement VisitBlockContainer(BlockContainer container)
 		{
 			BlockStatement blockStatement = new BlockStatement();
 			foreach (var block in container.Blocks) {

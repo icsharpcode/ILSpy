@@ -18,56 +18,63 @@
 
 using System;
 using System.Collections.Generic;
-
 namespace ICSharpCode.Decompiler.IL
 {
-	partial class IfInstruction : ILInstruction
+	partial class TryFinally
 	{
-		public IfInstruction(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst = null) : base(OpCode.IfInstruction)
+		public override void WriteTo(ITextOutput output)
 		{
-			this.Condition = condition;
-			this.TrueInst = trueInst;
-			this.FalseInst = falseInst ?? new Nop();
+			output.Write("try ");
+			tryBlock.WriteTo(output);
+			output.Write(" finally ");
+			finallyBlock.WriteTo(output);
+		}
+
+		public override StackType ResultType {
+			get {
+				return tryBlock.ResultType;
+			}
+		}
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			// if the endpoint of either the try or the finally is unreachable, the endpoint of the try-finally will be unreachable
+			return tryBlock.Flags | finallyBlock.Flags;
+		}
+
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		{
+			finished = false;
+			return this;
+		}
+	}
+	
+	partial class TryFault
+	{
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write("try ");
+			tryBlock.WriteTo(output);
+			output.Write(" fault ");
+			faultBlock.WriteTo(output);
 		}
 		
 		public override StackType ResultType {
-			get {
-				return CommonResultType(trueInst.ResultType, falseInst.ResultType);
-			}
-		}
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
-		{
-			this.Condition = condition.Inline(flagsBefore, instructionStack, out finished);
-			// don't continue inlining if this instruction still contains peek/pop instructions
-			if (HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop))
-				finished = false;
-			return this;
+			get { return tryBlock.ResultType; }
 		}
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return condition.Flags | CombineFlags(trueInst.Flags, falseInst.Flags);
+			// The endpoint of the try-fault is unreachable only if both endpoints are unreachable
+			return IfInstruction.CombineFlags(tryBlock.Flags, faultBlock.Flags);
 		}
 		
-		internal static InstructionFlags CombineFlags(InstructionFlags trueFlags, InstructionFlags falseFlags)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
 		{
-			// the endpoint of the 'if' is only unreachable if both branches have an unreachable endpoint
-			const InstructionFlags combineWithAnd = InstructionFlags.EndPointUnreachable;
-			return (trueFlags & falseFlags) | ((trueFlags | falseFlags) & ~combineWithAnd);
-		}
-		
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-			output.Write(" (");
-			condition.WriteTo(output);
-			output.Write(") ");
-			trueInst.WriteTo(output);
-			if (falseInst.OpCode != OpCode.Nop) {
-				output.Write(" else ");
-				falseInst.WriteTo(output);
-			}
+			finished = false;
+			return this;
 		}
 	}
 }
+
+

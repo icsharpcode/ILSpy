@@ -24,17 +24,17 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class Return
 	{
-		ILInstruction argument;
+		ILInstruction returnValue;
 		
 		/// <summary>
 		/// The value to return. Null if this return statement is within a void method.
 		/// </summary>
-		public ILInstruction Argument {
-			get { return argument; }
+		public ILInstruction ReturnValue {
+			get { return returnValue; }
 			set { 
 				if (value != null)
 					ValidateArgument(value);
-				SetChildInstruction(ref argument, value);
+				SetChildInstruction(ref returnValue, value);
 			}
 		}
 		
@@ -44,15 +44,15 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public Return(ILInstruction argument) : base(OpCode.Return)
 		{
-			this.Argument = argument;
+			this.ReturnValue = argument;
 		}
 		
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
-			if (Argument != null) {
+			if (returnValue != null) {
 				output.Write('(');
-				Argument.WriteTo(output);
+				returnValue.WriteTo(output);
 				output.Write(')');
 			}
 		}
@@ -60,21 +60,21 @@ namespace ICSharpCode.Decompiler.IL
 		public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
 		{
 			TAccumulate value = initial;
-			if (argument != null)
-				value = func(value, argument.AcceptVisitor(visitor));
+			if (returnValue != null)
+				value = func(value, returnValue.AcceptVisitor(visitor));
 			return value;
 		}
 		
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
 		{
-			if (argument != null)
-				this.Argument = argument.AcceptVisitor(visitor);
+			if (returnValue != null)
+				this.ReturnValue = returnValue.AcceptVisitor(visitor);
 		}
 		
 		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
 		{
-			if (argument != null)
-				this.Argument = argument.Inline(flagsBefore, instructionStack, out finished);
+			if (returnValue != null)
+				this.ReturnValue = returnValue.Inline(flagsBefore, instructionStack, out finished);
 			else
 				finished = true;
 			return this;

@@ -23,55 +23,6 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public abstract class UnaryInstruction : ILInstruction
-	{
-		ILInstruction argument;
-		
-		public ILInstruction Argument {
-			get { return argument; }
-			set {
-				ValidateArgument(value);
-				SetChildInstruction(ref argument, value);
-			}
-		}
-		
-		protected UnaryInstruction(OpCode opCode, ILInstruction argument) : base(opCode)
-		{
-			this.Argument = argument;
-		}
-
-		//public sealed override bool IsPeeking { get { return Operand.IsPeeking; } }
-
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-			output.Write('(');
-			argument.WriteTo(output);
-			output.Write(')');
-		}
-		
-		public sealed override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)
-		{
-			return func(initial, argument.AcceptVisitor(visitor));
-		}
-		
-		public sealed override void TransformChildren(ILVisitor<ILInstruction> visitor)
-		{
-			this.Argument = argument.AcceptVisitor(visitor);
-		}
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
-		{
-			Argument = argument.Inline(flagsBefore, instructionStack, out finished);
-			return this;
-		}
-		
-		protected override InstructionFlags ComputeFlags()
-		{
-			return argument.Flags;
-		}
-	}
-	
 	partial class BitNot
 	{
 		public override StackType ResultType {

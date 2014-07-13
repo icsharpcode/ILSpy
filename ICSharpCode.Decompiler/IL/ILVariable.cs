@@ -60,6 +60,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.CecilObject = p;
 		}
+		
+		public string Name {
+			get { return ToString(); }
+		}
 
 		public override string ToString()
 		{

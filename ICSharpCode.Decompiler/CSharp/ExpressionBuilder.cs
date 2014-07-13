@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using Mono.Cecil;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.TypeSystem;
@@ -56,6 +57,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			var expr = inst.AcceptVisitor(this).Expression;
 			expr.AddAnnotation(inst);
 			return expr;
+		}
+		
+		public AstType ConvertType(TypeReference type)
+		{
+			if (type == null)
+				return null;
+			return new SimpleType(type.Name);
 		}
 		
 		ConvertedExpression ConvertArgument(ILInstruction inst)
