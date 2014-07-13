@@ -101,8 +101,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				throw new InvalidOperationException("Could not find method in NR type system");
 			var entityDecl = typeSystemAstBuilder.ConvertEntity(method);
 			if (methodDefinition.HasBody) {
-				var ilReader = new ILReader(methodDefinition.Body, CancellationToken);
-				var function = ilReader.CreateFunction(true);
+				var ilReader = new ILReader();
+				var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
+				function.Body = function.Body.AcceptVisitor(new TransformingVisitor());
 				var body = statementBuilder.ConvertAsBlock(function.Body);
 				body.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 				entityDecl.AddChild(body, Roles.Body);

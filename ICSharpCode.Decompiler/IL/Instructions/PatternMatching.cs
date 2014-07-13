@@ -17,54 +17,25 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using Mono.Cecil;
-using ICSharpCode.Decompiler.Disassembler;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	partial class ILFunction
+	partial class ILInstruction
 	{
-		public readonly MethodDefinition Method;
-		public readonly IList<ILVariable> Variables = new List<ILVariable>();
-		
-		public ILFunction(MethodDefinition method, ILInstruction body) : base(OpCode.ILFunction)
+		public bool MatchLdcI4(int val)
 		{
-			this.Body = body;
-			this.Method = method;
+			return OpCode == OpCode.LdcI4 && ((LdcI4)this).Value == val;
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public bool MatchLdcI4(out int val)
 		{
-			output.Write(OpCode);
-			output.Write(' ');
-			Method.WriteTo(output);
-			output.WriteLine(" {");
-			output.Indent();
-			
-			foreach (var variable in Variables) {
-				variable.WriteDefinitionTo(output);
-				output.WriteLine();
+			var inst = this as LdcI4;
+			if (inst != null) {
+				val = inst.Value;
+				return true;
 			}
-			output.WriteLine();
-			body.WriteTo(output);
-			
-			output.WriteLine();
-			output.Unindent();
-			output.WriteLine("}");
-		}
-		
-		protected override InstructionFlags ComputeFlags()
-		{
-			// Creating a lambda may throw OutOfMemoryException
-			return InstructionFlags.MayThrow;
-		}
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
-		{
-			// To the outside, lambda creation looks like a constant
-			finished = true;
-			return this;
+			val = 0;
+			return false;
 		}
 	}
 }

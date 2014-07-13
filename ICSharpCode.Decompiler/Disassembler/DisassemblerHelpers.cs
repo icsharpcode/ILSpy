@@ -53,17 +53,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static void WriteOffsetReference(ITextOutput writer, Instruction instruction)
 		{
-			writer.WriteReference(OffsetToString(instruction.Offset), instruction);
+			if (instruction == null)
+				writer.Write("null");
+			else
+				writer.WriteReference(OffsetToString(instruction.Offset), instruction);
 		}
 
 		public static void WriteTo(this ExceptionHandler exceptionHandler, ITextOutput writer)
 		{
-			writer.Write("Try ");
+			writer.Write(".try ");
 			WriteOffsetReference(writer, exceptionHandler.TryStart);
 			writer.Write('-');
 			WriteOffsetReference(writer, exceptionHandler.TryEnd);
 			writer.Write(' ');
-			writer.Write(exceptionHandler.HandlerType.ToString());
+			writer.Write(exceptionHandler.HandlerType.ToString().ToLowerInvariant());
 			if (exceptionHandler.FilterStart != null) {
 				writer.Write(' ');
 				WriteOffsetReference(writer, exceptionHandler.FilterStart);

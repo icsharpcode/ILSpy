@@ -27,13 +27,12 @@ using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {
-#if DEBUG
+	#if DEBUG
 	/// <summary>
 	/// Represents the ILAst "language" used for debugging purposes.
 	/// </summary>
 	abstract class ILAstLanguage : Language
 	{
-		bool inlineVariables = true;
 		//ILAstOptimizationStep? abortBeforeStep;
 
 		readonly string name;
@@ -89,8 +88,8 @@ namespace ICSharpCode.ILSpy
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
 		{
 			yield return new TypedIL();
-			yield return new BlockIL(false);
-			yield return new BlockIL(true);
+			yield return new BlockIL(null);
+			yield return new BlockIL(new TransformingVisitor());
 			//yield return new ILAstLanguage { name = "ILAst (unoptimized)", inlineVariables = false };
 			//string nextName = "ILAst (variable splitting)";
 			//foreach (ILAstOptimizationStep step in Enum.GetValues(typeof(ILAstOptimizationStep))) {
@@ -129,18 +128,18 @@ namespace ICSharpCode.ILSpy
 				base.DecompileMethod(method, output, options);
 				if (!method.HasBody)
 					return;
-				ILReader reader = new ILReader(method.Body, options.CancellationToken);
-				reader.WriteTypedIL(output);
+				ILReader reader = new ILReader();
+				reader.WriteTypedIL(method.Body, output, options.CancellationToken);
 			}
 		}
 
 		class BlockIL : ILAstLanguage
 		{
-			readonly bool instructionInlining;
+			readonly ILVisitor<ILInstruction> transformer;
 			
-			public BlockIL(bool instructionInlining) : base(instructionInlining ? "ILAst (blocks+inlining)" :  "ILAst (blocks)")
+			public BlockIL(ILVisitor<ILInstruction> transformer) : base(transformer == null ? "ILAst (blocks)" :  "ILAst (" + transformer.ToString() + ")")
 			{
-				this.instructionInlining = instructionInlining;
+				this.transformer = transformer;
 			}
 			
 			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
@@ -148,10 +147,13 @@ namespace ICSharpCode.ILSpy
 				base.DecompileMethod(method, output, options);
 				if (!method.HasBody)
 					return;
-				ILReader reader = new ILReader(method.Body, options.CancellationToken);
-				reader.CreateFunction(instructionInlining).WriteTo(output);
+				ILReader reader = new ILReader();
+				ILInstruction il = reader.ReadIL(method.Body, options.CancellationToken);
+				if (transformer != null)
+					il = il.AcceptVisitor(transformer);
+				il.WriteTo(output);
 			}
 		}
 	}
-#endif
+	#endif
 }

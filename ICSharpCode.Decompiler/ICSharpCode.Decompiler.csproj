@@ -82,11 +82,12 @@
     <Compile Include="IL\Instructions\ILFunction.cs" />
     <Compile Include="IL\Instructions\ILInstruction.cs" />
     <Compile Include="IL\Instructions\InstructionCollection.cs" />
+    <Compile Include="IL\Instructions\LocalVarInstructions.cs" />
     <Compile Include="IL\Instructions\MemoryInstructions.cs" />
+    <Compile Include="IL\Instructions\PatternMatching.cs" />
     <Compile Include="IL\Instructions\Return.cs" />
     <Compile Include="IL\Instructions\SimpleInstruction.cs" />
-    <Compile Include="IL\Instructions\TryCatch.cs" />
-    <Compile Include="IL\Instructions\TryFinally.cs" />
+    <Compile Include="IL\Instructions\TryInstruction.cs" />
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
     <Compile Include="IL\TransformingVisitor.cs" />
     <Compile Include="TypesHierarchyHelpers.cs" />

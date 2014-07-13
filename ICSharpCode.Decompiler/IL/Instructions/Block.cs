@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.WriteLine();
 			}
 			output.Unindent();
-			output.WriteLine("}");
+			output.Write("}");
 		}
 		
 		public override IEnumerable<ILInstruction> Children {

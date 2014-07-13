@@ -54,9 +54,10 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var inst in Blocks) {
 				inst.WriteTo(output);
 				output.WriteLine();
+				output.WriteLine();
 			}
 			output.Unindent();
-			output.WriteLine("}");
+			output.Write("}");
 		}
 		
 		public override IEnumerable<ILInstruction> Children {

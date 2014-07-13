@@ -51,6 +51,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return new ExpressionStatement(exprBuilder.Convert(inst));
 		}
+		
+		protected internal override Statement VisitNop(Nop inst)
+		{
+			return new EmptyStatement();
+		}
 
 		protected internal override Statement VisitIfInstruction(IfInstruction inst)
 		{
@@ -92,13 +97,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var tryCatch = new TryCatchStatement();
 			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
-			foreach (var handler in inst.CatchHandlers) {
+			foreach (var handler in inst.Handlers) {
 				var catchClause = new CatchClause();
 				if (handler.Variable != null) {
 					catchClause.Type = exprBuilder.ConvertType(handler.Variable.Type);
 					catchClause.VariableName = handler.Variable.Name;
 				}
-				catchClause.Condition = exprBuilder.ConvertCondition(handler.Filter);
+				if (!handler.Filter.MatchLdcI4(1))
+					catchClause.Condition = exprBuilder.ConvertCondition(handler.Filter);
 				catchClause.Body = ConvertAsBlock(handler.Body);
 				tryCatch.CatchClauses.Add(catchClause);
 			}
@@ -123,6 +129,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			return tryCatch;
 		}
 
+		protected internal override Statement VisitBlock(Block block)
+		{
+			// Block without container
+			BlockStatement blockStatement = new BlockStatement();
+			foreach (var inst in block.Instructions) {
+				blockStatement.Add(Convert(inst));
+			}
+			return blockStatement;
+		}
+		
 		protected internal override Statement VisitBlockContainer(BlockContainer container)
 		{
 			BlockStatement blockStatement = new BlockStatement();

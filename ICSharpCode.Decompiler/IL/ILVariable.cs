@@ -31,6 +31,10 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		Local,
 		Parameter,
+		/// <summary>
+		/// Variable created for exception handler
+		/// </summary>
+		Exception
 	}
 
 	public class ILVariable
@@ -39,6 +43,21 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly TypeReference Type;
 		public readonly int Index;
 
+		/// <summary>
+		/// Number of ldloc instructions referencing this variable.
+		/// </summary>
+		public int LoadCount;
+		
+		/// <summary>
+		/// Number of stloc instructions referencing this variable.
+		/// </summary>
+		public int StoreCount;
+		
+		/// <summary>
+		/// Number of ldloca instructions referencing this variable.
+		/// </summary>
+		public int AddressCount;
+		
 		readonly object CecilObject;
 		
 		public ILVariable(VariableKind kind, TypeReference type, int index)
@@ -60,6 +79,7 @@ namespace ICSharpCode.Decompiler.IL
 			: this(VariableKind.Parameter, p.ParameterType, p.Index)
 		{
 			this.CecilObject = p;
+			this.StoreCount = 1; // count the initial store when the method is called with an argument
 		}
 		
 		public string Name {
@@ -85,6 +105,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteDefinition(this.Name, CecilObject ?? this, isLocal: true);
 			output.Write(" : ");
 			Type.WriteTo(output);
+			output.Write("({0} ldloc, {1} ldloca, {2} stloc)", LoadCount, AddressCount, StoreCount);
 		}
 		
 		internal void WriteTo(ITextOutput output)

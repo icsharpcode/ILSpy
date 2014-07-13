@@ -606,7 +606,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Try-catch statement</summary>
-	public sealed partial class TryCatch : ILInstruction
+	public sealed partial class TryCatch : TryInstruction
 	{
 
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
@@ -666,40 +666,9 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Try-finally statement</summary>
-	public sealed partial class TryFinally : ILInstruction
+	public sealed partial class TryFinally : TryInstruction
 	{
-		public TryFinally(ILInstruction tryBlock, ILInstruction finallyBlock) : base(OpCode.TryFinally)
-		{
-			this.TryBlock = tryBlock;
-			this.FinallyBlock = finallyBlock;
-		}
-		ILInstruction tryBlock;
-		public ILInstruction TryBlock {
-			get { return this.tryBlock; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.tryBlock, value);
-			}
-		}
-		ILInstruction finallyBlock;
-		public ILInstruction FinallyBlock {
-			get { return this.finallyBlock; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.finallyBlock, value);
-			}
-		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.tryBlock;
-				yield return this.finallyBlock;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
-		{
-			this.TryBlock = this.tryBlock.AcceptVisitor(visitor);
-			this.FinallyBlock = this.finallyBlock.AcceptVisitor(visitor);
-		}
+
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryFinally(this);
@@ -707,40 +676,9 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Try-fault statement</summary>
-	public sealed partial class TryFault : ILInstruction
+	public sealed partial class TryFault : TryInstruction
 	{
-		public TryFault(ILInstruction tryBlock, ILInstruction faultBlock) : base(OpCode.TryFault)
-		{
-			this.TryBlock = tryBlock;
-			this.FaultBlock = faultBlock;
-		}
-		ILInstruction tryBlock;
-		public ILInstruction TryBlock {
-			get { return this.tryBlock; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.tryBlock, value);
-			}
-		}
-		ILInstruction faultBlock;
-		public ILInstruction FaultBlock {
-			get { return this.faultBlock; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.faultBlock, value);
-			}
-		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.tryBlock;
-				yield return this.faultBlock;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
-		{
-			this.TryBlock = this.tryBlock.AcceptVisitor(visitor);
-			this.FaultBlock = this.faultBlock.AcceptVisitor(visitor);
-		}
+
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryFault(this);
@@ -1560,7 +1498,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly TypeReference type;
 		/// <summary>Returns the type operand.</summary>
 		public TypeReference Type { get { return type; } }
-		public override StackType ResultType { get { return type.GetStackType(); } }
+		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);

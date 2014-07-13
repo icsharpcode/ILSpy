@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static StackType GetStackType(this TypeReference typeRef)
 		{
 			return typeRef.SkipModifiers().MetadataType.GetStackType();
-        }
+		}
 
 		public static TypeReference SkipModifiers(this TypeReference typeRef)
 		{

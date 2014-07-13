@@ -11,10 +11,8 @@ namespace ICSharpCode.Decompiler
 	/// Represents a half-open interval.
 	/// The start position is inclusive; but the end position is exclusive.
 	/// </summary>
-	public struct Interval
+	public struct Interval : IEquatable<Interval>
 	{
-		public static readonly Interval Empty = new Interval(0, 0);
-
 		/// <summary>
 		/// Gets the inclusive start of the interval.
 		/// </summary>
@@ -43,6 +41,36 @@ namespace ICSharpCode.Decompiler
 		{
 			return string.Format("[{0}..{1})", Start, End);
 		}
+		
+		#region Equals and GetHashCode implementation
+		public override bool Equals(object obj)
+		{
+			return (obj is Interval) && Equals((Interval)obj);
+		}
+		
+		public bool Equals(Interval other)
+		{
+			return this.Start == other.Start && this.End == other.End;
+		}
+
+		public override int GetHashCode()
+		{
+			int hashCode = 0;
+			unchecked {
+				hashCode += 1000000007 * Start.GetHashCode();
+				hashCode += 1000000009 * End.GetHashCode();
+			}
+			return hashCode;
+		}
+
+		public static bool operator ==(Interval lhs, Interval rhs) {
+			return lhs.Equals(rhs);
+		}
+
+		public static bool operator !=(Interval lhs, Interval rhs) {
+			return !(lhs == rhs);
+		}
+		#endregion
 	}
 
 	/// <summary>

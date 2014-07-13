@@ -46,28 +46,32 @@ namespace ICSharpCode.Decompiler.IL
 			return new MetadataToken(reader.ReadUInt32());
 		}
 		
-		readonly Cil.MethodBody body;
-		readonly CancellationToken cancellationToken;
-		readonly TypeSystem typeSystem;
+		Cil.MethodBody body;
+		TypeSystem typeSystem;
 
 		BlobReader reader;
-		readonly Stack<StackType> stack;
+		Stack<StackType> stack;
 		ILVariable[] parameterVariables;
 		ILVariable[] localVariables;
 		BitArray isBranchTarget;
 		List<ILInstruction> instructionBuilder;
 
-		public ILReader(Cil.MethodBody body, CancellationToken cancellationToken)
+		// Dictionary that stores stacks for forward jumps
+		Dictionary<int, ImmutableArray<StackType>> branchStackDict;
+		
+		void Init(Cil.MethodBody body)
 		{
 			if (body == null)
 				throw new ArgumentNullException("body");
 			this.body = body;
-			this.cancellationToken = cancellationToken;
 			this.typeSystem = body.Method.Module.TypeSystem;
 			this.reader = body.GetILReader();
 			this.stack = new Stack<StackType>(body.MaxStackSize);
 			this.parameterVariables = InitParameterVariables(body);
 			this.localVariables = body.Variables.Select(v => new ILVariable(v)).ToArray();
+			this.instructionBuilder = new List<ILInstruction>();
+			this.isBranchTarget = new BitArray(body.CodeSize);
+			this.branchStackDict = new Dictionary<int, ImmutableArray<StackType>>();
 		}
 
 		IMetadataTokenProvider ReadAndDecodeMetadataToken()
@@ -93,27 +97,18 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Fail(message);
 		}
 		
-		// Dictionary that stores stacks for forward jumps
-		Dictionary<int, ImmutableArray<StackType>> branchStackDict = new Dictionary<int, ImmutableArray<StackType>>();
-		
-		void ReadInstructions(Dictionary<int, ImmutableArray<StackType>> outputStacks)
+		void ReadInstructions(Dictionary<int, ImmutableArray<StackType>> outputStacks, CancellationToken cancellationToken)
 		{
-			instructionBuilder = new List<ILInstruction>();
-			isBranchTarget = new BitArray(body.CodeSize);
-			stack.Clear();
-			branchStackDict.Clear();
-			
 			// Fill isBranchTarget and branchStackDict based on exception handlers
 			foreach (var eh in body.ExceptionHandlers) {
-				isBranchTarget[eh.TryStart.Offset] = true;
 				if (eh.FilterStart != null) {
 					isBranchTarget[eh.FilterStart.Offset] = true;
-					branchStackDict[eh.FilterStart.Offset] = ImmutableArray.Create(StackType.O);
+					branchStackDict[eh.FilterStart.Offset] = ImmutableArray.Create(eh.CatchType.GetStackType());
 				}
 				if (eh.HandlerStart != null) {
 					isBranchTarget[eh.HandlerStart.Offset] = true;
 					if (eh.HandlerType == Cil.ExceptionHandlerType.Catch || eh.HandlerType == Cil.ExceptionHandlerType.Filter)
-						branchStackDict[eh.HandlerStart.Offset] = ImmutableArray.Create(StackType.O);
+						branchStackDict[eh.HandlerStart.Offset] = ImmutableArray.Create(eh.CatchType.GetStackType());
 					else
 						branchStackDict[eh.HandlerStart.Offset] = ImmutableArray<StackType>.Empty;
 				}
@@ -141,10 +136,14 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public void WriteTypedIL(ITextOutput output)
+		/// <summary>
+		/// Debugging helper: writes the decoded instruction stream interleaved with the inferred evaluation stack layout.
+		/// </summary>
+		public void WriteTypedIL(Cil.MethodBody body, ITextOutput output, CancellationToken cancellationToken = default(CancellationToken))
 		{
+			Init(body);
 			var outputStacks = new Dictionary<int, ImmutableArray<StackType>>();
-			ReadInstructions(outputStacks);
+			ReadInstructions(outputStacks, cancellationToken);
 			foreach (var inst in instructionBuilder) {
 				output.Write("   [");
 				bool isFirstElement = true;
@@ -169,11 +168,14 @@ namespace ICSharpCode.Decompiler.IL
 			new Disassembler.MethodBodyDisassembler(output, false, cancellationToken).WriteExceptionHandlers(body);
 		}
 
-		public ILFunction CreateFunction(bool instructionInlining)
+		/// <summary>
+		/// Decodes the specified method body and returns an ILFunction.
+		/// </summary>
+		public ILFunction ReadIL(Cil.MethodBody body, CancellationToken cancellationToken = default(CancellationToken))
 		{
-			if (instructionBuilder == null)
-				ReadInstructions(null);
-			var container = new BlockBuilder(body, instructionInlining).CreateBlocks(instructionBuilder, isBranchTarget);
+			Init(body);
+			ReadInstructions(null, cancellationToken);
+			var container = new BlockBuilder(body).CreateBlocks(instructionBuilder, isBranchTarget);
 			var function = new ILFunction(body.Method, container);
 			function.Variables.AddRange(parameterVariables);
 			function.Variables.AddRange(localVariables);
@@ -751,6 +753,11 @@ namespace ICSharpCode.Decompiler.IL
 			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
 			target += reader.Position;
 			ILInstruction condition = Pop();
+			if (condition.ResultType == StackType.O) {
+				// introduce explicit comparison with null
+				condition = new Ceq(condition, new LdNull());
+				negate = !negate;
+			}
 			if (negate) {
 				condition = new LogicNot(condition);
 			}

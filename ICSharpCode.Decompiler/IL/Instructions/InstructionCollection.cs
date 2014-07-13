@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 
@@ -75,6 +76,12 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			return removed;
+		}
+
+		public void ReplaceList(IEnumerable<T> newList)
+		{
+			Clear();
+			this.AddRange(newList);
 		}
 	}
 }

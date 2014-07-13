@@ -87,6 +87,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ExceptionHandling.cs" />
     <Compile Include="Helpers\CodeAssert.cs" />
     <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
   </ItemGroup>

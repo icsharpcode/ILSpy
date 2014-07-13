@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using Mono.Cecil;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.TypeSystem;
@@ -40,7 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.compilation = compilation;
 		}
 		
-		internal struct ConvertedExpression 
+		internal struct ConvertedExpression
 		{
 			public readonly Expression Expression;
 			public readonly IType Type;
@@ -49,6 +48,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				this.Expression = expression;
 				this.Type = type;
+			}
+			
+			public Expression ConvertTo(IType targetType)
+			{
+				if (targetType.IsKnownType(KnownTypeCode.Boolean))
+					return ConvertToBoolean();
+				return Expression;
+			}
+			
+			public Expression ConvertToBoolean()
+			{
+				if (Type.IsKnownType(KnownTypeCode.Boolean) || Type.Kind == TypeKind.Unknown)
+					return Expression;
+				else if (Type.Kind == TypeKind.Pointer)
+					return new BinaryOperatorExpression(Expression, BinaryOperatorType.InEquality, new NullReferenceExpression());
+				else
+					return new BinaryOperatorExpression(Expression, BinaryOperatorType.InEquality, new PrimitiveExpression(0));
 			}
 		}
 
@@ -59,11 +75,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr;
 		}
 		
-		public AstType ConvertType(TypeReference type)
+		public AstType ConvertType(Mono.Cecil.TypeReference type)
 		{
 			if (type == null)
 				return null;
 			return new SimpleType(type.Name);
+		}
+		
+		IType GetType(Mono.Cecil.TypeReference type)
+		{
+			return SpecialType.UnknownType;
+		}
+		
+		ConvertedExpression ConvertVariable(ILVariable variable)
+		{
+			var expr = new IdentifierExpression(variable.Name);
+			expr.AddAnnotation(variable);
+			return new ConvertedExpression(expr, GetType(variable.Type));
 		}
 		
 		ConvertedExpression ConvertArgument(ILInstruction inst)
@@ -72,21 +100,152 @@ namespace ICSharpCode.Decompiler.CSharp
 			cexpr.Expression.AddAnnotation(inst);
 			return cexpr;
 		}
+		
+		ConvertedExpression IsType(IsInst inst)
+		{
+			var arg = ConvertArgument(inst.Argument);
+			return new ConvertedExpression(
+				new IsExpression(arg.Expression, ConvertType(inst.Type)),
+				compilation.FindType(TypeCode.Boolean));
+		}
+		
+		protected internal override ConvertedExpression VisitIsInst(IsInst inst)
+		{
+			var arg = ConvertArgument(inst.Argument);
+			return new ConvertedExpression(
+				new AsExpression(arg.Expression, ConvertType(inst.Type)),
+				GetType(inst.Type));
+		}
+		
+		protected internal override ConvertedExpression VisitNewObj(NewObj inst)
+		{
+			var oce = new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType));
+			oce.Arguments.AddRange(inst.Arguments.Select(i => ConvertArgument(i).Expression));
+			return new ConvertedExpression(oce, GetType(inst.Method.DeclaringType));
+		}
 
 		protected internal override ConvertedExpression VisitLdcI4(LdcI4 inst)
 		{
 			return new ConvertedExpression(
-						new PrimitiveExpression(inst.Value),
-						compilation.FindType(KnownTypeCode.Int32));
+				new PrimitiveExpression(inst.Value),
+				compilation.FindType(KnownTypeCode.Int32));
+		}
+		
+		protected internal override ConvertedExpression VisitLdcI8(LdcI8 inst)
+		{
+			return new ConvertedExpression(
+				new PrimitiveExpression(inst.Value),
+				compilation.FindType(KnownTypeCode.Int64));
+		}
+		
+		protected internal override ConvertedExpression VisitLdcF(LdcF inst)
+		{
+			return new ConvertedExpression(
+				new PrimitiveExpression(inst.Value),
+				compilation.FindType(KnownTypeCode.Double));
+		}
+		
+		protected internal override ConvertedExpression VisitLdStr(LdStr inst)
+		{
+			return new ConvertedExpression(
+				new PrimitiveExpression(inst.Value),
+				compilation.FindType(KnownTypeCode.String));
+		}
+		
+		protected internal override ConvertedExpression VisitLdNull(LdNull inst)
+		{
+			return new ConvertedExpression(
+				new NullReferenceExpression(),
+				SpecialType.UnknownType);
 		}
 
 		protected internal override ConvertedExpression VisitLogicNot(LogicNot inst)
 		{
+			return LogicNot(new ConvertedExpression(ConvertCondition(inst.Argument), compilation.FindType(KnownTypeCode.Boolean)));
+		}
+		
+		ConvertedExpression LogicNot(ConvertedExpression expr)
+		{
 			return new ConvertedExpression(
-						new UnaryOperatorExpression(UnaryOperatorType.Not, ConvertCondition(inst.Argument)),
-						compilation.FindType(KnownTypeCode.Boolean));
+				new UnaryOperatorExpression(UnaryOperatorType.Not, expr.Expression),
+				compilation.FindType(KnownTypeCode.Boolean));
+		}
+		
+		protected internal override ConvertedExpression VisitLdLoc(LdLoc inst)
+		{
+			return ConvertVariable(inst.Variable);
+		}
+		
+		protected internal override ConvertedExpression VisitLdLoca(LdLoca inst)
+		{
+			var expr = ConvertVariable(inst.Variable);
+			return new ConvertedExpression(
+				new DirectionExpression(FieldDirection.Ref, expr.Expression),
+				new ByReferenceType(expr.Type));
+		}
+		
+		protected internal override ConvertedExpression VisitStLoc(StLoc inst)
+		{
+			return Assignment(ConvertVariable(inst.Variable), ConvertArgument(inst.Value));
+		}
+		
+		protected internal override ConvertedExpression VisitCeq(Ceq inst)
+		{
+			if (inst.Left.OpCode == OpCode.IsInst && inst.Right.OpCode == OpCode.LdNull) {
+				return LogicNot(IsType((IsInst)inst.Left));
+			} else if (inst.Right.OpCode == OpCode.IsInst && inst.Left.OpCode == OpCode.LdNull) {
+				return LogicNot(IsType((IsInst)inst.Right));
+			} 
+			var left = ConvertArgument(inst.Left);
+			var right = ConvertArgument(inst.Right);
+			return new ConvertedExpression(
+				new BinaryOperatorExpression(left.Expression, BinaryOperatorType.Equality, right.Expression),
+				compilation.FindType(TypeCode.Boolean));
+		}
+		
+		protected internal override ConvertedExpression VisitClt(Clt inst)
+		{
+			return Comparison(inst, BinaryOperatorType.LessThan);
+		}
+		
+		protected internal override ConvertedExpression VisitCgt(Cgt inst)
+		{
+			return Comparison(inst, BinaryOperatorType.GreaterThan);
+		}
+		
+		protected internal override ConvertedExpression VisitClt_Un(Clt_Un inst)
+		{
+			return Comparison(inst, BinaryOperatorType.LessThan, un: true);
 		}
 
+		protected internal override ConvertedExpression VisitCgt_Un(Cgt_Un inst)
+		{
+			return Comparison(inst, BinaryOperatorType.GreaterThan, un: true);
+		}
+		
+		ConvertedExpression Comparison(BinaryComparisonInstruction inst, BinaryOperatorType op, bool un = false)
+		{
+			var left = ConvertArgument(inst.Left);
+			var right = ConvertArgument(inst.Right);
+			// TODO: ensure the arguments are signed
+			// or with _Un: ensure the arguments are unsigned; and that float comparisons are performed unordered
+			return new ConvertedExpression(
+				new BinaryOperatorExpression(left.Expression, op, right.Expression),
+				compilation.FindType(TypeCode.Boolean));
+		}
+		
+		ConvertedExpression Assignment(ConvertedExpression left, ConvertedExpression right)
+		{
+			return new ConvertedExpression(
+				new AssignmentExpression(left.Expression, right.ConvertTo(left.Type)),
+				left.Type);
+		}
+
+		Expression AddConversion(Expression expression, IType type)
+		{
+			return expression;
+		}
+		
 		protected override ConvertedExpression Default(ILInstruction inst)
 		{
 			return ErrorExpression("OpCode not supported: " + inst.OpCode);
@@ -102,12 +261,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public Expression ConvertCondition(ILInstruction condition)
 		{
 			var expr = ConvertArgument(condition);
-			if (expr.Type.IsKnownType(KnownTypeCode.Boolean) || expr.Type.Kind == TypeKind.Unknown)
-				return expr.Expression;
-			else if (expr.Type.Kind == TypeKind.Pointer)
-				return new BinaryOperatorExpression(expr.Expression, BinaryOperatorType.InEquality, new NullReferenceExpression());
-			else
-				return new BinaryOperatorExpression(expr.Expression, BinaryOperatorType.InEquality, new PrimitiveExpression(0));
-        }
+			return expr.ConvertToBoolean();
+		}
 	}
 }

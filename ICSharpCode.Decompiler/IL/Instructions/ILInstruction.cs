@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// Represents a decoded IL instruction
 	/// </summary>
-	public abstract class ILInstruction
+	public abstract partial class ILInstruction
 	{
 		public readonly OpCode OpCode;
 		
@@ -217,6 +217,5 @@ namespace ICSharpCode.Decompiler.IL
 				newChild.ReleaseRef();
 			InvalidateFlags();
 		}
-		
 	}
 }

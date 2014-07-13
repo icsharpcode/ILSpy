@@ -17,54 +17,51 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using Mono.Cecil;
-using ICSharpCode.Decompiler.Disassembler;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	partial class ILFunction
+	partial class LdLoc
 	{
-		public readonly MethodDefinition Method;
-		public readonly IList<ILVariable> Variables = new List<ILVariable>();
-		
-		public ILFunction(MethodDefinition method, ILInstruction body) : base(OpCode.ILFunction)
+		protected override void Connected()
 		{
-			this.Body = body;
-			this.Method = method;
+			base.Connected();
+			variable.LoadCount++;
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		protected override void Disconnected()
 		{
-			output.Write(OpCode);
-			output.Write(' ');
-			Method.WriteTo(output);
-			output.WriteLine(" {");
-			output.Indent();
-			
-			foreach (var variable in Variables) {
-				variable.WriteDefinitionTo(output);
-				output.WriteLine();
-			}
-			output.WriteLine();
-			body.WriteTo(output);
-			
-			output.WriteLine();
-			output.Unindent();
-			output.WriteLine("}");
+			variable.LoadCount--;
+			base.Disconnected();
+		}
+	}
+	
+	partial class LdLoca
+	{
+		protected override void Connected()
+		{
+			base.Connected();
+			variable.AddressCount++;
 		}
 		
-		protected override InstructionFlags ComputeFlags()
+		protected override void Disconnected()
 		{
-			// Creating a lambda may throw OutOfMemoryException
-			return InstructionFlags.MayThrow;
+			variable.AddressCount--;
+			base.Disconnected();
+		}
+	}
+	
+	partial class StLoc
+	{
+		protected override void Connected()
+		{
+			base.Connected();
+			variable.StoreCount++;
 		}
 		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		protected override void Disconnected()
 		{
-			// To the outside, lambda creation looks like a constant
-			finished = true;
-			return this;
+			variable.StoreCount--;
+			base.Disconnected();
 		}
 	}
 }
