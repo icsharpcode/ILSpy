@@ -19,6 +19,9 @@
 						Text="{Binding SearchTerm, ElementName=self}" ToolTip="Search" UpdateDelay="0:0:0.1"
 						WatermarkColor="Gray" WatermarkText="Search" />
 				<StackPanel Grid.Column="1" Grid.Row="0" Orientation="Horizontal">
+					<CheckBox Name="searchWholeWord" Checked="SearchWholeWord_CheckedChanged" Unchecked="SearchWholeWord_CheckedChanged"
+						VerticalAlignment="Center" ToolTip="Match whole word">
+					</CheckBox>
 					<Label Margin="0,-1">Search _for:</Label>
 					<ComboBox Width="100" Name="searchModeComboBox" Margin="1"
 							SelectionChanged="SearchModeComboBox_SelectionChanged">

@@ -117,6 +117,11 @@ namespace ICSharpCode.ILSpy
 			StartSearch(this.SearchTerm);
 		}
 		
+		void SearchWholeWord_CheckedChanged(object sender, RoutedEventArgs e)
+		{
+			StartSearch(this.SearchTerm);
+		}
+		
 		void StartSearch(string searchTerm)
 		{
 			if (currentSearch != null) {
@@ -127,7 +132,7 @@ namespace ICSharpCode.ILSpy
 				listBox.ItemsSource = null;
 			} else {
 				MainWindow mainWindow = MainWindow.Instance;
-				currentSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm, searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage);
+				currentSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm, searchWholeWord.IsChecked.GetValueOrDefault(false), searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage);
 				listBox.ItemsSource = currentSearch.Results;
 				new Thread(currentSearch.Run).Start();
 			}
@@ -190,6 +195,7 @@ namespace ICSharpCode.ILSpy
 			readonly CancellationTokenSource cts = new CancellationTokenSource();
 			readonly LoadedAssembly[] assemblies;
 			readonly string[] searchTerm;
+			readonly bool searchWholeWord;
 			readonly int searchMode;
 			readonly Language language;
 			public readonly ObservableCollection<SearchResult> Results = new ObservableCollection<SearchResult>();
@@ -198,12 +204,13 @@ namespace ICSharpCode.ILSpy
 			TypeCode searchTermLiteralType = TypeCode.Empty;
 			object searchTermLiteralValue;
 			
-			public RunningSearch(LoadedAssembly[] assemblies, string searchTerm, int searchMode, Language language)
+			public RunningSearch(LoadedAssembly[] assemblies, string searchTerm, bool searchWholeWord, int searchMode, Language language)
 			{
 				this.dispatcher = Dispatcher.CurrentDispatcher;
 				this.assemblies = assemblies;
 				this.searchTerm = searchTerm.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries);
 				this.language = language;
+				this.searchWholeWord = searchWholeWord;
 				this.searchMode = searchMode;
 				
 				this.Results.Add(new SearchResult { Name = "Searching..." });
@@ -280,12 +287,20 @@ namespace ICSharpCode.ILSpy
 			
 			bool IsMatch(string text)
 			{
-			  for (int i = 0; i < searchTerm.Length; ++i) {
-			    // How to handle overlapping matches?
-			    if (text.IndexOf(searchTerm[i], StringComparison.OrdinalIgnoreCase) < 0)
-			      return false;
-			  }
-  			return true;
+				for (int i = 0; i < searchTerm.Length; ++i) {
+				// How to handle overlapping matches?
+					if (searchWholeWord)
+					{
+						if (!string.Equals(text, searchTerm[i], StringComparison.OrdinalIgnoreCase))
+							return false;
+					}
+					else
+					{
+						if (text.IndexOf(searchTerm[i], StringComparison.OrdinalIgnoreCase) < 0)
+							return false;
+					}
+				}
+				return true;
 			}
 			
 			void PerformSearch(TypeDefinition type)
