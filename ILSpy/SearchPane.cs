@@ -288,16 +288,12 @@ namespace ICSharpCode.ILSpy
 			bool IsMatch(string text)
 			{
 				for (int i = 0; i < searchTerm.Length; ++i) {
-				// How to handle overlapping matches?
-					if (searchWholeWord)
-					{
-						if (!string.Equals(text, searchTerm[i], StringComparison.OrdinalIgnoreCase))
-							return false;
+					// How to handle overlapping matches?
+					if (searchWholeWord && !string.Equals(text, searchTerm[i], StringComparison.OrdinalIgnoreCase)) {
+						return false;
 					}
-					else
-					{
-						if (text.IndexOf(searchTerm[i], StringComparison.OrdinalIgnoreCase) < 0)
-							return false;
+					else if (text.IndexOf(searchTerm[i], StringComparison.OrdinalIgnoreCase) < 0) {
+						return false;
 					}
 				}
 				return true;
