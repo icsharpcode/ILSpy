@@ -36,10 +36,9 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		CecilLoader cecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true };
 		Dictionary<IUnresolvedEntity, MemberReference> entityDict = new Dictionary<IUnresolvedEntity, MemberReference>();
+		NRefactoryCecilMapper cecilMapper;
 		ICompilation compilation;
-		ITypeResolveContext mainAssemblyTypeResolveContext;
 		TypeSystemAstBuilder typeSystemAstBuilder;
-		StatementBuilder statementBuilder;
 
 		public CancellationToken CancellationToken { get; set; }
 
@@ -59,44 +58,28 @@ namespace ICSharpCode.Decompiler.CSharp
 					referencedAssemblies.Add(cecilLoader.LoadAssembly(asm));
 			}
 			compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
-			mainAssemblyTypeResolveContext = new SimpleTypeResolveContext(compilation.MainAssembly);
+			cecilMapper = new NRefactoryCecilMapper(compilation, module, GetMemberReference);
 
 			typeSystemAstBuilder = new TypeSystemAstBuilder();
 			typeSystemAstBuilder.AlwaysUseShortTypeNames = true;
 			typeSystemAstBuilder.AddAnnotations = true;
-
-			statementBuilder = new StatementBuilder(compilation);
 		}
-
-		MemberReference GetMemberReference(IMember member)
+		
+		MemberReference GetMemberReference(IUnresolvedEntity member)
 		{
-			var unresolved = member.UnresolvedMember;
 			lock (entityDict) {
 				MemberReference mr;
-				if (unresolved != null && entityDict.TryGetValue(unresolved, out mr))
+				if (member != null && entityDict.TryGetValue(member, out mr))
 					return mr;
 			}
 			return null;
-		}
-
-		ITypeDefinition GetTypeDefinition(TypeDefinition typeDef)
-		{
-			return compilation.MainAssembly.GetTypeDefinition(typeDef.GetFullTypeName());
-		}
-
-		IMethod GetMethod(MethodDefinition methodDef)
-		{
-			ITypeDefinition typeDef = GetTypeDefinition(methodDef.DeclaringType);
-			if (typeDef == null)
-				return null;
-			return typeDef.Methods.FirstOrDefault(m => GetMemberReference(m) == methodDef);
 		}
 
 		public EntityDeclaration Decompile(MethodDefinition methodDefinition)
 		{
 			if (methodDefinition == null)
 				throw new ArgumentNullException("methodDefinition");
-			var method = GetMethod(methodDefinition);
+			var method = cecilMapper.GetMethod(methodDefinition);
 			if (method == null)
 				throw new InvalidOperationException("Could not find method in NR type system");
 			var entityDecl = typeSystemAstBuilder.ConvertEntity(method);
@@ -104,6 +87,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				var ilReader = new ILReader();
 				var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
 				function.Body = function.Body.AcceptVisitor(new TransformingVisitor());
+				
+				var statementBuilder = new StatementBuilder(method, cecilMapper);
 				var body = statementBuilder.ConvertAsBlock(function.Body);
 				body.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 				entityDecl.AddChild(body, Roles.Body);

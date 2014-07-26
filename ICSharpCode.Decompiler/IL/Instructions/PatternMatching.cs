@@ -37,5 +37,28 @@ namespace ICSharpCode.Decompiler.IL
 			val = 0;
 			return false;
 		}
+		
+		public bool MatchLdLoc(ILVariable variable)
+		{
+			var inst = this as LdLoc;
+			return inst != null && inst.Variable == variable;
+		}
+		
+		public bool MatchLdLoc(out ILVariable variable)
+		{
+			var inst = this as LdLoc;
+			if (inst != null) {
+				variable = inst.Variable;
+				return true;
+			}
+			variable = null;
+			return false;
+		}
+		
+		public bool MatchLdThis()
+		{
+			var inst = this as LdLoc;
+			return inst != null && inst.Variable.Kind == VariableKind.This;
+		}
 	}
 }

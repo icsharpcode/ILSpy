@@ -32,6 +32,10 @@ namespace ICSharpCode.Decompiler.IL
 		Local,
 		Parameter,
 		/// <summary>
+		/// The 'this' parameter
+		/// </summary>
+		This,
+		/// <summary>
 		/// Variable created for exception handler
 		/// </summary>
 		Exception
@@ -42,6 +46,8 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly VariableKind Kind;
 		public readonly TypeReference Type;
 		public readonly int Index;
+		
+		public string Name;
 
 		/// <summary>
 		/// Number of ldloc instructions referencing this variable.
@@ -73,31 +79,26 @@ namespace ICSharpCode.Decompiler.IL
 			: this(VariableKind.Local, v.VariableType, v.Index)
 		{
 			this.CecilObject = v;
+			if (string.IsNullOrEmpty(v.Name))
+				this.Name = "V_" + v.Index;
+			else
+				this.Name = v.Name;
 		}
 
 		public ILVariable(ParameterDefinition p)
-			: this(VariableKind.Parameter, p.ParameterType, p.Index)
+			: this(p.Index == -1 ? VariableKind.This : VariableKind.Parameter, p.ParameterType, p.Index)
 		{
 			this.CecilObject = p;
 			this.StoreCount = 1; // count the initial store when the method is called with an argument
+			if (string.IsNullOrEmpty(p.Name))
+				this.Name = "P_" + this.Index;
+			else
+				this.Name = p.Name;
 		}
 		
-		public string Name {
-			get { return ToString(); }
-		}
-
 		public override string ToString()
 		{
-			switch (Kind) {
-				case VariableKind.Local:
-					return "V_" + Index.ToString();
-				case VariableKind.Parameter:
-					if (Index == -1)
-						return "this";
-					return "P_" + Index.ToString();
-				default:
-					return Kind.ToString();
-			}
+			return Name;
 		}
 		
 		internal void WriteDefinitionTo(ITextOutput output)

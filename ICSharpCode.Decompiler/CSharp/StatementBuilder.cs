@@ -30,10 +30,12 @@ namespace ICSharpCode.Decompiler.CSharp
 	class StatementBuilder : ILVisitor<Statement>
 	{
 		readonly ExpressionBuilder exprBuilder;
+		readonly IMethod currentMethod;
 		
-		public StatementBuilder(ICompilation compilation)
+		public StatementBuilder(IMethod method, NRefactoryCecilMapper cecilMapper)
 		{
-			this.exprBuilder = new ExpressionBuilder(compilation);
+			this.exprBuilder = new ExpressionBuilder(method.Compilation, cecilMapper);
+			this.currentMethod = method;
 		}
 		
 		public Statement Convert(ILInstruction inst)
@@ -79,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (inst.ReturnValue == null)
 				return new ReturnStatement();
-			return new ReturnStatement(exprBuilder.Convert(inst.ReturnValue));
+			return new ReturnStatement(exprBuilder.Convert(inst.ReturnValue, currentMethod.ReturnType));
 		}
 
 		TryCatchStatement MakeTryCatch(ILInstruction tryBlock)

@@ -16,6 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.NRefactory.CSharp.Refactoring;
+using ICSharpCode.NRefactory.CSharp.Resolver;
+using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.TypeSystem;
@@ -33,10 +36,16 @@ namespace ICSharpCode.Decompiler.CSharp
 	class ExpressionBuilder : ILVisitor<ExpressionBuilder.ConvertedExpression>
 	{
 		private readonly ICompilation compilation;
+		readonly NRefactoryCecilMapper cecilMapper;
+		readonly CSharpResolver resolver;
+		readonly TypeSystemAstBuilder astBuilder;
 		
-		public ExpressionBuilder(ICompilation compilation)
+		public ExpressionBuilder(ICompilation compilation, NRefactoryCecilMapper cecilMapper)
 		{
 			this.compilation = compilation;
+			this.cecilMapper = cecilMapper;
+			this.resolver = new CSharpResolver(compilation);
+			this.astBuilder = new TypeSystemAstBuilder(resolver);
 		}
 		
 		internal struct ConvertedExpression
@@ -50,11 +59,21 @@ namespace ICSharpCode.Decompiler.CSharp
 				this.Type = type;
 			}
 			
-			public Expression ConvertTo(IType targetType)
+			public Expression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder)
 			{
 				if (targetType.IsKnownType(KnownTypeCode.Boolean))
 					return ConvertToBoolean();
-				return Expression;
+				if (Type.Equals(targetType))
+					return Expression;
+				if (Expression is PrimitiveExpression) {
+					object value = ((PrimitiveExpression)Expression).Value;
+					var rr = expressionBuilder.resolver.ResolveCast(targetType, new ConstantResolveResult(Type, value));
+					if (rr.IsCompileTimeConstant && !rr.IsError)
+						return expressionBuilder.astBuilder.ConvertConstantValue(rr);
+				}
+				return new CastExpression(
+					expressionBuilder.astBuilder.ConvertType(targetType),
+					Expression);
 			}
 			
 			public Expression ConvertToBoolean()
@@ -75,23 +94,25 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr;
 		}
 		
+		public Expression Convert(ILInstruction inst, IType expectedType)
+		{
+			var expr = inst.AcceptVisitor(this);
+			expr.Expression.AddAnnotation(inst);
+			return expr.ConvertTo(expectedType, this);
+		}
+		
 		public AstType ConvertType(Mono.Cecil.TypeReference type)
 		{
 			if (type == null)
 				return null;
-			return new SimpleType(type.Name);
-		}
-		
-		IType GetType(Mono.Cecil.TypeReference type)
-		{
-			return SpecialType.UnknownType;
+			return astBuilder.ConvertType(cecilMapper.GetType(type));
 		}
 		
 		ConvertedExpression ConvertVariable(ILVariable variable)
 		{
 			var expr = new IdentifierExpression(variable.Name);
 			expr.AddAnnotation(variable);
-			return new ConvertedExpression(expr, GetType(variable.Type));
+			return new ConvertedExpression(expr, cecilMapper.GetType(variable.Type));
 		}
 		
 		ConvertedExpression ConvertArgument(ILInstruction inst)
@@ -114,14 +135,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			var arg = ConvertArgument(inst.Argument);
 			return new ConvertedExpression(
 				new AsExpression(arg.Expression, ConvertType(inst.Type)),
-				GetType(inst.Type));
+				cecilMapper.GetType(inst.Type));
 		}
 		
 		protected internal override ConvertedExpression VisitNewObj(NewObj inst)
 		{
 			var oce = new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType));
 			oce.Arguments.AddRange(inst.Arguments.Select(i => ConvertArgument(i).Expression));
-			return new ConvertedExpression(oce, GetType(inst.Method.DeclaringType));
+			return new ConvertedExpression(oce, cecilMapper.GetType(inst.Method.DeclaringType));
 		}
 
 		protected internal override ConvertedExpression VisitLdcI4(LdcI4 inst)
@@ -237,15 +258,43 @@ namespace ICSharpCode.Decompiler.CSharp
 		ConvertedExpression Assignment(ConvertedExpression left, ConvertedExpression right)
 		{
 			return new ConvertedExpression(
-				new AssignmentExpression(left.Expression, right.ConvertTo(left.Type)),
+				new AssignmentExpression(left.Expression, right.ConvertTo(left.Type, this)),
 				left.Type);
 		}
-
-		Expression AddConversion(Expression expression, IType type)
+		
+		protected internal override ConvertedExpression VisitCall(Call inst)
 		{
-			return expression;
+			return HandleCallInstruction(inst);
 		}
 		
+		protected internal override ConvertedExpression VisitCallVirt(CallVirt inst)
+		{
+			return HandleCallInstruction(inst);
+		}
+		
+		ConvertedExpression HandleCallInstruction(CallInstruction inst)
+		{
+			Expression target;
+			if (inst.Method.HasThis) {
+				var argInstruction = inst.Arguments[0];
+				if (inst.OpCode == OpCode.Call && argInstruction.MatchLdThis())
+					target = new BaseReferenceExpression().WithAnnotation(argInstruction);
+				else
+					target = Convert(argInstruction);
+			} else {
+				target = new TypeReferenceExpression(ConvertType(inst.Method.DeclaringType));
+			}
+			InvocationExpression invocation = target.Invoke(inst.Method.Name);
+			int firstParamIndex = inst.Method.HasThis ? 1 : 0;
+			for (int i = firstParamIndex; i < inst.Arguments.Count; i++) {
+				var p = inst.Method.Parameters[i - firstParamIndex];
+				var arg = ConvertArgument(inst.Arguments[i]);
+				var type = cecilMapper.GetType(p.ParameterType);
+				invocation.Arguments.Add(arg.ConvertTo(type, this));
+			}
+			return new ConvertedExpression(invocation, cecilMapper.GetType(inst.Method.ReturnType));
+		}
+
 		protected override ConvertedExpression Default(ILInstruction inst)
 		{
 			return ErrorExpression("OpCode not supported: " + inst.OpCode);
