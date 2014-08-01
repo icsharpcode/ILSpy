@@ -228,14 +228,35 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			}
 		}
 		
-		public void TraversePreOrder(Func<ControlFlowNode, IEnumerable<ControlFlowNode>> children, Action<ControlFlowNode> visitAction)
+		bool TraversePreOrderStart(Func<ControlFlowNode, IEnumerable<ControlFlowNode>> children, Action<ControlFlowNode> visitAction)
 		{
 			if (Visited)
-				return;
+				return false;
+
 			Visited = true;
 			visitAction(this);
-			foreach (ControlFlowNode t in children(this))
-				t.TraversePreOrder(children, visitAction);
+
+			return true;
+		}
+		public void TraversePreOrder(Func<ControlFlowNode, IEnumerable<ControlFlowNode>> children, Action<ControlFlowNode> visitAction)
+		{
+			TraversePreOrderStart(children, visitAction);
+			//foreach (ControlFlowNode t in children(this))
+			//	t.TraversePreOrder(children, visitAction);
+
+			Queue<ControlFlowNode> next = new Queue<ControlFlowNode>();
+			next.Enqueue(this);
+
+			do
+			{
+				ControlFlowNode node = next.Dequeue();
+
+				foreach (ControlFlowNode t in children(node))
+				{
+					if (t.TraversePreOrderStart(children, visitAction))
+						next.Enqueue(t);
+				}
+			} while (next.Count > 0);
 		}
 		
 		public void TraversePostOrder(Func<ControlFlowNode, IEnumerable<ControlFlowNode>> children, Action<ControlFlowNode> visitAction)
