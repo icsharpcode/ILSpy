@@ -84,7 +84,10 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			// Ensure that nodes are visited in the proper nested order.
 			// Jumps to different subtrees are allowed only for the child of a placeholder node.
-			Debug.Assert(containerStack.Count == 0 || node.Parent == containerStack.Peek() || containerStack.Peek().NodeType == NodeType.Pattern);
+
+			Debug.Assert(containerStack.Count == 0 || node.Parent == containerStack.Peek()
+				|| containerStack.Peek().NodeType == NodeType.Pattern || node is IfElseStatement);
+
 			if (positionStack.Count > 0) {
 				WriteSpecialsUpToNode(node);
 			}
@@ -1153,7 +1156,7 @@ namespace ICSharpCode.NRefactory.CSharp
 				default:
 					if (char.IsControl(ch) || char.IsSurrogate(ch) ||
 					// print all uncommon white spaces as numbers
-						(char.IsWhiteSpace(ch) && ch != ' ')) {
+						(char.IsWhiteSpace(ch) && ch != ' ') || ch > 255) {
 						return "\\u" + ((int)ch).ToString("x4");
 					} else {
 						return ch.ToString();
@@ -1755,8 +1758,8 @@ namespace ICSharpCode.NRefactory.CSharp
 			Semicolon();
 			EndNode(gotoStatement);
 		}
-		
-		public void VisitIfElseStatement(IfElseStatement ifElseStatement)
+
+		void VisitIfElseStatementStart(IfElseStatement ifElseStatement)
 		{
 			StartNode(ifElseStatement);
 			WriteKeyword(IfElseStatement.IfKeywordRole);
@@ -1767,10 +1770,41 @@ namespace ICSharpCode.NRefactory.CSharp
 			Space(policy.SpacesWithinIfParentheses);
 			RPar();
 			WriteEmbeddedStatement(ifElseStatement.TrueStatement);
-			if (!ifElseStatement.FalseStatement.IsNull) {
+
+			if (!ifElseStatement.FalseStatement.IsNull)
+			{
 				WriteKeyword(IfElseStatement.ElseKeywordRole);
-				WriteEmbeddedStatement(ifElseStatement.FalseStatement);
 			}
+		}
+		public void VisitIfElseStatement(IfElseStatement ifElseStatement)
+		{
+			VisitIfElseStatementStart(ifElseStatement);
+
+			if (!ifElseStatement.FalseStatement.IsNull)
+			{
+				IfElseStatement toVisit = ifElseStatement;
+
+				do
+				{
+					BlockStatement block = toVisit.FalseStatement as BlockStatement;
+					if (block != null && block.Statements.Count == 1 && block.Statements.ElementAt(0) is IfElseStatement)
+					{
+						toVisit = (IfElseStatement)block.Statements.ElementAt(0);
+
+						VisitIfElseStatementStart(toVisit);
+						Space();
+
+						EndNode(toVisit);
+					}
+					else
+					{
+						WriteEmbeddedStatement(toVisit.FalseStatement);
+
+						break;
+					}
+				} while (true);
+			}
+
 			EndNode(ifElseStatement);
 		}
 		

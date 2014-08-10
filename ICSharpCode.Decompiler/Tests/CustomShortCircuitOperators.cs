@@ -22,53 +22,53 @@ public static class CustomShortCircuitOperators
 {
 	private class B
 	{
-		public static bool operator true(CustomShortCircuitOperators.B x)
+		public static bool operator true(B x)
 		{
 			return true;
 		}
 
-		public static bool operator false(CustomShortCircuitOperators.B x)
+		public static bool operator false(B x)
 		{
 			return false;
 		}
 	}
 
-	private class C : CustomShortCircuitOperators.B
+	private class C : B
 	{
-		public static CustomShortCircuitOperators.C operator &(CustomShortCircuitOperators.C x, CustomShortCircuitOperators.C y)
+		public static C operator &(C x, C y)
 		{
 			return null;
 		}
 		
-		public static CustomShortCircuitOperators.C operator |(CustomShortCircuitOperators.C x, CustomShortCircuitOperators.C y)
+		public static C operator |(C x, C y)
 		{
 			return null;
 		}
 		
-		public static bool operator !(CustomShortCircuitOperators.C x)
+		public static bool operator !(C x)
 		{
 			return false;
 		}
 
 		private static void Main()
 		{
-			CustomShortCircuitOperators.C c = new CustomShortCircuitOperators.C();
-			CustomShortCircuitOperators.C c2 = new CustomShortCircuitOperators.C();
-			CustomShortCircuitOperators.C c3 = c && c2;
-			CustomShortCircuitOperators.C c4 = c || c2;
+			C c = new C();
+			C c2 = new C();
+			C c3 = c & c2;
+			C c4 = c | c2;
 			Console.WriteLine(c3.ToString());
 			Console.WriteLine(c4.ToString());
 		}
 		
 		private static void Test2()
 		{
-			CustomShortCircuitOperators.C c = new CustomShortCircuitOperators.C();
-			if (c && c)
+			C c = new C();
+			if (c & c)
 			{
 				Console.WriteLine(c.ToString());
 			}
 			
-			if (!(c && c))
+			if (!(c & c))
 			{
 				Console.WriteLine(c.ToString());
 			}
@@ -76,7 +76,7 @@ public static class CustomShortCircuitOperators
 		
 		private static void Test3()
 		{
-			CustomShortCircuitOperators.C c = new CustomShortCircuitOperators.C();
+			C c = new C();
 			if (c)
 			{
 				Console.WriteLine(c.ToString());
