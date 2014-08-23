@@ -492,14 +492,21 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Starg_S:
 					return Starg(reader.ReadByte());
 				case ILOpCode.Stind_I1:
+					return new StObj(value: Pop(), target: Pop(), type: typeSystem.SByte);
 				case ILOpCode.Stind_I2:
+					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Int16);
 				case ILOpCode.Stind_I4:
+					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Int32);
 				case ILOpCode.Stind_I8:
+					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Int64);
 				case ILOpCode.Stind_R4:
+					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Single);
 				case ILOpCode.Stind_R8:
+					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Double);
 				case ILOpCode.Stind_I:
+					return new StObj(value: Pop(), target: Pop(), type: typeSystem.IntPtr);
 				case ILOpCode.Stind_Ref:
-					throw new NotImplementedException();
+					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Object);
 				case ILOpCode.Stloc:
 					return Stloc(reader.ReadUInt16());
 				case ILOpCode.Stloc_S:
@@ -557,7 +564,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldlen:
 					return new LdLen(Pop());
 				case ILOpCode.Ldobj:
-					throw new NotImplementedException();
+					return new LdObj(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldsfld:
 					return new LdsFld((FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldsflda:
