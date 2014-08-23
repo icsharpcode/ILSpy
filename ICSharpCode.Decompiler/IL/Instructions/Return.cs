@@ -47,6 +47,15 @@ namespace ICSharpCode.Decompiler.IL
 			this.ReturnValue = argument;
 		}
 		
+		protected override InstructionFlags ComputeFlags()
+		{
+			InstructionFlags flags = InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
+			if (returnValue != null) {
+				flags |= returnValue.Flags;
+			}
+			return flags;
+		}
+		
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);

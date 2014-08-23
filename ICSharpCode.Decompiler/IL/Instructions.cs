@@ -1113,10 +1113,6 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class Return : ILInstruction
 	{
 		public override StackType ResultType { get { return StackType.Void; } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
-		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitReturn(this);

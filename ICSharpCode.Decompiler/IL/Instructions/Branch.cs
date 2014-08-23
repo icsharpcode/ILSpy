@@ -75,6 +75,14 @@ namespace ICSharpCode.Decompiler.IL
 			get { return targetBlock != null ? targetBlock.Label : CecilExtensions.OffsetToString(TargetILOffset); }
 		}
 		
+		internal override void CheckInvariant()
+		{
+			base.CheckInvariant();
+			if (targetBlock != null) {
+				Debug.Assert(targetBlock.Parent is BlockContainer);
+				Debug.Assert(this.IsDescendantOf(targetBlock.Parent));
+			}
+		}
 		
 		public override void WriteTo(ITextOutput output)
 		{

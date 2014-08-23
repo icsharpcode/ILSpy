@@ -53,8 +53,28 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		[Conditional("DEBUG")]
-		internal void CheckInvariant()
+		internal virtual void CheckInvariant()
 		{
+			foreach (var child in Children) {
+				Debug.Assert(child.Parent == this);
+				// if child flags are invalid, parent flags must be too
+				Debug.Assert(child.flags != invalidFlags || this.flags == invalidFlags);
+				Debug.Assert(child.IsConnected == this.IsConnected);
+				child.CheckInvariant();
+			}
+		}
+		
+		/// <summary>
+		/// Gets whether this node is a descendant of <paramref name="possibleAncestor"/>.
+		/// Also returns true if <c>this</c>==<paramref name="possibleAncestor"/>.
+		/// </summary>
+		public bool IsDescendantOf(ILInstruction possibleAncestor)
+		{
+			for (ILInstruction ancestor = this; ancestor != null; ancestor = ancestor.Parent) {
+				if (ancestor == possibleAncestor)
+					return true;
+			}
+			return false;
 		}
 		
 		/// <summary>

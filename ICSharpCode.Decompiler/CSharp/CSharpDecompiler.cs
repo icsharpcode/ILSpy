@@ -138,7 +138,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (methodDefinition.HasBody) {
 				var ilReader = new ILReader();
 				var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
+				function.CheckInvariant();
 				function.Body = function.Body.AcceptVisitor(new TransformingVisitor());
+				function.CheckInvariant();
 				var statementBuilder = new StatementBuilder(method, cecilMapper);
 				var body = statementBuilder.ConvertAsBlock(function.Body);
 				body.AcceptVisitor(new InsertParenthesesVisitor {

@@ -126,7 +126,7 @@
 		new OpCode("localloc", "Allocates space in the stack frame",
 			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
 		new OpCode("ret", "Returns from the current method or lambda.",
-			CustomClassName("Return"), CustomConstructor, MayBranch, UnconditionalBranch),
+			CustomClassName("Return"), CustomConstructor, CustomComputeFlags, MayBranch, UnconditionalBranch),
 		new OpCode("shl", "Shift left", BinaryNumeric),
 		new OpCode("shr", "Shift right", BinaryNumeric),
 		

@@ -212,7 +212,6 @@ namespace ICSharpCode.ILSpy
 		{
 			CSharpDecompiler decompiler = new CSharpDecompiler(type.Module);
 			output.WriteLine(decompiler.Decompile(type).ToString());
-			
 //			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: type);
 //			codeDomBuilder.AddType(type);
 //			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
