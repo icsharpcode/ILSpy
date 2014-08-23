@@ -207,14 +207,18 @@ namespace ICSharpCode.ILSpy
 			codeDomBuilder.AddEvent(ev);
 			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
 		}
-
+*/
 		public override void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: type);
-			codeDomBuilder.AddType(type);
-			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
+			CSharpDecompiler decompiler = new CSharpDecompiler(type.Module);
+			output.WriteLine(decompiler.Decompile(type).ToString());
+			
+//			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: type);
+//			codeDomBuilder.AddType(type);
+//			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
 		}
-		
+
+/*		
 		void RunTransformsAndGenerateCode(AstBuilder astBuilder, ITextOutput output, DecompilationOptions options, IAstTransform additionalTransform = null)
 		{
 			astBuilder.RunTransformations(transformAbortCondition);

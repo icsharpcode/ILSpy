@@ -75,6 +75,53 @@ namespace ICSharpCode.Decompiler.CSharp
 			return null;
 		}
 
+		public SyntaxTree DecompileWholeModuleAsSingleFile()
+		{
+			SyntaxTree syntaxTree = new SyntaxTree();
+			foreach (var g in compilation.MainAssembly.TopLevelTypeDefinitions.GroupBy(t => t.Namespace))
+			{
+				NamespaceDeclaration ns = new NamespaceDeclaration(g.Key);
+				foreach (var typeDef in g)
+				{
+					var typeDecl = Decompile(typeDef);
+					ns.AddMember(typeDecl);
+				}
+				syntaxTree.AddChild(ns, SyntaxTree.MemberRole);
+			}
+			return syntaxTree;
+		}
+		
+		public EntityDeclaration Decompile(TypeDefinition typeDefinition)
+		{
+			if (typeDefinition == null)
+				throw new ArgumentNullException("typeDefinition");
+			ITypeDefinition typeDef = cecilMapper.GetType(typeDefinition).GetDefinition();
+			if (typeDef == null)
+				throw new InvalidOperationException("Could not find type definition in NR type system");
+			return Decompile(typeDef);
+		}
+		
+		EntityDeclaration Decompile(ITypeDefinition typeDef)
+		{
+			var entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
+			var typeDecl = entityDecl as TypeDeclaration;
+			if (typeDecl == null)
+			{
+				// e.g. DelegateDeclaration
+				return entityDecl;
+			}
+			foreach (var method in typeDef.Methods)
+			{
+				var methodDef = cecilMapper.GetCecil(method) as MethodDefinition;
+				if (methodDef != null)
+				{
+					var memberDecl = Decompile(methodDef, method);
+					typeDecl.Members.Add(memberDecl);
+				}
+			}
+			return typeDecl;
+		}
+		
 		public EntityDeclaration Decompile(MethodDefinition methodDefinition)
 		{
 			if (methodDefinition == null)
@@ -82,15 +129,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			var method = cecilMapper.GetMethod(methodDefinition);
 			if (method == null)
 				throw new InvalidOperationException("Could not find method in NR type system");
+			return Decompile(methodDefinition, method);
+		}
+
+		EntityDeclaration Decompile(MethodDefinition methodDefinition, IMethod method)
+		{
 			var entityDecl = typeSystemAstBuilder.ConvertEntity(method);
 			if (methodDefinition.HasBody) {
 				var ilReader = new ILReader();
 				var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
 				function.Body = function.Body.AcceptVisitor(new TransformingVisitor());
-				
 				var statementBuilder = new StatementBuilder(method, cecilMapper);
 				var body = statementBuilder.ConvertAsBlock(function.Body);
-				body.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
+				body.AcceptVisitor(new InsertParenthesesVisitor {
+					InsertParenthesesForReadability = true
+				});
 				entityDecl.AddChild(body, Roles.Body);
 			}
 			return entityDecl;
