@@ -81,6 +81,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				if (Type.IsKnownType(KnownTypeCode.Boolean) || Type.Kind == TypeKind.Unknown)
 					return Expression;
+				else if (Expression is PrimitiveExpression && Type.IsKnownType(KnownTypeCode.Int32))
+					return new PrimitiveExpression((int)((PrimitiveExpression)Expression).Value != 0);
 				else if (Type.Kind == TypeKind.Pointer)
 					return new BinaryOperatorExpression(Expression, BinaryOperatorType.InEquality, new NullReferenceExpression());
 				else

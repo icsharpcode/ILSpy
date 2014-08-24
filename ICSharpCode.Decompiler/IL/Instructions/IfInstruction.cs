@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -28,6 +29,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Condition = condition;
 			this.TrueInst = trueInst;
 			this.FalseInst = falseInst ?? new Nop();
+		}
+		
+		internal override void CheckInvariant()
+		{
+			base.CheckInvariant();
+			Debug.Assert(condition.ResultType == StackType.I4);
 		}
 		
 		public override StackType ResultType {

@@ -120,6 +120,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (outputStacks != null)
 					outputStacks.Add(start, stack.ToImmutableArray());
 				ILInstruction decodedInstruction = DecodeInstruction();
+				decodedInstruction.CheckInvariant();
 				if (decodedInstruction.ResultType != StackType.Void)
 					stack.Push(decodedInstruction.ResultType);
 				decodedInstruction.ILRange = new Interval(start, reader.Position);

@@ -45,7 +45,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		public static StackType GetStackType(this TypeReference typeRef)
 		{
-			return typeRef.SkipModifiers().MetadataType.GetStackType();
+			typeRef = typeRef.SkipModifiers();
+			TypeDefinition typeDef = typeRef.Resolve();
+			if (typeDef != null && typeDef.IsEnum) {
+				typeRef = typeDef.GetEnumUnderlyingType();
+			}
+			return typeRef.MetadataType.GetStackType();
 		}
 
 		public static TypeReference SkipModifiers(this TypeReference typeRef)
