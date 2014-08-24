@@ -248,12 +248,12 @@ namespace ICSharpCode.Decompiler.IL
 	
 	partial class BinaryNumericInstruction
 	{
-		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, OverflowMode overflowMode)
+		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
 		{
 			switch (opCode) {
 <#	foreach (OpCode opCode in opCodes.Where(c => c.BaseClass == "BinaryNumericInstruction")) { #>
 				case OpCode.<#=opCode.Name#>:
-					return new <#=opCode.Name#>(left, right, overflowMode);
+					return new <#=opCode.Name#>(left, right, checkForOverflow, sign);
 <#	} #>
 				default:
 					throw new ArgumentException("opCode is not a binary numeric instruction");
@@ -477,9 +477,12 @@ namespace ICSharpCode.Decompiler.IL
 	static Action<OpCode> BinaryNumeric = opCode => {
 		Binary(opCode);
 		opCode.BaseClass = "BinaryNumericInstruction";
-		opCode.ConstructorParameters.Add("OverflowMode overflowMode");
-		opCode.BaseConstructorArguments.Add("overflowMode");
-		opCode.WriteOpCodeSuffix.Add("output.WriteSuffix(overflowMode);");
+		opCode.ConstructorParameters.Add("bool checkForOverflow");
+		opCode.BaseConstructorArguments.Add("checkForOverflow");
+		opCode.WriteOpCodeSuffix.Add("if (checkForOverflow) output.Write(\".ovf\");");
+		opCode.ConstructorParameters.Add("Sign sign");
+		opCode.BaseConstructorArguments.Add("sign");
+		opCode.WriteOpCodeSuffix.Add("if (sign == Sign.Unsigned) output.Write(\".un\");");
 	};
 	
 	// BinaryNumeric trait: the instruction is derived from BinaryComparisonInstruction. Implies Binary and I4Result.

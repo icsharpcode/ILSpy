@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL
 		I4,
 		/// <summary>64-bit integer</summary>
 		I8,
-		/// <summary>native-size integer</summary>
+		/// <summary>native-size integer, or unmanaged pointer</summary>
 		I,
 		/// <summary>Floating point number</summary>
 		F,

@@ -24,29 +24,27 @@ using System.Text;
 using System.Threading.Tasks;
 namespace ICSharpCode.Decompiler.IL
 {
-	[Flags]
-	public enum OverflowMode : byte
-	{
-		/// <summary>Don't check for overflow, treat integers as signed.</summary>
-		None = 0,
-		/// <summary>Check for overflow, treat integers as signed.</summary>
-		Ovf = 1,
-		/// <summary>Don't check for overflow, treat integers as unsigned.</summary>
-		Un = 2,
-		/// <summary>Check for overflow, treat integers as unsigned.</summary>
-		Ovf_Un = 3
-	}
-	
 	public abstract partial class BinaryNumericInstruction : BinaryInstruction
 	{
-		public readonly OverflowMode OverflowMode;
+		/// <summary>
+		/// Gets whether the instruction checks for overflow.
+		/// </summary>
+		public readonly bool CheckForOverflow;
+		
+		/// <summary>
+		/// For integer operations that depend on the sign, specifies whether the operation
+		/// is signed or unsigned.
+		/// For instructions that produce the same result for either sign, returns Sign.None.
+		/// </summary>
+		public readonly Sign Sign;
 
 		readonly StackType resultType;
 
-		protected BinaryNumericInstruction(OpCode opCode, ILInstruction left, ILInstruction right, OverflowMode overflowMode)
+		protected BinaryNumericInstruction(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
 			: base(opCode, left, right)
 		{
-			this.OverflowMode = overflowMode;
+			this.CheckForOverflow = checkForOverflow;
+			this.Sign = sign;
 			this.resultType = ComputeResultType(opCode, left.ResultType, right.ResultType);
 		}
 
@@ -83,7 +81,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = base.ComputeFlags();
-			if ((OverflowMode & OverflowMode.Ovf) != 0)
+			if (CheckForOverflow)
 				flags |= InstructionFlags.MayThrow;
 			return flags;
 		}
@@ -91,7 +89,12 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
-			output.WriteSuffix(OverflowMode);
+			if (CheckForOverflow)
+				output.Write(".ovf");
+			if (Sign == Sign.Unsigned)
+				output.Write(".unsigned");
+			else if (Sign == Sign.Signed)
+				output.Write(".signed");
 			output.Write('(');
 			Left.WriteTo(output);
 			output.Write(", ");

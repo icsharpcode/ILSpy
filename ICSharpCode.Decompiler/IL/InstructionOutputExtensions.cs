@@ -40,13 +40,5 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(primitiveType.ToString().ToLowerInvariant());
 		}
-
-		public static void WriteSuffix(this ITextOutput output, OverflowMode mode)
-		{
-			if ((mode & OverflowMode.Ovf) != 0)
-				output.Write(".ovf");
-			if ((mode & OverflowMode.Un) != 0)
-				output.Write(".un");
-		}
 	}
 }

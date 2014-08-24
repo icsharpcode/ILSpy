@@ -23,12 +23,18 @@ namespace ICSharpCode.Decompiler.IL
 	partial class Conv : UnaryInstruction
 	{
 		public readonly PrimitiveType TargetType;
-		public readonly OverflowMode ConvMode;
+		public readonly bool CheckForOverflow;
 		
-		public Conv(ILInstruction argument, PrimitiveType targetType, OverflowMode convMode) : base(OpCode.Conv, argument)
+		/// <summary>
+		/// Gets the sign of the input type.
+		/// </summary>
+		public readonly Sign Sign;
+		
+		public Conv(ILInstruction argument, PrimitiveType targetType, bool checkForOverflow, Sign sign) : base(OpCode.Conv, argument)
 		{
 			this.TargetType = targetType;
-			this.ConvMode = convMode;
+			this.CheckForOverflow = checkForOverflow;
+			this.Sign = sign;
 		}
 		
 		public override StackType ResultType {
@@ -38,7 +44,12 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
-			output.WriteSuffix(ConvMode);
+			if (CheckForOverflow)
+				output.Write(".ovf");
+			if (Sign == Sign.Unsigned)
+				output.Write(".unsigned");
+			else if (Sign == Sign.Signed)
+				output.Write(".signed");
 			output.Write(' ');
 			output.Write(Argument.ResultType);
 			output.Write("->");
@@ -51,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = base.ComputeFlags();
-			if ((ConvMode & OverflowMode.Ovf) != 0)
+			if (CheckForOverflow)
 				flags |= InstructionFlags.MayThrow;
 			return flags;
 		}

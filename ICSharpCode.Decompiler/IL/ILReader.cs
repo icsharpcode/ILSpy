@@ -188,11 +188,11 @@ namespace ICSharpCode.Decompiler.IL
 			switch (stack.PeekOrDefault()) {
 				case StackType.I4:
 				case StackType.I:
-					return new Sub(new LdcI4(0), Pop(), OverflowMode.None);
+					return new Sub(new LdcI4(0), Pop(), checkForOverflow: false, sign: Sign.None);
 				case StackType.I8:
-					return new Sub(new LdcI8(0), Pop(), OverflowMode.None);
+					return new Sub(new LdcI8(0), Pop(), checkForOverflow: false, sign: Sign.None);
 				case StackType.F:
-					return new Sub(new LdcF(0), Pop(), OverflowMode.None);
+					return new Sub(new LdcF(0), Pop(), checkForOverflow: false, sign: Sign.None);
 				default:
 					Warn("Unsupported input type for neg: ");
 					goto case StackType.I4;
@@ -216,9 +216,9 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Add:
 					return BinaryNumeric(OpCode.Add);
 				case ILOpCode.Add_Ovf:
-					return BinaryNumeric(OpCode.Add, OverflowMode.Ovf);
+					return BinaryNumeric(OpCode.Add, true, Sign.Signed);
 				case ILOpCode.Add_Ovf_Un:
-					return BinaryNumeric(OpCode.Add, OverflowMode.Ovf_Un);
+					return BinaryNumeric(OpCode.Add, true, Sign.Unsigned);
 				case ILOpCode.And:
 					return BinaryNumeric(OpCode.BitAnd);
 				case ILOpCode.Arglist:
@@ -296,77 +296,77 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ckfinite:
 					return new Ckfinite();
 				case ILOpCode.Conv_I1:
-					return new Conv(Pop(), PrimitiveType.I1, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.I1, false, Sign.None);
 				case ILOpCode.Conv_I2:
-					return new Conv(Pop(), PrimitiveType.I2, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.I2, false, Sign.None);
 				case ILOpCode.Conv_I4:
-					return new Conv(Pop(), PrimitiveType.I4, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.I4, false, Sign.None);
 				case ILOpCode.Conv_I8:
-					return new Conv(Pop(), PrimitiveType.I8, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.I8, false, Sign.None);
 				case ILOpCode.Conv_R4:
-					return new Conv(Pop(), PrimitiveType.R4, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.R4, false, Sign.Signed);
 				case ILOpCode.Conv_R8:
-					return new Conv(Pop(), PrimitiveType.R8, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.R8, false, Sign.Signed);
 				case ILOpCode.Conv_U1:
-					return new Conv(Pop(), PrimitiveType.U1, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.U1, false, Sign.None);
 				case ILOpCode.Conv_U2:
-					return new Conv(Pop(), PrimitiveType.U2, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.U2, false, Sign.None);
 				case ILOpCode.Conv_U4:
-					return new Conv(Pop(), PrimitiveType.U4, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.U4, false, Sign.None);
 				case ILOpCode.Conv_U8:
-					return new Conv(Pop(), PrimitiveType.U8, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.U8, false, Sign.None);
 				case ILOpCode.Conv_I:
-					return new Conv(Pop(), PrimitiveType.I, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.I, false, Sign.None);
 				case ILOpCode.Conv_U:
-					return new Conv(Pop(), PrimitiveType.U, OverflowMode.None);
+					return new Conv(Pop(), PrimitiveType.U, false, Sign.None);
 				case ILOpCode.Conv_R_Un:
-					return new Conv(Pop(), PrimitiveType.R8, OverflowMode.Un);
+					return new Conv(Pop(), PrimitiveType.R8, false, Sign.Unsigned);
 				case ILOpCode.Conv_Ovf_I1:
-					return new Conv(Pop(), PrimitiveType.I1, OverflowMode.Ovf);
+					return new Conv(Pop(), PrimitiveType.I1, true, Sign.Signed);
 				case ILOpCode.Conv_Ovf_I2:
-					return new Conv(Pop(), PrimitiveType.I2, OverflowMode.Ovf);
+					return new Conv(Pop(), PrimitiveType.I2, true, Sign.Signed);
 				case ILOpCode.Conv_Ovf_I4:
-					return new Conv(Pop(), PrimitiveType.I4, OverflowMode.Ovf);
+					return new Conv(Pop(), PrimitiveType.I4, true, Sign.Signed);
 				case ILOpCode.Conv_Ovf_I8:
-					return new Conv(Pop(), PrimitiveType.I8, OverflowMode.Ovf);
+					return new Conv(Pop(), PrimitiveType.I8, true, Sign.Signed);
 				case ILOpCode.Conv_Ovf_U1:
-					return new Conv(Pop(), PrimitiveType.U1, OverflowMode.Ovf);
+					return new Conv(Pop(), PrimitiveType.U1, true, Sign.Signed);
 				case ILOpCode.Conv_Ovf_U2:
-					return new Conv(Pop(), PrimitiveType.U2, OverflowMode.Ovf);
+					return new Conv(Pop(), PrimitiveType.U2, true, Sign.Signed);
 				case ILOpCode.Conv_Ovf_U4:
-					return new Conv(Pop(), PrimitiveType.U4, OverflowMode.Ovf);
+					return new Conv(Pop(), PrimitiveType.U4, true, Sign.Signed);
 				case ILOpCode.Conv_Ovf_U8:
-					return new Conv(Pop(), PrimitiveType.U8, OverflowMode.Ovf);
+					return new Conv(Pop(), PrimitiveType.U8, true, Sign.Signed);
 				case ILOpCode.Conv_Ovf_I:
-					return new Conv(Pop(), PrimitiveType.I, OverflowMode.Ovf);
+					return new Conv(Pop(), PrimitiveType.I, true, Sign.Signed);
 				case ILOpCode.Conv_Ovf_U:
-					return new Conv(Pop(), PrimitiveType.U, OverflowMode.Ovf);
+					return new Conv(Pop(), PrimitiveType.U, true, Sign.Signed);
 				case ILOpCode.Conv_Ovf_I1_Un:
-					return new Conv(Pop(), PrimitiveType.I1, OverflowMode.Ovf_Un);
+					return new Conv(Pop(), PrimitiveType.I1, true, Sign.Unsigned);
 				case ILOpCode.Conv_Ovf_I2_Un:
-					return new Conv(Pop(), PrimitiveType.I2, OverflowMode.Ovf_Un);
+					return new Conv(Pop(), PrimitiveType.I2, true, Sign.Unsigned);
 				case ILOpCode.Conv_Ovf_I4_Un:
-					return new Conv(Pop(), PrimitiveType.I4, OverflowMode.Ovf_Un);
+					return new Conv(Pop(), PrimitiveType.I4, true, Sign.Unsigned);
 				case ILOpCode.Conv_Ovf_I8_Un:
-					return new Conv(Pop(), PrimitiveType.I8, OverflowMode.Ovf_Un);
+					return new Conv(Pop(), PrimitiveType.I8, true, Sign.Unsigned);
 				case ILOpCode.Conv_Ovf_U1_Un:
-					return new Conv(Pop(), PrimitiveType.U1, OverflowMode.Ovf_Un);
+					return new Conv(Pop(), PrimitiveType.U1, true, Sign.Unsigned);
 				case ILOpCode.Conv_Ovf_U2_Un:
-					return new Conv(Pop(), PrimitiveType.U2, OverflowMode.Ovf_Un);
+					return new Conv(Pop(), PrimitiveType.U2, true, Sign.Unsigned);
 				case ILOpCode.Conv_Ovf_U4_Un:
-					return new Conv(Pop(), PrimitiveType.U4, OverflowMode.Ovf_Un);
+					return new Conv(Pop(), PrimitiveType.U4, true, Sign.Unsigned);
 				case ILOpCode.Conv_Ovf_U8_Un:
-					return new Conv(Pop(), PrimitiveType.U8, OverflowMode.Ovf_Un);
+					return new Conv(Pop(), PrimitiveType.U8, true, Sign.Unsigned);
 				case ILOpCode.Conv_Ovf_I_Un:
-					return new Conv(Pop(), PrimitiveType.I, OverflowMode.Ovf_Un);
+					return new Conv(Pop(), PrimitiveType.I, true, Sign.Unsigned);
 				case ILOpCode.Conv_Ovf_U_Un:
-					return new Conv(Pop(), PrimitiveType.U, OverflowMode.Ovf_Un);
+					return new Conv(Pop(), PrimitiveType.U, true, Sign.Unsigned);
 				case ILOpCode.Cpblk:
 					throw new NotImplementedException();
 				case ILOpCode.Div:
-					return BinaryNumeric(OpCode.Div, OverflowMode.None);
+					return BinaryNumeric(OpCode.Div, false, Sign.Signed);
 				case ILOpCode.Div_Un:
-					return BinaryNumeric(OpCode.Div, OverflowMode.Un);
+					return BinaryNumeric(OpCode.Div, false, Sign.Unsigned);
 				case ILOpCode.Dup:
 					return new Peek(stack.Count > 0 ? stack.Peek() : StackType.Unknown);
 				case ILOpCode.Endfilter:
@@ -458,11 +458,11 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Localloc:
 					return new LocAlloc(Pop());
 				case ILOpCode.Mul:
-					return BinaryNumeric(OpCode.Mul, OverflowMode.None);
+					return BinaryNumeric(OpCode.Mul, false, Sign.None);
 				case ILOpCode.Mul_Ovf:
-					return BinaryNumeric(OpCode.Mul, OverflowMode.Ovf);
+					return BinaryNumeric(OpCode.Mul, true, Sign.Signed);
 				case ILOpCode.Mul_Ovf_Un:
-					return BinaryNumeric(OpCode.Mul, OverflowMode.Ovf_Un);
+					return BinaryNumeric(OpCode.Mul, true, Sign.Unsigned);
 				case ILOpCode.Neg:
 					return Neg();
 				case ILOpCode.Newobj:
@@ -476,17 +476,17 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Pop:
 					return new Void(Pop());
 				case ILOpCode.Rem:
-					return BinaryNumeric(OpCode.Rem, OverflowMode.None);
+					return BinaryNumeric(OpCode.Rem, false, Sign.Signed);
 				case ILOpCode.Rem_Un:
-					return BinaryNumeric(OpCode.Rem, OverflowMode.Un);
+					return BinaryNumeric(OpCode.Rem, false, Sign.Unsigned);
 				case ILOpCode.Ret:
 					return Return();
 				case ILOpCode.Shl:
-					return BinaryNumeric(OpCode.Shl, OverflowMode.None);
+					return BinaryNumeric(OpCode.Shl, false, Sign.None);
 				case ILOpCode.Shr:
-					return BinaryNumeric(OpCode.Shr, OverflowMode.None);
+					return BinaryNumeric(OpCode.Shr, false, Sign.Signed);
 				case ILOpCode.Shr_Un:
-					return BinaryNumeric(OpCode.Shr, OverflowMode.Un);
+					return BinaryNumeric(OpCode.Shr, false, Sign.Unsigned);
 				case ILOpCode.Starg:
 					return Starg(reader.ReadUInt16());
 				case ILOpCode.Starg_S:
@@ -517,11 +517,11 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stloc_3:
 					return Stloc(ilOpCode - ILOpCode.Stloc_0);
 				case ILOpCode.Sub:
-					return BinaryNumeric(OpCode.Sub);
+					return BinaryNumeric(OpCode.Sub, false, Sign.None);
 				case ILOpCode.Sub_Ovf:
-					return BinaryNumeric(OpCode.Sub, OverflowMode.Ovf);
+					return BinaryNumeric(OpCode.Sub, true, Sign.Signed);
 				case ILOpCode.Sub_Ovf_Un:
-					return BinaryNumeric(OpCode.Sub, OverflowMode.Ovf_Un);
+					return BinaryNumeric(OpCode.Sub, true, Sign.Unsigned);
 				case ILOpCode.Switch:
 					throw new NotImplementedException();
 				case ILOpCode.Xor:
@@ -793,11 +793,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		ILInstruction BinaryNumeric(OpCode opCode, OverflowMode overflowMode = OverflowMode.None)
+		ILInstruction BinaryNumeric(OpCode opCode, bool checkForOverflow = false, Sign sign = Sign.None)
 		{
 			var right = Pop();
 			var left = Pop();
-			return BinaryNumericInstruction.Create(opCode, left, right, overflowMode);
+			return BinaryNumericInstruction.Create(opCode, left, right, checkForOverflow, sign);
 		}
 	}
 }

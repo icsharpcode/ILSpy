@@ -216,7 +216,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return LogicNot(IsType((IsInst)inst.Left));
 			} else if (inst.Right.OpCode == OpCode.IsInst && inst.Left.OpCode == OpCode.LdNull) {
 				return LogicNot(IsType((IsInst)inst.Right));
-			} 
+			}
 			var left = ConvertArgument(inst.Left);
 			var right = ConvertArgument(inst.Right);
 			return new ConvertedExpression(
@@ -260,6 +260,58 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ConvertedExpression(
 				new AssignmentExpression(left.Expression, right.ConvertTo(left.Type, this)),
 				left.Type);
+		}
+		
+		protected internal override ConvertedExpression VisitAdd(Add inst)
+		{
+			return HandleBinaryNumeric(inst, BinaryOperatorType.Add);
+		}
+		
+		protected internal override ConvertedExpression VisitSub(Sub inst)
+		{
+			return HandleBinaryNumeric(inst, BinaryOperatorType.Subtract);
+		}
+		
+		protected internal override ConvertedExpression VisitBitXor(BitXor inst)
+		{
+			return HandleBinaryNumeric(inst, BinaryOperatorType.ExclusiveOr);
+		}
+		
+		protected internal override ConvertedExpression VisitShl(Shl inst)
+		{
+			return HandleBinaryNumeric(inst, BinaryOperatorType.ShiftLeft);
+		}
+		
+		protected internal override ConvertedExpression VisitShr(Shr inst)
+		{
+			return HandleBinaryNumeric(inst, BinaryOperatorType.ShiftRight);
+		}
+		
+		ConvertedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op)
+		{
+			var left = ConvertArgument(inst.Left);
+			var right = ConvertArgument(inst.Right);
+			var rr = resolver.ResolveBinaryOperator(op, new ResolveResult(left.Type), new ResolveResult(right.Type));
+			if (!rr.IsError && rr.Type.GetStackType() == inst.ResultType
+			    && IsCompatibleWithSign(left.Type, inst.Sign) && IsCompatibleWithSign(right.Type, inst.Sign))
+			{
+				return new ConvertedExpression(
+					new BinaryOperatorExpression(left.Expression, op, right.Expression),
+					rr.Type);
+			}
+			IType targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode(inst.Sign));
+			return new ConvertedExpression(
+				new BinaryOperatorExpression(left.ConvertTo(targetType, this), op, right.ConvertTo(targetType, this)),
+				targetType);
+		}
+
+		/// <summary>
+		/// Gets whether <paramref name="type"/> has the specified <paramref name="sign"/>.
+		/// If <paramref name="sign"/> is None, always returns true.
+		/// </summary>
+		bool IsCompatibleWithSign(IType type, Sign sign)
+		{
+			return sign == Sign.None || type.GetSign() == sign;
 		}
 		
 		protected internal override ConvertedExpression VisitCall(Call inst)
