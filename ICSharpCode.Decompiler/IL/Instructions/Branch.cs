@@ -90,9 +90,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			output.WriteReference(TargetLabel, (object)targetBlock ?? TargetILOffset, isLocal: true);
 			if (PopCount != 0) {
-				output.Write(" (pop ");
+				output.Write(" (pops ");
 				output.Write(PopCount.ToString());
-				output.Write(')');
+				output.Write(" element)");
 			}
 		}
 	}

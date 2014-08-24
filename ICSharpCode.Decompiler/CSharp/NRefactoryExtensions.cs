@@ -19,11 +19,17 @@
 using System;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
 	static class NRefactoryExtensions
 	{
+		public static ConvertedExpression WithTypeInfo(this Expression expr, IType type)
+		{
+			return new ConvertedExpression(expr, type);
+		}
+		
 		public static T WithAnnotation<T>(this T node, object annotation) where T : AstNode
 		{
 			if (annotation != null)

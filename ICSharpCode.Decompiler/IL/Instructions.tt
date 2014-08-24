@@ -106,7 +106,8 @@
 		new OpCode("ldloca", "Loads the address of a local variable. (ldarga/ldloca)",
 			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand),
 		new OpCode("stloc", "Stores a value into a local variable. (starg/stloc)",
-			CustomClassName("StLoc"), CustomArguments("value"), VoidResult, HasVariableOperand),
+			CustomClassName("StLoc"), CustomArguments("value"), HasVariableOperand,
+			ResultType("variable.Type.GetStackType()")),
 		new OpCode("ldstr", "Loads a constant string.",
 			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),
 		new OpCode("ldc.i4", "Loads a constant 32-bit integer.",
@@ -136,14 +137,18 @@
 		new OpCode("ldflda", "Load address of instance field",
 			CustomClassName("LdFlda"), CustomArguments("target"), MayThrow, HasFieldOperand, ResultType("Ref")),
 		new OpCode("stfld", "Store value to instance field",
-			CustomClassName("StFld"), CustomArguments("target", "value"), MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, VoidResult, HasFieldOperand),
+			CustomClassName("StFld"), CustomArguments("target", "value"),
+			MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, HasFieldOperand,
+			ResultType("field.FieldType.GetStackType()")),
 		new OpCode("ldsfld", "Load static field",
 			CustomClassName("LdsFld"), NoArguments, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix,
 			HasFieldOperand, ResultType("field.FieldType.GetStackType()")),
 		new OpCode("ldsflda", "Load static field address",
 			CustomClassName("LdsFlda"), NoArguments, ResultType("Ref"), HasFieldOperand),
 		new OpCode("stsfld", "Store value to static field",
-			CustomClassName("StsFld"), CustomArguments("value"), MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, VoidResult, HasFieldOperand),
+			CustomClassName("StsFld"), CustomArguments("value"),
+			MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, HasFieldOperand,
+			ResultType("field.FieldType.GetStackType()")),
 
 		new OpCode("castclass", "Casts an object to a class.",
 			CustomClassName("CastClass"), Unary, HasTypeOperand, MayThrow, ResultType("type.GetStackType()")),
@@ -186,6 +191,7 @@
 #>
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.IL
@@ -635,6 +641,7 @@ namespace ICSharpCode.Decompiler.IL
 	static Action<OpCode> HasVariableOperand = opCode => {
 		opCode.ConstructorParameters.Add("ILVariable variable");
 		opCode.Members.Add("readonly ILVariable variable;");
+		opCode.ConstructorBody.Add("Debug.Assert(variable != null);");
 		opCode.ConstructorBody.Add("this.variable = variable;");
 		opCode.Members.Add("/// <summary>Returns the variable operand.</summary>" + Environment.NewLine
 						+ "public ILVariable Variable { get { return variable; } }");

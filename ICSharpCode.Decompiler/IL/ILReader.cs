@@ -493,21 +493,21 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Starg_S:
 					return Starg(reader.ReadByte());
 				case ILOpCode.Stind_I1:
-					return new StObj(value: Pop(), target: Pop(), type: typeSystem.SByte);
+					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.SByte));
 				case ILOpCode.Stind_I2:
-					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Int16);
+					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Int16));
 				case ILOpCode.Stind_I4:
-					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Int32);
+					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Int32));
 				case ILOpCode.Stind_I8:
-					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Int64);
+					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Int64));
 				case ILOpCode.Stind_R4:
-					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Single);
+					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Single));
 				case ILOpCode.Stind_R8:
-					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Double);
+					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Double));
 				case ILOpCode.Stind_I:
-					return new StObj(value: Pop(), target: Pop(), type: typeSystem.IntPtr);
+					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.IntPtr));
 				case ILOpCode.Stind_Ref:
-					return new StObj(value: Pop(), target: Pop(), type: typeSystem.Object);
+					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Object));
 				case ILOpCode.Stloc:
 					return Stloc(reader.ReadUInt16());
 				case ILOpCode.Stloc_S:
@@ -535,7 +535,7 @@ namespace ICSharpCode.Decompiler.IL
 					{
 						var type = (TypeReference)ReadAndDecodeMetadataToken();
 						var ld = new LdObj(Pop(), type);
-						return new StObj(Pop(), ld, type);
+						return new Void(new StObj(Pop(), ld, type));
 					}
 				case ILOpCode.Initobj:
 					return new InitObj(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
@@ -561,7 +561,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldflda:
 					return new LdFlda(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Stfld:
-					return new StFld(value: Pop(), target: Pop(), field: (FieldReference)ReadAndDecodeMetadataToken());
+					return new Void(new StFld(value: Pop(), target: Pop(), field: (FieldReference)ReadAndDecodeMetadataToken()));
 				case ILOpCode.Ldlen:
 					return new LdLen(Pop());
 				case ILOpCode.Ldobj:
@@ -571,7 +571,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldsflda:
 					return new LdsFlda((FieldReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Stsfld:
-					return new StsFld(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
+					return new Void(new StsFld(Pop(), (FieldReference)ReadAndDecodeMetadataToken()));
 				case ILOpCode.Ldtoken:
 					return new LdToken((MemberReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldvirtftn:
@@ -599,7 +599,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stelem_Ref:
 					throw new NotImplementedException();
 				case ILOpCode.Stobj:
-					return new StObj(value: Pop(), target: Pop(), type: (TypeReference)ReadAndDecodeMetadataToken());
+					return new Void(new StObj(value: Pop(), target: Pop(), type: (TypeReference)ReadAndDecodeMetadataToken()));
 				case ILOpCode.Throw:
 					return new Throw(Pop());
 				case ILOpCode.Unbox:
@@ -648,7 +648,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction Starg(ushort v)
 		{
-			return new StLoc(Pop(), parameterVariables[v]);
+			return new Void(new StLoc(Pop(), parameterVariables[v]));
 		}
 
 		private ILInstruction Ldloc(ushort v)
@@ -663,7 +663,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction Stloc(ushort v)
 		{
-			return new StLoc(Pop(), localVariables[v]);
+			return new Void(new StLoc(Pop(), localVariables[v]));
 		}
 
 		private ILInstruction DecodeConstrainedCall()

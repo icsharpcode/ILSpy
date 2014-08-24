@@ -69,6 +69,7 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				
 				var variable = new ILVariable(VariableKind.Exception, eh.CatchType, handlerBlock.ILRange.Start);
+				variable.Name = "ex";
 				handlerBlock.EntryPoint.Instructions.Add(new LdLoc(variable));
 				
 				ILInstruction filter;

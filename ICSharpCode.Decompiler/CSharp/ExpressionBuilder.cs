@@ -234,9 +234,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		ConvertedExpression Assignment(ConvertedExpression left, ConvertedExpression right)
 		{
-			return new ConvertedExpression(
-				new AssignmentExpression(left.Expression, right.ConvertTo(left.Type, this)),
-				left.Type);
+			return new AssignmentExpression(left.Expression, right.ConvertTo(left.Type, this))
+				.WithTypeInfo(left.Type);
 		}
 		
 		protected internal override ConvertedExpression VisitAdd(Add inst)

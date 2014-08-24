@@ -150,7 +150,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			BlockStatement blockStatement = new BlockStatement();
 			foreach (var block in container.Blocks) {
-				blockStatement.Add(new LabelStatement { Label = block.Label });
+				if (block.IncomingEdgeCount > 1 || block != container.EntryPoint) {
+					// If there are any incoming branches to this block, add a label:
+					blockStatement.Add(new LabelStatement { Label = block.Label });
+				}
 				foreach (var inst in block.Instructions) {
 					blockStatement.Add(Convert(inst));
 				}

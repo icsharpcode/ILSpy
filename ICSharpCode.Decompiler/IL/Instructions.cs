@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.IL
@@ -622,6 +623,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Filter = filter;
 			this.Body = body;
+			Debug.Assert(variable != null);
 			this.variable = variable;
 		}
 		ILInstruction filter;
@@ -825,6 +827,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public LdLoc(ILVariable variable) : base(OpCode.LdLoc)
 		{
+			Debug.Assert(variable != null);
 			this.variable = variable;
 		}
 		readonly ILVariable variable;
@@ -848,6 +851,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public LdLoca(ILVariable variable) : base(OpCode.LdLoca)
 		{
+			Debug.Assert(variable != null);
 			this.variable = variable;
 		}
 		public override StackType ResultType { get { return StackType.Ref; } }
@@ -872,6 +876,7 @@ namespace ICSharpCode.Decompiler.IL
 		public StLoc(ILInstruction value, ILVariable variable) : base(OpCode.StLoc)
 		{
 			this.Value = value;
+			Debug.Assert(variable != null);
 			this.variable = variable;
 		}
 		ILInstruction value;
@@ -896,10 +901,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = this.value.Inline(flagsBefore, instructionStack, out finished);
 			return this;
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
 		public ILVariable Variable { get { return variable; } }
+		public override StackType ResultType { get { return variable.Type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return value.Flags;
@@ -1306,10 +1311,10 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		public override StackType ResultType { get { return StackType.Void; } }
 		readonly FieldReference field;
 		/// <summary>Returns the field operand.</summary>
 		public FieldReference Field { get { return field; } }
+		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | value.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
@@ -1427,10 +1432,10 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		public override StackType ResultType { get { return StackType.Void; } }
 		readonly FieldReference field;
 		/// <summary>Returns the field operand.</summary>
 		public FieldReference Field { get { return field; } }
+		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return value.Flags | InstructionFlags.SideEffect;

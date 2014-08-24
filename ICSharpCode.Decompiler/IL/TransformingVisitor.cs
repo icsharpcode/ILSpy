@@ -79,9 +79,12 @@ namespace ICSharpCode.Decompiler.IL
 						// Wrap the instruction on top of the stack into an inline block,
 						// and append our void-typed instruction to the end of that block.
 						var headInst = stack.Pop();
-						var nestedBlock = headInst as Block ?? new Block { Instructions = { headInst } };
+						var nestedBlock = headInst as Block ?? new Block {
+							Instructions = { headInst },
+							ILRange = headInst.ILRange
+						};
 						nestedBlock.Instructions.Add(inst);
-						stack.Push(block);
+						stack.Push(nestedBlock);
 					} else {
 						// We can't move incomplete instructions into a nested block
 						// or the instruction stack was empty

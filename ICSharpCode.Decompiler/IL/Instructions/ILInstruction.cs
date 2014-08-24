@@ -46,10 +46,11 @@ namespace ICSharpCode.Decompiler.IL
 				throw new ArgumentException("Argument must not be of type void", "inst");
 		}
 		
-		internal static void ValidateChild(ILInstruction inst)
+		internal void ValidateChild(ILInstruction inst)
 		{
 			if (inst == null)
 				throw new ArgumentNullException("inst");
+			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
 		}
 		
 		[Conditional("DEBUG")]
