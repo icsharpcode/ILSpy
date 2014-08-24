@@ -34,12 +34,12 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Translates from ILAst to C# expressions.
 	/// </summary>
-	class ExpressionBuilder : ILVisitor<ExpressionBuilder.ConvertedExpression>
+	class ExpressionBuilder : ILVisitor<ConvertedExpression>
 	{
 		private readonly ICompilation compilation;
 		readonly NRefactoryCecilMapper cecilMapper;
-		readonly CSharpResolver resolver;
-		readonly TypeSystemAstBuilder astBuilder;
+		internal readonly CSharpResolver resolver;
+		internal readonly TypeSystemAstBuilder astBuilder;
 		
 		public ExpressionBuilder(ICompilation compilation, NRefactoryCecilMapper cecilMapper)
 		{
@@ -48,57 +48,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.resolver = new CSharpResolver(compilation);
 			this.astBuilder = new TypeSystemAstBuilder(resolver);
 		}
-		
-		internal struct ConvertedExpression
-		{
-			public readonly Expression Expression;
-			public readonly IType Type;
-			
-			public ConvertedExpression(Expression expression, IType type)
-			{
-				this.Expression = expression;
-				this.Type = type;
-			}
-			
-			public Expression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder)
-			{
-				if (targetType.IsKnownType(KnownTypeCode.Boolean))
-					return ConvertToBoolean();
-				if (Type.Equals(targetType))
-					return Expression;
-				if (Type.Kind == TypeKind.ByReference && targetType.Kind == TypeKind.Pointer && Expression is DirectionExpression) {
-					// convert from reference to pointer
-					Expression arg = ((DirectionExpression)Expression).Expression.Detach();
-					var pointerExpr = new ConvertedExpression(
-						new UnaryOperatorExpression(UnaryOperatorType.AddressOf, arg),
-						new PointerType(((ByReferenceType)Type).ElementType));
-					// perform remaining pointer cast, if necessary
-					return pointerExpr.ConvertTo(targetType, expressionBuilder);
-				}
-				if (Expression is PrimitiveExpression) {
-					object value = ((PrimitiveExpression)Expression).Value;
-					var rr = expressionBuilder.resolver.ResolveCast(targetType, new ConstantResolveResult(Type, value));
-					if (rr.IsCompileTimeConstant && !rr.IsError)
-						return expressionBuilder.astBuilder.ConvertConstantValue(rr);
-				}
-				return new CastExpression(
-					expressionBuilder.astBuilder.ConvertType(targetType),
-					Expression);
-			}
-			
-			public Expression ConvertToBoolean()
-			{
-				if (Type.IsKnownType(KnownTypeCode.Boolean) || Type.Kind == TypeKind.Unknown)
-					return Expression;
-				else if (Expression is PrimitiveExpression && Type.IsKnownType(KnownTypeCode.Int32))
-					return new PrimitiveExpression((int)((PrimitiveExpression)Expression).Value != 0);
-				else if (Type.Kind == TypeKind.Pointer)
-					return new BinaryOperatorExpression(Expression, BinaryOperatorType.InEquality, new NullReferenceExpression());
-				else
-					return new BinaryOperatorExpression(Expression, BinaryOperatorType.InEquality, new PrimitiveExpression(0));
-			}
-		}
 
+		public AstType ConvertType(Mono.Cecil.TypeReference type)
+		{
+			if (type == null)
+				return null;
+			return astBuilder.ConvertType(cecilMapper.GetType(type));
+		}
+		
 		public Expression Convert(ILInstruction inst)
 		{
 			return ConvertArgument(inst).Expression;
@@ -109,11 +66,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			return ConvertArgument(inst).ConvertTo(expectedType, this);
 		}
 		
-		public AstType ConvertType(Mono.Cecil.TypeReference type)
+		public Expression ConvertCondition(ILInstruction condition)
 		{
-			if (type == null)
-				return null;
-			return astBuilder.ConvertType(cecilMapper.GetType(type));
+			var expr = ConvertArgument(condition);
+			return expr.ConvertToBoolean();
 		}
 		
 		ConvertedExpression ConvertVariable(ILVariable variable)
@@ -435,12 +391,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			var e = new ErrorExpression();
 			e.AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);
 			return new ConvertedExpression(e, SpecialType.UnknownType);
-		}
-
-		public Expression ConvertCondition(ILInstruction condition)
-		{
-			var expr = ConvertArgument(condition);
-			return expr.ConvertToBoolean();
 		}
 	}
 }
