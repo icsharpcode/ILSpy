@@ -379,6 +379,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					UnaryOperatorType.Dereference, target.ConvertTo(new PointerType(type), this)),
 				type);
 		}
+		
+		protected internal override ConvertedExpression VisitUnboxAny(UnboxAny inst)
+		{
+			var arg = ConvertArgument(inst.Argument);
+			Expression expr = arg.Expression;
+			if (arg.Type.IsReferenceType != true) {
+				// ensure we treat the input as a reference type
+				expr = arg.ConvertTo(compilation.FindType(KnownTypeCode.Object), this);
+			}
+			expr = new CastExpression(ConvertType(inst.Type), expr);
+			return new ConvertedExpression(expr, cecilMapper.GetType(inst.Type));
+		}
 
 		protected override ConvertedExpression Default(ILInstruction inst)
 		{
