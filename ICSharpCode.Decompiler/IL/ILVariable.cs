@@ -90,7 +90,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.CecilObject = p;
 			this.StoreCount = 1; // count the initial store when the method is called with an argument
-			if (string.IsNullOrEmpty(p.Name))
+			if (this.Kind == VariableKind.This)
+				this.Name = "this";
+			else if (string.IsNullOrEmpty(p.Name))
 				this.Name = "P_" + this.Index;
 			else
 				this.Name = p.Name;

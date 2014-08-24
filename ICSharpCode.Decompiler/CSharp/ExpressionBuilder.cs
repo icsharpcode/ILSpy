@@ -66,6 +66,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					return ConvertToBoolean();
 				if (Type.Equals(targetType))
 					return Expression;
+				if (Type.Kind == TypeKind.ByReference && targetType.Kind == TypeKind.Pointer && Expression is DirectionExpression) {
+					// convert from reference to pointer
+					Expression arg = ((DirectionExpression)Expression).Expression.Detach();
+					var pointerExpr = new ConvertedExpression(
+						new UnaryOperatorExpression(UnaryOperatorType.AddressOf, arg),
+						new PointerType(((ByReferenceType)Type).ElementType));
+					// perform remaining pointer cast, if necessary
+					return pointerExpr.ConvertTo(targetType, expressionBuilder);
+				}
 				if (Expression is PrimitiveExpression) {
 					object value = ((PrimitiveExpression)Expression).Value;
 					var rr = expressionBuilder.resolver.ResolveCast(targetType, new ConstantResolveResult(Type, value));
@@ -109,8 +118,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		ConvertedExpression ConvertVariable(ILVariable variable)
 		{
-			var expr = new IdentifierExpression(variable.Name);
+			Expression expr;
+			if (variable.Kind == VariableKind.This)
+				expr = new ThisReferenceExpression();
+			else
+				expr = new IdentifierExpression(variable.Name);
 			expr.AddAnnotation(variable);
+			if (variable.Type.SkipModifiers().MetadataType == Mono.Cecil.MetadataType.ByReference)
+			{
+				// When loading a by-ref parameter, use 'ref paramName'.
+				// We'll strip away the 'ref' when dereferencing.
+				expr = new DirectionExpression(FieldDirection.Ref, expr);
+			}
 			return new ConvertedExpression(expr, cecilMapper.GetType(variable.Type));
 		}
 		
@@ -212,6 +231,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override ConvertedExpression VisitCeq(Ceq inst)
 		{
+			// Translate 'e as T == null' to 'e is T'.
+			// This is necessary for correctness when T is a value type.
 			if (inst.Left.OpCode == OpCode.IsInst && inst.Right.OpCode == OpCode.LdNull) {
 				return LogicNot(IsType((IsInst)inst.Left));
 			} else if (inst.Right.OpCode == OpCode.IsInst && inst.Left.OpCode == OpCode.LdNull) {
@@ -390,11 +411,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override ConvertedExpression VisitLdObj(LdObj inst)
 		{
 			var target = ConvertArgument(inst.Target);
-			var pointerType = new PointerType(cecilMapper.GetType(inst.Type));
+			var type = cecilMapper.GetType(inst.Type);
+			if (target.Type.Equals(new ByReferenceType(type)) && target.Expression is DirectionExpression)
+			{
+				// we can deference the managed reference by stripping away the 'ref'
+				return new ConvertedExpression(
+					((DirectionExpression)target.Expression).Expression.Detach(),
+					type);
+			}
 			return new ConvertedExpression(
 				new UnaryOperatorExpression(
-					UnaryOperatorType.Dereference, target.ConvertTo(pointerType, this)),
-				pointerType.ElementType);
+					UnaryOperatorType.Dereference, target.ConvertTo(new PointerType(type), this)),
+				type);
 		}
 
 		protected override ConvertedExpression Default(ILInstruction inst)
