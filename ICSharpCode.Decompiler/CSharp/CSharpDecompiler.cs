@@ -144,8 +144,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				var statementBuilder = new StatementBuilder(method, cecilMapper);
 				var body = statementBuilder.ConvertAsBlock(function.Body);
 				body.AcceptVisitor(new InsertParenthesesVisitor {
-					InsertParenthesesForReadability = true
-				});
+				                   	InsertParenthesesForReadability = true
+				                   });
+				// insert variables at start of body
+				Statement prevVarDecl = null;
+				foreach (var v in function.Variables) {
+					if (v.Kind == VariableKind.Local) {
+						var type = typeSystemAstBuilder.ConvertType(cecilMapper.GetType(v.Type));
+						var varDecl = new VariableDeclarationStatement(type, v.Name);
+						body.Statements.InsertAfter(prevVarDecl, varDecl);
+						prevVarDecl = varDecl;
+					}
+				}
 				entityDecl.AddChild(body, Roles.Body);
 			}
 			return entityDecl;
