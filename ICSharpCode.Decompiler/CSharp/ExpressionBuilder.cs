@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
 using ICSharpCode.NRefactory.CSharp.Resolver;
 using ICSharpCode.NRefactory.Semantics;
@@ -89,16 +90,12 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public Expression Convert(ILInstruction inst)
 		{
-			var expr = inst.AcceptVisitor(this).Expression;
-			expr.AddAnnotation(inst);
-			return expr;
+			return ConvertArgument(inst).Expression;
 		}
 		
 		public Expression Convert(ILInstruction inst, IType expectedType)
 		{
-			var expr = inst.AcceptVisitor(this);
-			expr.Expression.AddAnnotation(inst);
-			return expr.ConvertTo(expectedType, this);
+			return ConvertArgument(inst).ConvertTo(expectedType, this);
 		}
 		
 		public AstType ConvertType(Mono.Cecil.TypeReference type)
@@ -118,6 +115,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		ConvertedExpression ConvertArgument(ILInstruction inst)
 		{
 			var cexpr = inst.AcceptVisitor(this);
+			Debug.Assert(cexpr.Type.GetStackType() == inst.ResultType || cexpr.Type.Kind == TypeKind.Unknown || inst.ResultType == StackType.Void);
 			cexpr.Expression.AddAnnotation(inst);
 			return cexpr;
 		}
@@ -272,9 +270,34 @@ namespace ICSharpCode.Decompiler.CSharp
 			return HandleBinaryNumeric(inst, BinaryOperatorType.Subtract);
 		}
 		
+		protected internal override ConvertedExpression VisitMul(Mul inst)
+		{
+			return HandleBinaryNumeric(inst, BinaryOperatorType.Multiply);
+		}
+		
+		protected internal override ConvertedExpression VisitDiv(Div inst)
+		{
+			return HandleBinaryNumeric(inst, BinaryOperatorType.Divide);
+		}
+		
+		protected internal override ConvertedExpression VisitRem(Rem inst)
+		{
+			return HandleBinaryNumeric(inst, BinaryOperatorType.Modulus);
+		}
+		
 		protected internal override ConvertedExpression VisitBitXor(BitXor inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.ExclusiveOr);
+		}
+		
+		protected internal override ConvertedExpression VisitBitAnd(BitAnd inst)
+		{
+			return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseAnd);
+		}
+		
+		protected internal override ConvertedExpression VisitBitOr(BitOr inst)
+		{
+			return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseOr);
 		}
 		
 		protected internal override ConvertedExpression VisitShl(Shl inst)
@@ -314,6 +337,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			return sign == Sign.None || type.GetSign() == sign;
 		}
 		
+		protected internal override ConvertedExpression VisitConv(Conv inst)
+		{
+			var arg = ConvertArgument(inst.Argument);
+			Expression input = arg.Expression;
+			if (arg.Type.GetSign() != inst.Sign) {
+				// we need to cast the input to a type of appropriate sign
+				var inputType = inst.Argument.ResultType.ToKnownTypeCode(inst.Sign);
+				input = arg.ConvertTo(compilation.FindType(inputType), this);
+			}
+			var targetType = compilation.FindType(inst.TargetType.ToKnownTypeCode());
+			return new ConvertedExpression(
+				new CastExpression(astBuilder.ConvertType(targetType), input),
+				targetType);
+		}
+		
 		protected internal override ConvertedExpression VisitCall(Call inst)
 		{
 			return HandleCallInstruction(inst);
@@ -345,6 +383,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				invocation.Arguments.Add(arg.ConvertTo(type, this));
 			}
 			return new ConvertedExpression(invocation, cecilMapper.GetType(inst.Method.ReturnType));
+		}
+		
+		protected internal override ConvertedExpression VisitLdObj(LdObj inst)
+		{
+			var target = ConvertArgument(inst.Target);
+			var pointerType = new PointerType(cecilMapper.GetType(inst.Type));
+			return new ConvertedExpression(
+				new UnaryOperatorExpression(
+					UnaryOperatorType.Dereference, target.ConvertTo(pointerType, this)),
+				pointerType.ElementType);
 		}
 
 		protected override ConvertedExpression Default(ILInstruction inst)

@@ -95,6 +95,38 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
+		public static KnownTypeCode ToKnownTypeCode(this PrimitiveType primitiveType)
+		{
+			switch (primitiveType) {
+				case PrimitiveType.I1:
+					return KnownTypeCode.SByte;
+				case PrimitiveType.I2:
+					return KnownTypeCode.Int16;
+				case PrimitiveType.I4:
+					return KnownTypeCode.Int32;
+				case PrimitiveType.I8:
+					return KnownTypeCode.Int64;
+				case PrimitiveType.R4:
+					return KnownTypeCode.Single;
+				case PrimitiveType.R8:
+					return KnownTypeCode.Double;
+				case PrimitiveType.U1:
+					return KnownTypeCode.Byte;
+				case PrimitiveType.U2:
+					return KnownTypeCode.UInt16;
+				case PrimitiveType.U4:
+					return KnownTypeCode.UInt32;
+				case PrimitiveType.U8:
+					return KnownTypeCode.UInt64;
+				case PrimitiveType.I:
+					return KnownTypeCode.IntPtr;
+				case PrimitiveType.U:
+					return KnownTypeCode.UIntPtr;
+				default:
+					return KnownTypeCode.None;
+			}
+		}
+		
 		public static KnownTypeCode ToKnownTypeCode(this StackType stackType, Sign sign = Sign.None)
 		{
 			switch (stackType) {
