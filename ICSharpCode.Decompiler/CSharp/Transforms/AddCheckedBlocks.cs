@@ -18,10 +18,9 @@
 
 using System;
 using System.Linq;
-using ICSharpCode.Decompiler.ILAst;
 using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// Add checked/unchecked blocks.

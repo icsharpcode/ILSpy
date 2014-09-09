@@ -62,12 +62,17 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\ConvertedExpression.cs" />
     <Compile Include="CSharp\NRefactoryCecilMapper.cs" />
     <Compile Include="CSharp\CSharpDecompiler.cs" />
     <Compile Include="CSharp\ExpressionBuilder.cs" />
     <Compile Include="CSharp\NRefactoryExtensions.cs" />
     <Compile Include="CSharp\StatementBuilder.cs" />
+    <Compile Include="CSharp\Transforms\AddCheckedBlocks.cs" />
+    <Compile Include="CSharp\Transforms\CustomPatterns.cs" />
+    <Compile Include="CSharp\Transforms\IAstTransform.cs" />
+    <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="IL\Instructions.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -152,6 +157,9 @@
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="CSharp\Transforms" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <Target Name="BeforeBuild">

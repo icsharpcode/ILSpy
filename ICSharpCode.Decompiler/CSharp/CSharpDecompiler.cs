@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
@@ -39,9 +40,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		NRefactoryCecilMapper cecilMapper;
 		ICompilation compilation;
 		TypeSystemAstBuilder typeSystemAstBuilder;
+		List<IAstTransform> astTransforms = new List<IAstTransform>(TransformationPipeline.CreatePipeline());
 
 		public CancellationToken CancellationToken { get; set; }
 
+		/// <summary>
+		/// C# AST transforms.
+		/// </summary>
+		public IList<IAstTransform> AstTransforms {
+			get { return astTransforms; }
+		}
+		
 		public CSharpDecompiler(ModuleDefinition module)
 		{
 			cecilLoader.OnEntityLoaded = (entity, mr) => {
@@ -143,9 +152,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				function.CheckInvariant();
 				var statementBuilder = new StatementBuilder(method, cecilMapper);
 				var body = statementBuilder.ConvertAsBlock(function.Body);
-				body.AcceptVisitor(new InsertParenthesesVisitor {
-				                   	InsertParenthesesForReadability = true
-				                   });
+				foreach (var transform in astTransforms) {
+					transform.Run(body);
+				}
 				// insert variables at start of body
 				Statement prevVarDecl = null;
 				foreach (var v in function.Variables) {
@@ -156,6 +165,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						prevVarDecl = varDecl;
 					}
 				}
+				body.AcceptVisitor(new InsertParenthesesVisitor {
+				                   	InsertParenthesesForReadability = true
+				                   });
 				entityDecl.AddChild(body, Roles.Body);
 			}
 			return entityDecl;

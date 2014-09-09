@@ -25,7 +25,7 @@ using Mono.Cecil;
 using Ast = ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// Replaces method calls with the appropriate operator expressions.
@@ -40,13 +40,6 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			},
 			MemberName = "TypeHandle"
 		};
-		
-		DecompilerContext context;
-		
-		public ReplaceMethodCallsWithOperators(DecompilerContext context)
-		{
-			this.context = context;
-		}
 		
 		public override object VisitInvocationExpression(InvocationExpression invocationExpression, object data)
 		{
@@ -131,7 +124,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			if (methodRef.Name == "op_Explicit" && arguments.Length == 1) {
 				arguments[0].Remove(); // detach argument
 				invocationExpression.ReplaceWith(
-					arguments[0].CastTo(AstBuilder.ConvertType(methodRef.ReturnType, methodRef.MethodReturnType))
+					arguments[0].CastTo(ConvertType(methodRef.ReturnType, methodRef.MethodReturnType))
 					.WithAnnotation(methodRef)
 				);
 				return;
@@ -254,7 +247,8 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					}
 				}
 			}
-			if (context.Settings.IntroduceIncrementAndDecrement && (assignment.Operator == AssignmentOperatorType.Add || assignment.Operator == AssignmentOperatorType.Subtract)) {
+			// TODO: context.Settings.IntroduceIncrementAndDecrement
+			if (assignment.Operator == AssignmentOperatorType.Add || assignment.Operator == AssignmentOperatorType.Subtract) {
 				// detect increment/decrement
 				if (assignment.Right.IsMatch(new PrimitiveExpression(1))) {
 					// only if it's not a custom operator
@@ -329,6 +323,11 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		         	new TypePattern(typeof(MethodInfo)),
 		         	new TypePattern(typeof(ConstructorInfo))
 		         });
+
+		static AstType ConvertType(TypeReference parameterType, object ctx)
+		{
+			return new SimpleType(parameterType.Name);
+		}
 		
 		public override object VisitCastExpression(CastExpression castExpression, object data)
 		{
@@ -339,7 +338,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				MethodReference method = m.Get<AstNode>("method").Single().Annotation<MethodReference>();
 				if (m.Has("declaringType")) {
 					Expression newNode = m.Get<AstType>("declaringType").Single().Detach().Member(method.Name);
-					newNode = newNode.Invoke(method.Parameters.Select(p => new TypeReferenceExpression(AstBuilder.ConvertType(p.ParameterType, p))));
+					newNode = newNode.Invoke(method.Parameters.Select(p => new TypeReferenceExpression(ConvertType(p.ParameterType, p))));
 					newNode.AddAnnotation(method);
 					m.Get<AstNode>("method").Single().ReplaceWith(newNode);
 				}
