@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.CodeAnalysis.CSharp.Desktop</name>
+    </assembly>
+    <members>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.CSharpFileSystemExtensions.Emit(Microsoft.CodeAnalysis.CSharp.CSharpCompilation,System.String,System.String,System.String,System.String,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.ResourceDescription},System.Threading.CancellationToken)">
+            <summary>
+            Emit the IL for the compilation into the specified stream.
+            </summary>
+            <param name="compilation">Compilation.</param>
+            <param name="outputPath">Path of the file to which the PE image will be written.</param>
+            <param name="pdbPath">Path of the file to which the compilation's debug info will be written.
+            Also embedded in the output file.  Null to forego PDB generation.
+            </param>
+            <param name="xmlDocumentationPath">Path of the file to which the compilation's XML documentation will be written.  Null to forego XML generation.</param>
+            <param name="win32ResourcesPath">Path of the file from which the compilation's Win32 resources will be read (in RES format).  
+            Null to indicate that there are none.</param>
+            <param name="manifestResources">List of the compilation's managed resources.  Null to indicate that there are none.</param>
+            <param name="cancellationToken">To cancel the emit process.</param>
+            <exception cref="T:System.ArgumentNullException">Compilation or path is null.</exception>
+            <exception cref="T:System.ArgumentException">Path is empty or invalid.</exception>
+            <exception cref="T:System.IO.IOException">An error occurred while reading or writing a file.</exception>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CSharp.CSharpCommandLineArguments">
+            <summary>
+            The command line arguments to a C# <see cref="T:Microsoft.CodeAnalysis.CSharp.CSharpCompiler"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpCommandLineArguments.CompilationOptions">
+            <summary>
+            Gets the compilation options for the C# <see cref="T:Microsoft.CodeAnalysis.Compilation"/>
+            created from the <see cref="T:Microsoft.CodeAnalysis.CSharp.CSharpCompiler"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpCommandLineArguments.ParseOptions">
+            <summary>
+            Gets the parse options for the C# <see cref="T:Microsoft.CodeAnalysis.Compilation"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CSharp.CSharpCommandLineArguments.ShouldIncludeErrorEndLocation">
+            <value>
+            Should the format of error messages include the line and column of
+            the end of the offending text.
+            </value>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.CommandLineDiagnosticFormatter.RelativizeNormalizedPath(System.String)">
+            <summary>
+            Get the path name starting from the <see cref="F:Microsoft.CodeAnalysis.CSharp.CommandLineDiagnosticFormatter.baseDirectory"/>
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.CSharpCommandLineParser.AddDiagnostic(System.Collections.Generic.IList{Microsoft.CodeAnalysis.Diagnostic},System.Collections.Generic.Dictionary{System.String,Microsoft.CodeAnalysis.ReportDiagnostic},Microsoft.CodeAnalysis.CSharp.ErrorCode,System.Object[])">
+            <summary>
+            Diagnostic for the errorCode added if the warningOptions does not mention suppressed for the errorCode.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.CSharpCompiler.GetOutputFileName(Microsoft.CodeAnalysis.Compilation,System.Threading.CancellationToken)">
+            <summary>
+            Given a compilation and a destination directory, determine three names:
+              1) The name with which the assembly should be output.
+              2) The path of the assembly/module file.
+              3) The path of the pdb file.
+            
+            When csc produces an executable, but the name of the resulting assembly
+            is not specified using the "/out" switch, the name is taken from the name
+            of the file (note: file, not class) containing the assembly entrypoint
+            (as determined by binding and the "/main" switch).
+            
+            For example, if the command is "csc /target:exe a.cs b.cs" and b.cs contains the
+            entrypoint, then csc will produce "b.exe" and "b.pdb" in the output directory,
+            with assembly name "b" and module name "b.exe" embedded in the file.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.CSharpCompiler.PrintLogo(System.IO.TextWriter)">
+            <summary>
+            Print compiler logo
+            </summary>
+            <param name="consoleOutput"></param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CSharp.CSharpCompiler.PrintHelp(System.IO.TextWriter)">
+            <summary>
+            Print Commandline help message (up to 80 English characters per line)
+            </summary>
+            <param name="consoleOutput"></param>
+        </member>
+    </members>
+</doc>
