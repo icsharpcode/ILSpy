@@ -25,6 +25,8 @@ using System.Text;
 
 using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.Decompiler.Tests.Helpers;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CSharp;
 using Mono.Cecil;
 using NUnit.Framework;
@@ -36,7 +38,8 @@ namespace ICSharpCode.Decompiler.Tests
 		protected static void ValidateFileRoundtrip(string samplesFileName)
 		{
 			var fullPath = Path.Combine(@"..\..\Tests", samplesFileName);
-			AssertRoundtripCode(fullPath);
+			AssertRoundtripCode(fullPath, useRoslyn: false);
+			AssertRoundtripCode(fullPath, useRoslyn: true);
 		}
 
 		static string RemoveIgnorableLines(IEnumerable<string> lines)
@@ -44,10 +47,10 @@ namespace ICSharpCode.Decompiler.Tests
 			return CodeSampleFileParser.ConcatLines(lines.Where(l => !CodeSampleFileParser.IsCommentOrBlank(l)));
 		}
 
-		protected static void AssertRoundtripCode(string fileName, bool optimize = false, bool useDebug = false)
+		protected static void AssertRoundtripCode(string fileName, bool useRoslyn = false, bool optimize = false, bool useDebug = false)
 		{
 			var code = RemoveIgnorableLines(File.ReadLines(fileName));
-			AssemblyDefinition assembly = CompileLegacy(code, optimize, useDebug);
+			AssemblyDefinition assembly = useRoslyn ? CompileRoslyn(code, optimize, useDebug) : CompileLegacy(code, optimize, useDebug);
 
 			AstBuilder decompiler = new AstBuilder(new DecompilerContext(assembly.MainModule));
 			decompiler.AddAssembly(assembly);
@@ -83,6 +86,34 @@ namespace ICSharpCode.Decompiler.Tests
 				File.Delete(results.PathToAssembly);
 				results.TempFiles.Delete();
 			}
+		}
+		protected static AssemblyDefinition CompileRoslyn(string code, bool optimize, bool useDebug)
+		{
+			var compilation = CSharpCompilation.Create(
+				"RoslynAssembly-" + Guid.NewGuid(),
+				new[] { CSharpSyntaxTree.ParseText(code, new CSharpParseOptions(LanguageVersion.CSharp5)) },
+				new[] { typeof(object).Assembly, typeof(Enumerable).Assembly }
+					.Select(a => new MetadataFileReference(a.Location, MetadataReferenceProperties.Assembly)),
+				new CSharpCompilationOptions(
+					OutputKind.DynamicallyLinkedLibrary,
+					optimizationLevel: optimize ? OptimizationLevel.Debug : OptimizationLevel.Release,
+					allowUnsafe: true
+				)
+			);
+
+			var peStream = new MemoryStream();
+			var pdbStream = useDebug ? new MemoryStream() : null;
+
+			var emitResult = compilation.Emit(peStream, pdbStream: pdbStream);
+			if (!emitResult.Success)
+				throw new ApplicationException(string.Join(Environment.NewLine, emitResult.Diagnostics));
+			peStream.Position = 0;
+			if (useDebug)
+				pdbStream.Position = 0;
+			return AssemblyDefinition.ReadAssembly(
+				peStream,
+				new ReaderParameters { ReadSymbols = useDebug, SymbolStream = pdbStream }
+			);
 		}
 	}
 }

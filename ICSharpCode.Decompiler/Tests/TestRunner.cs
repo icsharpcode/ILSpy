@@ -16,17 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.CodeDom.Compiler;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
-using DiffLib;
-using ICSharpCode.Decompiler.Ast;
-using ICSharpCode.Decompiler.Tests.Helpers;
-using Microsoft.CSharp;
-using Mono.Cecil;
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -67,8 +56,8 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ExceptionHandling()
 		{
-			AssertRoundtripCode(@"..\..\Tests\ExceptionHandling.cs", optimize: false);
-			AssertRoundtripCode(@"..\..\Tests\ExceptionHandling.cs", optimize: false);
+			AssertRoundtripCode(@"..\..\Tests\ExceptionHandling.cs", useRoslyn: false, optimize: false);
+			AssertRoundtripCode(@"..\..\Tests\ExceptionHandling.cs", useRoslyn: true, optimize: false);
 		}
 		
 		[Test]
@@ -86,8 +75,8 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ControlFlowWithDebug()
 		{
-			AssertRoundtripCode(@"..\..\Tests\ControlFlow.cs", optimize: false, useDebug: true);
-			AssertRoundtripCode(@"..\..\Tests\ControlFlow.cs", optimize: false, useDebug: true);
+			AssertRoundtripCode(@"..\..\Tests\ControlFlow.cs", useRoslyn: false, optimize: false, useDebug: true);
+			AssertRoundtripCode(@"..\..\Tests\ControlFlow.cs", useRoslyn: true, optimize: false, useDebug: true);
 		}
 		
 		[Test]
@@ -182,10 +171,10 @@ namespace ICSharpCode.Decompiler.Tests
 		
 		static void TestFile(string fileName, bool useDebug = false)
 		{
-			AssertRoundtripCode(fileName, optimize: false, useDebug: useDebug);
-			AssertRoundtripCode(fileName, optimize: true, useDebug: useDebug);
-			AssertRoundtripCode(fileName, optimize: false, useDebug: useDebug);
-			AssertRoundtripCode(fileName, optimize: true, useDebug: useDebug);
+			AssertRoundtripCode(fileName, useRoslyn: false, optimize: false, useDebug: useDebug);
+			AssertRoundtripCode(fileName, useRoslyn: false, optimize: true, useDebug: useDebug);
+			AssertRoundtripCode(fileName, useRoslyn: true, optimize: false, useDebug: useDebug);
+			AssertRoundtripCode(fileName, useRoslyn: true, optimize: true, useDebug: useDebug);
 		}
 	}
 }
