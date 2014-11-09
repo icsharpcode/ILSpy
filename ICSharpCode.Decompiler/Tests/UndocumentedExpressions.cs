@@ -28,8 +28,7 @@ public class UndocumentedExpressions
 	
 	public static void MakeTypedRef(object o)
 	{
-		TypedReference tr = __makeref(o);
-		UndocumentedExpressions.AcceptTypedRef(tr);
+		UndocumentedExpressions.AcceptTypedRef(__makeref(o));
 	}
 	
 	private static void AcceptTypedRef(TypedReference tr)
