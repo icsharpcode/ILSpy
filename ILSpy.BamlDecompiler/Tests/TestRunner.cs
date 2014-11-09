@@ -106,7 +106,7 @@ namespace ILSpy.BamlDecompiler.Tests
 			Assert.IsNotNull(bamlStream);
 			XDocument document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream);
 
-			CodeAssert.AreEqual(File.ReadAllText(sourcePath), document.ToString());
+			CodeAssert.AreEqual(File.ReadAllText(sourcePath), document.ToString(), "XAML round-trip failed");
 		}
 		
 		Stream LoadBaml(Resource res, string name)

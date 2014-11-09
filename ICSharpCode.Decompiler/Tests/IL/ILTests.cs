@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.Tests
 			new Helpers.RemoveCompilerAttribute().Run(decompiler.SyntaxTree);
 			StringWriter output = new StringWriter();
 			decompiler.GenerateCode(new PlainTextOutput(output));
-			CodeAssert.AreEqual(expectedOutput, output.ToString());
+			CodeAssert.AreEqual(expectedOutput, output.ToString(), "Hand-written IL round-trip failed");
 		}
 	}
 }

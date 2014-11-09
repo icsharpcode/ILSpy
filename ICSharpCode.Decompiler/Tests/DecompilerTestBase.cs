@@ -58,7 +58,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 			StringWriter output = new StringWriter();
 			decompiler.GenerateCode(new PlainTextOutput(output));
-			CodeAssert.AreEqual(code, output.ToString());
+			CodeAssert.AreEqual(code, output.ToString(),
+				"Round-trip failed (" 
+			  + (useRoslyn ? "Roslyn" : "Legacy") + ", " 
+			  + (optimize ? "Optimized, " : "") 
+			  + (useDebug ? "with PDB" : "no PDB")
+			  + ")");
 		}
 
 		protected static AssemblyDefinition CompileLegacy(string code, bool optimize, bool useDebug)

@@ -10,11 +10,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 {
 	public class CodeAssert
 	{
-		public static void AreEqual(string input1, string input2)
+		public static void AreEqual(string input1, string input2, string context)
 		{
 			var diff = new StringWriter();
 			if (!Compare(input1, input2, diff)) {
-				Assert.Fail(diff.ToString());
+				Assert.Fail(context + ":\r\n" + diff.ToString());
 			}
 		}
 
