@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.Tests
 					.Select(a => new MetadataFileReference(a.Location, MetadataReferenceProperties.Assembly)),
 				new CSharpCompilationOptions(
 					OutputKind.DynamicallyLinkedLibrary,
-					optimizationLevel: optimize ? OptimizationLevel.Debug : OptimizationLevel.Release,
+					optimizationLevel: optimize ? OptimizationLevel.Release : OptimizationLevel.Debug,
 					allowUnsafe: true
 				)
 			);
