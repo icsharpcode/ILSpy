@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		{
 			bool modified = false;
 			modified |= TransformDecimalCtorToConstant(expr);
+			modified |= TransformDecimalStaticsToConstant(expr);
 			modified |= SimplifyLdcI4ConvI8(expr);
 			modified |= RemoveConvIFromArrayCreation(expr);
 			foreach(ILExpression arg in expr.Arguments) {
@@ -77,6 +78,37 @@ namespace ICSharpCode.Decompiler.ILAst
 			return false;
 		}
 		
+		// Roslyn emits 0m, 1m, etc as references to the static fields on Decimal.
+		static bool TransformDecimalStaticsToConstant(ILExpression expr)
+		{
+			FieldReference r;
+
+			if (!expr.Match(ILCode.Ldsfld, out r)
+			 || r.DeclaringType.Namespace != "System" 
+			 || r.DeclaringType.Name != "Decimal")
+				return false;
+
+			switch (r.Name) {
+				case "Zero":
+					expr.Code = ILCode.Ldc_Decimal;
+					expr.Operand = 0m;
+					expr.InferredType = r.DeclaringType;
+					return true;
+				case "One":
+					expr.Code = ILCode.Ldc_Decimal;
+					expr.Operand = 1m;
+					expr.InferredType = r.DeclaringType;
+					return true;
+				case "MinusOne":
+					expr.Code = ILCode.Ldc_Decimal;
+					expr.Operand = -1m;
+					expr.InferredType = r.DeclaringType;
+					return true;
+				default:
+					return false;
+			}
+		}
+
 		static bool SimplifyLdcI4ConvI8(ILExpression expr)
 		{
 			ILExpression ldc;
