@@ -1,0 +1,2015 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<doc>
+  <assembly>
+    <name>Microsoft.VisualStudio.Shell.Interop.9.0</name>
+  </assembly>
+  <members>
+    <member name="T:Microsoft.VisualStudio.Shell.IMenuCommandInvokeEx"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.IMenuCommandInvokeEx.Invoke(System.Object,System.IntPtr,Microsoft.VisualStudio.OLE.Interop.OLECMDEXECOPT)"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__FRAMESHOW3">
+      <summary>
+                    Adds members to <see cref="T:Microsoft.VisualStudio.Shell.Interop.__FRAMESHOW" /> enumeration, which specifies the state of a window frame.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__FRAMESHOW3.FRAMESHOW_WinActivated">
+      <summary>
+                    A window is activated (made visible).
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__GRADIENTTYPE2">
+      <summary>
+                    Adds members to <see cref="T:Microsoft.VisualStudio.Shell.Interop.__GRADIENTTYPE" /> enumeration, specifying types of gradients that can be used as backgrounds in VSPackages.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__GRADIENTTYPE2.VSGRADIENT_FILETAB_SELECTED">
+      <summary>
+                    Selected file tab.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__GRADIENTTYPE2.VSGRADIENT_FILETAB_HOT">
+      <summary>
+                    Hot file tab.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__PSFFILEID3">
+      <summary>
+                    Specifies Special Project Files that can be created or queried for with <see cref="M:Microsoft.VisualStudio.Shell.Interop.IVsProjectSpecialFiles.GetFile(System.Int32,System.UInt32,System.UInt32@,System.String@)" />.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__PSFFILEID3.PSFFILEID_AppXaml">
+      <summary>
+                    Get AppXaml files.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__PSFFILEID3.PSFFILEID_FIRST3">
+      <summary>
+                    Specifies the first PSFFIELDID3.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__SccStatus">
+      <summary>
+                    Specifies the state of a file in the source control system.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_INVALID">
+      <summary>
+                    The file is in an unknown state; the status could not be obtained.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_NOTCONTROLLED">
+      <summary>
+                    The file is not under source control.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_CONTROLLED">
+      <summary>
+                    The file is under source control.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_CHECKEDOUT">
+      <summary>
+                    The file is checked out by the current user at the specified path on the local disk.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_OUTOTHER">
+      <summary>
+                    The file is checked out by another user.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_OUTEXCLUSIVE">
+      <summary>
+                    The file is exclusively checked out.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_OUTMULTIPLE">
+      <summary>
+                    The file is checked out by more than one user.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_OUTOFDATE">
+      <summary>
+                    The file is not the most current version.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_DELETED">
+      <summary>
+                    The file was deleted from the source control database.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_LOCKED">
+      <summary>
+                    The file is locked; no more versions are allowed.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_MERGED">
+      <summary>
+                    The file is merged but not yet fixed or verified.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_SHARED">
+      <summary>
+                    The file is shared between projects in the source control database.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_PINNED">
+      <summary>
+                    The file is shared and is pinned to a specific version. No more changes can be made to the file in the source control database until the file is unpinned.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_MODIFIED">
+      <summary>
+                    The file was modified, broken, or violated.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_OUTBYUSER">
+      <summary>
+                    The file is checked out by the current user.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_NOMERGE">
+      <summary>
+                    The file can never be merged with. It does not have to be saved before a get operation.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_RESERVED_1">
+      <summary>
+                    This member is not intended to be used directly from your code because this member is specific to the source control provider. Team Foundation Client and the Microsoft Source Code Control Interface use this value to indicate that the file is excluded from source control.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_RESERVED_2">
+      <summary>
+                    This member is not intended to be used directly from your code because this member is specific to the source control provider. Team Foundation Client uses this value to indicate that the file has a pending edit.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__SccStatus.SCC_STATUS_RESERVED_3">
+      <summary>
+                    This member is not intended to be used directly from your code because this member is specific to the source control provider. Team Foundation Client uses this value to indicate that the file is located in the current workspace.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSCREATEPROJFLAGS3">
+      <summary>
+                    Controls how a project is created or opened.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSCREATEPROJFLAGS3.CPF_SKIP_SOLUTION_ACCESS_CHECK">
+      <summary>
+                    Do not check if the containing solution is accessible.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSCREATESOLUTIONFLAGS3">
+      <summary>
+                    Controls how a new solution is created.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSCREATESOLUTIONFLAGS3.CSF_SKIP_SOLUTION_ACCESS_CHECK">
+      <summary>
+                    Do not check if the solution folder is accessible.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSDBGLAUNCHFLAGS3">
+      <summary>
+                    Specifies flags that control how the debugger is started.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSDBGLAUNCHFLAGS3.DBGLAUNCH_WaitForEvent">
+      <summary>
+                    Launch the debugger when an event is fired.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSDBGLAUNCHFLAGS4"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSDBGLAUNCHFLAGS4.DBGLAUNCH_UseDefaultBrowser"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSFPROPID3">
+      <summary>
+                    Provides additional members for the <see cref="T:Microsoft.VisualStudio.Shell.Interop.__VSFPROPID" /> enumeration.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSFPROPID3.VSFPROPID_MDIContainerID">
+      <summary>
+                    I4 ID of the container (tab) group for the MDI window.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSFPROPID3.VSFPROPID_NotifyOnActivate">
+      <summary>
+                    BOOL Send FRAMESHOW_WinActivated notification when a window is activated.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSFPROPID3.VSFPROPID3_FIRST">
+      <summary>
+                    The first ID.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3">
+      <summary>
+                    Adds members to <see cref="T:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID" /> enumeration, specifying property identifies for window, document, and tool window frames.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3.VSHPROPID_TargetFrameworkVersion">
+      <summary>
+                    UI4   Target Framework version.  High word is major version, Low word is minor version.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3.VSHPROPID_WebReferenceSupported">
+      <summary>
+                    VT_BOOL  the project support for web references.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3.VSHPROPID_ServiceReferenceSupported">
+      <summary>
+                    VT_BOOL Project support for service references.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3.VSHPROPID_SupportsHierarchicalUpdate">
+      <summary>
+                    BOOL set to TRUE to enable hierarchical update.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3.VSHPROPID_SupportsNTierDesigner">
+      <summary>
+                    BOOL set this to TRUE to enable the N-Tier designer.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3.VSHPROPID_SupportsLinqOverDataSet">
+      <summary>
+                    BOOL set  to TRUE to enable the Linq Over DataSet.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3.VSHPROPID_ProductBrandName"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3.VSHPROPID_RefactorExtensions"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3.VSHPROPID_IsDefaultNamespaceRefactorNotify"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSHPROPID3.VSHPROPID_FIRST3">
+      <summary>
+                    The first ID.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryRootHandle">
+      <summary>
+                    Represents a registry root handle.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryRootHandle.RegHandle_Invalid">
+      <summary>
+                    Invalid value, used for initializing parameters.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryRootHandle.RegHandle_CurrentUser">
+      <summary>
+                    HKEY_CURRENT_USER
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryRootHandle.RegHandle_LocalMachine">
+      <summary>
+                    HKEY_LOCAL_MACHINE
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryType">
+      <summary>
+                    Represents a registry type setting.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryType.RegType_UserSettings">
+      <summary>
+                    Per-user settings.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryType.RegType_Configuration">
+      <summary>
+                    Per-installation (computer-wide) settings.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryType.RegType_PrivateConfig">
+      <summary>
+                    Reserved for future use.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryType.RegType_SessionSettings">
+      <summary>
+                    Reserved for future use.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryType.RegType_NewUserSettings">
+      <summary>
+                    Reserved for future use.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSPROPID3">
+      <summary>
+                    Provides additional members for the <see cref="T:Microsoft.VisualStudio.Shell.Interop.__VSPROPID" /> enumeration. Identifies property setting for a solution.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSPROPID3.VSPROPID_IsSavingOnClose">
+      <summary>
+                    BOOLEAN: true if the solution is being saved when closing.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSPROPID3.VSPROPID_FIRST3">
+      <summary>
+                    Specifies the first VSPROPID.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSQuerySaveFlags2">
+      <summary>
+                    This enumeration is an extension of <see cref="T:Microsoft.VisualStudio.Shell.Interop.tagVSQuerySaveFlags" />, and specifies additional flags.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSQuerySaveFlags2.QSF_DetectAnyChangedFile">
+      <summary>
+                    Check if any file changed.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSSLNOPENOPTIONS3">
+      <summary>
+                    Provides additional members for the <see cref="T:Microsoft.VisualStudio.Shell.Interop.__VSSLNOPENOPTIONS" /> enumeration.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSLNOPENOPTIONS3.SLNOPENOPT_SkipSolutionAccessCheck">
+      <summary>
+                    Do not check if the folder containing the solution can be modified.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSSPROPID3">
+      <summary>
+                    Provides additional members for the <see cref="T:Microsoft.VisualStudio.Shell.Interop.__VSSPROPID" /> enumeration.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSPROPID3.VSSPROPID_CommonAppDataDir">
+      <summary>
+                    Common (all users) application data directory.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSPROPID3.VSSPROPID_FIRST3">
+      <summary>
+                    First item.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2">
+      <summary>
+                    Provides additional members for the <see cref="T:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX" /> enumeration.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_SPLASHSCREEN_BORDER">
+      <summary>
+                    Splash screen border
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_FILETAB_SELECTED_GRADIENTTOP">
+      <summary>
+                    Top of selected file tab gradient.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_FILETAB_SELECTED_GRADIENTBOTTOM">
+      <summary>
+                    Bottom of selected file tab gradient
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_FILETAB_HOT_GRADIENTTOP">
+      <summary>
+                    Top of hot file tab gradient
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_FILETAB_HOT_GRADIENTBOTTOM">
+      <summary>
+                    Bottom of hot file tab gradient
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_FILETAB_DOCUMENTBORDER_SHADOW">
+      <summary>
+                    File tab document border shadow
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_FILETAB_DOCUMENTBORDER_BACKGROUND">
+      <summary>
+                    File tab document border background
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_FILETAB_DOCUMENTBORDER_HIGHLIGHT">
+      <summary>
+                    File tab document border highlight
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_BRANDEDUI_TITLE">
+      <summary>
+                    Branded UI title
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_BRANDEDUI_BORDER">
+      <summary>
+                    Branded UI border
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_BRANDEDUI_TEXT">
+      <summary>
+                    Branded UI text
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_BRANDEDUI_BACKGROUND">
+      <summary>
+                    Branded UI background
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_BRANDEDUI_FILL">
+      <summary>
+                    Branded UI fill
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VSSYSCOLOREX2.VSCOLOR_LASTEX2">
+      <summary>
+                    Last enumeration item
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.__VsWebProxyState">
+      <summary>
+                    Specifies how credentials are attached to a web proxy.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsWebProxyState.VsWebProxyState_NoCredentials">
+      <summary>
+                    Initial state
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsWebProxyState.VsWebProxyState_DefaultCredentials">
+      <summary>
+                    Default credentials attached to proxy
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsWebProxyState.VsWebProxyState_CachedCredentials">
+      <summary>
+                    Cached credentials attached to proxy
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsWebProxyState.VsWebProxyState_PromptForCredentials">
+      <summary>
+                    Prompt user for credentials
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.__VsWebProxyState.VsWebProxyState_Abort">
+      <summary>
+                    Terminate the current operation
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop._DEBUG_LAUNCH_OPERATION3">
+      <summary>
+                    Provides additional members to the <see cref="T:Microsoft.VisualStudio.Shell.Interop.DEBUG_LAUNCH_OPERATION" /> enumeration.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop._DEBUG_LAUNCH_OPERATION3.DLO_LaunchBrowser">
+      <summary>
+                    Lounch web browser
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop._LIBCAT_HIERARCHYTYPE2">
+      <summary>
+                    Provides additional members for the <see cref="T:Microsoft.VisualStudio.Shell.Interop._LIBCAT_HIERARCHYTYPE" /> enumeration.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop._LIBCAT_HIERARCHYTYPE2.LCHT_EXTENSIONMEMBERS">
+      <summary>
+                    Extension members hierarchy element type
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop._OLELOOP2"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop._OLELOOP2.oleloopModelessFormWithHandles"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop._OLELOOP2.oleloopModelessFormWithHandlesNoIdle"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop._OLELOOP2.oleloopModalFormWithHandles"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop._OLELOOP2.oleloopModalFormWithHandlesNoIdle"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.ENC_ACTIVE_STATEMENT"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_ACTIVE_STATEMENT.ASINFO"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_ACTIVE_STATEMENT.filename"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_ACTIVE_STATEMENT.id"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_ACTIVE_STATEMENT.methodToken"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_ACTIVE_STATEMENT.posType"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_ACTIVE_STATEMENT.tsPosition"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.ENC_BUILD_STATE"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_BUILD_STATE.ENC_NOT_MODIFIED"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_BUILD_STATE.ENC_NONCONTINUABLE_ERRORS"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_BUILD_STATE.ENC_COMPILE_ERRORS"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_BUILD_STATE.ENC_APPLY_READY"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.ENC_EXCEPTION_SPAN"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_EXCEPTION_SPAN.id"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_EXCEPTION_SPAN.methodToken"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_EXCEPTION_SPAN.tsPosition"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.ENC_REASON"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_REASON.ENCReason_Precompile"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_REASON.ENCReason_Rebuild"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.ENC_RETURNCODES"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_RETURNCODES.S_ENC_NOT_SUPPORTED"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.ENC_RETURNCODES.E_STATEMENT_DELETED"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.enum_ASINFO"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.enum_ASINFO.ASINFO_NONE"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.enum_ASINFO.ASINFO_LEAF"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.enum_ASINFO.ASINFO_MIDSTATEMENT"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.enum_ASINFO.ASINFO_NONUSER"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.enum_ENC_BREAKSTATE_REASON"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.enum_ENC_BREAKSTATE_REASON.ENC_BREAK_NORMAL"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.enum_ENC_BREAKSTATE_REASON.ENC_BREAK_EXCEPTION"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.enum_POSITION_TYPE"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.enum_POSITION_TYPE.TEXT_POSITION_ACTIVE_STATEMENT"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.enum_POSITION_TYPE.TEXT_POSITION_NEARBY_STATEMENT"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.enum_POSITION_TYPE.TEXT_POSITION_NONE"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies">
+      <summary>
+                    Enumerator for system assemblies. 
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies.Clone(Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies@)">
+      <summary>
+                    Clones this <see cref="T:Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies" /> interface by creating another instance.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="ppIEnumComponents">
+                    Reference to the cloned interface <see cref="T:Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies" />.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies.Count(System.UInt32@)">
+      <summary>
+                    Gets the number of enumerated system assemblies.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pCount">
+                    The number of system assemblies.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies.Next(System.UInt32,System.String[],System.UInt32@)">
+      <summary>
+                    Retrieves the next system assembly.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="celt">
+                    The number of assemblies to return.
+                </param>
+      <param name="rgAssemblies">
+                    A reference to the returned assemblies.
+                </param>
+      <param name="pceltFetched">
+                    Number of system assemblies returned.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies.Reset">
+      <summary>
+                    Resets the collection of assemblies to the first one.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies.Skip(System.UInt32)">
+      <summary>
+                    Moves ahead in the list of system assemblies.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="celt">
+                    The number of assemblies to skip ahead.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks">
+      <summary>
+                    Enumerator for supported versions of the framework.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks.Clone(Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks@)">
+      <summary>
+                    Clones this <see cref="T:Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks" /> interface by creating another instance.
+                </summary>
+      <param name="ppIEnumComponents">
+                    Reference to the cloned interface <see cref="T:Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks" />.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks.Count(System.UInt32@)">
+      <summary>
+                    Gets the number of supported framework versions.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pCount">
+                    The number of supported versions of the framework.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks.Next(System.UInt32,System.UInt32[],System.UInt32@)">
+      <summary>
+                    Retrieves supported target frameworks.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="celt">
+                    The number of target framework versions.
+                </param>
+      <param name="rgFrameworks">
+                    A reference to the returned target frameworks.
+                </param>
+      <param name="pceltFetched">
+                    The number of target frameworks returned.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks.Reset">
+      <summary>
+                    Resets the collection of target frameworks to the first one.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks.Skip(System.UInt32)">
+      <summary>
+                    Moves ahead in the enumeration of target frameworks.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="celt">
+                    The number of elements to skip ahead.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IEnumVsENCRebuildableProjectCfgs"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumVsENCRebuildableProjectCfgs.Clone(Microsoft.VisualStudio.Shell.Interop.IEnumVsENCRebuildableProjectCfgs@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumVsENCRebuildableProjectCfgs.GetCount(System.UInt32@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumVsENCRebuildableProjectCfgs.Next(System.UInt32,Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg[],System.UInt32@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumVsENCRebuildableProjectCfgs.Reset"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IEnumVsENCRebuildableProjectCfgs.Skip(System.UInt32)"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.ILocalRegistry4">
+      <summary>
+                    Establishes a local registry relative to the Visual Studio registry hive. You can get an instance of the interface through the <see cref="T:Microsoft.VisualStudio.Shell.Interop.SLocalRegistry" /> (SID_SLocalRegistry) service.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.ILocalRegistry4.GetLocalRegistryRootEx(System.UInt32,System.UInt32@,System.String@)">
+      <summary>
+                    Returns the local registry root.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="dwRegType">
+                    [in] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryType" /> value that specifies the registry hive.
+                </param>
+      <param name="pdwRegRootHandle">
+                    [in] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.__VsLocalRegistryRootHandle" /> value that specifies the registry root handle.
+                </param>
+      <param name="pbstrRoot">
+                    [out] Pointer to a string that contains the local registry root.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.ILocalRegistry4.RegisterClassObject(System.Guid@,System.UInt32@)">
+      <summary>
+                    Loads a class factory and registers it with COM.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="rclsid">
+                    The CLSID to register.
+                </param>
+      <param name="pdwCookie">
+                    Reference to the object.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.ILocalRegistry4.RegisterInterface(System.Guid@)">
+      <summary>
+                    Registers an interface for marshaling by using a locally registered proxy.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="riid">
+                    ID of the interface to register.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.ILocalRegistry4.RevokeClassObject(System.UInt32)">
+      <summary>
+                    Revokes a registered class object.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="dwCookie">
+                    The class object to revoke.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IOleComponent2">
+      <summary>
+                    Enables components to participate in message processing while they are waiting for handles.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.FContinueMessageLoop(System.UInt32,System.IntPtr,Microsoft.VisualStudio.OLE.Interop.MSG[])">
+      <param name="uReason"></param>
+      <param name="pvLoopData"></param>
+      <param name="pMsgPeeked"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.FDoIdle(System.UInt32)">
+      <param name="grfidlef"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.FPreTranslateMessage(Microsoft.VisualStudio.OLE.Interop.MSG[])">
+      <param name="pMsg"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.FQueryTerminate(System.Int32)">
+      <param name="fPromptUser"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.FReserved1(System.UInt32,System.UInt32,System.IntPtr,System.IntPtr)">
+      <param name="dwReserved"></param>
+      <param name="message"></param>
+      <param name="wParam"></param>
+      <param name="lParam"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.GetWaitHandlesAndTimeout(System.IntPtr[]@,System.UInt32@,System.UInt32@,System.IntPtr)">
+      <summary>
+                    When overridden in a derived class, returns the time-out and the list of handles on which this component is waiting.
+                </summary>
+      <returns>
+                    An error code (HRESULT) value that indicates the status of the operation.
+                </returns>
+      <param name="aHandles">
+                    When this method returns, contains an array of object handles for which this component is waiting, passed by reference. Must return at least one and no more than 64 handles. Must not return duplicate handles.
+                </param>
+      <param name="pnHandles">
+                    When this method returns, contains the number of handles in <paramref name="aHandles" />.
+                </param>
+      <param name="pdwTimeout">
+                    When this method returns, contains the time-out in milliseconds, or 0xFFFFFFFF for an infinite time-out.
+                </param>
+      <param name="pvLoopData">
+                    The object that was passed in <paramref name="pvLoopData" /> when <see cref="M:Microsoft.VisualStudio.OLE.Interop.IOleComponentManager.FPushMessageLoop(System.UInt32,System.UInt32,System.IntPtr)" /> was called for this component.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.HwndGetWindow(System.UInt32,System.UInt32)">
+      <param name="dwWhich"></param>
+      <param name="dwReserved"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.OnActivationChange(Microsoft.VisualStudio.OLE.Interop.IOleComponent,System.Int32,Microsoft.VisualStudio.OLE.Interop.OLECRINFO[],System.Int32,Microsoft.VisualStudio.OLE.Interop.OLECHOSTINFO[],System.UInt32)">
+      <param name="pic"></param>
+      <param name="fSameComponent"></param>
+      <param name="pcrinfo"></param>
+      <param name="fHostIsActivating"></param>
+      <param name="pchostinfo"></param>
+      <param name="dwReserved"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.OnAppActivate(System.Int32,System.UInt32)">
+      <param name="fActive"></param>
+      <param name="dwOtherThreadID"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.OnEnterState(System.UInt32,System.Int32)">
+      <param name="uStateID"></param>
+      <param name="fEnter"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.OnHandleSignaled(System.UInt32,System.IntPtr,System.Boolean@)">
+      <summary>
+                    When overridden in a derived class, enables the component to respond to a signal on a wait handle.
+                </summary>
+      <returns>
+                    An error code (HRESULT) value that indicates the status of the operation.
+                </returns>
+      <param name="nHandle">
+                    The zero-based index of the handle that was signaled.
+                </param>
+      <param name="pvLoopData">
+                    The object that was passed in <paramref name="pvLoopData" /> when <see cref="M:Microsoft.VisualStudio.OLE.Interop.IOleComponentManager.FPushMessageLoop(System.UInt32,System.UInt32,System.IntPtr)" /> was called for this component.
+                </param>
+      <param name="pfContinue">
+                    When this method returns, contains true to have this component re-enter the message loop, or false to exit the message loop immediately.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.OnLoseActivation"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.OnTimeout(System.IntPtr,System.Boolean@)">
+      <summary>
+                    When overridden in a derived class, enables the component to respond to a time-out on the message loop.
+                </summary>
+      <returns>
+                    An error code (HRESULT) value that indicates the status of the operation.
+                </returns>
+      <param name="pvLoopData">
+                    The object that was passed in <paramref name="pvLoopData" /> when <see cref="M:Microsoft.VisualStudio.OLE.Interop.IOleComponentManager.FPushMessageLoop(System.UInt32,System.UInt32,System.IntPtr)" /> was called for this component.
+                </param>
+      <param name="pfContinue">true to have this component re-enter the message loop; false to exit the message loop immediately.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IOleComponent2.Terminate"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsComponentSelectorDlg3"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsComponentSelectorDlg3.ComponentSelectorDlg3(System.UInt32,Microsoft.VisualStudio.Shell.Interop.IVsComponentUser,System.String,System.String,System.Guid@,System.Guid@,System.String,System.UInt32,Microsoft.VisualStudio.Shell.Interop.VSCOMPONENTSELECTORTABINIT[],System.String,System.String@,System.UInt32)">
+      <summary>
+                    Displays Browse … Dialog and returns selected components.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="grfFlags">
+                    Component selection flags taken from the VSCOMPSELFLAGS enumerator.
+                </param>
+      <param name="pUser">
+                    Interface on which AddComponent will be called.
+                </param>
+      <param name="lpszDlgTitle">
+                    Dialog box caption (null == "Select component").
+                </param>
+      <param name="lpszHelpTopic">
+                    F1 help topic (null == "VS.ComponentPicker")
+                </param>
+      <param name="rguidShowOnlyThisTab">
+                    Tab to show exclusively.
+                </param>
+      <param name="rguidStartOnThisTab">
+                    Tab to show when the dialog opens
+                </param>
+      <param name="pszMachineName">
+                    Enumerate COM components on this computer.
+                </param>
+      <param name="cTabInitializers">
+                    Number of tab initialization structs in <paramref name="prgcstiTabInitializers" />.
+                </param>
+      <param name="prgcstiTabInitializers">
+                    Tab initialization information
+                </param>
+      <param name="pszBrowseFilters">
+                    List of filters to use in 'Browse…' dialog.
+                </param>
+      <param name="pbstrBrowseLocation">
+                    Directory (initial/return value) to start the 'Browse…' dialog in.
+                </param>
+      <param name="targetVersion">
+                    Target framework version
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsComponentSelectorDlg3.ComponentSelectorDlg4(System.UInt32,Microsoft.VisualStudio.Shell.Interop.IVsComponentUser,System.UInt32,System.IntPtr[],System.String,System.String,System.UInt32@,System.UInt32@,System.UInt32,Microsoft.VisualStudio.Shell.Interop.VSCOMPONENTSELECTORTABINIT[],System.Guid@,System.String,System.String@,System.UInt32)">
+      <summary>
+                    Displays Browse … Dialog and returns selected components.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="grfFlags">
+                    Component selection flags taken from the VSCOMPSELFLAGS2 enumerator.
+                </param>
+      <param name="pUser">
+                    Interface on which AddComponent will be called.
+                </param>
+      <param name="cComponents">
+                    Number of components in the <paramref name="rgpcsdComponents" /> array.
+                </param>
+      <param name="rgpcsdComponents">
+                    Prepopulation of Selected Components. Can be null. User has the ability to remove any of these components from the list.
+                </param>
+      <param name="lpszDlgTitle">
+                    Dialog box caption (null == "Select component").
+                </param>
+      <param name="lpszHelpTopic">
+                    F1 help topic (null == "VS.ComponentPicker")
+                </param>
+      <param name="pxDlgSize">
+                    0 to use default.
+                </param>
+      <param name="pyDlgSize">
+                    0 to use default.
+                </param>
+      <param name="cTabInitializers">
+                    Number of tabs.
+                </param>
+      <param name="rgcstiTabInitializers">
+                    Show order of tabs and their initialization info.
+                </param>
+      <param name="pguidStartOnThisTab">
+                    Tab to show when the dialog starts up
+                </param>
+      <param name="pszBrowseFilters">
+                    List of filters to use in 'Browse…'.
+                </param>
+      <param name="pbstrBrowseLocation">
+                    Directory (initial/return value) to start the 'Browse…' dialog in.
+                </param>
+      <param name="targetVersion"></param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsEditorFactory2">
+      <summary>
+                    Creates instances of document view objects and of data objects.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsEditorFactory2.RetargetCodeOrDesignerToOpen(System.String,System.Guid@,Microsoft.VisualStudio.Shell.Interop.IVsHierarchy,System.UInt32,System.UInt32@,System.UInt32@,System.Guid@,System.String@,System.Guid@)">
+      <summary>
+                    Re-targets the item opened by View commands.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pszMkDocumentSource">
+                    Original document to open
+                </param>
+      <param name="rguidLogicalViewSource">
+                    A view specified by a <see cref="T:Microsoft.VisualStudio.Shell.Interop.LogicalViewID" />  value.
+                </param>
+      <param name="pvHier">
+                    A <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsHierarchy" /> hierarchy object.
+                </param>
+      <param name="itemidSource">
+                    A DWORD uniquely identifying the source node within a <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsHierarchy" />.
+                </param>
+      <param name="pitemidTarget">
+                    A DWORD uniquely identifying the target node within a <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsHierarchy" />.
+                </param>
+      <param name="pgrfEditorFlags">
+                    A <see cref="T:Microsoft.VisualStudio.Shell.Interop.__VSSPECIFICEDITORFLAGS" /> value specifying editor options.
+                </param>
+      <param name="pguidEditorTypeTarget">
+                    A GUID specifying the new target editor type.
+                </param>
+      <param name="pbstrPhysicalViewTarget">
+                    A string specifying the physical view target.
+                </param>
+      <param name="pguidLogicalViewTarget">
+                    A GUID specifying the logical view target.s
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg.BelongToProject(System.String,Microsoft.VisualStudio.Shell.Interop.ENC_REASON,System.Int32)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg.CancelENC"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg.ENCComplete(System.Int32)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg.ENCRebuild(System.Object,System.Object@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg.ENCRelink(System.Object)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg.SetENCProjectBuildOption(System.Guid@,System.String)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg.StartDebugging"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg.StopDebugging"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.BuildForEnc(System.Object)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.EncApplySucceeded(System.Int32)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.EnterBreakStateOnPE(System.UInt32,Microsoft.VisualStudio.Shell.Interop.ENC_ACTIVE_STATEMENT[],System.UInt32)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.ExitBreakStateOnPE"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.GetCurrentActiveStatementPosition(System.UInt32,Microsoft.VisualStudio.TextManager.Interop.TextSpan[])"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.GetCurrentExceptionSpanPosition(System.UInt32,Microsoft.VisualStudio.TextManager.Interop.TextSpan[])"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.GetENCBuildState(Microsoft.VisualStudio.Shell.Interop.ENC_BUILD_STATE[])"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.GetExceptionSpanCount(System.UInt32@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.GetExceptionSpans(System.UInt32,Microsoft.VisualStudio.Shell.Interop.ENC_EXCEPTION_SPAN[],System.UInt32@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.GetPEBuildTimeStamp(Microsoft.VisualStudio.OLE.Interop.FILETIME[])"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.GetPEidentity(System.Guid[],System.String[])"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.StartDebuggingPE"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsENCRebuildableProjectCfg2.StopDebuggingPE"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsFileUpgrade2">
+      <summary>
+                    Performs file upgrades for specified versions as part of a project upgrade.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsFileUpgrade2.UpgradeFile(System.String,System.String,System.Int32,Microsoft.VisualStudio.Shell.Interop.IVsUpgradeLogger,System.UInt16,System.UInt16,System.UInt16,System.UInt16,System.Int32@)">
+      <summary>
+                    Upgrade project with a specified file.
+                </summary>
+      <param name="bstrProjectName">
+                    [in] String containing the name of the project the file belongs to.
+                </param>
+      <param name="bstrFileName">
+                    [in] String containing the full path and name of the file to upgrade.
+                </param>
+      <param name="bNoBackup">
+                    [in] Boolean. If true, no backup file is created.
+                </param>
+      <param name="pLogger">
+                    [in] Pointer to a <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeLogger" /> interface to use for logging upgrade actions.
+                </param>
+      <param name="oldToolsVersionMajor">
+                    [in] Major version of old tool.
+                </param>
+      <param name="oldToolsVersionMinor">
+                    [in] Minor version of old tool.
+                </param>
+      <param name="newToolsVersionMajor">
+                    [in] Major version of new tool.
+                </param>
+      <param name="newToolsVersionMinor">
+                    [in] Minor version of new tool.
+                </param>
+      <param name="pUpgradeRequired">
+                    [out] Boolean. Set to true if the upgrade succeeded.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsFileUpgrade2.UpgradeFile_CheckOnly(System.String,System.String,System.Int32,Microsoft.VisualStudio.Shell.Interop.IVsUpgradeLogger,System.UInt16,System.UInt16,System.UInt16,System.UInt16,System.Int32@)">
+      <summary>
+                    Check if a specified tool can be upgraded.
+                </summary>
+      <param name="bstrProjectName">
+                    [in] String containing the name of the project the file belongs to.
+                </param>
+      <param name="bstrFileName">
+                    [in] String containing the full path and name of the file to upgrade.
+                </param>
+      <param name="bNoBackup">
+                    [in] Boolean. If true, no backup file is created.
+                </param>
+      <param name="pLogger">
+                    [in] Pointer to a <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeLogger" /> interface to use for logging upgrade actions.
+                </param>
+      <param name="oldToolsVersionMajor">
+                    [in] Major version of old tool.
+                </param>
+      <param name="oldToolsVersionMinor">
+                    [in] Minor version of old tool.
+                </param>
+      <param name="newToolsVersionMajor">
+                    [in] Major version of new tool.
+                </param>
+      <param name="newToolsVersionMinor">
+                    [in] Minor version of new tool.
+                </param>
+      <param name="pUpgradeRequired">
+                    [out] Boolean. Set to true if the upgrade is possible.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsFindSymbol2">
+      <summary>
+                    Implements the search done by the FindSymbol menu command, with support for multiple frameworks. 
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsFindSymbol2.DoSearch(System.Guid@,System.UInt32,Microsoft.VisualStudio.Shell.Interop.VSOBSEARCHCRITERIA2[])">
+      <summary>
+                    Performs the search.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="guidSymbolScope">
+                    [in] A GUID specifying the search scope or the GUID of a library.
+                </param>
+      <param name="dwSubID">
+                    [in] Scope subID. Must be zero unless <paramref name="guidSymbolScope" /> is GUID_VsSymbolScope_Frameworks.
+                </param>
+      <param name="pobSrch">
+                    [in] Bit flags indicating search options. Constructed using values from the <see cref="T:Microsoft.VisualStudio.Shell.Interop._VSOBSEARCHOPTIONS2" /> enumeration.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsFindSymbol2.GetUserOptions(System.Guid@,System.UInt32@,Microsoft.VisualStudio.Shell.Interop.VSOBSEARCHCRITERIA2[])">
+      <summary>
+                    Returns the search options.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pguidScope">
+                    [out] A GUID specifying the search scope.
+                </param>
+      <param name="pdwSubID">
+                    [out] Scope subID. Must be zero unless <paramref name="guidSymbolScope" /> is GUID_VsSymbolScope_Frameworks.
+                </param>
+      <param name="pobSrch">
+                    [out] Bit flags indicating search options. Constructed using values from the <see cref="T:Microsoft.VisualStudio.Shell.Interop._VSOBSEARCHOPTIONS2" /> enumeration.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsFindSymbol2.SetUserOptions(System.Guid@,System.UInt32,Microsoft.VisualStudio.Shell.Interop.VSOBSEARCHCRITERIA2[])">
+      <summary>
+                    Sets search options.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="guidScope">
+                    [in] A GUID specifying the search scope.
+                </param>
+      <param name="dwSubID">
+                    [in] Scope subID. Must be zero unless <paramref name="guidSymbolScope" /> is GUID_VsSymbolScope_Frameworks.
+                </param>
+      <param name="pobSrch">
+                    [in] Bit flags indicating search options. Constructed using values from the <see cref="T:Microsoft.VisualStudio.Shell.Interop._VSOBSEARCHOPTIONS2" /> enumeration.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsFindSymbolEvents2">
+      <summary>
+                    Outgoing interface for events, such as changes in search options, related to the Find Symbol command, with support for multiple frameworks. 
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsFindSymbolEvents2.OnUserOptionsChanged(System.Guid@,System.UInt32,Microsoft.VisualStudio.Shell.Interop.VSOBSEARCHCRITERIA2[])">
+      <summary>
+                    Defines the method called when user search options change.
+                </summary>
+      <param name="guidSymbolScope">
+                    [in] A GUID specifying the search scope or the GUID of a library.
+                </param>
+      <param name="dwSubID">
+                    [in] Scope subID. Must be zero unless <paramref name="guidSymbolScope" /> is GUID_VsSymbolScope_Frameworks.
+                </param>
+      <param name="pobSrch">
+                    [in] Bit flags indicating search options. Constructed using values from the <see cref="T:Microsoft.VisualStudio.Shell.Interop._VSOBSEARCHOPTIONS2" /> enumeration.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsLaunchPad3"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsLaunchPad3.ExecCommandWithElevationIfRequired(System.String,System.String,System.String)"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildHostObject">
+      <summary>
+                    Enables the project system to communicate with MSBuild host objects.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildHostObject.BeginBuild">
+      <summary>
+                    Begins a build.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildHostObject.Close">
+      <summary>
+                    Closes a build host object.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildHostObject.EndBuild">
+      <summary>
+                    Ends a build.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildHostObject.Init(Microsoft.VisualStudio.Shell.Interop.IVsHierarchy,Microsoft.VisualStudio.OLE.Interop.IServiceProvider)">
+      <summary>
+                    Initializes a build host object.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pHier">
+                    [in] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsHierarchy" /> interface to the project.
+                </param>
+      <param name="pSP">
+                    [in] A <see cref="T:Microsoft.VisualStudio.OLE.Interop.IServiceProvider" /> interface to the service provider.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildTaskFileManager">
+      <summary>
+                    Enables MSBuild to use memory instead of disk files for Intellisense builds.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildTaskFileManager.Delete(System.String)">
+      <summary>
+                    Deletes a file on disk and removes it from the RDT.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code. This method returns <see cref="F:Microsoft.VisualStudio.VSConstants.E_FAIL" /> if the document is in the RDT and something else has a lock on it which cannot be removed automatically.
+                </returns>
+      <param name="wszFilename">
+                    [in] The name of the file to delete.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildTaskFileManager.Exists(System.String,System.Int32,System.Int32@)">
+      <summary>
+                    Determines if a file exists in the RDT or on disk.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="wszFilename">
+                    [in] The name of the file.
+                </param>
+      <param name="fOnlyCheckOnDisk">
+                    [in] A Boolean value. Set to true to restrict the check to files on disk.
+                </param>
+      <param name="pfExists">
+                    [out] A Boolean value. Set to true if the file exists.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildTaskFileManager.GetFileContents(System.String,System.String@)">
+      <summary>
+                    Gets the contents of a specified file.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="wszFilename">
+                    [in] Name of the file to get.
+                </param>
+      <param name="pbstrFileContents">
+                    [out] The contents of the file.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildTaskFileManager.GetFileDocData(System.String,System.IntPtr@)">
+      <summary>
+                    Gets the DocData object for a file registered in the RDT.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code. If the specified file is not registered in the RDT, it returns NULL.
+                </returns>
+      <param name="wszFilename">
+                    [in] The name of the file.
+                </param>
+      <param name="ppunkDocData">
+                    [out] A pointer to the DocData object interface.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildTaskFileManager.GetFileLastChangeTime(System.String,Microsoft.VisualStudio.OLE.Interop.FILETIME[])">
+      <summary>
+                    Gets the time of the last change to a file.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="wszFilename">
+                    [in] The name of the file.
+                </param>
+      <param name="pFileTime">
+                    [out] A <see cref="T:Microsoft.VisualStudio.OLE.Interop.FILETIME" /> value specifying the last change time.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildTaskFileManager.IsRealBuildOperation(System.Int32@)">
+      <summary>
+                    Determines if a build is real or for design-time Intellisense.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pfIsRealBuild">
+                    [out] A Boolean value; true if the build is a real build, otherwise 6 if the build is for design-time generation for Intellisense.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsMSBuildTaskFileManager.PutGeneratedFileContents(System.String,System.String)">
+      <summary>
+                    Puts the contents of a generated file into an in-memory buffer and registers it in the RDT.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                
+                    Returns <see cref="F:Microsoft.VisualStudio.VSConstants.E_FAIL" /> if the document is in the RDT and something else has a lock on it which cannot be removed automatically.
+                </returns>
+      <param name="wszFilename"></param>
+      <param name="wszFileContents"></param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsOutputWindowPane2">
+      <summary>
+                    Writes a string to the output window, and also creates an entry in the Error List.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsOutputWindowPane2.OutputTaskItemStringEx2(System.String,Microsoft.VisualStudio.Shell.Interop.VSTASKPRIORITY,Microsoft.VisualStudio.Shell.Interop.VSTASKCATEGORY,System.String,System.Int32,System.String,System.UInt32,System.UInt32,System.String,System.String,System.String)">
+      <summary>
+                    Adds a string to the Output window and a corresponding item to the error list.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pszOutputString">
+                    [in] Output string of the task item.
+                </param>
+      <param name="nPriority">
+                    [in] Priority of the task item whose values are taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.VSTASKPRIORITY" /> enumeration.
+                </param>
+      <param name="nCategory">
+                    [in] Category of the task item whose values are taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.VSTASKCATEGORY" /> enumeration.
+                </param>
+      <param name="pszSubcategory">
+                    [in] Subcategory of the task.
+                </param>
+      <param name="nBitmap">
+                    [in] Bitmap of the task item whose values are taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop._vstaskbitmap" /> enumeration.
+                </param>
+      <param name="pszFileName">
+                    [in] Name of the file containing <paramref name="pszOutputString" />.
+                </param>
+      <param name="nLineNum">
+                    [in] Line number in <paramref name="pszFilename" />.
+                </param>
+      <param name="nColumn">
+                    [in] Zero-based column in <paramref name="pszFilename" />.
+                </param>
+      <param name="pszProjectUniqueName">
+                    [in] The unique name of the project for the Error List entry. May be null if no project is associated with the error.
+                </param>
+      <param name="pszTaskItemText">
+                    [in] Text of the task item.
+                </param>
+      <param name="pszLookupKwd">
+        <see cref="F:Microsoft.VisualStudio.Shell.Interop.VSUSERCONTEXTATTRIBUTEUSAGE.VSUC_Usage_LookupF1" /> keyword string.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsPackage2">
+      <summary>
+                    Makes properties of a VSPackage available.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsPackage2.get_CanClose(System.Boolean@)">
+      <summary>
+                    Specifies whether a package can be closed.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pfCanClose">
+                    [out] Boolean value. true if the package does not have to block shutdown of the integrated development environment (IDE).
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsProjectFlavorUpgradeViaFactory">
+      <summary>
+                    Upgrades flavored projects using a project factory.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsProjectFlavorUpgradeViaFactory.OnUpgradeProjectFlavorCancelled(System.String)">
+      <param name="pszFileName">
+                    The file upgrade is cancelled.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsProjectFlavorUpgradeViaFactory.UpgradeProjectFlavor(System.String,Microsoft.VisualStudio.Shell.Interop.IVsUpgradeBuildPropertyStorage,System.String,System.String,Microsoft.VisualStudio.Shell.Interop.IVsUpgradeLogger,System.Int32@,System.String[],System.String[],System.Guid@)">
+      <summary>
+                    Upgrades a flavored project.
+                </summary>
+      <param name="pszFileName">
+                    Name of file to upgrade.
+                </param>
+      <param name="pUpgradeBuildPropStg">
+                    Used to read and update build related properties and imports.
+                </param>
+      <param name="pszProjFileXMLFragment">
+                    Project file XML fragment.
+                </param>
+      <param name="pszUserFileXMLFragment">
+                    Project user file XML fragment.
+                </param>
+      <param name="pLogger">
+                    A <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeLogger" /> upgrade logger.
+                </param>
+      <param name="pUpgradeRequired">
+                    Specifies upgrade is required.
+                </param>
+      <param name="pbstrUpgradedProjFileXMLFragment">
+                    XML fragment returned by the flavored project.
+                </param>
+      <param name="pbstrUpgradedUserFileXMLFragment">
+                    XML fragment returned by the flavored user project.
+                </param>
+      <param name="pguidNewProjectFactory">
+                    Pointer to the project factory.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsProjectFlavorUpgradeViaFactory.UpgradeProjectFlavor_CheckOnly(System.String,Microsoft.VisualStudio.Shell.Interop.IVsUpgradeBuildPropertyStorage,System.String,System.String,Microsoft.VisualStudio.Shell.Interop.IVsUpgradeLogger,System.Int32@,System.Guid@)">
+      <summary>
+                    Checks if a flavored project upgrade is possible.
+                </summary>
+      <param name="pszFileName">
+                    Name of file to upgrade.
+                </param>
+      <param name="pUpgradeBuildPropStg">
+                    Used to read and update build related properties and imports.
+                </param>
+      <param name="pszProjFileXMLFragment">
+                    Project file XML fragment.
+                </param>
+      <param name="pszUserFileXMLFragment">
+                    Project user file XML fragment.
+                </param>
+      <param name="pLogger">
+                    A <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeLogger" /> upgrade logger.
+                </param>
+      <param name="pUpgradeRequired">
+                    Specifies upgrade is required.
+                </param>
+      <param name="pguidNewProjectFactory">
+                    Pointer to the project factory.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsProjectServerHost">
+      <summary>
+                    Enables a project to start or stop its hosted server.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsProjectServerHost.GetServerUrl(System.String@)">
+      <summary>
+                    Gets the URL of the hosted server.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pbstrUrl">
+                    Url of the hosted server.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsProjectServerHost.IsServerRunning(System.Int32@)">
+      <summary>
+                    Determines whether the hosted server is running.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="fIsRunning">True if the hosted server is currently running.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsProjectServerHost.StartServer(System.String,System.UInt32@)">
+      <summary>
+                    Creates a process for a hosted server.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="bstrEnvironment">
+                    Environment in which to start the server. If not specified, the default environment is used.
+                </param>
+      <param name="pdwProcessId">
+                    The ID of the new process.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsProjectServerHost.StopServer">
+      <summary>
+                    Stops a hosted server
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsQueryEditQuerySave3">
+      <summary>
+                    Indicates to the environment or source control package that a file is about to be changed in memory or saved.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsQueryEditQuerySave3.QuerySaveFile2(System.String,System.UInt32[],Microsoft.VisualStudio.Shell.Interop.VSQEQS_FILE_ATTRIBUTE_DATA[],System.UInt32@,System.UInt32@)">
+      <summary>
+                    Notifies the environment that a file is about to be saved.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pszMkDocument">
+                    [in] Path to the file (document to be saved) on the disk.
+                </param>
+      <param name="rgf">
+                    [in] Flags whose values for valid file attributes are taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.tagVSQEQSFlags" /> enumeration. The default value is zero.
+                </param>
+      <param name="pFileInfo">
+                    [in] Values taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.VSQEQS_FILE_ATTRIBUTE_DATA" /> structure containing information about the file attributes. Can be null; is ignored if <paramref name="rgf" /> is 0.
+                </param>
+      <param name="pdwQSResult">
+                    [out] A value taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.tagVSQuerySaveResult" /> enumeration specifying the results of a QuerySave.
+                </param>
+      <param name="prgfMoreInfo">
+                    [out] A value taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.tagVSQuerySaveResultFlags" /> enumeration specifying the results of a QuerySave.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsQueryEditQuerySave3.QuerySaveFiles2(System.UInt32[],System.Int32,System.String[],System.UInt32[],Microsoft.VisualStudio.Shell.Interop.VSQEQS_FILE_ATTRIBUTE_DATA[],System.UInt32@,System.UInt32@)">
+      <summary>
+                    Notifies the environment that multiple files are about to be saved.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="rgfQuerySave">
+                    [in] Flags are currently unused. The caller should always pass in the default null flag, which is zero.
+                </param>
+      <param name="cFiles">
+                    [in] File count.
+                </param>
+      <param name="rgpszMkDocuments">
+                    [in] Path to the file on the disk.
+                </param>
+      <param name="rgrgf">
+                    [in] Flags whose values are taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.tagVSQEQSFlags" /> enumeration for valid file attributes. Default = 0.
+                </param>
+      <param name="rgFileInfo">
+                    [in] Values taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.VSQEQS_FILE_ATTRIBUTE_DATA" /> structure containing information about the file attributes. Can be null; is ignored if <paramref name="rgf" /> is 0.
+                </param>
+      <param name="pdwQSResult">
+                    [out] A value taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.tagVSQuerySaveResult" /> enumeration specifying the results of a QuerySave.
+                </param>
+      <param name="prgfMoreInfo">
+                    [out] A value taken from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.tagVSQuerySaveResultFlags" /> enumeration specifying the results of a QuerySave.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsShell3">
+      <summary>
+                    Supplies shell services in addition to the <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsShell" /> interface. 
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsShell3.IsRunningElevated(System.Boolean@)">
+      <summary>
+                    Check to see if the application is running as an admin.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pElevated">True if application is running as an admin.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsShell3.RestartElevated">
+      <summary>
+                    Restart the application, asking for credentials from the user if not running as administrator, or start as admin if the user has admin privileges.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsSymbolicNavigationManager"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsSymbolicNavigationManager.OnBeforeNavigateToSymbol(Microsoft.VisualStudio.Shell.Interop.IVsHierarchy,System.UInt32,System.String,System.Int32@)">
+      <param name="pHierCodeFile"></param>
+      <param name="itemidCodeFile"></param>
+      <param name="pszRQName"></param>
+      <param name="pfNavigationHandled"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsSymbolicNavigationManager.QueryNavigateToSymbol(Microsoft.VisualStudio.Shell.Interop.IVsHierarchy,System.UInt32,System.String,Microsoft.VisualStudio.Shell.Interop.IVsHierarchy@,System.UInt32@,Microsoft.VisualStudio.TextManager.Interop.TextSpan[],System.Int32@)">
+      <param name="pHierCodeFile"></param>
+      <param name="itemidCodeFile"></param>
+      <param name="pszRQName"></param>
+      <param name="ppHierToNavigate"></param>
+      <param name="pitemidToNavigate"></param>
+      <param name="pSpanToNavigate"></param>
+      <param name="pfWouldNavigate"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsSymbolicNavigationManager.RegisterSymbolicNavigationNotify(Microsoft.VisualStudio.Shell.Interop.IVsSymbolicNavigationNotify,System.UInt32@)">
+      <param name="pNotify"></param>
+      <param name="pdwCookie"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsSymbolicNavigationManager.UnregisterSymbolicNavigationNotify(System.UInt32)">
+      <param name="dwCookie"></param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsSymbolicNavigationNotify">
+      <summary>
+                    Facilitates redirection of Goto Definition on a code symbol.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsSymbolicNavigationNotify.OnBeforeNavigateToSymbol(Microsoft.VisualStudio.Shell.Interop.IVsHierarchy,System.UInt32,System.String,System.Int32@)">
+      <summary>
+                    Determines if there is an alternate source file to navigate to for a code symbol.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pHierCodeFile">
+                    [in] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsHierarchy" /> representing the hierarchy of the code-file that the code language service would otherwise navigate to.
+                </param>
+      <param name="itemidCodeFile">
+                    [in] itemid of the code-file that the code language service would otherwise navigate to
+                </param>
+      <param name="pszRQName">
+                    [in] RQName-syntax string that identifies the symbol that is the target of the navigation
+                </param>
+      <param name="pfNavigationHandled">
+                    [out] Returns true if navigation to symbol has been handled; false if the caller should do normal navigation
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsSymbolicNavigationNotify.QueryNavigateToSymbol(Microsoft.VisualStudio.Shell.Interop.IVsHierarchy,System.UInt32,System.String,Microsoft.VisualStudio.Shell.Interop.IVsHierarchy@,System.UInt32@,Microsoft.VisualStudio.TextManager.Interop.TextSpan[],System.Int32@)">
+      <summary>
+                    Returns the alternate navigation target for the symbol if there is one.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pHierCodeFile">
+                    [in] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsHierarchy" /> representing the hierarchy of the code-file that the code language service would otherwise navigate to.
+                </param>
+      <param name="itemidCodeFile">
+                    [in] itemid of the code-file that the code language service would otherwise navigate to
+                </param>
+      <param name="pszRQName">
+                    [in] RQName-syntax string that identifies the symbol that is the target of the navigation
+                </param>
+      <param name="ppHierToNavigate">
+                    [out] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsHierarchy" /> representing the hierarchy of alternate navigation target that is, for the source document that generates the code file).
+                </param>
+      <param name="pitemidToNavigate">
+                    [out] itemid for the hierarchy of alternate navigation.
+                </param>
+      <param name="pSpanToNavigate">
+                    [out] A <see cref="T:Microsoft.VisualStudio.TextManager.Interop.TextSpan" /> representing the location of symbol in alternate navigation target. Set to (0,0,0,0) if the source is not a Text document.
+                </param>
+      <param name="pfWouldNavigate">
+                    [out] Returns true if alternate navigation target is returned; otherwise returns false.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsTargetFrameworkAssemblies">
+      <summary>
+                    Provides base support for targeting multiple framework versions.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsTargetFrameworkAssemblies.GetRequiredTargetFrameworkVersion(System.String,System.UInt32@)">
+      <summary>
+                    Gets the minimum versions of the target framework required for the given assembly to run.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="szAssemblyFile">
+                    [in] Path to the assembly to check.
+                </param>
+      <param name="pTargetFrameworkVersion">
+                    [out] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.WellKnownTargetFrameworkVersions" /> value specifying the required framework version.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsTargetFrameworkAssemblies.GetRequiredTargetFrameworkVersionFromDependency(System.String,System.UInt32@)">
+      <summary>
+                    Gets the minimum versions of the target framework required for a given assembly to run, based on the referenced assembly closure.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="szAssemblyFile">
+                    [in] Path to the assembly to check.
+                </param>
+      <param name="pTargetFrameworkVersion">
+                    [out] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.WellKnownTargetFrameworkVersions" /> value specifying the required framework version.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsTargetFrameworkAssemblies.GetSupportedFrameworks(Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks@)">
+      <summary>
+                    Gets an enumeration of supported framework versions.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pTargetFrameworks">
+                    [out] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks" /> value specifying the supported framework version.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsTargetFrameworkAssemblies.GetSystemAssemblies(System.UInt32,Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies@)">
+      <summary>
+                    Gets an enumeration containing the system assembly reference for a given framework version.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="targetVersion">
+                    [out] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.WellKnownTargetFrameworkVersions" /> value specifying the required framework version.
+                </param>
+      <param name="pAssemblies">
+                    [out] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.IEnumSystemAssemblies" /> value specifying the required framework version.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsTargetFrameworkAssemblies.GetTargetFrameworkDescription(System.UInt32,System.String@)">
+      <summary>
+                    Gets a descriptive string for a framework version.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="targetVersion">
+                    [in] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.WellKnownTargetFrameworkVersions" /> value specifying the required framework version.
+                </param>
+      <param name="pszDescription">
+                    [out] String describing the framework version.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsTargetFrameworkAssemblies.IsSystemAssembly(System.String,System.Int32@,System.UInt32@)">
+      <summary>
+                    Checks if a specified assembly is a system assembly and gets its framework version.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="szAssemblyFile">
+                    [in] Path to the assembly to check.
+                </param>
+      <param name="pIsSystem">
+                    [out] True if the assembly is a system assembly.
+                </param>
+      <param name="pTargetFrameworkVersion">
+                    [out] A <see cref="T:Microsoft.VisualStudio.Shell.Interop.IEnumTargetFrameworks" /> value specifying the supported framework version.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsToolbox4">
+      <summary>
+                    Provides persistence and localization support for a Toolbox. Extends, but does not inherit from, <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsToolbox3" />. You can get an instance of the interface from the <see cref="T:Microsoft.VisualStudio.Shell.Interop.SVsToolbox" /> (SID_SVsToolbox) service.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsToolbox4.ExpandTab(System.String,System.Int32)">
+      <param name="lpszTabID">
+                    [in] The localized name of the Toolbox tab.
+                </param>
+      <param name="fExpand">
+                    [in] Tab state.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsUIShell3">
+      <summary>
+                    Extends the functionality of the <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsUIShell" /> interface by providing access to additional window functionalities.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsUIShell3.ReportErrorInfo2(System.Int32,System.Boolean)">
+      <summary>
+                    Report error information, allowing the caller to suppress the UAC dialog box.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="hr">
+                    [in] The HRESULT to display.
+                </param>
+      <param name="Suppress">
+                    [in] True to suppress display of the dialog box.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsUIShell3.SuppressRestart(System.Boolean)">
+      <summary>
+                    Enable and disable showing the User Account Control (UAC) restart dialog box.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="Suppress">
+                    [in] True to suppress display of the dialog box.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeBuildPropertyStorage">
+      <summary>
+                    Upgrades build-related information in a project file.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeBuildPropertyStorage.AddNewImport(System.String,System.String)">
+      <summary>
+                    Add a new import to a project file.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pszImportPath">
+                    [in] Path to the file to import.
+                </param>
+      <param name="pszImportCondition">
+                    [in] Condition to be evaluated.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeBuildPropertyStorage.GetImports(System.Array@,System.Array@)">
+      <summary>
+                    Gets multiple imports from a project file.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="prgImportPaths">
+                    [in] Array of paths to the files to import.
+                </param>
+      <param name="prgImportConditions">
+                    [in] Array of conditions to be evaluated.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeBuildPropertyStorage.GetPropertyValue(System.String,System.String,System.UInt32,System.String@)">
+      <summary>
+                    Gets the value of a specified property from a project file.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pszPropName">
+                    [in] Name of the property
+                </param>
+      <param name="pszConfigName">
+                    [in] Configuration associated with the property
+                </param>
+      <param name="storage">
+                    [in] <see cref="T:Microsoft.VisualStudio.Shell.Interop._PersistStorageType" /> specifying whether the property is stored in a project or user file.
+                </param>
+      <param name="pbstrPropValue">
+                    [out] Value of the property
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeBuildPropertyStorage.RemoveImport(System.String,System.String)">
+      <summary>
+                    Removes an import from a project file.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pszImportPath"></param>
+      <param name="pszImportCondition"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeBuildPropertyStorage.RemoveProperty(System.String,System.String,System.UInt32)">
+      <summary>
+                    Removes a property from a project file.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pszPropName">
+                    [in] Name of the property
+                </param>
+      <param name="pszConfigName">
+                    [in] Configuration associated with the property
+                </param>
+      <param name="storage">
+                    [in] <see cref="T:Microsoft.VisualStudio.Shell.Interop._PersistStorageType" /> specifying whether the property is stored in a project or user file.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeBuildPropertyStorage.ReplaceImport(System.String,System.String,System.String,System.String)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsUpgradeBuildPropertyStorage.SetPropertyValue(System.String,System.String,System.UInt32,System.String)">
+      <summary>
+                    Sets a property value in a project file.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pszPropName">
+                    [in] Name of the property
+                </param>
+      <param name="pszConfigName">
+                    [in] Configuration associated with the property
+                </param>
+      <param name="storage">
+                    [in] <see cref="T:Microsoft.VisualStudio.Shell.Interop._PersistStorageType" /> specifying whether the property is stored in a project or user file.
+                </param>
+      <param name="pszPropValue">
+                    [out] Value of the property
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsUserSettingsMigration">
+      <summary>
+                    Migrates user settings.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsUserSettingsMigration.MigrateSettings(Microsoft.VisualStudio.Shell.Interop.IVsSettingsReader,Microsoft.VisualStudio.Shell.Interop.IVsSettingsWriter,System.String)">
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="pSettingsReader">
+                    [in] <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsSettingsReader" /> to access configuration information.
+                </param>
+      <param name="pSettingsWriter">
+                    [in] <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsSettingsWriter" /> to write configuration information.
+                </param>
+      <param name="pszGuidCategory">
+                    Guid representing settings category.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsWebAppMigration">
+      <summary>
+                    Provides methods to migrate web projects.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebAppMigration.CanConvertToWebApp(System.String,System.Int32@,System.String@)">
+      <summary>
+                    Determines if a project file can be converted to MSBuild format.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="lpszProjectPath">
+                    [in] path to the old project file.
+                </param>
+      <param name="pConverToWebApp">
+                    [out] Boolean value; true if the project can be converted.
+                </param>
+      <param name="pbstrNewProjPath">
+                    [out] Path to the new project.
+                </param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebAppMigration.ConvertProjFileToWebAppProj(System.String,System.Guid@)">
+      <summary>
+                    Converts a project file to a Web Application project file.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="lpszProjectPath">
+                    [in] Path to the project.
+                </param>
+      <param name="pProjectFactoryGuid">
+                    [out] GUID for the project factory.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsWebMigration"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebMigration.GetBaseType(System.String,System.String@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebMigration.LoadAssembly(System.String)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebMigration.Unload"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsWebMigrationService"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebMigrationService.GetProjectSCCInfo(System.String,System.String[],System.String[],System.String[],System.String[])"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebMigrationService.IsWebProject(System.String,System.Int32@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebMigrationService.MigrateWeb(Microsoft.VisualStudio.Shell.Interop.IVsProject,System.String,System.String)"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsWebProxy">
+      <summary>
+                    Web proxy service interface.
+                </summary>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebProxy.PrepareWebProxy(System.String,System.UInt32,System.UInt32@,System.Int32)">
+      <summary>
+                    Prepares the web proxy for a web call by attaching credentials to it.
+                </summary>
+      <returns>
+                    If the method succeeds, it returns <see cref="F:Microsoft.VisualStudio.VSConstants.S_OK" />. If it fails, it returns an error code.
+                </returns>
+      <param name="strWebCallUrl">
+                    [in] The URL for the web call.
+                </param>
+      <param name="oldProxyState">
+                    [in] A <see cref="Microsoft.VisualStudio.Shell.Interop.__VsWebProxyState" /> value specifying the current proxy state for the web call.
+                </param>
+      <param name="newProxyState">
+                    [out] A <see cref="Microsoft.VisualStudio.Shell.Interop.__VsWebProxyState" /> value specifying the new proxy state for the web call.
+                </param>
+      <param name="fOkToPrompt">
+                    [in] Prompt user for credentials if they are not available.
+                </param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsWebService3"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebService3.DiscoveryUrl(System.String@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebService3.Endpoints(System.Array@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebService3.GetMexWebServiceEndpoint(System.String,Microsoft.VisualStudio.Shell.Interop.IVsWebServiceEndpoint@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebService3.GetWebServiceEndpoint(System.String,Microsoft.VisualStudio.Shell.Interop.IVsWebServiceEndpoint@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebService3.MexEndpoints(System.Array@)"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsWebServiceEndpoint"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebServiceEndpoint.Url(System.String@)"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.IVsWebServiceProviderDebug"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.IVsWebServiceProviderDebug.GetDebugEngineFilter(Microsoft.VisualStudio.Shell.Interop.VsDebugEngineFilter[])"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.SVsSymbolicNavigationManager"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.SVsTargetFrameworkAssemblies">
+      <summary>
+                    Passed to <see cref="M:System.IServiceProvider.GetService(System.Type)" /> to return a reference to <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsTargetFrameworkAssemblies" />.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.SVsWebProxy">
+      <summary>
+                    Passed to <see cref="M:System.IServiceProvider.GetService(System.Type)" /> to return a reference to <see cref="T:Microsoft.VisualStudio.Shell.Interop.IVsWebProxy" />.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.tagVSQuerySaveResultFlags">
+      <summary>
+                    Specifies results of a QuerySave operation.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.tagVSQuerySaveResultFlags.QSR_DefaultFlag">
+      <summary>
+                    Default flag.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.tagVSQuerySaveResultFlags.QSR_Reloaded">
+      <summary>
+                    A file involved in the operation was checked out and a new version was retrieved from the source control database
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.tagVSQuerySaveResultFlags.QSR_Changed">
+      <summary>
+                    A file involved in the operation was checked out. A new version was retrieved from the source control database and the file was reloaded in the editor or in the shell (if the file is a project or solution file).
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.VsDebugEngineFilter"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.VsDebugEngineFilter.dwDebugEngineCount"></member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.VsDebugEngineFilter.pDebugEngines"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManager"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.#ctor"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.BeginBuild"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.Close"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.Delete(System.String)">
+      <param name="wszFilename"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.EndBuild"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.Exists(System.String,System.Int32,System.Int32@)">
+      <param name="wszFilename"></param>
+      <param name="fOnlyCheckOnDisk"></param>
+      <param name="pfExists"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.GetFileContents(System.String,System.String@)">
+      <param name="wszFilename"></param>
+      <param name="pbstrFileContents"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.GetFileDocData(System.String,System.IntPtr@)">
+      <param name="wszFilename"></param>
+      <param name="ppunkDocData"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.GetFileLastChangeTime(System.String,Microsoft.VisualStudio.OLE.Interop.FILETIME[])">
+      <param name="wszFilename"></param>
+      <param name="pFileTime"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.Init(Microsoft.VisualStudio.Shell.Interop.IVsHierarchy,Microsoft.VisualStudio.OLE.Interop.IServiceProvider)">
+      <param name="pHier"></param>
+      <param name="pSP"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.IsRealBuildOperation(System.Int32@)">
+      <param name="pfIsRealBuild"></param>
+    </member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsMSBuildTaskFileManagerClass.PutGeneratedFileContents(System.String,System.String)">
+      <param name="wszFilename"></param>
+      <param name="wszFileContents"></param>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.VsSymbolicNavigationManager"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.VsSymbolicNavigationManagerClass"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsSymbolicNavigationManagerClass.#ctor"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsSymbolicNavigationManagerClass.OnBeforeNavigateToSymbol(Microsoft.VisualStudio.Shell.Interop.IVsHierarchy,System.UInt32,System.String,System.Int32@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsSymbolicNavigationManagerClass.QueryNavigateToSymbol(Microsoft.VisualStudio.Shell.Interop.IVsHierarchy,System.UInt32,System.String,Microsoft.VisualStudio.Shell.Interop.IVsHierarchy@,System.UInt32@,Microsoft.VisualStudio.TextManager.Interop.TextSpan[],System.Int32@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsSymbolicNavigationManagerClass.RegisterSymbolicNavigationNotify(Microsoft.VisualStudio.Shell.Interop.IVsSymbolicNavigationNotify,System.UInt32@)"></member>
+    <member name="M:Microsoft.VisualStudio.Shell.Interop.VsSymbolicNavigationManagerClass.UnregisterSymbolicNavigationNotify(System.UInt32)"></member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.WellKnownTargetFrameworkVersions">
+      <summary>
+                    Represents the version number of a target framework.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.WellKnownTargetFrameworkVersions.TargetFrameworkVersion_Unknown">
+      <summary>
+                    Unknown version.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.WellKnownTargetFrameworkVersions.TargetFrameworkVersion_20">
+      <summary>
+                    Version 2.0.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.WellKnownTargetFrameworkVersions.TargetFrameworkVersion_30">
+      <summary>
+                    Version 3.0.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.WellKnownTargetFrameworkVersions.TargetFrameworkVersion_35">
+      <summary>
+                    Version 3.5.
+                </summary>
+    </member>
+    <member name="T:Microsoft.VisualStudio.Shell.Interop.WellKnownToolboxDataFormats">
+      <summary>
+                    Represents a toolbox data format.
+                </summary>
+    </member>
+    <member name="F:Microsoft.VisualStudio.Shell.Interop.WellKnownToolboxDataFormats.MinimumRequiredFrameworkVersion">
+      <summary>
+                    Represents the minimum version of the framework required.
+                </summary>
+    </member>
+  </members>
+</doc>
