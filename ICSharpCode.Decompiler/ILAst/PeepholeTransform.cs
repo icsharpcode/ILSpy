@@ -604,7 +604,7 @@ namespace ICSharpCode.Decompiler.ILAst
 			if (recombineVariable) {
 				// Split local variable, unsplit these two instances
 				// replace nextExpr.Operand with exprInit.Operand
-				ReplaceVariables(method, oldVar => oldVar == nextExpr.Operand ? (ILVariable)exprInit.Operand : oldVar);
+				ReplaceVariables(method, (oldVar, b) => oldVar == nextExpr.Operand ? (ILVariable)exprInit.Operand : oldVar);
 			}
 			
 			switch (loadInstruction) {

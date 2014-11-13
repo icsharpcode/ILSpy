@@ -120,9 +120,17 @@ public class ExceptionHandling
 		{
 			Console.WriteLine("Try2");
 		}
-		catch (Exception ex)
+		catch (Exception ex2)
 		{
-			Console.WriteLine(ex.Message);
+			Console.WriteLine(ex2.Message);
+			try
+			{
+				Console.WriteLine("Try2");
+			} 
+			catch (Exception ex3) 
+			{
+				Console.WriteLine(ex3.Message);
+			}
 		}
 	}
 }
