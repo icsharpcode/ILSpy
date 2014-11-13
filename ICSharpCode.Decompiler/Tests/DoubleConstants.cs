@@ -26,3 +26,20 @@ public class DoubleConstants
 	public const double PositiveInfinity = double.PositiveInfinity;
 	public const double NegativeInfinity = double.NegativeInfinity;
 }
+
+internal class DecimalConstants
+{
+	public const decimal Zero = 0m;
+	public const decimal One = 1m;
+
+	// TODO: Should the decompiler remove this implicit conversion?
+	private decimal? MinusOneN = new decimal?(-1m);
+	private object ZeroB = -1m;
+	private decimal ZeroP
+	{
+		get
+		{
+			return 0m;
+		}
+	}
+}

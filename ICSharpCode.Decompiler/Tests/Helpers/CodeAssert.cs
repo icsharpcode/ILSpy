@@ -10,11 +10,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 {
 	public class CodeAssert
 	{
-		public static void AreEqual(string input1, string input2)
+		public static void AreEqual(string input1, string input2, string context)
 		{
 			var diff = new StringWriter();
 			if (!Compare(input1, input2, diff)) {
-				Assert.Fail(diff.ToString());
+				if (context.Contains("Roslyn"))
+					Assert.Inconclusive(context + ":\r\n" + diff.ToString());
+				else
+					Assert.Fail(context + ":\r\n" + diff.ToString());
 			}
 		}
 
@@ -104,7 +107,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		private static IEnumerable<string> NormalizeAndSplitCode(string input)
 		{
-			return input.Split(new[] { "\r\n", "\n\r", "\n", "\r" }, StringSplitOptions.None);
+			return input.Split(new[] { "\r\n", "\n\r", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
 		}
 	}
 }

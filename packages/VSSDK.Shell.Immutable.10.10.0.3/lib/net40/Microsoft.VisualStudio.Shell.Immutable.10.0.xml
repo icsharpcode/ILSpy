@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.VisualStudio.Shell.Immutable.10.0</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.VisualStudio.Shell.RegistrationMethod">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationMethod&quot;]/*"/>
+            <summary>
+            How should the assembly be registered/located
+            </summary>
+        </member>
+        <member name="F:Microsoft.VisualStudio.Shell.RegistrationMethod.Default">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationMethod.Default&quot;]/*"/>
+            <summary>
+            Default should only be used by tools
+            </summary>
+        </member>
+        <member name="F:Microsoft.VisualStudio.Shell.RegistrationMethod.CodeBase">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationMethod.CodeBase&quot;]/*"/>
+            <summary>
+            The path to the assembly should be stored in the registry and used to locate the assembly at runtime
+            </summary>
+        </member>
+        <member name="F:Microsoft.VisualStudio.Shell.RegistrationMethod.Assembly">
+            <summary>
+            The assembly should be in the GAC or in PrivateAssemblies
+            </summary>
+        </member>
+        <member name="T:Microsoft.VisualStudio.Shell.RegistrationAttribute">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationAttribute&quot;]"/>
+            <devdoc>
+                This attribute is the basis for all other attributes that can be registered by RegPkg.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.Register(Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext)">
+             <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;Register&quot;]"/>
+             <devdoc>
+                 Called to register this attribute with the given context.  The context
+                 contains the location where the registration information should be placed.
+                 It also contains such as the type being registered, and path information.
+            
+                 This method is called both for registration and unregistration.  The difference is
+                 that unregistering just uses a hive that reverses the changes applied to it.
+             </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.Unregister(Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext)">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;Unregister&quot;]"/>
+            <devdoc>
+                Called to unregister this attribute with the given context.  The context
+                contains the location where the registration information should be removed.
+                It also contains things such as the type being unregistered, and path information.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.GetPackageRegKeyPath(System.Guid)">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;GetPackageRegKeyPath&quot;]"/>
+            <devdoc>
+                Returns the registry path (relative to this AppID's registry root) where the
+                registration for the given package is located.
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.VisualStudio.Shell.RegistrationAttribute.TypeId">
+            <summary>
+            Override the TypeID property in order to let the RegistrationAttribute derived
+            classes to work with System.ComponentModel.TypeDescriptor.GetAttributes(...).
+            An attribute derived from this one will have to override this property only if
+            it needs a better control on the instances that can be applied to a class.
+            </summary>
+        </member>
+        <member name="T:Microsoft.VisualStudio.Shell.RegistrationAttribute.Key">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;Key&quot;]"/>
+            <devdoc>
+                Abstraction around a registry key.  This may or may not actually
+                point to a real registry key.  It could point to a file.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.Key.Close">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;Key.Close&quot;]"/>
+            <devdoc>
+                Called to close this key.  Alternately, you may use the C# "using"
+                syntax on keys, since they are IDisposable. Always close keys when you
+                are done with them.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.Key.CreateSubkey(System.String)">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;Key.CreateSubkey&quot;]"/>
+            <devdoc>
+                Creates a subkey of the given name.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.Key.SetValue(System.String,System.Object)">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;Key.SetValue&quot;]"/>
+            <devdoc>
+                Sets the name to the given value. Pass an empty string or null into this to
+                set the default value for a key.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.Key.System#IDisposable#Dispose">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;Key.IDisposable.Dispose&quot;]/*"/>
+            <internalonly/>
+            <devdoc>
+            Closes the key.
+            </devdoc>
+        </member>
+        <member name="T:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext&quot;]"/>
+            <devdoc>
+                Abstraction around the registry itself.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.CreateKey(System.String)">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.CreateKey&quot;]"/>
+            <devdoc>
+                Creates a new key of the given name.  The key is created at the appropriate registration
+                point in the registry.  Always close or dispose this key when finished with it.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.RemoveKey(System.String)">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.RemoveKey&quot;]"/>
+            <devdoc>
+            Removes the key of the given name.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.RemoveValue(System.String,System.String)">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.RemoveValue&quot;]"/>
+            <devdoc>
+            Removes the value of the given name under the key of the given keyname
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.RemoveKeyIfEmpty(System.String)">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.RemoveKey&quot;]"/>
+            <devdoc>
+            Removes the key of the given name if it has no child key and
+            no value.
+            </devdoc>
+        </member>
+        <member name="M:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.EscapePath(System.String)">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.EscapePath&quot;]"/>
+            <devdoc>
+            Escape the string if needed
+            This is used by the implementation of the Register method on attributes so that paths be escaped when
+            needed. The attribute itself does not know if we are writting to a .reg file or directly to the registry.
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.ComponentPath">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.ComponentPath&quot;]"/>
+            <devdoc>
+                The path to the compnent that is being registered.  You should always use this rather than the 
+                codebase of the component type, and you should never assume that this is a physical path on
+                disk.  It may be a token that identifies the path at install time.  The "component"
+                is the type that the registration attribute was found on.
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.ComponentType">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.RegisteringType&quot;]"/>
+            <devdoc>
+                The type of the component that is being registered.
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.InprocServerPath">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.InprocServerPath&quot;]"/>
+            <devdoc>
+                The path to the COM object supplying the class factory.
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.CodeBase">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.CodeBase&quot;]"/>
+            <devdoc>
+                The path to the object being registered (including filename).
+            </devdoc>
+        </member>
+        <!-- Badly formed XML comment ignored for member "P:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.RootFolder" -->
+        <member name="P:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.RegistrationMethod">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.RegistrationMethod&quot;]"/>
+            <devdoc>
+            Specify if the assembly should be located using CodeBase or Assembly
+            </devdoc>
+        </member>
+        <member name="P:Microsoft.VisualStudio.Shell.RegistrationAttribute.RegistrationContext.Log">
+            <!-- Failed to insert some or all of included XML --><include file="doc\RegistrationAttribute.uex" path="docs/doc[@for=&quot;RegistrationContext.Log&quot;]"/>
+            <devdoc>
+                Returns a text writer that can be used to log registration information.  This should 
+                be a human readable (and ideally localized) bit of text that describes the
+                current registration process.
+            </devdoc>
+        </member>
+        <member name="T:Microsoft.VisualStudio.Shell.SVsServiceProvider">
+            <summary>
+            Represents a Visual Studio service provider and intended for dynamic discovery of other VS services from MEF components.
+            </summary>
+        </member>
+    </members>
+</doc>

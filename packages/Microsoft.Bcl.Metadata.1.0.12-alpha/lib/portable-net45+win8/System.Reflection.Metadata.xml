@@ -1,0 +1,2062 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>System.Reflection.Metadata</name>
+    </assembly>
+    <members>
+        <member name="M:System.Reflection.Metadata.PEReaderExtensions.GetMethodBody(System.Reflection.PortableExecutable.PEReader,System.Int32)">
+            <summary>
+            Returns a body block of a method with specified Relative Virtual Address (RVA);
+            </summary>
+            <exception cref="T:System.ArgumentNullException"><paramref name="peReader"/> is null.</exception>
+            <exception cref="T:System.BadImageFormatException">The body is not found in the metadata or is invalid.</exception>
+            <exception cref="T:System.InvalidOperationException">Section where the method is stored is not available.</exception>
+        </member>
+        <member name="T:System.Reflection.Metadata.StringInterner">
+            <summary>
+            Provides a mechanism to reuse existing strings and prevent the reader from allocating new ones.
+            </summary>
+            <param name="builder">The string that the reader has built up in a temporary buffer that must be converted to an immutable string.</param>
+            <returns>A string that compares equal (ordinal, case-sensitive) to what builder.ToString() would return.</returns>
+        </member>
+        <member name="T:System.Reflection.Internal.AbstractMemoryBlock">
+            <summary>
+            Represents a disposable blob of memory accessed via unsafe pointer.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Internal.AbstractMemoryBlock.GetContent(System.Int32)">
+            <summary>
+            Returns the content of the memory block. 
+            </summary>
+            <remarks>
+            Only creates a copy of the data if they are not represented by a managed byte array, or the offset is non-zero.
+            </remarks>
+        </member>
+        <member name="M:System.Reflection.Internal.AbstractMemoryBlock.Dispose">
+            <summary>
+            Disposes the block. The operation is idempotent.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Internal.AbstractMemoryBlock.Pointer">
+            <summary>
+            Pointer to the underlying data or <see cref="F:System.IntPtr.Zero"/> if the data have been disposed.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Internal.ByteArrayMemoryBlock">
+            <summary>
+            Represents a memory block backed by an array of bytes.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Internal.MemoryBlockProvider.GetMemoryBlock">
+            <summary>
+            Creates and hydrates a memory block representing all data.
+            </summary>
+            <exception cref="T:System.IO.IOException">Error while reading from the memory source.</exception>
+        </member>
+        <member name="M:System.Reflection.Internal.MemoryBlockProvider.GetMemoryBlock(System.Int32,System.Int32)">
+            <summary>
+            Creates and hydrates a memory block representing data in the specified range.
+            </summary>
+            <param name="start">Starting offset relative to the beginning of the data represented by this provider.</param>
+            <param name="size">Size of the resulting block.</param>
+            <exception cref="T:System.IO.IOException">Error while reading from the memory source.</exception>
+        </member>
+        <member name="M:System.Reflection.Internal.MemoryBlockProvider.GetStream(System.Object@)">
+            <summary>
+            Gets a seekable and readable <see cref="T:System.IO.Stream"/> that can be used to read all data.
+            The operations on the stream has to be done under a lock of <paramref name="guardOpt"/>, if non-null.
+            The stream should not be disposed.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Internal.MemoryBlockProvider.Size">
+            <summary>
+            The size of the data.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Internal.ExternalMemoryBlock">
+            <summary>
+            Class representing raw memory but not owning the memory.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Internal.ExternalMemoryBlockProvider">
+            <summary>
+            Represents raw memory owned by an external object. 
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Internal.NativeHeapMemoryBlock">
+            <summary>
+            Represents memory block allocated on native heap.
+            </summary>
+            <remarks>
+            Owns the native memory resource.
+            </remarks>
+        </member>
+        <member name="T:System.Reflection.Internal.StreamMemoryBlockProvider">
+            <summary>
+            Represents data read from a stream.
+            </summary>
+            <remarks>
+            Uses memory map to load data from streams backed by files that are bigger than <see cref="F:System.Reflection.Internal.StreamMemoryBlockProvider.MemoryMapThreshold"/>.
+            </remarks>
+        </member>
+        <member name="M:System.Reflection.Internal.StreamMemoryBlockProvider.GetMemoryBlockImpl(System.Int32,System.Int32)">
+            <exception cref="T:System.IO.IOException">Error while reading from the stream.</exception>
+        </member>
+        <member name="T:System.Reflection.Metadata.MetadataResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.AssemblyTableInvalidNumberOfRows">
+            <summary>
+              Looks up a localized string similar to Invalid number of rows of Assembly table: {0}..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.CantGetOffsetForVirtualHeapHandle">
+            <summary>
+              Looks up a localized string similar to Can&apos;t get a heap offset for a virtual heap handle.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.EnCMapNotSorted">
+            <summary>
+              Looks up a localized string similar to EnCMap table not sorted or has missing records..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.IllegalTablesInCompressedMetadataStream">
+            <summary>
+              Looks up a localized string similar to Illegal tables in compressed metadata stream..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.ImageTooSmallToContainCoffHeader">
+            <summary>
+              Looks up a localized string similar to Image too small to contain COFF header..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.ImageTooSmallToContainCorHeader">
+            <summary>
+              Looks up a localized string similar to Image too small to contain COR header..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.ImageTooSmallToContainDosHeader">
+            <summary>
+              Looks up a localized string similar to Image too small to contain DOS header..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.ImageTooSmallToContainPEHeader">
+            <summary>
+              Looks up a localized string similar to Image too small to contain PE header..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.ImageTooSmallToContainSections">
+            <summary>
+              Looks up a localized string similar to Image too small to contain number of sections claimed by COFF header..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidCodedIndex">
+            <summary>
+              Looks up a localized string similar to Invalid coded index..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidCorHeaderSize">
+            <summary>
+              Looks up a localized string similar to Invalid COR header size..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidHandle">
+            <summary>
+              Looks up a localized string similar to Invalid handle..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidLocalSignatureToken">
+            <summary>
+              Looks up a localized string similar to Invalid local signature token: 0x{0:X8}.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidMetadataSectionSpan">
+            <summary>
+              Looks up a localized string similar to Invalid metadata section span..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidMetadataStreamFormat">
+            <summary>
+              Looks up a localized string similar to Invalid Metadata stream format..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidMethodHeader1">
+            <summary>
+              Looks up a localized string similar to Invalid method header: 0x{0:X2}.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidMethodHeader2">
+            <summary>
+              Looks up a localized string similar to Invalid method header: 0x{0:X2} 0x{1:X2}.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidMethodRva">
+            <summary>
+              Looks up a localized string similar to Invalid relative virtual address (RVA): 0x{0:X8}.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidNumberOfSections">
+            <summary>
+              Looks up a localized string similar to Invalid number of sections in declared in PE header..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidPESignature">
+            <summary>
+              Looks up a localized string similar to Invalid PE signature..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidSectionName">
+            <summary>
+              Looks up a localized string similar to Invalid section name.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidSehHeader">
+            <summary>
+              Looks up a localized string similar to Invalid SEH header: 0x{0:X2}.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidSignature">
+            <summary>
+              Looks up a localized string similar to Invalid signature..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.InvalidToken">
+            <summary>
+              Looks up a localized string similar to Invalid token..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.MetadataHeaderTooSmall">
+            <summary>
+              Looks up a localized string similar to Metadata header too small..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.MetadataImageDoesNotRepresentAnAssembly">
+            <summary>
+              Looks up a localized string similar to Metadata image doesn&apos;t represent an assembly..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.MetadataSignature">
+            <summary>
+              Looks up a localized string similar to Invalid COR20 header signature..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.MetadataTableHeaderTooSmall">
+            <summary>
+              Looks up a localized string similar to Metadata table header too small..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.MetadataTableNotSorted">
+            <summary>
+              Looks up a localized string similar to Metadata table 0x{0:x2} not sorted..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.MetadataTablesTooSmall">
+            <summary>
+              Looks up a localized string similar to Metadata tables too small..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.MissingDataDirectory">
+            <summary>
+              Looks up a localized string similar to Missing data directory..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.ModuleTableInvalidNumberOfRows">
+            <summary>
+              Looks up a localized string similar to Invalid number of rows of Module table: {0}..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.NotEnoughSpaceForBlobStream">
+            <summary>
+              Looks up a localized string similar to Not enough space for Blob stream..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.NotEnoughSpaceForGUIDStream">
+            <summary>
+              Looks up a localized string similar to Not enough space for GUID stream..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.NotEnoughSpaceForMetadataStream">
+            <summary>
+              Looks up a localized string similar to Not enough space for Metadata stream..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.NotEnoughSpaceForStreamHeaderName">
+            <summary>
+              Looks up a localized string similar to Not enough space for stream header name..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.NotEnoughSpaceForStringStream">
+            <summary>
+              Looks up a localized string similar to Not enough space for String stream..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.NotEnoughSpaceForVersionString">
+            <summary>
+              Looks up a localized string similar to Not enough space for version string..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.NotMetadataHeapHandle">
+            <summary>
+              Looks up a localized string similar to Specified handle is not a valid metadata heap handle..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.NotMetadataTableHandle">
+            <summary>
+              Looks up a localized string similar to Specified handle is not a valid metadata table handle..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.NotMetadataTableOrUserStringHandle">
+            <summary>
+              Looks up a localized string similar to Specified handle is not a valid metadata table or UserString heap handle..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.OutOfBoundsRead">
+            <summary>
+              Looks up a localized string similar to Read out of bounds..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.PEImageDoesNotHaveMetadata">
+            <summary>
+              Looks up a localized string similar to PE image does not have metadata..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.PEImageNotAvailable">
+            <summary>
+              Looks up a localized string similar to PE image not available..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.RowIdOrHeapOffsetTooLarge">
+            <summary>
+              Looks up a localized string similar to Row ID or heap offset is too large..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.SectionTooSmall">
+            <summary>
+              Looks up a localized string similar to Section too small..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.StreamHeaderTooSmall">
+            <summary>
+              Looks up a localized string similar to Stream header too small..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.StreamMustSupportReadAndSeek">
+            <summary>
+              Looks up a localized string similar to Stream must support read and seek operations..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.TableRowCountSpaceTooSmall">
+            <summary>
+              Looks up a localized string similar to Table row count space to small..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.UnableToReadMetadataFile">
+            <summary>
+              Looks up a localized string similar to Unable to read metadata file.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.UnexpectedStreamEnd">
+            <summary>
+              Looks up a localized string similar to Unexpected stream end.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.UnknownFileFormat">
+            <summary>
+              Looks up a localized string similar to Unknown file format..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.UnknownPEMagicValue">
+            <summary>
+              Looks up a localized string similar to Unknown PE Magic value..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.UnknownTables">
+            <summary>
+              Looks up a localized string similar to Unknown tables: 0x{0:x16}..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MetadataResources.WinMDMissingMscorlibRef">
+            <summary>
+              Looks up a localized string similar to Missing mscorlib reference in AssemblyRef table..
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.Constant.Type">
+            <summary>
+            The type of the constant value.
+            </summary>
+            <remarks>
+            Corresponds to Type field of Constant table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.Constant.Value">
+            <summary>
+            The constant value.
+            </summary>
+            <remarks>
+            Corresponds to Value field of Constant table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.Constant.Parent">
+            <summary>
+            The parent handle (<see cref="T:System.Reflection.Metadata.ParameterHandle"/>, <see cref="T:System.Reflection.Metadata.FieldHandle"/>, or <see cref="T:System.Reflection.Metadata.PropertyHandle"/>).
+            </summary>
+            <remarks>
+            Corresponds to Parent field of Constant table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.CustomAttribute.Constructor">
+            <summary>
+            The constructor (<see cref="T:System.Reflection.Metadata.MethodHandle"/> or <see cref="T:System.Reflection.Metadata.MemberReferenceHandle"/>) of the custom attribute type.
+            </summary>
+            <remarks>
+            Corresponds to Type field of CustomAttribute table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.CustomAttribute.Parent">
+            <summary>
+            The handle of the metadata entity the attribute is applied to.
+            </summary>
+            <remarks>
+            Corresponds to Parent field of CustomAttribute table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.CustomAttribute.Value">
+            <summary>
+            The value of the attribute.
+            </summary>
+            <remarks>
+            Corresponds to Value field of CustomAttribute table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataReaderExtensions.GetTableRowCount(System.Reflection.Metadata.MetadataReader,System.Reflection.Metadata.Ecma335.TableIndex)">
+            <summary>
+            Returns the number of rows in the specified table.
+            </summary>
+            <exception cref="T:System.ArgumentNullException"><paramref name="reader"/> is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="tableIndex"/> is not a valid table index.</exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataReaderExtensions.GetTableRowSize(System.Reflection.Metadata.MetadataReader,System.Reflection.Metadata.Ecma335.TableIndex)">
+            <summary>
+            Returns the size of a row in the specified table.
+            </summary>
+            <exception cref="T:System.ArgumentNullException"><paramref name="reader"/> is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="tableIndex"/> is not a valid table index.</exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataReaderExtensions.GetHeapSize(System.Reflection.Metadata.MetadataReader,System.Reflection.Metadata.Ecma335.HeapIndex)">
+            <summary>
+            Returns the size of the specified heap.
+            </summary>
+            <exception cref="T:System.ArgumentNullException"><paramref name="reader"/> is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="heapIndex"/> is not a valid heap index.</exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataReaderExtensions.GetEditAndContinueLogEntries(System.Reflection.Metadata.MetadataReader)">
+            <summary>
+            Enumerates entries of EnC log.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataReaderExtensions.GetEditAndContinueMapEntries(System.Reflection.Metadata.MetadataReader)">
+            <summary>
+            Enumerates entries of EnC map.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataReaderExtensions.GetExportedTypes(System.Reflection.Metadata.MetadataReader)">
+            <summary>
+            Enumerates rows of ExportedType table.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataReaderExtensions.CalculateTypePropertyMap(System.Reflection.Metadata.MetadataReader)">
+            <summary>
+            TODO (tomat): temporary helper used by EnC. Use proper MetadataReader public API instead.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataReaderExtensions.CalculateTypeEventMap(System.Reflection.Metadata.MetadataReader)">
+            <summary>
+            TODO (tomat): temporary helper used by EnC. Use proper MetadataReader public API instead.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.Ecma335.MetadataTokens.TableCount">
+            <summary>
+            Maximum number of tables that can be present in Ecma335 metadata.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.Ecma335.MetadataTokens.HeapCount">
+            <summary>
+            Maximum number of tables that can be present in Ecma335 metadata.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataTokens.GetRowNumber(System.Reflection.Metadata.MetadataReader,System.Reflection.Metadata.Handle)">
+            <summary>
+            Returns the row number of a metadata table entry that corresponds 
+            to the specified <paramref name="handle"/> in the context of <paramref name="reader"/>.
+            </summary>
+            <returns>One based row number.</returns>
+            <exception cref="T:System.ArgumentException">The <paramref name="handle"/> is not a valid metadata table handle.</exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataTokens.GetHeapOffset(System.Reflection.Metadata.MetadataReader,System.Reflection.Metadata.Handle)">
+            <summary>
+            Returns the offset of metadata heap data that corresponds 
+            to the specified <paramref name="handle"/> in the context of <paramref name="reader"/>.
+            </summary>
+            <returns>Zero based offset, or -1 if <paramref name="handle"/> isn't a metadata heap handle.</returns>
+            <exception cref="T:System.NotSupportedException">The operation is not supported for the specified <paramref name="handle"/>.</exception>
+            <exception cref="T:System.ArgumentException">The <paramref name="handle"/> is invalid.</exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(System.Reflection.Metadata.MetadataReader,System.Reflection.Metadata.Handle)">
+            <summary>
+            Returns the metadata token of the specified <paramref name="handle"/> in the context of <paramref name="reader"/>.
+            </summary>
+            <returns>Metadata token.</returns>
+            <exception cref="T:System.ArgumentException">
+            Handle represents a metadata entity that doesn't have a token.
+            A token can only be retrieved for a metadata table handle or a heap handle of type <see cref="F:System.Reflection.Metadata.HandleType.UserString"/>.
+            </exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataTokens.GetRowNumber(System.Reflection.Metadata.Handle)">
+            <summary>
+            Returns the row number of a metadata table entry that corresponds 
+            to the specified <paramref name="handle"/>.
+            </summary>
+            <returns>
+            One based row number, or -1 if <paramref name="handle"/> can only be interpreted in a context of a specific <see cref="T:System.Reflection.Metadata.MetadataReader"/>.
+            See <see cref="M:System.Reflection.Metadata.Ecma335.MetadataTokens.GetRowNumber(System.Reflection.Metadata.MetadataReader,System.Reflection.Metadata.Handle)"/>.
+            </returns>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataTokens.GetHeapOffset(System.Reflection.Metadata.Handle)">
+            <summary>
+            Returns the offset of metadata heap data that corresponds 
+            to the specified <paramref name="handle"/>.
+            </summary>
+            <returns>
+            Zero based offset, or -1 if <paramref name="handle"/> can only be interpreted in a context of a specific <see cref="T:System.Reflection.Metadata.MetadataReader"/>.
+            See <see cref="M:System.Reflection.Metadata.Ecma335.MetadataTokens.GetHeapOffset(System.Reflection.Metadata.MetadataReader,System.Reflection.Metadata.Handle)"/>.
+            </returns>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(System.Reflection.Metadata.Handle)">
+            <summary>
+            Returns the metadata token of the specified <paramref name="handle"/>.
+            </summary>
+            <returns>
+            Metadata token, or 0 if <paramref name="handle"/> can only be interpreted in a context of a specific <see cref="T:System.Reflection.Metadata.MetadataReader"/>.
+            See <see cref="M:System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(System.Reflection.Metadata.MetadataReader,System.Reflection.Metadata.Handle)"/>.
+            </returns>
+            <exception cref="T:System.ArgumentException">
+            Handle represents a metadata entity that doesn't have a token.
+            A token can only be retrieved for a metadata table handle or a heap handle of type <see cref="F:System.Reflection.Metadata.HandleType.UserString"/>.
+            </exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataTokens.TryGetTableIndex(System.Reflection.Metadata.HandleType,System.Reflection.Metadata.Ecma335.TableIndex@)">
+            <summary>
+            Gets the <see cref="T:System.Reflection.Metadata.Ecma335.TableIndex"/> of the table corresponding to the specified <see cref="T:System.Reflection.Metadata.HandleType"/>.
+            </summary>
+            <param name="type">Handle type.</param>
+            <param name="index">Table index.</param>
+            <returns>True if the handle type corresponds to an Ecma335 table, false otherwise.</returns>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataTokens.TryGetHeapIndex(System.Reflection.Metadata.HandleType,System.Reflection.Metadata.Ecma335.HeapIndex@)">
+            <summary>
+            Gets the <see cref="T:System.Reflection.Metadata.Ecma335.HeapIndex"/> of the heap corresponding to the specified <see cref="T:System.Reflection.Metadata.HandleType"/>.
+            </summary>
+            <param name="type">Handle type.</param>
+            <param name="index">Heap index.</param>
+            <returns>True if the handle type corresponds to an Ecma335 heap, false otherwise.</returns>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataTokens.Handle(System.Int32)">
+            <summary>
+            Creates a handle from a token value.
+            </summary>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="token"/> is not a valid metadata token.
+            It must encode a metadata table entity or an offset in <see cref="F:System.Reflection.Metadata.HandleType.UserString"/> heap.
+            </exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.MetadataTokens.Handle(System.Reflection.Metadata.Ecma335.TableIndex,System.Int32)">
+            <summary>
+            Creates a handle from a token value.
+            </summary>
+            <exception cref="T:System.ArgumentException">
+            <paramref name="tableIndex"/> is not a valid table index.</exception>
+        </member>
+        <member name="P:System.Reflection.Metadata.ExceptionRegion.TryOffset">
+            <summary>
+            Start IL offset of the try block.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.ExceptionRegion.TryLength">
+            <summary>
+            Length in bytes of try block.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.ExceptionRegion.HandlerOffset">
+            <summary>
+            Start IL offset of the exception handler.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.ExceptionRegion.HandlerLength">
+            <summary>
+            Length in bytes of the exception handler.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.ExceptionRegion.FilterOffset">
+            <summary>
+            IL offset of the start of the filter block, or -1 if the region is not a filter.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.ExceptionRegion.CatchType">
+            <summary>
+            Returns a TypeRef, TypeDef, or TypeSpec handle if the region represents a catch, nil token otherwise. 
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Field.GetOffset">
+            <summary>
+            Returns field layout offset, or -1 if not available.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.GenericParameterConstraint.Parameter">
+            <summary>
+            The constrained <see cref="T:System.Reflection.Metadata.GenericParameterHandle"/>.
+            </summary>
+            <remarks>
+            Corresponds to Owner field of GenericParamConstraint table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.GenericParameterConstraint.Type">
+            <summary>
+            Handle (<see cref="T:System.Reflection.Metadata.TypeHandle"/>, <see cref="T:System.Reflection.Metadata.TypeReferenceHandle"/>, or <see cref="T:System.Reflection.Metadata.TypeSpecificationHandle"/>) 
+            specifying from which type this generic parameter is constrained to derive,
+            or which interface this generic parameter is constrained to implement.
+            </summary>
+            <remarks>
+            Corresponds to Constraint field of GenericParamConstraint table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.GenericParameter.Parent">
+            <summary>
+            <see cref="T:System.Reflection.Metadata.TypeHandle"/> or <see cref="T:System.Reflection.Metadata.MethodHandle"/>.
+            </summary>
+            <remarks>
+            Corresponds to Owner field of GenericParam table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.GenericParameter.Attributes">
+            <summary>
+            Attributes specifying variance and constraints.
+            </summary>
+            <remarks>
+            Corresponds to Flags field of GenericParam table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.GenericParameter.Index">
+            <summary>
+            Zero-based index of the parameter within the declaring generic type or method declaration.
+            </summary>
+            <remarks>
+            Corresponds to Number field of GenericParam table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.GenericParameter.Name">
+            <summary>
+            The name of the generic parameter.
+            </summary>
+            <remarks>
+            Corresponds to Name field of GenericParam table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.StringStreamReader.EqualsRaw(System.Reflection.Metadata.StringHandle,System.String)">
+            <summary>
+            Returns true if the given raw (non-virtual) handle represents the same string as given ASCII string.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.StringStreamReader.IndexOfRaw(System.Int32,System.Char)">
+            <summary>
+            Returns the heap index of the given ASCII character or -1 if not found prior null terminator or end of heap.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.StringStreamReader.StartsWithRaw(System.Reflection.Metadata.StringHandle,System.String)">
+            <summary>
+            Returns true if the given raw (non-virtual) handle represents a string that starts with given ASCII prefix.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.StringStreamReader.BinarySearchRaw(System.String[],System.Reflection.Metadata.StringHandle)">
+            <summary>
+            Equivalent to Array.BinarySearch, searches for given raw (non-virtual) handle in given array of ASCII strings.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.Ecma335.TokenTypeIds.VirtualTokenMask">
+            <summary>
+            Use the highest bit to mark tokens that are virtual (synthesized).
+            We create virtual tokens to represent projected WinMD entities. 
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.TokenTypeIds.IsEcmaToken(System.UInt32)">
+            <summary>
+            Returns true if the token value can escape the metadata reader.
+            We don't allow virtual tokens and heap tokens other than UserString to escape 
+            since the token type ids are internal to the reader and not specified by ECMA spec.
+            
+            Spec (Partition III, 1.9 Metadata tokens):
+            Many CIL instructions are followed by a "metadata token". This is a 4-byte value, that specifies a row in a
+            metadata table, or a starting byte offset in the User String heap. 
+            
+            For example, a value of 0x02 specifies the TypeDef table; a value of 0x70 specifies the User
+            String heap.The value corresponds to the number assigned to that metadata table (see Partition II for the full
+            list of tables) or to 0x70 for the User String heap.The least-significant 3 bytes specify the target row within that
+            metadata table, or starting byte offset within the User String heap.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.GetSimpleName(System.Reflection.Metadata.NamespaceHandle,System.Int32)">
+             <summary>
+             This will return a StringHandle for the simple name of a namespace name at the given segment index.
+             If no segment index is passed explicitly or the "segment" index is greater than or equal to the number
+             of segments, then the last segment is used. "Segment" in this context refers to part of a namespace
+             name between dots.
+            
+             Example: Given a NamespaceHandle to "System.Collections.Generic.Test" called 'handle':
+            
+               reader.GetString(GetSimpleName(handle)) == "Test"
+               reader.GetString(GetSimpleName(handle, 0)) == "System"
+               reader.GetString(GetSimpleName(handle, 1)) == "Collections"
+               reader.GetString(GetSimpleName(handle, 2)) == "Generic"
+               reader.GetString(GetSimpleName(handle, 3)) == "Test"
+               reader.GetString(GetSimpleName(handle, 1000)) == "Test"
+             </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.PopulateNamespaceTable">
+            <summary>
+            Two distinct namespace handles represent the same namespace if their full names are the same. This
+            method merges builders corresponding to such namespace handles.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.MergeDuplicateNamespaces(System.Collections.Generic.Dictionary{System.Reflection.Metadata.NamespaceHandle,System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder},System.Collections.Generic.Dictionary{System.String,System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder}@)">
+            <summary>
+            This will take 'table' and merge all of the NamespaceData instances that point to the same
+            namespace. It has to create 'stringTable' as an intermediate dictionary, so it will hand it
+            back to the caller should the caller want to use it.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.SynthesizeNamespaceData(System.String,System.Reflection.Metadata.NamespaceHandle)">
+            <summary>
+            Creates a NamespaceDataBuilder instance that contains a synthesized NamespaceHandle, 
+            as well as the name provided.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.LinkChildDataToParentData(System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder,System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder)">
+            <summary>
+            Quick convenience method that handles linking together child + parent
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.LinkChildToParentNamespace(System.Collections.Generic.Dictionary{System.String,System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder},System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder,System.Collections.Generic.List{System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder}@)">
+            <summary>
+            Links a child to its parent namespace. If the parent namespace doesn't exist, this will create a
+            synthetic one. This will automatically link any synthetic namespaces it creates up to its parents.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.ResolveParentChildRelationships(System.Collections.Generic.Dictionary{System.String,System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder},System.Collections.Generic.List{System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder}@)">
+            <summary>
+            This will link all parents/children in the given namespaces dictionary up to each other.
+            
+            In some cases, we need to synthesize namespaces that do not have any type definitions or forwarders
+            of their own, but do have child namespaces. These are returned via the syntheticNamespaces out
+            parameter.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.PopulateTableWithTypeDefinitions(System.Collections.Generic.Dictionary{System.Reflection.Metadata.NamespaceHandle,System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder})">
+            <summary>
+            Loops through all type definitions in metadata, adding them to the given table
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.PopulateTableWithTypeForwarders(System.Collections.Generic.Dictionary{System.Reflection.Metadata.NamespaceHandle,System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder})">
+            <summary>
+            Loops through all type forwarders in metadata, adding them to the given table
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.PopulateNamespaceList">
+            <summary>
+            Populates namespaceList with distinct namespaces. No ordering is guaranteed.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.EnsureNamespaceTableIsPopulated">
+            <summary>
+            If the namespace table doesn't exist, populates it!
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.EnsureNamespaceListIsPopulated">
+            <summary>
+            If the namespace list doesn't exist, populates it!
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.Ecma335.NamespaceCache.CacheIsRealized">
+            <summary>
+            Returns whether the namespaceTable has been created. If it hasn't, calling a GetXXX method
+            on this will probably have a very high amount of overhead.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder">
+            <summary>
+            An intermediate class used to build NamespaceData instances. This was created because we wanted to
+            use ImmutableArrays in NamespaceData, but having ArrayBuilders and ImmutableArrays that served the
+            same purpose in NamespaceData got ugly. With the current design of how we create our Namespace
+            dictionary, this needs to be a class because we have a many-to-one mapping between NamespaceHandles
+            and NamespaceData. So, the pointer semantics must be preserved.
+            
+            This class assumes that the builders will not be modified in any way after the first call to
+            Freeze().
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.NamespaceCache.NamespaceDataBuilder.Freeze">
+            <summary>
+            Returns a NamespaceData that represents this NamespaceDataBuilder instance. After calling
+            this method, it is an error to use any methods or fields except Freeze() on the target 
+            NamespaceDataBuilder.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.Ecma335.FieldLayoutTableReader.FindFieldLayoutRowId(System.Reflection.Metadata.FieldHandle)">
+            <summary>
+            Returns field offset for given field RowId, or -1 if not available. 
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.Ecma335.AssemblyRefTableReader.NumberOfNonVirtualRows">
+            <summary>
+            In CLI metadata equal to the actual number of entries in AssemblyRef table.
+            In WinMD metadata it includes synthesized AssemblyRefs in addition.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.AssemblyFile.ContainsMetadata">
+            <summary>
+            True if the file contains metadata.
+            </summary>
+            <remarks>
+            Corresponds to Flags field of File table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.AssemblyFile.Name">
+            <summary>
+            File name with extension.
+            </summary>
+            <remarks>
+            Corresponds to Name field of File table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.AssemblyFile.HashValue">
+            <summary>
+            Hash value of the file content calculated using <see cref="P:System.Reflection.Metadata.AssemblyDefinition.HashAlgorithm"/>.
+            </summary>
+            <remarks>
+            Corresponds to HashValue field of File table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.ManifestResource.Offset">
+            <summary>
+            Specifies the byte offset within the referenced file at which this resource record begins.
+            </summary>
+            <remarks>
+            Corresponds to Offset field of ManifestResource table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.ManifestResource.Attributes">
+            <summary>
+            Resource attributes.
+            </summary>
+            <remarks>
+            Corresponds to Flags field of ManifestResource table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.ManifestResource.Name">
+            <summary>
+            Name of the resource.
+            </summary>
+            <remarks>
+            Corresponds to Name field of ManifestResource table in ECMA-335 Standard.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.ManifestResource.Implementation">
+            <summary>
+            <see cref="T:System.Reflection.Metadata.AssemblyFileHandle"/>, <see cref="T:System.Reflection.Metadata.AssemblyReferenceHandle"/>, or nil handle.
+            </summary>
+            <remarks>
+            Corresponds to Implementation field of ManifestResource table in ECMA-335 Standard.
+            
+            If nil then <see cref="P:System.Reflection.Metadata.ManifestResource.Offset"/> is an offset in the PE image that contains the metadata, 
+            starting from the Resource entry in the CLI header.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.MemberReference.Parent">
+            <summary>
+            MethodDef, ModuleRef,TypeDef, TypeRef, or TypeSpec handle.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.BlobReader.ReadUtf8(System.Int32)">
+            <summary>
+            Reads UTF8 encoded string starting at the current position. 
+            </summary>
+            <param name="byteCount">The number of bytes to read.</param>
+            <returns>The string.</returns>
+            <exception cref="T:System.BadImageFormatException"><paramref name="byteCount"/> bytes not available.</exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.BlobReader.ReadUtf16(System.Int32)">
+            <summary>
+            Reads UTF16 encoded string starting at the current position. 
+            </summary>
+            <param name="byteCount">The number of bytes to read.</param>
+            <returns>The string.</returns>
+            <exception cref="T:System.BadImageFormatException"><paramref name="byteCount"/> bytes not available.</exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.BlobReader.ReadBytes(System.Int32)">
+            <summary>
+            Reads bytes starting at the current position. 
+            </summary>
+            <param name="byteCount">The number of bytes to read.</param>
+            <returns>The byte array.</returns>
+            <exception cref="T:System.BadImageFormatException"><paramref name="byteCount"/> bytes not available.</exception>
+        </member>
+        <member name="M:System.Reflection.Metadata.BlobReader.TryReadCompressedUInt32(System.UInt32@)">
+            <summary>
+            Reads a compressed integer value starting at offset. 
+            See Metadata Specification section II.23.2: Blobs and signatures.
+            </summary>
+            <param name="value">The value of the compressed integer that was read.</param>
+            <returns>true if the value was read successfully. false if the data at the current position was not a valid compressed integer.</returns>
+        </member>
+        <member name="M:System.Reflection.Metadata.BlobReader.ReadSerializationTypeCode">
+            <summary>
+            Reads type code encoded in a serialized custom attribute value. 
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.BlobReader.ReadSignatureTypeCode">
+            <summary>
+            Reads type code encoded in a signature. 
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.BlobReader.ReadTypeHandle">
+            <summary>
+            Reads a type handle encoded in a signature as (CLASS | VALUETYPE) TypeDefOrRefOrSpecEncoded. 
+            </summary>
+            <returns>The handle or nil if the encoding is invalid.</returns>
+        </member>
+        <member name="T:System.Reflection.Metadata.GenericParameterHandleCollection">
+            <summary>
+            Represents generic type parameters of a method or type.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.GenericParameterConstraintHandleCollection">
+            <summary>
+            Represents constraints of a generic type parameter.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.ParameterHandleCollection">
+            <summary>
+            Collection of parameters of a specified method.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.InterfaceHandleCollection">
+            <summary>
+            Collection of TypeDefs, TypeRefs and TypeSpecs that represents interfaces implemented by a specified type.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.TypeHandleCollection">
+            <summary>
+            Represents a collection of <see cref="T:System.Reflection.Metadata.TypeHandle"/>.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.TypeReferenceHandleCollection">
+            <summary>
+            Represents a collection of <see cref="T:System.Reflection.Metadata.TypeReferenceHandle"/>.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.TypeForwarderHandleCollection">
+            <summary>
+            Collection of type forwarders defined in the module.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.MemberReferenceHandleCollection">
+            <summary>
+            Represents a collection of <see cref="T:System.Reflection.Metadata.MemberReferenceHandle"/>.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.AssemblyReferenceHandleCollection">
+            <summary>
+            Collection of assembly references.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.ManifestResourceHandleCollection">
+            <summary>
+            Represents a collection of <see cref="T:System.Reflection.Metadata.ManifestResourceHandle"/>.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.AssemblyFileHandleCollection">
+            <summary>
+            Represents a collection of <see cref="T:System.Reflection.Metadata.AssemblyFileHandle"/>.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Metadata.NamespaceHandle">
+            <summary>
+            A handle that represents a namespace definition. 
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.MetadataKind.Ecma335">
+            <summary>
+            CLI metadata.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.MetadataKind.WindowsMetadata">
+            <summary>
+            Windows Metadata.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.MetadataKind.ManagedWindowsMetadata">
+            <summary>
+            Windows Metadata generated by managed compilers.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.MetadataReader.IsMinimalDelta">
+            <summary>
+            True if the metadata stream has minimal delta format. Used for EnC.
+            </summary>
+            <remarks>
+            The metadata stream has minimal delta format if "#JTD" stream is present.
+            Minimal delta format uses large size (4B) when encoding table/heap references.
+            The heaps in minimal delta only contain data of the delta, 
+            there is no padding at the beginning of the heaps that would align them 
+            with the original full metadata heaps.
+            </remarks>
+        </member>
+        <member name="M:System.Reflection.Metadata.MetadataReader.ReadMetadataHeader(System.Reflection.Metadata.BlobReader@)">
+            <summary>
+            Looks like this function reads beginning of the header described in
+            Ecma-335 24.2.1 Metadata root
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.MetadataReader.ReadStreamHeaders(System.Reflection.Metadata.BlobReader@)">
+            <summary>
+            Looks like this function reads stream headers described in
+            Ecma-335 24.2.2 Stream header
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.MetadataReader.TableRowCounts">
+            <summary>
+            A row count for each possible table. May be indexed by <see cref="T:System.Reflection.Metadata.Ecma335.TableIndex"/>.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.MetadataReader.GetNestedTypes(System.Reflection.Metadata.TypeHandle)">
+            <summary>
+            Returns an array of types nested in the specified type.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.MetadataReader.CalculateFieldDefTreatmentAndRowId(System.Reflection.Metadata.FieldHandle)">
+            <summary>
+            The backing field of a WinRT enumeration type is not public although the backing fields
+            of managed enumerations are. To allow managed languages to directly access this field,
+            it is made public by the metadata adapter.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.MetadataReader.ImplementsRedirectedInterface(System.Reflection.Metadata.MemberReferenceHandle,System.Boolean@)">
+            <summary>
+            We want to know if a given method implements a redirected interface.
+            For example, if we are given the method RemoveAt on a class "A" 
+            which implements the IVector interface (which is redirected
+            to IList in .NET) then this method would return true. The most 
+            likely reason why we would want to know this is that we wish to hide
+            (mark private) all methods which implement methods on a redirected 
+            interface.
+            </summary>
+            <param name="memberRef">The declaration token for the method</param>
+            <param name="isIDisposable">
+            Returns true if the redirected interface is <see cref="T:System.IDisposable"/>.
+            </param>
+            <returns>True if the method implements a method on a redirected interface.
+            False otherwise.</returns>
+        </member>
+        <member name="M:System.Reflection.Metadata.MetadataReader.GetAttributeTypeRaw(System.Reflection.Metadata.CustomAttributeHandle)">
+            <summary>
+            Returns the type definition or reference handle of the attribute type.
+            </summary>
+            <returns><see cref="T:System.Reflection.Metadata.TypeHandle"/> or <see cref="T:System.Reflection.Metadata.TypeReferenceHandle"/> or nil token if the metadata is invalid and the type can't be determined.</returns>
+        </member>
+        <member name="P:System.Reflection.Metadata.MethodBodyBlock.Size">
+            <summary>
+            Size of the method body - includes the header, IL and exception regions.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MethodSpecification.Method">
+            <summary>
+            MethodDef or MemberRef handle specifying to which generic method this <see cref="T:System.Reflection.Metadata.MethodSpecification"/> refers,
+            that is which generic method is it an instantiation of.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.MethodSpecification.Signature">
+            <summary>
+            Blob handle holding the signature of this instantiation.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.NamespaceDefinition.Name">
+            <summary>
+            Gets the unqualified name of the NamespaceDefinition.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.NamespaceDefinition.Parent">
+            <summary>
+            Gets the parent namespace.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.NamespaceDefinition.NamespaceDefinitions">
+            <summary>
+            Gets the namespace definitions that are direct children of the current
+            namespace definition. 
+            
+            System.Collections and System.Linq are direct children of System. 
+            System.Collections.Generic is a direct child of System.Collections.
+            System.Collections.Generic is *not* a direct child of System.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.NamespaceDefinition.TypeDefinitions">
+            <summary>
+            Gets all type definitions that reside directly in a namespace.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.NamespaceDefinition.TypeForwarders">
+            <summary>
+            Gets all type forwarders that reside directly in a namespace.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.Invalid">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.Invalid"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.Boolean">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.Boolean"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.Char">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.Char"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.SByte">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.SByte"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.Byte">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.Byte"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.Int16">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.Int16"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.UInt16">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.UInt16"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.Int32">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.Int32"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.UInt32">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.UInt32"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.Int64">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.Int64"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.UInt64">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.UInt64"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.Single">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.Single"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.Double">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.Double"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.String">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.String"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.Object">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.Object"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.Metadata.SerializationTypeCode.SZArray">
+            <summary>
+            Equivalent to <see cref="F:System.Reflection.Metadata.SignatureTypeCode.SZArray"/>.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.TypeDefinition.GetDeclaringType">
+            <summary>
+            Returns the enclosing type of a specified nested type or nil handle if the type is not nested.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Metadata.TypeDefinition.GetNestedTypes">
+            <summary>
+            Returns an array of types nested in the specified type.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.TypeDefinition.Name">
+            <summary>
+            Name of the type.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.TypeDefinition.Namespace">
+            <summary>
+            Namespace of the type, or nil if the type is nested or defined in a root namespace.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.TypeDefinition.BaseType">
+            <summary>
+            The base type of the type definition: either
+            <see cref="T:System.Reflection.Metadata.TypeSpecificationHandle"/>, <see cref="T:System.Reflection.Metadata.TypeReferenceHandle"/> or <see cref="T:System.Reflection.Metadata.TypeHandle"/>.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.TypeReference.ResolutionScope">
+            <summary>
+            Resolution scope in which the target type is defined and is uniquely identified by the specified <see cref="P:System.Reflection.Metadata.TypeReference.Namespace"/> and <see cref="P:System.Reflection.Metadata.TypeReference.Name"/>.
+            </summary>
+            <remarks>
+            Resolution scope can be one of the following handles:
+            <list type="bullet">
+            <item><description><see cref="T:System.Reflection.Metadata.TypeReferenceHandle"/> of the enclosing type, if the target type is a nested type.</description></item>
+            <item><description><see cref="T:System.Reflection.Metadata.ModuleReferenceHandle"/>, if the target type is defined in another module within the same assembly as this one.</description></item>
+            <item><description><see cref="F:System.Reflection.Metadata.Handle.ModuleDefinition"/>, if the target type is defined in the current module. This should not occur in a CLI compressed metadata module.</description></item>
+            <item><description><see cref="T:System.Reflection.Metadata.AssemblyReferenceHandle"/>, if the target type is defined in a different assembly from the current module.</description></item>
+            <item><description>Nil handle if the target type is forwarded to a different assembly via a <see cref="T:System.Reflection.Metadata.TypeForwarder"/> defined in the current module with matching <see cref="P:System.Reflection.Metadata.TypeReference.Namespace"/> and <see cref="P:System.Reflection.Metadata.TypeReference.Name"/>.</description></item>
+            </list>
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.Metadata.TypeReference.Name">
+            <summary>
+            Name of the target type.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.Metadata.TypeReference.Namespace">
+            <summary>
+            Name of the namespace where the target type is defined, or nil if the type is nested or defined in a root namespace.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.CoffHeader.Machine">
+            <summary>
+            The type of target machine.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.CoffHeader.NumberOfSections">
+            <summary>
+            The number of sections. This indicates the size of the section table, which immediately follows the headers.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.CoffHeader.TimeDateStamp">
+            <summary>
+            The low 32 bits of the number of seconds since 00:00 January 1, 1970, that indicates when the file was created.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.CoffHeader.PointerToSymbolTable">
+            <summary>
+            The file pointer to the COFF symbol table, or zero if no COFF symbol table is present. 
+            This value should be zero for a PE image.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.CoffHeader.NumberOfSymbols">
+            <summary>
+            The number of entries in the symbol table. This data can be used to locate the string table, 
+            which immediately follows the symbol table. This value should be zero for a PE image.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.CoffHeader.SizeOfOptionalHeader">
+            <summary>
+            The size of the optional header, which is required for executable files but not for object files. 
+            This value should be zero for an object file. 
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.CoffHeader.Characteristics">
+            <summary>
+            The flags that indicate the attributes of the file. 
+            </summary>
+        </member>
+        <member name="T:System.Reflection.PortableExecutable.CorFlags">
+            <summary>
+            COR20Flags
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.Unknown">
+            <summary>
+            The target CPU is unknown or not specified.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.I386">
+            <summary>
+            Intel 386.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.WceMipsV2">
+            <summary>
+            MIPS little-endian WCE v2
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.Alpha">
+            <summary>
+            Alpha
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.SH3">
+            <summary>
+            Hitachi SH3 little endian
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.SH3Dsp">
+            <summary>
+            Hitachi SH3 DSP.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.SH3E">
+            <summary>
+            Hitachi SH3 little endian.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.SH4">
+            <summary>
+            Hitachi SH4 little endian.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.SH5">
+            <summary>
+            Hitachi SH5.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.Arm">
+            <summary>
+            ARM little endian
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.Thumb">
+            <summary>
+            Thumb.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.ArmThumb2">
+            <summary>
+            ARM Thumb-2 little endian.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.AM33">
+            <summary>
+            Matsushita AM33.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.PowerPC">
+            <summary>
+            IBM PowerPC little endian.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.PowerPCFP">
+            <summary>
+            PowerPCFP
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.IA64">
+            <summary>
+            Intel 64
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.MIPS16">
+            <summary>
+            MIPS
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.Alpha64">
+            <summary>
+            ALPHA64
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.MipsFpu">
+            <summary>
+            MIPS with FPU.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.MipsFpu16">
+            <summary>
+            MIPS16 with FPU.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.Tricore">
+            <summary>
+            Infineon
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.Ebc">
+            <summary>
+            EFI Byte Code
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.Amd64">
+            <summary>
+            AMD64 (K8)
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.Machine.M32R">
+            <summary>
+            M32R little-endian
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.Magic">
+            <summary>
+            Identifies the format of the image file.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.MajorLinkerVersion">
+            <summary>
+            The linker major version number.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.MinorLinkerVersion">
+            <summary>
+            The linker minor version number.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.SizeOfCode">
+            <summary>
+            The size of the code (text) section, or the sum of all code sections if there are multiple sections.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.SizeOfInitializedData">
+            <summary>
+            The size of the initialized data section, or the sum of all such sections if there are multiple data sections.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.SizeOfUninitializedData">
+            <summary>
+            The size of the uninitialized data section (BSS), or the sum of all such sections if there are multiple BSS sections.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.AddressOfEntryPoint">
+            <summary>
+            The address of the entry point relative to the image base when the PE file is loaded into memory. 
+            For program images, this is the starting address. For device drivers, this is the address of the initialization function.
+            An entry point is optional for DLLs. When no entry point is present, this field must be zero.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.BaseOfCode">
+            <summary>
+            The address that is relative to the image base of the beginning-of-code section when it is loaded into memory.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.BaseOfData">
+            <summary>
+            The address that is relative to the image base of the beginning-of-data section when it is loaded into memory.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.ImageBase">
+            <summary>
+            The preferred address of the first byte of image when loaded into memory; 
+            must be a multiple of 64K.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.SectionAlignment">
+            <summary>
+            The alignment (in bytes) of sections when they are loaded into memory. It must be greater than or equal to <see cref="P:System.Reflection.PortableExecutable.PEHeader.FileAlignment"/>. 
+            The default is the page size for the architecture.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.FileAlignment">
+            <summary>
+            The alignment factor (in bytes) that is used to align the raw data of sections in the image file. 
+            The value should be a power of 2 between 512 and 64K, inclusive. The default is 512. 
+            If the <see cref="P:System.Reflection.PortableExecutable.PEHeader.SectionAlignment"/> is less than the architecture’s page size, 
+            then <see cref="P:System.Reflection.PortableExecutable.PEHeader.FileAlignment"/> must match <see cref="P:System.Reflection.PortableExecutable.PEHeader.SectionAlignment"/>.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.MajorOperatingSystemVersion">
+            <summary>
+            The major version number of the required operating system.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.MinorOperatingSystemVersion">
+            <summary>
+            The minor version number of the required operating system.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.MajorImageVersion">
+            <summary>
+            The major version number of the image.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.MinorImageVersion">
+            <summary>
+            The minor version number of the image.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.MajorSubsystemVersion">
+            <summary>
+            The major version number of the subsystem.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.MinorSubsystemVersion">
+            <summary>
+            The minor version number of the subsystem.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.SizeOfImage">
+            <summary>
+            The size (in bytes) of the image, including all headers, as the image is loaded in memory. 
+            It must be a multiple of <see cref="P:System.Reflection.PortableExecutable.PEHeader.SectionAlignment"/>.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.SizeOfHeaders">
+            <summary>
+            The combined size of an MS DOS stub, PE header, and section headers rounded up to a multiple of FileAlignment.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.CheckSum">
+            <summary>
+            The image file checksum. 
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.Subsystem">
+            <summary>
+            The subsystem that is required to run this image. 
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.SizeOfStackReserve">
+            <summary>
+            The size of the stack to reserve. Only <see cref="P:System.Reflection.PortableExecutable.PEHeader.SizeOfStackCommit"/> is committed; 
+            the rest is made available one page at a time until the reserve size is reached.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.SizeOfStackCommit">
+            <summary>
+            The size of the stack to commit.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.SizeOfHeapReserve">
+            <summary>
+            The size of the local heap space to reserve. Only <see cref="P:System.Reflection.PortableExecutable.PEHeader.SizeOfHeapCommit"/> is committed; 
+            the rest is made available one page at a time until the reserve size is reached.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.SizeOfHeapCommit">
+            <summary>
+            The size of the local heap space to commit.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.NumberOfRvaAndSizes">
+            <summary>
+            The number of data-directory entries in the remainder of the <see cref="T:System.Reflection.PortableExecutable.PEHeader"/>. Each describes a location and size.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEHeader.CertificateTableDirectory">
+            <summary>
+            The Certificate Table entry points to a table of attribute certificates. 
+            These certificates are not loaded into memory as part of the image.
+             As such, the first field of this entry, which is normally an RVA, is a file pointer instead.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.PortableExecutable.PEHeaders">
+            <summary>
+            An object used to read the PE headers from a stream.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.PortableExecutable.PEHeaders.#ctor(System.IO.Stream)">
+            <summary>
+            Reads Portable Executable headers from the current location in the stream.
+            </summary>
+            <exception cref="T:System.BadImageFormatException">The data read from stream have invalid format.</exception>
+            <exception cref="T:System.IO.IOException">Error reading from the stream.</exception>
+            <exception cref="T:System.ArgumentException">The stream doesn't support seek operations.</exception>
+            <exception cref="T:System.ArgumentNullException"><paramref name="peStream"/> is null.</exception>
+        </member>
+        <member name="M:System.Reflection.PortableExecutable.PEHeaders.GetContainingSectionIndex(System.Int32)">
+            <summary>
+            Searches sections of the PE image for the one that contains specified Relative Virtual Address.
+            </summary>
+            <param name="relativeVirtualAddress">Address.</param>
+            <returns>
+            Index of the section that contains <paramref name="relativeVirtualAddress"/>,
+            or -1 if there is none.
+            </returns>
+        </member>
+        <member name="T:System.Reflection.PortableExecutable.PEReader">
+            <summary>
+            Portable Executable format reader.
+            </summary>
+            <remarks>
+            The implementation is thread-safe, that is multiple threads can read data from the reader in parallel.
+            Disposal of the reader is not thread-safe (see <see cref="M:System.Reflection.PortableExecutable.PEReader.Dispose"/>).
+            </remarks>
+        </member>
+        <member name="M:System.Reflection.PortableExecutable.PEReader.#ctor(System.IntPtr,System.Int32)">
+            <summary>
+            Creates a Portable Executable reader over a PE image stored in memory.
+            </summary>
+            <param name="peImage">Pointer to the start of the PE image.</param>
+            <param name="size">The size of the PE image.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="peImage"/> is <see cref="F:System.IntPtr.Zero"/>.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="size"/> is negative.</exception>
+            <remarks>
+            The memory is owned by the caller and not released on disposal of the <see cref="T:System.Reflection.PortableExecutable.PEReader"/>.
+            The content of the image is not read during the construction of the <see cref="T:System.Reflection.PortableExecutable.PEReader"/>
+            </remarks>
+        </member>
+        <member name="M:System.Reflection.PortableExecutable.PEReader.#ctor(System.IO.Stream,System.Reflection.PortableExecutable.PEStreamOptions)">
+            <summary>
+            Creates a Portable Executable reader over a PE image stored in a stream.
+            </summary>
+            <param name="peStream">PE image stream.</param>
+            <param name="options">
+            Options specifying how sections of the PE image are read from the stream.
+            Unless <see cref="F:System.Reflection.PortableExecutable.PEStreamOptions.LeaveOpen"/> is specified, the responsibility for disposal of the stream is transferred upon entry of the constructor
+            unless the arguments given are invalid.
+            
+            Unless <see cref="F:System.Reflection.PortableExecutable.PEStreamOptions.PrefetchMetadata"/> or <see cref="F:System.Reflection.PortableExecutable.PEStreamOptions.PrefetchEntireImage"/> is specified no data is read from the stream
+            during the construction of the <see cref="T:System.Reflection.PortableExecutable.PEReader"/>.
+            </param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="peStream"/> is null.</exception>
+            <exception cref="T:System.ArgumentOutOfRangeException"><paramref name="options"/> has an invalid value.</exception>
+            <exception cref="T:System.BadImageFormatException">
+            <see cref="F:System.Reflection.PortableExecutable.PEStreamOptions.PrefetchMetadata"/> or <see cref="F:System.Reflection.PortableExecutable.PEStreamOptions.PrefetchEntireImage"/> is specified and the PE headers of the image are invalid.
+            </exception>
+        </member>
+        <member name="M:System.Reflection.PortableExecutable.PEReader.#ctor(System.Collections.Immutable.ImmutableArray{System.Byte})">
+            <summary>
+            Creates a Portable Executable reader over a PE image stored in a byte array.
+            </summary>
+            <param name="peImage">PE image.</param>
+            <remarks>
+            The content of the image is not read during the construction of the <see cref="T:System.Reflection.PortableExecutable.PEReader"/>
+            </remarks>
+            <exception cref="T:System.ArgumentNullException"><paramref name="peImage"/> is null.</exception>
+        </member>
+        <member name="M:System.Reflection.PortableExecutable.PEReader.Dispose">
+            <summary>
+            Disposes all memory allocated by the reader.
+            </summary>
+            <remarks>
+            <see cref="M:System.Reflection.PortableExecutable.PEReader.Dispose"/>  can be called multiple times (even in parallel). 
+            However, it is not safe to call <see cref="M:System.Reflection.PortableExecutable.PEReader.Dispose"/> in parallel with any other operation on the <see cref="T:System.Reflection.PortableExecutable.PEReader"/>
+            or reading from <see cref="T:System.Reflection.PortableExecutable.PEMemoryBlock"/>s retrieved from the reader.
+            </remarks>
+        </member>
+        <member name="M:System.Reflection.PortableExecutable.PEReader.GetEntireImageBlock">
+            <summary>
+            Returns a view of the entire image as a pointer and length.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">PE image not available.</exception>
+        </member>
+        <member name="M:System.Reflection.PortableExecutable.PEReader.GetEntireImage">
+            <summary>
+            Gets a pointer to and size of the PE image if available (<see cref="P:System.Reflection.PortableExecutable.PEReader.IsEntireImageAvailable"/>).
+            </summary>
+            <exception cref="T:System.InvalidOperationException">The entire PE image is not available.</exception>
+        </member>
+        <member name="M:System.Reflection.PortableExecutable.PEReader.GetMetadata">
+            <summary>
+            Loads PE section that contains CLI metadata.
+            </summary>
+            <exception cref="T:System.InvalidOperationException">The PE image doesn't contain metadata (<see cref="P:System.Reflection.PortableExecutable.PEReader.HasMetadata"/> returns false).</exception>
+            <exception cref="T:System.BadImageFormatException">The PE headers contain invalid data.</exception>
+        </member>
+        <member name="M:System.Reflection.PortableExecutable.PEReader.GetSectionData(System.Int32)">
+            <summary>
+            Loads PE section that contains the specified <paramref name="relativeVirtualAddress"/> into memory
+            and returns a memory block that starts at <paramref name="relativeVirtualAddress"/> and ends at the end of the containing section.
+            </summary>
+            <param name="relativeVirtualAddress">Relative Virtual Address of the data to read.</param>
+            <returns>
+            An empty block if <paramref name="relativeVirtualAddress"/> doesn't represent a location in any of the PE sections of this PE image.
+            </returns>
+            <exception cref="T:System.BadImageFormatException">The PE headers contain invalid data.</exception>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEReader.PEHeaders">
+            <summary>
+            Returns the PE headers.
+            </summary>
+            <returns>The PE headers.</returns>
+            <exception cref="T:System.BadImageFormatException">The headers contain invalid data.</exception>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEReader.IsEntireImageAvailable">
+            <summary>
+            Return true if the reader can access the entire PE image.
+            </summary>
+            <remarks>
+            Returns false if the <see cref="T:System.Reflection.PortableExecutable.PEReader"/> is constructed from a stream and only part of it is prefetched into memory.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.PEReader.HasMetadata">
+            <summary>
+            Returns true if the PE image contains CLI metadata.
+            </summary>
+            <exception cref="T:System.BadImageFormatException">The PE headers contain invalid data.</exception>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.PEStreamOptions.Default">
+            <summary>
+            By default the stream is disposed when <see cref="T:System.Reflection.PortableExecutable.PEReader"/> is disposed and sections of the PE image are read lazily.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.PEStreamOptions.LeaveOpen">
+            <summary>
+            Keep the stream open when the <see cref="T:System.Reflection.PortableExecutable.PEReader"/> is disposed.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.PEStreamOptions.PrefetchMetadata">
+            <summary>
+            Reads metadata section into memory right away. 
+            </summary>
+            <remarks>
+            Reading from other sections of the file is not allowed (<see cref="T:System.InvalidOperationException"/> is thrown by the <see cref="T:System.Reflection.PortableExecutable.PEReader"/>).
+            The underlying file may be closed and even deleted after <see cref="T:System.Reflection.PortableExecutable.PEReader"/> is constructed.
+            
+            <see cref="T:System.Reflection.PortableExecutable.PEReader"/> closes the stream automatically by the time the constructor returns unless <see cref="F:System.Reflection.PortableExecutable.PEStreamOptions.LeaveOpen"/> is specified.
+            </remarks>
+        </member>
+        <member name="F:System.Reflection.PortableExecutable.PEStreamOptions.PrefetchEntireImage">
+            <summary>
+            Reads the entire image into memory right away. 
+            </summary>
+            <remarks>
+            <see cref="T:System.Reflection.PortableExecutable.PEReader"/> closes the stream automatically by the time the constructor returns unless <see cref="F:System.Reflection.PortableExecutable.PEStreamOptions.LeaveOpen"/> is specified.
+            </remarks>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.SectionHeader.Name">
+            <summary>
+            An 8-byte, null-padded UTF-8 encoded string. If the string is exactly 8 characters long, there is no terminating null. 
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.SectionHeader.VirtualSize">
+            <summary>
+            The total size of the section when loaded into memory. 
+            If this value is greater than <see cref="P:System.Reflection.PortableExecutable.SectionHeader.SizeOfRawData"/>, the section is zero-padded. 
+            This field is valid only for PE images and should be set to zero for object files.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.SectionHeader.VirtualAddress">
+            <summary>
+            For PE images, the address of the first byte of the section relative to the image base when the 
+            section is loaded into memory. For object files, this field is the address of the first byte before
+            relocation is applied; for simplicity, compilers should set this to zero. Otherwise, 
+            it is an arbitrary value that is subtracted from offsets during relocation.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.SectionHeader.SizeOfRawData">
+            <summary>
+            The size of the section (for object files) or the size of the initialized data on disk (for image files).
+            For PE images, this must be a multiple of <see cref="P:System.Reflection.PortableExecutable.PEHeader.FileAlignment"/>.
+            If this is less than <see cref="P:System.Reflection.PortableExecutable.SectionHeader.VirtualSize"/>, the remainder of the section is zero-filled. 
+            Because the <see cref="P:System.Reflection.PortableExecutable.SectionHeader.SizeOfRawData"/> field is rounded but the <see cref="P:System.Reflection.PortableExecutable.SectionHeader.VirtualSize"/> field is not, 
+            it is possible for <see cref="P:System.Reflection.PortableExecutable.SectionHeader.SizeOfRawData"/> to be greater than <see cref="P:System.Reflection.PortableExecutable.SectionHeader.VirtualSize"/> as well.
+             When a section contains only uninitialized data, this field should be zero.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.SectionHeader.PointerToRawData">
+            <summary>
+            The file pointer to the first page of the section within the COFF file. 
+            For PE images, this must be a multiple of <see cref="P:System.Reflection.PortableExecutable.PEHeader.FileAlignment"/>. 
+            For object files, the value should be aligned on a 4 byte boundary for best performance. 
+            When a section contains only uninitialized data, this field should be zero.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.SectionHeader.PointerToRelocations">
+            <summary>
+            The file pointer to the beginning of relocation entries for the section.
+            This is set to zero for PE images or if there are no relocations.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.SectionHeader.PointerToLineNumbers">
+            <summary>
+            The file pointer to the beginning of line-number entries for the section. 
+            This is set to zero if there are no COFF line numbers. 
+            This value should be zero for an image because COFF debugging information is deprecated.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.SectionHeader.NumberOfRelocations">
+            <summary>
+            The number of relocation entries for the section. This is set to zero for PE images.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.SectionHeader.NumberOfLineNumbers">
+            <summary>
+            The number of line-number entries for the section.
+             This value should be zero for an image because COFF debugging information is deprecated.
+            </summary>
+        </member>
+        <member name="P:System.Reflection.PortableExecutable.SectionHeader.SectionCharacteristics">
+            <summary>
+            The flags that describe the characteristics of the section. 
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Internal.MemoryBlock.PeekCompressedUInt32(System.Int32,System.Int32@)">
+            <summary>
+            Decodes an compressed integer value starting at offset. 
+            See Metadata Specification section II.23.2: Blobs and signatures.
+            </summary>
+            <param name="offset">Offset to the start of the compressed data.</param>
+            <param name="numberOfBytesRead">Bytes actually read.</param>
+            <returns>
+            Value between 0 and 0x1fffffff, or <see cref="F:System.Reflection.Metadata.BlobReader.InvalidCompressedInteger"/> if the value encoding is invalid.
+            </returns>
+        </member>
+        <member name="M:System.Reflection.Internal.MemoryBlock.BinarySearchReferenceRange(System.UInt32,System.Int32,System.Int32,System.UInt32,System.Boolean,System.Int32@,System.Int32@)">
+            <summary>
+            Calculates a range of rows that have specified value in the specified column in a table that is sorted by that column.
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Internal.MemoryBlock.BinarySearchReferenceRange(System.UInt32[],System.Int32,System.Int32,System.UInt32,System.Boolean,System.Int32@,System.Int32@)">
+            <summary>
+            Calculates a range of rows that have specified value in the specified column in a table that is sorted by that column.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.MethodSemanticsAttributes.Setter">
+            <summary>
+            Used to read the value of the property.
+            CLS-compliant setters are named with set_ prefix.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.MethodSemanticsAttributes.Getter">
+            <summary>
+            Used to modify the value of the property.
+            CLS-compliant getters are named with get_ prefix.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.MethodSemanticsAttributes.Other">
+            <summary>
+            Other method for property (not getter or setter) or event (not adder, remover, or raiser).
+            </summary>
+        </member>
+        <member name="F:System.Reflection.MethodSemanticsAttributes.Adder">
+            <summary>
+            Used to add a handler for an event.
+            Corresponds to the AddOn flag in the Ecma 335 CLI specification.
+            CLS-compliant adders are named with add_ prefix.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.MethodSemanticsAttributes.Remover">
+            <summary>
+            Used to remove a handler for an event.
+            Correpsonds to th RemoveOn flag in the Ecma 335 CLI specification.
+            CLS-compliant removers are named with remove_ prefix.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.MethodSemanticsAttributes.Raiser">
+            <summary>
+            Used to indicate that an event has occurred.
+            Corresponds to the Fire flag in the Ecma 335 CLI specification.
+            CLS-compliant raisers are named with raise_ prefix.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.DeclarativeSecurityAction">
+            <summary>
+            Specifies the security actions that can be performed using declarative security.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.DeclarativeSecurityAction.None">
+            <summary>
+            No declarative security action.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.DeclarativeSecurityAction.Demand">
+            <summary>
+            Check that all callers in the call chain have been granted specified permission,
+            </summary>
+        </member>
+        <member name="F:System.Reflection.DeclarativeSecurityAction.Assert">
+            <summary>
+            The calling code can access the resource identified by the current permission object, even if callers higher in the stack have not been granted permission to access the resource.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.DeclarativeSecurityAction.Deny">
+            <summary>
+            Without further checks refuse Demand for the specified permission.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.DeclarativeSecurityAction.PermitOnly">
+            <summary>
+            Without further checks, refuse Demand for all permissions other than those specified.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.DeclarativeSecurityAction.LinkDemand">
+            <summary>
+            Check that the immediate caller has been granted the specified permission;
+            </summary>
+        </member>
+        <member name="F:System.Reflection.DeclarativeSecurityAction.InheritanceDemand">
+            <summary>
+            The derived class inheriting the class or overriding a method is required to have been granted the specified permission.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.DeclarativeSecurityAction.RequestMinimum">
+            <summary>
+            The request for the minimum permissions required for code to run. This action can only be used within the scope of the assembly.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.DeclarativeSecurityAction.RequestOptional">
+            <summary>
+            The request for additional permissions that are optional (not required to run). This request implicitly refuses all other permissions not specifically requested. This action can only be used within the scope of the assembly. 
+            </summary>
+        </member>
+        <member name="F:System.Reflection.DeclarativeSecurityAction.RequestRefuse">
+            <summary>
+            The request that permissions that might be misused will not be granted to the calling code. This action can only be used within the scope of the assembly.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.ManifestResourceAttributes.Public">
+            <summary>
+            The Resource is exported from the Assembly
+            </summary>
+        </member>
+        <member name="F:System.Reflection.ManifestResourceAttributes.Private">
+            <summary>
+            The Resource is exported from the Assembly
+            </summary>
+        </member>
+        <member name="F:System.Reflection.ManifestResourceAttributes.VisibilityMask">
+            <summary>
+            Masks just the visibility-related attributes (Public or Private).
+            </summary>
+        </member>
+        <member name="T:System.Reflection.AssemblyHashAlgorithm">
+            <summary>
+            Specifies all the hash algorithms used for hashing assembly files and for generating the strong name.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyHashAlgorithm.None">
+            <summary>
+            A mask indicating that there is no hash algorithm. If you specify None for a multi-module assembly, the common language runtime defaults to the SHA1 algorithm, since multi-module assemblies need to generate a hash.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyHashAlgorithm.MD5">
+            <summary>
+            Retrieves the MD5 message-digest algorithm. MD5 was developed by Rivest in 1991. It is basically MD4 with safety-belts and while it is slightly slower than MD4, it helps provide more security. The algorithm consists of four distinct rounds, which has a slightly different design from that of MD4. Message-digest size, as well as padding requirements, remain the same.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyHashAlgorithm.Sha1">
+            <summary>
+            Retrieves a revision of the Secure Hash Algorithm that corrects an unpublished flaw in SHA.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyHashAlgorithm.Sha256">
+            <summary>
+            Retrieves a version of the Secure Hash Algorithm with a hash size of 256 bits.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyHashAlgorithm.Sha384">
+            <summary>
+            Retrieves a version of the Secure Hash Algorithm with a hash size of 384 bits.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyHashAlgorithm.Sha512">
+            <summary>
+            Retrieves a version of the Secure Hash Algorithm with a hash size of 384 bits.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyFlags.PublicKey">
+            <summary>
+            The assembly reference holds the full (unhashed) public key.
+            Not applicable on assembly definition.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyFlags.Retargetable">
+            <summary>
+            The implementation of the referenced assembly used at runtime is not expected to match the version seen at compile time.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyFlags.WindowsRuntime">
+            <summary>
+            The assembly contains Windows Runtime code.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyFlags.ContentTypeMask">
+            <summary>
+            Content type mask. Masked bits correspond to values of <see cref="T:System.Reflection.AssemblyContentType"/>.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyFlags.DisableJitCompileOptimizer">
+            <summary>
+            Specifies that just-in-time (JIT) compiler optimization is disabled for the assembly.
+            </summary>
+        </member>
+        <member name="F:System.Reflection.AssemblyFlags.EnableJitCompileTracking">
+            <summary>
+            Specifies that just-in-time (JIT) compiler tracking is enabled for the assembly.
+            </summary>
+        </member>
+        <member name="T:System.Reflection.Internal.ObjectPool`1">
+            <summary>
+            Generic implementation of object pooling pattern with predefined pool size limit. The main
+            purpose is that limited number of frequently used objects can be kept in the pool for
+            further recycling.
+            
+            Notes: 
+            1) it is not the goal to keep all returned objects. Pool is not meant for storage. If there
+               is no space in the pool, extra returned objects will be dropped.
+            
+            2) it is implied that if object was obtained from a pool, the caller will return it back in
+               a relatively short time. Keeping checked out objects for long durations is ok, but 
+               reduces usefulness of pooling. Just new up your own.
+            
+            Not returning objects to the pool in not detrimental to the pool's work, but is a bad practice. 
+            Rationale: 
+               If there is no intent for reusing the object, do not use pool - just use "new". 
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Internal.ObjectPool`1.Allocate">
+            <summary>
+            Produces an instance.
+            </summary>
+            <remarks>
+            Search strategy is a simple linear probing which is chosen for it cache-friendliness.
+            Note that Free will try to store recycled objects close to the start thus statistically 
+            reducing how far we will typically search.
+            </remarks>
+        </member>
+        <member name="M:System.Reflection.Internal.ObjectPool`1.Free(`0)">
+            <summary>
+            Returns objects to the pool.
+            </summary>
+            <remarks>
+            Search strategy is a simple linear probing which is chosen for it cache-friendliness.
+            Note that Free will try to store recycled objects close to the start thus statistically 
+            reducing how far we will typically search in Allocate.
+            </remarks>
+        </member>
+        <member name="T:System.Reflection.Internal.PooledStringBuilder">
+            <summary>
+            The usage is:
+                   var inst = PooledStringBuilder.GetInstance();
+                   var sb = inst.builder;
+                   ... Do Stuff...
+                   ... sb.ToString() ...
+                   inst.Free();
+            </summary>
+        </member>
+        <member name="M:System.Reflection.Internal.StreamExtensions.CopyTo(System.IO.Stream,System.IntPtr,System.Int32)">
+            <summary>
+            Copies specified amount of data from given stream to a target memory pointer.
+            </summary>
+            <exception cref="T:System.IO.IOException">unexpected stream end.</exception>
+        </member>
+    </members>
+</doc>

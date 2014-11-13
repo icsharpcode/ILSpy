@@ -1,0 +1,1554 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>Microsoft.CodeAnalysis.Desktop</name>
+    </assembly>
+    <members>
+        <member name="T:Microsoft.CodeAnalysis.AdditionalFileStream">
+            <summary>
+            Represents a non source code file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.AdditionalFileStream.Path">
+            <summary>
+            Resolved absolute path of the stream (does not contain wildcards).
+            </summary>
+            <remarks>
+            Although this path is absolute it may not be normalized. That is, it may contain ".." and "." in the middle. 
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.AdditionalFileStream.OpenRead(System.Threading.CancellationToken)">
+            <summary>
+            Opens a <see cref="T:System.IO.Stream"/> that allows reading the content of this file.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference">
+            <summary>
+            Represents analyzers stored in an analyzer assembly file.
+            </summary>
+            <remarks>
+            Analyzer are read from the file, owned by the reference, and doesn't change 
+            since the reference is accessed until the reference object is garbage collected.
+            During this time the file is open and its content is read-only.
+            
+            If you need to manage the lifetime of the anayzer reference (and the file stream) explicitly use <see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerImageReference"/>.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.InMemoryAssemblyLoader">
+            <summary>
+            Handles loading assemblies without locking the corresponding DLL on disk.
+            
+            This is achieved by copying the DLL into a byte array, and then calling
+            <see cref="M:System.Reflection.Assembly.Load(System.Byte[])"/> to load the assembly from the byte array.
+            
+            Does not handle multi-module assemblies.
+            </summary>
+            
+            <remarks>
+            The interesting bit is that <see cref="T:System.Reflection.Assembly"/> objects loaded in this way
+            are not placed in the Load or Load-From binding contexts. If one of these
+            needs a dependency to be resolved and it isn't already loaded or available in
+            the GAC, the runtime will not do any probing to find it. Since it doesn't know
+            where the assembly came from, it doesn't assume it knows how to resolve its
+            dependencies.
+            
+            This means we also need to hook the <see cref="E:System.AppDomain.AssemblyResolve"/>
+            event and handle finding and loading dependencies ourselves. We also need to
+            handle loading the dependencies' dependencies, and so on.
+            </remarks>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.InMemoryAssemblyLoader.assembliesFromFiles">
+            <summary>
+            Maps from a full path to a file to a corresponding <see cref="T:System.Reflection.Assembly"/>
+            that we've already loaded.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.InMemoryAssemblyLoader.filesFromAssemblyNames">
+            <summary>
+            Maps from an assembly full name to the directory where we found the
+            corresponding file.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.InMemoryAssemblyLoader.assembliesFromNames">
+            <summary>
+            Maps from an assembly full name to the corresponding <see cref="T:System.Reflection.Assembly"/>.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.InMemoryAssemblyLoader.requestingFilesFromFiles">
+            <summary>
+            Maps from the full path to an assembly to the full path of the assembly
+            that requested it.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.InMemoryAssemblyLoader.guard">
+            <summary>
+            Controls access to the loader's data structures.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.InMemoryAssemblyLoader.Load(System.String)">
+            <summary>
+            Loads the <see cref="T:System.Reflection.Assembly"/> at the given path without locking the file.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.InMemoryAssemblyLoader.LoadCore(System.String)">
+            <summary>
+            Performs the actual loading of the assembly, updates data structures, and
+            fires the <see cref="E:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.AssemblyLoad"/> event.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.InMemoryAssemblyLoader.CurrentDomain_AssemblyResolve(System.Object,System.ResolveEventArgs)">
+            <summary>
+            Handles the <see cref="E:System.AppDomain.AssemblyResolve"/> event when the requesting
+            assembly is one that we've loaded.
+            
+            We assume that an assembly's dependencies can be found next to it in the file
+            system.
+            </summary>
+        </member>
+        <member name="E:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.AssemblyLoad">
+            <summary>
+            Fired when an <see cref="T:System.Reflection.Assembly"/> referred to by an <see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference"/>
+            (or a dependent <see cref="T:System.Reflection.Assembly"/>) is loaded.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.TryGetRequestingAssemblyPath(System.String)">
+            <summary>
+            Maps from one assembly back to the assembly that requested it, if known.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.#ctor(System.String,System.Func{System.String,System.Reflection.Assembly})">
+            <summary>
+            Creates an AnalyzerFileReference with the given <paramref name="fullPath"/>.
+            </summary>
+            <param name="fullPath">Full path of the analyzer assembly.</param>
+            <param name="getAssembly">An optional assembly loader to override the default assembly load mechanism.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.AddAnalyzers(System.Collections.Immutable.ImmutableArray{Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzer}.Builder,System.String)">
+            <summary>
+            Adds the <see cref="T:System.Collections.Immutable.ImmutableArray`1"/> of <see cref="T:Microsoft.CodeAnalysis.Diagnostics.IDiagnosticAnalyzer"/> defined in this assembly reference.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference.GetAnalyzerTypeNameMap(System.String)">
+            <summary>
+            Opens the analyzer dll with the metadata reader and builds a map of language -> analyzer type names.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CodeAnalysisDesktopResources">
+            <summary>
+              A strongly-typed resource class, for looking up localized strings, etc.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CodeAnalysisDesktopResources.ResourceManager">
+            <summary>
+              Returns the cached ResourceManager instance used by this class.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CodeAnalysisDesktopResources.Culture">
+            <summary>
+              Overrides the current thread's CurrentUICulture property for all
+              resource lookups using this strongly typed resource class.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.AssemblyIdentityExtensions.ToAssemblyName(Microsoft.CodeAnalysis.AssemblyIdentity)">
+            <summary>
+            Converts this identity to <see cref="T:System.Reflection.AssemblyName"/>.
+            </summary>
+            <returns>A new instance of <see cref="T:System.Reflection.AssemblyName"/>.</returns>
+            <exception cref="T:System.Globalization.CultureNotFoundException">The culture specified in <see cref="P:Microsoft.CodeAnalysis.AssemblyIdentity.CultureName"/> is not available on the current platform.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataFileFactory.CreateAssembly(System.String)">
+            <summary>
+            Finds all modules of an assembly on a specified path and builds an instance of <see cref="T:Microsoft.CodeAnalysis.AssemblyMetadata"/> that represents them.
+            </summary>
+            <param name="fullPath">The full path to the assembly on disk.</param>
+            <exception cref="T:System.ArgumentNullException"><paramref name="fullPath"/> is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="fullPath"/> is not an absolute path.</exception>
+            <exception cref="T:System.IO.IOException">Error reading file <paramref name="fullPath"/>. See <see cref="P:System.Exception.InnerException"/> for details.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataFileFactory.CreateModule(System.String)">
+            <summary>
+            Creates metadata module from a file containing a portable executable image.
+            </summary>
+            <param name="fullPath">Absolute file path.</param>
+            <remarks>
+            The file might remain mapped (and read-locked) until this object is disposed.
+            The memory map is only created for large files. Small files are read into memory.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException"><paramref name="fullPath"/> is null.</exception>
+            <exception cref="T:System.ArgumentException"><paramref name="fullPath"/> is not a valid absolute path.</exception>
+            <exception cref="T:System.BadImageFormatException">The PE image format is invalid.</exception>
+            <exception cref="T:System.IO.IOException">Error reading file <paramref name="fullPath"/>. See <see cref="P:System.Exception.InnerException"/> for details.</exception>
+            <exception cref="T:System.IO.FileNotFoundException">File <paramref name="fullPath"/> not found.</exception>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.AssemblyPortabilityPolicy">
+            <summary>
+            Policy to be used when matching assembly reference to an assembly definition accross platforms.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.AssemblyVersion.op_Explicit(System.Version)~Microsoft.CodeAnalysis.AssemblyVersion">
+            <summary>
+            Converts <see cref="T:System.Version"/> to <see cref="T:Microsoft.CodeAnalysis.AssemblyVersion"/>.
+            </summary>
+            <exception cref="T:System.InvalidCastException">Major, minor, build or revision number are less than 0 or greater than 0xFFFF.</exception>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.ClrMetaHost">
+            <summary>
+            Managed abstraction of the functionality provided by ICLRMetaHost.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.ClrMetaHost.CurrentRuntime">
+            <summary>
+            Gets the <see cref="T:Microsoft.Runtime.Hosting.ClrRuntimeInfo"/> corresponding to the current runtime.
+            That is, the runtime executing currently.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CommandLineReference">
+            <summary>
+            Describes a command line metadata reference (assembly or netmodule) specification.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineReference.Reference">
+            <summary>
+            Metadata file path or an assembly display name.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineReference.Properties">
+            <summary>
+            Metadata reference properties.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CommandLineSourceFile">
+            <summary>
+            Describes a source file specification stored on command line arguments.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineSourceFile.Path">
+            <summary>
+            Resolved absolute path of the source file (does not contain wildcards).
+            </summary>
+            <remarks>
+            Although this path is absolute it may not be normalized. That is, it may contain ".." and "." in the middle. 
+            </remarks>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineSourceFile.IsScript">
+            <summary>
+            True if the file should be treated as a script file.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CommandLineArguments">
+            <summary>
+            The base class for representing command line arguments to a
+            <see cref="T:Microsoft.CodeAnalysis.CommonCompiler"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.BaseDirectory">
+            <summary>
+            Directory used to resolve relative paths stored in the arguments.
+            </summary>
+            <remarks>
+            Except for paths stored in <see cref="P:Microsoft.CodeAnalysis.CommandLineArguments.MetadataReferences"/>, all
+            paths stored in the properties of this class are resolved and
+            absolute. This is the directory that relative paths specified on
+            command line were resolved against.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.ReferencePaths">
+            <summary>
+            Sequence of absolute paths used to search for references.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.KeyFileSearchPaths">
+            <summary>
+            Sequence of absolute paths used to search for key files.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.Utf8Output">
+            <summary>
+            If true, use UTF8 for output.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.CompilationName">
+            <summary>
+            Compilation name or null if not specified.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.OutputFileName">
+            <summary>
+            Name of the output file or null if not specified.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.PdbPath">
+            <summary>
+            Path of the PDB file or null if same as output binary path with .pdb extension.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.EmitPdb">
+            <summary>
+            True to emit PDB file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.OutputDirectory">
+            <summary>
+            Absolute path of the output directory.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.DocumentationPath">
+            <summary>
+            Absolute path of the documentation comment XML file or null if not specified.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.AppConfigPath">
+            <summary>
+            An absolute path of the App.config file or null if not specified.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.Errors">
+            <summary>
+            Errors while parsing the command line arguments.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.MetadataReferences">
+            <summary>
+            References to metadata supplied on the command line. 
+            Includes assemblies specified via /r and netmodules specified via /addmodule.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.AnalyzerReferences">
+            <summary>
+            References to analyzers supplied on the command line.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.AdditionalStreams">
+            <summary>
+            A set of additional non-code stream that can be used by analyzers.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.AdditionalOptions">
+            <summary>
+            A set of additional options passed in from the /option switch that can be used by analyzers.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.DisplayLogo">
+            <summary>
+            If true, prepend the command line header logo during 
+            <see cref="M:Microsoft.CodeAnalysis.CommonCompiler.Run(System.IO.TextWriter,System.Threading.CancellationToken)"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.DisplayHelp">
+            <summary>
+            If true, append the command line help during
+            <see cref="M:Microsoft.CodeAnalysis.CommonCompiler.Run(System.IO.TextWriter,System.Threading.CancellationToken)"/>
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.Win32ResourceFile">
+            <summary>
+            The path to a Win32 resource.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.Win32Icon">
+            <summary>
+            The path to a .ico icon file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.Win32Manifest">
+            <summary>
+            The path to a Win32 manifest file to embed
+            into the output portable executable (PE) file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.NoWin32Manifest">
+            <summary>
+            If true, do not embed any Win32 manifest, including
+            one specified by <see cref="P:Microsoft.CodeAnalysis.CommandLineArguments.Win32Manifest"/> or any
+            default manifest.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.ManifestResources">
+            <summary>
+            Resources specified as arguments to the compilation.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.Encoding">
+            <summary>
+            Encoding to be used for source files or 'null' for autodetect/default.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.ScriptArguments">
+            <summary>
+            Arguments following script argument separator "--" or null if <see cref="P:Microsoft.CodeAnalysis.CommandLineArguments.IsInteractive"/> is false.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.SourceFiles">
+            <summary>
+            Source file paths.
+            </summary>
+            <remarks>
+            Includes files specified directly on command line as well as files matching patterns specified 
+            on command line using '*' and '?' wildcards or /recurse option.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.TouchedFilesPath">
+            <summary>
+            Full path of a log of file paths accessed by the compiler, or null if file logging should be suppressed.
+            </summary>
+            <remarks>
+            Two log files will be created: 
+            One with path <see cref="P:Microsoft.CodeAnalysis.CommandLineArguments.TouchedFilesPath"/> and extension ".read" logging the files read,
+            and second with path <see cref="P:Microsoft.CodeAnalysis.CommandLineArguments.TouchedFilesPath"/> and extension ".write" logging the files written to during compilation.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.PrintFullPaths">
+            <summary>
+            If true, prints the full path of the file containing errors or
+            warnings in diagnostics.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.ParseOptions">
+            <summary>
+            Options to the <see cref="T:Microsoft.CodeAnalysis.CommandLineParser"/>.
+            </summary>
+            <returns></returns>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.CompilationOptions">
+            <summary>
+            Options to the <see cref="T:Microsoft.CodeAnalysis.Compilation"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineArguments.PreferredUILang">
+            <summary>
+            Specify the preferred output language name.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineArguments.ResolveMetadataReferences(Microsoft.CodeAnalysis.MetadataReferenceResolver,Microsoft.CodeAnalysis.MetadataReferenceProvider)">
+            <summary>
+            Resolves metadata references stored in <see cref="P:Microsoft.CodeAnalysis.CommandLineArguments.MetadataReferences"/> using given file resolver and metadata provider.
+            </summary>
+            <param name="metadataResolver"><see cref="T:Microsoft.CodeAnalysis.MetadataReferenceResolver"/> to use for assembly name and relative path resolution.</param>
+            <param name="metadataProvider"><see cref="T:Microsoft.CodeAnalysis.MetadataReferenceProvider"/> to read metadata from resolved paths.</param>
+            <returns>Yields resolved metadata references or <see cref="T:Microsoft.CodeAnalysis.UnresolvedMetadataReference"/>.</returns>
+            <exception cref="T:System.ArgumentNullException"><paramref name="metadataResolver"/> is null.</exception>
+            <exception cref="T:System.ArgumentNullException"><paramref name="metadataProvider"/> is null.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineArguments.ResolveMetadataReferences(Microsoft.CodeAnalysis.MetadataReferenceResolver,Microsoft.CodeAnalysis.MetadataReferenceProvider,System.Collections.Generic.List{Microsoft.CodeAnalysis.DiagnosticInfo},Microsoft.CodeAnalysis.CommonMessageProvider)">
+            <summary>
+            Resolves metadata references stored in <see cref="P:Microsoft.CodeAnalysis.CommandLineArguments.MetadataReferences"/> using given file resolver and metadata provider.
+            If a non-null diagnostic bag <paramref name="diagnosticsOpt"/> is provided, it catches exceptions that may be generated while reading the metadata file and
+            reports appropriate diagnostics.
+            Otherwise, if <paramref name="diagnosticsOpt"/> is null, the exceptions are unhandled.
+            </summary>
+            <remarks>
+            called by CommonCompiler with diagnostics and message provider
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineArguments.ResolveAnalyzerReferences">
+            <summary>
+            Resolves analyzer references stored in <see cref="P:Microsoft.CodeAnalysis.CommandLineArguments.AnalyzerReferences"/> using given file resolver.
+            </summary>
+            <returns>Yields resolved <see cref="T:Microsoft.CodeAnalysis.Diagnostics.AnalyzerFileReference"/> or <see cref="T:Microsoft.CodeAnalysis.Diagnostics.UnresolvedAnalyzerReference"/>.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.EnumerateFiles(System.String,System.String,System.IO.SearchOption)">
+            <summary>
+            Enumerates files in the specified directory and subdirectories whose name matches the given pattern.
+            </summary>
+            <param name="directory">Full path of the directory to enumerate.</param>
+            <param name="fileNamePattern">File name pattern. May contain wildcards '*' (matches zero or more characters) and '?' (matches any character).</param>
+            <param name="searchOption">Specifies whether to search the specified <paramref name="directory"/> only, or all its subdirectories as well.</param>
+            <returns>Sequence of file paths.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.RemoveTrailingSpacesAndDots(System.String)">
+            <summary>
+            Trims all '.' and whitespaces from the end of the path
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.ParseResponseFile(System.String,System.Collections.Generic.IList{Microsoft.CodeAnalysis.Diagnostic})">
+            <summary>
+            Parse a response file into a set of arguments. Errors openening the response file are output into "errors".
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.ParseResponseLines(System.Collections.Generic.IEnumerable{System.String})">
+            <summary>
+            Take a string of lines from a response file, remove comments, 
+            and split into a set of command line arguments.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.RemoveAllQuotes(System.String)">
+            <summary>
+            Remove all double quote characters from the given string.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.SplitCommandLineIntoArguments(System.String,System.Boolean)">
+            <summary>
+            Split a command line by the same rules as Main would get the commands.
+            </summary>
+            <remarks>
+            Rules for command line parsing, according to MSDN:
+            
+            Arguments are delimited by white space, which is either a space or a tab.
+             
+            A string surrounded by double quotation marks ("string") is interpreted 
+            as a single argument, regardless of white space contained within. 
+            A quoted string can be embedded in an argument.
+             
+            A double quotation mark preceded by a backslash (\") is interpreted as a 
+            literal double quotation mark character (").
+             
+            Backslashes are interpreted literally, unless they immediately precede a 
+            double quotation mark.
+             
+            If an even number of backslashes is followed by a double quotation mark, 
+            one backslash is placed in the argv array for every pair of backslashes, 
+            and the double quotation mark is interpreted as a string delimiter.
+             
+            If an odd number of backslashes is followed by a double quotation mark, 
+            one backslash is placed in the argv array for every pair of backslashes, 
+            and the double quotation mark is "escaped" by the remaining backslash, 
+            causing a literal double quotation mark (") to be placed in argv.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.Split(System.String,System.Func{System.Char,System.Boolean})">
+            <summary>
+            Split a string, based on whether "splitHere" returned true on each character.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.CondenseDoubledBackslashes(System.String)">
+            <summary>
+            Condense double backslashes that precede a quotation mark to single backslashes.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.AddBackslashes(System.Text.StringBuilder,System.Int32)">
+            <summary>
+            Add "count" backslashes to a StringBuilder. 
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.ParseSeparatedStrings(System.String,System.Char[],System.StringSplitOptions)">
+            <summary>
+            Split a string by a set of separators, taking quotes into account.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.TryParseUInt64(System.String,System.UInt64@)">
+            <summary>
+            Tries to parse a UInt64 from string in either decimal, octal or hex format.
+            </summary>
+            <param name="value">The string value.</param>
+            <param name="result">The result if parsing was successful.</param>
+            <returns>true if parsing was successful, otherwise false.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommandLineParser.TryParseUInt16(System.String,System.UInt16@)">
+            <summary>
+            Tries to parse a UInt16 from string in either decimal, octal or hex format.
+            </summary>
+            <param name="value">The string value.</param>
+            <param name="result">The result if parsing was successful.</param>
+            <returns>true if parsing was successful, otherwise false.</returns>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CommandLineSplitter">
+            <remarks>
+            Rules for command line parsing, according to MSDN:
+            
+            Arguments are delimited by white space, which is either a space or a tab.
+             
+            A string surrounded by double quotation marks ("string") is interpreted 
+            as a single argument, regardless of white space contained within. 
+            A quoted string can be embedded in an argument.
+             
+            A double quotation mark preceded by a backslash (\") is interpreted as a 
+            literal double quotation mark character (").
+             
+            Backslashes are interpreted literally, unless they immediately precede a 
+            double quotation mark.
+             
+            If an even number of backslashes is followed by a double quotation mark, 
+            one backslash is placed in the argv array for every pair of backslashes, 
+            and the double quotation mark is interpreted as a string delimiter.
+             
+            If an odd number of backslashes is followed by a double quotation mark, 
+            one backslash is placed in the argv array for every pair of backslashes, 
+            and the double quotation mark is "escaped" by the remaining backslash, 
+            causing a literal double quotation mark (") to be placed in argv.
+            </remarks>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CommonCompiler">
+            <summary>
+            Base class for csc.exe, csi.exe, vbc.exe and vbi.exe implementations.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommonCompiler.ResolveMetadataReferences(Microsoft.CodeAnalysis.MetadataReferenceResolver,Microsoft.CodeAnalysis.MetadataReferenceProvider,System.Collections.Generic.List{Microsoft.CodeAnalysis.DiagnosticInfo},Microsoft.CodeAnalysis.AssemblyIdentityComparer,Microsoft.CodeAnalysis.TouchedFileLogger,Microsoft.CodeAnalysis.MetadataReferenceResolver@)">
+            <summary>
+            Resolves metadata references stored in command line arguments and reports errors for those that can't be resolved.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommonCompiler.ReadFileContent(Microsoft.CodeAnalysis.CommandLineSourceFile,System.Collections.Generic.IList{Microsoft.CodeAnalysis.DiagnosticInfo},System.Text.Encoding)">
+            <summary>
+            Reads content of a source file.
+            </summary>
+            <param name="file">Source file information.</param>
+            <param name="diagnostics">Storage for diagnostics.</param>
+            <param name="encoding">Encoding to use or 'null' for autodetect/default</param>
+            <returns>File content or null on failure.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommonCompiler.ReadFileContent(Microsoft.CodeAnalysis.CommandLineSourceFile,System.Collections.Generic.IList{Microsoft.CodeAnalysis.DiagnosticInfo},System.Text.Encoding,System.String@)">
+            <summary>
+            Reads content of a source file.
+            </summary>
+            <param name="file">Source file information.</param>
+            <param name="diagnostics">Storage for diagnostics.</param>
+            <param name="encoding">Encoding to use or 'null' for autodetect/default</param>
+            <param name="normalizedFilePath">If given <paramref name="file"/> opens successfully, set to normalized absolute path of the file, null otherwise.</param>
+            <returns>File content or null on failure.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommonCompiler.Run(System.IO.TextWriter,System.Threading.CancellationToken)">
+            <summary>
+            csc.exe and vbc.exe entry point.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommonCompiler.GetOutputFileName(Microsoft.CodeAnalysis.Compilation,System.Threading.CancellationToken)">
+            <summary>
+            Given a compilation and a destination directory, determine three names:
+              1) The name with which the assembly should be output (default = null, which indicates that the compilation output name should be used).
+              2) The path of the assembly/module file (default = destination directory + compilation output name).
+              3) The path of the pdb file (default = assembly/module path with ".pdb" extension).
+            </summary>
+            <remarks>
+            C# has a special implementation that implements idiosyncratic behavior of csc.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommonCompiler.FileOpen">
+            <summary>
+            Test hook for intercepting File.Open.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommonCompiler.FileDelete">
+            <summary>
+            Test hook for intercepting File.Delete.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommonCompiler.FileMove">
+            <summary>
+            Test hook for intercepting File.Move.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommonCompiler.PathGetTempFileName">
+            <summary>
+            Test hook for intercepting Path.GetTempFileName.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommonCompiler.RunInteractive(System.IO.TextWriter)">
+            <summary>
+            csi.exe and vbi.exe entry point.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommonCompiler.Culture">
+            <summary>
+              When overriden by a derived class, this property can override the current thread's
+              CurrentUICulture property for diagnostic message resource lookups.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CommonCompiler.ExistingReferencesResolver">
+            <summary>
+            Looks for metadata references among the assembly file references given to the compilation when constructed.
+            When scripts are included into a project we don't want #r's to reference other assemblies than those 
+            specified explicitly in the project references.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommonCompiler.ExistingReferencesResolver.ResolveAssemblyName(System.String)">
+            <summary>
+            When compiling to a file all unresolved assembly names have to match one of the file references specified on command line.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.CommonCompiler.ExistingReferencesResolver.ResolveMetadataFile(System.String,System.String)">
+            <summary>
+            When compiling to a file all relative paths have to match one of the file references specified on command line.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.InvalidRuleSetException">
+            <summary>
+            Represents errors that occur while parsing RuleSet files.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.RuleSet">
+            <summary>
+            Represents a set of rules as specified in a rulset file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.RuleSet.FilePath">
+            <summary>
+            The file path of the ruleset file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.RuleSet.GeneralDiagnosticOption">
+            <summary>
+            The global option specified by the IncludeAll tag.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.RuleSet.SpecificDiagnosticOptions">
+            <summary>
+            Individual ruleids and their associated actions.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.RuleSet.Includes">
+            <summary>
+            List of rulesets included by this ruleset.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSet.#ctor(System.String,Microsoft.CodeAnalysis.ReportDiagnostic,System.Collections.Generic.IDictionary{System.String,Microsoft.CodeAnalysis.ReportDiagnostic},System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.RuleSetInclude})">
+            <summary>
+            Create a RuleSet.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSet.WithEffectiveAction(Microsoft.CodeAnalysis.ReportDiagnostic)">
+            <summary>
+            Create a RuleSet with a global effective action applied on it.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSet.GetEffectiveRuleSet(System.Collections.Generic.HashSet{System.String})">
+            <summary>
+            Get the effective ruleset after resolving all the included rulesets.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSet.GetEffectiveIncludes">
+            <summary>
+            Get all the files involved in resolving this ruleset.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSet.IsStricterThan(Microsoft.CodeAnalysis.ReportDiagnostic,Microsoft.CodeAnalysis.ReportDiagnostic)">
+            <summary>
+            Returns true if the action1 is stricter than action2.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSet.LoadEffectiveRuleSetFromFile(System.String)">
+            <summary>
+            Load the ruleset from the specified file. This ruleset will contain
+            all the rules resolved from the includes specified in the ruleset file
+            as well. See also: <seealso cref="M:Microsoft.CodeAnalysis.RuleSet.GetEffectiveIncludesFromFile(System.String)" />.
+            </summary>
+            <returns>
+            A ruleset that contains resolved rules or null if there were errors.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSet.GetEffectiveIncludesFromFile(System.String)">
+            <summary>
+            Get the paths to all files contributing rules to the ruleset from the specified file.
+            See also: <seealso cref="M:Microsoft.CodeAnalysis.RuleSet.LoadEffectiveRuleSetFromFile(System.String)" />.
+            </summary>
+            <returns>
+            The full paths to included files, or an empty array if there were errors.
+            </returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSet.GetDiagnosticOptionsFromRulesetFile(System.String,System.Collections.Generic.Dictionary{System.String,Microsoft.CodeAnalysis.ReportDiagnostic}@)">
+            <summary>
+            Parses the ruleset file at the given <paramref name="rulesetFileFullPath"/> and returns the following diagnostic options from the parsed file:
+            1) A map of <paramref name="specificDiagnosticOptions"/> from rule ID to <see cref="T:Microsoft.CodeAnalysis.ReportDiagnostic"/> option.
+            2) A global <see cref="T:Microsoft.CodeAnalysis.ReportDiagnostic"/> option for all rules in the ruleset file.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.RuleSetInclude">
+            <summary>
+            Represents a Include tag in a RuleSet file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.RuleSetInclude.IncludePath">
+            <summary>
+            The path of the included file.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.RuleSetInclude.Action">
+            <summary>
+            The effective action to apply on this included ruleset.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetInclude.#ctor(System.String,Microsoft.CodeAnalysis.ReportDiagnostic)">
+            <summary>
+            Create a RuleSetInclude given the includepath and the effective action.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetInclude.LoadRuleSet(Microsoft.CodeAnalysis.RuleSet)">
+            <summary>
+            Gets the RuleSet associated with this ruleset include
+            </summary>
+            <param name="parent">The parent of this ruleset include</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetInclude.GetIncludePath(Microsoft.CodeAnalysis.RuleSet)">
+            <summary>
+            Returns a full path to the include file. Relative paths are expanded relative to the current rule set file.
+            </summary>
+            <param name="parent">The parent of this rule set include</param>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.RuleSetProcessor">
+            <summary>
+            This type is responsible for parsing a ruleset xml file and producing a <see cref="T:Microsoft.CodeAnalysis.RuleSet"/> object.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetProcessor.CreateRuleSetSchema">
+            <summary>
+            Static constructor for initializing the schema object to be used for schema validation
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetProcessor.LoadFromFile(System.String)">
+            <summary>
+            Creates and loads the rule set from a file
+            </summary>
+            <param name="filePath">The file path to load the rule set</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetProcessor.ReadRuleSet(System.Xml.XmlNode,System.String)">
+            <summary>
+            Load the rule set from the XML node
+            </summary>
+            <param name="ruleSetNode">The rule set node from which to create a rule set object</param>
+            <param name="filePath">The file path to the rule set file</param>
+            <returns>A rule set object with data from the given XML node</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetProcessor.ReadRules(System.Xml.XmlNode)">
+            <summary>
+            Load the rules from the XML node
+            </summary>
+            <param name="rulesNode">The rules node from which to loop through each child rule node</param>
+            <returns>A list of rule objects with data from the given XML node</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetProcessor.ReadRule(System.Xml.XmlNode,System.String,System.String)">
+            <summary>
+            Load the rule from the XML node
+            </summary>
+            <param name="ruleNode">The rule node from which to create a rule object</param>
+            <param name="analyzer">The analyzer this rule belongs to</param>
+            <param name="space">The namespace this rule belongs to</param>
+            <returns>A rule object with data from the given XML node</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetProcessor.ReadRuleSetInclude(System.Xml.XmlNode)">
+            <summary>
+            Load the included rule set from the XML node
+            </summary>
+            <param name="includeNode">The include node from which to create a RuleSetInclude object</param>
+            <returns>A RuleSetInclude object with data from the given XML node</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetProcessor.ReadAction(System.Xml.XmlNode)">
+            <summary>
+            Reads the action from the given node
+            </summary>
+            <param name="node">The node to read the action, it can be a rule node or an include node</param>
+            <returns>The rule action</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetProcessor.ReadIncludeAll(System.Xml.XmlNode)">
+            <summary>
+            Load the IncludedAll from the XML node
+            </summary>
+            <param name="includeAllNode">The IncludeAll node from which to create a IncludeAll object</param>
+            <returns>A IncludeAll object with data from the given XML node</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetProcessor.ReadNonEmptyAttribute(System.Xml.XmlNode,System.String)">
+            <summary>
+            Reads an attribute from a node and validates that it is not empty.
+            </summary>
+            <param name="node">The XML node that contains the attribute</param>
+            <param name="attributeName">The name of the attribute to read</param>
+            <returns>The attribute value</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.RuleSetProcessor.GetDefaultXmlReaderSettings">
+            <summary>
+            Gets the default settings to read the rulset xml file.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.TouchedFileLogger">
+            <summary>
+            Used for logging all the paths which are "touched" (used) in any way
+            in the process of compilation.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.TouchedFileLogger.AddRead(System.String)">
+            <summary>
+            Adds a fully-qualified path to the Logger for a read file.
+            Semantics are undefined after a call to <see cref="M:Microsoft.CodeAnalysis.TouchedFileLogger.WriteReadPaths(System.IO.TextWriter)" />.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.TouchedFileLogger.AddWritten(System.String)">
+            <summary>
+            Adds a fully-qualified path to the Logger for a written file.
+            Semantics are undefined after a call to <see cref="M:Microsoft.CodeAnalysis.TouchedFileLogger.WriteWrittenPaths(System.IO.TextWriter)" />.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.TouchedFileLogger.AddReadWritten(System.String)">
+            <summary>
+            Adds a fully-qualified path to the Logger for a read and written
+            file. Semantics are undefined after a call to
+            <see cref="M:Microsoft.CodeAnalysis.TouchedFileLogger.WriteWrittenPaths(System.IO.TextWriter)" />.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.TouchedFileLogger.WriteReadPaths(System.IO.TextWriter)">
+            <summary>
+            Writes all of the paths the TouchedFileLogger to the given 
+            TextWriter in upper case. After calling this method the
+            logger is in an undefined state.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.TouchedFileLogger.WriteWrittenPaths(System.IO.TextWriter)">
+            <summary>
+            Writes all of the paths the TouchedFileLogger to the given 
+            TextWriter in upper case. After calling this method the
+            logger is in an undefined state.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.FileSystemExtensions.Emit(Microsoft.CodeAnalysis.Compilation,System.String,System.String,System.String,System.String,System.Collections.Generic.IEnumerable{Microsoft.CodeAnalysis.ResourceDescription},System.Threading.CancellationToken)">
+            <summary>
+            Emit the IL for the compilation into the specified stream.
+            </summary>
+            <param name="compilation">Compilation.</param>
+            <param name="outputPath">Path of the file to which the compilation will be written.</param>
+            <param name="pdbPath">Path of the file to which the compilation's debug info will be written.
+            Also embedded in the output file.  Null to forego PDB generation.
+            </param>
+            <param name="xmlDocPath">Path of the file to which the compilation's XML documentation will be written.  Null to forego XML generation.</param>
+            <param name="win32ResourcesPath">Path of the file from which the compilation's Win32 resources will be read (in RES format).  
+            Null to indicate that there are none.</param>
+            <param name="manifestResources">List of the compilation's managed resources.  Null to indicate that there are none.</param>
+            <param name="cancellationToken">To cancel the emit process.</param>
+            <exception cref="T:System.ArgumentNullException">Compilation or path is null.</exception>
+            <exception cref="T:System.ArgumentException">Path is empty or invalid.</exception>
+            <exception cref="T:System.IO.IOException">An error occurred while reading or writing a file.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.DesktopAssemblyIdentityComparer.#ctor(Microsoft.CodeAnalysis.AssemblyPortabilityPolicy)">
+            <param name="policy">Assembly portability policy, usually provided through an app.config file.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.DesktopAssemblyIdentityComparer.LoadFromXml(System.IO.Stream)">
+            <summary>
+            Loads <see cref="T:Microsoft.CodeAnalysis.AssemblyPortabilityPolicy"/> information from XML with App.config schema.
+            </summary>
+            <exception cref="T:System.Xml.XmlException">The stream doesn't contain a well formed XML.</exception>
+            <exception cref="T:System.ArgumentNullException"><paramref name="input"/> is null.</exception>
+            <remarks>
+            Tries to find supportPortability elements in the given XML:
+            <![CDATA[
+            <configuration>
+               <runtime>
+                  <assemblyBinding xmlns="urn:schemas-microsoft-com:asm.v1">
+                     <supportPortability PKT="7cec85d7bea7798e" enable="false"/>
+                     <supportPortability PKT="31bf3856ad364e35" enable="false"/>
+                  </assemblyBinding>
+               </runtime>
+            </configuration>
+            ]]>
+            
+            Keeps the stream open.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.DesktopAssemblyIdentityComparer.IsFrameworkAssembly(Microsoft.CodeAnalysis.AssemblyIdentity)">
+            <summary>
+            Returns true if the identity is a Framework 4.5 or lower assembly.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.DesktopStrongNameProvider">
+            <summary>
+            Provides strong name and signs source assemblies.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.DesktopStrongNameProvider.#ctor(System.Collections.Immutable.ImmutableArray{System.String})">
+            <summary>
+            Creates an instance of <see cref="T:Microsoft.CodeAnalysis.DesktopStrongNameProvider"/>.
+            </summary>
+            <param name="keyFileSearchPaths">
+            An ordered set of fully qualified paths which are searched when locating a cryptographic key file.
+            </param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.DesktopStrongNameProvider.ResolveStrongNameKeyFile(System.String)">
+            <summary>
+            Resolves assembly strong name key file path.
+            Internal for testing.
+            </summary>
+            <returns>Normalized key file path or null if not found.</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.DesktopStrongNameProvider.SignAssembly(Microsoft.CodeAnalysis.StrongNameKeys,System.IO.Stream,System.IO.Stream)">
+            <exception cref="T:System.IO.IOException"></exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.DesktopStrongNameProvider.GetPublicKey(System.Byte[])">
+            <exception cref="T:System.IO.IOException"/>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.DesktopStrongNameProvider.Sign(System.String,System.String)">
+            <exception cref="T:System.IO.IOException"/>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.DesktopStrongNameProvider.Sign(System.String,System.Collections.Immutable.ImmutableArray{System.Byte})">
+            <exception cref="T:System.IO.IOException"/>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.CommandLineAnalyzerReference">
+            <summary>
+            Describes a command line analyzer assembly specification.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.CommandLineAnalyzerReference.FilePath">
+            <summary>
+            Assembly file path.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.Text.EncodedStringText">
+            <summary>
+            Implementation of SourceText based on a <see cref="T:System.String"/> input
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.Text.EncodedStringText.source">
+            <summary>
+            Underlying string on which this SourceText instance is based
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.Create(System.IO.Stream,System.Text.Encoding)">
+            <summary>
+            Initializes an instance of <see cref="T:StringText"/> with provided bytes.
+            </summary>
+            <param name="stream"></param>
+            <param name="defaultEncoding">
+            Specifies an encoding to be used if the actual encoding can't be determined from the stream content (the stream doesn't start with Byte Order Mark).
+            If not specified auto-detect heristics are used to determine the encoding. If these heristics fail the decoding is assumed to be <see cref="P:System.Text.Encoding.Default"/>.
+            Note that if the stream starts with Byte Order Mark the value of <paramref name="defaultEncoding"/> is ignored.
+            </param>
+            <exception cref="T:System.IO.InvalidDataException">
+            The stream content can't be decoded using the specified <paramref name="defaultEncoding"/>, or
+            <paramref name="defaultEncoding"/> is null and the stream appears to be a binary file.
+            </exception>
+            <exception cref="T:System.IO.IOException">An IO error occured while reading from the stream.</exception>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.EncodedStringText.Source">
+            <summary>
+            Underlying string which is the source of this SourceText instance
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.EncodedStringText.Length">
+            <summary>
+            The length of the text represented by <see cref="T:StringText"/>.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.Text.EncodedStringText.Item(System.Int32)">
+            <summary>
+            Returns a character at given position.
+            </summary>
+            <param name="position">The position to get the character from.</param>
+            <returns>The character.</returns>
+            <exception cref="T:ArgumentOutOfRangeException">When position is negative or 
+            greater than <see cref="T:"/> length.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.ToString(Microsoft.CodeAnalysis.Text.TextSpan)">
+            <summary>
+            Provides a string representation of the StringText located within given span.
+            </summary>
+            <exception cref="T:ArgumentOutOfRangeException">When given span is outside of the text range.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.IsBinary(System.String)">
+            <summary>
+            The heuristic checks
+            for occurrence of two consecutive NUL (U+0000) characters in the stream, which are 
+            highly unlikely to appear in a text file. Since the heuristic is applied after 
+            the text has been decoded, it can be used with any encoding.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.Decode(System.IO.Stream,System.Text.Encoding,System.Text.Encoding@)">
+            <summary>
+            Decode the given stream using the given encoding. Does not
+            close the stream afterwards.
+            </summary>
+            <param name="data">Data stream</param>
+            <param name="encoding">Default encoding to use for decoding.</param>
+            <param name="actualEncoding">Actual encoding used to read the text.</param>
+            <exception cref="T:System.Text.DecoderFallbackException">If the given encoding is set to use <see cref="T:System.Text.DecoderExceptionFallback"/> as its fallback decoder.</exception>
+            <returns>Decoded stream as a text string</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.ReadUnicodeStringFromMemoryMappedViewStream(System.IO.MemoryMappedFiles.MemoryMappedViewStream)">
+            <summary>
+            Read a Unicode string from a memory mapped view. The stream is not closed on exit.
+            </summary>
+            <param name="memoryMappedViewStream">A view over a memory mapped stream which contains a Unicode string (preceded by a Unicode BOM)</param>
+            <returns>The string</returns>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.Text.EncodedStringText.TryDecodeMemoryStream(System.IO.MemoryStream,System.Text.Encoding,System.Text.Encoding@,System.String@)">
+            <summary>
+            If the MemoryStream was created with publiclyVisible=true, then we can access its buffer
+            directly and save allocations in StreamReader. The input MemoryStream is not closed on exit.
+            </summary>
+            <exception cref="T:System.Text.DecoderFallbackException">If the given encoding is set to use <see cref="T:System.Text.DecoderExceptionFallback"/> 
+            as its fallback decoder.</exception>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.FailFast.Assert(System.Boolean,System.String)">
+            <summary>
+            Checks for the given <paramref name="condition"/>; if the <paramref name="condition"/> is <c>true</c>, 
+            immediately terminates the process without running any pending <c>finally</c> blocks or finalizers
+            and causes a crash dump to be collected (if the system is configured to do so). 
+            Otherwise, the process continues normally.
+            </summary>
+            <param name="condition">The conditional expression to evaluate.</param>
+            <param name="message">An optional message to be recorded in the dump in case of failure. Can be <c>null</c>.</param>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.MetadataCache">
+             <summary>
+             Manages cache of the following information for Portable Executables loaded from files.
+            
+             For assemblies - a map from file name and timestamp to: 
+                 1) A weak reference to the corresponding PEAssembly object;
+                 2) A list of weak references to instances of VB/CS AssemblySymbols based on the PEAssembly object.
+            
+             For modules - a map from file name and timestamp to a weak reference to the corresponding PEModule object
+             
+             For analyzer assemblies - a map from file name and timestamp to a weak reference to the diagnostic analyzers defined in the assembly.
+             </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.MetadataCache.assembliesFromFiles">
+            <summary>
+            Global cache for assemblies imported from files.
+            The cache must be locked for the duration of read/write operations, see CacheLockObject property.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.MetadataCache.modulesFromFiles">
+            <summary>
+            Global cache for net-modules imported from files.
+            The cache must be locked for the duration of read/write operations, see CacheLockObject property.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.MetadataCache.analyzersFromFiles">
+            <summary>
+            Global cache for diagnostic analyzers imported from analyzer assembly files.
+            The cache must be locked for the duration of read/write operations, see CacheLockObject property.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.MetadataCache.compactTimer">
+            <summary>
+            Timer triggering compact operation for metadata cache.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.MetadataCache.compactTimerPeriod">
+            <summary>
+            Period at which the timer is firing (30 seconds).
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.MetadataCache.compactInProgress">
+            <summary>
+            compactTimer's procedure is in progress.
+            Used to prevent multiple instances running in parallel.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.MetadataCache.compactTimerIsOn">
+            <summary>
+            compactTimer is on, i.e. will fire.
+            
+            This field is changed to 'yes' only by EnableCompactTimer(),
+            and is changed to 'no' only by CompactCache().
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.MetadataCache.compactCollectionCount">
+            <summary>
+            Collection count last time the cache was compacted.
+            </summary>
+        </member>
+        <member name="F:Microsoft.CodeAnalysis.MetadataCache.Guard">
+            <summary>
+            Lock that must be acquired for the duration of read/write operations on MetadataCache.
+            
+            Internal for testing.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.GetCollectionCount">
+            <summary>
+            Return amount of GC collections occurred so far.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.CompactCache(System.Object)">
+            <summary>
+            Called by compactTimer to compact the cache.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.EnableCompactTimer">
+            <summary>
+            Trigger timer every 30 seconds.
+            Cache must be locked before calling this method.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MetadataCache.CompactTimerIsOn">
+            <summary>
+            For test purposes only.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.TriggerCacheCompact">
+            <summary>
+            Trigger compact operation for the cache, meant to be used for test purpose only.
+            Locking the cache prior to calling this method is a good way to get into a deadlock.
+            
+            For test purposes only!!!
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.CompactCacheOfAssemblies">
+            <summary>
+            Called by compactTimer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.CompactCacheOfModules">
+            <summary>
+            Called by compactTimer.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.CompactCacheOfAnalyzers">
+            <summary>
+            Called by compactTimer.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MetadataCache.AssembliesFromFiles">
+            <summary>
+            Global cache for assemblies imported from files.
+            The cache must be locked for the duration of read/write operations, see CacheLockObject property.
+            Internal accessibility is for test purpose only.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MetadataCache.AssemblyKeys">
+            <summary>
+            For test purposes only.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MetadataCache.ModulesFromFiles">
+            <summary>
+            Global cache for net-modules imported from files.
+            The cache must be locked for the duration of read/write operations, see CacheLockObject property.
+            Internal accessibility is for test purpose only.
+            </summary>
+            <remarks></remarks>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MetadataCache.ModuleKeys">
+            <summary>
+            For test purposes only.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MetadataCache.AnalyzersFromFiles">
+            <summary>
+            Global cache for analyzers imported from files.
+            The cache must be locked for the duration of read/write operations, see CacheLockObject property.
+            Internal accessibility is for test purpose only.
+            </summary>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MetadataCache.AnalyzerAssemblyKeys">
+            <summary>
+            For test purposes only.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.MetadataCache.CleaningCacheLock">
+            <summary>
+            This class is meant to be used for test purpose only.
+            It locks MetadataCache until the instance is disposed.
+            Upon locking, the cache is swapped with an empty cache,
+            original cache is restored before the cache is unlocked.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.CleaningCacheLock.CleanCaches">
+            <summary>
+            Clean global metadata caches, meant to be used for test purpose only.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.GetOrCreateFromFile(System.String,Microsoft.CodeAnalysis.MetadataImageKind)">
+            <exception cref="T:System.IO.IOException"/>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.GetOrCreateAssemblyFromFile(System.String)">
+            <exception cref="T:System.IO.IOException"/>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataCache.GetOrCreateModuleFromFile(System.String)">
+            <exception cref="T:System.IO.IOException"/>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.MetadataFileReference">
+            <summary>
+            Represents metadata stored in a file.
+            </summary>
+            <remarks>
+            Metadata image is read from the file, owned by the reference, and doesn't change 
+            since the reference is accessed by the compiler until the reference object is garbage collected.
+            During this time the file is open and its content is read-only.
+            
+            If you need to manage the lifetime of the metadata (and the file stream) explicitly use <see cref="T:Microsoft.CodeAnalysis.MetadataImageReference"/> or 
+            implement a custom subclass of <see cref="T:Microsoft.CodeAnalysis.PortableExecutableReference"/>.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataFileReference.GetMetadataImpl">
+            <exception cref="T:System.IO.IOException"/>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.MetadataFileReferenceProvider">
+            <summary>
+            An extensible mechanism for providing <see cref="T:Microsoft.CodeAnalysis.PortableExecutableReference"/>
+            to services that require them.
+            </summary>
+            <remarks>Used to create <see cref="T:Microsoft.CodeAnalysis.PortableExecutableReference"/> when 
+            processing interactive code directives that load .NET metadata.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataFileReferenceProvider.GetReference(System.String,Microsoft.CodeAnalysis.MetadataReferenceProperties)">
+            <summary>
+            Maps "metadata about .NET metadata" to <see cref="T:Microsoft.CodeAnalysis.PortableExecutableReference"/>. 
+            </summary>
+            <param name="resolvedPath">Path returned by <see cref="M:Microsoft.CodeAnalysis.MetadataReferenceResolver.ResolveReference(System.String,System.String)"/>.</param>
+            <param name="properties">Metadata reference properties.</param>
+            <returns>A <see cref="T:Microsoft.CodeAnalysis.PortableExecutableReference"/> corresponding to the <paramref name="resolvedPath"/> and
+            <paramref name="properties"/> parameters.</returns>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.MetadataFileReferenceResolver">
+            <summary>
+            Resolves metadata references specified in source code (#r directives).
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataFileReferenceResolver.#ctor(System.Collections.Immutable.ImmutableArray{System.String},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.CodeAnalysis.MetadataFileReferenceResolver"/> class.
+            </summary>
+            <param name="searchPaths">An ordered set of fully qualified 
+            paths which are searched when resolving assembly names.</param>
+            <param name="baseDirectory">Directory used when resolving relative paths.</param>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataFileReferenceResolver.#ctor(System.Collections.Generic.IEnumerable{System.String},System.String)">
+            <summary>
+            Initializes a new instance of the <see cref="T:Microsoft.CodeAnalysis.MetadataFileReferenceResolver"/> class.
+            </summary>
+            <param name="searchPaths">An ordered set of fully qualified 
+            paths which are searched when resolving assembly names.</param>
+            <param name="baseDirectory">Directory used when resolving relative paths.</param>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MetadataFileReferenceResolver.SearchPaths">
+            <summary>
+            Search paths used when resolving metadata references.
+            </summary>
+            <remarks>
+            All search paths are absolute.
+            </remarks>
+        </member>
+        <member name="P:Microsoft.CodeAnalysis.MetadataFileReferenceResolver.BaseDirectory">
+            <summary>
+            Directory used for resolution of relative paths.
+            A full directory path or null if not available.
+            </summary>
+            <remarks>
+            This directory is only used if the base directory isn't implied by the context within which the path is being resolved.
+            
+            It is used, for example, when resolving a strong name key file specified in <see cref="T:System.Reflection.AssemblyKeyFileAttribute"/>,
+            or a metadata file path specified in <see cref="T:Microsoft.CodeAnalysis.MetadataFileReference"/>.
+            
+            Resolution of a relative path that needs the base directory fails if the base directory is null.
+            </remarks>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.MetadataFileReferenceResolver.ResolveReference(System.String,System.String)">
+            <summary>
+            Resolves a metadata reference that is a path or an assembly name.
+            </summary>
+            <param name="reference">Reference path.</param>
+            <param name="baseFilePath">
+            The base file path to use to resolve relative paths against.
+            Null to use the <see cref="P:Microsoft.CodeAnalysis.MetadataFileReferenceResolver.BaseDirectory"/> as a base for relative paths.
+            </param>
+            <returns>
+            Normalized absolute path to the referenced file or null if it can't be resolved.
+            </returns>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.SerializableCompilationOptions">
+            <summary>
+            Represents compilation options common to C# and VB.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.SerializableParseOptions">
+            <summary>
+            Represents parse options common to C# and VB.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.SourceFileResolver">
+            <summary>
+            Resolves references to source files specified in source code.
+            </summary>
+        </member>
+        <member name="T:Microsoft.CodeAnalysis.XmlFileResolver">
+            <summary>
+            Resolves references to XML files specified in the source.
+            </summary>
+        </member>
+        <member name="M:Microsoft.CodeAnalysis.XmlFileResolver.ResolveReference(System.String,System.String)">
+            <summary>
+            Resolves XML document file path.
+            </summary>
+            <param name="path">
+            Value of the "file" attribute of an &lt;include&gt; documentation comment element.
+            </param>
+            <param name="baseFilePath">
+            Path of the source file (<see cref="P:Microsoft.CodeAnalysis.SyntaxTree.FilePath"/>) or XML document that contains the <paramref name="path"/>.
+            If not null used as a base path of <paramref name="path"/>, if <paramref name="path"/> is relative.
+            If <paramref name="baseFilePath"/> is relative <see cref="P:Microsoft.CodeAnalysis.XmlFileResolver.BaseDirectory"/> is used as the base path of <paramref name="baseFilePath"/>.
+            </param>
+            <returns>Normalized XML document file path or null if not found.</returns>
+        </member>
+        <member name="T:Microsoft.Runtime.Hosting.ClrRuntimeInfo">
+            <summary>
+            Managed abstraction of the functionality provided by ICLRRuntimeInfo.
+            </summary>
+        </member>
+        <member name="M:Microsoft.Runtime.Hosting.ClrRuntimeInfo.#ctor(Microsoft.Runtime.Hosting.Interop.IClrRuntimeInfo)">
+            <summary>
+            Constructor that wraps an ICLRRuntimeInfo (used internally)
+            </summary>
+        </member>
+        <member name="M:Microsoft.Runtime.Hosting.ClrRuntimeInfo.GetInterface``1(System.Guid)">
+            <summary>
+            Gets an interface provided by this runtime, such as ICLRRuntimeHost.
+            </summary>
+            <typeparam name="TInterface">The interface type to be returned.  This must be an RCW interface</typeparam>
+            <param name="clsid">The CLSID to be created</param>
+        </member>
+        <member name="F:Roslyn.Utilities.FileKey.FullPath">
+            <summary>
+            Full case-insensitive path.
+            </summary>
+        </member>
+        <member name="F:Roslyn.Utilities.FileKey.Timestamp">
+            <summary>
+            Last write time (Utc).
+            </summary>
+        </member>
+        <member name="M:Roslyn.Utilities.FileKey.#ctor(System.String,System.DateTime)">
+            <summary>
+            Constructor.
+            </summary>
+            <param name="fullPath">Full path.</param>
+            <param name="timestamp">Last write time (Utc).</param>
+        </member>
+        <member name="M:Roslyn.Utilities.FileKey.Create(System.String)">
+            <exception cref="T:System.IO.IOException"/>
+        </member>
+        <member name="M:Roslyn.Utilities.FileUtilities.ResolveRelativePath(System.String,System.String,System.String,System.Collections.Generic.IEnumerable{System.String},System.Func{System.String,System.Boolean})">
+            <summary>
+            Resolves relative path and returns absolute path.
+            The method depends only on values of its parameters and their implementation (for fileExists).
+            It doesn't itself depend on the state of the current process (namely on the current drive directories) or 
+            the state of file system.
+            </summary>
+            <param name="path">
+            Path to resolve.
+            </param>
+            <param name="basePath">
+            Base file path to resolve CWD-relative paths against. Null if not available.
+            </param>
+            <param name="baseDirectory">
+            Base directory to resolve CWD-relative paths against if <paramref name="basePath"/> isn't specified. 
+            Must be absolute path.
+            Null if not available.
+            </param>
+            <param name="searchPaths">
+            Sequence of paths used to search for unqualified relative paths.
+            </param>
+            <param name="fileExists">
+            Method that tests existence of a file.
+            </param>
+            <returns>
+            The resolved path or null if the path can't be resolved.
+            </returns>
+        </member>
+        <member name="M:Roslyn.Utilities.FileUtilities.NormalizeAbsolutePath(System.String)">
+            <summary>
+            Normalizes an absolute path.
+            </summary>
+            <param name="path">Path to normalize.</param>
+            <exception cref="T:System.IO.IOException"/>
+            <returns>Normalized path.</returns>
+        </member>
+        <member name="M:Roslyn.Utilities.FileUtilities.CreateFileStreamChecked(System.Func{System.String,System.IO.FileStream},System.String,System.String)">
+            <summary>
+            Used to create a file given a path specified by the user.
+            </summary>
+        </member>
+        <member name="M:Roslyn.Utilities.FileUtilities.DeleteFileOnClose(System.String)">
+            <summary>
+            Marks given file for automatic deletion when all its handles are closed.
+            Note that after doing this the file can't be opened again, not even by the same process.
+            </summary>
+        </member>
+        <member name="M:Roslyn.Utilities.FileUtilities.GetFileTimeStamp(System.String)">
+            <exception cref="T:System.IO.IOException"/>
+        </member>
+        <member name="F:Roslyn.Utilities.PathKind.Empty">
+            <summary>
+            Null or empty.
+            </summary>
+        </member>
+        <member name="F:Roslyn.Utilities.PathKind.Relative">
+            <summary>
+            "file"
+            </summary>
+        </member>
+        <member name="F:Roslyn.Utilities.PathKind.RelativeToCurrentDirectory">
+            <summary>
+            ".\file"
+            </summary>
+        </member>
+        <member name="F:Roslyn.Utilities.PathKind.RelativeToCurrentParent">
+            <summary>
+            "..\file"
+            </summary>
+        </member>
+        <member name="F:Roslyn.Utilities.PathKind.RelativeToCurrentRoot">
+            <summary>
+            "\dir\file"
+            </summary>
+        </member>
+        <member name="F:Roslyn.Utilities.PathKind.RelativeToDriveDirectory">
+            <summary>
+            "C:dir\file"
+            </summary>
+        </member>
+        <member name="F:Roslyn.Utilities.PathKind.Absolute">
+            <summary>
+            "C:\file" or "\\machine" (UNC).
+            </summary>
+        </member>
+        <member name="M:Roslyn.Utilities.PathUtilities.GetDirectoryName(System.String)">
+            <summary>
+            Get directory name from path.
+            </summary>
+            <remarks>
+            Unlike <see cref="M:System.IO.Path.GetDirectoryName"/> it
+                doesn't check for invalid path characters, 
+                doesn't strip any trailing directory separators (TODO: tomat),
+                doesn't recognize UNC structure \\computer-name\share\directory-name\file-name (TODO: tomat).
+            </remarks>
+            <returns>Prefix of path that represents a directory. </returns>
+        </member>
+        <member name="M:Roslyn.Utilities.PathUtilities.IsDriveRootedAbsolutePath(System.String)">
+            <summary>
+            Returns true if given path is absolute and starts with a drive specification ("C:\").
+            </summary>
+        </member>
+        <member name="M:Roslyn.Utilities.PathUtilities.GetPathRoot(System.String)">
+            <summary>
+            Get a prefix of given path which is the root of the path.
+            </summary>
+            <returns>
+            Root of an absolute path or null if the path isn't absolute or has invalid format (e.g. "\\").
+            It may or may not end with a directory separator (e.g. "C:\", "C:\foo", "\\machine\share", etc.) .
+            </returns>
+        </member>
+        <member name="M:Roslyn.Utilities.PathUtilities.GetUncPathRootLength(System.String)">
+            <summary>
+            Calculates the length of root of an UNC path.
+            </summary>
+            <remarks>
+            "\\server\share" is root of UNC path "\\server\share\dir1\dir2\file".
+            </remarks>
+        </member>
+        <member name="M:Roslyn.Utilities.PathUtilities.CombineAbsoluteAndRelativePaths(System.String,System.String)">
+            <summary>
+            Combines an absolute path with a relative.
+            </summary>
+            <param name="root">Absolute root path.</param>
+            <param name="relativePath">Relative path.</param>
+            <returns>
+            An absolute combined path, or null if <paramref name="relativePath"/> is 
+            absolute (e.g. "C:\abc", "\\machine\share\abc"), 
+            relative to the current root (e.g. "\abc"), 
+            or relative to a drive directory (e.g. "C:abc\def").
+            </returns>
+            <seealso cref="M:Roslyn.Utilities.PathUtilities.CombinePossiblyRelativeAndRelativePaths(System.String,System.String)"/>
+        </member>
+        <member name="M:Roslyn.Utilities.PathUtilities.CombinePossiblyRelativeAndRelativePaths(System.String,System.String)">
+            <summary>
+            Combine two paths, the first of which may be absolute.
+            </summary>
+            <param name="rootOpt">First path: absolute, relative, or null.</param>
+            <param name="relativePath">Second path: relative and non-null.</param>
+            <returns>null, if <paramref name="rootOpt"/> is null; a combined path, otherwise.</returns>
+            <seealso cref="M:Roslyn.Utilities.PathUtilities.CombineAbsoluteAndRelativePaths(System.String,System.String)"/>
+        </member>
+        <member name="M:Roslyn.Utilities.PathUtilities.IsFilePath(System.String)">
+            <summary>
+            Determines whether an assembly reference is considered an assembly file path or an assembly name.
+            used, for example, on values of /r and #r.
+            </summary>
+        </member>
+    </members>
+</doc>
