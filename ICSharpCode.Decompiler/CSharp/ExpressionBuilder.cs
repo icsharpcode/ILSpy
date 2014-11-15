@@ -371,17 +371,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			
 			var arguments = inst.Arguments.SelectArray(Convert);
-			int firstParamIndex = inst.Method.HasThis && inst.OpCode != OpCode.NewObj ? 1 : 0;
+			int firstParamIndex = (inst.Method.HasThis && inst.OpCode != OpCode.NewObj) ? 1 : 0;
 			Debug.Assert(arguments.Length == firstParamIndex + inst.Method.Parameters.Count);
 			ResolveResult rr;
 			if (method != null) {
 				// Convert arguments to the expected parameter types
-				Debug.Assert(arguments.Length == method.Parameters.Count);
+				Debug.Assert(arguments.Length == firstParamIndex + method.Parameters.Count);
 				for (int i = firstParamIndex; i < arguments.Length; i++) {
 					var parameter = method.Parameters[i - firstParamIndex];
 					arguments[i] = arguments[i].ConvertTo(parameter.Type, this);
 				}
-				rr = new CSharpInvocationResolveResult(target.ResolveResult, method, arguments.SelectArray(arg => arg.ResolveResult));
+				var argumentResolveResults = arguments.Skip(firstParamIndex).Select(arg => arg.ResolveResult).ToList();
+				rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults);
 			} else {
 				// no IMethod found -- determine the target types from the cecil parameter collection instead
 				for (int i = firstParamIndex; i < arguments.Length; i++) {
@@ -392,12 +393,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				rr = new ResolveResult(cecilMapper.GetType(inst.Method.DeclaringType));
 			}
 			
+			var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression);
 			if (inst.OpCode == OpCode.NewObj) {
-				return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), arguments.Select(arg => arg.Expression))
+				return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), argumentExpressions)
 					.WithILInstruction(inst).WithRR(rr);
 			} else {
 				var mre = new MemberReferenceExpression(target.Expression, inst.Method.Name);
-				return new InvocationExpression(mre, arguments.Select(arg => arg.Expression))
+				return new InvocationExpression(mre, argumentExpressions)
 					.WithILInstruction(inst).WithRR(rr);
 			}
 		}
