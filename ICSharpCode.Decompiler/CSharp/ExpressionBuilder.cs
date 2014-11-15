@@ -390,7 +390,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					var parameterType = cecilMapper.GetType(parameterDefinition.ParameterType);
 					arguments[i] = arguments[i].ConvertTo(parameterType, this);
 				}
-				rr = new ResolveResult(cecilMapper.GetType(inst.Method.DeclaringType));
+				if (inst.OpCode == OpCode.NewObj) {
+					rr = new ResolveResult(cecilMapper.GetType(inst.Method.DeclaringType));
+				} else {
+					rr = new ResolveResult(cecilMapper.GetType(inst.Method.ReturnType));
+				}
 			}
 			
 			var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression);
@@ -412,12 +416,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				// we can deference the managed reference by stripping away the 'ref'
 				var result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 				result = result.ConvertTo(type, this);
+				result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
+				return result;
+			} else {
+				// Cast pointer type if necessary:
+				target = target.ConvertTo(new PointerType(type), this);
+				return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
+					.WithILInstruction(inst)
+					.WithRR(new ResolveResult(type));
 			}
-			// Cast pointer type if necessary:
-			target = target.ConvertTo(new PointerType(type), this);
-			return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
-				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(type));
 		}
 		
 		protected internal override ConvertedExpression VisitUnboxAny(UnboxAny inst)
