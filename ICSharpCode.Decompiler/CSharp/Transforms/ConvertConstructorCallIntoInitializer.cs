@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
+using ICSharpCode.NRefactory.Semantics;
+using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -28,9 +30,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// If the first element of a constructor is a chained constructor call, convert it into a constructor initializer.
 	/// </summary>
-	public class ConvertConstructorCallIntoInitializer : DepthFirstAstVisitor<object, object>, IAstTransform
+	public class ConvertConstructorCallIntoInitializer : DepthFirstAstVisitor<TransformContext, object>, IAstTransform
 	{
-		public override object VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration, object data)
+		public override object VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration, TransformContext context)
 		{
 			ExpressionStatement stmt = constructorDeclaration.Body.Statements.FirstOrDefault() as ExpressionStatement;
 			if (stmt == null)
@@ -60,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		static readonly ExpressionStatement fieldInitializerPattern = new ExpressionStatement {
 			Expression = new AssignmentExpression {
-				Left = new NamedNode("fieldAccess", new MemberReferenceExpression { 
+				Left = new NamedNode("fieldAccess", new MemberReferenceExpression {
 				                     	Target = new ThisReferenceExpression(),
 				                     	MemberName = Pattern.AnyString
 				                     }),
@@ -71,19 +73,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		static readonly AstNode thisCallPattern = new ExpressionStatement(new ThisReferenceExpression().Invoke(".ctor", new Repeat(new AnyNode())));
 		
-		public override object VisitTypeDeclaration(TypeDeclaration typeDeclaration, object data)
+		public override object VisitTypeDeclaration(TypeDeclaration typeDeclaration, TransformContext context)
 		{
 			// Handle initializers on instance fields
 			HandleInstanceFieldInitializers(typeDeclaration.Members);
 			
 			// Now convert base constructor calls to initializers:
-			base.VisitTypeDeclaration(typeDeclaration, data);
+			base.VisitTypeDeclaration(typeDeclaration, context);
 			
 			// Remove single empty constructor:
 			RemoveSingleEmptyConstructor(typeDeclaration);
 			
 			// Handle initializers on static fields:
-			HandleStaticFieldInitializers(typeDeclaration.Members);
+			HandleStaticFieldInitializers(typeDeclaration.Members, context);
+			
 			return null;
 		}
 		
@@ -92,8 +95,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			var instanceCtorsNotChainingWithThis = instanceCtors.Where(ctor => !thisCallPattern.IsMatch(ctor.Body.Statements.FirstOrDefault())).ToArray();
 			if (instanceCtorsNotChainingWithThis.Length > 0) {
-				MethodDefinition ctorMethodDef = instanceCtorsNotChainingWithThis[0].Annotation<MethodDefinition>();
-				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsValueType)
+				var ctorMethodDef = instanceCtorsNotChainingWithThis[0].GetSymbol() as IMethod;
+				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsReferenceType == false)
 					return;
 				
 				// Recognize field initializers:
@@ -104,10 +107,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (!m.Success)
 						break;
 					
-					FieldDefinition fieldDef = m.Get<AstNode>("fieldAccess").Single().Annotation<FieldReference>().ResolveWithinSameModule();
-					if (fieldDef == null)
+					IField field = m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IField;
+					if (field == null)
 						break;
-					AstNode fieldOrEventDecl = members.FirstOrDefault(f => f.Annotation<FieldDefinition>() == fieldDef);
+					AstNode fieldOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == field);
 					if (fieldOrEventDecl == null)
 						break;
 					Expression initializer = m.Get<Expression>("initializer").Single();
@@ -141,12 +144,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		void HandleStaticFieldInitializers(IEnumerable<AstNode> members)
+		void HandleStaticFieldInitializers(IEnumerable<AstNode> members, TransformContext context)
 		{
 			// Convert static constructor into field initializers if the class is BeforeFieldInit
 			var staticCtor = members.OfType<ConstructorDeclaration>().FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
 			if (staticCtor != null) {
-				MethodDefinition ctorMethodDef = staticCtor.Annotation<MethodDefinition>();
+				IMethod ctorMethod = staticCtor.GetSymbol() as IMethod;
+				MethodDefinition ctorMethodDef = context.CecilMapper.GetCecil(ctorMethod) as MethodDefinition;
 				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsBeforeFieldInit) {
 					while (true) {
 						ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
@@ -155,10 +159,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						AssignmentExpression assignment = es.Expression as AssignmentExpression;
 						if (assignment == null || assignment.Operator != AssignmentOperatorType.Assign)
 							break;
-						FieldDefinition fieldDef = assignment.Left.Annotation<FieldReference>().ResolveWithinSameModule();
-						if (fieldDef == null || !fieldDef.IsStatic)
+						IField field = assignment.Left.GetSymbol() as IField;
+						if (field == null || !field.IsStatic)
 							break;
-						FieldDeclaration fieldDecl = members.OfType<FieldDeclaration>().FirstOrDefault(f => f.Annotation<FieldDefinition>() == fieldDef);
+						FieldDeclaration fieldDecl = members.OfType<FieldDeclaration>().FirstOrDefault(f => f.GetSymbol() == field);
 						if (fieldDecl == null)
 							break;
 						fieldDecl.Variables.Single().Initializer = assignment.Right.Detach();
@@ -170,14 +174,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		void IAstTransform.Run(AstNode node)
+		void IAstTransform.Run(AstNode node, TransformContext context)
 		{
 			// If we're viewing some set of members (fields are direct children of CompilationUnit),
 			// we also need to handle those:
 			HandleInstanceFieldInitializers(node.Children);
-			HandleStaticFieldInitializers(node.Children);
+			HandleStaticFieldInitializers(node.Children, context);
 			
-			node.AcceptVisitor(this, null);
+			node.AcceptVisitor(this, context);
 		}
 	}
 }

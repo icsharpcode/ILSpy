@@ -19,11 +19,24 @@
 using System;
 using System.Threading;
 using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	public interface IAstTransform
 	{
-		void Run(AstNode compilationUnit);
+		void Run(AstNode rootNode, TransformContext context);
+	}
+	
+	public class TransformContext
+	{
+		internal readonly NRefactoryCecilMapper CecilMapper;
+		public readonly ICompilation Compilation;
+		
+		internal TransformContext(ICompilation compilation, NRefactoryCecilMapper cecilMapper)
+		{
+			this.Compilation = compilation;
+			this.CecilMapper = cecilMapper;
+		}
 	}
 }

@@ -11,6 +11,7 @@ using System.Collections;
 using System.Collections.Generic;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.Semantics;
+using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.Decompiler.CSharp
@@ -71,6 +72,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			expression.Expression.AddAnnotation(resolveResult);
 			return new ConvertedExpression(expression, resolveResult);
+		}
+		
+		/// <summary>
+		/// Retrieves the symbol associated with this AstNode, or null if no symbol is associated with the node.
+		/// </summary>
+		public static ISymbol GetSymbol(this AstNode node)
+		{
+			var rr = node.Annotation<ResolveResult>();
+			return rr != null ? rr.GetSymbol() : null;
 		}
 	}
 }

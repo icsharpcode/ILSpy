@@ -16,20 +16,20 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.Decompiler.IL;
-using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.CSharp.Refactoring;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Utils;
-using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.NRefactory.CSharp.Refactoring;
+using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.NRefactory.Utils;
+using Mono.Cecil;
+using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -40,7 +40,22 @@ namespace ICSharpCode.Decompiler.CSharp
 		NRefactoryCecilMapper cecilMapper;
 		ICompilation compilation;
 		TypeSystemAstBuilder typeSystemAstBuilder;
-		List<IAstTransform> astTransforms = new List<IAstTransform>(TransformationPipeline.CreatePipeline());
+		List<IAstTransform> astTransforms = new List<IAstTransform> {
+			//new PushNegation(),
+			//new DelegateConstruction(context),
+			//new PatternStatementTransform(context),
+			new ReplaceMethodCallsWithOperators(),
+			new IntroduceUnsafeModifier(),
+			new AddCheckedBlocks(),
+			//new DeclareVariables(context), // should run after most transforms that modify statements
+			new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
+			//new DecimalConstantTransform(),
+			//new IntroduceUsingDeclarations(context),
+			//new IntroduceExtensionMethods(context), // must run after IntroduceUsingDeclarations
+			//new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
+			//new CombineQueryExpressions(context),
+			//new FlattenSwitchBlocks(),
+		};
 
 		public CancellationToken CancellationToken { get; set; }
 
@@ -84,6 +99,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			return null;
 		}
 
+		void RunTransforms(AstNode rootNode)
+		{
+			var context = new TransformContext(compilation, cecilMapper);
+			foreach (var transform in astTransforms)
+				transform.Run(rootNode, context);
+			rootNode.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
+		}
+		
 		public SyntaxTree DecompileWholeModuleAsSingleFile()
 		{
 			SyntaxTree syntaxTree = new SyntaxTree();
@@ -100,10 +123,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var typeDef in g) {
 					if (typeDef.Name == "<Module>" && typeDef.Members.Count == 0)
 						continue;
-					var typeDecl = Decompile(typeDef);
+					var typeDecl = DoDecompile(typeDef);
 					groupNode.AddChild(typeDecl, SyntaxTree.MemberRole);
 				}
 			}
+			RunTransforms(syntaxTree);
 			return syntaxTree;
 		}
 		
@@ -114,24 +138,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			ITypeDefinition typeDef = cecilMapper.GetType(typeDefinition).GetDefinition();
 			if (typeDef == null)
 				throw new InvalidOperationException("Could not find type definition in NR type system");
-			return Decompile(typeDef);
+			var decl = DoDecompile(typeDef);
+			RunTransforms(decl);
+			return decl;
 		}
 		
-		EntityDeclaration Decompile(ITypeDefinition typeDef)
+		EntityDeclaration DoDecompile(ITypeDefinition typeDef)
 		{
 			var entityDecl = typeSystemAstBuilder.ConvertEntity(typeDef);
 			var typeDecl = entityDecl as TypeDeclaration;
-			if (typeDecl == null)
-			{
+			if (typeDecl == null) {
 				// e.g. DelegateDeclaration
 				return entityDecl;
 			}
-			foreach (var method in typeDef.Methods)
-			{
+			foreach (var method in typeDef.Methods) {
 				var methodDef = cecilMapper.GetCecil(method) as MethodDefinition;
-				if (methodDef != null)
-				{
-					var memberDecl = Decompile(methodDef, method);
+				if (methodDef != null) {
+					var memberDecl = DoDecompile(methodDef, method);
 					typeDecl.Members.Add(memberDecl);
 				}
 			}
@@ -145,10 +168,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			var method = cecilMapper.GetMethod(methodDefinition);
 			if (method == null)
 				throw new InvalidOperationException("Could not find method in NR type system");
-			return Decompile(methodDefinition, method);
+			var decl = DoDecompile(methodDefinition, method);
+			RunTransforms(decl);
+			return decl;
 		}
 
-		EntityDeclaration Decompile(MethodDefinition methodDefinition, IMethod method)
+		EntityDeclaration DoDecompile(MethodDefinition methodDefinition, IMethod method)
 		{
 			var entityDecl = typeSystemAstBuilder.ConvertEntity(method);
 			if (methodDefinition.HasBody) {
@@ -159,9 +184,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				function.CheckInvariant();
 				var statementBuilder = new StatementBuilder(method, cecilMapper);
 				var body = statementBuilder.ConvertAsBlock(function.Body);
-				foreach (var transform in astTransforms) {
-					transform.Run(body);
-				}
+				
 				// insert variables at start of body
 				Statement prevVarDecl = null;
 				foreach (var v in function.Variables) {
@@ -172,9 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						prevVarDecl = varDecl;
 					}
 				}
-				body.AcceptVisitor(new InsertParenthesesVisitor {
-				                   	InsertParenthesesForReadability = true
-				                   });
+				
 				entityDecl.AddChild(body, Roles.Body);
 			}
 			return entityDecl;

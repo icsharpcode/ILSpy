@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 	public static class Tester
 	{
-		public static string CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug)
+		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug)
 		{
 			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 			CompilerParameters options = new CompilerParameters();
@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 				throw new Exception(b.ToString());
 			}
-			return results.PathToAssembly;
+			return results;
 		}
 
 		public static int Run(string assemblyFileName, out string output, out string error)

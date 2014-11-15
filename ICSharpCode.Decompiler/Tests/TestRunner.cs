@@ -1,4 +1,5 @@
 ﻿using System;
+using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -49,24 +50,24 @@ namespace ICSharpCode.Decompiler.Tests
 
 		void TestCompileDecompileCompileOutput(string testFileName, CompilerOptions options = CompilerOptions.UseDebug)
 		{
-			string outputFile = null, decompiledOutputFile = null;
+			CompilerResults outputFile = null, decompiledOutputFile = null;
 			string output1, output2, error1, error2;
 
 			try {
 				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options);
-				string decompiledCodeFile = Tester.DecompileCSharp(outputFile);
+				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly);
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
-				int result1 = Tester.Run(outputFile, out output1, out error1);
-				int result2 = Tester.Run(decompiledOutputFile, out output2, out error2);
+				int result1 = Tester.Run(outputFile.PathToAssembly, out output1, out error1);
+				int result2 = Tester.Run(decompiledOutputFile.PathToAssembly, out output2, out error2);
 
 				Assert.AreEqual(result1, result2);
 				Assert.AreEqual(output1, output2);
 				Assert.AreEqual(error1, error2);
 			} finally {
 				if (outputFile != null)
-					File.Delete(outputFile);
+					outputFile.TempFiles.Delete();
 				if (decompiledOutputFile != null)
-					File.Delete(decompiledOutputFile);
+					decompiledOutputFile.TempFiles.Delete();
 			}
 		}
 	}

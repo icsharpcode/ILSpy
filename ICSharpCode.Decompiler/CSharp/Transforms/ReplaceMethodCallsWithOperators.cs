@@ -348,7 +348,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 		
-		void IAstTransform.Run(AstNode node)
+		void IAstTransform.Run(AstNode node, TransformContext context)
 		{
 			node.AcceptVisitor(this, null);
 		}
