@@ -21,7 +21,7 @@ using System.Linq;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// Combines query expressions and removes transparent identifiers.

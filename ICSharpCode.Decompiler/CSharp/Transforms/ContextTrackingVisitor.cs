@@ -21,7 +21,7 @@ using System.Diagnostics;
 using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// Base class for AST visitors that need the current type/method context info.

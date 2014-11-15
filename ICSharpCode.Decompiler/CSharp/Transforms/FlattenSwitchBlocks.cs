@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	class FlattenSwitchBlocks : IAstTransform
 	{

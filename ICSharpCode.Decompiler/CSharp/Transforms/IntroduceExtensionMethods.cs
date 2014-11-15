@@ -21,7 +21,7 @@ using System.Linq;
 using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// Converts extension method calls into infix syntax.

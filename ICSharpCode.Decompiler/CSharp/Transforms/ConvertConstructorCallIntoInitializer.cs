@@ -23,7 +23,7 @@ using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
 using Mono.Cecil;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// If the first element of a constructor is a chained constructor call, convert it into a constructor initializer.
@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				invocation.Arguments.MoveTo(ci.Arguments);
 				// Add the initializer: (unless it is the default 'base()')
 				if (!(ci.ConstructorInitializerType == ConstructorInitializerType.Base && ci.Arguments.Count == 0))
-					constructorDeclaration.Initializer = ci.WithAnnotation(invocation.Annotation<MethodReference>());
+					constructorDeclaration.Initializer = ci.CopyAnnotationsFrom(invocation);
 				// Remove the statement:
 				stmt.Remove();
 			}

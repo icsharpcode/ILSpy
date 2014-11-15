@@ -26,14 +26,4 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		void Run(AstNode compilationUnit);
 	}
-	
-	public static class TransformationPipeline
-	{
-		public static IAstTransform[] CreatePipeline()
-		{
-			return new IAstTransform[] {
-				new AddCheckedBlocks()
-			};
-		}
-	}
 }

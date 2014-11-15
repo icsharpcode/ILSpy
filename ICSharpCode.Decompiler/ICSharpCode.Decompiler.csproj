@@ -70,9 +70,12 @@
     <Compile Include="CSharp\NRefactoryExtensions.cs" />
     <Compile Include="CSharp\StatementBuilder.cs" />
     <Compile Include="CSharp\Transforms\AddCheckedBlocks.cs" />
+    <Compile Include="CSharp\Transforms\ConvertConstructorCallIntoInitializer.cs" />
     <Compile Include="CSharp\Transforms\CustomPatterns.cs" />
     <Compile Include="CSharp\Transforms\IAstTransform.cs" />
+    <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
+    <Compile Include="CSharp\Transforms\TransformationPipeline.cs" />
     <Compile Include="IL\Instructions.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>

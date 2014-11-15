@@ -202,9 +202,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 		
 		/// <summary>
-		/// This annotation is used to convert a compound assignment "a += 2;" or increment operator "a++;"
-		/// back to the original "a = a + 2;". This is sometimes necessary when the checked/unchecked semantics
-		/// cannot be guaranteed otherwise (see CheckedUnchecked.ForWithCheckedInitializerAndUncheckedIterator test)
+		/// This annotation is used to allow later pipeline steps to convert a compound assignment "a += 2;" or
+		/// increment operator "a++;" back to the original "a = a + 2;".
+		/// This is sometimes necessary when the checked/unchecked semantics cannot be guaranteed otherwise
+		/// (see CheckedUnchecked.ForWithCheckedInitializerAndUncheckedIterator test).
 		/// </summary>
 		public class RestoreOriginalAssignOperatorAnnotation
 		{

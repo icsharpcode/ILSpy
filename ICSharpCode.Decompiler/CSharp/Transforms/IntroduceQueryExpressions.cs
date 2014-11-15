@@ -21,7 +21,7 @@ using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// Decompiles query expressions.

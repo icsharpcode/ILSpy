@@ -20,46 +20,28 @@ using System;
 using System.Threading;
 using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
-	public interface IAstTransform
-	{
-		void Run(AstNode compilationUnit);
-	}
-	
 	public static class TransformationPipeline
 	{
-		public static IAstTransform[] CreatePipeline(DecompilerContext context)
+		public static IAstTransform[] CreatePipeline()
 		{
 			return new IAstTransform[] {
-				new PushNegation(),
-				new DelegateConstruction(context),
-				new PatternStatementTransform(context),
-				new ReplaceMethodCallsWithOperators(context),
+				//new PushNegation(),
+				//new DelegateConstruction(context),
+				//new PatternStatementTransform(context),
+				new ReplaceMethodCallsWithOperators(),
 				new IntroduceUnsafeModifier(),
 				new AddCheckedBlocks(),
-				new DeclareVariables(context), // should run after most transforms that modify statements
+				//new DeclareVariables(context), // should run after most transforms that modify statements
 				new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
-				new DecimalConstantTransform(),
-				new IntroduceUsingDeclarations(context),
-				new IntroduceExtensionMethods(context), // must run after IntroduceUsingDeclarations
-				new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
-				new CombineQueryExpressions(context),
-				new FlattenSwitchBlocks(), 
+				//new DecimalConstantTransform(),
+				//new IntroduceUsingDeclarations(context),
+				//new IntroduceExtensionMethods(context), // must run after IntroduceUsingDeclarations
+				//new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
+				//new CombineQueryExpressions(context),
+				//new FlattenSwitchBlocks(), 
 			};
-		}
-		
-		public static void RunTransformationsUntil(AstNode node, Predicate<IAstTransform> abortCondition, DecompilerContext context)
-		{
-			if (node == null)
-				return;
-			
-			foreach (var transform in CreatePipeline(context)) {
-				context.CancellationToken.ThrowIfCancellationRequested();
-				if (abortCondition != null && abortCondition(transform))
-					return;
-				transform.Run(node);
-			}
 		}
 	}
 }

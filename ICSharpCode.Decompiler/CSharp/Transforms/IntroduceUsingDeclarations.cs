@@ -22,7 +22,7 @@ using System.Linq;
 using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// Introduces using declarations.

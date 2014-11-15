@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (inst.ReturnValue == null)
 				return new ReturnStatement();
-			return new ReturnStatement(exprBuilder.Convert(inst.ReturnValue, currentMethod.ReturnType));
+			return new ReturnStatement(exprBuilder.Convert(inst.ReturnValue).ConvertTo(currentMethod.ReturnType, exprBuilder));
 		}
 
 		TryCatchStatement MakeTryCatch(ILInstruction tryBlock)

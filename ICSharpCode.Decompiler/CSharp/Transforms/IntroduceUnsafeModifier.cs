@@ -19,7 +19,7 @@
 using System;
 using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.Decompiler.Ast.Transforms
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	public class IntroduceUnsafeModifier : DepthFirstAstVisitor<object, bool>, IAstTransform
 	{

@@ -25,11 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp
 {
 	static class NRefactoryExtensions
 	{
-		public static ConvertedExpression WithTypeInfo(this Expression expr, IType type)
-		{
-			return new ConvertedExpression(expr, type);
-		}
-		
+		[Obsolete("Use the more concrete With...()-methods in AnnotationExtensions, so that we maintain a centralised list of the possible annotation types")]
 		public static T WithAnnotation<T>(this T node, object annotation) where T : AstNode
 		{
 			if (annotation != null)
