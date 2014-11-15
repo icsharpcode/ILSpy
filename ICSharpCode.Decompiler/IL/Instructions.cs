@@ -394,7 +394,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Adds two numbers.</summary>
 	public sealed partial class Add : BinaryNumericInstruction
 	{
-		public Add(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Add, left, right, checkForOverflow, sign)
+		public Add(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None) : base(OpCode.Add, left, right, checkForOverflow, sign, compoundAssignmentType)
 		{
 		}
 
@@ -407,7 +407,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Subtracts two numbers</summary>
 	public sealed partial class Sub : BinaryNumericInstruction
 	{
-		public Sub(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Sub, left, right, checkForOverflow, sign)
+		public Sub(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None) : base(OpCode.Sub, left, right, checkForOverflow, sign, compoundAssignmentType)
 		{
 		}
 
@@ -420,7 +420,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Multiplies two numbers</summary>
 	public sealed partial class Mul : BinaryNumericInstruction
 	{
-		public Mul(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Mul, left, right, checkForOverflow, sign)
+		public Mul(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None) : base(OpCode.Mul, left, right, checkForOverflow, sign, compoundAssignmentType)
 		{
 		}
 
@@ -433,7 +433,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Divides two numbers</summary>
 	public sealed partial class Div : BinaryNumericInstruction
 	{
-		public Div(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Div, left, right, checkForOverflow, sign)
+		public Div(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None) : base(OpCode.Div, left, right, checkForOverflow, sign, compoundAssignmentType)
 		{
 		}
 
@@ -450,7 +450,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Division remainder</summary>
 	public sealed partial class Rem : BinaryNumericInstruction
 	{
-		public Rem(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Rem, left, right, checkForOverflow, sign)
+		public Rem(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None) : base(OpCode.Rem, left, right, checkForOverflow, sign, compoundAssignmentType)
 		{
 		}
 
@@ -467,7 +467,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Bitwise AND</summary>
 	public sealed partial class BitAnd : BinaryNumericInstruction
 	{
-		public BitAnd(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.BitAnd, left, right, checkForOverflow, sign)
+		public BitAnd(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None) : base(OpCode.BitAnd, left, right, checkForOverflow, sign, compoundAssignmentType)
 		{
 		}
 
@@ -480,7 +480,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Bitwise OR</summary>
 	public sealed partial class BitOr : BinaryNumericInstruction
 	{
-		public BitOr(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.BitOr, left, right, checkForOverflow, sign)
+		public BitOr(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None) : base(OpCode.BitOr, left, right, checkForOverflow, sign, compoundAssignmentType)
 		{
 		}
 
@@ -493,7 +493,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Bitwise XOR</summary>
 	public sealed partial class BitXor : BinaryNumericInstruction
 	{
-		public BitXor(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.BitXor, left, right, checkForOverflow, sign)
+		public BitXor(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None) : base(OpCode.BitXor, left, right, checkForOverflow, sign, compoundAssignmentType)
 		{
 		}
 
@@ -1127,7 +1127,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Shift left</summary>
 	public sealed partial class Shl : BinaryNumericInstruction
 	{
-		public Shl(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Shl, left, right, checkForOverflow, sign)
+		public Shl(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None) : base(OpCode.Shl, left, right, checkForOverflow, sign, compoundAssignmentType)
 		{
 		}
 
@@ -1140,7 +1140,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Shift right</summary>
 	public sealed partial class Shr : BinaryNumericInstruction
 	{
-		public Shr(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Shr, left, right, checkForOverflow, sign)
+		public Shr(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None) : base(OpCode.Shr, left, right, checkForOverflow, sign, compoundAssignmentType)
 		{
 		}
 
@@ -2277,29 +2277,29 @@ namespace ICSharpCode.Decompiler.IL
 	
 	partial class BinaryNumericInstruction
 	{
-		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
+		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None)
 		{
 			switch (opCode) {
 				case OpCode.Add:
-					return new Add(left, right, checkForOverflow, sign);
+					return new Add(left, right, checkForOverflow, sign, compoundAssignmentType);
 				case OpCode.Sub:
-					return new Sub(left, right, checkForOverflow, sign);
+					return new Sub(left, right, checkForOverflow, sign, compoundAssignmentType);
 				case OpCode.Mul:
-					return new Mul(left, right, checkForOverflow, sign);
+					return new Mul(left, right, checkForOverflow, sign, compoundAssignmentType);
 				case OpCode.Div:
-					return new Div(left, right, checkForOverflow, sign);
+					return new Div(left, right, checkForOverflow, sign, compoundAssignmentType);
 				case OpCode.Rem:
-					return new Rem(left, right, checkForOverflow, sign);
+					return new Rem(left, right, checkForOverflow, sign, compoundAssignmentType);
 				case OpCode.BitAnd:
-					return new BitAnd(left, right, checkForOverflow, sign);
+					return new BitAnd(left, right, checkForOverflow, sign, compoundAssignmentType);
 				case OpCode.BitOr:
-					return new BitOr(left, right, checkForOverflow, sign);
+					return new BitOr(left, right, checkForOverflow, sign, compoundAssignmentType);
 				case OpCode.BitXor:
-					return new BitXor(left, right, checkForOverflow, sign);
+					return new BitXor(left, right, checkForOverflow, sign, compoundAssignmentType);
 				case OpCode.Shl:
-					return new Shl(left, right, checkForOverflow, sign);
+					return new Shl(left, right, checkForOverflow, sign, compoundAssignmentType);
 				case OpCode.Shr:
-					return new Shr(left, right, checkForOverflow, sign);
+					return new Shr(left, right, checkForOverflow, sign, compoundAssignmentType);
 				default:
 					throw new ArgumentException("opCode is not a binary numeric instruction");
 			}

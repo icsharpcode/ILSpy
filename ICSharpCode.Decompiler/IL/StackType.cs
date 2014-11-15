@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// A type for the purpose of stack analysis.
 	/// </summary>
-	public enum StackType
+	public enum StackType : byte
 	{
 		Unknown,
 		/// <summary>32-bit integer</summary>

@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 	
-	public enum Sign
+	public enum Sign : byte
 	{
 		None,
 		Signed,

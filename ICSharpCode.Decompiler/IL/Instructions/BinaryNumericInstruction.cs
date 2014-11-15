@@ -24,8 +24,20 @@ using System.Text;
 using System.Threading.Tasks;
 namespace ICSharpCode.Decompiler.IL
 {
+	public enum CompoundAssignmentType : byte
+	{
+		None,
+		EvaluatesToOldValue,
+		EvaluatesToNewValue
+	}
+	
 	public abstract partial class BinaryNumericInstruction : BinaryInstruction
 	{
+		/// <summary>
+		/// Gets whether this instruction is a compound assignment.
+		/// </summary>
+		public readonly CompoundAssignmentType CompoundAssignmentType;
+		
 		/// <summary>
 		/// Gets whether the instruction checks for overflow.
 		/// </summary>
@@ -40,14 +52,32 @@ namespace ICSharpCode.Decompiler.IL
 
 		readonly StackType resultType;
 
-		protected BinaryNumericInstruction(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
+		protected BinaryNumericInstruction(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType)
 			: base(opCode, left, right)
 		{
 			this.CheckForOverflow = checkForOverflow;
 			this.Sign = sign;
+			this.CompoundAssignmentType = compoundAssignmentType;
 			this.resultType = ComputeResultType(opCode, left.ResultType, right.ResultType);
+			Debug.Assert(CompoundAssignmentType == CompoundAssignmentType.None || IsValidCompoundAssignmentTarget(Left));
 		}
-
+		
+		internal static bool IsValidCompoundAssignmentTarget(ILInstruction inst)
+		{
+			switch (inst.OpCode) {
+				case OpCode.LdLoc:
+				case OpCode.LdFld:
+				case OpCode.LdsFld:
+				case OpCode.LdObj:
+					return true;
+				case OpCode.Call:
+				case OpCode.CallVirt:
+					return true; // TODO: check if corresponding setter exists
+				default:
+					return false;
+			}
+		}
+		
 		internal static StackType ComputeResultType(OpCode opCode, StackType left, StackType right)
 		{
 			// Based on Table 2: Binary Numeric Operations
@@ -78,16 +108,54 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		internal override void CheckInvariant()
+		{
+			base.CheckInvariant();
+			Debug.Assert(CompoundAssignmentType == CompoundAssignmentType.None || IsValidCompoundAssignmentTarget(Left));
+		}
+
+		protected override void Connected()
+		{
+			base.Connected();
+			// Count the local variable store due to the compound assignment:
+			ILVariable v;
+			if (CompoundAssignmentType != CompoundAssignmentType.None && Left.MatchLdLoc(out v)) {
+				v.StoreCount++;
+			}
+		}
+		
+		protected override void Disconnected()
+		{
+			base.Disconnected();
+			// Count the local variable store due to the compound assignment:
+			ILVariable v;
+			if (CompoundAssignmentType != CompoundAssignmentType.None && Left.MatchLdLoc(out v)) {
+				v.StoreCount--;
+			}
+		}
+		
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = base.ComputeFlags();
 			if (CheckForOverflow)
 				flags |= InstructionFlags.MayThrow;
+			// Set MayWriteLocals if this is a compound assignment to a local variable
+			if (CompoundAssignmentType != CompoundAssignmentType.None && Left.OpCode == OpCode.LdLoc)
+				flags |= InstructionFlags.MayWriteLocals;
 			return flags;
 		}
 
 		public override void WriteTo(ITextOutput output)
 		{
+			switch (CompoundAssignmentType) {
+				case CompoundAssignmentType.EvaluatesToNewValue:
+					output.Write("compound.assign");
+					break;
+				case CompoundAssignmentType.EvaluatesToOldValue:
+					output.Write("compound.assign.oldvalue");
+					break;
+			}
+			
 			output.Write(OpCode);
 			if (CheckForOverflow)
 				output.Write(".ovf");

@@ -185,8 +185,6 @@
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), CustomArguments("array", "index"), HasTypeOperand,
 			MayThrow, ResultType("Ref"), SupportsReadonlyPrefix),
-		
-		
 	};
 #>
 using System;
@@ -254,12 +252,12 @@ namespace ICSharpCode.Decompiler.IL
 	
 	partial class BinaryNumericInstruction
 	{
-		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
+		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None)
 		{
 			switch (opCode) {
 <#	foreach (OpCode opCode in opCodes.Where(c => c.BaseClass == "BinaryNumericInstruction")) { #>
 				case OpCode.<#=opCode.Name#>:
-					return new <#=opCode.Name#>(left, right, checkForOverflow, sign);
+					return new <#=opCode.Name#>(left, right, checkForOverflow, sign, compoundAssignmentType);
 <#	} #>
 				default:
 					throw new ArgumentException("opCode is not a binary numeric instruction");
@@ -485,10 +483,10 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.BaseClass = "BinaryNumericInstruction";
 		opCode.ConstructorParameters.Add("bool checkForOverflow");
 		opCode.BaseConstructorArguments.Add("checkForOverflow");
-		opCode.WriteOpCodeSuffix.Add("if (checkForOverflow) output.Write(\".ovf\");");
 		opCode.ConstructorParameters.Add("Sign sign");
 		opCode.BaseConstructorArguments.Add("sign");
-		opCode.WriteOpCodeSuffix.Add("if (sign == Sign.Unsigned) output.Write(\".un\");");
+		opCode.ConstructorParameters.Add("CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None");
+		opCode.BaseConstructorArguments.Add("compoundAssignmentType");
 	};
 	
 	// BinaryNumeric trait: the instruction is derived from BinaryComparisonInstruction. Implies Binary and I4Result.
