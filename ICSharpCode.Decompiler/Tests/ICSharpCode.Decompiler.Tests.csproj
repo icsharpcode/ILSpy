@@ -91,6 +91,7 @@
     <Compile Include="Helpers\CodeAssert.cs" />
     <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
     <Compile Include="Helpers\Tester.cs" />
+    <Compile Include="TestCases\CompoundAssignment.cs" />
     <Compile Include="TestCases\ControlFlow.cs" />
     <Compile Include="TestCases\HelloWorld.cs" />
     <Compile Include="TestRunner.cs" />

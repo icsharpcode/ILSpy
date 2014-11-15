@@ -40,6 +40,12 @@ namespace ICSharpCode.Decompiler.Tests
 			TestCompileDecompileCompileOutputAll("ControlFlow.cs");
 		}
 
+		[Test]
+		public void CompoundAssignment()
+		{
+			TestCompileDecompileCompileOutputAll("CompoundAssignment.cs");
+		}
+
 		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{
 			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.None);
