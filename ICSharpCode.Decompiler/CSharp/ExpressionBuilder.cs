@@ -88,14 +88,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				expr = new ThisReferenceExpression();
 			else
 				expr = new IdentifierExpression(variable.Name);
-			if (variable.Type.SkipModifiers().MetadataType == Mono.Cecil.MetadataType.ByReference)
-			{
+			// TODO: use LocalResolveResult instead
+			if (variable.Type.SkipModifiers().MetadataType == Mono.Cecil.MetadataType.ByReference) {
 				// When loading a by-ref parameter, use 'ref paramName'.
 				// We'll strip away the 'ref' when dereferencing.
+				
+				// Ensure that the IdentifierExpression itself also gets a resolve result, as that might
+				// get used after the 'ref' is stripped away:
+				var elementType = variable.Type.SkipModifiers().GetElementType();
+				expr.WithRR(new ResolveResult(cecilMapper.GetType(elementType)));
+				
 				expr = new DirectionExpression(FieldDirection.Ref, expr);
 			}
-			return expr
-				.WithRR(new ResolveResult(cecilMapper.GetType(variable.Type))); // TODO: use LocalResolveResult instead
+			return expr.WithRR(new ResolveResult(cecilMapper.GetType(variable.Type)));
 		}
 		
 		ConvertedExpression IsType(IsInst inst)
