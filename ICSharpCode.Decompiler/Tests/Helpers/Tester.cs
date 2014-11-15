@@ -13,14 +13,22 @@ using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
+	[Flags]
+	public enum CompilerOptions
+	{
+		None,
+		Optimize,
+		UseDebug
+	}
+
 	public static class Tester
 	{
-		public static string CompileCSharp(string sourceFileName, bool optimize = false, bool useDebug = true)
+		public static string CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug)
 		{
 			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 			CompilerParameters options = new CompilerParameters();
 			options.GenerateExecutable = true;
-			options.CompilerOptions = "/unsafe /o" + (optimize ? "+" : "-") + (useDebug ? " /debug" : "");
+			options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-") + (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
 			options.ReferencedAssemblies.Add("System.Core.dll");
 			CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileName);
 			if (results.Errors.Count > 0) {

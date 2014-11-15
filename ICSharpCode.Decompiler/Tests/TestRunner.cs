@@ -33,23 +33,29 @@ namespace ICSharpCode.Decompiler.Tests
 			TestCompileDecompileCompileOutputAll("HelloWorld.cs");
 		}
 
-		void TestCompileDecompileCompileOutputAll(string testFileName)
+		[Test]
+		public void ControlFlow()
 		{
-			TestCompileDecompileCompileOutput(testFileName, optimize: false, useDebug: true);
-			TestCompileDecompileCompileOutput(testFileName, optimize: false, useDebug: false);
-			TestCompileDecompileCompileOutput(testFileName, optimize: true, useDebug: true);
-			TestCompileDecompileCompileOutput(testFileName, optimize: true, useDebug: false);
+			TestCompileDecompileCompileOutputAll("ControlFlow.cs");
 		}
 
-		void TestCompileDecompileCompileOutput(string testFileName, bool optimize = false, bool useDebug = true)
+		void TestCompileDecompileCompileOutputAll(string testFileName)
+		{
+			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.None);
+			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.UseDebug);
+			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.Optimize);
+			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.UseDebug | CompilerOptions.Optimize);
+		}
+
+		void TestCompileDecompileCompileOutput(string testFileName, CompilerOptions options = CompilerOptions.UseDebug)
 		{
 			string outputFile = null, decompiledOutputFile = null;
 			string output1, output2, error1, error2;
 
 			try {
-				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, "HelloWorld.cs"), optimize, useDebug);
+				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options);
 				string decompiledCodeFile = Tester.DecompileCSharp(outputFile);
-				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, optimize, useDebug);
+				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
 				int result1 = Tester.Run(outputFile, out output1, out error1);
 				int result2 = Tester.Run(decompiledOutputFile, out output2, out error2);
 
