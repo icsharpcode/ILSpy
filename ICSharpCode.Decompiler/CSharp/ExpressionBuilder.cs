@@ -454,6 +454,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.UnboxingConversion));
 		}
 
+		protected internal override TranslatedExpression VisitBox(Box inst)
+		{
+			var obj = compilation.FindType(KnownTypeCode.Object);
+			var arg = Translate(inst.Argument).ConvertTo(inst.Type, this);
+			return new CastExpression(ConvertType(obj), arg.Expression)
+				.WithILInstruction(inst)
+				.WithRR(new ConversionResolveResult(obj, arg.ResolveResult, Conversion.BoxingConversion));
+		}
+
 		protected override TranslatedExpression Default(ILInstruction inst)
 		{
 			return ErrorExpression("OpCode not supported: " + inst.OpCode);
