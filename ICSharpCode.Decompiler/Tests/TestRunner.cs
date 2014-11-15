@@ -1,32 +1,10 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
-// 
-// Permission is hereby granted, free of charge, to any person obtaining a copy of this
-// software and associated documentation files (the "Software"), to deal in the Software
-// without restriction, including without limitation the rights to use, copy, modify, merge,
-// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
-// to whom the Software is furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in all copies or
-// substantial portions of the Software.
-// 
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-// DEALINGS IN THE SOFTWARE.
-
-using System;
-using System.CodeDom.Compiler;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using DiffLib;
-using ICSharpCode.Decompiler.Ast;
+using System.Threading.Tasks;
 using ICSharpCode.Decompiler.Tests.Helpers;
-using Microsoft.CSharp;
-using Mono.Cecil;
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
@@ -34,187 +12,55 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture]
 	public class TestRunner
 	{
+		const string TestCasePath = @"..\..\Tests\TestCases";
+
 		[Test]
-		public void Async()
+		public void AllFilesHaveTests()
 		{
-			TestFile(@"..\..\Tests\Async.cs");
-		}
-		
-		[Test, Ignore("disambiguating overloads is not yet implemented")]
-		public void CallOverloadedMethod()
-		{
-			TestFile(@"..\..\Tests\CallOverloadedMethod.cs");
-		}
-		
-		[Test, Ignore("unncessary primitive casts")]
-		public void CheckedUnchecked()
-		{
-			TestFile(@"..\..\Tests\CheckedUnchecked.cs");
-		}
-		
-		[Test, Ignore("Missing cast on null")]
-		public void DelegateConstruction()
-		{
-			TestFile(@"..\..\Tests\DelegateConstruction.cs");
-		}
-		
-		[Test, Ignore("Not yet implemented")]
-		public void ExpressionTrees()
-		{
-			TestFile(@"..\..\Tests\ExpressionTrees.cs");
-		}
-		
-		[Test]
-		public void ExceptionHandling()
-		{
-			TestFile(@"..\..\Tests\ExceptionHandling.cs", optimize: false);
-		}
-		
-		[Test]
-		public void Generics()
-		{
-			TestFile(@"..\..\Tests\Generics.cs");
-		}
-		
-		[Test]
-		public void CustomShortCircuitOperators()
-		{
-			TestFile(@"..\..\Tests\CustomShortCircuitOperators.cs");
-		}
-		
-		[Test]
-		public void ControlFlowWithDebug()
-		{
-			TestFile(@"..\..\Tests\ControlFlow.cs", optimize: false, useDebug: true);
-		}
-		
-		[Test]
-		public void DoubleConstants()
-		{
-			TestFile(@"..\..\Tests\DoubleConstants.cs");
-		}
-		
-		[Test]
-		public void IncrementDecrement()
-		{
-			TestFile(@"..\..\Tests\IncrementDecrement.cs");
-		}
-		
-		[Test]
-		public void InitializerTests()
-		{
-			TestFile(@"..\..\Tests\InitializerTests.cs");
+			var testNames = typeof(TestRunner).GetMethods()
+				.Where(m => m.GetCustomAttributes(typeof(TestAttribute), false).Any())
+				.Select(m => m.Name)
+				.ToArray();
+			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles()) {
+				var testName = Path.GetFileNameWithoutExtension(file.Name);
+				Assert.Contains(testName, testNames);
+			}
 		}
 
 		[Test]
-		public void LiftedOperators()
+		public void HelloWorld()
 		{
-			TestFile(@"..\..\Tests\LiftedOperators.cs");
-		}
-		
-		[Test]
-		public void Loops()
-		{
-			TestFile(@"..\..\Tests\Loops.cs");
-		}
-		
-		[Test]
-		public void MultidimensionalArray()
-		{
-			TestFile(@"..\..\Tests\MultidimensionalArray.cs");
-		}
-		
-		[Test]
-		public void PInvoke()
-		{
-			TestFile(@"..\..\Tests\PInvoke.cs");
-		}
-		
-		[Test]
-		public void PropertiesAndEvents()
-		{
-			TestFile(@"..\..\Tests\PropertiesAndEvents.cs");
-		}
-		
-		[Test]
-		public void QueryExpressions()
-		{
-			TestFile(@"..\..\Tests\QueryExpressions.cs");
-		}
-		
-		[Test, Ignore("switch transform doesn't recreate the exact original switch")]
-		public void Switch()
-		{
-			TestFile(@"..\..\Tests\Switch.cs");
-		}
-		
-		[Test]
-		public void UndocumentedExpressions()
-		{
-			TestFile(@"..\..\Tests\UndocumentedExpressions.cs");
-		}
-		
-		[Test, Ignore("has incorrect casts to IntPtr")]
-		public void UnsafeCode()
-		{
-			TestFile(@"..\..\Tests\UnsafeCode.cs");
-		}
-		
-		[Test]
-		public void ValueTypes()
-		{
-			TestFile(@"..\..\Tests\ValueTypes.cs");
-		}
-		
-		[Test, Ignore("Redundant yield break; not removed")]
-		public void YieldReturn()
-		{
-			TestFile(@"..\..\Tests\YieldReturn.cs");
-		}
-		
-		[Test]
-		public void TypeAnalysis()
-		{
-			TestFile(@"..\..\Tests\TypeAnalysisTests.cs");
-		}
-		
-		static void TestFile(string fileName, bool useDebug = false)
-		{
-			TestFile(fileName, false, useDebug);
-			TestFile(fileName, true, useDebug);
+			TestCompileDecompileCompileOutputAll("HelloWorld.cs");
 		}
 
-		static void TestFile(string fileName, bool optimize, bool useDebug = false)
+		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{
-			string code = File.ReadAllText(fileName);
-			AssemblyDefinition assembly = Compile(code, optimize, useDebug);
-			AstBuilder decompiler = new AstBuilder(new DecompilerContext(assembly.MainModule));
-			decompiler.AddAssembly(assembly);
-			new Helpers.RemoveCompilerAttribute().Run(decompiler.SyntaxTree);
-			StringWriter output = new StringWriter();
-			decompiler.GenerateCode(new PlainTextOutput(output));
-			CodeAssert.AreEqual(code, output.ToString());
+			TestCompileDecompileCompileOutput(testFileName, optimize: false, useDebug: true);
+			TestCompileDecompileCompileOutput(testFileName, optimize: false, useDebug: false);
+			TestCompileDecompileCompileOutput(testFileName, optimize: true, useDebug: true);
+			TestCompileDecompileCompileOutput(testFileName, optimize: true, useDebug: false);
 		}
 
-		static AssemblyDefinition Compile(string code, bool optimize, bool useDebug)
+		void TestCompileDecompileCompileOutput(string testFileName, bool optimize = false, bool useDebug = true)
 		{
-			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
-			CompilerParameters options = new CompilerParameters();
-			options.CompilerOptions = "/unsafe /o" + (optimize ? "+" : "-") + (useDebug ? " /debug": "");
-			options.ReferencedAssemblies.Add("System.Core.dll");
-			CompilerResults results = provider.CompileAssemblyFromSource(options, code);
+			string outputFile = null, decompiledOutputFile = null;
+			string output1, output2, error1, error2;
+
 			try {
-				if (results.Errors.Count > 0) {
-					StringBuilder b = new StringBuilder("Compiler error:");
-					foreach (var error in results.Errors) {
-						b.AppendLine(error.ToString());
-					}
-					throw new Exception(b.ToString());
-				}
-				return AssemblyDefinition.ReadAssembly(results.PathToAssembly);
+				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, "HelloWorld.cs"), optimize, useDebug);
+				string decompiledCodeFile = Tester.DecompileCSharp(outputFile);
+				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, optimize, useDebug);
+				int result1 = Tester.Run(outputFile, out output1, out error1);
+				int result2 = Tester.Run(decompiledOutputFile, out output2, out error2);
+
+				Assert.AreEqual(result1, result2);
+				Assert.AreEqual(output1, output2);
+				Assert.AreEqual(error1, error2);
 			} finally {
-				File.Delete(results.PathToAssembly);
-				results.TempFiles.Delete();
+				if (outputFile != null)
+					File.Delete(outputFile);
+				if (decompiledOutputFile != null)
+					File.Delete(decompiledOutputFile);
 			}
 		}
 	}
