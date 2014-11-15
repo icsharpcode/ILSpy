@@ -67,9 +67,10 @@ namespace ICSharpCode.Decompiler.IL
 					stackCountBefore = stack.Count;
 					inst = inst.Inline(InstructionFlags.None, stack, out finished);
 				} while (stack.Count != stackCountBefore); // repeat transformations when something was inlined
-				if (inst.HasFlag(InstructionFlags.MayBranch)) {
+				if (inst.HasFlag(InstructionFlags.MayBranch) || !finished) {
 					// Values currently on the stack might be used on both sides of the branch,
 					// so we can't inline them.
+					// We also have to flush the stack if some occurrence of 'pop' or 'peek' remains in the current instruction.
 					FlushInstructionStack(stack, output);
 				}
 				if (inst.ResultType == StackType.Void) {
