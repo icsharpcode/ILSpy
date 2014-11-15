@@ -189,18 +189,37 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override ConvertedExpression VisitCeq(Ceq inst)
 		{
-			// Translate 'e as T == null' to 'e is T'.
+			// Translate '(e as T) == null' to '!(e is T)'.
 			// This is necessary for correctness when T is a value type.
 			if (inst.Left.OpCode == OpCode.IsInst && inst.Right.OpCode == OpCode.LdNull) {
 				return LogicNot(IsType((IsInst)inst.Left)).WithILInstruction(inst);
 			} else if (inst.Right.OpCode == OpCode.IsInst && inst.Left.OpCode == OpCode.LdNull) {
 				return LogicNot(IsType((IsInst)inst.Right)).WithILInstruction(inst);
 			}
+			
 			var left = Convert(inst.Left);
 			var right = Convert(inst.Right);
+			
+			// Remove redundant bool comparisons
+			if (left.Type.IsKnownType(KnownTypeCode.Boolean)) {
+				if (inst.Right.MatchLdcI4(0))
+					return LogicNot(left).WithILInstruction(inst); // 'b == 0' => '!b'
+				if (inst.Right.MatchLdcI4(1))
+					return left; // 'b == 1' => 'b'
+			} else if (right.Type.IsKnownType(KnownTypeCode.Boolean)) {
+				if (inst.Left.MatchLdcI4(0))
+					return LogicNot(right).WithILInstruction(inst); // '0 == b' => '!b'
+				if (inst.Left.MatchLdcI4(1))
+					return right; // '1 == b' => 'b'
+			}
+			
+			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.Equality, left.ResolveResult, right.ResolveResult);
+			if (rr.IsError) {
+				// TODO: insert casts to the wider type of the two input types
+			}
 			return new BinaryOperatorExpression(left.Expression, BinaryOperatorType.Equality, right.Expression)
 				.WithILInstruction(inst)
-				.WithRR(new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), ExpressionType.Equal, left.ResolveResult, right.ResolveResult));
+				.WithRR(rr);
 		}
 		
 		protected internal override ConvertedExpression VisitClt(Clt inst)
@@ -299,8 +318,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var left = Convert(inst.Left);
 			var right = Convert(inst.Right);
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
-			if (rr.IsError || rr.Type.GetStackType() != inst.ResultType 
-			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign)) 
+			if (rr.IsError || rr.Type.GetStackType() != inst.ResultType
+			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
 			{
 				// Left and right operands are incompatible, so convert them to a common type
 				IType targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode(inst.Sign));
