@@ -87,15 +87,22 @@ namespace ICSharpCode.Decompiler.CSharp
 		public SyntaxTree DecompileWholeModuleAsSingleFile()
 		{
 			SyntaxTree syntaxTree = new SyntaxTree();
-			foreach (var g in compilation.MainAssembly.TopLevelTypeDefinitions.GroupBy(t => t.Namespace))
-			{
-				NamespaceDeclaration ns = new NamespaceDeclaration(g.Key);
-				foreach (var typeDef in g)
-				{
-					var typeDecl = Decompile(typeDef);
-					ns.AddMember(typeDecl);
+			foreach (var g in compilation.MainAssembly.TopLevelTypeDefinitions.GroupBy(t => t.Namespace)) {
+				AstNode groupNode;
+				if (string.IsNullOrEmpty(g.Key)) {
+					groupNode = syntaxTree;
+				} else {
+					NamespaceDeclaration ns = new NamespaceDeclaration(g.Key);
+					syntaxTree.AddChild(ns, SyntaxTree.MemberRole);
+					groupNode = ns;
 				}
-				syntaxTree.AddChild(ns, SyntaxTree.MemberRole);
+				
+				foreach (var typeDef in g) {
+					if (typeDef.Name == "<Module>" && typeDef.Members.Count == 0)
+						continue;
+					var typeDecl = Decompile(typeDef);
+					groupNode.AddChild(typeDecl, SyntaxTree.MemberRole);
+				}
 			}
 			return syntaxTree;
 		}

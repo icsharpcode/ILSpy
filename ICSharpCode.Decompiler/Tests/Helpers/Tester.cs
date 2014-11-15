@@ -58,7 +58,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			CSharpDecompiler decompiler = new CSharpDecompiler(AssemblyDefinition.ReadAssembly(assemblyFileName).MainModule);
 			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
 			new Helpers.RemoveCompilerAttribute().Run(syntaxTree);
-			new Helpers.RemoveEmptyNamespace().Run(syntaxTree);
 			
 			StringWriter output = new StringWriter();
 			var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());
