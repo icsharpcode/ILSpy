@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return;
 				
 				// Recognize field initializers:
-				// Convert first statement in all ctors (if all ctors have the same statement) into a field initializer.
+				// Translate first statement in all ctors (if all ctors have the same statement) into a field initializer.
 				bool allSame;
 				do {
 					Match m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
@@ -146,7 +146,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		void HandleStaticFieldInitializers(IEnumerable<AstNode> members, TransformContext context)
 		{
-			// Convert static constructor into field initializers if the class is BeforeFieldInit
+			// Translate static constructor into field initializers if the class is BeforeFieldInit
 			var staticCtor = members.OfType<ConstructorDeclaration>().FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
 			if (staticCtor != null) {
 				IMethod ctorMethod = staticCtor.GetSymbol() as IMethod;

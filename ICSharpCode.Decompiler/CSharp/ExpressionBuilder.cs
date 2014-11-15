@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Translates from ILAst to C# expressions.
 	/// </summary>
-	class ExpressionBuilder : ILVisitor<ConvertedExpression>
+	class ExpressionBuilder : ILVisitor<TranslatedExpression>
 	{
 		internal readonly ICompilation compilation;
 		internal readonly NRefactoryCecilMapper cecilMapper;
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return astType;
 		}
 		
-		public ConvertedExpression Convert(ILInstruction inst)
+		public TranslatedExpression Translate(ILInstruction inst)
 		{
 			Debug.Assert(inst != null);
 			var cexpr = inst.AcceptVisitor(this);
@@ -75,9 +75,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			return cexpr;
 		}
 		
-		public ConvertedExpression ConvertCondition(ILInstruction condition)
+		public TranslatedExpression TranslateCondition(ILInstruction condition)
 		{
-			var expr = Convert(condition);
+			var expr = Translate(condition);
 			return expr.ConvertToBoolean(this);
 		}
 		
@@ -103,81 +103,81 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr.WithRR(new ResolveResult(cecilMapper.GetType(variable.Type)));
 		}
 		
-		ConvertedExpression IsType(IsInst inst)
+		TranslatedExpression IsType(IsInst inst)
 		{
-			var arg = Convert(inst.Argument);
+			var arg = Translate(inst.Argument);
 			var type = cecilMapper.GetType(inst.Type);
 			return new IsExpression(arg.Expression, ConvertType(type))
 				.WithILInstruction(inst)
 				.WithRR(new TypeIsResolveResult(arg.ResolveResult, type, compilation.FindType(TypeCode.Boolean)));
 		}
 		
-		protected internal override ConvertedExpression VisitIsInst(IsInst inst)
+		protected internal override TranslatedExpression VisitIsInst(IsInst inst)
 		{
-			var arg = Convert(inst.Argument);
+			var arg = Translate(inst.Argument);
 			var type = cecilMapper.GetType(inst.Type);
 			return new AsExpression(arg.Expression, ConvertType(type))
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(type, arg.ResolveResult, Conversion.TryCast));
 		}
 		
-		protected internal override ConvertedExpression VisitNewObj(NewObj inst)
+		protected internal override TranslatedExpression VisitNewObj(NewObj inst)
 		{
 			return HandleCallInstruction(inst);
 		}
 
-		protected internal override ConvertedExpression VisitLdcI4(LdcI4 inst)
+		protected internal override TranslatedExpression VisitLdcI4(LdcI4 inst)
 		{
 			return new PrimitiveExpression(inst.Value)
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), inst.Value));
 		}
 		
-		protected internal override ConvertedExpression VisitLdcI8(LdcI8 inst)
+		protected internal override TranslatedExpression VisitLdcI8(LdcI8 inst)
 		{
 			return new PrimitiveExpression(inst.Value)
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int64), inst.Value));
 		}
 		
-		protected internal override ConvertedExpression VisitLdcF(LdcF inst)
+		protected internal override TranslatedExpression VisitLdcF(LdcF inst)
 		{
 			return new PrimitiveExpression(inst.Value)
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Double), inst.Value));
 		}
 		
-		protected internal override ConvertedExpression VisitLdStr(LdStr inst)
+		protected internal override TranslatedExpression VisitLdStr(LdStr inst)
 		{
 			return new PrimitiveExpression(inst.Value)
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.String), inst.Value));
 		}
 		
-		protected internal override ConvertedExpression VisitLdNull(LdNull inst)
+		protected internal override TranslatedExpression VisitLdNull(LdNull inst)
 		{
 			return new NullReferenceExpression()
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(SpecialType.UnknownType, null));
 		}
 		
-		protected internal override ConvertedExpression VisitLogicNot(LogicNot inst)
+		protected internal override TranslatedExpression VisitLogicNot(LogicNot inst)
 		{
-			return LogicNot(ConvertCondition(inst.Argument)).WithILInstruction(inst);
+			return LogicNot(TranslateCondition(inst.Argument)).WithILInstruction(inst);
 		}
 		
-		ExpressionWithResolveResult LogicNot(ConvertedExpression expr)
+		ExpressionWithResolveResult LogicNot(TranslatedExpression expr)
 		{
 			return new UnaryOperatorExpression(UnaryOperatorType.Not, expr.Expression)
 				.WithRR(new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), ExpressionType.Not));
 		}
 		
-		protected internal override ConvertedExpression VisitLdLoc(LdLoc inst)
+		protected internal override TranslatedExpression VisitLdLoc(LdLoc inst)
 		{
 			return ConvertVariable(inst.Variable).WithILInstruction(inst);
 		}
 		
-		protected internal override ConvertedExpression VisitLdLoca(LdLoca inst)
+		protected internal override TranslatedExpression VisitLdLoca(LdLoca inst)
 		{
 			var expr = ConvertVariable(inst.Variable).WithILInstruction(inst);
 			// Note that we put the instruction on the IdentifierExpression instead of the DirectionExpression,
@@ -187,12 +187,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ByReferenceResolveResult(expr.ResolveResult, isOut: false));
 		}
 		
-		protected internal override ConvertedExpression VisitStLoc(StLoc inst)
+		protected internal override TranslatedExpression VisitStLoc(StLoc inst)
 		{
-			return Assignment(ConvertVariable(inst.Variable).WithoutILInstruction(), Convert(inst.Value)).WithILInstruction(inst);
+			return Assignment(ConvertVariable(inst.Variable).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
 		}
 		
-		protected internal override ConvertedExpression VisitCeq(Ceq inst)
+		protected internal override TranslatedExpression VisitCeq(Ceq inst)
 		{
 			// Translate '(e as T) == null' to '!(e is T)'.
 			// This is necessary for correctness when T is a value type.
@@ -202,8 +202,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				return LogicNot(IsType((IsInst)inst.Right)).WithILInstruction(inst);
 			}
 			
-			var left = Convert(inst.Left);
-			var right = Convert(inst.Right);
+			var left = Translate(inst.Left);
+			var right = Translate(inst.Right);
 			
 			// Remove redundant bool comparisons
 			if (left.Type.IsKnownType(KnownTypeCode.Boolean)) {
@@ -227,30 +227,30 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(rr);
 		}
 		
-		protected internal override ConvertedExpression VisitClt(Clt inst)
+		protected internal override TranslatedExpression VisitClt(Clt inst)
 		{
 			return Comparison(inst, BinaryOperatorType.LessThan);
 		}
 		
-		protected internal override ConvertedExpression VisitCgt(Cgt inst)
+		protected internal override TranslatedExpression VisitCgt(Cgt inst)
 		{
 			return Comparison(inst, BinaryOperatorType.GreaterThan);
 		}
 		
-		protected internal override ConvertedExpression VisitClt_Un(Clt_Un inst)
+		protected internal override TranslatedExpression VisitClt_Un(Clt_Un inst)
 		{
 			return Comparison(inst, BinaryOperatorType.LessThan, un: true);
 		}
 
-		protected internal override ConvertedExpression VisitCgt_Un(Cgt_Un inst)
+		protected internal override TranslatedExpression VisitCgt_Un(Cgt_Un inst)
 		{
 			return Comparison(inst, BinaryOperatorType.GreaterThan, un: true);
 		}
 		
-		ConvertedExpression Comparison(BinaryComparisonInstruction inst, BinaryOperatorType op, bool un = false)
+		TranslatedExpression Comparison(BinaryComparisonInstruction inst, BinaryOperatorType op, bool un = false)
 		{
-			var left = Convert(inst.Left);
-			var right = Convert(inst.Right);
+			var left = Translate(inst.Left);
+			var right = Translate(inst.Right);
 			// TODO: ensure the arguments are signed
 			// or with _Un: ensure the arguments are unsigned; and that float comparisons are performed unordered
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
@@ -260,68 +260,68 @@ namespace ICSharpCode.Decompiler.CSharp
 				                                  left.ResolveResult, right.ResolveResult));
 		}
 		
-		ExpressionWithResolveResult Assignment(ConvertedExpression left, ConvertedExpression right)
+		ExpressionWithResolveResult Assignment(TranslatedExpression left, TranslatedExpression right)
 		{
 			right = right.ConvertTo(left.Type, this);
 			return new AssignmentExpression(left.Expression, right.Expression)
 				.WithRR(new OperatorResolveResult(left.Type, ExpressionType.Assign, left.ResolveResult, right.ResolveResult));
 		}
 		
-		protected internal override ConvertedExpression VisitAdd(Add inst)
+		protected internal override TranslatedExpression VisitAdd(Add inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.Add);
 		}
 		
-		protected internal override ConvertedExpression VisitSub(Sub inst)
+		protected internal override TranslatedExpression VisitSub(Sub inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.Subtract);
 		}
 		
-		protected internal override ConvertedExpression VisitMul(Mul inst)
+		protected internal override TranslatedExpression VisitMul(Mul inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.Multiply);
 		}
 		
-		protected internal override ConvertedExpression VisitDiv(Div inst)
+		protected internal override TranslatedExpression VisitDiv(Div inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.Divide);
 		}
 		
-		protected internal override ConvertedExpression VisitRem(Rem inst)
+		protected internal override TranslatedExpression VisitRem(Rem inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.Modulus);
 		}
 		
-		protected internal override ConvertedExpression VisitBitXor(BitXor inst)
+		protected internal override TranslatedExpression VisitBitXor(BitXor inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.ExclusiveOr);
 		}
 		
-		protected internal override ConvertedExpression VisitBitAnd(BitAnd inst)
+		protected internal override TranslatedExpression VisitBitAnd(BitAnd inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseAnd);
 		}
 		
-		protected internal override ConvertedExpression VisitBitOr(BitOr inst)
+		protected internal override TranslatedExpression VisitBitOr(BitOr inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseOr);
 		}
 		
-		protected internal override ConvertedExpression VisitShl(Shl inst)
+		protected internal override TranslatedExpression VisitShl(Shl inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.ShiftLeft);
 		}
 		
-		protected internal override ConvertedExpression VisitShr(Shr inst)
+		protected internal override TranslatedExpression VisitShr(Shr inst)
 		{
 			return HandleBinaryNumeric(inst, BinaryOperatorType.ShiftRight);
 		}
 		
-		ConvertedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op)
+		TranslatedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op)
 		{
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
-			var left = Convert(inst.Left);
-			var right = Convert(inst.Right);
+			var left = Translate(inst.Left);
+			var right = Translate(inst.Right);
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 			if (rr.IsError || rr.Type.GetStackType() != inst.ResultType
 			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
@@ -346,9 +346,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			return sign == Sign.None || type.GetSign() == sign;
 		}
 		
-		protected internal override ConvertedExpression VisitConv(Conv inst)
+		protected internal override TranslatedExpression VisitConv(Conv inst)
 		{
-			var arg = Convert(inst.Argument);
+			var arg = Translate(inst.Argument);
 			if (arg.Type.GetSign() != inst.Sign) {
 				// we need to cast the input to a type of appropriate sign
 				var inputType = inst.Argument.ResultType.ToKnownTypeCode(inst.Sign);
@@ -361,23 +361,23 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(rr);
 		}
 		
-		protected internal override ConvertedExpression VisitCall(Call inst)
+		protected internal override TranslatedExpression VisitCall(Call inst)
 		{
 			return HandleCallInstruction(inst);
 		}
 		
-		protected internal override ConvertedExpression VisitCallVirt(CallVirt inst)
+		protected internal override TranslatedExpression VisitCallVirt(CallVirt inst)
 		{
 			return HandleCallInstruction(inst);
 		}
 		
-		ConvertedExpression HandleCallInstruction(CallInstruction inst)
+		TranslatedExpression HandleCallInstruction(CallInstruction inst)
 		{
 			// Used for Call, CallVirt and NewObj
 			var method = cecilMapper.GetMethod(inst.Method);
-			ConvertedExpression target;
+			TranslatedExpression target;
 			if (inst.OpCode == OpCode.NewObj) {
-				target = default(ConvertedExpression); // no target
+				target = default(TranslatedExpression); // no target
 			} else if (inst.Method.HasThis) {
 				var argInstruction = inst.Arguments[0];
 				if (inst.OpCode == OpCode.Call && argInstruction.MatchLdThis()) {
@@ -385,7 +385,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(argInstruction)
 						.WithRR(new ThisResolveResult(cecilMapper.GetType(inst.Method.DeclaringType), causesNonVirtualInvocation: true));
 				} else {
-					target = Convert(argInstruction);
+					target = Translate(argInstruction);
 				}
 			} else {
 				var declaringType = cecilMapper.GetType(inst.Method.DeclaringType);
@@ -394,12 +394,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new TypeResolveResult(declaringType));
 			}
 			
-			var arguments = inst.Arguments.SelectArray(Convert);
+			var arguments = inst.Arguments.SelectArray(Translate);
 			int firstParamIndex = (inst.Method.HasThis && inst.OpCode != OpCode.NewObj) ? 1 : 0;
 			Debug.Assert(arguments.Length == firstParamIndex + inst.Method.Parameters.Count);
 			ResolveResult rr;
 			if (method != null) {
-				// Convert arguments to the expected parameter types
+				// Translate arguments to the expected parameter types
 				Debug.Assert(arguments.Length == firstParamIndex + method.Parameters.Count);
 				for (int i = firstParamIndex; i < arguments.Length; i++) {
 					var parameter = method.Parameters[i - firstParamIndex];
@@ -432,9 +432,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		
-		protected internal override ConvertedExpression VisitLdObj(LdObj inst)
+		protected internal override TranslatedExpression VisitLdObj(LdObj inst)
 		{
-			var target = Convert(inst.Target);
+			var target = Translate(inst.Target);
 			var type = cecilMapper.GetType(inst.Type);
 			if (target.Type.Equals(new ByReferenceType(type)) && target.Expression is DirectionExpression) {
 				// we can deference the managed reference by stripping away the 'ref'
@@ -451,12 +451,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		protected internal override ConvertedExpression VisitStObj(StObj inst)
+		protected internal override TranslatedExpression VisitStObj(StObj inst)
 		{
-			var target = Convert(inst.Target);
-			var value = Convert(inst.Value);
+			var target = Translate(inst.Target);
+			var value = Translate(inst.Value);
 			var type = cecilMapper.GetType(inst.Type);
-			ConvertedExpression result;
+			TranslatedExpression result;
 			if (target.Type.Equals(new ByReferenceType(type)) && target.Expression is DirectionExpression) {
 				// we can deference the managed reference by stripping away the 'ref'
 				result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
@@ -470,9 +470,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			return Assignment(result, value).WithILInstruction(inst);
 		}
 
-		protected internal override ConvertedExpression VisitUnboxAny(UnboxAny inst)
+		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst)
 		{
-			var arg = Convert(inst.Argument);
+			var arg = Translate(inst.Argument);
 			if (arg.Type.IsReferenceType != true) {
 				// ensure we treat the input as a reference type
 				arg = arg.ConvertTo(compilation.FindType(KnownTypeCode.Object), this);
@@ -482,12 +482,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConversionResolveResult(cecilMapper.GetType(inst.Type), arg.ResolveResult, Conversion.UnboxingConversion));
 		}
 
-		protected override ConvertedExpression Default(ILInstruction inst)
+		protected override TranslatedExpression Default(ILInstruction inst)
 		{
 			return ErrorExpression("OpCode not supported: " + inst.OpCode);
 		}
 
-		static ConvertedExpression ErrorExpression(string message)
+		static TranslatedExpression ErrorExpression(string message)
 		{
 			var e = new ErrorExpression();
 			e.AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);

@@ -51,15 +51,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionWithILInstruction(expression);
 		}
 		
-		public static ConvertedExpression WithILInstruction(this ExpressionWithResolveResult expression, ILInstruction instruction)
+		public static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression, ILInstruction instruction)
 		{
 			expression.Expression.AddAnnotation(instruction);
-			return new ConvertedExpression(expression.Expression, expression.ResolveResult);
+			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
 		}
 		
-		public static ConvertedExpression WithoutILInstruction(this ExpressionWithResolveResult expression)
+		public static TranslatedExpression WithoutILInstruction(this ExpressionWithResolveResult expression)
 		{
-			return new ConvertedExpression(expression.Expression, expression.ResolveResult);
+			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
 		}
 		
 		public static ExpressionWithResolveResult WithRR(this Expression expression, ResolveResult resolveResult)
@@ -68,10 +68,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionWithResolveResult(expression, resolveResult);
 		}
 		
-		public static ConvertedExpression WithRR(this ExpressionWithILInstruction expression, ResolveResult resolveResult)
+		public static TranslatedExpression WithRR(this ExpressionWithILInstruction expression, ResolveResult resolveResult)
 		{
 			expression.Expression.AddAnnotation(resolveResult);
-			return new ConvertedExpression(expression, resolveResult);
+			return new TranslatedExpression(expression, resolveResult);
 		}
 		
 		/// <summary>

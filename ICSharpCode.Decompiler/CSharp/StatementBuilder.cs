@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected override Statement Default(ILInstruction inst)
 		{
-			return new ExpressionStatement(exprBuilder.Convert(inst));
+			return new ExpressionStatement(exprBuilder.Translate(inst));
 		}
 		
 		protected internal override Statement VisitNop(Nop inst)
@@ -61,12 +61,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override Statement VisitVoid(ICSharpCode.Decompiler.IL.Void inst)
 		{
-			return new ExpressionStatement(exprBuilder.Convert(inst.Argument));
+			return new ExpressionStatement(exprBuilder.Translate(inst.Argument));
 		}
 
 		protected internal override Statement VisitIfInstruction(IfInstruction inst)
 		{
-			var condition = exprBuilder.ConvertCondition(inst.Condition);
+			var condition = exprBuilder.TranslateCondition(inst.Condition);
 			var trueStatement = Convert(inst.TrueInst);
 			var falseStatement = inst.FalseInst.OpCode == OpCode.Nop ? null : Convert(inst.FalseInst);
 			return new IfElseStatement(condition, trueStatement, falseStatement);
@@ -79,14 +79,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override Statement VisitThrow(Throw inst)
 		{
-			return new ThrowStatement(exprBuilder.Convert(inst.Argument));
+			return new ThrowStatement(exprBuilder.Translate(inst.Argument));
 		}
 		
 		protected internal override Statement VisitReturn(Return inst)
 		{
 			if (inst.ReturnValue == null)
 				return new ReturnStatement();
-			return new ReturnStatement(exprBuilder.Convert(inst.ReturnValue).ConvertTo(currentMethod.ReturnType, exprBuilder));
+			return new ReturnStatement(exprBuilder.Translate(inst.ReturnValue).ConvertTo(currentMethod.ReturnType, exprBuilder));
 		}
 
 		TryCatchStatement MakeTryCatch(ILInstruction tryBlock)
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					catchClause.VariableName = handler.Variable.Name;
 				}
 				if (!handler.Filter.MatchLdcI4(1))
-					catchClause.Condition = exprBuilder.ConvertCondition(handler.Filter);
+					catchClause.Condition = exprBuilder.TranslateCondition(handler.Filter);
 				catchClause.Body = ConvertAsBlock(handler.Body);
 				tryCatch.CatchClauses.Add(catchClause);
 			}

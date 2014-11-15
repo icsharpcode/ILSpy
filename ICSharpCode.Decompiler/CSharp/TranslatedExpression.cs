@@ -86,10 +86,10 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	/// <remarks>
 	/// The resolve result is also always available as annotation on the expression, but having
-	/// ConvertedExpression as a separate type is still useful to ensure that no case in the expression builder
+	/// TranslatedExpression as a separate type is still useful to ensure that no case in the expression builder
 	/// forgets to add the annotation.
 	/// </remarks>
-	struct ConvertedExpression
+	struct TranslatedExpression
 	{
 		public readonly Expression Expression;
 		
@@ -105,14 +105,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			get { return ResolveResult.Type; }
 		}
 		
-		internal ConvertedExpression(Expression expression)
+		internal TranslatedExpression(Expression expression)
 		{
 			Debug.Assert(expression != null);
 			this.Expression = expression;
 			this.ResolveResult = expression.Annotation<ResolveResult>() ?? ErrorResolveResult.UnknownError;
 		}
 		
-		internal ConvertedExpression(Expression expression, ResolveResult resolveResult)
+		internal TranslatedExpression(Expression expression, ResolveResult resolveResult)
 		{
 			Debug.Assert(expression != null && resolveResult != null);
 			Debug.Assert(expression.Annotation<ResolveResult>() == resolveResult);
@@ -120,27 +120,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.Expression = expression;
 		}
 		
-		public static implicit operator Expression(ConvertedExpression expression)
+		public static implicit operator Expression(TranslatedExpression expression)
 		{
 			return expression.Expression;
 		}
 		
-		public static implicit operator ExpressionWithResolveResult(ConvertedExpression expression)
+		public static implicit operator ExpressionWithResolveResult(TranslatedExpression expression)
 		{
 			return new ExpressionWithResolveResult(expression.Expression, expression.ResolveResult);
 		}
 		
-		public static implicit operator ExpressionWithILInstruction(ConvertedExpression expression)
+		public static implicit operator ExpressionWithILInstruction(TranslatedExpression expression)
 		{
 			return new ExpressionWithILInstruction(expression.Expression);
 		}
 		
 		/// <summary>
-		/// Returns a new ConvertedExpression that represents the specified descendant expression.
+		/// Returns a new TranslatedExpression that represents the specified descendant expression.
 		/// All ILInstruction annotations from the current expression are copied to the descendant expression.
 		/// The descendant expression is detached from the AST.
 		/// </summary>
-		public ConvertedExpression UnwrapChild(Expression descendant)
+		public TranslatedExpression UnwrapChild(Expression descendant)
 		{
 			if (descendant == Expression)
 				return this;
@@ -148,12 +148,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var inst in parent.Annotations.OfType<ILInstruction>())
 					descendant.AddAnnotation(inst);
 				if (parent == Expression)
-					return new ConvertedExpression(descendant.Detach());
+					return new TranslatedExpression(descendant.Detach());
 			}
 			throw new ArgumentException("descendant must be a descendant of the current node");
 		}
 		
-		public ConvertedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder)
+		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder)
 		{
 			var type = this.Type;
 			if (targetType.IsKnownType(KnownTypeCode.Boolean))
@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithoutILInstruction().WithRR(rr);
 		}
 		
-		public ConvertedExpression ConvertToBoolean(ExpressionBuilder expressionBuilder)
+		public TranslatedExpression ConvertToBoolean(ExpressionBuilder expressionBuilder)
 		{
 			if (Type.IsKnownType(KnownTypeCode.Boolean) || Type.Kind == TypeKind.Unknown) {
 				return this;

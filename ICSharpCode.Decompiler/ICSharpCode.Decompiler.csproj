@@ -63,7 +63,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
-    <Compile Include="CSharp\ConvertedExpression.cs" />
+    <Compile Include="CSharp\TranslatedExpression.cs" />
     <Compile Include="CSharp\NRefactoryCecilMapper.cs" />
     <Compile Include="CSharp\CSharpDecompiler.cs" />
     <Compile Include="CSharp\ExpressionBuilder.cs" />
@@ -160,9 +160,7 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="CSharp\Transforms" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <Target Name="BeforeBuild">
     <MSBuild Projects="$(MSBuildProjectDirectory)\..\BuildTools\UpdateAssemblyInfo\UpdateAssemblyInfo.csproj" Targets="Build" Properties="Configuration=Debug" />
