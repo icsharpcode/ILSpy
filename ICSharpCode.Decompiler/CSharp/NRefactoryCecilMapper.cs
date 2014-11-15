@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.NRefactory.TypeSystem.Implementation;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp
@@ -70,10 +71,46 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		public IMethod GetMethod(MethodReference methodReference)
 		{
+			var method = GetNonGenericMethod(methodReference.GetElementMethod());
+			// TODO: specialize the method
+			return method;
+		}
+		
+		IMethod GetNonGenericMethod(MethodReference methodReference)
+		{
 			ITypeDefinition typeDef = GetType(methodReference.DeclaringType).GetDefinition();
 			if (typeDef == null)
 				return null;
-			return typeDef.Methods.FirstOrDefault(m => GetCecil(m) == methodReference);
+			IEnumerable<IMethod> methods;
+			if (methodReference.Name == ".ctor") {
+				methods = typeDef.GetConstructors();
+			} else if (methodReference.Name == ".cctor") {
+				return typeDef.Methods.FirstOrDefault(m => m.IsConstructor && m.IsStatic);
+			} else {
+				methods = typeDef.GetMethods(m => m.Name == methodReference.Name, GetMemberOptions.IgnoreInheritedMembers)
+					.Concat(typeDef.GetAccessors(m => m.Name == methodReference.Name, GetMemberOptions.IgnoreInheritedMembers));
+			}
+			foreach (var method in methods) {
+				if (GetCecil(method) == methodReference)
+					return method;
+			}
+			var parameterTypes = methodReference.Parameters.SelectArray(p => GetType(p.ParameterType));
+			foreach (var method in methods) {
+				if (parameterTypes.Length == method.Parameters.Count) {
+					bool signatureMatches = true;
+					for (int i = 0; i < parameterTypes.Length; i++) {
+						IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(parameterTypes[i]);
+						IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(method.Parameters[i].Type);
+						if (!type1.Equals(type2)) {
+							signatureMatches = false;
+							break;
+						}
+					}
+					if (signatureMatches)
+						return method;
+				}
+			}
+			return null;
 		}
 	}
 }
