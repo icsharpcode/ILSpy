@@ -450,7 +450,26 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(type));
 			}
 		}
-		
+
+		protected internal override ConvertedExpression VisitStObj(StObj inst)
+		{
+			var target = Convert(inst.Target);
+			var value = Convert(inst.Value);
+			var type = cecilMapper.GetType(inst.Type);
+			ConvertedExpression result;
+			if (target.Type.Equals(new ByReferenceType(type)) && target.Expression is DirectionExpression) {
+				// we can deference the managed reference by stripping away the 'ref'
+				result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
+			} else {
+				// Cast pointer type if necessary:
+				target = target.ConvertTo(new PointerType(type), this);
+				result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
+					.WithoutILInstruction()
+					.WithRR(new ResolveResult(type));
+			}
+			return Assignment(result, value).WithILInstruction(inst);
+		}
+
 		protected internal override ConvertedExpression VisitUnboxAny(UnboxAny inst)
 		{
 			var arg = Convert(inst.Argument);

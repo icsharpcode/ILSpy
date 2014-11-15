@@ -41,7 +41,7 @@ class ControlFlow
 	{
 		if (input.Contains("test")) {
 		}
-		result++;
+		result = result + 1;
 		Console.WriteLine("EmptyIf");
 	}
 
@@ -52,7 +52,7 @@ class ControlFlow
 		} else {
 			Console.WriteLine("else");
 		}
-		result++;
+		result = result + 1;
 		Console.WriteLine("end");
 	}
 
@@ -61,7 +61,7 @@ class ControlFlow
 		if (input.Contains("test")) {
 			Console.WriteLine("result");
 		}
-		result++;
+		result = result + 1;
 		Console.WriteLine("end");
 	}
 
@@ -72,14 +72,14 @@ class ControlFlow
 		} else {
 			Console.WriteLine("else");
 		}
-		result++;
+		result = result + 1;
 	}
 
 	static void Test(string input, ref int result)
 	{
 		foreach (char c in input) {
 			Console.Write(c);
-			result++;
+			result = result + 1;
 		}
 		if (input.Contains("test")) {
 			Console.WriteLine("result");

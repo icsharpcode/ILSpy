@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				foreach (var inst in parent.Annotations.OfType<ILInstruction>())
 					descendant.AddAnnotation(inst);
 				if (parent == Expression)
-					return new ConvertedExpression(descendant);
+					return new ConvertedExpression(descendant.Detach());
 			}
 			throw new ArgumentException("descendant must be a descendant of the current node");
 		}
