@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.NRefactory.TypeSystem.Implementation;
 using Mono.Cecil;
@@ -131,23 +132,16 @@ namespace ICSharpCode.Decompiler
 			lock (fieldLookupCache) {
 				IField field;
 				if (!fieldLookupCache.TryGetValue(fieldReference, out field)) {
-					field = GetNonGenericField(fieldReference);
-					// TODO: specialize the field if necessary
-					fieldLookupCache[fieldReference] = field;
+					field = FindNonGenericField(fieldReference);
+					if (fieldReference.DeclaringType.IsGenericInstance) {
+						var git = (GenericInstanceType)fieldReference.DeclaringType;
+						var typeArguments = git.GenericArguments.SelectArray(GetType);
+						field = (IField)field.Specialize(new TypeParameterSubstitution(typeArguments, null));
+					}
+					fieldLookupCache.Add(fieldReference, field);
 				}
 				return field;
 			}
-		}
-
-		IField GetNonGenericField(FieldReference fieldReference)
-		{
-			Debug.Assert(Monitor.IsEntered(fieldLookupCache));
-			IField field;
-			if (!fieldLookupCache.TryGetValue(fieldReference, out field)) {
-				field = FindNonGenericField(fieldReference);
-				fieldLookupCache.Add(fieldReference, field);
-			}
-			return field;
 		}
 
 		IField FindNonGenericField(FieldReference fieldReference)
@@ -195,24 +189,24 @@ namespace ICSharpCode.Decompiler
 			lock (methodLookupCache) {
 				IMethod method;
 				if (!methodLookupCache.TryGetValue(methodReference, out method)) {
-					method = GetNonGenericMethod(methodReference.GetElementMethod());
-					// TODO: specialize the method
-
-					methodLookupCache[methodReference] = method;
+					method = FindNonGenericMethod(methodReference.GetElementMethod());
+					if (methodReference.IsGenericInstance || methodReference.DeclaringType.IsGenericInstance) {
+						IList<IType> classTypeArguments = null;
+						IList<IType> methodTypeArguments = null;
+						if (methodReference.IsGenericInstance) {
+							var gim = ((GenericInstanceMethod)methodReference);
+							methodTypeArguments = gim.GenericArguments.SelectArray(GetType);
+						}
+						if (methodReference.DeclaringType.IsGenericInstance) {
+							var git = (GenericInstanceType)methodReference.DeclaringType;
+							classTypeArguments = git.GenericArguments.SelectArray(GetType);
+						}
+						method = method.Specialize(new TypeParameterSubstitution(classTypeArguments, methodTypeArguments));
+					}
+					methodLookupCache.Add(methodReference, method);
 				}
 				return method;
 			}
-		}
-
-		IMethod GetNonGenericMethod(MethodReference methodReference)
-		{
-			Debug.Assert(Monitor.IsEntered(methodLookupCache));
-			IMethod method;
-			if (!methodLookupCache.TryGetValue(methodReference, out method)) {
-				method = FindNonGenericMethod(methodReference);
-				methodLookupCache.Add(methodReference, method);
-			}
-			return method;
 		}
 
 		IMethod FindNonGenericMethod(MethodReference methodReference)
