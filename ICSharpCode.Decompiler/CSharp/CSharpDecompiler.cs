@@ -139,11 +139,25 @@ namespace ICSharpCode.Decompiler.CSharp
 				// e.g. DelegateDeclaration
 				return entityDecl;
 			}
+			foreach (var field in typeDef.Fields) {
+				var fieldDef = typeSystem.GetCecil(field) as FieldDefinition;
+				if (fieldDef != null) {
+					var memberDecl = DoDecompile(fieldDef, field, decompilationContext.WithCurrentMember(field));
+					typeDecl.Members.Add(memberDecl);
+				}
+			}
 			foreach (var method in typeDef.Methods) {
 				var methodDef = typeSystem.GetCecil(method) as MethodDefinition;
 				if (methodDef != null) {
 					var memberDecl = DoDecompile(methodDef, method, decompilationContext.WithCurrentMember(method));
 					typeDecl.Members.Add(memberDecl);
+				}
+			}
+			foreach (var property in typeDef.Properties) {
+				var propDef = typeSystem.GetCecil(property) as PropertyDefinition;
+				if (propDef != null) {
+					var propDecl = DoDecompile(propDef, property, decompilationContext.WithCurrentMember(property));
+					typeDecl.Members.Add(propDecl);
 				}
 			}
 			return typeDecl;
@@ -168,26 +182,60 @@ namespace ICSharpCode.Decompiler.CSharp
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
 			var entityDecl = typeSystemAstBuilder.ConvertEntity(method);
 			if (methodDefinition.HasBody) {
-				var ilReader = new ILReader(typeSystem);
-				var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
-				function.CheckInvariant();
-				function.Body = function.Body.AcceptVisitor(new TransformingVisitor());
-				function.CheckInvariant();
-				var statementBuilder = new StatementBuilder(decompilationContext);
-				var body = statementBuilder.ConvertAsBlock(function.Body);
-				
-				// insert variables at start of body
-				Statement prevVarDecl = null;
-				foreach (var v in function.Variables) {
-					if (v.Kind == VariableKind.Local) {
-						var type = typeSystemAstBuilder.ConvertType(v.Type);
-						var varDecl = new VariableDeclarationStatement(type, v.Name);
-						body.Statements.InsertAfter(prevVarDecl, varDecl);
-						prevVarDecl = varDecl;
-					}
+				DecompileBody(methodDefinition, method, entityDecl, decompilationContext, typeSystemAstBuilder);
+			}
+			return entityDecl;
+		}
+
+		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext, TypeSystemAstBuilder typeSystemAstBuilder)
+		{
+			var ilReader = new ILReader(typeSystem);
+			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
+			function.CheckInvariant();
+			function.Body = function.Body.AcceptVisitor(new TransformingVisitor());
+			function.CheckInvariant();
+			var statementBuilder = new StatementBuilder(decompilationContext, method);
+			var body = statementBuilder.ConvertAsBlock(function.Body);
+			
+			// insert variables at start of body
+			Statement prevVarDecl = null;
+			foreach (var v in function.Variables) {
+				if (v.Kind == VariableKind.Local) {
+					var type = typeSystemAstBuilder.ConvertType(v.Type);
+					var varDecl = new VariableDeclarationStatement(type, v.Name);
+					body.Statements.InsertAfter(prevVarDecl, varDecl);
+					prevVarDecl = varDecl;
 				}
-				
-				entityDecl.AddChild(body, Roles.Body);
+			}
+
+			entityDecl.AddChild(body, Roles.Body);
+		}
+
+		EntityDeclaration DoDecompile(FieldDefinition fieldDefinition, IField field, ITypeResolveContext decompilationContext)
+		{
+			Debug.Assert(decompilationContext.CurrentMember == field);
+			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+			return typeSystemAstBuilder.ConvertEntity(field);
+		}
+
+		EntityDeclaration DoDecompile(PropertyDefinition propertyDefinition, IProperty property, ITypeResolveContext decompilationContext)
+		{
+			Debug.Assert(decompilationContext.CurrentMember == property);
+			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+			EntityDeclaration entityDecl = typeSystemAstBuilder.ConvertEntity(property);
+			Accessor getter, setter;
+			if (entityDecl is PropertyDeclaration) {
+				getter = ((PropertyDeclaration)entityDecl).Getter;
+				setter = ((PropertyDeclaration)entityDecl).Setter;
+			} else {
+				getter = ((IndexerDeclaration)entityDecl).Getter;
+				setter = ((IndexerDeclaration)entityDecl).Setter;
+			}
+			if (property.CanGet) {
+				DecompileBody(propertyDefinition.GetMethod, property.Getter, getter, decompilationContext, typeSystemAstBuilder);
+			}
+			if (property.CanSet) {
+				DecompileBody(propertyDefinition.SetMethod, property.Setter, setter, decompilationContext, typeSystemAstBuilder);
 			}
 			return entityDecl;
 		}

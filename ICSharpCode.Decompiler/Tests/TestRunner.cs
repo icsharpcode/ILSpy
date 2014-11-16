@@ -46,6 +46,12 @@ namespace ICSharpCode.Decompiler.Tests
 			TestCompileDecompileCompileOutputAll("CompoundAssignment.cs");
 		}
 
+		[Test]
+		public void PropertiesAndEvents()
+		{
+			TestCompileDecompileCompileOutputAll("PropertiesAndEvents.cs");
+		}
+
 		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{
 			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.None);

@@ -94,6 +94,7 @@
     <Compile Include="TestCases\CompoundAssignment.cs" />
     <Compile Include="TestCases\ControlFlow.cs" />
     <Compile Include="TestCases\HelloWorld.cs" />
+    <Compile Include="TestCases\PropertiesAndEvents.cs" />
     <Compile Include="TestRunner.cs" />
   </ItemGroup>
   <ItemGroup>

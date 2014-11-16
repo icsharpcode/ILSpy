@@ -32,12 +32,12 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		readonly ExpressionBuilder exprBuilder;
 		readonly IMethod currentMethod;
-		
-		public StatementBuilder(ITypeResolveContext decompilationContext)
+
+		public StatementBuilder(ITypeResolveContext decompilationContext, IMethod currentMethod)
 		{
-			Debug.Assert(decompilationContext != null && decompilationContext.CurrentMember is IMethod);
+			Debug.Assert(decompilationContext != null && currentMethod != null);
 			this.exprBuilder = new ExpressionBuilder(decompilationContext);
-			this.currentMethod = (IMethod)decompilationContext.CurrentMember;
+			this.currentMethod = currentMethod;
 		}
 		
 		public Statement Convert(ILInstruction inst)
