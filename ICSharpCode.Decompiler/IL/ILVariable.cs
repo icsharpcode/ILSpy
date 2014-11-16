@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using System;
@@ -44,10 +45,10 @@ namespace ICSharpCode.Decompiler.IL
 	public class ILVariable
 	{
 		public readonly VariableKind Kind;
-		public readonly TypeReference Type;
+		public readonly IType Type;
 		public readonly int Index;
 		
-		public string Name;
+		public string Name { get; set; }
 
 		/// <summary>
 		/// Number of ldloc instructions referencing this variable.
@@ -64,38 +65,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public int AddressCount;
 		
-		readonly object CecilObject;
-		
-		public ILVariable(VariableKind kind, TypeReference type, int index)
+		public ILVariable(VariableKind kind, IType type, int index)
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
 			this.Kind = kind;
 			this.Type = type;
 			this.Index = index;
-		}
-		
-		public ILVariable(VariableDefinition v)
-			: this(VariableKind.Local, v.VariableType, v.Index)
-		{
-			this.CecilObject = v;
-			if (string.IsNullOrEmpty(v.Name))
-				this.Name = "V_" + v.Index;
-			else
-				this.Name = v.Name;
-		}
-
-		public ILVariable(ParameterDefinition p)
-			: this(p.Index == -1 ? VariableKind.This : VariableKind.Parameter, p.ParameterType, p.Index)
-		{
-			this.CecilObject = p;
-			this.StoreCount = 1; // count the initial store when the method is called with an argument
-			if (this.Kind == VariableKind.This)
-				this.Name = "this";
-			else if (string.IsNullOrEmpty(p.Name))
-				this.Name = "P_" + this.Index;
-			else
-				this.Name = p.Name;
 		}
 		
 		public override string ToString()
@@ -105,7 +81,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		internal void WriteDefinitionTo(ITextOutput output)
 		{
-			output.WriteDefinition(this.Name, CecilObject ?? this, isLocal: true);
+			output.WriteDefinition(this.Name, this, isLocal: true);
 			output.Write(" : ");
 			Type.WriteTo(output);
 			output.Write("({0} ldloc, {1} ldloca, {2} stloc)", LoadCount, AddressCount, StoreCount);
@@ -113,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		internal void WriteTo(ITextOutput output)
 		{
-			output.WriteReference(this.Name, CecilObject ?? this, isLocal: true);
+			output.WriteReference(this.Name, this, isLocal: true);
 		}
 	}
 }

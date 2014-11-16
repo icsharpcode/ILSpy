@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Mono.Cecil;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -772,7 +772,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Non-virtual method call.</summary>
 	public sealed partial class Call : CallInstruction
 	{
-		public Call(MethodReference method) : base(OpCode.Call, method)
+		public Call(IMethod method) : base(OpCode.Call, method)
 		{
 		}
 
@@ -785,7 +785,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Virtual method call.</summary>
 	public sealed partial class CallVirt : CallInstruction
 	{
-		public CallVirt(MethodReference method) : base(OpCode.CallVirt, method)
+		public CallVirt(IMethod method) : base(OpCode.CallVirt, method)
 		{
 		}
 
@@ -1024,13 +1024,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load method pointer</summary>
 	public sealed partial class LdFtn : SimpleInstruction
 	{
-		public LdFtn(MethodReference method) : base(OpCode.LdFtn)
+		public LdFtn(IMethod method) : base(OpCode.LdFtn)
 		{
 			this.method = method;
 		}
-		readonly MethodReference method;
+		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
-		public MethodReference Method { get { return method; } }
+		public IMethod Method { get { return method; } }
 		public override StackType ResultType { get { return StackType.I; } }
 		public override void WriteTo(ITextOutput output)
 		{
@@ -1047,13 +1047,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load method pointer</summary>
 	public sealed partial class LdVirtFtn : UnaryInstruction
 	{
-		public LdVirtFtn(ILInstruction argument, MethodReference method) : base(OpCode.LdVirtFtn, argument)
+		public LdVirtFtn(ILInstruction argument, IMethod method) : base(OpCode.LdVirtFtn, argument)
 		{
 			this.method = method;
 		}
-		readonly MethodReference method;
+		readonly IMethod method;
 		/// <summary>Returns the method operand.</summary>
-		public MethodReference Method { get { return method; } }
+		public IMethod Method { get { return method; } }
 		public override StackType ResultType { get { return StackType.I; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -1077,13 +1077,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Loads runtime representation of metadata token</summary>
 	public sealed partial class LdToken : SimpleInstruction
 	{
-		public LdToken(MemberReference member) : base(OpCode.LdToken)
+		public LdToken(Mono.Cecil.MemberReference member) : base(OpCode.LdToken)
 		{
 			this.member = member;
 		}
-		readonly MemberReference member;
+		readonly Mono.Cecil.MemberReference member;
 		/// <summary>Returns the token operand.</summary>
-		public MemberReference Member { get { return member; } }
+		public Mono.Cecil.MemberReference Member { get { return member; } }
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output)
 		{
@@ -1153,7 +1153,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load instance field</summary>
 	public sealed partial class LdFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public LdFld(ILInstruction target, FieldReference field) : base(OpCode.LdFld)
+		public LdFld(ILInstruction target, IField field) : base(OpCode.LdFld)
 		{
 			this.Target = target;
 			this.field = field;
@@ -1184,10 +1184,10 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		readonly FieldReference field;
+		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
-		public FieldReference Field { get { return field; } }
-		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
+		public IField Field { get { return field; } }
+		public override StackType ResultType { get { return field.Type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
@@ -1214,7 +1214,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load address of instance field</summary>
 	public sealed partial class LdFlda : ILInstruction
 	{
-		public LdFlda(ILInstruction target, FieldReference field) : base(OpCode.LdFlda)
+		public LdFlda(ILInstruction target, IField field) : base(OpCode.LdFlda)
 		{
 			this.Target = target;
 			this.field = field;
@@ -1241,9 +1241,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
 			return this;
 		}
-		readonly FieldReference field;
+		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
-		public FieldReference Field { get { return field; } }
+		public IField Field { get { return field; } }
 		public override StackType ResultType { get { return StackType.Ref; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -1267,7 +1267,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Store value to instance field</summary>
 	public sealed partial class StFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public StFld(ILInstruction target, ILInstruction value, FieldReference field) : base(OpCode.StFld)
+		public StFld(ILInstruction target, ILInstruction value, IField field) : base(OpCode.StFld)
 		{
 			this.Target = target;
 			this.Value = value;
@@ -1311,10 +1311,10 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		readonly FieldReference field;
+		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
-		public FieldReference Field { get { return field; } }
-		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
+		public IField Field { get { return field; } }
+		public override StackType ResultType { get { return field.Type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | value.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
@@ -1343,7 +1343,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load static field</summary>
 	public sealed partial class LdsFld : SimpleInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public LdsFld(FieldReference field) : base(OpCode.LdsFld)
+		public LdsFld(IField field) : base(OpCode.LdsFld)
 		{
 			this.field = field;
 		}
@@ -1351,10 +1351,10 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		readonly FieldReference field;
+		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
-		public FieldReference Field { get { return field; } }
-		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
+		public IField Field { get { return field; } }
+		public override StackType ResultType { get { return field.Type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.SideEffect;
@@ -1378,14 +1378,14 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load static field address</summary>
 	public sealed partial class LdsFlda : SimpleInstruction
 	{
-		public LdsFlda(FieldReference field) : base(OpCode.LdsFlda)
+		public LdsFlda(IField field) : base(OpCode.LdsFlda)
 		{
 			this.field = field;
 		}
 		public override StackType ResultType { get { return StackType.Ref; } }
-		readonly FieldReference field;
+		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
-		public FieldReference Field { get { return field; } }
+		public IField Field { get { return field; } }
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -1401,7 +1401,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Store value to static field</summary>
 	public sealed partial class StsFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public StsFld(ILInstruction value, FieldReference field) : base(OpCode.StsFld)
+		public StsFld(ILInstruction value, IField field) : base(OpCode.StsFld)
 		{
 			this.Value = value;
 			this.field = field;
@@ -1432,10 +1432,10 @@ namespace ICSharpCode.Decompiler.IL
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
 		public byte UnalignedPrefix { get; set; }
-		readonly FieldReference field;
+		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
-		public FieldReference Field { get { return field; } }
-		public override StackType ResultType { get { return field.FieldType.GetStackType(); } }
+		public IField Field { get { return field; } }
+		public override StackType ResultType { get { return field.Type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return value.Flags | InstructionFlags.SideEffect;
@@ -1462,13 +1462,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Casts an object to a class.</summary>
 	public sealed partial class CastClass : UnaryInstruction
 	{
-		public CastClass(ILInstruction argument, TypeReference type) : base(OpCode.CastClass, argument)
+		public CastClass(ILInstruction argument, IType type) : base(OpCode.CastClass, argument)
 		{
 			this.type = type;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -1492,13 +1492,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Test if object is instance of class or interface.</summary>
 	public sealed partial class IsInst : UnaryInstruction
 	{
-		public IsInst(ILInstruction argument, TypeReference type) : base(OpCode.IsInst, argument)
+		public IsInst(ILInstruction argument, IType type) : base(OpCode.IsInst, argument)
 		{
 			this.type = type;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output)
 		{
@@ -1518,7 +1518,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Indirect load (ref/pointer dereference).</summary>
 	public sealed partial class LdObj : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public LdObj(ILInstruction target, TypeReference type) : base(OpCode.LdObj)
+		public LdObj(ILInstruction target, IType type) : base(OpCode.LdObj)
 		{
 			this.Target = target;
 			this.type = type;
@@ -1545,9 +1545,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
 			return this;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -1579,7 +1579,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Indirect store (store to ref/pointer).</summary>
 	public sealed partial class StObj : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
-		public StObj(ILInstruction target, ILInstruction value, TypeReference type) : base(OpCode.StObj)
+		public StObj(ILInstruction target, ILInstruction value, IType type) : base(OpCode.StObj)
 		{
 			this.Target = target;
 			this.Value = value;
@@ -1619,9 +1619,9 @@ namespace ICSharpCode.Decompiler.IL
 				this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
 			return this;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -1655,13 +1655,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Boxes a value.</summary>
 	public sealed partial class Box : UnaryInstruction
 	{
-		public Box(ILInstruction argument, TypeReference type) : base(OpCode.Box, argument)
+		public Box(ILInstruction argument, IType type) : base(OpCode.Box, argument)
 		{
 			this.type = type;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		public override StackType ResultType { get { return StackType.O; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -1685,13 +1685,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Compute address inside box.</summary>
 	public sealed partial class Unbox : UnaryInstruction
 	{
-		public Unbox(ILInstruction argument, TypeReference type) : base(OpCode.Unbox, argument)
+		public Unbox(ILInstruction argument, IType type) : base(OpCode.Unbox, argument)
 		{
 			this.type = type;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		public override StackType ResultType { get { return StackType.Ref; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -1715,13 +1715,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Unbox a value.</summary>
 	public sealed partial class UnboxAny : UnaryInstruction
 	{
-		public UnboxAny(ILInstruction argument, TypeReference type) : base(OpCode.UnboxAny, argument)
+		public UnboxAny(ILInstruction argument, IType type) : base(OpCode.UnboxAny, argument)
 		{
 			this.type = type;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -1745,7 +1745,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Creates an object instance and calls the constructor.</summary>
 	public sealed partial class NewObj : CallInstruction
 	{
-		public NewObj(MethodReference method) : base(OpCode.NewObj, method)
+		public NewObj(IMethod method) : base(OpCode.NewObj, method)
 		{
 		}
 		public override StackType ResultType { get { return StackType.O; } }
@@ -1758,13 +1758,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Initializes the value at an address.</summary>
 	public sealed partial class InitObj : UnaryInstruction
 	{
-		public InitObj(ILInstruction argument, TypeReference type) : base(OpCode.InitObj, argument)
+		public InitObj(ILInstruction argument, IType type) : base(OpCode.InitObj, argument)
 		{
 			this.type = type;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		public override StackType ResultType { get { return StackType.Void; } }
 		public override void WriteTo(ITextOutput output)
 		{
@@ -1784,13 +1784,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Returns the default value for a type.</summary>
 	public sealed partial class DefaultValue : SimpleInstruction
 	{
-		public DefaultValue(TypeReference type) : base(OpCode.DefaultValue)
+		public DefaultValue(IType type) : base(OpCode.DefaultValue)
 		{
 			this.type = type;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		public override void WriteTo(ITextOutput output)
 		{
@@ -1841,13 +1841,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Gets the size of a type in bytes.</summary>
 	public sealed partial class SizeOf : SimpleInstruction
 	{
-		public SizeOf(TypeReference type) : base(OpCode.SizeOf)
+		public SizeOf(IType type) : base(OpCode.SizeOf)
 		{
 			this.type = type;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output)
 		{
@@ -1911,7 +1911,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load address of array element.</summary>
 	public sealed partial class LdElema : ILInstruction
 	{
-		public LdElema(ILInstruction array, ILInstruction index, TypeReference type) : base(OpCode.LdElema)
+		public LdElema(ILInstruction array, ILInstruction index, IType type) : base(OpCode.LdElema)
 		{
 			this.Array = array;
 			this.Index = index;
@@ -1951,9 +1951,9 @@ namespace ICSharpCode.Decompiler.IL
 				this.Array = this.array.Inline(flagsBefore, instructionStack, out finished);
 			return this;
 		}
-		readonly TypeReference type;
+		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
-		public TypeReference Type { get { return type; } }
+		public IType Type { get { return type; } }
 		public override StackType ResultType { get { return StackType.Ref; } }
 		/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>
 		public bool IsReadOnly { get; set; }

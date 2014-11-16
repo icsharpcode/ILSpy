@@ -128,7 +128,8 @@ namespace ICSharpCode.ILSpy
 				base.DecompileMethod(method, output, options);
 				if (!method.HasBody)
 					return;
-				ILReader reader = new ILReader();
+				var typeSystem = new DecompilerTypeSystem(method.Module);
+				ILReader reader = new ILReader(typeSystem);
 				reader.WriteTypedIL(method.Body, output, options.CancellationToken);
 			}
 		}
@@ -147,7 +148,8 @@ namespace ICSharpCode.ILSpy
 				base.DecompileMethod(method, output, options);
 				if (!method.HasBody)
 					return;
-				ILReader reader = new ILReader();
+				var typeSystem = new DecompilerTypeSystem(method.Module);
+				ILReader reader = new ILReader(typeSystem);
 				ILInstruction il = reader.ReadIL(method.Body, options.CancellationToken);
 				if (transformer != null)
 					il = il.AcceptVisitor(transformer);

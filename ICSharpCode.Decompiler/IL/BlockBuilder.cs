@@ -30,10 +30,14 @@ namespace ICSharpCode.Decompiler.IL
 	class BlockBuilder
 	{
 		readonly Mono.Cecil.Cil.MethodBody body;
-		
-		public BlockBuilder(Mono.Cecil.Cil.MethodBody body)
+		readonly DecompilerTypeSystem typeSystem;
+
+		public BlockBuilder(Mono.Cecil.Cil.MethodBody body, DecompilerTypeSystem typeSystem)
 		{
+			Debug.Assert(body != null);
+			Debug.Assert(typeSystem != null);
 			this.body = body;
+			this.typeSystem = typeSystem;
 		}
 		
 		List<TryInstruction> tryInstructionList = new List<TryInstruction>();
@@ -67,8 +71,8 @@ namespace ICSharpCode.Decompiler.IL
 					tryCatchList.Add(tryCatch);
 					tryInstructionList.Add(tryCatch);
 				}
-				
-				var variable = new ILVariable(VariableKind.Exception, eh.CatchType, handlerBlock.ILRange.Start);
+
+				var variable = new ILVariable(VariableKind.Exception, typeSystem.GetType(eh.CatchType), handlerBlock.ILRange.Start);
 				variable.Name = "ex";
 				handlerBlock.EntryPoint.Instructions.Add(new LdLoc(variable));
 				

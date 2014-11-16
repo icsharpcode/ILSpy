@@ -16,6 +16,7 @@ using Ricciolo.StylesExplorer.MarkupReflection;
 
 namespace ILSpy.BamlDecompiler.Tests
 {
+	/*
 	[TestFixture]
 	public class TestRunner
 	{
@@ -135,5 +136,5 @@ namespace ILSpy.BamlDecompiler.Tests
 			return null;
 		}
 		#endregion
-	}
+	}*/
 }

@@ -23,6 +23,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Immutable;
 using System.Diagnostics;
+using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using Cil = Mono.Cecil.Cil;
 using System.Collections;
@@ -46,9 +47,18 @@ namespace ICSharpCode.Decompiler.IL
 			return new MetadataToken(reader.ReadUInt32());
 		}
 		
-		Cil.MethodBody body;
-		TypeSystem typeSystem;
+		readonly ICompilation compilation;
+		readonly DecompilerTypeSystem typeSystem;
 
+		public ILReader(DecompilerTypeSystem typeSystem)
+		{
+			if (typeSystem == null)
+				throw new ArgumentNullException("typeSystem");
+			this.typeSystem = typeSystem;
+			this.compilation = typeSystem.Compilation;
+		}
+
+		Cil.MethodBody body;
 		BlobReader reader;
 		Stack<StackType> stack;
 		ILVariable[] parameterVariables;
@@ -64,11 +74,10 @@ namespace ICSharpCode.Decompiler.IL
 			if (body == null)
 				throw new ArgumentNullException("body");
 			this.body = body;
-			this.typeSystem = body.Method.Module.TypeSystem;
 			this.reader = body.GetILReader();
 			this.stack = new Stack<StackType>(body.MaxStackSize);
-			this.parameterVariables = InitParameterVariables(body);
-			this.localVariables = body.Variables.Select(v => new ILVariable(v)).ToArray();
+			InitParameterVariables();
+			this.localVariables = body.Variables.SelectArray(CreateILVariable);
 			this.instructionBuilder = new List<ILInstruction>();
 			this.isBranchTarget = new BitArray(body.CodeSize);
 			this.branchStackDict = new Dictionary<int, ImmutableArray<StackType>>();
@@ -80,23 +89,71 @@ namespace ICSharpCode.Decompiler.IL
 			return body.LookupToken(token);
 		}
 
-		static ILVariable[] InitParameterVariables(Mono.Cecil.Cil.MethodBody body)
+		IType ReadAndDecodeTypeReference()
 		{
-			var parameterVariables = new ILVariable[body.Method.GetPopAmount()];
-			int paramIndex = 0;
-			if (body.Method.HasThis)
-				parameterVariables[paramIndex++] = new ILVariable(body.ThisParameter);
-			foreach (var p in body.Method.Parameters)
-				parameterVariables[paramIndex++] = new ILVariable(p);
-			Debug.Assert(paramIndex == parameterVariables.Length);
-			return parameterVariables;
+			var token = ReadMetadataToken(ref reader);
+			var typeReference = body.LookupToken(token) as TypeReference;
+			return typeSystem.GetType(typeReference);
 		}
 
+		IMethod ReadAndDecodeMethodReference()
+		{
+			var token = ReadMetadataToken(ref reader);
+			var methodReference = body.LookupToken(token) as MethodReference;
+			return typeSystem.GetMethod(methodReference);
+		}
+
+		IField ReadAndDecodeFieldReference()
+		{
+			var token = ReadMetadataToken(ref reader);
+			var fieldReference = body.LookupToken(token) as FieldReference;
+			return typeSystem.GetField(fieldReference);
+		}
+
+		void InitParameterVariables()
+		{
+			parameterVariables = new ILVariable[GetPopCount(OpCode.Call, body.Method)];
+			int paramIndex = 0;
+			if (body.Method.HasThis)
+				parameterVariables[paramIndex++] = CreateILVariable(body.ThisParameter);
+			foreach (var p in body.Method.Parameters)
+				parameterVariables[paramIndex++] = CreateILVariable(p);
+			Debug.Assert(paramIndex == parameterVariables.Length);
+		}
+
+		ILVariable CreateILVariable(Cil.VariableDefinition v)
+		{
+			var ilVar = new ILVariable(VariableKind.Local, typeSystem.GetType(v.VariableType), v.Index);
+			if (string.IsNullOrEmpty(v.Name))
+				ilVar.Name = "V_" + v.Index;
+			else
+				ilVar.Name = v.Name;
+			return ilVar;
+		}
+
+		ILVariable CreateILVariable(ParameterDefinition p)
+		{
+			var variableKind = p.Index == -1 ? VariableKind.This : VariableKind.Parameter;
+			var ilVar = new ILVariable(variableKind, typeSystem.GetType(p.ParameterType), p.Index);
+			ilVar.StoreCount = 1; // count the initial store when the method is called with an argument
+			if (variableKind == VariableKind.This)
+				ilVar.Name = "this";
+			else if (string.IsNullOrEmpty(p.Name))
+				ilVar.Name = "P_" + p.Index;
+			else
+				ilVar.Name = p.Name;
+			return ilVar;
+		}
+		
+		/// <summary>
+		/// Warn when invalid IL is detected.
+		/// ILSpy should be able to handle invalid IL; but this method can be helpful for debugging the ILReader, as this method should not get called when processing valid IL.
+		/// </summary>
 		void Warn(string message)
 		{
 			Debug.Fail(message);
 		}
-		
+
 		void ReadInstructions(Dictionary<int, ImmutableArray<StackType>> outputStacks, CancellationToken cancellationToken)
 		{
 			// Fill isBranchTarget and branchStackDict based on exception handlers
@@ -120,6 +177,8 @@ namespace ICSharpCode.Decompiler.IL
 				if (outputStacks != null)
 					outputStacks.Add(start, stack.ToImmutableArray());
 				ILInstruction decodedInstruction = DecodeInstruction();
+				if (decodedInstruction.ResultType == StackType.Unknown)
+					Warn("Unknown result type (might be due to invalid IL)");
 				decodedInstruction.CheckInvariant();
 				if (decodedInstruction.ResultType != StackType.Void)
 					stack.Push(decodedInstruction.ResultType);
@@ -176,7 +235,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Init(body);
 			ReadInstructions(null, cancellationToken);
-			var container = new BlockBuilder(body).CreateBlocks(instructionBuilder, isBranchTarget);
+			var container = new BlockBuilder(body, typeSystem).CreateBlocks(instructionBuilder, isBranchTarget);
 			var function = new ILFunction(body.Method, container);
 			function.Variables.AddRange(parameterVariables);
 			function.Variables.AddRange(localVariables);
@@ -416,29 +475,29 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldstr:
 					return DecodeLdstr();
 				case ILOpCode.Ldftn:
-					return new LdFtn((MethodReference)ReadAndDecodeMetadataToken());
+					return new LdFtn(ReadAndDecodeMethodReference());
 				case ILOpCode.Ldind_I1:
-					return new LdObj(Pop(), typeSystem.SByte);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.SByte));
 				case ILOpCode.Ldind_I2:
-					return new LdObj(Pop(), typeSystem.Int16);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.Int16));
 				case ILOpCode.Ldind_I4:
-					return new LdObj(Pop(), typeSystem.Int32);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.Int32));
 				case ILOpCode.Ldind_I8:
-					return new LdObj(Pop(), typeSystem.Int64);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.Int64));
 				case ILOpCode.Ldind_U1:
-					return new LdObj(Pop(), typeSystem.Byte);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.Byte));
 				case ILOpCode.Ldind_U2:
-					return new LdObj(Pop(), typeSystem.UInt16);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.UInt16));
 				case ILOpCode.Ldind_U4:
-					return new LdObj(Pop(), typeSystem.UInt32);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.UInt32));
 				case ILOpCode.Ldind_R4:
-					return new LdObj(Pop(), typeSystem.Single);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.Single));
 				case ILOpCode.Ldind_R8:
-					return new LdObj(Pop(), typeSystem.Double);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.Double));
 				case ILOpCode.Ldind_I:
-					return new LdObj(Pop(), typeSystem.IntPtr);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.IntPtr));
 				case ILOpCode.Ldind_Ref:
-					return new LdObj(Pop(), typeSystem.Object);
+					return new LdObj(Pop(), compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Ldloc:
 					return Ldloc(reader.ReadUInt16());
 				case ILOpCode.Ldloc_S:
@@ -493,21 +552,21 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Starg_S:
 					return Starg(reader.ReadByte());
 				case ILOpCode.Stind_I1:
-					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.SByte));
+					return new Void(new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.SByte)));
 				case ILOpCode.Stind_I2:
-					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Int16));
+					return new Void(new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Int16)));
 				case ILOpCode.Stind_I4:
-					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Int32));
+					return new Void(new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Int32)));
 				case ILOpCode.Stind_I8:
-					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Int64));
+					return new Void(new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Int64)));
 				case ILOpCode.Stind_R4:
-					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Single));
+					return new Void(new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Single)));
 				case ILOpCode.Stind_R8:
-					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Double));
+					return new Void(new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Double)));
 				case ILOpCode.Stind_I:
-					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.IntPtr));
+					return new Void(new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.IntPtr)));
 				case ILOpCode.Stind_Ref:
-					return new Void(new StObj(value: Pop(), target: Pop(), type: typeSystem.Object));
+					return new Void(new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Object)));
 				case ILOpCode.Stloc:
 					return Stloc(reader.ReadUInt16());
 				case ILOpCode.Stloc_S:
@@ -528,19 +587,19 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Xor:
 					return BinaryNumeric(OpCode.BitXor);
 				case ILOpCode.Box:
-					return new Box(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
+					return new Box(Pop(), ReadAndDecodeTypeReference());
 				case ILOpCode.Castclass:
-					return new CastClass(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
+					return new CastClass(Pop(), ReadAndDecodeTypeReference());
 				case ILOpCode.Cpobj:
 					{
-						var type = (TypeReference)ReadAndDecodeMetadataToken();
+						var type = ReadAndDecodeTypeReference();
 						var ld = new LdObj(Pop(), type);
 						return new Void(new StObj(Pop(), ld, type));
 					}
 				case ILOpCode.Initobj:
-					return new InitObj(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
+					return new InitObj(Pop(), ReadAndDecodeTypeReference());
 				case ILOpCode.Isinst:
-					return new IsInst(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
+					return new IsInst(Pop(), ReadAndDecodeTypeReference());
 				case ILOpCode.Ldelem:
 				case ILOpCode.Ldelem_I1:
 				case ILOpCode.Ldelem_I2:
@@ -555,27 +614,27 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldelem_Ref:
 					throw new NotImplementedException();
 				case ILOpCode.Ldelema:
-					return new LdElema(index: Pop(), array: Pop(), type: (TypeReference)ReadAndDecodeMetadataToken());
+					return new LdElema(index: Pop(), array: Pop(), type: ReadAndDecodeTypeReference());
 				case ILOpCode.Ldfld:
-					return new LdFld(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
+					return new LdFld(Pop(), ReadAndDecodeFieldReference());
 				case ILOpCode.Ldflda:
-					return new LdFlda(Pop(), (FieldReference)ReadAndDecodeMetadataToken());
+					return new LdFlda(Pop(), ReadAndDecodeFieldReference());
 				case ILOpCode.Stfld:
-					return new Void(new StFld(value: Pop(), target: Pop(), field: (FieldReference)ReadAndDecodeMetadataToken()));
+					return new Void(new StFld(value: Pop(), target: Pop(), field: ReadAndDecodeFieldReference()));
 				case ILOpCode.Ldlen:
 					return new LdLen(Pop());
 				case ILOpCode.Ldobj:
-					return new LdObj(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
+					return new LdObj(Pop(), ReadAndDecodeTypeReference());
 				case ILOpCode.Ldsfld:
-					return new LdsFld((FieldReference)ReadAndDecodeMetadataToken());
+					return new LdsFld(ReadAndDecodeFieldReference());
 				case ILOpCode.Ldsflda:
-					return new LdsFlda((FieldReference)ReadAndDecodeMetadataToken());
+					return new LdsFlda(ReadAndDecodeFieldReference());
 				case ILOpCode.Stsfld:
-					return new Void(new StsFld(Pop(), (FieldReference)ReadAndDecodeMetadataToken()));
+					return new Void(new StsFld(Pop(), ReadAndDecodeFieldReference()));
 				case ILOpCode.Ldtoken:
 					return new LdToken((MemberReference)ReadAndDecodeMetadataToken());
 				case ILOpCode.Ldvirtftn:
-					return new LdVirtFtn(Pop(), (MethodReference)ReadAndDecodeMetadataToken());
+					return new LdVirtFtn(Pop(), ReadAndDecodeMethodReference());
 				case ILOpCode.Mkrefany:
 					throw new NotImplementedException();
 				case ILOpCode.Newarr:
@@ -587,7 +646,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Rethrow:
 					return new Rethrow();
 				case ILOpCode.Sizeof:
-					return new SizeOf((TypeReference)ReadAndDecodeMetadataToken());
+					return new SizeOf(ReadAndDecodeTypeReference());
 				case ILOpCode.Stelem:
 				case ILOpCode.Stelem_I1:
 				case ILOpCode.Stelem_I2:
@@ -599,13 +658,13 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stelem_Ref:
 					throw new NotImplementedException();
 				case ILOpCode.Stobj:
-					return new Void(new StObj(value: Pop(), target: Pop(), type: (TypeReference)ReadAndDecodeMetadataToken()));
+					return new Void(new StObj(value: Pop(), target: Pop(), type: ReadAndDecodeTypeReference()));
 				case ILOpCode.Throw:
 					return new Throw(Pop());
 				case ILOpCode.Unbox:
-					return new Unbox(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
+					return new Unbox(Pop(), ReadAndDecodeTypeReference());
 				case ILOpCode.Unbox_Any:
-					return new UnboxAny(Pop(), (TypeReference)ReadAndDecodeMetadataToken());
+					return new UnboxAny(Pop(), ReadAndDecodeTypeReference());
 				default:
 					throw new NotImplementedException(ilOpCode.ToString());
 			}
@@ -668,7 +727,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction DecodeConstrainedCall()
 		{
-			var typeRef = ReadAndDecodeMetadataToken() as TypeReference;
+			var typeRef = ReadAndDecodeTypeReference();
 			var inst = DecodeInstruction();
 			var call = inst as CallInstruction;
 			if (call != null)
@@ -721,14 +780,30 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction DecodeCall(OpCode opCode)
 		{
-			var method = (MethodReference)ReadAndDecodeMetadataToken();
-			var arguments = new ILInstruction[CallInstruction.GetPopCount(opCode, method)];
+			var method = ReadAndDecodeMethodReference();
+			var arguments = new ILInstruction[GetPopCount(opCode, method)];
 			for (int i = arguments.Length - 1; i >= 0; i--) {
 				arguments[i] = Pop();
 			}
 			var call = CallInstruction.Create(opCode, method);
 			call.Arguments.AddRange(arguments);
 			return call;
+		}
+		
+		static int GetPopCount(OpCode callCode, MethodReference methodReference)
+		{
+			int popCount = methodReference.Parameters.Count;
+			if (callCode != OpCode.NewObj && methodReference.HasThis)
+				popCount++;
+			return popCount;
+		}
+
+		static int GetPopCount(OpCode callCode, IMethod method)
+		{
+			int popCount = method.Parameters.Count;
+			if (callCode != OpCode.NewObj && !method.IsStatic)
+				popCount++;
+			return popCount;
 		}
 
 		ILInstruction Comparison(OpCode opCode_I, OpCode opCode_F)

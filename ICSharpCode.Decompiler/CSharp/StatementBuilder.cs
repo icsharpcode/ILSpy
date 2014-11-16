@@ -32,9 +32,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly ExpressionBuilder exprBuilder;
 		readonly IMethod currentMethod;
 		
-		public StatementBuilder(IMethod method, NRefactoryCecilMapper cecilMapper)
+		public StatementBuilder(IMethod method)
 		{
-			this.exprBuilder = new ExpressionBuilder(method.Compilation, cecilMapper);
+			this.exprBuilder = new ExpressionBuilder(method.Compilation);
 			this.currentMethod = method;
 		}
 		

@@ -21,22 +21,22 @@ using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
-	public class IntroduceUnsafeModifier : DepthFirstAstVisitor<object, bool>, IAstTransform
+	public class IntroduceUnsafeModifier : DepthFirstAstVisitor<bool>, IAstTransform
 	{
 		public static readonly object PointerArithmeticAnnotation = new PointerArithmetic();
 		
 		sealed class PointerArithmetic {}
 		
-		public void Run(AstNode compilationUnit, TransformContext context)
+		public void Run(AstNode compilationUnit)
 		{
-			compilationUnit.AcceptVisitor(this, null);
+			compilationUnit.AcceptVisitor(this);
 		}
 		
-		protected override bool VisitChildren(AstNode node, object data)
+		protected override bool VisitChildren(AstNode node)
 		{
 			bool result = false;
 			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
-				result |= child.AcceptVisitor(this, data);
+				result |= child.AcceptVisitor(this);
 			}
 			if (result && node is EntityDeclaration && !(node is Accessor)) {
 				((EntityDeclaration)node).Modifiers |= Modifiers.Unsafe;
@@ -45,23 +45,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return result;
 		}
 		
-		public override bool VisitPointerReferenceExpression(PointerReferenceExpression pointerReferenceExpression, object data)
+		public override bool VisitPointerReferenceExpression(PointerReferenceExpression pointerReferenceExpression)
 		{
-			base.VisitPointerReferenceExpression(pointerReferenceExpression, data);
+			base.VisitPointerReferenceExpression(pointerReferenceExpression);
 			return true;
 		}
 		
-		public override bool VisitComposedType(ComposedType composedType, object data)
+		public override bool VisitComposedType(ComposedType composedType)
 		{
 			if (composedType.PointerRank > 0)
 				return true;
 			else
-				return base.VisitComposedType(composedType, data);
+				return base.VisitComposedType(composedType);
 		}
 		
-		public override bool VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression, object data)
+		public override bool VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression)
 		{
-			bool result = base.VisitUnaryOperatorExpression(unaryOperatorExpression, data);
+			bool result = base.VisitUnaryOperatorExpression(unaryOperatorExpression);
 			if (unaryOperatorExpression.Operator == UnaryOperatorType.Dereference) {
 				BinaryOperatorExpression bop = unaryOperatorExpression.Expression as BinaryOperatorExpression;
 				if (bop != null && bop.Operator == BinaryOperatorType.Add && bop.Annotation<PointerArithmetic>() != null) {
@@ -81,9 +81,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		public override bool VisitMemberReferenceExpression(MemberReferenceExpression memberReferenceExpression, object data)
+		public override bool VisitMemberReferenceExpression(MemberReferenceExpression memberReferenceExpression)
 		{
-			bool result = base.VisitMemberReferenceExpression(memberReferenceExpression, data);
+			bool result = base.VisitMemberReferenceExpression(memberReferenceExpression);
 			UnaryOperatorExpression uoe = memberReferenceExpression.Target as UnaryOperatorExpression;
 			if (uoe != null && uoe.Operator == UnaryOperatorType.Dereference) {
 				PointerReferenceExpression pre = new PointerReferenceExpression();
@@ -97,9 +97,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return result;
 		}
 		
-		public override bool VisitStackAllocExpression(StackAllocExpression stackAllocExpression, object data)
+		public override bool VisitStackAllocExpression(StackAllocExpression stackAllocExpression)
 		{
-			base.VisitStackAllocExpression(stackAllocExpression, data);
+			base.VisitStackAllocExpression(stackAllocExpression);
 			return true;
 		}
 	}

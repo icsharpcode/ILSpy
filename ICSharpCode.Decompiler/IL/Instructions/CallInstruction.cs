@@ -22,14 +22,14 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Mono.Cecil;
+using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.Decompiler.Disassembler;
 
 namespace ICSharpCode.Decompiler.IL
 {
 	public abstract class CallInstruction : ILInstruction
 	{
-		public static CallInstruction Create(OpCode opCode, MethodReference method)
+		public static CallInstruction Create(OpCode opCode, IMethod method)
 		{
 			switch (opCode) {
 				case OpCode.Call:
@@ -44,20 +44,13 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public readonly InstructionCollection<ILInstruction> Arguments;
-		public readonly MethodReference Method;
+		public readonly IMethod Method;
 		
-		protected CallInstruction(OpCode opCode, MethodReference methodReference) : base(opCode)
+		protected CallInstruction(OpCode opCode, IMethod method) : base(opCode)
 		{
-			this.Method = methodReference;
+			Debug.Assert(method != null);
+			this.Method = method;
 			this.Arguments = new InstructionCollection<ILInstruction>(this);
-		}
-		
-		public static int GetPopCount(OpCode callCode, MethodReference methodReference)
-		{
-			int popCount = methodReference.Parameters.Count;
-			if (callCode != OpCode.NewObj && methodReference.HasThis)
-				popCount++;
-			return popCount;
 		}
 		
 		public override StackType ResultType {
@@ -97,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets/Sets the type specified in the 'constrained.' prefix.
 		/// Returns null if no 'constrained.' prefix exists for this call.
 		/// </summary>
-		public TypeReference ConstrainedTo;
+		public IType ConstrainedTo;
 
 		public override void WriteTo(ITextOutput output)
 		{

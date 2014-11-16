@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.Disassembler;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -39,6 +41,16 @@ namespace ICSharpCode.Decompiler.IL
 		public static void Write(this ITextOutput output, PrimitiveType primitiveType)
 		{
 			output.Write(primitiveType.ToString().ToLowerInvariant());
+		}
+		
+		public static void WriteTo(this IType type, ITextOutput output, ILNameSyntax nameSyntax = ILNameSyntax.ShortTypeName)
+		{
+			output.WriteReference(type.ToString(), type);
+		}
+		
+		public static void WriteTo(this ISymbol symbol, ITextOutput output)
+		{
+			output.WriteReference(symbol.ToString(), symbol);
 		}
 	}
 }

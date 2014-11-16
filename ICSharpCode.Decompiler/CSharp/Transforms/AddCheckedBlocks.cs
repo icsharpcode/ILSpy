@@ -234,12 +234,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 		#endregion
 		
-		public void Run(AstNode node, TransformContext context)
+		public void Run(AstNode node)
 		{
 			BlockStatement block = node as BlockStatement;
 			if (block == null) {
 				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
-					Run(child, context);
+					Run(child);
 				}
 			} else {
 				Result r = GetResultFromBlock(block);

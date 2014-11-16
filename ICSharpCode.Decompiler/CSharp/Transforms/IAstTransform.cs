@@ -25,18 +25,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	public interface IAstTransform
 	{
-		void Run(AstNode rootNode, TransformContext context);
-	}
-	
-	public class TransformContext
-	{
-		internal readonly NRefactoryCecilMapper CecilMapper;
-		public readonly ICompilation Compilation;
-		
-		internal TransformContext(ICompilation compilation, NRefactoryCecilMapper cecilMapper)
-		{
-			this.Compilation = compilation;
-			this.CecilMapper = cecilMapper;
-		}
+		void Run(AstNode rootNode);
 	}
 }

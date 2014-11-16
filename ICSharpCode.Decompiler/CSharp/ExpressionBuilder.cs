@@ -38,26 +38,15 @@ namespace ICSharpCode.Decompiler.CSharp
 	class ExpressionBuilder : ILVisitor<TranslatedExpression>
 	{
 		internal readonly ICompilation compilation;
-		internal readonly NRefactoryCecilMapper cecilMapper;
 		internal readonly CSharpResolver resolver;
 		internal readonly TypeSystemAstBuilder astBuilder;
 		
-		public ExpressionBuilder(ICompilation compilation, NRefactoryCecilMapper cecilMapper)
+		public ExpressionBuilder(ICompilation compilation)
 		{
 			Debug.Assert(compilation != null);
-			Debug.Assert(cecilMapper != null);
 			this.compilation = compilation;
-			this.cecilMapper = cecilMapper;
 			this.resolver = new CSharpResolver(compilation);
 			this.astBuilder = new TypeSystemAstBuilder(resolver);
-		}
-
-		public AstType ConvertType(Mono.Cecil.TypeReference typeReference)
-		{
-			if (typeReference == null)
-				return AstType.Null;
-			var type = cecilMapper.GetType(typeReference);
-			return ConvertType(type);
 		}
 
 		public AstType ConvertType(IType type)
@@ -89,36 +78,34 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 				expr = new IdentifierExpression(variable.Name);
 			// TODO: use LocalResolveResult instead
-			if (variable.Type.SkipModifiers().MetadataType == Mono.Cecil.MetadataType.ByReference) {
+			if (variable.Type.Kind == TypeKind.ByReference) {
 				// When loading a by-ref parameter, use 'ref paramName'.
 				// We'll strip away the 'ref' when dereferencing.
 				
 				// Ensure that the IdentifierExpression itself also gets a resolve result, as that might
 				// get used after the 'ref' is stripped away:
-				var elementType = variable.Type.SkipModifiers().GetElementType();
-				expr.WithRR(new ResolveResult(cecilMapper.GetType(elementType)));
+				var elementType = ((ByReferenceType)variable.Type).ElementType;
+				expr.WithRR(new ResolveResult(elementType));
 				
 				expr = new DirectionExpression(FieldDirection.Ref, expr);
 			}
-			return expr.WithRR(new ResolveResult(cecilMapper.GetType(variable.Type)));
+			return expr.WithRR(new ResolveResult(variable.Type));
 		}
 		
 		TranslatedExpression IsType(IsInst inst)
 		{
 			var arg = Translate(inst.Argument);
-			var type = cecilMapper.GetType(inst.Type);
-			return new IsExpression(arg.Expression, ConvertType(type))
+			return new IsExpression(arg.Expression, ConvertType(inst.Type))
 				.WithILInstruction(inst)
-				.WithRR(new TypeIsResolveResult(arg.ResolveResult, type, compilation.FindType(TypeCode.Boolean)));
+				.WithRR(new TypeIsResolveResult(arg.ResolveResult, inst.Type, compilation.FindType(TypeCode.Boolean)));
 		}
 		
 		protected internal override TranslatedExpression VisitIsInst(IsInst inst)
 		{
 			var arg = Translate(inst.Argument);
-			var type = cecilMapper.GetType(inst.Type);
-			return new AsExpression(arg.Expression, ConvertType(type))
+			return new AsExpression(arg.Expression, ConvertType(inst.Type))
 				.WithILInstruction(inst)
-				.WithRR(new ConversionResolveResult(type, arg.ResolveResult, Conversion.TryCast));
+				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.TryCast));
 		}
 		
 		protected internal override TranslatedExpression VisitNewObj(NewObj inst)
@@ -374,52 +361,36 @@ namespace ICSharpCode.Decompiler.CSharp
 		TranslatedExpression HandleCallInstruction(CallInstruction inst)
 		{
 			// Used for Call, CallVirt and NewObj
-			var method = cecilMapper.GetMethod(inst.Method);
 			TranslatedExpression target;
 			if (inst.OpCode == OpCode.NewObj) {
 				target = default(TranslatedExpression); // no target
-			} else if (inst.Method.HasThis) {
+			} else if (!inst.Method.IsStatic) {
 				var argInstruction = inst.Arguments[0];
 				if (inst.OpCode == OpCode.Call && argInstruction.MatchLdThis()) {
 					target = new BaseReferenceExpression()
 						.WithILInstruction(argInstruction)
-						.WithRR(new ThisResolveResult(cecilMapper.GetType(inst.Method.DeclaringType), causesNonVirtualInvocation: true));
+						.WithRR(new ThisResolveResult(inst.Method.DeclaringType, causesNonVirtualInvocation: true));
 				} else {
 					target = Translate(argInstruction);
 				}
 			} else {
-				var declaringType = cecilMapper.GetType(inst.Method.DeclaringType);
-				target = new TypeReferenceExpression(ConvertType(declaringType))
+				target = new TypeReferenceExpression(ConvertType(inst.Method.DeclaringType))
 					.WithoutILInstruction()
-					.WithRR(new TypeResolveResult(declaringType));
+					.WithRR(new TypeResolveResult(inst.Method.DeclaringType));
 			}
 			
 			var arguments = inst.Arguments.SelectArray(Translate);
-			int firstParamIndex = (inst.Method.HasThis && inst.OpCode != OpCode.NewObj) ? 1 : 0;
+			int firstParamIndex = (inst.Method.IsStatic || inst.OpCode == OpCode.NewObj) ? 0 : 1;
+			
+			// Translate arguments to the expected parameter types
 			Debug.Assert(arguments.Length == firstParamIndex + inst.Method.Parameters.Count);
-			ResolveResult rr;
-			if (method != null) {
-				// Translate arguments to the expected parameter types
-				Debug.Assert(arguments.Length == firstParamIndex + method.Parameters.Count);
-				for (int i = firstParamIndex; i < arguments.Length; i++) {
-					var parameter = method.Parameters[i - firstParamIndex];
-					arguments[i] = arguments[i].ConvertTo(parameter.Type, this);
-				}
-				var argumentResolveResults = arguments.Skip(firstParamIndex).Select(arg => arg.ResolveResult).ToList();
-				rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults);
-			} else {
-				// no IMethod found -- determine the target types from the cecil parameter collection instead
-				for (int i = firstParamIndex; i < arguments.Length; i++) {
-					var parameterDefinition = inst.Method.Parameters[i - firstParamIndex];
-					var parameterType = cecilMapper.GetType(parameterDefinition.ParameterType);
-					arguments[i] = arguments[i].ConvertTo(parameterType, this);
-				}
-				if (inst.OpCode == OpCode.NewObj) {
-					rr = new ResolveResult(cecilMapper.GetType(inst.Method.DeclaringType));
-				} else {
-					rr = new ResolveResult(cecilMapper.GetType(inst.Method.ReturnType));
-				}
+			for (int i = firstParamIndex; i < arguments.Length; i++) {
+				var parameter = inst.Method.Parameters[i - firstParamIndex];
+				arguments[i] = arguments[i].ConvertTo(parameter.Type, this);
 			}
+			var argumentResolveResults = arguments.Skip(firstParamIndex).Select(arg => arg.ResolveResult).ToList();
+			
+			var rr = new CSharpInvocationResolveResult(target.ResolveResult, inst.Method, argumentResolveResults);
 			
 			var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression);
 			if (inst.OpCode == OpCode.NewObj) {
@@ -435,19 +406,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst)
 		{
 			var target = Translate(inst.Target);
-			var type = cecilMapper.GetType(inst.Type);
-			if (target.Type.Equals(new ByReferenceType(type)) && target.Expression is DirectionExpression) {
+			if (target.Type.Equals(new ByReferenceType(inst.Type)) && target.Expression is DirectionExpression) {
 				// we can deference the managed reference by stripping away the 'ref'
 				var result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
-				result = result.ConvertTo(type, this);
+				result = result.ConvertTo(inst.Type, this);
 				result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
 				return result;
 			} else {
 				// Cast pointer type if necessary:
-				target = target.ConvertTo(new PointerType(type), this);
+				target = target.ConvertTo(new PointerType(inst.Type), this);
 				return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
 					.WithILInstruction(inst)
-					.WithRR(new ResolveResult(type));
+					.WithRR(new ResolveResult(inst.Type));
 			}
 		}
 
@@ -455,17 +425,16 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
-			var type = cecilMapper.GetType(inst.Type);
 			TranslatedExpression result;
-			if (target.Type.Equals(new ByReferenceType(type)) && target.Expression is DirectionExpression) {
+			if (target.Type.Equals(new ByReferenceType(inst.Type)) && target.Expression is DirectionExpression) {
 				// we can deference the managed reference by stripping away the 'ref'
 				result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 			} else {
 				// Cast pointer type if necessary:
-				target = target.ConvertTo(new PointerType(type), this);
+				target = target.ConvertTo(new PointerType(inst.Type), this);
 				result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
 					.WithoutILInstruction()
-					.WithRR(new ResolveResult(type));
+					.WithRR(new ResolveResult(inst.Type));
 			}
 			return Assignment(result, value).WithILInstruction(inst);
 		}
@@ -479,7 +448,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return new CastExpression(ConvertType(inst.Type), arg.Expression)
 				.WithILInstruction(inst)
-				.WithRR(new ConversionResolveResult(cecilMapper.GetType(inst.Type), arg.ResolveResult, Conversion.UnboxingConversion));
+				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.UnboxingConversion));
 		}
 
 		protected override TranslatedExpression Default(ILInstruction inst)

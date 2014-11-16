@@ -35,27 +35,9 @@ namespace ICSharpCode.Decompiler.CSharp
 {
 	public class CSharpDecompiler
 	{
-		CecilLoader cecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true };
-		Dictionary<IUnresolvedEntity, MemberReference> entityDict = new Dictionary<IUnresolvedEntity, MemberReference>();
-		NRefactoryCecilMapper cecilMapper;
-		ICompilation compilation;
+		readonly DecompilerTypeSystem typeSystem;
 		TypeSystemAstBuilder typeSystemAstBuilder;
-		List<IAstTransform> astTransforms = new List<IAstTransform> {
-			//new PushNegation(),
-			//new DelegateConstruction(context),
-			//new PatternStatementTransform(context),
-			new ReplaceMethodCallsWithOperators(),
-			new IntroduceUnsafeModifier(),
-			new AddCheckedBlocks(),
-			//new DeclareVariables(context), // should run after most transforms that modify statements
-			new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
-			//new DecimalConstantTransform(),
-			//new IntroduceUsingDeclarations(context),
-			//new IntroduceExtensionMethods(context), // must run after IntroduceUsingDeclarations
-			//new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
-			//new CombineQueryExpressions(context),
-			//new FlattenSwitchBlocks(),
-		};
+		List<IAstTransform> astTransforms;
 
 		public CancellationToken CancellationToken { get; set; }
 
@@ -65,52 +47,51 @@ namespace ICSharpCode.Decompiler.CSharp
 		public IList<IAstTransform> AstTransforms {
 			get { return astTransforms; }
 		}
-		
-		public CSharpDecompiler(ModuleDefinition module)
-		{
-			cecilLoader.OnEntityLoaded = (entity, mr) => {
-				// entityDict needs locking because the type system is multi-threaded and may be accessed externally
-				lock (entityDict)
-					entityDict[entity] = mr;
-			};
 
-			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(module);
-			var referencedAssemblies = new List<IUnresolvedAssembly>();
-			foreach (var asmRef in module.AssemblyReferences) {
-				var asm = module.AssemblyResolver.Resolve(asmRef);
-				if (asm != null)
-					referencedAssemblies.Add(cecilLoader.LoadAssembly(asm));
-			}
-			compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
-			cecilMapper = new NRefactoryCecilMapper(compilation, module, GetMemberReference);
+		public CSharpDecompiler(ModuleDefinition module)
+			: this(new DecompilerTypeSystem(module))
+		{
+		}
+
+		public CSharpDecompiler(DecompilerTypeSystem typeSystem)
+		{
+			if (typeSystem == null)
+				throw new ArgumentNullException("typeSystem");
+			this.typeSystem = typeSystem;
+
+			astTransforms = new List<IAstTransform> {
+				//new PushNegation(),
+				//new DelegateConstruction(context),
+				//new PatternStatementTransform(context),
+				new ReplaceMethodCallsWithOperators(),
+				new IntroduceUnsafeModifier(),
+				new AddCheckedBlocks(),
+				//new DeclareVariables(context), // should run after most transforms that modify statements
+				new ConvertConstructorCallIntoInitializer(typeSystem), // must run after DeclareVariables
+				//new DecimalConstantTransform(),
+				//new IntroduceUsingDeclarations(context),
+				//new IntroduceExtensionMethods(context), // must run after IntroduceUsingDeclarations
+				//new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
+				//new CombineQueryExpressions(context),
+				//new FlattenSwitchBlocks(),
+			};
 
 			typeSystemAstBuilder = new TypeSystemAstBuilder();
 			typeSystemAstBuilder.AlwaysUseShortTypeNames = true;
 			typeSystemAstBuilder.AddAnnotations = true;
 		}
 		
-		MemberReference GetMemberReference(IUnresolvedEntity member)
-		{
-			lock (entityDict) {
-				MemberReference mr;
-				if (member != null && entityDict.TryGetValue(member, out mr))
-					return mr;
-			}
-			return null;
-		}
-
 		void RunTransforms(AstNode rootNode)
 		{
-			var context = new TransformContext(compilation, cecilMapper);
 			foreach (var transform in astTransforms)
-				transform.Run(rootNode, context);
+				transform.Run(rootNode);
 			rootNode.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 		}
 		
 		public SyntaxTree DecompileWholeModuleAsSingleFile()
 		{
 			SyntaxTree syntaxTree = new SyntaxTree();
-			foreach (var g in compilation.MainAssembly.TopLevelTypeDefinitions.GroupBy(t => t.Namespace)) {
+			foreach (var g in typeSystem.Compilation.MainAssembly.TopLevelTypeDefinitions.GroupBy(t => t.Namespace)) {
 				AstNode groupNode;
 				if (string.IsNullOrEmpty(g.Key)) {
 					groupNode = syntaxTree;
@@ -135,7 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (typeDefinition == null)
 				throw new ArgumentNullException("typeDefinition");
-			ITypeDefinition typeDef = cecilMapper.GetType(typeDefinition).GetDefinition();
+			ITypeDefinition typeDef = typeSystem.GetType(typeDefinition).GetDefinition();
 			if (typeDef == null)
 				throw new InvalidOperationException("Could not find type definition in NR type system");
 			var decl = DoDecompile(typeDef);
@@ -152,7 +133,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return entityDecl;
 			}
 			foreach (var method in typeDef.Methods) {
-				var methodDef = cecilMapper.GetCecil(method) as MethodDefinition;
+				var methodDef = typeSystem.GetCecil(method) as MethodDefinition;
 				if (methodDef != null) {
 					var memberDecl = DoDecompile(methodDef, method);
 					typeDecl.Members.Add(memberDecl);
@@ -165,7 +146,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (methodDefinition == null)
 				throw new ArgumentNullException("methodDefinition");
-			var method = cecilMapper.GetMethod(methodDefinition);
+			var method = typeSystem.GetMethod(methodDefinition);
 			if (method == null)
 				throw new InvalidOperationException("Could not find method in NR type system");
 			var decl = DoDecompile(methodDefinition, method);
@@ -177,19 +158,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var entityDecl = typeSystemAstBuilder.ConvertEntity(method);
 			if (methodDefinition.HasBody) {
-				var ilReader = new ILReader();
+				var ilReader = new ILReader(typeSystem);
 				var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
 				function.CheckInvariant();
 				function.Body = function.Body.AcceptVisitor(new TransformingVisitor());
 				function.CheckInvariant();
-				var statementBuilder = new StatementBuilder(method, cecilMapper);
+				var statementBuilder = new StatementBuilder(method);
 				var body = statementBuilder.ConvertAsBlock(function.Body);
 				
 				// insert variables at start of body
 				Statement prevVarDecl = null;
 				foreach (var v in function.Variables) {
 					if (v.Kind == VariableKind.Local) {
-						var type = typeSystemAstBuilder.ConvertType(cecilMapper.GetType(v.Type));
+						var type = typeSystemAstBuilder.ConvertType(v.Type);
 						var varDecl = new VariableDeclarationStatement(type, v.Name);
 						body.Statements.InsertAfter(prevVarDecl, varDecl);
 						prevVarDecl = varDecl;

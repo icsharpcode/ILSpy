@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// Replaces method calls with the appropriate operator expressions.
 	/// Also simplifies "x = x op y" into "x op= y" where possible.
 	/// </summary>
-	public class ReplaceMethodCallsWithOperators : DepthFirstAstVisitor<object, object>, IAstTransform
+	public class ReplaceMethodCallsWithOperators : DepthFirstAstVisitor, IAstTransform
 	{
 		static readonly MemberReferenceExpression typeHandleOnTypeOfPattern = new MemberReferenceExpression {
 			Target = new Choice {
@@ -41,11 +41,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			MemberName = "TypeHandle"
 		};
 		
-		public override object VisitInvocationExpression(InvocationExpression invocationExpression, object data)
+		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
-			base.VisitInvocationExpression(invocationExpression, data);
+			base.VisitInvocationExpression(invocationExpression);
 			ProcessInvocationExpression(invocationExpression);
-			return null;
 		}
 
 		internal static void ProcessInvocationExpression(InvocationExpression invocationExpression)
@@ -232,9 +231,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		public override object VisitAssignmentExpression(AssignmentExpression assignment, object data)
+		public override void VisitAssignmentExpression(AssignmentExpression assignment)
 		{
-			base.VisitAssignmentExpression(assignment, data);
+			base.VisitAssignmentExpression(assignment);
 			// Combine "x = x op y" into "x op= y"
 			BinaryOperatorExpression binary = assignment.Right as BinaryOperatorExpression;
 			if (binary != null && assignment.Operator == AssignmentOperatorType.Assign) {
@@ -265,7 +264,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 			}
-			return null;
 		}
 		
 		public static AssignmentOperatorType GetAssignmentOperatorForBinaryOperator(BinaryOperatorType bop)
@@ -330,9 +328,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return new SimpleType(parameterType.Name);
 		}
 		
-		public override object VisitCastExpression(CastExpression castExpression, object data)
+		public override void VisitCastExpression(CastExpression castExpression)
 		{
-			base.VisitCastExpression(castExpression, data);
+			base.VisitCastExpression(castExpression);
 			// Handle methodof
 			Match m = getMethodOrConstructorFromHandlePattern.Match(castExpression);
 			if (m.Success) {
@@ -345,12 +343,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				castExpression.ReplaceWith(m.Get<AstNode>("ldtokenNode").Single());
 			}
-			return null;
 		}
 		
-		void IAstTransform.Run(AstNode node, TransformContext context)
+		void IAstTransform.Run(AstNode node)
 		{
-			node.AcceptVisitor(this, null);
+			node.AcceptVisitor(this);
 		}
 	}
 }

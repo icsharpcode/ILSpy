@@ -63,7 +63,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static string DecompileCSharp(string assemblyFileName)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(AssemblyDefinition.ReadAssembly(assemblyFileName).MainModule);
+			var typeSystem = new DecompilerTypeSystem(ModuleDefinition.ReadModule(assemblyFileName));
+			CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem);
 			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
 			new Helpers.RemoveCompilerAttribute().Run(syntaxTree);
 			

@@ -133,22 +133,22 @@
 		
 		new OpCode("ldfld", "Load instance field",
 			CustomClassName("LdFld"), CustomArguments("target"), MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow,
-			HasFieldOperand, ResultType("field.FieldType.GetStackType()")),
+			HasFieldOperand, ResultType("field.Type.GetStackType()")),
 		new OpCode("ldflda", "Load address of instance field",
 			CustomClassName("LdFlda"), CustomArguments("target"), MayThrow, HasFieldOperand, ResultType("Ref")),
 		new OpCode("stfld", "Store value to instance field",
 			CustomClassName("StFld"), CustomArguments("target", "value"),
 			MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, HasFieldOperand,
-			ResultType("field.FieldType.GetStackType()")),
+			ResultType("field.Type.GetStackType()")),
 		new OpCode("ldsfld", "Load static field",
 			CustomClassName("LdsFld"), NoArguments, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix,
-			HasFieldOperand, ResultType("field.FieldType.GetStackType()")),
+			HasFieldOperand, ResultType("field.Type.GetStackType()")),
 		new OpCode("ldsflda", "Load static field address",
 			CustomClassName("LdsFlda"), NoArguments, ResultType("Ref"), HasFieldOperand),
 		new OpCode("stsfld", "Store value to static field",
 			CustomClassName("StsFld"), CustomArguments("value"),
 			MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, HasFieldOperand,
-			ResultType("field.FieldType.GetStackType()")),
+			ResultType("field.Type.GetStackType()")),
 
 		new OpCode("castclass", "Casts an object to a class.",
 			CustomClassName("CastClass"), Unary, HasTypeOperand, MayThrow, ResultType("type.GetStackType()")),
@@ -190,7 +190,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using Mono.Cecil;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -631,7 +631,7 @@ namespace ICSharpCode.Decompiler.IL
 	// Call trait: the instruction performs a method call
 	static Action<OpCode> Call = opCode => {
 		opCode.BaseClass = "CallInstruction";
-		opCode.ConstructorParameters.Add("MethodReference method");
+		opCode.ConstructorParameters.Add("IMethod method");
 		opCode.BaseConstructorArguments.Add("method");
 	};
 
@@ -649,44 +649,44 @@ namespace ICSharpCode.Decompiler.IL
 	};
 	
 	static Action<OpCode> HasFieldOperand = opCode => {
-		opCode.ConstructorParameters.Add("FieldReference field");
-		opCode.Members.Add("readonly FieldReference field;");
+		opCode.ConstructorParameters.Add("IField field");
+		opCode.Members.Add("readonly IField field;");
 		opCode.ConstructorBody.Add("this.field = field;");
 		opCode.Members.Add("/// <summary>Returns the field operand.</summary>" + Environment.NewLine
-						+ "public FieldReference Field { get { return field; } }");
+						+ "public IField Field { get { return field; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, field);");
 	};
 
 	static Action<OpCode> HasTypeOperand = opCode => {
-		opCode.ConstructorParameters.Add("TypeReference type");
-		opCode.Members.Add("readonly TypeReference type;");
+		opCode.ConstructorParameters.Add("IType type");
+		opCode.Members.Add("readonly IType type;");
 		opCode.ConstructorBody.Add("this.type = type;");
 		opCode.Members.Add("/// <summary>Returns the type operand.</summary>" + Environment.NewLine
-						+ "public TypeReference Type { get { return type; } }");
+						+ "public IType Type { get { return type; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, type);");
 	};
 
 	static Action<OpCode> HasMethodOperand = opCode => {
-		opCode.ConstructorParameters.Add("MethodReference method");
-		opCode.Members.Add("readonly MethodReference method;");
+		opCode.ConstructorParameters.Add("IMethod method");
+		opCode.Members.Add("readonly IMethod method;");
 		opCode.ConstructorBody.Add("this.method = method;");
 		opCode.Members.Add("/// <summary>Returns the method operand.</summary>" + Environment.NewLine
-						+ "public MethodReference Method { get { return method; } }");
+						+ "public IMethod Method { get { return method; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, method);");
 	};
 	
 	static Action<OpCode> HasTokenOperand = opCode => {
-		opCode.ConstructorParameters.Add("MemberReference member");
-		opCode.Members.Add("readonly MemberReference member;");
+		opCode.ConstructorParameters.Add("Mono.Cecil.MemberReference member");
+		opCode.Members.Add("readonly Mono.Cecil.MemberReference member;");
 		opCode.ConstructorBody.Add("this.member = member;");
 		opCode.Members.Add("/// <summary>Returns the token operand.</summary>" + Environment.NewLine
-						+ "public MemberReference Member { get { return member; } }");
+						+ "public Mono.Cecil.MemberReference Member { get { return member; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, member);");

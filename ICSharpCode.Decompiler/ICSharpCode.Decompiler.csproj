@@ -64,7 +64,6 @@
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\TranslatedExpression.cs" />
-    <Compile Include="CSharp\NRefactoryCecilMapper.cs" />
     <Compile Include="CSharp\CSharpDecompiler.cs" />
     <Compile Include="CSharp\ExpressionBuilder.cs" />
     <Compile Include="CSharp\NRefactoryExtensions.cs" />
@@ -75,6 +74,7 @@
     <Compile Include="CSharp\Transforms\IAstTransform.cs" />
     <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
+    <Compile Include="DecompilerTypeSystem.cs" />
     <Compile Include="IL\Instructions.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
