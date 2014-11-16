@@ -391,18 +391,42 @@ namespace ICSharpCode.Decompiler.CSharp
 				var parameter = inst.Method.Parameters[i - firstParamIndex];
 				arguments[i] = arguments[i].ConvertTo(parameter.Type, this);
 			}
+
 			var argumentResolveResults = arguments.Skip(firstParamIndex).Select(arg => arg.ResolveResult).ToList();
+
+			ResolveResult rr;
+			if (inst.Method.IsAccessor)
+				rr = new MemberResolveResult(target.ResolveResult, inst.Method.AccessorOwner);
+			else
+				rr = new CSharpInvocationResolveResult(target.ResolveResult, inst.Method, argumentResolveResults);
 			
-			var rr = new CSharpInvocationResolveResult(target.ResolveResult, inst.Method, argumentResolveResults);
-			
-			var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression);
+			var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression).ToList();
 			if (inst.OpCode == OpCode.NewObj) {
 				return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), argumentExpressions)
 					.WithILInstruction(inst).WithRR(rr);
 			} else {
-				var mre = new MemberReferenceExpression(target.Expression, inst.Method.Name);
-				return new InvocationExpression(mre, argumentExpressions)
-					.WithILInstruction(inst).WithRR(rr);
+				Expression expr;
+				IMethod method = inst.Method;
+				if (method.IsAccessor) {
+					if (method.ReturnType.IsKnownType(KnownTypeCode.Void)) {
+						var value = argumentExpressions.Last();
+						argumentExpressions.Remove(value);
+						if (argumentExpressions.Count == 0)
+							expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
+						else
+							expr = new IndexerExpression(target.Expression, argumentExpressions);
+						expr = new AssignmentExpression(expr, value);
+					} else {
+						if (argumentExpressions.Count == 0)
+							expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
+						else
+							expr = new IndexerExpression(target.Expression, argumentExpressions);
+					}
+				} else {
+					var mre = new MemberReferenceExpression(target.Expression, inst.Method.Name);
+					expr = new InvocationExpression(mre, argumentExpressions);
+				}
+				return expr.WithILInstruction(inst).WithRR(rr);
 			}
 		}
 		
