@@ -94,6 +94,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return expr.WithRR(new ResolveResult(variable.Type));
 		}
+
+		ExpressionWithResolveResult ConvertField(IField field)
+		{
+			Expression expr = new IdentifierExpression(field.Name);
+			return expr.WithRR(new ResolveResult(field.ReturnType));
+		}
 		
 		TranslatedExpression IsType(IsInst inst)
 		{
@@ -464,6 +470,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(inst.Type));
 			}
 			return Assignment(result, value).WithILInstruction(inst);
+		}
+
+		protected internal override TranslatedExpression VisitLdFld(LdFld inst)
+		{
+			return ConvertField(inst.Field).WithILInstruction(inst);
+		}
+
+		protected internal override TranslatedExpression VisitStFld(StFld inst)
+		{
+			return Assignment(ConvertField(inst.Field).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
 		}
 
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst)
