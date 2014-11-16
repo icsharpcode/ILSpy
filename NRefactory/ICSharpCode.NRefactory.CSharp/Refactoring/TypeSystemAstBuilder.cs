@@ -77,7 +77,13 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 		/// Specifies whether the ast builder should add annotations to type references.
 		/// The default value is <c>false</c>.
 		/// </summary>
-		public bool AddAnnotations { get; set; }
+		public bool AddTypeReferenceAnnotations { get; set; }
+		
+		/// <summary>
+		/// Specifies whether the ast builder should add ResolveResult annotations to AST nodes.
+		/// The default value is <c>false</c>.
+		/// </summary>
+		public bool AddResolveResultAnnotations { get; set; }
 		
 		/// <summary>
 		/// Controls the accessibility modifiers are shown.
@@ -159,8 +165,10 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			if (type == null)
 				throw new ArgumentNullException("type");
 			AstType astType = ConvertTypeHelper(type);
-			if (AddAnnotations)
+			if (AddTypeReferenceAnnotations)
 				astType.AddAnnotation(type);
+			if (AddResolveResultAnnotations)
+				astType.AddAnnotation(new TypeResolveResult(type));
 			return astType;
 		}
 		
@@ -417,7 +425,10 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			}
 			
 			if (rr is TypeOfResolveResult) {
-				return new TypeOfExpression(ConvertType(rr.Type));
+				var expr = new TypeOfExpression(ConvertType(rr.Type));
+				if (AddResolveResultAnnotations)
+					expr.AddAnnotation(rr);
+				return expr;
 			} else if (rr is ArrayCreateResolveResult) {
 				ArrayCreateResolveResult acrr = (ArrayCreateResolveResult)rr;
 				ArrayCreateExpression ace = new ArrayCreateExpression();
@@ -438,6 +449,8 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 					initializer.Elements.AddRange(acrr.InitializerElements.Select(ConvertConstantValue));
 					ace.Initializer = initializer;
 				}
+				if (AddResolveResultAnnotations)
+					ace.AddAnnotation(rr);
 				return ace;
 			} else if (rr.IsCompileTimeConstant) {
 				return ConvertConstantValue(rr.Type, rr.ConstantValue);
@@ -451,10 +464,17 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			if (type == null)
 				throw new ArgumentNullException("type");
 			if (constantValue == null) {
-				if (type.IsReferenceType == true)
-					return new NullReferenceExpression();
-				else
-					return new DefaultValueExpression(ConvertType(type));
+				if (type.IsReferenceType == true) {
+					var expr = new NullReferenceExpression();
+					if (AddResolveResultAnnotations)
+						expr.AddAnnotation(new ConstantResolveResult(SpecialType.NullType, null));
+					return expr;
+				} else {
+					var expr = new DefaultValueExpression(ConvertType(type));
+					if (AddResolveResultAnnotations)
+						expr.AddAnnotation(new ConstantResolveResult(type, null));
+					return expr;
+				}
 			} else if (type.Kind == TypeKind.Enum) {
 				return ConvertEnumValue(type, (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false));
 			} else {

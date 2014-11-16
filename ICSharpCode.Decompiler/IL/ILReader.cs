@@ -93,21 +93,21 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var token = ReadMetadataToken(ref reader);
 			var typeReference = body.LookupToken(token) as TypeReference;
-			return typeSystem.GetType(typeReference);
+			return typeSystem.Resolve(typeReference);
 		}
 
 		IMethod ReadAndDecodeMethodReference()
 		{
 			var token = ReadMetadataToken(ref reader);
 			var methodReference = body.LookupToken(token) as MethodReference;
-			return typeSystem.GetMethod(methodReference);
+			return typeSystem.Resolve(methodReference);
 		}
 
 		IField ReadAndDecodeFieldReference()
 		{
 			var token = ReadMetadataToken(ref reader);
 			var fieldReference = body.LookupToken(token) as FieldReference;
-			return typeSystem.GetField(fieldReference);
+			return typeSystem.Resolve(fieldReference);
 		}
 
 		void InitParameterVariables()
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILVariable CreateILVariable(Cil.VariableDefinition v)
 		{
-			var ilVar = new ILVariable(VariableKind.Local, typeSystem.GetType(v.VariableType), v.Index);
+			var ilVar = new ILVariable(VariableKind.Local, typeSystem.Resolve(v.VariableType), v.Index);
 			if (string.IsNullOrEmpty(v.Name))
 				ilVar.Name = "V_" + v.Index;
 			else
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILVariable CreateILVariable(ParameterDefinition p)
 		{
 			var variableKind = p.Index == -1 ? VariableKind.This : VariableKind.Parameter;
-			var ilVar = new ILVariable(variableKind, typeSystem.GetType(p.ParameterType), p.Index);
+			var ilVar = new ILVariable(variableKind, typeSystem.Resolve(p.ParameterType), p.Index);
 			ilVar.StoreCount = 1; // count the initial store when the method is called with an argument
 			if (variableKind == VariableKind.This)
 				ilVar.Name = "this";

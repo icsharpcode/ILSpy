@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2014 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,14 +17,37 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Threading;
-using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.NRefactory.CSharp.Resolver;
 using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
-	public interface IAstTransform
+	/// <summary>
+	/// Parameters for IAstTransform.
+	/// </summary>
+	public class TransformContext
 	{
-		void Run(AstNode rootNode, TransformContext context);
+		public readonly DecompilerTypeSystem TypeSystem;
+		readonly ITypeResolveContext decompilationContext;
+		
+		/// <summary>
+		/// Returns the member that is being decompiled; or null if a whole type or assembly is being decompiled.
+		/// </summary>
+		public IMember DecompiledMember {
+			get { return decompilationContext.CurrentMember; }
+		}
+		
+		/// <summary>
+		/// Returns the type definition that is being decompiled; or null if an assembly is being decompiled.
+		/// </summary>
+		public ITypeDefinition DecompiledTypeDefinition {
+			get { return decompilationContext.CurrentTypeDefinition; }
+		}
+		
+		internal TransformContext(DecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext)
+		{
+			this.TypeSystem = typeSystem;
+			this.decompilationContext = decompilationContext;
+		}
 	}
 }

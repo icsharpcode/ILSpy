@@ -56,13 +56,15 @@ namespace ICSharpCode.Decompiler
 			context = new SimpleTypeResolveContext(compilation.MainAssembly);
 		}
 
-		public ICompilation Compilation
-		{
+		public ICompilation Compilation {
 			get { return compilation; }
 		}
+		
+		public IAssembly MainAssembly {
+			get { return compilation.MainAssembly; }
+		}
 
-		public ModuleDefinition ModuleDefinition
-		{
+		public ModuleDefinition ModuleDefinition {
 			get { return moduleDefinition; }
 		}
 
@@ -113,7 +115,7 @@ namespace ICSharpCode.Decompiler
 		/// <summary>
 		/// Retrieves a type definition for a type defined in the compilation's main assembly.
 		/// </summary>
-		public IType GetType(TypeReference typeReference)
+		public IType Resolve(TypeReference typeReference)
 		{
 			if (typeReference == null)
 				return SpecialType.UnknownType;
@@ -125,7 +127,7 @@ namespace ICSharpCode.Decompiler
 		#endregion
 
 		#region Resolve Field
-		public IField GetField(FieldReference fieldReference)
+		public IField Resolve(FieldReference fieldReference)
 		{
 			if (fieldReference == null)
 				throw new ArgumentNullException("fieldReference");
@@ -135,7 +137,7 @@ namespace ICSharpCode.Decompiler
 					field = FindNonGenericField(fieldReference);
 					if (fieldReference.DeclaringType.IsGenericInstance) {
 						var git = (GenericInstanceType)fieldReference.DeclaringType;
-						var typeArguments = git.GenericArguments.SelectArray(GetType);
+						var typeArguments = git.GenericArguments.SelectArray(Resolve);
 						field = (IField)field.Specialize(new TypeParameterSubstitution(typeArguments, null));
 					}
 					fieldLookupCache.Add(fieldReference, field);
@@ -146,7 +148,7 @@ namespace ICSharpCode.Decompiler
 
 		IField FindNonGenericField(FieldReference fieldReference)
 		{
-			ITypeDefinition typeDef = GetType(fieldReference.DeclaringType).GetDefinition();
+			ITypeDefinition typeDef = Resolve(fieldReference.DeclaringType).GetDefinition();
 			if (typeDef == null)
 				return CreateFakeField(fieldReference);
 			foreach (IField field in typeDef.Fields)
@@ -157,7 +159,7 @@ namespace ICSharpCode.Decompiler
 
 		IField CreateFakeField(FieldReference fieldReference)
 		{
-			var declaringType = GetType(fieldReference.DeclaringType);
+			var declaringType = Resolve(fieldReference.DeclaringType);
 			var f = new DefaultUnresolvedField();
 			f.Name = fieldReference.Name;
 			f.ReturnType = typeReferenceCecilLoader.ReadTypeReference(fieldReference.FieldType);
@@ -182,7 +184,7 @@ namespace ICSharpCode.Decompiler
 		#endregion
 
 		#region Resolve Method
-		public IMethod GetMethod(MethodReference methodReference)
+		public IMethod Resolve(MethodReference methodReference)
 		{
 			if (methodReference == null)
 				throw new ArgumentNullException("methodReference");
@@ -195,11 +197,11 @@ namespace ICSharpCode.Decompiler
 						IList<IType> methodTypeArguments = null;
 						if (methodReference.IsGenericInstance) {
 							var gim = ((GenericInstanceMethod)methodReference);
-							methodTypeArguments = gim.GenericArguments.SelectArray(GetType);
+							methodTypeArguments = gim.GenericArguments.SelectArray(Resolve);
 						}
 						if (methodReference.DeclaringType.IsGenericInstance) {
 							var git = (GenericInstanceType)methodReference.DeclaringType;
-							classTypeArguments = git.GenericArguments.SelectArray(GetType);
+							classTypeArguments = git.GenericArguments.SelectArray(Resolve);
 						}
 						method = method.Specialize(new TypeParameterSubstitution(classTypeArguments, methodTypeArguments));
 					}
@@ -211,7 +213,7 @@ namespace ICSharpCode.Decompiler
 
 		IMethod FindNonGenericMethod(MethodReference methodReference)
 		{
-			ITypeDefinition typeDef = GetType(methodReference.DeclaringType).GetDefinition();
+			ITypeDefinition typeDef = Resolve(methodReference.DeclaringType).GetDefinition();
 			if (typeDef == null)
 				return CreateFakeMethod(methodReference);
 			IEnumerable<IMethod> methods;
@@ -227,7 +229,7 @@ namespace ICSharpCode.Decompiler
 				if (GetCecil(method) == methodReference)
 					return method;
 			}
-			var parameterTypes = methodReference.Parameters.SelectArray(p => GetType(p.ParameterType));
+			var parameterTypes = methodReference.Parameters.SelectArray(p => Resolve(p.ParameterType));
 			foreach (var method in methods) {
 				if (CompareSignatures(method.Parameters, parameterTypes))
 					return method;

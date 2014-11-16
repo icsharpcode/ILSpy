@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.TypeSystem;
@@ -32,10 +33,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly ExpressionBuilder exprBuilder;
 		readonly IMethod currentMethod;
 		
-		public StatementBuilder(IMethod method)
+		public StatementBuilder(ITypeResolveContext decompilationContext)
 		{
-			this.exprBuilder = new ExpressionBuilder(method.Compilation);
-			this.currentMethod = method;
+			Debug.Assert(decompilationContext != null && decompilationContext.CurrentMember is IMethod);
+			this.exprBuilder = new ExpressionBuilder(decompilationContext);
+			this.currentMethod = (IMethod)decompilationContext.CurrentMember;
 		}
 		
 		public Statement Convert(ILInstruction inst)

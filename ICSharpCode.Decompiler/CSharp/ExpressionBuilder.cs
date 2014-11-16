@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
+using ICSharpCode.NRefactory.CSharp.TypeSystem;
 using ExpressionType = System.Linq.Expressions.ExpressionType;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
 using ICSharpCode.NRefactory.CSharp.Resolver;
@@ -41,12 +42,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly CSharpResolver resolver;
 		internal readonly TypeSystemAstBuilder astBuilder;
 		
-		public ExpressionBuilder(ICompilation compilation)
+		public ExpressionBuilder(ITypeResolveContext decompilationContext)
 		{
-			Debug.Assert(compilation != null);
-			this.compilation = compilation;
-			this.resolver = new CSharpResolver(compilation);
+			Debug.Assert(decompilationContext != null);
+			this.compilation = decompilationContext.Compilation;
+			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainAssembly, null, decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
 			this.astBuilder = new TypeSystemAstBuilder(resolver);
+			this.astBuilder.AlwaysUseShortTypeNames = true;
+			this.astBuilder.AddResolveResultAnnotations = true;
 		}
 
 		public AstType ConvertType(IType type)
@@ -145,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return new NullReferenceExpression()
 				.WithILInstruction(inst)
-				.WithRR(new ConstantResolveResult(SpecialType.UnknownType, null));
+				.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
 		}
 		
 		protected internal override TranslatedExpression VisitLogicNot(LogicNot inst)

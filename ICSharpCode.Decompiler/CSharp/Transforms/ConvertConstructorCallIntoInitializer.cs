@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
@@ -30,17 +31,31 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// If the first element of a constructor is a chained constructor call, convert it into a constructor initializer.
 	/// </summary>
-	public class ConvertConstructorCallIntoInitializer : DepthFirstAstVisitor, IAstTransform
+	public class ConvertConstructorCallIntoInitializer : IAstTransform
 	{
-		readonly DecompilerTypeSystem typeSystem;
-
-		public ConvertConstructorCallIntoInitializer(DecompilerTypeSystem typeSystem)
+		public void Run(AstNode node, TransformContext context)
 		{
-			if (typeSystem == null)
-				throw new ArgumentNullException("typeSystem");
-			this.typeSystem = typeSystem;
+			var visitor = new ConvertConstructorCallIntoInitializerVisitor(context);
+			
+			// If we're viewing some set of members (fields are direct children of SyntaxTree),
+			// we also need to handle those:
+			visitor.HandleInstanceFieldInitializers(node.Children);
+			visitor.HandleStaticFieldInitializers(node.Children);
+			
+			node.AcceptVisitor(visitor);
 		}
-
+	}
+	
+	sealed class ConvertConstructorCallIntoInitializerVisitor : DepthFirstAstVisitor
+	{
+		readonly TransformContext context;
+		
+		public ConvertConstructorCallIntoInitializerVisitor(TransformContext context)
+		{
+			Debug.Assert(context != null);
+			this.context = context;
+		}
+		
 		public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
 		{
 			ExpressionStatement stmt = constructorDeclaration.Body.Statements.FirstOrDefault() as ExpressionStatement;
@@ -96,7 +111,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			HandleStaticFieldInitializers(typeDeclaration.Members);
 		}
 		
-		void HandleInstanceFieldInitializers(IEnumerable<AstNode> members)
+		internal void HandleInstanceFieldInitializers(IEnumerable<AstNode> members)
 		{
 			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			var instanceCtorsNotChainingWithThis = instanceCtors.Where(ctor => !thisCallPattern.IsMatch(ctor.Body.Statements.FirstOrDefault())).ToArray();
@@ -150,13 +165,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		void HandleStaticFieldInitializers(IEnumerable<AstNode> members)
+		internal void HandleStaticFieldInitializers(IEnumerable<AstNode> members)
 		{
 			// Translate static constructor into field initializers if the class is BeforeFieldInit
 			var staticCtor = members.OfType<ConstructorDeclaration>().FirstOrDefault(c => (c.Modifiers & Modifiers.Static) == Modifiers.Static);
 			if (staticCtor != null) {
 				IMethod ctorMethod = staticCtor.GetSymbol() as IMethod;
-				MethodDefinition ctorMethodDef = typeSystem.GetCecil(ctorMethod) as MethodDefinition;
+				MethodDefinition ctorMethodDef = context.TypeSystem.GetCecil(ctorMethod) as MethodDefinition;
 				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsBeforeFieldInit) {
 					while (true) {
 						ExpressionStatement es = staticCtor.Body.Statements.FirstOrDefault() as ExpressionStatement;
@@ -178,16 +193,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						staticCtor.Remove();
 				}
 			}
-		}
-		
-		public void Run(AstNode node)
-		{
-			// If we're viewing some set of members (fields are direct children of CompilationUnit),
-			// we also need to handle those:
-			HandleInstanceFieldInitializers(node.Children);
-			HandleStaticFieldInitializers(node.Children);
-			
-			node.AcceptVisitor(this);
 		}
 	}
 }

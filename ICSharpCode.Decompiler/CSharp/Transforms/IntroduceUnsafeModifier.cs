@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		sealed class PointerArithmetic {}
 		
-		public void Run(AstNode compilationUnit)
+		public void Run(AstNode compilationUnit, TransformContext context)
 		{
 			compilationUnit.AcceptVisitor(this);
 		}

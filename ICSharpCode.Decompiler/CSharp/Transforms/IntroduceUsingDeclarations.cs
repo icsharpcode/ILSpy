@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.NRefactory.CSharp;
-using Mono.Cecil;
+using ICSharpCode.NRefactory.Semantics;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -29,25 +29,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class IntroduceUsingDeclarations : IAstTransform
 	{
-		DecompilerContext context;
+		public bool FullyQualifyAmbiguousTypeNames = true;
 		
-		public IntroduceUsingDeclarations(DecompilerContext context)
+		public void Run(AstNode compilationUnit, TransformContext context)
 		{
-			this.context = context;
-		}
-		
-		public void Run(AstNode compilationUnit)
-		{
-			if (!context.Settings.UsingDeclarations)
-				return;
-			
 			// First determine all the namespaces that need to be imported:
-			compilationUnit.AcceptVisitor(new FindRequiredImports(this), null);
+			var requiredImports = new FindRequiredImports(context);
+			compilationUnit.AcceptVisitor(requiredImports);
 			
-			importedNamespaces.Add("System"); // always import System, even when not necessary
+			requiredImports.ImportedNamespaces.Add("System"); // always import System, even when not necessary
 			
 			// Now add using declarations for those namespaces:
-			foreach (string ns in importedNamespaces.OrderByDescending(n => n)) {
+			foreach (string ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n)) {
 				// we go backwards (OrderByDescending) through the list of namespaces because we insert them backwards
 				// (always inserting at the start of the list)
 				string[] parts = ns.Split('.');
@@ -58,9 +51,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				compilationUnit.InsertChildAfter(null, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
 			}
 			
-			if (!context.Settings.FullyQualifyAmbiguousTypeNames)
+			if (!FullyQualifyAmbiguousTypeNames)
 				return;
-			
+
+			/*
 			FindAmbiguousTypeNames(context.CurrentModule, internalsVisible: true);
 			foreach (AssemblyNameReference r in context.CurrentModule.AssemblyReferences) {
 				AssemblyDefinition d = context.CurrentModule.AssemblyResolver.Resolve(r);
@@ -69,25 +63,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			
 			// verify that the SimpleTypes refer to the correct type (no ambiguities)
-			compilationUnit.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(this), null);
+			compilationUnit.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(this), null);*/
 		}
 		
-		readonly HashSet<string> declaredNamespaces = new HashSet<string>() { string.Empty };
-		readonly HashSet<string> importedNamespaces = new HashSet<string>();
 		
 		// Note that we store type names with `n suffix, so we automatically disambiguate based on number of type parameters.
-		readonly HashSet<string> availableTypeNames = new HashSet<string>();
-		readonly HashSet<string> ambiguousTypeNames = new HashSet<string>();
+		//readonly HashSet<string> availableTypeNames = new HashSet<string>();
+		//readonly HashSet<string> ambiguousTypeNames = new HashSet<string>();
 		
-		sealed class FindRequiredImports : DepthFirstAstVisitor<object, object>
+		sealed class FindRequiredImports : DepthFirstAstVisitor
 		{
-			readonly IntroduceUsingDeclarations transform;
 			string currentNamespace;
+
+			public readonly HashSet<string> DeclaredNamespaces = new HashSet<string>() { string.Empty };
+			public readonly HashSet<string> ImportedNamespaces = new HashSet<string>();
 			
-			public FindRequiredImports(IntroduceUsingDeclarations transform)
+			public FindRequiredImports(TransformContext context)
 			{
-				this.transform = transform;
-				this.currentNamespace = transform.context.CurrentType != null ? transform.context.CurrentType.Namespace : string.Empty;
+				this.currentNamespace = context.DecompiledTypeDefinition != null ? context.DecompiledTypeDefinition.Namespace : string.Empty;
 			}
 			
 			bool IsParentOfCurrentNamespace(string ns)
@@ -103,28 +96,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			}
 			
-			public override object VisitSimpleType(SimpleType simpleType, object data)
+			public override void VisitSimpleType(SimpleType simpleType)
 			{
-				TypeReference tr = simpleType.Annotation<TypeReference>();
-				if (tr != null && !IsParentOfCurrentNamespace(tr.Namespace)) {
-					transform.importedNamespaces.Add(tr.Namespace);
+				var trr = simpleType.Annotation<TypeResolveResult>();
+				if (trr != null && !IsParentOfCurrentNamespace(trr.Type.Namespace)) {
+					ImportedNamespaces.Add(trr.Type.Namespace);
 				}
-				return base.VisitSimpleType(simpleType, data); // also visit type arguments
+				base.VisitSimpleType(simpleType); // also visit type arguments
 			}
 			
-			public override object VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration, object data)
+			public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 			{
 				string oldNamespace = currentNamespace;
-				foreach (Identifier ident in namespaceDeclaration.Identifiers) {
-					currentNamespace = NamespaceDeclaration.BuildQualifiedName(currentNamespace, ident.Name);
-					transform.declaredNamespaces.Add(currentNamespace);
+				foreach (string ident in namespaceDeclaration.Identifiers) {
+					currentNamespace = NamespaceDeclaration.BuildQualifiedName(currentNamespace, ident);
+					DeclaredNamespaces.Add(currentNamespace);
 				}
-				base.VisitNamespaceDeclaration(namespaceDeclaration, data);
+				base.VisitNamespaceDeclaration(namespaceDeclaration);
 				currentNamespace = oldNamespace;
-				return null;
 			}
 		}
 		
+		/*
 		void FindAmbiguousTypeNames(ModuleDefinition module, bool internalsVisible)
 		{
 			foreach (TypeDefinition type in module.Types) {
@@ -355,6 +348,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return false;
 				return transform.ambiguousTypeNames.Contains(name);
 			}
-		}
+		}*/
 	}
 }

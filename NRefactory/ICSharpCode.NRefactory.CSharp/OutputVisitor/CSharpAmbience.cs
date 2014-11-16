@@ -171,7 +171,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		TypeSystemAstBuilder CreateAstBuilder()
 		{
 			TypeSystemAstBuilder astBuilder = new TypeSystemAstBuilder();
-			astBuilder.AddAnnotations = true;
+			astBuilder.AddTypeReferenceAnnotations = true;
 			astBuilder.ShowModifiers = (ConversionFlags & ConversionFlags.ShowModifiers) == ConversionFlags.ShowModifiers;
 			astBuilder.ShowAccessibility = (ConversionFlags & ConversionFlags.ShowAccessibility) == ConversionFlags.ShowAccessibility;
 			astBuilder.AlwaysUseShortTypeNames = (ConversionFlags & ConversionFlags.UseFullyQualifiedTypeNames) != ConversionFlags.UseFullyQualifiedTypeNames;

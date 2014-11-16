@@ -194,7 +194,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else if (Type.Kind == TypeKind.Pointer) {
 				var nullRef = new NullReferenceExpression()
 					.WithoutILInstruction()
-					.WithRR(new ConstantResolveResult(this.Type, null));
+					.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
 				return new BinaryOperatorExpression(Expression, BinaryOperatorType.InEquality, nullRef.Expression)
 					.WithoutILInstruction()
 					.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,

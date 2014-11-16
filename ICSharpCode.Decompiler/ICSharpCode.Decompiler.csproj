@@ -63,6 +63,8 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
+    <Compile Include="CSharp\Transforms\IntroduceUsingDeclarations.cs" />
+    <Compile Include="CSharp\Transforms\TransformContext.cs" />
     <Compile Include="CSharp\TranslatedExpression.cs" />
     <Compile Include="CSharp\CSharpDecompiler.cs" />
     <Compile Include="CSharp\ExpressionBuilder.cs" />
