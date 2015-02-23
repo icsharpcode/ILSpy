@@ -88,24 +88,25 @@ Want to know when major new features are added? When a new stable version is rel
 
 Viewing IL (Build 199)
 
-[![Image](http://community.sharpdevelop.net/photos/christophwille/images/34590/500x375.aspx)](http://community.sharpdevelop.net/photos/christophwille/images/34590/original.aspx)
+[![Image](images/screenshots/build199_viewingil_small.jpg)](images/screenshots/build199_viewingil.png)
 
   
 Navigating Types (Build 199)
 
-[![Image](http://community.sharpdevelop.net/photos/christophwille/images/34591/500x375.aspx)](http://community.sharpdevelop.net/photos/christophwille/images/34591/original.aspx)
+[![Image](images/screenshots/build199_navigatingtypes_small.jpg)](images/screenshots/build199_navigatingtypes.png)
 
   
 Saving Resources (Build 199)
 
-[![Image](http://community.sharpdevelop.net/photos/christophwille/images/34592/500x375.aspx)](http://community.sharpdevelop.net/photos/christophwille/images/34592/original.aspx)
+[![Image](images/screenshots/build199_savingresources_small.jpg)](images/screenshots/build199_savingresources.png)
 
   
 Decompiling a Type to C# (Build 199)
 
-[![Image](http://community.sharpdevelop.net/photos/christophwille/images/34593/500x375.aspx)](http://community.sharpdevelop.net/photos/christophwille/images/34593/original.aspx)
+[![Image](images/screenshots/build199_decompilingtocsharp_small.jpg)](images/screenshots/build199_decompilingtocsharp.png)
 
   
 Decompiling method with 'yield return' (Build 528)
 
-[![Image](http://community.sharpdevelop.net/blogs/danielgrunwald/ILSpy%20-%20yield%20return.png)](http://community.sharpdevelop.net/blogs/danielgrunwald/ILSpy%20-%20yield%20return.png)
+[![Image](images/screenshots/build258_yieldreturn.png)](images/screenshots/build258_yieldreturn.png)
+
