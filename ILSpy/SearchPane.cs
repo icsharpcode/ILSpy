@@ -53,9 +53,12 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		
-		const int SearchMode_Type = 0;
-		const int SearchMode_Member = 1;
-		const int SearchMode_Literal = 2;
+		public enum SearchMode : int
+		{
+			Type = 0,
+			Member = 1,
+			Literal = 2,
+		}
 		
 		private SearchPane()
 		{
@@ -63,7 +66,7 @@ namespace ICSharpCode.ILSpy
 			searchModeComboBox.Items.Add(new { Image = Images.Class, Name = "Type" });
 			searchModeComboBox.Items.Add(new { Image = Images.Property, Name = "Member" });
 			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
-			searchModeComboBox.SelectedIndex = SearchMode_Type;
+			searchModeComboBox.SelectedIndex = (int)SearchMode.Type;
 			
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
 		}
@@ -127,7 +130,7 @@ namespace ICSharpCode.ILSpy
 				listBox.ItemsSource = null;
 			} else {
 				MainWindow mainWindow = MainWindow.Instance;
-				currentSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm, searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage);
+				currentSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm, (SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage);
 				listBox.ItemsSource = currentSearch.Results;
 				new Thread(currentSearch.Run).Start();
 			}
@@ -164,13 +167,13 @@ namespace ICSharpCode.ILSpy
 		{
 			base.OnKeyDown(e);
 			if (e.Key == Key.T && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
-				searchModeComboBox.SelectedIndex = SearchMode_Type;
+				searchModeComboBox.SelectedIndex = (int)SearchMode.Type;
 				e.Handled = true;
 			} else if (e.Key == Key.M && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
-				searchModeComboBox.SelectedIndex = SearchMode_Member;
+				searchModeComboBox.SelectedIndex = (int)SearchMode.Member;
 				e.Handled = true;
 			} else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
-				searchModeComboBox.SelectedIndex = SearchMode_Literal;
+				searchModeComboBox.SelectedIndex = (int)SearchMode.Literal;
 				e.Handled = true;
 			}
 		}
@@ -190,7 +193,7 @@ namespace ICSharpCode.ILSpy
 			readonly CancellationTokenSource cts = new CancellationTokenSource();
 			readonly LoadedAssembly[] assemblies;
 			readonly string[] searchTerm;
-			readonly int searchMode;
+			readonly SearchMode searchMode;
 			readonly Language language;
 			public readonly ObservableCollection<SearchResult> Results = new ObservableCollection<SearchResult>();
 			int resultCount;
@@ -198,7 +201,7 @@ namespace ICSharpCode.ILSpy
 			TypeCode searchTermLiteralType = TypeCode.Empty;
 			object searchTermLiteralValue;
 			
-			public RunningSearch(LoadedAssembly[] assemblies, string searchTerm, int searchMode, Language language)
+			public RunningSearch(LoadedAssembly[] assemblies, string searchTerm, SearchMode searchMode, Language language)
 			{
 				this.dispatcher = Dispatcher.CurrentDispatcher;
 				this.assemblies = assemblies;
@@ -217,7 +220,7 @@ namespace ICSharpCode.ILSpy
 			public void Run()
 			{
 				try {
-					if (searchMode == SearchMode_Literal) {
+					if (searchMode == SearchMode.Literal) {
 			      if (1 == searchTerm.Length)
 			      {
   						CSharpParser parser = new CSharpParser();
@@ -290,7 +293,7 @@ namespace ICSharpCode.ILSpy
 			
 			void PerformSearch(TypeDefinition type)
 			{
-				if (searchMode == SearchMode_Type && IsMatch(type.Name)) {
+				if (searchMode == SearchMode.Type && (IsMatch(type.Name) || IsMatch(type.FullName))) {
 					AddResult(new SearchResult {
 					          	Member = type,
 					          	Image = TypeTreeNode.GetIcon(type),
@@ -304,7 +307,7 @@ namespace ICSharpCode.ILSpy
 					PerformSearch(nestedType);
 				}
 				
-				if (searchMode == SearchMode_Type)
+				if (searchMode == SearchMode.Type)
 					return;
 				
 				foreach (FieldDefinition field in type.Fields) {
@@ -363,7 +366,7 @@ namespace ICSharpCode.ILSpy
 			
 			bool IsMatch(FieldDefinition field)
 			{
-				if (searchMode == SearchMode_Literal)
+				if (searchMode == SearchMode.Literal)
 					return IsLiteralMatch(field.Constant);
 				else
 					return IsMatch(field.Name);
@@ -371,7 +374,7 @@ namespace ICSharpCode.ILSpy
 			
 			bool IsMatch(PropertyDefinition property)
 			{
-				if (searchMode == SearchMode_Literal)
+				if (searchMode == SearchMode.Literal)
 					return MethodIsLiteralMatch(property.GetMethod) || MethodIsLiteralMatch(property.SetMethod);
 				else
 					return IsMatch(property.Name);
@@ -379,7 +382,7 @@ namespace ICSharpCode.ILSpy
 			
 			bool IsMatch(EventDefinition ev)
 			{
-				if (searchMode == SearchMode_Literal)
+				if (searchMode == SearchMode.Literal)
 					return MethodIsLiteralMatch(ev.AddMethod) || MethodIsLiteralMatch(ev.RemoveMethod) || MethodIsLiteralMatch(ev.InvokeMethod);
 				else
 					return IsMatch(ev.Name);
@@ -387,7 +390,7 @@ namespace ICSharpCode.ILSpy
 			
 			bool IsMatch(MethodDefinition m)
 			{
-				if (searchMode == SearchMode_Literal)
+				if (searchMode == SearchMode.Literal)
 					return MethodIsLiteralMatch(m);
 				else
 					return IsMatch(m.Name);
