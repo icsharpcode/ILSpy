@@ -675,7 +675,8 @@ namespace ICSharpCode.Decompiler.ILAst
 				List<ILExpression> args = expr.Arguments;
 				switch (expr.Code) {
 					case ILCode.Localloc:
-						args[0] = DivideBySize(args[0], ((PointerType)expr.InferredType).ElementType);
+						if (expr.InferredType is PointerType)
+							args[0] = DivideBySize(args[0], ((PointerType)expr.InferredType).ElementType);
 						break;
 					case ILCode.Add:
 					case ILCode.Add_Ovf:
