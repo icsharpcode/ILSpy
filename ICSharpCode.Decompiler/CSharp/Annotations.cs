@@ -57,6 +57,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
 		}
 		
+		public static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression, IEnumerable<ILInstruction> instructions)
+		{
+			foreach (var inst in instructions)
+				expression.Expression.AddAnnotation(inst);
+			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
+		}
+		
 		public static TranslatedExpression WithoutILInstruction(this ExpressionWithResolveResult expression)
 		{
 			return new TranslatedExpression(expression.Expression, expression.ResolveResult);

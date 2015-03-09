@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
-		internal readonly TypeSystemAstBuilder astBuilder;
+		readonly TypeSystemAstBuilder astBuilder;
 		
 		public ExpressionBuilder(ITypeResolveContext decompilationContext)
 		{
@@ -55,8 +55,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		public AstType ConvertType(IType type)
 		{
 			var astType = astBuilder.ConvertType(type);
-			astType.AddAnnotation(new TypeResolveResult(type));
+			Debug.Assert(astType.Annotation<TypeResolveResult>() != null);
 			return astType;
+		}
+		
+		public ExpressionWithResolveResult ConvertConstantValue(ResolveResult rr)
+		{
+			var expr = astBuilder.ConvertConstantValue(rr);
+			var exprRR = expr.Annotation<ResolveResult>();
+			if (exprRR == null) {
+				exprRR = rr;
+				expr.AddAnnotation(rr);
+			}
+			return new ExpressionWithResolveResult(expr, exprRR);
 		}
 		
 		public TranslatedExpression Translate(ILInstruction inst)

@@ -172,9 +172,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var rr = expressionBuilder.resolver.ResolveCast(targetType, ResolveResult);
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
-				return expressionBuilder.astBuilder.ConvertConstantValue(rr)
-					.WithILInstruction(this.ILInstructions)
-					.WithRR(rr);
+				return expressionBuilder.ConvertConstantValue(rr)
+					.WithILInstruction(this.ILInstructions);
 			}
 			return Expression.CastTo(expressionBuilder.ConvertType(targetType))
 				.WithoutILInstruction().WithRR(rr);
