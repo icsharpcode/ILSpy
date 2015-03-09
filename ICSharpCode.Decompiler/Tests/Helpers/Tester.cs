@@ -67,6 +67,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem);
 			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
 			new Helpers.RemoveCompilerAttribute().Run(syntaxTree);
+			new Helpers.EscapeGeneratedIdentifiers().Run(syntaxTree);
 			
 			StringWriter output = new StringWriter();
 			var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());

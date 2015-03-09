@@ -34,4 +34,32 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			node.AcceptVisitor(this, null);
 		}
 	}
+	
+	class EscapeGeneratedIdentifiers : DepthFirstAstVisitor<object, object>
+	{
+		bool IsValid(char ch)
+		{
+			if (char.IsLetterOrDigit(ch))
+				return true;
+			if (ch == '_')
+				return true;
+			return false;
+		}
+		
+		string ReplaceInvalid(string s)
+		{
+			return string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : string.Format("_{0:0000X}", (int)ch)));
+		}
+		
+		public override object VisitIdentifier(Identifier identifier, object data)
+		{
+			identifier.Name = ReplaceInvalid(identifier.Name);
+			return null;
+		}
+
+		public void Run(AstNode node)
+		{
+			node.AcceptVisitor(this, null);
+		}
+	}
 }
