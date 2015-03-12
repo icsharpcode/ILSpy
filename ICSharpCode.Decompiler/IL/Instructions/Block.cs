@@ -41,15 +41,8 @@ namespace ICSharpCode.Decompiler.IL
 	///   }
 	/// </code>
 	/// <para>
-	/// If the execution reaches the end of the block, one element is popped from the evaluation stack and
-	/// is used as the return value of the block.
-	/// This means it is impossible for a block to return void: any block with ResultType void must
-	/// perform an unconditional branch!
+	/// If the execution reaches the end of the block, the block returns the result value of the last instruction.
 	/// </para>
-	/// TODO: that seems like a bad idea for the purposes of goto-removal, I think we'll want
-	/// separate classes for void-blocks and inline-blocks.
-	/// Or maybe let blocks evaluate to the return value of their last instruction, and use a final pop()
-	/// instruction for inline-block semantics.
 	/// TODO: actually I think it's a good idea to implement a small ILAst interpreter
 	///    public virtual ILInstruction Phase1(InterpreterState state);
 	///    public virtual InterpreterResult ILInstruction Phase2(InterpreterState state);
@@ -77,15 +70,11 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override StackType ResultType {
 			get {
-				return StackType.Void;
+				if (Instructions.Count == 0)
+					return StackType.Void;
+				else
+					return Instructions.Last().ResultType;
 			}
-		}
-		
-		internal override void CheckInvariant()
-		{
-			base.CheckInvariant();
-			// if the end-point isn't unreachable, there's an implicit pop at the end of the block
-			Debug.Assert(this.HasFlag(InstructionFlags.EndPointUnreachable) || this.ResultType != StackType.Void);
 		}
 		
 		/// <summary>
@@ -156,10 +145,9 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			// an inline block has no phase-1 effects, so we're immediately done with inlining
-			finished = true;
 			return this;
 		}
 	}

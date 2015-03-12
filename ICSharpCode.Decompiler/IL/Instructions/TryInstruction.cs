@@ -38,10 +38,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			// Cannot inline into try instructions because moving code into the try block would change semantics
-			finished = false;
+			// Inlining into exception-handling constructs would be madness.
+			// To keep phase-1 execution semantics consistent with inlining, there's a
+			// phase-1-boundary around every try/catch/finally/fault block.
 			return this;
 		}
 	}
@@ -79,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			var flags = TryBlock.Flags;
+			var flags = Block.Phase1Boundary(TryBlock.Flags);
 			foreach (var handler in Handlers)
 				flags = IfInstruction.CombineFlags(flags, handler.Flags);
 			return flags;
@@ -117,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class TryCatchHandler
 	{
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			// should never happen as TryCatchHandler only appears within TryCatch instructions
 			throw new InvalidOperationException();
@@ -136,7 +137,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return Block.Phase1Boundary(filter.Flags | body.Flags);
+			return Block.Phase1Boundary(filter.Flags) | Block.Phase1Boundary(body.Flags);
 		}
 		
 		public override void WriteTo(ITextOutput output)
@@ -200,7 +201,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			// if the endpoint of either the try or the finally is unreachable, the endpoint of the try-finally will be unreachable
-			return TryBlock.Flags | finallyBlock.Flags;
+			return Block.Phase1Boundary(TryBlock.Flags) | Block.Phase1Boundary(finallyBlock.Flags);
 		}
 		
 		public override IEnumerable<ILInstruction> Children {
@@ -248,7 +249,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			// The endpoint of the try-fault is unreachable only if both endpoints are unreachable
-			return IfInstruction.CombineFlags(TryBlock.Flags, faultBlock.Flags);
+			return IfInstruction.CombineFlags(Block.Phase1Boundary(TryBlock.Flags), Block.Phase1Boundary(faultBlock.Flags));
 		}
 		
 		public override IEnumerable<ILInstruction> Children {

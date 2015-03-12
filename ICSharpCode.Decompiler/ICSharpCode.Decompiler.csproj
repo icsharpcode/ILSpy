@@ -100,6 +100,7 @@
     <Compile Include="IL\Instructions\SimpleInstruction.cs" />
     <Compile Include="IL\Instructions\TryInstruction.cs" />
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
+    <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\NRTypeExtensions.cs" />
     <Compile Include="IL\TransformingVisitor.cs" />
     <Compile Include="TypesHierarchyHelpers.cs" />

@@ -590,15 +590,12 @@ namespace ICSharpCode.Decompiler.IL
 			opCode.Members.Add(b.ToString());
 			if (generateInline) {
 				b = new StringBuilder();
-				b.AppendLine("internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)");
+				b.AppendLine("internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)");
 				b.AppendLine("{");
 				for (int i = children.Length - 1; i >= 0; i--) {
 					string arg = children[i].Name;
-					if (i < children.Length - 1) {
-						if (children[i].IsOptional)
-							b.AppendLine("\tif (finished && this." + arg + " != null)");
-						else
-							b.AppendLine("\tif (finished)");
+					if (children[i].IsOptional) {
+						b.AppendLine("\tif (this." + arg + " != null)");
 						b.Append("\t");
 					}
 					b.Append("\tthis." + MakeName(arg) + " = this." + arg + ".Inline(flagsBefore");
@@ -607,7 +604,7 @@ namespace ICSharpCode.Decompiler.IL
 						b.Append(string.Join(" | ", children.Take(i).Select(child2 => "this." + child2.Name + ".Flags")));
 						b.Append(") & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop))");
 					}
-					b.AppendLine(", instructionStack, out finished);");
+					b.AppendLine(", context);");
 				}
 				b.AppendLine("\treturn this;");
 				b.Append("}");

@@ -22,6 +22,15 @@ using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
+	/// <remarks>
+	/// The condition must return StackType.I4, use comparison instructions like Ceq to check if other types are non-zero.
+	/// Phase-1 execution of an IfInstruction consists of phase-1 execution of the condition.
+	/// Phase-2 execution of an IfInstruction will phase-2-execute the condition.
+	/// If the condition evaluates to a non-zero, the TrueInst is executed (both phase-1 and phase-2).
+	/// If the condition evaluates to zero, the FalseInst is executed (both phase-1 and phase-2).
+	/// The return value of the IfInstruction is the return value of the TrueInst or FalseInst.
+	/// </remarks>
 	partial class IfInstruction : ILInstruction
 	{
 		public IfInstruction(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst = null) : base(OpCode.IfInstruction)
@@ -43,18 +52,16 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Condition = condition.Inline(flagsBefore, instructionStack, out finished);
-			// don't continue inlining if this instruction still contains peek/pop instructions
-			if (HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop))
-				finished = false;
+			this.Condition = condition.Inline(flagsBefore, context);
+			// note: we skip TrueInst and FalseInst because there's a phase-1-boundary around them
 			return this;
 		}
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return condition.Flags | CombineFlags(trueInst.Flags, falseInst.Flags);
+			return condition.Flags | Block.Phase1Boundary(CombineFlags(trueInst.Flags, falseInst.Flags));
 		}
 		
 		internal static InstructionFlags CombineFlags(InstructionFlags trueFlags, InstructionFlags falseFlags)

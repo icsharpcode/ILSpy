@@ -61,10 +61,9 @@ namespace ICSharpCode.Decompiler.IL
 			return InstructionFlags.MayThrow;
 		}
 		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			// To the outside, lambda creation looks like a constant
-			finished = true;
 			return this;
 		}
 	}

@@ -64,6 +64,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// The instruction may have side effects, such as accessing heap memory,
 		/// performing system calls, writing to local variables through pointers, etc.
 		/// </summary>
+		/// <remarks>
+		/// Throwing an exception or directly writing to local variables or the evaluation stack
+		/// is not considered a side effect, and is modeled by separate flags.
+		/// </remarks>
 		SideEffect = 0x40,
 		
 		/// <summary>

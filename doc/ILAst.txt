@@ -62,7 +62,8 @@ For example, consider the ILAst for 'new List<int> { 1 }.Length':
 	call get_Length(
 		{	newobj List<int>()
 			call Add(peek, ldc.i4 1)
-		}) // inline blocks evaluate to the value they pushed onto the stack
+			pop
+		}) // inline blocks evaluate to the value of their last instruction
 
 When evaluating the 'call get_Length' instruction, in phase 1 we cannot completely replace all
 'peek' and 'pop' instructions with values from the stack, because the List<int> object is not yet pushed to the stack.

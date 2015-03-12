@@ -97,9 +97,9 @@ namespace ICSharpCode.Decompiler.IL
 				| (flagsInAllBlocks & InstructionFlags.EndPointUnreachable);
 		}
 		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			finished = false;
+			// Blocks are phase-1 boundaries
 			return this;
 		}
 	}

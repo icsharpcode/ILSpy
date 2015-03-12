@@ -112,18 +112,15 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 		}
 
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			InstructionFlags operandFlags = InstructionFlags.None;
 			for (int i = 0; i < Arguments.Count - 1; i++) {
 				operandFlags |= Arguments[i].Flags;
 			}
 			flagsBefore |= operandFlags & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop);
-			finished = true;
 			for (int i = Arguments.Count - 1; i >= 0; i--) {
-				Arguments[i] = Arguments[i].Inline(flagsBefore, instructionStack, out finished);
-				if (!finished)
-					break;
+				Arguments[i] = Arguments[i].Inline(flagsBefore, context);
 			}
 			return this;
 		}

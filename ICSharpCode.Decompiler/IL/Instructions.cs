@@ -196,9 +196,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Argument = this.argument.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Argument = this.argument.Inline(flagsBefore, instructionStack, out finished);
+			this.Argument = this.argument.Inline(flagsBefore, context);
 			return this;
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -249,11 +249,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Left = this.left.AcceptVisitor(visitor);
 			this.Right = this.right.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Right = this.right.Inline(flagsBefore | ((this.left.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), instructionStack, out finished);
-			if (finished)
-				this.Left = this.left.Inline(flagsBefore, instructionStack, out finished);
+			this.Right = this.right.Inline(flagsBefore | ((this.left.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
+			this.Left = this.left.Inline(flagsBefore, context);
 			return this;
 		}
 		protected override InstructionFlags ComputeFlags()
@@ -891,9 +890,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Value = this.value.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Value = this.value.Inline(flagsBefore, instructionStack, out finished);
+			this.Value = this.value.Inline(flagsBefore, context);
 			return this;
 		}
 		readonly ILVariable variable;
@@ -1170,9 +1169,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Target = this.target.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
@@ -1231,9 +1230,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Target = this.target.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
 		readonly IField field;
@@ -1295,11 +1294,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = this.target.AcceptVisitor(visitor);
 			this.Value = this.value.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), instructionStack, out finished);
-			if (finished)
-				this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
+			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
@@ -1418,9 +1416,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Value = this.value.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Value = this.value.Inline(flagsBefore, instructionStack, out finished);
+			this.Value = this.value.Inline(flagsBefore, context);
 			return this;
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
@@ -1535,9 +1533,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Target = this.target.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
 		readonly IType type;
@@ -1607,11 +1605,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = this.target.AcceptVisitor(visitor);
 			this.Value = this.value.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), instructionStack, out finished);
-			if (finished)
-				this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
+			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
 		readonly IType type;
@@ -1880,9 +1877,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Target = this.target.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Target = this.target.Inline(flagsBefore, instructionStack, out finished);
+			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
 		public override StackType ResultType { get { return StackType.I; } }
@@ -1939,11 +1936,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Array = this.array.AcceptVisitor(visitor);
 			this.Index = this.index.AcceptVisitor(visitor);
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Index = this.index.Inline(flagsBefore | ((this.array.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), instructionStack, out finished);
-			if (finished)
-				this.Array = this.array.Inline(flagsBefore, instructionStack, out finished);
+			this.Index = this.index.Inline(flagsBefore | ((this.array.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
+			this.Array = this.array.Inline(flagsBefore, context);
 			return this;
 		}
 		readonly IType type;

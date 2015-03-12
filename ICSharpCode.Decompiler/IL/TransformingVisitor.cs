@@ -54,20 +54,52 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected bool removeNops;
 		
+		sealed class InliningStack : Stack<ILInstruction>, IInlineContext
+		{
+			/// <summary>
+			/// Indicates whether inlining was success for at least one
+			/// peek or pop instruction.
+			/// </summary>
+			internal bool didInline;
+			
+			/// <summary>
+			/// Indicates whether inlining encountered a peek or pop instruction
+			/// that could not be inlined.
+			/// </summary>
+			internal bool error;
+			
+			ILInstruction IInlineContext.Peek(InstructionFlags flagsBefore)
+			{
+				error = true;
+				return null;
+			}
+			
+			ILInstruction IInlineContext.Pop(InstructionFlags flagsBefore)
+			{
+				if (error)
+					return null;
+				if (base.Count > 0 && SemanticHelper.MayReorder(flagsBefore, base.Peek().Flags)) {
+					didInline = true;
+					return base.Pop();
+				}
+				error = true;
+				return null;
+			}
+		}
+		
 		protected internal override ILInstruction VisitBlock(Block block)
 		{
-			Stack<ILInstruction> stack = new Stack<ILInstruction>();
+			var stack = new InliningStack();
 			List<ILInstruction> output = new List<ILInstruction>();
 			for (int i = 0; i < block.Instructions.Count; i++) {
 				var inst = block.Instructions[i];
-				int stackCountBefore;
-				bool finished;
 				do {
 					inst = inst.AcceptVisitor(this);
-					stackCountBefore = stack.Count;
-					inst = inst.Inline(InstructionFlags.None, stack, out finished);
-				} while (stack.Count != stackCountBefore); // repeat transformations when something was inlined
-				if (inst.HasFlag(InstructionFlags.MayBranch) || !finished) {
+					stack.didInline = false;
+					stack.error = false;
+					inst = inst.Inline(InstructionFlags.None, stack);
+				} while (stack.didInline); // repeat transformations when something was inlined
+				if (stack.error || inst.HasFlag(InstructionFlags.MayBranch)) {
 					// Values currently on the stack might be used on both sides of the branch,
 					// so we can't inline them.
 					// We also have to flush the stack if some occurrence of 'pop' or 'peek' remains in the current instruction.
@@ -76,9 +108,11 @@ namespace ICSharpCode.Decompiler.IL
 				if (inst.ResultType == StackType.Void) {
 					// We cannot directly push instructions onto the stack if they don't produce
 					// a result.
-					if (finished && stack.Count > 0) {
+					if (!stack.error && stack.Count > 0) {
 						// Wrap the instruction on top of the stack into an inline block,
 						// and append our void-typed instruction to the end of that block.
+						// TODO: I think this is wrong now that we changed the inline block semantics;
+						// we need to re-think how to build inline blocks.
 						var headInst = stack.Pop();
 						var nestedBlock = headInst as Block ?? new Block {
 							Instructions = { headInst },
@@ -126,8 +160,10 @@ namespace ICSharpCode.Decompiler.IL
 			// we can remove the container.
 			if (container.Blocks.Count == 1 && container.EntryPoint.IncomingEdgeCount == 1) {
 				// If the block has only one instruction, we can remove the block too
-				if (container.EntryPoint.Instructions.Count == 1)
-					return container.EntryPoint.Instructions[0];
+				// (but only if this doesn't change the pop-order in the phase 1 evaluation of the parent block)
+				var instructions = container.EntryPoint.Instructions;
+				if (instructions.Count == 1 && !instructions[0].HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop))
+					return instructions[0];
 				return container.EntryPoint;
 			}
 			return container;

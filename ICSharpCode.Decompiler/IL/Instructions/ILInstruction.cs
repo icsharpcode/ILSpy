@@ -153,13 +153,21 @@ namespace ICSharpCode.Decompiler.IL
 		public abstract void TransformChildren(ILVisitor<ILInstruction> visitor);
 		
 		/// <summary>
-		/// Attempts inlining from the instruction stack into this instruction.
+		/// Attempts inlining from the inline context into this instruction.
 		/// </summary>
 		/// <param name="flagsBefore">Combined instruction flags of the instructions
 		/// that the instructions getting inlined would get moved over.</param>
-		/// <param name="instructionStack">The instruction stack.</param>
-		/// <param name="finished">Receives 'true' if all open 'pop' or 'peek' placeholders were inlined into; false otherwise.</param>
-		internal abstract ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished);
+		/// <param name="context">The inline context providing the values on the evaluation stack.</param>
+		/// <returns>
+		/// Returns the modified ILInstruction after inlining is complete.
+		/// Note that inlining modifies the AST in-place, so this method usually returns <c>this</c>
+		/// (unless <c>this</c> should be replaced by another node)
+		/// </returns>
+		/// <remarks>
+		/// Inlining from an inline context representing the actual evaluation stack
+		/// is equivalent to phase-1 execution of the instruction.
+		/// </remarks>
+		internal abstract ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context);
 		
 		/// <summary>
 		/// Number of parents that refer to this instruction and are connected to the root.

@@ -79,12 +79,10 @@ namespace ICSharpCode.Decompiler.IL
 				this.ReturnValue = returnValue.AcceptVisitor(visitor);
 		}
 		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			if (returnValue != null)
-				this.ReturnValue = returnValue.Inline(flagsBefore, instructionStack, out finished);
-			else
-				finished = true;
+				this.ReturnValue = returnValue.Inline(flagsBefore, context);
 			return this;
 		}
 	}

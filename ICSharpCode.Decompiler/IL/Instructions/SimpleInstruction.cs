@@ -54,32 +54,26 @@ namespace ICSharpCode.Decompiler.IL
 			return InstructionFlags.None;
 		}
 		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			finished = true; // Nothing to do, since we don't have arguments.
+			// Nothing to do, since we don't have arguments.
 			return this;
 		}
 	}
 
 	partial class Pop
 	{
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			if (instructionStack.Count > 0 && SemanticHelper.MayReorder(flagsBefore, instructionStack.Peek().Flags)) {
-				finished = true;
-				return instructionStack.Pop();
-			}
-			finished = false;
-			return this;
+			return context.Pop(flagsBefore) ?? this;
 		}
 	}
 
 	partial class Peek
 	{
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)
+		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			finished = false;
-			return this;
+			return context.Peek(flagsBefore) ?? this;
 		}
 	}
 }
