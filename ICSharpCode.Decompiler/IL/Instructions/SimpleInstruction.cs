@@ -63,6 +63,11 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class Pop
 	{
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.MayPop;
+		}
+		
 		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			return context.Pop(flagsBefore) ?? this;
@@ -71,6 +76,11 @@ namespace ICSharpCode.Decompiler.IL
 
 	partial class Peek
 	{
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.MayPeek;
+		}
+		
 		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			return context.Peek(flagsBefore) ?? this;

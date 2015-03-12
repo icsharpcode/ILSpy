@@ -47,5 +47,64 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			return decompilerTypeSystem.Value.Compilation.FindType(type);
 		}
+		
+		/// <summary>
+		/// Retrieves a static method that returns void and takes the specified parameter types.
+		/// </summary>
+		public static IMethod Action<T1>()
+		{
+			return Action(typeof(T1));
+		}
+		
+		/// <summary>
+		/// Retrieves a static method that returns void and takes the specified parameter types.
+		/// </summary>
+		public static IMethod Action<T1, T2>()
+		{
+			return Action(typeof(T1), typeof(T2));
+		}
+		
+		/// <summary>
+		/// Retrieves a static method that returns void and takes the specified parameter types.
+		/// </summary>
+		public static IMethod Action<T1, T2, T3>()
+		{
+			return Action(typeof(T1), typeof(T2), typeof(T3));
+		}
+		
+		/// <summary>
+		/// Retrieves a static method that returns void and takes the specified parameter types.
+		/// </summary>
+		public static IMethod Action<T1, T2, T3, T4>()
+		{
+			return Action(typeof(T1), typeof(T2), typeof(T3), typeof(T4));
+		}
+		
+		/// <summary>
+		/// Retrieves a static method that returns void and takes the specified parameter types.
+		/// </summary>
+		public static IMethod Action(params Type[] paramTypes)
+		{
+			return Action(paramTypes.Select(FromReflection).ToArray());
+		}
+		
+		/// <summary>
+		/// Retrieves a static method that returns void and takes the specified parameter types.
+		/// </summary>
+		public static IMethod Action(params IType[] paramTypes)
+		{
+			return FromReflection(typeof(Actions)).GetMethods(
+				m => m.Name == "Action" && m.TypeParameters.Count == paramTypes.Length && m.Parameters.Count == paramTypes.Length)
+				.Single();
+		}
+	}
+	
+	static class Actions
+	{
+		public static void Action() {}
+		public static void Action<T1>(T1 a1) {}
+		public static void Action<T1, T2>(T1 a1, T2 a2) {}
+		public static void Action<T1, T2, T3>(T1 a1, T2 a2, T3 a3) {}
+		public static void Action<T1, T2, T3, T4>(T1 a1, T2 a2, T3 a3, T4 a4) {}
 	}
 }

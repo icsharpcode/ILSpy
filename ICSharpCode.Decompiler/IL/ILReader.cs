@@ -354,7 +354,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Clt_Un:
 					return Comparison(OpCode.Clt_Un, OpCode.Clt_Un);
 				case ILOpCode.Ckfinite:
-					return new Ckfinite();
+					return new Ckfinite(new Peek(stack.Count > 0 ? stack.Peek() : StackType.Unknown));
 				case ILOpCode.Conv_I1:
 					return new Conv(Pop(), PrimitiveType.I1, false, Sign.None);
 				case ILOpCode.Conv_I2:

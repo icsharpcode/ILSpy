@@ -98,6 +98,7 @@ namespace ICSharpCode.Decompiler.IL
 					stack.didInline = false;
 					stack.error = false;
 					inst = inst.Inline(InstructionFlags.None, stack);
+					Debug.Assert(stack.error == inst.HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop));
 				} while (stack.didInline); // repeat transformations when something was inlined
 				if (stack.error || inst.HasFlag(InstructionFlags.MayBranch)) {
 					// Values currently on the stack might be used on both sides of the branch,

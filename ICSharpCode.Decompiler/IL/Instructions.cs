@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL
 		Call,
 		/// <summary>Virtual method call.</summary>
 		CallVirt,
-		/// <summary>Checks that the float on top of the stack is not NaN or infinite.</summary>
+		/// <summary>Checks that the input float is not NaN or infinite.</summary>
 		Ckfinite,
 		/// <summary>Numeric cast.</summary>
 		Conv,
@@ -307,10 +307,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		StackType resultType;
 		public override StackType ResultType { get { return resultType; } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return InstructionFlags.MayPeek;
-		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitPeek(this);
@@ -789,16 +785,16 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Checks that the float on top of the stack is not NaN or infinite.</summary>
-	public sealed partial class Ckfinite : SimpleInstruction
+	/// <summary>Checks that the input float is not NaN or infinite.</summary>
+	public sealed partial class Ckfinite : UnaryInstruction
 	{
-		public Ckfinite() : base(OpCode.Ckfinite)
+		public Ckfinite(ILInstruction argument) : base(OpCode.Ckfinite, argument)
 		{
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return InstructionFlags.MayPeek | InstructionFlags.MayThrow;
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{

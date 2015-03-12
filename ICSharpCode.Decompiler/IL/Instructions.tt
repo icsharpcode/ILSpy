@@ -36,7 +36,7 @@
 		new OpCode("pop", "Pops the top of the evaluation stack and returns the value.",
 			NoArguments, ResultTypeParam),
 		new OpCode("peek", "Peeks at the top of the evaluation stack and returns the value. Corresponds to IL 'dup'.",
-			Peeking, NoArguments, ResultTypeParam),
+			NoArguments, ResultTypeParam),
 		new OpCode("void", "Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.",
 			VoidResult, Unary),
 		new OpCode("ILFunction", "A container of IL blocks.",
@@ -97,8 +97,8 @@
 		new OpCode("call", "Non-virtual method call.", Call),
 		new OpCode("callvirt", "Virtual method call.", 
 			CustomClassName("CallVirt"), Call),
-		new OpCode("ckfinite", "Checks that the float on top of the stack is not NaN or infinite.",
-			Peeking, NoArguments, MayThrow, VoidResult),
+		new OpCode("ckfinite", "Checks that the input float is not NaN or infinite.",
+			Unary, MayThrow, VoidResult),
 		new OpCode("conv", "Numeric cast.",
 			Unary, CustomConstructor),
 		new OpCode("ldloc", "Loads the value of a local variable. (ldarg/ldloc)",
@@ -405,9 +405,6 @@ namespace ICSharpCode.Decompiler.IL
 		};
 	}
 
-	// Peeking trait: the instruction looks at the top-of-stack without popping
-	static Action<OpCode> Peeking = HasFlag("InstructionFlags.MayPeek");
-	
 	// ResultType trait: the instruction has the specified result type.
 	static Action<OpCode> ResultType(string type)
 	{
