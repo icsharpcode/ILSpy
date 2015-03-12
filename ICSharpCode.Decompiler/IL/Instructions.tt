@@ -71,13 +71,13 @@
 				new ChildInfo("trueInst"),
 				new ChildInfo("falseInst"),
 			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
-		new OpCode("try.catch", "Try-catch statement",
+		new OpCode("try.catch", "Try-catch statement.",
 			BaseClass("TryInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo),
-		new OpCode("try.catch.handler", "Catch handler within a try-catch statement",
+		new OpCode("try.catch.handler", "Catch handler within a try-catch statement.",
 			CustomChildren(new [] {
 				new ChildInfo("filter") { IsArgument = true },
 				new ChildInfo("body"),
-			}), HasVariableOperand, CustomWriteTo, ResultType("Void")),
+			}), HasVariableOperand, CustomWriteTo, CustomComputeFlags),
 		new OpCode("try.finally", "Try-finally statement",
 			BaseClass("TryInstruction"), CustomConstructor, CustomWriteTo, CustomComputeFlags),
 		new OpCode("try.fault", "Try-fault statement",
@@ -200,13 +200,13 @@ namespace ICSharpCode.Decompiler.IL
 	public enum OpCode
 	{
 <#	foreach (OpCode opCode in opCodes) { #>
-		/// <summary><#=opCode.Description#></summary>
+		/// <summary><#=opCode.Description.Replace("\n", "\n\t\t/// ")#></summary>
 		<#=opCode.Name#>,
 <#  } #>
 	}
 
 <#	foreach (OpCode opCode in baseClasses.Concat(opCodes)) { #>
-	/// <summary><#=opCode.Description#></summary>
+	/// <summary><#=opCode.Description.Replace("\n", "\n\t/// ")#></summary>
 	<#=opCode.ClassModifiers#> partial class <#=opCode.Name#> : <#=string.Join(", ", new[]{opCode.BaseClass}.Concat(opCode.Interfaces))#>
 	{
 <#	if (opCode.GenerateConstructor) { #>

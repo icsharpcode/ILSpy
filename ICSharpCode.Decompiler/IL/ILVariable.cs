@@ -30,7 +30,13 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public enum VariableKind
 	{
+		/// <summary>
+		/// A local variable.
+		/// </summary>
 		Local,
+		/// <summary>
+		/// A parameter.
+		/// </summary>
 		Parameter,
 		/// <summary>
 		/// The 'this' parameter
@@ -46,6 +52,10 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public readonly VariableKind Kind;
 		public readonly IType Type;
+		
+		/// <summary>
+		/// The index of the local variable or parameter (depending on Kind)
+		/// </summary>
 		public readonly int Index;
 		
 		public string Name { get; set; }
@@ -53,16 +63,25 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Number of ldloc instructions referencing this variable.
 		/// </summary>
+		/// <remarks>
+		/// This variable is automatically updated when adding/removing ldloc instructions from the ILAst.
+		/// </remarks>
 		public int LoadCount;
 		
 		/// <summary>
 		/// Number of stloc instructions referencing this variable.
 		/// </summary>
+		/// <remarks>
+		/// This variable is automatically updated when adding/removing stloc instructions from the ILAst.
+		/// </remarks>
 		public int StoreCount;
 		
 		/// <summary>
 		/// Number of ldloca instructions referencing this variable.
 		/// </summary>
+		/// <remarks>
+		/// This variable is automatically updated when adding/removing ldloca instructions from the ILAst.
+		/// </remarks>
 		public int AddressCount;
 		
 		public ILVariable(VariableKind kind, IType type, int index)

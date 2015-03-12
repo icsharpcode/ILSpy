@@ -27,13 +27,19 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal static bool MayReorder(InstructionFlags inst1, InstructionFlags inst2)
 		{
-			// If both instructions perform a non-read-only action, we cannot reorder them
-			if ((inst1 & inst2 & ~(InstructionFlags.MayPeek | InstructionFlags.MayReadLocals)) != 0)
+			// If both instructions perform an impure action, we cannot reorder them
+			const InstructionFlags pureFlags =
+				InstructionFlags.MayPeek
+				| InstructionFlags.MayReadEvaluationStack
+				| InstructionFlags.MayReadLocals;
+			if ((inst1 & inst2 & ~pureFlags) != 0)
 				return false;
 			// We cannot reorder if inst2 might pop what inst1 peeks at
 			if (ConflictingPair(inst1, inst2, InstructionFlags.MayPeek, InstructionFlags.MayPop))
 				return false;
-			if (ConflictingPair(inst1, inst2, InstructionFlags.MayReadLocals, InstructionFlags.MayWriteLocals))
+			if (ConflictingPair(inst1, inst2, InstructionFlags.MayReadEvaluationStack, InstructionFlags.MayWriteEvaluationStack))
+				return false;
+			if (ConflictingPair(inst1, inst2, InstructionFlags.MayReadLocals, InstructionFlags.MayWriteLocals | InstructionFlags.SideEffect))
 				return false;
 			return true;
 		}
@@ -43,6 +49,6 @@ namespace ICSharpCode.Decompiler.IL
 			// if one instruction has the read flag and the other the write flag, that's a conflict
 			return (inst1 & readFlag) != 0 && (inst2 & writeFlag) != 0
 				|| (inst2 & readFlag) != 0 && (inst1 & writeFlag) != 0;
-        }
+		}
 	}
 }

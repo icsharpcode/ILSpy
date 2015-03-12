@@ -29,18 +29,25 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		None = 0,
 		/// <summary>
-		/// The instruction may pop from the evaluation stack.
+		/// Phase-1 execution of this instruction may pop from the evaluation stack.
 		/// </summary>
 		MayPop   = 0x01,
+		/// <summary>
+		/// Phase-1 execution of this instruction may peek at the top-most element of the evaluation stack.
+		/// If MayPop is also set, this flag refers to the top-most element after an arbitrary number of pops.
+		/// </summary>
 		MayPeek  = 0x02,
 		/// <summary>
-		/// The instruction may throw an exception.
+		/// Phase-2 execution of this instruction may read the evaluation stack.
+		/// This is not set for instructions that access the stack only in phase-1.
 		/// </summary>
-		MayThrow = 0x04,
+		MayReadEvaluationStack = 0x04,
 		/// <summary>
-		/// The instruction may exit with a branch or return.
+		/// Phase-2 execution of this instruction may modify the evaluation stack.
+		/// This is not set for instructions that access the stack only in phase-1.
 		/// </summary>
-		MayBranch = 0x08,
+		MayWriteEvaluationStack = 0x08,
+		
 		/// <summary>
 		/// The instruction may read from local variables.
 		/// </summary>
@@ -48,15 +55,28 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// The instruction may write to local variables.
 		/// </summary>
+		/// <remarks>
+		/// This flag is not set for indirect write to local variables through pointers.
+		/// Ensure you also check the SideEffect flag.
+		/// </remarks>
 		MayWriteLocals = 0x20,
 		/// <summary>
 		/// The instruction may have side effects, such as accessing heap memory,
 		/// performing system calls, writing to local variables through pointers, etc.
 		/// </summary>
 		SideEffect = 0x40,
+		
+		/// <summary>
+		/// The instruction may throw an exception.
+		/// </summary>
+		MayThrow = 0x100,
+		/// <summary>
+		/// The instruction may exit with a branch or return.
+		/// </summary>
+		MayBranch = 0x200,
 		/// <summary>
 		/// The instruction performs unconditional control flow, so that its endpoint is unreachable.
 		/// </summary>
-		EndPointUnreachable = 0x80,
+		EndPointUnreachable = 0x400,
 	}
 }

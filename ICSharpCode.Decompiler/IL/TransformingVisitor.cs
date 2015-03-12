@@ -99,7 +99,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			FlushInstructionStack(stack, output);
 			if (!(block.Parent is BlockContainer)) {
-				if (output.Count == 1)
+				// We can't unpack an instruction from a block if there's the potential that this changes
+				// the pop-order in the phase 1 evaluation of the parent block.
+				if (output.Count == 1 && !output[0].HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop))
 					return output[0];
 			}
 			block.Instructions.ReplaceList(output);

@@ -57,6 +57,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			// Creating a lambda may throw OutOfMemoryException
+			// We intentionally don't propagate any flags from the lambda body!
 			return InstructionFlags.MayThrow;
 		}
 		

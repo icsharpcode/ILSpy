@@ -31,6 +31,10 @@ namespace ICSharpCode.Decompiler.IL
 	/// and only branches within this container may reference the blocks in this container.
 	/// That means that viewed from the outside, the block container has a single entry point (but possibly multiple exit points),
 	/// and the same holds for every block within the container.
+	/// 
+	/// If a block within the container falls through to its end point, control flow is transferred to the end point
+	/// of the whole block container. The return value of the block is ignored in this case, the container always
+	/// returns void.
 	/// </summary>
 	partial class BlockContainer : ILInstruction
 	{
@@ -73,13 +77,24 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		internal override void CheckInvariant()
+		{
+			base.CheckInvariant();
+			Debug.Assert(Blocks.Count >= 1);
+		}
+		
 		protected override InstructionFlags ComputeFlags()
 		{
-			var flags = InstructionFlags.None;
+			InstructionFlags flagsInAnyBlock = InstructionFlags.None;
+			InstructionFlags flagsInAllBlocks = ~InstructionFlags.None;
 			foreach (var block in Blocks) {
-				flags |= block.Flags;
+				flagsInAnyBlock |= block.Flags;
+				flagsInAllBlocks &= block.Flags;
 			}
-			return flags;
+			// Return EndPointUnreachable only if no block has a reachable endpoint.
+			// The other flags are combined from all blocks.
+			return (flagsInAnyBlock & ~InstructionFlags.EndPointUnreachable)
+				| (flagsInAllBlocks & InstructionFlags.EndPointUnreachable);
 		}
 		
 		internal override ILInstruction Inline(InstructionFlags flagsBefore, Stack<ILInstruction> instructionStack, out bool finished)

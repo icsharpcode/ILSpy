@@ -70,9 +70,9 @@ namespace ICSharpCode.Decompiler.IL
 		EndFinally,
 		/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 		IfInstruction,
-		/// <summary>Try-catch statement</summary>
+		/// <summary>Try-catch statement.</summary>
 		TryCatch,
-		/// <summary>Catch handler within a try-catch statement</summary>
+		/// <summary>Catch handler within a try-catch statement.</summary>
 		TryCatchHandler,
 		/// <summary>Try-finally statement</summary>
 		TryFinally,
@@ -606,7 +606,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Try-catch statement</summary>
+	/// <summary>Try-catch statement.</summary>
 	public sealed partial class TryCatch : TryInstruction
 	{
 
@@ -616,7 +616,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Catch handler within a try-catch statement</summary>
+	/// <summary>Catch handler within a try-catch statement.</summary>
 	public sealed partial class TryCatchHandler : ILInstruction
 	{
 		public TryCatchHandler(ILInstruction filter, ILInstruction body, ILVariable variable) : base(OpCode.TryCatchHandler)
@@ -656,11 +656,6 @@ namespace ICSharpCode.Decompiler.IL
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
 		public ILVariable Variable { get { return variable; } }
-		public override StackType ResultType { get { return StackType.Void; } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return filter.Flags | body.Flags;
-		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryCatchHandler(this);
