@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// However, this is just of theoretical interest; we currently don't plan to use inline blocks that
 	/// pop elements that they didn't push themselves.
 	/// </remarks>
-	partial class Block : ILInstruction
+	partial class Block : ILInstruction, IEnumerable<ILInstruction>
 	{
 		public readonly InstructionCollection<ILInstruction> Instructions;
 		
@@ -149,6 +149,22 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			// an inline block has no phase-1 effects, so we're immediately done with inlining
 			return this;
+		}
+		
+		// Add() and GetEnumerator() for collection initializer support:
+		public void Add(ILInstruction instruction)
+		{
+			this.Instructions.Add(instruction);
+		}
+		
+		IEnumerator<ILInstruction> IEnumerable<ILInstruction>.GetEnumerator()
+		{
+			return this.Instructions.GetEnumerator();
+		}
+		
+		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+		{
+			return this.Instructions.GetEnumerator();
 		}
 	}
 }

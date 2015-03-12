@@ -22,6 +22,8 @@ namespace ICSharpCode.Decompiler.IL
 {
 	static class SemanticHelper
 	{
+		// TODO: consider moving IfInstruction.CombineFlags and Block.Phase1Boundary here
+		
 		/// <summary>
 		/// Gets whether the instruction sequence 'inst1; inst2;' may be ordered to 'inst2; inst1;'
 		/// </summary>
