@@ -492,6 +492,16 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return Assignment(ConvertField(inst.Field).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
 		}
+		
+		protected internal override TranslatedExpression VisitLdsFld(LdsFld inst)
+		{
+			return ConvertField(inst.Field).WithILInstruction(inst);
+		}
+		
+		protected internal override TranslatedExpression VisitStsFld(StsFld inst)
+		{
+			return Assignment(ConvertField(inst.Field).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
+		}
 
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst)
 		{
