@@ -35,21 +35,17 @@ namespace ICSharpCode.Decompiler.IL
 	/// </para>
 	/// <code>
 	///   foreach (var inst in Instructions) {
-	///     inst.Phase1();
-	///     var result = inst.Phase2();
+	///     var result = inst.Phase1().Phase2();
 	///     if (result != void) evalStack.Push(result);
 	///   }
+	///   return FinalInstruction.Phase1().Phase2();
 	/// </code>
 	/// <para>
-	/// If the execution reaches the end of the block, the block returns the result value of the last instruction.
+	/// Note: if execution reaches the end of the instruction list,
+	/// the FinalInstruction (which is not part of the list) will be executed.
+	/// The block returns returns the result value of the FinalInstruction.
+	/// For blocks returning void, the FinalInstruction will usually be 'nop'.
 	/// </para>
-	/// TODO: actually I think it's a good idea to implement a small ILAst interpreter
-	///    public virtual ILInstruction Phase1(InterpreterState state);
-	///    public virtual InterpreterResult ILInstruction Phase2(InterpreterState state);
-	/// It's probably the easiest solution for specifying clear semantics, and
-	/// we might be able to use the interpreter logic for symbolic execution.
-	/// In fact, I think we'll need at least Phase1() in order to implement TransformStackIntoVariablesState()
-	/// without being incorrect about the pop-order in nested blocks.
 	/// </summary>
 	/// <remarks>
 	/// Fun fact: the empty block acts like a phase-2 pop instruction,
@@ -57,23 +53,32 @@ namespace ICSharpCode.Decompiler.IL
 	/// However, this is just of theoretical interest; we currently don't plan to use inline blocks that
 	/// pop elements that they didn't push themselves.
 	/// </remarks>
-	partial class Block : ILInstruction, IEnumerable<ILInstruction>
+	partial class Block : ILInstruction
 	{
 		public readonly InstructionCollection<ILInstruction> Instructions;
+		ILInstruction finalInstruction;
+
+		public ILInstruction FinalInstruction {
+			get {
+				return finalInstruction;
+			}
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref finalInstruction, value);
+			}
+		}
 		
 		public int IncomingEdgeCount;
 		
 		public Block() : base(OpCode.Block)
 		{
 			this.Instructions = new InstructionCollection<ILInstruction>(this);
+			this.FinalInstruction = new Nop();
 		}
 		
 		public override StackType ResultType {
 			get {
-				if (Instructions.Count == 0)
-					return StackType.Void;
-				else
-					return Instructions.Last().ResultType;
+				return finalInstruction.ResultType;
 			}
 		}
 		
@@ -97,12 +102,21 @@ namespace ICSharpCode.Decompiler.IL
 				inst.WriteTo(output);
 				output.WriteLine();
 			}
+			if (finalInstruction.OpCode != OpCode.Nop) {
+				output.Write("final: ");
+				finalInstruction.WriteTo(output);
+				output.WriteLine();
+			}
 			output.Unindent();
 			output.Write("}");
 		}
 		
 		public override IEnumerable<ILInstruction> Children {
-			get { return Instructions; }
+			get {
+				foreach (var inst in Instructions)
+					yield return inst;
+				yield return finalInstruction;
+			}
 		}
 		
 		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
@@ -110,22 +124,21 @@ namespace ICSharpCode.Decompiler.IL
 			for (int i = 0; i < Instructions.Count; i++) {
 				Instructions[i] = Instructions[i].AcceptVisitor(visitor);
 			}
+			FinalInstruction = FinalInstruction.AcceptVisitor(visitor);
 		}
 		
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = InstructionFlags.None;
 			foreach (var inst in Instructions) {
-				flags |= inst.Flags;
+				flags |= Phase1Boundary(inst.Flags);
 				if (inst.ResultType != StackType.Void) {
 					// implicit push
 					flags |= InstructionFlags.MayWriteEvaluationStack;
 				}
 			}
-			// implicit pop at end of block
-			if ((flags & InstructionFlags.EndPointUnreachable) == 0)
-				flags |= InstructionFlags.MayWriteEvaluationStack;
-			return Phase1Boundary(flags);
+			flags |= Phase1Boundary(FinalInstruction.Flags);
+			return flags;
 		}
 		
 		/// <summary>
@@ -149,22 +162,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			// an inline block has no phase-1 effects, so we're immediately done with inlining
 			return this;
-		}
-		
-		// Add() and GetEnumerator() for collection initializer support:
-		public void Add(ILInstruction instruction)
-		{
-			this.Instructions.Add(instruction);
-		}
-		
-		IEnumerator<ILInstruction> IEnumerable<ILInstruction>.GetEnumerator()
-		{
-			return this.Instructions.GetEnumerator();
-		}
-		
-		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
-		{
-			return this.Instructions.GetEnumerator();
 		}
 	}
 }

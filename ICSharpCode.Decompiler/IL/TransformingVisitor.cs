@@ -87,23 +87,32 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
+		ILInstruction DoInline(InliningStack stack, ILInstruction inst)
+		{
+			do {
+				inst = inst.AcceptVisitor(this);
+				stack.didInline = false;
+				stack.error = false;
+				inst = inst.Inline(InstructionFlags.None, stack);
+				Debug.Assert(stack.error == inst.HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop));
+			} while (stack.didInline); // repeat transformations when something was inlined
+			return inst;
+		}
+		
 		protected internal override ILInstruction VisitBlock(Block block)
 		{
 			var stack = new InliningStack();
 			List<ILInstruction> output = new List<ILInstruction>();
 			for (int i = 0; i < block.Instructions.Count; i++) {
 				var inst = block.Instructions[i];
-				do {
-					inst = inst.AcceptVisitor(this);
-					stack.didInline = false;
-					stack.error = false;
-					inst = inst.Inline(InstructionFlags.None, stack);
-					Debug.Assert(stack.error == inst.HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop));
-				} while (stack.didInline); // repeat transformations when something was inlined
-				if (stack.error || inst.HasFlag(InstructionFlags.MayBranch)) {
+				inst = DoInline(stack, inst); 
+				if (inst.HasFlag(InstructionFlags.MayBranch 
+				                 | InstructionFlags.MayPeek | InstructionFlags.MayPop
+				                 | InstructionFlags.MayReadEvaluationStack | InstructionFlags.MayWriteEvaluationStack)) {
 					// Values currently on the stack might be used on both sides of the branch,
 					// so we can't inline them.
-					// We also have to flush the stack if some occurrence of 'pop' or 'peek' remains in the current instruction.
+					// We also have to flush the stack if the instruction still accesses the evaluation stack,
+					// no matter whether in phase-1 or phase-2.
 					FlushInstructionStack(stack, output);
 				}
 				if (inst.ResultType == StackType.Void) {
@@ -132,14 +141,13 @@ namespace ICSharpCode.Decompiler.IL
 					stack.Push(inst);
 				}
 			}
+			// Allow inlining into the final instruction
+			block.FinalInstruction = DoInline(stack, block.FinalInstruction);
 			FlushInstructionStack(stack, output);
-			if (!(block.Parent is BlockContainer)) {
-				// We can't unpack an instruction from a block if there's the potential that this changes
-				// the pop-order in the phase 1 evaluation of the parent block.
-				if (output.Count == 1 && !output[0].HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop))
-					return output[0];
-			}
 			block.Instructions.ReplaceList(output);
+			if (!(block.Parent is BlockContainer)) {
+				return TrySimplifyBlock(block);
+			}
 			return block;
 		}
 
@@ -160,14 +168,26 @@ namespace ICSharpCode.Decompiler.IL
 			// If the container only contains a single block, and the block contents do not jump back to the block start,
 			// we can remove the container.
 			if (container.Blocks.Count == 1 && container.EntryPoint.IncomingEdgeCount == 1) {
-				// If the block has only one instruction, we can remove the block too
-				// (but only if this doesn't change the pop-order in the phase 1 evaluation of the parent block)
-				var instructions = container.EntryPoint.Instructions;
-				if (instructions.Count == 1 && !instructions[0].HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop))
-					return instructions[0];
-				return container.EntryPoint;
+				return TrySimplifyBlock(container.EntryPoint);
 			}
 			return container;
+		}
+		
+		/// <summary>
+		/// If a block has only one instruction, replace it with that instruction.
+		/// </summary>
+		ILInstruction TrySimplifyBlock(Block block)
+		{
+			// If the block has only one instruction, we can remove the block too
+			// (but only if this doesn't change the pop-order in the phase 1 evaluation of the parent block)
+			if (block.Instructions.Count == 0) {
+				if (!block.FinalInstruction.HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop))
+					return block.FinalInstruction;
+			} else if (block.Instructions.Count == 1 && block.FinalInstruction.OpCode == OpCode.Nop) {
+				if (block.Instructions[0].ResultType == StackType.Void && !block.Instructions[0].HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop))
+					return block.Instructions[0];
+			}
+			return block;
 		}
 	}
 }

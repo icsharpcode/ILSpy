@@ -145,6 +145,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var inst in block.Instructions) {
 				blockStatement.Add(Convert(inst));
 			}
+			blockStatement.Add(Convert(block.FinalInstruction));
 			return blockStatement;
 		}
 		
@@ -158,6 +159,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				foreach (var inst in block.Instructions) {
 					blockStatement.Add(Convert(inst));
+				}
+				if (block.FinalInstruction.OpCode != OpCode.Nop) {
+					blockStatement.Add(Convert(block.FinalInstruction));
 				}
 			}
 			return blockStatement;

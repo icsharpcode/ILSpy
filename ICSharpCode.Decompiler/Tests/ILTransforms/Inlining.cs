@@ -39,13 +39,19 @@ namespace ICSharpCode.Decompiler.Tests.ILTransforms
 		{
 			var f = MakeFunction(
 				new Block {
-					new LdcI4(1),
-					new LdcI4(2),
-					new Add(new Pop(StackType.I4), new Pop(StackType.I4), false, Sign.Signed)
+					Instructions = {
+						new LdcI4(1),
+						new LdcI4(2),
+						new Add(new Pop(StackType.I4), new Pop(StackType.I4), false, Sign.Signed)
+					}
 				});
 			f.AcceptVisitor(new TransformingVisitor());
 			Assert.AreEqual(
-				new Add(new LdcI4(1), new LdcI4(2), false, Sign.Signed).ToString(),
+				new Block {
+					Instructions = {
+						new Add(new LdcI4(1), new LdcI4(2), false, Sign.Signed)
+					}
+				}.ToString(),
 				f.Body.ToString()
 			);
 		}
@@ -55,26 +61,30 @@ namespace ICSharpCode.Decompiler.Tests.ILTransforms
 		{
 			var f = MakeFunction(
 				new Block {
-					new LdcI4(1),
-					new LdcI4(2),
-					new LdcI4(3),
-					new Call(TypeSystem.Action<int, int, int>()) {
-						Arguments = {
-							new Pop(StackType.I4),
-							new Block { new Pop(StackType.I4) },
-							new Pop(StackType.I4),
+					Instructions = {
+						new LdcI4(1),
+						new LdcI4(2),
+						new LdcI4(3),
+						new Call(TypeSystem.Action<int, int, int>()) {
+							Arguments = {
+								new Pop(StackType.I4),
+								new Block { FinalInstruction = new Pop(StackType.I4) },
+								new Pop(StackType.I4),
+							}
 						}
 					}
 				});
 			f.AcceptVisitor(new TransformingVisitor());
 			Assert.AreEqual(
 				new Block {
-					new LdcI4(1),
-					new Call(TypeSystem.Action<int, int, int>()) {
-						Arguments = {
-							new LdcI4(2),
-							new Block { new Pop(StackType.I4) },
-							new LdcI4(3)
+					Instructions = {
+						new LdcI4(1),
+						new Call(TypeSystem.Action<int, int, int>()) {
+							Arguments = {
+								new LdcI4(2),
+								new Block { FinalInstruction = new Pop(StackType.I4) },
+								new LdcI4(3)
+							}
 						}
 					}
 				}.ToString(),
