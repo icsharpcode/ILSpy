@@ -94,7 +94,11 @@ namespace ICSharpCode.Decompiler.IL
 				stack.didInline = false;
 				stack.error = false;
 				inst = inst.Inline(InstructionFlags.None, stack);
-				Debug.Assert(stack.error == inst.HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop));
+				// An error implies that a peek or pop instruction wasn't replaced
+				// But even if we replaced all peek/pop instructions, we might have replaced them with
+				// another peek or pop instruction, so MayPeek/MayPop might still be set after
+				// we finish without error!
+				Debug.Assert(!stack.error || inst.HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop));
 			} while (stack.didInline); // repeat transformations when something was inlined
 			return inst;
 		}
@@ -105,44 +109,51 @@ namespace ICSharpCode.Decompiler.IL
 			List<ILInstruction> output = new List<ILInstruction>();
 			for (int i = 0; i < block.Instructions.Count; i++) {
 				var inst = block.Instructions[i];
-				inst = DoInline(stack, inst); 
-				if (inst.HasFlag(InstructionFlags.MayBranch 
-				                 | InstructionFlags.MayPeek | InstructionFlags.MayPop
+				inst = DoInline(stack, inst);
+				if (inst.HasFlag(InstructionFlags.MayBranch | InstructionFlags.MayPop
 				                 | InstructionFlags.MayReadEvaluationStack | InstructionFlags.MayWriteEvaluationStack)) {
 					// Values currently on the stack might be used on both sides of the branch,
 					// so we can't inline them.
 					// We also have to flush the stack if the instruction still accesses the evaluation stack,
 					// no matter whether in phase-1 or phase-2.
 					FlushInstructionStack(stack, output);
+				} else if (inst.ResultType == StackType.Void && stack.Count > 0) {
+					// For void instructions on non-empty stack, we can create a new inline block (or add to an existing one)
+					// This works even when inst involves Peek.
+					ILInstruction headInst = stack.Pop();
+					Block inlineBlock = headInst as Block;
+					if (inlineBlock == null || inlineBlock.FinalInstruction.OpCode != OpCode.Pop) {
+						inlineBlock = new Block {
+							Instructions = { headInst },
+							ILRange = new Interval(headInst.ILRange.Start, headInst.ILRange.Start),
+							FinalInstruction = new Pop(headInst.ResultType)
+						};
+					}
+					inlineBlock.Instructions.Add(inst);
+					inst = inlineBlock;
+				}
+				if (inst.HasFlag(InstructionFlags.MayPeek)) {
+					// Prevent instruction from being inlined if it was peeked at.
+					FlushInstructionStack(stack, output);
 				}
 				if (inst.ResultType == StackType.Void) {
-					// We cannot directly push instructions onto the stack if they don't produce
-					// a result.
-					if (!stack.error && stack.Count > 0) {
-						// Wrap the instruction on top of the stack into an inline block,
-						// and append our void-typed instruction to the end of that block.
-						// TODO: I think this is wrong now that we changed the inline block semantics;
-						// we need to re-think how to build inline blocks.
-						var headInst = stack.Pop();
-						var nestedBlock = headInst as Block ?? new Block {
-							Instructions = { headInst },
-							ILRange = headInst.ILRange
-						};
-						nestedBlock.Instructions.Add(inst);
-						stack.Push(nestedBlock);
-					} else {
-						// We can't move incomplete instructions into a nested block
-						// or the instruction stack was empty
-						FlushInstructionStack(stack, output);
-						output.Add(inst);
-					}
+					// We can't add void instructions to the stack, so flush the stack
+					// and directly add the instruction to the output.
+					FlushInstructionStack(stack, output);
+					output.Add(inst);
 				} else {
 					// Instruction has a result, so we can push it on the stack normally
 					stack.Push(inst);
 				}
 			}
 			// Allow inlining into the final instruction
-			block.FinalInstruction = DoInline(stack, block.FinalInstruction);
+			if (block.FinalInstruction.OpCode == OpCode.Pop && stack.Count > 0 && IsInlineBlock(stack.Peek())) {
+				// Don't inline an inline block into the final pop instruction:
+				// doing so would result in infinite recursion.
+			} else {
+				// regular inlining into the final instruction
+				block.FinalInstruction = DoInline(stack, block.FinalInstruction);
+			}
 			FlushInstructionStack(stack, output);
 			block.Instructions.ReplaceList(output);
 			if (!(block.Parent is BlockContainer)) {
@@ -151,10 +162,30 @@ namespace ICSharpCode.Decompiler.IL
 			return block;
 		}
 
+		bool IsInlineBlock(ILInstruction inst)
+		{
+			Block block = inst as Block;
+			return block != null && block.FinalInstruction.OpCode == OpCode.Pop;
+		}
+		
 		void FlushInstructionStack(Stack<ILInstruction> stack, List<ILInstruction> output)
 		{
-			output.AddRange(stack.Reverse());
+			foreach (var inst in stack.Reverse()) {
+				AddToOutput(inst, output);
+			}
 			stack.Clear();
+		}
+		
+		void AddToOutput(ILInstruction inst, List<ILInstruction> output)
+		{
+			// Unpack inline blocks that would become direct children of the parent block
+			if (IsInlineBlock(inst)) {
+				foreach (var nestedInst in ((Block)inst).Instructions) {
+					AddToOutput(nestedInst, output);
+				}
+			} else {
+				output.Add(inst);
+			}
 		}
 		
 		protected internal override ILInstruction VisitBlockContainer(BlockContainer container)

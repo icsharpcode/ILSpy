@@ -37,8 +37,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
-			output.Write(' ');
-			Method.WriteTo(output);
+			if (Method != null) {
+				output.Write(' ');
+				Method.WriteTo(output);
+			}
 			output.WriteLine(" {");
 			output.Indent();
 			

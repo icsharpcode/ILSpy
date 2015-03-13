@@ -528,10 +528,6 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class Branch : SimpleInstruction
 	{
 		public override StackType ResultType { get { return StackType.Void; } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
-		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBranch(this);

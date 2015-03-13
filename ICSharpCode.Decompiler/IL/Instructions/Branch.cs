@@ -25,6 +25,14 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>
+	/// Unconditional branch. <c>goto target;</c>
+	/// </summary>
+	/// <remarks>
+	/// Phase-1 execution of a branch is a no-op.
+	/// Phase-2 execution removes PopCount elements from the evaluation stack
+	/// and jumps to the target block.
+	/// </remarks>
 	partial class Branch : SimpleInstruction
 	{
 		readonly int targetILOffset;
@@ -32,14 +40,22 @@ namespace ICSharpCode.Decompiler.IL
 		
 		/// <summary>
 		/// Pops the specified number of arguments from the evaluation stack during the branching operation.
-		/// Note that the Branch instruction does not set InstructionFlags.MayPop -- the pop instead is considered
-		/// to happen after the branch was taken.
 		/// </summary>
 		public int PopCount;
 		
 		public Branch(int targetILOffset) : base(OpCode.Branch)
 		{
 			this.targetILOffset = targetILOffset;
+		}
+		
+		protected override InstructionFlags ComputeFlags()
+		{
+			var flags = InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
+			if (PopCount > 0) {
+				// the branch pop happens during phase-2, so don't use MayPop
+				flags |= InstructionFlags.MayWriteEvaluationStack;
+			}
+			return flags;
 		}
 		
 		public int TargetILOffset {

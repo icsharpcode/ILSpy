@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
+using System.Diagnostics;
 using ICSharpCode.Decompiler.IL;
 using NUnit.Framework;
 using ICSharpCode.Decompiler.Tests.Helpers;
@@ -85,6 +86,39 @@ namespace ICSharpCode.Decompiler.Tests.ILTransforms
 								new Block { FinalInstruction = new Pop(StackType.I4) },
 								new LdcI4(3)
 							}
+						}
+					}
+				}.ToString(),
+				f.Body.ToString()
+			);
+		}
+		
+		[Test]
+		public void BuildInlineBlock()
+		{
+			var f = MakeFunction(
+				new Block {
+					Instructions = {
+						new LdcI4(1),
+						new LdcI4(2),
+						new Call(TypeSystem.Action<int>()) { Arguments = { new Peek(StackType.I4) } },
+						new Call(TypeSystem.Action<int>()) { Arguments = { new Peek(StackType.I4) } },
+						new Call(TypeSystem.Action<int, int>()) { Arguments = { new Pop(StackType.I4), new Pop(StackType.I4) } }
+					}
+				});
+			f.AcceptVisitor(new TransformingVisitor());
+			Debug.WriteLine(f.ToString());
+			Assert.AreEqual(
+				new Call(TypeSystem.Action<int, int>()) {
+					Arguments = {
+						new LdcI4(1),
+						new Block {
+							Instructions = {
+								new LdcI4(2),
+								new Call(TypeSystem.Action<int>()) { Arguments = { new Peek(StackType.I4) } },
+								new Call(TypeSystem.Action<int>()) { Arguments = { new Peek(StackType.I4) } },
+							},
+							FinalInstruction = new Pop(StackType.I4)
 						}
 					}
 				}.ToString(),

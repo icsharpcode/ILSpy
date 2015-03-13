@@ -60,7 +60,7 @@
 		new OpCode("bit.not", "Bitwise NOT", Unary),
 		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
 		new OpCode("br", "Unconditional branch. <c>goto target;</c>",
-			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch),
+			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch, CustomComputeFlags),
 		// TODO: get rid of endfinally, we can represent those with a normal branch to the end of the filter/finally block instead
 		new OpCode("endfinally", "Marks the end of an finally, fault or exception filter block.",
 			CustomClassName("EndFinally"), NoArguments, UnconditionalBranch, MayBranch),
