@@ -201,6 +201,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Argument = this.argument.Inline(flagsBefore, context);
 			return this;
 		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Argument.TransformStackIntoVariables(state);
+		}
 		protected override InstructionFlags ComputeFlags()
 		{
 			return argument.Flags;
@@ -254,6 +258,11 @@ namespace ICSharpCode.Decompiler.IL
 			this.Right = this.right.Inline(flagsBefore | ((this.left.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
 			this.Left = this.left.Inline(flagsBefore, context);
 			return this;
+		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Left.TransformStackIntoVariables(state);
+			Right.TransformStackIntoVariables(state);
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -887,6 +896,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = this.value.Inline(flagsBefore, context);
 			return this;
 		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Value.TransformStackIntoVariables(state);
+		}
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
 		public ILVariable Variable { get { return variable; } }
@@ -1166,6 +1179,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Target.TransformStackIntoVariables(state);
+		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -1226,6 +1243,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
+		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Target.TransformStackIntoVariables(state);
 		}
 		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
@@ -1291,6 +1312,11 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
+		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Target.TransformStackIntoVariables(state);
+			Value.TransformStackIntoVariables(state);
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
@@ -1413,6 +1439,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = this.value.Inline(flagsBefore, context);
 			return this;
 		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Value.TransformStackIntoVariables(state);
+		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -1530,6 +1560,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Target.TransformStackIntoVariables(state);
+		}
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
 		public IType Type { get { return type; } }
@@ -1602,6 +1636,11 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
+		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Target.TransformStackIntoVariables(state);
+			Value.TransformStackIntoVariables(state);
 		}
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
@@ -1874,6 +1913,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Target.TransformStackIntoVariables(state);
+		}
 		public override StackType ResultType { get { return StackType.I; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -1933,6 +1976,11 @@ namespace ICSharpCode.Decompiler.IL
 			this.Index = this.index.Inline(flagsBefore | ((this.array.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
 			this.Array = this.array.Inline(flagsBefore, context);
 			return this;
+		}
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Array.TransformStackIntoVariables(state);
+			Index.TransformStackIntoVariables(state);
 		}
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>

@@ -33,8 +33,13 @@ namespace ICSharpCode.Decompiler.IL
 	/// - cleanup after branch inlining
 	/// - removal of unnecessary blocks and block containers
 	/// </remarks>
-	public class TransformingVisitor : ILVisitor<ILInstruction>
+	public class TransformingVisitor : ILVisitor<ILInstruction>, IILTransform
 	{
+		public void Run(ILFunction function, ILTransformContext context)
+		{
+			function.AcceptVisitor(this);
+		}
+
 		protected override ILInstruction Default(ILInstruction inst)
 		{
 			inst.TransformChildren(this);

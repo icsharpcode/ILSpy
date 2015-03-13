@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		}
 	}
 	
-	class EscapeGeneratedIdentifiers : DepthFirstAstVisitor<object, object>
+	class EscapeGeneratedIdentifiers : DepthFirstAstVisitor
 	{
 		bool IsValid(char ch)
 		{
@@ -51,15 +51,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : string.Format("_{0:0000X}", (int)ch)));
 		}
 		
-		public override object VisitIdentifier(Identifier identifier, object data)
+		public override void VisitIdentifier(Identifier identifier)
 		{
 			identifier.Name = ReplaceInvalid(identifier.Name);
-			return null;
 		}
 
 		public void Run(AstNode node)
 		{
-			node.AcceptVisitor(this, null);
+			node.AcceptVisitor(this);
 		}
 	}
 }

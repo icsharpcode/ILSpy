@@ -45,7 +45,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Variable created for exception handler
 		/// </summary>
-		Exception
+		Exception,
+		StackSlot
 	}
 
 	public class ILVariable

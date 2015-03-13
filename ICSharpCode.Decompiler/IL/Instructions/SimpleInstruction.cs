@@ -59,6 +59,10 @@ namespace ICSharpCode.Decompiler.IL
 			// Nothing to do, since we don't have arguments.
 			return this;
 		}
+
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+		}
 	}
 
 	partial class Pop

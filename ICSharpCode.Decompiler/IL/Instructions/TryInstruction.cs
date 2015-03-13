@@ -102,6 +102,11 @@ namespace ICSharpCode.Decompiler.IL
 					throw new InvalidOperationException("Cannot transform a TryCatchHandler");
 			}
 		}
+
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			throw new NotImplementedException();
+		}
 	}
 	
 	/// <summary>
@@ -138,6 +143,10 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return Block.Phase1Boundary(filter.Flags) | Block.Phase1Boundary(body.Flags);
+		}
+
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
 		}
 		
 		public override void WriteTo(ITextOutput output)
@@ -216,6 +225,11 @@ namespace ICSharpCode.Decompiler.IL
 			this.TryBlock = TryBlock.AcceptVisitor(visitor);
 			this.FinallyBlock = finallyBlock.AcceptVisitor(visitor);
 		}
+
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			throw new NotImplementedException();
+		}
 	}
 	
 	partial class TryFault
@@ -263,6 +277,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.TryBlock = TryBlock.AcceptVisitor(visitor);
 			this.FaultBlock = faultBlock.AcceptVisitor(visitor);
+		}
+
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

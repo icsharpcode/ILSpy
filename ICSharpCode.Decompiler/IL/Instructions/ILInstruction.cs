@@ -168,6 +168,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// is equivalent to phase-1 execution of the instruction.
 		/// </remarks>
 		internal abstract ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context);
+
+		/// <summary>
+		/// Transforms the evaluation stack 'pop' and 'peek' instructions into local copy.
+		/// </summary>
+		internal abstract void TransformStackIntoVariables(TransformStackIntoVariablesState state);
 		
 		/// <summary>
 		/// Number of parents that refer to this instruction and are connected to the root.

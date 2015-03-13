@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -101,6 +102,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			// Blocks are phase-1 boundaries
 			return this;
+		}
+
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			EntryPoint.TransformStackIntoVariables(state);
 		}
 	}
 }

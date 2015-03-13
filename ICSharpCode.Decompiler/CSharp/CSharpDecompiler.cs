@@ -37,6 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	public class CSharpDecompiler
 	{
 		readonly DecompilerTypeSystem typeSystem;
+
 		List<IAstTransform> astTransforms = new List<IAstTransform> {
 			//new PushNegation(),
 			//new DelegateConstruction(context),
@@ -52,6 +53,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			//new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
 			//new CombineQueryExpressions(context),
 			//new FlattenSwitchBlocks(),
+		};
+
+		List<IILTransform> ilTransforms = new List<IILTransform> {
+			new TransformingVisitor(),
+			new TransformStackIntoVariables()
 		};
 
 		public CancellationToken CancellationToken { get; set; }
@@ -192,15 +198,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			var ilReader = new ILReader(typeSystem);
 			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
 			function.CheckInvariant();
-			function.Body = function.Body.AcceptVisitor(new TransformingVisitor());
-			function.CheckInvariant();
+			var context = new ILTransformContext { TypeSystem = typeSystem };
+			foreach (var transform in ilTransforms) {
+				transform.Run(function, context);
+				function.CheckInvariant();
+			}
 			var statementBuilder = new StatementBuilder(decompilationContext, method);
 			var body = statementBuilder.ConvertAsBlock(function.Body);
 			
 			// insert variables at start of body
 			Statement prevVarDecl = null;
 			foreach (var v in function.Variables) {
-				if (v.Kind == VariableKind.Local) {
+				if (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot) {
 					var type = typeSystemAstBuilder.ConvertType(v.Type);
 					var varDecl = new VariableDeclarationStatement(type, v.Name);
 					body.Statements.InsertAfter(prevVarDecl, varDecl);

@@ -98,11 +98,14 @@
     <Compile Include="IL\Instructions\PatternMatching.cs" />
     <Compile Include="IL\Instructions\Return.cs" />
     <Compile Include="IL\Instructions\SimpleInstruction.cs" />
+    <Compile Include="IL\Instructions\TransformStackIntoVariablesState.cs" />
     <Compile Include="IL\Instructions\TryInstruction.cs" />
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
     <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\NRTypeExtensions.cs" />
     <Compile Include="IL\TransformingVisitor.cs" />
+    <Compile Include="IL\TransformStackIntoVariables.cs" />
+    <Compile Include="IL\UnionFind.cs" />
     <Compile Include="TypesHierarchyHelpers.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />

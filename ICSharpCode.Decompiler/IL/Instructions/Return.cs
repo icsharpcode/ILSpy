@@ -85,5 +85,11 @@ namespace ICSharpCode.Decompiler.IL
 				this.ReturnValue = returnValue.Inline(flagsBefore, context);
 			return this;
 		}
+
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			if (returnValue != null)
+				ReturnValue.TransformStackIntoVariables(state);
+		}
 	}
 }

@@ -22,6 +22,8 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.NRefactory.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -162,6 +164,23 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			// an inline block has no phase-1 effects, so we're immediately done with inlining
 			return this;
+		}
+		
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			for (int i = 0; i < Instructions.Count; i++) {
+				var inst = Instructions[i].Inline(InstructionFlags.None, state);
+				inst.TransformStackIntoVariables(state);
+				if (inst.ResultType != StackType.Void) {
+					var type = state.TypeSystem.Compilation.FindType(inst.ResultType.ToKnownTypeCode());
+					ILVariable variable = new ILVariable(VariableKind.StackSlot, type, state.Variables.Count);
+					state.Variables.Push(variable);
+					inst = new Void(new StLoc(inst, variable));
+				}
+				Instructions[i] = inst;
+			}
+			FinalInstruction = FinalInstruction.Inline(InstructionFlags.None, state);
+			FinalInstruction.TransformStackIntoVariables(state);
 		}
 	}
 }

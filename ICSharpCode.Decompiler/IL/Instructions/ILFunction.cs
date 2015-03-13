@@ -68,5 +68,13 @@ namespace ICSharpCode.Decompiler.IL
 			// To the outside, lambda creation looks like a constant
 			return this;
 		}
+
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			var oldStack = state.Variables;
+			state.Variables = new Stack<ILVariable>();
+			Body.TransformStackIntoVariables(state);
+			state.Variables = oldStack;
+		}
 	}
 }

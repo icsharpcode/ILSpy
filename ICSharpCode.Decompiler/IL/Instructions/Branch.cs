@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -109,6 +110,18 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(" (pops ");
 				output.Write(PopCount.ToString());
 				output.Write(" element)");
+			}
+		}
+		
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			ImmutableArray<ILVariable> initialVariables;
+			if (!state.InitialVariables.TryGetValue(targetBlock, out initialVariables)) {
+				initialVariables = state.Variables.ToImmutableArray();
+				state.InitialVariables.Add(targetBlock, initialVariables);
+				targetBlock.TransformStackIntoVariables(state);
+			} else {
+				state.MergeVariables(state.Variables, initialVariables.ToStack());
 			}
 		}
 	}

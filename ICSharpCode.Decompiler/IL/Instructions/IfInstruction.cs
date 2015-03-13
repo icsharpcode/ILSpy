@@ -58,6 +58,11 @@ namespace ICSharpCode.Decompiler.IL
 			// note: we skip TrueInst and FalseInst because there's a phase-1-boundary around them
 			return this;
 		}
+
+		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			throw new NotImplementedException();
+		}
 		
 		protected override InstructionFlags ComputeFlags()
 		{

@@ -606,6 +606,15 @@ namespace ICSharpCode.Decompiler.IL
 				b.AppendLine("\treturn this;");
 				b.Append("}");
 				opCode.Members.Add(b.ToString());
+				b.Clear();
+				b.AppendLine("internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)");
+				b.AppendLine("{");
+				for (int i = 0; i < children.Length; i++) {
+					string arg = children[i].Name;
+					b.AppendLine("\t" + MakeName(arg) + ".TransformStackIntoVariables(state);");
+				}
+				b.Append("}");
+				opCode.Members.Add(b.ToString());
 			}
 		};
 	}
