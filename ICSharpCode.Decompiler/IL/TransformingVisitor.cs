@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		 */
 		
-		protected bool removeNops;
+		protected bool removeNops = true;
 		
 		sealed class InliningStack : Stack<ILInstruction>, IInlineContext
 		{
@@ -114,6 +114,8 @@ namespace ICSharpCode.Decompiler.IL
 			List<ILInstruction> output = new List<ILInstruction>();
 			for (int i = 0; i < block.Instructions.Count; i++) {
 				var inst = block.Instructions[i];
+				if (removeNops && inst.OpCode == OpCode.Nop)
+					continue;
 				inst = DoInline(stack, inst);
 				if (inst.HasFlag(InstructionFlags.MayBranch | InstructionFlags.MayPop
 				                 | InstructionFlags.MayReadEvaluationStack | InstructionFlags.MayWriteEvaluationStack)) {

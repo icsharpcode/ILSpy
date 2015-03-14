@@ -123,6 +123,9 @@ namespace ICSharpCode.Decompiler.IL
 			} else {
 				state.MergeVariables(state.Variables, initialVariables.ToStack());
 			}
+			// No one is supposed to use the variable stack after an unconditional branch,
+			// but let's clear it just to be safe.
+			state.Variables.Clear();
 		}
 	}
 }

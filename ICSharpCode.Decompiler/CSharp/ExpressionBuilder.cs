@@ -391,7 +391,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(argInstruction)
 						.WithRR(new ThisResolveResult(inst.Method.DeclaringType, causesNonVirtualInvocation: true));
 				} else {
-					target = Translate(argInstruction);
+					target = Translate(argInstruction).ConvertTo(inst.Method.DeclaringType, this);
 				}
 			} else {
 				target = new TypeReferenceExpression(ConvertType(inst.Method.DeclaringType))
