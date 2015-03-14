@@ -61,7 +61,14 @@ namespace ICSharpCode.Decompiler.IL
 
 		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
-			throw new NotImplementedException();
+			Condition.TransformStackIntoVariables(state);
+			var stackAfterCondition = state.Variables.Clone();
+			TrueInst.Inline(InstructionFlags.None, state).TransformStackIntoVariables(state);
+			var afterTrue = state.Variables.Clone();
+			state.Variables = stackAfterCondition;
+			FalseInst.Inline(InstructionFlags.None, state).TransformStackIntoVariables(state);
+			if (!TrueInst.HasFlag(InstructionFlags.EndPointUnreachable) && !FalseInst.HasFlag(InstructionFlags.EndPointUnreachable))
+				state.MergeVariables(state.Variables, afterTrue);
 		}
 		
 		protected override InstructionFlags ComputeFlags()
