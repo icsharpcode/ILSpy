@@ -63,12 +63,21 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Condition.TransformStackIntoVariables(state);
 			var stackAfterCondition = state.Variables.Clone();
-			TrueInst.Inline(InstructionFlags.None, state).TransformStackIntoVariables(state);
+			TrueInst = TrueInst.Inline(InstructionFlags.None, state);
+			TrueInst.TransformStackIntoVariables(state);
 			var afterTrue = state.Variables.Clone();
 			state.Variables = stackAfterCondition;
-			FalseInst.Inline(InstructionFlags.None, state).TransformStackIntoVariables(state);
-			if (!TrueInst.HasFlag(InstructionFlags.EndPointUnreachable) && !FalseInst.HasFlag(InstructionFlags.EndPointUnreachable))
+			FalseInst = FalseInst.Inline(InstructionFlags.None, state);
+			FalseInst.TransformStackIntoVariables(state);
+			if (!TrueInst.HasFlag(InstructionFlags.EndPointUnreachable) && !FalseInst.HasFlag(InstructionFlags.EndPointUnreachable)) {
+				// If end-points of both instructions are reachable, merge their states
 				state.MergeVariables(state.Variables, afterTrue);
+			}
+			if (FalseInst.HasFlag(InstructionFlags.EndPointUnreachable)) {
+				// If the end-point of FalseInst is unreachable, continue with the end-state of TrueInst instead
+				// (if both are unreachable, it doesn't matter what we continue with)
+				state.Variables = afterTrue;
+			}
 		}
 		
 		protected override InstructionFlags ComputeFlags()
