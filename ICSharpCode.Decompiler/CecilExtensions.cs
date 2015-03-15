@@ -178,6 +178,11 @@ namespace ICSharpCode.Decompiler
 			return string.Format("IL_{0:x4}", offset);
 		}
 		
+		public static string OffsetToString(long offset)
+		{
+			return string.Format("IL_{0:x4}", offset);
+		}
+		
 		public static HashSet<MethodDefinition> GetAccessorMethods(this TypeDefinition type)
 		{
 			HashSet<MethodDefinition> accessorMethods = new HashSet<MethodDefinition>();

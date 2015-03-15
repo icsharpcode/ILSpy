@@ -50,6 +50,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 		{
 			return string.Format("IL_{0:x4}", offset);
 		}
+		
+		public static string OffsetToString(long offset)
+		{
+			return string.Format("IL_{0:x4}", offset);
+		}
 
 		public static void WriteOffsetReference(ITextOutput writer, Instruction instruction)
 		{

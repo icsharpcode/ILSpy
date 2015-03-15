@@ -102,6 +102,7 @@
     <Compile Include="Helpers\TypeSystemHelper.cs" />
     <Compile Include="ILTransforms\InliningTests.cs" />
     <Compile Include="Loops.cs" />
+    <Compile Include="LongSetTests.cs" />
     <Compile Include="StackToVariablesTests.cs" />
     <Compile Include="TestCases\CompoundAssignment.cs" />
     <Compile Include="TestCases\ControlFlow.cs" />

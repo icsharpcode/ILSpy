@@ -74,13 +74,82 @@ namespace ICSharpCode.Decompiler
 	}
 
 	/// <summary>
-	/// An immutable set of integers, that is implemented as a list of intervals.
+	/// Represents a half-open interval.
+	/// The start position is inclusive; but the end position is exclusive.
 	/// </summary>
-	struct IntegerSet
+	public struct LongInterval : IEquatable<LongInterval>
 	{
-		public readonly ImmutableArray<Interval> Intervals;
+		/// <summary>
+		/// Gets the inclusive start of the interval.
+		/// </summary>
+		public readonly long Start;
 
-		public IntegerSet(ImmutableArray<Interval> intervals)
+		/// <summary>
+		/// Gets the exclusive end of the interval.
+		/// </summary>
+		public readonly long End;
+
+		public LongInterval(long start, long end)
+		{
+			if (start > end && end != long.MinValue)
+				throw new ArgumentException("The end must be after the start", "end");
+			this.Start = start;
+			this.End = end;
+		}
+
+		public bool Contains(long val)
+		{
+			// Use 'val <= End-1' instead of 'val < End' to allow intervals to include int.MaxValue.
+			return Start <= val && val <= unchecked(End - 1);
+		}
+
+		public override string ToString()
+		{
+			return string.Format("[{0}..{1})", Start, End);
+		}
+
+		#region Equals and GetHashCode implementation
+		public override bool Equals(object obj)
+		{
+			return (obj is LongInterval) && Equals((LongInterval)obj);
+		}
+
+		public bool Equals(LongInterval other)
+		{
+			return this.Start == other.Start && this.End == other.End;
+		}
+
+		public override int GetHashCode()
+		{
+			int hashCode = 0;
+			unchecked
+			{
+				hashCode += 1000000007 * Start.GetHashCode();
+				hashCode += 1000000009 * End.GetHashCode();
+			}
+			return hashCode;
+		}
+
+		public static bool operator ==(LongInterval lhs, LongInterval rhs)
+		{
+			return lhs.Equals(rhs);
+		}
+
+		public static bool operator !=(LongInterval lhs, LongInterval rhs)
+		{
+			return !(lhs == rhs);
+		}
+		#endregion
+	}
+
+	/// <summary>
+	/// An immutable set of longs, that is implemented as a list of intervals.
+	/// </summary>
+	struct LongSet
+	{
+		public readonly ImmutableArray<LongInterval> Intervals;
+
+		public LongSet(ImmutableArray<LongInterval> intervals)
 		{
 			this.Intervals = intervals;
 		}
@@ -90,14 +159,29 @@ namespace ICSharpCode.Decompiler
 			get { return Intervals.IsDefaultOrEmpty; }
 		}
 
-		public bool Contains(int val)
+		public bool Contains(long val)
 		{
-			// TODO: use binary search
-			foreach (Interval v in Intervals) {
-				if (v.Start <= val && val <= v.End)
-					return true;
+			int index = upper_bound(val);
+			return index > 0 && Intervals[index - 1].Contains(val);
+		}
+		
+		internal int upper_bound(long val)
+		{
+			int min = 0, max = Intervals.Length - 1;
+			while (max >= min) {
+				int m = min + (max - min) / 2;
+				LongInterval i = Intervals[m];
+				if (val < i.Start) {
+					max = m - 1;
+					continue;
+				}
+				if (val > i.End) {
+					min = m + 1;
+					continue;
+				}
+				return m + 1;
 			}
-			return false;
+			return min;
 		}
 
 		public override string ToString()
