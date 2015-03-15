@@ -20,7 +20,7 @@ using System;
 using System.Collections.Immutable;
 using NUnit.Framework;
 
-namespace ICSharpCode.Decompiler.Tests
+namespace ICSharpCode.Decompiler.Tests.Util
 {
 	[TestFixture]
 	public class LongSetTests

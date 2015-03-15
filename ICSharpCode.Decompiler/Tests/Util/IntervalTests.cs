@@ -22,7 +22,7 @@ using ICSharpCode.Decompiler.IL;
 using NUnit.Framework;
 using ICSharpCode.Decompiler.Tests.Helpers;
 
-namespace ICSharpCode.Decompiler.Tests.ILTransforms
+namespace ICSharpCode.Decompiler.Tests.Util
 {
 	public class IntervalTests
 	{
