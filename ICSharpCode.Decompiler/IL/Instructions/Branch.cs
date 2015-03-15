@@ -49,6 +49,14 @@ namespace ICSharpCode.Decompiler.IL
 			this.targetILOffset = targetILOffset;
 		}
 		
+		public Branch(Block targetBlock) : base(OpCode.Branch)
+		{
+			if (targetBlock == null)
+				throw new ArgumentNullException("targetBlock");
+			this.targetBlock = targetBlock;
+			this.targetILOffset = targetBlock.ILRange.Start;
+		}
+		
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;

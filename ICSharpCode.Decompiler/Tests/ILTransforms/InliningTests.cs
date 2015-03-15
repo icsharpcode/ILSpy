@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Tests.ILTransforms
 	/// <summary>
 	/// IL Inlining unit tests.
 	/// </summary>
-	public class Inlining
+	public class InliningTests
 	{
 		static ILFunction MakeFunction(ILInstruction body)
 		{

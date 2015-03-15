@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
@@ -59,7 +60,37 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public readonly InstructionCollection<ILInstruction> Instructions;
 		ILInstruction finalInstruction;
+		
+		/// <summary>
+		/// For blocks in a block container, this field holds
+		/// the number of incoming control flow edges to this block.
+		/// </summary>
+		/// <remarks>
+		/// This variable is automatically updated when adding/removing branch instructions from the ILAst,
+		/// or when adding the block as an entry point to a BlockContainer.
+		/// </remarks>
+		public int IncomingEdgeCount;
 
+		/// <summary>
+		/// Returns the index of the block in the parent BlockContainer's block list.
+		/// Returns 0 if the block is not in a BlockContainer.
+		/// </summary>
+		public int Index {
+			get {
+				// TODO: we can offer this in O(1) by making the
+				// parent BlockContainer store this in the blocks,
+				// but I'm not sure if it's worth the complexity.
+				// We'll have to see if the Index is useful in more than a few places.
+				// (otherwise those few places could use a Dictionary<Block, int>)
+				var bc = Parent as BlockContainer;
+				if (bc != null) {
+					return bc.Blocks.IndexOf(this);
+				} else {
+					return 0;
+				}
+			}
+		}
+		
 		public ILInstruction FinalInstruction {
 			get {
 				return finalInstruction;
@@ -70,7 +101,6 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public int IncomingEdgeCount;
 		
 		public Block() : base(OpCode.Block)
 		{
@@ -178,9 +208,24 @@ namespace ICSharpCode.Decompiler.IL
 					inst = new Void(new StLoc(inst, variable));
 				}
 				Instructions[i] = inst;
+				if (inst.HasFlag(InstructionFlags.EndPointUnreachable))
+					return;
 			}
 			FinalInstruction = FinalInstruction.Inline(InstructionFlags.None, state);
 			FinalInstruction.TransformStackIntoVariables(state);
+			if (FinalInstruction.HasFlag(InstructionFlags.EndPointUnreachable))
+				return;
+			var bc = Parent as BlockContainer;
+			if (bc != null) {
+				// If this block allows us to fall out of the container,
+				// remember the variable stack in state.FinalVariables.
+				ImmutableArray<ILVariable> variables;
+				if (state.FinalVariables.TryGetValue(bc, out variables)) {
+					state.MergeVariables(state.Variables, variables.ToStack());
+				} else {
+					state.FinalVariables.Add(bc, state.Variables.ToImmutableArray());
+				}
+			}
 		}
 	}
 }

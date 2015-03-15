@@ -70,5 +70,18 @@ public class Loops
 			array[i].ToLower();
 		}
 	}
+	
+	public void NestedLoops()
+	{
+		for (int i = 0; i < 10; i++) {
+			if (i % 2 == 0) {
+				for (int j = 0; j < 5; j++) {
+					Console.WriteLine("Y");
+				}
+			} else {
+				Console.WriteLine("X");
+			}
+		}
+	}
 }
 

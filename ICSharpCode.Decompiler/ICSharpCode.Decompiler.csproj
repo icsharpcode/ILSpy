@@ -76,6 +76,8 @@
     <Compile Include="CSharp\Transforms\IAstTransform.cs" />
     <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
+    <Compile Include="FlowAnalysis\ControlFlowNode.cs" />
+    <Compile Include="FlowAnalysis\Dominance.cs" />
     <Compile Include="IL\Instructions.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -93,17 +95,19 @@
     <Compile Include="IL\Instructions\ILInstruction.cs" />
     <Compile Include="IL\Instructions\InstructionCollection.cs" />
     <Compile Include="IL\Instructions\LocalVarInstructions.cs" />
+    <Compile Include="IL\Instructions\Loop.cs" />
     <Compile Include="IL\Instructions\MemoryInstructions.cs" />
     <Compile Include="IL\Instructions\PatternMatching.cs" />
     <Compile Include="IL\Instructions\Return.cs" />
     <Compile Include="IL\Instructions\SimpleInstruction.cs" />
-    <Compile Include="IL\Instructions\TransformStackIntoVariablesState.cs" />
     <Compile Include="IL\Instructions\TryInstruction.cs" />
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
     <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\NRTypeExtensions.cs" />
-    <Compile Include="IL\TransformingVisitor.cs" />
-    <Compile Include="IL\TransformStackIntoVariables.cs" />
+    <Compile Include="IL\Transforms\LoopDetection.cs" />
+    <Compile Include="IL\Transforms\TransformingVisitor.cs" />
+    <Compile Include="IL\Transforms\TransformStackIntoVariables.cs" />
+    <Compile Include="IL\Transforms\TransformStackIntoVariablesState.cs" />
     <Compile Include="IL\UnionFind.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />
@@ -169,6 +173,9 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="FlowAnalysis" />
+    <Folder Include="ILAst" />
+    <Folder Include="IL\Transforms" />
     <Folder Include="TypeSystem" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />

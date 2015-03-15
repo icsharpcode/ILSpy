@@ -172,7 +172,6 @@ namespace ICSharpCode.Decompiler.IL
 				case OpCode.BlockContainer:
 					var container = (BlockContainer)inst;
 					containerStack.Push(container);
-					container.EntryPoint.IncomingEdgeCount++; // count the entry edge
 					foreach (var block in container.Blocks)
 						ConnectBranches(block);
 					containerStack.Pop();

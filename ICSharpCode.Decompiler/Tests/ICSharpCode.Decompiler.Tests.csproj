@@ -100,7 +100,8 @@
     <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
     <Compile Include="Helpers\Tester.cs" />
     <Compile Include="Helpers\TypeSystemHelper.cs" />
-    <Compile Include="ILTransforms\Inlining.cs" />
+    <Compile Include="ILTransforms\InliningTests.cs" />
+    <Compile Include="Loops.cs" />
     <Compile Include="StackToVariablesTests.cs" />
     <Compile Include="TestCases\CompoundAssignment.cs" />
     <Compile Include="TestCases\ControlFlow.cs" />

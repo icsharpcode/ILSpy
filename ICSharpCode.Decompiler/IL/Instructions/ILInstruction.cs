@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.NRefactory.Utils;
 using ICSharpCode.Decompiler.CSharp;
 
 namespace ICSharpCode.Decompiler.IL
@@ -153,6 +154,15 @@ namespace ICSharpCode.Decompiler.IL
 		public abstract void TransformChildren(ILVisitor<ILInstruction> visitor);
 		
 		/// <summary>
+		/// Returns all descendants of the ILInstruction.
+		/// </summary>
+		public IEnumerable<ILInstruction> Descendants {
+			get {
+				return TreeTraversal.PreOrder(Children, inst => inst.Children);
+			}
+		}
+		
+		/// <summary>
 		/// Attempts inlining from the inline context into this instruction.
 		/// </summary>
 		/// <param name="flagsBefore">Combined instruction flags of the instructions
@@ -237,18 +247,30 @@ namespace ICSharpCode.Decompiler.IL
 			InvalidateFlags();
 		}
 		
-		protected internal void AddChildInstruction(ILInstruction newChild)
+		/// <summary>
+		/// Called when a new child is added to a InstructionCollection.
+		/// </summary>
+		protected internal void InstructionCollectionAdded(ILInstruction newChild)
 		{
 			if (refCount > 0)
 				newChild.AddRef();
 			newChild.parent = this;
-			InvalidateFlags();
 		}
 		
-		protected internal void RemoveChildInstruction(ILInstruction newChild)
+		/// <summary>
+		/// Called when a child is removed from a InstructionCollection.
+		/// </summary>
+		protected internal void InstructionCollectionRemoved(ILInstruction newChild)
 		{
 			if (refCount > 0)
 				newChild.ReleaseRef();
+		}
+		
+		/// <summary>
+		/// Called when a series of add/remove operations on the InstructionCollection is complete.
+		/// </summary>
+		protected internal virtual void InstructionCollectionUpdateComplete()
+		{
 			InvalidateFlags();
 		}
 	}

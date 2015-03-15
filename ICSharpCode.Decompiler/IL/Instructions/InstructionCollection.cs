@@ -35,22 +35,25 @@ namespace ICSharpCode.Decompiler.IL
 		protected override void ClearItems()
 		{
 			foreach (var child in this)
-				parentInstruction.RemoveChildInstruction(child);
+				parentInstruction.InstructionCollectionRemoved(child);
 			base.ClearItems();
+			parentInstruction.InstructionCollectionUpdateComplete();
 		}
 		
 		protected override void InsertItem(int index, T item)
 		{
 			if (item == null)
 				throw new ArgumentNullException("item");
-			parentInstruction.AddChildInstruction(item);
+			parentInstruction.InstructionCollectionAdded(item);
 			base.InsertItem(index, item);
+			parentInstruction.InstructionCollectionUpdateComplete();
 		}
 		
 		protected override void RemoveItem(int index)
 		{
-			parentInstruction.RemoveChildInstruction(this[index]);
+			parentInstruction.InstructionCollectionRemoved(this[index]);
 			base.RemoveItem(index);
+			parentInstruction.InstructionCollectionUpdateComplete();
 		}
 		
 		protected override void SetItem(int index, T item)
@@ -59,13 +62,15 @@ namespace ICSharpCode.Decompiler.IL
 				throw new ArgumentNullException("item");
 			if (this[index] == item)
 				return;
-			parentInstruction.RemoveChildInstruction(this[index]);
-			parentInstruction.AddChildInstruction(item);
+			parentInstruction.InstructionCollectionRemoved(this[index]);
+			parentInstruction.InstructionCollectionAdded(item);
 			base.SetItem(index, item);
+			parentInstruction.InstructionCollectionUpdateComplete();
 		}
 		
 		public int RemoveAll(Predicate<T> predicate)
 		{
+			// TODO: optimize
 			int removed = 0;
 			for (int i = 0; i < this.Count;) {
 				if (predicate(this[i])) {

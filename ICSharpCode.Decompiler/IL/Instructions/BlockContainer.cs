@@ -40,10 +40,16 @@ namespace ICSharpCode.Decompiler.IL
 	partial class BlockContainer : ILInstruction
 	{
 		public readonly InstructionCollection<Block> Blocks;
+		Block entryPoint;
 
 		public Block EntryPoint {
-			get {
-				return Blocks[0];
+			get { return entryPoint; }
+			private set {
+				if (entryPoint != null && IsConnected)
+					entryPoint.IncomingEdgeCount--;
+				entryPoint = value;
+				if (entryPoint != null && IsConnected)
+					entryPoint.IncomingEdgeCount++;
 			}
 		}
 
@@ -52,6 +58,26 @@ namespace ICSharpCode.Decompiler.IL
 			this.Blocks = new InstructionCollection<Block>(this);
 		}
 
+		protected internal override void InstructionCollectionUpdateComplete()
+		{
+			base.InstructionCollectionUpdateComplete();
+			this.EntryPoint = this.Blocks.FirstOrDefault();
+		}
+		
+		protected override void Connected()
+		{
+			base.Connected();
+			if (entryPoint != null)
+				entryPoint.IncomingEdgeCount++;
+		}
+		
+		protected override void Disconnected()
+		{
+			base.Disconnected();
+			if (entryPoint != null)
+				entryPoint.IncomingEdgeCount--;
+		}
+		
 		public override void WriteTo(ITextOutput output)
 		{
 			output.WriteLine("BlockContainer {");
@@ -81,7 +107,8 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant()
 		{
 			base.CheckInvariant();
-			Debug.Assert(Blocks.Count >= 1);
+			Debug.Assert(EntryPoint == Blocks[0]);
+			Debug.Assert(!IsConnected || EntryPoint.IncomingEdgeCount >= 1);
 		}
 		
 		protected override InstructionFlags ComputeFlags()
@@ -107,6 +134,11 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			EntryPoint.TransformStackIntoVariables(state);
+			ImmutableArray<ILVariable> variables;
+			if (state.FinalVariables.TryGetValue(this, out variables))
+				state.Variables = variables.ToStack();
+			else
+				state.Variables.Clear();
 		}
 	}
 }

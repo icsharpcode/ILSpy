@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using Mono.Cecil;
@@ -88,14 +89,10 @@ namespace ICSharpCode.ILSpy
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
 		{
 			yield return new TypedIL();
-			yield return new BlockIL(null);
-			yield return new BlockIL(new TransformingVisitor());
-			//yield return new ILAstLanguage { name = "ILAst (unoptimized)", inlineVariables = false };
-			//string nextName = "ILAst (variable splitting)";
-			//foreach (ILAstOptimizationStep step in Enum.GetValues(typeof(ILAstOptimizationStep))) {
-			//	yield return new ILAstLanguage { name = nextName, abortBeforeStep = step };
-			//	nextName = "ILAst (after " + step + ")";
-			//}
+			CSharpDecompiler decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll));
+			for (int i = 0; i <= decompiler.ILTransforms.Count; i++) {
+				yield return new BlockIL(decompiler.ILTransforms.Take(i).ToList());
+			}
 		}
 
 		public override string FileExtension {
@@ -136,11 +133,11 @@ namespace ICSharpCode.ILSpy
 
 		class BlockIL : ILAstLanguage
 		{
-			readonly ILVisitor<ILInstruction> transformer;
+			readonly IReadOnlyList<IILTransform> transforms;
 			
-			public BlockIL(ILVisitor<ILInstruction> transformer) : base(transformer == null ? "ILAst (blocks)" :  "ILAst (" + transformer.ToString() + ")")
+			public BlockIL(IReadOnlyList<IILTransform> transforms) : base(transforms.Count == 0 ? "ILAst (blocks)" :  "ILAst (" + transforms.Last().GetType().Name + ")")
 			{
-				this.transformer = transformer;
+				this.transforms = transforms;
 			}
 			
 			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
@@ -150,9 +147,9 @@ namespace ICSharpCode.ILSpy
 					return;
 				var typeSystem = new DecompilerTypeSystem(method.Module);
 				ILReader reader = new ILReader(typeSystem);
-				ILInstruction il = reader.ReadIL(method.Body, options.CancellationToken);
-				if (transformer != null)
-					il = il.AcceptVisitor(transformer);
+				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
+				foreach (var transform in transforms)
+					transform.Run(il, new ILTransformContext { TypeSystem = typeSystem });
 				il.WriteTo(output);
 			}
 		}

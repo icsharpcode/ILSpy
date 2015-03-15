@@ -73,6 +73,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			var falseStatement = inst.FalseInst.OpCode == OpCode.Nop ? null : Convert(inst.FalseInst);
 			return new IfElseStatement(condition, trueStatement, falseStatement);
 		}
+		
+		protected internal override Statement VisitLoop(Loop inst)
+		{
+			return new WhileStatement(new PrimitiveExpression(true), Convert(inst.Body));
+		}
 
 		protected internal override Statement VisitBranch(Branch inst)
 		{

@@ -32,12 +32,19 @@ using ICSharpCode.NRefactory.Utils;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
 	public class CSharpDecompiler
 	{
 		readonly DecompilerTypeSystem typeSystem;
+
+		List<IILTransform> ilTransforms = new List<IILTransform> {
+			new LoopDetection(),
+			new TransformingVisitor(),
+			new TransformStackIntoVariables()
+		};
 
 		List<IAstTransform> astTransforms = new List<IAstTransform> {
 			//new PushNegation(),
@@ -56,12 +63,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			//new FlattenSwitchBlocks(),
 		};
 
-		List<IILTransform> ilTransforms = new List<IILTransform> {
-			new TransformingVisitor(),
-			new TransformStackIntoVariables()
-		};
-
 		public CancellationToken CancellationToken { get; set; }
+
+		/// <summary>
+		/// IL transforms.
+		/// </summary>
+		public IList<IILTransform> ILTransforms {
+			get { return ilTransforms; }
+		}
 
 		/// <summary>
 		/// C# AST transforms.

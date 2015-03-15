@@ -71,6 +71,11 @@
 				new ChildInfo("trueInst"),
 				new ChildInfo("falseInst"),
 			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
+		new OpCode("loop", "Infinite loop",
+			CustomChildren(new []{
+				new ChildInfo("body")
+			}),
+			CustomComputeFlags, CustomWriteTo, ResultType("Void")),
 		new OpCode("try.catch", "Try-catch statement.",
 			BaseClass("TryInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo),
 		new OpCode("try.catch.handler", "Catch handler within a try-catch statement.",

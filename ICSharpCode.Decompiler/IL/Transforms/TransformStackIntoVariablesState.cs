@@ -29,6 +29,7 @@ namespace ICSharpCode.Decompiler.IL
 		public Stack<ILVariable> Variables { get; set; }
 		public UnionFind<ILVariable> UnionFind { get; set; }
 		public Dictionary<Block, ImmutableArray<ILVariable>> InitialVariables { get; set; }
+		public Dictionary<BlockContainer, ImmutableArray<ILVariable>> FinalVariables { get; set; }
 		public IDecompilerTypeSystem TypeSystem { get; set; }
 
 		public TransformStackIntoVariablesState()
@@ -36,6 +37,7 @@ namespace ICSharpCode.Decompiler.IL
 			Variables = new Stack<ILVariable>();
 			UnionFind = new UnionFind<ILVariable>();
 			InitialVariables = new Dictionary<Block, ImmutableArray<ILVariable>>();
+			FinalVariables = new Dictionary<BlockContainer, ImmutableArray<ILVariable>>();
 		}
 
 		public void MergeVariables(Stack<ILVariable> a, Stack<ILVariable> b)
