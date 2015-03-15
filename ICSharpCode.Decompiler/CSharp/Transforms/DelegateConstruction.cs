@@ -180,8 +180,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreach (AstNode node in body.Descendants) {
 				if (node is ThisReferenceExpression)
 					node.ReplaceWith(target.Clone());
-				
 			}
+			Expression replacement;
 			if (isLambda) {
 				LambdaExpression lambda = new LambdaExpression();
 				lambda.CopyAnnotationsFrom(ame);
@@ -189,11 +189,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				Expression returnExpr = ((ReturnStatement)body.Statements.Single()).Expression;
 				returnExpr.Remove();
 				lambda.Body = returnExpr;
-				objectCreateExpression.ReplaceWith(lambda);
+				replacement = lambda;
 			} else {
 				ame.Body = body;
-				objectCreateExpression.ReplaceWith(ame);
+				replacement = ame;
 			}
+			var expectedType = objectCreateExpression.Annotation<TypeInformation>().ExpectedType.Resolve();
+			if (expectedType != null && !expectedType.IsDelegate()) {
+				var simplifiedDelegateCreation = (ObjectCreateExpression)objectCreateExpression.Clone();
+				simplifiedDelegateCreation.Arguments.Clear();
+				simplifiedDelegateCreation.Arguments.Add(replacement);
+				replacement = simplifiedDelegateCreation;
+			}
+			objectCreateExpression.ReplaceWith(replacement);
 			return true;
 		}
 		

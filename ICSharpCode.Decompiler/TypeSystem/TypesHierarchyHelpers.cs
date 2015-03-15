@@ -32,9 +32,11 @@ namespace ICSharpCode.Decompiler.Ast
 			if (resolveTypeArguments)
 				return BaseTypes(derivedType).Any(t => t.Item == baseType);
 			else {
-				var comparableBaseType = baseType.ResolveOrThrow();
+				var comparableBaseType = baseType.Resolve();
+				if (comparableBaseType == null)
+					return false;
 				while (derivedType.BaseType != null) {
-					var resolvedBaseType = derivedType.BaseType.ResolveOrThrow();
+					var resolvedBaseType = derivedType.BaseType.Resolve();
 					if (resolvedBaseType == null)
 						return false;
 					if (comparableBaseType == resolvedBaseType)
@@ -185,24 +187,32 @@ namespace ICSharpCode.Decompiler.Ast
 			if (derivedType == null)
 				throw new ArgumentNullException("derivedType");
 
-			var visibility = IsVisibleFromDerived(baseMember);
-			if (visibility.HasValue)
-				return visibility.Value;
+			MethodAttributes attrs = GetAccessAttributes(baseMember) & MethodAttributes.MemberAccessMask;
+			if (attrs == MethodAttributes.Private)
+				return false;
 
 			if (baseMember.DeclaringType.Module == derivedType.Module)
 				return true;
-			// TODO: Check also InternalsVisibleToAttribute.
-				return false;
-		}
 
-		private static bool? IsVisibleFromDerived(IMemberDefinition member)
-		{
-			MethodAttributes attrs = GetAccessAttributes(member) & MethodAttributes.MemberAccessMask;
-			if (attrs == MethodAttributes.Private)
+			if (attrs == MethodAttributes.Assembly || attrs == MethodAttributes.FamANDAssem) {
+				var derivedTypeAsm = derivedType.Module.Assembly;
+				var asm = baseMember.DeclaringType.Module.Assembly;
+
+				if (asm.HasCustomAttributes) {
+					var attributes = asm.CustomAttributes
+						.Where(attr => attr.AttributeType.FullName == "System.Runtime.CompilerServices.InternalsVisibleToAttribute");
+					foreach (var attribute in attributes) {
+						string assemblyName = attribute.ConstructorArguments[0].Value as string;
+						assemblyName = assemblyName.Split(',')[0]; // strip off any public key info
+						if (assemblyName == derivedTypeAsm.Name.Name)
+							return true;
+					}
+				}
+
 				return false;
-			if (attrs == MethodAttributes.Assembly || attrs == MethodAttributes.FamANDAssem)
-				return null;
-				return true;
+			}
+
+			return true;
 		}
 
 		private static MethodAttributes GetAccessAttributes(IMemberDefinition member)

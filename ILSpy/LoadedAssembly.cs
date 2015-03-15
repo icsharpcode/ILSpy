@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy
 		readonly string fileName;
 		readonly string shortName;
 		
-		public LoadedAssembly(AssemblyList assemblyList, string fileName)
+		public LoadedAssembly(AssemblyList assemblyList, string fileName, Stream stream = null)
 		{
 			if (assemblyList == null)
 				throw new ArgumentNullException("assemblyList");
@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy
 			this.assemblyList = assemblyList;
 			this.fileName = fileName;
 			
-			this.assemblyTask = Task.Factory.StartNew<ModuleDefinition>(LoadAssembly); // requires that this.fileName is set
+			this.assemblyTask = Task.Factory.StartNew<ModuleDefinition>(LoadAssembly, stream); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 		
@@ -84,6 +84,16 @@ namespace ICSharpCode.ILSpy
 		public string ShortName {
 			get { return shortName; }
 		}
+
+		public string Text {
+			get {
+				if (AssemblyDefinition != null) {
+					return String.Format("{0} ({1})", ShortName, AssemblyDefinition.Name.Version);
+				} else {
+					return ShortName;
+				}
+			}
+		}
 		
 		public bool IsLoaded {
 			get { return assemblyTask.IsCompleted; }
@@ -92,13 +102,29 @@ namespace ICSharpCode.ILSpy
 		public bool HasLoadError {
 			get { return assemblyTask.IsFaulted; }
 		}
-		
-		ModuleDefinition LoadAssembly()
+
+		public bool IsAutoLoaded { get; set; }
+
+		ModuleDefinition LoadAssembly(object state)
 		{
+			var stream = state as Stream;
+			ModuleDefinition module;
+
 			// runs on background thread
 			ReaderParameters p = new ReaderParameters();
 			p.AssemblyResolver = new MyAssemblyResolver(this);
-			ModuleDefinition module = ModuleDefinition.ReadModule(fileName, p);
+
+			if (stream != null)
+			{
+				// Read the module from a precrafted stream
+				module = ModuleDefinition.ReadModule(stream, p);
+			}
+			else
+			{
+				// Read the module from disk (by default)
+				module = ModuleDefinition.ReadModule(fileName, p);
+			}
+
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
 				try {
 					LoadSymbols(module);
@@ -228,7 +254,8 @@ namespace ICSharpCode.ILSpy
 					file = Path.Combine(dir, name.Name + ".exe");
 			}
 			if (file != null) {
-				return assemblyList.OpenAssembly(file);
+				var loaded = assemblyList.OpenAssembly(file, true);
+				return loaded;
 			} else {
 				return null;
 			}
@@ -249,7 +276,7 @@ namespace ICSharpCode.ILSpy
 			
 			string file = Path.Combine(Environment.SystemDirectory, "WinMetadata", name + ".winmd");
 			if (File.Exists(file)) {
-				return assemblyList.OpenAssembly(file);
+				return assemblyList.OpenAssembly(file, true);
 			} else {
 				return null;
 			}
@@ -268,5 +295,6 @@ namespace ICSharpCode.ILSpy
 		{
 			assemblyTask.Wait();
 		}
+
 	}
 }

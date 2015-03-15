@@ -424,7 +424,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 		}
 		
-		void WriteEmbeddedStatement(Statement embeddedStatement)
+		void WriteEmbeddedStatement(Statement embeddedStatement, bool startOnSameLine = false)
 		{
 			if (embeddedStatement.IsNull) {
 				NewLine();
@@ -433,11 +433,13 @@ namespace ICSharpCode.NRefactory.CSharp
 			BlockStatement block = embeddedStatement as BlockStatement;
 			if (block != null) {
 				VisitBlockStatement(block);
-			} else {
+			} else if (!startOnSameLine) {
 				NewLine();
 				writer.Indent();
 				embeddedStatement.AcceptVisitor(this);
 				writer.Unindent();
+			} else {
+				embeddedStatement.AcceptVisitor(this);
 			}
 		}
 		
@@ -1509,7 +1511,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			WriteEmbeddedStatement(ifElseStatement.TrueStatement);
 			if (!ifElseStatement.FalseStatement.IsNull) {
 				WriteKeyword(IfElseStatement.ElseKeywordRole);
-				WriteEmbeddedStatement(ifElseStatement.FalseStatement);
+				WriteEmbeddedStatement(ifElseStatement.FalseStatement, ifElseStatement.FalseStatement is IfElseStatement);
 			}
 			EndNode(ifElseStatement);
 		}

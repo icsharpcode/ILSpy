@@ -10,5 +10,5 @@ obj/
 _ReSharper*/
 *.ReSharper
 *.patch
-/ILSpy.sln.ide
-/packages/*
+/packages
+*.ide/

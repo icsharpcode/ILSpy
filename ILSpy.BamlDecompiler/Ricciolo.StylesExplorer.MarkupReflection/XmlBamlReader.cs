@@ -868,11 +868,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			switch (x) {
 				case 0x25a:
 					// StaticExtension
-					object resource = this.GetResourceName(valueIdentifier);
-					if (resource is ResourceName)
-						value = this.GetStaticExtension(((ResourceName)resource).Name);
-					else if (resource is PropertyDeclaration)
-						value = this.GetStaticExtension(FormatPropertyDeclaration(((PropertyDeclaration)resource), true, false, false));
+					value = this.GetStaticExtension(this.GetResourceName(valueIdentifier));
 					break;
 				case 0x25b: // StaticResource
 				case 0xbd: // DynamicResource
@@ -883,7 +879,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					else if (isStaticType)
 					{
 						TypeDeclaration extensionDeclaration = this.GetTypeDeclaration(extensionIdentifier);
-						value = GetExtension(extensionDeclaration, GetStaticExtension(GetResourceName(valueIdentifier).ToString()));
+						value = GetExtension(extensionDeclaration, GetStaticExtension(GetResourceName(valueIdentifier)));
 					}
 					else
 					{
@@ -912,7 +908,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			short identifier = reader.ReadInt16();
 			string text = reader.ReadString();
 
-			EnqueueProperty(identifier, text);
+			EnqueueProperty(identifier, EscapeCurlyBraces(text));
 		}
 
 		void ReadPropertyWithConverter()
@@ -921,7 +917,16 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			string text = reader.ReadString();
 			reader.ReadInt16();
 
-			EnqueueProperty(identifier, text);
+			EnqueueProperty(identifier, EscapeCurlyBraces(text));
+		}
+
+		string EscapeCurlyBraces(string text)
+		{
+			if (!text.StartsWith("{", StringComparison.OrdinalIgnoreCase))
+				return text;
+			if (text.StartsWith("{}", StringComparison.OrdinalIgnoreCase))
+				return text;
+			return "{}" + text;
 		}
 		
 		bool HaveSeenNestedElement()
@@ -1316,7 +1321,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		{
 			reader.ReadInt16();
 
-			// Non serve aprire niente, è il default
+			// Non serve aprire niente, ?il default
 		}
 
 		static void ReadConstructorParametersStart()
@@ -1449,15 +1454,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			if (isValueType)
 				resource = GetTypeExtension(typeIdentifier);
 			else if (isStaticType) {
-				object name = GetResourceName(typeIdentifier);
-				if (name == null)
-					resource = null;
-				else if (name is ResourceName)
-					resource = GetStaticExtension(((ResourceName)name).Name);
-				else if (name is PropertyDeclaration)
-					resource = GetStaticExtension(FormatPropertyDeclaration(((PropertyDeclaration)name), true, false, false));
-				else
-					throw new InvalidOperationException("Invalid resource: " + name.GetType());
+				resource = GetStaticExtension(GetResourceName(typeIdentifier));
 			} else {
 				resource = this.stringTable[typeIdentifier];
 			}
@@ -1473,8 +1470,18 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			return String.Format("{{TemplateBinding {0}}}", FormatPropertyDeclaration(propertyDeclaration, true, false, false));
 		}
 
-		string GetStaticExtension(string name)
+		string GetStaticExtension(object resource)
 		{
+			if (resource == null)
+				return null;
+			string name;
+			if (resource is ResourceName)
+				name = ((ResourceName)resource).Name;
+			else if (resource is PropertyDeclaration)
+				name = this.FormatPropertyDeclaration(((PropertyDeclaration)resource), true, false, false);
+			else
+				throw new InvalidOperationException("Invalid resource: " + resource.GetType());
+
 			string prefix = this.LookupPrefix(XmlPIMapping.XamlNamespace, false);
 			if (String.IsNullOrEmpty(prefix))
 				return String.Format("{{Static {0}}}", name);
@@ -1588,7 +1595,8 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			string fullName = reader.ReadString();
 			assemblyId = (short)(assemblyId & 0xfff);
 			TypeDeclaration declaration;
-			int length = fullName.LastIndexOf('.');
+			int bracket = fullName.IndexOf('[');
+			int length = bracket > -1 ? fullName.LastIndexOf('.', bracket) : fullName.LastIndexOf('.');
 			if (length != -1)
 			{
 				string name = fullName.Substring(length + 1);

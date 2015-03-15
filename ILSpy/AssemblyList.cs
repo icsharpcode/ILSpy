@@ -88,7 +88,7 @@ namespace ICSharpCode.ILSpy
 			return new XElement(
 				"List",
 				new XAttribute("name", this.ListName),
-				assemblies.Select(asm => new XElement("Assembly", asm.FileName))
+				assemblies.Where(asm => !asm.IsAutoLoaded).Select(asm => new XElement("Assembly", asm.FileName))
 			);
 		}
 		
@@ -117,6 +117,21 @@ namespace ICSharpCode.ILSpy
 				);
 			}
 		}
+
+		internal void RefreshSave()
+		{
+			if (!dirty) {
+				dirty = true;
+				App.Current.Dispatcher.BeginInvoke(
+					DispatcherPriority.Background,
+					new Action(
+						delegate {
+							dirty = false;
+							AssemblyListManager.SaveList(this);
+						})
+				);
+			}
+		}
 		
 		internal void ClearCache()
 		{
@@ -128,7 +143,7 @@ namespace ICSharpCode.ILSpy
 		/// Opens an assembly from disk.
 		/// Returns the existing assembly node if it is already loaded.
 		/// </summary>
-		public LoadedAssembly OpenAssembly(string file)
+		public LoadedAssembly OpenAssembly(string file, bool isAutoLoaded=false)
 		{
 			App.Current.Dispatcher.VerifyAccess();
 			
@@ -140,8 +155,33 @@ namespace ICSharpCode.ILSpy
 			}
 			
 			var newAsm = new LoadedAssembly(this, file);
+			newAsm.IsAutoLoaded = isAutoLoaded;
 			lock (assemblies) {
 				this.assemblies.Add(newAsm);
+			}
+			return newAsm;
+		}
+
+		/// <summary>
+		/// Replace the assembly object model from a crafted stream, without disk I/O
+		/// Returns null if it is not already loaded.
+		/// </summary>
+		public LoadedAssembly HotReplaceAssembly(string file, Stream stream)
+		{
+			App.Current.Dispatcher.VerifyAccess();
+			file = Path.GetFullPath(file);
+
+			var target = this.assemblies.FirstOrDefault(asm => file.Equals(asm.FileName, StringComparison.OrdinalIgnoreCase));
+			if (target == null)
+				return null;
+
+			var index = this.assemblies.IndexOf(target);
+			var newAsm = new LoadedAssembly(this, file, stream);
+			newAsm.IsAutoLoaded = target.IsAutoLoaded;
+			lock (assemblies)
+			{
+				this.assemblies.Remove(target);
+				this.assemblies.Insert(index, newAsm);
 			}
 			return newAsm;
 		}

@@ -199,7 +199,9 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Commands\SimpleCommand.cs" />
+    <Compile Include="SearchStrategies.cs" />
     <Compile Include="TaskHelper.cs" />
+    <Compile Include="TextView\EditorCommands.cs" />
     <Compile Include="TextView\FoldingCommands.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzeContextMenuEntry.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedAssemblyTreeNode.cs" />
@@ -216,6 +218,7 @@
     <Compile Include="TreeNodes\Analyzer\AnalyzedTypeInstantiationsTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedTypeTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedEventAccessorTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedTypeUsedByTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedVirtualMethodUsedByTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzerEntityTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzerSearchTreeNode.cs" />
@@ -228,6 +231,7 @@
     <Compile Include="TreeNodes\IMemberTreeNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\CursorResourceEntryNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\IconResourceEntryNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\ImageListResourceEntryNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\ImageResourceEntryNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\XmlResourceNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\IResourceNodeFactory.cs" />
@@ -248,6 +252,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="..\doc\license.txt">
       <Link>license.txt</Link>
+    </EmbeddedResource>
+    <EmbeddedResource Include="..\doc\MS-PL.txt">
+      <Link>MS-PL.txt</Link>
     </EmbeddedResource>
     <Resource Include="Images\AssemblyList.png" />
     <Resource Include="Images\AssemblyListGAC.png" />
