@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public class ILTransformContext
 	{
-		public DecompilerTypeSystem TypeSystem { get; set; }
+		public IDecompilerTypeSystem TypeSystem { get; set; }
 	}
 
 	public interface IILTransform

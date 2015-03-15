@@ -30,9 +30,9 @@ namespace ICSharpCode.Decompiler.IL
 	class BlockBuilder
 	{
 		readonly Mono.Cecil.Cil.MethodBody body;
-		readonly DecompilerTypeSystem typeSystem;
+		readonly IDecompilerTypeSystem typeSystem;
 
-		public BlockBuilder(Mono.Cecil.Cil.MethodBody body, DecompilerTypeSystem typeSystem)
+		public BlockBuilder(Mono.Cecil.Cil.MethodBody body, IDecompilerTypeSystem typeSystem)
 		{
 			Debug.Assert(body != null);
 			Debug.Assert(typeSystem != null);

@@ -48,9 +48,9 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		readonly ICompilation compilation;
-		readonly DecompilerTypeSystem typeSystem;
+		readonly IDecompilerTypeSystem typeSystem;
 
-		public ILReader(DecompilerTypeSystem typeSystem)
+		public ILReader(IDecompilerTypeSystem typeSystem)
 		{
 			if (typeSystem == null)
 				throw new ArgumentNullException("typeSystem");

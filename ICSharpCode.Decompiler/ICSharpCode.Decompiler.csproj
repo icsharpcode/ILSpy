@@ -76,7 +76,6 @@
     <Compile Include="CSharp\Transforms\IAstTransform.cs" />
     <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
-    <Compile Include="DecompilerTypeSystem.cs" />
     <Compile Include="IL\Instructions.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -106,7 +105,6 @@
     <Compile Include="IL\TransformingVisitor.cs" />
     <Compile Include="IL\TransformStackIntoVariables.cs" />
     <Compile Include="IL\UnionFind.cs" />
-    <Compile Include="TypesHierarchyHelpers.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />
     <Compile Include="Disassembler\ILStructure.cs" />
@@ -130,7 +128,11 @@
     <Compile Include="Output\PlainTextOutput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Output\TextOutputWriter.cs" />
-    <Compile Include="ReferenceResolvingException.cs" />
+    <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
+    <Compile Include="TypeSystem\SpecializingDecompilerTypeSystem.cs" />
+    <Compile Include="TypeSystem\IDecompilerTypeSystem.cs" />
+    <Compile Include="TypeSystem\ReferenceResolvingException.cs" />
+    <Compile Include="TypeSystem\TypesHierarchyHelpers.cs" />
     <Compile Include="Util\Argument.cs" />
     <Compile Include="Util\CollectionExtensions.cs" />
     <Compile Include="Util\Interval.cs" />
@@ -166,7 +168,9 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="TypeSystem" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <Target Name="BeforeBuild">
     <MSBuild Projects="$(MSBuildProjectDirectory)\..\BuildTools\UpdateAssemblyInfo\UpdateAssemblyInfo.csproj" Targets="Build" Properties="Configuration=Debug" />

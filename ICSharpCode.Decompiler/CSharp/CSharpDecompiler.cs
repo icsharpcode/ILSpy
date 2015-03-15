@@ -23,6 +23,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
 using ICSharpCode.NRefactory.TypeSystem;
@@ -193,12 +194,30 @@ namespace ICSharpCode.Decompiler.CSharp
 			return entityDecl;
 		}
 
+		IDecompilerTypeSystem GetSpecializingTypeSystem(ITypeResolveContext decompilationContext)
+		{
+			IList<IType> classTypeParameters = null;
+			IList<IType> methodTypeParameters = null;
+			
+			if (decompilationContext.CurrentTypeDefinition != null)
+				classTypeParameters = decompilationContext.CurrentTypeDefinition.TypeArguments;
+			IMethod method = decompilationContext.CurrentMember as IMethod;
+			if (method != null)
+				methodTypeParameters = method.TypeArguments;
+			
+			if ((classTypeParameters != null && classTypeParameters.Count > 0) || (methodTypeParameters != null && methodTypeParameters.Count > 0))
+				return new SpecializingDecompilerTypeSystem(typeSystem, new TypeParameterSubstitution(classTypeParameters, methodTypeParameters));
+			else
+				return typeSystem;
+		}
+		
 		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext, TypeSystemAstBuilder typeSystemAstBuilder)
 		{
-			var ilReader = new ILReader(typeSystem);
+			var specializingTypeSystem = GetSpecializingTypeSystem(decompilationContext);
+			var ilReader = new ILReader(specializingTypeSystem);
 			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
 			function.CheckInvariant();
-			var context = new ILTransformContext { TypeSystem = typeSystem };
+			var context = new ILTransformContext { TypeSystem = specializingTypeSystem };
 			foreach (var transform in ilTransforms) {
 				transform.Run(function, context);
 				function.CheckInvariant();

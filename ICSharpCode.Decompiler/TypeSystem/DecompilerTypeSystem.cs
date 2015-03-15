@@ -16,7 +16,7 @@ namespace ICSharpCode.Decompiler
 	/// Manages the NRefactory type system for the decompiler.
 	/// This class is thread-safe.
 	/// </summary>
-	public class DecompilerTypeSystem
+	public class DecompilerTypeSystem : IDecompilerTypeSystem
 	{
 		readonly ModuleDefinition moduleDefinition;
 		readonly ICompilation compilation;
@@ -112,9 +112,6 @@ namespace ICSharpCode.Decompiler
 		}
 
 		#region Resolve Type
-		/// <summary>
-		/// Retrieves a type definition for a type defined in the compilation's main assembly.
-		/// </summary>
 		public IType Resolve(TypeReference typeReference)
 		{
 			if (typeReference == null)

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL
 		public Stack<ILVariable> Variables { get; set; }
 		public UnionFind<ILVariable> UnionFind { get; set; }
 		public Dictionary<Block, ImmutableArray<ILVariable>> InitialVariables { get; set; }
-		public DecompilerTypeSystem TypeSystem { get; set; }
+		public IDecompilerTypeSystem TypeSystem { get; set; }
 
 		public TransformStackIntoVariablesState()
 		{
