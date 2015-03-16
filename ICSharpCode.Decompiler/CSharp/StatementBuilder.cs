@@ -74,11 +74,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new IfElseStatement(condition, trueStatement, falseStatement);
 		}
 		
-		protected internal override Statement VisitLoop(Loop inst)
-		{
-			return new WhileStatement(new PrimitiveExpression(true), Convert(inst.Body));
-		}
-
 		protected internal override Statement VisitBranch(Branch inst)
 		{
 			return new GotoStatement(inst.TargetLabel);

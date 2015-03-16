@@ -70,8 +70,6 @@ namespace ICSharpCode.Decompiler.IL
 		EndFinally,
 		/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 		IfInstruction,
-		/// <summary>Infinite loop</summary>
-		Loop,
 		/// <summary>Try-catch statement.</summary>
 		TryCatch,
 		/// <summary>Catch handler within a try-catch statement.</summary>
@@ -605,37 +603,6 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitIfInstruction(this);
-		}
-	}
-
-	/// <summary>Infinite loop</summary>
-	public sealed partial class Loop : ILInstruction
-	{
-		public Loop(ILInstruction body) : base(OpCode.Loop)
-		{
-			this.Body = body;
-		}
-		ILInstruction body;
-		public ILInstruction Body {
-			get { return this.body; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.body, value);
-			}
-		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.body;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
-		{
-			this.Body = this.body.AcceptVisitor(visitor);
-		}
-		public override StackType ResultType { get { return StackType.Void; } }
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitLoop(this);
 		}
 	}
 
@@ -2137,10 +2104,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitLoop(Loop inst)
-		{
-			return Default(inst);
-		}
 		protected internal virtual T VisitTryCatch(TryCatch inst)
 		{
 			return Default(inst);
@@ -2419,7 +2382,6 @@ namespace ICSharpCode.Decompiler.IL
 			"br",
 			"endfinally",
 			"if",
-			"loop",
 			"try.catch",
 			"try.catch.handler",
 			"try.finally",

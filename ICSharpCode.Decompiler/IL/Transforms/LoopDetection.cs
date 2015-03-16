@@ -126,8 +126,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			if (loop != null) {
-				// loop now is the union of all natural loops with loop head h
-				Debug.Assert(loop[0] == h);
+				// loop now is the union of all natural loops with loop head h.
+				// Sort blocks in the loop in reverse post-order to make the output look a bit nicer.
+				// (if the loop doesn't contain nested loops, this is a topological sort)
+				loop.Sort((a, b) => b.PostOrderNumber.CompareTo(a.PostOrderNumber));
+				Debug.Assert(loop[0] == h); // TODO: is this guaranteed after sorting?
 				foreach (var node in loop) {
 					node.Visited = false; // reset visited flag so that we can find nested loops
 					Debug.Assert(h.Dominates(node), "The loop body must be dominated by the loop head");
@@ -148,15 +151,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Block oldEntryPoint = (Block)loop[0].UserData;
 			BlockContainer oldContainer = (BlockContainer)oldEntryPoint.Parent;
 			
-			BlockContainer body = new BlockContainer();
+			BlockContainer loopContainer = new BlockContainer();
 			Block newEntryPoint = new Block();
-			body.Blocks.Add(newEntryPoint);
+			loopContainer.Blocks.Add(newEntryPoint);
 			// Move contents of oldEntryPoint to newEntryPoint
 			// (we can't move the block itself because it might be the target of branch instructions outside the loop)
 			newEntryPoint.Instructions.ReplaceList(oldEntryPoint.Instructions);
 			newEntryPoint.FinalInstruction = oldEntryPoint.FinalInstruction;
 			newEntryPoint.ILRange = oldEntryPoint.ILRange;
-			oldEntryPoint.Instructions.ReplaceList(new[] { new Loop(body) });
+			oldEntryPoint.Instructions.ReplaceList(new[] { loopContainer });
 			oldEntryPoint.FinalInstruction = new Nop();
 			
 			// Move other blocks into the loop body: they're all dominated by the loop header,
@@ -164,42 +167,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int i = 1; i < loop.Count; i++) {
 				Block block = (Block)loop[i].UserData;
 				Debug.Assert(block.Parent == oldContainer);
-				body.Blocks.Add(block);
+				loopContainer.Blocks.Add(block);
 			}
 			// Remove all blocks that were moved into the body from the old container
 			oldContainer.Blocks.RemoveAll(b => b.Parent != oldContainer);
 			
 			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
-			foreach (var branch in body.Descendants.OfType<Branch>()) {
+			foreach (var branch in loopContainer.Descendants.OfType<Branch>()) {
 				if (branch.TargetBlock == oldEntryPoint)
 					branch.TargetBlock = newEntryPoint;
-			}
-			
-			// Because we use extended basic blocks, not just basic blocks, it's possible
-			// that we moved too many instructions into the loop body.
-			// In cases where those additional instructions branch, that's not really a problem
-			// (and is more readable with the instructions being inside the loop, anyways)
-			// But in cases where those additional instructions fall through to the end of
-			// the block, they previously had the semantics of falling out of the oldContainer,
-			// thus leaving the loop.
-			// Now they just fall out of the body block container, and thus get executed repeatedly.
-			// To fix up this semantic difference, we'll patch up these blocks to branch to
-			// a new empty block in the old container.
-			Block fallthrough_helper_block = null;
-			foreach (var block in body.Blocks) {
-				if (!block.HasFlag(InstructionFlags.EndPointUnreachable)) {
-					if (block.FinalInstruction.OpCode != OpCode.Nop) {
-						// move final instruction into the block
-						block.Instructions.Add(new Void(block.FinalInstruction));
-						block.FinalInstruction = new Nop();
-					}
-					if (fallthrough_helper_block == null) {
-						fallthrough_helper_block = new Block();
-						oldContainer.Blocks.Add(fallthrough_helper_block);
-					}
-					block.Instructions.Add(new Branch(fallthrough_helper_block));
-				}
-				Debug.Assert(block.HasFlag(InstructionFlags.EndPointUnreachable));
 			}
 		}
 	}

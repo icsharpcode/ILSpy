@@ -95,7 +95,6 @@
     <Compile Include="IL\Instructions\ILInstruction.cs" />
     <Compile Include="IL\Instructions\InstructionCollection.cs" />
     <Compile Include="IL\Instructions\LocalVarInstructions.cs" />
-    <Compile Include="IL\Instructions\Loop.cs" />
     <Compile Include="IL\Instructions\MemoryInstructions.cs" />
     <Compile Include="IL\Instructions\PatternMatching.cs" />
     <Compile Include="IL\Instructions\Return.cs" />
