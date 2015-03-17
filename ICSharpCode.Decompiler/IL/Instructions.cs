@@ -119,7 +119,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Load method pointer</summary>
 		LdVirtFtn,
 		/// <summary>Loads runtime representation of metadata token</summary>
-		LdToken,
+		LdTypeToken,
+		/// <summary>Loads runtime representation of metadata token</summary>
+		LdMemberToken,
 		/// <summary>Allocates space in the stack frame</summary>
 		LocAlloc,
 		/// <summary>Returns from the current method or lambda.</summary>
@@ -1074,15 +1076,38 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Loads runtime representation of metadata token</summary>
-	public sealed partial class LdToken : SimpleInstruction
+	public sealed partial class LdTypeToken : SimpleInstruction
 	{
-		public LdToken(Mono.Cecil.MemberReference member) : base(OpCode.LdToken)
+		public LdTypeToken(IType type) : base(OpCode.LdTypeToken)
+		{
+			this.type = type;
+		}
+		readonly IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type { get { return type; } }
+		public override StackType ResultType { get { return StackType.O; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdTypeToken(this);
+		}
+	}
+
+	/// <summary>Loads runtime representation of metadata token</summary>
+	public sealed partial class LdMemberToken : SimpleInstruction
+	{
+		public LdMemberToken(IMember member) : base(OpCode.LdMemberToken)
 		{
 			this.member = member;
 		}
-		readonly Mono.Cecil.MemberReference member;
+		readonly IMember member;
 		/// <summary>Returns the token operand.</summary>
-		public Mono.Cecil.MemberReference Member { get { return member; } }
+		public IMember Member { get { return member; } }
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output)
 		{
@@ -1092,7 +1117,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitLdToken(this);
+			return visitor.VisitLdMemberToken(this);
 		}
 	}
 
@@ -2200,7 +2225,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitLdToken(LdToken inst)
+		protected internal virtual T VisitLdTypeToken(LdTypeToken inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLdMemberToken(LdMemberToken inst)
 		{
 			return Default(inst);
 		}
@@ -2406,7 +2435,8 @@ namespace ICSharpCode.Decompiler.IL
 			"ldnull",
 			"ldftn",
 			"ldvirtftn",
-			"ldtoken",
+			"ldtypetoken",
+			"ldmembertoken",
 			"localloc",
 			"ret",
 			"shl",

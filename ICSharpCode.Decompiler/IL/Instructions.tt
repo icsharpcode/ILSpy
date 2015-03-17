@@ -122,8 +122,10 @@
 			CustomClassName("LdFtn"), NoArguments, HasMethodOperand, ResultType("I")),
 		new OpCode("ldvirtftn", "Load method pointer",
 			CustomClassName("LdVirtFtn"), Unary, HasMethodOperand, MayThrow, ResultType("I")),
-		new OpCode("ldtoken", "Loads runtime representation of metadata token",
-			CustomClassName("LdToken"), NoArguments, HasTokenOperand, ResultType("O")),
+		new OpCode("ldtypetoken", "Loads runtime representation of metadata token",
+			CustomClassName("LdTypeToken"), NoArguments, HasTypeOperand, ResultType("O")),
+		new OpCode("ldmembertoken", "Loads runtime representation of metadata token",
+			CustomClassName("LdMemberToken"), NoArguments, HasMemberOperand, ResultType("O")),
 		new OpCode("localloc", "Allocates space in the stack frame",
 			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
 		new OpCode("ret", "Returns from the current method or lambda.",
@@ -684,12 +686,12 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, method);");
 	};
 	
-	static Action<OpCode> HasTokenOperand = opCode => {
-		opCode.ConstructorParameters.Add("Mono.Cecil.MemberReference member");
-		opCode.Members.Add("readonly Mono.Cecil.MemberReference member;");
+	static Action<OpCode> HasMemberOperand = opCode => {
+		opCode.ConstructorParameters.Add("IMember member");
+		opCode.Members.Add("readonly IMember member;");
 		opCode.ConstructorBody.Add("this.member = member;");
 		opCode.Members.Add("/// <summary>Returns the token operand.</summary>" + Environment.NewLine
-						+ "public Mono.Cecil.MemberReference Member { get { return member; } }");
+						+ "public IMember Member { get { return member; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, member);");

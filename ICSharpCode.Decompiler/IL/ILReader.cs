@@ -632,7 +632,14 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stsfld:
 					return new Void(new StsFld(Pop(), ReadAndDecodeFieldReference()));
 				case ILOpCode.Ldtoken:
-					return new LdToken((MemberReference)ReadAndDecodeMetadataToken());
+					var memberReference = ReadAndDecodeMetadataToken() as MemberReference;
+					if (memberReference is TypeReference)
+						return new LdTypeToken(typeSystem.Resolve((TypeReference)memberReference));
+					if (memberReference is FieldReference)
+						return new LdMemberToken(typeSystem.Resolve((FieldReference)memberReference));
+					if (memberReference is MethodReference)
+						return new LdMemberToken(typeSystem.Resolve((MethodReference)memberReference));
+					throw new NotImplementedException();
 				case ILOpCode.Ldvirtftn:
 					return new LdVirtFtn(Pop(), ReadAndDecodeMethodReference());
 				case ILOpCode.Mkrefany:

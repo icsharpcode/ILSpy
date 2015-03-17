@@ -168,6 +168,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
 		}
 		
+		protected internal override TranslatedExpression VisitLdTypeToken(LdTypeToken inst)
+		{
+			return new TypeOfExpression(ConvertType(inst.Type))
+				.WithILInstruction(inst)
+				.WithRR(new TypeResolveResult(compilation.FindType(typeof(Type))));
+		}
+		
 		protected internal override TranslatedExpression VisitLogicNot(LogicNot inst)
 		{
 			return LogicNot(TranslateCondition(inst.Argument)).WithILInstruction(inst);
