@@ -172,7 +172,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return new TypeOfExpression(ConvertType(inst.Type))
 				.WithILInstruction(inst)
-				.WithRR(new TypeOfResolveResult(compilation.FindType(KnownTypeCode.Type), inst.Type);
+				.WithRR(new TypeOfResolveResult(compilation.FindType(KnownTypeCode.Type), inst.Type));
 		}
 		
 		protected internal override TranslatedExpression VisitLogicNot(LogicNot inst)

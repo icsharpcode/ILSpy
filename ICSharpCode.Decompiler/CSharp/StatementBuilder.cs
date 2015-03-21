@@ -88,6 +88,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new GotoStatement(inst.TargetLabel);
 		}
 		
+		/// <summary>Target container that a 'break;' statement would break out of</summary>
+		BlockContainer breakTarget;
+		/// <summary>Dictionary from BlockContainer to label name for 'goto of_container';</summary>
+		readonly Dictionary<BlockContainer, string> endContainerLabels = new Dictionary<BlockContainer, string>();
+		
+		protected internal override Statement VisitLeave(Leave inst)
+		{
+			if (inst.TargetContainer == breakTarget)
+				return new BreakStatement();
+			string label;
+			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out label)) {
+				endContainerLabels.Add(inst.TargetContainer, "end_" + inst.TargetLabel);
+			}
+			return new GotoStatement(label);
+		}
+		
 		protected internal override Statement VisitThrow(Throw inst)
 		{
 			return new ThrowStatement(exprBuilder.Translate(inst.Argument));
@@ -163,8 +179,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (container.EntryPoint.IncomingEdgeCount > 1) {
 				var oldContinueTarget = continueTarget;
 				var oldContinueCount = continueCount;
+				var oldBreakTarget = breakTarget;
 				continueTarget = container.EntryPoint;
 				continueCount = 0;
+				breakTarget = container;
 				var blockStatement = ConvertBlockContainer(container);
 				Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
 				Debug.Assert(blockStatement.Statements.First() is LabelStatement);
@@ -174,6 +192,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				continueTarget = oldContinueTarget;
 				continueCount = oldContinueCount;
+				breakTarget = oldBreakTarget;
 				return new WhileStatement(new PrimitiveExpression(true), blockStatement);
 			} else {
 				return ConvertBlockContainer(container);
@@ -194,6 +213,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (block.FinalInstruction.OpCode != OpCode.Nop) {
 					blockStatement.Add(Convert(block.FinalInstruction));
 				}
+			}
+			string label;
+			if (endContainerLabels.TryGetValue(container, out label)) {
+				blockStatement.Add(new LabelStatement { Label = label });
 			}
 			return blockStatement;
 		}

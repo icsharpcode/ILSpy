@@ -51,8 +51,9 @@ namespace ICSharpCode.Decompiler.IL
 	/// </para>
 	/// </summary>
 	/// <remarks>
-	/// Fun fact: the empty block acts like a phase-2 pop instruction,
-	/// which is a slightly different behavior than the normal phase-1 <see cref="Pop"/> instruction!
+	/// Fun fact: wrapping a pop instruction in a block
+	/// (<c>new Block { FinalInstruction = popInst }</c>) turns it
+	/// from a phase-1 pop instruction to a phase-2 pop instruction.
 	/// However, this is just of theoretical interest; we currently don't plan to use inline blocks that
 	/// pop elements that they didn't push themselves.
 	/// </remarks>
