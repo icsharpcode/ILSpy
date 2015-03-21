@@ -56,20 +56,78 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public List<T>.Enumerator GetEnumerator()
+		#region GetEnumerator
+		public Enumerator GetEnumerator()
 		{
-			return list.GetEnumerator();
+			return new Enumerator(this);
+		}
+		
+		/// <summary>
+		/// Custom enumerator for InstructionCollection.
+		/// Unlike List{T}.Enumerator, this enumerator allows replacing an item during the enumeration.
+		/// Adding/removing items from the collection still is invalid (however, such
+		/// invalid actions are only detected in debug builds).
+		/// 
+		/// Warning: even though this is a struct, it is invalid to copy:
+		/// the number of constructor calls must match the number of dispose calls.
+		/// </summary>
+		public struct Enumerator : IEnumerator<T>
+		{
+			#if DEBUG
+			ILInstruction parentInstruction;
+			#endif
+			readonly List<T> list;
+			int pos;
+			
+			public Enumerator(InstructionCollection<T> col)
+			{
+				this.list = col.list;
+				this.pos = -1;
+				#if DEBUG
+				this.parentInstruction = col.parentInstruction;
+				col.parentInstruction.StartEnumerator();
+				#endif
+			}
+			
+			public bool MoveNext()
+			{
+				return ++pos < list.Count;
+			}
+
+			public T Current {
+				get { return list[pos]; }
+			}
+
+			public void Dispose()
+			{
+				#if DEBUG
+				if (parentInstruction != null) {
+					parentInstruction.StopEnumerator();
+					parentInstruction = null;
+				}
+				#endif
+			}
+
+			void System.Collections.IEnumerator.Reset()
+			{
+				pos = -1;
+			}
+			
+			object System.Collections.IEnumerator.Current {
+				get { return this.Current; }
+			}
 		}
 		
 		IEnumerator<T> IEnumerable<T>.GetEnumerator()
 		{
-			return list.GetEnumerator();
+			return GetEnumerator();
 		}
 
 		System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
 		{
-			return list.GetEnumerator();
+			return GetEnumerator();
 		}
+		#endregion
 		
 		/// <summary>
 		/// Gets the index of the instruction in this collection.

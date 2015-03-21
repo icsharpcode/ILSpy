@@ -199,6 +199,19 @@ namespace ICSharpCode.Decompiler.IL
 		
 		#if DEBUG
 		int activeEnumerators;
+		
+		[Conditional("DEBUG")]
+		internal void StartEnumerator()
+		{
+			activeEnumerators++;
+		}
+		
+		[Conditional("DEBUG")]
+		internal void StopEnumerator()
+		{
+			Debug.Assert(activeEnumerators > 0);
+			activeEnumerators--;
+		}
 		#endif
 		
 		[Conditional("DEBUG")]
@@ -209,26 +222,14 @@ namespace ICSharpCode.Decompiler.IL
 			#endif
 		}
 		
-		[Conditional("DEBUG")]
-		internal void StartEnumerator()
-		{
-			#if DEBUG
-			activeEnumerators++;
-			#endif
-		}
-		
-		[Conditional("DEBUG")]
-		internal void StopEnumerator()
-		{
-			#if DEBUG
-			Debug.Assert(activeEnumerators > 0);
-			activeEnumerators--;
-			#endif
-		}
-		
+		/// <summary>
+		/// Enumerator over the children of an ILInstruction.
+		/// Warning: even though this is a struct, it is invalid to copy:
+		/// the number of constructor calls must match the number of dispose calls.
+		/// </summary>
 		public struct ChildrenEnumerator : IEnumerator<ILInstruction>
 		{
-			readonly ILInstruction inst;
+			ILInstruction inst;
 			readonly int end;
 			int pos;
 			
@@ -238,7 +239,9 @@ namespace ICSharpCode.Decompiler.IL
 				this.inst = inst;
 				this.pos = -1;
 				this.end = inst.GetChildCount();
+				#if DEBUG
 				inst.StartEnumerator();
+				#endif
 			}
 			
 			public ILInstruction Current {
@@ -254,7 +257,12 @@ namespace ICSharpCode.Decompiler.IL
 
 			public void Dispose()
 			{
-				inst.StopEnumerator();
+				#if DEBUG
+				if (inst != null) {
+					inst.StopEnumerator();
+					inst = null;
+				}
+				#endif
 			}
 			
 			object System.Collections.IEnumerator.Current {
@@ -263,7 +271,7 @@ namespace ICSharpCode.Decompiler.IL
 			
 			void System.Collections.IEnumerator.Reset()
 			{
-				throw new NotSupportedException();
+				pos = -1;
 			}
 		}
 		#endregion
@@ -303,15 +311,14 @@ namespace ICSharpCode.Decompiler.IL
 						}
 						enumerator.Dispose();
 						if (stack.Count > 0) {
-							yield return stack.Peek().Current;
-							// Pop enumerator only after yielding, so that it gets
-							// disposed if the enumeration is aborted.
 							enumerator = stack.Pop();
+							yield return enumerator.Current;
 						} else {
 							break;
 						}
 					}
 				} finally {
+					enumerator.Dispose();
 					while (stack.Count > 0) {
 						stack.Pop().Dispose();
 					}
