@@ -83,5 +83,44 @@ public class Loops
 			}
 		}
 	}
+	
+	public int MultipleExits()
+	{
+		int i = 0;
+		while (true) {
+			if (i % 4 == 0) { return 4; }
+			if (i % 7 == 0) { break; }
+			if (i % 9 == 0) { return 5; }
+			if (i % 11 == 0) { break; }
+			i++;
+		}
+		i = int.MinValue;
+		return i;
+	}
+	
+	public int InterestingLoop()
+	{
+		int i = 0;
+		if (i % 11 == 0) {
+			while (true) {
+				if (i % 4 == 0) {
+					if (i % 7 == 0) {
+						if (i % 11 == 0) {
+							continue; // use a continue here to prevent moving the if (i%7) outside the loop
+						}
+						Console.WriteLine("7");
+					} else {
+						// this block is not part of the natural loop
+						Console.WriteLine("!7");
+					}
+					break;
+				}
+				i++;
+			}
+			// This instruction is still dominated by the loop header
+			i = int.MinValue;
+		}
+		return i;
+	}
 }
 

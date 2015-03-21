@@ -39,14 +39,19 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 		}
 		
-		public sealed override IEnumerable<ILInstruction> Children {
-			get {
-				return EmptyList<ILInstruction>.Instance;
-			}
+		protected override int GetChildCount()
+		{
+			return 0;
 		}
 		
-		public sealed override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected override ILInstruction GetChild(int index)
 		{
+			throw new IndexOutOfRangeException();
+		}
+		
+		protected override void SetChild(int index, ILInstruction value)
+		{
+			throw new IndexOutOfRangeException();
 		}
 		
 		protected override InstructionFlags ComputeFlags()

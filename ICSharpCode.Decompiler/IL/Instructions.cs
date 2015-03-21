@@ -186,24 +186,38 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.argument; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.argument, value);
+				SetChildInstruction(ref this.argument, value, 0);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.argument;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Argument = this.argument.AcceptVisitor(visitor);
+			return 1;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.argument;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Argument = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Argument = this.argument.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Argument.TransformStackIntoVariables(state);
 		}
@@ -233,7 +247,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.left; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.left, value);
+				SetChildInstruction(ref this.left, value, 0);
 			}
 		}
 		ILInstruction right;
@@ -241,27 +255,44 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.right; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.right, value);
+				SetChildInstruction(ref this.right, value, 1);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.left;
-				yield return this.right;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Left = this.left.AcceptVisitor(visitor);
-			this.Right = this.right.AcceptVisitor(visitor);
+			return 2;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.left;
+				case 1:
+					return this.right;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Left = value;
+					break;
+				case 1:
+					this.Right = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Right = this.right.Inline(flagsBefore | ((this.left.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
 			this.Left = this.left.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Left.TransformStackIntoVariables(state);
 			Right.TransformStackIntoVariables(state);
@@ -345,17 +376,31 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.body; }
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref this.body, value);
+				SetChildInstruction(ref this.body, value, 0);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.body;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Body = this.body.AcceptVisitor(visitor);
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.body;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Body = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
 		}
 		public override StackType ResultType { get { return StackType.O; } }
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
@@ -570,7 +615,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.condition; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.condition, value);
+				SetChildInstruction(ref this.condition, value, 0);
 			}
 		}
 		ILInstruction trueInst;
@@ -578,7 +623,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.trueInst; }
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref this.trueInst, value);
+				SetChildInstruction(ref this.trueInst, value, 1);
 			}
 		}
 		ILInstruction falseInst;
@@ -586,21 +631,41 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.falseInst; }
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref this.falseInst, value);
+				SetChildInstruction(ref this.falseInst, value, 2);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.condition;
-				yield return this.trueInst;
-				yield return this.falseInst;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Condition = this.condition.AcceptVisitor(visitor);
-			this.TrueInst = this.trueInst.AcceptVisitor(visitor);
-			this.FalseInst = this.falseInst.AcceptVisitor(visitor);
+			return 3;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.condition;
+				case 1:
+					return this.trueInst;
+				case 2:
+					return this.falseInst;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Condition = value;
+					break;
+				case 1:
+					this.TrueInst = value;
+					break;
+				case 2:
+					this.FalseInst = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -633,7 +698,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.filter; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.filter, value);
+				SetChildInstruction(ref this.filter, value, 0);
 			}
 		}
 		ILInstruction body;
@@ -641,19 +706,36 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.body; }
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref this.body, value);
+				SetChildInstruction(ref this.body, value, 1);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.filter;
-				yield return this.body;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Filter = this.filter.AcceptVisitor(visitor);
-			this.Body = this.body.AcceptVisitor(visitor);
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.filter;
+				case 1:
+					return this.body;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Filter = value;
+					break;
+				case 1:
+					this.Body = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
 		}
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
@@ -881,24 +963,38 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.value; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.value, value);
+				SetChildInstruction(ref this.value, value, 0);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.value;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Value = this.value.AcceptVisitor(visitor);
+			return 1;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Value = this.value.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Value.TransformStackIntoVariables(state);
 		}
@@ -1187,24 +1283,38 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.target; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.target, value);
+				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.target;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Target = this.target.AcceptVisitor(visitor);
+			return 1;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.target;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Target = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Target.TransformStackIntoVariables(state);
 		}
@@ -1252,24 +1362,38 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.target; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.target, value);
+				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.target;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Target = this.target.AcceptVisitor(visitor);
+			return 1;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.target;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Target = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Target.TransformStackIntoVariables(state);
 		}
@@ -1310,7 +1434,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.target; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.target, value);
+				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
 		ILInstruction value;
@@ -1318,27 +1442,44 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.value; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.value, value);
+				SetChildInstruction(ref this.value, value, 1);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.target;
-				yield return this.value;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Target = this.target.AcceptVisitor(visitor);
-			this.Value = this.value.AcceptVisitor(visitor);
+			return 2;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.target;
+				case 1:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Target = value;
+					break;
+				case 1:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Target.TransformStackIntoVariables(state);
 			Value.TransformStackIntoVariables(state);
@@ -1447,24 +1588,38 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.value; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.value, value);
+				SetChildInstruction(ref this.value, value, 0);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.value;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Value = this.value.AcceptVisitor(visitor);
+			return 1;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Value = this.value.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Value.TransformStackIntoVariables(state);
 		}
@@ -1568,24 +1723,38 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.target; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.target, value);
+				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.target;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Target = this.target.AcceptVisitor(visitor);
+			return 1;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.target;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Target = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Target.TransformStackIntoVariables(state);
 		}
@@ -1634,7 +1803,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.target; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.target, value);
+				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
 		ILInstruction value;
@@ -1642,27 +1811,44 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.value; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.value, value);
+				SetChildInstruction(ref this.value, value, 1);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.target;
-				yield return this.value;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Target = this.target.AcceptVisitor(visitor);
-			this.Value = this.value.AcceptVisitor(visitor);
+			return 2;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.target;
+				case 1:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Target = value;
+					break;
+				case 1:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Target.TransformStackIntoVariables(state);
 			Value.TransformStackIntoVariables(state);
@@ -1921,24 +2107,38 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.target; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.target, value);
+				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.target;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Target = this.target.AcceptVisitor(visitor);
+			return 1;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.target;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Target = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Target.TransformStackIntoVariables(state);
 		}
@@ -1974,7 +2174,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.array; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.array, value);
+				SetChildInstruction(ref this.array, value, 0);
 			}
 		}
 		ILInstruction index;
@@ -1982,27 +2182,44 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.index; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.index, value);
+				SetChildInstruction(ref this.index, value, 1);
 			}
 		}
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return this.array;
-				yield return this.index;
-			}
-		}
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected sealed override int GetChildCount()
 		{
-			this.Array = this.array.AcceptVisitor(visitor);
-			this.Index = this.index.AcceptVisitor(visitor);
+			return 2;
 		}
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.array;
+				case 1:
+					return this.index;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Array = value;
+					break;
+				case 1:
+					this.Index = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Index = this.index.Inline(flagsBefore | ((this.array.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
 			this.Array = this.array.Inline(flagsBefore, context);
 			return this;
 		}
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			Array.TransformStackIntoVariables(state);
 			Index.TransformStackIntoVariables(state);

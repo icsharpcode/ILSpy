@@ -69,42 +69,28 @@ namespace ICSharpCode.Decompiler.IL
 		/// This variable is automatically updated when adding/removing branch instructions from the ILAst,
 		/// or when adding the block as an entry point to a BlockContainer.
 		/// </remarks>
-		public int IncomingEdgeCount;
+		public int IncomingEdgeCount { get; internal set; }
 
-		/// <summary>
-		/// Returns the index of the block in the parent BlockContainer's block list.
-		/// Returns 0 if the block is not in a BlockContainer.
-		/// </summary>
-		public int Index {
-			get {
-				// TODO: we can offer this in O(1) by making the
-				// parent BlockContainer store this in the blocks,
-				// but I'm not sure if it's worth the complexity.
-				// We'll have to see if the Index is useful in more than a few places.
-				// (otherwise those few places could use a Dictionary<Block, int>)
-				var bc = Parent as BlockContainer;
-				if (bc != null) {
-					return bc.Blocks.IndexOf(this);
-				} else {
-					return 0;
-				}
-			}
-		}
-		
 		public ILInstruction FinalInstruction {
 			get {
 				return finalInstruction;
 			}
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref finalInstruction, value);
+				SetChildInstruction(ref finalInstruction, value, Instructions.Count);
 			}
 		}
 		
+		protected internal override void InstructionCollectionUpdateComplete()
+		{
+			base.InstructionCollectionUpdateComplete();
+			if (finalInstruction.Parent == this)
+				finalInstruction.ChildIndex = Instructions.Count;
+		}
 		
 		public Block() : base(OpCode.Block)
 		{
-			this.Instructions = new InstructionCollection<ILInstruction>(this);
+			this.Instructions = new InstructionCollection<ILInstruction>(this, 0);
 			this.FinalInstruction = new Nop();
 		}
 		
@@ -143,20 +129,24 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("}");
 		}
 		
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				foreach (var inst in Instructions)
-					yield return inst;
-				yield return finalInstruction;
-			}
+		protected override int GetChildCount()
+		{
+			return Instructions.Count + 1;
 		}
 		
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected override ILInstruction GetChild(int index)
 		{
-			for (int i = 0; i < Instructions.Count; i++) {
-				Instructions[i] = Instructions[i].AcceptVisitor(visitor);
-			}
-			FinalInstruction = FinalInstruction.AcceptVisitor(visitor);
+			if (index == Instructions.Count)
+				return finalInstruction;
+			return Instructions[index];
+		}
+		
+		protected override void SetChild(int index, ILInstruction value)
+		{
+			if (index == Instructions.Count)
+				FinalInstruction = value;
+			else
+				Instructions[index] = value;
 		}
 		
 		protected override InstructionFlags ComputeFlags()

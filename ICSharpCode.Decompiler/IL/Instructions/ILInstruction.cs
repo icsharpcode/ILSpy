@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			foreach (var child in Children) {
 				Debug.Assert(child.Parent == this);
+				Debug.Assert(this.GetChild(child.ChildIndex) == child);
 				// if child flags are invalid, parent flags must be too
 				Debug.Assert(child.flags != invalidFlags || this.flags == invalidFlags);
 				Debug.Assert(child.IsConnected == this.IsConnected);
@@ -146,12 +147,110 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets the child nodes of this instruction.
 		/// </summary>
-		public abstract IEnumerable<ILInstruction> Children { get; }
+		public ChildrenCollection Children {
+			get {
+				return new ChildrenCollection(this);
+			}
+		}
+		
+		protected abstract int GetChildCount();
+		protected abstract ILInstruction GetChild(int index);
+		protected abstract void SetChild(int index, ILInstruction value);
+		
+		#region ChildrenCollection + ChildrenEnumerator
+		public struct ChildrenCollection : IReadOnlyList<ILInstruction>
+		{
+			readonly ILInstruction inst;
+			
+			internal ChildrenCollection(ILInstruction inst)
+			{
+				Debug.Assert(inst != null);
+				this.inst = inst;
+			}
+			
+			public int Count {
+				get { return inst.GetChildCount(); }
+			}
+			
+			public ILInstruction this[int index] {
+				get { return inst.GetChild(index); }
+			}
+			
+			public ChildrenEnumerator GetEnumerator()
+			{
+				return new ChildrenEnumerator(inst);
+			}
+			
+			IEnumerator<ILInstruction> IEnumerable<ILInstruction>.GetEnumerator()
+			{
+				return GetEnumerator();
+			}
+			
+			System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+			{
+				return GetEnumerator();
+			}
+		}
+		
+		public struct ChildrenEnumerator : IEnumerator<ILInstruction>
+		{
+			readonly ILInstruction inst;
+			readonly int end;
+			int pos;
+			
+			public ChildrenEnumerator(ILInstruction inst)
+			{
+				Debug.Assert(inst != null);
+				this.inst = inst;
+				this.pos = -1;
+				this.end = inst.GetChildCount();
+			}
+			
+			public ILInstruction Current {
+				get {
+					return inst.GetChild(pos);
+				}
+			}
+
+			public bool MoveNext()
+			{
+				return ++pos < end;
+			}
+
+			public void Dispose()
+			{
+			}
+			
+			object System.Collections.IEnumerator.Current {
+				get { return this.Current; }
+			}
+			
+			void System.Collections.IEnumerator.Reset()
+			{
+				throw new NotSupportedException();
+			}
+		}
+		#endregion
 		
 		/// <summary>
 		/// Transforms the children of this instruction by applying the specified visitor.
 		/// </summary>
-		public abstract void TransformChildren(ILVisitor<ILInstruction> visitor);
+		[Obsolete]
+		public void TransformChildren(ILVisitor<ILInstruction> visitor)
+		{
+			int count = GetChildCount();
+			for (int i = 0; i < count; i++) {
+				SetChild(i, GetChild(i).AcceptVisitor(visitor));
+			}
+		}
+		
+		/// <summary>
+		/// Replaces this ILInstruction with the given replacement instruction.
+		/// </summary>
+		public void ReplaceWith(ILInstruction replacement)
+		{
+			parent.SetChild(ChildIndex, replacement);
+		}
 		
 		/// <summary>
 		/// Returns all descendants of the ILInstruction.
@@ -206,16 +305,25 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
+		/// <summary>
+		/// Gets whether this ILInstruction is connected to the root node of the ILAst.
+		/// </summary>
 		protected bool IsConnected {
 			get { return refCount > 0; }
 		}
 		
+		/// <summary>
+		/// Called after the ILInstruction was connected to the root node of the ILAst.
+		/// </summary>
 		protected virtual void Connected()
 		{
 			foreach (var child in Children)
 				child.AddRef();
 		}
 		
+		/// <summary>
+		/// Called after the ILInstruction was disconnected from the root node of the ILAst.
+		/// </summary>
 		protected virtual void Disconnected()
 		{
 			foreach (var child in Children)
@@ -231,19 +339,37 @@ namespace ICSharpCode.Decompiler.IL
 			get { return parent; }
 		}
 		
-		protected void SetChildInstruction(ref ILInstruction childPointer, ILInstruction newValue)
+		/// <summary>
+		/// Gets the index of this node in the Parent.Children collection.
+		/// </summary>
+		public int ChildIndex { get; internal set; }
+		
+		/// <summary>
+		/// Replaces a child of this ILInstruction.
+		/// </summary>
+		/// <param name="childPointer">Reference to the field holding the child</param>
+		/// <param name="newValue">New child</param>
+		/// <param name="index">Index of the field in the Children collection</param>
+		protected internal void SetChildInstruction(ref ILInstruction childPointer, ILInstruction newValue, int index)
 		{
-			if (childPointer == newValue)
+			ILInstruction oldValue = childPointer;
+			Debug.Assert(this is Return || oldValue == GetChild(index));
+			if (oldValue == newValue)
 				return;
+			childPointer = newValue;
+			if (newValue != null) {
+				newValue.parent = this;
+				newValue.ChildIndex = index;
+			}
 			if (refCount > 0) {
 				// The new value may be a subtree of the old value.
 				// We first call AddRef(), then ReleaseRef() to prevent the subtree
 				// that stays connected from receiving a Disconnected() notification followed by a Connected() notification.
-				newValue.AddRef();
-				childPointer.ReleaseRef();
+				if (newValue != null)
+					newValue.AddRef();
+				if (oldValue != null)
+					oldValue.ReleaseRef();
 			}
-			childPointer = newValue;
-			newValue.parent = this;
 			InvalidateFlags();
 		}
 		
@@ -252,18 +378,19 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		protected internal void InstructionCollectionAdded(ILInstruction newChild)
 		{
+			Debug.Assert(GetChild(newChild.ChildIndex) == newChild);
+			newChild.parent = this;
 			if (refCount > 0)
 				newChild.AddRef();
-			newChild.parent = this;
 		}
 		
 		/// <summary>
 		/// Called when a child is removed from a InstructionCollection.
 		/// </summary>
-		protected internal void InstructionCollectionRemoved(ILInstruction newChild)
+		protected internal void InstructionCollectionRemoved(ILInstruction oldChild)
 		{
 			if (refCount > 0)
-				newChild.ReleaseRef();
+				oldChild.ReleaseRef();
 		}
 		
 		/// <summary>

@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var sourceNode = nodes[i];
 				foreach (var branch in block.Descendants.OfType<Branch>()) {
 					if (branch.TargetBlock.Parent == bc) {
-						sourceNode.AddEdgeTo(nodes[branch.TargetBlock.Index]);
+						sourceNode.AddEdgeTo(nodes[bc.Blocks.IndexOf(branch.TargetBlock)]);
 					} else {
 						// Note: edges into different block containers are ignored:
 						// Either they point to a nested block container in the source block,

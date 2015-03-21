@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public BlockContainer() : base(OpCode.BlockContainer)
 		{
-			this.Blocks = new InstructionCollection<Block>(this);
+			this.Blocks = new InstructionCollection<Block>(this, 0);
 		}
 
 		protected internal override void InstructionCollectionUpdateComplete()
@@ -91,17 +91,20 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write("}");
 		}
 		
-		public override IEnumerable<ILInstruction> Children {
-			get { return Blocks; }
+		protected override int GetChildCount()
+		{
+			return Blocks.Count;
 		}
 		
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected override ILInstruction GetChild(int index)
 		{
-			foreach (var block in Blocks) {
-				// Recurse into the blocks, but don't allow replacing the block
-				if (block.AcceptVisitor(visitor) != block)
-					throw new InvalidOperationException("Cannot replace blocks in BlockContainer");
-			}
+			return Blocks[index];
+		}
+		
+		protected override void SetChild(int index, ILInstruction value)
+		{
+			if (Blocks[index] != value)
+				throw new InvalidOperationException("Cannot replace blocks in BlockContainer");
 		}
 
 		internal override void CheckInvariant()

@@ -74,8 +74,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new IfElseStatement(condition, trueStatement, falseStatement);
 		}
 		
+		/// <summary>Target block that a 'continue;' statement would jump to</summary>
+		Block continueTarget;
+		/// <summary>Number of ContinueStatements that were created for the current continueTarget</summary>
+		int continueCount;
+		
 		protected internal override Statement VisitBranch(Branch inst)
 		{
+			if (inst.TargetBlock == continueTarget) {
+				continueCount++;
+				return new ContinueStatement();
+			}
 			return new GotoStatement(inst.TargetLabel);
 		}
 		
@@ -150,6 +159,28 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 		
 		protected internal override Statement VisitBlockContainer(BlockContainer container)
+		{
+			if (container.EntryPoint.IncomingEdgeCount > 1) {
+				var oldContinueTarget = continueTarget;
+				var oldContinueCount = continueCount;
+				continueTarget = container.EntryPoint;
+				continueCount = 0;
+				var blockStatement = ConvertBlockContainer(container);
+				Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
+				Debug.Assert(blockStatement.Statements.First() is LabelStatement);
+				if (container.EntryPoint.IncomingEdgeCount == continueCount + 1) {
+					// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
+					blockStatement.Statements.First().Remove();
+				}
+				continueTarget = oldContinueTarget;
+				continueCount = oldContinueCount;
+				return new WhileStatement(new PrimitiveExpression(true), blockStatement);
+			} else {
+				return ConvertBlockContainer(container);
+			}
+		}
+		
+		BlockStatement ConvertBlockContainer(BlockContainer container)
 		{
 			BlockStatement blockStatement = new BlockStatement();
 			foreach (var block in container.Blocks) {

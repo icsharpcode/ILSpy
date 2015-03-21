@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Debug.Assert(method != null);
 			this.Method = method;
-			this.Arguments = new InstructionCollection<ILInstruction>(this);
+			this.Arguments = new InstructionCollection<ILInstruction>(this, 0);
 		}
 		
 		public override StackType ResultType {
@@ -62,15 +62,19 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public override IEnumerable<ILInstruction> Children {
-			get { return Arguments; }
+		protected override int GetChildCount()
+		{
+			return Arguments.Count;
 		}
 		
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected override ILInstruction GetChild(int index)
 		{
-			for (int i = 0; i < Arguments.Count; i++) {
-				Arguments[i] = Arguments[i].AcceptVisitor(visitor);
-			}
+			return Arguments[index];
+		}
+		
+		protected override void SetChild(int index, ILInstruction value)
+		{
+			Arguments[index] = value;
 		}
 		
 		protected override InstructionFlags ComputeFlags()

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL
 			set { 
 				if (value != null)
 					ValidateArgument(value);
-				SetChildInstruction(ref returnValue, value);
+				SetChildInstruction(ref returnValue, value, 0);
 			}
 		}
 		
@@ -66,17 +66,25 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				if (returnValue != null)
-					yield return returnValue;
-			}
+		protected override int GetChildCount()
+		{
+			return returnValue != null ? 1 : 0;
 		}
 		
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected override ILInstruction GetChild(int index)
 		{
-			if (returnValue != null)
-				this.ReturnValue = returnValue.AcceptVisitor(visitor);
+			if (index == 0 && returnValue != null)
+				return returnValue;
+			else
+				throw new IndexOutOfRangeException();
+		}
+		
+		protected override void SetChild(int index, ILInstruction value)
+		{
+			if (index == 0 && returnValue != null)
+				ReturnValue = value;
+			else
+				throw new IndexOutOfRangeException();
 		}
 		
 		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)

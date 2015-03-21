@@ -539,28 +539,49 @@ namespace ICSharpCode.Decompiler.IL
 					+ "\tset {" + Environment.NewLine
 					+ (children[i].IsOptional ? "\t\tif (value != null)" + Environment.NewLine + "\t" : "")
 					+ "\t\t" + (children[i].IsArgument ? "ValidateArgument" : "ValidateChild") + "(value);" + Environment.NewLine
-					+ "\t\tSetChildInstruction(ref this." + arg + ", value);" + Environment.NewLine
+					+ "\t\tSetChildInstruction(ref this." + arg + ", value, " + i + ");" + Environment.NewLine
 					+ "\t}" + Environment.NewLine
 					+ "}");
 			}
 			opCode.WriteArguments.Add("output.Write(')');");
 			StringBuilder b;
-			/*
 			b = new StringBuilder();
-			b.AppendLine("public override TAccumulate AggregateChildren<TSource, TAccumulate>(TAccumulate initial, ILVisitor<TSource> visitor, Func<TAccumulate, TSource, TAccumulate> func)");
+			b.AppendLine("protected sealed override int GetChildCount()");
 			b.AppendLine("{");
-			b.AppendLine("\tTAccumulate value = initial;");
-			foreach (var child in children) {
-				if (child.IsOptional) {
-					b.AppendLine("\tif (this." + child.Name + " != null)");
-					b.Append('\t');
-				}
-				b.AppendLine("\tvalue = func(value, this." + child.Name + ".AcceptVisitor(visitor));");
-			}
-			b.AppendLine("\treturn value;");
+			b.AppendLine("\treturn " + children.Length + ";");
 			b.Append("}");
-			opCode.Members.Add(b.ToString());*/
+			opCode.Members.Add(b.ToString());
 			
+			b = new StringBuilder();
+			b.AppendLine("protected sealed override ILInstruction GetChild(int index)");
+			b.AppendLine("{");
+			b.AppendLine("\tswitch (index) {");
+			for (int i = 0; i < children.Length; i++) {
+				b.AppendLine("\t\tcase " + i + ":");
+				b.AppendLine("\t\t\treturn this." + children[i].Name + ";");
+			}
+			b.AppendLine("\t\tdefault:");
+			b.AppendLine("\t\t\tthrow new IndexOutOfRangeException();");
+			b.AppendLine("\t}");
+			b.Append("}");
+			opCode.Members.Add(b.ToString());
+			
+			b = new StringBuilder();
+			b.AppendLine("protected sealed override void SetChild(int index, ILInstruction value)");
+			b.AppendLine("{");
+			b.AppendLine("\tswitch (index) {");
+			for (int i = 0; i < children.Length; i++) {
+				b.AppendLine("\t\tcase " + i + ":");
+				b.AppendLine("\t\t\tthis." + children[i].PropertyName + " = value;");
+				b.AppendLine("\t\t\tbreak;");
+			}
+			b.AppendLine("\t\tdefault:");
+			b.AppendLine("\t\t\tthrow new IndexOutOfRangeException();");
+			b.AppendLine("\t}");
+			b.Append("}");
+			opCode.Members.Add(b.ToString());
+			
+			/*
 			b = new StringBuilder();
 			b.AppendLine("public override IEnumerable<ILInstruction> Children {");
 			b.AppendLine("\tget {");
@@ -587,9 +608,10 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			b.Append("}");
 			opCode.Members.Add(b.ToString());
+			*/
 			if (generateInline) {
 				b = new StringBuilder();
-				b.AppendLine("internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)");
+				b.AppendLine("internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)");
 				b.AppendLine("{");
 				for (int i = children.Length - 1; i >= 0; i--) {
 					string arg = children[i].Name;
@@ -609,7 +631,7 @@ namespace ICSharpCode.Decompiler.IL
 				b.Append("}");
 				opCode.Members.Add(b.ToString());
 				b.Clear();
-				b.AppendLine("internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)");
+				b.AppendLine("internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)");
 				b.AppendLine("{");
 				for (int i = 0; i < children.Length; i++) {
 					string arg = children[i].Name;

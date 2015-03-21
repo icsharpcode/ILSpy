@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.tryBlock; }
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref this.tryBlock, value);
+				SetChildInstruction(ref this.tryBlock, value, 0);
 			}
 		}
 		
@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public TryCatch(ILInstruction tryBlock) : base(OpCode.TryCatch, tryBlock)
 		{
-			this.Handlers = new InstructionCollection<TryCatchHandler>(this);
+			this.Handlers = new InstructionCollection<TryCatchHandler>(this, 1);
 		}
 		
 		public override void WriteTo(ITextOutput output)
@@ -86,23 +86,27 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 		
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return TryBlock;
-				foreach (var handler in Handlers)
-					yield return handler;
-			}
+		protected override int GetChildCount()
+		{
+			return 1 + Handlers.Count;
 		}
 		
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected override ILInstruction GetChild(int index)
 		{
-			this.TryBlock = TryBlock.AcceptVisitor(visitor);
-			for (int i = 0; i < Handlers.Count; i++) {
-				if (Handlers[i].AcceptVisitor(visitor) != Handlers[i])
-					throw new InvalidOperationException("Cannot transform a TryCatchHandler");
-			}
+			if (index == 0)
+				return TryBlock;
+			else
+				return Handlers[index - 1];
 		}
-
+		
+		protected override void SetChild(int index, ILInstruction value)
+		{
+			if (index == 0)
+				TryBlock = value;
+			else
+				Handlers[index - 1] = (TryCatchHandler)value;
+		}
+		
 		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			throw new NotImplementedException();
@@ -189,7 +193,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.finallyBlock; }
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref this.finallyBlock, value);
+				SetChildInstruction(ref this.finallyBlock, value, 1);
 			}
 		}
 		
@@ -213,19 +217,37 @@ namespace ICSharpCode.Decompiler.IL
 			return Block.Phase1Boundary(TryBlock.Flags) | Block.Phase1Boundary(finallyBlock.Flags);
 		}
 		
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return TryBlock;
-				yield return finallyBlock;
+		protected override int GetChildCount()
+		{
+			return 2;
+		}
+		
+		protected override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return TryBlock;
+				case 1:
+					return finallyBlock;
+				default:
+					throw new IndexOutOfRangeException();
 			}
 		}
 		
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected override void SetChild(int index, ILInstruction value)
 		{
-			this.TryBlock = TryBlock.AcceptVisitor(visitor);
-			this.FinallyBlock = finallyBlock.AcceptVisitor(visitor);
+			switch (index) {
+				case 0:
+					TryBlock = value;
+					break;
+				case 1:
+					FinallyBlock = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
 		}
-
+		
 		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			throw new NotImplementedException();
@@ -244,7 +266,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return this.faultBlock; }
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref this.faultBlock, value);
+				SetChildInstruction(ref this.faultBlock, value, 1);
 			}
 		}
 		
@@ -266,19 +288,37 @@ namespace ICSharpCode.Decompiler.IL
 			return IfInstruction.CombineFlags(Block.Phase1Boundary(TryBlock.Flags), Block.Phase1Boundary(faultBlock.Flags));
 		}
 		
-		public override IEnumerable<ILInstruction> Children {
-			get {
-				yield return TryBlock;
-				yield return faultBlock;
+		protected override int GetChildCount()
+		{
+			return 2;
+		}
+		
+		protected override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return TryBlock;
+				case 1:
+					return faultBlock;
+				default:
+					throw new IndexOutOfRangeException();
 			}
 		}
 		
-		public override void TransformChildren(ILVisitor<ILInstruction> visitor)
+		protected override void SetChild(int index, ILInstruction value)
 		{
-			this.TryBlock = TryBlock.AcceptVisitor(visitor);
-			this.FaultBlock = faultBlock.AcceptVisitor(visitor);
+			switch (index) {
+				case 0:
+					TryBlock = value;
+					break;
+				case 1:
+					FaultBlock = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
 		}
-
+		
 		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
 			throw new NotImplementedException();
