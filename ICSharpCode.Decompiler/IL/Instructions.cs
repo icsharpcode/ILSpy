@@ -66,6 +66,8 @@ namespace ICSharpCode.Decompiler.IL
 		Arglist,
 		/// <summary>Unconditional branch. <c>goto target;</c></summary>
 		Branch,
+		/// <summary>Unconditional branch to end of block container. <c>goto container_end;</c>, often <c>break;</c></summary>
+		Leave,
 		/// <summary>Marks the end of an finally, fault or exception filter block.</summary>
 		EndFinally,
 		/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
@@ -663,6 +665,20 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBranch(this);
+		}
+	}
+
+	/// <summary>Unconditional branch to end of block container. <c>goto container_end;</c>, often <c>break;</c></summary>
+	public sealed partial class Leave : SimpleInstruction
+	{
+		public override StackType ResultType { get { return StackType.Void; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLeave(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLeave(this);
 		}
 	}
 
@@ -2626,6 +2642,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitLeave(Leave inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitEndFinally(EndFinally inst)
 		{
 			Default(inst);
@@ -2924,6 +2944,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitLeave(Leave inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitEndFinally(EndFinally inst)
 		{
 			return Default(inst);
@@ -3212,6 +3236,7 @@ namespace ICSharpCode.Decompiler.IL
 			"bit.not",
 			"arglist",
 			"br",
+			"leave",
 			"endfinally",
 			"if",
 			"try.catch",

@@ -33,15 +33,23 @@ namespace ICSharpCode.Decompiler.IL
 	/// That means that viewed from the outside, the block container has a single entry point (but possibly multiple exit points),
 	/// and the same holds for every block within the container.
 	/// 
-	/// If a block within the container falls through to its end point, control flow is transferred to the end point
-	/// of the whole block container. The return value of the block is ignored in this case, the container always
-	/// returns void.
+	/// All blocks in the container must perform unconditional control flow (falling through to the block end is not allowed).
+	/// To exit the block container, use the 'leave' instruction.
 	/// </summary>
 	partial class BlockContainer : ILInstruction
 	{
 		public readonly InstructionCollection<Block> Blocks;
+		
+		/// <summary>
+		/// Gets the number of 'leave' instructions that target this BlockContainer.
+		/// </summary>
+		public int LeaveCount { get; internal set; }
+		
 		Block entryPoint;
 
+		/// <summary>
+		/// Gets the container's entry point. This is the first block in the Blocks collection.
+		/// </summary>
 		public Block EntryPoint {
 			get { return entryPoint; }
 			private set {
@@ -80,7 +88,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output)
 		{
-			output.WriteLine("BlockContainer {");
+			output.WriteDefinition("BlockContainer", this);
+			output.WriteLine(" {");
 			output.Indent();
 			foreach (var inst in Blocks) {
 				inst.WriteTo(output);
@@ -112,20 +121,21 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant();
 			Debug.Assert(EntryPoint == Blocks[0]);
 			Debug.Assert(!IsConnected || EntryPoint.IncomingEdgeCount >= 1);
+			Debug.Assert(Blocks.All(b => b.HasFlag(InstructionFlags.EndPointUnreachable)));
 		}
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			InstructionFlags flagsInAnyBlock = InstructionFlags.None;
-			InstructionFlags flagsInAllBlocks = ~InstructionFlags.None;
+			InstructionFlags flags = InstructionFlags.None;
 			foreach (var block in Blocks) {
-				flagsInAnyBlock |= block.Flags;
-				flagsInAllBlocks &= block.Flags;
+				flags |= block.Flags;
 			}
-			// Return EndPointUnreachable only if no block has a reachable endpoint.
-			// The other flags are combined from all blocks.
-			return (flagsInAnyBlock & ~InstructionFlags.EndPointUnreachable)
-				| (flagsInAllBlocks & InstructionFlags.EndPointUnreachable);
+			// The end point of the BlockContainer is only reachable if there's a leave instruction
+			if (LeaveCount == 0)
+				flags |= InstructionFlags.EndPointUnreachable;
+			else
+				flags &= ~InstructionFlags.EndPointUnreachable;
+			return flags;
 		}
 		
 		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)

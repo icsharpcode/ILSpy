@@ -36,27 +36,20 @@ namespace ICSharpCode.Decompiler.IL
 	/// Phase-2 execution removes PopCount elements from the evaluation stack
 	/// and jumps to the target block.
 	/// </remarks>
-	partial class Branch : SimpleInstruction
+	partial class Leave : SimpleInstruction
 	{
-		readonly int targetILOffset;
-		Block targetBlock;
+		BlockContainer targetContainer;
 		
 		/// <summary>
 		/// Pops the specified number of arguments from the evaluation stack during the branching operation.
 		/// </summary>
 		public int PopCount;
 		
-		public Branch(int targetILOffset) : base(OpCode.Branch)
+		public Leave(BlockContainer targetContainer) : base(OpCode.Leave)
 		{
-			this.targetILOffset = targetILOffset;
-		}
-		
-		public Branch(Block targetBlock) : base(OpCode.Branch)
-		{
-			if (targetBlock == null)
-				throw new ArgumentNullException("targetBlock");
-			this.targetBlock = targetBlock;
-			this.targetILOffset = targetBlock.ILRange.Start;
+			if (targetContainer == null)
+				throw new ArgumentNullException("targetContainer");
+			this.targetContainer = targetContainer;
 		}
 		
 		protected override InstructionFlags ComputeFlags()
@@ -69,53 +62,46 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 		
-		public int TargetILOffset {
-			get { return targetBlock != null ? targetBlock.ILRange.Start : targetILOffset; }
-		}
-		
-		public Block TargetBlock {
-			get { return targetBlock; }
+		public BlockContainer TargetContainer {
+			get { return targetContainer; }
 			set {
-				if (targetBlock != null && IsConnected)
-					targetBlock.IncomingEdgeCount--;
-				targetBlock = value;
-				if (targetBlock != null && IsConnected)
-					targetBlock.IncomingEdgeCount++;
+				if (targetContainer != null && IsConnected)
+					targetContainer.LeaveCount--;
+				targetContainer = value;
+				if (targetContainer != null && IsConnected)
+					targetContainer.LeaveCount++;
 			}
 		}
 		
 		protected override void Connected()
 		{
 			base.Connected();
-			if (targetBlock != null)
-				targetBlock.IncomingEdgeCount++;
+			if (targetContainer != null)
+				targetContainer.LeaveCount++;
 		}
 		
 		protected override void Disconnected()
 		{
 			base.Disconnected();
-			if (targetBlock != null)
-				targetBlock.IncomingEdgeCount--;
+			if (targetContainer != null)
+				targetContainer.LeaveCount--;
 		}
 		
 		public string TargetLabel {
-			get { return targetBlock != null ? targetBlock.Label : CecilExtensions.OffsetToString(TargetILOffset); }
+			get { return targetContainer.EntryPoint.Label; }
 		}
 		
 		internal override void CheckInvariant()
 		{
 			base.CheckInvariant();
-			if (targetBlock != null) {
-				Debug.Assert(targetBlock.Parent is BlockContainer);
-				Debug.Assert(this.IsDescendantOf(targetBlock.Parent));
-			}
+			Debug.Assert(this.IsDescendantOf(targetContainer));
 		}
 		
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			output.WriteReference(TargetLabel, (object)targetBlock ?? TargetILOffset, isLocal: true);
+			output.WriteReference(TargetLabel, targetContainer, isLocal: true);
 			if (PopCount != 0) {
 				output.Write(" (pops ");
 				output.Write(PopCount.ToString());
@@ -125,16 +111,12 @@ namespace ICSharpCode.Decompiler.IL
 		
 		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
-			ImmutableArray<ILVariable> initialVariables;
-			if (!state.InitialVariables.TryGetValue(targetBlock, out initialVariables)) {
-				initialVariables = state.Variables.ToImmutableArray();
-				state.InitialVariables.Add(targetBlock, initialVariables);
-				targetBlock.TransformStackIntoVariables(state);
+			ImmutableArray<ILVariable> variables;
+			if (state.FinalVariables.TryGetValue(targetContainer, out variables)) {
+				state.MergeVariables(state.Variables, variables.ToStack());
 			} else {
-				state.MergeVariables(state.Variables, initialVariables.ToStack());
+				state.FinalVariables.Add(targetContainer, state.Variables.ToImmutableArray());
 			}
-			// No one is supposed to use the variable stack after an unconditional branch,
-			// but let's clear it just to be safe.
 			state.Variables.Clear();
 		}
 	}

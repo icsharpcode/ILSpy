@@ -98,6 +98,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (returnValue != null)
 				ReturnValue.TransformStackIntoVariables(state);
+			state.Variables.Clear();
 		}
 	}
 }

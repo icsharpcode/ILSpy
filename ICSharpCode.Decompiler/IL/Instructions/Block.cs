@@ -203,19 +203,6 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			FinalInstruction = FinalInstruction.Inline(InstructionFlags.None, state);
 			FinalInstruction.TransformStackIntoVariables(state);
-			if (FinalInstruction.HasFlag(InstructionFlags.EndPointUnreachable))
-				return;
-			var bc = Parent as BlockContainer;
-			if (bc != null) {
-				// If this block allows us to fall out of the container,
-				// remember the variable stack in state.FinalVariables.
-				ImmutableArray<ILVariable> variables;
-				if (state.FinalVariables.TryGetValue(bc, out variables)) {
-					state.MergeVariables(state.Variables, variables.ToStack());
-				} else {
-					state.FinalVariables.Add(bc, state.Variables.ToImmutableArray());
-				}
-			}
 		}
 	}
 }

@@ -94,6 +94,7 @@
     <Compile Include="IL\Instructions\ILFunction.cs" />
     <Compile Include="IL\Instructions\ILInstruction.cs" />
     <Compile Include="IL\Instructions\InstructionCollection.cs" />
+    <Compile Include="IL\Instructions\Leave.cs" />
     <Compile Include="IL\Instructions\LocalVarInstructions.cs" />
     <Compile Include="IL\Instructions\MemoryInstructions.cs" />
     <Compile Include="IL\Instructions\PatternMatching.cs" />

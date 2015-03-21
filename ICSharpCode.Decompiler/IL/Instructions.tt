@@ -61,7 +61,9 @@
 		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
 		new OpCode("br", "Unconditional branch. <c>goto target;</c>",
 			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch, CustomComputeFlags),
-		// TODO: get rid of endfinally, we can represent those with a normal branch to the end of the filter/finally block instead
+		new OpCode("leave", "Unconditional branch to end of block container. <c>goto container_end;</c>, often <c>break;</c>",
+			NoArguments, CustomConstructor, UnconditionalBranch, MayBranch, CustomComputeFlags),
+		// TODO: get rid of endfinally, we can represent those with 'leave blockcontainer' instead
 		new OpCode("endfinally", "Marks the end of an finally, fault or exception filter block.",
 			CustomClassName("EndFinally"), NoArguments, UnconditionalBranch, MayBranch),
 		new OpCode("if", "If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c>",

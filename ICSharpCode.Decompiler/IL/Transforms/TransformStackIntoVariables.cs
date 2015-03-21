@@ -36,6 +36,9 @@ namespace ICSharpCode.Decompiler.IL
 	
 	public class TransformStackIntoVariables : IILTransform
 	{
+		// Transform ordering:
+		// TransformStackIntoVariables should run after all inlining transforms, so that no unnecessary variables are created.
+		
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			var state = new TransformStackIntoVariablesState();
