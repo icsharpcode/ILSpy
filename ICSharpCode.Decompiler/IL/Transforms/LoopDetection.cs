@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			foreach (var blockContainer in function.Descendants.OfType<BlockContainer>().ToArray()) {
+			foreach (var blockContainer in function.Descendants.OfType<BlockContainer>()) {
 				Run(blockContainer, context);
 			}
 		}

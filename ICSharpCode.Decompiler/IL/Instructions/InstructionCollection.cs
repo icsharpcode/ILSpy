@@ -113,6 +113,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public void Add(T value)
 		{
+			parentInstruction.AssertNoEnumerators();
 			value.ChildIndex = list.Count + firstChildIndex;
 			list.Add(value);
 			parentInstruction.InstructionCollectionAdded(value);
@@ -121,6 +122,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public void AddRange(IEnumerable<T> values)
 		{
+			parentInstruction.AssertNoEnumerators();
 			foreach (T value in values) {
 				value.ChildIndex = list.Count + firstChildIndex;
 				list.Add(value);
@@ -137,6 +139,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public void ReplaceList(IEnumerable<T> newList)
 		{
+			parentInstruction.AssertNoEnumerators();
 			int index = 0;
 			foreach (T value in newList) {
 				value.ChildIndex = index + firstChildIndex;
@@ -160,6 +163,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public void Insert(int index, T item)
 		{
+			parentInstruction.AssertNoEnumerators();
 			list.Insert(index, item);
 			item.ChildIndex = index;
 			parentInstruction.InstructionCollectionAdded(item);
@@ -175,6 +179,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public void RemoveAt(int index)
 		{
+			parentInstruction.AssertNoEnumerators();
 			parentInstruction.InstructionCollectionRemoved(list[index]);
 			list.RemoveAt(index);
 			for (int i = index; i < list.Count; i++) {
@@ -187,6 +192,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public void Clear()
 		{
+			parentInstruction.AssertNoEnumerators();
 			foreach (var entry in list) {
 				parentInstruction.InstructionCollectionRemoved(entry);
 			}
@@ -213,6 +219,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int RemoveAll(Predicate<T> predicate)
 		{
+			parentInstruction.AssertNoEnumerators();
 			int j = 0;
 			for (int i = 0; i < list.Count; i++) {
 				T item = list[i];

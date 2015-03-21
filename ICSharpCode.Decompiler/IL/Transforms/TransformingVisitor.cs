@@ -42,7 +42,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override ILInstruction Default(ILInstruction inst)
 		{
-			inst.TransformChildren(this);
+			foreach (var child in inst.Children) {
+				child.ReplaceWith(child.AcceptVisitor(this));
+			}
 			return inst;
 		}
 		
@@ -197,7 +199,9 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected internal override ILInstruction VisitBlockContainer(BlockContainer container)
 		{
-			container.TransformChildren(this);
+			foreach (var block in container.Blocks) {
+				block.ReplaceWith(block.AcceptVisitor(this));
+			}
 			
 			// VisitBranch() 'steals' blocks from containers. Remove all blocks that were stolen from the block list:
 			Debug.Assert(container.EntryPoint.IncomingEdgeCount > 0);

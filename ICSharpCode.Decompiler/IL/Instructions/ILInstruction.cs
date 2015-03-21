@@ -142,6 +142,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Calls the Visit*-method on the visitor corresponding to the concrete type of this instruction.
 		/// </summary>
+		public abstract void AcceptVisitor(ILVisitor visitor);
+		
+		/// <summary>
+		/// Calls the Visit*-method on the visitor corresponding to the concrete type of this instruction.
+		/// </summary>
 		public abstract T AcceptVisitor<T>(ILVisitor<T> visitor);
 		
 		/// <summary>
@@ -192,6 +197,35 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
+		#if DEBUG
+		int activeEnumerators;
+		#endif
+		
+		[Conditional("DEBUG")]
+		internal void AssertNoEnumerators()
+		{
+			#if DEBUG
+			Debug.Assert(activeEnumerators == 0);
+			#endif
+		}
+		
+		[Conditional("DEBUG")]
+		internal void StartEnumerator()
+		{
+			#if DEBUG
+			activeEnumerators++;
+			#endif
+		}
+		
+		[Conditional("DEBUG")]
+		internal void StopEnumerator()
+		{
+			#if DEBUG
+			Debug.Assert(activeEnumerators > 0);
+			activeEnumerators--;
+			#endif
+		}
+		
 		public struct ChildrenEnumerator : IEnumerator<ILInstruction>
 		{
 			readonly ILInstruction inst;
@@ -204,6 +238,7 @@ namespace ICSharpCode.Decompiler.IL
 				this.inst = inst;
 				this.pos = -1;
 				this.end = inst.GetChildCount();
+				inst.StartEnumerator();
 			}
 			
 			public ILInstruction Current {
@@ -219,6 +254,7 @@ namespace ICSharpCode.Decompiler.IL
 
 			public void Dispose()
 			{
+				inst.StopEnumerator();
 			}
 			
 			object System.Collections.IEnumerator.Current {
@@ -233,31 +269,53 @@ namespace ICSharpCode.Decompiler.IL
 		#endregion
 		
 		/// <summary>
-		/// Transforms the children of this instruction by applying the specified visitor.
-		/// </summary>
-		[Obsolete]
-		public void TransformChildren(ILVisitor<ILInstruction> visitor)
-		{
-			int count = GetChildCount();
-			for (int i = 0; i < count; i++) {
-				SetChild(i, GetChild(i).AcceptVisitor(visitor));
-			}
-		}
-		
-		/// <summary>
 		/// Replaces this ILInstruction with the given replacement instruction.
 		/// </summary>
 		public void ReplaceWith(ILInstruction replacement)
 		{
+			Debug.Assert(parent.GetChild(ChildIndex) == this);
+			if (replacement == this)
+				return;
 			parent.SetChild(ChildIndex, replacement);
 		}
 		
 		/// <summary>
-		/// Returns all descendants of the ILInstruction.
+		/// Returns all descendants of the ILInstruction in post-order.
 		/// </summary>
+		/// <remarks>
+		/// Within a loop 'foreach (var node in inst.Descendants)', it is illegal to
+		/// add or remove from the child collections of node's ancestors, as those are
+		/// currently being enumerated.
+		/// Note that it is valid to modify node's children as those were already previously visited.
+		/// As a special case, it is also allowed to replace node itself with another node.
+		/// </remarks>
 		public IEnumerable<ILInstruction> Descendants {
 			get {
-				return TreeTraversal.PreOrder(Children, inst => inst.Children);
+				// Copy of TreeTraversal.PostOrder() specialized for ChildrenEnumerator
+				Stack<ChildrenEnumerator> stack = new Stack<ChildrenEnumerator>();
+				ChildrenEnumerator enumerator = new ChildrenEnumerator(this);
+				try {
+					while (true) {
+						while (enumerator.MoveNext()) {
+							var element = enumerator.Current;
+							stack.Push(enumerator);
+							enumerator = new ChildrenEnumerator(element);
+						}
+						enumerator.Dispose();
+						if (stack.Count > 0) {
+							yield return stack.Peek().Current;
+							// Pop enumerator only after yielding, so that it gets
+							// disposed if the enumeration is aborted.
+							enumerator = stack.Pop();
+						} else {
+							break;
+						}
+					}
+				} finally {
+					while (stack.Count > 0) {
+						stack.Pop().Dispose();
+					}
+				}
 			}
 		}
 		

@@ -42,11 +42,11 @@ namespace ICSharpCode.Decompiler.IL
 			state.TypeSystem = context.TypeSystem;
 			function.TransformStackIntoVariables(state);
 			HashSet<ILVariable> variables = new HashSet<ILVariable>();
-			function.TransformChildren(new CollectStackVariablesVisitor(state, variables));
+			function.AcceptVisitor(new CollectStackVariablesVisitor(state, variables));
 			function.Variables.AddRange(variables);
 		}
 
-		class CollectStackVariablesVisitor : ILVisitor<ILInstruction>
+		class CollectStackVariablesVisitor : ILVisitor
 		{
 			readonly TransformStackIntoVariablesState state;
 
@@ -58,32 +58,33 @@ namespace ICSharpCode.Decompiler.IL
 				this.variables = variables;
 			}
 
-			protected override ILInstruction Default(ILInstruction inst)
+			protected override void Default(ILInstruction inst)
 			{
-				inst.TransformChildren(this);
-				return inst;
+				foreach (var child in inst.Children) {
+					child.AcceptVisitor(this);
+				}
 			}
 
-			protected internal override ILInstruction VisitLdLoc(LdLoc inst)
+			protected internal override void VisitLdLoc(LdLoc inst)
 			{
+				base.VisitLdLoc(inst);
 				if (inst.Variable.Kind == VariableKind.StackSlot) {
 					var variable = state.UnionFind.Find(inst.Variable);
 					if (variables.Add(variable))
 						variable.Name = "S_" + (variables.Count - 1);
-					inst = new LdLoc(variable);
+					inst.ReplaceWith(new LdLoc(variable));
 				}
-				return base.VisitLdLoc(inst);
 			}
 
-			protected internal override ILInstruction VisitStLoc(StLoc inst)
+			protected internal override void VisitStLoc(StLoc inst)
 			{
+				base.VisitStLoc(inst);
 				if (inst.Variable.Kind == VariableKind.StackSlot) {
 					var variable = state.UnionFind.Find(inst.Variable);
 					if (variables.Add(variable))
 						variable.Name = "S_" + (variables.Count - 1);
-					inst = new StLoc(inst.Value, variable);
+					inst.ReplaceWith(new StLoc(inst.Value, variable));
 				}
-				return base.VisitStLoc(inst);
 			}
 		}
 	}

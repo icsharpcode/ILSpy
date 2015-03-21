@@ -319,6 +319,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitNop(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNop(this);
@@ -334,6 +338,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		StackType resultType;
 		public override StackType ResultType { get { return resultType; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitPop(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitPop(this);
@@ -349,6 +357,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		StackType resultType;
 		public override StackType ResultType { get { return resultType; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitPeek(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitPeek(this);
@@ -362,6 +374,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitVoid(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitVoid(this);
@@ -403,6 +419,10 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		public override StackType ResultType { get { return StackType.O; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitILFunction(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitILFunction(this);
@@ -413,6 +433,10 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class BlockContainer : ILInstruction
 	{
 		public override StackType ResultType { get { return StackType.Void; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitBlockContainer(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBlockContainer(this);
@@ -423,6 +447,10 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class Block : ILInstruction
 	{
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitBlock(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBlock(this);
@@ -436,6 +464,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.I4; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLogicNot(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLogicNot(this);
@@ -449,6 +481,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitAdd(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitAdd(this);
@@ -462,6 +498,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitSub(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitSub(this);
@@ -475,6 +515,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitMul(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitMul(this);
@@ -491,6 +535,10 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDiv(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -509,6 +557,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitRem(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitRem(this);
@@ -522,6 +574,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitBitAnd(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitAnd(this);
@@ -535,6 +591,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitBitOr(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitOr(this);
@@ -548,6 +608,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitBitXor(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitXor(this);
@@ -561,6 +625,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitBitNot(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitNot(this);
@@ -574,6 +642,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.O; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitArglist(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitArglist(this);
@@ -584,6 +656,10 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class Branch : SimpleInstruction
 	{
 		public override StackType ResultType { get { return StackType.Void; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitBranch(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBranch(this);
@@ -600,6 +676,10 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitEndFinally(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -667,6 +747,10 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitIfInstruction(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitIfInstruction(this);
@@ -677,6 +761,10 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class TryCatch : TryInstruction
 	{
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitTryCatch(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryCatch(this);
@@ -740,6 +828,10 @@ namespace ICSharpCode.Decompiler.IL
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
 		public ILVariable Variable { get { return variable; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitTryCatchHandler(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryCatchHandler(this);
@@ -750,6 +842,10 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class TryFinally : TryInstruction
 	{
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitTryFinally(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryFinally(this);
@@ -760,6 +856,10 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class TryFault : TryInstruction
 	{
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitTryFault(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryFault(this);
@@ -777,6 +877,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return InstructionFlags.SideEffect;
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDebugBreak(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitDebugBreak(this);
@@ -790,6 +894,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCeq(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCeq(this);
@@ -803,6 +911,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCgt(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCgt(this);
@@ -816,6 +928,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCgt_Un(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCgt_Un(this);
@@ -829,6 +945,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitClt(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitClt(this);
@@ -842,6 +962,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitClt_Un(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitClt_Un(this);
@@ -855,6 +979,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCall(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCall(this);
@@ -868,6 +996,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCallVirt(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCallVirt(this);
@@ -885,6 +1017,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCkfinite(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCkfinite(this);
@@ -895,6 +1031,10 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class Conv : UnaryInstruction
 	{
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitConv(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitConv(this);
@@ -919,6 +1059,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			variable.WriteTo(output);
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdLoc(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLoc(this);
@@ -942,6 +1086,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdLoca(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -1015,6 +1163,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.value.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitStLoc(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStLoc(this);
@@ -1035,6 +1187,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdStr(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -1057,6 +1213,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdcI4(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcI4(this);
@@ -1077,6 +1237,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdcI8(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -1099,6 +1263,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdcF(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcF(this);
@@ -1112,6 +1280,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.O; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdNull(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdNull(this);
@@ -1134,6 +1306,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, method);
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdFtn(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -1165,6 +1341,10 @@ namespace ICSharpCode.Decompiler.IL
 			Argument.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdVirtFtn(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdVirtFtn(this);
@@ -1187,6 +1367,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdTypeToken(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -1211,6 +1395,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, member);
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdMemberToken(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdMemberToken(this);
@@ -1228,6 +1416,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLocAlloc(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLocAlloc(this);
@@ -1238,6 +1430,10 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class Return : ILInstruction
 	{
 		public override StackType ResultType { get { return StackType.Void; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitReturn(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitReturn(this);
@@ -1251,6 +1447,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitShl(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitShl(this);
@@ -1264,6 +1464,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitShr(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitShr(this);
@@ -1343,6 +1547,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.target.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdFld(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdFld(this);
@@ -1413,6 +1621,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('(');
 			this.target.WriteTo(output);
 			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdFlda(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -1511,6 +1723,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.value.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitStFld(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStFld(this);
@@ -1546,6 +1762,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdsFld(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdsFld(this);
@@ -1568,6 +1788,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdsFlda(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -1648,6 +1872,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.value.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitStsFld(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStsFld(this);
@@ -1678,6 +1906,10 @@ namespace ICSharpCode.Decompiler.IL
 			Argument.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCastClass(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCastClass(this);
@@ -1703,6 +1935,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('(');
 			Argument.WriteTo(output);
 			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitIsInst(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -1782,6 +2018,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('(');
 			this.target.WriteTo(output);
 			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdObj(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -1880,6 +2120,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.value.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitStObj(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStObj(this);
@@ -1909,6 +2153,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('(');
 			Argument.WriteTo(output);
 			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitBox(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -1940,6 +2188,10 @@ namespace ICSharpCode.Decompiler.IL
 			Argument.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitUnbox(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitUnbox(this);
@@ -1970,6 +2222,10 @@ namespace ICSharpCode.Decompiler.IL
 			Argument.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitUnboxAny(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitUnboxAny(this);
@@ -1983,6 +2239,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.O; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitNewObj(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNewObj(this);
@@ -2009,6 +2269,10 @@ namespace ICSharpCode.Decompiler.IL
 			Argument.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitInitObj(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitInitObj(this);
@@ -2032,6 +2296,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitDefaultValue(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitDefaultValue(this);
@@ -2049,6 +2317,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitThrow(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitThrow(this);
@@ -2065,6 +2337,10 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitRethrow(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -2088,6 +2364,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitSizeOf(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -2153,6 +2433,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write('(');
 			this.target.WriteTo(output);
 			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdLen(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
@@ -2247,6 +2531,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.index.WriteTo(output);
 			output.Write(')');
 		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdElema(this);
+		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdElema(this);
@@ -2254,6 +2542,304 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 
+	/// <summary>
+	/// Base class for visitor pattern.
+	/// </summary>
+	public abstract class ILVisitor
+	{
+		/// <summary>Called by Visit*() methods that were not overridden</summary>
+		protected abstract void Default(ILInstruction inst);
+		
+		protected internal virtual void VisitNop(Nop inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitPop(Pop inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitPeek(Peek inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitVoid(Void inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitILFunction(ILFunction function)
+		{
+			Default(function);
+		}
+		protected internal virtual void VisitBlockContainer(BlockContainer container)
+		{
+			Default(container);
+		}
+		protected internal virtual void VisitBlock(Block block)
+		{
+			Default(block);
+		}
+		protected internal virtual void VisitLogicNot(LogicNot inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitAdd(Add inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitSub(Sub inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitMul(Mul inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDiv(Div inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitRem(Rem inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitBitAnd(BitAnd inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitBitOr(BitOr inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitBitXor(BitXor inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitBitNot(BitNot inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitArglist(Arglist inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitBranch(Branch inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitEndFinally(EndFinally inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitIfInstruction(IfInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitTryCatch(TryCatch inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitTryCatchHandler(TryCatchHandler inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitTryFinally(TryFinally inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitTryFault(TryFault inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDebugBreak(DebugBreak inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitCeq(Ceq inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitCgt(Cgt inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitCgt_Un(Cgt_Un inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitClt(Clt inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitClt_Un(Clt_Un inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitCall(Call inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitCallVirt(CallVirt inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitCkfinite(Ckfinite inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitConv(Conv inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdLoc(LdLoc inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdLoca(LdLoca inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitStLoc(StLoc inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdStr(LdStr inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdcI4(LdcI4 inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdcI8(LdcI8 inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdcF(LdcF inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdNull(LdNull inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdFtn(LdFtn inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdVirtFtn(LdVirtFtn inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdTypeToken(LdTypeToken inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdMemberToken(LdMemberToken inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLocAlloc(LocAlloc inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitReturn(Return inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitShl(Shl inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitShr(Shr inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdFld(LdFld inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdFlda(LdFlda inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitStFld(StFld inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdsFld(LdsFld inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdsFlda(LdsFlda inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitStsFld(StsFld inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitCastClass(CastClass inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitIsInst(IsInst inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdObj(LdObj inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitStObj(StObj inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitBox(Box inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitUnbox(Unbox inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitUnboxAny(UnboxAny inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitNewObj(NewObj inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitInitObj(InitObj inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitDefaultValue(DefaultValue inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitThrow(Throw inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitRethrow(Rethrow inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitSizeOf(SizeOf inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdLen(LdLen inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdElema(LdElema inst)
+		{
+			Default(inst);
+		}
+	}
+	
 	/// <summary>
 	/// Base class for visitor pattern.
 	/// </summary>
