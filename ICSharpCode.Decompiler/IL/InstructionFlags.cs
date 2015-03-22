@@ -81,6 +81,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// The instruction performs unconditional control flow, so that its endpoint is unreachable.
 		/// </summary>
+		/// <remarks>
+		/// If EndPointUnreachable is set, either MayThrow or MayBranch should also be set
+		/// (unless the instruction represents an infinite loop).
+		/// </remarks>
 		EndPointUnreachable = 0x400,
 	}
 }

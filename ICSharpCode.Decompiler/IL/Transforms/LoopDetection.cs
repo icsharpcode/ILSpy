@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// * LoopDetection should run before other control flow structures are detected.
 	/// * Blocks should be basic blocks (not extended basic blocks) so that the natural loops
 	/// don't include more instructions than strictly necessary.
-	/// * (depending on future loop detection improvements:) Loop detection should run after the 'return block' is duplicated.
+	/// * (depending on future loop detection improvements:) Loop detection should run after the 'return block' is duplicated (OptimizingTransform).
 	/// </remarks>
 	public class LoopDetection : IILTransform
 	{

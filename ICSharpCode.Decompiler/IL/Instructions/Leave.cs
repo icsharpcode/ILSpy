@@ -47,8 +47,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public Leave(BlockContainer targetContainer) : base(OpCode.Leave)
 		{
-			if (targetContainer == null)
-				throw new ArgumentNullException("targetContainer");
+			// Note: ILReader will create Leave instructions with targetContainer==null to represent 'endfinally',
+			// the targetContainer will then be filled in by BlockBuilder
 			this.targetContainer = targetContainer;
 		}
 		
@@ -88,20 +88,22 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		public string TargetLabel {
-			get { return targetContainer.EntryPoint.Label; }
+			get { return targetContainer != null ? targetContainer.EntryPoint.Label : string.Empty; }
 		}
 		
 		internal override void CheckInvariant()
 		{
 			base.CheckInvariant();
-			Debug.Assert(this.IsDescendantOf(targetContainer));
+			Debug.Assert(targetContainer == null || this.IsDescendantOf(targetContainer));
 		}
 		
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
-			output.Write(' ');
-			output.WriteReference(TargetLabel, targetContainer, isLocal: true);
+			if (targetContainer != null) {
+				output.Write(' ');
+				output.WriteReference(TargetLabel, targetContainer, isLocal: true);
+			}
 			if (PopCount != 0) {
 				output.Write(" (pops ");
 				output.Write(PopCount.ToString());

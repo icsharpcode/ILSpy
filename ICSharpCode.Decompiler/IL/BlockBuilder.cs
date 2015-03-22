@@ -175,7 +175,13 @@ namespace ICSharpCode.Decompiler.IL
 			switch (inst.OpCode) {
 				case OpCode.Branch:
 					var branch = (Branch)inst;
+					Debug.Assert(branch.TargetBlock == null);
 					branch.TargetBlock = FindBranchTarget(branch.TargetILOffset);
+					break;
+				case OpCode.Leave:
+					var leave = (Leave)inst;
+					Debug.Assert(leave.TargetContainer == null);
+					leave.TargetContainer = containerStack.Peek();
 					break;
 				case OpCode.BlockContainer:
 					var container = (BlockContainer)inst;

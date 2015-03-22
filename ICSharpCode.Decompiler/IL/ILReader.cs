@@ -431,7 +431,7 @@ namespace ICSharpCode.Decompiler.IL
 					return new Peek(stack.Count > 0 ? stack.Peek() : StackType.Unknown);
 				case ILOpCode.Endfilter:
 				case ILOpCode.Endfinally:
-					return new EndFinally();
+					return new Leave(null);
 				case ILOpCode.Initblk:
 					throw new NotImplementedException();
 				case ILOpCode.Jmp:
