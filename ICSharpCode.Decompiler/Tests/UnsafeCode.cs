@@ -138,6 +138,11 @@ public class UnsafeCode
 		return (long*)((byte*)p + 3);
 	}
 
+    public unsafe int PointerSubtraction(long* p, long* q)
+    {
+        return (int)((long)(p - q));
+    }
+
 	unsafe ~UnsafeCode()
 	{
 		this.PassPointerAsRefParameter(this.NullPointer);
