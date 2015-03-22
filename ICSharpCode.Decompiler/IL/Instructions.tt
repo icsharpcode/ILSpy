@@ -528,7 +528,6 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly string PropertyName;
 		public readonly string Name;
 		public bool IsArgument;
-		public bool IsOptional;
 		
 		public ChildInfo(string name)
 		{
@@ -551,15 +550,11 @@ namespace ICSharpCode.Decompiler.IL
 				opCode.ConstructorBody.Add("this." + argProp + " = " + arg + ";");
 				if (i > 0)
 					opCode.WriteArguments.Add("output.Write(\", \");");
-				if (children[i].IsOptional)
-					opCode.WriteArguments.Add("if (this." + arg + " != null) this." + arg + ".WriteTo(output);");
-				else
-					opCode.WriteArguments.Add("this." + arg + ".WriteTo(output);");
+				opCode.WriteArguments.Add("this." + arg + ".WriteTo(output);");
 				opCode.Members.Add("ILInstruction " + arg + ";");
 				opCode.Members.Add("public ILInstruction " + argProp + " {" + Environment.NewLine
 					+ "\tget { return this." + arg + "; }" + Environment.NewLine
 					+ "\tset {" + Environment.NewLine
-					+ (children[i].IsOptional ? "\t\tif (value != null)" + Environment.NewLine + "\t" : "")
 					+ "\t\t" + (children[i].IsArgument ? "ValidateArgument" : "ValidateChild") + "(value);" + Environment.NewLine
 					+ "\t\tSetChildInstruction(ref this." + arg + ", value, " + i + ");" + Environment.NewLine
 					+ "\t}" + Environment.NewLine
@@ -603,44 +598,23 @@ namespace ICSharpCode.Decompiler.IL
 			b.Append("}");
 			opCode.Members.Add(b.ToString());
 			
-			/*
 			b = new StringBuilder();
-			b.AppendLine("public override IEnumerable<ILInstruction> Children {");
-			b.AppendLine("\tget {");
-			foreach (var child in children) {
-				if (child.IsOptional) {
-					b.AppendLine("\t\tif (this." + child.Name + " != null)");
-					b.Append('\t');
-				}
-				b.AppendLine("\t\tyield return this." + child.Name + ";");
+			b.AppendLine("public sealed override ILInstruction Clone()");
+			b.AppendLine("{");
+			b.AppendLine("\tvar clone = (" + opCode.Name + ")ShallowClone();");
+			for (int i = 0; i < children.Length; i++) {
+				b.AppendLine("\tclone." + children[i].PropertyName + " = this." + children[i].Name + ".Clone();");
 			}
-			b.AppendLine("\t}");
+			b.AppendLine("\treturn clone;");
 			b.Append("}");
 			opCode.Members.Add(b.ToString());
 			
-			b = new StringBuilder();
-			b.AppendLine("public override void TransformChildren(ILVisitor<ILInstruction> visitor)");
-			b.AppendLine("{");
-			foreach (var child in children) {
-				if (child.IsOptional) {
-					b.AppendLine("\tif (this." + child.Name + " != null)");
-					b.Append('\t');
-				}
-				b.AppendLine("\tthis." + child.PropertyName + " = this." + child.Name + ".AcceptVisitor(visitor);");
-			}
-			b.Append("}");
-			opCode.Members.Add(b.ToString());
-			*/
 			if (generateInline) {
 				b = new StringBuilder();
 				b.AppendLine("internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)");
 				b.AppendLine("{");
 				for (int i = children.Length - 1; i >= 0; i--) {
 					string arg = children[i].Name;
-					if (children[i].IsOptional) {
-						b.AppendLine("\tif (this." + arg + " != null)");
-						b.Append("\t");
-					}
 					b.Append("\tthis." + MakeName(arg) + " = this." + arg + ".Inline(flagsBefore");
 					if (i > 0) {
 						b.Append(" | ((");

@@ -214,6 +214,12 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (UnaryInstruction)ShallowClone();
+			clone.Argument = this.argument.Clone();
+			return clone;
+		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Argument = this.argument.Inline(flagsBefore, context);
@@ -287,6 +293,13 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					throw new IndexOutOfRangeException();
 			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (BinaryInstruction)ShallowClone();
+			clone.Left = this.left.Clone();
+			clone.Right = this.right.Clone();
+			return clone;
 		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
@@ -419,6 +432,12 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					throw new IndexOutOfRangeException();
 			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (ILFunction)ShallowClone();
+			clone.Body = this.body.Clone();
+			return clone;
 		}
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -763,6 +782,14 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (IfInstruction)ShallowClone();
+			clone.Condition = this.condition.Clone();
+			clone.TrueInst = this.trueInst.Clone();
+			clone.FalseInst = this.falseInst.Clone();
+			return clone;
+		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitIfInstruction(this);
@@ -840,6 +867,13 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					throw new IndexOutOfRangeException();
 			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (TryCatchHandler)ShallowClone();
+			clone.Filter = this.filter.Clone();
+			clone.Body = this.body.Clone();
+			return clone;
 		}
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
@@ -1152,6 +1186,12 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					throw new IndexOutOfRangeException();
 			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (StLoc)ShallowClone();
+			clone.Value = this.value.Clone();
+			return clone;
 		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
@@ -1529,6 +1569,12 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (LdFld)ShallowClone();
+			clone.Target = this.target.Clone();
+			return clone;
+		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Target = this.target.Inline(flagsBefore, context);
@@ -1611,6 +1657,12 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					throw new IndexOutOfRangeException();
 			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (LdFlda)ShallowClone();
+			clone.Target = this.target.Clone();
+			return clone;
 		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
@@ -1700,6 +1752,13 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					throw new IndexOutOfRangeException();
 			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (StFld)ShallowClone();
+			clone.Target = this.target.Clone();
+			clone.Value = this.value.Clone();
+			return clone;
 		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
@@ -1854,6 +1913,12 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (StsFld)ShallowClone();
+			clone.Value = this.value.Clone();
+			return clone;
+		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Value = this.value.Inline(flagsBefore, context);
@@ -2001,6 +2066,12 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (LdObj)ShallowClone();
+			clone.Target = this.target.Clone();
+			return clone;
+		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Target = this.target.Inline(flagsBefore, context);
@@ -2097,6 +2168,13 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					throw new IndexOutOfRangeException();
 			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (StObj)ShallowClone();
+			clone.Target = this.target.Clone();
+			clone.Value = this.value.Clone();
+			return clone;
 		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
@@ -2429,6 +2507,12 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (LdLen)ShallowClone();
+			clone.Target = this.target.Clone();
+			return clone;
+		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
 			this.Target = this.target.Inline(flagsBefore, context);
@@ -2512,6 +2596,13 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					throw new IndexOutOfRangeException();
 			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (LdElema)ShallowClone();
+			clone.Array = this.array.Clone();
+			clone.Index = this.index.Clone();
+			return clone;
 		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{

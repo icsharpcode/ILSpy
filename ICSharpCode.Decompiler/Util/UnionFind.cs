@@ -20,8 +20,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace ICSharpCode.Decompiler.IL
+namespace ICSharpCode.Decompiler
 {
+	/// <summary>
+	/// Union-Find data structure.
+	/// </summary>
 	public class UnionFind<T>
 	{
 		Dictionary<T, Node> mapping;

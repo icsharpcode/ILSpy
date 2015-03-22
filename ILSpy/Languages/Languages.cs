@@ -42,7 +42,7 @@ namespace ICSharpCode.ILSpy
 			languages.AddRange(composition.GetExportedValues<Language>());
 			#if DEBUG
 			languages.AddRange(ILAstLanguage.GetDebugLanguages());
-			//languages.AddRange(CSharpLanguage.GetDebugLanguages());
+			languages.AddRange(CSharpLanguage.GetDebugLanguages());
 			#endif
 			allLanguages = languages.AsReadOnly();
 		}

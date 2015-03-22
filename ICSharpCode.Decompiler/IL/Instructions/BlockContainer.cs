@@ -66,6 +66,23 @@ namespace ICSharpCode.Decompiler.IL
 			this.Blocks = new InstructionCollection<Block>(this, 0);
 		}
 
+		public override ILInstruction Clone()
+		{
+			BlockContainer clone = new BlockContainer();
+			clone.ILRange = this.ILRange;
+			clone.Blocks.AddRange(this.Blocks.Select(block => (Block)block.Clone()));
+			// Adjust branch instructions to point to the new container
+			foreach (var branch in clone.Descendants.OfType<Branch>()) {
+				if (branch.TargetBlock != null && branch.TargetBlock.Parent == this)
+					branch.TargetBlock = clone.Blocks[branch.TargetBlock.ChildIndex];
+			}
+			foreach (var leave in clone.Descendants.OfType<Leave>()) {
+				if (leave.TargetContainer == this)
+					leave.TargetContainer = clone;
+			}
+			return clone;
+		}
+		
 		protected internal override void InstructionCollectionUpdateComplete()
 		{
 			base.InstructionCollectionUpdateComplete();

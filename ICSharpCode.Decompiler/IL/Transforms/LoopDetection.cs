@@ -26,12 +26,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Detect loops in IL AST.
 	/// </summary>
+	/// <remarks>
+	/// Transform ordering:
+	/// * LoopDetection should run before other control flow structures are detected.
+	/// * Blocks should be basic blocks (not extended basic blocks) so that the natural loops
+	/// don't include more instructions than strictly necessary.
+	/// * (depending on future loop detection improvements:) Loop detection should run after the 'return block' is duplicated.
+	/// </remarks>
 	public class LoopDetection : IILTransform
 	{
-		// Transform ordering:
-		// LoopDetection should run before other control flow structures are detected.
-		// It should run after the 'return block' is duplicated.
-		
 		#region Construct Control Flow Graph
 		/// <summary>
 		/// Constructs a control flow graph for the blocks in the given block container.

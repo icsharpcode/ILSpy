@@ -95,6 +95,15 @@ namespace ICSharpCode.Decompiler.IL
 			this.FinalInstruction = new Nop();
 		}
 		
+		public override ILInstruction Clone()
+		{
+			Block clone = new Block();
+			clone.ILRange = this.ILRange;
+			clone.Instructions.AddRange(this.Instructions.Select(inst => inst.Clone()));
+			clone.FinalInstruction = this.FinalInstruction.Clone();
+			return clone;
+		}
+		
 		public override StackType ResultType {
 			get {
 				return finalInstruction.ResultType;

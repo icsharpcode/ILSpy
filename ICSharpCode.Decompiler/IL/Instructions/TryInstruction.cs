@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -62,6 +63,14 @@ namespace ICSharpCode.Decompiler.IL
 		public TryCatch(ILInstruction tryBlock) : base(OpCode.TryCatch, tryBlock)
 		{
 			this.Handlers = new InstructionCollection<TryCatchHandler>(this, 1);
+		}
+		
+		public override ILInstruction Clone()
+		{
+			var clone = new TryCatch(TryBlock.Clone());
+			clone.ILRange = this.ILRange;
+			clone.Handlers.AddRange(this.Handlers.Select(h => (TryCatchHandler)h.Clone()));
+			return clone;
 		}
 		
 		public override void WriteTo(ITextOutput output)
@@ -197,6 +206,13 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
+		public override ILInstruction Clone()
+		{
+			return new TryFinally(TryBlock.Clone(), finallyBlock.Clone()) {
+				ILRange = this.ILRange
+			};
+		}
+		
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(".try ");
@@ -268,6 +284,13 @@ namespace ICSharpCode.Decompiler.IL
 				ValidateChild(value);
 				SetChildInstruction(ref this.faultBlock, value, 1);
 			}
+		}
+		
+		public override ILInstruction Clone()
+		{
+			return new TryFault(TryBlock.Clone(), faultBlock.Clone()) {
+				ILRange = this.ILRange
+			};
 		}
 		
 		public override void WriteTo(ITextOutput output)

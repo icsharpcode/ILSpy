@@ -541,6 +541,9 @@ namespace ICSharpCode.ILSpy
 					break;
 				bestMatch = node;
 				node.EnsureLazyChildren();
+				var ilSpyTreeNode = node as ILSpyTreeNode;
+				if (ilSpyTreeNode != null)
+					ilSpyTreeNode.EnsureChildrenFiltered();
 				node = node.Children.FirstOrDefault(c => c.ToString() == element);
 			}
 			if (returnBestMatch)

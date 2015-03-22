@@ -39,19 +39,24 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 		}
 		
-		protected override int GetChildCount()
+		protected sealed override int GetChildCount()
 		{
 			return 0;
 		}
 		
-		protected override ILInstruction GetChild(int index)
+		protected sealed override ILInstruction GetChild(int index)
 		{
 			throw new IndexOutOfRangeException();
 		}
 		
-		protected override void SetChild(int index, ILInstruction value)
+		protected sealed override void SetChild(int index, ILInstruction value)
 		{
 			throw new IndexOutOfRangeException();
+		}
+		
+		public sealed override ILInstruction Clone()
+		{
+			return ShallowClone();
 		}
 		
 		protected override InstructionFlags ComputeFlags()

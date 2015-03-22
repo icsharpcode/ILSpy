@@ -102,13 +102,13 @@
     <Compile Include="Helpers\TypeSystemHelper.cs" />
     <Compile Include="ILTransforms\InliningTests.cs" />
     <Compile Include="Loops.cs" />
-    <Compile Include="LongSetTests.cs" />
     <Compile Include="StackToVariablesTests.cs" />
     <Compile Include="TestCases\CompoundAssignment.cs" />
     <Compile Include="TestCases\ControlFlow.cs" />
     <Compile Include="TestCases\HelloWorld.cs" />
     <Compile Include="TestCases\PropertiesAndEvents.cs" />
     <Compile Include="TestRunner.cs" />
+    <Compile Include="Util\LongSetTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />

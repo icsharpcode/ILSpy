@@ -44,33 +44,34 @@ namespace ICSharpCode.ILSpy
 	{
 		string name = "C#";
 		bool showAllMembers = false;
-		//Predicate<IAstTransform> transformAbortCondition = null;
+		int transformCount = int.MaxValue;
 
 		public CSharpLanguage()
 		{
 		}
 
 		#if DEBUG
-		/*
 		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
 		{
-			DecompilerContext context = new DecompilerContext(ModuleDefinition.CreateModule("dummy", ModuleKind.Dll));
+			//DecompilerContext context = new DecompilerContext(ModuleDefinition.CreateModule("dummy", ModuleKind.Dll));
+			var decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll));
 			string lastTransformName = "no transforms";
-			foreach (Type _transformType in TransformationPipeline.CreatePipeline(context).Select(v => v.GetType()).Distinct()) {
-				Type transformType = _transformType; // copy for lambda
+			int transformCount = 0;
+			foreach (var transform in decompiler.AstTransforms) {
+				Type transformType = transform.GetType(); // copy for lambda
 				yield return new CSharpLanguage {
-					transformAbortCondition = v => transformType.IsInstanceOfType(v),
+					transformCount = transformCount,
 					name = "C# - " + lastTransformName,
 					showAllMembers = true
 				};
 				lastTransformName = "after " + transformType.Name;
+				transformCount++;
 			}
 			yield return new CSharpLanguage {
 				name = "C# - " + lastTransformName,
 				showAllMembers = true
 			};
 		}
-		*/
 		#endif
 
 		public override string Name
@@ -92,6 +93,8 @@ namespace ICSharpCode.ILSpy
 		{
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = new CSharpDecompiler(method.Module);
+			while (decompiler.AstTransforms.Count > transformCount)
+				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
 			output.WriteLine(decompiler.Decompile(method).ToString());
 			/*
 			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: method.DeclaringType, isSingleMember: true);

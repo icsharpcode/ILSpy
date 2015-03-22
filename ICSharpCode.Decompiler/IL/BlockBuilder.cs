@@ -32,6 +32,12 @@ namespace ICSharpCode.Decompiler.IL
 		readonly Mono.Cecil.Cil.MethodBody body;
 		readonly IDecompilerTypeSystem typeSystem;
 
+		/// <summary>
+		/// Gets/Sets whether to create extended basic blocks instead of basic blocks.
+		/// The default is <c>false</c>.
+		/// </summary>
+		public bool CreateExtendedBlocks;
+		
 		public BlockBuilder(Mono.Cecil.Cil.MethodBody body, IDecompilerTypeSystem typeSystem)
 		{
 			Debug.Assert(body != null);
@@ -145,6 +151,8 @@ namespace ICSharpCode.Decompiler.IL
 				currentBlock.Instructions.Add(inst);
 				if (inst.HasFlag(InstructionFlags.EndPointUnreachable))
 					FinalizeCurrentBlock(inst.ILRange.End, fallthrough: false);
+				else if (!CreateExtendedBlocks && inst.HasFlag(InstructionFlags.MayBranch))
+					FinalizeCurrentBlock(inst.ILRange.End, fallthrough: true);
 			}
 			FinalizeCurrentBlock(body.CodeSize, fallthrough: false);
 			containerStack.Clear();
@@ -195,42 +203,3 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 }
-
-
-/* Inlining logic: } else {
-						bool finished;
-						var inlinedInst = inst.Inline(InstructionFlags.None, instructionStack, out finished);
-						if (inlinedInst.HasFlag(InstructionFlags.MayBranch)) {
-							// Values currently on the stack might be used on both sides of the branch,
-							// so we can't inline them.
-							FlushInstructionStack();
-						}
-						if (inlinedInst.ResultType == StackType.Void) {
-							// We cannot directly push instructions onto the stack if they don't produce
-							// a result.
-							if (finished && instructionStack.Count > 0) {
-								// Wrap the instruction on top of the stack into an inline block,
-								// and append our void-typed instruction to the end of that block.
-								var headInst = instructionStack.Pop();
-								var block = headInst as Block ?? new Block { Instructions = { headInst } };
-								block.Instructions.Add(inlinedInst);
-								instructionStack.Push(block);
-							} else {
-								// We can't move incomplete instructions into a nested block
-								// or the instruction stack was empty
-								FlushInstructionStack();
-								currentBlock.Instructions.Add(inst);
-							}
-						} else {
-							// Instruction has a result, so we can push it on the stack normally
-							instructionStack.Push(inlinedInst);
-						}
-					}
-		private void FlushInstructionStack()
-		{
-			if (instructionStack != null && instructionStack.Count > 0) {
-				// Flush instruction stack
-				currentBlock.Instructions.AddRange(instructionStack.Reverse());
-				instructionStack.Clear();
-			}
-		}*/

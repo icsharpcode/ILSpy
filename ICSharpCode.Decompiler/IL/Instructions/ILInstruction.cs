@@ -465,5 +465,29 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			InvalidateFlags();
 		}
+		
+		/// <summary>
+		/// Creates a deep clone of the ILInstruction.
+		/// </summary>
+		public abstract ILInstruction Clone();
+		
+		/// <summary>
+		/// Creates a shallow clone of the ILInstruction.
+		/// </summary>
+		/// <remarks>
+		/// Like MemberwiseClone(), except that the new instruction starts as disconnected.
+		/// </remarks>
+		protected ILInstruction ShallowClone()
+		{
+			ILInstruction inst = (ILInstruction)MemberwiseClone();
+			// reset refCount and parent so that the cloned instruction starts as disconnected
+			inst.refCount = 0;
+			inst.parent = null;
+			inst.flags = invalidFlags;
+			#if DEBUG
+			inst.activeEnumerators = 0;
+			#endif
+			return inst;
+		}
 	}
 }

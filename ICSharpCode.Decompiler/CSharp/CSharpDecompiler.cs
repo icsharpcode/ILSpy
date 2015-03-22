@@ -41,6 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly DecompilerTypeSystem typeSystem;
 
 		List<IILTransform> ilTransforms = new List<IILTransform> {
+			new OptimizingTransform(),
 			new LoopDetection(),
 			new TransformingVisitor(),
 			new TransformStackIntoVariables()
@@ -101,9 +102,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		void RunTransforms(AstNode rootNode, ITypeResolveContext decompilationContext)
 		{
-			var context = new TransformContext(typeSystem, decompilationContext);
-			foreach (var transform in astTransforms)
+			var context = new TransformContext(typeSystem, decompilationContext, CancellationToken);
+			foreach (var transform in astTransforms) {
+				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(rootNode, context);
+			}
 			rootNode.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 		}
 		
@@ -226,8 +229,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			var ilReader = new ILReader(specializingTypeSystem);
 			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
 			function.CheckInvariant();
-			var context = new ILTransformContext { TypeSystem = specializingTypeSystem };
+			var context = new ILTransformContext { TypeSystem = specializingTypeSystem, CancellationToken = CancellationToken };
 			foreach (var transform in ilTransforms) {
+				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(function, context);
 				function.CheckInvariant();
 			}

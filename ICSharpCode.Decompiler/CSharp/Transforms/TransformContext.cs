@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Threading;
 using ICSharpCode.NRefactory.CSharp.Resolver;
 using ICSharpCode.NRefactory.TypeSystem;
 
@@ -28,6 +29,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	public class TransformContext
 	{
 		public readonly DecompilerTypeSystem TypeSystem;
+		public readonly CancellationToken CancellationToken;
 		readonly ITypeResolveContext decompilationContext;
 		
 		/// <summary>
@@ -44,10 +46,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			get { return decompilationContext.CurrentTypeDefinition; }
 		}
 		
-		internal TransformContext(DecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext)
+		internal TransformContext(DecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, CancellationToken cancellationToken)
 		{
 			this.TypeSystem = typeSystem;
 			this.decompilationContext = decompilationContext;
+			this.CancellationToken = cancellationToken;
 		}
 	}
 }

@@ -157,7 +157,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			EnsureChildrenFiltered();
 		}
 
-		void EnsureChildrenFiltered()
+		internal void EnsureChildrenFiltered()
 		{
 			EnsureLazyChildren();
 			if (childrenNeedFiltering) {

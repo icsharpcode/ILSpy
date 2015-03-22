@@ -97,12 +97,12 @@ namespace ICSharpCode.Decompiler
 			column = 1;
 		}
 		
-		public void WriteDefinition(string text, object definition, bool isLocal)
+		public void WriteDefinition(string text, object definition, bool isLocal = true)
 		{
 			Write(text);
 		}
 		
-		public void WriteReference(string text, object reference, bool isLocal)
+		public void WriteReference(string text, object reference, bool isLocal = false)
 		{
 			Write(text);
 		}

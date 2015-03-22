@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public ILInstruction ReturnValue {
 			get { return returnValue; }
-			set { 
+			set {
 				if (value != null)
 					ValidateArgument(value);
 				SetChildInstruction(ref returnValue, value, 0);
@@ -45,6 +45,14 @@ namespace ICSharpCode.Decompiler.IL
 		public Return(ILInstruction argument) : base(OpCode.Return)
 		{
 			this.ReturnValue = argument;
+		}
+		
+		public override ILInstruction Clone()
+		{
+			Return clone = (Return)ShallowClone();
+			if (returnValue != null)
+				clone.ReturnValue = returnValue.Clone();
+			return clone;
 		}
 		
 		protected override InstructionFlags ComputeFlags()

@@ -46,11 +46,32 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly InstructionCollection<ILInstruction> Arguments;
 		public readonly IMethod Method;
 		
+		/// <summary>
+		/// Gets/Sets whether the call has the 'tail.' prefix.
+		/// </summary>
+		public bool IsTail;
+
+		/// <summary>
+		/// Gets/Sets the type specified in the 'constrained.' prefix.
+		/// Returns null if no 'constrained.' prefix exists for this call.
+		/// </summary>
+		public IType ConstrainedTo;
+
 		protected CallInstruction(OpCode opCode, IMethod method) : base(opCode)
 		{
 			Debug.Assert(method != null);
 			this.Method = method;
 			this.Arguments = new InstructionCollection<ILInstruction>(this, 0);
+		}
+		
+		public sealed override ILInstruction Clone()
+		{
+			var clone = Create(this.OpCode, this.Method);
+			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			clone.ILRange = this.ILRange;
+			clone.IsTail = this.IsTail;
+			clone.ConstrainedTo = this.ConstrainedTo;
+			return clone;
 		}
 		
 		public override StackType ResultType {
@@ -62,17 +83,17 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		protected override int GetChildCount()
+		protected sealed override int GetChildCount()
 		{
 			return Arguments.Count;
 		}
 		
-		protected override ILInstruction GetChild(int index)
+		protected sealed override ILInstruction GetChild(int index)
 		{
 			return Arguments[index];
 		}
 		
-		protected override void SetChild(int index, ILInstruction value)
+		protected sealed override void SetChild(int index, ILInstruction value)
 		{
 			Arguments[index] = value;
 		}
@@ -85,17 +106,6 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 		
-		/// <summary>
-		/// Gets/Sets whether the call has the 'tail.' prefix.
-		/// </summary>
-		public bool IsTail;
-
-		/// <summary>
-		/// Gets/Sets the type specified in the 'constrained.' prefix.
-		/// Returns null if no 'constrained.' prefix exists for this call.
-		/// </summary>
-		public IType ConstrainedTo;
-
 		public override void WriteTo(ITextOutput output)
 		{
 			if (ConstrainedTo != null) {

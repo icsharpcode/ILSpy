@@ -105,10 +105,10 @@
     <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\NRTypeExtensions.cs" />
     <Compile Include="IL\Transforms\LoopDetection.cs" />
+    <Compile Include="IL\Transforms\OptimizingTransform.cs" />
     <Compile Include="IL\Transforms\TransformingVisitor.cs" />
     <Compile Include="IL\Transforms\TransformStackIntoVariables.cs" />
     <Compile Include="IL\Transforms\TransformStackIntoVariablesState.cs" />
-    <Compile Include="IL\UnionFind.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />
     <Compile Include="Disassembler\ILStructure.cs" />
@@ -137,9 +137,9 @@
     <Compile Include="TypeSystem\IDecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\ReferenceResolvingException.cs" />
     <Compile Include="TypeSystem\TypesHierarchyHelpers.cs" />
-    <Compile Include="Util\Argument.cs" />
     <Compile Include="Util\CollectionExtensions.cs" />
     <Compile Include="Util\Interval.cs" />
+    <Compile Include="Util\UnionFind.cs" />
     <None Include="IL\ILOpCodes.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ILOpCodes.cs</LastGenOutput>
