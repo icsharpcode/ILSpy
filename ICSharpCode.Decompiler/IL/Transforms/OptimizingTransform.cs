@@ -28,7 +28,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <remarks>
 	/// The optimizations performed are:
 	/// * 'nop' instructions are removed
-	/// * TODO branches that lead to a 'return block' are replaced with a return instruction
+	/// * branches that lead to other branches are replaced with branches that directly jump to the destination
+	/// * branches that lead to a 'return block' are replaced with a return instruction
+	/// * basic blocks are combined where possible
 	/// </remarks>
 	public class OptimizingTransform : IILTransform
 	{
@@ -37,7 +39,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				// Remove 'nop' instructions
 				block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.Nop);
-				/* TODO we might need this for the 'return block' optimization
 				// Ensure return blocks are inlined:
 				if (block.Instructions.Count == 2 && block.Instructions[1].OpCode == OpCode.Return) {
 					Return ret = (Return)block.Instructions[1];
@@ -46,8 +47,56 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						block.Instructions.RemoveAt(0);
 					}
 				}
-				*/
 			}
+			foreach (var branch in function.Descendants.OfType<Branch>()) {
+				// Resolve indirect branches
+				var targetBlock = branch.TargetBlock;
+				while (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0].OpCode == OpCode.Branch) {
+					var nextBranch = (Branch)targetBlock.Instructions[0];
+					branch.TargetBlock = nextBranch.TargetBlock;
+					branch.PopCount += nextBranch.PopCount;
+					if (targetBlock.IncomingEdgeCount == 0)
+						targetBlock.Instructions.Clear(); // mark the block for deletion
+					targetBlock = branch.TargetBlock;
+				}
+				if (IsReturnBlock(targetBlock)) {
+					// Replace branches to 'return blocks' with the return instruction
+					branch.ReplaceWith(targetBlock.Instructions[0].Clone());
+				} else if (branch.TargetBlock.Instructions.Count == 1 && branch.TargetBlock.Instructions[0].OpCode == OpCode.Leave) {
+					// Replace branches to 'leave' instruction with the leave instruction
+					Leave leave = (Leave)branch.TargetBlock.Instructions[0];
+					branch.ReplaceWith(new Leave(leave.TargetContainer) { PopCount = branch.PopCount + leave.PopCount, ILRange = branch.ILRange });
+				}
+				if (targetBlock.IncomingEdgeCount == 0)
+					targetBlock.Instructions.Clear(); // mark the block for deletion
+			}
+			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
+				foreach (var block in container.Blocks) {
+					if (block.Instructions.Count == 0)
+						continue; // block is already marked for deletion
+					Branch br = block.Instructions.Last() as Branch;
+					if (br != null && br.TargetBlock.Parent == container && br.TargetBlock.IncomingEdgeCount == 1) {
+						// We could inline the target block into this block
+						// Do so only if the block will stay a basic block -- we don't want extended basic blocks prior to LoopDetection.
+						var targetBlock = br.TargetBlock;
+						if (targetBlock.Instructions.Count == 1 || !targetBlock.Instructions[targetBlock.Instructions.Count - 2].HasFlag(InstructionFlags.MayBranch)) {
+							block.Instructions.Remove(br);
+							block.Instructions.AddRange(targetBlock.Instructions);
+							targetBlock.Instructions.Clear(); // mark targetBlock for deletion
+						}
+					}
+				}
+				// Remove return blocks that are no longer reachable:
+				container.Blocks.RemoveAll(b => b.IncomingEdgeCount == 0 && b.Instructions.Count == 0);
+			}
+		}
+
+		static bool IsReturnBlock(Block targetBlock)
+		{
+			if (targetBlock.Instructions.Count != 1 || targetBlock.FinalInstruction.OpCode != OpCode.Nop)
+				return false;
+			var ret = targetBlock.Instructions[0] as Return;
+			return ret != null && (ret.ReturnValue == null || ret.ReturnValue.OpCode == OpCode.LdLoc);
 		}
 	}
 }

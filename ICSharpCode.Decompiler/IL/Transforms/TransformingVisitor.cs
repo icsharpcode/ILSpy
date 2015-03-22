@@ -204,12 +204,12 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			
 			// VisitBranch() 'steals' blocks from containers. Remove all blocks that were stolen from the block list:
-			Debug.Assert(container.EntryPoint.IncomingEdgeCount > 0);
-			container.Blocks.RemoveAll(b => b.IncomingEdgeCount == 0);
+//			Debug.Assert(container.EntryPoint.IncomingEdgeCount > 0);
+//			container.Blocks.RemoveAll(b => b.IncomingEdgeCount == 0);
 			
 			// If the container only contains a single block, and the block contents do not jump back to the block start,
 			// we can remove the container.
-			if (container.Blocks.Count == 1 && container.EntryPoint.IncomingEdgeCount == 1) {
+			if (container.Blocks.Count == 1 && container.LeaveCount == 0 && container.EntryPoint.IncomingEdgeCount == 1) {
 				return TrySimplifyBlock(container.EntryPoint);
 			}
 			return container;
