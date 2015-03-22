@@ -2449,16 +2449,16 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Returns the length of an array as 'native unsigned int'.</summary>
 	public sealed partial class LdLen : ILInstruction
 	{
-		public LdLen(ILInstruction target) : base(OpCode.LdLen)
+		public LdLen(ILInstruction array) : base(OpCode.LdLen)
 		{
-			this.Target = target;
+			this.Array = array;
 		}
-		ILInstruction target;
-		public ILInstruction Target {
-			get { return this.target; }
+		ILInstruction array;
+		public ILInstruction Array {
+			get { return this.array; }
 			set {
 				ValidateArgument(value);
-				SetChildInstruction(ref this.target, value, 0);
+				SetChildInstruction(ref this.array, value, 0);
 			}
 		}
 		protected sealed override int GetChildCount()
@@ -2469,7 +2469,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				case 0:
-					return this.target;
+					return this.array;
 				default:
 					throw new IndexOutOfRangeException();
 			}
@@ -2478,7 +2478,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				case 0:
-					this.Target = value;
+					this.Array = value;
 					break;
 				default:
 					throw new IndexOutOfRangeException();
@@ -2487,28 +2487,28 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (LdLen)ShallowClone();
-			clone.Target = this.target.Clone();
+			clone.Array = this.array.Clone();
 			return clone;
 		}
 		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
 		{
-			this.Target = this.target.Inline(flagsBefore, context);
+			this.Array = this.array.Inline(flagsBefore, context);
 			return this;
 		}
 		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
 		{
-			Target.TransformStackIntoVariables(state);
+			Array.TransformStackIntoVariables(state);
 		}
 		public override StackType ResultType { get { return StackType.I; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return target.Flags | InstructionFlags.MayThrow;
+			return array.Flags | InstructionFlags.MayThrow;
 		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 			output.Write('(');
-			this.target.WriteTo(output);
+			this.array.WriteTo(output);
 			output.Write(')');
 		}
 		public override void AcceptVisitor(ILVisitor visitor)

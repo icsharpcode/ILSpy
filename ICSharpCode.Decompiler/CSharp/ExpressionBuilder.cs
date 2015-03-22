@@ -457,7 +457,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst)
 		{
 			var target = Translate(inst.Target);
-			if (target.Type.Equals(new ByReferenceType(inst.Type)) && target.Expression is DirectionExpression) {
+			if (target.Expression is DirectionExpression && IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
 				// we can deference the managed reference by stripping away the 'ref'
 				var result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 				result = result.ConvertTo(inst.Type, this);
@@ -472,12 +472,26 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		bool IsCompatibleTypeForMemoryAccess(IType pointerType, IType accessType)
+		{
+			IType memoryType;
+			if (pointerType is PointerType)
+				memoryType = ((PointerType)pointerType).ElementType;
+			else if (pointerType is ByReferenceType)
+				memoryType = ((ByReferenceType)pointerType).ElementType;
+			else
+				return false;
+			if (memoryType.IsReferenceType == true && accessType.IsReferenceType == true)
+				return true;
+			return memoryType.Equals(accessType);
+		}
+		
 		protected internal override TranslatedExpression VisitStObj(StObj inst)
 		{
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
 			TranslatedExpression result;
-			if (target.Type.Equals(new ByReferenceType(inst.Type)) && target.Expression is DirectionExpression) {
+			if (target.Expression is DirectionExpression && IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
 				// we can deference the managed reference by stripping away the 'ref'
 				result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 			} else {
@@ -510,6 +524,28 @@ namespace ICSharpCode.Decompiler.CSharp
 			return Assignment(ConvertField(inst.Field).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
 		}
 
+		protected internal override TranslatedExpression VisitLdLen(LdLen inst)
+		{
+			TranslatedExpression arrayExpr = Translate(inst.Array);
+			// TODO: what if arrayExpr is not an array type?
+			var lenExpr = arrayExpr.Expression.Member("LongLength")
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int64)));
+			return lenExpr.ConvertTo(compilation.FindType(KnownTypeCode.IntPtr), this);
+		}
+		
+		protected internal override TranslatedExpression VisitLdElema(LdElema inst)
+		{
+			TranslatedExpression arrayExpr = Translate(inst.Array);
+			var arrayType = arrayExpr.Type as ArrayType;
+			// TODO: what if arrayExpr is not an array type?
+			// TODO: what if the type of the ldelema instruction does not match the array type?
+			TranslatedExpression expr = new IndexerExpression(arrayExpr, Translate(inst.Index))
+				.WithILInstruction(inst).WithRR(new ResolveResult(arrayType != null ? arrayType.ElementType : SpecialType.UnknownType));
+			return new DirectionExpression(FieldDirection.Ref, expr)
+				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+		}
+		
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst)
 		{
 			var arg = Translate(inst.Argument);

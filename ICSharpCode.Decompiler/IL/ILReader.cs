@@ -601,18 +601,29 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Isinst:
 					return new IsInst(Pop(), ReadAndDecodeTypeReference());
 				case ILOpCode.Ldelem:
+					return LdElem(index: Pop(), array: Pop(), type: ReadAndDecodeTypeReference());
 				case ILOpCode.Ldelem_I1:
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.SByte));
 				case ILOpCode.Ldelem_I2:
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Int16));
 				case ILOpCode.Ldelem_I4:
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Int32));
 				case ILOpCode.Ldelem_I8:
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Int64));
 				case ILOpCode.Ldelem_U1:
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Byte));
 				case ILOpCode.Ldelem_U2:
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.UInt16));
 				case ILOpCode.Ldelem_U4:
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.UInt32));
 				case ILOpCode.Ldelem_R4:
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Single));
 				case ILOpCode.Ldelem_R8:
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Double));
 				case ILOpCode.Ldelem_I:
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.IntPtr));
 				case ILOpCode.Ldelem_Ref:
-					throw new NotImplementedException();
+					return LdElem(index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Ldelema:
 					return new LdElema(index: Pop(), array: Pop(), type: ReadAndDecodeTypeReference());
 				case ILOpCode.Ldfld:
@@ -730,6 +741,11 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction Stloc(ushort v)
 		{
 			return new Void(new StLoc(Pop(), localVariables[v]));
+		}
+		
+		private ILInstruction LdElem(ILInstruction array, ILInstruction index, IType type)
+		{
+			return new LdObj(new LdElema(array, index, type), type);
 		}
 
 		private ILInstruction DecodeConstrainedCall()
