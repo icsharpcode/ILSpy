@@ -99,7 +99,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				return new BreakStatement();
 			string label;
 			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out label)) {
-				endContainerLabels.Add(inst.TargetContainer, "end_" + inst.TargetLabel);
+				label = "end_" + inst.TargetLabel;
+				endContainerLabels.Add(inst.TargetContainer, label);
 			}
 			return new GotoStatement(label);
 		}
@@ -208,6 +209,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					blockStatement.Add(new LabelStatement { Label = block.Label });
 				}
 				foreach (var inst in block.Instructions) {
+					if (inst.OpCode == OpCode.Leave && IsFinalLeave((Leave)inst)) {
+						// skip the final 'leave' instruction and just fall out of the BlockStatement
+						continue;
+					}
 					blockStatement.Add(Convert(inst));
 				}
 				if (block.FinalInstruction.OpCode != OpCode.Nop) {
@@ -219,6 +224,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				blockStatement.Add(new LabelStatement { Label = label });
 			}
 			return blockStatement;
+		}
+
+		static bool IsFinalLeave(Leave leave)
+		{
+			Block block = (Block)leave.Parent;
+			if (leave.ChildIndex != block.Instructions.Count - 1 || block.FinalInstruction.OpCode != OpCode.Nop)
+				return false;
+			BlockContainer container = (BlockContainer)block.Parent;
+			return block.ChildIndex == container.Blocks.Count - 1;
 		}
 	}
 }
