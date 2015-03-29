@@ -1428,22 +1428,58 @@ namespace ICSharpCode.NRefactory.CSharp
 		public void VisitAttributeSection(AttributeSection attributeSection)
 		{
 			StartNode(attributeSection);
+
+			string attributeTarget = attributeSection.AttributeTarget;
+			bool singleLine = attributeSection.Parent is ParameterDeclaration || attributeSection.Parent is TypeParameterDeclaration;
+
+			AstNodeCollection<Attribute> attributes = attributeSection.Attributes;
+			if (!singleLine && attributes.Count > 0) {
+				// split this attribute section into multiple sections for readbility
+				List<List<Attribute>> sections = new List<List<Attribute>> { new List<Attribute>() };
+
+				attributes.Aggregate(0, (length, attr) => {
+					int attrLen = attr.ToString().Length;
+					List<Attribute> section;
+					if (length > 0 && length + attrLen > 65) {
+						sections.Add(section = new List<Attribute>());
+						length = 0;
+					} else {
+						section = sections[sections.Count - 1];
+					}
+
+					section.Add(attr);
+					return length + attrLen;
+				});
+
+				foreach (List<Attribute> section in sections) {
+					WriteAttributeSection(attributeTarget, section);
+					NewLine();
+				}
+
+			} else {
+				WriteAttributeSection(attributeTarget, attributes);
+				if (singleLine) {
+					Space();
+				} else {
+					NewLine();
+				}
+			}
+
+			EndNode(attributeSection);
+		}
+
+		void WriteAttributeSection(string attributeTarget, IEnumerable<Attribute> attributes)
+		{
 			WriteToken(Roles.LBracket);
-			if (!string.IsNullOrEmpty(attributeSection.AttributeTarget)) {
-				WriteToken(attributeSection.AttributeTarget, Roles.AttributeTargetRole);
+			if (!string.IsNullOrEmpty(attributeTarget)) {
+				WriteToken(attributeTarget, Roles.AttributeTargetRole);
 				WriteToken(Roles.Colon);
 				Space();
 			}
-			WriteCommaSeparatedList(attributeSection.Attributes);
+			WriteCommaSeparatedList(attributes);
 			WriteToken(Roles.RBracket);
-			if (attributeSection.Parent is ParameterDeclaration || attributeSection.Parent is TypeParameterDeclaration) {
-				Space();
-			} else {
-				NewLine();
-			}
-			EndNode(attributeSection);
 		}
-		
+
 		public void VisitDelegateDeclaration(DelegateDeclaration delegateDeclaration)
 		{
 			StartNode(delegateDeclaration);
