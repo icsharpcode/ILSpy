@@ -104,6 +104,7 @@
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
     <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\NRTypeExtensions.cs" />
+    <Compile Include="IL\Transforms\ControlFlowSimplification.cs" />
     <Compile Include="IL\Transforms\LoopDetection.cs" />
     <Compile Include="IL\Transforms\OptimizingTransform.cs" />
     <Compile Include="IL\Transforms\TransformingVisitor.cs" />

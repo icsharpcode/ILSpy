@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -48,10 +50,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
+			HashSet<Block> visitedBlocks = new HashSet<Block>();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
 				// Resolve indirect branches
 				var targetBlock = branch.TargetBlock;
+				visitedBlocks.Clear();
 				while (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0].OpCode == OpCode.Branch) {
+					if (!visitedBlocks.Add(targetBlock)) {
+						// prevent infinite loop when indirect branches point in infinite loop
+						break;
+					}
 					var nextBranch = (Branch)targetBlock.Instructions[0];
 					branch.TargetBlock = nextBranch.TargetBlock;
 					branch.PopCount += nextBranch.PopCount;
@@ -74,16 +82,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				foreach (var block in container.Blocks) {
 					if (block.Instructions.Count == 0)
 						continue; // block is already marked for deletion
-					Branch br = block.Instructions.Last() as Branch;
-					if (br != null && br.TargetBlock.Parent == container && br.TargetBlock.IncomingEdgeCount == 1) {
-						// We could inline the target block into this block
-						// Do so only if the block will stay a basic block -- we don't want extended basic blocks prior to LoopDetection.
-						var targetBlock = br.TargetBlock;
-						if (targetBlock.Instructions.Count == 1 || !targetBlock.Instructions[targetBlock.Instructions.Count - 2].HasFlag(InstructionFlags.MayBranch)) {
-							block.Instructions.Remove(br);
-							block.Instructions.AddRange(targetBlock.Instructions);
-							targetBlock.Instructions.Clear(); // mark targetBlock for deletion
-						}
+					while (CombineBlockWithNextBlock(container, block)) {
+						// repeat combining blocks until it is no longer possible
+						// (this loop terminates because a block is deleted in every iteration)
 					}
 				}
 				// Remove return blocks that are no longer reachable:
@@ -97,6 +98,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			var ret = targetBlock.Instructions[0] as Return;
 			return ret != null && (ret.ReturnValue == null || ret.ReturnValue.OpCode == OpCode.LdLoc);
+		}
+		
+		static bool CombineBlockWithNextBlock(BlockContainer container, Block block)
+		{
+			Debug.Assert(container == block.Parent);
+			// Ensure the block will stay a basic block -- we don't want extended basic blocks prior to LoopDetection.
+			// TODO: when LoopDetection is complete, check that it really can't handle EBBs
+			if (block.Instructions.Count > 1 && block.Instructions[block.Instructions.Count - 2].HasFlag(InstructionFlags.MayBranch))
+				return false;
+			Branch br = block.Instructions.Last() as Branch;
+			// Check whether we can combine the target block with this block
+			if (br == null || br.TargetBlock.Parent != container || br.TargetBlock.IncomingEdgeCount != 1)
+				return false;
+			if (br.TargetBlock == block)
+				return false; // don't inline block into itself
+			var targetBlock = br.TargetBlock;
+			block.Instructions.Remove(br);
+			block.Instructions.AddRange(targetBlock.Instructions);
+			targetBlock.Instructions.Clear(); // mark targetBlock for deletion
+			return true;
 		}
 	}
 }

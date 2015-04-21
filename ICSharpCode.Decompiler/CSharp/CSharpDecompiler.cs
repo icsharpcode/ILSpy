@@ -43,6 +43,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		List<IILTransform> ilTransforms = new List<IILTransform> {
 			new OptimizingTransform(),
 			new LoopDetection(),
+			new ControlFlowSimplification(),
 			new TransformingVisitor(),
 			new TransformStackIntoVariables()
 		};

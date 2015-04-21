@@ -104,6 +104,15 @@ namespace ICSharpCode.Decompiler.IL
 			return clone;
 		}
 		
+		internal override void CheckInvariant()
+		{
+			base.CheckInvariant();
+			for (int i = 0; i < Instructions.Count - 1; i++) {
+				// only the last instruction may have an unreachable endpoint
+				Debug.Assert(!Instructions[i].HasFlag(InstructionFlags.EndPointUnreachable));
+			}
+		}
+		
 		public override StackType ResultType {
 			get {
 				return finalInstruction.ResultType;

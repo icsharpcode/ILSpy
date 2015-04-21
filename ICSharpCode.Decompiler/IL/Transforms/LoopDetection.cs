@@ -39,18 +39,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Constructs a control flow graph for the blocks in the given block container.
 		/// The graph nodes will have the same indices as the blocks in the block container.
-		/// An additional exit node is used to signal when a block potentially falls through
-		/// to the endpoint of the BlockContainer.
 		/// Return statements, exceptions, or branches leaving the block container are not
 		/// modeled by the control flow graph.
 		/// </summary>
-		static ControlFlowNode BuildCFG(BlockContainer bc)
+		internal static ControlFlowNode[] BuildCFG(BlockContainer bc)
 		{
 			ControlFlowNode[] nodes = new ControlFlowNode[bc.Blocks.Count];
 			for (int i = 0; i < nodes.Length; i++) {
 				nodes[i] = new ControlFlowNode { UserData = bc.Blocks[i] };
 			}
-			ControlFlowNode exit = new ControlFlowNode();
 			
 			// Create edges:
 			for (int i = 0; i < bc.Blocks.Count; i++) {
@@ -67,18 +64,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// like a return statement or exceptional exit.
 					}
 				}
-				if (!block.HasFlag(InstructionFlags.EndPointUnreachable))
-					sourceNode.AddEdgeTo(exit);
 			}
 			
-			if (nodes[0].Predecessors.Count != 0) {
-				// Create artificial entry point without predecessors:
-				ControlFlowNode entry = new ControlFlowNode();
-				entry.AddEdgeTo(nodes[0]);
-				return entry;
-			} else {
-				return nodes[0];
-			}
+			return nodes;
 		}
 		#endregion
 		
@@ -97,7 +85,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public void Run(BlockContainer blockContainer, ILTransformContext context)
 		{
-			var entryPoint = BuildCFG(blockContainer);
+			var cfg = BuildCFG(blockContainer);
+			var entryPoint = cfg[0];
 			Dominance.ComputeDominance(entryPoint, context.CancellationToken);
 			FindLoops(entryPoint);
 		}

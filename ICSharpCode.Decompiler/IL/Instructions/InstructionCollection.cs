@@ -298,5 +298,23 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return removed;
 		}
+		
+		// more efficient versions of some LINQ methods:
+		public T First()
+		{
+			return list[0];
+		}
+		
+		public T Last()
+		{
+			return list[list.Count - 1];
+		}
+		
+		public T ElementAtOrDefault(int index)
+		{
+			if (index >= 0 && index < list.Count)
+				return list[index];
+			return null;
+		}
 	}
 }

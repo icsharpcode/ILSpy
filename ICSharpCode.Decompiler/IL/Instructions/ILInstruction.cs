@@ -39,15 +39,16 @@ namespace ICSharpCode.Decompiler.IL
 			this.OpCode = opCode;
 		}
 		
-		internal static void ValidateArgument(ILInstruction inst)
+		protected void ValidateArgument(ILInstruction inst)
 		{
 			if (inst == null)
 				throw new ArgumentNullException("inst");
 			if (inst.ResultType == StackType.Void)
 				throw new ArgumentException("Argument must not be of type void", "inst");
+			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
 		}
 		
-		internal void ValidateChild(ILInstruction inst)
+		protected void ValidateChild(ILInstruction inst)
 		{
 			if (inst == null)
 				throw new ArgumentNullException("inst");
@@ -444,6 +445,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal void InstructionCollectionAdded(ILInstruction newChild)
 		{
 			Debug.Assert(GetChild(newChild.ChildIndex) == newChild);
+			Debug.Assert(!this.IsDescendantOf(newChild), "ILAst must form a tree");
 			newChild.parent = this;
 			if (refCount > 0)
 				newChild.AddRef();
