@@ -89,7 +89,9 @@ namespace UpdateAssemblyInfo
 				}
 			} catch (Exception ex) {
 				Console.WriteLine(ex);
-				return 3;
+                if (args != null)
+                    Console.WriteLine(string.Format("command line arguments : {0}", string.Join(" ", args)));
+                return 3;
 			}
 		}
 		
@@ -219,18 +221,21 @@ namespace UpdateAssemblyInfo
 			path += ";" + Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "git\\bin");
 			info.EnvironmentVariables["PATH"] =  path;
 			info.RedirectStandardOutput = true;
-			info.UseShellExecute = false;
+            info.UseShellExecute = false;
 			using (Process p = Process.Start(info)) {
 				string line;
 				int revNum = BaseCommitRev;
-				while ((line = p.StandardOutput.ReadLine()) != null) {
-					if (gitCommitHash == null) {
-						// first entry is HEAD
-						gitCommitHash = line;
-					}
-					revNum++;
-				}
-				p.WaitForExit();
+                while ((line = p.StandardOutput.ReadLine()) != null)
+                {
+                    //check the length, because when my cmd start, there is a banner
+                    if (gitCommitHash == null && line.Length == BaseCommit.Length)
+                    {
+                        // first entry is HEAD
+                        gitCommitHash = line;
+                    }
+                    revNum++;
+                }
+                p.WaitForExit();
 				if (p.ExitCode != 0)
 					throw new Exception("git-rev-list exit code was " + p.ExitCode);
 				// Only set revisionNuber once we ensured the operation was successful,
