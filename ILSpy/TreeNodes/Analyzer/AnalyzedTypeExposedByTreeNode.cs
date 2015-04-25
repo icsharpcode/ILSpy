@@ -18,16 +18,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
-using ICSharpCode.TreeView;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedTypeExposedByTreeNode : AnalyzerTreeNode
+	internal sealed class AnalyzedTypeExposedByTreeNode : AnalyzerSearchTreeNode
 	{
 		private readonly TypeDefinition analyzedType;
-		private readonly ThreadingSupport threading;
 
 		public AnalyzedTypeExposedByTreeNode(TypeDefinition analyzedType)
 		{
@@ -35,8 +34,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				throw new ArgumentNullException("analyzedType");
 
 			this.analyzedType = analyzedType;
-			this.threading = new ThreadingSupport();
-			this.LazyLoading = true;
 		}
 
 		public override object Text
@@ -44,34 +41,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			get { return "Exposed By"; }
 		}
 
-		public override object Icon
+		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			get { return Images.Search; }
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedType, FindReferencesInType);
+			return analyzer.PerformAnalysis(ct).OrderBy(n => n.Text);
 		}
 
-		protected override void LoadChildren()
-		{
-			threading.LoadChildren(this, FetchChildren);
-		}
-
-		protected override void OnCollapsing()
-		{
-			if (threading.IsRunning) {
-				this.LazyLoading = true;
-				threading.Cancel();
-				this.Children.Clear();
-			}
-		}
-
-		private IEnumerable<SharpTreeNode> FetchChildren(CancellationToken ct)
-		{
-			ScopedWhereUsedAnalyzer<SharpTreeNode> analyzer;
-
-			analyzer = new ScopedWhereUsedAnalyzer<SharpTreeNode>(analyzedType, FindReferencesInType);
-			return analyzer.PerformAnalysis(ct);
-		}
-
-		private IEnumerable<SharpTreeNode> FindReferencesInType(TypeDefinition type)
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
 			if (analyzedType.IsEnum && type == analyzedType)
 				yield break;
@@ -80,23 +56,35 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				yield break;
 
 			foreach (FieldDefinition field in type.Fields) {
-				if (TypeIsExposedBy(field))
-					yield return new AnalyzedFieldTreeNode(field);
+				if (TypeIsExposedBy(field)) {
+					var node = new AnalyzedFieldTreeNode(field);
+					node.Language = this.Language;
+					yield return node;
+				}
 			}
 
 			foreach (PropertyDefinition property in type.Properties) {
-				if (TypeIsExposedBy(property))
-					yield return new AnalyzedPropertyTreeNode(property);
+				if (TypeIsExposedBy(property)) {
+					var node = new AnalyzedPropertyTreeNode(property);
+					node.Language = this.Language;
+					yield return node;
+				}
 			}
 
 			foreach (EventDefinition eventDef in type.Events) {
-				if (TypeIsExposedBy(eventDef))
-					yield return new AnalyzedEventTreeNode(eventDef);
+				if (TypeIsExposedBy(eventDef)) {
+					var node = new AnalyzedEventTreeNode(eventDef);
+					node.Language = this.Language;
+					yield return node;
+				}
 			}
 
 			foreach (MethodDefinition method in type.Methods) {
-				if (TypeIsExposedBy(method))
-					yield return new AnalyzedMethodTreeNode(method);
+				if (TypeIsExposedBy(method)) {
+					var node = new AnalyzedMethodTreeNode(method);
+					node.Language = this.Language;
+					yield return node;
+				}
 			}
 		}
 
@@ -140,7 +128,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (method.IsPrivate) {
 				if (!method.HasOverrides)
 					return false;
-				else if (!method.Overrides[0].DeclaringType.Resolve().IsInterface)
+				var typeDefinition = method.Overrides[0].DeclaringType.Resolve();
+				if (typeDefinition != null && !typeDefinition.IsInterface)
 					return false;
 			}
 

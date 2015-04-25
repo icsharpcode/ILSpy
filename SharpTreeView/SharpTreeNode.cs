@@ -12,6 +12,7 @@ using System.Collections.ObjectModel;
 using System.Windows.Controls;
 using System.Collections.Specialized;
 using System.Windows.Input;
+using System.Windows.Media;
 
 namespace ICSharpCode.TreeView
 {
@@ -101,6 +102,10 @@ namespace ICSharpCode.TreeView
 			get { return null; }
 		}
 		
+		public virtual Brush Foreground {
+			get { return SystemColors.WindowTextBrush; }
+		}
+		
 		public virtual object Icon
 		{
 			get { return null; }
@@ -157,13 +162,6 @@ namespace ICSharpCode.TreeView
 			}
 		}
 		
-        public virtual System.Windows.Media.Brush ForegroundBrush
-        {
-            get
-            {
-                return SystemColors.WindowTextBrush;
-            }
-        }
 		#endregion
 		
 		#region OnChildrenChanged

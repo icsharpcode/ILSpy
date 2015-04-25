@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using ICSharpCode.Decompiler.ILAst;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Analysis;
 
@@ -35,6 +36,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		{
 			public AstType Type;
 			public string Name;
+			public ILVariable ILVariable;
 			
 			public AssignmentExpression ReplacedAssignment;
 			public Statement InsertionPoint;
@@ -57,9 +59,12 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			foreach (var v in variablesToDeclare) {
 				if (v.ReplacedAssignment == null) {
 					BlockStatement block = (BlockStatement)v.InsertionPoint.Parent;
+					var decl = new VariableDeclarationStatement((AstType)v.Type.Clone(), v.Name);
+					if (v.ILVariable != null)
+						decl.Variables.Single().AddAnnotation(v.ILVariable);
 					block.Statements.InsertBefore(
 						v.InsertionPoint,
-						new VariableDeclarationStatement((AstType)v.Type.Clone(), v.Name));
+						decl);
 				}
 			}
 			// First do all the insertions, then do all the replacements. This is necessary because a replacement might remove our reference point from the AST.
@@ -67,9 +72,10 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				if (v.ReplacedAssignment != null) {
 					// We clone the right expression so that it doesn't get removed from the old ExpressionStatement,
 					// which might be still in use by the definite assignment graph.
+					VariableInitializer initializer = new VariableInitializer(v.Name, v.ReplacedAssignment.Right.Detach()).CopyAnnotationsFrom(v.ReplacedAssignment).WithAnnotation(v.ILVariable);
 					VariableDeclarationStatement varDecl = new VariableDeclarationStatement {
 						Type = (AstType)v.Type.Clone(),
-						Variables = { new VariableInitializer(v.Name, v.ReplacedAssignment.Right.Detach()).CopyAnnotationsFrom(v.ReplacedAssignment) }
+						Variables = { initializer }
 					};
 					ExpressionStatement es = v.ReplacedAssignment.Parent as ExpressionStatement;
 					if (es != null) {
@@ -100,9 +106,11 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 						daa = new DefiniteAssignmentAnalysis(block, cancellationToken);
 					}
 					foreach (VariableDeclarationStatement varDecl in variables) {
-						string variableName = varDecl.Variables.Single().Name;
-						bool allowPassIntoLoops = varDecl.Variables.Single().Annotation<DelegateConstruction.CapturedVariableAnnotation>() == null;
-						DeclareVariableInBlock(daa, block, varDecl.Type, variableName, allowPassIntoLoops);
+						VariableInitializer initializer = varDecl.Variables.Single();
+						string variableName = initializer.Name;
+						ILVariable v = initializer.Annotation<ILVariable>();
+						bool allowPassIntoLoops = initializer.Annotation<DelegateConstruction.CapturedVariableAnnotation>() == null;
+						DeclareVariableInBlock(daa, block, varDecl.Type, variableName, v, allowPassIntoLoops);
 					}
 				}
 			}
@@ -111,7 +119,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			}
 		}
 		
-		void DeclareVariableInBlock(DefiniteAssignmentAnalysis daa, BlockStatement block, AstType type, string variableName, bool allowPassIntoLoops)
+		void DeclareVariableInBlock(DefiniteAssignmentAnalysis daa, BlockStatement block, AstType type, string variableName, ILVariable v, bool allowPassIntoLoops)
 		{
 			// declarationPoint: The point where the variable would be declared, if we decide to declare it in this block
 			Statement declarationPoint = null;
@@ -136,13 +144,22 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 						if (TryConvertAssignmentExpressionIntoVariableDeclaration((Expression)usingStmt.ResourceAcquisition, type, variableName))
 							continue;
 					}
+					IfElseStatement ies = stmt as IfElseStatement;
+					if (ies != null) {
+						foreach (var child in IfElseChainChildren(ies)) {
+							BlockStatement subBlock = child as BlockStatement;
+							if (subBlock != null)
+								DeclareVariableInBlock(daa, subBlock, type, variableName, v, allowPassIntoLoops);
+						}
+						continue;
+					}
 					foreach (AstNode child in stmt.Children) {
 						BlockStatement subBlock = child as BlockStatement;
 						if (subBlock != null) {
-							DeclareVariableInBlock(daa, subBlock, type, variableName, allowPassIntoLoops);
+							DeclareVariableInBlock(daa, subBlock, type, variableName, v, allowPassIntoLoops);
 						} else if (HasNestedBlocks(child)) {
 							foreach (BlockStatement nestedSubBlock in child.Children.OfType<BlockStatement>()) {
-								DeclareVariableInBlock(daa, nestedSubBlock, type, variableName, allowPassIntoLoops);
+								DeclareVariableInBlock(daa, nestedSubBlock, type, variableName, v, allowPassIntoLoops);
 							}
 						}
 					}
@@ -151,7 +168,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				// Try converting an assignment expression into a VariableDeclarationStatement
 				if (!TryConvertAssignmentExpressionIntoVariableDeclaration(declarationPoint, type, variableName)) {
 					// Declare the variable in front of declarationPoint
-					variablesToDeclare.Add(new VariableToDeclare { Type = type, Name = variableName, InsertionPoint = declarationPoint });
+					variablesToDeclare.Add(new VariableToDeclare { Type = type, Name = variableName, ILVariable = v, InsertionPoint = declarationPoint });
 				}
 			}
 		}
@@ -172,7 +189,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			if (ae != null && ae.Operator == AssignmentOperatorType.Assign) {
 				IdentifierExpression ident = ae.Left as IdentifierExpression;
 				if (ident != null && ident.Identifier == variableName) {
-					variablesToDeclare.Add(new VariableToDeclare { Type = type, Name = variableName, ReplacedAssignment = ae });
+					variablesToDeclare.Add(new VariableToDeclare { Type = type, Name = variableName, ILVariable = ident.Annotation<ILVariable>(), ReplacedAssignment = ae });
 					return true;
 				}
 			}
@@ -260,6 +277,15 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					}
 				}
 			}
+
+			IfElseStatement ies = stmt as IfElseStatement;
+			if (ies != null) {
+				foreach (var child in IfElseChainChildren(ies)) {
+					if (!(child is BlockStatement) && UsesVariable(child, variableName))
+						return false;
+				}
+				return true;
+			}
 			
 			// We can move the variable into a sub-block only if the variable is used in only that sub-block (and not in expressions such as the loop condition)
 			for (AstNode child = stmt.FirstChild; child != null; child = child.NextSibling) {
@@ -276,6 +302,19 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				}
 			}
 			return true;
+		}
+
+		static IEnumerable<AstNode> IfElseChainChildren(IfElseStatement ies)
+		{
+			IfElseStatement prev;
+			do {
+				yield return ies.Condition;
+				yield return ies.TrueStatement;
+				prev = ies;
+				ies = ies.FalseStatement as IfElseStatement;
+			} while (ies != null);
+			if (!prev.FalseStatement.IsNull)
+				yield return prev.FalseStatement;
 		}
 		
 		static bool HasNestedBlocks(AstNode node)

@@ -20,15 +20,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using ICSharpCode.TreeView;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal class AnalyzedTypeExtensionMethodsTreeNode : AnalyzerTreeNode
+	internal class AnalyzedTypeExtensionMethodsTreeNode : AnalyzerSearchTreeNode
 	{
 		private readonly TypeDefinition analyzedType;
-		private readonly ThreadingSupport threading;
 
 		public AnalyzedTypeExtensionMethodsTreeNode(TypeDefinition analyzedType)
 		{
@@ -36,8 +34,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				throw new ArgumentNullException("analyzedType");
 
 			this.analyzedType = analyzedType;
-			this.threading = new ThreadingSupport();
-			this.LazyLoading = true;
 		}
 
 		public override object Text
@@ -45,41 +41,22 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			get { return "Extension Methods"; }
 		}
 
-		public override object Icon
+		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			get { return Images.Search; }
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedType, FindReferencesInType);
+			return analyzer.PerformAnalysis(ct).OrderBy(n => n.Text);
 		}
 
-		protected override void LoadChildren()
-		{
-			threading.LoadChildren(this, FetchChildren);
-		}
-
-		protected override void OnCollapsing()
-		{
-			if (threading.IsRunning) {
-				this.LazyLoading = true;
-				threading.Cancel();
-				this.Children.Clear();
-			}
-		}
-
-		private IEnumerable<SharpTreeNode> FetchChildren(CancellationToken ct)
-		{
-			ScopedWhereUsedAnalyzer<SharpTreeNode> analyzer;
-
-			analyzer = new ScopedWhereUsedAnalyzer<SharpTreeNode>(analyzedType, FindReferencesInType);
-			return analyzer.PerformAnalysis(ct);
-		}
-
-		private IEnumerable<SharpTreeNode> FindReferencesInType(TypeDefinition type)
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
 			if (!HasExtensionAttribute(type))
 				yield break;
 			foreach (MethodDefinition method in type.Methods) {
 				if (method.IsStatic && HasExtensionAttribute(method)) {
 					if (method.HasParameters && method.Parameters[0].ParameterType.Resolve() == analyzedType) {
-						yield return new AnalyzedMethodTreeNode(method);
+						var node = new AnalyzedMethodTreeNode(method);
+						node.Language = this.Language;
+						yield return node;
 					}
 				}
 			}

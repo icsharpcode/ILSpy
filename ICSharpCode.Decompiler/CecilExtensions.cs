@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler
 			throw new NotSupportedException ();
 		}
 		
-		public static int? GetPopDelta(this Instruction instruction)
+		public static int? GetPopDelta(this Instruction instruction, MethodDefinition methodDef)
 		{
 			OpCode code = instruction.OpCode;
 			switch (code.StackBehaviourPop) {
@@ -93,15 +93,17 @@ namespace ICSharpCode.Decompiler
 
 				case StackBehaviour.Varpop:
 					if (code == OpCodes.Ret)
-						return null;
+						return methodDef.ReturnType.IsVoid() ? 0 : 1;
 
 					if (code.FlowControl != FlowControl.Call)
 						break;
 
 					IMethodSignature method = (IMethodSignature) instruction.Operand;
 					int count = method.HasParameters ? method.Parameters.Count : 0;
-					if (code == OpCodes.Calli || (method.HasThis && code != OpCodes.Newobj))
+					if (method.HasThis && code != OpCodes.Newobj)
 						++count;
+					if (code == OpCodes.Calli)
+						++count; // calli takes a function pointer in additional to the normal args
 
 					return count;
 			}
@@ -124,6 +126,41 @@ namespace ICSharpCode.Decompiler
 				return false;
 			return type.IsValueType || type.IsVoid();
 		}
+
+		/// <summary>
+		/// checks if the given TypeReference is one of the following types:
+		/// [sbyte, short, int, long, IntPtr]
+		/// </summary>
+		public static bool IsSignedIntegralType(this TypeReference type)
+		{
+			return type.MetadataType == MetadataType.SByte ||
+				   type.MetadataType == MetadataType.Int16 ||
+				   type.MetadataType == MetadataType.Int32 ||
+				   type.MetadataType == MetadataType.Int64 ||
+				   type.MetadataType == MetadataType.IntPtr;
+		}
+
+		/// <summary>
+		/// checks if the given value is a numeric zero-value.
+		/// NOTE that this only works for types: [sbyte, short, int, long, IntPtr, byte, ushort, uint, ulong, float, double and decimal]
+		/// </summary>
+		public static bool IsZero(this object value)
+		{
+			return value.Equals((sbyte)0) ||
+				   value.Equals((short)0) ||
+				   value.Equals(0) ||
+				   value.Equals(0L) ||
+				   value.Equals(IntPtr.Zero) ||
+				   value.Equals((byte)0) ||
+				   value.Equals((ushort)0) ||
+				   value.Equals(0u) ||
+				   value.Equals(0UL) ||
+				   value.Equals(0.0f) ||
+				   value.Equals(0.0) ||
+				   value.Equals((decimal)0);
+					
+		}
+
 		#endregion
 		
 		/// <summary>
@@ -131,6 +168,8 @@ namespace ICSharpCode.Decompiler
 		/// </summary>
 		public static int GetEndOffset(this Instruction inst)
 		{
+			if (inst == null)
+				throw new ArgumentNullException("inst");
 			return inst.Offset + inst.GetSize();
 		}
 		
@@ -186,6 +225,7 @@ namespace ICSharpCode.Decompiler
 				return null;
 		}
 
+		[Obsolete("throwing exceptions is considered a bug")]
 		public static TypeDefinition ResolveOrThrow(this TypeReference typeReference)
 		{
 			var resolved = typeReference.Resolve();
@@ -213,16 +253,38 @@ namespace ICSharpCode.Decompiler
 				return true;
 			return IsCompilerGeneratedOrIsInCompilerGeneratedClass(member.DeclaringType);
 		}
+
+		public static TypeReference GetEnumUnderlyingType(this TypeDefinition type)
+		{
+			if (!type.IsEnum)
+				throw new ArgumentException("Type must be an enum", "type");
+
+			var fields = type.Fields;
+
+			for (int i = 0; i < fields.Count; i++)
+			{
+				var field = fields[i];
+				if (!field.IsStatic)
+					return field.FieldType;
+			}
+
+			throw new NotSupportedException();
+		}
 		
 		public static bool IsAnonymousType(this TypeReference type)
 		{
 			if (type == null)
 				return false;
-			if (string.IsNullOrEmpty(type.Namespace) && type.Name.StartsWith("<>", StringComparison.Ordinal) && type.Name.Contains("AnonymousType")) {
+			if (string.IsNullOrEmpty(type.Namespace) && type.HasGeneratedName() && (type.Name.Contains("AnonType") || type.Name.Contains("AnonymousType"))) {
 				TypeDefinition td = type.Resolve();
 				return td != null && td.IsCompilerGenerated();
 			}
 			return false;
+		}
+
+		public static bool HasGeneratedName(this MemberReference member)
+		{
+			return member.Name.StartsWith("<", StringComparison.Ordinal);
 		}
 		
 		public static bool ContainsAnonymousType(this TypeReference type)
@@ -294,6 +356,17 @@ namespace ICSharpCode.Decompiler
 					defaultMemberAttribute = attr;
 					return true;
 				}
+			}
+			return false;
+		}
+
+		public static bool IsDelegate(this TypeDefinition type)
+		{
+			if (type.BaseType != null && type.BaseType.Namespace == "System") {
+				if (type.BaseType.Name == "MulticastDelegate")
+					return true;
+				if (type.BaseType.Name == "Delegate" && type.Name != "MulticastDelegate")
+					return true;
 			}
 			return false;
 		}

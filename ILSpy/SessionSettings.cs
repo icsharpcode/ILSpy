@@ -18,7 +18,10 @@
 
 using System;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Xml.Linq;
 
@@ -28,7 +31,7 @@ namespace ICSharpCode.ILSpy
 	/// Per-session setting:
 	/// Loaded at startup; saved at exit.
 	/// </summary>
-	sealed class SessionSettings : INotifyPropertyChanged
+	public sealed class SessionSettings : INotifyPropertyChanged
 	{
 		public SessionSettings(ILSpySettings spySettings)
 		{
@@ -43,11 +46,12 @@ namespace ICSharpCode.ILSpy
 			
 			XElement activeTreeViewPath = doc.Element("ActiveTreeViewPath");
 			if (activeTreeViewPath != null) {
-				this.ActiveTreeViewPath = activeTreeViewPath.Elements().Select(e => (string)e).ToArray();
+				this.ActiveTreeViewPath = activeTreeViewPath.Elements().Select(e => Unescape((string)e)).ToArray();
 			}
+			this.ActiveAutoLoadedAssembly = (string)doc.Element("ActiveAutoLoadedAssembly");
 			
 			this.WindowState = FromString((string)doc.Element("WindowState"), WindowState.Normal);
-			this.WindowBounds = FromString((string)doc.Element("WindowBounds"), new Rect(10, 10, 750, 550));
+			this.WindowBounds = FromString((string)doc.Element("WindowBounds"), DefaultWindowBounds);
 			this.SplitterPosition = FromString((string)doc.Element("SplitterPosition"), 0.4);
 			this.TopPaneSplitterPosition = FromString((string)doc.Element("TopPaneSplitterPosition"), 0.3);
 			this.BottomPaneSplitterPosition = FromString((string)doc.Element("BottomPaneSplitterPosition"), 0.3);
@@ -64,11 +68,13 @@ namespace ICSharpCode.ILSpy
 		public FilterSettings FilterSettings { get; private set; }
 		
 		public string[] ActiveTreeViewPath;
+		public string ActiveAutoLoadedAssembly;
 		
 		public string ActiveAssemblyList;
 		
 		public WindowState WindowState = WindowState.Normal;
 		public Rect WindowBounds;
+		internal static Rect DefaultWindowBounds =  new Rect(10, 10, 750, 550);
 		/// <summary>
 		/// position of the left/right splitter
 		/// </summary>
@@ -83,7 +89,10 @@ namespace ICSharpCode.ILSpy
 				doc.Add(new XElement("ActiveAssemblyList", this.ActiveAssemblyList));
 			}
 			if (this.ActiveTreeViewPath != null) {
-				doc.Add(new XElement("ActiveTreeViewPath", ActiveTreeViewPath.Select(p => new XElement("Node", p))));
+				doc.Add(new XElement("ActiveTreeViewPath", ActiveTreeViewPath.Select(p => new XElement("Node", Escape(p)))));
+			}
+			if (this.ActiveAutoLoadedAssembly != null) {
+				doc.Add(new XElement("ActiveAutoLoadedAssembly", this.ActiveAutoLoadedAssembly));
 			}
 			doc.Add(new XElement("WindowState", ToString(this.WindowState)));
 			doc.Add(new XElement("WindowBounds", ToString(this.WindowBounds)));
@@ -92,6 +101,25 @@ namespace ICSharpCode.ILSpy
 			doc.Add(new XElement("BottomPaneSplitterPosition", ToString(this.BottomPaneSplitterPosition)));
 			
 			ILSpySettings.SaveSettings(doc);
+		}
+		
+		static Regex regex = new Regex("\\\\x(?<num>[0-9A-f]{4})");
+		
+		static string Escape(string p)
+		{
+			StringBuilder sb = new StringBuilder();
+			foreach (char ch in p) {
+				if (char.IsLetterOrDigit(ch))
+					sb.Append(ch);
+				else
+					sb.AppendFormat("\\x{0:X4}", (int)ch);
+			}
+			return sb.ToString();
+		}
+		
+		static string Unescape(string p)
+		{
+			return regex.Replace(p, m => ((char)int.Parse(m.Groups["num"].Value, NumberStyles.HexNumber)).ToString());
 		}
 		
 		static T FromString<T>(string s, T defaultValue)

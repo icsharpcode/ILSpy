@@ -15,9 +15,13 @@
     <NoStdLib>False</NoStdLib>
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
-    <ApplicationIcon>Images\ILSpy.ico</ApplicationIcon>
+    <ApplicationIcon>Images\ILSpy-Large.ico</ApplicationIcon>
     <RunCodeAnalysis>False</RunCodeAnalysis>
     <StartArguments>/separate</StartArguments>
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\NRefactory\ICSharpCode.NRefactory.snk</AssemblyOriginatorKeyFile>
+    <DelaySign>False</DelaySign>
+    <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'x86' ">
     <PlatformTarget>x86</PlatformTarget>
@@ -44,13 +48,22 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
-    <DebugSymbols>False</DebugSymbols>
-    <DebugType>None</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>PdbOnly</DebugType>
     <Optimize>True</Optimize>
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="ICSharpCode.NRefactory">
+      <HintPath>..\packages\ICSharpCode.NRefactory.5.5.1\lib\Net40\ICSharpCode.NRefactory.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.NRefactory.Cecil">
+      <HintPath>..\packages\ICSharpCode.NRefactory.5.5.1\lib\Net40\ICSharpCode.NRefactory.Cecil.dll</HintPath>
+    </Reference>
+    <Reference Include="ICSharpCode.NRefactory.CSharp">
+      <HintPath>..\packages\ICSharpCode.NRefactory.5.5.1\lib\Net40\ICSharpCode.NRefactory.CSharp.dll</HintPath>
+    </Reference>
     <Reference Include="PresentationCore">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
@@ -95,20 +108,28 @@
     </Compile>
     <Compile Include="AssemblyList.cs" />
     <Compile Include="AssemblyListManager.cs" />
-    <Compile Include="BamlDecompiler.cs" />
+    <Compile Include="AvalonEdit\ITextMarker.cs" />
+    <Compile Include="AvalonEdit\TextMarkerService.cs" />
+    <Compile Include="Commands\BrowseBackCommand.cs" />
+    <Compile Include="Commands\BrowseForwardCommand.cs" />
     <Compile Include="CommandLineArguments.cs" />
-    <Compile Include="Commands.cs" />
-    <Compile Include="ConnectMethodDecompiler.cs" />
-    <Compile Include="Controls\DockedPane.cs" />
-    <Compile Include="DecompilerSettingsPanel.xaml.cs">
-      <DependentUpon>DecompilerSettingsPanel.xaml</DependentUpon>
-      <SubType>Code</SubType>
+    <Compile Include="Commands\ExitCommand.cs" />
+    <Compile Include="Commands\CommandWrapper.cs" />
+    <Compile Include="Commands\OpenListCommand.cs" />
+    <Compile Include="Controls\MarkupExtensions.cs" />
+    <Compile Include="Controls\ResourceObjectTable.xaml.cs">
+      <DependentUpon>ResourceObjectTable.xaml</DependentUpon>
     </Compile>
-    <Compile Include="DisplaySettings.cs" />
-    <Compile Include="ExportCommandAttribute.cs" />
+    <Compile Include="Controls\DockedPane.cs" />
+    <Compile Include="Commands\DecompileAllCommand.cs" />
+    <Compile Include="Commands\ExportCommandAttribute.cs" />
+    <Compile Include="Controls\ExtensionMethods.cs" />
     <Compile Include="Controls\SearchBox.cs" />
     <Compile Include="Controls\SortableGridViewColumn.cs" />
-    <Compile Include="CSharpLanguage.cs" />
+    <Compile Include="CreateListDialog.xaml.cs">
+      <DependentUpon>CreateListDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Languages\CSharpLanguage.cs" />
     <Compile Include="DecompilationOptions.cs" />
     <Compile Include="ExtensionMethods.cs" />
     <Compile Include="FilterSettings.cs" />
@@ -116,58 +137,99 @@
     <Compile Include="GacInterop.cs" />
     <Compile Include="GuessFileType.cs" />
     <Compile Include="ContextMenuEntry.cs" />
-    <Compile Include="ILAstLanguage.cs" />
-    <Compile Include="ILLanguage.cs" />
+    <Compile Include="DecompileEventArgs.cs" />
+    <Compile Include="Languages\ILAstLanguage.cs" />
+    <Compile Include="Languages\ILLanguage.cs" />
     <Compile Include="ILSpySettings.cs" />
     <Compile Include="Images\AccessOverlayIcon.cs" />
     <Compile Include="Images\MemberIcon.cs" />
     <Compile Include="Images\TypeIcon.cs" />
+    <Compile Include="IPane.cs" />
     <Compile Include="ISmartTextOutput.cs" />
-    <Compile Include="Language.cs" />
+    <Compile Include="Languages\Language.cs" />
     <Compile Include="Images\Images.cs" />
+    <Compile Include="Languages\Languages.cs" />
     <Compile Include="LoadedAssembly.cs" />
-    <Compile Include="MainWindowSplashScreen.xaml.cs">
-      <DependentUpon>MainWindowSplashScreen.xaml</DependentUpon>
-    </Compile>
     <Compile Include="NativeMethods.cs" />
     <Compile Include="NavigationHistory.cs" />
     <Compile Include="NavigationState.cs" />
+    <Compile Include="Commands\OpenCommand.cs" />
+    <Compile Include="Commands\OpenFromGacCommand.cs" />
     <Compile Include="OpenFromGacDialog.xaml.cs">
       <DependentUpon>OpenFromGacDialog.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="OptionsDialog.xaml.cs">
+    <Compile Include="Controls\ResourceStringTable.xaml.cs">
+      <DependentUpon>ResourceStringTable.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="OpenListDialog.xaml.cs">
+      <DependentUpon>OpenListDialog.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Options\DecompilerSettingsPanel.xaml.cs">
+      <DependentUpon>DecompilerSettingsPanel.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Options\DisplaySettings.cs" />
+    <Compile Include="Options\DisplaySettingsPanel.xaml.cs">
+      <DependentUpon>DisplaySettingsPanel.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Options\OptionsDialog.xaml.cs">
       <DependentUpon>OptionsDialog.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="SplashScreen.cs" />
+    <Compile Include="Commands\RefreshCommand.cs" />
+    <Compile Include="Commands\SaveCommand.cs" />
     <Compile Include="SearchPane.cs">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DisplaySettingsPanel.xaml.cs">
-      <DependentUpon>DisplaySettingsPanel.xaml</DependentUpon>
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Commands\SimpleCommand.cs" />
+    <Compile Include="SearchStrategies.cs" />
+    <Compile Include="TaskHelper.cs" />
+    <Compile Include="TextView\EditorCommands.cs" />
+    <Compile Include="TextView\FoldingCommands.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzeContextMenuEntry.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedAssemblyTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedAttributeAppliedToTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedEventOverridesTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedEventTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedInterfacePropertyImplementedByTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedInterfaceMethodImplementedByTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedInterfaceEventImplementedByTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedEventFiredByTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyAccessorTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedTypeExposedByTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedTypeExtensionMethodsTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedTypeInstantiationsTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedTypeTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedEventAccessorTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzedTypeUsedByTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedVirtualMethodUsedByTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzerEntityTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\AnalyzerSearchTreeNode.cs" />
+    <Compile Include="TreeNodes\Analyzer\RemoveAnalyzeContextMenuEntry.cs" />
     <Compile Include="TreeNodes\Analyzer\Helpers.cs" />
     <Compile Include="TreeNodes\Analyzer\ScopedWhereUsedAnalyzer.cs" />
+    <Compile Include="TreeNodes\BaseTypesEntryNode.cs" />
+    <Compile Include="TreeNodes\DerivedTypesEntryNode.cs" />
+    <Compile Include="TreeNodes\FilterResult.cs" />
     <Compile Include="TreeNodes\IMemberTreeNode.cs" />
-    <Compile Include="TreeNodes\XamlResourceNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\CursorResourceEntryNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\IconResourceEntryNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\ImageListResourceEntryNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\ImageResourceEntryNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\XmlResourceNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\IResourceNodeFactory.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\ResourcesFileTreeNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\XamlResourceNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyOverridesTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyTreeNode.cs" />
+    <Compile Include="TreeNodes\SearchMsdnContextMenuEntry.cs" />
+    <Compile Include="VB\ILSpyEnvironmentProvider.cs" />
+    <Compile Include="VB\VBLanguage.cs" />
+    <Compile Include="VB\VBTextOutputFormatter.cs" />
     <Compile Include="XmlDoc\AddXmlDocTransform.cs" />
     <Compile Include="XmlDoc\XmlDocKeyProvider.cs" />
     <Compile Include="XmlDoc\XmlDocLoader.cs" />
@@ -181,7 +243,11 @@
     <EmbeddedResource Include="..\doc\license.txt">
       <Link>license.txt</Link>
     </EmbeddedResource>
+    <EmbeddedResource Include="..\doc\MS-PL.txt">
+      <Link>MS-PL.txt</Link>
+    </EmbeddedResource>
     <Resource Include="Images\AssemblyList.png" />
+    <Resource Include="Images\AssemblyListGAC.png" />
     <Resource Include="Images\AssemblyWarning.png" />
     <Resource Include="Images\ViewCode.png" />
     <Resource Include="Images\SaveFile.png" />
@@ -191,6 +257,13 @@
     <Resource Include="Images\Delete.png" />
     <Resource Include="Images\ILSpy.ico" />
     <Resource Include="Images\FindAssembly.png" />
+    <None Include="app.config" />
+    <Resource Include="Images\Breakpoint.png" />
+    <Resource Include="Images\CurrentLine.png" />
+    <Resource Include="Images\DisabledBreakpoint.png" />
+    <None Include="Images\ResourceXsl.png" />
+    <None Include="packages.config" />
+    <None Include="Properties\app.config.template" />
     <None Include="Properties\AssemblyInfo.template.cs" />
     <Compile Include="Properties\WPFAssemblyInfo.cs" />
     <Compile Include="MainWindow.xaml.cs">
@@ -224,29 +297,34 @@
     <Compile Include="TreeNodes\NamespaceTreeNode.cs" />
     <Compile Include="TreeNodes\PropertyTreeNode.cs" />
     <Compile Include="TreeNodes\ReferenceFolderTreeNode.cs" />
-    <Compile Include="TreeNodes\ResourceEntryNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\ResourceEntryNode.cs" />
     <Compile Include="TreeNodes\ResourceListTreeNode.cs" />
-    <Compile Include="TreeNodes\ResourceTreeNode.cs" />
+    <Compile Include="TreeNodes\ResourceNodes\ResourceTreeNode.cs" />
     <Compile Include="TreeNodes\ThreadingSupport.cs" />
     <Compile Include="TreeNodes\TypeTreeNode.cs" />
     <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
   </ItemGroup>
   <ItemGroup>
+    <Page Include="Controls\ResourceObjectTable.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Controls\ResourceStringTable.xaml" />
     <Page Include="Controls\SearchBoxStyle.xaml">
       <DependentUpon>SearchBox.cs</DependentUpon>
     </Page>
-    <Page Include="DecompilerSettingsPanel.xaml" />
-    <Page Include="MainWindow.xaml" />
-    <Page Include="MainWindowSplashScreen.xaml">
+    <Page Include="CreateListDialog.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
-    <Page Include="OptionsDialog.xaml" />
+    <Page Include="OpenListDialog.xaml" />
+    <Page Include="Options\DecompilerSettingsPanel.xaml" />
+    <Page Include="Options\DisplaySettingsPanel.xaml" />
+    <Page Include="Options\OptionsDialog.xaml" />
     <Page Include="SearchPane.xaml">
       <DependentUpon>SearchPane.cs</DependentUpon>
     </Page>
-    <Page Include="DisplaySettingsPanel.xaml" />
     <Page Include="TextView\DecompilerTextView.xaml">
       <DependentUpon>DecompilerTextView.cs</DependentUpon>
     </Page>
@@ -292,6 +370,7 @@
     <Resource Include="Images\OverlayPrivate.png" />
     <Resource Include="Images\OverlayProtected.png" />
     <Resource Include="Images\OverlayProtectedInternal.png" />
+    <Resource Include="Images\OverlayCompilerControlled.png" />
     <Resource Include="Images\OverlayStatic.png" />
     <Resource Include="Images\VirtualMethod.png" />
     <Resource Include="Images\PInvokeMethod.png" />
@@ -313,9 +392,9 @@
       <Project>{63E6915C-7EA4-4D76-AB28-0D7191EEA626}</Project>
       <Name>Mono.Cecil.Pdb</Name>
     </ProjectReference>
-    <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory\ICSharpCode.NRefactory.csproj">
-      <Project>{3B2A5653-EC97-4001-BB9B-D90F1AF2C371}</Project>
-      <Name>ICSharpCode.NRefactory</Name>
+    <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory.VB\ICSharpCode.NRefactory.VB.csproj">
+      <Project>{7B82B671-419F-45F4-B778-D9286F996EFA}</Project>
+      <Name>ICSharpCode.NRefactory.VB</Name>
     </ProjectReference>
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj">
       <Project>{DDE2A481-8271-4EAC-A330-8FA6A38D13D1}</Project>
@@ -323,11 +402,10 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <Resource Include="Images\loading_14.gif" />
-    <Resource Include="Images\loading_13.gif" />
-    <Resource Include="Images\loading_12.gif" />
-    <Resource Include="Images\loading_11.gif" />
-    <Resource Include="Images\splash.png" />
+    <Resource Include="Images\ResourceXml.png" />
+    <Resource Include="Images\ResourceXsd.png" />
+    <Resource Include="Images\ResourceXslt.png" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

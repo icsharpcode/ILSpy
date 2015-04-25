@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel;
+using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler
 {
@@ -41,6 +42,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 		
+		bool expressionTrees = true;
+		
+		/// <summary>
+		/// Decompile expression trees.
+		/// </summary>
+		public bool ExpressionTrees {
+			get { return expressionTrees; }
+			set {
+				if (expressionTrees != value) {
+					expressionTrees = value;
+					OnPropertyChanged("ExpressionTrees");
+				}
+			}
+		}
+		
 		bool yieldReturn = true;
 		
 		/// <summary>
@@ -52,6 +68,21 @@ namespace ICSharpCode.Decompiler
 				if (yieldReturn != value) {
 					yieldReturn = value;
 					OnPropertyChanged("YieldReturn");
+				}
+			}
+		}
+		
+		bool asyncAwait = true;
+		
+		/// <summary>
+		/// Decompile async methods.
+		/// </summary>
+		public bool AsyncAwait {
+			get { return asyncAwait; }
+			set {
+				if (asyncAwait != value) {
+					asyncAwait = value;
+					OnPropertyChanged("AsyncAwait");
 				}
 			}
 		}
@@ -223,6 +254,86 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
+
+		bool foldBraces = false;
+		
+		public bool FoldBraces {
+			get { return foldBraces; }
+			set {
+				if (foldBraces != value) {
+					foldBraces = value;
+					OnPropertyChanged("FoldBraces");
+				}
+			}
+		}
+		
+		#region Options to aid VB decompilation
+		bool introduceIncrementAndDecrement = true;
+		
+		/// <summary>
+		/// Gets/Sets whether to use increment and decrement operators
+		/// </summary>
+		public bool IntroduceIncrementAndDecrement {
+			get { return introduceIncrementAndDecrement; }
+			set {
+				if (introduceIncrementAndDecrement != value) {
+					introduceIncrementAndDecrement = value;
+					OnPropertyChanged("IntroduceIncrementAndDecrement");
+				}
+			}
+		}
+		
+		bool makeAssignmentExpressions = true;
+		
+		/// <summary>
+		/// Gets/Sets whether to use assignment expressions such as in while ((count = Do()) != 0) ;
+		/// </summary>
+		public bool MakeAssignmentExpressions {
+			get { return makeAssignmentExpressions; }
+			set {
+				if (makeAssignmentExpressions != value) {
+					makeAssignmentExpressions = value;
+					OnPropertyChanged("MakeAssignmentExpressions");
+				}
+			}
+		}
+		
+		bool alwaysGenerateExceptionVariableForCatchBlocks = false;
+		
+		/// <summary>
+		/// Gets/Sets whether to always generate exception variables in catch blocks
+		/// </summary>
+		public bool AlwaysGenerateExceptionVariableForCatchBlocks {
+			get { return alwaysGenerateExceptionVariableForCatchBlocks; }
+			set {
+				if (alwaysGenerateExceptionVariableForCatchBlocks != value) {
+					alwaysGenerateExceptionVariableForCatchBlocks = value;
+					OnPropertyChanged("AlwaysGenerateExceptionVariableForCatchBlocks");
+				}
+			}
+		}
+		#endregion
+		
+		CSharpFormattingOptions csharpFormattingOptions;
+		
+		public CSharpFormattingOptions CSharpFormattingOptions {
+			get {
+				if (csharpFormattingOptions == null) {
+					csharpFormattingOptions = FormattingOptionsFactory.CreateAllman();
+					csharpFormattingOptions.IndentSwitchBody = false;
+					csharpFormattingOptions.ArrayInitializerWrapping = Wrapping.WrapAlways;
+				}
+				return csharpFormattingOptions;
+			}
+			set {
+				if (value == null)
+					throw new ArgumentNullException();
+				if (csharpFormattingOptions != value) {
+					csharpFormattingOptions = value;
+					OnPropertyChanged("CSharpFormattingOptions");
+				}
+			}
+		}
 		
 		public event PropertyChangedEventHandler PropertyChanged;
 		
@@ -236,6 +347,8 @@ namespace ICSharpCode.Decompiler
 		public DecompilerSettings Clone()
 		{
 			DecompilerSettings settings = (DecompilerSettings)MemberwiseClone();
+			if (csharpFormattingOptions != null)
+				settings.csharpFormattingOptions = csharpFormattingOptions.Clone();
 			settings.PropertyChanged = null;
 			return settings;
 		}

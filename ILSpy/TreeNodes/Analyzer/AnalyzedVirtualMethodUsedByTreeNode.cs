@@ -21,17 +21,15 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using ICSharpCode.TreeView;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using ICSharpCode.Decompiler.Ast;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedVirtualMethodUsedByTreeNode : AnalyzerTreeNode
+	internal sealed class AnalyzedVirtualMethodUsedByTreeNode : AnalyzerSearchTreeNode
 	{
 		private readonly MethodDefinition analyzedMethod;
-		private readonly ThreadingSupport threading;
 		private ConcurrentDictionary<MethodDefinition, int> foundMethods;
 		private MethodDefinition baseMethod;
 		private List<TypeReference> possibleTypes;
@@ -42,8 +40,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				throw new ArgumentNullException("analyzedMethod");
 
 			this.analyzedMethod = analyzedMethod;
-			this.threading = new ThreadingSupport();
-			this.LazyLoading = true;
 		}
 
 		public override object Text
@@ -51,31 +47,12 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			get { return "Used By"; }
 		}
 
-		public override object Icon
-		{
-			get { return Images.Search; }
-		}
-
-		protected override void LoadChildren()
-		{
-			threading.LoadChildren(this, FetchChildren);
-		}
-
-		protected override void OnCollapsing()
-		{
-			if (threading.IsRunning) {
-				this.LazyLoading = true;
-				threading.Cancel();
-				this.Children.Clear();
-			}
-		}
-
-		private IEnumerable<SharpTreeNode> FetchChildren(CancellationToken ct)
+		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
 			InitializeAnalyzer();
 
-			var analyzer = new ScopedWhereUsedAnalyzer<SharpTreeNode>(analyzedMethod, FindReferencesInType);
-			foreach (var child in analyzer.PerformAnalysis(ct)) {
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedMethod, FindReferencesInType);
+			foreach (var child in analyzer.PerformAnalysis(ct).OrderBy(n => n.Text)) {
 				yield return child;
 			}
 
@@ -86,16 +63,16 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			foundMethods = new ConcurrentDictionary<MethodDefinition, int>();
 
-			var BaseMethods = TypesHierarchyHelpers.FindBaseMethods(analyzedMethod).ToArray();
-			if (BaseMethods.Length > 0) {
-				baseMethod = BaseMethods[BaseMethods.Length - 1];
-			}
+			var baseMethods = TypesHierarchyHelpers.FindBaseMethods(analyzedMethod).ToArray();
+			if (baseMethods.Length > 0) {
+				baseMethod = baseMethods[baseMethods.Length - 1];
+			} else
+				baseMethod = analyzedMethod;
 
 			possibleTypes = new List<TypeReference>();
 
 			TypeReference type = analyzedMethod.DeclaringType.BaseType;
-			while (type !=null)
-			{
+			while (type != null) {
 				possibleTypes.Add(type);
 				type = type.Resolve().BaseType;
 			}
@@ -107,7 +84,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			baseMethod = null;
 		}
 
-		private IEnumerable<SharpTreeNode> FindReferencesInType(TypeDefinition type)
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
 			string name = analyzedMethod.Name;
 			foreach (MethodDefinition method in type.Methods) {
@@ -119,15 +96,24 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 					MethodReference mr = instr.Operand as MethodReference;
 					if (mr != null && mr.Name == name) {
 						// explicit call to the requested method 
-						if (Helpers.IsReferencedBy(analyzedMethod.DeclaringType, mr.DeclaringType) && mr.Resolve() == analyzedMethod) {
+						if (instr.OpCode.Code == Code.Call
+							&& Helpers.IsReferencedBy(analyzedMethod.DeclaringType, mr.DeclaringType)
+							&& mr.Resolve() == analyzedMethod) {
 							found = true;
 							prefix = "(as base) ";
 							break;
 						}
 						// virtual call to base method
-						if (instr.OpCode.Code == Code.Callvirt && Helpers.IsReferencedBy(baseMethod.DeclaringType, mr.DeclaringType) && mr.Resolve() == baseMethod) {
-							found = true;
-							break;
+						if (instr.OpCode.Code == Code.Callvirt) {
+							MethodDefinition md = mr.Resolve();
+							if (md == null) {
+								// cannot resolve the operand, so ignore this method
+								break;
+							}
+							if (md == baseMethod) {
+								found = true;
+								break;
+							}
 						}
 					}
 				}
@@ -137,7 +123,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				if (found) {
 					MethodDefinition codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
 					if (codeLocation != null && !HasAlreadyBeenFound(codeLocation)) {
-						yield return new AnalyzedMethodTreeNode(codeLocation, prefix);
+						var node = new AnalyzedMethodTreeNode(codeLocation);
+						node.Language = this.Language;
+						yield return node;
 					}
 				}
 			}

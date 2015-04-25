@@ -163,6 +163,15 @@ namespace Mono.Cecil.Tests {
 			Assert.IsTrue (array.Dimensions [1].IsSized);
 			Assert.AreEqual (0, array.Dimensions [1].LowerBound);
 			Assert.AreEqual (null, array.Dimensions [1].UpperBound);
+
+			var rank_one_low_bound_m1 = types.GetField ("rank_one_low_bound_m1");
+			array = rank_one_low_bound_m1.FieldType as ArrayType;
+			Assert.IsNotNull (array);
+
+			Assert.AreEqual (1, array.Rank);
+			Assert.IsTrue (array.Dimensions [0].IsSized);
+			Assert.AreEqual (-1, array.Dimensions [0].LowerBound);
+			Assert.AreEqual (4, array.Dimensions [0].UpperBound);
 		}
 
 		[TestCSharp ("Fields.cs")]
@@ -236,25 +245,25 @@ namespace Mono.Cecil.Tests {
 			var field = fields.GetField ("int32_int16");
 			Assert.AreEqual ("System.Int32", field.FieldType.FullName);
 			Assert.IsTrue (field.HasConstant);
-			Assert.IsInstanceOfType (typeof (short), field.Constant);
+			Assert.IsInstanceOf (typeof (short), field.Constant);
 			Assert.AreEqual ((short) 1, field.Constant);
 
 			field = fields.GetField ("int16_int32");
 			Assert.AreEqual ("System.Int16", field.FieldType.FullName);
 			Assert.IsTrue (field.HasConstant);
-			Assert.IsInstanceOfType (typeof (int), field.Constant);
+			Assert.IsInstanceOf (typeof (int), field.Constant);
 			Assert.AreEqual (1, field.Constant);
 
 			field = fields.GetField ("char_int16");
 			Assert.AreEqual ("System.Char", field.FieldType.FullName);
 			Assert.IsTrue (field.HasConstant);
-			Assert.IsInstanceOfType (typeof (short), field.Constant);
+			Assert.IsInstanceOf (typeof (short), field.Constant);
 			Assert.AreEqual ((short) 1, field.Constant);
 
 			field = fields.GetField ("int16_char");
 			Assert.AreEqual ("System.Int16", field.FieldType.FullName);
 			Assert.IsTrue (field.HasConstant);
-			Assert.IsInstanceOfType (typeof (char), field.Constant);
+			Assert.IsInstanceOf (typeof (char), field.Constant);
 			Assert.AreEqual ('s', field.Constant);
 		}
 

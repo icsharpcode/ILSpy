@@ -31,18 +31,13 @@ using System.Collections.Generic;
 
 namespace Mono.Cecil {
 
-	public static class GlobalAssemblyResolver {
-
-		public static readonly IAssemblyResolver Instance = new DefaultAssemblyResolver ();
-	}
-
 	public class DefaultAssemblyResolver : BaseAssemblyResolver {
 
 		readonly IDictionary<string, AssemblyDefinition> cache;
 
 		public DefaultAssemblyResolver ()
 		{
-			cache = new Dictionary<string, AssemblyDefinition> ();
+			cache = new Dictionary<string, AssemblyDefinition> (StringComparer.Ordinal);
 		}
 
 		public override AssemblyDefinition Resolve (AssemblyNameReference name)

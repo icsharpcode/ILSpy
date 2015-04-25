@@ -49,6 +49,15 @@ namespace Mono.Cecil {
 			get { return method; }
 		}
 
+		public int Sequence {
+			get {
+				if (method == null)
+					return -1;
+
+				return method.HasImplicitThis () ? index + 1 : index;
+			}
+		}
+
 		public bool HasConstant {
 			get {
 				this.ResolveConstant (ref constant, parameter_type.Module);
@@ -128,6 +137,12 @@ namespace Mono.Cecil {
 		}
 
 		#endregion
+
+		internal ParameterDefinition (TypeReference parameterType, IMethodSignature method)
+			: this (string.Empty, ParameterAttributes.None, parameterType)
+		{
+			this.method = method;
+		}
 
 		public ParameterDefinition (TypeReference parameterType)
 			: this (string.Empty, ParameterAttributes.None, parameterType)

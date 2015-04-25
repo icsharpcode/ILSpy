@@ -50,32 +50,36 @@ namespace ICSharpCode.Decompiler.ILAst
 			AnalyzeNode(method);
 		}
 		
-		void AnalyzeNode(ILNode node)
+		/// <summary>
+		/// For each variable reference, adds <paramref name="direction"/> to the num* dicts.
+		/// Direction will be 1 for analysis, and -1 when removing a node from analysis.
+		/// </summary>
+		void AnalyzeNode(ILNode node, int direction = 1)
 		{
 			ILExpression expr = node as ILExpression;
 			if (expr != null) {
 				ILVariable locVar = expr.Operand as ILVariable;
 				if (locVar != null) {
 					if (expr.Code == ILCode.Stloc) {
-						numStloc[locVar] = numStloc.GetOrDefault(locVar) + 1;
+						numStloc[locVar] = numStloc.GetOrDefault(locVar) + direction;
 					} else if (expr.Code == ILCode.Ldloc) {
-						numLdloc[locVar] = numLdloc.GetOrDefault(locVar) + 1;
+						numLdloc[locVar] = numLdloc.GetOrDefault(locVar) + direction;
 					} else if (expr.Code == ILCode.Ldloca) {
-						numLdloca[locVar] = numLdloca.GetOrDefault(locVar) + 1;
+						numLdloca[locVar] = numLdloca.GetOrDefault(locVar) + direction;
 					} else {
 						throw new NotSupportedException(expr.Code.ToString());
 					}
 				}
 				foreach (ILExpression child in expr.Arguments)
-					AnalyzeNode(child);
+					AnalyzeNode(child, direction);
 			} else {
 				var catchBlock = node as ILTryCatchBlock.CatchBlock;
 				if (catchBlock != null && catchBlock.ExceptionVariable != null) {
-					numStloc[catchBlock.ExceptionVariable] = numStloc.GetOrDefault(catchBlock.ExceptionVariable) + 1;
+					numStloc[catchBlock.ExceptionVariable] = numStloc.GetOrDefault(catchBlock.ExceptionVariable) + direction;
 				}
 				
 				foreach (ILNode child in node.GetChildren())
-					AnalyzeNode(child);
+					AnalyzeNode(child, direction);
 			}
 		}
 		
@@ -194,6 +198,7 @@ namespace ICSharpCode.Decompiler.ILAst
 					// The variable is never loaded
 					if (inlinedExpression.HasNoSideEffects()) {
 						// Remove completely
+						AnalyzeNode(body[pos], -1);
 						body.RemoveAt(pos);
 						return true;
 					} else if (inlinedExpression.CanBeExpressionStatement() && v.IsGenerated) {
@@ -334,6 +339,7 @@ namespace ICSharpCode.Decompiler.ILAst
 					case ILCode.Stfld:
 					case ILCode.Ldfld:
 					case ILCode.Ldflda:
+					case ILCode.Await:
 						return true;
 				}
 			}
@@ -385,7 +391,7 @@ namespace ICSharpCode.Decompiler.ILAst
 			for (int i = 0; i < expr.Arguments.Count; i++) {
 				// Stop when seeing an opcode that does not guarantee that its operands will be evaluated.
 				// Inlining in that case might result in the inlined expresion not being evaluted.
-				if (i == 1 && (expr.Code == ILCode.LogicAnd || expr.Code == ILCode.LogicOr || expr.Code == ILCode.TernaryOp))
+				if (i == 1 && (expr.Code == ILCode.LogicAnd || expr.Code == ILCode.LogicOr || expr.Code == ILCode.TernaryOp || expr.Code == ILCode.NullCoalescing))
 					return false;
 				
 				ILExpression arg = expr.Arguments[i];
@@ -406,7 +412,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		}
 		
 		/// <summary>
-		/// Determines whether it is save to move 'expressionBeingMoved' past 'expr'
+		/// Determines whether it is safe to move 'expressionBeingMoved' past 'expr'
 		/// </summary>
 		bool IsSafeForInlineOver(ILExpression expr, ILExpression expressionBeingMoved)
 		{
@@ -427,6 +433,9 @@ namespace ICSharpCode.Decompiler.ILAst
 				case ILCode.Ldflda:
 				case ILCode.Ldsflda:
 				case ILCode.Ldelema:
+				case ILCode.AddressOf:
+				case ILCode.ValueOf:
+				case ILCode.NullableOf:
 					// address-loading instructions are safe if their arguments are safe
 					foreach (ILExpression arg in expr.Arguments) {
 						if (!IsSafeForInlineOver(arg, expressionBeingMoved))
@@ -434,8 +443,8 @@ namespace ICSharpCode.Decompiler.ILAst
 					}
 					return true;
 				default:
-					// abort, inlining is not possible
-					return false;
+					// instructions with no side-effects are safe (except for Ldloc and Ldloca which are handled separately)
+					return expr.HasNoSideEffects();
 			}
 		}
 		

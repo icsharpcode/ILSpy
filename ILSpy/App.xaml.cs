@@ -22,11 +22,13 @@ using System.ComponentModel.Composition.Hosting;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
+using System.Reflection;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Navigation;
 using System.Windows.Threading;
+
 using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
@@ -44,9 +46,16 @@ namespace ICSharpCode.ILSpy
 		
 		internal static CommandLineArguments CommandLineArguments;
 		
+		internal static IList<ExceptionData> StartupExceptions = new List<ExceptionData>();
+		
+		internal class ExceptionData
+		{
+			public Exception Exception;
+			public string PluginName;
+		}
+		
 		public App()
 		{
-            SplashScreen.Start();
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
 			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
 			if (App.CommandLineArguments.SingleInstance ?? true) {
@@ -60,37 +69,38 @@ namespace ICSharpCode.ILSpy
 			
 			var catalog = new AggregateCatalog();
 			catalog.Catalogs.Add(new AssemblyCatalog(typeof(App).Assembly));
-			catalog.Catalogs.Add(new DirectoryCatalog(".", "*.Plugin.dll"));
+			// Don't use DirectoryCatalog, that causes problems if the plugins are from the Internet zone
+			// see http://stackoverflow.com/questions/8063841/mef-loading-plugins-from-a-network-shared-folder
+			string appPath = Path.GetDirectoryName(typeof(App).Module.FullyQualifiedName);
+			foreach (string plugin in Directory.GetFiles(appPath, "*.Plugin.dll")) {
+				string shortName = Path.GetFileNameWithoutExtension(plugin);
+				try {
+					var asm = Assembly.Load(shortName);
+					asm.GetTypes();
+					catalog.Catalogs.Add(new AssemblyCatalog(asm));
+				} catch (Exception ex) {
+					// Cannot show MessageBox here, because WPF would crash with a XamlParseException
+					// Remember and show exceptions in text output, once MainWindow is properly initialized
+					StartupExceptions.Add(new ExceptionData { Exception = ex, PluginName = shortName });
+				}
+			}
 			
 			compositionContainer = new CompositionContainer(catalog);
 			
 			Languages.Initialize(compositionContainer);
 			
-			if (!Debugger.IsAttached) {
+			if (!System.Diagnostics.Debugger.IsAttached) {
 				AppDomain.CurrentDomain.UnhandledException += ShowErrorBox;
 				Dispatcher.CurrentDispatcher.UnhandledException += Dispatcher_UnhandledException;
 			}
+			TaskScheduler.UnobservedTaskException += DotNet40_UnobservedTaskException;
 			
 			EventManager.RegisterClassHandler(typeof(Window),
 			                                  Hyperlink.RequestNavigateEvent,
 			                                  new RequestNavigateEventHandler(Window_RequestNavigate));
-            EventManager.RegisterClassHandler(typeof(MainWindow),
-                                  Window.LoadedEvent,
-                                  new RoutedEventHandler(OnMainWindowLoaded));
-
+			
 		}
-
-        private void OnMainWindowLoaded(object sender, RoutedEventArgs e)
-        {
-            CloseSplashScreen();
-            this.MainWindow.Activate();
-        }
-
-        private static void CloseSplashScreen()
-        {
-            SplashScreen.Stop();
-        }
-
+		
 		string FullyQualifyPath(string argument)
 		{
 			// Fully qualify the paths before passing them to another process,
@@ -102,6 +112,12 @@ namespace ICSharpCode.ILSpy
 			} catch (ArgumentException) {
 				return argument;
 			}
+		}
+
+		void DotNet40_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+		{
+			// On .NET 4.0, an unobserved exception in a task terminates the process unless we mark it as observed
+			e.SetObserved();
 		}
 		
 		#region Exception Handling
@@ -182,8 +198,6 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				ILSpy.MainWindow.Instance.TextView.ShowText(output);
-			} else {
-				Process.Start(e.Uri.ToString());
 			}
 		}
 	}

@@ -57,7 +57,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text
 		{
-			get { return GetText(property, Language, isIndexer); }
+			get { return GetText(property, Language, isIndexer) + property.MetadataToken.ToSuffixString(); }
 		}
 
 		public static object GetText(PropertyDefinition property, Language language, bool? isIndexer = null)
@@ -87,10 +87,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case MethodAttributes.FamANDAssem:
 					return AccessOverlayIcon.Internal;
 				case MethodAttributes.Family:
-				case MethodAttributes.FamORAssem:
 					return AccessOverlayIcon.Protected;
+				case MethodAttributes.FamORAssem:
+					return AccessOverlayIcon.ProtectedInternal;
 				case MethodAttributes.Private:
 					return AccessOverlayIcon.Private;
+				case MethodAttributes.CompilerControlled:
+					return AccessOverlayIcon.CompilerControlled;
 				default:
 					throw new NotSupportedException();
 			}
@@ -148,20 +151,23 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			language.DecompileProperty(property, output, options);
 		}
+		
+		public override bool IsPublicAPI {
+			get {
+				switch (GetAttributesOfMostAccessibleMethod(property) & MethodAttributes.MemberAccessMask) {
+					case MethodAttributes.Public:
+					case MethodAttributes.Family:
+					case MethodAttributes.FamORAssem:
+						return true;
+					default:
+						return false;
+				}
+			}
+		}
 
 		MemberReference IMemberTreeNode.Member
 		{
 			get { return property; }
 		}
-
-        public override bool IsPublicAccess()
-        {
-            if (this.property != null && this.property.GetMethod != null)
-            {
-                var m = this.property.GetMethod;
-                return m.IsPublic || m.IsVirtual || m.IsFamily;
-            }
-            return true;
-        }
 	}
 }

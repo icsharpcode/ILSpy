@@ -18,14 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Collections.Specialized;
+using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-
 using ICSharpCode.ILSpy.TreeNodes.Analyzer;
 using ICSharpCode.TreeView;
 
@@ -34,12 +29,14 @@ namespace ICSharpCode.ILSpy
 	/// <summary>
 	/// Analyzer tree view.
 	/// </summary>
-	public partial class AnalyzerTreeView : SharpTreeView, IPane
+	public class AnalyzerTreeView : SharpTreeView, IPane
 	{
 		static AnalyzerTreeView instance;
-		
-		public static AnalyzerTreeView Instance {
-			get {
+
+		public static AnalyzerTreeView Instance
+		{
+			get
+			{
 				if (instance == null) {
 					App.Current.VerifyAccess();
 					instance = new AnalyzerTreeView();
@@ -47,42 +44,80 @@ namespace ICSharpCode.ILSpy
 				return instance;
 			}
 		}
-		
+
 		private AnalyzerTreeView()
 		{
 			this.ShowRoot = false;
-			this.Root = new AnalyzerTreeNode { Language = MainWindow.Instance.CurrentLanguage };
+			this.Root = new AnalyzerRootNode { Language = MainWindow.Instance.CurrentLanguage };
+			this.BorderThickness = new Thickness(0);
 			ContextMenuProvider.Add(this);
+			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
 		}
-		
+
+		void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (e.Action == NotifyCollectionChangedAction.Reset) {
+				this.Root.Children.Clear();
+			} else {
+				List<LoadedAssembly> removedAssemblies = new List<LoadedAssembly>();
+				if (e.OldItems != null)
+					removedAssemblies.AddRange(e.OldItems.Cast<LoadedAssembly>());
+				List<LoadedAssembly> addedAssemblies = new List<LoadedAssembly>();
+				if (e.NewItems != null)
+					addedAssemblies.AddRange(e.NewItems.Cast<LoadedAssembly>());
+				((AnalyzerRootNode)this.Root).HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
+			}
+		}
+
 		public void Show()
 		{
 			if (!IsVisible)
 				MainWindow.Instance.ShowInBottomPane("Analyzer", this);
 		}
-		
+
 		public void Show(AnalyzerTreeNode node)
 		{
 			Show();
-			
+
 			node.IsExpanded = true;
 			this.Root.Children.Add(node);
 			this.SelectedItem = node;
 			this.FocusNode(node);
 		}
 		
+		public void ShowOrFocus(AnalyzerTreeNode node)
+		{
+			if (node is AnalyzerEntityTreeNode) {
+				var an = node as AnalyzerEntityTreeNode;
+				var found = this.Root.Children.OfType<AnalyzerEntityTreeNode>().FirstOrDefault(n => n.Member == an.Member);
+				if (found != null) {
+					Show();
+					
+					found.IsExpanded = true;
+					this.SelectedItem = found;
+					this.FocusNode(found);
+					return;
+				}
+			}
+			Show(node);
+		}
+
 		void IPane.Closed()
 		{
 			this.Root.Children.Clear();
 		}
-	}
-	
-	[ExportMainMenuCommand(Menu = "_View", Header = "_Analyzer", MenuCategory = "ShowPane", MenuOrder = 100)]
-	sealed class ShowAnalyzerCommand : SimpleCommand
-	{
-		public override void Execute(object parameter)
+		
+		sealed class AnalyzerRootNode : AnalyzerTreeNode
 		{
-			AnalyzerTreeView.Instance.Show();
+			public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
+			{
+				this.Children.RemoveAll(
+					delegate(SharpTreeNode n) {
+						AnalyzerTreeNode an = n as AnalyzerTreeNode;
+						return an == null || !an.HandleAssemblyListChanged(removedAssemblies, addedAssemblies);
+					});
+				return true;
+			}
 		}
 	}
 }

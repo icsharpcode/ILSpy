@@ -99,6 +99,9 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				if (result != null)
 					return result;
 			}
+			AstNode simplifiedIfElse = SimplifyCascadingIfElseStatements(ifElseStatement);
+			if (simplifiedIfElse != null)
+				return simplifiedIfElse;
 			return base.VisitIfElseStatement(ifElseStatement, data);
 		}
 		
@@ -140,7 +143,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		/// </summary>
 		static readonly AstNode variableAssignPattern = new ExpressionStatement(
 			new AssignmentExpression(
-				new NamedNode("variable", new IdentifierExpression()),
+				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
 				new AnyNode("initializer")
 			));
 		
@@ -158,12 +161,12 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			FinallyBlock = new BlockStatement {
 				new Choice {
 					{ "valueType",
-						new ExpressionStatement(InvokeDispose(new NamedNode("ident", new IdentifierExpression())))
+						new ExpressionStatement(InvokeDispose(new NamedNode("ident", new IdentifierExpression(Pattern.AnyString))))
 					},
 					{ "referenceType",
 						new IfElseStatement {
 							Condition = new BinaryOperatorExpression(
-								new NamedNode("ident", new IdentifierExpression()),
+								new NamedNode("ident", new IdentifierExpression(Pattern.AnyString)),
 								BinaryOperatorType.InEquality,
 								new NullReferenceExpression()
 							),
@@ -227,6 +230,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 							Name = variableName,
 							Initializer = m1.Get<Expression>("initializer").Single().Detach()
 						}.CopyAnnotationsFrom(node.Expression)
+							.WithAnnotation(m1.Get<AstNode>("variable").Single().Annotation<ILVariable>())
 					}
 				}.CopyAnnotationsFrom(node);
 			} else {
@@ -318,6 +322,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					new NamedNode(
 						"enumeratorVariable",
 						new VariableInitializer {
+							Name = Pattern.AnyString,
 							Initializer = new AnyNode("collection").ToExpression().Invoke("GetEnumerator")
 						}
 					)
@@ -325,16 +330,19 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			},
 			EmbeddedStatement = new BlockStatement {
 				new Repeat(
-					new VariableDeclarationStatement { Type = new AnyNode(), Variables = { new VariableInitializer() } }.WithName("variablesOutsideLoop")
+					new VariableDeclarationStatement { Type = new AnyNode(), Variables = { new VariableInitializer(Pattern.AnyString) } }.WithName("variablesOutsideLoop")
 				).ToStatement(),
 				new WhileStatement {
 					Condition = new IdentifierExpressionBackreference("enumeratorVariable").ToExpression().Invoke("MoveNext"),
 					EmbeddedStatement = new BlockStatement {
 						new Repeat(
-							new VariableDeclarationStatement { Type = new AnyNode(), Variables = { new VariableInitializer() } }.WithName("variablesInsideLoop")
+							new VariableDeclarationStatement { 
+								Type = new AnyNode(), 
+								Variables = { new VariableInitializer(Pattern.AnyString) }
+							}.WithName("variablesInsideLoop")
 						).ToStatement(),
 						new AssignmentExpression {
-							Left = new IdentifierExpression().WithName("itemVariable"),
+							Left = new IdentifierExpression(Pattern.AnyString).WithName("itemVariable"),
 							Operator = AssignmentOperatorType.Assign,
 							Right = new IdentifierExpressionBackreference("enumeratorVariable").ToExpression().Member("Current")
 						},
@@ -382,7 +390,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				VariableName = itemVar.Identifier,
 				InExpression = m.Get<Expression>("collection").Single().Detach(),
 				EmbeddedStatement = newBody
-			};
+			}.WithAnnotation(itemVarDecl.Variables.Single().Annotation<ILVariable>());
 			if (foreachStatement.InExpression is BaseReferenceExpression) {
 				foreachStatement.InExpression = new ThisReferenceExpression().CopyAnnotationsFrom(foreachStatement.InExpression);
 			}
@@ -397,17 +405,17 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		#region foreach (non-generic)
 		ExpressionStatement getEnumeratorPattern = new ExpressionStatement(
 			new AssignmentExpression(
-				new NamedNode("left", new IdentifierExpression()),
+				new NamedNode("left", new IdentifierExpression(Pattern.AnyString)),
 				new AnyNode("collection").ToExpression().Invoke("GetEnumerator")
 			));
 		
 		TryCatchStatement nonGenericForeachPattern = new TryCatchStatement {
 			TryBlock = new BlockStatement {
 				new WhileStatement {
-					Condition = new IdentifierExpression().WithName("enumerator").Invoke("MoveNext"),
+					Condition = new IdentifierExpression(Pattern.AnyString).WithName("enumerator").Invoke("MoveNext"),
 					EmbeddedStatement = new BlockStatement {
 						new AssignmentExpression(
-							new IdentifierExpression().WithName("itemVar"),
+							new IdentifierExpression(Pattern.AnyString).WithName("itemVar"),
 							new Choice {
 								new Backreference("enumerator").ToExpression().Member("Current"),
 								new CastExpression {
@@ -422,7 +430,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			},
 			FinallyBlock = new BlockStatement {
 				new AssignmentExpression(
-					new IdentifierExpression().WithName("disposable"),
+					new IdentifierExpression(Pattern.AnyString).WithName("disposable"),
 					new Backreference("enumerator").ToExpression().CastAs(new TypePattern(typeof(IDisposable)))
 				),
 				new IfElseStatement {
@@ -471,10 +479,12 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			// We just care that we can move it in front of the loop:
 			if (declarationPoint != loop)
 				return null;
-			
-			ForeachStatement foreachStatement = new ForeachStatement();
-			foreachStatement.VariableType = itemVarDecl.Type.Clone();
-			foreachStatement.VariableName = itemVar.Identifier;
+
+			ForeachStatement foreachStatement = new ForeachStatement
+			{
+				VariableType = itemVarDecl.Type.Clone(),
+				VariableName = itemVar.Identifier,
+			}.WithAnnotation(itemVarDecl.Variables.Single().Annotation<ILVariable>());
 			BlockStatement body = new BlockStatement();
 			foreachStatement.EmbeddedStatement = body;
 			((BlockStatement)node.Parent).Statements.InsertBefore(node, foreachStatement);
@@ -508,7 +518,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		#region for
 		static readonly WhileStatement forPattern = new WhileStatement {
 			Condition = new BinaryOperatorExpression {
-				Left = new NamedNode("ident", new IdentifierExpression()),
+				Left = new NamedNode("ident", new IdentifierExpression(Pattern.AnyString)),
 				Operator = BinaryOperatorType.Any,
 				Right = new AnyNode("endExpr")
 			},
@@ -601,17 +611,18 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		#region lock
 		static readonly AstNode lockFlagInitPattern = new ExpressionStatement(
 			new AssignmentExpression(
-				new NamedNode("variable", new IdentifierExpression()),
+				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
 				new PrimitiveExpression(false)
 			));
 		
 		static readonly AstNode lockTryCatchPattern = new TryCatchStatement {
 			TryBlock = new BlockStatement {
+				new OptionalNode(new VariableDeclarationStatement()).ToStatement(),
 				new TypePattern(typeof(System.Threading.Monitor)).ToType().Invoke(
 					"Enter", new AnyNode("enter"),
 					new DirectionExpression {
 						FieldDirection = FieldDirection.Ref,
-						Expression = new NamedNode("flag", new IdentifierExpression())
+						Expression = new NamedNode("flag", new IdentifierExpression(Pattern.AnyString))
 					}),
 				new Repeat(new AnyNode()).ToStatement()
 			},
@@ -619,21 +630,57 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				new IfElseStatement {
 					Condition = new Backreference("flag"),
 					TrueStatement = new BlockStatement {
-						new TypePattern(typeof(System.Threading.Monitor)).ToType().Invoke("Exit", new NamedNode("exit", new IdentifierExpression()))
+						new TypePattern(typeof(System.Threading.Monitor)).ToType().Invoke("Exit", new AnyNode("exit"))
 					}
 				}
 			}};
+
+		static readonly AstNode oldMonitorCallPattern = new ExpressionStatement(
+			new TypePattern(typeof(System.Threading.Monitor)).ToType().Invoke("Enter", new AnyNode("enter"))
+		);
+
+		static readonly AstNode oldLockTryCatchPattern = new TryCatchStatement
+		{
+			TryBlock = new BlockStatement {
+				new Repeat(new AnyNode()).ToStatement()
+			},
+			FinallyBlock = new BlockStatement {
+				new TypePattern(typeof(System.Threading.Monitor)).ToType().Invoke("Exit", new AnyNode("exit"))
+			}
+		};
+
+		bool AnalyzeLockV2(ExpressionStatement node, out Expression enter, out Expression exit)
+		{
+			enter = null;
+			exit = null;
+			Match m1 = oldMonitorCallPattern.Match(node);
+			if (!m1.Success) return false;
+			Match m2 = oldLockTryCatchPattern.Match(node.NextSibling);
+			if (!m2.Success) return false;
+			enter = m1.Get<Expression>("enter").Single();
+			exit = m2.Get<Expression>("exit").Single();
+			return true;
+		}
+
+		bool AnalyzeLockV4(ExpressionStatement node, out Expression enter, out Expression exit)
+		{
+			enter = null;
+			exit = null;
+			Match m1 = lockFlagInitPattern.Match(node);
+			if (!m1.Success) return false;
+			Match m2 = lockTryCatchPattern.Match(node.NextSibling);
+			if (!m2.Success) return false;
+			enter = m2.Get<Expression>("enter").Single();
+			exit = m2.Get<Expression>("exit").Single();
+			return m1.Get<IdentifierExpression>("variable").Single().Identifier == m2.Get<IdentifierExpression>("flag").Single().Identifier;
+		}
 		
 		public LockStatement TransformLock(ExpressionStatement node)
 		{
-			Match m1 = lockFlagInitPattern.Match(node);
-			if (!m1.Success) return null;
-			AstNode tryCatch = node.NextSibling;
-			Match m2 = lockTryCatchPattern.Match(tryCatch);
-			if (!m2.Success) return null;
-			if (m1.Get<IdentifierExpression>("variable").Single().Identifier == m2.Get<IdentifierExpression>("flag").Single().Identifier) {
-				Expression enter = m2.Get<Expression>("enter").Single();
-				IdentifierExpression exit = m2.Get<IdentifierExpression>("exit").Single();
+			Expression enter, exit;
+			bool isV2 = AnalyzeLockV2(node, out enter, out exit);
+			if (isV2 || AnalyzeLockV4(node, out enter, out exit)) {
+				AstNode tryCatch = node.NextSibling;
 				if (!exit.IsMatch(enter)) {
 					// If exit and enter are not the same, then enter must be "exit = ..."
 					AssignmentExpression assign = enter as AssignmentExpression;
@@ -649,7 +696,8 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				LockStatement l = new LockStatement();
 				l.Expression = enter.Detach();
 				l.EmbeddedStatement = ((TryCatchStatement)tryCatch).TryBlock.Detach();
-				((BlockStatement)l.EmbeddedStatement).Statements.First().Remove(); // Remove 'Enter()' call
+				if (!isV2) // Remove 'Enter()' call
+					((BlockStatement)l.EmbeddedStatement).Statements.First().Remove(); 
 				tryCatch.ReplaceWith(l);
 				node.Remove(); // remove flag variable
 				return l;
@@ -677,10 +725,10 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				new IfElseStatement {
 					Condition = new Backreference("cachedDict").ToExpression().Invoke(
 						"TryGetValue",
-						new NamedNode("switchVar", new IdentifierExpression()),
+						new NamedNode("switchVar", new IdentifierExpression(Pattern.AnyString)),
 						new DirectionExpression {
 							FieldDirection = FieldDirection.Out,
-							Expression = new IdentifierExpression().WithName("intVar")
+							Expression = new IdentifierExpression(Pattern.AnyString).WithName("intVar")
 						}),
 					TrueStatement = new BlockStatement {
 						Statements = {
@@ -709,7 +757,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					return null;
 			}
 			FieldReference cachedDictField = m.Get<AstNode>("cachedDict").Single().Annotation<FieldReference>();
-			if (cachedDictField == null || !cachedDictField.DeclaringType.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+			if (cachedDictField == null)
 				return null;
 			List<Statement> dictCreation = m.Get<BlockStatement>("dictCreation").Single().Statements.ToList();
 			List<KeyValuePair<string, int>> dict = BuildDictionary(dictCreation);
@@ -758,6 +806,43 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		
 		List<KeyValuePair<string, int>> BuildDictionary(List<Statement> dictCreation)
 		{
+			if (context.Settings.ObjectOrCollectionInitializers && dictCreation.Count == 1)
+				return BuildDictionaryFromInitializer(dictCreation[0]);
+
+			return BuildDictionaryFromAddMethodCalls(dictCreation);
+		}
+
+		static readonly Statement assignInitializedDictionary = new ExpressionStatement {
+			Expression = new AssignmentExpression {
+				Left = new AnyNode().ToExpression(),
+				Right = new ObjectCreateExpression {
+					Type = new AnyNode(),
+					Arguments = { new Repeat(new AnyNode()) },
+					Initializer = new ArrayInitializerExpression {
+						Elements = { new Repeat(new AnyNode("dictJumpTable")) }
+					}
+				},
+			},
+		};
+
+		private List<KeyValuePair<string, int>> BuildDictionaryFromInitializer(Statement statement)
+		{
+			List<KeyValuePair<string, int>> dict = new List<KeyValuePair<string, int>>();
+			Match m = assignInitializedDictionary.Match(statement);
+			if (!m.Success)
+				return dict;
+
+			foreach (ArrayInitializerExpression initializer in m.Get<ArrayInitializerExpression>("dictJumpTable")) {
+				KeyValuePair<string, int> pair;
+				if (TryGetPairFrom(initializer.Elements, out pair))
+					dict.Add(pair);
+			}
+
+			return dict;
+		}
+
+		private static List<KeyValuePair<string, int>> BuildDictionaryFromAddMethodCalls(List<Statement> dictCreation)
+		{
 			List<KeyValuePair<string, int>> dict = new List<KeyValuePair<string, int>>();
 			for (int i = 0; i < dictCreation.Count; i++) {
 				ExpressionStatement es = dictCreation[i] as ExpressionStatement;
@@ -766,13 +851,27 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				InvocationExpression ie = es.Expression as InvocationExpression;
 				if (ie == null)
 					continue;
-				PrimitiveExpression arg1 = ie.Arguments.ElementAtOrDefault(0) as PrimitiveExpression;
-				PrimitiveExpression arg2 = ie.Arguments.ElementAtOrDefault(1) as PrimitiveExpression;
-				if (arg1 != null && arg2 != null && arg1.Value is string && arg2.Value is int)
-					dict.Add(new KeyValuePair<string, int>((string)arg1.Value, (int)arg2.Value));
+
+				KeyValuePair<string, int> pair;
+				if (TryGetPairFrom(ie.Arguments, out pair))
+					dict.Add(pair);
 			}
 			return dict;
 		}
+
+		private static bool TryGetPairFrom(AstNodeCollection<Expression> expressions, out KeyValuePair<string, int> pair)
+		{
+			PrimitiveExpression arg1 = expressions.ElementAtOrDefault(0) as PrimitiveExpression;
+			PrimitiveExpression arg2 = expressions.ElementAtOrDefault(1) as PrimitiveExpression;
+			if (arg1 != null && arg2 != null && arg1.Value is string && arg2.Value is int) {
+				pair = new KeyValuePair<string, int>((string)arg1.Value, (int)arg2.Value);
+				return true;
+			}
+
+			pair = default(KeyValuePair<string, int>);
+			return false;
+		}
+
 		#endregion
 		
 		#region Automatic Properties
@@ -781,6 +880,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			Modifiers = Modifiers.Any,
 			ReturnType = new AnyNode(),
 			PrivateImplementationType = new OptionalNode(new AnyNode()),
+			Name = Pattern.AnyString,
 			Getter = new Accessor {
 				Attributes = { new Repeat(new AnyNode()) },
 				Modifiers = Modifiers.Any,
@@ -838,24 +938,26 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		
 		#region Automatic Events
 		static readonly Accessor automaticEventPatternV4 = new Accessor {
+			Attributes = { new Repeat(new AnyNode()) },
 			Body = new BlockStatement {
 				new VariableDeclarationStatement { Type = new AnyNode("type"), Variables = { new AnyNode() } },
 				new VariableDeclarationStatement { Type = new Backreference("type"), Variables = { new AnyNode() } },
 				new VariableDeclarationStatement { Type = new Backreference("type"), Variables = { new AnyNode() } },
 				new AssignmentExpression {
-					Left = new NamedNode("var1", new IdentifierExpression()),
+					Left = new NamedNode("var1", new IdentifierExpression(Pattern.AnyString)),
 					Operator = AssignmentOperatorType.Assign,
 					Right = new NamedNode(
 						"field",
 						new MemberReferenceExpression {
-							Target = new Choice { new ThisReferenceExpression(), new TypeReferenceExpression { Type = new AnyNode() } }
+							Target = new Choice { new ThisReferenceExpression(), new TypeReferenceExpression { Type = new AnyNode() } },
+							MemberName = Pattern.AnyString
 						})
 				},
 				new DoWhileStatement {
 					EmbeddedStatement = new BlockStatement {
-						new AssignmentExpression(new NamedNode("var2", new IdentifierExpression()), new IdentifierExpressionBackreference("var1")),
+						new AssignmentExpression(new NamedNode("var2", new IdentifierExpression(Pattern.AnyString)), new IdentifierExpressionBackreference("var1")),
 						new AssignmentExpression {
-							Left = new NamedNode("var3", new IdentifierExpression()),
+							Left = new NamedNode("var3", new IdentifierExpression(Pattern.AnyString)),
 							Operator = AssignmentOperatorType.Assign,
 							Right = new AnyNode("delegateCombine").ToExpression().Invoke(
 								new IdentifierExpressionBackreference("var2"),
@@ -905,6 +1007,10 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				return null;
 			EventDeclaration ed = new EventDeclaration();
 			ev.Attributes.MoveTo(ed.Attributes);
+			foreach (var attr in ev.AddAccessor.Attributes) {
+				attr.AttributeTarget = "method";
+				ed.Attributes.Add(attr.Detach());
+			}
 			ed.ReturnType = ev.ReturnType.Detach();
 			ed.Modifiers = ev.Modifiers;
 			ed.Variables.Add(new VariableInitializer(ev.Name));
@@ -982,32 +1088,35 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			return null;
 		}
 		#endregion
-		
-		#region Pattern Matching Helpers
-		sealed class TypePattern : Pattern
+
+		#region Simplify cascading if-else-if statements
+		static readonly IfElseStatement cascadingIfElsePattern = new IfElseStatement
 		{
-			readonly string ns;
-			readonly string name;
-			
-			public TypePattern(Type type)
-			{
-				this.ns = type.Namespace;
-				this.name = type.Name;
+			Condition = new AnyNode(),
+			TrueStatement = new AnyNode(),
+			FalseStatement = new BlockStatement {
+				Statements = {
+					new NamedNode(
+						"nestedIfStatement",
+						new IfElseStatement {
+							Condition = new AnyNode(),
+							TrueStatement = new AnyNode(),
+							FalseStatement = new OptionalNode(new AnyNode())
+						}
+					)
+				}
+			}
+		};
+
+		AstNode SimplifyCascadingIfElseStatements(IfElseStatement node)
+		{
+			Match m = cascadingIfElsePattern.Match(node);
+			if (m.Success) {
+				IfElseStatement elseIf = m.Get<IfElseStatement>("nestedIfStatement").Single();
+				node.FalseStatement = elseIf.Detach();
 			}
 			
-			public override bool DoMatch(INode other, Match match)
-			{
-				AstNode o = other as AstNode;
-				if (o == null)
-					return false;
-				TypeReference tr = o.Annotation<TypeReference>();
-				return tr != null && tr.Namespace == ns && tr.Name == name;
-			}
-			
-			public override S AcceptVisitor<T, S>(IPatternAstVisitor<T, S> visitor, T data)
-			{
-				throw new NotImplementedException();
-			}
+			return null;
 		}
 		#endregion
 	}

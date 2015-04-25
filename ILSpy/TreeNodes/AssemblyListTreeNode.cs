@@ -132,6 +132,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		#region Find*Node
 
+		public AssemblyTreeNode FindAssemblyNode(ModuleDefinition module)
+		{
+			if (module == null)
+				return null;
+			App.Current.Dispatcher.VerifyAccess();
+			foreach (AssemblyTreeNode node in this.Children) {
+				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.ModuleDefinition == module)
+					return node;
+			}
+			return null;
+		}
+		
 		public AssemblyTreeNode FindAssemblyNode(AssemblyDefinition asm)
 		{
 			if (asm == null)
@@ -183,7 +195,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// Looks up the method node corresponding to the method definition.
 		/// Returns null if no matching node is found.
 		/// </summary>
-		public SharpTreeNode FindMethodNode(MethodDefinition def)
+		public ILSpyTreeNode FindMethodNode(MethodDefinition def)
 		{
 			if (def == null)
 				return null;
@@ -203,8 +215,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					p.EnsureLazyChildren();
 					methodNode = p.Children.OfType<MethodTreeNode>().FirstOrDefault(m => m.MethodDefinition == def);
 					if (methodNode != null) {
-						/// If the requested method is a property or event accessor, and accessors are
-						/// hidden in the UI, then return the owning property or event.
+						// If the requested method is a property or event accessor, and accessors are
+						// hidden in the UI, then return the owning property or event.
 						if (methodNode.IsHidden)
 							return p;
 						else

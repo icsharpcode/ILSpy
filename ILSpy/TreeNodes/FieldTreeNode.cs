@@ -44,7 +44,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override object Text
 		{
-			get { return HighlightSearchMatch(field.Name, " : " + this.Language.TypeToString(field.FieldType, false, field)); }
+			get {
+				return HighlightSearchMatch(
+					field.Name,
+					" : " + this.Language.TypeToString(field.FieldType, false, field) + field.MetadataToken.ToSuffixString()
+				);
+			}
 		}
 
 		public override object Icon
@@ -59,10 +64,29 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			if (field.IsLiteral)
 				return Images.GetIcon(MemberIcon.Literal, GetOverlayIcon(field.Attributes), false);
-			else if (field.IsInitOnly)
-				return Images.GetIcon(MemberIcon.FieldReadOnly, GetOverlayIcon(field.Attributes), field.IsStatic);
-			else
+			else if (field.IsInitOnly) {
+				if (IsDecimalConstant(field))
+					return Images.GetIcon(MemberIcon.Literal, GetOverlayIcon(field.Attributes), false);
+				else
+					return Images.GetIcon(MemberIcon.FieldReadOnly, GetOverlayIcon(field.Attributes), field.IsStatic);
+			} else
 				return Images.GetIcon(MemberIcon.Field, GetOverlayIcon(field.Attributes), field.IsStatic);
+		}
+
+		private static bool IsDecimalConstant(FieldDefinition field)
+		{
+			var fieldType = field.FieldType;
+			if (fieldType.Name == "Decimal" && fieldType.Namespace == "System") {
+				if (field.HasCustomAttributes) {
+					var attrs = field.CustomAttributes;
+					for (int i = 0; i < attrs.Count; i++) {
+						var attrType = attrs[i].AttributeType;
+						if (attrType.Name == "DecimalConstantAttribute" && attrType.Namespace == "System.Runtime.CompilerServices")
+							return true;
+					}
+				}
+			}
+			return false;
 		}
 
 		private static AccessOverlayIcon GetOverlayIcon(FieldAttributes fieldAttributes)
@@ -74,10 +98,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case FieldAttributes.FamANDAssem:
 					return AccessOverlayIcon.Internal;
 				case FieldAttributes.Family:
-				case FieldAttributes.FamORAssem:
 					return AccessOverlayIcon.Protected;
-				default:
+				case FieldAttributes.FamORAssem:
+					return AccessOverlayIcon.ProtectedInternal;
+				case FieldAttributes.Private:
 					return AccessOverlayIcon.Private;
+				case FieldAttributes.CompilerControlled:
+					return AccessOverlayIcon.CompilerControlled;
+				default:
+					throw new NotSupportedException();
 			}
 		}
 
@@ -93,19 +122,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			language.DecompileField(field, output, options);
 		}
+		
+		public override bool IsPublicAPI {
+			get {
+				return field.IsPublic || field.IsFamily || field.IsFamilyOrAssembly;
+			}
+		}
 
 		MemberReference IMemberTreeNode.Member
 		{
 			get { return field; }
 		}
-
-        public override bool IsPublicAccess()
-        {
-            if (field != null)
-            {
-                return field.IsPublic;
-            }
-            return true;
-        }
-    }
+	}
 }

@@ -99,13 +99,14 @@ namespace Mono.Cecil.PE {
 			// Characteristics		2
 			ushort characteristics = ReadUInt16 ();
 
-			ushort subsystem;
-			ReadOptionalHeaders (out subsystem);
+			ushort subsystem, dll_characteristics;
+			ReadOptionalHeaders (out subsystem, out dll_characteristics);
 			ReadSections (sections);
 			ReadCLIHeader ();
 			ReadMetadata ();
 
 			image.Kind = GetModuleKind (characteristics, subsystem);
+			image.Characteristics = (ModuleCharacteristics) dll_characteristics;
 		}
 
 		TargetArchitecture ReadArchitecture ()
@@ -118,6 +119,8 @@ namespace Mono.Cecil.PE {
 				return TargetArchitecture.AMD64;
 			case 0x0200:
 				return TargetArchitecture.IA64;
+			case 0x01c4:
+				return TargetArchitecture.ARMv7;
 			}
 
 			throw new NotSupportedException ();
@@ -134,7 +137,7 @@ namespace Mono.Cecil.PE {
 			return ModuleKind.Console;
 		}
 
-		void ReadOptionalHeaders (out ushort subsystem)
+		void ReadOptionalHeaders (out ushort subsystem, out ushort dll_characteristics)
 		{
 			// - PEOptionalHeader
 			//   - StandardFieldsHeader
@@ -174,6 +177,7 @@ namespace Mono.Cecil.PE {
 			subsystem = ReadUInt16 ();
 
 			// DLLFlags				2
+			dll_characteristics = ReadUInt16 ();
 			// StackReserveSize		4 || 8
 			// StackCommitSize		4 || 8
 			// HeapReserveSize		4 || 8
@@ -190,7 +194,7 @@ namespace Mono.Cecil.PE {
 			// CertificateTable		8
 			// BaseRelocationTable	8
 
-			Advance (pe64 ? 90 : 74);
+			Advance (pe64 ? 88 : 72);
 
 			// Debug				8
 			image.Debug = ReadDataDirectory ();
@@ -276,9 +280,6 @@ namespace Mono.Cecil.PE {
 
 				sections [i] = section;
 
-				if (section.Name == ".reloc")
-					continue;
-
 				ReadSectionData (section);
 			}
 
@@ -323,6 +324,7 @@ namespace Mono.Cecil.PE {
 			// Resources				8
 			image.Resources = ReadDataDirectory ();
 			// StrongNameSignature		8
+			image.StrongName = ReadDataDirectory ();
 			// CodeManagerTable			8
 			// VTableFixups				8
 			// ExportAddressTableJumps	8

@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			} else {
 				// The ECMA specification says that ' inside SQString should be ecaped using an octal escape sequence,
 				// but we follow Microsoft's ILDasm and use \'.
-				return "'" + NRefactory.CSharp.OutputVisitor.ConvertString(identifier).Replace("'", "\\'") + "'";
+				return "'" + NRefactory.CSharp.TextWriterTokenWriter.ConvertString(identifier).Replace("'", "\\'") + "'";
 			}
 		}
 		
@@ -353,12 +353,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 			
 			string s = operand as string;
 			if (s != null) {
-				writer.Write("\"" + NRefactory.CSharp.OutputVisitor.ConvertString(s) + "\"");
+				writer.Write("\"" + NRefactory.CSharp.TextWriterTokenWriter.ConvertString(s) + "\"");
 			} else if (operand is char) {
 				writer.Write(((int)(char)operand).ToString());
 			} else if (operand is float) {
 				float val = (float)operand;
 				if (val == 0) {
+					if (1 / val == float.NegativeInfinity) {
+						// negative zero is a special case
+						writer.Write('-');
+					}
 					writer.Write("0.0");
 				} else if (float.IsInfinity(val) || float.IsNaN(val)) {
 					byte[] data = BitConverter.GetBytes(val);
@@ -375,6 +379,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 			} else if (operand is double) {
 				double val = (double)operand;
 				if (val == 0) {
+					if (1 / val == double.NegativeInfinity) {
+						// negative zero is a special case
+						writer.Write('-');
+					}
 					writer.Write("0.0");
 				} else if (double.IsInfinity(val) || double.IsNaN(val)) {
 					byte[] data = BitConverter.GetBytes(val);

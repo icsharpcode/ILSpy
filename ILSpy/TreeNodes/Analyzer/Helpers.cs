@@ -17,12 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using ICSharpCode.Decompiler;
 using Mono.Cecil;
-using ICSharpCode.Decompiler.ILAst;
 using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
@@ -67,26 +64,35 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				return FindMethodUsageInType(method.DeclaringType, method) ?? method;
 			}
 
-			var typeUsage = GetOriginalCodeLocation(method.DeclaringType, method);
+			var typeUsage = GetOriginalCodeLocation(method.DeclaringType);
 
 			return typeUsage ?? method;
 		}
-		public static MethodDefinition GetOriginalCodeLocation(TypeDefinition type, MethodDefinition method)
+		
+		/// <summary>
+		/// Given a compiler-generated type, returns the method where that type is used.
+		/// Used to detect the 'parent method' for a lambda/iterator/async state machine.
+		/// </summary>
+		public static MethodDefinition GetOriginalCodeLocation(TypeDefinition type)
 		{
 			if (type != null && type.DeclaringType != null && type.IsCompilerGenerated()) {
-				MethodDefinition constructor = GetTypeConstructor(type);
-				return FindMethodUsageInType(type.DeclaringType, constructor);
+				if (type.IsValueType) {
+					// Value types might not have any constructor; but they must be stored in a local var
+					// because 'initobj' (or 'call .ctor') expects a managed ref.
+					return FindVariableOfTypeUsageInType(type.DeclaringType, type);
+				} else {
+					MethodDefinition constructor = GetTypeConstructor(type);
+					if (constructor == null)
+						return null;
+					return FindMethodUsageInType(type.DeclaringType, constructor);
+				}
 			}
 			return null;
 		}
 
 		private static MethodDefinition GetTypeConstructor(TypeDefinition type)
 		{
-			foreach (MethodDefinition method in type.Methods) {
-				if (method.Name == ".ctor")
-					return method;
-			}
-			return null;
+			return type.Methods.FirstOrDefault(method => method.Name == ".ctor");
 		}
 
 		private static MethodDefinition FindMethodUsageInType(TypeDefinition type, MethodDefinition analyzedMethod)
@@ -99,8 +105,29 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				foreach (Instruction instr in method.Body.Instructions) {
 					MethodReference mr = instr.Operand as MethodReference;
 					if (mr != null && mr.Name == name &&
-						Helpers.IsReferencedBy(analyzedMethod.DeclaringType, mr.DeclaringType) &&
+						IsReferencedBy(analyzedMethod.DeclaringType, mr.DeclaringType) &&
 						mr.Resolve() == analyzedMethod) {
+						found = true;
+						break;
+					}
+				}
+
+				method.Body = null;
+
+				if (found)
+					return method;
+			}
+			return null;
+		}
+		
+		private static MethodDefinition FindVariableOfTypeUsageInType(TypeDefinition type, TypeDefinition variableType)
+		{
+			foreach (MethodDefinition method in type.Methods) {
+				bool found = false;
+				if (!method.HasBody)
+					continue;
+				foreach (var v in method.Body.Variables) {
+					if (v.VariableType.ResolveWithinSameModule() == variableType) {
 						found = true;
 						break;
 					}

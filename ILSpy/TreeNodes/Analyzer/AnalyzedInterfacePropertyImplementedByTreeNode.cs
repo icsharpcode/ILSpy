@@ -21,16 +21,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler.Ast;
-using ICSharpCode.TreeView;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedInterfacePropertyImplementedByTreeNode : AnalyzerTreeNode
+	internal sealed class AnalyzedInterfacePropertyImplementedByTreeNode : AnalyzerSearchTreeNode
 	{
 		private readonly PropertyDefinition analyzedProperty;
 		private readonly MethodDefinition analyzedMethod;
-		private readonly ThreadingSupport threading;
 
 		public AnalyzedInterfacePropertyImplementedByTreeNode(PropertyDefinition analyzedProperty)
 		{
@@ -39,8 +37,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 			this.analyzedProperty = analyzedProperty;
 			this.analyzedMethod = this.analyzedProperty.GetMethod ?? this.analyzedProperty.SetMethod;
-			this.threading = new ThreadingSupport();
-			this.LazyLoading = true;
 		}
 
 		public override object Text
@@ -48,33 +44,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			get { return "Implemented By"; }
 		}
 
-		public override object Icon
+		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			get { return Images.Search; }
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedMethod, FindReferencesInType);
+			return analyzer.PerformAnalysis(ct).OrderBy(n => n.Text);
 		}
 
-		protected override void LoadChildren()
-		{
-			threading.LoadChildren(this, FetchChildren);
-		}
-
-		protected override void OnCollapsing()
-		{
-			if (threading.IsRunning) {
-				this.LazyLoading = true;
-				threading.Cancel();
-				this.Children.Clear();
-			}
-		}
-
-		private IEnumerable<SharpTreeNode> FetchChildren(CancellationToken ct)
-		{
-			ScopedWhereUsedAnalyzer<SharpTreeNode> analyzer;
-			analyzer = new ScopedWhereUsedAnalyzer<SharpTreeNode>(analyzedMethod, FindReferencesInType);
-			return analyzer.PerformAnalysis(ct);
-		}
-
-		private IEnumerable<SharpTreeNode> FindReferencesInType(TypeDefinition type)
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
 			if (!type.HasInterfaces)
 				yield break;
@@ -84,15 +60,20 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 			foreach (PropertyDefinition property in type.Properties.Where(e => e.Name == analyzedProperty.Name)) {
 				MethodDefinition accessor = property.GetMethod ?? property.SetMethod;
-				if (TypesHierarchyHelpers.MatchInterfaceMethod(accessor, analyzedMethod, implementedInterfaceRef))
-					yield return new AnalyzedPropertyTreeNode(property);
+				if (TypesHierarchyHelpers.MatchInterfaceMethod(accessor, analyzedMethod, implementedInterfaceRef)) {
+					var node = new AnalyzedPropertyTreeNode(property);
+					node.Language = this.Language;
+					yield return node;
+				}
 				yield break;
 			}
 
 			foreach (PropertyDefinition property in type.Properties.Where(e => e.Name.EndsWith(analyzedProperty.Name))) {
 				MethodDefinition accessor = property.GetMethod ?? property.SetMethod;
 				if (accessor.HasOverrides && accessor.Overrides.Any(m => m.Resolve() == analyzedMethod)) {
-					yield return new AnalyzedPropertyTreeNode(property);
+					var node = new AnalyzedPropertyTreeNode(property);
+					node.Language = this.Language;
+					yield return node;
 				}
 			}
 		}

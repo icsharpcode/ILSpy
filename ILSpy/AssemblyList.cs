@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -26,8 +25,6 @@ using System.IO;
 using System.Linq;
 using System.Windows.Threading;
 using System.Xml.Linq;
-using ICSharpCode.ILSpy.TreeNodes;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {
@@ -40,6 +37,9 @@ namespace ICSharpCode.ILSpy
 		
 		/// <summary>Dirty flag, used to mark modifications so that the list is saved later</summary>
 		bool dirty;
+		
+		internal readonly ConcurrentDictionary<string, LoadedAssembly> assemblyLookupCache = new ConcurrentDictionary<string, LoadedAssembly>();
+		internal readonly ConcurrentDictionary<string, LoadedAssembly> winRTMetadataLookupCache = new ConcurrentDictionary<string, LoadedAssembly>();
 		
 		/// <summary>
 		/// The assemblies in this list.
@@ -88,7 +88,7 @@ namespace ICSharpCode.ILSpy
 			return new XElement(
 				"List",
 				new XAttribute("name", this.ListName),
-				assemblies.Select(asm => new XElement("Assembly", asm.FileName))
+				assemblies.Where(asm => !asm.IsAutoLoaded).Select(asm => new XElement("Assembly", asm.FileName))
 			);
 		}
 		
@@ -101,8 +101,25 @@ namespace ICSharpCode.ILSpy
 		
 		void Assemblies_CollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
 		{
+			ClearCache();
 			// Whenever the assembly list is modified, mark it as dirty
 			// and enqueue a task that saves it once the UI has finished modifying the assembly list.
+			if (!dirty) {
+				dirty = true;
+				App.Current.Dispatcher.BeginInvoke(
+					DispatcherPriority.Background,
+					new Action(
+						delegate {
+							dirty = false;
+							AssemblyListManager.SaveList(this);
+							ClearCache();
+						})
+				);
+			}
+		}
+
+		internal void RefreshSave()
+		{
 			if (!dirty) {
 				dirty = true;
 				App.Current.Dispatcher.BeginInvoke(
@@ -116,11 +133,17 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		
+		internal void ClearCache()
+		{
+			assemblyLookupCache.Clear();
+			winRTMetadataLookupCache.Clear();
+		}
+		
 		/// <summary>
 		/// Opens an assembly from disk.
 		/// Returns the existing assembly node if it is already loaded.
 		/// </summary>
-		public LoadedAssembly OpenAssembly(string file)
+		public LoadedAssembly OpenAssembly(string file, bool isAutoLoaded=false)
 		{
 			App.Current.Dispatcher.VerifyAccess();
 			
@@ -132,8 +155,33 @@ namespace ICSharpCode.ILSpy
 			}
 			
 			var newAsm = new LoadedAssembly(this, file);
+			newAsm.IsAutoLoaded = isAutoLoaded;
 			lock (assemblies) {
 				this.assemblies.Add(newAsm);
+			}
+			return newAsm;
+		}
+
+		/// <summary>
+		/// Replace the assembly object model from a crafted stream, without disk I/O
+		/// Returns null if it is not already loaded.
+		/// </summary>
+		public LoadedAssembly HotReplaceAssembly(string file, Stream stream)
+		{
+			App.Current.Dispatcher.VerifyAccess();
+			file = Path.GetFullPath(file);
+
+			var target = this.assemblies.FirstOrDefault(asm => file.Equals(asm.FileName, StringComparison.OrdinalIgnoreCase));
+			if (target == null)
+				return null;
+
+			var index = this.assemblies.IndexOf(target);
+			var newAsm = new LoadedAssembly(this, file, stream);
+			newAsm.IsAutoLoaded = target.IsAutoLoaded;
+			lock (assemblies)
+			{
+				this.assemblies.Remove(target);
+				this.assemblies.Insert(index, newAsm);
 			}
 			return newAsm;
 		}
@@ -144,6 +192,20 @@ namespace ICSharpCode.ILSpy
 			lock (assemblies) {
 				assemblies.Remove(assembly);
 			}
+			RequestGC();
+		}
+		
+		static bool gcRequested;
+		
+		void RequestGC()
+		{
+			if (gcRequested) return;
+			gcRequested = true;
+			App.Current.Dispatcher.BeginInvoke(DispatcherPriority.ContextIdle, new Action(
+				delegate {
+					gcRequested = false;
+					GC.Collect();
+				}));
 		}
 		
 		public void Sort(IComparer<LoadedAssembly> comparer)

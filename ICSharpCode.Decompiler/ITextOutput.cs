@@ -18,20 +18,24 @@
 
 using System;
 using System.IO;
+using ICSharpCode.NRefactory;
+using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler
 {
 	public interface ITextOutput
 	{
-		int CurrentLine { get; }
+		TextLocation Location { get; }
 		
 		void Indent();
 		void Unindent();
 		void Write(char ch);
 		void Write(string text);
 		void WriteLine();
-		void WriteDefinition(string text, object definition);
-		void WriteReference(string text, object reference);
+		void WriteDefinition(string text, object definition, bool isLocal = true);
+		void WriteReference(string text, object reference, bool isLocal = false);
+		
+		void AddDebugSymbols(MethodDebugSymbols methodDebugSymbols);
 		
 		void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false);
 		void MarkFoldEnd();

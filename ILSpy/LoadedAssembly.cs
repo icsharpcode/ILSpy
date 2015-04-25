@@ -18,10 +18,9 @@
 
 using System;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
-
+using ICSharpCode.ILSpy.Options;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
@@ -31,12 +30,12 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	public sealed class LoadedAssembly
 	{
-		readonly Task<AssemblyDefinition> assemblyTask;
+		readonly Task<ModuleDefinition> assemblyTask;
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
-		string shortName;
+		readonly string shortName;
 		
-		public LoadedAssembly(AssemblyList assemblyList, string fileName)
+		public LoadedAssembly(AssemblyList assemblyList, string fileName, Stream stream = null)
 		{
 			if (assemblyList == null)
 				throw new ArgumentNullException("assemblyList");
@@ -45,21 +44,32 @@ namespace ICSharpCode.ILSpy
 			this.assemblyList = assemblyList;
 			this.fileName = fileName;
 			
-			this.assemblyTask = Task.Factory.StartNew<AssemblyDefinition>(LoadAssembly); // requires that this.fileName is set
+			this.assemblyTask = Task.Factory.StartNew<ModuleDefinition>(LoadAssembly, stream); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
 		}
 		
 		/// <summary>
-		/// Gets the Cecil AssemblyDefinition.
+		/// Gets the Cecil ModuleDefinition.
 		/// Can be null when there was a load error.
 		/// </summary>
-		public AssemblyDefinition AssemblyDefinition {
+		public ModuleDefinition ModuleDefinition {
 			get {
 				try {
 					return assemblyTask.Result;
 				} catch (AggregateException) {
 					return null;
 				}
+			}
+		}
+		
+		/// <summary>
+		/// Gets the Cecil AssemblyDefinition.
+		/// Is null when there was a load error; or when opening a netmodule.
+		/// </summary>
+		public AssemblyDefinition AssemblyDefinition {
+			get {
+				var module = this.ModuleDefinition;
+				return module != null ? module.Assembly : null;
 			}
 		}
 		
@@ -74,6 +84,16 @@ namespace ICSharpCode.ILSpy
 		public string ShortName {
 			get { return shortName; }
 		}
+
+		public string Text {
+			get {
+				if (AssemblyDefinition != null) {
+					return String.Format("{0} ({1})", ShortName, AssemblyDefinition.Name.Version);
+				} else {
+					return ShortName;
+				}
+			}
+		}
 		
 		public bool IsLoaded {
 			get { return assemblyTask.IsCompleted; }
@@ -82,23 +102,39 @@ namespace ICSharpCode.ILSpy
 		public bool HasLoadError {
 			get { return assemblyTask.IsFaulted; }
 		}
-		
-		AssemblyDefinition LoadAssembly()
+
+		public bool IsAutoLoaded { get; set; }
+
+		ModuleDefinition LoadAssembly(object state)
 		{
+			var stream = state as Stream;
+			ModuleDefinition module;
+
 			// runs on background thread
 			ReaderParameters p = new ReaderParameters();
 			p.AssemblyResolver = new MyAssemblyResolver(this);
-			AssemblyDefinition asm = AssemblyDefinition.ReadAssembly(fileName, p);
+
+			if (stream != null)
+			{
+				// Read the module from a precrafted stream
+				module = ModuleDefinition.ReadModule(stream, p);
+			}
+			else
+			{
+				// Read the module from disk (by default)
+				module = ModuleDefinition.ReadModule(fileName, p);
+			}
+
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
 				try {
-					LoadSymbols(asm.MainModule);
+					LoadSymbols(module);
 				} catch (IOException) {
 				} catch (UnauthorizedAccessException) {
 				} catch (InvalidOperationException) {
 					// ignore any errors during symbol loading
 				}
 			}
-			return asm;
+			return module;
 		}
 		
 		private void LoadSymbols(ModuleDefinition module)
@@ -133,6 +169,8 @@ namespace ICSharpCode.ILSpy
 				if (!disposed) {
 					disposed = true;
 					assemblyLoadDisableCount--;
+					// clear the lookup cache since we might have stored the lookups failed due to DisableAssemblyLoad()
+					MainWindow.Instance.CurrentAssemblyList.ClearCache();
 				}
 			}
 		}
@@ -148,13 +186,13 @@ namespace ICSharpCode.ILSpy
 			
 			public AssemblyDefinition Resolve(AssemblyNameReference name)
 			{
-				var node = parent.LookupReferencedAssembly(name.FullName);
+				var node = parent.LookupReferencedAssembly(name);
 				return node != null ? node.AssemblyDefinition : null;
 			}
 			
 			public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
 			{
-				var node = parent.LookupReferencedAssembly(name.FullName);
+				var node = parent.LookupReferencedAssembly(name);
 				return node != null ? node.AssemblyDefinition : null;
 			}
 			
@@ -171,7 +209,28 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		
+		public IAssemblyResolver GetAssemblyResolver()
+		{
+			return new MyAssemblyResolver(this);
+		}
+		
+		public LoadedAssembly LookupReferencedAssembly(AssemblyNameReference name)
+		{
+			if (name == null)
+				throw new ArgumentNullException("name");
+			if (name.IsWindowsRuntime) {
+				return assemblyList.winRTMetadataLookupCache.GetOrAdd(name.Name, LookupWinRTMetadata);
+			} else {
+				return assemblyList.assemblyLookupCache.GetOrAdd(name.FullName, LookupReferencedAssemblyInternal);
+			}
+		}
+		
 		public LoadedAssembly LookupReferencedAssembly(string fullName)
+		{
+			return assemblyList.assemblyLookupCache.GetOrAdd(fullName, LookupReferencedAssemblyInternal);
+		}
+		
+		LoadedAssembly LookupReferencedAssemblyInternal(string fullName)
 		{
 			foreach (LoadedAssembly asm in assemblyList.GetAssemblies()) {
 				if (asm.AssemblyDefinition != null && fullName.Equals(asm.AssemblyDefinition.FullName, StringComparison.OrdinalIgnoreCase))
@@ -195,20 +254,47 @@ namespace ICSharpCode.ILSpy
 					file = Path.Combine(dir, name.Name + ".exe");
 			}
 			if (file != null) {
-				return assemblyList.OpenAssembly(file);
+				var loaded = assemblyList.OpenAssembly(file, true);
+				return loaded;
 			} else {
 				return null;
 			}
 		}
 		
-		public Task ContinueWhenLoaded(Action<Task<AssemblyDefinition>> onAssemblyLoaded, TaskScheduler taskScheduler)
+		LoadedAssembly LookupWinRTMetadata(string name)
+		{
+			foreach (LoadedAssembly asm in assemblyList.GetAssemblies()) {
+				if (asm.AssemblyDefinition != null && name.Equals(asm.AssemblyDefinition.Name.Name, StringComparison.OrdinalIgnoreCase))
+					return asm;
+			}
+			if (assemblyLoadDisableCount > 0)
+				return null;
+			if (!App.Current.Dispatcher.CheckAccess()) {
+				// Call this method on the GUI thread.
+				return (LoadedAssembly)App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Func<string, LoadedAssembly>(LookupWinRTMetadata), name);
+			}
+			
+			string file = Path.Combine(Environment.SystemDirectory, "WinMetadata", name + ".winmd");
+			if (File.Exists(file)) {
+				return assemblyList.OpenAssembly(file, true);
+			} else {
+				return null;
+			}
+		}
+		
+		public Task ContinueWhenLoaded(Action<Task<ModuleDefinition>> onAssemblyLoaded, TaskScheduler taskScheduler)
 		{
 			return this.assemblyTask.ContinueWith(onAssemblyLoaded, taskScheduler);
 		}
 		
+		/// <summary>
+		/// Wait until the assembly is loaded.
+		/// Throws an AggregateException when loading the assembly fails.
+		/// </summary>
 		public void WaitUntilLoaded()
 		{
 			assemblyTask.Wait();
 		}
+
 	}
 }

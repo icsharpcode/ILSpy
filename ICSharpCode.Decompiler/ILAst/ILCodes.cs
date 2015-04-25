@@ -247,12 +247,22 @@ namespace ICSharpCode.Decompiler.ILAst
 		Readonly,
 		
 		// Virtual codes - defined for convenience
+		Cne,
+		Cge,
+		Cge_Un,
+		Cle,
+		Cle_Un,
 		Ldexception,  // Operand holds the CatchType for catch handler, null for filter
 		LogicNot,
 		LogicAnd,
 		LogicOr,
 		NullCoalescing,
 		InitArray, // Array Initializer
+
+		/// <summary>
+		/// Defines a barrier between the parent expression and the argument expression that prevents combining them
+		/// </summary>
+		Wrap,
 		
 		// new Class { Prop = 1, Collection = { { 2, 3 }, {4, 5} }}
 		// is represented as:
@@ -261,8 +271,8 @@ namespace ICSharpCode.Decompiler.ILAst
 		//            InitCollection(CallGetter(Collection, InitializedObject))),
 		//                           Call(Add, InitializedObject, 2, 3),
 		//                           Call(Add, InitializedObject, 4, 5)))
-		InitObject, // Object initializer: first arg is newobj, remaining args are the initializing statements
-		InitCollection, // Collection initializer: first arg is newobj, remaining args are the initializing statements
+		InitObject, // Object initializer: first arg is newobj/defaultvalue, remaining args are the initializing statements
+		InitCollection, // Collection initializer: first arg is newobj/defaultvalue, remaining args are the initializing statements
 		InitializedObject, // Refers the the object being initialized (refers to first arg in parent InitObject or InitCollection instruction)
 		
 		TernaryOp, // ?:
@@ -306,7 +316,28 @@ namespace ICSharpCode.Decompiler.ILAst
 		/// Used for postincrement for properties, and to represent the Address() method on multi-dimensional arrays.
 		/// Also used when inlining a method call on a value type: "stloc(v, ...); call(M, ldloca(v));" becomes "call(M, AddressOf(...))"
 		/// </remarks>
-		AddressOf
+		AddressOf,
+		/// <summary>Simulates getting the value of a lifted operator's nullable argument</summary>
+		/// <remarks>
+		/// For example "stloc(v1, ...); stloc(v2, ...); logicand(ceq(call(Nullable`1::GetValueOrDefault, ldloca(v1)), ldloc(v2)), callgetter(Nullable`1::get_HasValue, ldloca(v1)))" becomes "wrap(ceq(ValueOf(...), ...))"
+		/// </remarks>
+		ValueOf,
+		/// <summary>Simulates creating a new nullable value from a value type argument</summary>
+		/// <remarks>
+		/// For example "stloc(v1, ...); stloc(v2, ...); ternaryop(callgetter(Nullable`1::get_HasValue, ldloca(v1)), newobj(Nullable`1::.ctor, add(call(Nullable`1::GetValueOrDefault, ldloca(v1)), ldloc(v2))), defaultvalue(Nullable`1))"
+		/// becomes "NullableOf(add(valueof(...), ...))"
+		/// </remarks>
+		NullableOf,
+		/// <summary>
+		/// Declares parameters that are used in an expression tree.
+		/// The last child of this node is the call constructing the expression tree, all other children are the
+		/// assignments to the ParameterExpression variables.
+		/// </summary>
+		ExpressionTreeParameterDeclarations,
+		/// <summary>
+		/// C# 5 await
+		/// </summary>
+		Await
 	}
 	
 	public static class ILCodeUtil

@@ -32,6 +32,9 @@ namespace ICSharpCode.ILSpy
 			image.Freeze();
 			return image;
 		}
+		
+		public static readonly BitmapImage Breakpoint = LoadBitmap("Breakpoint");
+		public static readonly BitmapImage CurrentLine = LoadBitmap("CurrentLine");
 
 		public static readonly BitmapImage ViewCode = LoadBitmap("ViewCode");
 		public static readonly BitmapImage Save = LoadBitmap("SaveFile");
@@ -59,6 +62,9 @@ namespace ICSharpCode.ILSpy
 		public static readonly BitmapImage Resource = LoadBitmap("Resource");
 		public static readonly BitmapImage ResourceImage = LoadBitmap("ResourceImage");
 		public static readonly BitmapImage ResourceResourcesFile = LoadBitmap("ResourceResourcesFile");
+		public static readonly BitmapImage ResourceXml = LoadBitmap("ResourceXml");
+		public static readonly BitmapImage ResourceXsd = LoadBitmap("ResourceXsd");
+		public static readonly BitmapImage ResourceXslt = LoadBitmap("ResourceXslt");
 
 		public static readonly BitmapImage Class = LoadBitmap("Class");
 		public static readonly BitmapImage Struct = LoadBitmap("Struct");
@@ -89,6 +95,7 @@ namespace ICSharpCode.ILSpy
 		private static readonly BitmapImage OverlayInternal = LoadBitmap("OverlayInternal");
 		private static readonly BitmapImage OverlayProtectedInternal = LoadBitmap("OverlayProtectedInternal");
 		private static readonly BitmapImage OverlayPrivate = LoadBitmap("OverlayPrivate");
+		private static readonly BitmapImage OverlayCompilerControlled = LoadBitmap("OverlayCompilerControlled");
 
 		private static readonly BitmapImage OverlayStatic = LoadBitmap("OverlayStatic");
 
@@ -108,13 +115,13 @@ namespace ICSharpCode.ILSpy
 		}
 
 
-		private static TypeIconCache typeIconCache = new TypeIconCache();
-		private static MemberIconCache memberIconCache = new MemberIconCache();
+		private static readonly TypeIconCache typeIconCache = new TypeIconCache();
+		private static readonly MemberIconCache memberIconCache = new MemberIconCache();
 
-		public static ImageSource GetIcon(TypeIcon icon, AccessOverlayIcon overlay)
+		public static ImageSource GetIcon(TypeIcon icon, AccessOverlayIcon overlay, bool isStatic = false)
 		{
 			lock (typeIconCache)
-				return typeIconCache.GetIcon(icon, overlay, false);
+				return typeIconCache.GetIcon(icon, overlay, isStatic);
 		}
 
 		public static ImageSource GetIcon(MemberIcon icon, AccessOverlayIcon overlay, bool isStatic)
@@ -239,7 +246,7 @@ namespace ICSharpCode.ILSpy
 
 		private abstract class IconCache<T>
 		{
-			private Dictionary<Tuple<T, AccessOverlayIcon, bool>, ImageSource> cache = new Dictionary<Tuple<T, AccessOverlayIcon, bool>, ImageSource>();
+			private readonly Dictionary<Tuple<T, AccessOverlayIcon, bool>, ImageSource> cache = new Dictionary<Tuple<T, AccessOverlayIcon, bool>, ImageSource>();
 
 			protected void PreloadPublicIconToCache(T icon, ImageSource image)
 			{
@@ -287,6 +294,9 @@ namespace ICSharpCode.ILSpy
 						break;
 					case AccessOverlayIcon.Private:
 						overlayImage = Images.OverlayPrivate;
+						break;
+					case AccessOverlayIcon.CompilerControlled:
+						overlayImage = Images.OverlayCompilerControlled;
 						break;
 					default:
 						throw new NotSupportedException();

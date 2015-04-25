@@ -18,13 +18,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.ComponentModel.Composition;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
@@ -36,15 +34,19 @@ using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using System.Xml;
 using ICSharpCode.AvalonEdit;
+using ICSharpCode.AvalonEdit.Document;
+using ICSharpCode.AvalonEdit.Editing;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using ICSharpCode.AvalonEdit.Rendering;
+using ICSharpCode.AvalonEdit.Search;
 using ICSharpCode.Decompiler;
+using ICSharpCode.ILSpy.AvalonEdit;
+using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.ILSpy.XmlDoc;
 using ICSharpCode.NRefactory.Documentation;
-using ICSharpCode.NRefactory.TypeSystem;
 using Microsoft.Win32;
 using Mono.Cecil;
 
@@ -55,7 +57,7 @@ namespace ICSharpCode.ILSpy.TextView
 	/// Contains all the threading logic that makes the decompiler work in the background.
 	/// </summary>
 	[Export, PartCreationPolicy(CreationPolicy.Shared)]
-	public sealed partial class DecompilerTextView : UserControl
+	public sealed partial class DecompilerTextView : UserControl, IDisposable
 	{
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
@@ -64,7 +66,11 @@ namespace ICSharpCode.ILSpy.TextView
 		ILSpyTreeNode[] decompiledNodes;
 		
 		DefinitionLookup definitionLookup;
+		TextSegmentCollection<ReferenceSegment> references;
 		CancellationTokenSource currentCancellationTokenSource;
+		
+		readonly TextMarkerService textMarkerService;
+		readonly List<ITextMarker> localReferenceMarks = new List<ITextMarker>();
 		
 		#region Constructor
 		public DecompilerTextView()
@@ -80,6 +86,7 @@ namespace ICSharpCode.ILSpy.TextView
 				});
 			
 			InitializeComponent();
+			
 			this.referenceElementGenerator = new ReferenceElementGenerator(this.JumpToReference, this.IsLink);
 			textEditor.TextArea.TextView.ElementGenerators.Add(referenceElementGenerator);
 			this.uiElementGenerator = new UIElementGenerator();
@@ -87,10 +94,48 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.Options.RequireControlModifierForHyperlinkClick = false;
 			textEditor.TextArea.TextView.MouseHover += TextViewMouseHover;
 			textEditor.TextArea.TextView.MouseHoverStopped += TextViewMouseHoverStopped;
-			textEditor.SetBinding(TextEditor.FontFamilyProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFont") });
-			textEditor.SetBinding(TextEditor.FontSizeProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFontSize") });
-			textEditor.SetBinding(TextEditor.ShowLineNumbersProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("ShowLineNumbers") });
+			textEditor.TextArea.TextView.MouseDown += TextViewMouseDown;
+			textEditor.SetBinding(Control.FontFamilyProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFont") });
+			textEditor.SetBinding(Control.FontSizeProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFontSize") });
+			
+			textMarkerService = new TextMarkerService(textEditor.TextArea.TextView);
+			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
+			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
+			textEditor.ShowLineNumbers = true;
+			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged += CurrentDisplaySettings_PropertyChanged;
+
+			// SearchPanel
+			SearchPanel.Install(textEditor.TextArea)
+				.RegisterCommands(Application.Current.MainWindow.CommandBindings);
+			
+			// Bookmarks context menu
+			ShowLineMargin();
+			
+			// add marker service & margin
+			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
+			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
 		}
+		
+		#endregion
+		
+		#region Line margin
+
+		void CurrentDisplaySettings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+		{
+			if (e.PropertyName == "ShowLineNumbers") {
+				ShowLineMargin();
+			}
+		}
+		
+		void ShowLineMargin()
+		{
+			foreach (var margin in this.textEditor.TextArea.LeftMargins) {
+				if (margin is LineNumberMargin || margin is System.Windows.Shapes.Line) {
+					margin.Visibility = DisplaySettingsPanel.CurrentDisplaySettings.ShowLineNumbers ? Visibility.Visible : Visibility.Collapsed;
+				}
+			}
+		}
+		
 		#endregion
 		
 		#region Tooltip support
@@ -107,7 +152,7 @@ namespace ICSharpCode.ILSpy.TextView
 			TextViewPosition? position = textEditor.TextArea.TextView.GetPosition(e.GetPosition(textEditor.TextArea.TextView) + textEditor.TextArea.TextView.ScrollOffset);
 			if (position == null)
 				return;
-			int offset = textEditor.Document.GetOffset(position.Value);
+			int offset = textEditor.Document.GetOffset(position.Value.Location);
 			ReferenceSegment seg = referenceElementGenerator.References.FindSegmentsContaining(offset).FirstOrDefault();
 			if (seg == null)
 				return;
@@ -145,13 +190,17 @@ namespace ICSharpCode.ILSpy.TextView
 				}
 				XmlDocRenderer renderer = new XmlDocRenderer();
 				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(mr));
-				XmlDocumentationProvider docProvider = XmlDocLoader.LoadDocumentation(mr.Module);
-				if (docProvider != null) {
-					string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
-					if (documentation != null) {
-						renderer.AppendText(Environment.NewLine);
-						renderer.AddXmlDocumentation(documentation);
+				try {
+					XmlDocumentationProvider docProvider = XmlDocLoader.LoadDocumentation(mr.Module);
+					if (docProvider != null) {
+						string documentation = docProvider.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
+						if (documentation != null) {
+							renderer.AppendText(Environment.NewLine);
+							renderer.AddXmlDocumentation(documentation);
+						}
 					}
+				} catch (XmlException) {
+					// ignore
 				}
 				return renderer.CreateTextBlock();
 			}
@@ -168,11 +217,26 @@ namespace ICSharpCode.ILSpy.TextView
 		/// When the task is cancelled before completing, the callback is not called; and any result
 		/// of the task (including exceptions) are ignored.
 		/// </summary>
+		[Obsolete("RunWithCancellation(taskCreation).ContinueWith(taskCompleted) instead")]
 		public void RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation, Action<Task<T>> taskCompleted)
+		{
+			RunWithCancellation(taskCreation).ContinueWith(taskCompleted, CancellationToken.None, TaskContinuationOptions.NotOnCanceled, TaskScheduler.FromCurrentSynchronizationContext());
+		}
+		
+		/// <summary>
+		/// Switches the GUI into "waiting" mode, then calls <paramref name="taskCreation"/> to create
+		/// the task.
+		/// If another task is started before the previous task finishes running, the previous task is cancelled.
+		/// </summary>
+		public Task<T> RunWithCancellation<T>(Func<CancellationToken, Task<T>> taskCreation)
 		{
 			if (waitAdorner.Visibility != Visibility.Visible) {
 				waitAdorner.Visibility = Visibility.Visible;
 				waitAdorner.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, new Duration(TimeSpan.FromSeconds(0.5)), FillBehavior.Stop));
+				var taskBar = MainWindow.Instance.TaskbarItemInfo;
+				if (taskBar != null) {
+					taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.Indeterminate;
+				}
 			}
 			CancellationTokenSource previousCancellationTokenSource = currentCancellationTokenSource;
 			var myCancellationTokenSource = new CancellationTokenSource();
@@ -181,25 +245,39 @@ namespace ICSharpCode.ILSpy.TextView
 			if (previousCancellationTokenSource != null)
 				previousCancellationTokenSource.Cancel();
 			
-			var task = taskCreation(myCancellationTokenSource.Token);
+			var tcs = new TaskCompletionSource<T>();
+			Task<T> task;
+			try {
+				task = taskCreation(myCancellationTokenSource.Token);
+			} catch (OperationCanceledException) {
+				task = TaskHelper.FromCancellation<T>();
+			} catch (Exception ex) {
+				task = TaskHelper.FromException<T>(ex);
+			}
 			Action continuation = delegate {
 				try {
 					if (currentCancellationTokenSource == myCancellationTokenSource) {
 						currentCancellationTokenSource = null;
 						waitAdorner.Visibility = Visibility.Collapsed;
-						taskCompleted(task);
-					} else {
-						try {
-							task.Wait();
-						} catch (AggregateException) {
-							// observe the exception (otherwise the task's finalizer will shut down the AppDomain)
+						var taskBar = MainWindow.Instance.TaskbarItemInfo;
+						if (taskBar != null) {
+							taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.None;
 						}
+						if (task.IsCanceled) {
+							AvalonEditTextOutput output = new AvalonEditTextOutput();
+							output.WriteLine("The operation was canceled.");
+							ShowOutput(output);
+						}
+						tcs.SetFromTask(task);
+					} else {
+						tcs.SetCanceled();
 					}
 				} finally {
 					myCancellationTokenSource.Dispose();
 				}
 			};
 			task.ContinueWith(delegate { Dispatcher.BeginInvoke(DispatcherPriority.Normal, continuation); });
+			return tcs.Task;
 		}
 		
 		void cancelButton_Click(object sender, RoutedEventArgs e)
@@ -233,7 +311,11 @@ namespace ICSharpCode.ILSpy.TextView
 				currentCancellationTokenSource.Cancel();
 				currentCancellationTokenSource = null; // prevent canceled task from producing output
 			}
-			this.nextDecompilationRun = null; // remove scheduled decompilation run
+			if (this.nextDecompilationRun != null) {
+				// remove scheduled decompilation run
+				this.nextDecompilationRun.TaskCompletionSource.TrySetCanceled();
+				this.nextDecompilationRun = null;
+			}
 			ShowOutput(textOutput, highlighting);
 			decompiledNodes = nodes;
 		}
@@ -245,7 +327,8 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			Debug.WriteLine("Showing {0} characters of output", textOutput.TextLength);
 			Stopwatch w = Stopwatch.StartNew();
-			
+
+			ClearLocalReferenceMarks();
 			textEditor.ScrollToHome();
 			if (foldingManager != null) {
 				FoldingManager.Uninstall(foldingManager);
@@ -254,6 +337,7 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.Document = null; // clear old document while we're changing the highlighting
 			uiElementGenerator.UIElements = textOutput.UIElements;
 			referenceElementGenerator.References = textOutput.References;
+			references = textOutput.References;
 			definitionLookup = textOutput.DefinitionLookup;
 			textEditor.SyntaxHighlighting = highlighting;
 			
@@ -293,26 +377,40 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		DecompilationContext nextDecompilationRun;
 		
+		[Obsolete("Use DecompileAsync() instead")]
+		public void Decompile(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
+		{
+			DecompileAsync(language, treeNodes, options).HandleExceptions();
+		}
+		
 		/// <summary>
 		/// Starts the decompilation of the given nodes.
 		/// The result is displayed in the text view.
+		/// If any errors occur, the error message is displayed in the text view, and the task returned by this method completes successfully.
+		/// If the operation is cancelled (by starting another decompilation action); the returned task is marked as cancelled.
 		/// </summary>
-		public void Decompile(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
+		public Task DecompileAsync(ILSpy.Language language, IEnumerable<ILSpyTreeNode> treeNodes, DecompilationOptions options)
 		{
 			// Some actions like loading an assembly list cause several selection changes in the tree view,
 			// and each of those will start a decompilation action.
+			
 			bool isDecompilationScheduled = this.nextDecompilationRun != null;
+			if (this.nextDecompilationRun != null)
+				this.nextDecompilationRun.TaskCompletionSource.TrySetCanceled();
 			this.nextDecompilationRun = new DecompilationContext(language, treeNodes.ToArray(), options);
+			var task = this.nextDecompilationRun.TaskCompletionSource.Task;
 			if (!isDecompilationScheduled) {
 				Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(
 					delegate {
 						var context = this.nextDecompilationRun;
 						this.nextDecompilationRun = null;
 						if (context != null)
-							DoDecompile(context, DefaultOutputLengthLimit);
+							DoDecompile(context, DefaultOutputLengthLimit)
+								.ContinueWith(t => context.TaskCompletionSource.SetFromTask(t)).HandleExceptions();
 					}
 				));
 			}
+			return task;
 		}
 		
 		sealed class DecompilationContext
@@ -320,6 +418,7 @@ namespace ICSharpCode.ILSpy.TextView
 			public readonly ILSpy.Language Language;
 			public readonly ILSpyTreeNode[] TreeNodes;
 			public readonly DecompilationOptions Options;
+			public readonly TaskCompletionSource<object> TaskCompletionSource = new TaskCompletionSource<object>();
 			
 			public DecompilationContext(ILSpy.Language language, ILSpyTreeNode[] treeNodes, DecompilationOptions options)
 			{
@@ -329,38 +428,33 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 		
-		void DoDecompile(DecompilationContext context, int outputLengthLimit)
+		Task DoDecompile(DecompilationContext context, int outputLengthLimit)
 		{
-			RunWithCancellation(
+			return RunWithCancellation(
 				delegate (CancellationToken ct) { // creation of the background task
 					context.Options.CancellationToken = ct;
 					return DecompileAsync(context, outputLengthLimit);
-				},
-				delegate (Task<AvalonEditTextOutput> task) { // handling the result
-					try {
-						AvalonEditTextOutput textOutput = task.Result;
-						ShowOutput(textOutput, context.Language.SyntaxHighlighting, context.Options.TextViewState);
-					} catch (AggregateException aggregateException) {
-						textEditor.SyntaxHighlighting = null;
-						Debug.WriteLine("Decompiler crashed: " + aggregateException.ToString());
-						// Unpack aggregate exceptions as long as there's only a single exception:
-						// (assembly load errors might produce nested aggregate exceptions)
-						Exception ex = aggregateException;
-						while (ex is AggregateException && (ex as AggregateException).InnerExceptions.Count == 1)
-							ex = ex.InnerException;
-						AvalonEditTextOutput output = new AvalonEditTextOutput();
-						if (ex is OutputLengthExceededException) {
-							WriteOutputLengthExceededMessage(output, context, outputLengthLimit == DefaultOutputLengthLimit);
-						} else {
-							output.WriteLine(ex.ToString());
-						}
-						ShowOutput(output);
+				})
+			.Then(
+				delegate (AvalonEditTextOutput textOutput) { // handling the result
+					ShowOutput(textOutput, context.Language.SyntaxHighlighting, context.Options.TextViewState);
+					decompiledNodes = context.TreeNodes;
+				})
+			.Catch<Exception>(exception => {
+					textEditor.SyntaxHighlighting = null;
+					Debug.WriteLine("Decompiler crashed: " + exception.ToString());
+					AvalonEditTextOutput output = new AvalonEditTextOutput();
+					if (exception is OutputLengthExceededException) {
+						WriteOutputLengthExceededMessage(output, context, outputLengthLimit == DefaultOutputLengthLimit);
+					} else {
+						output.WriteLine(exception.ToString());
 					}
+					ShowOutput(output);
 					decompiledNodes = context.TreeNodes;
 				});
 		}
 		
-		static Task<AvalonEditTextOutput> DecompileAsync(DecompilationContext context, int outputLengthLimit)
+		Task<AvalonEditTextOutput> DecompileAsync(DecompilationContext context, int outputLengthLimit)
 		{
 			Debug.WriteLine("Start decompilation of {0} tree nodes", context.TreeNodes.Length);
 			
@@ -375,17 +469,19 @@ namespace ICSharpCode.ILSpy.TextView
 			Thread thread = new Thread(new ThreadStart(
 				delegate {
 					#if DEBUG
-					if (Debugger.IsAttached) {
+					if (System.Diagnostics.Debugger.IsAttached) {
 						try {
 							AvalonEditTextOutput textOutput = new AvalonEditTextOutput();
 							textOutput.LengthLimit = outputLengthLimit;
 							DecompileNodes(context, textOutput);
 							textOutput.PrepareDocument();
 							tcs.SetResult(textOutput);
+						} catch (OutputLengthExceededException ex) {
+							tcs.SetException(ex);
 						} catch (AggregateException ex) {
-							tcs.SetException(ex);
-						} catch (OperationCanceledException ex) {
-							tcs.SetException(ex);
+							tcs.SetException(ex.InnerExceptions);
+						} catch (OperationCanceledException) {
+							tcs.SetCanceled();
 						}
 					} else
 						#endif
@@ -396,6 +492,8 @@ namespace ICSharpCode.ILSpy.TextView
 							DecompileNodes(context, textOutput);
 							textOutput.PrepareDocument();
 							tcs.SetResult(textOutput);
+						} catch (OperationCanceledException) {
+							tcs.SetCanceled();
 						} catch (Exception ex) {
 							tcs.SetException(ex);
 						}
@@ -405,7 +503,7 @@ namespace ICSharpCode.ILSpy.TextView
 			return tcs.Task;
 		}
 		
-		static void DecompileNodes(DecompilationContext context, ITextOutput textOutput)
+		void DecompileNodes(DecompilationContext context, ITextOutput textOutput)
 		{
 			var nodes = context.TreeNodes;
 			for (int i = 0; i < nodes.Length; i++) {
@@ -435,7 +533,7 @@ namespace ICSharpCode.ILSpy.TextView
 				output.AddButton(
 					Images.ViewCode, "Display Code",
 					delegate {
-						DoDecompile(context, ExtendedOutputLengthLimit);
+						DoDecompile(context, ExtendedOutputLengthLimit).HandleExceptions();
 					});
 				output.WriteLine();
 			}
@@ -448,7 +546,7 @@ namespace ICSharpCode.ILSpy.TextView
 			output.WriteLine();
 		}
 		#endregion
-		
+
 		#region JumpToReference
 		/// <summary>
 		/// Jumps to the definition referred to by the <see cref="ReferenceSegment"/>.
@@ -456,6 +554,19 @@ namespace ICSharpCode.ILSpy.TextView
 		internal void JumpToReference(ReferenceSegment referenceSegment)
 		{
 			object reference = referenceSegment.Reference;
+			if (referenceSegment.IsLocal) {
+				ClearLocalReferenceMarks();
+				if (references != null) {
+					foreach (var r in references) {
+						if (reference.Equals(r.Reference)) {
+							var mark = textMarkerService.Create(r.StartOffset, r.Length);
+							mark.BackgroundColor = r.IsLocalTarget ? Colors.LightSeaGreen : Colors.GreenYellow;
+							localReferenceMarks.Add(mark);
+						}
+					}
+				}
+				return;
+			}
 			if (definitionLookup != null) {
 				int pos = definitionLookup.GetDefinitionPosition(reference);
 				if (pos >= 0) {
@@ -470,6 +581,20 @@ namespace ICSharpCode.ILSpy.TextView
 				}
 			}
 			MainWindow.Instance.JumpToReference(reference);
+		}
+
+		void TextViewMouseDown(object sender, MouseButtonEventArgs e)
+		{
+			if (GetReferenceSegmentAtMousePosition() == null)
+				ClearLocalReferenceMarks();
+		}
+
+		void ClearLocalReferenceMarks()
+		{
+			foreach (var mark in localReferenceMarks) {
+				textMarkerService.Remove(mark);
+			}
+			localReferenceMarks.Clear();
 		}
 		
 		/// <summary>
@@ -514,24 +639,17 @@ namespace ICSharpCode.ILSpy.TextView
 				delegate (CancellationToken ct) {
 					context.Options.CancellationToken = ct;
 					return SaveToDiskAsync(context, fileName);
-				},
-				delegate (Task<AvalonEditTextOutput> task) {
-					try {
-						ShowOutput(task.Result);
-					} catch (AggregateException aggregateException) {
-						textEditor.SyntaxHighlighting = null;
-						Debug.WriteLine("Decompiler crashed: " + aggregateException.ToString());
-						// Unpack aggregate exceptions as long as there's only a single exception:
-						// (assembly load errors might produce nested aggregate exceptions)
-						Exception ex = aggregateException;
-						while (ex is AggregateException && (ex as AggregateException).InnerExceptions.Count == 1)
-							ex = ex.InnerException;
-						AvalonEditTextOutput output = new AvalonEditTextOutput();
-						output.WriteLine(ex.ToString());
-						ShowOutput(output);
-					}
-					decompiledNodes = context.TreeNodes;
-				});
+				})
+				.Then(output => ShowOutput(output))
+				.Catch((Exception ex) => {
+					textEditor.SyntaxHighlighting = null;
+					Debug.WriteLine("Decompiler crashed: " + ex.ToString());
+					// Unpack aggregate exceptions as long as there's only a single exception:
+					// (assembly load errors might produce nested aggregate exceptions)
+					AvalonEditTextOutput output = new AvalonEditTextOutput();
+					output.WriteLine(ex.ToString());
+					ShowOutput(output);
+				}).HandleExceptions();
 		}
 
 		Task<AvalonEditTextOutput> SaveToDiskAsync(DecompilationContext context, string fileName)
@@ -558,9 +676,9 @@ namespace ICSharpCode.ILSpy.TextView
 						output.AddButton(null, "Open Explorer", delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
 						output.WriteLine();
 						tcs.SetResult(output);
+					} catch (OperationCanceledException) {
+						tcs.SetCanceled();
 						#if DEBUG
-					} catch (OperationCanceledException ex) {
-						tcs.SetException(ex);
 					} catch (AggregateException ex) {
 						tcs.SetException(ex);
 						#else
@@ -591,6 +709,20 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 		#endregion
 
+		internal ReferenceSegment GetReferenceSegmentAtMousePosition()
+		{
+			TextViewPosition? position = GetPositionFromMousePosition();
+			if (position == null)
+				return null;
+			int offset = textEditor.Document.GetOffset(position.Value.Location);
+			return referenceElementGenerator.References.FindSegmentsContaining(offset).FirstOrDefault();
+		}
+		
+		internal TextViewPosition? GetPositionFromMousePosition()
+		{
+			return textEditor.TextArea.TextView.GetPosition(Mouse.GetPosition(textEditor.TextArea.TextView) + textEditor.TextArea.TextView.ScrollOffset);
+		}
+		
 		public DecompilerTextViewState GetState()
 		{
 			if (decompiledNodes == null)
@@ -604,6 +736,40 @@ namespace ICSharpCode.ILSpy.TextView
 			state.DecompiledNodes = decompiledNodes;
 			return state;
 		}
+		
+		public void Dispose()
+		{
+			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged -= CurrentDisplaySettings_PropertyChanged;
+		}
+		
+		#region Unfold
+		public void UnfoldAndScroll(int lineNumber)
+		{
+			if (lineNumber <= 0 || lineNumber > textEditor.Document.LineCount)
+				return;
+			
+			var line = textEditor.Document.GetLineByNumber(lineNumber);
+			
+			// unfold
+			var foldings = foldingManager.GetFoldingsContaining(line.Offset);
+			if (foldings != null) {
+				foreach (var folding in foldings) {
+					if (folding.IsFolded) {
+						folding.IsFolded = false;
+					}
+				}
+			}
+			// scroll to
+			textEditor.ScrollTo(lineNumber, 0);
+		}
+		
+		public FoldingManager FoldingManager
+		{
+			get {
+				return foldingManager;
+			}
+		}
+		#endregion
 	}
 
 	public class DecompilerTextViewState

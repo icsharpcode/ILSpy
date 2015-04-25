@@ -27,7 +27,6 @@
 //
 
 using System;
-using System.Collections.Generic;
 
 using Mono.Collections.Generic;
 
@@ -41,6 +40,15 @@ namespace Mono.Cecil {
 		AssemblyDefinition Resolve (string fullName, ReaderParameters parameters);
 	}
 
+	public interface IMetadataResolver {
+		TypeDefinition Resolve (TypeReference type);
+		FieldDefinition Resolve (FieldReference field);
+		MethodDefinition Resolve (MethodReference method);
+	}
+
+#if !SILVERLIGHT && !CF
+	[Serializable]
+#endif
 	public class ResolutionException : Exception {
 
 		readonly MemberReference member;
@@ -54,31 +62,57 @@ namespace Mono.Cecil {
 		{
 			this.member = member;
 		}
+
+#if !SILVERLIGHT && !CF
+		protected ResolutionException (
+			System.Runtime.Serialization.SerializationInfo info,
+			System.Runtime.Serialization.StreamingContext context)
+			: base (info, context)
+		{
+		}
+#endif
 	}
 
-	static class MetadataResolver {
+	public class MetadataResolver : IMetadataResolver {
 
-		public static TypeDefinition Resolve (IAssemblyResolver resolver, TypeReference type)
+		readonly IAssemblyResolver assembly_resolver;
+
+		public IAssemblyResolver AssemblyResolver {
+			get { return assembly_resolver; }
+		}
+
+		public MetadataResolver (IAssemblyResolver assemblyResolver)
 		{
+			if (assemblyResolver == null)
+				throw new ArgumentNullException ("assemblyResolver");
+
+			assembly_resolver = assemblyResolver;
+		}
+
+		public virtual TypeDefinition Resolve (TypeReference type)
+		{
+			if (type == null)
+				throw new ArgumentNullException ("type");
+
 			type = type.GetElementType ();
 
 			var scope = type.Scope;
 			switch (scope.MetadataScopeType) {
 			case MetadataScopeType.AssemblyNameReference:
-				var assembly = resolver.Resolve ((AssemblyNameReference) scope);
+				var assembly = assembly_resolver.Resolve ((AssemblyNameReference) scope);
 				if (assembly == null)
 					return null;
 
-				return GetType (resolver, assembly.MainModule, type);
+				return GetType (assembly.MainModule, type);
 			case MetadataScopeType.ModuleDefinition:
-				return GetType (resolver, (ModuleDefinition) scope, type);
+				return GetType ((ModuleDefinition) scope, type);
 			case MetadataScopeType.ModuleReference:
 				var modules = type.Module.Assembly.Modules;
 				var module_ref = (ModuleReference) scope;
 				for (int i = 0; i < modules.Count; i++) {
 					var netmodule = modules [i];
 					if (netmodule.Name == module_ref.Name)
-						return GetType (resolver, netmodule, type);
+						return GetType (netmodule, type);
 				}
 				break;
 			}
@@ -86,9 +120,9 @@ namespace Mono.Cecil {
 			throw new NotSupportedException ();
 		}
 
-		static TypeDefinition GetType (IAssemblyResolver resolver, ModuleDefinition module, TypeReference reference)
+		static TypeDefinition GetType (ModuleDefinition module, TypeReference reference)
 		{
-			var type = GetType (module, reference);
+			var type = GetTypeDefinition (module, reference);
 			if (type != null)
 				return type;
 
@@ -111,7 +145,7 @@ namespace Mono.Cecil {
 			return null;
 		}
 
-		static TypeDefinition GetType (ModuleDefinition module, TypeReference type)
+		static TypeDefinition GetTypeDefinition (ModuleDefinition module, TypeReference type)
 		{
 			if (!type.IsNested)
 				return module.GetType (type.Namespace, type.Name);
@@ -123,19 +157,22 @@ namespace Mono.Cecil {
 			return declaring_type.GetNestedType (type.Name);
 		}
 
-		public static FieldDefinition Resolve (IAssemblyResolver resolver, FieldReference field)
+		public virtual FieldDefinition Resolve (FieldReference field)
 		{
-			var type = Resolve (resolver, field.DeclaringType);
+			if (field == null)
+				throw new ArgumentNullException ("field");
+
+			var type = Resolve (field.DeclaringType);
 			if (type == null)
 				return null;
 
 			if (!type.HasFields)
 				return null;
 
-			return GetField (resolver, type, field);
+			return GetField (type, field);
 		}
 
-		static FieldDefinition GetField (IAssemblyResolver resolver, TypeDefinition type, FieldReference reference)
+		FieldDefinition GetField (TypeDefinition type, FieldReference reference)
 		{
 			while (type != null) {
 				var field = GetField (type.Fields, reference);
@@ -145,13 +182,13 @@ namespace Mono.Cecil {
 				if (type.BaseType == null)
 					return null;
 
-				type = Resolve (resolver, type.BaseType);
+				type = Resolve (type.BaseType);
 			}
 
 			return null;
 		}
 
-		static FieldDefinition GetField (IList<FieldDefinition> fields, FieldReference reference)
+		static FieldDefinition GetField (Collection<FieldDefinition> fields, FieldReference reference)
 		{
 			for (int i = 0; i < fields.Count; i++) {
 				var field = fields [i];
@@ -168,9 +205,12 @@ namespace Mono.Cecil {
 			return null;
 		}
 
-		public static MethodDefinition Resolve (IAssemblyResolver resolver, MethodReference method)
+		public virtual MethodDefinition Resolve (MethodReference method)
 		{
-			var type = Resolve (resolver, method.DeclaringType);
+			if (method == null)
+				throw new ArgumentNullException ("method");
+
+			var type = Resolve (method.DeclaringType);
 			if (type == null)
 				return null;
 
@@ -179,10 +219,10 @@ namespace Mono.Cecil {
 			if (!type.HasMethods)
 				return null;
 
-			return GetMethod (resolver, type, method);
+			return GetMethod (type, method);
 		}
 
-		static MethodDefinition GetMethod (IAssemblyResolver resolver, TypeDefinition type, MethodReference reference)
+		MethodDefinition GetMethod (TypeDefinition type, MethodReference reference)
 		{
 			while (type != null) {
 				var method = GetMethod (type.Methods, reference);
@@ -192,13 +232,13 @@ namespace Mono.Cecil {
 				if (type.BaseType == null)
 					return null;
 
-				type = Resolve (resolver, type.BaseType);
+				type = Resolve (type.BaseType);
 			}
 
 			return null;
 		}
 
-		public static MethodDefinition GetMethod (IList<MethodDefinition> methods, MethodReference reference)
+		public static MethodDefinition GetMethod (Collection<MethodDefinition> methods, MethodReference reference)
 		{
 			for (int i = 0; i < methods.Count; i++) {
 				var method = methods [i];

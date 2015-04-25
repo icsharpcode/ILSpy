@@ -98,16 +98,16 @@ namespace ICSharpCode.Decompiler.ILAst
 					if (leftBoolVal != 0) {
 						newExpr = condExpr;
 					} else {
-						newExpr = new ILExpression(ILCode.LogicNot, null, condExpr);
+						newExpr = new ILExpression(ILCode.LogicNot, null, condExpr) { InferredType = typeSystem.Boolean };
 					}
-				} else if (retTypeIsBoolean && trueExpr.Match(ILCode.Ldc_I4, out leftBoolVal)) {
+				} else if ((retTypeIsBoolean || TypeAnalysis.IsBoolean(falseExpr.InferredType)) && trueExpr.Match(ILCode.Ldc_I4, out leftBoolVal) && (leftBoolVal == 0 || leftBoolVal == 1)) {
 					// It can be expressed as logical expression
 					if (leftBoolVal != 0) {
 						newExpr = MakeLeftAssociativeShortCircuit(ILCode.LogicOr, condExpr, falseExpr);
 					} else {
 						newExpr = MakeLeftAssociativeShortCircuit(ILCode.LogicAnd, new ILExpression(ILCode.LogicNot, null, condExpr), falseExpr);
 					}
-				} else if (retTypeIsBoolean && falseExpr.Match(ILCode.Ldc_I4, out rightBoolVal)) {
+				} else if ((retTypeIsBoolean || TypeAnalysis.IsBoolean(trueExpr.InferredType)) && falseExpr.Match(ILCode.Ldc_I4, out rightBoolVal) && (rightBoolVal == 0 || rightBoolVal == 1)) {
 					// It can be expressed as logical expression
 					if (rightBoolVal != 0) {
 						newExpr = MakeLeftAssociativeShortCircuit(ILCode.LogicOr, new ILExpression(ILCode.LogicNot, null, condExpr), trueExpr);
@@ -258,6 +258,10 @@ namespace ICSharpCode.Decompiler.ILAst
 			if (!head.Body[head.Body.Count - 3].Match(ILCode.Stloc, out targetVar, out targetVarInitExpr))
 				return false;
 			
+			ILVariable leftVar;
+			if (!targetVarInitExpr.Match(ILCode.Ldloc, out leftVar))
+				return false;
+			
 			// looking for:
 			// brtrue(exitLabel, call(op_False, leftVar)
 			// br(followingBlock)
@@ -267,12 +271,19 @@ namespace ICSharpCode.Decompiler.ILAst
 			if(!head.MatchLastAndBr(ILCode.Brtrue, out exitLabel, out callExpr, out followingBlock))
 				return false;
 			
-			MethodDefinition opFalse;
-			ILExpression leftVar;
-			if (!callExpr.Match(ILCode.Call, out opFalse, out leftVar))
+			if (labelGlobalRefCount[followingBlock] > 1)
 				return false;
 			
-			if (!leftVar.MatchLdloc(targetVarInitExpr.Operand as ILVariable))
+			MethodReference opFalse;
+			ILExpression opFalseArg;
+			if (!callExpr.Match(ILCode.Call, out opFalse, out opFalseArg))
+				return false;
+			
+			// ignore operators other than op_False and op_True
+			if (opFalse.Name != "op_False" && opFalse.Name != "op_True")
+				return false;
+			
+			if (!opFalseArg.MatchLdloc(leftVar))
 				return false;
 			
 			ILBasicBlock followingBasicBlock = labelToBasicBlock[followingBlock];
@@ -286,22 +297,34 @@ namespace ICSharpCode.Decompiler.ILAst
 			if (!followingBasicBlock.MatchSingleAndBr(ILCode.Stloc, out _targetVar, out opBitwiseCallExpr, out _exitLabel))
 				return false;
 			
-			if (_targetVar != targetVar)
+			if (_targetVar != targetVar || exitLabel != _exitLabel)
 				return false;
 			
-			MethodDefinition opBitwise;
+			MethodReference opBitwise;
 			ILExpression leftVarExpression;
 			ILExpression rightExpression;
 			if (!opBitwiseCallExpr.Match(ILCode.Call, out opBitwise, out leftVarExpression, out rightExpression))
 				return false;
 			
-			if (!leftVar.MatchLdloc(leftVarExpression.Operand as ILVariable))
+			if (!leftVarExpression.MatchLdloc(leftVar))
+				return false;
+			
+			// ignore operators other than op_BitwiseAnd and op_BitwiseOr
+			if (opBitwise.Name != "op_BitwiseAnd" && opBitwise.Name != "op_BitwiseOr")
 				return false;
 			
 			// insert:
 			// stloc(targetVar, LogicAnd(C::op_BitwiseAnd, leftVar, rightExpression)
 			// br(exitLabel)
-			ILExpression shortCircuitExpr = MakeLeftAssociativeShortCircuit(opBitwise.Name == "op_BitwiseAnd" ? ILCode.LogicAnd : ILCode.LogicOr, leftVar, rightExpression);
+			ILCode op = opBitwise.Name == "op_BitwiseAnd" ? ILCode.LogicAnd : ILCode.LogicOr;
+			
+			if (op == ILCode.LogicAnd && opFalse.Name != "op_False")
+				return false;
+			
+			if (op == ILCode.LogicOr && opFalse.Name != "op_True")
+				return false;
+			
+			ILExpression shortCircuitExpr = MakeLeftAssociativeShortCircuit(op, opFalseArg, rightExpression);
 			shortCircuitExpr.Operand = opBitwise;
 			
 			head.Body.RemoveTail(ILCode.Stloc, ILCode.Brtrue, ILCode.Br);
@@ -320,10 +343,10 @@ namespace ICSharpCode.Decompiler.ILAst
 				ILExpression current = right;
 				while(current.Arguments[0].Match(code))
 					current = current.Arguments[0];
-				current.Arguments[0] = new ILExpression(code, null, left, current.Arguments[0]);
+				current.Arguments[0] = new ILExpression(code, null, left, current.Arguments[0]) { InferredType = typeSystem.Boolean };
 				return right;
 			} else {
-				return new ILExpression(code, null, left, right);
+				return new ILExpression(code, null, left, right) { InferredType = typeSystem.Boolean };
 			}
 		}
 		

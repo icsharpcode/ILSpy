@@ -21,16 +21,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler.Ast;
-using ICSharpCode.NRefactory.Utils;
-using ICSharpCode.TreeView;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedEventOverridesTreeNode : AnalyzerTreeNode
+	internal sealed class AnalyzedEventOverridesTreeNode : AnalyzerSearchTreeNode
 	{
 		private readonly EventDefinition analyzedEvent;
-		private readonly ThreadingSupport threading;
 
 		public AnalyzedEventOverridesTreeNode(EventDefinition analyzedEvent)
 		{
@@ -38,8 +35,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				throw new ArgumentNullException("analyzedEvent");
 
 			this.analyzedEvent = analyzedEvent;
-			this.threading = new ThreadingSupport();
-			this.LazyLoading = true;
 		}
 
 		public override object Text
@@ -47,38 +42,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			get { return "Overridden By"; }
 		}
 
-		public override object Icon
+		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			get { return Images.Search; }
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedEvent, FindReferencesInType);
+			return analyzer.PerformAnalysis(ct).OrderBy(n => n.Text);
 		}
 
-		protected override void LoadChildren()
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
-			threading.LoadChildren(this, FetchChildren);
-		}
-
-		protected override void OnCollapsing()
-		{
-			if (threading.IsRunning) {
-				this.LazyLoading = true;
-				threading.Cancel();
-				this.Children.Clear();
-			}
-		}
-
-		private IEnumerable<SharpTreeNode> FetchChildren(CancellationToken ct)
-		{
-			ScopedWhereUsedAnalyzer<SharpTreeNode> analyzer;
-
-			analyzer = new ScopedWhereUsedAnalyzer<SharpTreeNode>(analyzedEvent, FindReferencesInType);
-			return analyzer.PerformAnalysis(ct);
-		}
-
-		private IEnumerable<SharpTreeNode> FindReferencesInType(TypeDefinition type)
-		{
-			string name = analyzedEvent.Name;
-			string declTypeName = analyzedEvent.DeclaringType.FullName;
-
 			if (!TypesHierarchyHelpers.IsBaseType(analyzedEvent.DeclaringType, type, resolveTypeArguments: false))
 				yield break;
 
@@ -86,7 +57,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				if (TypesHierarchyHelpers.IsBaseEvent(analyzedEvent, eventDef)) {
 					MethodDefinition anyAccessor = eventDef.AddMethod ?? eventDef.RemoveMethod;
 					bool hidesParent = !anyAccessor.IsVirtual ^ anyAccessor.IsNewSlot;
-					yield return new AnalyzedEventTreeNode(eventDef, hidesParent ? "(hides) " : "");
+					var node = new AnalyzedEventTreeNode(eventDef, hidesParent ? "(hides) " : "");
+					node.Language = this.Language;
+					yield return node;
 				}
 			}
 		}

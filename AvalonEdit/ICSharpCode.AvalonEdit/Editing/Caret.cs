@@ -1,17 +1,36 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under the GNU LGPL (for details please see \doc\license.txt)
+﻿// Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Windows;
 using System.Windows.Documents;
 using System.Windows.Media;
 using System.Windows.Media.TextFormatting;
 using System.Windows.Threading;
-
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.AvalonEdit.Utils;
+#if NREFACTORY
+using ICSharpCode.NRefactory;
+using ICSharpCode.NRefactory.Editor;
+#endif
 
 namespace ICSharpCode.AvalonEdit.Editing
 {
@@ -31,10 +50,17 @@ namespace ICSharpCode.AvalonEdit.Editing
 			this.textView = textArea.TextView;
 			position = new TextViewPosition(1, 1, 0);
 			
-			caretAdorner = new CaretLayer(textView);
+			caretAdorner = new CaretLayer(textArea);
 			textView.InsertLayer(caretAdorner, KnownLayer.Caret, LayerInsertionPosition.Replace);
 			textView.VisualLinesChanged += TextView_VisualLinesChanged;
 			textView.ScrollOffsetChanged += TextView_ScrollOffsetChanged;
+		}
+		
+		internal void UpdateIfVisible()
+		{
+			if (visible) {
+				Show();
+			}
 		}
 		
 		void TextView_VisualLinesChanged(object sender, EventArgs e)
@@ -102,7 +128,7 @@ namespace ICSharpCode.AvalonEdit.Editing
 		/// </summary>
 		public TextLocation Location {
 			get {
-				return position;
+				return position.Location;
 			}
 			set {
 				this.Position = new TextViewPosition(value);
@@ -142,6 +168,18 @@ namespace ICSharpCode.AvalonEdit.Editing
 			}
 		}
 		
+		bool isInVirtualSpace;
+		
+		/// <summary>
+		/// Gets whether the caret is in virtual space.
+		/// </summary>
+		public bool IsInVirtualSpace {
+			get {
+				ValidateVisualColumn();
+				return isInVirtualSpace;
+			}
+		}
+		
 		int storedCaretOffset;
 		
 		internal void OnDocumentChanging()
@@ -154,7 +192,14 @@ namespace ICSharpCode.AvalonEdit.Editing
 		{
 			InvalidateVisualColumn();
 			if (storedCaretOffset >= 0) {
-				int newCaretOffset = e.GetNewOffset(storedCaretOffset, AnchorMovementType.Default);
+				// If the caret is at the end of a selection, we don't expand the selection if something
+				// is inserted at the end. Thus we also need to keep the caret in front of the insertion.
+				AnchorMovementType caretMovementType;
+				if (!textArea.Selection.IsEmpty && storedCaretOffset == textArea.Selection.SurroundingSegment.EndOffset)
+					caretMovementType = AnchorMovementType.BeforeInsertion;
+				else
+					caretMovementType = AnchorMovementType.Default;
+				int newCaretOffset = e.GetNewOffset(storedCaretOffset, caretMovementType);
 				TextDocument document = textArea.Document;
 				if (document != null) {
 					// keep visual column
@@ -174,7 +219,7 @@ namespace ICSharpCode.AvalonEdit.Editing
 				if (document == null) {
 					return 0;
 				} else {
-					return document.GetOffset(position);
+					return document.GetOffset(position.Location);
 				}
 			}
 			set {
@@ -279,27 +324,16 @@ namespace ICSharpCode.AvalonEdit.Editing
 			// mark column as validated
 			visualColumnValid = true;
 			
-			int caretOffset = textView.Document.GetOffset(position);
+			int caretOffset = textView.Document.GetOffset(position.Location);
 			int firstDocumentLineOffset = visualLine.FirstDocumentLine.Offset;
-			if (position.VisualColumn < 0) {
-				position.VisualColumn = visualLine.GetVisualColumn(caretOffset - firstDocumentLineOffset);
-			} else {
-				int offsetFromVisualColumn = visualLine.GetRelativeOffset(position.VisualColumn);
-				offsetFromVisualColumn += firstDocumentLineOffset;
-				if (offsetFromVisualColumn != caretOffset) {
-					position.VisualColumn = visualLine.GetVisualColumn(caretOffset - firstDocumentLineOffset);
-				} else {
-					if (position.VisualColumn > visualLine.VisualLength) {
-						position.VisualColumn = visualLine.VisualLength;
-					}
-				}
-			}
+			position.VisualColumn = visualLine.ValidateVisualColumn(position, textArea.Selection.EnableVirtualSpace);
+			
 			// search possible caret positions
-			int newVisualColumnForwards = visualLine.GetNextCaretPosition(position.VisualColumn - 1, LogicalDirection.Forward, CaretPositioningMode.Normal);
+			int newVisualColumnForwards = visualLine.GetNextCaretPosition(position.VisualColumn - 1, LogicalDirection.Forward, CaretPositioningMode.Normal, textArea.Selection.EnableVirtualSpace);
 			// If position.VisualColumn was valid, we're done with validation.
 			if (newVisualColumnForwards != position.VisualColumn) {
 				// also search backwards so that we can pick the better match
-				int newVisualColumnBackwards = visualLine.GetNextCaretPosition(position.VisualColumn + 1, LogicalDirection.Backward, CaretPositioningMode.Normal);
+				int newVisualColumnBackwards = visualLine.GetNextCaretPosition(position.VisualColumn + 1, LogicalDirection.Backward, CaretPositioningMode.Normal, textArea.Selection.EnableVirtualSpace);
 				
 				if (newVisualColumnForwards < 0 && newVisualColumnBackwards < 0)
 					throw ThrowUtil.NoValidCaretPosition();
@@ -338,6 +372,7 @@ namespace ICSharpCode.AvalonEdit.Editing
 				}
 				this.Position = new TextViewPosition(textView.Document.GetLocation(newOffset), newVisualColumn);
 			}
+			isInVirtualSpace = (position.VisualColumn > visualLine.VisualLength);
 		}
 		
 		Rect CalcCaretRectangle(VisualLine visualLine)
@@ -346,15 +381,48 @@ namespace ICSharpCode.AvalonEdit.Editing
 				RevalidateVisualColumn(visualLine);
 			}
 			
-			TextLine textLine = visualLine.GetTextLine(position.VisualColumn);
-			double xPos = textLine.GetDistanceFromCharacterHit(new CharacterHit(position.VisualColumn, 0));
+			TextLine textLine = visualLine.GetTextLine(position.VisualColumn, position.IsAtEndOfLine);
+			double xPos = visualLine.GetTextLineVisualXPosition(textLine, position.VisualColumn);
 			double lineTop = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextTop);
-			double lineBottom = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.LineBottom);
+			double lineBottom = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextBottom);
 			
 			return new Rect(xPos,
 			                lineTop,
 			                SystemParameters.CaretWidth,
 			                lineBottom - lineTop);
+		}
+		
+		Rect CalcCaretOverstrikeRectangle(VisualLine visualLine)
+		{
+			if (!visualColumnValid) {
+				RevalidateVisualColumn(visualLine);
+			}
+			
+			int currentPos = position.VisualColumn;
+			// The text being overwritten in overstrike mode is everything up to the next normal caret stop
+			int nextPos = visualLine.GetNextCaretPosition(currentPos, LogicalDirection.Forward, CaretPositioningMode.Normal, true);
+			TextLine textLine = visualLine.GetTextLine(currentPos);
+			
+			Rect r;
+			if (currentPos < visualLine.VisualLength) {
+				// If the caret is within the text, use GetTextBounds() for the text being overwritten.
+				// This is necessary to ensure the rectangle is calculated correctly in bidirectional text.
+				var textBounds = textLine.GetTextBounds(currentPos, nextPos - currentPos)[0];
+				r = textBounds.Rectangle;
+				r.Y += visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.LineTop);
+			} else {
+				// If the caret is at the end of the line (or in virtual space),
+				// use the visual X position of currentPos and nextPos (one or more of which will be in virtual space)
+				double xPos = visualLine.GetTextLineVisualXPosition(textLine, currentPos);
+				double xPos2 = visualLine.GetTextLineVisualXPosition(textLine, nextPos);
+				double lineTop = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextTop);
+				double lineBottom = visualLine.GetTextLineVisualYPosition(textLine, VisualYPosition.TextBottom);
+				r = new Rect(xPos, lineTop, xPos2 - xPos, lineBottom - lineTop);
+			}
+			// If the caret is too small (e.g. in front of zero-width character), ensure it's still visible
+			if (r.Width < SystemParameters.CaretWidth)
+				r.Width = SystemParameters.CaretWidth;
+			return r;
 		}
 		
 		/// <summary>
@@ -364,7 +432,7 @@ namespace ICSharpCode.AvalonEdit.Editing
 		{
 			if (textView != null && textView.Document != null) {
 				VisualLine visualLine = textView.GetOrConstructVisualLine(textView.Document.GetLineByNumber(position.Line));
-				return CalcCaretRectangle(visualLine);
+				return textArea.OverstrikeMode ? CalcCaretOverstrikeRectangle(visualLine) : CalcCaretRectangle(visualLine);
 			} else {
 				return Rect.Empty;
 			}
@@ -419,7 +487,7 @@ namespace ICSharpCode.AvalonEdit.Editing
 			if (caretAdorner != null && textView != null) {
 				VisualLine visualLine = textView.GetVisualLine(position.Line);
 				if (visualLine != null) {
-					Rect caretRect = CalcCaretRectangle(visualLine);
+					Rect caretRect = this.textArea.OverstrikeMode ? CalcCaretOverstrikeRectangle(visualLine) : CalcCaretRectangle(visualLine);
 					// Create Win32 caret so that Windows knows where our managed caret is. This is necessary for
 					// features like 'Follow text editing' in the Windows Magnifier.
 					if (!hasWin32Caret) {
@@ -429,6 +497,7 @@ namespace ICSharpCode.AvalonEdit.Editing
 						Win32.SetCaretPosition(textView, caretRect.Location - textView.ScrollOffset);
 					}
 					caretAdorner.Show(caretRect);
+					textArea.ime.UpdateCompositionWindow();
 				} else {
 					caretAdorner.Hide();
 				}

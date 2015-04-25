@@ -167,5 +167,62 @@ namespace Mono.Cecil.Tests {
 			Assert.AreEqual (1, instance.GenericArguments.Count);
 			Assert.AreEqual (1, owner.GenericParameters.Count);
 		}
+
+		[TestModule ("cscgpbug.dll", Verify = false)]
+		public void UnboundGenericParameter (ModuleDefinition module)
+		{
+			var type = module.GetType ("ListViewModel");
+			var method = type.GetMethod ("<>n__FabricatedMethod1");
+
+			var parameter = method.ReturnType as GenericParameter;
+
+			Assert.IsNotNull (parameter);
+			Assert.AreEqual (0, parameter.Position);
+			Assert.IsNull (parameter.Owner);
+		}
+
+		[TestCSharp ("Generics.cs")]
+		public void GenericMultidimensionalArray (ModuleDefinition module)
+		{
+			var type = module.GetType ("LaMatrix");
+			var method = type.GetMethod ("At");
+
+			var call = method.Body.Instructions.Where (i => i.Operand is MethodReference).First ();
+			var get = (MethodReference) call.Operand;
+
+			Assert.IsNotNull (get);
+			Assert.AreEqual (0, get.GenericParameters.Count);
+			Assert.AreEqual (MethodCallingConvention.Default, get.CallingConvention);
+			Assert.AreEqual (method.GenericParameters [0], get.ReturnType);
+		}
+
+		[Test]
+		public void CorlibPrimitive ()
+		{
+			var module = typeof (TypeTests).ToDefinition ().Module;
+
+			var int32 = module.TypeSystem.Int32;
+			Assert.IsTrue (int32.IsPrimitive);
+			Assert.AreEqual (MetadataType.Int32, int32.MetadataType);
+
+			var int32_def = int32.Resolve ();
+			Assert.IsTrue (int32_def.IsPrimitive);
+			Assert.AreEqual (MetadataType.Int32, int32_def.MetadataType);
+		}
+
+		[TestIL ("explicitthis.il", Verify = false)]
+		public void ExplicitThis (ModuleDefinition module)
+		{
+			var type = module.GetType ("MakeDecision");
+			var method = type.GetMethod ("Decide");
+			var fptr = method.ReturnType as FunctionPointerType;
+
+			Assert.IsNotNull (fptr);
+			Assert.IsTrue (fptr.HasThis);
+			Assert.IsTrue (fptr.ExplicitThis);
+
+			Assert.AreEqual (0, fptr.Parameters [0].Sequence);
+			Assert.AreEqual (1, fptr.Parameters [1].Sequence);
+		}
 	}
 }

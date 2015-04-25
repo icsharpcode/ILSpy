@@ -21,16 +21,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler.Ast;
-using ICSharpCode.TreeView;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedTypeInstantiationsTreeNode : AnalyzerTreeNode
+	internal sealed class AnalyzedTypeInstantiationsTreeNode : AnalyzerSearchTreeNode
 	{
 		private readonly TypeDefinition analyzedType;
-		private readonly ThreadingSupport threading;
 		private readonly bool isSystemObject;
 
 		public AnalyzedTypeInstantiationsTreeNode(TypeDefinition analyzedType)
@@ -39,8 +37,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				throw new ArgumentNullException("analyzedType");
 
 			this.analyzedType = analyzedType;
-			this.threading = new ThreadingSupport();
-			this.LazyLoading = true;
 
 			this.isSystemObject = (analyzedType.FullName == "System.Object");
 		}
@@ -50,34 +46,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			get { return "Instantiated By"; }
 		}
 
-		public override object Icon
+		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			get { return Images.Search; }
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedType, FindReferencesInType);
+			return analyzer.PerformAnalysis(ct).OrderBy(n => n.Text);
 		}
 
-		protected override void LoadChildren()
-		{
-			threading.LoadChildren(this, FetchChildren);
-		}
-
-		protected override void OnCollapsing()
-		{
-			if (threading.IsRunning) {
-				this.LazyLoading = true;
-				threading.Cancel();
-				this.Children.Clear();
-			}
-		}
-
-		private IEnumerable<SharpTreeNode> FetchChildren(CancellationToken ct)
-		{
-			ScopedWhereUsedAnalyzer<SharpTreeNode> analyzer;
-
-			analyzer = new ScopedWhereUsedAnalyzer<SharpTreeNode>(analyzedType, FindReferencesInType);
-			return analyzer.PerformAnalysis(ct);
-		}
-
-		private IEnumerable<SharpTreeNode> FindReferencesInType(TypeDefinition type)
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
 			foreach (MethodDefinition method in type.Methods) {
 				bool found = false;
@@ -102,17 +77,17 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 				method.Body = null;
 
-				if (found)
-					yield return new AnalyzedMethodTreeNode(method);
+				if (found) {
+					var node = new AnalyzedMethodTreeNode(method);
+					node.Language = this.Language;
+					yield return node;
+				}
 			}
 		}
 
 		public static bool CanShow(TypeDefinition type)
 		{
-			if (type.IsClass && !type.IsEnum) {
-				return type.Methods.Where(m => m.Name == ".ctor").Any(m => !m.IsPrivate);
-			}
-			return false;
+			return (type.IsClass && !(type.IsAbstract && type.IsSealed) && !type.IsEnum);
 		}
 	}
 }

@@ -18,7 +18,6 @@
 
 using System;
 using ICSharpCode.Decompiler;
-using ICSharpCode.TreeView;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -28,7 +27,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	sealed class ModuleReferenceTreeNode : ILSpyTreeNode
 	{
-		ModuleReference r;
+		readonly ModuleReference r;
 		
 		public ModuleReferenceTreeNode(ModuleReference r)
 		{
@@ -38,7 +37,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 		
 		public override object Text {
-			get { return r.Name; }
+			get { return r.Name + r.MetadataToken.ToSuffixString(); }
 		}
 		
 		public override object Icon {

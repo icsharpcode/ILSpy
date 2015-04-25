@@ -28,8 +28,8 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	sealed class ReferenceElementGenerator : VisualLineElementGenerator
 	{
-		Action<ReferenceSegment> referenceClicked;
-		Predicate<ReferenceSegment> isLink;
+		readonly Action<ReferenceSegment> referenceClicked;
+		readonly Predicate<ReferenceSegment> isLink;
 		
 		/// <summary>
 		/// The collection of references (hyperlinks).
@@ -84,8 +84,8 @@ namespace ICSharpCode.ILSpy.TextView
 	/// </summary>
 	sealed class VisualLineReferenceText : VisualLineText
 	{
-		ReferenceElementGenerator parent;
-		ReferenceSegment referenceSegment;
+		readonly ReferenceElementGenerator parent;
+		readonly ReferenceSegment referenceSegment;
 		
 		/// <summary>
 		/// Creates a visual line text element with the specified length.
@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy.TextView
 		protected override void OnQueryCursor(QueryCursorEventArgs e)
 		{
 			e.Handled = true;
-			e.Cursor = Cursors.Hand;
+			e.Cursor = referenceSegment.IsLocal ? Cursors.Arrow : Cursors.Hand;
 		}
 		
 		/// <inheritdoc/>
@@ -110,7 +110,8 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (e.ChangedButton == MouseButton.Left && !e.Handled) {
 				parent.JumpToReference(referenceSegment);
-				e.Handled = true;
+				if(!referenceSegment.IsLocal)
+					e.Handled = true;
 			}
 		}
 		

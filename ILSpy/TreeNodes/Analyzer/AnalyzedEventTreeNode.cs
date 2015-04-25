@@ -21,7 +21,7 @@ using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedEventTreeNode : AnalyzerTreeNode
+	internal sealed class AnalyzedEventTreeNode : AnalyzerEntityTreeNode
 	{
 		private readonly EventDefinition analyzedEvent;
 		private readonly string prefix;
@@ -33,6 +33,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			this.analyzedEvent = analyzedEvent;
 			this.prefix = prefix;
 			this.LazyLoading = true;
+		}
+
+		public override MemberReference Member {
+			get { return analyzedEvent; }
 		}
 
 		public override object Icon
@@ -49,23 +53,23 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			}
 		}
 
-		public override void ActivateItem(System.Windows.RoutedEventArgs e)
-		{
-			e.Handled = true;
-			MainWindow.Instance.JumpToReference(analyzedEvent);
-		}
-
 		protected override void LoadChildren()
 		{
 			if (analyzedEvent.AddMethod != null)
 				this.Children.Add(new AnalyzedEventAccessorTreeNode(analyzedEvent.AddMethod, "add"));
+			
 			if (analyzedEvent.RemoveMethod != null)
 				this.Children.Add(new AnalyzedEventAccessorTreeNode(analyzedEvent.RemoveMethod, "remove"));
+			
 			foreach (var accessor in analyzedEvent.OtherMethods)
 				this.Children.Add(new AnalyzedEventAccessorTreeNode(accessor, null));
 
+			if (AnalyzedEventFiredByTreeNode.CanShow(analyzedEvent))
+				this.Children.Add(new AnalyzedEventFiredByTreeNode(analyzedEvent));
+
 			if (AnalyzedEventOverridesTreeNode.CanShow(analyzedEvent))
 				this.Children.Add(new AnalyzedEventOverridesTreeNode(analyzedEvent));
+			
 			if (AnalyzedInterfaceEventImplementedByTreeNode.CanShow(analyzedEvent))
 				this.Children.Add(new AnalyzedInterfaceEventImplementedByTreeNode(analyzedEvent));
 		}

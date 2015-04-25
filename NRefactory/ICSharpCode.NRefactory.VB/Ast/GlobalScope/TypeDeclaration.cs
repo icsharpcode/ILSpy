@@ -1,5 +1,5 @@
 ﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under the GNU LGPL (for details please see \doc\license.txt)
+// This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
 using System;
 using System.Collections.Generic;
@@ -8,6 +8,14 @@ using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.NRefactory.VB.Ast
 {
+	public enum ClassType
+	{
+		Class,
+		Struct,
+		Interface,
+		Module
+	}
+	
 	public class TypeDeclaration : AttributedNode
 	{
 		public readonly static Role<AttributedNode> MemberRole = new Role<AttributedNode>("Member");
@@ -31,6 +39,7 @@ namespace ICSharpCode.NRefactory.VB.Ast
 		
 		public AstType InheritsType {
 			get { return GetChildByRole(InheritsTypeRole); }
+			set { SetChildByRole(InheritsTypeRole, value); }
 		}
 		
 		public AstNodeCollection<AstType> ImplementsTypes {

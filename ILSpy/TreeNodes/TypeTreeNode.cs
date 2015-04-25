@@ -59,10 +59,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 		
 		public override object Text {
-			get { return HighlightSearchMatch(this.Language.TypeToString(type, includeNamespace: false)); }
+			get { return HighlightSearchMatch(this.Language.FormatTypeName(type), type.MetadataToken.ToSuffixString()); }
 		}
 		
-		public bool IsPublicAPI {
+		public override bool IsPublicAPI {
 			get {
 				switch (type.Attributes & TypeAttributes.VisibilityMask) {
 					case TypeAttributes.Public:
@@ -81,10 +81,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
 			if (settings.SearchTermMatches(type.Name)) {
-				if (type.IsNested && !settings.Language.ShowMember(type))
-					return FilterResult.Hidden;
-				else
+				if (settings.Language.ShowMember(type))
 					return FilterResult.Match;
+				else
+					return FilterResult.Hidden;
 			} else {
 				return FilterResult.Recurse;
 			}
@@ -200,18 +200,5 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		MemberReference IMemberTreeNode.Member {
 			get { return type; }
 		}
-
-        public override bool IsPublicAccess()
-        {
-            if (type != null)
-            {
-                if (type.IsNested)
-                {
-                    return type.IsNestedPublic || type.IsNestedFamily; 
-                }
-                return !type.IsNotPublic;
-            }
-            return true;
-        }
 	}
 }

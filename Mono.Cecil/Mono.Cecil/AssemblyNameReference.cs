@@ -92,8 +92,13 @@ namespace Mono.Cecil {
 			set { attributes = attributes.SetAttributes ((uint) AssemblyAttributes.Retargetable, value); }
 		}
 
+		public bool IsWindowsRuntime {
+			get { return attributes.GetAttributes ((uint) AssemblyAttributes.WindowsRuntime); }
+			set { attributes = attributes.SetAttributes ((uint) AssemblyAttributes.WindowsRuntime, value); }
+		}
+
 		public byte [] PublicKey {
-			get { return public_key; }
+			get { return public_key ?? Empty<byte>.Array; }
 			set {
 				public_key = value;
 				HasPublicKey = !public_key.IsNullOrEmpty ();
@@ -112,7 +117,7 @@ namespace Mono.Cecil {
 					Array.Reverse (local_public_key_token, 0, 8);
 					public_key_token = local_public_key_token; // publish only once finished (required for thread-safety)
 				}
-				return public_key_token;
+				return public_key_token ?? Empty<byte>.Array;
 			}
 			set {
 				public_key_token = value;
@@ -171,9 +176,10 @@ namespace Mono.Cecil {
 				builder.Append (sep);
 				builder.Append ("PublicKeyToken=");
 
-				if (this.PublicKeyToken != null && public_key_token.Length > 0) {
-					for (int i = 0 ; i < public_key_token.Length ; i++) {
-						builder.Append (public_key_token [i].ToString ("x2"));
+				var pk_token = PublicKeyToken;
+				if (!pk_token.IsNullOrEmpty () && pk_token.Length > 0) {
+					for (int i = 0 ; i < pk_token.Length ; i++) {
+						builder.Append (pk_token [i].ToString ("x2"));
 					}
 				} else
 					builder.Append ("null");
@@ -203,22 +209,22 @@ namespace Mono.Cecil {
 				if (parts.Length != 2)
 					throw new ArgumentException ("Malformed name");
 
-				switch (parts [0]) {
-				case "Version":
+				switch (parts [0].ToLowerInvariant ()) {
+				case "version":
 					name.Version = new Version (parts [1]);
 					break;
-				case "Culture":
+				case "culture":
 					name.Culture = parts [1];
 					break;
-				case "PublicKeyToken":
-					string pk_token = parts [1];
+				case "publickeytoken":
+					var pk_token = parts [1];
 					if (pk_token == "null")
 						break;
 
 					name.PublicKeyToken = new byte [pk_token.Length / 2];
-					for (int j = 0; j < name.PublicKeyToken.Length; j++) {
+					for (int j = 0; j < name.PublicKeyToken.Length; j++)
 						name.PublicKeyToken [j] = Byte.Parse (pk_token.Substring (j * 2, 2), NumberStyles.HexNumber);
-					}
+
 					break;
 				}
 			}

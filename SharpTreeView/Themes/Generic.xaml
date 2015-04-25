@@ -181,8 +181,8 @@
                     <Border Background="Transparent">
                         <Border Background="{TemplateBinding Background}">
                             <Default:SharpTreeNodeView Name="nodeView"
-                                                       HorizontalAlignment="Left" 
-                                                       Foreground="{Binding ForegroundBrush}"/>
+                                                       Foreground="{Binding Foreground}"
+                                                       HorizontalAlignment="Left" />
                         </Border>
                     </Border>
                     <ControlTemplate.Triggers>
@@ -209,12 +209,12 @@
                                     Property="Foreground"
                                     Value="{DynamicResource {x:Static SystemColors.ControlTextBrushKey}}" />
                         </MultiTrigger>-->
-                        <!--<Trigger Property="IsSelected"
+                        <Trigger Property="IsEnabled"
                                  Value="False">
                             <Setter TargetName="nodeView"
                                     Property="Foreground"
-                                    Value="Red" />
-                        </Trigger>-->
+                                    Value="{DynamicResource {x:Static SystemColors.GrayTextBrushKey}}" />
+                        </Trigger>
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>

@@ -29,8 +29,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Input;
-using System.Xml;
 using System.Xml.Linq;
+
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.TextView;
@@ -45,10 +45,12 @@ namespace ICSharpCode.ILSpy
 		
 		public override void Execute(object parameter)
 		{
+			MainWindow.Instance.UnselectAll();
 			Display(decompilerTextView);
 		}
 		
 		static readonly Uri UpdateUrl = new Uri("http://www.ilspy.net/updates.xml");
+		const string band = "stable";
 		
 		static AvailableVersionInfo latestAvailableVersion;
 		
@@ -93,6 +95,7 @@ namespace ICSharpCode.ILSpy
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("SharpDevelop", "http://www.icsharpcode.net/opensource/sd/"));
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("MIT License", "resource:license.txt"));
 			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("LGPL", "resource:LGPL.txt"));
+			output.AddVisualLineElementGenerator(new MyLinkElementGenerator("MS-PL", "resource:MS-PL.txt"));
 			textView.ShowText(output);
 		}
 		
@@ -177,7 +180,9 @@ namespace ICSharpCode.ILSpy
 		{
 			var tcs = new TaskCompletionSource<AvailableVersionInfo>();
 			WebClient wc = new WebClient();
-			wc.UseDefaultCredentials = true;
+			IWebProxy systemWebProxy = WebRequest.GetSystemWebProxy();
+			systemWebProxy.Credentials = CredentialCache.DefaultCredentials;
+			wc.Proxy = systemWebProxy;
 			wc.DownloadDataCompleted += delegate(object sender, DownloadDataCompletedEventArgs e) {
 				if (e.Error != null) {
 					tcs.SetException(e.Error);
@@ -185,7 +190,7 @@ namespace ICSharpCode.ILSpy
 					try {
 						XDocument doc = XDocument.Load(new MemoryStream(e.Result));
 						var bands = doc.Root.Elements("band");
-						var currentBand = bands.FirstOrDefault(b => (string)b.Attribute("id") == "stable") ?? bands.First();
+						var currentBand = bands.FirstOrDefault(b => (string)b.Attribute("id") == band) ?? bands.First();
 						Version version = new Version((string)currentBand.Element("latestVersion"));
 						string url = (string)currentBand.Element("downloadUrl");
 						if (!(url.StartsWith("http://", StringComparison.Ordinal) || url.StartsWith("https://", StringComparison.Ordinal)))
@@ -214,7 +219,7 @@ namespace ICSharpCode.ILSpy
 				XElement s = spySettings["UpdateSettings"];
 				this.automaticUpdateCheckEnabled = (bool?)s.Element("AutomaticUpdateCheckEnabled") ?? true;
 				try {
-					this.LastSuccessfulUpdateCheck = (DateTime?)s.Element("LastSuccessfulUpdateCheck");
+					this.lastSuccessfulUpdateCheck = (DateTime?)s.Element("LastSuccessfulUpdateCheck");
 				} catch (FormatException) {
 					// avoid crashing on settings files invalid due to
 					// https://github.com/icsharpcode/ILSpy/issues/closed/#issue/2

@@ -20,18 +20,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Ast;
-using ICSharpCode.NRefactory.Utils;
-using ICSharpCode.TreeView;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	internal sealed class AnalyzedPropertyOverridesTreeNode : AnalyzerTreeNode
+	internal sealed class AnalyzedPropertyOverridesTreeNode : AnalyzerSearchTreeNode
 	{
 		private readonly PropertyDefinition analyzedProperty;
-		private readonly ThreadingSupport threading;
 
 		public AnalyzedPropertyOverridesTreeNode(PropertyDefinition analyzedProperty)
 		{
@@ -39,8 +35,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				throw new ArgumentNullException("analyzedProperty");
 
 			this.analyzedProperty = analyzedProperty;
-			this.threading = new ThreadingSupport();
-			this.LazyLoading = true;
 		}
 
 		public override object Text
@@ -48,38 +42,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			get { return "Overridden By"; }
 		}
 
-		public override object Icon
+		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			get { return Images.Search; }
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedProperty, FindReferencesInType);
+			return analyzer.PerformAnalysis(ct).OrderBy(n => n.Text);
 		}
 
-		protected override void LoadChildren()
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
-			threading.LoadChildren(this, FetchChildren);
-		}
-
-		protected override void OnCollapsing()
-		{
-			if (threading.IsRunning) {
-				this.LazyLoading = true;
-				threading.Cancel();
-				this.Children.Clear();
-			}
-		}
-
-		private IEnumerable<SharpTreeNode> FetchChildren(CancellationToken ct)
-		{
-			ScopedWhereUsedAnalyzer<SharpTreeNode> analyzer;
-
-			analyzer = new ScopedWhereUsedAnalyzer<SharpTreeNode>(analyzedProperty, FindReferencesInType);
-			return analyzer.PerformAnalysis(ct);
-		}
-
-		private IEnumerable<SharpTreeNode> FindReferencesInType(TypeDefinition type)
-		{
-			string name = analyzedProperty.Name;
-			string declTypeName = analyzedProperty.DeclaringType.FullName;
-
 			if (!TypesHierarchyHelpers.IsBaseType(analyzedProperty.DeclaringType, type, resolveTypeArguments: false))
 				yield break;
 
@@ -88,7 +58,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				if (TypesHierarchyHelpers.IsBaseProperty(analyzedProperty, property)) {
 					MethodDefinition anyAccessor = property.GetMethod ?? property.SetMethod;
 					bool hidesParent = !anyAccessor.IsVirtual ^ anyAccessor.IsNewSlot;
-					yield return new AnalyzedPropertyTreeNode(property, hidesParent ? "(hides) " : "");
+					var node = new AnalyzedPropertyTreeNode(property, hidesParent ? "(hides) " : "");
+					node.Language = this.Language;
+					yield return node;
 				}
 			}
 		}

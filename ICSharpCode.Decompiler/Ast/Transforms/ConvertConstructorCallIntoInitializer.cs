@@ -60,7 +60,10 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		
 		static readonly ExpressionStatement fieldInitializerPattern = new ExpressionStatement {
 			Expression = new AssignmentExpression {
-				Left = new NamedNode("fieldAccess", new MemberReferenceExpression { Target = new ThisReferenceExpression() }),
+				Left = new NamedNode("fieldAccess", new MemberReferenceExpression { 
+				                     	Target = new ThisReferenceExpression(),
+				                     	MemberName = Pattern.AnyString
+				                     }),
 				Operator = AssignmentOperatorType.Assign,
 				Right = new AnyNode("initializer")
 			}
@@ -107,6 +110,10 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					AstNode fieldOrEventDecl = members.FirstOrDefault(f => f.Annotation<FieldDefinition>() == fieldDef);
 					if (fieldOrEventDecl == null)
 						break;
+					Expression initializer = m.Get<Expression>("initializer").Single();
+					// 'this'/'base' cannot be used in field initializers
+					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression || n is BaseReferenceExpression))
+						break;
 					
 					allSame = true;
 					for (int i = 1; i < instanceCtorsNotChainingWithThis.Length; i++) {
@@ -116,7 +123,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					if (allSame) {
 						foreach (var ctor in instanceCtorsNotChainingWithThis)
 							ctor.Body.First().Remove();
-						fieldOrEventDecl.GetChildrenByRole(AstNode.Roles.Variable).Single().Initializer = m.Get<Expression>("initializer").Single().Detach();
+						fieldOrEventDecl.GetChildrenByRole(Roles.Variable).Single().Initializer = initializer.Detach();
 					}
 				} while (allSame);
 			}

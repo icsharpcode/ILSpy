@@ -1,12 +1,26 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under the GNU LGPL (for details please see \doc\license.txt)
+﻿// Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
-using System.Windows.Threading;
 
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Editing;
@@ -24,6 +38,7 @@ namespace ICSharpCode.AvalonEdit.Folding
 		
 		internal readonly List<TextView> textViews = new List<TextView>();
 		readonly TextSegmentCollection<FoldingSection> foldings;
+		bool isFirstUpdate = true;
 		
 		#region Constructor
 		/// <summary>
@@ -37,15 +52,6 @@ namespace ICSharpCode.AvalonEdit.Folding
 			this.foldings = new TextSegmentCollection<FoldingSection>();
 			document.VerifyAccess();
 			TextDocumentWeakEventManager.Changed.AddListener(document, this);
-		}
-		
-		/// <summary>
-		/// Creates a new FoldingManager instance.
-		/// </summary>
-		[Obsolete("Use the (TextDocument) constructor instead.")]
-		public FoldingManager(TextView textView, TextDocument document)
-			: this(document)
-		{
 		}
 		#endregion
 		
@@ -68,13 +74,16 @@ namespace ICSharpCode.AvalonEdit.Folding
 		void OnDocumentChanged(DocumentChangeEventArgs e)
 		{
 			foldings.UpdateOffsets(e);
-			FoldingSection s = foldings.FindFirstSegmentWithStartAfter(e.Offset);
-			while (s != null && s.StartOffset == e.Offset) {
-				FoldingSection next = foldings.GetNextSegment(s);
-				if (s.Length == 0) {
-					RemoveFolding(s);
+			int newEndOffset = e.Offset + e.InsertionLength;
+			// extend end offset to the end of the line (including delimiter)
+			var endLine = document.GetLineByOffset(newEndOffset);
+			newEndOffset = endLine.Offset + endLine.TotalLength;
+			foreach (var affectedFolding in foldings.FindOverlappingSegments(e.Offset, newEndOffset - e.Offset)) {
+				if (affectedFolding.Length == 0) {
+					RemoveFolding(affectedFolding);
+				} else {
+					affectedFolding.ValidateCollapsedLineSections();
 				}
-				s = next;
 			}
 		}
 		#endregion
@@ -88,7 +97,7 @@ namespace ICSharpCode.AvalonEdit.Folding
 			foreach (FoldingSection fs in foldings) {
 				if (fs.collapsedSections != null) {
 					Array.Resize(ref fs.collapsedSections, textViews.Count);
-					fs.collapsedSections[fs.collapsedSections.Length - 1] = fs.CollapseSection(textView);
+					fs.ValidateCollapsedLineSections();
 				}
 			}
 		}
@@ -98,23 +107,16 @@ namespace ICSharpCode.AvalonEdit.Folding
 			int pos = textViews.IndexOf(textView);
 			if (pos < 0)
 				throw new ArgumentException();
+			textViews.RemoveAt(pos);
 			foreach (FoldingSection fs in foldings) {
 				if (fs.collapsedSections != null) {
-					CollapsedLineSection[] c = new CollapsedLineSection[textViews.Count];
+					var c = new CollapsedLineSection[textViews.Count];
 					Array.Copy(fs.collapsedSections, 0, c, 0, pos);
+					fs.collapsedSections[pos].Uncollapse();
 					Array.Copy(fs.collapsedSections, pos + 1, c, pos, c.Length - pos);
 					fs.collapsedSections = c;
 				}
 			}
-		}
-		
-		internal CollapsedLineSection[] CollapseLines(DocumentLine start, DocumentLine end)
-		{
-			CollapsedLineSection[] c = new CollapsedLineSection[textViews.Count];
-			for (int i = 0; i < c.Length; i++) {
-				c[i] = textViews[i].CollapseLines(start, end);
-			}
-			return c;
 		}
 		
 		internal void Redraw()
@@ -138,6 +140,8 @@ namespace ICSharpCode.AvalonEdit.Folding
 		{
 			if (startOffset >= endOffset)
 				throw new ArgumentException("startOffset must be less than endOffset");
+			if (startOffset < 0 || endOffset > document.TextLength)
+				throw new ArgumentException("Folding must be within document boundary");
 			FoldingSection fs = new FoldingSection(this, startOffset, endOffset);
 			foldings.Add(fs);
 			Redraw(fs);
@@ -254,6 +258,9 @@ namespace ICSharpCode.AvalonEdit.Folding
 					throw new ArgumentException("newFoldings must be sorted by start offset");
 				previousStartOffset = newFolding.StartOffset;
 				
+				int startOffset = newFolding.StartOffset.CoerceValue(0, document.TextLength);
+				int endOffset = newFolding.EndOffset.CoerceValue(0, document.TextLength);
+				
 				if (newFolding.StartOffset == newFolding.EndOffset)
 					continue; // ignore zero-length foldings
 				
@@ -270,7 +277,10 @@ namespace ICSharpCode.AvalonEdit.Folding
 					// no matching current folding; create a new one:
 					section = this.CreateFolding(newFolding.StartOffset, newFolding.EndOffset);
 					// auto-close #regions only when opening the document
-					section.IsFolded = newFolding.DefaultClosed;
+					if (isFirstUpdate) {
+						section.IsFolded = newFolding.DefaultClosed;
+						isFirstUpdate = false;
+					}
 					section.Tag = newFolding;
 				}
 				section.Title = newFolding.Name;
@@ -327,6 +337,7 @@ namespace ICSharpCode.AvalonEdit.Folding
 				margin = new FoldingMargin() { FoldingManager = this };
 				generator = new FoldingElementGenerator() { FoldingManager = this };
 				textArea.LeftMargins.Add(margin);
+				textArea.TextView.Services.AddService(typeof(FoldingManager), this);
 				// HACK: folding only works correctly when it has highest priority
 				textArea.TextView.ElementGenerators.Insert(0, generator);
 				textArea.Caret.PositionChanged += textArea_Caret_PositionChanged;
@@ -363,6 +374,7 @@ namespace ICSharpCode.AvalonEdit.Folding
 					textArea.Caret.PositionChanged -= textArea_Caret_PositionChanged;
 					textArea.LeftMargins.Remove(margin);
 					textArea.TextView.ElementGenerators.Remove(generator);
+					textArea.TextView.Services.RemoveService(typeof(FoldingManager));
 					margin = null;
 					generator = null;
 					textArea = null;

@@ -11,6 +11,8 @@
 	UseLayoutRounding="True"
 	TextOptions.TextFormattingMode="Display"
 	FocusManager.FocusedElement="{Binding ElementName=treeView}"
+	xmlns:d="http://schemas.microsoft.com/expression/blend/2008" d:DesignHeight="500" d:DesignWidth="500"
+	xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="d"
 >
 	<Window.Resources>
 		<BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -37,9 +39,12 @@
 			Command="Search"
 			Executed="SearchCommandExecuted" />
 	</Window.CommandBindings>
+	<Window.TaskbarItemInfo>
+		<TaskbarItemInfo />
+	</Window.TaskbarItemInfo>
 	<DockPanel>
 		<!-- Main menu -->
-		<Menu DockPanel.Dock="Top" Name="mainMenu">
+		<Menu DockPanel.Dock="Top" Name="mainMenu" Height="23">
 			<MenuItem Header="_File" /> <!-- contents of file menu are added using MEF -->
 			<MenuItem Header="_View">
 				<MenuItem Header="Show _internal types and members" IsCheckable="True" IsChecked="{Binding FilterSettings.ShowInternalApi}">
@@ -52,7 +57,7 @@
 		<!-- ToolBar -->
 		<ToolBar
 			Name="toolBar"
-			DockPanel.Dock="Top">
+			DockPanel.Dock="Top" ToolBarTray.IsLocked="True">
 			<ToolBar.Resources>
 				<!-- Make images transparent if menu command is disabled -->
 				<Style TargetType="{x:Type Image}">
@@ -75,8 +80,18 @@
 			<Separator />
 			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100"
 			          ItemsSource="{x:Static local:Languages.AllLanguages}"
-			          SelectedItem="{Binding FilterSettings.Language}" />
+			          SelectedItem="{Binding FilterSettings.Language}"/>
 		</ToolBar>
+		<!-- Status bar -->
+		<StatusBar x:Name="statusBar" DockPanel.Dock="Bottom" Height="26" Visibility="Collapsed">
+			<StatusBarItem DockPanel.Dock="Right">
+				<TextBlock VerticalAlignment="Center"
+				           HorizontalAlignment="Right"
+				           x:Name="StatusLabel"
+				           ToolTip="Status"
+				           Text="Stand by..."/>
+			</StatusBarItem>
+		</StatusBar>
 		<!-- Main grid separating left pane (treeView) from main pane (textEditor) -->
 		<Grid>
 			<Grid.ColumnDefinitions>
@@ -101,7 +116,8 @@
 				SelectionChanged="TreeView_SelectionChanged"
 				ShowRoot="False"
 				AllowDropOrder="True"
-				AllowDrop="True" />
+				AllowDrop="True"
+				BorderThickness="0,1,1,1" Visibility="Visible" />
 			<GridSplitter
 				Grid.ZIndex="1"
 				Grid.Column="1"
@@ -109,6 +125,7 @@
 				BorderThickness="5,0"
 				HorizontalAlignment="Center"
 				VerticalAlignment="Stretch"
+				Focusable="False"
 				BorderBrush="Transparent" />
 			<!-- Right pane: Text Editor -->
 			<Grid Grid.Column="2">
@@ -119,9 +136,9 @@
 				<Grid.RowDefinitions>
 					<RowDefinition Height="Auto" />
 					<RowDefinition Height="0" Name="topPaneRow" />
-					<RowDefinition Height="1" />
+					<RowDefinition Height="0" />
 					<RowDefinition Height="0.7*" MinHeight="100" Name="textViewRow" />
-					<RowDefinition Height="1" />
+					<RowDefinition Height="0" />
 					<RowDefinition Height="0" Name="bottomPaneRow" />
 				</Grid.RowDefinitions>
 				<Border BorderBrush="Black" BorderThickness="1" Name="updateAvailablePanel" Visibility="Collapsed">
@@ -134,7 +151,9 @@
 					</DockPanel>
 				</Border>
 				
-				<controls:DockedPane x:Name="topPane" Grid.Row="1" Title="Top" Visibility="Collapsed" CloseButtonClicked="TopPane_CloseButtonClicked" />
+				<controls:DockedPane x:Name="topPane" Grid.Row="1" Title="Top" Visibility="Collapsed"
+					CloseButtonClicked="TopPane_CloseButtonClicked" Margin="0,0,0,3"
+					BorderThickness="1,1,0,1" />
 				
 				<GridSplitter
 					Grid.ZIndex="1"
@@ -144,6 +163,7 @@
 					BorderBrush="Transparent"
 					HorizontalAlignment="Stretch"
 					VerticalAlignment="Center"
+					Focusable="False"
 					Visibility="{Binding Visibility, ElementName=topPane}" />
 				
 				<!-- decompilerTextView is into the mainPane by code -->
@@ -157,9 +177,11 @@
 					BorderBrush="Transparent"
 					HorizontalAlignment="Stretch"
 					VerticalAlignment="Center"
+					Focusable="False"
 					Visibility="{Binding Visibility, ElementName=bottomPane}" />
 				
-				<controls:DockedPane x:Name="bottomPane" Grid.Row="5" Title="Bottom" Visibility="Collapsed" CloseButtonClicked="BottomPane_CloseButtonClicked" />
+				<controls:DockedPane x:Name="bottomPane" Grid.Row="5" Title="Bottom" Visibility="Collapsed"
+					CloseButtonClicked="BottomPane_CloseButtonClicked" Margin="0,3,0,0" BorderThickness="1,1,0,1"/>
 			</Grid>
 		</Grid>
 	</DockPanel>

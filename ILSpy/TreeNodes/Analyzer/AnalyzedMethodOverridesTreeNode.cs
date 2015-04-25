@@ -19,12 +19,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Ast;
-using ICSharpCode.NRefactory.Utils;
-using ICSharpCode.TreeView;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
@@ -32,10 +29,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 	/// <summary>
 	/// Searches for overrides of the analyzed method.
 	/// </summary>
-	internal sealed class AnalyzedMethodOverridesTreeNode : AnalyzerTreeNode
+	internal sealed class AnalyzedMethodOverridesTreeNode : AnalyzerSearchTreeNode
 	{
 		private readonly MethodDefinition analyzedMethod;
-		private readonly ThreadingSupport threading;
 
 		public AnalyzedMethodOverridesTreeNode(MethodDefinition analyzedMethod)
 		{
@@ -43,8 +39,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				throw new ArgumentNullException("analyzedMethod");
 
 			this.analyzedMethod = analyzedMethod;
-			this.threading = new ThreadingSupport();
-			this.LazyLoading = true;
 		}
 
 		public override object Text
@@ -52,36 +46,15 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			get { return "Overridden By"; }
 		}
 
-		public override object Icon
+		protected override IEnumerable<AnalyzerTreeNode> FetchChildren(CancellationToken ct)
 		{
-			get { return Images.Search; }
+			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedMethod, FindReferencesInType);
+			return analyzer.PerformAnalysis(ct).OrderBy(n => n.Text);
 		}
 
-		protected override void LoadChildren()
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
-			threading.LoadChildren(this, FetchChildren);
-		}
-
-		protected override void OnCollapsing()
-		{
-			if (threading.IsRunning) {
-				this.LazyLoading = true;
-				threading.Cancel();
-				this.Children.Clear();
-			}
-		}
-
-		private IEnumerable<SharpTreeNode> FetchChildren(CancellationToken ct)
-		{
-			ScopedWhereUsedAnalyzer<SharpTreeNode> analyzer;
-
-			analyzer = new ScopedWhereUsedAnalyzer<SharpTreeNode>(analyzedMethod, FindReferencesInType);
-			return analyzer.PerformAnalysis(ct);
-		}
-
-		private IEnumerable<SharpTreeNode> FindReferencesInType(TypeDefinition type)
-		{
-			SharpTreeNode newNode = null;
+			AnalyzerTreeNode newNode = null;
 			try {
 				if (!TypesHierarchyHelpers.IsBaseType(analyzedMethod.DeclaringType, type, resolveTypeArguments: false))
 					yield break;
@@ -97,8 +70,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				// ignore this type definition. maybe add a notification about such cases.
 			}
 
-			if (newNode != null)
+			if (newNode != null) {
+				newNode.Language = this.Language;
 				yield return newNode;
+			}
 		}
 
 		public static bool CanShow(MethodDefinition method)

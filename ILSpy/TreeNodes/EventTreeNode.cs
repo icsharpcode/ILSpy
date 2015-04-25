@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override object Text
 		{
-			get { return GetText(ev, this.Language); }
+			get { return GetText(ev, this.Language) + ev.MetadataToken.ToSuffixString(); }
 		}
 
 		public static object GetText(EventDefinition eventDef, Language language)
@@ -86,10 +86,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case MethodAttributes.FamANDAssem:
 					return AccessOverlayIcon.Internal;
 				case MethodAttributes.Family:
-				case MethodAttributes.FamORAssem:
 					return AccessOverlayIcon.Protected;
+				case MethodAttributes.FamORAssem:
+					return AccessOverlayIcon.ProtectedInternal;
 				case MethodAttributes.Private:
 					return AccessOverlayIcon.Private;
+				case MethodAttributes.CompilerControlled:
+					return AccessOverlayIcon.CompilerControlled;
 				default:
 					throw new NotSupportedException();
 			}
@@ -108,19 +111,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.DecompileEvent(ev, output, options);
 		}
 		
+		
+		public override bool IsPublicAPI {
+			get {
+				MethodDefinition accessor = ev.AddMethod ?? ev.RemoveMethod;
+				return accessor != null && (accessor.IsPublic || accessor.IsFamilyOrAssembly || accessor.IsFamily);
+			}
+		}
+		
 		MemberReference IMemberTreeNode.Member
 		{
 			get { return ev; }
 		}
-
-        public override bool IsPublicAccess()
-        {
-            if (ev != null && ev.AddMethod != null)
-            {
-                return ev.AddMethod.IsPublic || ev.AddMethod.IsVirtual || ev.AddMethod.IsFamily;
-            }
-            return true;
-        }
-
 	}
 }

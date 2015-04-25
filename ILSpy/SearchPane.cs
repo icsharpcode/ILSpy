@@ -19,30 +19,24 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.NRefactory.Utils;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy
 {
-	/// <summary>
-	/// Notifies panes when they are closed.
-	/// </summary>
-	public interface IPane
-	{
-		void Closed();
-	}
-	
 	/// <summary>
 	/// Search pane
 	/// </summary>
@@ -61,24 +55,46 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		
-		const int SearchMode_Type = 0;
-		const int SearchMode_Member = 1;
-		
 		private SearchPane()
 		{
 			InitializeComponent();
 			searchModeComboBox.Items.Add(new { Image = Images.Class, Name = "Type" });
 			searchModeComboBox.Items.Add(new { Image = Images.Property, Name = "Member" });
-			searchModeComboBox.SelectedIndex = SearchMode_Type;
+			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
+			searchModeComboBox.SelectedIndex = (int)SearchMode.Type;
+			ContextMenuProvider.Add(listBox);
+			
+			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
+		}
+		
+		bool runSearchOnNextShow;
+		
+		void MainWindow_Instance_CurrentAssemblyListChanged(object sender, NotifyCollectionChangedEventArgs e)
+		{
+			if (IsVisible) {
+				StartSearch(this.SearchTerm);
+			} else {
+				StartSearch(null);
+				runSearchOnNextShow = true;
+			}
 		}
 		
 		public void Show()
 		{
-			if (!IsVisible)
+			if (!IsVisible) {
 				MainWindow.Instance.ShowInTopPane("Search", this);
+				if (runSearchOnNextShow) {
+					runSearchOnNextShow = false;
+					StartSearch(this.SearchTerm);
+				}
+			}
 			Dispatcher.BeginInvoke(
 				DispatcherPriority.Background,
-				new Func<bool>(searchBox.Focus));
+				new Action(
+					delegate {
+						searchBox.Focus();
+						searchBox.SelectAll();
+					}));
 		}
 		
 		public static readonly DependencyProperty SearchTermProperty =
@@ -110,7 +126,7 @@ namespace ICSharpCode.ILSpy
 				listBox.ItemsSource = null;
 			} else {
 				MainWindow mainWindow = MainWindow.Instance;
-				currentSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm, searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage);
+				currentSearch = new RunningSearch(mainWindow.CurrentAssemblyList.GetAssemblies(), searchTerm, (SearchMode)searchModeComboBox.SelectedIndex, mainWindow.CurrentLanguage);
 				listBox.ItemsSource = currentSearch.Results;
 				new Thread(currentSearch.Run).Start();
 			}
@@ -147,10 +163,13 @@ namespace ICSharpCode.ILSpy
 		{
 			base.OnKeyDown(e);
 			if (e.Key == Key.T && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
-				searchModeComboBox.SelectedIndex = SearchMode_Type;
+				searchModeComboBox.SelectedIndex = (int)SearchMode.Type;
 				e.Handled = true;
 			} else if (e.Key == Key.M && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
-				searchModeComboBox.SelectedIndex = SearchMode_Member;
+				searchModeComboBox.SelectedIndex = (int)SearchMode.Member;
+				e.Handled = true;
+			} else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
+				searchModeComboBox.SelectedIndex = (int)SearchMode.Literal;
 				e.Handled = true;
 			}
 		}
@@ -163,23 +182,23 @@ namespace ICSharpCode.ILSpy
 				listBox.SelectedIndex = 0;
 			}
 		}
-		
+
 		sealed class RunningSearch
 		{
 			readonly Dispatcher dispatcher;
 			readonly CancellationTokenSource cts = new CancellationTokenSource();
 			readonly LoadedAssembly[] assemblies;
-			readonly string searchTerm;
-			readonly int searchMode;
+			readonly string[] searchTerm;
+			readonly SearchMode searchMode;
 			readonly Language language;
 			public readonly ObservableCollection<SearchResult> Results = new ObservableCollection<SearchResult>();
 			int resultCount;
-			
-			public RunningSearch(LoadedAssembly[] assemblies, string searchTerm, int searchMode, Language language)
+
+			public RunningSearch(LoadedAssembly[] assemblies, string searchTerm, SearchMode searchMode, Language language)
 			{
 				this.dispatcher = Dispatcher.CurrentDispatcher;
 				this.assemblies = assemblies;
-				this.searchTerm = searchTerm;
+				this.searchTerm = searchTerm.Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries);
 				this.language = language;
 				this.searchMode = searchMode;
 				
@@ -194,14 +213,16 @@ namespace ICSharpCode.ILSpy
 			public void Run()
 			{
 				try {
+					var searcher = GetSearchStrategy(searchMode, searchTerm);
 					foreach (var loadedAssembly in assemblies) {
-						AssemblyDefinition asm = loadedAssembly.AssemblyDefinition;
-						if (asm == null)
+						ModuleDefinition module = loadedAssembly.ModuleDefinition;
+						if (module == null)
 							continue;
 						CancellationToken cancellationToken = cts.Token;
-						foreach (TypeDefinition type in asm.MainModule.Types) {
+
+						foreach (TypeDefinition type in module.Types) {
 							cancellationToken.ThrowIfCancellationRequested();
-							PerformSearch(type);
+							searcher.Search(type, language, AddResult);
 						}
 					}
 				} catch (OperationCanceledException) {
@@ -224,109 +245,71 @@ namespace ICSharpCode.ILSpy
 					new Action(delegate { this.Results.Insert(this.Results.Count - 1, result); }));
 				cts.Token.ThrowIfCancellationRequested();
 			}
-			
-			bool IsMatch(string text)
+
+			AbstractSearchStrategy GetSearchStrategy(SearchMode mode, string[] terms)
 			{
-				if (text.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
-					return true;
-				else
-					return false;
-			}
-			
-			void PerformSearch(TypeDefinition type)
-			{
-				if (searchMode == SearchMode_Type && IsMatch(type.Name)) {
-					AddResult(new SearchResult {
-					          	Member = type,
-					          	Image = TypeTreeNode.GetIcon(type),
-					          	Name = language.TypeToString(type, includeNamespace: false),
-					          	LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
-					          	Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
-					          });
+				if (terms.Length == 1) {
+					if (terms[0].StartsWith("t:"))
+						return new TypeSearchStrategy(terms[0].Substring(2));
+
+					if (terms[0].StartsWith("m:"))
+						return new MemberSearchStrategy(terms[0].Substring(2));
+
+					if (terms[0].StartsWith("c:"))
+						return new LiteralSearchStrategy(terms[0].Substring(2));
 				}
-				
-				foreach (TypeDefinition nestedType in type.NestedTypes) {
-					PerformSearch(nestedType);
+
+				switch (mode) {
+					case SearchMode.Type:
+						return new TypeSearchStrategy(terms);
+					case SearchMode.Member:
+						return new MemberSearchStrategy(terms);
+					case SearchMode.Literal:
+						return new LiteralSearchStrategy(terms);
 				}
-				
-				if (searchMode == SearchMode_Type)
-					return;
-				
-				foreach (FieldDefinition field in type.Fields) {
-					if (IsMatch(field.Name)) {
-						AddResult(new SearchResult {
-						          	Member = field,
-						          	Image = FieldTreeNode.GetIcon(field),
-						          	Name = field.Name,
-						          	LocationImage = TypeTreeNode.GetIcon(type),
-						          	Location = language.TypeToString(type, includeNamespace: true)
-						          });
-					}
-				}
-				foreach (PropertyDefinition property in type.Properties) {
-					if (IsMatch(property.Name)) {
-						AddResult(new SearchResult {
-						          	Member = property,
-						          	Image = PropertyTreeNode.GetIcon(property),
-						          	Name = property.Name,
-						          	LocationImage = TypeTreeNode.GetIcon(type),
-						          	Location = language.TypeToString(type, includeNamespace: true)
-						          });
-					}
-				}
-				foreach (EventDefinition ev in type.Events) {
-					if (IsMatch(ev.Name)) {
-						AddResult(new SearchResult {
-						          	Member = ev,
-						          	Image = EventTreeNode.GetIcon(ev),
-						          	Name = ev.Name,
-						          	LocationImage = TypeTreeNode.GetIcon(type),
-						          	Location = language.TypeToString(type, includeNamespace: true)
-						          });
-					}
-				}
-				foreach (MethodDefinition method in type.Methods) {
-					if (IsMatch(method.Name)) {
-						AddResult(new SearchResult {
-						          	Member = method,
-						          	Image = MethodTreeNode.GetIcon(method),
-						          	Name = method.Name,
-						          	LocationImage = TypeTreeNode.GetIcon(type),
-						          	Location = language.TypeToString(type, includeNamespace: true)
-						          });
-					}
-				}
-			}
-		}
-		
-		sealed class SearchResult : INotifyPropertyChanged, IMemberTreeNode
-		{
-			event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged {
-				add { }
-				remove { }
-			}
-			
-			public MemberReference Member { get; set; }
-			
-			public string Location { get; set; }
-			public string Name { get; set; }
-			public ImageSource Image { get; set; }
-			public ImageSource LocationImage { get; set; }
-			
-			public override string ToString()
-			{
-				return Name;
+
+				return null;
 			}
 		}
 	}
-	
-	[ExportMainMenuCommand(Menu = "_View", Header = "_Search", MenuIcon="Images/Find.png", MenuCategory = "ShowPane", MenuOrder = 100)]
-	[ExportToolbarCommand(ToolTip = "Search (F3)", ToolbarIcon = "Images/Find.png", ToolbarCategory = "View", ToolbarOrder = 100)]
+
+	sealed class SearchResult : INotifyPropertyChanged, IMemberTreeNode
+	{
+		event PropertyChangedEventHandler INotifyPropertyChanged.PropertyChanged {
+			add { }
+			remove { }
+		}
+			
+		public MemberReference Member { get; set; }
+			
+		public string Location { get; set; }
+		public string Name { get; set; }
+		public ImageSource Image { get; set; }
+		public ImageSource LocationImage { get; set; }
+			
+		public override string ToString()
+		{
+			return Name;
+		}
+	}
+
+	[ExportMainMenuCommand(Menu = "_View", Header = "_Search", MenuIcon = "Images/Find.png", MenuCategory = "ShowPane", MenuOrder = 100)]
+	[ExportToolbarCommand(ToolTip = "Search (Ctrl+Shift+F or Ctrl+E)", ToolbarIcon = "Images/Find.png", ToolbarCategory = "View", ToolbarOrder = 100)]
 	sealed class ShowSearchCommand : CommandWrapper
 	{
 		public ShowSearchCommand()
 			: base(NavigationCommands.Search)
 		{
+			NavigationCommands.Search.InputGestures.Clear();
+			NavigationCommands.Search.InputGestures.Add(new KeyGesture(Key.F, ModifierKeys.Control | ModifierKeys.Shift));
+			NavigationCommands.Search.InputGestures.Add(new KeyGesture(Key.E, ModifierKeys.Control));
 		}
+	}
+
+	public enum SearchMode
+	{
+		Type,
+		Member,
+		Literal
 	}
 }

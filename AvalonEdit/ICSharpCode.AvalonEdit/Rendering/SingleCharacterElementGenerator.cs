@@ -1,5 +1,20 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under the GNU LGPL (for details please see \doc\license.txt)
+﻿// Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.Windows;
@@ -56,7 +71,6 @@ namespace ICSharpCode.AvalonEdit.Rendering
 			this.ShowBoxForControlCharacters = options.ShowBoxForControlCharacters;
 		}
 		
-		/// <inheritdoc/>
 		public override int GetFirstInterestedOffset(int startOffset)
 		{
 			DocumentLine endLine = CurrentContext.VisualLine.LastDocumentLine;
@@ -83,7 +97,6 @@ namespace ICSharpCode.AvalonEdit.Rendering
 			return -1;
 		}
 		
-		/// <inheritdoc/>
 		public override VisualLineElement ConstructElement(int offset)
 		{
 			char c = CurrentContext.Document.GetCharAt(offset);
@@ -113,7 +126,7 @@ namespace ICSharpCode.AvalonEdit.Rendering
 			
 			public override int GetNextCaretPosition(int visualColumn, LogicalDirection direction, CaretPositioningMode mode)
 			{
-				if (mode == CaretPositioningMode.Normal)
+				if (mode == CaretPositioningMode.Normal || mode == CaretPositioningMode.EveryCodepoint)
 					return base.GetNextCaretPosition(visualColumn, direction, mode);
 				else
 					return -1;
@@ -148,7 +161,7 @@ namespace ICSharpCode.AvalonEdit.Rendering
 			
 			public override int GetNextCaretPosition(int visualColumn, LogicalDirection direction, CaretPositioningMode mode)
 			{
-				if (mode == CaretPositioningMode.Normal)
+				if (mode == CaretPositioningMode.Normal || mode == CaretPositioningMode.EveryCodepoint)
 					return base.GetNextCaretPosition(visualColumn, direction, mode);
 				else
 					return -1;
@@ -199,14 +212,14 @@ namespace ICSharpCode.AvalonEdit.Rendering
 			
 			public override TextEmbeddedObjectMetrics Format(double remainingParagraphWidth)
 			{
-				return new TextEmbeddedObjectMetrics(element.text.WidthIncludingTrailingWhitespace,
-				                                     element.text.Height,
-				                                     element.text.Baseline);
+				double width = Math.Min(0, element.text.WidthIncludingTrailingWhitespace - 1);
+				return new TextEmbeddedObjectMetrics(width, element.text.Height, element.text.Baseline);
 			}
 			
 			public override Rect ComputeBoundingBox(bool rightToLeft, bool sideways)
 			{
-				return new Rect(0, 0, element.text.WidthIncludingTrailingWhitespace, element.text.Height);
+				double width = Math.Min(0, element.text.WidthIncludingTrailingWhitespace - 1);
+				return new Rect(0, 0, width, element.text.Height);
 			}
 			
 			public override void Draw(DrawingContext drawingContext, Point origin, bool rightToLeft, bool sideways)
@@ -230,6 +243,14 @@ namespace ICSharpCode.AvalonEdit.Rendering
 		
 		sealed class SpecialCharacterTextRun : FormattedTextRun
 		{
+			static readonly SolidColorBrush darkGrayBrush;
+			
+			static SpecialCharacterTextRun()
+			{
+				darkGrayBrush = new SolidColorBrush(Color.FromArgb(200, 128, 128, 128));
+				darkGrayBrush.Freeze();
+			}
+			
 			public SpecialCharacterTextRun(FormattedTextElement element, TextRunProperties properties)
 				: base(element, properties)
 			{
@@ -237,10 +258,10 @@ namespace ICSharpCode.AvalonEdit.Rendering
 			
 			public override void Draw(DrawingContext drawingContext, Point origin, bool rightToLeft, bool sideways)
 			{
-				Point newOrigin = new Point(origin.X + 1, origin.Y);
-				var metrics = Format(double.PositiveInfinity);
-				Rect r = new Rect(newOrigin.X + 1, newOrigin.Y - metrics.Baseline, metrics.Width + 1, metrics.Height);
-				drawingContext.DrawRoundedRectangle(Brushes.DarkGray, null, r, 2.5, 2.5);
+				Point newOrigin = new Point(origin.X + 1.5, origin.Y);
+				var metrics = base.Format(double.PositiveInfinity);
+				Rect r = new Rect(newOrigin.X - 0.5, newOrigin.Y - metrics.Baseline, metrics.Width + 2, metrics.Height);
+				drawingContext.DrawRoundedRectangle(darkGrayBrush, null, r, 2.5, 2.5);
 				base.Draw(drawingContext, newOrigin, rightToLeft, sideways);
 			}
 			

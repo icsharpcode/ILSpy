@@ -1,5 +1,20 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under MIT X11 license (for details please see \doc\license.txt)
+﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.CodeDom.Compiler;
@@ -17,8 +32,14 @@ using NUnit.Framework;
 namespace ICSharpCode.Decompiler.Tests
 {
 	[TestFixture]
-	public class TestRunner
+	public class TestRunner : DecompilerTestBase
 	{
+		[Test]
+		public void Async()
+		{
+			TestFile(@"..\..\Tests\Async.cs");
+		}
+		
 		[Test, Ignore("disambiguating overloads is not yet implemented")]
 		public void CallOverloadedMethod()
 		{
@@ -37,10 +58,17 @@ namespace ICSharpCode.Decompiler.Tests
 			TestFile(@"..\..\Tests\DelegateConstruction.cs");
 		}
 		
+		[Test, Ignore("Not yet implemented")]
+		public void ExpressionTrees()
+		{
+			TestFile(@"..\..\Tests\ExpressionTrees.cs");
+		}
+		
 		[Test]
 		public void ExceptionHandling()
 		{
-			TestFile(@"..\..\Tests\ExceptionHandling.cs");
+			AssertRoundtripCode(@"..\..\Tests\ExceptionHandling.cs", optimize: false);
+			AssertRoundtripCode(@"..\..\Tests\ExceptionHandling.cs", optimize: false);
 		}
 		
 		[Test]
@@ -56,15 +84,41 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 		
 		[Test]
+		public void ControlFlowWithDebug()
+		{
+			AssertRoundtripCode(@"..\..\Tests\ControlFlow.cs", optimize: false, useDebug: true);
+			AssertRoundtripCode(@"..\..\Tests\ControlFlow.cs", optimize: false, useDebug: true);
+		}
+		
+		[Test]
+		public void DoubleConstants()
+		{
+			TestFile(@"..\..\Tests\DoubleConstants.cs");
+		}
+		
+		[Test]
 		public void IncrementDecrement()
 		{
 			TestFile(@"..\..\Tests\IncrementDecrement.cs");
 		}
 		
-		[Test, Ignore("Formatting issues (array initializers not on single line)")]
+		[Test]
 		public void InitializerTests()
 		{
 			TestFile(@"..\..\Tests\InitializerTests.cs");
+		}
+
+		[Test]
+		public void LiftedOperators()
+		{
+			TestFile(@"..\..\Tests\LiftedOperators.cs");
+		}
+		
+		[Test]
+		public void Lock()
+		{
+			//TestFile(@"..\..\Tests\Lock.cs", compilerVersion: 2);
+			TestFile(@"..\..\Tests\Lock.cs", compilerVersion: 4);
 		}
 		
 		[Test]
@@ -91,7 +145,7 @@ namespace ICSharpCode.Decompiler.Tests
 			TestFile(@"..\..\Tests\PropertiesAndEvents.cs");
 		}
 		
-		[Test, Ignore("Formatting differences in anonymous method create expressions")]
+		[Test]
 		public void QueryExpressions()
 		{
 			TestFile(@"..\..\Tests\QueryExpressions.cs");
@@ -127,38 +181,18 @@ namespace ICSharpCode.Decompiler.Tests
 			TestFile(@"..\..\Tests\YieldReturn.cs");
 		}
 		
-		static void TestFile(string fileName)
+		[Test]
+		public void TypeAnalysis()
 		{
-			string code = File.ReadAllText(fileName);
-			AssemblyDefinition assembly = Compile(code);
-			AstBuilder decompiler = new AstBuilder(new DecompilerContext(assembly.MainModule));
-			decompiler.AddAssembly(assembly);
-			new Helpers.RemoveCompilerAttribute().Run(decompiler.CompilationUnit);
-			StringWriter output = new StringWriter();
-			decompiler.GenerateCode(new PlainTextOutput(output));
-			CodeAssert.AreEqual(code, output.ToString());
+			TestFile(@"..\..\Tests\TypeAnalysisTests.cs");
 		}
-
-		static AssemblyDefinition Compile(string code)
+		
+		static void TestFile(string fileName, bool useDebug = false, int compilerVersion = 4)
 		{
-			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
-			CompilerParameters options = new CompilerParameters();
-			options.CompilerOptions = "/unsafe";
-			options.ReferencedAssemblies.Add("System.Core.dll");
-			CompilerResults results = provider.CompileAssemblyFromSource(options, code);
-			try {
-				if (results.Errors.Count > 0) {
-					StringBuilder b = new StringBuilder("Compiler error:");
-					foreach (var error in results.Errors) {
-						b.AppendLine(error.ToString());
-					}
-					throw new Exception(b.ToString());
-				}
-				return AssemblyDefinition.ReadAssembly(results.PathToAssembly);
-			} finally {
-				File.Delete(results.PathToAssembly);
-				results.TempFiles.Delete();
-			}
+			AssertRoundtripCode(fileName, optimize: false, useDebug: useDebug, compilerVersion: compilerVersion);
+			AssertRoundtripCode(fileName, optimize: true, useDebug: useDebug, compilerVersion: compilerVersion);
+			AssertRoundtripCode(fileName, optimize: false, useDebug: useDebug, compilerVersion: compilerVersion);
+			AssertRoundtripCode(fileName, optimize: true, useDebug: useDebug, compilerVersion: compilerVersion);
 		}
 	}
 }

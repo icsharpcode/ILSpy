@@ -1,5 +1,20 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under the GNU LGPL (for details please see \doc\license.txt)
+﻿// Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.Collections.Generic;
@@ -84,6 +99,10 @@ namespace ICSharpCode.AvalonEdit.Rendering
 		#endregion
 		
 		#region RebuildDocument
+		void ILineTracker.ChangeComplete(DocumentChangeEventArgs e)
+		{
+		}
+		
 		void ILineTracker.SetLineLength(DocumentLine ls, int newTotalLength)
 		{
 		}
@@ -425,26 +444,35 @@ namespace ICSharpCode.AvalonEdit.Rendering
 		
 		HeightTreeNode GetNodeByVisualPosition(double position)
 		{
-			if (position <= 0) {
-				return root.LeftMost;
-			}
-			if (position > root.totalHeight) {
-				return root.RightMost;
-			}
 			HeightTreeNode node = root;
 			while (true) {
-				if (node.left != null && position < node.left.totalHeight) {
+				double positionAfterLeft = position;
+				if (node.left != null) {
+					positionAfterLeft -= node.left.totalHeight;
+					if (positionAfterLeft < 0) {
+						// Descend into left
+						node = node.left;
+						continue;
+					}
+				}
+				double positionBeforeRight = positionAfterLeft - node.lineNode.TotalHeight;
+				if (positionBeforeRight < 0) {
+					// Found the correct node
+					return node;
+				}
+				if (node.right == null || node.right.totalHeight == 0) {
+					// Can happen when position>node.totalHeight,
+					// i.e. at the end of the document, or due to rounding errors in previous loop iterations.
+					
+					// If node.lineNode isn't collapsed, return that.
+					// Also return node.lineNode if there is no previous node that we could return instead.
+					if (node.lineNode.TotalHeight > 0 || node.left == null)
+						return node;
+					// Otherwise, descend into left (find the last non-collapsed node)
 					node = node.left;
 				} else {
-					if (node.left != null) {
-						position -= node.left.totalHeight;
-					}
-					position -= node.lineNode.TotalHeight;
-					if (position < 0 || node.right == null)
-						return node;
-					// node.right==null can happen when totalHeight is incorrect due to rounding errors,
-					// so position can be below the rounded totalHeight but larger than the sum
-					// of all nodes
+					// Descend into right
+					position = positionBeforeRight;
 					node = node.right;
 				}
 			}

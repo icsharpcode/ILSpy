@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using ICSharpCode.NRefactory;
 
 namespace ICSharpCode.Decompiler
 {
@@ -27,21 +28,26 @@ namespace ICSharpCode.Decompiler
 		int indent;
 		bool needsIndent;
 		
+		int line = 1;
+		int column = 1;
+		
 		public PlainTextOutput(TextWriter writer)
 		{
 			if (writer == null)
 				throw new ArgumentNullException("writer");
 			this.writer = writer;
-			CurrentLine = 1;
 		}
 		
 		public PlainTextOutput()
 		{
 			this.writer = new StringWriter();
-			CurrentLine = 1;
 		}
 		
-		public int CurrentLine { get; set; }
+		public TextLocation Location {
+			get {
+				return new TextLocation(line, column + (needsIndent ? indent : 0));
+			}
+		}
 		
 		public override string ToString()
 		{
@@ -65,6 +71,7 @@ namespace ICSharpCode.Decompiler
 				for (int i = 0; i < indent; i++) {
 					writer.Write('\t');
 				}
+				column += indent;
 			}
 		}
 		
@@ -72,27 +79,30 @@ namespace ICSharpCode.Decompiler
 		{
 			WriteIndent();
 			writer.Write(ch);
+			column++;
 		}
 		
 		public void Write(string text)
 		{
 			WriteIndent();
 			writer.Write(text);
+			column += text.Length;
 		}
 		
 		public void WriteLine()
 		{
 			writer.WriteLine();
 			needsIndent = true;
-			++CurrentLine;
+			line++;
+			column = 1;
 		}
 		
-		public void WriteDefinition(string text, object definition)
+		public void WriteDefinition(string text, object definition, bool isLocal)
 		{
 			Write(text);
 		}
 		
-		public void WriteReference(string text, object reference)
+		public void WriteReference(string text, object reference, bool isLocal)
 		{
 			Write(text);
 		}
@@ -102,6 +112,10 @@ namespace ICSharpCode.Decompiler
 		}
 		
 		void ITextOutput.MarkFoldEnd()
+		{
+		}
+		
+		void ITextOutput.AddDebugSymbols(MethodDebugSymbols methodDebugSymbols)
 		{
 		}
 	}

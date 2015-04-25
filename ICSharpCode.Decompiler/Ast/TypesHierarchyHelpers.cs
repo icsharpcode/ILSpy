@@ -1,4 +1,22 @@
-﻿using System;
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -14,9 +32,11 @@ namespace ICSharpCode.Decompiler.Ast
 			if (resolveTypeArguments)
 				return BaseTypes(derivedType).Any(t => t.Item == baseType);
 			else {
-				var comparableBaseType = baseType.ResolveOrThrow();
+				var comparableBaseType = baseType.Resolve();
+				if (comparableBaseType == null)
+					return false;
 				while (derivedType.BaseType != null) {
-					var resolvedBaseType = derivedType.BaseType.ResolveOrThrow();
+					var resolvedBaseType = derivedType.BaseType.Resolve();
 					if (resolvedBaseType == null)
 						return false;
 					if (comparableBaseType == resolvedBaseType)
@@ -167,24 +187,32 @@ namespace ICSharpCode.Decompiler.Ast
 			if (derivedType == null)
 				throw new ArgumentNullException("derivedType");
 
-			var visibility = IsVisibleFromDerived(baseMember);
-			if (visibility.HasValue)
-				return visibility.Value;
+			MethodAttributes attrs = GetAccessAttributes(baseMember) & MethodAttributes.MemberAccessMask;
+			if (attrs == MethodAttributes.Private)
+				return false;
 
 			if (baseMember.DeclaringType.Module == derivedType.Module)
 				return true;
-			// TODO: Check also InternalsVisibleToAttribute.
-				return false;
-		}
 
-		private static bool? IsVisibleFromDerived(IMemberDefinition member)
-		{
-			MethodAttributes attrs = GetAccessAttributes(member) & MethodAttributes.MemberAccessMask;
-			if (attrs == MethodAttributes.Private)
+			if (attrs == MethodAttributes.Assembly || attrs == MethodAttributes.FamANDAssem) {
+				var derivedTypeAsm = derivedType.Module.Assembly;
+				var asm = baseMember.DeclaringType.Module.Assembly;
+
+				if (asm.HasCustomAttributes) {
+					var attributes = asm.CustomAttributes
+						.Where(attr => attr.AttributeType.FullName == "System.Runtime.CompilerServices.InternalsVisibleToAttribute");
+					foreach (var attribute in attributes) {
+						string assemblyName = attribute.ConstructorArguments[0].Value as string;
+						assemblyName = assemblyName.Split(',')[0]; // strip off any public key info
+						if (assemblyName == derivedTypeAsm.Name.Name)
+							return true;
+					}
+				}
+
 				return false;
-			if (attrs == MethodAttributes.Assembly || attrs == MethodAttributes.FamANDAssem)
-				return null;
-				return true;
+			}
+
+			return true;
 		}
 
 		private static MethodAttributes GetAccessAttributes(IMemberDefinition member)

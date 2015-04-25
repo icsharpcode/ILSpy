@@ -89,6 +89,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var index = line.IndexOf("//");
 			if (index >= 0) {
 				return line.Substring(0, index);
+			} else if (line.StartsWith("#")) {
+				return string.Empty;
 			} else {
 				return line;
 			}
@@ -102,7 +104,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		private static IEnumerable<string> NormalizeAndSplitCode(string input)
 		{
-			return input.Split(new[] { "\r\n", "\n\r", "\n", "\r" }, StringSplitOptions.None);
+			return input.Split(new[] { "\r\n", "\n\r", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
 		}
 	}
 }

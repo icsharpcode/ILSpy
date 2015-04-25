@@ -19,6 +19,7 @@
 using System;
 using System.Text;
 using System.Windows.Media;
+
 using ICSharpCode.Decompiler;
 using Mono.Cecil;
 
@@ -29,7 +30,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class MethodTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		MethodDefinition method;
+		readonly MethodDefinition method;
 
 		public MethodDefinition MethodDefinition
 		{
@@ -51,15 +52,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-        public override bool IsPublicAccess()
-        {
-            if (method != null)
-            {
-                return method.IsPublic || method.IsVirtual || method.IsFamily;
-            }
-            return true;
-        }
-
 		public static object GetText(MethodDefinition method, Language language)
 		{
 			StringBuilder b = new StringBuilder();
@@ -76,6 +68,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			b.Append(") : ");
 			b.Append(language.TypeToString(method.ReturnType, false, method.MethodReturnType));
+			b.Append(method.MetadataToken.ToSuffixString());
 			return HighlightSearchMatch(method.Name, b.ToString());
 		}
 
@@ -123,10 +116,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case MethodAttributes.FamANDAssem:
 					return AccessOverlayIcon.Internal;
 				case MethodAttributes.Family:
-				case MethodAttributes.FamORAssem:
 					return AccessOverlayIcon.Protected;
+				case MethodAttributes.FamORAssem:
+					return AccessOverlayIcon.ProtectedInternal;
 				case MethodAttributes.Private:
 					return AccessOverlayIcon.Private;
+				case MethodAttributes.CompilerControlled:
+					return AccessOverlayIcon.CompilerControlled;
 				default:
 					throw new NotSupportedException();
 			}
@@ -145,6 +141,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return FilterResult.Hidden;
 		}
 
+		public override bool IsPublicAPI {
+			get {
+				return method.IsPublic || method.IsFamily || method.IsFamilyOrAssembly;
+			}
+		}
+		
 		MemberReference IMemberTreeNode.Member
 		{
 			get { return method; }
