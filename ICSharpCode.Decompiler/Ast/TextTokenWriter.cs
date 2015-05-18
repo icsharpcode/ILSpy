@@ -301,6 +301,16 @@ namespace ICSharpCode.Decompiler.Ast
 				output.Write("()");
 			}
 		}
+
+		public override void Write(string str)
+		{
+			output.Write(str);
+		}
+
+		public override void Write(char c)
+		{
+			output.Write(c);
+		}
 		
 		Stack<TextLocation> startLocations = new Stack<TextLocation>();
 		Stack<MethodDebugSymbols> symbolsStack = new Stack<MethodDebugSymbols>();

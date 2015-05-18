@@ -26,27 +26,19 @@ namespace ICSharpCode.NRefactory.CSharp
 		public abstract void StartNode(AstNode node);
 		public abstract void EndNode(AstNode node);
 		
-		/// <summary>
-		/// Writes an identifier.
-		/// </summary>
 		public abstract void WriteIdentifier(Identifier identifier);
 		
-		/// <summary>
-		/// Writes a keyword to the output.
-		/// </summary>
 		public abstract void WriteKeyword(Role role, string keyword);
-		
-		/// <summary>
-		/// Writes a token to the output.
-		/// </summary>
+
 		public abstract void WriteToken(Role role, string token);
 		
-		/// <summary>
-		/// Writes a primitive/literal value
-		/// </summary>
 		public abstract void WritePrimitiveValue(object value, string literalValue = null);
 		
 		public abstract void WritePrimitiveType(string type);
+
+		public abstract void Write(char c);
+
+		public abstract void Write(string str);
 		
 		public abstract void Space();
 		public abstract void Indent();
@@ -125,6 +117,16 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			decoratedWriter.WritePrimitiveType(type);
 		}
+
+		public override void Write(char c)
+		{
+			decoratedWriter.Write(c);
+		}
+
+		public override void Write(string str)
+		{
+			decoratedWriter.Write(str);
+		}
 		
 		public override void Space()
 		{
@@ -157,5 +159,3 @@ namespace ICSharpCode.NRefactory.CSharp
 		}
 	}
 }
-
-

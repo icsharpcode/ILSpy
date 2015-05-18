@@ -91,9 +91,9 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 		
 		[Test]
-		public void DoubleConstants()
+		public void Constants()
 		{
-			TestFile(@"..\..\Tests\DoubleConstants.cs");
+			TestFile(@"..\..\Tests\Constants.cs");
 		}
 		
 		[Test]

@@ -52,29 +52,29 @@ public class InitializerTests
 			get;
 			set;
 		}
-		
+
 		public InitializerTests.StructData NestedStruct
 		{
 			get;
 			set;
 		}
 	}
-	
+
 	private struct StructData
 	{
 		public int Field;
-		public int Property 
+		public int Property
 		{
 			get;
-			set; 
+			set;
 		}
-		
+
 		public InitializerTests.Data MoreData
 		{
 			get;
 			set;
 		}
-		
+
 		public StructData(int initialValue)
 		{
 			this = default(InitializerTests.StructData);
@@ -82,7 +82,7 @@ public class InitializerTests
 			this.Property = initialValue;
 		}
 	}
-	
+
 	// Helper methods used to ensure initializers used within expressions work correctly
 	private static void X(object a, object b)
 	{
@@ -186,7 +186,7 @@ public class InitializerTests
 					7,
 					8,
 					254,
-					255
+					byte.MaxValue
 				});
 	}
 
@@ -194,14 +194,14 @@ public class InitializerTests
 	{
 		InitializerTests.X(InitializerTests.Y(), new sbyte[]
 				{
-					-128,
+					sbyte.MinValue,
 					-127,
 					0,
 					1,
 					2,
 					3,
 					4,
-					127
+					sbyte.MaxValue
 				});
 	}
 
@@ -209,11 +209,11 @@ public class InitializerTests
 	{
 		InitializerTests.X(InitializerTests.Y(), new short[]
 				{
-					-32768,
+					short.MinValue,
 					-1,
 					0,
 					1,
-					32767
+					short.MaxValue
 				});
 	}
 
@@ -226,7 +226,7 @@ public class InitializerTests
 					32767,
 					32768, 
 					65534,
-					65535
+					ushort.MaxValue
 				});
 	}
 
@@ -298,7 +298,7 @@ public class InitializerTests
 		InitializerTests.X(InitializerTests.Y(), new float[]
 				{
 					-1.5f,
-					0f,
+					0.0f,
 					1.5f,
 					float.NegativeInfinity,
 					float.PositiveInfinity,
@@ -326,8 +326,8 @@ public class InitializerTests
 					-100m,
 					0m,
 					100m,
-					-79228162514264337593543950335m, 
-					79228162514264337593543950335m, 
+					decimal.MinValue, 
+					decimal.MaxValue, 
 					0.0000001m
 				});
 	}
@@ -353,7 +353,7 @@ public class InitializerTests
 					InitializerTests.MyEnum.b
 				});
 	}
-	
+
 	public static void RecursiveArrayInitializer()
 	{
 		int[] array = new int[3];
@@ -427,9 +427,9 @@ public class InitializerTests
 	public static void ObjectInitializer()
 	{
 		InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-		  {
-			  a = InitializerTests.MyEnum.a
-		  });
+		{
+			a = InitializerTests.MyEnum.a
+		});
 	}
 
 	public static void NotAObjectInitializer()
@@ -442,88 +442,88 @@ public class InitializerTests
 	public static void ObjectInitializerAssignCollectionToField()
 	{
 		InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-		  {
-			  a = InitializerTests.MyEnum.a,
-			  FieldList = new List<InitializerTests.MyEnum2>
+		{
+			a = InitializerTests.MyEnum.a,
+			FieldList = new List<InitializerTests.MyEnum2>
 				{
 					InitializerTests.MyEnum2.c,
 					InitializerTests.MyEnum2.d
 				}
-		  });
+		});
 	}
 
 	public static void ObjectInitializerAddToCollectionInField()
 	{
 		InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-		  {
-			  a = InitializerTests.MyEnum.a,
-			  FieldList =
+		{
+			a = InitializerTests.MyEnum.a,
+			FieldList =
 				{
 					InitializerTests.MyEnum2.c,
 					InitializerTests.MyEnum2.d
 				}
-		  });
+		});
 	}
 
 	public static void ObjectInitializerAssignCollectionToProperty()
 	{
 		InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-		  {
-			  a = InitializerTests.MyEnum.a,
-			  PropertyList = new List<InitializerTests.MyEnum2>
+		{
+			a = InitializerTests.MyEnum.a,
+			PropertyList = new List<InitializerTests.MyEnum2>
 				{
 					InitializerTests.MyEnum2.c,
 					InitializerTests.MyEnum2.d
 				}
-		  });
+		});
 	}
 
 	public static void ObjectInitializerAddToCollectionInProperty()
 	{
 		InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-		  {
-			  a = InitializerTests.MyEnum.a,
-			  PropertyList =
+		{
+			a = InitializerTests.MyEnum.a,
+			PropertyList =
 				{
 					InitializerTests.MyEnum2.c,
 					InitializerTests.MyEnum2.d
 				}
-		  });
+		});
 	}
 
 	public static void ObjectInitializerWithInitializationOfNestedObjects()
 	{
 		InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
-		  {
-			  MoreData =
-			  {
-				  a = InitializerTests.MyEnum.a
-			  }
-		  });
+		{
+			MoreData =
+			{
+				a = InitializerTests.MyEnum.a
+			}
+		});
 	}
-	
+
 	public static void StructInitializer_DefaultConstructor()
 	{
-		InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData 
-			{
-				Field = 1,
-				Property = 2
-			});
+		InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData
+		{
+			Field = 1,
+			Property = 2
+		});
 	}
-	
+
 	public static void StructInitializer_ExplicitConstructor()
 	{
 		InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData(0)
-			{
-				Field = 1,
-				Property = 2
-			});
+		{
+			Field = 1,
+			Property = 2
+		});
 	}
-	
+
 	public static void StructInitializerWithInitializationOfNestedObjects()
 	{
 		InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData
-		  {
+		{
 			MoreData =
 			{
 				a = InitializerTests.MyEnum.a,
@@ -533,138 +533,138 @@ public class InitializerTests
 					InitializerTests.MyEnum2.d 
 				}
 			}
-		  });
+		});
 	}
-	
+
 	public static void StructInitializerWithinObjectInitializer()
 	{
 		InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
+		{
+			NestedStruct = new InitializerTests.StructData(2)
 			{
-				NestedStruct = new InitializerTests.StructData(2)
-				{
-					Field = 1,
-					Property = 2
-				}
-			});
+				Field = 1,
+				Property = 2
+			}
+		});
 	}
-	
+
 	public int[,] MultidimensionalInit()
 	{
 		return new int[,]
 		{
 
-	        {
-	            0,
-	            0,
-	            0,
-	            0
-	        },
+			{
+				0,
+				0,
+				0,
+				0
+			},
 
-	        {
-	            1,
-	            1,
-	            1,
-	            1
-	        },
+			{
+				1,
+				1,
+				1,
+				1
+			},
 
-	        {
-	            0,
-	            0,
-	            0,
-	            0
-	        },
+			{
+				0,
+				0,
+				0,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            0,
-	            0
-	        },
+			{
+				0,
+				0,
+				0,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            1,
-	            0
-	        },
+			{
+				0,
+				0,
+				1,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            1,
-	            0
-	        },
+			{
+				0,
+				0,
+				1,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            1,
-	            0
-	        },
+			{
+				0,
+				0,
+				1,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            1,
-	            0
-	        },
+			{
+				0,
+				0,
+				1,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            0,
-	            0
-	        },
+			{
+				0,
+				0,
+				0,
+				0
+			},
 
-	        {
-	            1,
-	            1,
-	            1,
-	            1
-	        },
+			{
+				1,
+				1,
+				1,
+				1
+			},
 
-	        {
-	            0,
-	            0,
-	            0,
-	            0
-	        },
+			{
+				0,
+				0,
+				0,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            0,
-	            0
-	        },
+			{
+				0,
+				0,
+				0,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            1,
-	            0
-	        },
+			{
+				0,
+				0,
+				1,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            1,
-	            0
-	        },
+			{
+				0,
+				0,
+				1,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            1,
-	            0
-	        },
+			{
+				0,
+				0,
+				1,
+				0
+			},
 
-	        {
-	            0,
-	            0,
-	            1,
-	            0
+			{
+				0,
+				0,
+				1,
+				0
 			}
-	    };
+		};
 	}
 
 	public int[][,] MultidimensionalInit2()
@@ -672,133 +672,133 @@ public class InitializerTests
 		return new int[][,]
 		{
 			new int[,]
-	            {
+				{
 
-	                {
+					{
 						0,
 						0,
 						0,
 						0
 					},
 
-	                {
+					{
 						1,
 						1,
 						1,
 						1
 					},
 
-	                {
+					{
 						0,
 						0,
 						0,
 						0
 					},
 
-	                {
+					{
 						0,
 						0,
 						0,
 						0
 					}
 
-	            },
-	        new int[,]
-	            {
+				},
+			new int[,]
+				{
 
-	                {
+					{
 						0,
 						0,
 						1,
 						0
 					},
 
-	                {
+					{
 						0,
 						0,
 						1,
 						0
 					},
 
-	                {
+					{
 						0,
 						0,
 						1,
 						0
 					},
 
-	                {
+					{
 						0,
 						0,
 						1,
 						0
 					}
 
-	            },
-	        new int[,]
-	            {
+				},
+			new int[,]
+				{
 
-	                {
+					{
 						0,
 						0,
 						0,
 						0
 					},
 
-	                {
+					{
 						1,
 						1,
 						1,
 						1
 					},
 
-	                {
+					{
 						0,
 						0,
 						0,
 						0
 					},
 
-	                {
+					{
 						0,
 						0,
 						0,
 						0
 					}
-	            },
-	        new int[,]
-	            {
+				},
+			new int[,]
+				{
 
-	                {
+					{
 						0,
 						0,
 						1,
 						0
 					},
 
-	                {
+					{
 						0,
 						0,
 						1,
 						0
 					},
 
-	                {
+					{
 						0,
 						0,
 						1,
 						0
 					},
 
-	                {
+					{
 						0,
 						0,
 						1,
 						0
 					}
 
-	            }
-	    };
+				}
+		};
 	}
 
 	public int[][,,] ArrayOfArrayOfArrayInit()
