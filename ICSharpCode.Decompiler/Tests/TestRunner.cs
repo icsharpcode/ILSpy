@@ -13,7 +13,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture]
 	public class TestRunner
 	{
-		const string TestCasePath = @"..\..\Tests\TestCases";
+		const string TestCasePath = @"../../Tests/TestCases";
 
 		[Test]
 		public void AllFilesHaveTests()

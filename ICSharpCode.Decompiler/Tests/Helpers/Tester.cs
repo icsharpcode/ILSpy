@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-") + (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
 			options.ReferencedAssemblies.Add("System.Core.dll");
 			CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileName);
-			if (results.Errors.Count > 0) {
+			if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
 				StringBuilder b = new StringBuilder("Compiler error:");
 				foreach (var error in results.Errors) {
 					b.AppendLine(error.ToString());
