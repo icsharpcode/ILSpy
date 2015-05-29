@@ -1677,7 +1677,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 			if (!catchClause.Condition.IsNull) {
 				Space();
-				WriteKeyword(CatchClause.IfKeywordRole);
+				WriteKeyword(CatchClause.WhenKeywordRole);
 				Space(policy.SpaceBeforeIfParentheses);
 				LPar();
 				Space(policy.SpacesWithinIfParentheses);
