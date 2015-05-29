@@ -771,7 +771,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			byte alignment = reader.ReadByte();
 			var inst = DecodeInstruction();
-			var sup = inst as ISupportsUnalignedPrefix;
+			var sup = UnpackVoid(inst) as ISupportsUnalignedPrefix;
 			if (sup != null)
 				sup.UnalignedPrefix = alignment;
 			else
@@ -782,12 +782,18 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction DecodeVolatile()
 		{
 			var inst = DecodeInstruction();
-			var svp = inst as ISupportsVolatilePrefix;
+			var svp = UnpackVoid(inst) as ISupportsVolatilePrefix;
 			if (svp != null)
 				svp.IsVolatile = true;
 			else
 				Warn("Ignored invalid 'volatile' prefix");
 			return inst;
+		}
+
+		ILInstruction UnpackVoid(ILInstruction inst)
+		{
+			Void v = inst as Void;
+			return v != null ? v.Argument : inst;
 		}
 		
 		private ILInstruction DecodeReadonly()
