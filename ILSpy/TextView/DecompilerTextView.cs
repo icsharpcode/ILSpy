@@ -153,6 +153,8 @@ namespace ICSharpCode.ILSpy.TextView
 			if (position == null)
 				return;
 			int offset = textEditor.Document.GetOffset(position.Value.Location);
+			if (referenceElementGenerator.References == null)
+				return;
 			ReferenceSegment seg = referenceElementGenerator.References.FindSegmentsContaining(offset).FirstOrDefault();
 			if (seg == null)
 				return;
@@ -692,6 +694,8 @@ namespace ICSharpCode.ILSpy.TextView
 
 		internal ReferenceSegment GetReferenceSegmentAtMousePosition()
 		{
+			if (referenceElementGenerator.References == null)
+				return null;
 			TextViewPosition? position = GetPositionFromMousePosition();
 			if (position == null)
 				return null;
