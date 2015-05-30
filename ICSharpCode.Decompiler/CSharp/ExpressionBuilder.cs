@@ -410,9 +410,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var func = (LdFtn)inst.Arguments[1];
 			var target = TranslateTarget(func.Method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
-			return new MemberReferenceExpression(target, func.Method.Name)
+			return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), new MemberReferenceExpression(target, func.Method.Name))
 				.WithILInstruction(inst)
-				.WithRR(new MemberResolveResult(target.ResolveResult, func.Method));
+				.WithRR(new ConversionResolveResult(func.Method.DeclaringType,
+				                                    new MemberResolveResult(target.ResolveResult, func.Method),
+				                                    Conversion.MethodGroupConversion(func.Method, func.OpCode == OpCode.LdVirtFtn, false))); // TODO handle extension methods capturing the first argument
 		}
 		
 		TranslatedExpression TranslateTarget(IMember member, ILInstruction target, bool nonVirtualInvocation)
