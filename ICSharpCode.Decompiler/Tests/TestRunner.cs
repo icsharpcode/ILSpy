@@ -52,6 +52,12 @@ namespace ICSharpCode.Decompiler.Tests
 			TestCompileDecompileCompileOutputAll("PropertiesAndEvents.cs");
 		}
 
+		[Test]
+		public void Switch()
+		{
+			TestCompileDecompileCompileOutputAll("Switch.cs");
+		}
+
 		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{
 			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.None);

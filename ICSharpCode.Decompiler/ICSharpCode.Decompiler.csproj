@@ -100,6 +100,7 @@
     <Compile Include="IL\Instructions\PatternMatching.cs" />
     <Compile Include="IL\Instructions\Return.cs" />
     <Compile Include="IL\Instructions\SimpleInstruction.cs" />
+    <Compile Include="IL\Instructions\SwitchInstruction.cs" />
     <Compile Include="IL\Instructions\TryInstruction.cs" />
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
     <Compile Include="IL\IInlineContext.cs" />

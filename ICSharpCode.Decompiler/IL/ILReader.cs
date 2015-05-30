@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void Warn(string message)
 		{
-			Debug.Fail(message);
+			//Debug.Fail(message);
 		}
 
 		void ReadInstructions(Dictionary<int, ImmutableArray<StackType>> outputStacks, CancellationToken cancellationToken)
@@ -583,7 +583,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Sub_Ovf_Un:
 					return BinaryNumeric(OpCode.Sub, true, Sign.Unsigned);
 				case ILOpCode.Switch:
-					throw new NotImplementedException();
+					return DecodeSwitch();
 				case ILOpCode.Xor:
 					return BinaryNumeric(OpCode.BitXor);
 				case ILOpCode.Box:
@@ -656,7 +656,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Mkrefany:
 					throw new NotImplementedException();
 				case ILOpCode.Newarr:
-					throw new NotImplementedException();
+					return new NewArr(ReadAndDecodeTypeReference(), Pop());
 				case ILOpCode.Refanytype:
 					throw new NotImplementedException();
 				case ILOpCode.Refanyval:
@@ -666,15 +666,23 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Sizeof:
 					return new SizeOf(ReadAndDecodeTypeReference());
 				case ILOpCode.Stelem:
+					return StElem(value: Pop(), index: Pop(), array: Pop(), type: ReadAndDecodeTypeReference());
 				case ILOpCode.Stelem_I1:
+					return StElem(value: Pop(), index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.SByte));
 				case ILOpCode.Stelem_I2:
+					return StElem(value: Pop(), index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Int16));
 				case ILOpCode.Stelem_I4:
+					return StElem(value: Pop(), index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Int32));
 				case ILOpCode.Stelem_I8:
+					return StElem(value: Pop(), index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Int64));
 				case ILOpCode.Stelem_R4:
+					return StElem(value: Pop(), index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Single));
 				case ILOpCode.Stelem_R8:
+					return StElem(value: Pop(), index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Double));
 				case ILOpCode.Stelem_I:
+					return StElem(value: Pop(), index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.IntPtr));
 				case ILOpCode.Stelem_Ref:
-					throw new NotImplementedException();
+					return StElem(value: Pop(), index: Pop(), array: Pop(), type: compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Stobj:
 					return new Void(new StObj(value: Pop(), target: Pop(), type: ReadAndDecodeTypeReference()));
 				case ILOpCode.Throw:
@@ -746,6 +754,11 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction LdElem(ILInstruction array, ILInstruction index, IType type)
 		{
 			return new LdObj(new LdElema(array, index, type), type);
+		}
+		
+		private ILInstruction StElem(ILInstruction array, ILInstruction index, ILInstruction value, IType type)
+		{
+			return new Void(new StObj(new LdElema(array, index, type), value, type));
 		}
 
 		private ILInstruction DecodeConstrainedCall()
@@ -896,6 +909,24 @@ namespace ICSharpCode.Decompiler.IL
 			if (targetILOffset >= reader.Position) {
 				branchStackDict[targetILOffset] = stack.ToImmutableArray();
 			}
+		}
+
+		ILInstruction DecodeSwitch()
+		{
+			uint length = reader.ReadUInt32();
+			int baseOffset = 4 * (int)length + reader.Position;
+			var instr = new SwitchInstruction(Pop());
+			
+			for (uint i = 0; i < length; i++) {
+				var section = new SwitchSection();
+				section.Labels = new LongSet(i);
+				int target = baseOffset + reader.ReadInt32();
+				MarkBranchTarget(target);
+				section.Body = new Branch(target);
+				instr.Sections.Add(section);
+			}
+			
+			return instr;
 		}
 		
 		ILInstruction BinaryNumeric(OpCode opCode, bool checkForOverflow = false, Sign sign = Sign.None)

@@ -70,6 +70,11 @@
 				new ChildInfo("trueInst"),
 				new ChildInfo("falseInst"),
 			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
+		new OpCode("switch", "Switch statement",
+			CustomClassName("SwitchInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo, ResultType("Void")),
+		new OpCode("switch.section", "Switch section within a switch statement",
+			CustomClassName("SwitchSection"), CustomChildren(new [] { new ChildInfo("body") }),
+			CustomConstructor, CustomComputeFlags, CustomWriteTo, ResultType("Void")),
 		new OpCode("try.catch", "Try-catch statement.",
 			BaseClass("TryInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo),
 		new OpCode("try.catch.handler", "Catch handler within a try-catch statement.",
@@ -170,6 +175,8 @@
 			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("type.GetStackType()")),
 		new OpCode("newobj", "Creates an object instance and calls the constructor.",
 			CustomClassName("NewObj"), Call, ResultType("O")),
+		new OpCode("newarr", "Creates an array instance.",
+			CustomClassName("NewArr"), HasTypeOperand, CustomArguments("size"), MayThrow, ResultType("O")),
 		new OpCode("initobj", "Initializes the value at an address.",
 			CustomClassName("InitObj"), Unary, HasTypeOperand, VoidResult),
 		new OpCode("default.value", "Returns the default value for a type.",
@@ -185,7 +192,7 @@
 			CustomClassName("LdLen"), CustomArguments("array"), MayThrow, ResultType("I")),
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), CustomArguments("array", "index"), HasTypeOperand,
-			MayThrow, ResultType("Ref"), SupportsReadonlyPrefix),
+			MayThrow, ResultType("Ref"), SupportsReadonlyPrefix)
 	};
 #>
 using System;

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using ICSharpCode.NRefactory.PatternMatching;
+using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using Ast = ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp;
@@ -40,23 +41,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			},
 			MemberName = "TypeHandle"
 		};
-		
+
+		TransformContext context;
+
 		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
 			base.VisitInvocationExpression(invocationExpression);
 			ProcessInvocationExpression(invocationExpression);
 		}
 
-		internal static void ProcessInvocationExpression(InvocationExpression invocationExpression)
+		void ProcessInvocationExpression(InvocationExpression invocationExpression)
 		{
-			MethodReference methodRef = invocationExpression.Annotation<MethodReference>();
-			if (methodRef == null)
+			var method = invocationExpression.GetSymbol() as IMethod;
+			if (method == null)
 				return;
 			var arguments = invocationExpression.Arguments.ToArray();
 			
 			// Reduce "String.Concat(a, b)" to "a + b"
-			if (methodRef.Name == "Concat" && methodRef.DeclaringType.FullName == "System.String" && arguments.Length >= 2)
-			{
+			if (method.Name == "Concat" && method.DeclaringType.FullName == "System.String" && arguments.Length >= 2
+			    && arguments.All(a => a.GetResolveResult().Type.IsKnownType(KnownTypeCode.String))) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
 				Expression expr = arguments[0];
 				for (int i = 1; i < arguments.Length; i++) {
@@ -66,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 			}
 			
-			switch (methodRef.FullName) {
+			switch (method.FullName) {
 				case "System.Type System.Type::GetTypeFromHandle(System.RuntimeTypeHandle)":
 					if (arguments.Length == 1) {
 						if (typeHandleOnTypeOfPattern.IsMatch(arguments[0])) {
@@ -94,7 +97,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								FieldReference field = oldArg.Annotation<FieldReference>();
 								if (field != null) {
 									AstType declaringType = ((TypeOfExpression)mre2.Target).Type.Detach();
-									oldArg.ReplaceWith(declaringType.Member(field.Name).WithAnnotation(field));
+									oldArg.ReplaceWith(declaringType.Member(field.Name).CopyAnnotationsFrom(oldArg));
 									invocationExpression.ReplaceWith(mre1.Target);
 									return;
 								}
@@ -104,35 +107,35 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					break;
 			}
 			
-			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(methodRef.Name);
+			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name);
 			if (bop != null && arguments.Length == 2) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
 				invocationExpression.ReplaceWith(
-					new BinaryOperatorExpression(arguments[0], bop.Value, arguments[1]).WithAnnotation(methodRef)
+					new BinaryOperatorExpression(arguments[0], bop.Value, arguments[1]).CopyAnnotationsFrom(invocationExpression)
 				);
 				return;
 			}
-			UnaryOperatorType? uop = GetUnaryOperatorTypeFromMetadataName(methodRef.Name);
+			UnaryOperatorType? uop = GetUnaryOperatorTypeFromMetadataName(method.Name);
 			if (uop != null && arguments.Length == 1) {
 				arguments[0].Remove(); // detach argument
 				invocationExpression.ReplaceWith(
-					new UnaryOperatorExpression(uop.Value, arguments[0]).WithAnnotation(methodRef)
+					new UnaryOperatorExpression(uop.Value, arguments[0]).CopyAnnotationsFrom(invocationExpression)
 				);
 				return;
 			}
-			if (methodRef.Name == "op_Explicit" && arguments.Length == 1) {
+			if (method.Name == "op_Explicit" && arguments.Length == 1) {
 				arguments[0].Remove(); // detach argument
 				invocationExpression.ReplaceWith(
-					arguments[0].CastTo(ConvertType(methodRef.ReturnType, methodRef.MethodReturnType))
-					.WithAnnotation(methodRef)
+					arguments[0].CastTo(context.TypeSystemAstBuilder.ConvertType(method.ReturnType))
+						.CopyAnnotationsFrom(invocationExpression)
 				);
 				return;
 			}
-			if (methodRef.Name == "op_Implicit" && arguments.Length == 1) {
+			if (method.Name == "op_Implicit" && arguments.Length == 1) {
 				invocationExpression.ReplaceWith(arguments[0]);
 				return;
 			}
-			if (methodRef.Name == "op_True" && arguments.Length == 1 && invocationExpression.Role == Roles.Condition) {
+			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Role == Roles.Condition) {
 				invocationExpression.ReplaceWith(arguments[0]);
 				return;
 			}
@@ -322,11 +325,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		         	new TypePattern(typeof(MethodInfo)),
 		         	new TypePattern(typeof(ConstructorInfo))
 		         });
-
-		static AstType ConvertType(TypeReference parameterType, object ctx)
-		{
-			return new SimpleType(parameterType.Name);
-		}
 		
 		public override void VisitCastExpression(CastExpression castExpression)
 		{
@@ -334,19 +332,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Handle methodof
 			Match m = getMethodOrConstructorFromHandlePattern.Match(castExpression);
 			if (m.Success) {
-				MethodReference method = m.Get<AstNode>("method").Single().Annotation<MethodReference>();
-				if (m.Has("declaringType")) {
+				IMethod method = m.Get<AstNode>("method").Single().GetSymbol() as IMethod;
+				if (m.Has("declaringType") && method != null) {
 					Expression newNode = m.Get<AstType>("declaringType").Single().Detach().Member(method.Name);
-					newNode = newNode.Invoke(method.Parameters.Select(p => new TypeReferenceExpression(ConvertType(p.ParameterType, p))));
-					newNode.AddAnnotation(method);
+					newNode = newNode.Invoke(method.Parameters.Select(p => new TypeReferenceExpression(context.TypeSystemAstBuilder.ConvertType(p.Type))));
 					m.Get<AstNode>("method").Single().ReplaceWith(newNode);
 				}
-				castExpression.ReplaceWith(m.Get<AstNode>("ldtokenNode").Single());
+				castExpression.ReplaceWith(m.Get<AstNode>("ldtokenNode").Single().CopyAnnotationsFrom(castExpression));
 			}
 		}
 		
 		void IAstTransform.Run(AstNode node, TransformContext context)
 		{
+			this.context = context;
 			node.AcceptVisitor(this);
 		}
 	}

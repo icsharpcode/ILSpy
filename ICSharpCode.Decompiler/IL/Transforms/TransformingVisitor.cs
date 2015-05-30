@@ -129,17 +129,17 @@ namespace ICSharpCode.Decompiler.IL
 				} else if (inst.ResultType == StackType.Void && stack.Count > 0) {
 					// For void instructions on non-empty stack, we can create a new inline block (or add to an existing one)
 					// This works even when inst involves Peek.
-					ILInstruction headInst = stack.Pop();
-					Block inlineBlock = headInst as Block;
-					if (inlineBlock == null || inlineBlock.FinalInstruction.OpCode != OpCode.Pop) {
-						inlineBlock = new Block {
-							Instructions = { headInst },
-							ILRange = new Interval(headInst.ILRange.Start, headInst.ILRange.Start),
-							FinalInstruction = new Pop(headInst.ResultType)
-						};
-					}
-					inlineBlock.Instructions.Add(inst);
-					inst = inlineBlock;
+//					ILInstruction headInst = stack.Pop();
+//					Block inlineBlock = headInst as Block;
+//					if (inlineBlock == null || inlineBlock.FinalInstruction.OpCode != OpCode.Pop) {
+//						inlineBlock = new Block {
+//							Instructions = { headInst },
+//							ILRange = new Interval(headInst.ILRange.Start, headInst.ILRange.Start),
+//							FinalInstruction = new Pop(headInst.ResultType)
+//						};
+//					}
+//					inlineBlock.Instructions.Add(inst);
+//					inst = inlineBlock;
 				}
 				if (inst.HasFlag(InstructionFlags.MayPeek)) {
 					// Prevent instruction from being inlined if it was peeked at.

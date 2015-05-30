@@ -89,5 +89,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			var rr = node.Annotation<ResolveResult>();
 			return rr != null ? rr.GetSymbol() : null;
 		}
+		
+		public static ResolveResult GetResolveResult(this AstNode node)
+		{
+			return node.Annotation<ResolveResult>() ?? ErrorResolveResult.UnknownError;
+		}
 	}
 }

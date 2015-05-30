@@ -106,10 +106,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr.WithRR(new ResolveResult(variable.Type));
 		}
 
-		ExpressionWithResolveResult ConvertField(IField field)
+		ExpressionWithResolveResult ConvertField(IField field, ILInstruction target = null)
 		{
-			Expression expr = new IdentifierExpression(field.Name);
-			return expr.WithRR(new ResolveResult(field.ReturnType));
+			return new MemberReferenceExpression(TranslateTarget(field, target, true), field.Name)
+				.WithRR(new ResolveResult(field.ReturnType));
 		}
 		
 		TranslatedExpression IsType(IsInst inst)
@@ -131,6 +131,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitNewObj(NewObj inst)
 		{
 			return HandleCallInstruction(inst);
+		}
+		
+		protected internal override TranslatedExpression VisitNewArr(NewArr inst)
+		{
+			var arg = Translate(inst.Size);
+			return new ArrayCreateExpression {
+				Type = ConvertType(inst.Type),
+				Arguments = {
+					arg
+				}
+			}
+			.WithILInstruction(inst)
+			.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, 1), new [] { arg.ResolveResult }, new ResolveResult[0]));
 		}
 
 		protected internal override TranslatedExpression VisitLdcI4(LdcI4 inst)
@@ -384,26 +397,52 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return HandleCallInstruction(inst);
 		}
+
+		static bool IsDelegateConstruction(CallInstruction inst)
+		{
+			return inst.Arguments.Count == 2
+				&& (inst.Arguments[1].OpCode == OpCode.LdFtn
+				    || inst.Arguments[1].OpCode == OpCode.LdVirtFtn)
+				&& inst.Method.DeclaringType.Kind == TypeKind.Delegate;
+		}
+
+		TranslatedExpression HandleDelegateConstruction(CallInstruction inst)
+		{
+			var func = (LdFtn)inst.Arguments[1];
+			var target = TranslateTarget(func.Method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
+			return new MemberReferenceExpression(target, func.Method.Name)
+				.WithILInstruction(inst)
+				.WithRR(new MemberResolveResult(target.ResolveResult, func.Method));
+		}
+		
+		TranslatedExpression TranslateTarget(IMember member, ILInstruction target, bool nonVirtualInvocation)
+		{
+			if (!member.IsStatic) {
+				if (nonVirtualInvocation && target.MatchLdThis() && member.DeclaringTypeDefinition != resolver.CurrentTypeDefinition) {
+					return new BaseReferenceExpression()
+						.WithILInstruction(target)
+						.WithRR(new ThisResolveResult(member.DeclaringType, nonVirtualInvocation));
+				} else {
+					return Translate(target).ConvertTo(member.DeclaringType, this);
+				}
+			} else {
+				return new TypeReferenceExpression(ConvertType(member.DeclaringType))
+					.WithoutILInstruction()
+					.WithRR(new TypeResolveResult(member.DeclaringType));
+			}
+		}
 		
 		TranslatedExpression HandleCallInstruction(CallInstruction inst)
 		{
 			// Used for Call, CallVirt and NewObj
 			TranslatedExpression target;
 			if (inst.OpCode == OpCode.NewObj) {
-				target = default(TranslatedExpression); // no target
-			} else if (!inst.Method.IsStatic) {
-				var argInstruction = inst.Arguments[0];
-				if (inst.OpCode == OpCode.Call && argInstruction.MatchLdThis()) {
-					target = new BaseReferenceExpression()
-						.WithILInstruction(argInstruction)
-						.WithRR(new ThisResolveResult(inst.Method.DeclaringType, causesNonVirtualInvocation: true));
-				} else {
-					target = Translate(argInstruction).ConvertTo(inst.Method.DeclaringType, this);
+				if (IsDelegateConstruction(inst)) {
+					return HandleDelegateConstruction(inst);
 				}
+				target = default(TranslatedExpression); // no target
 			} else {
-				target = new TypeReferenceExpression(ConvertType(inst.Method.DeclaringType))
-					.WithoutILInstruction()
-					.WithRR(new TypeResolveResult(inst.Method.DeclaringType));
+				target = TranslateTarget(inst.Method, inst.Arguments.FirstOrDefault(), inst.OpCode == OpCode.Call);
 			}
 			
 			var arguments = inst.Arguments.SelectArray(Translate);
@@ -414,6 +453,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			for (int i = firstParamIndex; i < arguments.Length; i++) {
 				var parameter = inst.Method.Parameters[i - firstParamIndex];
 				arguments[i] = arguments[i].ConvertTo(parameter.Type, this);
+				
+				if (parameter.IsOut && arguments[i].Expression is DirectionExpression) {
+					((DirectionExpression)arguments[i].Expression).FieldDirection = FieldDirection.Out;
+				}
 			}
 
 			var argumentResolveResults = arguments.Skip(firstParamIndex).Select(arg => arg.ResolveResult).ToList();
@@ -535,12 +578,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLdFld(LdFld inst)
 		{
-			return ConvertField(inst.Field).WithILInstruction(inst);
+			return ConvertField(inst.Field, inst.Target).WithILInstruction(inst);
 		}
 
 		protected internal override TranslatedExpression VisitStFld(StFld inst)
 		{
-			return Assignment(ConvertField(inst.Field).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
+			return Assignment(ConvertField(inst.Field, inst.Target).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
 		}
 		
 		protected internal override TranslatedExpression VisitLdsFld(LdsFld inst)

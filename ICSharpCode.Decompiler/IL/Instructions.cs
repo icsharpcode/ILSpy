@@ -70,6 +70,10 @@ namespace ICSharpCode.Decompiler.IL
 		Leave,
 		/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 		IfInstruction,
+		/// <summary>Switch statement</summary>
+		SwitchInstruction,
+		/// <summary>Switch section within a switch statement</summary>
+		SwitchSection,
 		/// <summary>Try-catch statement.</summary>
 		TryCatch,
 		/// <summary>Catch handler within a try-catch statement.</summary>
@@ -158,6 +162,8 @@ namespace ICSharpCode.Decompiler.IL
 		UnboxAny,
 		/// <summary>Creates an object instance and calls the constructor.</summary>
 		NewObj,
+		/// <summary>Creates an array instance.</summary>
+		NewArr,
 		/// <summary>Initializes the value at an address.</summary>
 		InitObj,
 		/// <summary>Returns the default value for a type.</summary>
@@ -774,6 +780,71 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitIfInstruction(this);
+		}
+	}
+
+	/// <summary>Switch statement</summary>
+	public sealed partial class SwitchInstruction : ILInstruction
+	{
+		public override StackType ResultType { get { return StackType.Void; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitSwitchInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitSwitchInstruction(this);
+		}
+	}
+
+	/// <summary>Switch section within a switch statement</summary>
+	public sealed partial class SwitchSection : ILInstruction
+	{
+		ILInstruction body;
+		public ILInstruction Body {
+			get { return this.body; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.body, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.body;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Body = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (SwitchSection)ShallowClone();
+			clone.Body = this.body.Clone();
+			return clone;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitSwitchSection(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitSwitchSection(this);
 		}
 	}
 
@@ -2320,6 +2391,87 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
+	/// <summary>Creates an array instance.</summary>
+	public sealed partial class NewArr : ILInstruction
+	{
+		public NewArr(IType type, ILInstruction size) : base(OpCode.NewArr)
+		{
+			this.type = type;
+			this.Size = size;
+		}
+		readonly IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type { get { return type; } }
+		ILInstruction size;
+		public ILInstruction Size {
+			get { return this.size; }
+			set {
+				ValidateArgument(value);
+				SetChildInstruction(ref this.size, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.size;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Size = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (NewArr)ShallowClone();
+			clone.Size = this.size.Clone();
+			return clone;
+		}
+		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		{
+			this.Size = this.size.Inline(flagsBefore, context);
+			return this;
+		}
+		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
+		{
+			Size.TransformStackIntoVariables(state);
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return size.Flags | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			this.size.WriteTo(output);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitNewArr(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitNewArr(this);
+		}
+	}
+
 	/// <summary>Initializes the value at an address.</summary>
 	public sealed partial class InitObj : UnaryInstruction
 	{
@@ -2718,6 +2870,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitSwitchInstruction(SwitchInstruction inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitSwitchSection(SwitchSection inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitTryCatch(TryCatch inst)
 		{
 			Default(inst);
@@ -2894,6 +3054,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitNewArr(NewArr inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitInitObj(InitObj inst)
 		{
 			Default(inst);
@@ -3013,6 +3177,14 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitIfInstruction(IfInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitSwitchInstruction(SwitchInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitSwitchSection(SwitchSection inst)
 		{
 			return Default(inst);
 		}
@@ -3192,6 +3364,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitNewArr(NewArr inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitInitObj(InitObj inst)
 		{
 			return Default(inst);
@@ -3298,6 +3474,8 @@ namespace ICSharpCode.Decompiler.IL
 			"br",
 			"leave",
 			"if",
+			"switch",
+			"switch.section",
 			"try.catch",
 			"try.catch.handler",
 			"try.finally",
@@ -3342,6 +3520,7 @@ namespace ICSharpCode.Decompiler.IL
 			"unbox",
 			"unbox.any",
 			"newobj",
+			"newarr",
 			"initobj",
 			"default.value",
 			"throw",

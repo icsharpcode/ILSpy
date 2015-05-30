@@ -17,14 +17,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
+using ICSharpCode.NRefactory.Utils;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.TypeSystem;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -72,6 +71,30 @@ namespace ICSharpCode.Decompiler.CSharp
 			var trueStatement = Convert(inst.TrueInst);
 			var falseStatement = inst.FalseInst.OpCode == OpCode.Nop ? null : Convert(inst.FalseInst);
 			return new IfElseStatement(condition, trueStatement, falseStatement);
+		}
+
+		CaseLabel CreateTypedCaseLabel(long i, IType type)
+		{
+			Expression value;
+			if (type.IsKnownType(KnownTypeCode.Boolean)) {
+				value = new PrimitiveExpression(i != 0);
+			} else {
+				value = new PrimitiveExpression(CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, true));
+			}
+			return new CaseLabel(value);
+		}
+		
+		protected internal override Statement VisitSwitchInstruction(SwitchInstruction inst)
+		{
+			var value = exprBuilder.Translate(inst.Value);
+			var stmt = new SwitchStatement() { Expression = value };	
+			foreach (var section in inst.Sections) {
+				var astSection = new ICSharpCode.NRefactory.CSharp.SwitchSection();
+				astSection.CaseLabels.AddRange(section.Labels.Range().Select(i => CreateTypedCaseLabel(i, value.Type)));
+				astSection.Statements.Add(Convert(section.Body));
+				stmt.SwitchSections.Add(astSection);
+			}
+			return stmt;
 		}
 		
 		/// <summary>Target block that a 'continue;' statement would jump to</summary>

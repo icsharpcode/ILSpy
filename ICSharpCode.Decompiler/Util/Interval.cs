@@ -140,18 +140,29 @@ namespace ICSharpCode.Decompiler
 			return !(lhs == rhs);
 		}
 		#endregion
+		
+		public IEnumerable<long> Range()
+		{
+			for (long i = Start; i < End; i++)
+				yield return i;
+		}
 	}
 
 	/// <summary>
 	/// An immutable set of longs, that is implemented as a list of intervals.
 	/// </summary>
-	struct LongSet
+	public struct LongSet
 	{
 		public readonly ImmutableArray<LongInterval> Intervals;
 
 		public LongSet(ImmutableArray<LongInterval> intervals)
 		{
 			this.Intervals = intervals;
+		}
+		
+		public LongSet(long value)
+			: this(ImmutableArray.Create(new LongInterval(value, unchecked(value + 1))))
+		{
 		}
 		
 		public bool IsEmpty
@@ -184,6 +195,11 @@ namespace ICSharpCode.Decompiler
 			return min;
 		}
 
+		public IEnumerable<long> Range()
+		{
+			return Intervals.SelectMany(i => i.Range());
+		}
+		
 		public override string ToString()
 		{
 			return string.Join(",", Intervals);

@@ -107,15 +107,13 @@
     <Compile Include="TestCases\ControlFlow.cs" />
     <Compile Include="TestCases\HelloWorld.cs" />
     <Compile Include="TestCases\PropertiesAndEvents.cs" />
+    <Compile Include="TestCases\Switch.cs" />
     <Compile Include="TestRunner.cs" />
     <Compile Include="Util\LongSetTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="ILTransforms" />
-    <Folder Include="Util" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>
