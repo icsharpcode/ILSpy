@@ -726,6 +726,15 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		}
 		#endregion
 		
+		#region Type Parameter Attributes
+		void AddAttributes(GenericParameter genericParameter, IUnresolvedTypeParameter targetTP)
+		{
+			if (genericParameter.HasCustomAttributes) {
+				AddCustomAttributes(genericParameter.CustomAttributes, targetTP.Attributes);
+			}
+		}
+		#endregion
+		
 		#region MarshalAsAttribute (ConvertMarshalInfo)
 		static readonly ITypeReference marshalAsAttributeTypeRef = typeof(MarshalAsAttribute).ToTypeReference();
 		static readonly ITypeReference unmanagedTypeTypeRef = typeof(UnmanagedType).ToTypeReference();
@@ -860,6 +869,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			for (int i = 0; i < typeParameters.Count; i++) {
 				var tp = (DefaultUnresolvedTypeParameter)typeParameters[i];
 				AddConstraints(tp, typeDefinition.GenericParameters[i]);
+				AddAttributes(typeDefinition.GenericParameters[i], tp);
 				tp.ApplyInterningProvider(interningProvider);
 			}
 		}
@@ -1326,6 +1336,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 				for (int i = 0; i < method.GenericParameters.Count; i++) {
 					var tp = (DefaultUnresolvedTypeParameter)m.TypeParameters[i];
 					AddConstraints(tp, method.GenericParameters[i]);
+					AddAttributes(method.GenericParameters[i], tp);
 					tp.ApplyInterningProvider(interningProvider);
 				}
 			}
