@@ -426,13 +426,19 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		TranslatedExpression HandleDelegateConstruction(CallInstruction inst)
 		{
-			var func = (LdFtn)inst.Arguments[1];
-			var target = TranslateTarget(func.Method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
-			return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), new MemberReferenceExpression(target, func.Method.Name))
+			ILInstruction func = inst.Arguments[1];
+			IMethod method;
+			if (func.OpCode == OpCode.LdFtn) {
+				method = ((LdFtn)func).Method;
+			} else {
+				method = ((LdVirtFtn)func).Method;
+			}
+			var target = TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
+			return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), new MemberReferenceExpression(target, method.Name))
 				.WithILInstruction(inst)
-				.WithRR(new ConversionResolveResult(func.Method.DeclaringType,
-				                                    new MemberResolveResult(target.ResolveResult, func.Method),
-				                                    Conversion.MethodGroupConversion(func.Method, func.OpCode == OpCode.LdVirtFtn, false))); // TODO handle extension methods capturing the first argument
+				.WithRR(new ConversionResolveResult(method.DeclaringType,
+				                                    new MemberResolveResult(target.ResolveResult, method),
+				                                    Conversion.MethodGroupConversion(method, func.OpCode == OpCode.LdVirtFtn, false))); // TODO handle extension methods capturing the first argument
 		}
 		
 		TranslatedExpression TranslateTarget(IMember member, ILInstruction target, bool nonVirtualInvocation)
