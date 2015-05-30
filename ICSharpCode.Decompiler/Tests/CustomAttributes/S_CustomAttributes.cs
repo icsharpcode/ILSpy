@@ -37,14 +37,9 @@ namespace aa
 		[Obsolete("some message")]
 		public static void ObsoletedMethod()
 		{
-			//Console.WriteLine("{0} $$$ {1}", AttributeTargets.Interface, (AttributeTargets)(AttributeTargets.Property | AttributeTargets.Field));
-			Console.WriteLine("{0} $$$ {1}", AttributeTargets.Interface, AttributeTargets.Property | AttributeTargets.Field);
-			AttributeTargets attributeTargets = AttributeTargets.Property | AttributeTargets.Field;
-			Console.WriteLine("{0} $$$ {1}", AttributeTargets.Interface, attributeTargets);
 		}
 		// No Boxing
-		[CustomAttributes.MyAttribute(new StringComparison[]
-		{
+		[My(new StringComparison[] {
 			StringComparison.Ordinal, 
 			StringComparison.CurrentCulture
 		})]
@@ -52,8 +47,7 @@ namespace aa
 		{
 		}
 		// Boxing of each array element
-		[CustomAttributes.MyAttribute(new object[]
-		{
+		[My(new object[] {
 			StringComparison.Ordinal, 
 			StringComparison.CurrentCulture
 		})]
