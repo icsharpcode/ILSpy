@@ -83,7 +83,8 @@ namespace ICSharpCode.Decompiler.IL
 			// Based on Table 2: Binary Numeric Operations
 			// also works for Table 5: Integer Operations
 			// and for Table 7: Overflow Arithmetic Operations
-			if (left == right) {
+			if (left == right || opCode == OpCode.Shl || opCode == OpCode.Shr) {
+				// Shift op codes use Table 6
 				return left;
 			}
 			if (left == StackType.Ref || right == StackType.Ref) {
