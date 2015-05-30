@@ -309,10 +309,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				getter = ((IndexerDeclaration)entityDecl).Getter;
 				setter = ((IndexerDeclaration)entityDecl).Setter;
 			}
-			if (property.CanGet) {
+			if (property.CanGet && property.Getter.HasBody) {
 				DecompileBody(propertyDefinition.GetMethod, property.Getter, getter, decompilationContext, typeSystemAstBuilder);
 			}
-			if (property.CanSet) {
+			if (property.CanSet && property.Setter.HasBody) {
 				DecompileBody(propertyDefinition.SetMethod, property.Setter, setter, decompilationContext, typeSystemAstBuilder);
 			}
 			return entityDecl;
