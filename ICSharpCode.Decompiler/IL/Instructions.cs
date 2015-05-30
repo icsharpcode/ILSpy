@@ -2380,7 +2380,7 @@ namespace ICSharpCode.Decompiler.IL
 		public NewObj(IMethod method) : base(OpCode.NewObj, method)
 		{
 		}
-		public override StackType ResultType { get { return StackType.O; } }
+		public override StackType ResultType { get { return Method.DeclaringType.GetStackType(); } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitNewObj(this);
