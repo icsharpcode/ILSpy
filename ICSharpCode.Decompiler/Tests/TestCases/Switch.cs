@@ -22,8 +22,11 @@ public static class Switch
 {
 	public static void Main()
 	{
-		string[] args = { "First case", "Else" };
-		TestCase(ShortSwitchOverString, args);	
+		TestCase(ShortSwitchOverString, "First case", "Else");
+		TestCase(SwitchOverString1, "First case", "Second case", "2nd case", "Third case", "Fourth case", "Fifth case", "Sixth case", null, "default", "else");
+		Console.WriteLine(SwitchOverString2());
+		Console.WriteLine(SwitchOverBool(true));
+		Console.WriteLine(SwitchOverBool(false));
 	}
 	
 	static void TestCase(Func<string, string> target, params string[] args)

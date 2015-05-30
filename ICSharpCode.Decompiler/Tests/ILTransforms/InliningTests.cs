@@ -93,7 +93,7 @@ namespace ICSharpCode.Decompiler.Tests.ILTransforms
 			);
 		}
 		
-		[Test]
+		[Test, Ignore("Inline blocks are currently disabled")]
 		public void BuildInlineBlock()
 		{
 			var f = MakeFunction(

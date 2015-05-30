@@ -193,6 +193,20 @@ namespace ICSharpCode.Decompiler.CSharp
 					typeDecl.Members.Add(memberDecl);
 				}
 			}
+			if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType.IsNull)) {
+				// Remove the [DefaultMember] attribute if the class contains indexers
+				foreach (AttributeSection section in typeDecl.Attributes) {
+					foreach (var attr in section.Attributes) {
+						var tr = attr.Type.GetResolveResult().Type;
+						if (tr.Name == "DefaultMemberAttribute" && tr.Namespace == "System.Reflection") {
+							attr.Remove();
+						}
+					}
+					if (section.Attributes.Count == 0)
+						section.Remove();
+				}
+			}
+			
 			return typeDecl;
 		}
 		
