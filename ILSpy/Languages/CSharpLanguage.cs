@@ -292,7 +292,7 @@ namespace ICSharpCode.ILSpy
 			}
 			return null;
 		}
-		/*
+
 		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
@@ -326,14 +326,19 @@ namespace ICSharpCode.ILSpy
 				
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
 				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
-					AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: assembly.ModuleDefinition);
-					codeDomBuilder.AddAssembly(assembly.ModuleDefinition, onlyAssemblyLevel: !options.FullDecompilation);
-					codeDomBuilder.RunTransformations(transformAbortCondition);
-					codeDomBuilder.GenerateCode(output);
-	}
-}
+					CSharpDecompiler decompiler = new CSharpDecompiler(assembly.ModuleDefinition);
+					if (options.FullDecompilation) {
+						SyntaxTree st = decompiler.DecompileWholeModuleAsSingleFile();
+						output.WriteLine(st.ToString());
+					}
+//					AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: assembly.ModuleDefinition);
+//					codeDomBuilder.AddAssembly(assembly.ModuleDefinition, onlyAssemblyLevel: !options.FullDecompilation);
+//					codeDomBuilder.RunTransformations(transformAbortCondition);
+//					codeDomBuilder.GenerateCode(output);
+				}
+			}
 		}
-		*/
+		
 		#region WriteProjectFile
 		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module)
 		{
@@ -460,13 +465,12 @@ namespace ICSharpCode.ILSpy
 		#endregion
 
 		#region WriteCodeFilesInProject
-		/*
 		bool IncludeTypeWhenDecompilingProject(TypeDefinition type, DecompilationOptions options)
 		{
-			if (type.Name == "<Module>" || AstBuilder.MemberIsHidden(type, options.DecompilerSettings))
-				return false;
-			if (type.Namespace == "XamlGeneratedNamespace" && type.Name == "GeneratedInternalTypeHelper")
-				return false;
+//			if (type.Name == "<Module>" || CSharpDecompiler.MemberIsHidden(type, options.DecompilerSettings))
+//				return false;
+//			if (type.Namespace == "XamlGeneratedNamespace" && type.Name == "GeneratedInternalTypeHelper")
+//				return false;
 			return true;
 		}
 
@@ -475,16 +479,16 @@ namespace ICSharpCode.ILSpy
 			// don't automatically load additional assemblies when an assembly node is selected in the tree view
 			using (LoadedAssembly.DisableAssemblyLoad())
 			{
-				AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: module);
-				codeDomBuilder.AddAssembly(module, onlyAssemblyLevel: true);
-				codeDomBuilder.RunTransformations(transformAbortCondition);
+//				AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: module);
+//				codeDomBuilder.AddAssembly(module, onlyAssemblyLevel: true);
+//				codeDomBuilder.RunTransformations(transformAbortCondition);
 
 				string prop = "Properties";
 				if (directories.Add("Properties"))
 					Directory.CreateDirectory(Path.Combine(options.SaveAsProjectDirectory, prop));
 				string assemblyInfo = Path.Combine(prop, "AssemblyInfo" + this.FileExtension);
-				using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, assemblyInfo)))
-					codeDomBuilder.GenerateCode(new PlainTextOutput(w));
+//				using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, assemblyInfo)))
+//					codeDomBuilder.GenerateCode(new PlainTextOutput(w));
 				return new Tuple<string, string>[] { Tuple.Create("Compile", assemblyInfo) };
 			}
 		}
@@ -503,23 +507,22 @@ namespace ICSharpCode.ILSpy
 						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
-			AstMethodBodyBuilder.ClearUnhandledOpcodes();
+			DecompilerTypeSystem ts = new DecompilerTypeSystem(module);
+//			AstMethodBodyBuilder.ClearUnhandledOpcodes();
 			Parallel.ForEach(
 				files,
 				new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
 				delegate(IGrouping<string, TypeDefinition> file) {
 					using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, file.Key))) {
-						AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: module);
+						CSharpDecompiler decompiler = new CSharpDecompiler(ts);
 						foreach (TypeDefinition type in file) {
-							codeDomBuilder.AddType(type);
+							w.WriteLine(decompiler.Decompile(type).ToString());
 						}
-						codeDomBuilder.RunTransformations(transformAbortCondition);
-						codeDomBuilder.GenerateCode(new PlainTextOutput(w));
 					}
 				});
-			AstMethodBodyBuilder.PrintNumberOfUnhandledOpcodes();
+//			AstMethodBodyBuilder.PrintNumberOfUnhandledOpcodes();
 			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(module, options, directories));
-		}*/
+		}
 		#endregion
 
 		#region WriteResourceFilesInProject
