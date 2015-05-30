@@ -96,6 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)
 		{
 			var typeSystemAstBuilder = new TypeSystemAstBuilder();
+			typeSystemAstBuilder.ShowAttributes = true;
 			typeSystemAstBuilder.AlwaysUseShortTypeNames = true;
 			typeSystemAstBuilder.AddResolveResultAnnotations = true;
 			return typeSystemAstBuilder;
