@@ -597,7 +597,7 @@ namespace ICSharpCode.Decompiler.IL
 						return new Void(new StObj(Pop(), ld, type));
 					}
 				case ILOpCode.Initobj:
-					return new InitObj(Pop(), ReadAndDecodeTypeReference());
+					return InitObj(Pop(), ReadAndDecodeTypeReference());
 				case ILOpCode.Isinst:
 					return new IsInst(Pop(), ReadAndDecodeTypeReference());
 				case ILOpCode.Ldelem:
@@ -761,6 +761,11 @@ namespace ICSharpCode.Decompiler.IL
 			return new Void(new StObj(new LdElema(array, index, type), value, type));
 		}
 
+		ILInstruction InitObj(ILInstruction target, IType type)
+		{
+			return new Void(new StObj(target, new DefaultValue(type), type));
+		}
+		
 		private ILInstruction DecodeConstrainedCall()
 		{
 			var typeRef = ReadAndDecodeTypeReference();

@@ -177,8 +177,6 @@
 			CustomClassName("NewObj"), Call, ResultType("Method.DeclaringType.GetStackType()")),
 		new OpCode("newarr", "Creates an array instance.",
 			CustomClassName("NewArr"), HasTypeOperand, CustomArguments("size"), MayThrow, ResultType("O")),
-		new OpCode("initobj", "Initializes the value at an address.",
-			CustomClassName("InitObj"), Unary, HasTypeOperand, VoidResult),
 		new OpCode("default.value", "Returns the default value for a type.",
 			NoArguments, HasTypeOperand, ResultType("type.GetStackType()")),
 		new OpCode("throw", "Throws an exception.",

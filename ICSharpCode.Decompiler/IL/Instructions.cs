@@ -164,8 +164,6 @@ namespace ICSharpCode.Decompiler.IL
 		NewObj,
 		/// <summary>Creates an array instance.</summary>
 		NewArr,
-		/// <summary>Initializes the value at an address.</summary>
-		InitObj,
 		/// <summary>Returns the default value for a type.</summary>
 		DefaultValue,
 		/// <summary>Throws an exception.</summary>
@@ -2472,36 +2470,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Initializes the value at an address.</summary>
-	public sealed partial class InitObj : UnaryInstruction
-	{
-		public InitObj(ILInstruction argument, IType type) : base(OpCode.InitObj, argument)
-		{
-			this.type = type;
-		}
-		readonly IType type;
-		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
-		public override StackType ResultType { get { return StackType.Void; } }
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
-			output.Write('(');
-			Argument.WriteTo(output);
-			output.Write(')');
-		}
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitInitObj(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitInitObj(this);
-		}
-	}
-
 	/// <summary>Returns the default value for a type.</summary>
 	public sealed partial class DefaultValue : SimpleInstruction
 	{
@@ -3058,10 +3026,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitInitObj(InitObj inst)
-		{
-			Default(inst);
-		}
 		protected internal virtual void VisitDefaultValue(DefaultValue inst)
 		{
 			Default(inst);
@@ -3368,10 +3332,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitInitObj(InitObj inst)
-		{
-			return Default(inst);
-		}
 		protected internal virtual T VisitDefaultValue(DefaultValue inst)
 		{
 			return Default(inst);
@@ -3521,7 +3481,6 @@ namespace ICSharpCode.Decompiler.IL
 			"unbox.any",
 			"newobj",
 			"newarr",
-			"initobj",
 			"default.value",
 			"throw",
 			"rethrow",
