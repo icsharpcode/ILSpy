@@ -181,6 +181,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
 		}
 		
+		protected internal override TranslatedExpression VisitDefaultValue(DefaultValue inst)
+		{
+			return new DefaultValueExpression(ConvertType(inst.Type))
+				.WithILInstruction(inst)
+				.WithRR(new ConstantResolveResult(inst.Type, null));
+		}
+		
 		protected internal override TranslatedExpression VisitLdTypeToken(LdTypeToken inst)
 		{
 			return new TypeOfExpression(ConvertType(inst.Type))
