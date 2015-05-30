@@ -654,6 +654,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
 		}
 		
+		protected internal override TranslatedExpression VisitLdsFlda(LdsFlda inst)
+		{
+			var expr = ConvertField(inst.Field);
+			return new DirectionExpression(FieldDirection.Ref, expr)
+				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+		}
+		
 		protected internal override TranslatedExpression VisitLdElema(LdElema inst)
 		{
 			TranslatedExpression arrayExpr = Translate(inst.Array);
