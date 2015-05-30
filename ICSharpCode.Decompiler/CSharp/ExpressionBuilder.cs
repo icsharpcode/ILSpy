@@ -640,6 +640,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return lenExpr.ConvertTo(compilation.FindType(KnownTypeCode.IntPtr), this);
 		}
 		
+		protected internal override TranslatedExpression VisitLdFlda(LdFlda inst)
+		{
+			var expr = ConvertField(inst.Field, inst.Target);
+			return new DirectionExpression(FieldDirection.Ref, expr)
+				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+		}
+		
 		protected internal override TranslatedExpression VisitLdElema(LdElema inst)
 		{
 			TranslatedExpression arrayExpr = Translate(inst.Array);
