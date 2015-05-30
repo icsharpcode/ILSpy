@@ -103,7 +103,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		void RunTransforms(AstNode rootNode, ITypeResolveContext decompilationContext)
 		{
-			var context = new TransformContext(typeSystem, decompilationContext, CancellationToken);
+			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+			var context = new TransformContext(typeSystem, decompilationContext, typeSystemAstBuilder, CancellationToken);
 			foreach (var transform in astTransforms) {
 				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(rootNode, context);

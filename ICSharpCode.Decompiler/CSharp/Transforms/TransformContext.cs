@@ -18,6 +18,7 @@
 
 using System;
 using System.Threading;
+using ICSharpCode.NRefactory.CSharp.Refactoring;
 using ICSharpCode.NRefactory.CSharp.Resolver;
 using ICSharpCode.NRefactory.TypeSystem;
 
@@ -30,6 +31,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		public readonly DecompilerTypeSystem TypeSystem;
 		public readonly CancellationToken CancellationToken;
+		public readonly TypeSystemAstBuilder TypeSystemAstBuilder;
 		readonly ITypeResolveContext decompilationContext;
 		
 		/// <summary>
@@ -46,10 +48,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			get { return decompilationContext.CurrentTypeDefinition; }
 		}
 		
-		internal TransformContext(DecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, CancellationToken cancellationToken)
+		internal TransformContext(DecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, TypeSystemAstBuilder typeSystemAstBuilder, CancellationToken cancellationToken)
 		{
 			this.TypeSystem = typeSystem;
 			this.decompilationContext = decompilationContext;
+			this.TypeSystemAstBuilder = typeSystemAstBuilder;
 			this.CancellationToken = cancellationToken;
 		}
 	}
