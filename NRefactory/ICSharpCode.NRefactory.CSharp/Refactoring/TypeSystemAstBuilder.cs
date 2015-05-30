@@ -425,7 +425,7 @@ namespace ICSharpCode.NRefactory.CSharp.Refactoring
 			}
 			
 			if (rr is TypeOfResolveResult) {
-				var expr = new TypeOfExpression(ConvertType(rr.Type));
+				var expr = new TypeOfExpression(ConvertType(((TypeOfResolveResult)rr).ReferencedType));
 				if (AddResolveResultAnnotations)
 					expr.AddAnnotation(rr);
 				return expr;
