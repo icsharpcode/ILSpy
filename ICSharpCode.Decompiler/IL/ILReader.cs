@@ -878,10 +878,22 @@ namespace ICSharpCode.Decompiler.IL
 			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
 			target += reader.Position;
 			ILInstruction condition = Pop();
-			if (condition.ResultType == StackType.O) {
-				// introduce explicit comparison with null
-				condition = new Ceq(condition, new LdNull());
-				negate = !negate;
+			switch (condition.ResultType) {
+				case StackType.O:
+					// introduce explicit comparison with null
+					condition = new Ceq(condition, new LdNull());
+					negate = !negate;
+					break;
+				case StackType.I:
+					// introduce explicit comparison with 0
+					condition = new Ceq(condition, new LdcI4(0));
+					negate = !negate;
+					break;
+				case StackType.I8:
+					// introduce explicit comparison with 0
+					condition = new Ceq(condition, new LdcI8(0));
+					negate = !negate;
+					break;
 			}
 			if (negate) {
 				condition = new LogicNot(condition);

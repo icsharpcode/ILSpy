@@ -349,19 +349,37 @@ namespace ICSharpCode.Decompiler.CSharp
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
-			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
-			if (rr.IsError || rr.Type.GetStackType() != inst.ResultType
-			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
-			{
-				// Left and right operands are incompatible, so convert them to a common type
-				IType targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode(inst.Sign));
+			ResolveResult rr;
+			if (left.Type.IsKnownType(KnownTypeCode.IntPtr) || left.Type.IsKnownType(KnownTypeCode.UIntPtr)
+			    || right.Type.IsKnownType(KnownTypeCode.IntPtr) || right.Type.IsKnownType(KnownTypeCode.UIntPtr)) {
+				IType targetType;
+				if (inst.Sign == Sign.Unsigned) {
+					targetType = compilation.FindType(KnownTypeCode.UInt64);
+				} else {
+					targetType = compilation.FindType(KnownTypeCode.Int64);
+				}
 				left = left.ConvertTo(targetType, this);
 				right = right.ConvertTo(targetType, this);
+				rr = new OperatorResolveResult(targetType, BinaryOperatorExpression.GetLinqNodeType(op, inst.CheckForOverflow), left.ResolveResult, right.ResolveResult);
+				var resultExpr = new BinaryOperatorExpression(left.Expression, op, right.Expression)
+					.WithILInstruction(inst)
+					.WithRR(rr);
+				return resultExpr.ConvertTo(compilation.FindType(inst.ResultType.ToKnownTypeCode()), this);
+			} else {
 				rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
+				if (rr.IsError || rr.Type.GetStackType() != inst.ResultType
+				    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
+				{
+					// Left and right operands are incompatible, so convert them to a common type
+					IType targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode(inst.Sign));
+					left = left.ConvertTo(targetType, this);
+					right = right.ConvertTo(targetType, this);
+					rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
+				}
+				return new BinaryOperatorExpression(left.Expression, op, right.Expression)
+					.WithILInstruction(inst)
+					.WithRR(rr);
 			}
-			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
-				.WithILInstruction(inst)
-				.WithRR(rr);
 		}
 
 		/// <summary>
