@@ -117,8 +117,12 @@ namespace ICSharpCode.Decompiler
 			if (typeReference == null)
 				return SpecialType.UnknownType;
 			ITypeReference typeRef;
-			lock (typeReferenceCecilLoader)
-				typeRef = typeReferenceCecilLoader.ReadTypeReference(typeReference);
+			if (typeReference is PinnedType) {
+				typeRef = new NRefactory.TypeSystem.ByReferenceType(Resolve(((PinnedType)typeReference).ElementType)).ToTypeReference();
+			} else {
+				lock (typeReferenceCecilLoader)
+					typeRef = typeReferenceCecilLoader.ReadTypeReference(typeReference);
+			}
 			return typeRef.Resolve(context);
 		}
 		#endregion
