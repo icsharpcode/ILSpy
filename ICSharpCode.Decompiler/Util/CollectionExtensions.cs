@@ -19,7 +19,7 @@ namespace ICSharpCode.Decompiler
 		{
 			if (stack.Count == 0)
 				return default(T);
-			return stack.Pop();
+			return stack.Peek();
 		}
 		
 		public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> input)

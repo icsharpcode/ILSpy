@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void Warn(string message)
 		{
-			//Debug.Fail(message);
+			Debug.Fail(message);
 		}
 
 		void ReadInstructions(Dictionary<int, ImmutableArray<StackType>> outputStacks, CancellationToken cancellationToken)

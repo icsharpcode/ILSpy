@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Sign = sign;
 			this.CompoundAssignmentType = compoundAssignmentType;
 			this.resultType = ComputeResultType(opCode, left.ResultType, right.ResultType);
+			Debug.Assert(resultType != StackType.Unknown);
 			Debug.Assert(CompoundAssignmentType == CompoundAssignmentType.None || IsValidCompoundAssignmentTarget(Left));
 		}
 		
