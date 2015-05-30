@@ -679,6 +679,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(obj, arg.ResolveResult, Conversion.BoxingConversion));
 		}
+		
+		protected internal override TranslatedExpression VisitCastClass(CastClass inst)
+		{
+			return Translate(inst.Argument).ConvertTo(inst.Type, this);
+		}
 
 		protected override TranslatedExpression Default(ILInstruction inst)
 		{
