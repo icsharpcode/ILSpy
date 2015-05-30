@@ -145,6 +145,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			.WithILInstruction(inst)
 			.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, 1), new [] { arg.ResolveResult }, new ResolveResult[0]));
 		}
+		
+		protected internal override TranslatedExpression VisitLocAlloc(LocAlloc inst)
+		{
+			var byteType = compilation.FindType(KnownTypeCode.Byte);
+			return new StackAllocExpression {
+				Type = ConvertType(byteType),
+				CountExpression = Translate(inst.Argument)
+			}.WithILInstruction(inst).WithRR(new ResolveResult(new PointerType(byteType)));
+		}
 
 		protected internal override TranslatedExpression VisitLdcI4(LdcI4 inst)
 		{
@@ -186,6 +195,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new DefaultValueExpression(ConvertType(inst.Type))
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(inst.Type, null));
+		}
+		
+		protected internal override TranslatedExpression VisitSizeOf(SizeOf inst)
+		{
+			return new SizeOfExpression(ConvertType(inst.Type))
+				.WithILInstruction(inst)
+				.WithRR(new SizeOfResolveResult(compilation.FindType(KnownTypeCode.Int32), inst.Type, null));
 		}
 		
 		protected internal override TranslatedExpression VisitLdTypeToken(LdTypeToken inst)
