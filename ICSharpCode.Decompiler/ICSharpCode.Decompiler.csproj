@@ -106,11 +106,10 @@
     <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\NRTypeExtensions.cs" />
     <Compile Include="IL\Transforms\ControlFlowSimplification.cs" />
+    <Compile Include="IL\Transforms\IILTransform.cs" />
     <Compile Include="IL\Transforms\LoopDetection.cs" />
     <Compile Include="IL\Transforms\OptimizingTransform.cs" />
     <Compile Include="IL\Transforms\TransformingVisitor.cs" />
-    <Compile Include="IL\Transforms\TransformStackIntoVariables.cs" />
-    <Compile Include="IL\Transforms\TransformStackIntoVariablesState.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />
     <Compile Include="Disassembler\ILStructure.cs" />

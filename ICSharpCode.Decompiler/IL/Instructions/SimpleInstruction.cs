@@ -69,35 +69,5 @@ namespace ICSharpCode.Decompiler.IL
 			// Nothing to do, since we don't have arguments.
 			return this;
 		}
-
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-		}
-	}
-
-	partial class Pop
-	{
-		protected override InstructionFlags ComputeFlags()
-		{
-			return InstructionFlags.MayPop;
-		}
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			return context.Pop(flagsBefore) ?? this;
-		}
-	}
-
-	partial class Peek
-	{
-		protected override InstructionFlags ComputeFlags()
-		{
-			return InstructionFlags.MayPeek;
-		}
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			return context.Peek(flagsBefore) ?? this;
-		}
 	}
 }

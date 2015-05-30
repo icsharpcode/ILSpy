@@ -23,6 +23,7 @@ using ICSharpCode.Decompiler.Tests.Helpers;
 
 namespace ICSharpCode.Decompiler.Tests.ILTransforms
 {
+	/*
 	/// <summary>
 	/// IL Inlining unit tests.
 	/// </summary>
@@ -126,4 +127,5 @@ namespace ICSharpCode.Decompiler.Tests.ILTransforms
 			);
 		}
 	}
+	*/
 }

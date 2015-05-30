@@ -138,12 +138,5 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return this;
 		}
-
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			for (int i = 0; i < Arguments.Count; i++) {
-				Arguments[i].TransformStackIntoVariables(state);
-			}
-		}
 	}
 }

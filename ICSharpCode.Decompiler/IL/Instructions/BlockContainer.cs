@@ -160,16 +160,6 @@ namespace ICSharpCode.Decompiler.IL
 			// Blocks are phase-1 boundaries
 			return this;
 		}
-
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			EntryPoint.TransformStackIntoVariables(state);
-			ImmutableArray<ILVariable> variables;
-			if (state.FinalVariables.TryGetValue(this, out variables))
-				state.Variables = variables.ToStack();
-			else
-				state.Variables.Clear();
-		}
 	}
 }
 

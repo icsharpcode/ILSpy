@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿// Copyright (c) 2015 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,50 +17,18 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	partial class ILInstruction
+	public class ILTransformContext
 	{
-		public bool MatchLdcI4(int val)
-		{
-			return OpCode == OpCode.LdcI4 && ((LdcI4)this).Value == val;
-		}
-		
-		public bool MatchLdLoc(ILVariable variable)
-		{
-			var inst = this as LdLoc;
-			return inst != null && inst.Variable == variable;
-		}
-		
-		public bool MatchLdThis()
-		{
-			var inst = this as LdLoc;
-			return inst != null && inst.Variable.Kind == VariableKind.This;
-		}
-		
-		public bool MatchStLoc(ILVariable variable, out ILInstruction value)
-		{
-			var inst = this as StLoc;
-			if (inst != null && inst.Variable == variable) {
-				value = inst.Value;
-				return true;
-			}
-			value = null;
-			return false;
-		}
-		
-		public bool MatchStLoc(out ILVariable variable, out ILInstruction value)
-		{
-			var inst = this as StLoc;
-			if (inst != null) {
-				variable = inst.Variable;
-				value = inst.Value;
-				return true;
-			}
-			variable = null;
-			value = null;
-			return false;
-		}
+		public IDecompilerTypeSystem TypeSystem { get; set; }
+		public CancellationToken CancellationToken { get; set; }
+	}
+
+	public interface IILTransform
+	{
+		void Run(ILFunction function, ILTransformContext context);
 	}
 }

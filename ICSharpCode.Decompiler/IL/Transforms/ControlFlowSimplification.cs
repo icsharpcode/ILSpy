@@ -152,7 +152,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool IsUsableBranchToChild(ControlFlowNode cfgNode, ILInstruction potentialBranchInstruction)
 		{
 			Branch br = potentialBranchInstruction as Branch;
-			if (br == null || br.PopCount != 0)
+			if (br == null)
 				return false;
 			var targetBlock = br.TargetBlock;
 			return targetBlock.Parent == currentContainer && cfgNode.Dominates(controlFlowGraph[targetBlock.ChildIndex])
@@ -167,11 +167,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.Branch:
 					Branch br1 = (Branch)exit1;
 					Branch br2 = (Branch)exit2;
-					return br1.TargetBlock == br2.TargetBlock && br1.PopCount == br2.PopCount;
+					return br1.TargetBlock == br2.TargetBlock;
 				case OpCode.Leave:
 					Leave leave1 = (Leave)exit1;
 					Leave leave2 = (Leave)exit2;
-					return leave1.TargetContainer == leave2.TargetContainer && leave1.PopCount == leave2.PopCount;
+					return leave1.TargetContainer == leave2.TargetContainer;
 				case OpCode.Return:
 					Return ret1 = (Return)exit1;
 					Return ret2 = (Return)exit2;

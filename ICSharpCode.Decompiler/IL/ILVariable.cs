@@ -17,14 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.NRefactory.TypeSystem;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ICSharpCode.Decompiler.Disassembler;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -53,6 +47,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public readonly VariableKind Kind;
 		public readonly IType Type;
+		public readonly StackType StackType;
 		
 		/// <summary>
 		/// The index of the local variable or parameter (depending on Kind)
@@ -84,6 +79,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// This variable is automatically updated when adding/removing ldloca instructions from the ILAst.
 		/// </remarks>
 		public int AddressCount;
+
+		public bool IsSingleUse {
+			get {
+				return LoadCount == 1 && StoreCount == 1 && AddressCount == 0;
+			}
+		}
 		
 		public ILVariable(VariableKind kind, IType type, int index)
 		{
@@ -91,6 +92,17 @@ namespace ICSharpCode.Decompiler.IL
 				throw new ArgumentNullException("type");
 			this.Kind = kind;
 			this.Type = type;
+			this.StackType = type.GetStackType();
+			this.Index = index;
+		}
+		
+		public ILVariable(VariableKind kind, StackType type, int index)
+		{
+			if (type == null)
+				throw new ArgumentNullException("type");
+			this.Kind = kind;
+			this.Type = SpecialType.UnknownType;
+			this.StackType = type;
 			this.Index = index;
 		}
 		

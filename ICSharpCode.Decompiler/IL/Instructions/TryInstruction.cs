@@ -115,23 +115,6 @@ namespace ICSharpCode.Decompiler.IL
 			else
 				Handlers[index - 1] = (TryCatchHandler)value;
 		}
-		
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			TryBlock = TryBlock.Inline(InstructionFlags.None, state);
-			TryBlock.TransformStackIntoVariables(state);
-			Stack<ILVariable> variablesAfter = TryBlock.HasFlag(InstructionFlags.EndPointUnreachable) ? null : state.Variables.Clone();
-			for (int i = 0; i < Handlers.Count; i++) {
-				Handlers[i].TransformStackIntoVariables(state);
-				if (!Handlers[i].HasFlag(InstructionFlags.EndPointUnreachable)) {
-					if (variablesAfter == null)
-						variablesAfter = state.Variables.Clone();
-					else
-						state.MergeVariables(variablesAfter, state.Variables);
-				}
-			}
-			state.Variables = variablesAfter ?? new Stack<ILVariable>();
-		}
 	}
 	
 	/// <summary>
@@ -170,16 +153,6 @@ namespace ICSharpCode.Decompiler.IL
 			return Block.Phase1Boundary(filter.Flags) | Block.Phase1Boundary(body.Flags);
 		}
 
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			state.Variables.Clear();
-			Filter = Filter.Inline(InstructionFlags.None, state);
-			Filter.TransformStackIntoVariables(state);
-			state.Variables.Clear();
-			Body = Body.Inline(InstructionFlags.None, state);
-			Body.TransformStackIntoVariables(state);
-		}
-		
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write("catch ");
@@ -281,17 +254,6 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
-		
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			TryBlock = TryBlock.Inline(InstructionFlags.None, state);
-			TryBlock.TransformStackIntoVariables(state);
-			var variablesAfterTry = state.Variables;
-			state.Variables = new Stack<ILVariable>();
-			FinallyBlock = FinallyBlock.Inline(InstructionFlags.None, state);
-			FinallyBlock.TransformStackIntoVariables(state);
-			state.Variables = variablesAfterTry;
-		}
 	}
 	
 	partial class TryFault
@@ -364,25 +326,6 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				default:
 					throw new IndexOutOfRangeException();
-			}
-		}
-		
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			TryBlock = TryBlock.Inline(InstructionFlags.None, state);
-			TryBlock.TransformStackIntoVariables(state);
-			var variablesAfterTry = state.Variables;
-			state.Variables = new Stack<ILVariable>();
-			FaultBlock = FaultBlock.Inline(InstructionFlags.None, state);
-			FaultBlock.TransformStackIntoVariables(state);
-			if (!TryBlock.HasFlag(InstructionFlags.EndPointUnreachable) && !FaultBlock.HasFlag(InstructionFlags.EndPointUnreachable)) {
-				// If end-points of both instructions are reachable, merge their states
-				state.MergeVariables(state.Variables, variablesAfterTry);
-			}
-			if (FaultBlock.HasFlag(InstructionFlags.EndPointUnreachable)) {
-				// If the end-point of FaultBlock is unreachable, continue with the end-state of TryBlock instead
-				// (if both are unreachable, it doesn't matter what we continue with)
-				state.Variables = variablesAfterTry;
 			}
 		}
 	}

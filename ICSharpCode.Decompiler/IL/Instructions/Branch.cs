@@ -41,11 +41,6 @@ namespace ICSharpCode.Decompiler.IL
 		readonly int targetILOffset;
 		Block targetBlock;
 		
-		/// <summary>
-		/// Pops the specified number of arguments from the evaluation stack during the branching operation.
-		/// </summary>
-		public int PopCount;
-		
 		public Branch(int targetILOffset) : base(OpCode.Branch)
 		{
 			this.targetILOffset = targetILOffset;
@@ -61,12 +56,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			var flags = InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
-			if (PopCount > 0) {
-				// the branch pop happens during phase-2, so don't use MayPop
-				flags |= InstructionFlags.MayWriteEvaluationStack;
-			}
-			return flags;
+			return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 		}
 		
 		public int TargetILOffset {
@@ -116,26 +106,6 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			output.Write(' ');
 			output.WriteReference(TargetLabel, (object)targetBlock ?? TargetILOffset, isLocal: true);
-			if (PopCount != 0) {
-				output.Write(" (pops ");
-				output.Write(PopCount.ToString());
-				output.Write(" element)");
-			}
-		}
-		
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			ImmutableArray<ILVariable> initialVariables;
-			if (!state.InitialVariables.TryGetValue(targetBlock, out initialVariables)) {
-				initialVariables = state.Variables.ToImmutableArray();
-				state.InitialVariables.Add(targetBlock, initialVariables);
-				targetBlock.TransformStackIntoVariables(state);
-			} else {
-				state.MergeVariables(state.Variables, initialVariables.ToStack());
-			}
-			// No one is supposed to use the variable stack after an unconditional branch,
-			// but let's clear it just to be safe.
-			state.Variables.Clear();
 		}
 	}
 }

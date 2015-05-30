@@ -345,11 +345,6 @@ namespace ICSharpCode.Decompiler.IL
 		internal abstract ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context);
 
 		/// <summary>
-		/// Transforms the evaluation stack 'pop' and 'peek' instructions into local copy.
-		/// </summary>
-		internal abstract void TransformStackIntoVariables(TransformStackIntoVariablesState state);
-		
-		/// <summary>
 		/// Number of parents that refer to this instruction and are connected to the root.
 		/// Usually is 0 for unconnected nodes and 1 for connected nodes, but may temporarily increase to 2
 		/// when the ILAst is re-arranged (e.g. within SetChildInstruction).

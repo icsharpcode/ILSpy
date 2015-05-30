@@ -33,12 +33,6 @@
 	OpCode[] opCodes = {
 		new OpCode("nop", "No operation. Takes 0 arguments and returns void.",
 			VoidResult, NoArguments),
-		new OpCode("pop", "Pops the top of the evaluation stack and returns the value.",
-			NoArguments, ResultTypeParam),
-		new OpCode("peek", "Peeks at the top of the evaluation stack and returns the value. Corresponds to IL 'dup'.",
-			NoArguments, ResultTypeParam),
-		new OpCode("void", "Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.",
-			VoidResult, Unary),
 		new OpCode("ILFunction", "A container of IL blocks.",
 			CustomChildren(new [] {
 				new ChildInfo("body")
@@ -106,12 +100,12 @@
 		new OpCode("conv", "Numeric cast.",
 			Unary, CustomConstructor),
 		new OpCode("ldloc", "Loads the value of a local variable. (ldarg/ldloc)",
-			CustomClassName("LdLoc"), NoArguments, HasVariableOperand, ResultType("variable.Type.GetStackType()")),
+			CustomClassName("LdLoc"), NoArguments, HasVariableOperand, ResultType("variable.StackType")),
 		new OpCode("ldloca", "Loads the address of a local variable. (ldarga/ldloca)",
 			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand),
 		new OpCode("stloc", "Stores a value into a local variable. (starg/stloc)",
 			CustomClassName("StLoc"), HasVariableOperand, CustomArguments("value"),
-			ResultType("variable.Type.GetStackType()")),
+			ResultType("variable.StackType")),
 		new OpCode("ldstr", "Loads a constant string.",
 			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),
 		new OpCode("ldc.i4", "Loads a constant 32-bit integer.",
@@ -668,15 +662,6 @@ namespace ICSharpCode.Decompiler.IL
 					b.AppendLine(", context);");
 				}
 				b.AppendLine("\treturn this;");
-				b.Append("}");
-				opCode.Members.Add(b.ToString());
-				b.Clear();
-				b.AppendLine("internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)");
-				b.AppendLine("{");
-				for (int i = 0; i < children.Length; i++) {
-					string arg = children[i].Name;
-					b.AppendLine("\t" + MakeName(arg) + ".TransformStackIntoVariables(state);");
-				}
 				b.Append("}");
 				opCode.Members.Add(b.ToString());
 			}

@@ -93,21 +93,6 @@ namespace ICSharpCode.Decompiler.IL
 				Sections[index - 1] = (SwitchSection)value;
 		}
 		
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Value.TransformStackIntoVariables(state);
-			var stateAfterExpression = state.Variables.Clone();
-			for (int i = 0; i < Sections.Count; i++) {
-				state.Variables = stateAfterExpression.Clone();
-				Sections[i] = (SwitchSection)Sections[i].Inline(InstructionFlags.None, state);
-				Sections[i].TransformStackIntoVariables(state);
-				if (!Sections[i].HasFlag(InstructionFlags.EndPointUnreachable)) {
-					state.MergeVariables(state.Variables, stateAfterExpression);
-				}
-			}
-			state.Variables = stateAfterExpression;
-		}
-		
 		public override ILInstruction Clone()
 		{
 			var clone = new SwitchInstruction(value.Clone());
@@ -148,11 +133,6 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(": ");
 			
 			body.WriteTo(output);
-		}
-		
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			body.TransformStackIntoVariables(state);
 		}
 	}
 }

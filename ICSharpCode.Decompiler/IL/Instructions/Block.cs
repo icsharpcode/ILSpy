@@ -187,15 +187,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// The MayPop and MayPeek flags are removed and converted into
 		/// MayReadEvaluationStack and/or MayWriteEvaluationStack flags.
 		/// </summary>
+		[Obsolete("there's not phase-1 evaluation anymore")]
 		internal static InstructionFlags Phase1Boundary(InstructionFlags flags)
 		{
-			// Convert phase-1 flags to phase-2 flags
-			if ((flags & InstructionFlags.MayPop) != 0)
-				flags |= InstructionFlags.MayWriteEvaluationStack;
-			if ((flags & (InstructionFlags.MayPeek | InstructionFlags.MayPop)) != 0)
-				flags |= InstructionFlags.MayReadEvaluationStack;
-			// an inline block has no phase-1 effects
-			flags &= ~(InstructionFlags.MayPeek | InstructionFlags.MayPop);
 			return flags;
 		}
 		
@@ -203,25 +197,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			// an inline block has no phase-1 effects, so we're immediately done with inlining
 			return this;
-		}
-		
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			for (int i = 0; i < Instructions.Count; i++) {
-				var inst = Instructions[i].Inline(InstructionFlags.None, state);
-				inst.TransformStackIntoVariables(state);
-				if (inst.ResultType != StackType.Void) {
-					var type = state.TypeSystem.Compilation.FindType(inst.ResultType.ToKnownTypeCode());
-					ILVariable variable = new ILVariable(VariableKind.StackSlot, type, state.Variables.Count);
-					state.Variables.Push(variable);
-					inst = new Void(new StLoc(variable, inst));
-				}
-				Instructions[i] = inst;
-				if (inst.HasFlag(InstructionFlags.EndPointUnreachable))
-					return;
-			}
-			FinalInstruction = FinalInstruction.Inline(InstructionFlags.None, state);
-			FinalInstruction.TransformStackIntoVariables(state);
 		}
 	}
 }

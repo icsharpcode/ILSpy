@@ -61,11 +61,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new EmptyStatement();
 		}
 		
-		protected internal override Statement VisitVoid(ICSharpCode.Decompiler.IL.Void inst)
-		{
-			return new ExpressionStatement(exprBuilder.Translate(inst.Argument));
-		}
-
 		protected internal override Statement VisitIfInstruction(IfInstruction inst)
 		{
 			var condition = exprBuilder.TranslateCondition(inst.Condition);

@@ -78,7 +78,9 @@ namespace ICSharpCode.Decompiler.IL
 					tryInstructionList.Add(tryCatch);
 				}
 
-				var variable = new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), handlerBlock.ILRange.Start);
+				ILVariable variable = null;
+				throw new NotImplementedException();
+				//var variable = new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), handlerBlock.ILRange.Start);
 				variable.Name = "ex";
 				handlerBlock.EntryPoint.Instructions.Add(new LdLoc(variable));
 				

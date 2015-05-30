@@ -61,6 +61,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected bool removeNops = true;
 		
+		/*
 		sealed class InliningStack : Stack<ILInstruction>, IInlineContext
 		{
 			/// <summary>
@@ -196,6 +197,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Add(inst);
 			}
 		}
+		*/
 		
 		protected internal override ILInstruction VisitBlockContainer(BlockContainer container)
 		{

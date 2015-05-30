@@ -44,7 +44,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Ensure return blocks are inlined:
 				if (block.Instructions.Count == 2 && block.Instructions[1].OpCode == OpCode.Return) {
 					Return ret = (Return)block.Instructions[1];
-					if (ret.ReturnValue != null && ret.ReturnValue.OpCode == OpCode.Pop && block.Instructions[0].ResultType != StackType.Void) {
+					ILVariable v;
+					ILInstruction inst;
+					if (ret.ReturnValue != null && ret.ReturnValue.MatchLdLoc(out v)
+					    && v.IsSingleUse && block.Instructions[0].MatchStLoc(v, out inst))
+					{
 						ret.ReturnValue = block.Instructions[0];
 						block.Instructions.RemoveAt(0);
 					}
@@ -62,7 +66,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					var nextBranch = (Branch)targetBlock.Instructions[0];
 					branch.TargetBlock = nextBranch.TargetBlock;
-					branch.PopCount += nextBranch.PopCount;
 					if (targetBlock.IncomingEdgeCount == 0)
 						targetBlock.Instructions.Clear(); // mark the block for deletion
 					targetBlock = branch.TargetBlock;
@@ -73,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				} else if (branch.TargetBlock.Instructions.Count == 1 && branch.TargetBlock.Instructions[0].OpCode == OpCode.Leave) {
 					// Replace branches to 'leave' instruction with the leave instruction
 					Leave leave = (Leave)branch.TargetBlock.Instructions[0];
-					branch.ReplaceWith(new Leave(leave.TargetContainer) { PopCount = branch.PopCount + leave.PopCount, ILRange = branch.ILRange });
+					branch.ReplaceWith(new Leave(leave.TargetContainer) { ILRange = branch.ILRange });
 				}
 				if (targetBlock.IncomingEdgeCount == 0)
 					targetBlock.Instructions.Clear(); // mark the block for deletion

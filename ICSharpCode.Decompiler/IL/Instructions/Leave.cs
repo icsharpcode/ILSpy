@@ -40,11 +40,6 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		BlockContainer targetContainer;
 		
-		/// <summary>
-		/// Pops the specified number of arguments from the evaluation stack during the branching operation.
-		/// </summary>
-		public int PopCount;
-		
 		public Leave(BlockContainer targetContainer) : base(OpCode.Leave)
 		{
 			// Note: ILReader will create Leave instructions with targetContainer==null to represent 'endfinally',
@@ -54,12 +49,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			var flags = InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
-			if (PopCount > 0) {
-				// the branch pop happens during phase-2, so don't use MayPop
-				flags |= InstructionFlags.MayWriteEvaluationStack;
-			}
-			return flags;
+			return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 		}
 		
 		public BlockContainer TargetContainer {
@@ -104,22 +94,6 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(' ');
 				output.WriteReference(TargetLabel, targetContainer, isLocal: true);
 			}
-			if (PopCount != 0) {
-				output.Write(" (pops ");
-				output.Write(PopCount.ToString());
-				output.Write(" element)");
-			}
-		}
-		
-		internal override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			ImmutableArray<ILVariable> variables;
-			if (state.FinalVariables.TryGetValue(targetContainer, out variables)) {
-				state.MergeVariables(state.Variables, variables.ToStack());
-			} else {
-				state.FinalVariables.Add(targetContainer, state.Variables.ToImmutableArray());
-			}
-			state.Variables.Clear();
 		}
 	}
 }

@@ -44,8 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new OptimizingTransform(),
 			new LoopDetection(),
 			new ControlFlowSimplification(),
-			new TransformingVisitor(),
-			new TransformStackIntoVariables()
+			new TransformingVisitor()
 		};
 
 		List<IAstTransform> astTransforms = new List<IAstTransform> {

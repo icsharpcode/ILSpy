@@ -30,12 +30,6 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		/// <summary>No operation. Takes 0 arguments and returns void.</summary>
 		Nop,
-		/// <summary>Pops the top of the evaluation stack and returns the value.</summary>
-		Pop,
-		/// <summary>Peeks at the top of the evaluation stack and returns the value. Corresponds to IL 'dup'.</summary>
-		Peek,
-		/// <summary>Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.</summary>
-		Void,
 		/// <summary>A container of IL blocks.</summary>
 		ILFunction,
 		/// <summary>A container of IL blocks.</summary>
@@ -227,10 +221,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Argument = this.argument.Inline(flagsBefore, context);
 			return this;
 		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Argument.TransformStackIntoVariables(state);
-		}
 		protected override InstructionFlags ComputeFlags()
 		{
 			return argument.Flags;
@@ -309,11 +299,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Left = this.left.Inline(flagsBefore, context);
 			return this;
 		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Left.TransformStackIntoVariables(state);
-			Right.TransformStackIntoVariables(state);
-		}
 		protected override InstructionFlags ComputeFlags()
 		{
 			return left.Flags | right.Flags;
@@ -343,61 +328,6 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNop(this);
-		}
-	}
-
-	/// <summary>Pops the top of the evaluation stack and returns the value.</summary>
-	public sealed partial class Pop : SimpleInstruction
-	{
-		public Pop(StackType resultType) : base(OpCode.Pop)
-		{
-			this.resultType = resultType;
-		}
-		StackType resultType;
-		public override StackType ResultType { get { return resultType; } }
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitPop(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitPop(this);
-		}
-	}
-
-	/// <summary>Peeks at the top of the evaluation stack and returns the value. Corresponds to IL 'dup'.</summary>
-	public sealed partial class Peek : SimpleInstruction
-	{
-		public Peek(StackType resultType) : base(OpCode.Peek)
-		{
-			this.resultType = resultType;
-		}
-		StackType resultType;
-		public override StackType ResultType { get { return resultType; } }
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitPeek(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitPeek(this);
-		}
-	}
-
-	/// <summary>Ignore the arguments and produce void. Used to prevent the end result of an instruction from being pushed to the evaluation stack.</summary>
-	public sealed partial class Void : UnaryInstruction
-	{
-		public Void(ILInstruction argument) : base(OpCode.Void, argument)
-		{
-		}
-		public override StackType ResultType { get { return StackType.Void; } }
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitVoid(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitVoid(this);
 		}
 	}
 
@@ -1148,7 +1078,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
 		public ILVariable Variable { get { return variable; } }
-		public override StackType ResultType { get { return variable.Type.GetStackType(); } }
+		public override StackType ResultType { get { return variable.StackType; } }
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -1247,11 +1177,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = this.value.Inline(flagsBefore, context);
 			return this;
 		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Value.TransformStackIntoVariables(state);
-		}
-		public override StackType ResultType { get { return variable.Type.GetStackType(); } }
+		public override StackType ResultType { get { return variable.StackType; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return value.Flags;
@@ -1626,10 +1552,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Target.TransformStackIntoVariables(state);
-		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -1714,10 +1636,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
-		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Target.TransformStackIntoVariables(state);
 		}
 		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
@@ -1811,11 +1729,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
-		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Target.TransformStackIntoVariables(state);
-			Value.TransformStackIntoVariables(state);
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
@@ -1970,10 +1883,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = this.value.Inline(flagsBefore, context);
 			return this;
 		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Value.TransformStackIntoVariables(state);
-		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -2123,10 +2032,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
 		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Target.TransformStackIntoVariables(state);
-		}
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
 		public IType Type { get { return type; } }
@@ -2227,11 +2132,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
 			this.Target = this.target.Inline(flagsBefore, context);
 			return this;
-		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Target.TransformStackIntoVariables(state);
-			Value.TransformStackIntoVariables(state);
 		}
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
@@ -2442,10 +2342,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Size = this.size.Inline(flagsBefore, context);
 			return this;
 		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Size.TransformStackIntoVariables(state);
-		}
 		public override StackType ResultType { get { return StackType.O; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -2615,10 +2511,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Array = this.array.Inline(flagsBefore, context);
 			return this;
 		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Array.TransformStackIntoVariables(state);
-		}
 		public override StackType ResultType { get { return StackType.I; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -2707,11 +2599,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Array = this.array.Inline(flagsBefore, context);
 			return this;
 		}
-		internal sealed override void TransformStackIntoVariables(TransformStackIntoVariablesState state)
-		{
-			Array.TransformStackIntoVariables(state);
-			Index.TransformStackIntoVariables(state);
-		}
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
 		public IType Type { get { return type; } }
@@ -2755,18 +2642,6 @@ namespace ICSharpCode.Decompiler.IL
 		protected abstract void Default(ILInstruction inst);
 		
 		protected internal virtual void VisitNop(Nop inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitPop(Pop inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitPeek(Peek inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitVoid(Void inst)
 		{
 			Default(inst);
 		}
@@ -3061,18 +2936,6 @@ namespace ICSharpCode.Decompiler.IL
 		protected abstract T Default(ILInstruction inst);
 		
 		protected internal virtual T VisitNop(Nop inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitPop(Pop inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitPeek(Peek inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitVoid(Void inst)
 		{
 			return Default(inst);
 		}
@@ -3414,9 +3277,6 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		static readonly string[] originalOpCodeNames = {
 			"nop",
-			"pop",
-			"peek",
-			"void",
 			"ILFunction",
 			"BlockContainer",
 			"Block",
@@ -3498,32 +3358,6 @@ namespace ICSharpCode.Decompiler.IL
 			if (inst != null) {
 				return true;
 			}
-			return false;
-		}
-		public bool MatchPop()
-		{
-			var inst = this as Pop;
-			if (inst != null) {
-				return true;
-			}
-			return false;
-		}
-		public bool MatchPeek()
-		{
-			var inst = this as Peek;
-			if (inst != null) {
-				return true;
-			}
-			return false;
-		}
-		public bool MatchVoid(out ILInstruction argument)
-		{
-			var inst = this as Void;
-			if (inst != null) {
-				argument = inst.Argument;
-				return true;
-			}
-			argument = default(ILInstruction);
 			return false;
 		}
 		public bool MatchLogicNot(out ILInstruction argument)
