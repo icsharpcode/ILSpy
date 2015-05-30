@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
+using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.Utils;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.CSharp;
@@ -75,13 +76,16 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		CaseLabel CreateTypedCaseLabel(long i, IType type)
 		{
-			Expression value;
+			object value;
 			if (type.IsKnownType(KnownTypeCode.Boolean)) {
-				value = new PrimitiveExpression(i != 0);
+				value = i != 0;
+			} else if (type.Kind == TypeKind.Enum) {
+				var enumType = type.GetDefinition().EnumUnderlyingType;
+				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), i, true);
 			} else {
-				value = new PrimitiveExpression(CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, true));
+				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, true);
 			}
-			return new CaseLabel(value);
+			return new CaseLabel(exprBuilder.ConvertConstantValue(new ConstantResolveResult(type, value)));
 		}
 		
 		protected internal override Statement VisitSwitchInstruction(SwitchInstruction inst)
