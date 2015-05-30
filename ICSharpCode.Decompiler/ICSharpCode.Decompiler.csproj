@@ -135,6 +135,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Output\TextOutputWriter.cs" />
     <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
+    <Compile Include="TypeSystem\DecompilerTypeSystemUtils.cs" />
     <Compile Include="TypeSystem\SpecializingDecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\IDecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\ReferenceResolvingException.cs" />

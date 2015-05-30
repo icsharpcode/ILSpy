@@ -175,6 +175,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				return expressionBuilder.ConvertConstantValue(rr)
 					.WithILInstruction(this.ILInstructions);
 			}
+			if (targetType.Kind == TypeKind.Pointer && 0.Equals(ResolveResult.ConstantValue)) {
+				return new NullReferenceExpression()
+					.WithILInstruction(this.ILInstructions)
+					.WithRR(new ConstantResolveResult(targetType, null));
+			}
 			return Expression.CastTo(expressionBuilder.ConvertType(targetType))
 				.WithoutILInstruction().WithRR(rr);
 		}

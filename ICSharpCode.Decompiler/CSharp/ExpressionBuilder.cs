@@ -247,7 +247,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			
 			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.Equality, left.ResolveResult, right.ResolveResult);
 			if (rr.IsError) {
-				// TODO: insert casts to the wider type of the two input types
+				var targetType = DecompilerTypeSystemUtils.GetLargerType(left.Type, right.Type);
+				if (targetType.Equals(left.Type)) {
+					right = right.ConvertTo(targetType, this);
+				} else {
+					left = left.ConvertTo(targetType, this);
+				}
+				rr = new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean),
+				                               BinaryOperatorExpression.GetLinqNodeType(BinaryOperatorType.Equality, false),
+				                               left.ResolveResult, right.ResolveResult);
 			}
 			return new BinaryOperatorExpression(left.Expression, BinaryOperatorType.Equality, right.Expression)
 				.WithILInstruction(inst)
