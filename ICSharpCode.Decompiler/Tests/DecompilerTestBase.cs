@@ -28,6 +28,8 @@ using ICSharpCode.Decompiler.Tests.Helpers;
 using Microsoft.CSharp;
 using Mono.Cecil;
 using NUnit.Framework;
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.Tests
 {
@@ -49,13 +51,15 @@ namespace ICSharpCode.Decompiler.Tests
 			var code = RemoveIgnorableLines(File.ReadLines(fileName));
 			AssemblyDefinition assembly = CompileLegacy(code, optimize, useDebug, compilerVersion);
 
-			AstBuilder decompiler = new AstBuilder(new DecompilerContext(assembly.MainModule));
-			decompiler.AddAssembly(assembly);
-			new Helpers.RemoveCompilerAttribute().Run(decompiler.SyntaxTree);
+			CSharpDecompiler decompiler = new CSharpDecompiler(assembly.MainModule);
 
-			StringWriter output = new StringWriter();
-			decompiler.GenerateCode(new PlainTextOutput(output));
-			CodeAssert.AreEqual(code, output.ToString());
+			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
+
+			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
+
+			var options = FormattingOptionsFactory.CreateAllman();
+			options.IndentSwitchBody = false;
+			CodeAssert.AreEqual(code, syntaxTree.ToString(options));
 		}
 
 		protected static AssemblyDefinition CompileLegacy(string code, bool optimize, bool useDebug, int compilerVersion)

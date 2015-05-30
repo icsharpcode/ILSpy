@@ -341,5 +341,13 @@ namespace ICSharpCode.NRefactory.CSharp
 			}
 			base.VisitQueryExpression(queryExpression);
 		}
+
+		public override void VisitNamedExpression (NamedExpression namedExpression)
+		{
+			if (InsertParenthesesForReadability) {
+				ParenthesizeIfRequired(namedExpression.Expression, RelationalAndTypeTesting + 1);
+			}
+			base.VisitNamedExpression (namedExpression);
+		}
 	}
 }

@@ -249,7 +249,7 @@ namespace NamedInitializerPropertyType
 		{
 			get
 			{
-				return null;
+				return (Type)null;
 			}
 			set
 			{

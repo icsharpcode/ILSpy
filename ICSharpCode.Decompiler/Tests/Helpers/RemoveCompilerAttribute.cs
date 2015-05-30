@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 
 using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
-	class RemoveCompilerAttribute : DepthFirstAstVisitor<object, object>
+	class RemoveCompilerAttribute : DepthFirstAstVisitor<object, object>, IAstTransform
 	{
 		public override object VisitAttribute(NRefactory.CSharp.Attribute attribute, object data)
 		{
@@ -29,9 +30,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return null;
 		}
 
-		public void Run(AstNode node)
+		public void Run(AstNode rootNode, TransformContext context)
 		{
-			node.AcceptVisitor(this, null);
+			rootNode.AcceptVisitor(this, null);
 		}
 	}
 	

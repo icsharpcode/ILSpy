@@ -116,22 +116,31 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
 			SyntaxTree syntaxTree = new SyntaxTree();
-			foreach (var g in typeSystem.Compilation.MainAssembly.TopLevelTypeDefinitions.GroupBy(t => t.Namespace)) {
-				AstNode groupNode;
-				if (string.IsNullOrEmpty(g.Key)) {
+			foreach (var a in typeSystem.Compilation.MainAssembly.AssemblyAttributes)
+			{
+				var astBuilder = CreateAstBuilder(decompilationContext);
+				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
+				attrSection.AttributeTarget = "assembly";
+				syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
+			}
+			string currentNamespace = null;
+			AstNode groupNode = null;
+			foreach (var cecilType in typeSystem.ModuleDefinition.Types) {
+				var typeDef = typeSystem.Resolve(cecilType).GetDefinition();
+				if (typeDef.Name == "<Module>" && typeDef.Members.Count == 0)
+					continue;
+				if(string.IsNullOrEmpty(cecilType.Namespace)) {
 					groupNode = syntaxTree;
 				} else {
-					NamespaceDeclaration ns = new NamespaceDeclaration(g.Key);
-					syntaxTree.AddChild(ns, SyntaxTree.MemberRole);
-					groupNode = ns;
+					if (currentNamespace != cecilType.Namespace)
+					{
+						groupNode = new NamespaceDeclaration(cecilType.Namespace);
+						syntaxTree.AddChild(groupNode, SyntaxTree.MemberRole);
+					}
 				}
-				
-				foreach (var typeDef in g) {
-					if (typeDef.Name == "<Module>" && typeDef.Members.Count == 0)
-						continue;
-					var typeDecl = DoDecompile(typeDef, decompilationContext.WithCurrentTypeDefinition(typeDef));
-					groupNode.AddChild(typeDecl, SyntaxTree.MemberRole);
-				}
+				currentNamespace = cecilType.Namespace;
+				var typeDecl = DoDecompile(typeDef, decompilationContext.WithCurrentTypeDefinition(typeDef));
+				groupNode.AddChild(typeDecl, SyntaxTree.MemberRole);
 			}
 			RunTransforms(syntaxTree, decompilationContext);
 			return syntaxTree;
@@ -160,17 +169,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				// e.g. DelegateDeclaration
 				return entityDecl;
 			}
+			foreach (var type in typeDef.NestedTypes) {
+				typeDecl.Members.Add(DoDecompile(type, decompilationContext.WithCurrentTypeDefinition(type)));
+			}
 			foreach (var field in typeDef.Fields) {
 				var fieldDef = typeSystem.GetCecil(field) as FieldDefinition;
 				if (fieldDef != null) {
 					var memberDecl = DoDecompile(fieldDef, field, decompilationContext.WithCurrentMember(field));
-					typeDecl.Members.Add(memberDecl);
-				}
-			}
-			foreach (var method in typeDef.Methods) {
-				var methodDef = typeSystem.GetCecil(method) as MethodDefinition;
-				if (methodDef != null) {
-					var memberDecl = DoDecompile(methodDef, method, decompilationContext.WithCurrentMember(method));
 					typeDecl.Members.Add(memberDecl);
 				}
 			}
@@ -179,6 +184,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (propDef != null) {
 					var propDecl = DoDecompile(propDef, property, decompilationContext.WithCurrentMember(property));
 					typeDecl.Members.Add(propDecl);
+				}
+			}
+			foreach (var method in typeDef.Methods) {
+				var methodDef = typeSystem.GetCecil(method) as MethodDefinition;
+				if (methodDef != null) {
+					var memberDecl = DoDecompile(methodDef, method, decompilationContext.WithCurrentMember(method));
+					typeDecl.Members.Add(memberDecl);
 				}
 			}
 			return typeDecl;
@@ -258,6 +270,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentMember == field);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+			if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum) {
+				var enumDec = new EnumMemberDeclaration() {
+					Name = field.Name,
+					Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue),
+				};
+				enumDec.Attributes.AddRange(field.Attributes.Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
+				return enumDec;
+			}
 			return typeSystemAstBuilder.ConvertEntity(field);
 		}
 

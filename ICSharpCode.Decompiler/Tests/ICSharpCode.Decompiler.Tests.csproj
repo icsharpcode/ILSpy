@@ -110,6 +110,12 @@
     <Compile Include="TestCases\Switch.cs" />
     <Compile Include="TestRunner.cs" />
     <Compile Include="Util\LongSetTests.cs" />
+    <Compile Include="CustomAttributes\CustomAttributeTests.cs" />
+    <Compile Include="CustomAttributes\S_AssemblyCustomAttribute.cs" />
+    <Compile Include="CustomAttributes\S_CustomAttributeSamples.cs" />
+    <Compile Include="CustomAttributes\S_CustomAttributes.cs" />
+    <Compile Include="DecompilerTestBase.cs" />
+    <Compile Include="CodeSampleFileParser.cs" />
   </ItemGroup>
   <ItemGroup>
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />

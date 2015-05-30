@@ -65,8 +65,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		{
 			var typeSystem = new DecompilerTypeSystem(ModuleDefinition.ReadModule(assemblyFileName));
 			CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem);
+			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
-			new Helpers.RemoveCompilerAttribute().Run(syntaxTree);
 			new Helpers.EscapeGeneratedIdentifiers().Run(syntaxTree);
 			
 			StringWriter output = new StringWriter();

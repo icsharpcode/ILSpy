@@ -38,6 +38,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
 				Run(container, context);
 			}
+
+			// Remove "return;" at end of method
+			var funcBody = function.Body as BlockContainer;
+			if (funcBody != null)
+			{
+				var lastBlock = funcBody.Blocks.LastOrDefault();
+				var lastInst = lastBlock.Instructions.LastOrDefault() as Return;
+				if (lastInst != null && lastInst.ReturnValue == null)
+				{
+					lastInst.ReplaceWith(new Leave(funcBody));
+				}
+			}
 		}
 		
 		BlockContainer currentContainer;

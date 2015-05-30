@@ -24,9 +24,9 @@ namespace aa
 			{
 			}
 		}
-		[CustomAttributes.MyAttribute(CustomAttributes.EnumWithFlag.Item1 | CustomAttributes.EnumWithFlag.Item2)]
+		[My(EnumWithFlag.Item1 | EnumWithFlag.Item2)]
 		private static int field;
-		[CustomAttributes.MyAttribute(CustomAttributes.EnumWithFlag.All)]
+		[My(EnumWithFlag.All)]
 		public static string Property
 		{
 			get
