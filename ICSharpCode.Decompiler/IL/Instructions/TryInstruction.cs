@@ -331,8 +331,9 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			// The endpoint of the try-fault is unreachable only if both endpoints are unreachable
-			return IfInstruction.CombineFlags(Block.Phase1Boundary(TryBlock.Flags), Block.Phase1Boundary(faultBlock.Flags));
+			// The endpoint of the try-fault is unreachable iff the try endpoint is unreachable
+			return Block.Phase1Boundary(TryBlock.Flags)
+				| Block.Phase1Boundary(faultBlock.Flags & ~InstructionFlags.EndPointUnreachable);
 		}
 		
 		protected override int GetChildCount()
