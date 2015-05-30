@@ -137,6 +137,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ThrowStatement(exprBuilder.Translate(inst.Argument));
 		}
 		
+		protected internal override Statement VisitRethrow(Rethrow inst)
+		{
+			return new ThrowStatement();
+		}
+		
 		protected internal override Statement VisitReturn(Return inst)
 		{
 			if (inst.ReturnValue == null)
