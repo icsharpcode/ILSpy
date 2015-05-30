@@ -12,19 +12,19 @@ namespace ICSharpCode.Decompiler.Tests.CustomAttributes
 		[Test]
 		public void CustomAttributeSamples()
 		{
-			ValidateFileRoundtrip(@"CustomAttributes\S_CustomAttributeSamples.cs");
+			ValidateFileRoundtrip(@"CustomAttributes/S_CustomAttributeSamples.cs");
 		}
 
 		[Test]
 		public void CustomAttributesMultiTest()
 		{
-			ValidateFileRoundtrip(@"CustomAttributes\S_CustomAttributes.cs");
+			ValidateFileRoundtrip(@"CustomAttributes/S_CustomAttributes.cs");
 		}
 
 		[Test]
 		public void AssemblyCustomAttributesMultiTest()
 		{
-			ValidateFileRoundtrip(@"CustomAttributes\S_AssemblyCustomAttribute.cs");
+			ValidateFileRoundtrip(@"CustomAttributes/S_AssemblyCustomAttribute.cs");
 		}
 	}
 }

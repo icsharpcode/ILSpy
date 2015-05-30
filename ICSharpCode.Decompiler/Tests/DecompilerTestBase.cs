@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.Tests
 	{
 		protected static void ValidateFileRoundtrip(string samplesFileName)
 		{
-			var fullPath = Path.Combine(@"..\..\Tests", samplesFileName);
+			var fullPath = Path.Combine(@"../../Tests", samplesFileName);
 			AssertRoundtripCode(fullPath);
 		}
 
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerResults results = provider.CompileAssemblyFromSource(options, code);
 			try
 			{
-				if (results.Errors.Count > 0)
+				if (results.Errors.Cast<CompilerError>().Any((arg) => !arg.IsWarning))
 				{
 					StringBuilder b = new StringBuilder("Compiler error:");
 					foreach (var error in results.Errors)
