@@ -58,6 +58,12 @@ namespace ICSharpCode.Decompiler.Tests
 			TestCompileDecompileCompileOutputAll("Switch.cs");
 		}
 
+		[Test]
+		public void Generics()
+		{
+			TestCompileDecompileCompileOutputAll("Generics.cs");
+		}
+
 		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{
 			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.None);

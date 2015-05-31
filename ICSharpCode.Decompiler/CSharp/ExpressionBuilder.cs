@@ -206,9 +206,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLdTypeToken(LdTypeToken inst)
 		{
-			return new TypeOfExpression(ConvertType(inst.Type))
+			return new TypeOfExpression(ConvertType(inst.Type)).Member("TypeHandle")
 				.WithILInstruction(inst)
-				.WithRR(new TypeOfResolveResult(compilation.FindType(KnownTypeCode.Type), inst.Type));
+				.WithRR(new TypeOfResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle")), inst.Type));
 		}
 		
 		protected internal override TranslatedExpression VisitLogicNot(LogicNot inst)
@@ -548,6 +548,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				} else {
 					var mre = new MemberReferenceExpression(target.Expression, inst.Method.Name);
+					mre.TypeArguments.AddRange(inst.Method.TypeArguments.Select(a => ConvertType(a)));
 					expr = new InvocationExpression(mre, argumentExpressions);
 				}
 				return expr.WithILInstruction(inst).WithRR(rr);

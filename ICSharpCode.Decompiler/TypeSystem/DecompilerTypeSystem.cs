@@ -233,8 +233,11 @@ namespace ICSharpCode.Decompiler
 			var parameterTypes = methodReference.Parameters.SelectArray(p => Resolve(p.ParameterType));
 			var returnType = Resolve(methodReference.ReturnType);
 			foreach (var method in methods) {
-				if (CompareSignatures(method.Parameters, parameterTypes) && CompareTypes(method.ReturnType, returnType))
-					return method;
+				if (method.TypeParameters.Count != methodReference.GenericParameters.Count)
+					continue;
+				if (!CompareSignatures(method.Parameters, parameterTypes) || !CompareTypes(method.ReturnType, returnType))
+					continue;
+				return method;
 			}
 			return CreateFakeMethod(methodReference);
 		}
