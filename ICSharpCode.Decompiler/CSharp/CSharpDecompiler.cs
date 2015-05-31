@@ -44,6 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new OptimizingTransform(),
 			new LoopDetection(),
 			new ControlFlowSimplification(),
+			new ILInlining(),
 			new TransformingVisitor()
 		};
 
@@ -269,6 +270,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// insert variables at start of body
 			Statement prevVarDecl = null;
 			foreach (var v in function.Variables) {
+				if (v.LoadCount == 0 && v.StoreCount == 0 && v.AddressCount == 0)
+					continue;
 				if (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot) {
 					var type = typeSystemAstBuilder.ConvertType(v.Type);
 					var varDecl = new VariableDeclarationStatement(type, v.Name);

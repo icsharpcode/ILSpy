@@ -24,6 +24,8 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class Return
 	{
+		public static readonly SlotInfo ReturnValueSlot = new SlotInfo("ReturnValue", canInlineInto: true);
+		
 		ILInstruction returnValue;
 		
 		/// <summary>
@@ -33,7 +35,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return returnValue; }
 			set {
 				if (value != null)
-					ValidateArgument(value);
+					ValidateChild(value);
 				SetChildInstruction(ref returnValue, value, 0);
 			}
 		}
@@ -95,11 +97,9 @@ namespace ICSharpCode.Decompiler.IL
 				throw new IndexOutOfRangeException();
 		}
 		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
+		protected override SlotInfo GetChildSlot(int index)
 		{
-			if (returnValue != null)
-				this.ReturnValue = returnValue.Inline(flagsBefore, context);
-			return this;
+			return ReturnValueSlot;
 		}
 	}
 }

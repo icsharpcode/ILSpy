@@ -28,46 +28,16 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// A simple instruction that does not have any arguments.
 	/// </summary>
-	public abstract class SimpleInstruction : ILInstruction
+	public abstract partial class SimpleInstruction : ILInstruction
 	{
-		protected SimpleInstruction(OpCode opCode) : base(opCode)
-		{
-		}
-		
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
 		}
 		
-		protected sealed override int GetChildCount()
-		{
-			return 0;
-		}
-		
-		protected sealed override ILInstruction GetChild(int index)
-		{
-			throw new IndexOutOfRangeException();
-		}
-		
-		protected sealed override void SetChild(int index, ILInstruction value)
-		{
-			throw new IndexOutOfRangeException();
-		}
-		
-		public sealed override ILInstruction Clone()
-		{
-			return ShallowClone();
-		}
-		
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.None;
-		}
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			// Nothing to do, since we don't have arguments.
-			return this;
 		}
 	}
 }

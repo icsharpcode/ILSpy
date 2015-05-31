@@ -29,26 +29,6 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		None = 0,
 		/// <summary>
-		/// Phase-1 execution of this instruction may pop from the evaluation stack.
-		/// </summary>
-		MayPop   = 0x01,
-		/// <summary>
-		/// Phase-1 execution of this instruction may peek at the top-most element of the evaluation stack.
-		/// If MayPop is also set, this flag refers to the top-most element after an arbitrary number of pops.
-		/// </summary>
-		MayPeek  = 0x02,
-		/// <summary>
-		/// Phase-2 execution of this instruction may read the evaluation stack.
-		/// This is not set for instructions that access the stack only in phase-1.
-		/// </summary>
-		MayReadEvaluationStack = 0x04,
-		/// <summary>
-		/// Phase-2 execution of this instruction may modify the evaluation stack.
-		/// This is not set for instructions that access the stack only in phase-1.
-		/// </summary>
-		MayWriteEvaluationStack = 0x08,
-		
-		/// <summary>
 		/// The instruction may read from local variables.
 		/// </summary>
 		MayReadLocals  = 0x10,

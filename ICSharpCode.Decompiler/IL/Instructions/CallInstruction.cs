@@ -29,6 +29,8 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public abstract class CallInstruction : ILInstruction
 	{
+		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true, isCollection: true);
+		
 		public static CallInstruction Create(OpCode opCode, IMethod method)
 		{
 			switch (opCode) {
@@ -98,6 +100,11 @@ namespace ICSharpCode.Decompiler.IL
 			Arguments[index] = value;
 		}
 		
+		protected override SlotInfo GetChildSlot(int index)
+		{
+			return ArgumentSlot;
+		}
+		
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = InstructionFlags.MayThrow | InstructionFlags.SideEffect;
@@ -124,19 +131,6 @@ namespace ICSharpCode.Decompiler.IL
 				Arguments[i].WriteTo(output);
 			}
 			output.Write(')');
-		}
-
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			InstructionFlags operandFlags = InstructionFlags.None;
-			for (int i = 0; i < Arguments.Count - 1; i++) {
-				operandFlags |= Arguments[i].Flags;
-			}
-			flagsBefore |= operandFlags & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop);
-			for (int i = Arguments.Count - 1; i >= 0; i--) {
-				Arguments[i] = Arguments[i].Inline(flagsBefore, context);
-			}
-			return this;
 		}
 	}
 }

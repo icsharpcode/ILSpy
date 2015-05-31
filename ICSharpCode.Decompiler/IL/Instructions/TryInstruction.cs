@@ -25,6 +25,8 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public abstract class TryInstruction : ILInstruction
 	{
+		public static readonly SlotInfo TryBlockSlot = new SlotInfo("TryBlock");
+		
 		protected TryInstruction(OpCode opCode, ILInstruction tryBlock) : base(opCode)
 		{
 			this.TryBlock = tryBlock;
@@ -38,14 +40,6 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.tryBlock, value, 0);
 			}
 		}
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			// Inlining into exception-handling constructs would be madness.
-			// To keep phase-1 execution semantics consistent with inlining, there's a
-			// phase-1-boundary around every try/catch/finally/fault block.
-			return this;
-		}
 	}
 	
 	/// <summary>
@@ -58,6 +52,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// </remarks>
 	partial class TryCatch : TryInstruction
 	{
+		public static readonly SlotInfo HandlerSlot = new SlotInfo("Handler", isCollection: true);
 		public readonly InstructionCollection<TryCatchHandler> Handlers;
 		
 		public TryCatch(ILInstruction tryBlock) : base(OpCode.TryCatch, tryBlock)
@@ -115,6 +110,14 @@ namespace ICSharpCode.Decompiler.IL
 			else
 				Handlers[index - 1] = (TryCatchHandler)value;
 		}
+		
+		protected override SlotInfo GetChildSlot(int index)
+		{
+			if (index == 0)
+				return TryBlockSlot;
+			else
+				return HandlerSlot;
+		}
 	}
 	
 	/// <summary>
@@ -131,12 +134,6 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class TryCatchHandler
 	{
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			// should never happen as TryCatchHandler only appears within TryCatch instructions
-			throw new InvalidOperationException();
-		}
-		
 		internal override void CheckInvariant()
 		{
 			base.CheckInvariant();
@@ -183,6 +180,8 @@ namespace ICSharpCode.Decompiler.IL
 	
 	partial class TryFinally
 	{
+		public static readonly SlotInfo FinallyBlockSlot = new SlotInfo("FinallyBlock");
+		
 		public TryFinally(ILInstruction tryBlock, ILInstruction finallyBlock) : base(OpCode.TryFinally, tryBlock)
 		{
 			this.FinallyBlock = finallyBlock;
@@ -254,10 +253,24 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		
+		protected override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TryBlockSlot;
+				case 1:
+					return FinallyBlockSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 	}
 	
 	partial class TryFault
 	{
+		public static readonly SlotInfo FaultBlockSlot = new SlotInfo("FaultBlock");
+		
 		public TryFault(ILInstruction tryBlock, ILInstruction faultBlock) : base(OpCode.TryFinally, tryBlock)
 		{
 			this.FaultBlock = faultBlock;
@@ -324,6 +337,18 @@ namespace ICSharpCode.Decompiler.IL
 				case 1:
 					FaultBlock = value;
 					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		
+		protected override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TryBlockSlot;
+				case 1:
+					return FaultBlockSlot;
 				default:
 					throw new IndexOutOfRangeException();
 			}

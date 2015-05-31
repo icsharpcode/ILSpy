@@ -49,7 +49,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (ret.ReturnValue != null && ret.ReturnValue.MatchLdLoc(out v)
 					    && v.IsSingleUse && block.Instructions[0].MatchStLoc(v, out inst))
 					{
-						ret.ReturnValue = block.Instructions[0];
+						inst.AddILRange(ret.ReturnValue.ILRange);
+						inst.AddILRange(block.Instructions[0].ILRange);
+						ret.ReturnValue = inst;
 						block.Instructions.RemoveAt(0);
 					}
 				}

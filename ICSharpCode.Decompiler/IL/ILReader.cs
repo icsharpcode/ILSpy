@@ -150,7 +150,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		/// <summary>
 		/// Warn when invalid IL is detected.
-		/// ILSpy should be able to handle invalid IL; but this method can be helpful for debugging the ILReader, as this method should not get called when processing valid IL.
+		/// ILSpy should be able to handle invalid IL; but this method can be helpful for debugging the ILReader,
+		/// as this method should not get called when processing valid IL.
 		/// </summary>
 		void Warn(string message)
 		{
@@ -207,6 +208,7 @@ namespace ICSharpCode.Decompiler.IL
 					Warn("Unknown result type (might be due to invalid IL)");
 				decodedInstruction.CheckInvariant();
 				decodedInstruction.ILRange = new Interval(start, reader.Position);
+				UnpackPush(decodedInstruction).ILRange = decodedInstruction.ILRange;
 				instructionBuilder.Add(decodedInstruction);
 				if (decodedInstruction.HasFlag(InstructionFlags.EndPointUnreachable)) {
 					if (!stackByOffset.TryGetValue(reader.Position, out currentStack)) {
@@ -269,6 +271,16 @@ namespace ICSharpCode.Decompiler.IL
 			return function;
 		}
 
+		static ILInstruction UnpackPush(ILInstruction inst)
+		{
+			ILVariable v;
+			ILInstruction inner;
+			if (inst.MatchStLoc(out v, out inner) && v.Kind == VariableKind.StackSlot)
+				return inner;
+			else
+				return inst;
+		}
+		
 		ILInstruction Neg()
 		{
 			switch (PeekStackType()) {
@@ -280,7 +292,7 @@ namespace ICSharpCode.Decompiler.IL
 				case StackType.F:
 					return Push(new Sub(new LdcF(0), Pop(), checkForOverflow: false, sign: Sign.None));
 				default:
-					Warn("Unsupported input type for neg: ");
+					Warn("Unsupported input type for neg.");
 					goto case StackType.I4;
 			}
 		}
@@ -669,14 +681,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stsfld:
 					return new StsFld(Pop(), ReadAndDecodeFieldReference());
 				case ILOpCode.Ldtoken:
-					var memberReference = ReadAndDecodeMetadataToken() as MemberReference;
-					if (memberReference is TypeReference)
-						return new LdTypeToken(typeSystem.Resolve((TypeReference)memberReference));
-					if (memberReference is FieldReference)
-						return new LdMemberToken(typeSystem.Resolve((FieldReference)memberReference));
-					if (memberReference is MethodReference)
-						return new LdMemberToken(typeSystem.Resolve((MethodReference)memberReference));
-					throw new NotImplementedException();
+					return Push(LdToken(ReadAndDecodeMetadataToken()));
 				case ILOpCode.Ldvirtftn:
 					return Push(new LdVirtFtn(Pop(), ReadAndDecodeMethodReference()));
 				case ILOpCode.Mkrefany:
@@ -690,7 +695,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Rethrow:
 					return new Rethrow();
 				case ILOpCode.Sizeof:
-					return new SizeOf(ReadAndDecodeTypeReference());
+					return Push(new SizeOf(ReadAndDecodeTypeReference()));
 				case ILOpCode.Stelem:
 					return StElem(ReadAndDecodeTypeReference());
 				case ILOpCode.Stelem_I1:
@@ -780,19 +785,20 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Push(ILInstruction inst)
 		{
 			Debug.Assert(inst.ResultType != StackType.Void);
-			var v = new ILVariable(VariableKind.StackSlot, inst.ResultType, inst.ILRange.Start);
+			IType type = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			var v = new ILVariable(VariableKind.StackSlot, type, inst.ResultType, inst.ILRange.Start);
 			v.Name = "S_" + inst.ILRange.Start.ToString("x4");
 			currentStack = currentStack.Push(v);
 			return new StLoc(v, inst);
 		}
 		
-		IL.LdLoc Peek()
+		LdLoc Peek()
 		{
 			// TODO: handle stack underflow?
 			return new LdLoc(currentStack.Peek());
 		}
 		
-		IL.LdLoc Pop()
+		LdLoc Pop()
 		{
 			// TODO: handle stack underflow?
 			ILVariable v;
@@ -803,9 +809,9 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction Return()
 		{
 			if (body.Method.ReturnType.GetStackType() == StackType.Void)
-				return new ICSharpCode.Decompiler.IL.Return();
+				return new IL.Return();
 			else
-				return new ICSharpCode.Decompiler.IL.Return(Pop());
+				return new IL.Return(Pop());
 		}
 
 		private ILInstruction DecodeLdstr()
@@ -859,25 +865,29 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction InitObj(ILInstruction target, IType type)
 		{
-			return new Void(new StObj(target, new DefaultValue(type), type));
+			return new StObj(target, new DefaultValue(type), type);
 		}
 		
 		private ILInstruction DecodeConstrainedCall()
 		{
 			var typeRef = ReadAndDecodeTypeReference();
 			var inst = DecodeInstruction();
-			var call = inst as CallInstruction;
+			var call = UnpackPush(inst) as CallInstruction;
 			if (call != null)
 				call.ConstrainedTo = typeRef;
+			else
+				Warn("Ignored invalid 'constrained' prefix");
 			return inst;
 		}
 
 		private ILInstruction DecodeTailCall()
 		{
 			var inst = DecodeInstruction();
-			var call = inst as CallInstruction;
+			var call = UnpackPush(inst) as CallInstruction;
 			if (call != null)
 				call.IsTail = true;
+			else
+				Warn("Ignored invalid 'tail' prefix");
 			return inst;
 		}
 
@@ -885,7 +895,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			byte alignment = reader.ReadByte();
 			var inst = DecodeInstruction();
-			var sup = inst as ISupportsUnalignedPrefix;
+			var sup = UnpackPush(inst) as ISupportsUnalignedPrefix;
 			if (sup != null)
 				sup.UnalignedPrefix = alignment;
 			else
@@ -896,7 +906,7 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction DecodeVolatile()
 		{
 			var inst = DecodeInstruction();
-			var svp = inst as ISupportsVolatilePrefix;
+			var svp = UnpackPush(inst) as ISupportsVolatilePrefix;
 			if (svp != null)
 				svp.IsVolatile = true;
 			else
@@ -907,7 +917,7 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction DecodeReadonly()
 		{
 			var inst = DecodeInstruction();
-			var ldelema = inst as LdElema;
+			var ldelema = UnpackPush(inst) as LdElema;
 			if (ldelema != null)
 				ldelema.IsReadOnly = true;
 			else
@@ -1042,6 +1052,17 @@ namespace ICSharpCode.Decompiler.IL
 			var right = Pop();
 			var left = Pop();
 			return Push(BinaryNumericInstruction.Create(opCode, left, right, checkForOverflow, sign));
+		}
+
+		ILInstruction LdToken(IMetadataTokenProvider token)
+		{
+			if (token is TypeReference)
+				return new LdTypeToken(typeSystem.Resolve((TypeReference)token));
+			if (token is FieldReference)
+				return new LdMemberToken(typeSystem.Resolve((FieldReference)token));
+			if (token is MethodReference)
+				return new LdMemberToken(typeSystem.Resolve((MethodReference)token));
+			throw new NotImplementedException();
 		}
 	}
 }

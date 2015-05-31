@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2011-2015 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -21,121 +21,31 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Mono.Cecil;
+using ICSharpCode.Decompiler.IL;
 
-namespace ICSharpCode.Decompiler.ILAst
+namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
 	/// Performs inlining transformations.
 	/// </summary>
-	public class ILInlining
+	public class ILInlining : IILTransform
 	{
-		readonly ILBlock method;
-		internal Dictionary<ILVariable, int> numStloc  = new Dictionary<ILVariable, int>();
-		internal Dictionary<ILVariable, int> numLdloc  = new Dictionary<ILVariable, int>();
-		internal Dictionary<ILVariable, int> numLdloca = new Dictionary<ILVariable, int>();
-		
-		public ILInlining(ILBlock method)
+		public void Run(ILFunction function, ILTransformContext context)
 		{
-			this.method = method;
-			AnalyzeMethod();
-		}
-		
-		void AnalyzeMethod()
-		{
-			numStloc.Clear();
-			numLdloc.Clear();
-			numLdloca.Clear();
-			
-			// Analyse the whole method
-			AnalyzeNode(method);
-		}
-		
-		/// <summary>
-		/// For each variable reference, adds <paramref name="direction"/> to the num* dicts.
-		/// Direction will be 1 for analysis, and -1 when removing a node from analysis.
-		/// </summary>
-		void AnalyzeNode(ILNode node, int direction = 1)
-		{
-			ILExpression expr = node as ILExpression;
-			if (expr != null) {
-				ILVariable locVar = expr.Operand as ILVariable;
-				if (locVar != null) {
-					if (expr.Code == ILCode.Stloc) {
-						numStloc[locVar] = numStloc.GetOrDefault(locVar) + direction;
-					} else if (expr.Code == ILCode.Ldloc) {
-						numLdloc[locVar] = numLdloc.GetOrDefault(locVar) + direction;
-					} else if (expr.Code == ILCode.Ldloca) {
-						numLdloca[locVar] = numLdloca.GetOrDefault(locVar) + direction;
-					} else {
-						throw new NotSupportedException(expr.Code.ToString());
-					}
-				}
-				foreach (ILExpression child in expr.Arguments)
-					AnalyzeNode(child, direction);
-			} else {
-				var catchBlock = node as ILTryCatchBlock.CatchBlock;
-				if (catchBlock != null && catchBlock.ExceptionVariable != null) {
-					numStloc[catchBlock.ExceptionVariable] = numStloc.GetOrDefault(catchBlock.ExceptionVariable) + direction;
-				}
-				
-				foreach (ILNode child in node.GetChildren())
-					AnalyzeNode(child, direction);
+			foreach (var block in function.Descendants.OfType<Block>()) {
+				InlineAllInBlock(block);
 			}
 		}
-		
-		public bool InlineAllVariables()
+
+		public bool InlineAllInBlock(Block block)
 		{
 			bool modified = false;
-			ILInlining i = new ILInlining(method);
-			foreach (ILBlock block in method.GetSelfAndChildrenRecursive<ILBlock>())
-				modified |= i.InlineAllInBlock(block);
-			return modified;
-		}
-		
-		public bool InlineAllInBlock(ILBlock block)
-		{
-			bool modified = false;
-			List<ILNode> body = block.Body;
-			if (block is ILTryCatchBlock.CatchBlock && body.Count > 1) {
-				ILVariable v = ((ILTryCatchBlock.CatchBlock)block).ExceptionVariable;
-				if (v != null && v.IsGenerated) {
-					if (numLdloca.GetOrDefault(v) == 0 && numStloc.GetOrDefault(v) == 1 && numLdloc.GetOrDefault(v) == 1) {
-						ILVariable v2;
-						ILExpression ldException;
-						if (body[0].Match(ILCode.Stloc, out v2, out ldException) && ldException.MatchLdloc(v)) {
-							body.RemoveAt(0);
-							((ILTryCatchBlock.CatchBlock)block).ExceptionVariable = v2;
-							modified = true;
-						}
-					}
-				}
-			}
-			for(int i = 0; i < body.Count - 1;) {
-				ILVariable locVar;
-				ILExpression expr;
-				if (body[i].Match(ILCode.Stloc, out locVar, out expr) && InlineOneIfPossible(block.Body, i, aggressive: false)) {
+			int i = 0;
+			while (i < block.Instructions.Count) {
+				if (InlineOneIfPossible(block, i, aggressive: false)) {
 					modified = true;
-					i = Math.Max(0, i - 1); // Go back one step
-				} else {
-					i++;
-				}
-			}
-			foreach(ILBasicBlock bb in body.OfType<ILBasicBlock>()) {
-				modified |= InlineAllInBasicBlock(bb);
-			}
-			return modified;
-		}
-		
-		public bool InlineAllInBasicBlock(ILBasicBlock bb)
-		{
-			bool modified = false;
-			List<ILNode> body = bb.Body;
-			for(int i = 0; i < body.Count;) {
-				ILVariable locVar;
-				ILExpression expr;
-				if (body[i].Match(ILCode.Stloc, out locVar, out expr) && InlineOneIfPossible(bb.Body, i, aggressive: false)) {
-					modified = true;
-					i = Math.Max(0, i - 1); // Go back one step
+					i = Math.Max(0, i - 1);
+					// Go back one step
 				} else {
 					i++;
 				}
@@ -144,19 +54,16 @@ namespace ICSharpCode.Decompiler.ILAst
 		}
 		
 		/// <summary>
-		/// Inlines instructions before pos into block.Body[pos].
+		/// Inlines instructions before pos into block.Instructions[pos].
 		/// </summary>
 		/// <returns>The number of instructions that were inlined.</returns>
-		public int InlineInto(List<ILNode> body, int pos, bool aggressive)
+		public int InlineInto(Block block, int pos, bool aggressive)
 		{
-			if (pos >= body.Count)
+			if (pos >= block.Instructions.Count)
 				return 0;
 			int count = 0;
 			while (--pos >= 0) {
-				ILExpression expr = body[pos] as ILExpression;
-				if (expr == null || expr.Code != ILCode.Stloc)
-					break;
-				if (InlineOneIfPossible(body, pos, aggressive))
+				if (InlineOneIfPossible(block, pos, aggressive))
 					count++;
 				else
 					break;
@@ -171,10 +78,10 @@ namespace ICSharpCode.Decompiler.ILAst
 		/// <remarks>
 		/// After the operation, pos will point to the new combined instruction.
 		/// </remarks>
-		public bool InlineIfPossible(List<ILNode> body, ref int pos)
+		public bool InlineIfPossible(Block block, ref int pos)
 		{
-			if (InlineOneIfPossible(body, pos, true)) {
-				pos -= InlineInto(body, pos, false);
+			if (InlineOneIfPossible(block, pos, true)) {
+				pos -= InlineInto(block, pos, false);
 				return true;
 			}
 			return false;
@@ -183,29 +90,30 @@ namespace ICSharpCode.Decompiler.ILAst
 		/// <summary>
 		/// Inlines the stloc instruction at block.Body[pos] into the next instruction, if possible.
 		/// </summary>
-		public bool InlineOneIfPossible(List<ILNode> body, int pos, bool aggressive)
+		public bool InlineOneIfPossible(Block block, int pos, bool aggressive)
 		{
-			ILVariable v;
-			ILExpression inlinedExpression;
-			if (body[pos].Match(ILCode.Stloc, out v, out inlinedExpression) && !v.IsPinned) {
-				if (InlineIfPossible(v, inlinedExpression, body.ElementAtOrDefault(pos+1), aggressive)) {
+			StLoc stloc = block.Instructions[pos] as StLoc;
+			if (stloc != null && stloc.Variable.Kind != VariableKind.PinnedLocal) {
+				ILVariable v = stloc.Variable;
+				if (InlineIfPossible(v, stloc.Value, block.Instructions.ElementAtOrDefault(pos+1), aggressive)) {
 					// Assign the ranges of the stloc instruction:
-					inlinedExpression.ILRanges.AddRange(((ILExpression)body[pos]).ILRanges);
+					stloc.Value.AddILRange(stloc.ILRange);
 					// Remove the stloc instruction:
-					body.RemoveAt(pos);
+					Debug.Assert(block.Instructions[pos] == stloc);
+					block.Instructions.RemoveAt(pos);
 					return true;
-				} else if (numLdloc.GetOrDefault(v) == 0 && numLdloca.GetOrDefault(v) == 0) {
+				} else if (v.LoadCount == 0 && v.AddressCount == 0) {
 					// The variable is never loaded
-					if (inlinedExpression.HasNoSideEffects()) {
-						// Remove completely
-						AnalyzeNode(body[pos], -1);
-						body.RemoveAt(pos);
+					if (SemanticHelper.IsPure(stloc.Value.Flags)) {
+						// Remove completely if the instruction has no effects
+						// (except for reading locals)
+						block.Instructions.RemoveAt(pos);
 						return true;
-					} else if (inlinedExpression.CanBeExpressionStatement() && v.IsGenerated) {
+					} else if (v.Kind == VariableKind.StackSlot) {
 						// Assign the ranges of the stloc instruction:
-						inlinedExpression.ILRanges.AddRange(((ILExpression)body[pos]).ILRanges);
+						stloc.Value.AddILRange(stloc.ILRange);
 						// Remove the stloc, but keep the inner expression
-						body[pos] = inlinedExpression;
+						stloc.ReplaceWith(stloc.Value);
 						return true;
 					}
 				}
@@ -216,46 +124,40 @@ namespace ICSharpCode.Decompiler.ILAst
 		/// <summary>
 		/// Inlines 'expr' into 'next', if possible.
 		/// </summary>
-		bool InlineIfPossible(ILVariable v, ILExpression inlinedExpression, ILNode next, bool aggressive)
+		bool InlineIfPossible(ILVariable v, ILInstruction inlinedExpression, ILInstruction next, bool aggressive)
 		{
 			// ensure the variable is accessed only a single time
-			if (numStloc.GetOrDefault(v) != 1)
+			if (v.StoreCount != 1)
 				return false;
-			int ldloc = numLdloc.GetOrDefault(v);
-			if (ldloc > 1 || ldloc + numLdloca.GetOrDefault(v) != 1)
+			if (v.LoadCount > 1 || v.LoadCount + v.AddressCount != 1)
 				return false;
 			
-			if (next is ILCondition)
-				next = ((ILCondition)next).Condition;
-			else if (next is ILWhileLoop)
-				next = ((ILWhileLoop)next).Condition;
-			
-			ILExpression parent;
-			int pos;
-			if (FindLoadInNext(next as ILExpression, v, inlinedExpression, out parent, out pos) == true) {
-				if (ldloc == 0) {
-					if (!IsGeneratedValueTypeTemporary((ILExpression)next, parent, pos, v, inlinedExpression))
-						return false;
+			ILInstruction loadInst;
+			if (FindLoadInNext(next, v, inlinedExpression, out loadInst) == true) {
+				if (loadInst.OpCode == OpCode.LdLoca) {
+					//if (!IsGeneratedValueTypeTemporary((ILInstruction)next, loadInst, v, inlinedExpression))
+					return false;
 				} else {
-					if (!aggressive && !v.IsGenerated && !NonAggressiveInlineInto((ILExpression)next, parent, inlinedExpression))
+					Debug.Assert(loadInst.OpCode == OpCode.LdLoc);
+					if (!aggressive && v.Kind != VariableKind.StackSlot && !NonAggressiveInlineInto(next, loadInst, inlinedExpression))
 						return false;
 				}
 				
 				// Assign the ranges of the ldloc instruction:
-				inlinedExpression.ILRanges.AddRange(parent.Arguments[pos].ILRanges);
+				inlinedExpression.AddILRange(loadInst.ILRange);
 				
-				if (ldloc == 0) {
-					// it was an ldloca instruction, so we need to use the pseudo-opcode 'addressof' so that the types
-					// comes out correctly
-					parent.Arguments[pos] = new ILExpression(ILCode.AddressOf, null, inlinedExpression);
+				if (loadInst.OpCode == OpCode.LdLoca) {
+					// it was an ldloca instruction, so we need to use the pseudo-opcode 'addressof'
+					// to preserve the semantics of the compiler-generated temporary
+					loadInst.ReplaceWith(new AddressOf(inlinedExpression));
 				} else {
-					parent.Arguments[pos] = inlinedExpression;
+					loadInst.ReplaceWith(inlinedExpression);
 				}
 				return true;
 			}
 			return false;
 		}
-
+		/*
 		/// <summary>
 		/// Is this a temporary variable generated by the C# compiler for instance method calls on value type values
 		/// </summary>
@@ -264,7 +166,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		/// <param name="pos">Index of the load within 'parent'</param>
 		/// <param name="v">The variable being inlined.</param>
 		/// <param name="inlinedExpression">The expression being inlined</param>
-		bool IsGeneratedValueTypeTemporary(ILExpression next, ILExpression parent, int pos, ILVariable v, ILExpression inlinedExpression)
+		bool IsGeneratedValueTypeTemporary(ILInstruction next, ILInstruction parent, int pos, ILVariable v, ILInstruction inlinedExpression)
 		{
 			if (pos == 0 && v.Type != null && v.Type.IsValueType) {
 				// Inlining a value type variable is allowed only if the resulting code will maintain the semantics
@@ -317,7 +219,7 @@ namespace ICSharpCode.Decompiler.ILAst
 					case ILCode.Castclass:
 					case ILCode.Unbox_Any:
 						// These are valid, but might occur as part of a foreach loop variable.
-						ILExpression arg = inlinedExpression.Arguments[0];
+						ILInstruction arg = inlinedExpression.Arguments[0];
 						if (arg.Code == ILCode.CallGetter || arg.Code == ILCode.CallvirtGetter || arg.Code == ILCode.Call || arg.Code == ILCode.Callvirt) {
 							mr = (MethodReference)arg.Operand;
 							if (mr.Name == "get_Current" && mr.HasThis)
@@ -345,24 +247,28 @@ namespace ICSharpCode.Decompiler.ILAst
 			}
 			return false;
 		}
+		*/
 		
 		/// <summary>
 		/// Determines whether a variable should be inlined in non-aggressive mode, even though it is not a generated variable.
 		/// </summary>
 		/// <param name="next">The next top-level expression</param>
-		/// <param name="parent">The direct parent of the load within 'next'</param>
+		/// <param name="loadInst">The load within 'next'</param>
 		/// <param name="inlinedExpression">The expression being inlined</param>
-		bool NonAggressiveInlineInto(ILExpression next, ILExpression parent, ILExpression inlinedExpression)
+		bool NonAggressiveInlineInto(ILInstruction next, ILInstruction loadInst, ILInstruction inlinedExpression)
 		{
-			if (inlinedExpression.Code == ILCode.DefaultValue)
+			Debug.Assert(loadInst.IsDescendantOf(next));
+			
+			if (inlinedExpression.OpCode == OpCode.DefaultValue)
 				return true;
 			
-			switch (next.Code) {
-				case ILCode.Ret:
-				case ILCode.Brtrue:
+			var parent = loadInst.Parent;
+			switch (next.OpCode) {
+				case OpCode.Return:
+				case OpCode.IfInstruction:
 					return parent == next;
-				case ILCode.Switch:
-					return parent == next || (parent.Code == ILCode.Sub && parent == next.Arguments[0]);
+				case OpCode.SwitchInstruction:
+					return parent == next || (parent.OpCode == OpCode.Sub && parent.Parent == next);
 				default:
 					return false;
 			}
@@ -371,37 +277,32 @@ namespace ICSharpCode.Decompiler.ILAst
 		/// <summary>
 		/// Gets whether 'expressionBeingMoved' can be inlined into 'expr'.
 		/// </summary>
-		public bool CanInlineInto(ILExpression expr, ILVariable v, ILExpression expressionBeingMoved)
+		public bool CanInlineInto(ILInstruction expr, ILVariable v, ILInstruction expressionBeingMoved)
 		{
-			ILExpression parent;
-			int pos;
-			return FindLoadInNext(expr, v, expressionBeingMoved, out parent, out pos) == true;
+			ILInstruction loadInst;
+			return FindLoadInNext(expr, v, expressionBeingMoved, out loadInst) == true;
 		}
 		
 		/// <summary>
 		/// Finds the position to inline to.
 		/// </summary>
 		/// <returns>true = found; false = cannot continue search; null = not found</returns>
-		bool? FindLoadInNext(ILExpression expr, ILVariable v, ILExpression expressionBeingMoved, out ILExpression parent, out int pos)
+		bool? FindLoadInNext(ILInstruction expr, ILVariable v, ILInstruction expressionBeingMoved, out ILInstruction loadInst)
 		{
-			parent = null;
-			pos = 0;
+			loadInst = null;
 			if (expr == null)
 				return false;
-			for (int i = 0; i < expr.Arguments.Count; i++) {
-				// Stop when seeing an opcode that does not guarantee that its operands will be evaluated.
-				// Inlining in that case might result in the inlined expresion not being evaluted.
-				if (i == 1 && (expr.Code == ILCode.LogicAnd || expr.Code == ILCode.LogicOr || expr.Code == ILCode.TernaryOp || expr.Code == ILCode.NullCoalescing))
+			if (expr.MatchLdLoc(v) || expr.MatchLdLoca(v)) {
+				// Match found, we can inline
+				loadInst = expr;
+				return true;
+			}
+			foreach (var child in expr.Children) {
+				if (!child.SlotInfo.CanInlineInto)
 					return false;
 				
-				ILExpression arg = expr.Arguments[i];
-				
-				if ((arg.Code == ILCode.Ldloc || arg.Code == ILCode.Ldloca) && arg.Operand == v) {
-					parent = expr;
-					pos = i;
-					return true;
-				}
-				bool? r = FindLoadInNext(arg, v, expressionBeingMoved, out parent, out pos);
+				// Recursively try to find the load instruction
+				bool? r = FindLoadInNext(child, v, expressionBeingMoved, out loadInst);
 				if (r != null)
 					return r;
 			}
@@ -414,40 +315,25 @@ namespace ICSharpCode.Decompiler.ILAst
 		/// <summary>
 		/// Determines whether it is safe to move 'expressionBeingMoved' past 'expr'
 		/// </summary>
-		bool IsSafeForInlineOver(ILExpression expr, ILExpression expressionBeingMoved)
+		bool IsSafeForInlineOver(ILInstruction expr, ILInstruction expressionBeingMoved)
 		{
-			switch (expr.Code) {
-				case ILCode.Ldloc:
-					ILVariable loadedVar = (ILVariable)expr.Operand;
-					if (numLdloca.GetOrDefault(loadedVar) != 0) {
-						// abort, inlining is not possible
-						return false;
-					}
-					foreach (ILExpression potentialStore in expressionBeingMoved.GetSelfAndChildrenRecursive<ILExpression>()) {
-						if (potentialStore.Code == ILCode.Stloc && potentialStore.Operand == loadedVar)
+			ILVariable v;
+			if (expr.MatchLdLoc(out v) && v.AddressCount == 0) {
+				// MayReorder() only looks at flags, so it doesn't
+				// allow reordering 'stloc x y; ldloc v' to 'ldloc v; stloc x y'
+				
+				// We'll allow the reordering unless x==v
+				if (expressionBeingMoved.HasFlag(InstructionFlags.MayWriteLocals)) {
+					foreach (var stloc in expressionBeingMoved.Descendants.OfType<StLoc>()) {
+						if (stloc.Variable == v)
 							return false;
 					}
-					// the expression is loading a non-forbidden variable
-					return true;
-				case ILCode.Ldloca:
-				case ILCode.Ldflda:
-				case ILCode.Ldsflda:
-				case ILCode.Ldelema:
-				case ILCode.AddressOf:
-				case ILCode.ValueOf:
-				case ILCode.NullableOf:
-					// address-loading instructions are safe if their arguments are safe
-					foreach (ILExpression arg in expr.Arguments) {
-						if (!IsSafeForInlineOver(arg, expressionBeingMoved))
-							return false;
-					}
-					return true;
-				default:
-					// instructions with no side-effects are safe (except for Ldloc and Ldloca which are handled separately)
-					return expr.HasNoSideEffects();
+				}
+				return true;
 			}
+			return SemanticHelper.MayReorder(expressionBeingMoved.Flags, expr.Flags);
 		}
-		
+		/*
 		/// <summary>
 		/// Runs a very simple form of copy propagation.
 		/// Copy propagation is used in two cases:
@@ -461,7 +347,7 @@ namespace ICSharpCode.Decompiler.ILAst
 			foreach (ILBlock block in method.GetSelfAndChildrenRecursive<ILBlock>()) {
 				for (int i = 0; i < block.Body.Count; i++) {
 					ILVariable v;
-					ILExpression copiedExpr;
+					ILInstruction copiedExpr;
 					if (block.Body[i].Match(ILCode.Stloc, out v, out copiedExpr)
 					    && !v.IsParameter && numStloc.GetOrDefault(v) == 1 && numLdloca.GetOrDefault(v) == 0
 					    && CanPerformCopyPropagation(copiedExpr, v))
@@ -470,16 +356,16 @@ namespace ICSharpCode.Decompiler.ILAst
 						ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Arguments.Count];
 						for (int j = 0; j < uninlinedArgs.Length; j++) {
 							uninlinedArgs[j] = new ILVariable { IsGenerated = true, Name = v.Name + "_cp_" + j };
-							block.Body.Insert(i++, new ILExpression(ILCode.Stloc, uninlinedArgs[j], copiedExpr.Arguments[j]));
+							block.Body.Insert(i++, new ILInstruction(ILCode.Stloc, uninlinedArgs[j], copiedExpr.Arguments[j]));
 						}
 						
 						// perform copy propagation:
-						foreach (var expr in method.GetSelfAndChildrenRecursive<ILExpression>()) {
+						foreach (var expr in method.GetSelfAndChildrenRecursive<ILInstruction>()) {
 							if (expr.Code == ILCode.Ldloc && expr.Operand == v) {
 								expr.Code = copiedExpr.Code;
 								expr.Operand = copiedExpr.Operand;
 								for (int j = 0; j < uninlinedArgs.Length; j++) {
-									expr.Arguments.Add(new ILExpression(ILCode.Ldloc, uninlinedArgs[j]));
+									expr.Arguments.Add(new ILInstruction(ILCode.Ldloc, uninlinedArgs[j]));
 								}
 							}
 						}
@@ -496,7 +382,7 @@ namespace ICSharpCode.Decompiler.ILAst
 			}
 		}
 		
-		bool CanPerformCopyPropagation(ILExpression expr, ILVariable copyVariable)
+		bool CanPerformCopyPropagation(ILInstruction expr, ILVariable copyVariable)
 		{
 			switch (expr.Code) {
 				case ILCode.Ldloca:
@@ -519,6 +405,6 @@ namespace ICSharpCode.Decompiler.ILAst
 				default:
 					return false;
 			}
-		}
+		}*/
 	}
 }

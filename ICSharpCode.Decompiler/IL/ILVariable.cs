@@ -29,6 +29,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		Local,
 		/// <summary>
+		/// A pinned local variable
+		/// </summary>
+		PinnedLocal,
+		/// <summary>
 		/// A parameter.
 		/// </summary>
 		Parameter,
@@ -96,13 +100,11 @@ namespace ICSharpCode.Decompiler.IL
 			this.Index = index;
 		}
 		
-		public ILVariable(VariableKind kind, StackType type, int index)
+		public ILVariable(VariableKind kind, IType type, StackType stackType, int index)
 		{
-			if (type == null)
-				throw new ArgumentNullException("type");
 			this.Kind = kind;
-			this.Type = SpecialType.UnknownType;
-			this.StackType = type;
+			this.Type = type;
+			this.StackType = stackType;
 			this.Index = index;
 		}
 		
@@ -115,6 +117,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.WriteDefinition(this.Name, this, isLocal: true);
 			output.Write(" : ");
+			if (Kind == VariableKind.PinnedLocal)
+				output.Write("pinned ");
 			Type.WriteTo(output);
 			output.Write("({0} ldloc, {1} ldloca, {2} stloc)", LoadCount, AddressCount, StoreCount);
 		}

@@ -26,6 +26,9 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class SwitchInstruction
 	{
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo SectionSlot = new SlotInfo("Section", isCollection: true);
+		
 		public SwitchInstruction(ILInstruction value)
 			: base(OpCode.SwitchInstruction)
 		{
@@ -43,12 +46,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		public readonly InstructionCollection<SwitchSection> Sections;
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			Value = value.Inline(flagsBefore, context);
-			return this;
-		}
 		
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -93,6 +90,13 @@ namespace ICSharpCode.Decompiler.IL
 				Sections[index - 1] = (SwitchSection)value;
 		}
 		
+		protected override SlotInfo GetChildSlot(int index)
+		{
+			if (index == 0)
+				return ValueSlot;
+			return SectionSlot;
+		}
+		
 		public override ILInstruction Clone()
 		{
 			var clone = new SwitchInstruction(value.Clone());
@@ -112,14 +116,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		public LongSet Labels { get; set; }
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			// Inlining into switch sections would be madness.
-			// To keep phase-1 execution semantics consistent with inlining, there's a
-			// phase-1-boundary around every switch section.
-			return this;
-		}
 		
 		protected override InstructionFlags ComputeFlags()
 		{

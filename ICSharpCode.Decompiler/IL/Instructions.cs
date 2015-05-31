@@ -102,6 +102,8 @@ namespace ICSharpCode.Decompiler.IL
 		LdLoca,
 		/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
 		StLoc,
+		/// <summary>Stores the value into an anonymous temporary variable, and returns the address of that variable.</summary>
+		AddressOf,
 		/// <summary>Loads a constant string.</summary>
 		LdStr,
 		/// <summary>Loads a constant 32-bit integer.</summary>
@@ -172,6 +174,44 @@ namespace ICSharpCode.Decompiler.IL
 		LdElema,
 	}
 
+	/// <summary>Instruction without any arguments</summary>
+	public abstract partial class SimpleInstruction : ILInstruction
+	{
+		protected SimpleInstruction(OpCode opCode) : base(opCode)
+		{
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 0;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (SimpleInstruction)ShallowClone();
+			return clone;
+		}
+	}
+
 	/// <summary>Instruction with a single argument</summary>
 	public abstract partial class UnaryInstruction : ILInstruction
 	{
@@ -179,11 +219,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Argument = argument;
 		}
+		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
 		ILInstruction argument;
 		public ILInstruction Argument {
 			get { return this.argument; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.argument, value, 0);
 			}
 		}
@@ -210,16 +251,20 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ArgumentSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (UnaryInstruction)ShallowClone();
 			clone.Argument = this.argument.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Argument = this.argument.Inline(flagsBefore, context);
-			return this;
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -242,19 +287,21 @@ namespace ICSharpCode.Decompiler.IL
 			this.Left = left;
 			this.Right = right;
 		}
+		public static readonly SlotInfo LeftSlot = new SlotInfo("Left", canInlineInto: true);
 		ILInstruction left;
 		public ILInstruction Left {
 			get { return this.left; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.left, value, 0);
 			}
 		}
+		public static readonly SlotInfo RightSlot = new SlotInfo("Right", canInlineInto: true);
 		ILInstruction right;
 		public ILInstruction Right {
 			get { return this.right; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.right, value, 1);
 			}
 		}
@@ -286,18 +333,23 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return LeftSlot;
+				case 1:
+					return RightSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (BinaryInstruction)ShallowClone();
 			clone.Left = this.left.Clone();
 			clone.Right = this.right.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Right = this.right.Inline(flagsBefore | ((this.left.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
-			this.Left = this.left.Inline(flagsBefore, context);
-			return this;
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -334,6 +386,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>A container of IL blocks.</summary>
 	public sealed partial class ILFunction : ILInstruction
 	{
+		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body;
 		public ILInstruction Body {
 			get { return this.body; }
@@ -361,6 +414,15 @@ namespace ICSharpCode.Decompiler.IL
 				case 0:
 					this.Body = value;
 					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return BodySlot;
 				default:
 					throw new IndexOutOfRangeException();
 			}
@@ -636,14 +698,16 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 	public sealed partial class IfInstruction : ILInstruction
 	{
+		public static readonly SlotInfo ConditionSlot = new SlotInfo("Condition", canInlineInto: true);
 		ILInstruction condition;
 		public ILInstruction Condition {
 			get { return this.condition; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.condition, value, 0);
 			}
 		}
+		public static readonly SlotInfo TrueInstSlot = new SlotInfo("TrueInst");
 		ILInstruction trueInst;
 		public ILInstruction TrueInst {
 			get { return this.trueInst; }
@@ -652,6 +716,7 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.trueInst, value, 1);
 			}
 		}
+		public static readonly SlotInfo FalseInstSlot = new SlotInfo("FalseInst");
 		ILInstruction falseInst;
 		public ILInstruction FalseInst {
 			get { return this.falseInst; }
@@ -693,6 +758,19 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ConditionSlot;
+				case 1:
+					return TrueInstSlot;
+				case 2:
+					return FalseInstSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (IfInstruction)ShallowClone();
@@ -728,6 +806,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Switch section within a switch statement</summary>
 	public sealed partial class SwitchSection : ILInstruction
 	{
+		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body;
 		public ILInstruction Body {
 			get { return this.body; }
@@ -755,6 +834,15 @@ namespace ICSharpCode.Decompiler.IL
 				case 0:
 					this.Body = value;
 					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return BodySlot;
 				default:
 					throw new IndexOutOfRangeException();
 			}
@@ -800,14 +888,16 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(variable != null);
 			this.variable = variable;
 		}
+		public static readonly SlotInfo FilterSlot = new SlotInfo("Filter");
 		ILInstruction filter;
 		public ILInstruction Filter {
 			get { return this.filter; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.filter, value, 0);
 			}
 		}
+		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body;
 		public ILInstruction Body {
 			get { return this.body; }
@@ -840,6 +930,17 @@ namespace ICSharpCode.Decompiler.IL
 				case 1:
 					this.Body = value;
 					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return FilterSlot;
+				case 1:
+					return BodySlot;
 				default:
 					throw new IndexOutOfRangeException();
 			}
@@ -1135,11 +1236,12 @@ namespace ICSharpCode.Decompiler.IL
 		readonly ILVariable variable;
 		/// <summary>Returns the variable operand.</summary>
 		public ILVariable Variable { get { return variable; } }
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value;
 		public ILInstruction Value {
 			get { return this.value; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.value, value, 0);
 			}
 		}
@@ -1166,16 +1268,20 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (StLoc)ShallowClone();
 			clone.Value = this.value.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Value = this.value.Inline(flagsBefore, context);
-			return this;
 		}
 		public override StackType ResultType { get { return variable.StackType; } }
 		protected override InstructionFlags ComputeFlags()
@@ -1198,6 +1304,82 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitStLoc(this);
+		}
+	}
+
+	/// <summary>Stores the value into an anonymous temporary variable, and returns the address of that variable.</summary>
+	public sealed partial class AddressOf : ILInstruction
+	{
+		public AddressOf(ILInstruction value) : base(OpCode.AddressOf)
+		{
+			this.Value = value;
+		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.value, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (AddressOf)ShallowClone();
+			clone.Value = this.value.Clone();
+			return clone;
+		}
+		public override StackType ResultType { get { return StackType.Ref; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return value.Flags;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			this.value.WriteTo(output);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitAddressOf(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitAddressOf(this);
 		}
 	}
 
@@ -1510,11 +1692,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = target;
 			this.field = field;
 		}
+		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target;
 		public ILInstruction Target {
 			get { return this.target; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
@@ -1541,16 +1724,20 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TargetSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (LdFld)ShallowClone();
 			clone.Target = this.target.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Target = this.target.Inline(flagsBefore, context);
-			return this;
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
@@ -1595,11 +1782,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = target;
 			this.field = field;
 		}
+		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target;
 		public ILInstruction Target {
 			get { return this.target; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
@@ -1626,16 +1814,20 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TargetSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (LdFlda)ShallowClone();
 			clone.Target = this.target.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Target = this.target.Inline(flagsBefore, context);
-			return this;
 		}
 		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
@@ -1673,19 +1865,21 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 			this.field = field;
 		}
+		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target;
 		public ILInstruction Target {
 			get { return this.target; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value;
 		public ILInstruction Value {
 			get { return this.value; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.value, value, 1);
 			}
 		}
@@ -1717,18 +1911,23 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TargetSlot;
+				case 1:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (StFld)ShallowClone();
 			clone.Target = this.target.Clone();
 			clone.Value = this.value.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
-			this.Target = this.target.Inline(flagsBefore, context);
-			return this;
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
@@ -1841,11 +2040,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 			this.field = field;
 		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value;
 		public ILInstruction Value {
 			get { return this.value; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.value, value, 0);
 			}
 		}
@@ -1872,16 +2072,20 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (StsFld)ShallowClone();
 			clone.Value = this.value.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Value = this.value.Inline(flagsBefore, context);
-			return this;
 		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
@@ -1990,11 +2194,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = target;
 			this.type = type;
 		}
+		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target;
 		public ILInstruction Target {
 			get { return this.target; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
@@ -2021,16 +2226,20 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TargetSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (LdObj)ShallowClone();
 			clone.Target = this.target.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Target = this.target.Inline(flagsBefore, context);
-			return this;
 		}
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
@@ -2076,19 +2285,21 @@ namespace ICSharpCode.Decompiler.IL
 			this.Value = value;
 			this.type = type;
 		}
+		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
 		ILInstruction target;
 		public ILInstruction Target {
 			get { return this.target; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.target, value, 0);
 			}
 		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value;
 		public ILInstruction Value {
 			get { return this.value; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.value, value, 1);
 			}
 		}
@@ -2120,18 +2331,23 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TargetSlot;
+				case 1:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (StObj)ShallowClone();
 			clone.Target = this.target.Clone();
 			clone.Value = this.value.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Value = this.value.Inline(flagsBefore | ((this.target.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
-			this.Target = this.target.Inline(flagsBefore, context);
-			return this;
 		}
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
@@ -2300,11 +2516,12 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
 		public IType Type { get { return type; } }
+		public static readonly SlotInfo SizeSlot = new SlotInfo("Size", canInlineInto: true);
 		ILInstruction size;
 		public ILInstruction Size {
 			get { return this.size; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.size, value, 0);
 			}
 		}
@@ -2331,16 +2548,20 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return SizeSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (NewArr)ShallowClone();
 			clone.Size = this.size.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Size = this.size.Inline(flagsBefore, context);
-			return this;
 		}
 		public override StackType ResultType { get { return StackType.O; } }
 		protected override InstructionFlags ComputeFlags()
@@ -2469,11 +2690,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.Array = array;
 		}
+		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
 		ILInstruction array;
 		public ILInstruction Array {
 			get { return this.array; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.array, value, 0);
 			}
 		}
@@ -2500,16 +2722,20 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ArraySlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (LdLen)ShallowClone();
 			clone.Array = this.array.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Array = this.array.Inline(flagsBefore, context);
-			return this;
 		}
 		public override StackType ResultType { get { return StackType.I; } }
 		protected override InstructionFlags ComputeFlags()
@@ -2542,19 +2768,21 @@ namespace ICSharpCode.Decompiler.IL
 			this.Index = index;
 			this.type = type;
 		}
+		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
 		ILInstruction array;
 		public ILInstruction Array {
 			get { return this.array; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.array, value, 0);
 			}
 		}
+		public static readonly SlotInfo IndexSlot = new SlotInfo("Index", canInlineInto: true);
 		ILInstruction index;
 		public ILInstruction Index {
 			get { return this.index; }
 			set {
-				ValidateArgument(value);
+				ValidateChild(value);
 				SetChildInstruction(ref this.index, value, 1);
 			}
 		}
@@ -2586,18 +2814,23 @@ namespace ICSharpCode.Decompiler.IL
 					throw new IndexOutOfRangeException();
 			}
 		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ArraySlot;
+				case 1:
+					return IndexSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (LdElema)ShallowClone();
 			clone.Array = this.array.Clone();
 			clone.Index = this.index.Clone();
 			return clone;
-		}
-		internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Index = this.index.Inline(flagsBefore | ((this.array.Flags) & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop)), context);
-			this.Array = this.array.Inline(flagsBefore, context);
-			return this;
 		}
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
@@ -2786,6 +3019,10 @@ namespace ICSharpCode.Decompiler.IL
 			Default(inst);
 		}
 		protected internal virtual void VisitStLoc(StLoc inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitAddressOf(AddressOf inst)
 		{
 			Default(inst);
 		}
@@ -3083,6 +3320,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitAddressOf(AddressOf inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitLdStr(LdStr inst)
 		{
 			return Default(inst);
@@ -3313,6 +3554,7 @@ namespace ICSharpCode.Decompiler.IL
 			"ldloc",
 			"ldloca",
 			"stloc",
+			"addressof",
 			"ldstr",
 			"ldc.i4",
 			"ldc.i8",
@@ -3605,6 +3847,16 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			variable = default(ILVariable);
+			value = default(ILInstruction);
+			return false;
+		}
+		public bool MatchAddressOf(out ILInstruction value)
+		{
+			var inst = this as AddressOf;
+			if (inst != null) {
+				value = inst.Value;
+				return true;
+			}
 			value = default(ILInstruction);
 			return false;
 		}

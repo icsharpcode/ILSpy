@@ -25,22 +25,26 @@ namespace ICSharpCode.Decompiler.IL
 		// TODO: consider moving IfInstruction.CombineFlags and Block.Phase1Boundary here
 		
 		/// <summary>
+		/// Gets whether instruction is pure:
+		/// * must not have side effects
+		/// * must not throw exceptions
+		/// * must not branch
+		/// </summary>
+		internal static bool IsPure(InstructionFlags inst)
+		{
+			const InstructionFlags pureFlags = InstructionFlags.MayReadLocals;
+			return (inst & ~pureFlags) == 0;
+		}
+		
+		/// <summary>
 		/// Gets whether the instruction sequence 'inst1; inst2;' may be ordered to 'inst2; inst1;'
 		/// </summary>
 		internal static bool MayReorder(InstructionFlags inst1, InstructionFlags inst2)
 		{
 			// If both instructions perform an impure action, we cannot reorder them
-			const InstructionFlags pureFlags =
-				InstructionFlags.MayPeek
-				| InstructionFlags.MayReadEvaluationStack
-				| InstructionFlags.MayReadLocals;
-			if ((inst1 & inst2 & ~pureFlags) != 0)
+			if (!IsPure(inst1) && !IsPure(inst2))
 				return false;
-			// We cannot reorder if inst2 might pop what inst1 peeks at
-			if (ConflictingPair(inst1, inst2, InstructionFlags.MayPeek, InstructionFlags.MayPop))
-				return false;
-			if (ConflictingPair(inst1, inst2, InstructionFlags.MayReadEvaluationStack, InstructionFlags.MayWriteEvaluationStack))
-				return false;
+			// We cannot reorder if inst2 might write what inst1 looks at
 			if (ConflictingPair(inst1, inst2, InstructionFlags.MayReadLocals, InstructionFlags.MayWriteLocals | InstructionFlags.SideEffect))
 				return false;
 			return true;

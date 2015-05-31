@@ -33,10 +33,27 @@ namespace ICSharpCode.Decompiler.IL
 			return inst != null && inst.Variable == variable;
 		}
 		
+		public bool MatchLdLoca(ILVariable variable)
+		{
+			var inst = this as LdLoca;
+			return inst != null && inst.Variable == variable;
+		}
+		
 		public bool MatchLdThis()
 		{
 			var inst = this as LdLoc;
 			return inst != null && inst.Variable.Kind == VariableKind.This;
+		}
+		
+		public bool MatchStLoc(out ILVariable variable)
+		{
+			var inst = this as StLoc;
+			if (inst != null) {
+				variable = inst.Variable;
+				return true;
+			}
+			variable = null;
+			return false;
 		}
 		
 		public bool MatchStLoc(ILVariable variable, out ILInstruction value)
@@ -46,19 +63,6 @@ namespace ICSharpCode.Decompiler.IL
 				value = inst.Value;
 				return true;
 			}
-			value = null;
-			return false;
-		}
-		
-		public bool MatchStLoc(out ILVariable variable, out ILInstruction value)
-		{
-			var inst = this as StLoc;
-			if (inst != null) {
-				variable = inst.Variable;
-				value = inst.Value;
-				return true;
-			}
-			variable = null;
 			value = null;
 			return false;
 		}

@@ -24,6 +24,8 @@
 <#@ output extension=".cs" #>
 <#
 	OpCode[] baseClasses = {
+		new OpCode("SimpleInstruction", "Instruction without any arguments",
+			AbstractBaseClass, CustomArguments(), CustomWriteTo),
 		new OpCode("UnaryInstruction", "Instruction with a single argument",
 			AbstractBaseClass, CustomArguments("argument")),
 		new OpCode("BinaryInstruction", "Instruction with two arguments: Left and Right",
@@ -60,7 +62,7 @@
 		new OpCode("if", "If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c>",
 			CustomClassName("IfInstruction"),
 			CustomChildren(new []{
-				new ChildInfo("condition") { IsArgument = true },
+				new ArgumentInfo("condition"),
 				new ChildInfo("trueInst"),
 				new ChildInfo("falseInst"),
 			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
@@ -73,7 +75,7 @@
 			BaseClass("TryInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo),
 		new OpCode("try.catch.handler", "Catch handler within a try-catch statement.",
 			CustomChildren(new [] {
-				new ChildInfo("filter") { IsArgument = true },
+				new ChildInfo("filter"),
 				new ChildInfo("body"),
 			}), HasVariableOperand, CustomWriteTo, CustomComputeFlags),
 		new OpCode("try.finally", "Try-finally statement",
@@ -106,6 +108,9 @@
 		new OpCode("stloc", "Stores a value into a local variable. (starg/stloc)",
 			CustomClassName("StLoc"), HasVariableOperand, CustomArguments("value"),
 			ResultType("variable.StackType")),
+		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
+			CustomClassName("AddressOf"), CustomArguments("value"), ResultType("Ref")),
+		
 		new OpCode("ldstr", "Loads a constant string.",
 			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),
 		new OpCode("ldc.i4", "Loads a constant 32-bit integer.",
@@ -557,19 +562,40 @@ namespace ICSharpCode.Decompiler.IL
 
 	static Action<OpCode> CustomArguments(params string[] arguments)
 	{
-		return CustomChildren(arguments.Select(arg => new ChildInfo(arg) { IsArgument = true}).ToArray(), generateInline: true);
+		return CustomChildren(arguments.Select(arg => new ArgumentInfo(arg)).ToArray(), generateInline: true);
 	}
 	
 	class ChildInfo
 	{
 		public readonly string PropertyName;
 		public readonly string Name;
-		public bool IsArgument;
+		public readonly string SlotName;
+		
+		public bool CanInlineInto;
 		
 		public ChildInfo(string name)
 		{
 			this.Name = name;
 			this.PropertyName = MakeName(name);
+			this.SlotName = this.PropertyName + "Slot";
+		}
+		
+		public string GetSlotInit()
+		{
+			StringBuilder b = new StringBuilder();
+			b.Append("new SlotInfo(\"" + PropertyName + "\"");
+			if (CanInlineInto)
+				b.Append(", canInlineInto: true");
+			b.Append(")");
+			return b.ToString();
+		}
+	}
+	
+	class ArgumentInfo : ChildInfo
+	{
+		public ArgumentInfo(string name) : base(name)
+		{
+			this.CanInlineInto = true;
 		}
 	}
 	
@@ -589,11 +615,12 @@ namespace ICSharpCode.Decompiler.IL
 				if (i > 0)
 					opCode.WriteArguments.Add("output.Write(\", \");");
 				opCode.WriteArguments.Add("this." + arg + ".WriteTo(output);");
+				opCode.Members.Add("public static readonly SlotInfo " + children[i].SlotName + " = " + children[i].GetSlotInit() + ";");
 				opCode.Members.Add("ILInstruction " + arg + ";");
 				opCode.Members.Add("public ILInstruction " + argProp + " {" + Environment.NewLine
 					+ "\tget { return this." + arg + "; }" + Environment.NewLine
 					+ "\tset {" + Environment.NewLine
-					+ "\t\t" + (children[i].IsArgument ? "ValidateArgument" : "ValidateChild") + "(value);" + Environment.NewLine
+					+ "\t\tValidateChild(value);" + Environment.NewLine
 					+ "\t\tSetChildInstruction(ref this." + arg + ", value, " + i + ");" + Environment.NewLine
 					+ "\t}" + Environment.NewLine
 					+ "}");
@@ -637,6 +664,20 @@ namespace ICSharpCode.Decompiler.IL
 			opCode.Members.Add(b.ToString());
 			
 			b = new StringBuilder();
+			b.AppendLine("protected sealed override SlotInfo GetChildSlot(int index)");
+			b.AppendLine("{");
+			b.AppendLine("\tswitch (index) {");
+			for (int i = 0; i < children.Length; i++) {
+				b.AppendLine("\t\tcase " + i + ":");
+				b.AppendLine("\t\t\treturn " + children[i].SlotName + ";");
+			}
+			b.AppendLine("\t\tdefault:");
+			b.AppendLine("\t\t\tthrow new IndexOutOfRangeException();");
+			b.AppendLine("\t}");
+			b.Append("}");
+			opCode.Members.Add(b.ToString());
+			
+			b = new StringBuilder();
 			b.AppendLine("public sealed override ILInstruction Clone()");
 			b.AppendLine("{");
 			b.AppendLine("\tvar clone = (" + opCode.Name + ")ShallowClone();");
@@ -646,25 +687,6 @@ namespace ICSharpCode.Decompiler.IL
 			b.AppendLine("\treturn clone;");
 			b.Append("}");
 			opCode.Members.Add(b.ToString());
-			
-			if (generateInline) {
-				b = new StringBuilder();
-				b.AppendLine("internal sealed override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)");
-				b.AppendLine("{");
-				for (int i = children.Length - 1; i >= 0; i--) {
-					string arg = children[i].Name;
-					b.Append("\tthis." + MakeName(arg) + " = this." + arg + ".Inline(flagsBefore");
-					if (i > 0) {
-						b.Append(" | ((");
-						b.Append(string.Join(" | ", children.Take(i).Select(child2 => "this." + child2.Name + ".Flags")));
-						b.Append(") & ~(InstructionFlags.MayPeek | InstructionFlags.MayPop))");
-					}
-					b.AppendLine(", context);");
-				}
-				b.AppendLine("\treturn this;");
-				b.Append("}");
-				opCode.Members.Add(b.ToString());
-			}
 		};
 	}
 

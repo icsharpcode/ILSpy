@@ -52,13 +52,6 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			this.Condition = condition.Inline(flagsBefore, context);
-			// note: we skip TrueInst and FalseInst because there's a phase-1-boundary around them
-			return this;
-		}
-		
 		protected override InstructionFlags ComputeFlags()
 		{
 			return condition.Flags | Block.Phase1Boundary(CombineFlags(trueInst.Flags, falseInst.Flags));

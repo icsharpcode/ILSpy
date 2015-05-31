@@ -62,11 +62,5 @@ namespace ICSharpCode.Decompiler.IL
 			// We intentionally don't propagate any flags from the lambda body!
 			return InstructionFlags.MayThrow;
 		}
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			// To the outside, lambda creation looks like a constant
-			return this;
-		}
 	}
 }

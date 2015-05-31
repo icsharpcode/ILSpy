@@ -39,15 +39,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.OpCode = opCode;
 		}
 		
-		protected void ValidateArgument(ILInstruction inst)
-		{
-			if (inst == null)
-				throw new ArgumentNullException("inst");
-			if (inst.ResultType == StackType.Void)
-				throw new ArgumentException("Argument must not be of type void", "inst");
-			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
-		}
-		
 		protected void ValidateChild(ILInstruction inst)
 		{
 			if (inst == null)
@@ -128,6 +119,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public Interval ILRange;
 
+		public void AddILRange(Interval ilRange)
+		{
+			// TODO: try to combine the two ranges
+			this.ILRange = ilRange;
+		}
+
 		/// <summary>
 		/// Writes the ILAst to the text output.
 		/// </summary>
@@ -162,6 +159,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected abstract int GetChildCount();
 		protected abstract ILInstruction GetChild(int index);
 		protected abstract void SetChild(int index, ILInstruction value);
+		protected abstract SlotInfo GetChildSlot(int index);
 		
 		#region ChildrenCollection + ChildrenEnumerator
 		public struct ChildrenCollection : IReadOnlyList<ILInstruction>
@@ -290,6 +288,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		/// <summary>
 		/// Returns all descendants of the ILInstruction in post-order.
+		/// (including the ILInstruction itself)
 		/// </summary>
 		/// <remarks>
 		/// Within a loop 'foreach (var node in inst.Descendants)', it is illegal to
@@ -324,26 +323,10 @@ namespace ICSharpCode.Decompiler.IL
 						stack.Pop().Dispose();
 					}
 				}
+				yield return this;
 			}
 		}
 		
-		/// <summary>
-		/// Attempts inlining from the inline context into this instruction.
-		/// </summary>
-		/// <param name="flagsBefore">Combined instruction flags of the instructions
-		/// that the instructions getting inlined would get moved over.</param>
-		/// <param name="context">The inline context providing the values on the evaluation stack.</param>
-		/// <returns>
-		/// Returns the modified ILInstruction after inlining is complete.
-		/// Note that inlining modifies the AST in-place, so this method usually returns <c>this</c>
-		/// (unless <c>this</c> should be replaced by another node)
-		/// </returns>
-		/// <remarks>
-		/// Inlining from an inline context representing the actual evaluation stack
-		/// is equivalent to phase-1 execution of the instruction.
-		/// </remarks>
-		internal abstract ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context);
-
 		/// <summary>
 		/// Number of parents that refer to this instruction and are connected to the root.
 		/// Usually is 0 for unconnected nodes and 1 for connected nodes, but may temporarily increase to 2
@@ -404,6 +387,16 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets the index of this node in the Parent.Children collection.
 		/// </summary>
 		public int ChildIndex { get; internal set; }
+		
+		/// <summary>
+		/// Gets information about the slot in which this instruction is stored.
+		/// (i.e., the relation of this instruction to its parent instruction)
+		/// </summary>
+		public SlotInfo SlotInfo {
+			get {
+				return parent.GetChildSlot(this.ChildIndex);
+			}
+		}
 		
 		/// <summary>
 		/// Replaces a child of this ILInstruction.

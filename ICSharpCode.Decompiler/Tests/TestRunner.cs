@@ -64,6 +64,12 @@ namespace ICSharpCode.Decompiler.Tests
 			TestCompileDecompileCompileOutputAll("Generics.cs");
 		}
 
+		[Test]
+		public void ValueTypeCall()
+		{
+			TestCompileDecompileCompileOutputAll("ValueTypeCall.cs");
+		}
+
 		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{
 			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.None);

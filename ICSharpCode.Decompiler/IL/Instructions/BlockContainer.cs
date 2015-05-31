@@ -38,6 +38,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class BlockContainer : ILInstruction
 	{
+		public readonly SlotInfo BlockSlot = new SlotInfo("Block", isCollection: true);
 		public readonly InstructionCollection<Block> Blocks;
 		
 		/// <summary>
@@ -133,6 +134,11 @@ namespace ICSharpCode.Decompiler.IL
 				throw new InvalidOperationException("Cannot replace blocks in BlockContainer");
 		}
 
+		protected override SlotInfo GetChildSlot(int index)
+		{
+			return BlockSlot;
+		}
+
 		internal override void CheckInvariant()
 		{
 			base.CheckInvariant();
@@ -153,12 +159,6 @@ namespace ICSharpCode.Decompiler.IL
 			else
 				flags &= ~InstructionFlags.EndPointUnreachable;
 			return flags;
-		}
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			// Blocks are phase-1 boundaries
-			return this;
 		}
 	}
 }

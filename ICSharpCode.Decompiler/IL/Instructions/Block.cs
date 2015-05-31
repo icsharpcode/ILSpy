@@ -30,35 +30,22 @@ namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
 	/// A block consists of a list of IL instructions.
-	/// <para>
-	/// Phase-1 execution of a block is a no-op: any peek/pop instructions within the block are ignored at this stage.
-	/// </para>
-	/// <para>
-	/// Phase-2 execution will execute the instructions in order, pseudo-code:
-	/// </para>
-	/// <code>
-	///   foreach (var inst in Instructions) {
-	///     var result = inst.Phase1().Phase2();
-	///     if (result != void) evalStack.Push(result);
-	///   }
-	///   return FinalInstruction.Phase1().Phase2();
-	/// </code>
+	/// 
 	/// <para>
 	/// Note: if execution reaches the end of the instruction list,
 	/// the FinalInstruction (which is not part of the list) will be executed.
 	/// The block returns returns the result value of the FinalInstruction.
 	/// For blocks returning void, the FinalInstruction will usually be 'nop'.
+	/// 
+	/// TODO: now that 'implicit push' is gone, reconsider whether we need
+	/// a separate slot for FinalInstruction
 	/// </para>
 	/// </summary>
-	/// <remarks>
-	/// Fun fact: wrapping a pop instruction in a block
-	/// (<c>new Block { FinalInstruction = popInst }</c>) turns it
-	/// from a phase-1 pop instruction to a phase-2 pop instruction.
-	/// However, this is just of theoretical interest; we currently don't plan to use inline blocks that
-	/// pop elements that they didn't push themselves.
-	/// </remarks>
 	partial class Block : ILInstruction
 	{
+		public static readonly SlotInfo InstructionSlot = new SlotInfo("Instruction", isCollection: true);
+		public static readonly SlotInfo FinalInstructionSlot = new SlotInfo("FinalInstruction");
+		
 		public readonly InstructionCollection<ILInstruction> Instructions;
 		ILInstruction finalInstruction;
 		
@@ -168,15 +155,19 @@ namespace ICSharpCode.Decompiler.IL
 				Instructions[index] = value;
 		}
 		
+		protected override SlotInfo GetChildSlot(int index)
+		{
+			if (index == Instructions.Count)
+				return InstructionSlot;
+			else
+				return FinalInstructionSlot;
+		}
+		
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = InstructionFlags.None;
 			foreach (var inst in Instructions) {
 				flags |= Phase1Boundary(inst.Flags);
-				if (inst.ResultType != StackType.Void) {
-					// implicit push
-					flags |= InstructionFlags.MayWriteEvaluationStack;
-				}
 			}
 			flags |= Phase1Boundary(FinalInstruction.Flags);
 			return flags;
@@ -187,16 +178,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// The MayPop and MayPeek flags are removed and converted into
 		/// MayReadEvaluationStack and/or MayWriteEvaluationStack flags.
 		/// </summary>
-		[Obsolete("there's not phase-1 evaluation anymore")]
+		[Obsolete("there's no phase-1 evaluation anymore")]
 		internal static InstructionFlags Phase1Boundary(InstructionFlags flags)
 		{
 			return flags;
-		}
-		
-		internal override ILInstruction Inline(InstructionFlags flagsBefore, IInlineContext context)
-		{
-			// an inline block has no phase-1 effects, so we're immediately done with inlining
-			return this;
 		}
 	}
 }

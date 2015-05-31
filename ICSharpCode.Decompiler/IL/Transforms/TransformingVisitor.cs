@@ -225,10 +225,9 @@ namespace ICSharpCode.Decompiler.IL
 			// If the block has only one instruction, we can remove the block too
 			// (but only if this doesn't change the pop-order in the phase 1 evaluation of the parent block)
 			if (block.Instructions.Count == 0) {
-				if (!block.FinalInstruction.HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop))
-					return block.FinalInstruction;
+				return block.FinalInstruction;
 			} else if (block.Instructions.Count == 1 && block.FinalInstruction.OpCode == OpCode.Nop) {
-				if (block.Instructions[0].ResultType == StackType.Void && !block.Instructions[0].HasFlag(InstructionFlags.MayPeek | InstructionFlags.MayPop))
+				if (block.Instructions[0].ResultType == StackType.Void)
 					return block.Instructions[0];
 			}
 			return block;
