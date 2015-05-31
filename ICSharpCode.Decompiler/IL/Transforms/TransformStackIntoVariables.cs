@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL
 					var variable = state.UnionFind.Find(inst.Variable);
 					if (variables.Add(variable))
 						variable.Name = "S_" + (variables.Count - 1);
-					inst.ReplaceWith(new StLoc(inst.Value, variable));
+					inst.ReplaceWith(new StLoc(variable, inst.Value));
 				}
 			}
 		}

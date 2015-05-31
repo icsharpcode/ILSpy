@@ -27,32 +27,10 @@ namespace ICSharpCode.Decompiler.IL
 			return OpCode == OpCode.LdcI4 && ((LdcI4)this).Value == val;
 		}
 		
-		public bool MatchLdcI4(out int val)
-		{
-			var inst = this as LdcI4;
-			if (inst != null) {
-				val = inst.Value;
-				return true;
-			}
-			val = 0;
-			return false;
-		}
-		
 		public bool MatchLdLoc(ILVariable variable)
 		{
 			var inst = this as LdLoc;
 			return inst != null && inst.Variable == variable;
-		}
-		
-		public bool MatchLdLoc(out ILVariable variable)
-		{
-			var inst = this as LdLoc;
-			if (inst != null) {
-				variable = inst.Variable;
-				return true;
-			}
-			variable = null;
-			return false;
 		}
 		
 		public bool MatchLdThis()

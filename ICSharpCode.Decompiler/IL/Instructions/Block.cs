@@ -214,7 +214,7 @@ namespace ICSharpCode.Decompiler.IL
 					var type = state.TypeSystem.Compilation.FindType(inst.ResultType.ToKnownTypeCode());
 					ILVariable variable = new ILVariable(VariableKind.StackSlot, type, state.Variables.Count);
 					state.Variables.Push(variable);
-					inst = new Void(new StLoc(inst, variable));
+					inst = new Void(new StLoc(variable, inst));
 				}
 				Instructions[i] = inst;
 				if (inst.HasFlag(InstructionFlags.EndPointUnreachable))

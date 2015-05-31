@@ -110,7 +110,7 @@
 		new OpCode("ldloca", "Loads the address of a local variable. (ldarga/ldloca)",
 			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand),
 		new OpCode("stloc", "Stores a value into a local variable. (starg/stloc)",
-			CustomClassName("StLoc"), CustomArguments("value"), HasVariableOperand,
+			CustomClassName("StLoc"), HasVariableOperand, CustomArguments("value"),
 			ResultType("variable.Type.GetStackType()")),
 		new OpCode("ldstr", "Loads a constant string.",
 			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),
@@ -314,6 +314,28 @@ namespace ICSharpCode.Decompiler.IL
 <#	} #>
 		};
 	}
+	
+	partial class ILInstruction
+	{
+<#	foreach (OpCode opCode in opCodes) { #>
+<#		if (opCode.GenerateMatch) { #>
+		public bool Match<#=opCode.Name#>(<#=string.Join(", ", opCode.MatchParameters)#>)
+		{
+			var inst = this as <#=opCode.Name#>;
+			if (inst != null) {
+<#			foreach (var parameter in opCode.MatchParameters) {#>
+				<#=parameter.Name#> = inst.<#=parameter.FieldName#>;
+<#			}#>
+				return true;
+			}
+<#			foreach (var parameter in opCode.MatchParameters) {#>
+			<#=parameter.Name#> = default(<#=parameter.TypeName#>);
+<#			}#>
+			return false;
+		}
+<#		}
+	} #>
+	}
 }
 
 <#+
@@ -370,6 +392,9 @@ namespace ICSharpCode.Decompiler.IL
 		public string ConstructorModifier = "public";
 		public List<string> ConstructorParameters = new List<string>();
 		public List<string> ConstructorBody = new List<string>();
+		
+		public bool GenerateMatch = true;
+		public List<MatchParamInfo> MatchParameters = new List<MatchParamInfo>();
 
 		public string BaseClass = "ILInstruction";
 		public List<string> Interfaces = new List<string>();
@@ -378,7 +403,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public List<string> Flags = new List<string>();
 		public bool GenerateComputeFlags = true;
-		
+
 		public bool GenerateAcceptVisitor = true;
 		
 		public bool GenerateWriteTo = false;
@@ -398,6 +423,18 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 	
+	class MatchParamInfo
+	{
+		public string TypeName;
+		public string Name;
+		public string FieldName;
+		
+		public override string ToString()
+		{
+			return "out " + TypeName + " " + Name;
+		}
+	}
+	
 	static Action<OpCode> CustomClassName(string name)
 	{
 		return opCode => {
@@ -414,6 +451,7 @@ namespace ICSharpCode.Decompiler.IL
 	
 	static Action<OpCode> CustomConstructor = opCode => {
 		opCode.GenerateConstructor = false;
+		opCode.GenerateMatch = false;
 	};
 	
 	static Action<OpCode> CustomWriteTo = opCode => {
@@ -479,6 +517,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.BaseClass = "UnaryInstruction";
 		opCode.Flags.Add("base.ComputeFlags()");
 		opCode.ConstructorParameters.Add("ILInstruction argument");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = "argument", FieldName = "Argument" });
 		opCode.BaseConstructorArguments.Add("argument");
 		opCode.WriteArguments.Add("output.Write('(');");
 		opCode.WriteArguments.Add("Argument.WriteTo(output);");
@@ -493,6 +532,8 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorParameters.Add("ILInstruction right");
 		opCode.BaseConstructorArguments.Add("left");
 		opCode.BaseConstructorArguments.Add("right");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = "left", FieldName = "Left" });
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = "right", FieldName = "Right" });
 		opCode.WriteArguments.Add("output.Write('(');");
 		opCode.WriteArguments.Add("Left.WriteTo(output);");
 		opCode.WriteArguments.Add("output.Write(\", \");");
@@ -550,6 +591,7 @@ namespace ICSharpCode.Decompiler.IL
 				opCode.Flags.Add(arg + ".Flags");
 				opCode.ConstructorParameters.Add("ILInstruction " + arg);
 				opCode.ConstructorBody.Add("this." + argProp + " = " + arg + ";");
+				opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = arg, FieldName = argProp });
 				if (i > 0)
 					opCode.WriteArguments.Add("output.Write(\", \");");
 				opCode.WriteArguments.Add("this." + arg + ".WriteTo(output);");
@@ -647,6 +689,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorModifier = "protected";
 		opCode.ConstructorParameters.Add("OpCode opCode");
 		opCode.BaseConstructorArguments.Add("opCode");
+		opCode.GenerateMatch = false;
 	};
 
 	// SideEffect trait: the instruction has a non-local side effect
@@ -658,6 +701,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.BaseClass = "CallInstruction";
 		opCode.ConstructorParameters.Add("IMethod method");
 		opCode.BaseConstructorArguments.Add("method");
+		opCode.GenerateMatch = false;
 	};
 
 	// HasVariableOperand trait: the instruction refers to a local variable
@@ -666,6 +710,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.Members.Add("readonly ILVariable variable;");
 		opCode.ConstructorBody.Add("Debug.Assert(variable != null);");
 		opCode.ConstructorBody.Add("this.variable = variable;");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILVariable", Name = "variable", FieldName = "Variable" });
 		opCode.Members.Add("/// <summary>Returns the variable operand.</summary>" + Environment.NewLine
 						+ "public ILVariable Variable { get { return variable; } }");
 		opCode.GenerateWriteTo = true;
@@ -677,6 +722,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorParameters.Add("IField field");
 		opCode.Members.Add("readonly IField field;");
 		opCode.ConstructorBody.Add("this.field = field;");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IField", Name = "field", FieldName = "Field" });
 		opCode.Members.Add("/// <summary>Returns the field operand.</summary>" + Environment.NewLine
 						+ "public IField Field { get { return field; } }");
 		opCode.GenerateWriteTo = true;
@@ -688,6 +734,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorParameters.Add("IType type");
 		opCode.Members.Add("readonly IType type;");
 		opCode.ConstructorBody.Add("this.type = type;");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IType", Name = "type", FieldName = "Type" });
 		opCode.Members.Add("/// <summary>Returns the type operand.</summary>" + Environment.NewLine
 						+ "public IType Type { get { return type; } }");
 		opCode.GenerateWriteTo = true;
@@ -699,6 +746,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorParameters.Add("IMethod method");
 		opCode.Members.Add("readonly IMethod method;");
 		opCode.ConstructorBody.Add("this.method = method;");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IMethod", Name = "method", FieldName = "Method" });
 		opCode.Members.Add("/// <summary>Returns the method operand.</summary>" + Environment.NewLine
 						+ "public IMethod Method { get { return method; } }");
 		opCode.GenerateWriteTo = true;
@@ -710,6 +758,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorParameters.Add("IMember member");
 		opCode.Members.Add("readonly IMember member;");
 		opCode.ConstructorBody.Add("this.member = member;");
+		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IMember", Name = "member", FieldName = "Member" });
 		opCode.Members.Add("/// <summary>Returns the token operand.</summary>" + Environment.NewLine
 						+ "public IMember Member { get { return member; } }");
 		opCode.GenerateWriteTo = true;
@@ -723,6 +772,7 @@ namespace ICSharpCode.Decompiler.IL
 		return opCode => {
 			NoArguments(opCode);
 			opCode.ConstructorParameters.Add(operandType + " value");
+			opCode.MatchParameters.Add(new MatchParamInfo { TypeName = operandType, Name = "value", FieldName = "Value" });
 			opCode.Members.Add("public readonly " + operandType + " Value;");
 			opCode.ConstructorBody.Add("this.Value = value;");
 			opCode.GenerateWriteTo = true;

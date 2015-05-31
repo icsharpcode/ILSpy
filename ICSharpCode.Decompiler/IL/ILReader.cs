@@ -733,7 +733,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction Starg(ushort v)
 		{
-			return new Void(new StLoc(Pop(), parameterVariables[v]));
+			return new Void(new StLoc(parameterVariables[v], Pop()));
 		}
 
 		private ILInstruction Ldloc(ushort v)
@@ -748,7 +748,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction Stloc(ushort v)
 		{
-			return new Void(new StLoc(Pop(), localVariables[v]));
+			return new Void(new StLoc(localVariables[v], Pop()));
 		}
 		
 		private ILInstruction LdElem(ILInstruction array, ILInstruction index, IType type)

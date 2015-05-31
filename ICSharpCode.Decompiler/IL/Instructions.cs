@@ -1196,12 +1196,15 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
 	public sealed partial class StLoc : ILInstruction
 	{
-		public StLoc(ILInstruction value, ILVariable variable) : base(OpCode.StLoc)
+		public StLoc(ILVariable variable, ILInstruction value) : base(OpCode.StLoc)
 		{
-			this.Value = value;
 			Debug.Assert(variable != null);
 			this.variable = variable;
+			this.Value = value;
 		}
+		readonly ILVariable variable;
+		/// <summary>Returns the variable operand.</summary>
+		public ILVariable Variable { get { return variable; } }
 		ILInstruction value;
 		public ILInstruction Value {
 			get { return this.value; }
@@ -1248,9 +1251,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Value.TransformStackIntoVariables(state);
 		}
-		readonly ILVariable variable;
-		/// <summary>Returns the variable operand.</summary>
-		public ILVariable Variable { get { return variable; } }
 		public override StackType ResultType { get { return variable.Type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -3488,6 +3488,646 @@ namespace ICSharpCode.Decompiler.IL
 			"ldlen",
 			"ldelema",
 		};
+	}
+	
+	partial class ILInstruction
+	{
+		public bool MatchNop()
+		{
+			var inst = this as Nop;
+			if (inst != null) {
+				return true;
+			}
+			return false;
+		}
+		public bool MatchPop()
+		{
+			var inst = this as Pop;
+			if (inst != null) {
+				return true;
+			}
+			return false;
+		}
+		public bool MatchPeek()
+		{
+			var inst = this as Peek;
+			if (inst != null) {
+				return true;
+			}
+			return false;
+		}
+		public bool MatchVoid(out ILInstruction argument)
+		{
+			var inst = this as Void;
+			if (inst != null) {
+				argument = inst.Argument;
+				return true;
+			}
+			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchLogicNot(out ILInstruction argument)
+		{
+			var inst = this as LogicNot;
+			if (inst != null) {
+				argument = inst.Argument;
+				return true;
+			}
+			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchAdd(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Add;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchSub(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Sub;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchMul(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Mul;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchDiv(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Div;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchRem(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Rem;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchBitAnd(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as BitAnd;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchBitOr(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as BitOr;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchBitXor(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as BitXor;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchBitNot(out ILInstruction argument)
+		{
+			var inst = this as BitNot;
+			if (inst != null) {
+				argument = inst.Argument;
+				return true;
+			}
+			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchArglist()
+		{
+			var inst = this as Arglist;
+			if (inst != null) {
+				return true;
+			}
+			return false;
+		}
+		public bool MatchTryCatchHandler(out ILInstruction filter, out ILInstruction body, out ILVariable variable)
+		{
+			var inst = this as TryCatchHandler;
+			if (inst != null) {
+				filter = inst.Filter;
+				body = inst.Body;
+				variable = inst.Variable;
+				return true;
+			}
+			filter = default(ILInstruction);
+			body = default(ILInstruction);
+			variable = default(ILVariable);
+			return false;
+		}
+		public bool MatchDebugBreak()
+		{
+			var inst = this as DebugBreak;
+			if (inst != null) {
+				return true;
+			}
+			return false;
+		}
+		public bool MatchCeq(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Ceq;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchCgt(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Cgt;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchCgt_Un(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Cgt_Un;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchClt(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Clt;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchClt_Un(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Clt_Un;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchCkfinite(out ILInstruction argument)
+		{
+			var inst = this as Ckfinite;
+			if (inst != null) {
+				argument = inst.Argument;
+				return true;
+			}
+			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchLdLoc(out ILVariable variable)
+		{
+			var inst = this as LdLoc;
+			if (inst != null) {
+				variable = inst.Variable;
+				return true;
+			}
+			variable = default(ILVariable);
+			return false;
+		}
+		public bool MatchLdLoca(out ILVariable variable)
+		{
+			var inst = this as LdLoca;
+			if (inst != null) {
+				variable = inst.Variable;
+				return true;
+			}
+			variable = default(ILVariable);
+			return false;
+		}
+		public bool MatchStLoc(out ILVariable variable, out ILInstruction value)
+		{
+			var inst = this as StLoc;
+			if (inst != null) {
+				variable = inst.Variable;
+				value = inst.Value;
+				return true;
+			}
+			variable = default(ILVariable);
+			value = default(ILInstruction);
+			return false;
+		}
+		public bool MatchLdStr(out string value)
+		{
+			var inst = this as LdStr;
+			if (inst != null) {
+				value = inst.Value;
+				return true;
+			}
+			value = default(string);
+			return false;
+		}
+		public bool MatchLdcI4(out int value)
+		{
+			var inst = this as LdcI4;
+			if (inst != null) {
+				value = inst.Value;
+				return true;
+			}
+			value = default(int);
+			return false;
+		}
+		public bool MatchLdcI8(out long value)
+		{
+			var inst = this as LdcI8;
+			if (inst != null) {
+				value = inst.Value;
+				return true;
+			}
+			value = default(long);
+			return false;
+		}
+		public bool MatchLdcF(out double value)
+		{
+			var inst = this as LdcF;
+			if (inst != null) {
+				value = inst.Value;
+				return true;
+			}
+			value = default(double);
+			return false;
+		}
+		public bool MatchLdNull()
+		{
+			var inst = this as LdNull;
+			if (inst != null) {
+				return true;
+			}
+			return false;
+		}
+		public bool MatchLdFtn(out IMethod method)
+		{
+			var inst = this as LdFtn;
+			if (inst != null) {
+				method = inst.Method;
+				return true;
+			}
+			method = default(IMethod);
+			return false;
+		}
+		public bool MatchLdVirtFtn(out ILInstruction argument, out IMethod method)
+		{
+			var inst = this as LdVirtFtn;
+			if (inst != null) {
+				argument = inst.Argument;
+				method = inst.Method;
+				return true;
+			}
+			argument = default(ILInstruction);
+			method = default(IMethod);
+			return false;
+		}
+		public bool MatchLdTypeToken(out IType type)
+		{
+			var inst = this as LdTypeToken;
+			if (inst != null) {
+				type = inst.Type;
+				return true;
+			}
+			type = default(IType);
+			return false;
+		}
+		public bool MatchLdMemberToken(out IMember member)
+		{
+			var inst = this as LdMemberToken;
+			if (inst != null) {
+				member = inst.Member;
+				return true;
+			}
+			member = default(IMember);
+			return false;
+		}
+		public bool MatchLocAlloc(out ILInstruction argument)
+		{
+			var inst = this as LocAlloc;
+			if (inst != null) {
+				argument = inst.Argument;
+				return true;
+			}
+			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchShl(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Shl;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchShr(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as Shr;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchLdFld(out ILInstruction target, out IField field)
+		{
+			var inst = this as LdFld;
+			if (inst != null) {
+				target = inst.Target;
+				field = inst.Field;
+				return true;
+			}
+			target = default(ILInstruction);
+			field = default(IField);
+			return false;
+		}
+		public bool MatchLdFlda(out ILInstruction target, out IField field)
+		{
+			var inst = this as LdFlda;
+			if (inst != null) {
+				target = inst.Target;
+				field = inst.Field;
+				return true;
+			}
+			target = default(ILInstruction);
+			field = default(IField);
+			return false;
+		}
+		public bool MatchStFld(out ILInstruction target, out ILInstruction value, out IField field)
+		{
+			var inst = this as StFld;
+			if (inst != null) {
+				target = inst.Target;
+				value = inst.Value;
+				field = inst.Field;
+				return true;
+			}
+			target = default(ILInstruction);
+			value = default(ILInstruction);
+			field = default(IField);
+			return false;
+		}
+		public bool MatchLdsFld(out IField field)
+		{
+			var inst = this as LdsFld;
+			if (inst != null) {
+				field = inst.Field;
+				return true;
+			}
+			field = default(IField);
+			return false;
+		}
+		public bool MatchLdsFlda(out IField field)
+		{
+			var inst = this as LdsFlda;
+			if (inst != null) {
+				field = inst.Field;
+				return true;
+			}
+			field = default(IField);
+			return false;
+		}
+		public bool MatchStsFld(out ILInstruction value, out IField field)
+		{
+			var inst = this as StsFld;
+			if (inst != null) {
+				value = inst.Value;
+				field = inst.Field;
+				return true;
+			}
+			value = default(ILInstruction);
+			field = default(IField);
+			return false;
+		}
+		public bool MatchCastClass(out ILInstruction argument, out IType type)
+		{
+			var inst = this as CastClass;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
+			return false;
+		}
+		public bool MatchIsInst(out ILInstruction argument, out IType type)
+		{
+			var inst = this as IsInst;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
+			return false;
+		}
+		public bool MatchLdObj(out ILInstruction target, out IType type)
+		{
+			var inst = this as LdObj;
+			if (inst != null) {
+				target = inst.Target;
+				type = inst.Type;
+				return true;
+			}
+			target = default(ILInstruction);
+			type = default(IType);
+			return false;
+		}
+		public bool MatchStObj(out ILInstruction target, out ILInstruction value, out IType type)
+		{
+			var inst = this as StObj;
+			if (inst != null) {
+				target = inst.Target;
+				value = inst.Value;
+				type = inst.Type;
+				return true;
+			}
+			target = default(ILInstruction);
+			value = default(ILInstruction);
+			type = default(IType);
+			return false;
+		}
+		public bool MatchBox(out ILInstruction argument, out IType type)
+		{
+			var inst = this as Box;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
+			return false;
+		}
+		public bool MatchUnbox(out ILInstruction argument, out IType type)
+		{
+			var inst = this as Unbox;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
+			return false;
+		}
+		public bool MatchUnboxAny(out ILInstruction argument, out IType type)
+		{
+			var inst = this as UnboxAny;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
+			return false;
+		}
+		public bool MatchNewArr(out IType type, out ILInstruction size)
+		{
+			var inst = this as NewArr;
+			if (inst != null) {
+				type = inst.Type;
+				size = inst.Size;
+				return true;
+			}
+			type = default(IType);
+			size = default(ILInstruction);
+			return false;
+		}
+		public bool MatchDefaultValue(out IType type)
+		{
+			var inst = this as DefaultValue;
+			if (inst != null) {
+				type = inst.Type;
+				return true;
+			}
+			type = default(IType);
+			return false;
+		}
+		public bool MatchThrow(out ILInstruction argument)
+		{
+			var inst = this as Throw;
+			if (inst != null) {
+				argument = inst.Argument;
+				return true;
+			}
+			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchRethrow()
+		{
+			var inst = this as Rethrow;
+			if (inst != null) {
+				return true;
+			}
+			return false;
+		}
+		public bool MatchSizeOf(out IType type)
+		{
+			var inst = this as SizeOf;
+			if (inst != null) {
+				type = inst.Type;
+				return true;
+			}
+			type = default(IType);
+			return false;
+		}
+		public bool MatchLdLen(out ILInstruction array)
+		{
+			var inst = this as LdLen;
+			if (inst != null) {
+				array = inst.Array;
+				return true;
+			}
+			array = default(ILInstruction);
+			return false;
+		}
+		public bool MatchLdElema(out ILInstruction array, out ILInstruction index, out IType type)
+		{
+			var inst = this as LdElema;
+			if (inst != null) {
+				array = inst.Array;
+				index = inst.Index;
+				type = inst.Type;
+				return true;
+			}
+			array = default(ILInstruction);
+			index = default(ILInstruction);
+			type = default(IType);
+			return false;
+		}
 	}
 }
 
