@@ -231,23 +231,28 @@ namespace ICSharpCode.Decompiler
 					return method;
 			}
 			var parameterTypes = methodReference.Parameters.SelectArray(p => Resolve(p.ParameterType));
+			var returnType = Resolve(methodReference.ReturnType);
 			foreach (var method in methods) {
-				if (CompareSignatures(method.Parameters, parameterTypes))
+				if (CompareSignatures(method.Parameters, parameterTypes) && CompareTypes(method.ReturnType, returnType))
 					return method;
 			}
 			return CreateFakeMethod(methodReference);
 		}
 
+		static bool CompareTypes(IType a, IType b)
+		{
+			IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
+			IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
+			return type1.Equals(type2);
+		}
+		
 		static bool CompareSignatures(IList<IParameter> parameters, IType[] parameterTypes)
 		{
 			if (parameterTypes.Length != parameters.Count)
 				return false;
 			for (int i = 0; i < parameterTypes.Length; i++) {
-				IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(parameterTypes[i]);
-				IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(parameters[i].Type);
-				if (!type1.Equals(type2)) {
+				if (!CompareTypes(parameterTypes[i], parameters[i].Type))
 					return false;
-				}
 			}
 			return true;
 		}
