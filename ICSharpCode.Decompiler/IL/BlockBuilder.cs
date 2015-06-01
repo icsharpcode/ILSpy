@@ -31,6 +31,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		readonly Mono.Cecil.Cil.MethodBody body;
 		readonly IDecompilerTypeSystem typeSystem;
+		readonly Dictionary<Mono.Cecil.Cil.ExceptionHandler, ILVariable> variableByExceptionHandler;
 
 		/// <summary>
 		/// Gets/Sets whether to create extended basic blocks instead of basic blocks.
@@ -38,12 +39,15 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool CreateExtendedBlocks;
 		
-		public BlockBuilder(Mono.Cecil.Cil.MethodBody body, IDecompilerTypeSystem typeSystem)
+		internal BlockBuilder(Mono.Cecil.Cil.MethodBody body, IDecompilerTypeSystem typeSystem,
+		                      Dictionary<Mono.Cecil.Cil.ExceptionHandler, ILVariable> variableByExceptionHandler)
 		{
 			Debug.Assert(body != null);
 			Debug.Assert(typeSystem != null);
+			Debug.Assert(variableByExceptionHandler != null);
 			this.body = body;
 			this.typeSystem = typeSystem;
+			this.variableByExceptionHandler = variableByExceptionHandler;
 		}
 		
 		List<TryInstruction> tryInstructionList = new List<TryInstruction>();
@@ -78,25 +82,18 @@ namespace ICSharpCode.Decompiler.IL
 					tryInstructionList.Add(tryCatch);
 				}
 
-				ILVariable variable = null;
-				throw new NotImplementedException();
-				//var variable = new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), handlerBlock.ILRange.Start);
-				variable.Name = "ex";
-				handlerBlock.EntryPoint.Instructions.Add(new LdLoc(variable));
-				
 				ILInstruction filter;
 				if (eh.HandlerType == Mono.Cecil.Cil.ExceptionHandlerType.Filter) {
 					var filterBlock = new BlockContainer();
 					filterBlock.ILRange = new Interval(eh.FilterStart.Offset, eh.HandlerStart.Offset);
 					filterBlock.Blocks.Add(new Block());
-					filterBlock.EntryPoint.Instructions.Add(new LdLoc(variable));
 					handlerContainers.Add(filterBlock.ILRange.Start, filterBlock);
 					filter = filterBlock;
 				} else {
 					filter = new LdcI4(1);
 				}
 
-				tryCatch.Handlers.Add(new TryCatchHandler(filter, handlerBlock, variable));
+				tryCatch.Handlers.Add(new TryCatchHandler(filter, handlerBlock, variableByExceptionHandler[eh]));
 			}
 			if (tryInstructionList.Count > 0) {
 				tryInstructionList = tryInstructionList.OrderBy(tc => tc.TryBlock.ILRange.Start).ThenByDescending(tc => tc.TryBlock.ILRange.End).ToList();

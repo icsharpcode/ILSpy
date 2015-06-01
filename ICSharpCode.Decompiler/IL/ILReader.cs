@@ -68,6 +68,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		// Dictionary that stores stacks for each IL instruction
 		Dictionary<int, ImmutableStack<ILVariable>> stackByOffset;
+		Dictionary<Cil.ExceptionHandler, ILVariable> variableByExceptionHandler;
 		UnionFind<ILVariable> unionFind;
 		IEnumerable<ILVariable> stackVariables;
 		
@@ -84,6 +85,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.instructionBuilder = new List<ILInstruction>();
 			this.isBranchTarget = new BitArray(body.CodeSize);
 			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
+			this.variableByExceptionHandler = new Dictionary<Cil.ExceptionHandler, ILVariable>();
 		}
 
 		IMetadataTokenProvider ReadAndDecodeMetadataToken()
@@ -160,6 +162,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		void MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
 		{
+			Debug.Assert(a.Count() == b.Count());
 			var enum1 = a.GetEnumerator();
 			var enum2 = b.GetEnumerator();
 			while (enum1.MoveNext() && enum2.MoveNext()) {
@@ -183,9 +186,9 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var eh in body.ExceptionHandlers) {
 				ImmutableStack<ILVariable> ehStack = null;
 				if (eh.HandlerType == Cil.ExceptionHandlerType.Catch || eh.HandlerType == Cil.ExceptionHandlerType.Filter) {
-					ehStack = ImmutableStack.Create(
-						new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), eh.HandlerStart.Offset)
-					);
+					var v = new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), eh.HandlerStart.Offset);
+					variableByExceptionHandler.Add(eh, v);
+					ehStack = ImmutableStack.Create(v);
 				} else {
 					ehStack = ImmutableStack<ILVariable>.Empty;
 				}
@@ -262,7 +265,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Init(body);
 			ReadInstructions(cancellationToken);
-			var container = new BlockBuilder(body, typeSystem).CreateBlocks(instructionBuilder, isBranchTarget);
+			var container = new BlockBuilder(body, typeSystem, variableByExceptionHandler).CreateBlocks(instructionBuilder, isBranchTarget);
 			var function = new ILFunction(body.Method, container);
 			function.Variables.AddRange(parameterVariables);
 			function.Variables.AddRange(localVariables);
