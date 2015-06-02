@@ -641,7 +641,7 @@ namespace ICSharpCode.Decompiler.IL
 						return new StObj(Pop(), ld, type);
 					}
 				case ILOpCode.Initobj:
-					return Push(InitObj(Pop(), ReadAndDecodeTypeReference()));
+					return InitObj(Pop(), ReadAndDecodeTypeReference());
 				case ILOpCode.Isinst:
 					return Push(new IsInst(Pop(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldelem:
