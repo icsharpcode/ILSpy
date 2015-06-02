@@ -158,29 +158,18 @@ namespace ICSharpCode.Decompiler.IL
 		protected override SlotInfo GetChildSlot(int index)
 		{
 			if (index == Instructions.Count)
-				return InstructionSlot;
-			else
 				return FinalInstructionSlot;
+			else
+				return InstructionSlot;
 		}
 		
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = InstructionFlags.None;
 			foreach (var inst in Instructions) {
-				flags |= Phase1Boundary(inst.Flags);
+				flags |= inst.Flags;
 			}
-			flags |= Phase1Boundary(FinalInstruction.Flags);
-			return flags;
-		}
-		
-		/// <summary>
-		/// Adjust flags for a phase-1 boundary:
-		/// The MayPop and MayPeek flags are removed and converted into
-		/// MayReadEvaluationStack and/or MayWriteEvaluationStack flags.
-		/// </summary>
-		[Obsolete("there's no phase-1 evaluation anymore")]
-		internal static InstructionFlags Phase1Boundary(InstructionFlags flags)
-		{
+			flags |= FinalInstruction.Flags;
 			return flags;
 		}
 	}

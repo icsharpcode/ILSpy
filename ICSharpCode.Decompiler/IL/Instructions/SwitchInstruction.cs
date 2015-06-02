@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return Block.Phase1Boundary(body.Flags);
+			return body.Flags;
 		}
 		
 		public override void WriteTo(ITextOutput output)

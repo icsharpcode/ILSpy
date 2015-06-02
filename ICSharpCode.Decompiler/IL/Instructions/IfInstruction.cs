@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return condition.Flags | Block.Phase1Boundary(CombineFlags(trueInst.Flags, falseInst.Flags));
+			return condition.Flags | CombineFlags(trueInst.Flags, falseInst.Flags);
 		}
 		
 		internal static InstructionFlags CombineFlags(InstructionFlags trueFlags, InstructionFlags falseFlags)
