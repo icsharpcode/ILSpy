@@ -242,6 +242,8 @@ namespace ICSharpCode.Decompiler.IL
 						isFirstElement = false;
 					else
 						output.Write(", ");
+					output.WriteReference(element.Name, element, isLocal: true);
+					output.Write(":");
 					output.Write(element.StackType);
 				}
 				output.Write(']');
@@ -575,6 +577,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Or:
 					return BinaryNumeric(OpCode.BitOr);
 				case ILOpCode.Pop:
+					Pop();
 					return new Nop();
 				case ILOpCode.Rem:
 					return BinaryNumeric(OpCode.Rem, false, Sign.Signed);

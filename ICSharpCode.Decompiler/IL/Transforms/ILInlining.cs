@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		/// <summary>
-		/// Inlines the stloc instruction at block.Body[pos] into the next instruction, if possible.
+		/// Inlines the stloc instruction at block.Instructions[pos] into the next instruction, if possible.
 		/// </summary>
 		public bool InlineOneIfPossible(Block block, int pos, bool aggressive)
 		{
