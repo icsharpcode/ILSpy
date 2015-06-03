@@ -480,7 +480,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(target)
 						.WithRR(new ThisResolveResult(member.DeclaringType, nonVirtualInvocation));
 				} else {
-					return Translate(target).ConvertTo(member.DeclaringType, this);
+					var translatedTarget = Translate(target);
+					if (member.DeclaringType.IsReferenceType == false && translatedTarget.Expression is DirectionExpression) {
+						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
+					}
+					return translatedTarget.ConvertTo(member.DeclaringType, this);
 				}
 			} else {
 				return new TypeReferenceExpression(ConvertType(member.DeclaringType))
