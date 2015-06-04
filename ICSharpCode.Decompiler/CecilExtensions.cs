@@ -133,6 +133,8 @@ namespace ICSharpCode.Decompiler
 		/// </summary>
 		public static bool IsSignedIntegralType(this TypeReference type)
 		{
+			if (type == null)
+				return false;
 			return type.MetadataType == MetadataType.SByte ||
 				   type.MetadataType == MetadataType.Int16 ||
 				   type.MetadataType == MetadataType.Int32 ||
@@ -146,6 +148,8 @@ namespace ICSharpCode.Decompiler
 		/// </summary>
 		public static bool IsZero(this object value)
 		{
+			if (value == null)
+				return false;
 			return value.Equals((sbyte)0) ||
 				   value.Equals((short)0) ||
 				   value.Equals(0) ||
