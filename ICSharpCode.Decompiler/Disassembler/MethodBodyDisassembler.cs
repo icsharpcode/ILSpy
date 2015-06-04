@@ -68,14 +68,13 @@ namespace ICSharpCode.Decompiler.Disassembler
 					inst.WriteTo(output);
 
 					/*
-					if (methodMapping != null) {
+					if (debugSymbols != null) {
 						// add IL code mappings - used in debugger
-						methodMapping.MemberCodeMappings.Add(
-							new SourceCodeMapping() {
+						debugSymbols.SequencePoints.Add(
+							new SequencePoint() {
 								StartLocation = output.Location,
 								EndLocation = output.Location,
-								ILInstructionOffset = new ILRange { From = inst.Offset, To = inst.Next == null ? method.Body.CodeSize : inst.Next.Offset },
-								MemberMapping = methodMapping
+								ILRanges = new ILRange[] { new ILRange(inst.Offset, inst.Next == null ? method.Body.CodeSize : inst.Next.Offset) }
 							});
 					}*/
 
@@ -203,13 +202,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 					inst.WriteTo(output);
 
 					/*// add IL code mappings - used in debugger
-					if (currentMethodMapping != null) {
-						currentMethodMapping.MemberCodeMappings.Add(
-							new SourceCodeMapping() {
+					if (debugSymbols != null) {
+						debugSymbols.SequencePoints.Add(
+							new SequencePoint() {
 								StartLocation = startLocation,
 								EndLocation = output.Location,
-								ILInstructionOffset = new ILRange { From = inst.Offset, To = inst.Next == null ? codeSize : inst.Next.Offset },
-								MemberMapping = currentMethodMapping
+								ILRanges = new ILRange[] { new ILRange(inst.Offset, inst.Next == null ? codeSize : inst.Next.Offset) }
 							});
 					}*/
 
