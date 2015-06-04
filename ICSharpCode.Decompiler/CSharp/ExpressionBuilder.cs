@@ -216,6 +216,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			return LogicNot(TranslateCondition(inst.Argument)).WithILInstruction(inst);
 		}
 		
+		protected internal override TranslatedExpression VisitBitNot(BitNot inst)
+		{
+			var argument = Translate(inst.Argument);
+			return new UnaryOperatorExpression(UnaryOperatorType.BitNot, argument)
+				.WithRR(argument.ResolveResult)
+				.WithILInstruction(inst);
+		}
+		
 		ExpressionWithResolveResult LogicNot(TranslatedExpression expr)
 		{
 			return new UnaryOperatorExpression(UnaryOperatorType.Not, expr.Expression)
@@ -704,6 +712,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new CastExpression(ConvertType(inst.Type), arg.Expression)
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.UnboxingConversion));
+		}
+		
+		protected internal override TranslatedExpression VisitUnbox(Unbox inst)
+		{
+			var arg = Translate(inst.Argument);
+			var castExpression = new CastExpression(ConvertType(inst.Type), arg.Expression)
+				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.UnboxingConversion));
+			return new DirectionExpression(FieldDirection.Ref, castExpression)
+				.WithILInstruction(inst)
+				.WithRR(new ConversionResolveResult(new ByReferenceType(inst.Type), arg.ResolveResult, Conversion.UnboxingConversion));
 		}
 
 		protected internal override TranslatedExpression VisitBox(Box inst)
