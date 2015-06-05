@@ -220,24 +220,24 @@ namespace ICSharpCode.Decompiler.IL
 			switch (typeCode) {
 				case TypeCode.Boolean:
 				case TypeCode.Byte:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => (int)d[i]);
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI4((int)d[i]));
 				case TypeCode.SByte:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => (int)unchecked((sbyte)d[i]));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI4((int)unchecked((sbyte)d[i])));
 				case TypeCode.Int16:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => (int)BitConverter.ToInt16(d, i));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI4((int)BitConverter.ToInt16(d, i)));
 				case TypeCode.Char:
 				case TypeCode.UInt16:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => (int)BitConverter.ToUInt16(d, i));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI4((int)BitConverter.ToUInt16(d, i)));
 				case TypeCode.Int32:
 				case TypeCode.UInt32:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, BitConverter.ToInt32);
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI4(BitConverter.ToInt32(d, i)));
 				case TypeCode.Int64:
 				case TypeCode.UInt64:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, BitConverter.ToInt64);
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI8(BitConverter.ToInt64(d, i)));
 				case TypeCode.Single:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, BitConverter.ToSingle);
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcF(BitConverter.ToSingle(d, i)));
 				case TypeCode.Double:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, BitConverter.ToDouble);
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcF(BitConverter.ToDouble(d, i)));
 				case TypeCode.Object:
 					var typeDef = type.GetDefinition();
 					if (typeDef != null && typeDef.Kind == TypeKind.Enum)
@@ -248,7 +248,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		static bool DecodeArrayInitializer<T>(byte[] initialValue, ILVariable array, int[] arrayLength, List<ILInstruction> output, TypeCode elementType, IType type, Func<byte[], int, T> decoder)
+		static bool DecodeArrayInitializer(byte[] initialValue, ILVariable array, int[] arrayLength, List<ILInstruction> output, TypeCode elementType, IType type, Func<byte[], int, ILInstruction> decoder)
 		{
 			int elementSize = ElementSizeOf(elementType);
 			var totalLength = arrayLength.Aggregate(1, (t, l) => t * l);
@@ -256,41 +256,15 @@ namespace ICSharpCode.Decompiler.IL
 				return false;
 
 			for (int i = 0; i < totalLength; i++) {
-				object value = (object)decoder(initialValue, i * elementSize);
-				if (!0.Equals(value)) {
-					output.Add(LoadInstructionFor(elementType, value));
-					int next = i;
-					for (int j = arrayLength.Length - 1; j >= 0; j--) {
-						output.Add(new LdcI4(next % arrayLength[j]));
-						next = next / arrayLength[j];
-					}
+				output.Add(decoder(initialValue, i * elementSize));
+				int next = i;
+				for (int j = arrayLength.Length - 1; j >= 0; j--) {
+					output.Add(new LdcI4(next % arrayLength[j]));
+					next = next / arrayLength[j];
 				}
 			}
 
 			return true;
-		}
-
-		static ILInstruction LoadInstructionFor(TypeCode elementType, object value)
-		{
-			switch (elementType) {
-				case TypeCode.Boolean:
-				case TypeCode.Byte:
-				case TypeCode.SByte:
-				case TypeCode.Char:
-				case TypeCode.Int16:
-				case TypeCode.UInt16:
-				case TypeCode.Int32:
-				case TypeCode.UInt32:
-					return new LdcI4((int)value);
-				case TypeCode.Int64:
-				case TypeCode.UInt64:
-					return new LdcI8((long)value);
-				case TypeCode.Single:
-				case TypeCode.Double:
-					return new LdcF((double)value);
-				default:
-					throw new ArgumentOutOfRangeException("elementType");
-			}
 		}
 		
 		static ILInstruction StElem(ILInstruction array, ILInstruction[] indices, ILInstruction value, IType type)
