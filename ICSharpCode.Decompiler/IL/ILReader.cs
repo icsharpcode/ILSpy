@@ -669,7 +669,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldelem_Ref:
 					return LdElem(compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Ldelema:
-					return Push(new LdElema(index: Pop(), array: Pop(), type: ReadAndDecodeTypeReference()));
+					return Push(new LdElema(indices: Pop(), array: Pop(), type: ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldfld:
 					return Push(new LdFld(Pop(), ReadAndDecodeFieldReference()));
 				case ILOpCode.Ldflda:
@@ -858,7 +858,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		private ILInstruction LdElem(IType type)
 		{
-			return Push(new LdObj(new LdElema(index: Pop(), array: Pop(), type: type), type));
+			return Push(new LdObj(new LdElema(indices: Pop(), array: Pop(), type: type), type));
 		}
 		
 		private ILInstruction StElem(IType type)
@@ -866,7 +866,7 @@ namespace ICSharpCode.Decompiler.IL
 			var value = Pop();
 			var index = Pop();
 			var array = Pop();
-			return new StObj(new LdElema(array, index, type), value, type);
+			return new StObj(new LdElema(type, array, index), value, type);
 		}
 
 		ILInstruction InitObj(ILInstruction target, IType type)
@@ -938,12 +938,31 @@ namespace ICSharpCode.Decompiler.IL
 			for (int i = arguments.Length - 1; i >= 0; i--) {
 				arguments[i] = Pop();
 			}
-			var call = CallInstruction.Create(opCode, method);
-			call.Arguments.AddRange(arguments);
-			if (call.ResultType != StackType.Void)
-				return Push(call);
+			ILInstruction result;
+			if (method.DeclaringType.Kind == TypeKind.Array) {
+				var type = ((ICSharpCode.NRefactory.TypeSystem.ArrayType)method.DeclaringType).ElementType;
+				if (opCode == OpCode.NewObj) {
+					result = new NewArr(type, arguments);
+				} else if (method.Name == "Set") {
+					var target = arguments[0].Clone();
+					var value = arguments.Last().Clone();
+					var indices = arguments.Skip(1).Take(arguments.Length - 2).ToArray();
+					result = new StObj(new LdElema(type, target, indices), value, type);
+				} else if (method.Name == "Get") {
+					var target = arguments[0].Clone();
+					var indices = arguments.Skip(1).ToArray();
+					result = new LdObj(new LdElema(type, target, indices), type);
+				} else
+					throw new NotImplementedException();
+			} else {
+				var call = CallInstruction.Create(opCode, method);
+				call.Arguments.AddRange(arguments);
+				result = call;
+			}
+			if (result.ResultType != StackType.Void)
+				return Push(result);
 			else
-				return call;
+				return result;
 		}
 		
 		static int GetPopCount(OpCode callCode, MethodReference methodReference)

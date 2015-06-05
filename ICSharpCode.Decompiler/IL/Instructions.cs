@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -363,6 +364,55 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(", ");
 			this.right.WriteTo(output);
 			output.Write(')');
+		}
+	}
+
+	/// <summary>Instruction with a list of arguments.</summary>
+	public abstract partial class CallInstruction : ILInstruction
+	{
+		protected CallInstruction(OpCode opCode, params ILInstruction[] arguments) : base(opCode)
+		{
+			this.Arguments = new InstructionCollection<ILInstruction>(this, 0);
+			this.Arguments.AddRange(arguments);
+		}
+		public static readonly SlotInfo ArgumentsSlot = new SlotInfo("Arguments", canInlineInto: true);
+		public InstructionCollection<ILInstruction> Arguments { get; private set; }
+		protected sealed override int GetChildCount()
+		{
+			return Arguments.Count;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				default:
+					return this.Arguments[index - 0];
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				default:
+					this.Arguments[index - 0] = value;
+					break;
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				default:
+					return ArgumentsSlot;
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (CallInstruction)ShallowClone();
+			clone.Arguments = new InstructionCollection<ILInstruction>(this, 0);
+			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 		}
 	}
 
@@ -2508,65 +2558,54 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Creates an array instance.</summary>
 	public sealed partial class NewArr : ILInstruction
 	{
-		public NewArr(IType type, ILInstruction size) : base(OpCode.NewArr)
+		public NewArr(IType type, params ILInstruction[] indices) : base(OpCode.NewArr)
 		{
 			this.type = type;
-			this.Size = size;
+			this.Indices = new InstructionCollection<ILInstruction>(this, 0);
+			this.Indices.AddRange(indices);
 		}
 		readonly IType type;
 		/// <summary>Returns the type operand.</summary>
 		public IType Type { get { return type; } }
-		public static readonly SlotInfo SizeSlot = new SlotInfo("Size", canInlineInto: true);
-		ILInstruction size;
-		public ILInstruction Size {
-			get { return this.size; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.size, value, 0);
-			}
-		}
+		public static readonly SlotInfo IndicesSlot = new SlotInfo("Indices", canInlineInto: true);
+		public InstructionCollection<ILInstruction> Indices { get; private set; }
 		protected sealed override int GetChildCount()
 		{
-			return 1;
+			return Indices.Count;
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
 			switch (index) {
-				case 0:
-					return this.size;
 				default:
-					throw new IndexOutOfRangeException();
+					return this.Indices[index - 0];
 			}
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
 		{
 			switch (index) {
-				case 0:
-					this.Size = value;
-					break;
 				default:
-					throw new IndexOutOfRangeException();
+					this.Indices[index - 0] = value;
+					break;
 			}
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
 		{
 			switch (index) {
-				case 0:
-					return SizeSlot;
 				default:
-					throw new IndexOutOfRangeException();
+					return IndicesSlot;
 			}
 		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (NewArr)ShallowClone();
-			clone.Size = this.size.Clone();
+			clone.Indices = new InstructionCollection<ILInstruction>(this, 0);
+			clone.Indices.AddRange(this.Indices.Select(arg => arg.Clone()));
 			return clone;
 		}
 		public override StackType ResultType { get { return StackType.O; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return size.Flags | InstructionFlags.MayThrow;
+			return Indices.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow;
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -2574,7 +2613,11 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
 			output.Write('(');
-			this.size.WriteTo(output);
+			bool first = true;
+			foreach (var indices in Indices) {
+				if (!first) output.Write(", "); else first = false;
+				indices.WriteTo(output);
+			}
 			output.Write(')');
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -2762,12 +2805,16 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Load address of array element.</summary>
 	public sealed partial class LdElema : ILInstruction
 	{
-		public LdElema(ILInstruction array, ILInstruction index, IType type) : base(OpCode.LdElema)
+		public LdElema(IType type, ILInstruction array, params ILInstruction[] indices) : base(OpCode.LdElema)
 		{
-			this.Array = array;
-			this.Index = index;
 			this.type = type;
+			this.Array = array;
+			this.Indices = new InstructionCollection<ILInstruction>(this, 1);
+			this.Indices.AddRange(indices);
 		}
+		readonly IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type { get { return type; } }
 		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
 		ILInstruction array;
 		public ILInstruction Array {
@@ -2777,28 +2824,19 @@ namespace ICSharpCode.Decompiler.IL
 				SetChildInstruction(ref this.array, value, 0);
 			}
 		}
-		public static readonly SlotInfo IndexSlot = new SlotInfo("Index", canInlineInto: true);
-		ILInstruction index;
-		public ILInstruction Index {
-			get { return this.index; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.index, value, 1);
-			}
-		}
+		public static readonly SlotInfo IndicesSlot = new SlotInfo("Indices", canInlineInto: true);
+		public InstructionCollection<ILInstruction> Indices { get; private set; }
 		protected sealed override int GetChildCount()
 		{
-			return 2;
+			return 1 + Indices.Count;
 		}
 		protected sealed override ILInstruction GetChild(int index)
 		{
 			switch (index) {
 				case 0:
 					return this.array;
-				case 1:
-					return this.index;
 				default:
-					throw new IndexOutOfRangeException();
+					return this.Indices[index - 1];
 			}
 		}
 		protected sealed override void SetChild(int index, ILInstruction value)
@@ -2807,11 +2845,9 @@ namespace ICSharpCode.Decompiler.IL
 				case 0:
 					this.Array = value;
 					break;
-				case 1:
-					this.Index = value;
-					break;
 				default:
-					throw new IndexOutOfRangeException();
+					this.Indices[index - 1] = value;
+					break;
 			}
 		}
 		protected sealed override SlotInfo GetChildSlot(int index)
@@ -2819,28 +2855,24 @@ namespace ICSharpCode.Decompiler.IL
 			switch (index) {
 				case 0:
 					return ArraySlot;
-				case 1:
-					return IndexSlot;
 				default:
-					throw new IndexOutOfRangeException();
+					return IndicesSlot;
 			}
 		}
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (LdElema)ShallowClone();
 			clone.Array = this.array.Clone();
-			clone.Index = this.index.Clone();
+			clone.Indices = new InstructionCollection<ILInstruction>(this, 1);
+			clone.Indices.AddRange(this.Indices.Select(arg => arg.Clone()));
 			return clone;
 		}
-		readonly IType type;
-		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
 		public override StackType ResultType { get { return StackType.Ref; } }
 		/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>
 		public bool IsReadOnly { get; set; }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return array.Flags | index.Flags | InstructionFlags.MayThrow;
+			return array.Flags | Indices.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow;
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -2851,8 +2883,10 @@ namespace ICSharpCode.Decompiler.IL
 			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
 			output.Write('(');
 			this.array.WriteTo(output);
-			output.Write(", ");
-			this.index.WriteTo(output);
+			foreach (var indices in Indices) {
+				output.Write(", ");
+				indices.WriteTo(output);
+			}
 			output.Write(')');
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -4140,16 +4174,14 @@ namespace ICSharpCode.Decompiler.IL
 			type = default(IType);
 			return false;
 		}
-		public bool MatchNewArr(out IType type, out ILInstruction size)
+		public bool MatchNewArr(out IType type)
 		{
 			var inst = this as NewArr;
 			if (inst != null) {
 				type = inst.Type;
-				size = inst.Size;
 				return true;
 			}
 			type = default(IType);
-			size = default(ILInstruction);
 			return false;
 		}
 		public bool MatchDefaultValue(out IType type)
@@ -4200,18 +4232,16 @@ namespace ICSharpCode.Decompiler.IL
 			array = default(ILInstruction);
 			return false;
 		}
-		public bool MatchLdElema(out ILInstruction array, out ILInstruction index, out IType type)
+		public bool MatchLdElema(out IType type, out ILInstruction array)
 		{
 			var inst = this as LdElema;
 			if (inst != null) {
-				array = inst.Array;
-				index = inst.Index;
 				type = inst.Type;
+				array = inst.Array;
 				return true;
 			}
-			array = default(ILInstruction);
-			index = default(ILInstruction);
 			type = default(IType);
+			array = default(ILInstruction);
 			return false;
 		}
 	}

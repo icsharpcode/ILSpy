@@ -28,6 +28,9 @@ namespace ICSharpCode.Decompiler
 	{
 		ICompilation Compilation { get; }
 		
+		TypeDefinition GetCecil(ITypeDefinition typeDefinition);
+		MemberReference GetCecil(IMember member);
+		
 		IType Resolve(TypeReference typeReference);
 		IField Resolve(FieldReference fieldReference);
 		IMethod Resolve(MethodReference methodReference);

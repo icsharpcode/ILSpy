@@ -21,6 +21,15 @@ using System.Collections.Generic;
 
 public class InitializerTests
 {
+	public static int Main()
+	{
+		int[,] test = new int[2,3];
+		test[0,0] = 0;
+		test[0,1] = 1;
+		test[0,2] = 2;
+		return test.Length + test[0, 0] + test[0, 2];
+	}
+	
 	private enum MyEnum
 	{
 		a,

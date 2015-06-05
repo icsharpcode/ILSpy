@@ -63,5 +63,15 @@ namespace ICSharpCode.Decompiler
 				method = (IMethod)method.Specialize(substitution);
 			return method;
 		}
+
+		public Mono.Cecil.TypeDefinition GetCecil(ITypeDefinition typeDefinition)
+		{
+			return context.GetCecil(typeDefinition);
+		}
+
+		public Mono.Cecil.MemberReference GetCecil(IMember member)
+		{
+			return context.GetCecil(member);
+		}
 	}
 }

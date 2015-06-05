@@ -135,15 +135,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitNewArr(NewArr inst)
 		{
-			var arg = Translate(inst.Size);
-			return new ArrayCreateExpression {
-				Type = ConvertType(inst.Type),
-				Arguments = {
-					arg
-				}
-			}
-			.WithILInstruction(inst)
-			.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, 1), new [] { arg.ResolveResult }, new ResolveResult[0]));
+			var dimensions = inst.Indices.Count;
+			var args = inst.Indices.Select(arg => Translate(arg)).ToArray();
+			var expr = new ArrayCreateExpression { Type = ConvertType(inst.Type) };
+			expr.Arguments.AddRange(args.Select(arg => arg.Expression));
+			return expr.WithILInstruction(inst)
+					.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, dimensions), args.Select(a => a.ResolveResult).ToList(), new ResolveResult[0]));
 		}
 		
 		protected internal override TranslatedExpression VisitLocAlloc(LocAlloc inst)
@@ -696,7 +693,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var arrayType = arrayExpr.Type as ArrayType;
 			// TODO: what if arrayExpr is not an array type?
 			// TODO: what if the type of the ldelema instruction does not match the array type?
-			TranslatedExpression expr = new IndexerExpression(arrayExpr, Translate(inst.Index))
+			TranslatedExpression expr = new IndexerExpression(arrayExpr, inst.Indices.Select(i => Translate(i).Expression))
 				.WithILInstruction(inst).WithRR(new ResolveResult(arrayType != null ? arrayType.ElementType : SpecialType.UnknownType));
 			return new DirectionExpression(FieldDirection.Ref, expr)
 				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));

@@ -27,7 +27,7 @@ using ICSharpCode.Decompiler.Disassembler;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public abstract class CallInstruction : ILInstruction
+	public abstract partial class CallInstruction : ILInstruction
 	{
 		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true, isCollection: true);
 		
@@ -45,7 +45,6 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public readonly InstructionCollection<ILInstruction> Arguments;
 		public readonly IMethod Method;
 		
 		/// <summary>
@@ -66,16 +65,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.Arguments = new InstructionCollection<ILInstruction>(this, 0);
 		}
 		
-		public sealed override ILInstruction Clone()
-		{
-			var clone = Create(this.OpCode, this.Method);
-			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
-			clone.ILRange = this.ILRange;
-			clone.IsTail = this.IsTail;
-			clone.ConstrainedTo = this.ConstrainedTo;
-			return clone;
-		}
-		
 		public override StackType ResultType {
 			get {
 				if (OpCode == OpCode.NewObj)
@@ -83,34 +72,6 @@ namespace ICSharpCode.Decompiler.IL
 				else
 					return Method.ReturnType.GetStackType();
 			}
-		}
-		
-		protected sealed override int GetChildCount()
-		{
-			return Arguments.Count;
-		}
-		
-		protected sealed override ILInstruction GetChild(int index)
-		{
-			return Arguments[index];
-		}
-		
-		protected sealed override void SetChild(int index, ILInstruction value)
-		{
-			Arguments[index] = value;
-		}
-		
-		protected override SlotInfo GetChildSlot(int index)
-		{
-			return ArgumentSlot;
-		}
-		
-		protected override InstructionFlags ComputeFlags()
-		{
-			var flags = InstructionFlags.MayThrow | InstructionFlags.SideEffect;
-			foreach (var op in Arguments)
-				flags |= op.Flags;
-			return flags;
 		}
 		
 		public override void WriteTo(ITextOutput output)
