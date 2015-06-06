@@ -691,13 +691,13 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldvirtftn:
 					return Push(new LdVirtFtn(Pop(), ReadAndDecodeMethodReference()));
 				case ILOpCode.Mkrefany:
-					throw new NotImplementedException();
+					return Push(new MakeRefAny(Pop(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Newarr:
 					return Push(new NewArr(ReadAndDecodeTypeReference(), Pop()));
 				case ILOpCode.Refanytype:
-					throw new NotImplementedException();
+					return Push(new RefAnyType(Pop()));
 				case ILOpCode.Refanyval:
-					throw new NotImplementedException();
+					return Push(new RefAnyValue(Pop(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Rethrow:
 					return new Rethrow();
 				case ILOpCode.Sizeof:
@@ -806,6 +806,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		LdLoc Pop()
 		{
+			if (currentStack.IsEmpty)
+				Debugger.Break();
 			// TODO: handle stack underflow?
 			ILVariable v;
 			currentStack = currentStack.Pop(out v);
@@ -938,31 +940,30 @@ namespace ICSharpCode.Decompiler.IL
 			for (int i = arguments.Length - 1; i >= 0; i--) {
 				arguments[i] = Pop();
 			}
-			ILInstruction result;
-			if (method.DeclaringType.Kind == TypeKind.Array) {
-				var type = ((ICSharpCode.NRefactory.TypeSystem.ArrayType)method.DeclaringType).ElementType;
-				if (opCode == OpCode.NewObj) {
-					result = new NewArr(type, arguments);
-				} else if (method.Name == "Set") {
-					var target = arguments[0].Clone();
-					var value = arguments.Last().Clone();
-					var indices = arguments.Skip(1).Take(arguments.Length - 2).ToArray();
-					result = new StObj(new LdElema(type, target, indices), value, type);
-				} else if (method.Name == "Get") {
-					var target = arguments[0].Clone();
-					var indices = arguments.Skip(1).ToArray();
-					result = new LdObj(new LdElema(type, target, indices), type);
-				} else
+			switch (method.DeclaringType.Kind) {
+				case TypeKind.Array:
+					var type = ((ICSharpCode.NRefactory.TypeSystem.ArrayType)method.DeclaringType).ElementType;
+					if (opCode == OpCode.NewObj)
+						return Push(new NewArr(type, arguments));
+					if (method.Name == "Set") {
+						var target = arguments[0];
+						var value = arguments.Last();
+						var indices = arguments.Skip(1).Take(arguments.Length - 2).ToArray();
+						return new StObj(new LdElema(type, target, indices), value, type);
+					}
+					if (method.Name == "Get") {
+						var target = arguments[0];
+						var indices = arguments.Skip(1).ToArray();
+						return Push(new LdObj(new LdElema(type, target, indices), type));
+					}
 					throw new NotImplementedException();
-			} else {
-				var call = CallInstruction.Create(opCode, method);
-				call.Arguments.AddRange(arguments);
-				result = call;
+				default:
+					var call = CallInstruction.Create(opCode, method);
+					call.Arguments.AddRange(arguments);
+					if (call.ResultType != StackType.Void)
+						return Push(call);
+					return call;
 			}
-			if (result.ResultType != StackType.Void)
-				return Push(result);
-			else
-				return result;
 		}
 		
 		static int GetPopCount(OpCode callCode, MethodReference methodReference)

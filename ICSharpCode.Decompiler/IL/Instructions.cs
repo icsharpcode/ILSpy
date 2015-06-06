@@ -173,6 +173,12 @@ namespace ICSharpCode.Decompiler.IL
 		LdLen,
 		/// <summary>Load address of array element.</summary>
 		LdElema,
+		/// <summary>Push a typed reference of type class onto the stack.</summary>
+		MakeRefAny,
+		/// <summary>Push the type token stored in a typed reference.</summary>
+		RefAnyType,
+		/// <summary>Push the address stored in a typed reference.</summary>
+		RefAnyValue,
 	}
 
 	/// <summary>Instruction without any arguments</summary>
@@ -2899,6 +2905,87 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
+	/// <summary>Push a typed reference of type class onto the stack.</summary>
+	public sealed partial class MakeRefAny : UnaryInstruction
+	{
+		public MakeRefAny(ILInstruction argument, IType type) : base(OpCode.MakeRefAny, argument)
+		{
+			this.type = type;
+		}
+		readonly IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type { get { return type; } }
+		public override StackType ResultType { get { return StackType.O; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitMakeRefAny(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitMakeRefAny(this);
+		}
+	}
+
+	/// <summary>Push the type token stored in a typed reference.</summary>
+	public sealed partial class RefAnyType : UnaryInstruction
+	{
+		public RefAnyType(ILInstruction argument) : base(OpCode.RefAnyType, argument)
+		{
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitRefAnyType(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitRefAnyType(this);
+		}
+	}
+
+	/// <summary>Push the address stored in a typed reference.</summary>
+	public sealed partial class RefAnyValue : UnaryInstruction
+	{
+		public RefAnyValue(ILInstruction argument, IType type) : base(OpCode.RefAnyValue, argument)
+		{
+			this.type = type;
+		}
+		readonly IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type { get { return type; } }
+		public override StackType ResultType { get { return StackType.Ref; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			output.Write('(');
+			Argument.WriteTo(output);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitRefAnyValue(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitRefAnyValue(this);
+		}
+	}
+
 
 	/// <summary>
 	/// Base class for visitor pattern.
@@ -3193,6 +3280,18 @@ namespace ICSharpCode.Decompiler.IL
 			Default(inst);
 		}
 		protected internal virtual void VisitLdElema(LdElema inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitMakeRefAny(MakeRefAny inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitRefAnyType(RefAnyType inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitRefAnyValue(RefAnyValue inst)
 		{
 			Default(inst);
 		}
@@ -3494,6 +3593,18 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitMakeRefAny(MakeRefAny inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitRefAnyType(RefAnyType inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitRefAnyValue(RefAnyValue inst)
+		{
+			return Default(inst);
+		}
 	}
 	
 	partial class BinaryNumericInstruction
@@ -3623,6 +3734,9 @@ namespace ICSharpCode.Decompiler.IL
 			"sizeof",
 			"ldlen",
 			"ldelema",
+			"mkrefany",
+			"refanytype",
+			"refanyval",
 		};
 	}
 	
@@ -4242,6 +4356,40 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			type = default(IType);
 			array = default(ILInstruction);
+			return false;
+		}
+		public bool MatchMakeRefAny(out ILInstruction argument, out IType type)
+		{
+			var inst = this as MakeRefAny;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
+			return false;
+		}
+		public bool MatchRefAnyType(out ILInstruction argument)
+		{
+			var inst = this as RefAnyType;
+			if (inst != null) {
+				argument = inst.Argument;
+				return true;
+			}
+			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchRefAnyValue(out ILInstruction argument, out IType type)
+		{
+			var inst = this as RefAnyValue;
+			if (inst != null) {
+				argument = inst.Argument;
+				type = inst.Type;
+				return true;
+			}
+			argument = default(ILInstruction);
+			type = default(IType);
 			return false;
 		}
 	}

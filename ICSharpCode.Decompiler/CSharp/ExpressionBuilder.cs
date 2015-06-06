@@ -28,8 +28,6 @@ using ICSharpCode.NRefactory.TypeSystem;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -733,6 +731,47 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitCastClass(CastClass inst)
 		{
 			return Translate(inst.Argument).ConvertTo(inst.Type, this);
+		}
+		
+		protected internal override TranslatedExpression VisitArglist(Arglist inst)
+		{
+			return new UndocumentedExpression { UndocumentedExpressionType = UndocumentedExpressionType.ArgListAccess }
+				.WithILInstruction(inst)
+				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeArgumentHandle"))));
+		}
+		
+		protected internal override TranslatedExpression VisitMakeRefAny(MakeRefAny inst)
+		{
+			var arg = Translate(inst.Argument).Expression;
+			if (arg is DirectionExpression) {
+				arg = ((DirectionExpression)arg).Expression;
+			}
+			return new UndocumentedExpression {
+				UndocumentedExpressionType = UndocumentedExpressionType.MakeRef,
+				Arguments = { arg.Detach() }
+			}
+			.WithILInstruction(inst)
+			.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "TypedReference"))));
+		}
+		
+		protected internal override TranslatedExpression VisitRefAnyType(RefAnyType inst)
+		{
+			return new UndocumentedExpression {
+				UndocumentedExpressionType = UndocumentedExpressionType.RefType,
+				Arguments = { Translate(inst.Argument).Expression.Detach() }
+			}.Member("TypeHandle")
+			.WithILInstruction(inst)
+			.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle"))));
+		}
+		
+		protected internal override TranslatedExpression VisitRefAnyValue(RefAnyValue inst)
+		{
+			var expr = new UndocumentedExpression {
+				UndocumentedExpressionType = UndocumentedExpressionType.RefValue,
+				Arguments = { Translate(inst.Argument).Expression, new TypeReferenceExpression(ConvertType(inst.Type)) }
+			};
+			return new DirectionExpression(FieldDirection.Ref, expr.WithILInstruction(inst)).WithoutILInstruction()
+			.WithRR(new ByReferenceResolveResult(inst.Type, false));
 		}
 
 		protected override TranslatedExpression Default(ILInstruction inst)
