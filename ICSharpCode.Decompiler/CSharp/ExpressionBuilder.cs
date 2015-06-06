@@ -18,6 +18,7 @@
 
 using System.Diagnostics;
 using ICSharpCode.NRefactory.CSharp.TypeSystem;
+using ICSharpCode.NRefactory.Utils;
 using ExpressionType = System.Linq.Expressions.ExpressionType;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
 using ICSharpCode.NRefactory.CSharp.Resolver;
@@ -138,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var expr = new ArrayCreateExpression { Type = ConvertType(inst.Type) };
 			expr.Arguments.AddRange(args.Select(arg => arg.Expression));
 			return expr.WithILInstruction(inst)
-					.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, dimensions), args.Select(a => a.ResolveResult).ToList(), new ResolveResult[0]));
+				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, dimensions), args.Select(a => a.ResolveResult).ToList(), new ResolveResult[0]));
 		}
 		
 		protected internal override TranslatedExpression VisitLocAlloc(LocAlloc inst)
@@ -736,7 +737,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitArglist(Arglist inst)
 		{
 			return new UndocumentedExpression { UndocumentedExpressionType = UndocumentedExpressionType.ArgListAccess }
-				.WithILInstruction(inst)
+			.WithILInstruction(inst)
 				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeArgumentHandle"))));
 		}
 		
@@ -751,7 +752,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				Arguments = { arg.Detach() }
 			}
 			.WithILInstruction(inst)
-			.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "TypedReference"))));
+				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "TypedReference"))));
 		}
 		
 		protected internal override TranslatedExpression VisitRefAnyType(RefAnyType inst)
@@ -760,8 +761,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				UndocumentedExpressionType = UndocumentedExpressionType.RefType,
 				Arguments = { Translate(inst.Argument).Expression.Detach() }
 			}.Member("TypeHandle")
-			.WithILInstruction(inst)
-			.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle"))));
+				.WithILInstruction(inst)
+				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle"))));
 		}
 		
 		protected internal override TranslatedExpression VisitRefAnyValue(RefAnyValue inst)
@@ -771,9 +772,69 @@ namespace ICSharpCode.Decompiler.CSharp
 				Arguments = { Translate(inst.Argument).Expression, new TypeReferenceExpression(ConvertType(inst.Type)) }
 			};
 			return new DirectionExpression(FieldDirection.Ref, expr.WithILInstruction(inst)).WithoutILInstruction()
-			.WithRR(new ByReferenceResolveResult(inst.Type, false));
+				.WithRR(new ByReferenceResolveResult(inst.Type, false));
+		}
+		
+		protected internal override TranslatedExpression VisitBlock(Block block)
+		{
+			TranslatedExpression expr;
+			if (TranslateArrayInitializer(block, out expr))
+				return expr;
+			
+			return base.VisitBlock(block);
 		}
 
+		bool TranslateArrayInitializer(Block block, out TranslatedExpression result)
+		{
+			result = default(TranslatedExpression);
+			var stloc = block.Instructions.FirstOrDefault() as StLoc;
+			var final = block.FinalInstruction as LdLoc;
+			IType type;
+			if (stloc == null || final == null || !stloc.Value.MatchNewArr(out type))
+				return false;
+			if (stloc.Variable != final.Variable)
+				return false;
+			var newArr = (NewArr)stloc.Value;
+			var values = new List<ExpressionWithResolveResult>();
+			
+			for (int i = 1; i < block.Instructions.Count; i++) {
+				ILInstruction target, value, array;
+				IType t;
+				ILVariable v;
+				if (!block.Instructions[i].MatchStObj(out target, out value, out t) || !type.Equals(t))
+					return false;
+				if (!target.MatchLdElema(out t, out array) || !type.Equals(t))
+					return false;
+				if (!array.MatchLdLoc(out v) || v != final.Variable)
+					return false;
+				ExpressionWithResolveResult val = Translate(value);
+				object obj;
+				if (val.Expression is PrimitiveExpression) {
+					var primitiveValue = ((PrimitiveExpression)val.Expression).Value;
+					if (type.IsKnownType(KnownTypeCode.Boolean)) {
+						obj = !0.Equals(primitiveValue);
+					} else if (type.Kind == TypeKind.Enum) {
+						var enumType = type.GetDefinition().EnumUnderlyingType;
+						obj = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), primitiveValue, true);
+					} else {
+						obj = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), primitiveValue, false);
+					}
+					val = ConvertConstantValue(new ConstantResolveResult(type, obj));
+				}
+				values.Add(val);
+			}
+			
+			var expr = new ArrayCreateExpression {
+				Type = ConvertType(type),
+				Initializer = new ArrayInitializerExpression(values.Select(e => e.Expression))
+			};
+			expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
+			result = expr.WithILInstruction(block)
+				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, newArr.Indices.Count), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), values.Select(v => v.ResolveResult).ToArray()));
+			
+			return true;
+		}
+		
 		protected override TranslatedExpression Default(ILInstruction inst)
 		{
 			return ErrorExpression("OpCode not supported: " + inst.OpCode);

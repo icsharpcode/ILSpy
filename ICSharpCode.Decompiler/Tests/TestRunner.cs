@@ -69,6 +69,12 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			TestCompileDecompileCompileOutputAll("ValueTypeCall.cs");
 		}
+		
+		[Test, Ignore("broken")]
+		public void InitializerTests()
+		{
+			TestCompileDecompileCompileOutputAll("InitializerTests.cs");
+		}
 
 		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{
