@@ -116,17 +116,33 @@ namespace ICSharpCode.Decompiler.CSharp
 			rootNode.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 		}
 		
-		public SyntaxTree DecompileWholeModuleAsSingleFile()
+		/// <summary>
+		/// Decompile assembly and module attributes.
+		/// </summary>
+		public SyntaxTree DecompileModuleAndAssemblyAttributes()
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
 			SyntaxTree syntaxTree = new SyntaxTree();
-			foreach (var a in typeSystem.Compilation.MainAssembly.AssemblyAttributes)
-			{
+			DoDecompileModuleAndAssemblyAttributes(decompilationContext, syntaxTree);
+			RunTransforms(syntaxTree, decompilationContext);
+			return syntaxTree;
+		}
+
+		void DoDecompileModuleAndAssemblyAttributes(ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
+		{
+			foreach (var a in typeSystem.Compilation.MainAssembly.AssemblyAttributes) {
 				var astBuilder = CreateAstBuilder(decompilationContext);
 				var attrSection = new AttributeSection(astBuilder.ConvertAttribute(a));
 				attrSection.AttributeTarget = "assembly";
 				syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 			}
+		}
+		
+		public SyntaxTree DecompileWholeModuleAsSingleFile()
+		{
+			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
+			SyntaxTree syntaxTree = new SyntaxTree();
+			DoDecompileModuleAndAssemblyAttributes(decompilationContext, syntaxTree);
 			string currentNamespace = null;
 			AstNode groupNode = null;
 			foreach (var cecilType in typeSystem.ModuleDefinition.Types) {
@@ -150,7 +166,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return syntaxTree;
 		}
 		
-		public EntityDeclaration Decompile(TypeDefinition typeDefinition)
+		public SyntaxTree Decompile(TypeDefinition typeDefinition)
 		{
 			if (typeDefinition == null)
 				throw new ArgumentNullException("typeDefinition");
@@ -158,9 +174,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (typeDef == null)
 				throw new InvalidOperationException("Could not find type definition in NR type system");
 			var decompilationContext = new SimpleTypeResolveContext(typeDef);
-			var decl = DoDecompile(typeDef, decompilationContext);
-			RunTransforms(decl, decompilationContext);
-			return decl;
+			var syntaxTree = new SyntaxTree();
+			syntaxTree.Members.Add(DoDecompile(typeDef, decompilationContext));
+			RunTransforms(syntaxTree, decompilationContext);
+			return syntaxTree;
 		}
 		
 		EntityDeclaration DoDecompile(ITypeDefinition typeDef, ITypeResolveContext decompilationContext)
@@ -221,7 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return typeDecl;
 		}
 		
-		public EntityDeclaration Decompile(MethodDefinition methodDefinition)
+		public SyntaxTree Decompile(MethodDefinition methodDefinition)
 		{
 			if (methodDefinition == null)
 				throw new ArgumentNullException("methodDefinition");
@@ -229,9 +246,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method == null)
 				throw new InvalidOperationException("Could not find method in NR type system");
 			var decompilationContext = new SimpleTypeResolveContext(method);
-			var decl = DoDecompile(methodDefinition, method, decompilationContext);
-			RunTransforms(decl, decompilationContext);
-			return decl;
+			var syntaxTree = new SyntaxTree();
+			syntaxTree.Members.Add(DoDecompile(methodDefinition, method, decompilationContext));
+			RunTransforms(syntaxTree, decompilationContext);
+			return syntaxTree;
 		}
 
 		EntityDeclaration DoDecompile(MethodDefinition methodDefinition, IMethod method, ITypeResolveContext decompilationContext)

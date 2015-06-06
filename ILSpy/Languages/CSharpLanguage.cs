@@ -330,11 +330,10 @@ namespace ICSharpCode.ILSpy
 					if (options.FullDecompilation) {
 						SyntaxTree st = decompiler.DecompileWholeModuleAsSingleFile();
 						output.WriteLine(st.ToString());
+					} else {
+						SyntaxTree st = decompiler.DecompileModuleAndAssemblyAttributes();
+						output.WriteLine(st.ToString());
 					}
-//					AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: assembly.ModuleDefinition);
-//					codeDomBuilder.AddAssembly(assembly.ModuleDefinition, onlyAssemblyLevel: !options.FullDecompilation);
-//					codeDomBuilder.RunTransformations(transformAbortCondition);
-//					codeDomBuilder.GenerateCode(output);
 				}
 			}
 		}
@@ -474,21 +473,21 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 
-		IEnumerable<Tuple<string, string>> WriteAssemblyInfo(ModuleDefinition module, DecompilationOptions options, HashSet<string> directories)
+		IEnumerable<Tuple<string, string>> WriteAssemblyInfo(DecompilerTypeSystem ts, DecompilationOptions options, HashSet<string> directories)
 		{
 			// don't automatically load additional assemblies when an assembly node is selected in the tree view
 			using (LoadedAssembly.DisableAssemblyLoad())
 			{
-//				AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: module);
-//				codeDomBuilder.AddAssembly(module, onlyAssemblyLevel: true);
-//				codeDomBuilder.RunTransformations(transformAbortCondition);
+				CSharpDecompiler decompiler = new CSharpDecompiler(ts);
+				SyntaxTree syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
 
 				string prop = "Properties";
 				if (directories.Add("Properties"))
 					Directory.CreateDirectory(Path.Combine(options.SaveAsProjectDirectory, prop));
 				string assemblyInfo = Path.Combine(prop, "AssemblyInfo" + this.FileExtension);
-//				using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, assemblyInfo)))
-//					codeDomBuilder.GenerateCode(new PlainTextOutput(w));
+				using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, assemblyInfo))) {
+					syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, options.DecompilerSettings.CSharpFormattingOptions));
+				}
 				return new Tuple<string, string>[] { Tuple.Create("Compile", assemblyInfo) };
 			}
 		}
@@ -508,7 +507,6 @@ namespace ICSharpCode.ILSpy
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
 			DecompilerTypeSystem ts = new DecompilerTypeSystem(module);
-//			AstMethodBodyBuilder.ClearUnhandledOpcodes();
 			Parallel.ForEach(
 				files,
 				new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
@@ -516,12 +514,12 @@ namespace ICSharpCode.ILSpy
 					using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, file.Key))) {
 						CSharpDecompiler decompiler = new CSharpDecompiler(ts);
 						foreach (TypeDefinition type in file) {
-							w.WriteLine(decompiler.Decompile(type).ToString());
+							var syntaxTree = decompiler.Decompile(type);
+							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, options.DecompilerSettings.CSharpFormattingOptions));
 						}
 					}
 				});
-//			AstMethodBodyBuilder.PrintNumberOfUnhandledOpcodes();
-			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(module, options, directories));
+			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, options, directories));
 		}
 		#endregion
 
