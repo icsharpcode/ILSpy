@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
+using System.Linq;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -60,6 +62,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// => logic.not(ceq(ldnull, right))
 				inst.ReplaceWith(new LogicNot(new Ceq(inst.Left, inst.Right) { ILRange = inst.ILRange }));
 			}
+		}
+		
+		protected internal override void VisitCall(Call inst)
+		{
+			base.VisitCall(inst);
+			if (!inst.Method.IsConstructor || inst.Method.DeclaringType.Kind != TypeKind.Struct)
+				return;
+			if (inst.Arguments.Count != inst.Method.Parameters.Count + 1)
+				return;
+			var newObj = new NewObj(inst.Method);
+			newObj.Arguments.AddRange(inst.Arguments.Skip(1));
+			var expr = new StObj(inst.Arguments[0], newObj, inst.Method.DeclaringType);
+			inst.ReplaceWith(expr);
 		}
 	}
 }

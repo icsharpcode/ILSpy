@@ -47,7 +47,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			new ILInlining(),
 			new TransformingVisitor(),
 			new ExpressionTransforms(),
-			new TransformValueTypeInitializers(),
 			new TransformArrayInitializers()
 		};
 

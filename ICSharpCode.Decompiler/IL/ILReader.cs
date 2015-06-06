@@ -800,14 +800,14 @@ namespace ICSharpCode.Decompiler.IL
 		
 		LdLoc Peek()
 		{
+			Debug.Assert(!currentStack.IsEmpty);
 			// TODO: handle stack underflow?
 			return new LdLoc(currentStack.Peek());
 		}
 		
 		LdLoc Pop()
 		{
-			if (currentStack.IsEmpty)
-				Debugger.Break();
+			Debug.Assert(!currentStack.IsEmpty);
 			// TODO: handle stack underflow?
 			ILVariable v;
 			currentStack = currentStack.Pop(out v);
