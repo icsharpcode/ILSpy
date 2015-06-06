@@ -28,11 +28,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// 
 	/// The transforms here do not open up new inlining opportunities.
 	/// </remarks>
-	public class ExpressionTransforms : IILTransform, ILVisitor
+	public class ExpressionTransforms : ILVisitor, IILTransform
 	{
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
 			function.AcceptVisitor(this);
+		}
+		
+		protected override void Default(ILInstruction inst)
+		{
+			foreach (var child in inst.Children) {
+				child.AcceptVisitor(this);
+			}
 		}
 		
 		protected internal override void VisitCgt_Un(Cgt_Un inst)
