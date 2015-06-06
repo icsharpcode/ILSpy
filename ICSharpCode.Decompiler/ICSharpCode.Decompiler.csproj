@@ -132,6 +132,7 @@
     <Compile Include="IL\InstructionOutputExtensions.cs" />
     <Compile Include="IL\PrimitiveType.cs" />
     <Compile Include="IL\StackType.cs" />
+    <Compile Include="IL\Transforms\TransformValueTypeInitializers.cs" />
     <Compile Include="Output\ITextOutput.cs" />
     <Compile Include="Output\PlainTextOutput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

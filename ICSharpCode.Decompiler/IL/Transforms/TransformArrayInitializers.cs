@@ -33,13 +33,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.context = context;
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-					try {
-						if (!DoTransform(block, i))
-							DoTransformMultiDim(block, i);
-					} catch (Exception ex) {
-						Console.WriteLine(ex);
-						throw;
-					}
+					if (!DoTransform(block, i))
+						DoTransformMultiDim(block, i);
 				}
 			}
 		}
