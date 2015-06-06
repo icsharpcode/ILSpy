@@ -51,6 +51,9 @@
     <RunCodeAnalysis>true</RunCodeAnalysis>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(AppVeyor)' != ''">
+    <DeployExtension>False</DeployExtension>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="EnvDTE">
       <HintPath>..\packages\VSSDK.DTE.7.0.3\lib\net20\envdte.dll</HintPath>

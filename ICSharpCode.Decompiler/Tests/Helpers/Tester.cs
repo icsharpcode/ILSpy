@@ -54,6 +54,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var errorTask = process.StandardError.ReadToEndAsync();
 
 			Task.WaitAll(outputTask, errorTask);
+			process.WaitForExit();
 
 			output = outputTask.Result;
 			error = errorTask.Result;

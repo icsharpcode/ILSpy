@@ -1,0 +1,11 @@
+version: 1.0.{build}
+configuration: Debug
+platform: Any CPU
+install:
+- git submodule update --init --recursive
+before_build:
+- nuget restore ILSpy.sln
+build:
+  project: ILSpy.sln
+  parallel: true
+  verbosity: minimal
