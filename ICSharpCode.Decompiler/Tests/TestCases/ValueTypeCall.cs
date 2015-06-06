@@ -9,7 +9,7 @@ namespace ValueTypeCall
 		public void Increment()
 		{
 			Console.WriteLine("Inc() called on {0}", val);
-			val++;
+			val = val + 1;
 		}
 	}
 	
