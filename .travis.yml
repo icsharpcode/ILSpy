@@ -1,0 +1,6 @@
+language: csharp
+install:
+  - nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory testrunner
+script:
+  - xbuild /p:Configuration=Debug ICSharpCode.Decompiler/ICSharpCode.Decompiler.sln
+  - mono ./testrunner/NUnit.Runners.2.6.4/tools/nunit-console.exe ICSharpCode.Decompiler/bin/Debug/ICSharpCode.Decompiler.Tests.dll
