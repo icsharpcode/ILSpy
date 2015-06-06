@@ -189,6 +189,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					typeDecl.Members.Add(propDecl);
 				}
 			}
+			foreach (var @event in typeDef.Events) {
+				var eventDef = typeSystem.GetCecil(@event) as EventDefinition;
+				if (eventDef != null) {
+					var eventDecl = DoDecompile(eventDef, @event, decompilationContext.WithCurrentMember(@event));
+					typeDecl.Members.Add(eventDecl);
+				}
+			}
 			foreach (var method in typeDef.Methods) {
 				var methodDef = typeSystem.GetCecil(method) as MethodDefinition;
 				if (methodDef != null) {
@@ -320,6 +327,21 @@ namespace ICSharpCode.Decompiler.CSharp
 				DecompileBody(propertyDefinition.SetMethod, property.Setter, setter, decompilationContext, typeSystemAstBuilder);
 			}
 			return entityDecl;
+		}
+		
+		EntityDeclaration DoDecompile(EventDefinition propertyDefinition, IEvent ev, ITypeResolveContext decompilationContext)
+		{
+			Debug.Assert(decompilationContext.CurrentMember == ev);
+			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
+			typeSystemAstBuilder.UseCustomEvents = true;
+			var eventDecl = (CustomEventDeclaration)typeSystemAstBuilder.ConvertEntity(ev);
+			if (propertyDefinition.AddMethod != null && propertyDefinition.AddMethod.HasBody) {
+				DecompileBody(propertyDefinition.AddMethod, ev.AddAccessor, eventDecl.AddAccessor, decompilationContext, typeSystemAstBuilder);
+			}
+			if (propertyDefinition.RemoveMethod != null && propertyDefinition.RemoveMethod.HasBody) {
+				DecompileBody(propertyDefinition.RemoveMethod, ev.RemoveAccessor, eventDecl.RemoveAccessor, decompilationContext, typeSystemAstBuilder);
+			}
+			return eventDecl;
 		}
 	}
 }
