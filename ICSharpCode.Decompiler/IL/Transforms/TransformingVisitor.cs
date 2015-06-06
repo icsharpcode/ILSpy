@@ -26,6 +26,7 @@ namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
 	/// Visitor that applies a list of transformations to the IL Ast.
+	/// TODO: do we still need this, now that inlining is reverted back to the old ILInlining?
 	/// </summary>
 	/// <remarks>
 	/// The base class performs:

@@ -111,6 +111,7 @@
     <Compile Include="IL\Transforms\ILInlining.cs" />
     <Compile Include="IL\Transforms\LoopDetection.cs" />
     <Compile Include="IL\Transforms\OptimizingTransform.cs" />
+    <Compile Include="IL\Transforms\ExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\TransformArrayInitializers.cs" />
     <Compile Include="IL\Transforms\TransformingVisitor.cs" />
     <Compile Include="CecilExtensions.cs" />
