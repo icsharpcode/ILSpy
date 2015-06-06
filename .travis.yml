@@ -1,5 +1,7 @@
 language: csharp
+solution: ICSharpCode.Decompiler.sln
 install:
+  - nuget restore ICSharpCode.Decompiler.sln
   - nuget install NUnit.Runners -Version 2.6.4 -OutputDirectory testrunner
 script:
   - xbuild /p:Configuration=Debug ICSharpCode.Decompiler/ICSharpCode.Decompiler.sln
