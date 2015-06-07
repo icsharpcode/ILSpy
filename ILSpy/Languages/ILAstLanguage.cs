@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
 		{
 			yield return new TypedIL();
-			CSharpDecompiler decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll));
+			CSharpDecompiler decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
 			for (int i = 0; i <= decompiler.ILTransforms.Count; i++) {
 				yield return new BlockIL(decompiler.ILTransforms.Take(i).ToList());
 			}

@@ -178,7 +178,6 @@
     <Compile Include="OpenListDialog.xaml.cs">
       <DependentUpon>OpenListDialog.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Options\DecompilerSettings.cs" />
     <Compile Include="Options\DecompilerSettingsPanel.xaml.cs">
       <DependentUpon>DecompilerSettingsPanel.xaml</DependentUpon>
       <SubType>Code</SubType>

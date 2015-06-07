@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var code = RemoveIgnorableLines(File.ReadLines(fileName));
 			AssemblyDefinition assembly = CompileLegacy(code, optimize, useDebug, compilerVersion);
 
-			CSharpDecompiler decompiler = new CSharpDecompiler(assembly.MainModule);
+			CSharpDecompiler decompiler = new CSharpDecompiler(assembly.MainModule, new DecompilerSettings());
 
 			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 

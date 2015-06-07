@@ -55,7 +55,7 @@ namespace ICSharpCode.ILSpy
 		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
 		{
 			//DecompilerContext context = new DecompilerContext(ModuleDefinition.CreateModule("dummy", ModuleKind.Dll));
-			var decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll));
+			var decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
 			string lastTransformName = "no transforms";
 			int transformCount = 0;
 			foreach (var transform in decompiler.AstTransforms) {
@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
-			CSharpDecompiler decompiler = new CSharpDecompiler(method.Module);
+			CSharpDecompiler decompiler = new CSharpDecompiler(method.Module, options.DecompilerSettings);
 			while (decompiler.AstTransforms.Count > transformCount)
 				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
 			output.WriteLine(decompiler.Decompile(method).ToString());
@@ -214,7 +214,7 @@ namespace ICSharpCode.ILSpy
 */
 		public override void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(type.Module);
+			CSharpDecompiler decompiler = new CSharpDecompiler(type.Module, options.DecompilerSettings);
 			output.WriteLine(decompiler.Decompile(type).ToString());
 //			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: type);
 //			codeDomBuilder.AddType(type);
@@ -327,7 +327,7 @@ namespace ICSharpCode.ILSpy
 				
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
 				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
-					CSharpDecompiler decompiler = new CSharpDecompiler(assembly.ModuleDefinition);
+					CSharpDecompiler decompiler = new CSharpDecompiler(assembly.ModuleDefinition, options.DecompilerSettings);
 					if (options.FullDecompilation) {
 						SyntaxTree st = decompiler.DecompileWholeModuleAsSingleFile();
 						output.WriteLine(st.ToString());
@@ -467,10 +467,10 @@ namespace ICSharpCode.ILSpy
 		#region WriteCodeFilesInProject
 		bool IncludeTypeWhenDecompilingProject(TypeDefinition type, DecompilationOptions options)
 		{
-//			if (type.Name == "<Module>" || CSharpDecompiler.MemberIsHidden(type, options.DecompilerSettings))
-//				return false;
-//			if (type.Namespace == "XamlGeneratedNamespace" && type.Name == "GeneratedInternalTypeHelper")
-//				return false;
+			if (type.Name == "<Module>" || CSharpDecompiler.MemberIsHidden(type, options.DecompilerSettings))
+				return false;
+			if (type.Namespace == "XamlGeneratedNamespace" && type.Name == "GeneratedInternalTypeHelper")
+				return false;
 			return true;
 		}
 
@@ -479,7 +479,7 @@ namespace ICSharpCode.ILSpy
 			// don't automatically load additional assemblies when an assembly node is selected in the tree view
 			using (LoadedAssembly.DisableAssemblyLoad())
 			{
-				CSharpDecompiler decompiler = new CSharpDecompiler(ts);
+				CSharpDecompiler decompiler = new CSharpDecompiler(ts, options.DecompilerSettings);
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 				SyntaxTree syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
 
@@ -514,7 +514,7 @@ namespace ICSharpCode.ILSpy
 				new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
 				delegate(IGrouping<string, TypeDefinition> file) {
 					using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, file.Key))) {
-						CSharpDecompiler decompiler = new CSharpDecompiler(ts);
+						CSharpDecompiler decompiler = new CSharpDecompiler(ts, options.DecompilerSettings);
 						decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 						var syntaxTree = decompiler.DecompileTypes(file.ToArray());
 						syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, options.DecompilerSettings.CSharpFormattingOptions));

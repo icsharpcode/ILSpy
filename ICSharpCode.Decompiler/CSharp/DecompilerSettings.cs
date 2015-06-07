@@ -20,7 +20,7 @@ using System;
 using System.ComponentModel;
 using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.ILSpy.Options
+namespace ICSharpCode.Decompiler.CSharp
 {
 	/// <summary>
 	/// Settings for the decompiler.

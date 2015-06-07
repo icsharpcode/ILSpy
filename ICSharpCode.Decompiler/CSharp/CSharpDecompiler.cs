@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	public class CSharpDecompiler
 	{
 		readonly DecompilerTypeSystem typeSystem;
+		readonly DecompilerSettings settings;
 
 		List<IILTransform> ilTransforms = new List<IILTransform> {
 			new OptimizingTransform(),
@@ -89,17 +90,85 @@ namespace ICSharpCode.Decompiler.CSharp
 			get { return astTransforms; }
 		}
 
-		public CSharpDecompiler(ModuleDefinition module)
-			: this(new DecompilerTypeSystem(module))
+		public CSharpDecompiler(ModuleDefinition module, DecompilerSettings settings)
+			: this(new DecompilerTypeSystem(module), settings)
 		{
 		}
 
-		public CSharpDecompiler(DecompilerTypeSystem typeSystem)
+		public CSharpDecompiler(DecompilerTypeSystem typeSystem, DecompilerSettings settings)
 		{
 			if (typeSystem == null)
 				throw new ArgumentNullException("typeSystem");
 			this.typeSystem = typeSystem;
+			this.settings = settings;
 		}
+		
+		#region MemberIsHidden
+		public static bool MemberIsHidden(MemberReference member, DecompilerSettings settings)
+		{
+			MethodDefinition method = member as MethodDefinition;
+			if (method != null) {
+				if (method.IsGetter || method.IsSetter || method.IsAddOn || method.IsRemoveOn)
+					return true;
+				if (settings.AnonymousMethods && method.HasGeneratedName() && method.IsCompilerGenerated())
+					return true;
+			}
+
+			TypeDefinition type = member as TypeDefinition;
+			if (type != null) {
+				if (type.DeclaringType != null) {
+					if (settings.AnonymousMethods && IsClosureType(type))
+						return true;
+//					if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
+//						return true;
+//					if (settings.AsyncAwait && AsyncDecompiler.IsCompilerGeneratedStateMachine(type))
+//						return true;
+				} else if (type.IsCompilerGenerated()) {
+					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+						return true;
+					if (type.IsAnonymousType())
+						return true;
+				}
+			}
+			
+			FieldDefinition field = member as FieldDefinition;
+			if (field != null) {
+				if (field.IsCompilerGenerated()) {
+					if (settings.AnonymousMethods && IsAnonymousMethodCacheField(field))
+						return true;
+					if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field))
+						return true;
+					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
+						return true;
+				}
+				// event-fields are not [CompilerGenerated]
+				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
+					return true;
+			}
+			
+			return false;
+		}
+		
+		static bool IsSwitchOnStringCache(FieldDefinition field)
+		{
+			return field.Name.StartsWith("<>f__switch", StringComparison.Ordinal);
+		}
+
+		static bool IsAutomaticPropertyBackingField(FieldDefinition field)
+		{
+			return field.HasGeneratedName() && field.Name.EndsWith("BackingField", StringComparison.Ordinal);
+		}
+
+		static bool IsAnonymousMethodCacheField(FieldDefinition field)
+		{
+			return field.Name.StartsWith("CS$<>", StringComparison.Ordinal) || field.Name.StartsWith("<>f__am", StringComparison.Ordinal);
+		}
+
+		static bool IsClosureType(TypeDefinition type)
+		{
+			return type.HasGeneratedName() && type.IsCompilerGenerated() && (type.Name.Contains("DisplayClass") || type.Name.Contains("AnonStorey"));
+		}
+		#endregion
 		
 		TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)
 		{
@@ -151,7 +220,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeDef = typeSystem.Resolve(cecilType).GetDefinition();
 				if (typeDef.Name == "<Module>" && typeDef.Members.Count == 0)
 					continue;
-				if (string.IsNullOrEmpty(cecilType.Namespace)) {
+				if (MemberIsHidden(cecilType, settings))
+					continue;
+				if(string.IsNullOrEmpty(cecilType.Namespace)) {
 					groupNode = syntaxTree;
 				} else {
 					if (currentNamespace != cecilType.Namespace) {
@@ -247,28 +318,28 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			foreach (var field in typeDef.Fields) {
 				var fieldDef = typeSystem.GetCecil(field) as FieldDefinition;
-				if (fieldDef != null) {
+				if (fieldDef != null && !MemberIsHidden(fieldDef, settings)) {
 					var memberDecl = DoDecompile(fieldDef, field, decompilationContext.WithCurrentMember(field));
 					typeDecl.Members.Add(memberDecl);
 				}
 			}
 			foreach (var property in typeDef.Properties) {
 				var propDef = typeSystem.GetCecil(property) as PropertyDefinition;
-				if (propDef != null) {
+				if (propDef != null && !MemberIsHidden(propDef, settings)) {
 					var propDecl = DoDecompile(propDef, property, decompilationContext.WithCurrentMember(property));
 					typeDecl.Members.Add(propDecl);
 				}
 			}
 			foreach (var @event in typeDef.Events) {
 				var eventDef = typeSystem.GetCecil(@event) as EventDefinition;
-				if (eventDef != null) {
+				if (eventDef != null && !MemberIsHidden(eventDef, settings)) {
 					var eventDecl = DoDecompile(eventDef, @event, decompilationContext.WithCurrentMember(@event));
 					typeDecl.Members.Add(eventDecl);
 				}
 			}
 			foreach (var method in typeDef.Methods) {
 				var methodDef = typeSystem.GetCecil(method) as MethodDefinition;
-				if (methodDef != null) {
+				if (methodDef != null && !MemberIsHidden(methodDef, settings)) {
 					var memberDecl = DoDecompile(methodDef, method, decompilationContext.WithCurrentMember(method));
 					typeDecl.Members.Add(memberDecl);
 				}

@@ -20,6 +20,7 @@ using System;
 using System.Windows.Controls;
 using System.Xml.Linq;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
 
 namespace ICSharpCode.ILSpy.Options
 {
