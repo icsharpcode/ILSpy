@@ -794,7 +794,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (stloc.Variable != final.Variable)
 				return false;
 			var newArr = (NewArr)stloc.Value;
-			var values = new List<ExpressionWithResolveResult>();
+			
+			var translatedDimensions = newArr.Indices.Select(i => Translate(i)).ToArray();
+			
+			if (!translatedDimensions.All(dim => dim.ResolveResult.IsCompileTimeConstant))
+				return false;
+			int dimensions = newArr.Indices.Count;
+			int[] dimensionSizes = translatedDimensions.Select(dim => (int)dim.ResolveResult.ConstantValue).ToArray();
+			var container = new Stack<ArrayInitializerExpression>();
+			var root = new ArrayInitializerExpression();
+			container.Push(root);
+			var elementResolveResults = new List<ResolveResult>();
 			
 			for (int i = 1; i < block.Instructions.Count; i++) {
 				ILInstruction target, value, array;
@@ -806,16 +816,26 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 				if (!array.MatchLdLoc(out v) || v != final.Variable)
 					return false;
-				values.Add(Translate(value).ConvertTo(type, this));
+				while (container.Count < dimensions) {
+					var aie = new ArrayInitializerExpression();
+					container.Peek().Elements.Add(aie);
+					container.Push(aie);
+				}
+				var val = Translate(value).ConvertTo(type, this);
+				container.Peek().Elements.Add(val);
+				elementResolveResults.Add(val.ResolveResult);
+				while (container.Count > 0 && container.Peek().Elements.Count == dimensionSizes[container.Count - 1]) {
+					container.Pop();
+				}
 			}
 			
 			var expr = new ArrayCreateExpression {
 				Type = ConvertType(type),
-				Initializer = new ArrayInitializerExpression(values.Select(e => e.Expression))
+				Initializer = root
 			};
 			expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
 			result = expr.WithILInstruction(block)
-				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, newArr.Indices.Count), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), values.Select(v => v.ResolveResult).ToArray()));
+				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
 			
 			return true;
 		}
