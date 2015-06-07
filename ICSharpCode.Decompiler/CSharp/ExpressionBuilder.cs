@@ -616,12 +616,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				memoryType = ((ByReferenceType)pointerType).ElementType;
 			else
 				return false;
+			ITypeDefinition memoryTypeDef = memoryType.GetDefinition();
+			ITypeDefinition accessTypeDef = accessType.GetDefinition();
+			if (memoryType.Kind == TypeKind.Enum && memoryTypeDef != null) {
+				memoryType = memoryTypeDef.EnumUnderlyingType;
+			}
+			if (accessType.Kind == TypeKind.Enum && accessTypeDef != null) {
+				accessType = accessTypeDef.EnumUnderlyingType;
+			}
 			if (memoryType.Equals(accessType))
 				return true;
 			// If the types are not equal, the access still might produce equal results:
 			if (memoryType.IsReferenceType == true && accessType.IsReferenceType == true)
 				return true;
-			ITypeDefinition memoryTypeDef = memoryType.GetDefinition();
 			if (memoryTypeDef != null) {
 				switch (memoryTypeDef.KnownTypeCode) {
 					case KnownTypeCode.Byte:
@@ -694,10 +701,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			TranslatedExpression arrayExpr = Translate(inst.Array);
 			var arrayType = arrayExpr.Type as ArrayType;
-			// TODO: what if arrayExpr is not an array type?
-			// TODO: what if the type of the ldelema instruction does not match the array type?
+			if (arrayType == null) {
+				arrayType  = new ArrayType(compilation, inst.Type, inst.Indices.Count);
+				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
+			}
 			TranslatedExpression expr = new IndexerExpression(arrayExpr, inst.Indices.Select(i => Translate(i).Expression))
-				.WithILInstruction(inst).WithRR(new ResolveResult(arrayType != null ? arrayType.ElementType : SpecialType.UnknownType));
+				.WithILInstruction(inst).WithRR(new ResolveResult(arrayType.ElementType));
 			return new DirectionExpression(FieldDirection.Ref, expr)
 				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
 		}

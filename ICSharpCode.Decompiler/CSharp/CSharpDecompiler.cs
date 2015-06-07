@@ -110,40 +110,47 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method != null) {
 				if (method.IsGetter || method.IsSetter || method.IsAddOn || method.IsRemoveOn)
 					return true;
-				if (settings.AnonymousMethods && method.HasGeneratedName() && method.IsCompilerGenerated())
-					return true;
+//				if (settings.AnonymousMethods && method.HasGeneratedName() && method.IsCompilerGenerated())
+//					return true;
 			}
 
 			TypeDefinition type = member as TypeDefinition;
 			if (type != null) {
 				if (type.DeclaringType != null) {
-					if (settings.AnonymousMethods && IsClosureType(type))
-						return true;
+//					if (settings.AnonymousMethods && IsClosureType(type))
+//						return true;
 //					if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
 //						return true;
 //					if (settings.AsyncAwait && AsyncDecompiler.IsCompilerGeneratedStateMachine(type))
 //						return true;
 				} else if (type.IsCompilerGenerated()) {
-					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
-						return true;
-					if (type.IsAnonymousType())
-						return true;
+//					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+//						return true;
+//					if (type.IsAnonymousType())
+//						return true;
 				}
 			}
 			
 			FieldDefinition field = member as FieldDefinition;
 			if (field != null) {
 				if (field.IsCompilerGenerated()) {
-					if (settings.AnonymousMethods && IsAnonymousMethodCacheField(field))
-						return true;
-					if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field))
-						return true;
-					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
-						return true;
+//					if (settings.AnonymousMethods && IsAnonymousMethodCacheField(field))
+//						return true;
+//					if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field))
+//						return true;
+//					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
+//						return true;
 				}
 				// event-fields are not [CompilerGenerated]
-				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
-					return true;
+//				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
+//					return true;
+				// HACK : only hide fields starting with '__StaticArrayInit'
+				if (field.DeclaringType.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal)) {
+					if (field.Name.StartsWith("__StaticArrayInit", StringComparison.Ordinal))
+						return true;
+					if (field.FieldType.Name.StartsWith("__StaticArrayInit", StringComparison.Ordinal))
+						return true;
+				}
 			}
 			
 			return false;
