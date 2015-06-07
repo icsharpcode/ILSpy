@@ -18,7 +18,6 @@
 
 using System.Diagnostics;
 using ICSharpCode.NRefactory.CSharp.TypeSystem;
-using ICSharpCode.NRefactory.Utils;
 using ExpressionType = System.Linq.Expressions.ExpressionType;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
 using ICSharpCode.NRefactory.CSharp.Resolver;
@@ -807,21 +806,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return false;
 				if (!array.MatchLdLoc(out v) || v != final.Variable)
 					return false;
-				ExpressionWithResolveResult val = Translate(value);
-				object obj;
-				if (val.Expression is PrimitiveExpression) {
-					var primitiveValue = ((PrimitiveExpression)val.Expression).Value;
-					if (type.IsKnownType(KnownTypeCode.Boolean)) {
-						obj = !0.Equals(primitiveValue);
-					} else if (type.Kind == TypeKind.Enum) {
-						var enumType = type.GetDefinition().EnumUnderlyingType;
-						obj = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), primitiveValue, true);
-					} else {
-						obj = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), primitiveValue, false);
-					}
-					val = ConvertConstantValue(new ConstantResolveResult(type, obj));
-				}
-				values.Add(val);
+				values.Add(Translate(value).ConvertTo(type, this));
 			}
 			
 			var expr = new ArrayCreateExpression {
