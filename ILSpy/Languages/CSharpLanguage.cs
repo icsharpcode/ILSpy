@@ -516,10 +516,8 @@ namespace ICSharpCode.ILSpy
 					using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, file.Key))) {
 						CSharpDecompiler decompiler = new CSharpDecompiler(ts);
 						decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-						foreach (TypeDefinition type in file) {
-							var syntaxTree = decompiler.Decompile(type);
-							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, options.DecompilerSettings.CSharpFormattingOptions));
-						}
+						var syntaxTree = decompiler.DecompileTypes(file.ToArray());
+						syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, options.DecompilerSettings.CSharpFormattingOptions));
 					}
 				});
 			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, options, directories));

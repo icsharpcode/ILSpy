@@ -14,8 +14,10 @@ namespace ICSharpCode.Decompiler
 {
 	/// <summary>
 	/// Manages the NRefactory type system for the decompiler.
-	/// This class is thread-safe.
 	/// </summary>
+	/// <remarks>
+	/// This class is thread-safe.
+	/// </remarks>
 	public class DecompilerTypeSystem : IDecompilerTypeSystem
 	{
 		readonly ModuleDefinition moduleDefinition;
@@ -24,9 +26,9 @@ namespace ICSharpCode.Decompiler
 
 		/// <summary>
 		/// CecilLoader used for converting cecil type references to ITypeReference.
-		/// May only be accessed within lock(cecilLoader).
+		/// May only be accessed within lock(typeReferenceCecilLoader).
 		/// </summary>
-		CecilLoader typeReferenceCecilLoader = new CecilLoader();
+		readonly CecilLoader typeReferenceCecilLoader = new CecilLoader();
 
 		/// <summary>
 		/// Dictionary for NRefactory->Cecil lookup. Only contains entities from the main module.

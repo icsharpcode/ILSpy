@@ -36,6 +36,12 @@ using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
+	/// <summary>
+	/// Main class of the C# decompiler engine.
+	/// </summary>
+	/// <remarks>
+	/// Instances of this class are not thread-safe. Use separate instances to decompile multiple members in parallel.
+	/// </remarks>
 	public class CSharpDecompiler
 	{
 		readonly DecompilerTypeSystem typeSystem;
@@ -136,23 +142,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				syntaxTree.AddChild(attrSection, SyntaxTree.MemberRole);
 			}
 		}
-		
-		public SyntaxTree DecompileWholeModuleAsSingleFile()
+
+		void DoDecompileTypes(IEnumerable<TypeDefinition> types, ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
 		{
-			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
-			SyntaxTree syntaxTree = new SyntaxTree();
-			DoDecompileModuleAndAssemblyAttributes(decompilationContext, syntaxTree);
 			string currentNamespace = null;
 			AstNode groupNode = null;
-			foreach (var cecilType in typeSystem.ModuleDefinition.Types) {
+			foreach (var cecilType in types) {
 				var typeDef = typeSystem.Resolve(cecilType).GetDefinition();
 				if (typeDef.Name == "<Module>" && typeDef.Members.Count == 0)
 					continue;
-				if(string.IsNullOrEmpty(cecilType.Namespace)) {
+				if (string.IsNullOrEmpty(cecilType.Namespace)) {
 					groupNode = syntaxTree;
 				} else {
-					if (currentNamespace != cecilType.Namespace)
-					{
+					if (currentNamespace != cecilType.Namespace) {
 						groupNode = new NamespaceDeclaration(cecilType.Namespace);
 						syntaxTree.AddChild(groupNode, SyntaxTree.MemberRole);
 					}
@@ -161,21 +163,72 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeDecl = DoDecompile(typeDef, decompilationContext.WithCurrentTypeDefinition(typeDef));
 				groupNode.AddChild(typeDecl, SyntaxTree.MemberRole);
 			}
+		}
+		
+		/// <summary>
+		/// Decompiles the whole module into a single syntax tree.
+		/// </summary>
+		public SyntaxTree DecompileWholeModuleAsSingleFile()
+		{
+			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
+			SyntaxTree syntaxTree = new SyntaxTree();
+			DoDecompileModuleAndAssemblyAttributes(decompilationContext, syntaxTree);
+			DoDecompileTypes(typeSystem.ModuleDefinition.Types, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompilationContext);
 			return syntaxTree;
 		}
 		
-		public SyntaxTree Decompile(TypeDefinition typeDefinition)
+		/// <summary>
+		/// Decompile the given types.
+		/// </summary>
+		/// <remarks>
+		/// Unlike Decompile(IMemberDefinition[]), this method will add namespace declarations around the type definitions.
+		/// </remarks>
+		public SyntaxTree DecompileTypes(IEnumerable<TypeDefinition> types)
 		{
-			if (typeDefinition == null)
-				throw new ArgumentNullException("typeDefinition");
-			ITypeDefinition typeDef = typeSystem.Resolve(typeDefinition).GetDefinition();
-			if (typeDef == null)
-				throw new InvalidOperationException("Could not find type definition in NR type system");
-			var decompilationContext = new SimpleTypeResolveContext(typeDef);
-			var syntaxTree = new SyntaxTree();
-			syntaxTree.Members.Add(DoDecompile(typeDef, decompilationContext));
+			if (types == null)
+				throw new ArgumentNullException("types");
+			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
+			SyntaxTree syntaxTree = new SyntaxTree();
+			DoDecompileTypes(types, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompilationContext);
+			return syntaxTree;
+		}
+		
+		/// <summary>
+		/// Decompile the specified types and/or members.
+		/// </summary>
+		public SyntaxTree Decompile(params IMemberDefinition[] definitions)
+		{
+			if (definitions == null)
+				throw new ArgumentNullException("definitions");
+			var syntaxTree = new SyntaxTree();
+			foreach (var def in definitions) {
+				if (def == null)
+					throw new ArgumentException("definitions contains null element");
+				var typeDefinition = def as TypeDefinition;
+				var methodDefinition = def as MethodDefinition;
+				var fieldDefinition = def as FieldDefinition;
+				if (typeDefinition != null) {
+					ITypeDefinition typeDef = typeSystem.Resolve(typeDefinition).GetDefinition();
+					if (typeDef == null)
+						throw new InvalidOperationException("Could not find type definition in NR type system");
+					syntaxTree.Members.Add(DoDecompile(typeDef, new SimpleTypeResolveContext(typeDef)));
+				} else if (methodDefinition != null) {
+					IMethod method = typeSystem.Resolve(methodDefinition);
+					if (method == null)
+						throw new InvalidOperationException("Could not find method definition in NR type system");
+					syntaxTree.Members.Add(DoDecompile(methodDefinition, method, new SimpleTypeResolveContext(method)));
+				} else if (fieldDefinition != null) {
+					IField field = typeSystem.Resolve(fieldDefinition);
+					if (field == null)
+						throw new InvalidOperationException("Could not find field definition in NR type system");
+					syntaxTree.Members.Add(DoDecompile(fieldDefinition, field, new SimpleTypeResolveContext(field)));
+				} else {
+					throw new NotImplementedException();
+				}
+			}
+			RunTransforms(syntaxTree, new SimpleTypeResolveContext(typeSystem.MainAssembly));
 			return syntaxTree;
 		}
 		
@@ -237,20 +290,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			return typeDecl;
 		}
 		
-		public SyntaxTree Decompile(MethodDefinition methodDefinition)
-		{
-			if (methodDefinition == null)
-				throw new ArgumentNullException("methodDefinition");
-			var method = typeSystem.Resolve(methodDefinition);
-			if (method == null)
-				throw new InvalidOperationException("Could not find method in NR type system");
-			var decompilationContext = new SimpleTypeResolveContext(method);
-			var syntaxTree = new SyntaxTree();
-			syntaxTree.Members.Add(DoDecompile(methodDefinition, method, decompilationContext));
-			RunTransforms(syntaxTree, decompilationContext);
-			return syntaxTree;
-		}
-
 		EntityDeclaration DoDecompile(MethodDefinition methodDefinition, IMethod method, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == method);
