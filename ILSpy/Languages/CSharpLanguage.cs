@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using System.Xml;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.XmlDoc;
 using ICSharpCode.NRefactory.CSharp;
@@ -479,6 +480,7 @@ namespace ICSharpCode.ILSpy
 			using (LoadedAssembly.DisableAssemblyLoad())
 			{
 				CSharpDecompiler decompiler = new CSharpDecompiler(ts);
+				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 				SyntaxTree syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
 
 				string prop = "Properties";
@@ -513,6 +515,7 @@ namespace ICSharpCode.ILSpy
 				delegate(IGrouping<string, TypeDefinition> file) {
 					using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, file.Key))) {
 						CSharpDecompiler decompiler = new CSharpDecompiler(ts);
+						decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 						foreach (TypeDefinition type in file) {
 							var syntaxTree = decompiler.Decompile(type);
 							syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, options.DecompilerSettings.CSharpFormattingOptions));

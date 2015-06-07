@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.NRefactory.CSharp;
 using Microsoft.CSharp;
 using Mono.Cecil;
@@ -67,8 +68,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var typeSystem = new DecompilerTypeSystem(ModuleDefinition.ReadModule(assemblyFileName));
 			CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem);
 			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
+			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
-			new Helpers.EscapeGeneratedIdentifiers().Run(syntaxTree);
 			
 			StringWriter output = new StringWriter();
 			var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());
