@@ -136,6 +136,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			var dimensions = inst.Indices.Count;
 			var args = inst.Indices.Select(arg => Translate(arg)).ToArray();
 			var expr = new ArrayCreateExpression { Type = ConvertType(inst.Type) };
+			var ct = expr.Type as ComposedType;
+			if (ct != null) {
+				// change "new (int[,])[10] to new int[10][,]"
+				ct.ArraySpecifiers.MoveTo(expr.AdditionalArraySpecifiers);
+			}
 			expr.Arguments.AddRange(args.Select(arg => arg.Expression));
 			return expr.WithILInstruction(inst)
 				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, inst.Type, dimensions), args.Select(a => a.ResolveResult).ToList(), new ResolveResult[0]));
