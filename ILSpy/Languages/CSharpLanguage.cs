@@ -383,12 +383,12 @@ namespace ICSharpCode.ILSpy
 				if (targetFrameworkAttribute != null && targetFrameworkAttribute.ConstructorArguments.Any()) {
 					string frameworkName = (string)targetFrameworkAttribute.ConstructorArguments[0].Value;
 					string[] frameworkParts = frameworkName.Split(',');
-					string frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith("Version="));
+					string frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase));
 					if (frameworkVersion != null) {
 						w.WriteElementString("TargetFrameworkVersion", frameworkVersion.Substring("Version=".Length));
 						useTargetFrameworkAttribute = true;
 					}
-					string frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith("Profile="));
+					string frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
 					if (frameworkProfile != null)
 						w.WriteElementString("TargetFrameworkProfile", frameworkProfile.Substring("Profile=".Length));
 				}
@@ -410,6 +410,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 				w.WriteElementString("WarningLevel", "4");
+				w.WriteElementString("AllowUnsafeBlocks", "True");
 
 				w.WriteEndElement(); // </PropertyGroup>
 
@@ -440,6 +441,12 @@ namespace ICSharpCode.ILSpy
 					if (r.Name != "mscorlib") {
 						w.WriteStartElement("Reference");
 						w.WriteAttributeString("Include", r.Name);
+						if (GacInterop.FindAssemblyInNetGac(r) == null) {
+							var asm = module.AssemblyResolver.Resolve(r);
+							if (asm != null) {
+								w.WriteElementString("HintPath", asm.MainModule.FullyQualifiedName);
+							}
+						}
 						w.WriteEndElement();
 					}
 				}
