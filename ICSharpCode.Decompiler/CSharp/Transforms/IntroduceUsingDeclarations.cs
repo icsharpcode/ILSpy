@@ -65,21 +65,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			if (!FullyQualifyAmbiguousTypeNames)
 				return;
-			
-			var astBuilder = CreateAstBuilderWithUsingScope(context, usingScope);
-			
-			// verify that the SimpleTypes refer to the correct type (no ambiguities)
-			compilationUnit.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(astBuilder), null);
-		}
 
-		TypeSystemAstBuilder CreateAstBuilderWithUsingScope(TransformContext context, UsingScope usingScope)
-		{
-			var resolveContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly, usingScope.Resolve(context.TypeSystem.Compilation), context.DecompiledTypeDefinition, context.DecompiledMember);
-			var resolver = new CSharpResolver(resolveContext);
-			return new TypeSystemAstBuilder(resolver) {
-				AddResolveResultAnnotations = true,
-				UseAliases = true
-			};
+			// verify that the SimpleTypes refer to the correct type (no ambiguities)
+			compilationUnit.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(context, usingScope), null);
 		}
 		
 		sealed class FindRequiredImports : DepthFirstAstVisitor
@@ -130,11 +118,49 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		sealed class FullyQualifyAmbiguousTypeNamesVisitor : DepthFirstAstVisitor<object, object>
 		{
-			readonly TypeSystemAstBuilder astBuilder;
+			Stack<CSharpTypeResolveContext> context;
+			TypeSystemAstBuilder astBuilder;
 			
-			public FullyQualifyAmbiguousTypeNamesVisitor(TypeSystemAstBuilder astBuilder)
+			public FullyQualifyAmbiguousTypeNamesVisitor(TransformContext context, UsingScope usingScope)
 			{
-				this.astBuilder = astBuilder;
+				this.context = new Stack<CSharpTypeResolveContext>();
+				var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly, usingScope.Resolve(context.TypeSystem.Compilation));
+				this.context.Push(currentContext);
+				this.astBuilder = CreateAstBuilder(currentContext);
+			}
+
+			static TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context)
+			{
+				return new TypeSystemAstBuilder(new CSharpResolver(context)) {
+					AddResolveResultAnnotations = true,
+					UseAliases = true
+				};
+			}
+			
+			public override object VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration, object data)
+			{
+				var previousContext = context.Peek();
+				var currentUsingScope = new UsingScope(previousContext.CurrentUsingScope.UnresolvedUsingScope, namespaceDeclaration.Identifiers.Last());
+				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, currentUsingScope.Resolve(previousContext.Compilation));
+				context.Push(currentContext);
+				try {
+					astBuilder = CreateAstBuilder(currentContext);
+					return base.VisitNamespaceDeclaration(namespaceDeclaration, data);
+				} finally {
+					context.Pop();
+				}
+			}
+			
+			public override object VisitTypeDeclaration(TypeDeclaration typeDeclaration, object data)
+			{
+				var currentContext = context.Peek().WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
+				context.Push(currentContext);
+				try {
+					astBuilder = CreateAstBuilder(currentContext);
+					return base.VisitTypeDeclaration(typeDeclaration, data);
+				} finally {
+					context.Pop();
+				}
 			}
 			
 			public override object VisitSimpleType(SimpleType simpleType, object data)
@@ -143,24 +169,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (simpleType.Ancestors.OfType<UsingDeclaration>().Any() || (rr = simpleType.Annotation<TypeResolveResult>()) == null)
 					return base.VisitSimpleType(simpleType, data);
 				simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
-				return null;
-			}
-			
-			public override object VisitMemberType(MemberType memberType, object data)
-			{
-				TypeResolveResult rr;
-				if (memberType.Ancestors.OfType<UsingDeclaration>().Any() || (rr = memberType.Annotation<TypeResolveResult>()) == null)
-					return base.VisitMemberType(memberType, data);
-				memberType.ReplaceWith(astBuilder.ConvertType(rr.Type));
-				return null;
-			}
-			
-			public override object VisitComposedType(ComposedType composedType, object data)
-			{
-				TypeResolveResult rr;
-				if (composedType.Ancestors.OfType<UsingDeclaration>().Any() || (rr = composedType.Annotation<TypeResolveResult>()) == null)
-					return base.VisitComposedType(composedType, data);
-				composedType.ReplaceWith(astBuilder.ConvertType(rr.Type));
 				return null;
 			}
 		}

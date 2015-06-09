@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.Tests
 			TestCompileDecompileCompileOutputAll("ValueTypeCall.cs");
 		}
 		
-		[Test, Ignore("broken")]
+		[Test]
 		public void InitializerTests()
 		{
 			TestCompileDecompileCompileOutputAll("InitializerTests.cs");
