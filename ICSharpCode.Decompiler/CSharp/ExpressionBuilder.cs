@@ -106,8 +106,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		ExpressionWithResolveResult ConvertField(IField field, ILInstruction target = null)
 		{
-			return new MemberReferenceExpression(TranslateTarget(field, target, true), field.Name)
-				.WithRR(new ResolveResult(field.ReturnType));
+			var targetExpression = TranslateTarget(field, target, true);
+			return new MemberReferenceExpression(targetExpression, field.Name)
+				.WithRR(new MemberResolveResult(targetExpression.ResolveResult, field));
 		}
 		
 		TranslatedExpression IsType(IsInst inst)
