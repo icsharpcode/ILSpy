@@ -74,8 +74,51 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var newObj = new NewObj(inst.Method);
 			newObj.ILRange = inst.ILRange;
 			newObj.Arguments.AddRange(inst.Arguments.Skip(1));
-			var expr = new StObj(inst.Arguments[0], newObj, inst.Method.DeclaringType);
+			LdcDecimal decimalConstant;
+			ILInstruction result;
+			if (TransformDecimalCtorToConstant(newObj, out decimalConstant)) {
+				result = decimalConstant;
+			} else {
+				result = newObj;
+			}
+			var expr = new StObj(inst.Arguments[0], result, inst.Method.DeclaringType);
 			inst.ReplaceWith(expr);
+		}
+		
+		protected internal override void VisitNewObj(NewObj inst)
+		{
+			LdcDecimal decimalConstant;
+			if (TransformDecimalCtorToConstant(inst, out decimalConstant)) {
+				inst.ReplaceWith(decimalConstant);
+				return;
+			}
+			base.VisitNewObj(inst);
+		}
+		
+		bool TransformDecimalCtorToConstant(NewObj inst, out LdcDecimal result)
+		{
+			IType t = inst.Method.DeclaringType;
+			result = null;
+			if (!t.IsKnownType(KnownTypeCode.Decimal))
+				return false;
+			var args = inst.Arguments;
+			if (args.Count == 1) {
+				int val;
+				if (args[0].MatchLdcI4(out val)) {
+					result = new LdcDecimal(val);
+					return true;
+				}
+			} else if (args.Count == 5) {
+				int lo, mid, hi, isNegative, scale;
+				if (args[0].MatchLdcI4(out lo) && args[1].MatchLdcI4(out mid) &&
+				    args[2].MatchLdcI4(out hi) && args[3].MatchLdcI4(out isNegative) &&
+				    args[4].MatchLdcI4(out scale))
+				{
+					result = new LdcDecimal(new decimal(lo, mid, hi, isNegative != 0, (byte)scale));
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 }

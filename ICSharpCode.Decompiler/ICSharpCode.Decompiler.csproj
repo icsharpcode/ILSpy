@@ -64,6 +64,7 @@
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\DecompilerSettings.cs" />
+    <Compile Include="CSharp\Transforms\DecimalConstantTransform.cs" />
     <Compile Include="CSharp\Transforms\EscapeInvalidIdentifiers.cs" />
     <Compile Include="CSharp\Transforms\IntroduceUsingDeclarations.cs" />
     <Compile Include="CSharp\Transforms\TransformContext.cs" />

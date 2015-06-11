@@ -75,6 +75,12 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			TestCompileDecompileCompileOutputAll("InitializerTests.cs");
 		}
+		
+		[Test]
+		public void DecimalFields()
+		{
+			TestCompileDecompileCompileOutputAll("DecimalFields.cs");
+		}
 
 		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{

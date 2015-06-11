@@ -122,6 +122,8 @@
 			LoadConstant("long"), ResultType("I8")),
 		new OpCode("ldc.f", "Loads a constant floating-point number.",
 			LoadConstant("double"), ResultType("F")),
+		new OpCode("ldc.decimal", "Loads a constant decimal.",
+			LoadConstant("decimal"), ResultType("O")),
 		new OpCode("ldnull", "Loads the null reference.",
 			CustomClassName("LdNull"), NoArguments, ResultType("O")),
 		new OpCode("ldftn", "Load method pointer",

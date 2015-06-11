@@ -113,6 +113,8 @@ namespace ICSharpCode.Decompiler.IL
 		LdcI8,
 		/// <summary>Loads a constant floating-point number.</summary>
 		LdcF,
+		/// <summary>Loads a constant decimal.</summary>
+		LdcDecimal,
 		/// <summary>Loads the null reference.</summary>
 		LdNull,
 		/// <summary>Load method pointer</summary>
@@ -1536,6 +1538,31 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcF(this);
+		}
+	}
+
+	/// <summary>Loads a constant decimal.</summary>
+	public sealed partial class LdcDecimal : SimpleInstruction
+	{
+		public LdcDecimal(decimal value) : base(OpCode.LdcDecimal)
+		{
+			this.Value = value;
+		}
+		public readonly decimal Value;
+		public override StackType ResultType { get { return StackType.O; } }
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdcDecimal(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdcDecimal(this);
 		}
 	}
 
@@ -3163,6 +3190,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitLdcDecimal(LdcDecimal inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitLdNull(LdNull inst)
 		{
 			Default(inst);
@@ -3473,6 +3504,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitLdcDecimal(LdcDecimal inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitLdNull(LdNull inst)
 		{
 			return Default(inst);
@@ -3704,6 +3739,7 @@ namespace ICSharpCode.Decompiler.IL
 			"ldc.i4",
 			"ldc.i8",
 			"ldc.f",
+			"ldc.decimal",
 			"ldnull",
 			"ldftn",
 			"ldvirtftn",
@@ -4046,6 +4082,16 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			value = default(double);
+			return false;
+		}
+		public bool MatchLdcDecimal(out decimal value)
+		{
+			var inst = this as LdcDecimal;
+			if (inst != null) {
+				value = inst.Value;
+				return true;
+			}
+			value = default(decimal);
 			return false;
 		}
 		public bool MatchLdNull()

@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new AddCheckedBlocks(),
 			//new DeclareVariables(context), // should run after most transforms that modify statements
 			new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
-			//new DecimalConstantTransform(),
+			new DecimalConstantTransform(),
 			new IntroduceUsingDeclarations(),
 			//new IntroduceExtensionMethods(context), // must run after IntroduceUsingDeclarations
 			//new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods

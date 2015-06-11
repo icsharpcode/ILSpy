@@ -19,40 +19,39 @@
 using System;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
-using Mono.Cecil;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// Transforms decimal constant fields.
 	/// </summary>
-	public class DecimalConstantTransform : DepthFirstAstVisitor<object, object>, IAstTransform
+	public class DecimalConstantTransform : DepthFirstAstVisitor, IAstTransform
 	{
 		static readonly PrimitiveType decimalType = new PrimitiveType("decimal");
 		
-		public override object VisitFieldDeclaration(FieldDeclaration fieldDeclaration, object data)
+		public override void VisitFieldDeclaration(FieldDeclaration fieldDeclaration)
 		{
 			const Modifiers staticReadOnly = Modifiers.Static | Modifiers.Readonly;
 			if ((fieldDeclaration.Modifiers & staticReadOnly) == staticReadOnly && decimalType.IsMatch(fieldDeclaration.ReturnType)) {
 				foreach (var attributeSection in fieldDeclaration.Attributes) {
 					foreach (var attribute in attributeSection.Attributes) {
-						TypeReference tr = attribute.Type.Annotation<TypeReference>();
-						if (tr != null && tr.Name == "DecimalConstantAttribute" && tr.Namespace == "System.Runtime.CompilerServices") {
+						var t = attribute.Type.GetSymbol() as IType;
+						if (t != null && t.Name == "DecimalConstantAttribute" && t.Namespace == "System.Runtime.CompilerServices") {
 							attribute.Remove();
 							if (attributeSection.Attributes.Count == 0)
 								attributeSection.Remove();
 							fieldDeclaration.Modifiers = (fieldDeclaration.Modifiers & ~staticReadOnly) | Modifiers.Const;
-							return null;
+							return;
 						}
 					}
 				}
 			}
-			return null;
 		}
-		
-		public void Run(AstNode compilationUnit)
+
+		public void Run(AstNode rootNode, TransformContext context)
 		{
-			compilationUnit.AcceptVisitor(this, null);
+			rootNode.AcceptVisitor(this);
 		}
 	}
 }

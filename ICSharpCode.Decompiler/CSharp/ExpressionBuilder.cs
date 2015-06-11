@@ -177,6 +177,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Double), inst.Value));
 		}
 		
+		protected internal override TranslatedExpression VisitLdcDecimal(LdcDecimal inst)
+		{
+			return new PrimitiveExpression(inst.Value)
+				.WithILInstruction(inst)
+				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Decimal), inst.Value));
+		}
+		
 		protected internal override TranslatedExpression VisitLdStr(LdStr inst)
 		{
 			return new PrimitiveExpression(inst.Value)
