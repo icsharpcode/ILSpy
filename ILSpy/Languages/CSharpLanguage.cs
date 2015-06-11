@@ -90,13 +90,24 @@ namespace ICSharpCode.ILSpy
 			get { return ".csproj"; }
 		}
 
+		CSharpDecompiler CreateDecompiler(ModuleDefinition module, DecompilationOptions options)
+		{
+			CSharpDecompiler decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
+			while (decompiler.AstTransforms.Count > transformCount)
+				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
+			return decompiler;
+		}
+		
+		void WriteCode(ITextOutput output, SyntaxTree syntaxTree)
+		{
+			output.WriteLine(syntaxTree.ToString());
+		}
+		
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
-			CSharpDecompiler decompiler = new CSharpDecompiler(method.Module, options.DecompilerSettings);
-			while (decompiler.AstTransforms.Count > transformCount)
-				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
-			output.WriteLine(decompiler.Decompile(method).ToString());
+			CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
+			WriteCode(output, decompiler.Decompile(method));
 			/*
 			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: method.DeclaringType, isSingleMember: true);
 			if (method.IsConstructor && !method.IsStatic && !method.DeclaringType.IsValueType) {
@@ -147,15 +158,13 @@ namespace ICSharpCode.ILSpy
 		}
 		*/
 
-			/*
 		public override void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(property.DeclaringType, includeNamespace: true));
-			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: property.DeclaringType, isSingleMember: true);
-			codeDomBuilder.AddProperty(property);
-			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
+			CSharpDecompiler decompiler = CreateDecompiler(property.Module, options);
+			WriteCode(output, decompiler.Decompile(property));
 		}
-
+/*
 		public override void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
@@ -203,22 +212,19 @@ namespace ICSharpCode.ILSpy
 					codeDomBuilder.AddMethod(ctor);
 			}
 		}
-
+*/
 		public override void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(ev.DeclaringType, includeNamespace: true));
-			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: ev.DeclaringType, isSingleMember: true);
-			codeDomBuilder.AddEvent(ev);
-			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
+			CSharpDecompiler decompiler = CreateDecompiler(ev.Module, options);
+			WriteCode(output, decompiler.Decompile(ev));
 		}
-*/
+
 		public override void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(type.Module, options.DecompilerSettings);
-			output.WriteLine(decompiler.Decompile(type).ToString());
-//			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: type);
-//			codeDomBuilder.AddType(type);
-//			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
+			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
+			CSharpDecompiler decompiler = CreateDecompiler(type.Module, options);
+			WriteCode(output, decompiler.Decompile(type));
 		}
 
 /*		

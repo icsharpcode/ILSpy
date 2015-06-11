@@ -37,7 +37,9 @@ namespace ICSharpCode.Decompiler
 		Dictionary<IUnresolvedEntity, MemberReference> entityDict = new Dictionary<IUnresolvedEntity, MemberReference>();
 
 		Dictionary<FieldReference, IField> fieldLookupCache = new Dictionary<FieldReference, IField>();
+		Dictionary<PropertyReference, IProperty> propertyLookupCache = new Dictionary<PropertyReference, IProperty>();
 		Dictionary<MethodReference, IMethod> methodLookupCache = new Dictionary<MethodReference, IMethod>();
+		Dictionary<EventReference, IEvent> eventLookupCache = new Dictionary<EventReference, IEvent>();
 		
 		public DecompilerTypeSystem(ModuleDefinition moduleDefinition)
 		{
@@ -297,6 +299,77 @@ namespace ICSharpCode.Decompiler
 			{
 				get { return declaringType; }
 			}
+		}
+		#endregion
+
+		#region Resolve Property
+		public IProperty Resolve(PropertyReference propertyReference)
+		{
+			if (propertyReference == null)
+				throw new ArgumentNullException("propertyReference");
+			lock (propertyLookupCache) {
+				IProperty property;
+				if (!propertyLookupCache.TryGetValue(propertyReference, out property)) {
+					property = FindNonGenericProperty(propertyReference);
+					if (propertyReference.DeclaringType.IsGenericInstance) {
+						var git = (GenericInstanceType)propertyReference.DeclaringType;
+						var typeArguments = git.GenericArguments.SelectArray(Resolve);
+						property = (IProperty)property.Specialize(new TypeParameterSubstitution(typeArguments, null));
+					}
+					propertyLookupCache.Add(propertyReference, property);
+				}
+				return property;
+			}
+		}
+
+		IProperty FindNonGenericProperty(PropertyReference propertyReference)
+		{
+			ITypeDefinition typeDef = Resolve(propertyReference.DeclaringType).GetDefinition();
+			if (typeDef == null)
+				return null;
+			var parameterTypes = propertyReference.Parameters.SelectArray(p => Resolve(p.ParameterType));
+			var returnType = Resolve(propertyReference.PropertyType);
+			foreach (IProperty property in typeDef.Properties) {
+				if (property.Name == propertyReference.Name
+				    && CompareTypes(property.ReturnType, returnType)
+				    && CompareSignatures(property.Parameters, parameterTypes))
+					return property;
+			}
+			return null;
+		}
+		#endregion
+
+		#region Resolve Event
+		public IEvent Resolve(EventReference eventReference)
+		{
+			if (eventReference == null)
+				throw new ArgumentNullException("propertyReference");
+			lock (eventLookupCache) {
+				IEvent ev;
+				if (!eventLookupCache.TryGetValue(eventReference, out ev)) {
+					ev = FindNonGenericEvent(eventReference);
+					if (eventReference.DeclaringType.IsGenericInstance) {
+						var git = (GenericInstanceType)eventReference.DeclaringType;
+						var typeArguments = git.GenericArguments.SelectArray(Resolve);
+						ev = (IEvent)ev.Specialize(new TypeParameterSubstitution(typeArguments, null));
+					}
+					eventLookupCache.Add(eventReference, ev);
+				}
+				return ev;
+			}
+		}
+
+		IEvent FindNonGenericEvent(EventReference eventReference)
+		{
+			ITypeDefinition typeDef = Resolve(eventReference.DeclaringType).GetDefinition();
+			if (typeDef == null)
+				return null;
+			var returnType = Resolve(eventReference.EventType);
+			foreach (IEvent ev in typeDef.Events) {
+				if (ev.Name == eventReference.Name && CompareTypes(ev.ReturnType, returnType))
+					return ev;
+			}
+			return null;
 		}
 		#endregion
 	}

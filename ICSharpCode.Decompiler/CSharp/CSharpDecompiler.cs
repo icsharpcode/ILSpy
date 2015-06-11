@@ -287,6 +287,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				var typeDefinition = def as TypeDefinition;
 				var methodDefinition = def as MethodDefinition;
 				var fieldDefinition = def as FieldDefinition;
+				var propertyDefinition = def as PropertyDefinition;
+				var eventDefinition = def as EventDefinition;
 				if (typeDefinition != null) {
 					ITypeDefinition typeDef = typeSystem.Resolve(typeDefinition).GetDefinition();
 					if (typeDef == null)
@@ -302,8 +304,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (field == null)
 						throw new InvalidOperationException("Could not find field definition in NR type system");
 					syntaxTree.Members.Add(DoDecompile(fieldDefinition, field, new SimpleTypeResolveContext(field)));
+				} else if (propertyDefinition != null) {
+					IProperty property = typeSystem.Resolve(propertyDefinition);
+					if (property == null)
+						throw new InvalidOperationException("Could not find field definition in NR type system");
+					syntaxTree.Members.Add(DoDecompile(propertyDefinition, property, new SimpleTypeResolveContext(property)));
+				} else if (eventDefinition != null) {
+					IEvent ev = typeSystem.Resolve(eventDefinition);
+					if (ev == null)
+						throw new InvalidOperationException("Could not find field definition in NR type system");
+					syntaxTree.Members.Add(DoDecompile(eventDefinition, ev, new SimpleTypeResolveContext(ev)));
 				} else {
-					throw new NotImplementedException();
+					throw new NotSupportedException(def.GetType().Name);
 				}
 			}
 			RunTransforms(syntaxTree, new SimpleTypeResolveContext(typeSystem.MainAssembly));
