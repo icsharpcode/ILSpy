@@ -265,8 +265,9 @@ namespace ICSharpCode.Decompiler.IL
 			var parent = loadInst.Parent;
 			switch (next.OpCode) {
 				case OpCode.Return:
-				case OpCode.IfInstruction:
 					return parent == next;
+				case OpCode.IfInstruction:
+					return parent == next || (parent.OpCode == OpCode.LogicNot && parent.Parent == next);
 				case OpCode.SwitchInstruction:
 					return parent == next || (parent.OpCode == OpCode.Sub && parent.Parent == next);
 				default:
