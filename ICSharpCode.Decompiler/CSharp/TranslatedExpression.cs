@@ -170,6 +170,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				// perform remaining pointer cast, if necessary
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
 			}
+			if (type.IsKnownType(KnownTypeCode.Boolean) && targetType.GetStackType() == StackType.I4) {
+				// convert from boolean to integer (or enum)
+				return new ConditionalExpression(
+					this.Expression,
+					LdcI4(expressionBuilder.compilation, 1).ConvertTo(targetType, expressionBuilder),
+					LdcI4(expressionBuilder.compilation, 0).ConvertTo(targetType, expressionBuilder)
+				).WithoutILInstruction().WithRR(new ResolveResult(targetType));
+			}
 			var rr = expressionBuilder.resolver.ResolveCast(targetType, ResolveResult);
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
 				return expressionBuilder.ConvertConstantValue(rr)
@@ -182,6 +190,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return Expression.CastTo(expressionBuilder.ConvertType(targetType))
 				.WithoutILInstruction().WithRR(rr);
+		}
+		
+		TranslatedExpression LdcI4(ICompilation compilation, int val)
+		{
+			return new PrimitiveExpression(val)
+				.WithoutILInstruction()
+				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), val));
 		}
 		
 		public TranslatedExpression ConvertToBoolean(ExpressionBuilder expressionBuilder)
