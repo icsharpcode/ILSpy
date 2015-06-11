@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return;
 
 			// verify that the SimpleTypes refer to the correct type (no ambiguities)
-			compilationUnit.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(context, usingScope), null);
+			compilationUnit.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(context, usingScope));
 		}
 		
 		sealed class FindRequiredImports : DepthFirstAstVisitor
@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		sealed class FullyQualifyAmbiguousTypeNamesVisitor : DepthFirstAstVisitor<object, object>
+		sealed class FullyQualifyAmbiguousTypeNamesVisitor : DepthFirstAstVisitor
 		{
 			Stack<CSharpTypeResolveContext> context;
 			TypeSystemAstBuilder astBuilder;
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				};
 			}
 			
-			public override object VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration, object data)
+			public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 			{
 				var previousContext = context.Peek();
 				var currentUsingScope = new UsingScope(previousContext.CurrentUsingScope.UnresolvedUsingScope, namespaceDeclaration.Identifiers.Last());
@@ -145,31 +145,32 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				context.Push(currentContext);
 				try {
 					astBuilder = CreateAstBuilder(currentContext);
-					return base.VisitNamespaceDeclaration(namespaceDeclaration, data);
+					base.VisitNamespaceDeclaration(namespaceDeclaration);
 				} finally {
 					context.Pop();
 				}
 			}
 			
-			public override object VisitTypeDeclaration(TypeDeclaration typeDeclaration, object data)
+			public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 			{
 				var currentContext = context.Peek().WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
 				context.Push(currentContext);
 				try {
 					astBuilder = CreateAstBuilder(currentContext);
-					return base.VisitTypeDeclaration(typeDeclaration, data);
+					base.VisitTypeDeclaration(typeDeclaration);
 				} finally {
 					context.Pop();
 				}
 			}
 			
-			public override object VisitSimpleType(SimpleType simpleType, object data)
+			public override void VisitSimpleType(SimpleType simpleType)
 			{
 				TypeResolveResult rr;
-				if (simpleType.Ancestors.OfType<UsingDeclaration>().Any() || (rr = simpleType.Annotation<TypeResolveResult>()) == null)
-					return base.VisitSimpleType(simpleType, data);
+				if (simpleType.Ancestors.OfType<UsingDeclaration>().Any() || (rr = simpleType.Annotation<TypeResolveResult>()) == null) {
+					base.VisitSimpleType(simpleType);
+					return;
+				}
 				simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
-				return null;
 			}
 		}
 	}
