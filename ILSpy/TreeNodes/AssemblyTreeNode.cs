@@ -101,7 +101,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					tooltip.Inlines.Add(new Bold(new Run("Name: ")));
 					tooltip.Inlines.Add(new Run(assembly.AssemblyDefinition.FullName));
 					tooltip.Inlines.Add(new LineBreak());
-				    string publicKey = GetStringFromKey(assembly.AssemblyDefinition.Name.PublicKey);
+				    string publicKey = assembly.AssemblyDefinition.Name.PublicKeyString;
 				    AddPublicKeyToToolTip(publicKey);
 				    tooltip.Inlines.Add(new Bold(new Run("Location: ")));
 					tooltip.Inlines.Add(new Run(assembly.FileName));
@@ -380,6 +380,40 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			MainWindow.Instance.RefreshDecompiledView();
 		}
 	}
+
+    [ExportContextMenuEntryAttribute(Header = "_Copy Public Key To Clipboard")]
+    internal sealed class CopyPublicKey : IContextMenuEntry
+    {
+        private string publicKey = string.Empty;
+
+        public bool IsVisible(TextViewContext context)
+        {
+            if (context.SelectedTreeNodes == null && context.SelectedTreeNodes.Count() != 1)
+                return false;
+
+            if (context.SelectedTreeNodes.First() is AssemblyTreeNode)
+            {
+                var loadedAssembly = ((AssemblyTreeNode) context.SelectedTreeNodes.First()).LoadedAssembly;
+                publicKey = loadedAssembly.AssemblyDefinition.Name.PublicKeyString;
+
+                if (!string.IsNullOrWhiteSpace(publicKey))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool IsEnabled(TextViewContext context)
+        {
+            return true;
+        }
+
+        public void Execute(TextViewContext context)
+        {
+            Clipboard.SetText(publicKey);
+        }
+    }
 
 	[ExportContextMenuEntryAttribute(Header = "_Add To Main List")]
 	sealed class AddToMainList : IContextMenuEntry

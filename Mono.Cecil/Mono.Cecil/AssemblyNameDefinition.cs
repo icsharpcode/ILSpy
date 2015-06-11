@@ -27,6 +27,7 @@
 //
 
 using System;
+using System.Text;
 
 namespace Mono.Cecil {
 
@@ -36,7 +37,20 @@ namespace Mono.Cecil {
 			get { return Empty<byte>.Array; }
 		}
 
-		internal AssemblyNameDefinition ()
+	    public string PublicKeyString
+	    {
+	        get
+	        {
+                StringBuilder stringBuilder = new StringBuilder();
+                foreach (byte b in this.PublicKey)
+                {
+                    stringBuilder.AppendFormat("{0:X2}", b);
+                }
+                return stringBuilder.ToString();
+	        }
+	    }
+
+	    internal AssemblyNameDefinition ()
 		{
 			this.token = new MetadataToken (TokenType.Assembly, 1);
 		}
