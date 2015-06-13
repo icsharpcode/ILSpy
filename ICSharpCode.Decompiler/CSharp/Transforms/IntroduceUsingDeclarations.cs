@@ -170,6 +170,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					base.VisitSimpleType(simpleType);
 					return;
 				}
+				// HACK : ignore type names in attributes (TypeSystemAstBuilder doesn't handle them correctly)
+				if (simpleType.Parent is NRefactory.CSharp.Attribute) {
+					base.VisitSimpleType(simpleType);
+					return;
+				}
 				simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
 			}
 		}
