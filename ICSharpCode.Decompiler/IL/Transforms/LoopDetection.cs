@@ -19,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.NRefactory.Utils;
 using ICSharpCode.Decompiler.FlowAnalysis;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -123,10 +124,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (loop != null) {
 				// loop now is the union of all natural loops with loop head h.
+				// Try to extend the loop to reduce the number of exit points:
+				ExtendLoop(h, loop, h);
+				
 				// Sort blocks in the loop in reverse post-order to make the output look a bit nicer.
 				// (if the loop doesn't contain nested loops, this is a topological sort)
 				loop.Sort((a, b) => b.PostOrderNumber.CompareTo(a.PostOrderNumber));
-				Debug.Assert(loop[0] == h); // TODO: is this guaranteed after sorting?
+				Debug.Assert(loop[0] == h);
 				foreach (var node in loop) {
 					node.Visited = false; // reset visited flag so that we can find nested loops
 					Debug.Assert(h.Dominates(node), "The loop body must be dominated by the loop head");
@@ -138,7 +142,90 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				FindLoops(child);
 			}
 		}
-
+		
+		/// <summary>
+		/// Given a natural loop, add additional CFG nodes to the loop in order
+		/// to reduce the number of exit points out of the loop.
+		/// We do this because C# only allows reaching a single exit point (with 'break'
+		/// statements or when the loop condition evaluates to false), so we'd have
+		/// to introduce 'goto' statements for any additional exit points.
+		/// 
+		/// Definition: a loop exit point is a CFG node that is not itself part of the loop,
+		/// but has at least one predecessor which is part of the loop.
+		/// 
+		/// Nodes can only be added to the loop if they are dominated by the loop head.
+		/// When adding a node to the loop, we implicitly also add all of that node's predecessors
+		/// to the loop. (this ensures that the loop keeps its single entry point)
+		/// 
+		/// Adding a node to the loop has two effects on the the number of exit points:
+		/// * exit points that were added to the loop are no longer exit points, thus reducing the total number of exit points
+		/// * successors of the newly added nodes might be new, additional exit points
+		/// 
+		/// The loop extension algorithm proceeds traverses the loop head's dominator tree in pre-order.
+		/// For each candidate node, we detect whether adding it to the loop reduces the number of exit points.
+		/// If it does, the candidate is added to the loop.
+		/// </summary>
+		/// <remarks>
+		/// Requires and maintains the invariant that a node is marked as visited iff it is contained in the loop.
+		/// 
+		/// Note: I don't think this works reliably to minimize the number of exit points,
+		/// it's just a heuristic that should reduce the number of exit points in most cases.
+		/// I think what we're really looking for is a minimum vertex cut of the following flow graph:
+		/// * all nodes that are part of the natural loop are combined into a single node (the source node)
+		/// * all control flow nodes that are dominated by the loop head (but not part of the loop)
+		///   are nodes in the graph
+		/// * all nodes that in the loop's dominance frontier are nodes in the graph
+		/// * connections are as usual in the CFG
+		/// * the nodes in the loop's dominance frontier are additionally connected to the sink node.
+		/// 
+		/// Also, if the only way to leave the loop is through 'ret' or 'leave' instructions, or 'br' instructions
+		/// that leave the block container, this method has the effect of adding more code than necessary to the loop,
+		/// as those instructions do not have corresponding control flow edges.
+		/// </remarks>
+		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop, ControlFlowNode candidate)
+		{
+			Debug.Assert(candidate.Visited == loop.Contains(candidate));
+			if (!candidate.Visited) {
+				// This node not yet part of the loop, but might be added
+				List<ControlFlowNode> additionalNodes = new List<ControlFlowNode>();
+				// Find additionalNodes nodes and mark them as visited.
+				candidate.TraversePreOrder(n => n.Predecessors, additionalNodes.Add);
+				// This means Visited now represents the candiate extended loop.
+				// Determine new exit points that are reachable from the additional nodes
+				// (note: some of these might have previously been exit points, too)
+				var newExitPoints = additionalNodes.SelectMany(n => n.Successors).Where(n => !n.Visited).ToHashSet();
+				// Make visited represent the unextended loop, so that we can measure the exit points
+				// in the old state.
+				foreach (var node in additionalNodes)
+					node.Visited = false;
+				// Measure number of added and removed exit points
+				int removedExitPoints = additionalNodes.Count(IsExitPoint);
+				int addedExitPoints = newExitPoints.Count(n => !IsExitPoint(n));
+				if (removedExitPoints > addedExitPoints) {
+					// We can reduce the number of exit points by adding the candidate node to the loop.
+					candidate.TraversePreOrder(n => n.Predecessors, loop.Add);
+				}
+			}
+			// Pre-order traversal of dominator tree
+			foreach (var node in candidate.DominatorTreeChildren) {
+				ExtendLoop(loopHead, loop, node);
+			}
+		}
+		
+		/// <summary>
+		/// Gets whether 'node' is an exit point for the loop marked by the Visited flag.
+		/// </summary>
+		bool IsExitPoint(ControlFlowNode node)
+		{
+			if (node.Visited)
+				return false; // nodes in the loop are not exit points
+			foreach (var pred in node.Predecessors) {
+				if (pred.Visited)
+					return true;
+			}
+			return false;
+		}
+		
 		/// <summary>
 		/// Move the blocks associated with the loop into a new block container.
 		/// </summary>

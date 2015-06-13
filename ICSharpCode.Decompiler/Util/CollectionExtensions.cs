@@ -8,6 +8,11 @@ namespace ICSharpCode.Decompiler
 {
 	static class CollectionExtensions
 	{
+		public static HashSet<T> ToHashSet<T>(this IEnumerable<T> input)
+		{
+			return new HashSet<T>(input);
+		}
+		
 		public static T PopOrDefault<T>(this Stack<T> stack)
 		{
 			if (stack.Count == 0)
