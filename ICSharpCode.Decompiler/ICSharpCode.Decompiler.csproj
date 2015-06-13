@@ -111,6 +111,7 @@
     <Compile Include="IL\Transforms\ControlFlowSimplification.cs" />
     <Compile Include="IL\Transforms\IILTransform.cs" />
     <Compile Include="IL\Transforms\ILInlining.cs" />
+    <Compile Include="IL\Transforms\IntroduceExitPoints.cs" />
     <Compile Include="IL\Transforms\LoopDetection.cs" />
     <Compile Include="IL\Transforms\OptimizingTransform.cs" />
     <Compile Include="IL\Transforms\ExpressionTransforms.cs" />

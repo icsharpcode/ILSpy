@@ -119,6 +119,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (inst.TargetContainer == breakTarget)
 				return new BreakStatement();
+			if (inst.TargetContainer.SlotInfo == ILFunction.BodySlot)
+				return new ReturnStatement();
 			string label;
 			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out label)) {
 				label = "end_" + inst.TargetLabel;
@@ -212,7 +214,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				continueTarget = container.EntryPoint;
 				continueCount = 0;
 				breakTarget = container;
-				var blockStatement = ConvertBlockContainer(container);
+				var blockStatement = ConvertBlockContainer(container, true);
 				Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
 				Debug.Assert(blockStatement.Statements.First() is LabelStatement);
 				if (container.EntryPoint.IncomingEdgeCount == continueCount + 1) {
@@ -224,11 +226,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				breakTarget = oldBreakTarget;
 				return new WhileStatement(new PrimitiveExpression(true), blockStatement);
 			} else {
-				return ConvertBlockContainer(container);
+				return ConvertBlockContainer(container, false);
 			}
 		}
 		
-		BlockStatement ConvertBlockContainer(BlockContainer container)
+		BlockStatement ConvertBlockContainer(BlockContainer container, bool isLoop)
 		{
 			BlockStatement blockStatement = new BlockStatement();
 			foreach (var block in container.Blocks) {
@@ -237,7 +239,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					blockStatement.Add(new LabelStatement { Label = block.Label });
 				}
 				foreach (var inst in block.Instructions) {
-					if (inst.OpCode == OpCode.Leave && IsFinalLeave((Leave)inst)) {
+					if (!isLoop && inst.OpCode == OpCode.Leave && IsFinalLeave((Leave)inst)) {
 						// skip the final 'leave' instruction and just fall out of the BlockStatement
 						continue;
 					}

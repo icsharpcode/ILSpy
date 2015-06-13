@@ -50,6 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		List<IILTransform> ilTransforms = new List<IILTransform> {
 			new OptimizingTransform(),
 			new LoopDetection(),
+			new IntroduceExitPoints(),
 			new ControlFlowSimplification(),
 			new ILInlining(),
 			new TransformingVisitor(),

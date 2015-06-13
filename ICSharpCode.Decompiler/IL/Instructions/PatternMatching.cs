@@ -66,5 +66,17 @@ namespace ICSharpCode.Decompiler.IL
 			value = null;
 			return false;
 		}
+		
+		public bool MatchBranch(Block targetBlock)
+		{
+			var inst = this as Branch;
+			return inst != null && inst.TargetBlock == targetBlock;
+		}
+		
+		public bool MatchLeave(BlockContainer targetContainer)
+		{
+			var inst = this as Leave;
+			return inst != null && inst.TargetContainer == targetContainer;
+		}
 	}
 }

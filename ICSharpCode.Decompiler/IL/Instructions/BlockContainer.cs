@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	partial class BlockContainer : ILInstruction
 	{
-		public readonly SlotInfo BlockSlot = new SlotInfo("Block", isCollection: true);
+		public static readonly SlotInfo BlockSlot = new SlotInfo("Block", isCollection: true);
 		public readonly InstructionCollection<Block> Blocks;
 		
 		/// <summary>
@@ -162,5 +162,3 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 }
-
-

@@ -181,6 +181,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Also, if the only way to leave the loop is through 'ret' or 'leave' instructions, or 'br' instructions
 		/// that leave the block container, this method has the effect of adding more code than necessary to the loop,
 		/// as those instructions do not have corresponding control flow edges.
+		/// Ideally, 'leave' and 'br' should be also considered exit points; and if there are no other exit points,
+		/// we can afford to introduce an additional exit point so that 'ret' instructions and nested infinite loops
+		/// don't have to be moved into the loop.
 		/// </remarks>
 		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop, ControlFlowNode candidate)
 		{
