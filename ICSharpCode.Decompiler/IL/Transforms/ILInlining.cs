@@ -93,29 +93,48 @@ namespace ICSharpCode.Decompiler.IL
 		public bool InlineOneIfPossible(Block block, int pos, bool aggressive)
 		{
 			StLoc stloc = block.Instructions[pos] as StLoc;
-			if (stloc != null && stloc.Variable.Kind != VariableKind.PinnedLocal) {
-				ILVariable v = stloc.Variable;
-				if (InlineIfPossible(v, stloc.Value, block.Instructions.ElementAtOrDefault(pos+1), aggressive)) {
-					// Assign the ranges of the stloc instruction:
-					stloc.Value.AddILRange(stloc.ILRange);
-					// Remove the stloc instruction:
-					Debug.Assert(block.Instructions[pos] == stloc);
+			if (stloc == null || stloc.Variable.Kind == VariableKind.PinnedLocal)
+				return false;
+			ILVariable v = stloc.Variable;
+			// ensure the variable is accessed only a single time
+			if (v.StoreCount != 1)
+				return false;
+			if (v.LoadCount > 1 || v.LoadCount + v.AddressCount != 1)
+				return false;
+			return InlineOne(stloc, aggressive);
+		}
+		
+		/// <summary>
+		/// Inlines the stloc instruction at block.Instructions[pos] into the next instruction.
+		/// 
+		/// Note that this method does not check whether 'v' has only one use;
+		/// the caller is expected to validate whether inlining 'v' has any effects on other uses of 'v'.
+		/// </summary>
+		public static bool InlineOne(StLoc stloc, bool aggressive)
+		{
+			ILVariable v = stloc.Variable;
+			Block block = (Block)stloc.Parent;
+			int pos = stloc.ChildIndex;
+			if (DoInline(v, stloc.Value, block.Instructions.ElementAtOrDefault(pos + 1), aggressive)) {
+				// Assign the ranges of the stloc instruction:
+				stloc.Value.AddILRange(stloc.ILRange);
+				// Remove the stloc instruction:
+				Debug.Assert(block.Instructions[pos] == stloc);
+				block.Instructions.RemoveAt(pos);
+				return true;
+			} else if (v.LoadCount == 0 && v.AddressCount == 0) {
+				// The variable is never loaded
+				if (SemanticHelper.IsPure(stloc.Value.Flags)) {
+					// Remove completely if the instruction has no effects
+					// (except for reading locals)
 					block.Instructions.RemoveAt(pos);
 					return true;
-				} else if (v.LoadCount == 0 && v.AddressCount == 0) {
-					// The variable is never loaded
-					if (SemanticHelper.IsPure(stloc.Value.Flags)) {
-						// Remove completely if the instruction has no effects
-						// (except for reading locals)
-						block.Instructions.RemoveAt(pos);
-						return true;
-					} else if (v.Kind == VariableKind.StackSlot) {
-						// Assign the ranges of the stloc instruction:
-						stloc.Value.AddILRange(stloc.ILRange);
-						// Remove the stloc, but keep the inner expression
-						stloc.ReplaceWith(stloc.Value);
-						return true;
-					}
+				} else if (v.Kind == VariableKind.StackSlot) {
+					// Assign the ranges of the stloc instruction:
+					stloc.Value.AddILRange(stloc.ILRange);
+					// Remove the stloc, but keep the inner expression
+					stloc.ReplaceWith(stloc.Value);
+					return true;
 				}
 			}
 			return false;
@@ -123,15 +142,12 @@ namespace ICSharpCode.Decompiler.IL
 		
 		/// <summary>
 		/// Inlines 'expr' into 'next', if possible.
+		/// 
+		/// Note that this method does not check whether 'v' has only one use;
+		/// the caller is expected to validate whether inlining 'v' has any effects on other uses of 'v'.
 		/// </summary>
-		bool InlineIfPossible(ILVariable v, ILInstruction inlinedExpression, ILInstruction next, bool aggressive)
+		static bool DoInline(ILVariable v, ILInstruction inlinedExpression, ILInstruction next, bool aggressive)
 		{
-			// ensure the variable is accessed only a single time
-			if (v.StoreCount != 1)
-				return false;
-			if (v.LoadCount > 1 || v.LoadCount + v.AddressCount != 1)
-				return false;
-			
 			ILInstruction loadInst;
 			if (FindLoadInNext(next, v, inlinedExpression, out loadInst) == true) {
 				if (loadInst.OpCode == OpCode.LdLoca) {
@@ -247,7 +263,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return false;
 		}
-		*/
+		 */
 		
 		/// <summary>
 		/// Determines whether a variable should be inlined in non-aggressive mode, even though it is not a generated variable.
@@ -255,7 +271,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="next">The next top-level expression</param>
 		/// <param name="loadInst">The load within 'next'</param>
 		/// <param name="inlinedExpression">The expression being inlined</param>
-		bool NonAggressiveInlineInto(ILInstruction next, ILInstruction loadInst, ILInstruction inlinedExpression)
+		static bool NonAggressiveInlineInto(ILInstruction next, ILInstruction loadInst, ILInstruction inlinedExpression)
 		{
 			Debug.Assert(loadInst.IsDescendantOf(next));
 			
@@ -278,7 +294,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets whether 'expressionBeingMoved' can be inlined into 'expr'.
 		/// </summary>
-		public bool CanInlineInto(ILInstruction expr, ILVariable v, ILInstruction expressionBeingMoved)
+		public static bool CanInlineInto(ILInstruction expr, ILVariable v, ILInstruction expressionBeingMoved)
 		{
 			ILInstruction loadInst;
 			return FindLoadInNext(expr, v, expressionBeingMoved, out loadInst) == true;
@@ -288,7 +304,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// Finds the position to inline to.
 		/// </summary>
 		/// <returns>true = found; false = cannot continue search; null = not found</returns>
-		bool? FindLoadInNext(ILInstruction expr, ILVariable v, ILInstruction expressionBeingMoved, out ILInstruction loadInst)
+		static bool? FindLoadInNext(ILInstruction expr, ILVariable v, ILInstruction expressionBeingMoved, out ILInstruction loadInst)
 		{
 			loadInst = null;
 			if (expr == null)
@@ -316,7 +332,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Determines whether it is safe to move 'expressionBeingMoved' past 'expr'
 		/// </summary>
-		bool IsSafeForInlineOver(ILInstruction expr, ILInstruction expressionBeingMoved)
+		static bool IsSafeForInlineOver(ILInstruction expr, ILInstruction expressionBeingMoved)
 		{
 			ILVariable v;
 			if (expr.MatchLdLoc(out v) && v.AddressCount == 0) {
