@@ -122,5 +122,68 @@ public class Loops
 		}
 		return i;
 	}
+	
+	bool Condition(string arg)
+	{
+		Console.WriteLine("Condition: " + arg);
+		return false;
+	}
+	
+	public void WhileLoop()
+	{
+		Console.WriteLine("Initial");
+		if (Condition("if")) {
+			while (Condition("while")) {
+				Console.WriteLine("Loop Body");
+				if (Condition("test")) {
+					if (Condition("continue"))
+						continue;
+					if (!Condition("break"))
+						break;
+				}
+				Console.WriteLine("End of loop body");
+			}
+			Console.WriteLine("After loop");
+		}
+		Console.WriteLine("End of method");
+	}
+	
+	public void DoWhileLoop()
+	{
+		Console.WriteLine("Initial");
+		if (Condition("if")) {
+			do {
+				Console.WriteLine("Loop Body");
+				if (Condition("test")) {
+					if (Condition("continue"))
+						continue;
+					if (!Condition("break"))
+						break;
+				}
+				Console.WriteLine("End of loop body");
+			} while (Condition("while"));
+			Console.WriteLine("After loop");
+		}
+		Console.WriteLine("End of method");
+	}
+	
+	public void ForLoop()
+	{
+		Console.WriteLine("Initial");
+		if (Condition("if")) {
+			for (int i = 0; Condition("for"); i++) {
+				Console.WriteLine("Loop Body");
+				if (Condition("test")) {
+					if (Condition("continue"))
+						continue;
+					if (!Condition("break"))
+						break;
+				}
+				Console.WriteLine("End of loop body");
+			}
+			Console.WriteLine("After loop");
+		}
+		Console.WriteLine("End of method");
+	}
 }
 

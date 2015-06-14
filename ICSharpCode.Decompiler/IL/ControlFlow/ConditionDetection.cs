@@ -77,6 +77,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// usually an IfInstruction with a branch:
 			IfInstruction ifInst = block.Instructions.ElementAtOrDefault(block.Instructions.Count - 2) as IfInstruction;
 			if (ifInst != null && ifInst.FalseInst.OpCode == OpCode.Nop) {
+				if (IsBranchToLaterTarget(ifInst.TrueInst, exitInst)) {
+					// "if (c) goto lateBlock; goto earlierBlock;"
+					// -> "if (!c)" goto earlierBlock; goto lateBlock;
+					// This reordering should make the if structure correspond more closely to the original C# source code
+					block.Instructions[block.Instructions.Count - 1] = ifInst.TrueInst;
+					ifInst.TrueInst = exitInst;
+					exitInst = block.Instructions.Last();
+					ifInst.Condition = new LogicNot(ifInst.Condition);
+				}
+				
 				ILInstruction trueExitInst;
 				if (IsUsableBranchToChild(cfgNode, ifInst.TrueInst)) {
 					// "if (...) goto targetBlock; exitInst;"
@@ -135,6 +145,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				block.Instructions.AddRange(targetBlock.Instructions);
 				targetBlock.Instructions.Clear();
 			}
+		}
+
+		bool IsBranchToLaterTarget(ILInstruction inst1, ILInstruction inst2)
+		{
+			Block block1, block2;
+			if (inst1.MatchBranch(out block1) && inst2.MatchBranch(out block2)) {
+				return block1.ILRange.Start > block2.ILRange.Start;
+			}
+			return false;
 		}
 		
 		bool IsUsableBranchToChild(ControlFlowNode cfgNode, ILInstruction potentialBranchInstruction)

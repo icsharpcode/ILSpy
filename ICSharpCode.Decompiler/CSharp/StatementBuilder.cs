@@ -204,30 +204,36 @@ namespace ICSharpCode.Decompiler.CSharp
 				blockStatement.Add(Convert(block.FinalInstruction));
 			return blockStatement;
 		}
-		
+
 		protected internal override Statement VisitBlockContainer(BlockContainer container)
 		{
 			if (container.EntryPoint.IncomingEdgeCount > 1) {
 				var oldContinueTarget = continueTarget;
 				var oldContinueCount = continueCount;
 				var oldBreakTarget = breakTarget;
-				continueTarget = container.EntryPoint;
-				continueCount = 0;
-				breakTarget = container;
-				var blockStatement = ConvertBlockContainer(container, true);
-				Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
-				Debug.Assert(blockStatement.Statements.First() is LabelStatement);
-				if (container.EntryPoint.IncomingEdgeCount == continueCount + 1) {
-					// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
-					blockStatement.Statements.First().Remove();
-				}
+				var loop = ConvertLoop(container);
 				continueTarget = oldContinueTarget;
 				continueCount = oldContinueCount;
 				breakTarget = oldBreakTarget;
-				return new WhileStatement(new PrimitiveExpression(true), blockStatement);
+				return loop;
 			} else {
 				return ConvertBlockContainer(container, false);
 			}
+		}
+		
+		WhileStatement ConvertLoop(BlockContainer container)
+		{
+			continueTarget = container.EntryPoint;
+			continueCount = 0;
+			breakTarget = container;
+			var blockStatement = ConvertBlockContainer(container, true);
+			Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
+			Debug.Assert(blockStatement.Statements.First() is LabelStatement);
+			if (container.EntryPoint.IncomingEdgeCount == continueCount + 1) {
+				// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
+				blockStatement.Statements.First().Remove();
+			}
+			return new WhileStatement(new PrimitiveExpression(true), blockStatement);
 		}
 		
 		BlockStatement ConvertBlockContainer(BlockContainer container, bool isLoop)

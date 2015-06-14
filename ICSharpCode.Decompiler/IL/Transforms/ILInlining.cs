@@ -283,7 +283,10 @@ namespace ICSharpCode.Decompiler.IL
 				case OpCode.Return:
 					return parent == next;
 				case OpCode.IfInstruction:
-					return parent == next || (parent.OpCode == OpCode.LogicNot && parent.Parent == next);
+					while (parent.OpCode == OpCode.LogicNot) {
+						parent = parent.Parent;
+					}
+					return parent == next;
 				case OpCode.SwitchInstruction:
 					return parent == next || (parent.OpCode == OpCode.Sub && parent.Parent == next);
 				default:

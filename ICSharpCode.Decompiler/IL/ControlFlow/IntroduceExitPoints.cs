@@ -97,9 +97,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (currentExit == null) {
 				currentExit = inst;
-				inst.ReplaceWith(new Leave(currentContainer));
+				inst.ReplaceWith(new Leave(currentContainer) { ILRange = inst.ILRange });
 			} else if (ConditionDetection.CompatibleExitInstruction(inst, currentExit)) {
-				inst.ReplaceWith(new Leave(currentContainer));
+				inst.ReplaceWith(new Leave(currentContainer) { ILRange = inst.ILRange });
 			}
 		}
 		

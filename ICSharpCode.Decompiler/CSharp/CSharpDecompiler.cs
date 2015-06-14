@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		List<IILTransform> ilTransforms = new List<IILTransform> {
 			new ControlFlowSimplification(),
+			new ILInlining(), // temporary pass, just to make the ILAst easier to read while debugging loop detection
 			new LoopDetection(),
 			new IntroduceExitPoints(),
 			new ConditionDetection(),
