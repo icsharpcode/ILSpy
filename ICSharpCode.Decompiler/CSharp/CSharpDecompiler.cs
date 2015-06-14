@@ -20,18 +20,14 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
-using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
 using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Utils;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.Decompiler.CSharp
@@ -48,10 +44,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly DecompilerSettings settings;
 
 		List<IILTransform> ilTransforms = new List<IILTransform> {
-			new OptimizingTransform(),
+			new ControlFlowSimplification(),
 			new LoopDetection(),
 			new IntroduceExitPoints(),
-			new ControlFlowSimplification(),
+			new ConditionDetection(),
 			new ILInlining(),
 			new TransformingVisitor(),
 			new ExpressionTransforms(),

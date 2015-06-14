@@ -81,6 +81,10 @@
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="FlowAnalysis\ControlFlowNode.cs" />
     <Compile Include="FlowAnalysis\Dominance.cs" />
+    <Compile Include="IL\ControlFlow\ConditionDetection.cs" />
+    <Compile Include="IL\ControlFlow\ControlFlowSimplification.cs" />
+    <Compile Include="IL\ControlFlow\IntroduceExitPoints.cs" />
+    <Compile Include="IL\ControlFlow\LoopDetection.cs" />
     <Compile Include="IL\Instructions.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -109,12 +113,8 @@
     <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\NRTypeExtensions.cs" />
     <Compile Include="IL\SlotInfo.cs" />
-    <Compile Include="IL\Transforms\ControlFlowSimplification.cs" />
     <Compile Include="IL\Transforms\IILTransform.cs" />
     <Compile Include="IL\Transforms\ILInlining.cs" />
-    <Compile Include="IL\Transforms\IntroduceExitPoints.cs" />
-    <Compile Include="IL\Transforms\LoopDetection.cs" />
-    <Compile Include="IL\Transforms\OptimizingTransform.cs" />
     <Compile Include="IL\Transforms\ExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\TransformArrayInitializers.cs" />
     <Compile Include="IL\Transforms\TransformingVisitor.cs" />
@@ -185,6 +185,7 @@
   <ItemGroup>
     <Folder Include="FlowAnalysis" />
     <Folder Include="ILAst" />
+    <Folder Include="IL\ControlFlow" />
     <Folder Include="IL\Transforms" />
     <Folder Include="TypeSystem" />
   </ItemGroup>

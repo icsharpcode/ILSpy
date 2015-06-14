@@ -15,10 +15,11 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 using System;
 using System.Diagnostics;
 
-namespace ICSharpCode.Decompiler.IL.Transforms
+namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
 	/// <summary>
 	/// Control flow transform: use 'leave' instructions instead of 'br' where possible.
@@ -97,7 +98,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (currentExit == null) {
 				currentExit = inst;
 				inst.ReplaceWith(new Leave(currentContainer));
-			} else if (ControlFlowSimplification.CompatibleExitInstruction(inst, currentExit)) {
+			} else if (ConditionDetection.CompatibleExitInstruction(inst, currentExit)) {
 				inst.ReplaceWith(new Leave(currentContainer));
 			}
 		}

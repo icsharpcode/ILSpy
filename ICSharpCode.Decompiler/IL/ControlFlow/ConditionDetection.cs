@@ -21,7 +21,7 @@ using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.FlowAnalysis;
 
-namespace ICSharpCode.Decompiler.IL.Transforms
+namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
 	/// <summary>
 	/// Detects 'if' structure and other non-loop aspects of control flow.
@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// Blocks should be basic blocks prior to this transform.
 	/// After this transform, they will be extended basic blocks.
 	/// </remarks>
-	public class ControlFlowSimplification : IILTransform
+	public class ConditionDetection : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{

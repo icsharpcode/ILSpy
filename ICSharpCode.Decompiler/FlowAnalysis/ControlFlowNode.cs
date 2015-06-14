@@ -18,13 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
-
-using ICSharpCode.NRefactory.Utils;
-using ICSharpCode.Decompiler.Disassembler;
-using Mono.Cecil.Cil;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {
