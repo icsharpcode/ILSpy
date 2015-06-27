@@ -1,0 +1,19 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Guid="*">
+        <File Source="$(var.ILSpy.TargetDir)\ILSpy.exe" />
+      </Component>
+      <Component Guid="*">
+        <File Source="$(var.ILSpy.TargetDir)\ILSpy.exe.config" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="ILSpy.Binaries">
+      <ComponentRef Id="ILSpy.exe" />
+      <ComponentRef Id="ILSpy.exe.config" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

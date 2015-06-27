@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <?include Variables.wxi ?>
+  <Product Id="*" Name="$(var.ProductName)" Language="1033" Version="$(var.Version)" Manufacturer="$(var.Manufacturer)" UpgradeCode="$(var.UpgradeCode)">
+    <Package InstallerVersion="200" Compressed="yes" InstallScope="perMachine" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Feature Id="ProductFeature" Title="$(var.ProductName)" Level="1">
+      <ComponentGroupRef Id="ProductComponents" />
+    </Feature>
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="ManufacturerFolder" Name="$(var.Manufacturer)">
+          <Directory Id="INSTALLFOLDER" Name="$(var.ProductName)" />
+        </Directory>
+      </Directory>
+
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ManufacturerProgramsFolder" Name="$(var.Manufacturer)">
+          <Directory Id="ProductProgramsFolder" Name="$(var.ProductName)" />
+        </Directory>
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents">
+      <ComponentGroupRef Id="ICSharpCode.AvalonEdit.Binaries" />
+      <ComponentGroupRef Id="ICSharpCode.Decompiler.Binaries" />
+      <ComponentGroupRef Id="ICSharpCode.NRefactory.CSharp.Binaries" />
+      <ComponentGroupRef Id="ICSharpCode.NRefactory.VB.Binaries" />
+      <ComponentGroupRef Id="ICSharpCode.NRefactory.Binaries" />
+      <ComponentGroupRef Id="ICSharpCode.TreeView.Binaries" />
+      <ComponentGroupRef Id="ILSpy.BamlDecompiler.Binaries" />
+      <ComponentGroupRef Id="ILSpy.Binaries" />
+      <ComponentGroupRef Id="Mono.Cecil.Pdb.Binaries" />
+      <ComponentGroupRef Id="Mono.Cecil.Binaries" />
+      <ComponentRef Id="ILSpy.ApplicationShortcut" />
+    </ComponentGroup>
+  </Fragment>
+
+  <Fragment>
+    <DirectoryRef Id="ProductProgramsFolder">
+      <Component Id="ILSpy.ApplicationShortcut" Guid="*">
+        <RegistryValue Root="HKCU" Key="SOFTWARE\$(var.Manufacturer)\$(var.ProductName)" Name="ApplicationShortcut" Type="integer" Value="1" KeyPath="yes"/>
+        <Shortcut Id="ILSpy.ApplicationShortcut" Name="$(var.ProductName)" Target="[#ILSpy.exe]" Advertise="no" />
+        <RemoveFolder Id="ManufacturerProgramsFolder" On="uninstall" Directory="ManufacturerProgramsFolder"/>
+        <RemoveFolder Id="ProductProgramsFolder" On="uninstall" Directory="ProductProgramsFolder"/>
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+</Wix>

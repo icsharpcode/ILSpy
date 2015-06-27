@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Fragment>
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Guid="*">
+        <File Source="$(var.Mono.Cecil.Pdb.TargetDir)\Mono.Cecil.Pdb.dll" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+  <Fragment>
+    <ComponentGroup Id="Mono.Cecil.Pdb.Binaries">
+      <ComponentRef Id="Mono.Cecil.Pdb.dll" />
+    </ComponentGroup>
+  </Fragment>
+</Wix>

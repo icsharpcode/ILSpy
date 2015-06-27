@@ -41,6 +41,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		Rebracer.xml = Rebracer.xml
 	EndProjectSection
 EndProject
+Project("{930C7802-8A8C-48F9-8165-68863BCCD9DD}") = "ILSpy.Setup", "ILSpy.Setup\ILSpy.Setup.wixproj", "{EBFB1AD1-517C-44C4-91BE-8D23BC99CAB8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -159,6 +161,12 @@ Global
 		{9D7BE6C0-B7B3-4A50-A54E-18A2D84A3384}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9D7BE6C0-B7B3-4A50-A54E-18A2D84A3384}.Release|Any CPU.Build.0 = Release|Any CPU
 		{9D7BE6C0-B7B3-4A50-A54E-18A2D84A3384}.Release|x86.ActiveCfg = Release|Any CPU
+		{EBFB1AD1-517C-44C4-91BE-8D23BC99CAB8}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{EBFB1AD1-517C-44C4-91BE-8D23BC99CAB8}.Debug|x86.ActiveCfg = Debug|x86
+		{EBFB1AD1-517C-44C4-91BE-8D23BC99CAB8}.Release|Any CPU.ActiveCfg = Release|x86
+		{EBFB1AD1-517C-44C4-91BE-8D23BC99CAB8}.Release|Any CPU.Build.0 = Release|x86
+		{EBFB1AD1-517C-44C4-91BE-8D23BC99CAB8}.Release|x86.ActiveCfg = Release|x86
+		{EBFB1AD1-517C-44C4-91BE-8D23BC99CAB8}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
