@@ -18,6 +18,8 @@
 
 using System;
 using System.Text;
+using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
@@ -151,5 +153,25 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			get { return method; }
 		}
-	}
+
+        TextBlock tooltip;
+
+        public override object ToolTip
+        {
+            get
+            {
+                if (tooltip == null)
+                {
+                    tooltip = new TextBlock();
+                    tooltip.Inlines.Add(new Bold(new Run("Type: ")));
+                    tooltip.Inlines.Add(new Run(this.MethodDefinition.DeclaringType.FullName));
+                    tooltip.Inlines.Add(new LineBreak());
+                    tooltip.Inlines.Add(new Bold(new Run("Assembly: ")));
+                    tooltip.Inlines.Add(new Run(this.MethodDefinition.Module.Assembly.FullName));
+                }
+
+                return tooltip;
+            }
+        }
+    }
 }

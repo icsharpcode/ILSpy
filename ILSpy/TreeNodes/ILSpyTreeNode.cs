@@ -190,5 +190,5 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					return System.Windows.SystemColors.GrayTextBrush;
 			}
 		}
-	}
+    }
 }
