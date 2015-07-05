@@ -101,6 +101,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.SelectedFontSize = (double?)e.Attribute("FontSize") ?? 10.0 * 4 / 3;
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
 			s.ShowMetadataTokens = (bool?) e.Attribute("ShowMetadataTokens") ?? false;
+		    s.EnableWordWrap = (bool?)e.Attribute("EnableWordWrap") ?? false;
 			
 			return s;
 		}
@@ -116,6 +117,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("FontSize", s.SelectedFontSize);
 			section.SetAttributeValue("ShowLineNumbers", s.ShowLineNumbers);
 			section.SetAttributeValue("ShowMetadataTokens", s.ShowMetadataTokens);
+            section.SetAttributeValue("EnableWordWrap", s.EnableWordWrap);
 			
 			XElement existingElement = root.Element("DisplaySettings");
 			if (existingElement != null)

@@ -96,12 +96,27 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		public void CopyValues(DisplaySettings s)
+        bool enableWordWrap;
+
+        public bool EnableWordWrap
+        {
+            get { return enableWordWrap; }
+            set
+            {
+                if (enableWordWrap != value) {
+                    enableWordWrap = value;
+                    OnPropertyChanged("EnableWordWrap");
+                }
+            }
+        }
+
+        public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
 			this.SelectedFontSize = s.selectedFontSize;
 			this.ShowLineNumbers = s.showLineNumbers;
 			this.ShowMetadataTokens = s.showMetadataTokens;
+            this.EnableWordWrap = s.enableWordWrap;
 		}
 	}
 }
