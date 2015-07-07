@@ -133,10 +133,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		{
 			if (string.IsNullOrEmpty(name))
 				return Identifier.Null;
-			if (name[0] == '@')
-				return new Identifier (name.Substring (1), new TextLocation (location.Line, location.Column + 1)) { IsVerbatim = true };
-			else
-				return new Identifier (name, location);
+            return new Identifier(name, location) { IsVerbatim = name[0] == '@' };
 		}
 		
 		public static Identifier Create (string name, TextLocation location, bool isVerbatim)
