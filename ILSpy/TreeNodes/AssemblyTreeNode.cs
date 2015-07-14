@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -100,7 +101,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					tooltip.Inlines.Add(new Bold(new Run("Name: ")));
 					tooltip.Inlines.Add(new Run(assembly.AssemblyDefinition.FullName));
 					tooltip.Inlines.Add(new LineBreak());
-					tooltip.Inlines.Add(new Bold(new Run("Location: ")));
+				    string publicKey = assembly.AssemblyDefinition.Name.PublicKeyString;
+				    AddPublicKeyToToolTip(publicKey);
+				    tooltip.Inlines.Add(new Bold(new Run("Location: ")));
 					tooltip.Inlines.Add(new Run(assembly.FileName));
 					tooltip.Inlines.Add(new LineBreak());
 					tooltip.Inlines.Add(new Bold(new Run("Architecture: ")));
@@ -117,7 +120,36 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		public override bool ShowExpander
+	    private void AddPublicKeyToToolTip(string publicKey)
+	    {
+	        if (!string.IsNullOrWhiteSpace(publicKey))
+	        {
+	            tooltip.Inlines.Add(new Bold(new Run("Public Key: ")));
+	            tooltip.Inlines.Add(new LineBreak());
+	            string remaining = publicKey;
+	            const int lineSize = 64;
+	            while (!string.IsNullOrWhiteSpace(remaining))
+	            {
+	                int charsToTake = remaining.Length > lineSize ? lineSize : remaining.Length;
+	                string line = remaining.Substring(0, charsToTake);
+	                remaining = remaining.Substring(charsToTake);
+	                tooltip.Inlines.Add(new Run(line));
+	                tooltip.Inlines.Add(new LineBreak());
+	            }
+	        }
+	    }
+
+	    private string GetStringFromKey(byte[] publicKey)
+	    {
+            StringBuilder stringBuilder = new StringBuilder();
+	        foreach (byte b in publicKey)
+	        {
+	            stringBuilder.AppendFormat("{0:X2}", b);
+	        }
+	        return stringBuilder.ToString();
+	    }
+
+	    public override bool ShowExpander
 		{
 			get { return !assembly.HasLoadError; }
 		}
@@ -348,6 +380,40 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			MainWindow.Instance.RefreshDecompiledView();
 		}
 	}
+
+    [ExportContextMenuEntryAttribute(Header = "_Copy Public Key To Clipboard")]
+    internal sealed class CopyPublicKey : IContextMenuEntry
+    {
+        private string publicKey = string.Empty;
+
+        public bool IsVisible(TextViewContext context)
+        {
+            if (context.SelectedTreeNodes == null && context.SelectedTreeNodes.Count() != 1)
+                return false;
+
+            if (context.SelectedTreeNodes.First() is AssemblyTreeNode)
+            {
+                var loadedAssembly = ((AssemblyTreeNode) context.SelectedTreeNodes.First()).LoadedAssembly;
+                publicKey = loadedAssembly.AssemblyDefinition.Name.PublicKeyString;
+
+                if (!string.IsNullOrWhiteSpace(publicKey))
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public bool IsEnabled(TextViewContext context)
+        {
+            return true;
+        }
+
+        public void Execute(TextViewContext context)
+        {
+            Clipboard.SetText(publicKey);
+        }
+    }
 
 	[ExportContextMenuEntryAttribute(Header = "_Add To Main List")]
 	sealed class AddToMainList : IContextMenuEntry
