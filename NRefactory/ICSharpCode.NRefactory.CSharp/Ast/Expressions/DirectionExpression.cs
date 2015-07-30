@@ -38,7 +38,7 @@ namespace ICSharpCode.NRefactory.CSharp
 	/// </summary>
 	public class DirectionExpression : Expression
 	{
-		public readonly static TokenRole RefKeywordRole = new TokenRole ("ref");
+		public readonly static TokenRole RefKeywordRole = new TokenRole ("&");
 		public readonly static TokenRole OutKeywordRole = new TokenRole ("out");
 		
 		public FieldDirection FieldDirection {
