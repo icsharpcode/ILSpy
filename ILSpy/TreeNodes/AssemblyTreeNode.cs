@@ -349,6 +349,44 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
+	[ExportContextMenuEntryAttribute(Header = "_Goto Entry Point")]
+	sealed class GotoEntryPoint : IContextMenuEntry
+	{
+		public bool IsVisible(TextViewContext context)
+		{
+			return GetEntryPoint(context) != null;
+		}
+
+		public bool IsEnabled(TextViewContext context)
+		{
+			return true;
+		}
+
+		public void Execute(TextViewContext context)
+		{
+			var entryPoint = GetEntryPoint(context);
+			if (entryPoint == null)
+				return;
+			MainWindow.Instance.JumpToReference(entryPoint);
+		}
+
+		private static MethodDefinition GetEntryPoint(TextViewContext context)
+		{
+			if (context.SelectedTreeNodes == null)
+				return null;
+			if (context.SelectedTreeNodes.Length != 1)
+				return null;
+			var assemblyNode = context.SelectedTreeNodes[0] as AssemblyTreeNode;
+			if (assemblyNode == null)
+				return null;
+			if (assemblyNode.LoadedAssembly == null)
+				return null;
+			if (assemblyNode.LoadedAssembly.AssemblyDefinition == null)
+				return null;
+			return assemblyNode.LoadedAssembly.AssemblyDefinition.EntryPoint;
+		}
+	}
+
 	[ExportContextMenuEntryAttribute(Header = "_Add To Main List")]
 	sealed class AddToMainList : IContextMenuEntry
 	{
