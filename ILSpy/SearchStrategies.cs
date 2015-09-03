@@ -53,7 +53,7 @@ namespace ICSharpCode.ILSpy
 							if (equalCompareLength == -1)
 								equalCompareLength = text.Length;
 
-							if (term.Length > 1 && String.Compare(term, 1, text, 0, equalCompareLength, StringComparison.OrdinalIgnoreCase) != 0)
+							if (term.Length > 1 && String.Compare(term, 1, text, 0, Math.Max(term.Length, equalCompareLength), StringComparison.OrdinalIgnoreCase) != 0)
 								return false;
 						}
 						break;
