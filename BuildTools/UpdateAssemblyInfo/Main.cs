@@ -29,10 +29,6 @@ namespace UpdateAssemblyInfo
 				Output = "ILSpy/Properties/AssemblyInfo.cs"
 			},
 			new TemplateFile {
-				Input = "ICSharpCode.Decompiler/Properties/AssemblyInfo.template.cs",
-				Output = "ICSharpCode.Decompiler/Properties/AssemblyInfo.cs"
-			},
-			new TemplateFile {
 				Input = "ILSpy/Properties/app.config.template",
 				Output = "ILSpy/app.config"
 			}

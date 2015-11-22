@@ -3,16 +3,12 @@
 
 using System;
 using System.Collections;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Resources;
 using System.Xml.Linq;
-using ICSharpCode.Decompiler.Tests.Helpers;
-using ICSharpCode.ILSpy;
 using Mono.Cecil;
 using NUnit.Framework;
-using Ricciolo.StylesExplorer.MarkupReflection;
 
 namespace ILSpy.BamlDecompiler.Tests
 {
@@ -112,7 +108,7 @@ namespace ILSpy.BamlDecompiler.Tests
 			Assert.IsNotNull(bamlStream);
 			XDocument document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream);
 
-			CodeAssert.AreEqual(File.ReadAllText(sourcePath), document.ToString());
+			Assert.AreEqual(File.ReadAllText(sourcePath), document.ToString());
 		}
 		
 		Stream LoadBaml(Resource res, string name)
