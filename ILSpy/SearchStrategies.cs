@@ -37,8 +37,31 @@ namespace ICSharpCode.ILSpy
 
 			for (int i = 0; i < searchTerm.Length; ++i) {
 				// How to handle overlapping matches?
-				if (text.IndexOf(searchTerm[i], StringComparison.OrdinalIgnoreCase) < 0)
-					return false;
+				var term = searchTerm[i];
+				switch (term[0])
+				{
+					case '+': // must contain
+						term = term.Substring(1);
+						goto default;
+					case '-': // should not contain
+						if (term.Length > 1 && text.IndexOf(term.Substring(1), StringComparison.OrdinalIgnoreCase) >= 0)
+							return false;
+						break;
+					case '=': // exact match
+						{
+							var equalCompareLength = text.IndexOf('`');
+							if (equalCompareLength == -1)
+								equalCompareLength = text.Length;
+
+							if (term.Length > 1 && String.Compare(term, 1, text, 0, Math.Max(term.Length, equalCompareLength), StringComparison.OrdinalIgnoreCase) != 0)
+								return false;
+						}
+						break;
+					default:
+						if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
+							return false;
+						break;
+				}
 			}
 			return true;
 		}
