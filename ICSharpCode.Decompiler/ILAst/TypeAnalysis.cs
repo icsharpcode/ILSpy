@@ -1266,6 +1266,16 @@ namespace ICSharpCode.Decompiler.ILAst
 					return TypeCode.Double;
 				case MetadataType.String:
 					return TypeCode.String;
+				case MetadataType.RequiredModifier:
+				case MetadataType.OptionalModifier:
+					TypeReference modifier = ((IModifierType)type).ModifierType;
+					switch (modifier.FullName) {
+						case "System.Runtime.CompilerServices.IsSignUnspecifiedByte":
+							return TypeCode.SByte;
+						case "System.Runtime.CompilerServices.IsLong":
+							return TypeCode.Int32;
+					}
+					goto default;
 				default:
 					return TypeCode.Object;
 			}
