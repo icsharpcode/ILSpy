@@ -1,0 +1,130 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
+    <ProductVersion>3.9</ProductVersion>
+    <ProjectGuid>ebfb1ad1-517c-44c4-91be-8d23bc99cab8</ProjectGuid>
+    <SchemaVersion>2.0</SchemaVersion>
+    <OutputName>ILSpy.Setup</OutputName>
+    <OutputType>Package</OutputType>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' AND '$(MSBuildExtensionsPath32)' != '' ">$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+    <WixTargetsPath Condition=" '$(WixTargetsPath)' == '' ">$(MSBuildExtensionsPath)\Microsoft\WiX\v3.x\Wix.targets</WixTargetsPath>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+    <DefineConstants>Debug</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
+    <OutputPath>bin\$(Configuration)\</OutputPath>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="ICSharpCode.AvalonEdit.wxs" />
+    <Compile Include="ICSharpCode.Decompiler.wxs" />
+    <Compile Include="ICSharpCode.NRefactory.CSharp.wxs" />
+    <Compile Include="ICSharpCode.NRefactory.VB.wxs" />
+    <Compile Include="ICSharpCode.NRefactory.wxs" />
+    <Compile Include="ICSharpCode.TreeView.wxs" />
+    <Compile Include="ILSpy.BamlDecompiler.wxs" />
+    <Compile Include="ILSpy.wxs" />
+    <Compile Include="Mono.Cecil.Pdb.wxs" />
+    <Compile Include="Mono.Cecil.wxs" />
+    <Compile Include="Product.wxs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AvalonEdit\ICSharpCode.AvalonEdit\ICSharpCode.AvalonEdit.csproj">
+      <Name>ICSharpCode.AvalonEdit</Name>
+      <Project>{6c55b776-26d4-4db3-a6ab-87e783b2f3d1}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj">
+      <Name>ICSharpCode.Decompiler</Name>
+      <Project>{984cc812-9470-4a13-aff9-cc44068d666c}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\ILSpy.BamlDecompiler\ILSpy.BamlDecompiler.csproj">
+      <Name>ILSpy.BamlDecompiler</Name>
+      <Project>{a6bad2ba-76ba-461c-8b6d-418607591247}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\ILSpy\ILSpy.csproj">
+      <Name>ILSpy</Name>
+      <Project>{1e85eff9-e370-4683-83e4-8a3d063ff791}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\Mono.Cecil\Mono.Cecil.csproj">
+      <Name>Mono.Cecil</Name>
+      <Project>{d68133bd-1e63-496e-9ede-4fbdbf77b486}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\Mono.Cecil\symbols\pdb\Mono.Cecil.Pdb.csproj">
+      <Name>Mono.Cecil.Pdb</Name>
+      <Project>{63e6915c-7ea4-4d76-ab28-0d7191eea626}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory.CSharp\ICSharpCode.NRefactory.CSharp.csproj">
+      <Name>ICSharpCode.NRefactory.CSharp</Name>
+      <Project>{53dca265-3c3c-42f9-b647-f72ba678122b}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory.VB\ICSharpCode.NRefactory.VB.csproj">
+      <Name>ICSharpCode.NRefactory.VB</Name>
+      <Project>{7b82b671-419f-45f4-b778-d9286f996efa}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory\ICSharpCode.NRefactory.csproj">
+      <Name>ICSharpCode.NRefactory</Name>
+      <Project>{3b2a5653-ec97-4001-bb9b-d90f1af2c371}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+    <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj">
+      <Name>ICSharpCode.TreeView</Name>
+      <Project>{dde2a481-8271-4eac-a330-8fa6a38d13d1}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="Variables.wxi" />
+  </ItemGroup>
+  <Import Project="$(WixTargetsPath)" />
+  <!--
+	To modify your build process, add your task inside one of the targets below and uncomment it.
+	Other similar extension points exist, see Wix.targets.
+	<Target Name="BeforeBuild">
+	</Target>
+	<Target Name="AfterBuild">
+	</Target>
+	-->
+</Project>

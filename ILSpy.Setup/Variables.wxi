@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Include>
+  <?define Manufacturer = "ICSharpCode"?>
+  <?define ProductName = "ILSpy"?>
+  <?define ProductVersion = "ILSpy"?>
+  <?define UpgradeCode = "d3649f73-6b1f-4cfd-b658-ac030f8f9464"?>
+  <?define Version = !(bind.fileVersion.ILSpy.exe)?>
+</Include>
