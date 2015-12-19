@@ -33,7 +33,8 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		{
 			return new IAstTransform[] {
 				new PushNegation(),
-				new DelegateConstruction(context),
+                //new VariableDetupler(context),
+                new DelegateConstruction(context),
 				new PatternStatementTransform(context),
 				new ReplaceMethodCallsWithOperators(context),
 				new IntroduceUnsafeModifier(),

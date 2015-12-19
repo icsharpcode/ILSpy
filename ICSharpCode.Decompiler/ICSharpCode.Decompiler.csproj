@@ -90,6 +90,7 @@
     <Compile Include="Ast\Transforms\PushNegation.cs" />
     <Compile Include="Ast\Transforms\TransformationPipeline.cs" />
     <Compile Include="Ast\Transforms\PatternStatementTransform.cs" />
+    <Compile Include="Ast\Transforms\VariableDetupler.cs" />
     <Compile Include="Ast\TypesHierarchyHelpers.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="CodeMappings.cs" />
@@ -139,11 +140,11 @@
     <None Include="Properties\AssemblyInfo.template.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Mono.Cecil\Mono.Cecil.csproj"  Condition=" '$(BuildNuGetPackage)' != 'True' ">
+    <ProjectReference Include="..\Mono.Cecil\Mono.Cecil.csproj" Condition=" '$(BuildNuGetPackage)' != 'True' ">
       <Project>{D68133BD-1E63-496E-9EDE-4FBDBF77B486}</Project>
       <Name>Mono.Cecil</Name>
     </ProjectReference>
-    <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory.CSharp\ICSharpCode.NRefactory.CSharp.csproj"  Condition=" '$(BuildNuGetPackage)' != 'True' ">
+    <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory.CSharp\ICSharpCode.NRefactory.CSharp.csproj" Condition=" '$(BuildNuGetPackage)' != 'True' ">
       <Project>{53DCA265-3C3C-42F9-B647-F72BA678122B}</Project>
       <Name>ICSharpCode.NRefactory.CSharp</Name>
     </ProjectReference>

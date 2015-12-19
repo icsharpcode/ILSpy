@@ -459,6 +459,16 @@ namespace ICSharpCode.Decompiler.ILAst
 			}
 			output.Write(')');
 		}
+
+        public ILExpression Clone()
+        {
+            return new ILExpression(Code, Operand, Arguments?.Select(a => a?.Clone())?.ToArray()) {
+                ILRanges = ILRanges?.ToList(),
+                ExpectedType = ExpectedType,
+                InferredType = InferredType,
+                Prefixes = Prefixes?.ToArray()
+            };
+        }
 	}
 	
 	public class ILWhileLoop : ILNode
