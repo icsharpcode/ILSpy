@@ -273,7 +273,7 @@ namespace ICSharpCode.Decompiler.ILAst
                 else return n;
             });
 
-            if (numLdloca.GetOrDefault(v) > 0 || !inlinedExpression.HasNoSideEffects()) return InlineIfPossible(v, inlinedExpression, next.First(), aggresive);
+            if (numLdloca.GetOrDefault(v) > 0 || !inlinedExpression.HasNoSideEffects() || !v.IsGenerated) return InlineIfPossible(v, inlinedExpression, next.First(), aggresive);
 
             int ldlocCount = numLdloc.GetOrDefault(v);
             var parents = new List<ILExpression>();

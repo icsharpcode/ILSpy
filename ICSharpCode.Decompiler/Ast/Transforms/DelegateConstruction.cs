@@ -478,6 +478,21 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
             return null;
         }
 
+        static bool IsVariableOrDisplayClassProp(Expression v)
+        {
+            if (v is IdentifierExpression) return true;
+            var memberRef = v as MemberReferenceExpression;
+            if (memberRef != null) {
+                var targetTypeRef = memberRef.Target as TypeReferenceExpression;
+                if (targetTypeRef != null && targetTypeRef.Type != null) {
+                    return targetTypeRef.Type.Annotation<TypeReference>().ResolveWithinSameModule().IsCompilerGeneratedOrIsInCompilerGeneratedClass() == true;
+                }
+                if(memberRef.Target is IdentifierExpression) {
+                    return memberRef.Target.Annotation<TypeInformation>().InferredType.ResolveWithinSameModule().IsCompilerGeneratedOrIsInCompilerGeneratedClass();
+                }
+            }
+            return false;
+        }
 
         static readonly IfElseStatement cacheIfPattern =
             new IfElseStatement(
@@ -501,9 +516,8 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
                     condition = ass.Right;
                 }
                 variables.Add(condition);
-                
-                if (!variables.All(v => v is IdentifierExpression || (v is MemberReferenceExpression &&
-                     (((MemberReferenceExpression)v).Target as TypeReferenceExpression).Type.Annotation<TypeReference>().ResolveWithinSameModule().IsCompilerGeneratedOrIsInCompilerGeneratedClass()))) return null;
+
+                if (!variables.All(IsVariableOrDisplayClassProp)) return null;
 
                 var bitmap = new bool[variables.Count];
                 Expression body;
@@ -523,7 +537,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
                 if (lamda == null) return null;
 
                 var uu = variables.SelectMany(FindSameExpressions).Where(rr => !rr.Ancestors.Contains(ifElseStatement)).ToArray();
-                if(uu.Length > 1) return null;
+                if (uu.Length > 1) return null;
 
 
                 foreach (var id in variables.OfType<IdentifierExpression>()) {
@@ -531,7 +545,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
                 }
                 ifElseStatement.Remove();
 
-                foreach(var v in uu) {
+                foreach (var v in uu) {
                     v.ReplaceWith(lamda.Clone());
                 }
             }
@@ -555,7 +569,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
             foreach (var c in searchIn.Children) {
                 if (expr != c && exclude != c && expr.IsMatch(c)) {
                     result.Add(c as Expression);
-                } else if(exclude != c && c.HasChildren) {
+                } else if (exclude != c && c.HasChildren) {
                     FindSameExpressions(result, c, expr, exclude);
                 }
             }
