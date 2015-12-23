@@ -117,7 +117,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("FontSize", s.SelectedFontSize);
 			section.SetAttributeValue("ShowLineNumbers", s.ShowLineNumbers);
 			section.SetAttributeValue("ShowMetadataTokens", s.ShowMetadataTokens);
-            section.SetAttributeValue("EnableWordWrap", s.EnableWordWrap);
+			section.SetAttributeValue("EnableWordWrap", s.EnableWordWrap);
 			
 			XElement existingElement = root.Element("DisplaySettings");
 			if (existingElement != null)

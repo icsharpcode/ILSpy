@@ -715,7 +715,7 @@ namespace ICSharpCode.Decompiler.Ast
 						}
 						return new StackAllocExpression {
 							Type = AstBuilder.ConvertType(type),
-                            CountExpression = arg1
+							CountExpression = arg1
 						};
 					}
 				case ILCode.Mkrefany:
