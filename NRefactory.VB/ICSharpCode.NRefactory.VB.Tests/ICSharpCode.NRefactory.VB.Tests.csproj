@@ -13,12 +13,14 @@
     <NoConfig>False</NoConfig>
     <RunPostBuildEvent>OnBuildSuccess</RunPostBuildEvent>
     <OutputType>Library</OutputType>
-    <OutputPath>..\..\..\..\bin\UnitTests\</OutputPath>
+    <OutputPath>bin\$(Configuration)\</OutputPath>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <WarningLevel>4</WarningLevel>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>False</TreatWarningsAsErrors>
     <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <NoWin32Manifest>False</NoWin32Manifest>
+    <IntermediateOutputPath>obj\$(Configuration)\</IntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
@@ -33,6 +35,7 @@
     <DebugType>Full</DebugType>
     <DebugSymbols>true</DebugSymbols>
     <StartAction>Project</StartAction>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <DebugSymbols>False</DebugSymbols>
@@ -62,7 +65,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="nunit.framework">
-      <HintPath>..\..\Mono.Cecil\Test\libs\nunit-2.4.8\nunit.framework.dll</HintPath>
+      <HintPath>..\..\ICSharpCode.Decompiler\Tests\nunit.framework.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
@@ -94,7 +97,7 @@
       <Project>{7B82B671-419F-45F4-B778-D9286F996EFA}</Project>
       <Name>ICSharpCode.NRefactory.VB</Name>
     </ProjectReference>
-    <ProjectReference Include="..\ICSharpCode.NRefactory\ICSharpCode.NRefactory.csproj">
+    <ProjectReference Include="..\..\NRefactory\ICSharpCode.NRefactory\ICSharpCode.NRefactory.csproj">
       <Project>{3B2A5653-EC97-4001-BB9B-D90F1AF2C371}</Project>
       <Name>ICSharpCode.NRefactory</Name>
     </ProjectReference>

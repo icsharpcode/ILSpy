@@ -115,7 +115,7 @@
       <Name>ILSpy</Name>
       <Private>False</Private>
     </ProjectReference>
-    <ProjectReference Include="..\Mono.Cecil\Mono.Cecil.csproj">
+    <ProjectReference Include="..\cecil\Mono.Cecil.csproj">
       <Project>{D68133BD-1E63-496E-9EDE-4FBDBF77B486}</Project>
       <Name>Mono.Cecil</Name>
       <Private>False</Private>
