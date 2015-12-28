@@ -102,7 +102,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
 			s.ShowMetadataTokens = (bool?) e.Attribute("ShowMetadataTokens") ?? false;
 		    s.EnableWordWrap = (bool?)e.Attribute("EnableWordWrap") ?? false;
-			s.SortResults = (bool?)e.Attribute("SortResults") ?? true; // Enabled by default
+			s.SortResults = (bool?)e.Attribute("SortResults") ?? false;
 			
 			return s;
 		}
