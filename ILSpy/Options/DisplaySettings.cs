@@ -110,6 +110,21 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
+		bool sortResults;
+
+		public bool SortResults
+		{
+			get { return sortResults; }
+			set
+			{
+				if (sortResults != value)
+				{
+					sortResults = value;
+					OnPropertyChanged("SortResults");
+				}
+			}
+		}
+
 		public void CopyValues(DisplaySettings s)
 		{
 			this.SelectedFont = s.selectedFont;
@@ -117,6 +132,7 @@ namespace ICSharpCode.ILSpy.Options
 			this.ShowLineNumbers = s.showLineNumbers;
 			this.ShowMetadataTokens = s.showMetadataTokens;
 			this.EnableWordWrap = s.enableWordWrap;
+			this.SortResults = s.sortResults;
 		}
 	}
 }

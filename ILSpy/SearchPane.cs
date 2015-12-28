@@ -242,8 +242,30 @@ namespace ICSharpCode.ILSpy
 				}
 				dispatcher.BeginInvoke(
 					DispatcherPriority.Normal,
-					new Action(delegate { this.Results.Insert(this.Results.Count - 1, result); }));
+					new Action(delegate { InsertResult(result); }));
 				cts.Token.ThrowIfCancellationRequested();
+			}
+
+			void InsertResult(SearchResult result)
+			{
+				if (Options.DisplaySettingsPanel.CurrentDisplaySettings.SortResults)
+				{
+					// Keep results collection sorted by "Fitness" by inserting result into correct place
+					// Inserts in the beginning shifts all elements, but there can be no more than 1000 items.
+					for (int i = 0; i < this.Results.Count; i++)
+					{
+						if (this.Results[i].Fitness < result.Fitness)
+						{
+							this.Results.Insert(i, result);
+							break;
+						}
+					}
+				}
+				else
+				{
+					// Original code
+					this.Results.Insert(this.Results.Count - 1, result);
+				}
 			}
 
 			AbstractSearchStrategy GetSearchStrategy(SearchMode mode, string[] terms)
@@ -281,6 +303,7 @@ namespace ICSharpCode.ILSpy
 		}
 			
 		public MemberReference Member { get; set; }
+		public float Fitness { get; set; }
 			
 		public string Location { get; set; }
 		public string Name { get; set; }

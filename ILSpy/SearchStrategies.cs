@@ -30,6 +30,37 @@ namespace ICSharpCode.ILSpy
 			searchTerm = terms;
 		}
 
+		protected float GetFitness(string text)
+		{
+			// TODO: Is it possible to get fitness for regex?
+			if (regex != null)
+				return 1;
+
+			float result = 0;
+			for (int i = 0; i < searchTerm.Length; ++i) {
+				// How to handle overlapping matches?
+				var term = searchTerm[i];
+				switch (term[0])
+				{
+					case '+': // must contain
+						term = term.Substring(1);
+						goto default;
+					case '-': // should not contain, ignore
+						break;
+					case '=': // exact match
+						term = term.Substring(1);
+						goto default;
+					default:
+						if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)
+						{
+							result += term.Length / (float)text.Length;
+						}
+						break;
+				}
+			}
+			return result;
+		}
+
 		protected bool IsMatch(string text)
 		{
 			if (regex != null)
@@ -93,6 +124,7 @@ namespace ICSharpCode.ILSpy
 					addResult(new SearchResult
 					{
 						Member = item,
+						Fitness = GetFitness(item.Name),
 						Image = image(item),
 						Name = item.Name,
 						LocationImage = TypeTreeNode.GetIcon(type),
@@ -340,10 +372,12 @@ namespace ICSharpCode.ILSpy
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
 			if (IsMatch(type.Name) || IsMatch(type.FullName)) {
+				string name = language.TypeToString(type, includeNamespace: false);
 				addResult(new SearchResult {
 					Member = type,
+					Fitness = GetFitness(name),
 					Image = TypeTreeNode.GetIcon(type),
-					Name = language.TypeToString(type, includeNamespace: false),
+					Name = name,
 					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
 					Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
 				});
