@@ -462,11 +462,11 @@ namespace ICSharpCode.Decompiler.ILAst
 
         public ILExpression Clone()
         {
-            return new ILExpression(Code, Operand, Arguments?.Select(a => a?.Clone())?.ToArray()) {
-                ILRanges = ILRanges?.ToList(),
+            return new ILExpression(Code, Operand, Arguments == null ? null : Arguments.Select(a => a?.Clone())?.ToArray()) {
+                ILRanges = ILRanges == null ? null :ILRanges.ToList(),
                 ExpectedType = ExpectedType,
                 InferredType = InferredType,
-                Prefixes = Prefixes?.ToArray()
+                Prefixes = Prefixes == null ? null : Prefixes.ToArray()
             };
         }
 	}
