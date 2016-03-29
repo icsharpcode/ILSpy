@@ -255,6 +255,7 @@ namespace ICSharpCode.ILSpy
 			}
 			if (file != null) {
 				var loaded = assemblyList.OpenAssembly(file, true);
+				File.SetLastAccessTime(file, DateTime.Now);
 				return loaded;
 			} else {
 				return null;
