@@ -1,4 +1,4 @@
-markdown: rdiscount
+markdown: kramdown
 
 # GitHub enforces these three options:
 safe: true
