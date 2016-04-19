@@ -77,9 +77,14 @@ namespace ICSharpCode.ILSpy.AddIn
 				mcs.AddCommand(menuItem2);
 
 				// Create the command for the menu item.
-				CommandID menuCommandID3 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenILSpy);
-				MenuCommand menuItem3 = new MenuCommand(OpenILSpyCallback, menuCommandID3);
+				CommandID menuCommandID3 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenCodeItemInILSpy);
+				MenuCommand menuItem3 = new MenuCommand(OpenCodeItemInILSpyCallback, menuCommandID3);
 				mcs.AddCommand(menuItem3);
+
+				// Create the command for the menu item.
+				CommandID menuCommandID4 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenILSpy);
+				MenuCommand menuItem4 = new MenuCommand(OpenILSpyCallback, menuCommandID4);
+				mcs.AddCommand(menuItem4);
 			}
 		}
 		#endregion
@@ -122,6 +127,74 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 		}
 
+		private void OpenCodeItemInILSpyCallback(object sender, EventArgs e)
+		{
+			var document = (EnvDTE.Document)(((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ActiveDocument);
+			var selection = (EnvDTE.TextPoint)((EnvDTE.TextSelection)document.Selection).ActivePoint;
+			var projectItem = document.ProjectItem;
+
+			string navigateTo = null;
+
+			// Find the full name of the method or class enclosing the current selection.
+			// Note that order of testing is important, need to get the narrowest, most
+			// internal element first.
+			//
+			// Add a prefix to match the ILSpy command line (see doc\Command Line.txt).
+			// The prefix characters are documented in Appendix A of the C# specification:
+			//  E   Event
+			//  F   Field
+			//  M   Method (including constructors, destructors, and operators)
+			//  N   Namespace
+			//  P   Property (including indexers)
+			//  T   Type (such as class, delegate, enum, interface, and struct)
+			navigateTo = GetCodeElementFullName("/navigateTo:M:", projectItem, selection, EnvDTE.vsCMElement.vsCMElementFunction);
+			if (navigateTo == null) {
+				navigateTo = GetCodeElementFullName("/navigateTo:E:", projectItem, selection, EnvDTE.vsCMElement.vsCMElementEvent);
+			}
+			if (navigateTo == null) {
+				navigateTo = GetCodeElementFullName("/navigateTo:P:", projectItem, selection, EnvDTE.vsCMElement.vsCMElementProperty);
+			}
+			if (navigateTo == null) {
+				navigateTo = GetCodeElementFullName("/navigateTo:T:", projectItem, selection,
+					EnvDTE.vsCMElement.vsCMElementDelegate,
+					EnvDTE.vsCMElement.vsCMElementEnum,
+					EnvDTE.vsCMElement.vsCMElementInterface,
+					EnvDTE.vsCMElement.vsCMElementStruct,
+					EnvDTE.vsCMElement.vsCMElementClass);
+			}
+
+			EnvDTE.Project project = projectItem.ContainingProject;
+			EnvDTE.Configuration config = project.ConfigurationManager.ActiveConfiguration;
+			string projectPath = Path.GetDirectoryName(project.FileName);
+			string outputPath = config.Properties.Item("OutputPath").Value.ToString();
+			string assemblyFileName = project.Properties.Item("OutputFileName").Value.ToString();
+
+			// Note that if navigateTo is still null this will just open ILSpy on the assembly.
+			OpenAssemblyInILSpy(Path.Combine(projectPath, outputPath, assemblyFileName), navigateTo);
+		}
+
+		private string GetCodeElementFullName(string prefix, EnvDTE.ProjectItem file, EnvDTE.TextPoint selection, params EnvDTE.vsCMElement[] elementTypes)
+		{
+			foreach (var elementType in elementTypes)
+			{
+				try
+				{
+					var codeElement = file.FileCodeModel.CodeElementFromPoint(selection, elementType);
+					if (elementType == EnvDTE.vsCMElement.vsCMElementFunction)
+					{
+						// TODO: use codeElement.Parameters to disambiguate overloaded methods
+					}
+					return prefix + codeElement.FullName;
+				}
+				catch (COMException)
+				{
+					//Don’t do anything – this is expected if there is no such code element at specified point.
+				}
+			}
+
+			return null;
+		}
+
 		private void OpenILSpyCallback(object sender, EventArgs e)
 		{
 			Process.Start(GetILSpyPath());
@@ -133,13 +206,19 @@ namespace ICSharpCode.ILSpy.AddIn
 			return Path.Combine(basePath, "ILSpy.exe");
 		}
 
-		private void OpenAssemblyInILSpy(string assemblyFileName)
+		private void OpenAssemblyInILSpy(string assemblyFileName, params string[] arguments)
 		{
 			if (!File.Exists(assemblyFileName)) {
 				ShowMessage("Could not find assembly '{0}', please ensure the project and all references were built correctly!", assemblyFileName);
 				return;
 			}
-			Process.Start(GetILSpyPath(), Utils.ArgumentArrayToCommandLine(assemblyFileName));
+
+			string commandLineArguments = Utils.ArgumentArrayToCommandLine(assemblyFileName);
+			if (arguments != null) {
+				commandLineArguments = string.Concat(commandLineArguments, " ", Utils.ArgumentArrayToCommandLine(arguments));
+			}
+
+			Process.Start(GetILSpyPath(), commandLineArguments);
 		}
 
 		private void ShowMessage(string format, params object[] items)
