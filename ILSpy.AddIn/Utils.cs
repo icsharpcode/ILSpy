@@ -74,6 +74,10 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		static void AppendArgument(StringBuilder b, string arg)
 		{
+			if (arg == null) {
+				return;
+			}
+
 			if (arg.Length > 0 && arg.IndexOfAny(charsNeedingQuoting) < 0) {
 				b.Append(arg);
 			} else {
