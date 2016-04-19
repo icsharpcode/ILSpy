@@ -119,11 +119,7 @@ namespace ICSharpCode.ILSpy.AddIn
 
 			foreach (EnvDTE.UIHierarchyItem item in items) {
 				EnvDTE.Project project = (EnvDTE.Project)item.Object;
-				EnvDTE.Configuration config = project.ConfigurationManager.ActiveConfiguration;
-				string projectPath = Path.GetDirectoryName(project.FileName);
-				string outputPath = config.Properties.Item("OutputPath").Value.ToString();
-				string assemblyFileName = project.Properties.Item("OutputFileName").Value.ToString();
-				OpenAssemblyInILSpy(Path.Combine(projectPath, outputPath, assemblyFileName));
+				OpenProjectInILSpy(project);
 			}
 		}
 
@@ -131,68 +127,147 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			var document = (EnvDTE.Document)(((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ActiveDocument);
 			var selection = (EnvDTE.TextPoint)((EnvDTE.TextSelection)document.Selection).ActivePoint;
-			var projectItem = document.ProjectItem;
 
-			string navigateTo = null;
+			// Search code elements in desired order, working from innermost to outermost.
+			// Should eventually find something, and if not we'll just open the assembly itself.
+			var codeElement = GetSelectedCodeElement(selection,
+				EnvDTE.vsCMElement.vsCMElementFunction,
+				EnvDTE.vsCMElement.vsCMElementEvent,
+				EnvDTE.vsCMElement.vsCMElementVariable,		// There is no vsCMElementField, fields are just variables outside of function scope.
+				EnvDTE.vsCMElement.vsCMElementProperty,
+				EnvDTE.vsCMElement.vsCMElementDelegate,
+				EnvDTE.vsCMElement.vsCMElementEnum,
+				EnvDTE.vsCMElement.vsCMElementInterface,
+				EnvDTE.vsCMElement.vsCMElementStruct,
+				EnvDTE.vsCMElement.vsCMElementClass,
+				EnvDTE.vsCMElement.vsCMElementNamespace);
 
-			// Find the full name of the method or class enclosing the current selection.
-			// Note that order of testing is important, need to get the narrowest, most
-			// internal element first.
-			//
-			// Add a prefix to match the ILSpy command line (see doc\Command Line.txt).
-			// The prefix characters are documented in Appendix A of the C# specification:
-			//  E   Event
-			//  F   Field
-			//  M   Method (including constructors, destructors, and operators)
-			//  N   Namespace
-			//  P   Property (including indexers)
-			//  T   Type (such as class, delegate, enum, interface, and struct)
-			navigateTo = GetCodeElementFullName("/navigateTo:M:", projectItem, selection, EnvDTE.vsCMElement.vsCMElementFunction);
-			if (navigateTo == null) {
-				navigateTo = GetCodeElementFullName("/navigateTo:E:", projectItem, selection, EnvDTE.vsCMElement.vsCMElementEvent);
+			if (codeElement != null) {
+				OpenCodeItemInILSpy(codeElement);
 			}
-			if (navigateTo == null) {
-				navigateTo = GetCodeElementFullName("/navigateTo:P:", projectItem, selection, EnvDTE.vsCMElement.vsCMElementProperty);
+			else {
+				OpenProjectInILSpy(document.ProjectItem.ContainingProject);
 			}
-			if (navigateTo == null) {
-				navigateTo = GetCodeElementFullName("/navigateTo:T:", projectItem, selection,
-					EnvDTE.vsCMElement.vsCMElementDelegate,
-					EnvDTE.vsCMElement.vsCMElementEnum,
-					EnvDTE.vsCMElement.vsCMElementInterface,
-					EnvDTE.vsCMElement.vsCMElementStruct,
-					EnvDTE.vsCMElement.vsCMElementClass);
-			}
-
-			EnvDTE.Project project = projectItem.ContainingProject;
-			EnvDTE.Configuration config = project.ConfigurationManager.ActiveConfiguration;
-			string projectPath = Path.GetDirectoryName(project.FileName);
-			string outputPath = config.Properties.Item("OutputPath").Value.ToString();
-			string assemblyFileName = project.Properties.Item("OutputFileName").Value.ToString();
-
-			// Note that if navigateTo is still null this will just open ILSpy on the assembly.
-			OpenAssemblyInILSpy(Path.Combine(projectPath, outputPath, assemblyFileName), navigateTo);
 		}
 
-		private string GetCodeElementFullName(string prefix, EnvDTE.ProjectItem file, EnvDTE.TextPoint selection, params EnvDTE.vsCMElement[] elementTypes)
+		private EnvDTE.CodeElement GetSelectedCodeElement(EnvDTE.TextPoint selection, params EnvDTE.vsCMElement[] elementTypes)
 		{
-			foreach (var elementType in elementTypes)
-			{
-				try
-				{
-					var codeElement = file.FileCodeModel.CodeElementFromPoint(selection, elementType);
-					if (elementType == EnvDTE.vsCMElement.vsCMElementFunction)
-					{
-						// TODO: use codeElement.Parameters to disambiguate overloaded methods
-					}
-					return prefix + codeElement.FullName;
-				}
-				catch (COMException)
-				{
-					//Don’t do anything – this is expected if there is no such code element at specified point.
+			foreach (var elementType in elementTypes) {
+				var codeElement = selection.CodeElement[elementType];
+				if (codeElement != null) {
+					return codeElement;
 				}
 			}
 
 			return null;
+		}
+
+		private void OpenCodeItemInILSpy(EnvDTE.CodeElement codeElement)
+		{
+			string navigateTo = "/navigateTo:" + GetCodeElementIDString(codeElement);
+			OpenProjectInILSpy(codeElement.ProjectItem.ContainingProject, navigateTo);
+		}
+
+		// Get ID string for code element, for /navigateTo command line option.
+		// See "ID string format" in Appendix A of the C# language specification for details.
+		// See ICSharpCode.ILSpy.XmlDoc.XmlDocKeyProvider.GetKey for a similar implementation, based on Mono.Cecil.MemberReference.
+		private string GetCodeElementIDString(EnvDTE.CodeElement codeElement)
+		{
+			switch (codeElement.Kind) {
+				case EnvDTE.vsCMElement.vsCMElementEvent:
+					return string.Concat("E:",
+						GetCodeElementContainerString((EnvDTE.CodeElement)codeElement.Collection.Parent),
+						".", codeElement.Name);
+
+				case EnvDTE.vsCMElement.vsCMElementVariable:
+					return string.Concat("F:",
+						GetCodeElementContainerString((EnvDTE.CodeElement)codeElement.Collection.Parent),
+						".", codeElement.Name);
+
+				case EnvDTE.vsCMElement.vsCMElementFunction: {
+						var codeFunction = (EnvDTE.CodeFunction)codeElement;
+
+						var idBuilder = new System.Text.StringBuilder();
+						idBuilder.Append("M:");
+
+						// Constructors need to be called "#ctor" for navigation purposes.
+						string classFullName = GetCodeElementContainerString((EnvDTE.CodeElement)codeFunction.Parent);
+						string functionName = (codeFunction.FunctionKind == EnvDTE.vsCMFunction.vsCMFunctionConstructor ? "#ctor" : codeFunction.Name);
+						idBuilder.Append(classFullName);
+						idBuilder.Append('.');
+						idBuilder.Append(functionName);
+
+						// Append parameter types, to disambiguate overloaded methods.
+						// TODO: handle generic type parameters correctly, both from class and method
+						if (codeFunction.Parameters.Count > 0) {
+							idBuilder.Append("(");
+							bool first = true;
+							foreach (EnvDTE.CodeParameter parameter in codeFunction.Parameters) {
+								if (!first) {
+									idBuilder.Append(",");
+								}
+								first = false;
+								idBuilder.Append(parameter.Type.AsFullName);
+							}
+							idBuilder.Append(")");
+						}
+						return idBuilder.ToString();
+					}
+
+				case EnvDTE.vsCMElement.vsCMElementNamespace:
+					return string.Concat("N:",
+						codeElement.FullName);
+
+				case EnvDTE.vsCMElement.vsCMElementProperty:
+					return string.Concat("P:",
+						GetCodeElementContainerString((EnvDTE.CodeElement)codeElement.Collection.Parent),
+						".", codeElement.Name);
+
+				case EnvDTE.vsCMElement.vsCMElementDelegate:
+				case EnvDTE.vsCMElement.vsCMElementEnum:
+				case EnvDTE.vsCMElement.vsCMElementInterface:
+				case EnvDTE.vsCMElement.vsCMElementStruct:
+				case EnvDTE.vsCMElement.vsCMElementClass:
+						return string.Concat("T:",
+							GetCodeElementContainerString(codeElement));
+
+				default:
+					return string.Format("!:Code element {0} is of unsupported type {1}", codeElement.FullName, codeElement.Kind.ToString());
+			}
+		}
+
+		private string GetCodeElementContainerString(EnvDTE.CodeElement containerElement)
+		{
+			switch (containerElement.Kind) {
+				case EnvDTE.vsCMElement.vsCMElementNamespace:
+					return containerElement.FullName;
+
+				case EnvDTE.vsCMElement.vsCMElementInterface:
+				case EnvDTE.vsCMElement.vsCMElementStruct:
+				case EnvDTE.vsCMElement.vsCMElementClass: {
+						var idBuilder = new System.Text.StringBuilder();
+						idBuilder.Append(GetCodeElementContainerString((EnvDTE.CodeElement)containerElement.Collection.Parent));
+						idBuilder.Append('.');
+						idBuilder.Append(containerElement.Name);
+
+						// For "Generic<T1,T2>" we need "Generic`2".
+						bool isGeneric =
+							((containerElement.Kind == EnvDTE.vsCMElement.vsCMElementClass) && ((EnvDTE80.CodeClass2)containerElement).IsGeneric) ||
+							((containerElement.Kind == EnvDTE.vsCMElement.vsCMElementStruct) && ((EnvDTE80.CodeStruct2)containerElement).IsGeneric) ||
+							((containerElement.Kind == EnvDTE.vsCMElement.vsCMElementInterface) && ((EnvDTE80.CodeInterface2)containerElement).IsGeneric);
+						int iGenericParams = containerElement.FullName.LastIndexOf('<');
+						if (isGeneric && (iGenericParams >= 0)) {
+							int genericParamsCount = containerElement.FullName.Substring(iGenericParams).Split(',').Length;
+							idBuilder.Append('`');
+							idBuilder.Append(genericParamsCount);
+						}
+
+						return idBuilder.ToString();
+					}
+
+				default:
+					return string.Format("!:Code element {0} is of unsupported container type {1}", containerElement.FullName, containerElement.Kind.ToString());
+			}
 		}
 
 		private void OpenILSpyCallback(object sender, EventArgs e)
@@ -204,6 +279,15 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			var basePath = Path.GetDirectoryName(typeof(ILSpyAddInPackage).Assembly.Location);
 			return Path.Combine(basePath, "ILSpy.exe");
+		}
+
+		private void OpenProjectInILSpy(EnvDTE.Project project, params string[] arguments)
+		{
+			EnvDTE.Configuration config = project.ConfigurationManager.ActiveConfiguration;
+			string projectPath = Path.GetDirectoryName(project.FileName);
+			string outputPath = config.Properties.Item("OutputPath").Value.ToString();
+			string assemblyFileName = project.Properties.Item("OutputFileName").Value.ToString();
+			OpenAssemblyInILSpy(Path.Combine(projectPath, outputPath, assemblyFileName), arguments);
 		}
 
 		private void OpenAssemblyInILSpy(string assemblyFileName, params string[] arguments)
