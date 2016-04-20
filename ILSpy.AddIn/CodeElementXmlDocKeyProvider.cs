@@ -2,12 +2,18 @@
 
 namespace ICSharpCode.ILSpy.AddIn
 {
+	/// <summary>
+	/// Provides XML documentation tags for Visual Studio CodeElements.
+	/// </summary>
+	/// <remarks>
+	/// Used to support the "/navigateTo" command line option when opening ILSpy. Must match
+	/// the logic of ICSharpCode.ILSpy.XmlDoc.XmlDocKeyProvider, which does the same thing for
+	/// a Mono.Cecil.MemberReference. See "ID string format" in Appendix A of the C# language
+	/// specification for formatting requirements.
+	/// </remarks>
 	public static class CodeElementXmlDocKeyProvider
 	{
-		// Get ID string for code element, for /navigateTo command line option.
-		// See "ID string format" in Appendix A of the C# language specification for details.
-		// See ICSharpCode.ILSpy.XmlDoc.XmlDocKeyProvider.GetKey for a similar implementation, based on Mono.Cecil.MemberReference.
-		public static string GetCodeElementIDString(EnvDTE.CodeElement codeElement)
+		public static string GetKey(EnvDTE.CodeElement codeElement)
 		{
 			switch (codeElement.Kind) {
 				case EnvDTE.vsCMElement.vsCMElementEvent:
