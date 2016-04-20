@@ -185,20 +185,29 @@ namespace ICSharpCode.ILSpy.AddIn
 						".", codeElement.Name);
 
 				case EnvDTE.vsCMElement.vsCMElementFunction: {
-						var codeFunction = (EnvDTE.CodeFunction)codeElement;
+						var codeFunction = (EnvDTE80.CodeFunction2)codeElement;
 
 						var idBuilder = new System.Text.StringBuilder();
 						idBuilder.Append("M:");
 
 						// Constructors need to be called "#ctor" for navigation purposes.
-						string classFullName = GetCodeElementContainerString((EnvDTE.CodeElement)codeFunction.Parent);
+						string[] genericClassTypeParameters;
+						string classFullName = GetCodeElementContainerString((EnvDTE.CodeElement)codeFunction.Parent, out genericClassTypeParameters);
 						string functionName = (codeFunction.FunctionKind == EnvDTE.vsCMFunction.vsCMFunctionConstructor ? "#ctor" : codeFunction.Name);
 						idBuilder.Append(classFullName);
 						idBuilder.Append('.');
 						idBuilder.Append(functionName);
 
+						// Get type parameters to generic method, if present.
+						string[] genericMethodTypeParameters = new string[0];
+						int iGenericParams = codeFunction.FullName.LastIndexOf('<');
+						if ((codeFunction.IsGeneric) && (iGenericParams >= 0)) {
+							genericMethodTypeParameters = codeFunction.FullName.Substring(iGenericParams).Split(new char[] {'<', ',', ' ', '>'}, StringSplitOptions.RemoveEmptyEntries);
+							idBuilder.Append("``");
+							idBuilder.Append(genericMethodTypeParameters.Length);
+						}
+
 						// Append parameter types, to disambiguate overloaded methods.
-						// TODO: handle generic type parameters correctly, both from class and method
 						if (codeFunction.Parameters.Count > 0) {
 							idBuilder.Append("(");
 							bool first = true;
@@ -207,7 +216,21 @@ namespace ICSharpCode.ILSpy.AddIn
 									idBuilder.Append(",");
 								}
 								first = false;
-								idBuilder.Append(parameter.Type.AsFullName);
+								int genericClassTypeParameterIndex = Array.IndexOf(genericClassTypeParameters, parameter.Type.AsFullName);
+								if (genericClassTypeParameterIndex >= 0) {
+									idBuilder.Append('`');
+									idBuilder.Append(genericClassTypeParameterIndex);
+								}
+								else {
+									int genericMethodTypeParameterIndex = Array.IndexOf(genericMethodTypeParameters, parameter.Type.AsFullName);
+									if (genericMethodTypeParameterIndex >= 0) {
+										idBuilder.Append("``");
+										idBuilder.Append(genericMethodTypeParameterIndex);
+									}
+									else {
+										idBuilder.Append(parameter.Type.AsFullName);
+									}
+								}
 							}
 							idBuilder.Append(")");
 						}
@@ -238,6 +261,14 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		private string GetCodeElementContainerString(EnvDTE.CodeElement containerElement)
 		{
+			string[] genericTypeParametersIgnored;
+			return GetCodeElementContainerString(containerElement, out genericTypeParametersIgnored);
+		}
+
+		private string GetCodeElementContainerString(EnvDTE.CodeElement containerElement, out string[] genericTypeParameters)
+		{
+			genericTypeParameters = new string[0];
+
 			switch (containerElement.Kind) {
 				case EnvDTE.vsCMElement.vsCMElementNamespace:
 					return containerElement.FullName;
@@ -257,9 +288,9 @@ namespace ICSharpCode.ILSpy.AddIn
 							((containerElement.Kind == EnvDTE.vsCMElement.vsCMElementInterface) && ((EnvDTE80.CodeInterface2)containerElement).IsGeneric);
 						int iGenericParams = containerElement.FullName.LastIndexOf('<');
 						if (isGeneric && (iGenericParams >= 0)) {
-							int genericParamsCount = containerElement.FullName.Substring(iGenericParams).Split(',').Length;
+							genericTypeParameters = containerElement.FullName.Substring(iGenericParams).Split(new char[] {'<', ',', ' ', '>'}, StringSplitOptions.RemoveEmptyEntries);
 							idBuilder.Append('`');
-							idBuilder.Append(genericParamsCount);
+							idBuilder.Append(genericTypeParameters.Length);
 						}
 
 						return idBuilder.ToString();
