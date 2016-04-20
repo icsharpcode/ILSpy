@@ -66,22 +66,23 @@ namespace ICSharpCode.ILSpy.AddIn
 			// Add our command handlers for menu (commands must exist in the .vsct file)
 			OleMenuCommandService mcs = GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
 			if (null != mcs) {
-				// Create the command for the menu item.
+				// Create the command for the References context menu.
 				CommandID menuCommandID = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenReferenceInILSpy);
 				MenuCommand menuItem = new MenuCommand(OpenReferenceInILSpyCallback, menuCommandID);
 				mcs.AddCommand(menuItem);
 
-				// Create the command for the menu item.
+				// Create the command for the Project context menu, to open the output assembly.
 				CommandID menuCommandID2 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenProjectOutputInILSpy);
 				MenuCommand menuItem2 = new MenuCommand(OpenProjectOutputInILSpyCallback, menuCommandID2);
 				mcs.AddCommand(menuItem2);
 
-				// Create the command for the menu item.
+				// Create the command for the code window context menu.
 				CommandID menuCommandID3 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenCodeItemInILSpy);
-				MenuCommand menuItem3 = new MenuCommand(OpenCodeItemInILSpyCallback, menuCommandID3);
+				OleMenuCommand menuItem3 = new OleMenuCommand(OpenCodeItemInILSpyCallback, menuCommandID3);
+				menuItem3.BeforeQueryStatus += OpenCodeItemInILSpyCallback_BeforeQueryStatus;
 				mcs.AddCommand(menuItem3);
 
-				// Create the command for the menu item.
+				// Create the command for the Tools menu item.
 				CommandID menuCommandID4 = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenILSpy);
 				MenuCommand menuItem4 = new MenuCommand(OpenILSpyCallback, menuCommandID4);
 				mcs.AddCommand(menuItem4);
@@ -120,6 +121,21 @@ namespace ICSharpCode.ILSpy.AddIn
 			foreach (EnvDTE.UIHierarchyItem item in items) {
 				EnvDTE.Project project = (EnvDTE.Project)item.Object;
 				OpenProjectInILSpy(project);
+			}
+		}
+
+		// Called when the menu is popped, determines whether "Open code in ILSpy" option is available.
+		private void OpenCodeItemInILSpyCallback_BeforeQueryStatus(object sender, EventArgs e)
+		{
+			OleMenuCommand menuItem = sender as OleMenuCommand;
+			if (menuItem != null) {
+				var document = (EnvDTE.Document)(((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ActiveDocument);
+				menuItem.Enabled =
+					(document != null) &&
+					(document.ProjectItem != null) &&
+					(document.ProjectItem.ContainingProject != null) &&
+					(document.ProjectItem.ContainingProject.ConfigurationManager != null) &&
+					!string.IsNullOrEmpty(document.ProjectItem.ContainingProject.FileName);
 			}
 		}
 
