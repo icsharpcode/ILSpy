@@ -244,7 +244,14 @@ namespace ICSharpCode.ILSpy.AddIn
 										idBuilder.Append(genericMethodTypeParameterIndex);
 									}
 									else {
-										idBuilder.Append(parameter.Type.AsFullName);
+										// Special handling for arrays, because AsFullName for an array is empty.
+										if (parameter.Type.TypeKind == EnvDTE.vsCMTypeRef.vsCMTypeRefArray) {
+											idBuilder.Append(parameter.Type.ElementType.AsFullName);
+											idBuilder.Append("[]");
+										}
+										else {
+											idBuilder.Append(parameter.Type.AsFullName);
+										}
 									}
 								}
 							}
