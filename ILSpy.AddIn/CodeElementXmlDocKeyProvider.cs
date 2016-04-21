@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Text;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
@@ -13,7 +15,238 @@ namespace ICSharpCode.ILSpy.AddIn
 	/// </remarks>
 	public static class CodeElementXmlDocKeyProvider
 	{
-		public static string GetKey(EnvDTE.CodeElement codeElement)
+		#region GetKey
+		public static string GetKey(EnvDTE.CodeElement member)
+		{
+			StringBuilder b = new StringBuilder();
+			if ((member.Kind == EnvDTE.vsCMElement.vsCMElementDelegate) ||
+				(member.Kind == EnvDTE.vsCMElement.vsCMElementEnum) ||
+				(member.Kind == EnvDTE.vsCMElement.vsCMElementInterface) ||
+				(member.Kind == EnvDTE.vsCMElement.vsCMElementStruct) ||
+				(member.Kind == EnvDTE.vsCMElement.vsCMElementClass)) {
+				b.Append("T:");
+				AppendTypeName(b, member);
+			}
+			else if (member.Kind == EnvDTE.vsCMElement.vsCMElementNamespace){
+				b.Append("N:");
+				b.Append(member.FullName);
+			}
+			else {
+				if (member.Kind == EnvDTE.vsCMElement.vsCMElementVariable)
+					b.Append("F:");
+				else if (member.Kind == EnvDTE.vsCMElement.vsCMElementProperty)
+					b.Append("P:");
+				else if (member.Kind == EnvDTE.vsCMElement.vsCMElementEvent)
+					b.Append("E:");
+				else if (member.Kind == EnvDTE.vsCMElement.vsCMElementFunction)
+					b.Append("M:");
+				AppendTypeName(b, (EnvDTE.CodeElement)member.Collection.Parent);
+				b.Append('.');
+				b.Append(member.Name.Replace('.', '#'));
+				EnvDTE.CodeElements parameters;
+				string[] genericMethodParameters = cEmptyStringArray;
+				EnvDTE.CodeTypeRef explicitReturnType = null;
+				if (member.Kind == EnvDTE.vsCMElement.vsCMElementProperty) {
+					parameters = ((EnvDTE.CodeProperty)member).Getter.Parameters;
+				}
+				else if (member.Kind == EnvDTE.vsCMElement.vsCMElementFunction) {
+					EnvDTE80.CodeFunction2 mr = (EnvDTE80.CodeFunction2)member;
+					if (mr.IsGeneric) {
+						genericMethodParameters = GetGenericParameters(member);
+						b.Append("``");
+						b.Append(genericMethodParameters.Length);
+					}
+					parameters = mr.Parameters;
+					if (mr.Name == "op_Implicit" || mr.Name == "op_Explicit") {
+						// TODO: check operator overloads to see if these work
+						explicitReturnType = mr.Type;
+					}
+				}
+				else {
+					parameters = null;
+				}
+				if (parameters != null && parameters.Count > 0) {
+					b.Append('(');
+					int i = 0;
+					foreach (EnvDTE80.CodeParameter2 parameter in parameters) {
+						if (i > 0) b.Append(',');
+						AppendTypeName(b, parameter, genericMethodParameters);
+						++i;
+					}
+					b.Append(')');
+				}
+				if (explicitReturnType != null) {
+					b.Append('~');
+					AppendTypeName(b, (EnvDTE.CodeElement)explicitReturnType);
+				}
+			}
+			return b.ToString();
+		}
+
+		static void AppendTypeName(StringBuilder b, EnvDTE.CodeElement type)
+		{
+			if (type == null) {
+				// could happen when a TypeSpecification has no ElementType; e.g. function pointers in C++/CLI assemblies
+				return;
+			}
+
+			bool isGeneric =
+				((type.Kind == EnvDTE.vsCMElement.vsCMElementClass) && ((EnvDTE80.CodeClass2)type).IsGeneric) ||
+				((type.Kind == EnvDTE.vsCMElement.vsCMElementStruct) && ((EnvDTE80.CodeStruct2)type).IsGeneric) ||
+				((type.Kind == EnvDTE.vsCMElement.vsCMElementInterface) && ((EnvDTE80.CodeInterface2)type).IsGeneric);
+
+			if (isGeneric) {
+				AppendTypeNameWithArguments(b, type, GetGenericParameters(type));
+			}
+			else {
+				// TODO: handle generic parameters, but above?
+				//GenericParameter gp = type as GenericParameter;
+				//if (gp != null) {
+				//	b.Append('`');
+				//	if (gp.Owner.GenericParameterType == GenericParameterType.Method) {
+				//		b.Append('`');
+				//	}
+				//	b.Append(gp.Position);
+				//}
+				EnvDTE.CodeElement declaringType = GetDeclaringType(type);
+				if (declaringType != null) {
+					AppendTypeName(b, declaringType);
+					b.Append('.');
+					b.Append(type.Name);
+				}
+				else {
+					b.Append(type.FullName);
+				}
+			}
+		}
+
+		static void AppendTypeName(StringBuilder b, EnvDTE80.CodeParameter2 parameter, string[] genericMethodParameters)
+		{
+			EnvDTE80.CodeTypeRef2 typeRef = (EnvDTE80.CodeTypeRef2)parameter.Type;
+
+			// Parameters of generic types from generic method are indicated as ``1, ``2, etc.
+			// TODO: parameters of generic types from enclosing class (and nested classes??)
+			int indexOfGenericParameter = Array.IndexOf(genericMethodParameters, typeRef.AsFullName);
+			if (indexOfGenericParameter >= 0) {
+				b.Append("``");
+				b.Append(indexOfGenericParameter);
+			}
+			else if (typeRef.TypeKind == EnvDTE.vsCMTypeRef.vsCMTypeRefArray) {
+				AppendTypeNameWithArguments(b, (EnvDTE.CodeElement)typeRef.ElementType, genericMethodParameters);
+			}
+			else {
+				AppendTypeNameWithArguments(b, (EnvDTE.CodeElement)typeRef.CodeType, genericMethodParameters);
+			}
+
+			// TODO: think we need to handle generic arguments here (from enclosing type or method, but how?)
+			if (typeRef.TypeKind == EnvDTE.vsCMTypeRef.vsCMTypeRefArray) {
+				b.Append('[');
+				for (int i = 0; i < typeRef.Rank; i++) {
+					if (i > 0)
+						b.Append(',');
+					// TODO: how to get array bounds from EnvDTE code model?
+					//ArrayDimension ad = arrayType.Dimensions[i];
+					//if (ad.IsSized) {
+					//	b.Append(ad.LowerBound);
+					//	b.Append(':');
+					//	b.Append(ad.UpperBound);
+					//}
+				}
+				b.Append(']');
+			}
+
+			if ((parameter.ParameterKind == EnvDTE80.vsCMParameterKind.vsCMParameterKindRef) ||
+				(parameter.ParameterKind == EnvDTE80.vsCMParameterKind.vsCMParameterKindOut)) {
+				b.Append('@');
+			}
+
+			if (typeRef.TypeKind == EnvDTE.vsCMTypeRef.vsCMTypeRefPointer) {
+				b.Append('*');
+			}
+		}
+
+		static int AppendTypeNameWithArguments(StringBuilder b, EnvDTE.CodeElement type, string[] genericArguments)
+		{
+			int outerTypeParameterCount = 0;
+			EnvDTE.CodeElement declaringType = GetDeclaringType(type);
+			if (declaringType != null) {
+				outerTypeParameterCount = AppendTypeNameWithArguments(b, declaringType, genericArguments);
+				b.Append('.');
+			}
+			else {
+				string typeNamespace = GetNamespace(type);
+				if (!string.IsNullOrEmpty(typeNamespace)) {
+					b.Append(typeNamespace);
+					b.Append('.');
+				}
+			}
+
+			string[] localTypeParameters = GetGenericParameters(type);
+			int localTypeParameterCount = localTypeParameters.Length;
+			b.Append(type.Name);
+
+			if (localTypeParameterCount > 0) {
+				int totalTypeParameterCount = outerTypeParameterCount + localTypeParameterCount;
+				b.Append('{');
+				for (int i = 0; i < localTypeParameterCount; i++) {
+					if (i > 0) b.Append(',');
+					string localTypeParameter = localTypeParameters[i];
+					int genericIndex = Array.IndexOf(genericArguments, localTypeParameter);
+					if (genericIndex >= 0) {
+						b.Append("``");
+						b.Append(genericIndex);
+					}
+					else {
+						b.Append(localTypeParameter);
+					}
+				}
+				b.Append('}');
+			}
+			return outerTypeParameterCount + localTypeParameterCount;
+		}
+
+		private static string[] GetGenericParameters(EnvDTE.CodeElement codeElement)
+		{
+			int iGenericParameters = codeElement.FullName.LastIndexOf('<');
+			if (iGenericParameters >= 0) {
+				return codeElement.FullName.Substring(iGenericParameters).Split(cGenericParameterSeparators, StringSplitOptions.RemoveEmptyEntries);
+			}
+			else {
+				return cEmptyStringArray;
+			}
+		}
+		private static readonly char[] cGenericParameterSeparators = new char[] { '<', ',', ' ', '>' };
+		private static readonly string[] cEmptyStringArray = new string[0];
+
+		private static EnvDTE.CodeElement GetDeclaringType(EnvDTE.CodeElement codeElement)
+		{
+			EnvDTE.CodeElement declaringElement = null;
+			if (codeElement != null) {
+				declaringElement = (EnvDTE.CodeElement)codeElement.Collection.Parent;
+				bool hasDeclaringType =
+					(declaringElement.Kind == EnvDTE.vsCMElement.vsCMElementClass) ||
+					(declaringElement.Kind == EnvDTE.vsCMElement.vsCMElementStruct) ||
+					(declaringElement.Kind == EnvDTE.vsCMElement.vsCMElementInterface);
+				if (!hasDeclaringType) {
+					declaringElement = null;
+				}
+			}
+			return declaringElement;
+		}
+
+		private static string GetNamespace(EnvDTE.CodeElement codeElement)
+		{
+			if (codeElement != null) {
+				EnvDTE.CodeElement parent = (EnvDTE.CodeElement)codeElement.Collection.Parent;
+				if (parent.Kind == EnvDTE.vsCMElement.vsCMElementNamespace) {
+					return parent.FullName;
+				}
+			}
+			return null;
+		}
+		#endregion
+
+		public static string XXXGetKey(EnvDTE.CodeElement codeElement)
 		{
 			switch (codeElement.Kind) {
 				case EnvDTE.vsCMElement.vsCMElementEvent:
