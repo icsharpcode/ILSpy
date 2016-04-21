@@ -144,11 +144,11 @@ namespace ICSharpCode.ILSpy.VB
 			return expression.Annotation<EventDefinition>() != null;
 		}
 		
-		public bool IsMethodGroup(ICSharpCode.NRefactory.CSharp.Expression expression)
+		public bool IsMethodGroup(NRefactory.CSharp.Expression expression)
 		{
-			var annotation = expression.Annotation<MethodDefinition>();
-			if (annotation != null) {
-				return true;
+			var methodInfo = expression.Annotation<MethodDefinition>();
+			if (methodInfo != null) {
+				return !methodInfo.IsGetter && !methodInfo.IsSetter;
 			}
 			
 			return false;
