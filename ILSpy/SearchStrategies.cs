@@ -38,6 +38,7 @@ namespace ICSharpCode.ILSpy
 			for (int i = 0; i < searchTerm.Length; ++i) {
 				// How to handle overlapping matches?
 				var term = searchTerm[i];
+				if (string.IsNullOrEmpty(term)) continue;
 				switch (term[0])
 				{
 					case '+': // must contain
