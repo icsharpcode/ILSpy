@@ -67,11 +67,17 @@ namespace ICSharpCode.NRefactory.VB
 		
 		public object VisitBlockStatement(BlockStatement blockStatement, object data)
 		{
+			// prepare new block
+			NewLine();
+			Indent();
+
 			StartNode(blockStatement);
 			foreach (var stmt in blockStatement) {
 				stmt.AcceptVisitor(this, data);
 				NewLine();
 			}
+			// finish block
+			Unindent();
 			return EndNode(blockStatement);
 		}
 		
@@ -519,12 +525,7 @@ namespace ICSharpCode.NRefactory.VB
 			WriteKeyword("New");
 			WriteCommaSeparatedListInParenthesis(constructorDeclaration.Parameters, false);
 			MarkFoldStart();
-			NewLine();
-			
-			Indent();
 			WriteBlock(constructorDeclaration.Body);
-			Unindent();
-			
 			WriteKeyword("End");
 			WriteKeyword("Sub");
 			MarkFoldEnd();
@@ -556,10 +557,7 @@ namespace ICSharpCode.NRefactory.VB
 			WriteImplementsClause(methodDeclaration.ImplementsClause);
 			if (!methodDeclaration.Body.IsNull) {
 				MarkFoldStart();
-				NewLine();
-				Indent();
 				WriteBlock(methodDeclaration.Body);
-				Unindent();
 				WriteKeyword("End");
 				if (methodDeclaration.IsSub)
 					WriteKeyword("Sub");
@@ -1109,9 +1107,12 @@ namespace ICSharpCode.NRefactory.VB
 		
 		void WriteBlock(BlockStatement body)
 		{
-			if (body.IsNull)
+			if (body.IsNull) {
 				NewLine();
-			else
+				Indent();
+				NewLine();
+				Unindent();
+			} else
 				VisitBlockStatement(body, null);
 		}
 		
@@ -1307,10 +1308,7 @@ namespace ICSharpCode.NRefactory.VB
 			}
 			if (accessor.Parameters.Any())
 				WriteCommaSeparatedListInParenthesis(accessor.Parameters, false);
-			NewLine();
-			Indent();
 			WriteBlock(accessor.Body);
-			Unindent();
 			WriteKeyword("End");
 
 			if (accessor.Role == PropertyDeclaration.GetterRole) {
@@ -1356,10 +1354,7 @@ namespace ICSharpCode.NRefactory.VB
 			StartNode(withStatement);
 			WriteKeyword("With");
 			withStatement.Expression.AcceptVisitor(this, data);
-			NewLine();
-			Indent();
 			withStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("End");
 			WriteKeyword("With");
 			return EndNode(withStatement);
@@ -1370,10 +1365,7 @@ namespace ICSharpCode.NRefactory.VB
 			StartNode(syncLockStatement);
 			WriteKeyword("SyncLock");
 			syncLockStatement.Expression.AcceptVisitor(this, data);
-			NewLine();
-			Indent();
 			syncLockStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("End");
 			WriteKeyword("SyncLock");
 			return EndNode(syncLockStatement);
@@ -1383,19 +1375,13 @@ namespace ICSharpCode.NRefactory.VB
 		{
 			StartNode(tryStatement);
 			WriteKeyword("Try");
-			NewLine();
-			Indent();
 			tryStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			foreach (var clause in tryStatement.CatchBlocks) {
 				clause.AcceptVisitor(this, data);
 			}
 			if (!tryStatement.FinallyBlock.IsNull) {
 				WriteKeyword("Finally");
-				NewLine();
-				Indent();
 				tryStatement.FinallyBlock.AcceptVisitor(this, data);
-				Unindent();
 			}
 			WriteKeyword("End");
 			WriteKeyword("Try");
@@ -1445,19 +1431,17 @@ namespace ICSharpCode.NRefactory.VB
 			ifElseStatement.Condition.AcceptVisitor(this, data);
 			Space();
 			WriteKeyword("Then");
-			NewLine();
-			Indent();
+			bool needsEndIf = ifElseStatement.Body is BlockStatement;
 			ifElseStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			if (!ifElseStatement.ElseBlock.IsNull) {
 				WriteKeyword("Else");
-				NewLine();
-				Indent();
+				needsEndIf = ifElseStatement.ElseBlock is BlockStatement;
 				ifElseStatement.ElseBlock.AcceptVisitor(this, data);
-				Unindent();
 			}
-			WriteKeyword("End");
-			WriteKeyword("If");
+			if (needsEndIf) {
+				WriteKeyword("End");
+				WriteKeyword("If");
+			}
 			return EndNode(ifElseStatement);
 		}
 		
@@ -1881,10 +1865,7 @@ namespace ICSharpCode.NRefactory.VB
 			WriteKeyword("While");
 			Space();
 			whileStatement.Condition.AcceptVisitor(this, data);
-			NewLine();
-			Indent();
 			whileStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("End");
 			WriteKeyword("While");
 			
@@ -1942,10 +1923,7 @@ namespace ICSharpCode.NRefactory.VB
 				Space();
 				forStatement.StepExpression.AcceptVisitor(this, data);
 			}
-			NewLine();
-			Indent();
 			forStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("Next");
 			
 			return EndNode(forStatement);
@@ -1961,10 +1939,7 @@ namespace ICSharpCode.NRefactory.VB
 			Space();
 			WriteKeyword("In");
 			forEachStatement.InExpression.AcceptVisitor(this, data);
-			NewLine();
-			Indent();
 			forEachStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("Next");
 			
 			return EndNode(forEachStatement);
@@ -2064,10 +2039,7 @@ namespace ICSharpCode.NRefactory.VB
 			}
 			if (!operatorDeclaration.Body.IsNull) {
 				MarkFoldStart();
-				NewLine();
-				Indent();
 				WriteBlock(operatorDeclaration.Body);
-				Unindent();
 				WriteKeyword("End");
 				WriteKeyword("Operator");
 				MarkFoldEnd();
@@ -2109,10 +2081,7 @@ namespace ICSharpCode.NRefactory.VB
 				Space();
 				WriteCommaSeparatedList(caseStatement.Clauses);
 			}
-			NewLine();
-			Indent();
 			caseStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			
 			return EndNode(caseStatement);
 		}
@@ -2238,10 +2207,7 @@ namespace ICSharpCode.NRefactory.VB
 				WriteKeyword("While");
 				doLoopStatement.Expression.AcceptVisitor(this, data);
 			}
-			NewLine();
-			Indent();
 			doLoopStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("Loop");
 			if (doLoopStatement.ConditionType == ConditionType.LoopUntil) {
 				WriteKeyword("Until");
@@ -2261,10 +2227,7 @@ namespace ICSharpCode.NRefactory.VB
 			
 			WriteKeyword("Using");
 			WriteCommaSeparatedList(usingStatement.Resources);
-			NewLine();
-			Indent();
 			usingStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("End");
 			WriteKeyword("Using");
 			
@@ -2317,10 +2280,7 @@ namespace ICSharpCode.NRefactory.VB
 			else
 				WriteKeyword("Function");
 			WriteCommaSeparatedListInParenthesis(multiLineLambdaExpression.Parameters, false);
-			NewLine();
-			Indent();
 			multiLineLambdaExpression.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("End");
 			if (multiLineLambdaExpression.IsSub)
 				WriteKeyword("Sub");
