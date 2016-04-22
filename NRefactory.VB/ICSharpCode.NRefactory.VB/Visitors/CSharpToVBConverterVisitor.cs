@@ -513,8 +513,10 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 		{
 			Expression expr;
 			
-			if (!string.IsNullOrEmpty(primitiveExpression.Value as string) || primitiveExpression.Value is char)
+			if (!string.IsNullOrEmpty(primitiveExpression.Value as string))
 				expr = ConvertToConcat(primitiveExpression.Value.ToString());
+			else if (primitiveExpression.Value is char)
+				expr = ConvertToSpecialChar((char)primitiveExpression.Value);
 			else
 				expr = new PrimitiveExpression(primitiveExpression.Value);
 			
@@ -530,24 +532,15 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				string part;
 				switch (literal[i]) {
 					case '\0':
-						part = literal.Substring(start, i - start);
-						if (!string.IsNullOrEmpty(part))
-							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbNullChar"));
-						start = i + 1;
-						break;
 					case '\b':
-						part = literal.Substring(start, i - start);
-						if (!string.IsNullOrEmpty(part))
-							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbBack"));
-						start = i + 1;
-						break;
 					case '\f':
+					case '\n':
+					case '\t':
+					case '\v':
 						part = literal.Substring(start, i - start);
 						if (!string.IsNullOrEmpty(part))
 							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbFormFeed"));
+						parts.Push(ConvertToSpecialChar(literal[i]));
 						start = i + 1;
 						break;
 					case '\r':
@@ -559,27 +552,6 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 							parts.Push(new IdentifierExpression("vbCrLf"));
 						} else
 							parts.Push(new IdentifierExpression("vbCr"));
-						start = i + 1;
-						break;
-					case '\n':
-						part = literal.Substring(start, i - start);
-						if (!string.IsNullOrEmpty(part))
-							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbLf"));
-						start = i + 1;
-						break;
-					case '\t':
-						part = literal.Substring(start, i - start);
-						if (!string.IsNullOrEmpty(part))
-							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbTab"));
-						start = i + 1;
-						break;
-					case '\v':
-						part = literal.Substring(start, i - start);
-						if (!string.IsNullOrEmpty(part))
-							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbVerticalTab"));
 						start = i + 1;
 						break;
 					default:
@@ -607,6 +579,30 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				current = new BinaryOperatorExpression(parts.Pop(), BinaryOperatorType.Concat, current);
 			
 			return current;
+		}
+
+		Expression ConvertToSpecialChar(char ch)
+		{
+			switch (ch) {
+				case '\0':
+					return new IdentifierExpression("vbNullChar");
+				case '\b':
+					return new IdentifierExpression("vbBack");
+				case '\f':
+					return new IdentifierExpression("vbFormFeed");
+				case '\r':
+					return new IdentifierExpression("vbCr");
+				case '\n':
+					return new IdentifierExpression("vbLf");
+				case '\t':
+					return new IdentifierExpression("vbTab");
+				case '\v':
+					return new IdentifierExpression("vbVerticalTab");
+				default:
+					if (ch > 255)
+						return new InvocationExpression(new IdentifierExpression("ChrW"), new PrimitiveExpression((int)ch));
+					return new PrimitiveExpression(ch);
+			}
 		}
 		
 		public AstNode VisitSizeOfExpression(CSharp.SizeOfExpression sizeOfExpression, object data)
