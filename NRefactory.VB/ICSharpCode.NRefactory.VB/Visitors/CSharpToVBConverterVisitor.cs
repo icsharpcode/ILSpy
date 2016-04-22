@@ -840,7 +840,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			foreach (string id in namespaceDeclaration.Identifiers) {
 				newNamespace.Identifiers.Add(new Identifier(id, TextLocation.Empty));
 			}
-			ConvertNodes(namespaceDeclaration.Members, newNamespace.Members);
+			ConvertMembers(namespaceDeclaration, newNamespace, CSharp.NamespaceDeclaration.MemberRole, NamespaceDeclaration.MemberRole);
 			
 			return EndNode(namespaceDeclaration, newNamespace);
 		}
@@ -864,7 +864,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				
 				type.Name = new Identifier(typeDeclaration.Name, TextLocation.Empty);
 				
-				ConvertNodes(typeDeclaration.Members, type.Members);
+				ConvertMembers(typeDeclaration, type, CSharp.Roles.TypeMemberRole, EnumDeclaration.MemberRole);
 				
 				return EndNode(typeDeclaration, type);
 			} else {
@@ -918,7 +918,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				type.Name = typeDeclaration.Name;
 				
 				types.Push(type);
-				ConvertNodes(typeDeclaration.Members, type.Members);
+				ConvertMembers(typeDeclaration, type, CSharp.Roles.TypeMemberRole, TypeDeclaration.MemberRole);
 				types.Pop();
 				
 				return EndNode(typeDeclaration, type);
@@ -2221,7 +2221,24 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 					result.Add(n);
 			}
 		}
-		
+
+		void ConvertMembers<T, S, M>(CSharp.AstNode parent, T result, Role<S> sourceRole, Role<M> targetRole) where T : VB.AstNode where S : CSharp.AstNode where M : VB.AstNode
+		{
+			foreach (var node in parent.Children) {
+				if (node.Role == CSharp.Roles.Comment) {
+					var n = (Comment)node.AcceptVisitor(this, null);
+					if (n != null)
+						result.AddChild(n, AstNode.Roles.Comment);
+				}
+				
+				if (node.Role == sourceRole) {
+					var n = (M)node.AcceptVisitor(this, null);
+					if (n != null)
+						result.AddChild(n, targetRole);
+				}
+			}
+		}
+
 		T EndNode<T>(CSharp.AstNode node, T result) where T : VB.AstNode
 		{
 			if (result != null) {
