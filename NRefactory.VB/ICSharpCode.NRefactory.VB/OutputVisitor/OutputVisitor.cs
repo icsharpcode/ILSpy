@@ -1625,7 +1625,8 @@ namespace ICSharpCode.NRefactory.VB
 			WriteKeyword("New");
 			Space();
 			arrayCreateExpression.Type.AcceptVisitor(this, data);
-			WriteCommaSeparatedListInParenthesis(arrayCreateExpression.Arguments, false);
+			if (arrayCreateExpression.Arguments.Any())
+				WriteCommaSeparatedListInParenthesis(arrayCreateExpression.Arguments, false);
 			foreach (var specifier in arrayCreateExpression.AdditionalArraySpecifiers) {
 				specifier.AcceptVisitor(this, data);
 			}
