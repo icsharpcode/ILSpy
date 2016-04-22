@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.VB
 
 		//readonly CecilLoader loader = new CecilLoader();
 		
-		public string GetTypeNameForAttribute(ICSharpCode.NRefactory.CSharp.Attribute attribute)
+		public string GetTypeNameForAttribute(NRefactory.CSharp.Attribute attribute)
 		{
 			return attribute.Type.Annotations
 				.OfType<Mono.Cecil.MemberReference>()
@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy.VB
 			return SpecialType.UnknownType;
 		}
 		
-		public TypeKind GetTypeKindForAstType(ICSharpCode.NRefactory.CSharp.AstType type)
+		public TypeKind GetTypeKindForAstType(NRefactory.CSharp.AstType type)
 		{
 			var annotation = type.Annotation<TypeReference>();
 			if (annotation == null)
@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.VB
 			return TypeKind.Unknown;
 		}
 		
-		public TypeCode ResolveExpression(ICSharpCode.NRefactory.CSharp.Expression expression)
+		public TypeCode ResolveExpression(NRefactory.CSharp.Expression expression)
 		{
 			var annotation = expression.Annotations.OfType<TypeInformation>().FirstOrDefault();
 			
@@ -106,9 +106,9 @@ namespace ICSharpCode.ILSpy.VB
 			return TypeCode.Object;
 		}
 		
-		public Nullable<bool> IsReferenceType(ICSharpCode.NRefactory.CSharp.Expression expression)
+		public Nullable<bool> IsReferenceType(NRefactory.CSharp.Expression expression)
 		{
-			if (expression is ICSharpCode.NRefactory.CSharp.NullReferenceExpression)
+			if (expression is NRefactory.CSharp.NullReferenceExpression)
 				return true;
 			
 			var annotation = expression.Annotations.OfType<TypeInformation>().FirstOrDefault();
@@ -146,7 +146,7 @@ namespace ICSharpCode.ILSpy.VB
 		
 		public bool IsMethodGroup(NRefactory.CSharp.Expression expression)
 		{
-			var methodInfo = expression.Annotation<MethodDefinition>();
+			var methodInfo = expression.Annotation<MethodReference>()?.Resolve();
 			if (methodInfo != null) {
 				return !methodInfo.IsGetter && !methodInfo.IsSetter;
 			}
