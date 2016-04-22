@@ -852,17 +852,17 @@ namespace ICSharpCode.NRefactory.VB
 		void WriteIdentifier(string identifier, Role<Identifier> identifierRole = null)
 		{
 			WriteSpecialsUpToRole(identifierRole ?? AstNode.Roles.Identifier);
-			if (IsKeyword(identifier, containerStack.Peek())) {
-				if (lastWritten == LastWritten.KeywordOrIdentifier)
-					Space(); // this space is not strictly required, so we call Space()
+
+			if (lastWritten == LastWritten.KeywordOrIdentifier)
+				Space(); // this space is not strictly required, so we call Space()
+
+			if (IsKeyword(identifier, containerStack.Peek()))
 				formatter.WriteToken("[");
-			} else if (lastWritten == LastWritten.KeywordOrIdentifier) {
-				formatter.Space(); // this space is strictly required, so we directly call the formatter
-			}
+
 			formatter.WriteIdentifier(identifier);
-			if (IsKeyword(identifier, containerStack.Peek())) {
+			if (IsKeyword(identifier, containerStack.Peek()))
 				formatter.WriteToken("]");
-			}
+
 			lastWritten = LastWritten.KeywordOrIdentifier;
 		}
 		
@@ -1011,7 +1011,7 @@ namespace ICSharpCode.NRefactory.VB
 			"GetType", "GetXmlNamespace", "Global", "GoSub", "GoTo", "Handles", "If", "Implements",
 			"Imports", "In", "Inherits", "Integer", "Interface", "Is", "IsNot", "Let", "Lib", "Like",
 			"Long", "Loop", "Me", "Mod", "Module", "MustInherit", "MustOverride", "MyBase", "MyClass",
-			"Namespace", "Narrowing", "New", "Next", "Not", "Nothing", "NotInheritable", "NotOverridable",
+			"Namespace", "Narrowing", "Next", "Not", "Nothing", "NotInheritable", "NotOverridable",
 			"Object", "Of", "On", "Operator", "Option", "Optional", "Or", "OrElse", "Overloads",
 			"Overridable", "Overrides", "ParamArray", "Partial", "Private", "Property", "Protected",
 			"Public", "RaiseEvent", "ReadOnly", "ReDim", "REM", "RemoveHandler", "Resume", "Return",
@@ -1030,6 +1030,11 @@ namespace ICSharpCode.NRefactory.VB
 		/// </summary>
 		public static bool IsKeyword(string identifier, AstNode context)
 		{
+			if (identifier == "New") {
+				if (context.PrevSibling is InstanceExpression)
+					return false;
+				return true;
+			}
 			if (unconditionalKeywords.Contains(identifier))
 				return true;
 //			if (context.Ancestors.Any(a => a is QueryExpression)) {
