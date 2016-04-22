@@ -98,11 +98,22 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				Type = (AstType)arrayCreateExpression.Type.AcceptVisitor(this, data),
 				Initializer = (ArrayInitializerExpression)arrayCreateExpression.Initializer.AcceptVisitor(this, data)
 			};
-			ConvertNodes(arrayCreateExpression.Arguments, expr.Arguments,
-			             n => new BinaryOperatorExpression(n, BinaryOperatorType.Subtract, new PrimitiveExpression(1)));
+			ConvertNodes(arrayCreateExpression.Arguments, expr.Arguments, ReduceArrayUpperBoundExpression);
 			ConvertNodes(arrayCreateExpression.AdditionalArraySpecifiers, expr.AdditionalArraySpecifiers);
 			
 			return EndNode(arrayCreateExpression, expr);
+		}
+
+		Expression ReduceArrayUpperBoundExpression(Expression expression)
+		{
+			if (expression is PrimitiveExpression)
+			{
+				var numericLiteral = expression as PrimitiveExpression;
+				int? upperBound = numericLiteral.Value as int?;
+				if (upperBound.HasValue)
+					return new PrimitiveExpression(upperBound.Value - 1);
+			}
+			return new BinaryOperatorExpression(expression, BinaryOperatorType.Subtract, new PrimitiveExpression(1));
 		}
 		
 		public AstNode VisitArrayInitializerExpression(CSharp.ArrayInitializerExpression arrayInitializerExpression, object data)
