@@ -244,6 +244,7 @@ namespace ICSharpCode.NRefactory.VB
 			WriteModifiers(typeDeclaration.ModifierTokens);
 			WriteClassTypeKeyword(typeDeclaration);
 			WriteIdentifier(typeDeclaration.Name.Name);
+			WriteTypeParameters(typeDeclaration.TypeParameters);
 			MarkFoldStart();
 			NewLine();
 			

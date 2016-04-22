@@ -904,6 +904,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				
 				ConvertNodes(typeDeclaration.Attributes, type.Attributes);
 				ConvertNodes(typeDeclaration.ModifierTokens, type.ModifierTokens);
+				ConvertNodes(typeDeclaration.TypeParameters, type.TypeParameters);
 				
 				if (typeDeclaration.BaseTypes.Any()) {
 					var first = typeDeclaration.BaseTypes.First();
