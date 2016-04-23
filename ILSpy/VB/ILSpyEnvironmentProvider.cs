@@ -146,10 +146,7 @@ namespace ICSharpCode.ILSpy.VB
 		
 		public bool IsMethodGroup(NRefactory.CSharp.Expression expression)
 		{
-			var r = expression.Annotation<MethodReference>();
-			if (r == null)
-				return false;
-			var methodInfo = r.Resolve();
+			var methodInfo = expression.Annotation<MethodReference>()?.Resolve();
 			if (methodInfo != null) {
 				return !methodInfo.IsGetter && !methodInfo.IsSetter;
 			}
