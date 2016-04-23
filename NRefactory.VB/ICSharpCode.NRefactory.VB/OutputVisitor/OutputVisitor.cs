@@ -1243,16 +1243,15 @@ namespace ICSharpCode.NRefactory.VB
 				lastWritten = LastWritten.KeywordOrIdentifier;
 			} else if (val is IFormattable) {
 				StringBuilder b = new StringBuilder();
-//				if (primitiveExpression.LiteralFormat == LiteralFormat.HexadecimalNumber) {
-//					b.Append("0x");
-//					b.Append(((IFormattable)val).ToString("x", NumberFormatInfo.InvariantInfo));
-//				} else {
 				b.Append(((IFormattable)val).ToString(null, NumberFormatInfo.InvariantInfo));
-//				}
-				if (val is uint || val is ulong) {
+				if (val is ushort || val is ulong) {
 					b.Append("U");
 				}
-				if (val is long || val is ulong) {
+				if (val is short || val is ushort) {
+					b.Append("S");
+				} else if (val is uint) {
+					b.Append("UI");
+				} else if (val is long || val is ulong) {
 					b.Append("L");
 				}
 				formatter.WriteToken(b.ToString());
