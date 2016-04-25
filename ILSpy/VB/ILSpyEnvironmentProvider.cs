@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpy.VB
 			return TypeCode.Object;
 		}
 		
-		public Nullable<bool> IsReferenceType(NRefactory.CSharp.Expression expression)
+		public bool? IsReferenceType(NRefactory.CSharp.Expression expression)
 		{
 			if (expression is NRefactory.CSharp.NullReferenceExpression)
 				return true;
@@ -152,6 +152,26 @@ namespace ICSharpCode.ILSpy.VB
 			}
 			
 			return false;
+		}
+
+		public NRefactory.CSharp.ParameterDeclaration[] GetParametersForProperty(NRefactory.CSharp.PropertyDeclaration property)
+		{
+			var propInfo = property.Annotation<PropertyReference>();
+
+			if (propInfo == null)
+				return new NRefactory.CSharp.ParameterDeclaration[0];
+
+			return propInfo.Parameters.Select(p => new NRefactory.CSharp.ParameterDeclaration(AstBuilder.ConvertType(p.ParameterType), p.Name, GetModifiers(p))).ToArray();
+		}
+
+		NRefactory.CSharp.ParameterModifier GetModifiers(ParameterDefinition p)
+		{
+			if (p.IsOut && p.IsIn)
+				return NRefactory.CSharp.ParameterModifier.Ref;
+			if (p.IsOut)
+				return NRefactory.CSharp.ParameterModifier.Out;
+
+			return NRefactory.CSharp.ParameterModifier.None;
 		}
 	}
 }

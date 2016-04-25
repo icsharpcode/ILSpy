@@ -22,6 +22,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 		IType ResolveType(AstType type, TypeDeclaration entity = null);
 		bool IsMethodGroup(CSharp.Expression expression);
 		bool HasEvent(Expression expression);
+		CSharp.ParameterDeclaration[] GetParametersForProperty(CSharp.PropertyDeclaration property);
 	}
 	
 	/// <summary>
@@ -1921,6 +1922,8 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			if (members.Pop().inIterator) {
 				decl.Modifiers |= Modifiers.Iterator;
 			}
+
+			ConvertNodes(provider.GetParametersForProperty(propertyDeclaration), decl.Parameters);
 			
 			return EndNode(propertyDeclaration, decl);
 		}
