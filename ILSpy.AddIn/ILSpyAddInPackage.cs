@@ -180,8 +180,8 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		private void OpenCodeItemInILSpy(EnvDTE.CodeElement codeElement)
 		{
-			string navigateTo = "/navigateTo:" + CodeElementXmlDocKeyProvider.GetKey(codeElement);
-			OpenProjectInILSpy(codeElement.ProjectItem.ContainingProject, navigateTo);
+			string codeElementKey = CodeElementXmlDocKeyProvider.GetKey(codeElement);
+			OpenProjectInILSpy(codeElement.ProjectItem.ContainingProject, "/navigateTo:" + codeElementKey);
 		}
 
 		private void OpenILSpyCallback(object sender, EventArgs e)

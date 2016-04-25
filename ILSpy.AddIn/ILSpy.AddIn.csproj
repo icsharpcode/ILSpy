@@ -148,6 +148,7 @@
     <Compile Include="ILSpyAddInPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PkgCmdID.cs" />
+    <None Include="Samples\ILSpyAddInSamples.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -150,6 +150,9 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			EnvDTE80.CodeTypeRef2 parameterTypeRef = (EnvDTE80.CodeTypeRef2)parameter.Type;
 			string parameterTypeString = parameterTypeRef.AsFullName;
+			if (parameterTypeRef.TypeKind == EnvDTE.vsCMTypeRef.vsCMTypeRefArray) {
+				parameterTypeString = parameterTypeRef.ElementType.AsFullName;
+			}
 			int substringStart = 0;
 			for (int i = 0; i < parameterTypeString.Length; ++i) {
 				switch (parameterTypeString[i]) {
@@ -166,6 +169,10 @@ namespace ICSharpCode.ILSpy.AddIn
 					case ',':
 						AppendParameterTypeSubstring(b, parameterTypeString, substringStart, i, genericTypeParameters, genericMethodParameters);
 						substringStart = i + 1;
+						// Skip space after comma if present.
+						if (parameterTypeString[substringStart] == ' ') {
+							++substringStart;
+						}
 						b.Append(',');
 						break;
 				}
@@ -189,15 +196,11 @@ namespace ICSharpCode.ILSpy.AddIn
 				b.Append(']');
 			}
 
-			// TODO: test out and ref parameters
+			// Append ref / out indicator if needed.
+			// Note there is no need to append a '*' for pointers, as this is included in the full name of the type.
 			if ((parameter.ParameterKind == EnvDTE80.vsCMParameterKind.vsCMParameterKindRef) ||
 				(parameter.ParameterKind == EnvDTE80.vsCMParameterKind.vsCMParameterKindOut)) {
 				b.Append('@');
-			}
-
-			// TODO: test pointer parameters
-			if (parameterTypeRef.TypeKind == EnvDTE.vsCMTypeRef.vsCMTypeRefPointer) {
-				b.Append('*');
 			}
 		}
 
@@ -216,7 +219,7 @@ namespace ICSharpCode.ILSpy.AddIn
 					b.Append(indexOfGenericMethodParameter);
 				}
 				else {
-					b.Append(substring.Trim());
+					b.Append(substring);
 				}
 			}
 		}
