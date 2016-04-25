@@ -10,12 +10,16 @@ using System.Collections.Generic;
 /// Note that this code is not compiled or used in the project in any way, it is
 /// only provided for reference.
 
+
 // N:ILSpy.AddIn.Tests
 namespace ILSpy.AddIn.Tests
 {
     // T:ILSpy.AddIn.Tests.SomeClass
     public class SomeClass
     {
+        // E:ILSpy.AddIn.Tests.SomeClass.OnEvent
+        public event Action OnEvent;
+
         // F:ILSpy.AddIn.Tests.SomeClass.mField
         private int mField;
 
@@ -30,6 +34,12 @@ namespace ILSpy.AddIn.Tests
             {
                 mField = value;
             }
+        }
+
+        // P:ILSpy.AddIn.Tests.SomeClass.Item(System.Int32,System.Int32)
+        public int this[int x, int y]
+        {
+            get { return x + y + mField; }
         }
 
         // M:ILSpy.AddIn.Tests.SomeClass.#ctor
@@ -249,6 +259,11 @@ namespace ILSpy.AddIn.Tests
         {
         }
 
+        // M:ILSpy.AddIn.Tests.SomeGenericClass`2.Finalize
+        ~SomeGenericClass()
+        {
+        }
+
         // M:ILSpy.AddIn.Tests.SomeGenericClass`2.GenericClassMethod(`0,`1)
         public void GenericClassMethod(T1 a, T2 b)
         {
@@ -311,6 +326,21 @@ namespace ILSpy.AddIn.Tests
             return y;
         }
 
+        // M:ILSpy.AddIn.Tests.SomeGenericClass`2.ArrayMethod(`0[],System.Int32[])
+        public void ArrayMethod(T1[] x, int[] y)
+        {
+        }
+
+        // NOT? M:ILSpy.AddIn.Tests.SomeGenericClass`2.ArrayMethod(`0[,],System.Int32[,])
+        public void ArrayMethod(T1[,] x, int[,] y)
+        {
+        }
+
+        // NOT! M:ILSpy.AddIn.Tests.SomeGenericClass`2.ArrayMethod([],[])
+        public void ArrayMethod(T1[][] x, int[][] y)
+        {
+        }
+
         // M:ILSpy.AddIn.Tests.SomeGenericClass`2.GenericClassGenericMethod``2(`0,``0,ILSpy.AddIn.Tests.SomeClass)
         public T3 GenericClassGenericMethod<T3, T4>(T1 x, T3 y, SomeClass z)
         {
@@ -333,20 +363,21 @@ namespace ILSpy.AddIn.Tests
         {
             string foo = x.ToString() + y.ToString();
         }
-        
-        // NOT M:ILSpy.AddIn.Tests.SomeGenericClass`2.operator +(ILSpy.AddIn.Tests.SomeGenericClass{`0,`1},ILSpy.AddIn.Tests.SomeGenericClass{`0,`1})
+
+
+        // M:ILSpy.AddIn.Tests.SomeGenericClass`2.op_Addition(ILSpy.AddIn.Tests.SomeGenericClass{`0,`1},ILSpy.AddIn.Tests.SomeGenericClass{`0,`1})
         public static SomeGenericClass<T1, T2> operator +(SomeGenericClass<T1, T2> a, SomeGenericClass<T1, T2> b)
         {
             return new SomeGenericClass<T1, T2>();
         }
 
-        // NOT M:ILSpy.AddIn.Tests.SomeGenericClass`2.explicit operator NestedGeneric``2(ILSpy.AddIn.Tests.SomeGenericClass{`0,`1})
+        // M:ILSpy.AddIn.Tests.SomeGenericClass`2.op_Explicit(ILSpy.AddIn.Tests.SomeGenericClass{`0,`1})~ILSpy.AddIn.Tests.SomeGenericClass`2.NestedGeneric`2
         public static explicit operator NestedGeneric<T1, T2>(SomeGenericClass<T1, T2> sgc)
         {
             return new NestedGeneric<T1, T2>();
         }
 
-        // NOT M:ILSpy.AddIn.Tests.SomeGenericClass`2.implicit operator NestedGeneric``2(ILSpy.AddIn.Tests.SomeGenericClass{`0,`1})
+        // M:ILSpy.AddIn.Tests.SomeGenericClass`2.op_Implicit(ILSpy.AddIn.Tests.SomeGenericClass{`0,`1})~ILSpy.AddIn.Tests.SomeGenericClass`2.NestedGeneric`2
         public static implicit operator NestedGeneric<T2, T1>(SomeGenericClass<T1, T2> sgc)
         {
             return new NestedGeneric<T2, T1>();

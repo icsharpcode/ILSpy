@@ -45,10 +45,38 @@ namespace ICSharpCode.ILSpy.AddIn
 				string typeName = member.FullName.Substring(0, nameIndex - 1);
 				string memberName = member.FullName.Substring(nameIndex);
 
+				// Name substitutions for special cases.
 				if (member.Kind == EnvDTE.vsCMElement.vsCMElementFunction) {
 					EnvDTE80.CodeFunction2 mr = (EnvDTE80.CodeFunction2)member;
 					if (mr.FunctionKind == EnvDTE.vsCMFunction.vsCMFunctionConstructor) {
 						memberName = memberName.Replace(member.Name, "#ctor");
+					}
+					else if (mr.FunctionKind == EnvDTE.vsCMFunction.vsCMFunctionDestructor) {
+						memberName = memberName.Replace(member.Name, "Finalize");
+					}
+					else if (mr.FunctionKind == EnvDTE.vsCMFunction.vsCMFunctionOperator) {
+						if (memberName.StartsWith("implicit operator")) {
+							memberName = "op_Implicit";
+						}
+						else if (memberName.StartsWith("explicit operator")) {
+							memberName = "op_Explicit";
+						}
+						else {
+							// NRefactory has a handy mapping we can make use of, just need to extract the operator sybol first.
+							string[] memberNameWords = member.Name.Split(' ');
+							if (memberNameWords.Length >= 2) {
+								string operatorSymbol = memberNameWords[1];
+								string operatorName = ICSharpCode.NRefactory.MonoCSharp.Operator.GetMetadataName(operatorSymbol);
+								if (operatorName != null) {
+									memberName = memberName.Replace(member.Name, operatorName);
+								}
+							}
+						}
+					}
+				}
+				else if (member.Kind == EnvDTE.vsCMElement.vsCMElementProperty) {
+					if (member.Name == "this") {
+						memberName = memberName.Replace(member.Name, "Item");
 					}
 				}
 
@@ -63,8 +91,7 @@ namespace ICSharpCode.ILSpy.AddIn
 				else if (member.Kind == EnvDTE.vsCMElement.vsCMElementFunction) {
 					EnvDTE80.CodeFunction2 mr = (EnvDTE80.CodeFunction2)member;
 					parameters = mr.Parameters;
-					if (mr.Name == "op_Implicit" || mr.Name == "op_Explicit") {
-						// TODO: check operator overloads to see if these work
+					if (memberName == "op_Implicit" || memberName == "op_Explicit") {
 						explicitReturnType = mr.Type;
 					}
 				}
