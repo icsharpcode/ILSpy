@@ -138,6 +138,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Guids.cs" />
+    <Compile Include="CodeElementXmlDocKeyProvider.cs" />
     <Compile Include="Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -147,6 +148,7 @@
     <Compile Include="ILSpyAddInPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PkgCmdID.cs" />
+    <None Include="Samples\ILSpyAddInSamples.cs" />
     <Compile Include="Utils.cs" />
   </ItemGroup>
   <ItemGroup>
