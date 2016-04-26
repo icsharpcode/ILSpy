@@ -60,6 +60,10 @@ namespace ICSharpCode.ILSpy
 			InitializeComponent();
 			searchModeComboBox.Items.Add(new { Image = Images.Class, Name = "Type" });
 			searchModeComboBox.Items.Add(new { Image = Images.Property, Name = "Member" });
+			searchModeComboBox.Items.Add(new { Image = Images.Method, Name = "Method" });
+			searchModeComboBox.Items.Add(new { Image = Images.Field, Name = "Field" });
+			searchModeComboBox.Items.Add(new { Image = Images.Property, Name = "Property" });
+			searchModeComboBox.Items.Add(new { Image = Images.Event, Name = "Event" });
 			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
 			searchModeComboBox.SelectedIndex = (int)SearchMode.Type;
 			ContextMenuProvider.Add(listBox);
@@ -249,23 +253,44 @@ namespace ICSharpCode.ILSpy
 			AbstractSearchStrategy GetSearchStrategy(SearchMode mode, string[] terms)
 			{
 				if (terms.Length == 1) {
-					if (terms[0].StartsWith("t:"))
+					if (terms[0].StartsWith("t:", StringComparison.Ordinal))
 						return new TypeSearchStrategy(terms[0].Substring(2));
 
-					if (terms[0].StartsWith("m:"))
+					if (terms[0].StartsWith("m:", StringComparison.Ordinal))
 						return new MemberSearchStrategy(terms[0].Substring(2));
 
-					if (terms[0].StartsWith("c:"))
+					if (terms[0].StartsWith("md:", StringComparison.Ordinal))
+						return new MemberSearchStrategy(terms[0].Substring(3), MemberSearchKind.Method);
+
+					if (terms[0].StartsWith("f:", StringComparison.Ordinal))
+						return new MemberSearchStrategy(terms[0].Substring(2), MemberSearchKind.Field);
+
+					if (terms[0].StartsWith("p:", StringComparison.Ordinal))
+						return new MemberSearchStrategy(terms[0].Substring(2), MemberSearchKind.Property);
+
+					if (terms[0].StartsWith("e:", StringComparison.Ordinal))
+						return new MemberSearchStrategy(terms[0].Substring(2), MemberSearchKind.Event);
+
+					if (terms[0].StartsWith("c:", StringComparison.Ordinal))
 						return new LiteralSearchStrategy(terms[0].Substring(2));
 				}
 
-				switch (mode) {
+				switch (mode)
+				{
 					case SearchMode.Type:
 						return new TypeSearchStrategy(terms);
 					case SearchMode.Member:
 						return new MemberSearchStrategy(terms);
 					case SearchMode.Literal:
 						return new LiteralSearchStrategy(terms);
+					case SearchMode.Method:
+						return new MemberSearchStrategy(terms, MemberSearchKind.Method);
+					case SearchMode.Field:
+						return new MemberSearchStrategy(terms, MemberSearchKind.Field);
+					case SearchMode.Property:
+						return new MemberSearchStrategy(terms, MemberSearchKind.Property);
+					case SearchMode.Event:
+						return new MemberSearchStrategy(terms, MemberSearchKind.Event);
 				}
 
 				return null;
@@ -310,6 +335,10 @@ namespace ICSharpCode.ILSpy
 	{
 		Type,
 		Member,
+		Method,
+		Field,
+		Property,
+		Event,
 		Literal
 	}
 }

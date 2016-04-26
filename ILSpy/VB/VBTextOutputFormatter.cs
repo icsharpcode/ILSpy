@@ -33,6 +33,8 @@ namespace ICSharpCode.ILSpy.VB
 	{
 		readonly ITextOutput output;
 		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
+
+		bool firstImport, lastImport;
 		
 		public VBTextOutputFormatter(ITextOutput output)
 		{
@@ -43,28 +45,36 @@ namespace ICSharpCode.ILSpy.VB
 		
 		public void StartNode(AstNode node)
 		{
-//			var ranges = node.Annotation<List<ILRange>>();
-//			if (ranges != null && ranges.Count > 0)
-//			{
-//				// find the ancestor that has method mapping as annotation
-//				if (node.Ancestors != null && node.Ancestors.Count() > 0)
-//				{
-//					var n = node.Ancestors.FirstOrDefault(a => a.Annotation<MemberMapping>() != null);
-//					if (n != null) {
-//						MemberMapping mapping = n.Annotation<MemberMapping>();
-//
-//						// add all ranges
-//						foreach (var range in ranges) {
-//							mapping.MemberCodeMappings.Add(new SourceCodeMapping {
-//							                               	ILInstructionOffset = range,
-//							                               	SourceCodeLine = output.CurrentLine,
-//							                               	MemberMapping = mapping
-//							                               });
-//						}
-//					}
-//				}
-//			}
-			
+			//			var ranges = node.Annotation<List<ILRange>>();
+			//			if (ranges != null && ranges.Count > 0)
+			//			{
+			//				// find the ancestor that has method mapping as annotation
+			//				if (node.Ancestors != null && node.Ancestors.Count() > 0)
+			//				{
+			//					var n = node.Ancestors.FirstOrDefault(a => a.Annotation<MemberMapping>() != null);
+			//					if (n != null) {
+			//						MemberMapping mapping = n.Annotation<MemberMapping>();
+			//
+			//						// add all ranges
+			//						foreach (var range in ranges) {
+			//							mapping.MemberCodeMappings.Add(new SourceCodeMapping {
+			//							                               	ILInstructionOffset = range,
+			//							                               	SourceCodeLine = output.CurrentLine,
+			//							                               	MemberMapping = mapping
+			//							                               });
+			//						}
+			//					}
+			//				}
+			//			}
+			if (nodeStack.Count == 0) {
+				if (node is ImportsStatement) {
+					firstImport = !(node.PrevSibling is ImportsStatement);
+					lastImport = !(node.NextSibling is ImportsStatement);
+				} else {
+					firstImport = false;
+					lastImport = false;
+				}
+			}
 			nodeStack.Push(node);
 		}
 		
@@ -98,6 +108,11 @@ namespace ICSharpCode.ILSpy.VB
 			if (memberRef != null) {
 				output.WriteReference(identifier, memberRef, true);
 				return;
+			}
+
+			if (firstImport) {
+				output.MarkFoldStart(defaultCollapsed: true);
+				firstImport = false;
 			}
 
 			output.Write(identifier);
@@ -198,6 +213,10 @@ namespace ICSharpCode.ILSpy.VB
 		
 		public void NewLine()
 		{
+			if (lastImport) {
+				output.MarkFoldEnd();
+				lastImport = false;
+			}
 			output.WriteLine();
 		}
 		

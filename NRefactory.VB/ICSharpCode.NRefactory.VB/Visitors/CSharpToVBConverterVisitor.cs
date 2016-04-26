@@ -22,6 +22,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 		IType ResolveType(AstType type, TypeDeclaration entity = null);
 		bool IsMethodGroup(CSharp.Expression expression);
 		bool HasEvent(Expression expression);
+		CSharp.ParameterDeclaration[] GetParametersForProperty(CSharp.PropertyDeclaration property);
 	}
 	
 	/// <summary>
@@ -98,11 +99,22 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				Type = (AstType)arrayCreateExpression.Type.AcceptVisitor(this, data),
 				Initializer = (ArrayInitializerExpression)arrayCreateExpression.Initializer.AcceptVisitor(this, data)
 			};
-			ConvertNodes(arrayCreateExpression.Arguments, expr.Arguments,
-			             n => new BinaryOperatorExpression(n, BinaryOperatorType.Subtract, new PrimitiveExpression(1)));
+			ConvertNodes(arrayCreateExpression.Arguments, expr.Arguments, ReduceArrayUpperBoundExpression);
 			ConvertNodes(arrayCreateExpression.AdditionalArraySpecifiers, expr.AdditionalArraySpecifiers);
 			
 			return EndNode(arrayCreateExpression, expr);
+		}
+
+		Expression ReduceArrayUpperBoundExpression(Expression expression)
+		{
+			if (expression is PrimitiveExpression)
+			{
+				var numericLiteral = expression as PrimitiveExpression;
+				int? upperBound = numericLiteral.Value as int?;
+				if (upperBound.HasValue)
+					return new PrimitiveExpression(upperBound.Value - 1);
+			}
+			return new BinaryOperatorExpression(expression, BinaryOperatorType.Subtract, new PrimitiveExpression(1));
 		}
 		
 		public AstNode VisitArrayInitializerExpression(CSharp.ArrayInitializerExpression arrayInitializerExpression, object data)
@@ -502,8 +514,10 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 		{
 			Expression expr;
 			
-			if (!string.IsNullOrEmpty(primitiveExpression.Value as string) || primitiveExpression.Value is char)
+			if (!string.IsNullOrEmpty(primitiveExpression.Value as string))
 				expr = ConvertToConcat(primitiveExpression.Value.ToString());
+			else if (primitiveExpression.Value is char)
+				expr = ConvertToSpecialChar((char)primitiveExpression.Value);
 			else
 				expr = new PrimitiveExpression(primitiveExpression.Value);
 			
@@ -519,24 +533,15 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				string part;
 				switch (literal[i]) {
 					case '\0':
-						part = literal.Substring(start, i - start);
-						if (!string.IsNullOrEmpty(part))
-							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbNullChar"));
-						start = i + 1;
-						break;
 					case '\b':
-						part = literal.Substring(start, i - start);
-						if (!string.IsNullOrEmpty(part))
-							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbBack"));
-						start = i + 1;
-						break;
 					case '\f':
+					case '\n':
+					case '\t':
+					case '\v':
 						part = literal.Substring(start, i - start);
 						if (!string.IsNullOrEmpty(part))
 							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbFormFeed"));
+						parts.Push(ConvertToSpecialChar(literal[i]));
 						start = i + 1;
 						break;
 					case '\r':
@@ -548,27 +553,6 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 							parts.Push(new IdentifierExpression("vbCrLf"));
 						} else
 							parts.Push(new IdentifierExpression("vbCr"));
-						start = i + 1;
-						break;
-					case '\n':
-						part = literal.Substring(start, i - start);
-						if (!string.IsNullOrEmpty(part))
-							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbLf"));
-						start = i + 1;
-						break;
-					case '\t':
-						part = literal.Substring(start, i - start);
-						if (!string.IsNullOrEmpty(part))
-							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbTab"));
-						start = i + 1;
-						break;
-					case '\v':
-						part = literal.Substring(start, i - start);
-						if (!string.IsNullOrEmpty(part))
-							parts.Push(new PrimitiveExpression(part));
-						parts.Push(new IdentifierExpression("vbVerticalTab"));
 						start = i + 1;
 						break;
 					default:
@@ -596,6 +580,30 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				current = new BinaryOperatorExpression(parts.Pop(), BinaryOperatorType.Concat, current);
 			
 			return current;
+		}
+
+		Expression ConvertToSpecialChar(char ch)
+		{
+			switch (ch) {
+				case '\0':
+					return new IdentifierExpression("vbNullChar");
+				case '\b':
+					return new IdentifierExpression("vbBack");
+				case '\f':
+					return new IdentifierExpression("vbFormFeed");
+				case '\r':
+					return new IdentifierExpression("vbCr");
+				case '\n':
+					return new IdentifierExpression("vbLf");
+				case '\t':
+					return new IdentifierExpression("vbTab");
+				case '\v':
+					return new IdentifierExpression("vbVerticalTab");
+				default:
+					if (ch > 255)
+						return new InvocationExpression(new IdentifierExpression("ChrW"), new PrimitiveExpression((int)ch));
+					return new PrimitiveExpression(ch);
+			}
 		}
 		
 		public AstNode VisitSizeOfExpression(CSharp.SizeOfExpression sizeOfExpression, object data)
@@ -840,7 +848,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			foreach (string id in namespaceDeclaration.Identifiers) {
 				newNamespace.Identifiers.Add(new Identifier(id, TextLocation.Empty));
 			}
-			ConvertNodes(namespaceDeclaration.Members, newNamespace.Members);
+			ConvertMembers(namespaceDeclaration, newNamespace, CSharp.NamespaceDeclaration.MemberRole, NamespaceDeclaration.MemberRole);
 			
 			return EndNode(namespaceDeclaration, newNamespace);
 		}
@@ -864,7 +872,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				
 				type.Name = new Identifier(typeDeclaration.Name, TextLocation.Empty);
 				
-				ConvertNodes(typeDeclaration.Members, type.Members);
+				ConvertMembers(typeDeclaration, type, CSharp.Roles.TypeMemberRole, EnumDeclaration.MemberRole);
 				
 				return EndNode(typeDeclaration, type);
 			} else {
@@ -904,6 +912,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				
 				ConvertNodes(typeDeclaration.Attributes, type.Attributes);
 				ConvertNodes(typeDeclaration.ModifierTokens, type.ModifierTokens);
+				ConvertNodes(typeDeclaration.TypeParameters, type.TypeParameters);
 				
 				if (typeDeclaration.BaseTypes.Any()) {
 					var first = typeDeclaration.BaseTypes.First();
@@ -918,7 +927,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				type.Name = typeDeclaration.Name;
 				
 				types.Push(type);
-				ConvertNodes(typeDeclaration.Members, type.Members);
+				ConvertMembers(typeDeclaration, type, CSharp.Roles.TypeMemberRole, TypeDeclaration.MemberRole);
 				types.Pop();
 				
 				return EndNode(typeDeclaration, type);
@@ -1913,6 +1922,8 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			if (members.Pop().inIterator) {
 				decl.Modifiers |= Modifiers.Iterator;
 			}
+
+			ConvertNodes(provider.GetParametersForProperty(propertyDeclaration), decl.Parameters);
 			
 			return EndNode(propertyDeclaration, decl);
 		}
@@ -2221,7 +2232,24 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 					result.Add(n);
 			}
 		}
-		
+
+		void ConvertMembers<T, S, M>(CSharp.AstNode parent, T result, Role<S> sourceRole, Role<M> targetRole) where T : VB.AstNode where S : CSharp.AstNode where M : VB.AstNode
+		{
+			foreach (var node in parent.Children) {
+				if (node.Role == CSharp.Roles.Comment) {
+					var n = (Comment)node.AcceptVisitor(this, null);
+					if (n != null)
+						result.AddChild(n, AstNode.Roles.Comment);
+				}
+				
+				if (node.Role == sourceRole) {
+					var n = (M)node.AcceptVisitor(this, null);
+					if (n != null)
+						result.AddChild(n, targetRole);
+				}
+			}
+		}
+
 		T EndNode<T>(CSharp.AstNode node, T result) where T : VB.AstNode
 		{
 			if (result != null) {

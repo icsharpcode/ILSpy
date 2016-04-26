@@ -36,6 +36,7 @@
 			  Foreground="Black"
 				  Grid.Row="1"
 				  AlternationCount="2"
+				  ScrollViewer.CanContentScroll="False"
 				  ItemContainerStyle="{StaticResource alternatingWithBinding}">
 		<ListView.View>
 			<GridView AllowsColumnReorder="False">
