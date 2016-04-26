@@ -109,7 +109,6 @@ namespace ICSharpCode.ILSpy.AddIn
 					b.Append(')');
 				}
 				if (explicitReturnType != null) {
-					// TODO: test explicit return types
 					b.Append('~');
 					AppendTypeName(b, explicitReturnType.AsFullName, true, false);
 				}
@@ -177,12 +176,11 @@ namespace ICSharpCode.ILSpy.AddIn
 		{
 			EnvDTE80.CodeTypeRef2 parameterTypeRef = (EnvDTE80.CodeTypeRef2)parameter.Type;
 			string parameterTypeString = parameterTypeRef.AsFullName;
-			if (parameterTypeRef.TypeKind == EnvDTE.vsCMTypeRef.vsCMTypeRefArray) {
-				parameterTypeString = parameterTypeRef.ElementType.AsFullName;
-			}
+
 			int substringStart = 0;
 			for (int i = 0; i < parameterTypeString.Length; ++i) {
-				switch (parameterTypeString[i]) {
+				char ch = parameterTypeString[i];
+				switch (ch) {
 					case '<':
 						AppendParameterTypeSubstring(b, parameterTypeString, substringStart, i, genericTypeParameters, genericMethodParameters);
 						substringStart = i + 1;
@@ -193,42 +191,30 @@ namespace ICSharpCode.ILSpy.AddIn
 						substringStart = i + 1;
 						b.Append('}');
 						break;
+					case '[':
+					case ']':
 					case ',':
 						AppendParameterTypeSubstring(b, parameterTypeString, substringStart, i, genericTypeParameters, genericMethodParameters);
 						substringStart = i + 1;
 						// Skip space after comma if present.
-						if (parameterTypeString[substringStart] == ' ') {
+						if ((substringStart < parameterTypeString.Length) && (parameterTypeString[substringStart] == ' ')) {
 							++substringStart;
 						}
-						b.Append(',');
+						b.Append(ch);
 						break;
 				}
 			}
 
 			AppendParameterTypeSubstring(b, parameterTypeString, substringStart, parameterTypeString.Length, genericTypeParameters, genericMethodParameters);
 
-			if (parameterTypeRef.TypeKind == EnvDTE.vsCMTypeRef.vsCMTypeRefArray) {
-				b.Append('[');
-				for (int i = 0; i < parameterTypeRef.Rank; i++) {
-					if (i > 0)
-						b.Append(',');
-					// TODO: how to get array bounds from EnvDTE code model?
-					//ArrayDimension ad = arrayType.Dimensions[i];
-					//if (ad.IsSized) {
-					//	b.Append(ad.LowerBound);
-					//	b.Append(':');
-					//	b.Append(ad.UpperBound);
-					//}
-				}
-				b.Append(']');
-			}
-
 			// Append ref / out indicator if needed.
-			// Note there is no need to append a '*' for pointers, as this is included in the full name of the type.
 			if ((parameter.ParameterKind == EnvDTE80.vsCMParameterKind.vsCMParameterKindRef) ||
 				(parameter.ParameterKind == EnvDTE80.vsCMParameterKind.vsCMParameterKindOut)) {
 				b.Append('@');
 			}
+
+			// Note there is no need to append a '*' for pointers, as this is included in the full name of the type.
+			// Multi-dimensional and nested arrays are also captured in the full name of the type.
 		}
 
 		private static void AppendParameterTypeSubstring(StringBuilder b, string parameterTypeString, int substringStart, int substringStop, string[] genericTypeParameters, string[] genericMethodParameters)
