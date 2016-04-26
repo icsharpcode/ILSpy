@@ -129,7 +129,7 @@ namespace ICSharpCode.ILSpy.VB
 			foreach (var type in interfaces) {
 				var def = type.Annotation<TypeReference>().Resolve();
 				if (def == null) continue;
-				foreach (var method in def.Methods.Where(m => !m.Name.StartsWith("get_") && !m.Name.StartsWith("set_"))) {
+				foreach (var method in def.Methods.Where(m => !m.Name.StartsWith("get_", StringComparison.Ordinal) && !m.Name.StartsWith("set_", StringComparison.Ordinal))) {
 					yield return new NRefactory.VB.Ast.InterfaceMemberSpecifier((NRefactory.VB.Ast.AstType)type.Clone(), method.Name);
 				}
 				
@@ -148,7 +148,7 @@ namespace ICSharpCode.ILSpy.VB
 		{
 			var methodInfo = expression.Annotation<MethodReference>()?.Resolve();
 			if (methodInfo != null) {
-				return !methodInfo.IsGetter && !methodInfo.IsSetter;
+				return !methodInfo.IsGetter && !methodInfo.IsSetter && !methodInfo.IsAddOn && !methodInfo.IsRemoveOn;
 			}
 			
 			return false;
