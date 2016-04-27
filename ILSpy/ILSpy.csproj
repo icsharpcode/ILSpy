@@ -137,6 +137,7 @@
     <Compile Include="Images\TypeIcon.cs" />
     <Compile Include="IPane.cs" />
     <Compile Include="ISmartTextOutput.cs" />
+    <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Images\Images.cs" />
     <Compile Include="Languages\Languages.cs" />
