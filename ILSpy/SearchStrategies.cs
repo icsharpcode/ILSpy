@@ -373,4 +373,53 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
+	class TypeAndMemberSearchStrategy : AbstractSearchStrategy
+	{
+		public TypeAndMemberSearchStrategy(params string[] terms)
+			: base(terms)
+		{
+		}
+
+		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
+		{
+			if (IsMatch(type.Name) || IsMatch(type.FullName))
+			{
+				addResult(new SearchResult
+				{
+					Member = type,
+					Image = TypeTreeNode.GetIcon(type),
+					Name = language.TypeToString(type, includeNamespace: false),
+					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
+					Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
+				});
+			}
+
+			foreach (TypeDefinition nestedType in type.NestedTypes)
+			{
+				Search(nestedType, language, addResult);
+			}
+
+			base.Search(type, language, addResult);
+		}
+
+		protected override bool IsMatch(FieldDefinition field)
+		{
+			return IsMatch(field.Name);
+		}
+
+		protected override bool IsMatch(PropertyDefinition property)
+		{
+			return IsMatch(property.Name);
+		}
+
+		protected override bool IsMatch(EventDefinition ev)
+		{
+			return IsMatch(ev.Name);
+		}
+
+		protected override bool IsMatch(MethodDefinition m)
+		{
+			return IsMatch(m.Name);
+		}
+	}
 }
