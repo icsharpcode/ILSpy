@@ -531,6 +531,14 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 		}
+
+		public void SelectNodes(IEnumerable<SharpTreeNode> nodes)
+		{
+			if (nodes.Any() && nodes.All(n => !n.AncestorsAndSelf().Any(a => a.IsHidden))) {
+				treeView.FocusNode(nodes.First());
+				treeView.SetSelectedNodes(nodes);
+			}
+		}
 		
 		/// <summary>
 		/// Retrieves a node using the .ToString() representations of its ancestors.
@@ -557,7 +565,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Gets the .ToString() representation of the node's ancestors.
 		/// </summary>
-		public string[] GetPathForNode(SharpTreeNode node)
+		public static string[] GetPathForNode(SharpTreeNode node)
 		{
 			if (node == null)
 				return null;
