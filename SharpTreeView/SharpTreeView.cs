@@ -122,6 +122,27 @@ namespace ICSharpCode.TreeView
 		TreeFlattener flattener;
 		bool updatesLocked;
 
+		public IDisposable LockUpdates()
+		{
+			return new UpdateLock(this);
+		}
+
+		class UpdateLock : IDisposable
+		{
+			SharpTreeView instance;
+
+			public UpdateLock(SharpTreeView instance)
+			{
+				this.instance = instance;
+				this.instance.updatesLocked = true;
+			}
+
+			public void Dispose()
+			{
+				this.instance.updatesLocked = false;
+			}
+		}
+
 		void Reload()
 		{
 			if (flattener != null) {
