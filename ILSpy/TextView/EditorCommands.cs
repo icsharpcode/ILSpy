@@ -16,15 +16,10 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
 namespace ICSharpCode.ILSpy.TextView
 {
-	[ExportContextMenuEntryAttribute(Header = "Copy", Category = "Editor")]
-	internal sealed class CopyContextMenuEntry : IContextMenuEntry
+	[ExportContextMenuEntry(Header = "Copy", Category = "Editor")]
+	sealed class CopyContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
 		{
@@ -39,6 +34,25 @@ namespace ICSharpCode.ILSpy.TextView
 		public void Execute(TextViewContext context)
 		{
 			context.TextView.textEditor.Copy();
+		}
+	}
+
+	[ExportContextMenuEntry(Header = "Select All", Category = "Editor")]
+	sealed class SelectAllContextMenuEntry : IContextMenuEntry
+	{
+		public bool IsVisible(TextViewContext context)
+		{
+			return context.TextView != null;
+		}
+
+		public bool IsEnabled(TextViewContext context)
+		{
+			return context.TextView != null;
+		}
+
+		public void Execute(TextViewContext context)
+		{
+			context.TextView.textEditor.SelectAll();
 		}
 	}
 }
