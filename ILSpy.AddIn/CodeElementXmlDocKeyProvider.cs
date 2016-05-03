@@ -11,7 +11,7 @@ namespace ICSharpCode.ILSpy.AddIn
 	/// Used to support the "/navigateTo" command line option when opening ILSpy. Must match
 	/// the logic of ICSharpCode.ILSpy.XmlDoc.XmlDocKeyProvider, which does the same thing for
 	/// a Mono.Cecil.MemberReference. See "ID string format" in Appendix A of the C# language
-	/// specification for formatting requirements.
+	/// specification for formatting requirements, and Samples/ILSpyAddInSamples.cs for examples.
 	/// </remarks>
 	public static class CodeElementXmlDocKeyProvider
 	{
@@ -191,16 +191,44 @@ namespace ICSharpCode.ILSpy.AddIn
 						substringStart = i + 1;
 						b.Append('}');
 						break;
+
 					case '[':
-					case ']':
+						AppendParameterTypeSubstring(b, parameterTypeString, substringStart, i, genericTypeParameters, genericMethodParameters);
+						b.Append('[');
+
+						// Skip ahead to the closing bracket, counting commas to determine array rank.
+						int rank = 1;
+						do {
+							++i;
+							ch = parameterTypeString[i];
+							if (ch == ',') {
+								++rank;
+							}
+						}
+						while (ch != ']');
+						substringStart = i + 1;
+
+						// For multi-dimensional arrays, add "0:" default array bounds. Note that non-standard bounds are not possible via C# declaration.
+						if (rank > 1) {
+							for (int r = 0; r < rank; ++r) {
+								if (r != 0) {
+									b.Append(',');
+								}
+								b.Append("0:");
+							}
+						}
+
+						b.Append(']');
+						break;
+
 					case ',':
 						AppendParameterTypeSubstring(b, parameterTypeString, substringStart, i, genericTypeParameters, genericMethodParameters);
 						substringStart = i + 1;
-						// Skip space after comma if present.
-						if ((substringStart < parameterTypeString.Length) && (parameterTypeString[substringStart] == ' ')) {
+						// Skip space after comma if present. (e.g. System.Collections.Generic.KeyValuePair`2{System.String,System.String}.)
+						if (parameterTypeString[substringStart] == ' ') {
 							++substringStart;
 						}
-						b.Append(ch);
+						b.Append(',');
 						break;
 				}
 			}
@@ -214,7 +242,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 
 			// Note there is no need to append a '*' for pointers, as this is included in the full name of the type.
-			// Multi-dimensional and nested arrays are also captured in the full name of the type.
+			// Multi-dimensional and jagged arrays are handled above during string parsing.
 		}
 
 		private static void AppendParameterTypeSubstring(StringBuilder b, string parameterTypeString, int substringStart, int substringStop, string[] genericTypeParameters, string[] genericMethodParameters)

@@ -331,12 +331,12 @@ namespace ILSpy.AddIn.Tests
 		{
 		}
 
-		// NOT? M:ILSpy.AddIn.Tests.SomeGenericClass`2.ArrayMethod(`0[,],System.Int32[,])
+		// M:ILSpy.AddIn.Tests.SomeGenericClass`2.ArrayMethod(`0[0:,0:],System.Int32[0:,0:])
 		public void ArrayMethod(T1[,] x, int[,] y)
 		{
 		}
 
-		// NOT? M:ILSpy.AddIn.Tests.SomeGenericClass`2.ArrayMethod(System.Int32[,],System.Int32[,])
+		// M:ILSpy.AddIn.Tests.SomeGenericClass`2.ArrayMethod(System.Int32[0:,0:],System.Int32[0:,0:])
 		public void ArrayMethod(int[,] x, int[,] y)
 		{
 		}
@@ -349,26 +349,20 @@ namespace ILSpy.AddIn.Tests
 		// M:ILSpy.AddIn.Tests.SomeGenericClass`2.GenericClassGenericMethod``2(`0,``0,ILSpy.AddIn.Tests.SomeClass)
 		public T3 GenericClassGenericMethod<T3, T4>(T1 x, T3 y, SomeClass z)
 		{
-			mField1 = x;
-			string foo = y.ToString() + z.ToString();
 			return y;
 		}
 
 		// M:ILSpy.AddIn.Tests.SomeGenericClass`2.GenericClassGenericMethod``2(`0,``0,ILSpy.AddIn.Tests.SomeClass[]@)
 		public T3 GenericClassGenericMethod<T3, T4>(T1 x, T3 y, out SomeClass[] z)
 		{
-			mField1 = x;
 			z = null;
-			string foo = y.ToString() + z.ToString();
 			return y;
 		}
 
-		// M:ILSpy.AddIn.Tests.SomeGenericClass`2.GenericClassGenericMethod``2(System.Int32[],ILSpy.AddIn.Tests.SomeGenericClass{``0,``1})
-		public void GenericClassGenericMethod<T3, T4>(int[] x, SomeGenericClass<T3, T4> y)
+		// M:ILSpy.AddIn.Tests.SomeGenericClass`2.GenericClassGenericMethod``2(System.Int32[],ILSpy.AddIn.Tests.SomeGenericClass{``0[],``1[0:,0:,0:]}[0:,0:,0:])
+		public void GenericClassGenericMethod<T3, T4>(int[] x, SomeGenericClass<T3[], T4[,,]>[,,] y)
 		{
-			string foo = x.ToString() + y.ToString();
 		}
-
 
 		// M:ILSpy.AddIn.Tests.SomeGenericClass`2.op_Addition(ILSpy.AddIn.Tests.SomeGenericClass{`0,`1},ILSpy.AddIn.Tests.SomeGenericClass{`0,`1})
 		public static SomeGenericClass<T1, T2> operator +(SomeGenericClass<T1, T2> a, SomeGenericClass<T1, T2> b)
