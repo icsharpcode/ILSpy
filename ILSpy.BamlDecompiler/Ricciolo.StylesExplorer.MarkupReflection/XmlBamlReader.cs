@@ -488,6 +488,9 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				case BamlRecordType.PresentationOptionsAttribute:
 					this.ReadPresentationOptionsAttribute();
 					break;
+				case BamlRecordType.TypeSerializerInfo:
+					this.ReadTypeInfo();
+					break;
 				default:
 					throw new NotImplementedException("UnsupportedNode: " + currentType);
 			}
@@ -526,6 +529,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				case BamlRecordType.TypeInfo:
 				case BamlRecordType.AttributeInfo:
 				case BamlRecordType.StringInfo:
+				case BamlRecordType.TypeSerializerInfo:
 					bytesToSkip = reader.ReadCompressedInt32();
 					break;
 			}
