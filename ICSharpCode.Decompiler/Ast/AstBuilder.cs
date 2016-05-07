@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.Ast
 								Type = new SimpleType("AssemblyVersion")
 									.WithAnnotation(new TypeReference(
 										"System.Reflection", "AssemblyVersionAttribute",
-										moduleDefinition, moduleDefinition.TypeSystem.CoreLibrary)),
+										moduleDefinition, moduleDefinition.TypeSystem.Corlib)),
 								Arguments = {
 									new PrimitiveExpression(moduleDefinition.Assembly.Name.Version.ToString())
 								}
@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.Ast
 									Type = new SimpleType("TypeForwardedTo")
 										.WithAnnotation(new TypeReference(
 											"System.Runtime.CompilerServices", "TypeForwardedToAttribute",
-											module, module.TypeSystem.CoreLibrary)),
+											module, module.TypeSystem.Corlib)),
 									Arguments = { forwardedType }
 								}
 							}
@@ -1264,7 +1264,7 @@ namespace ICSharpCode.Decompiler.Ast
 				Ast.Attribute methodImpl = CreateNonCustomAttribute(typeof(MethodImplAttribute));
 				TypeReference methodImplOptions = new TypeReference(
 					"System.Runtime.CompilerServices", "MethodImplOptions",
-					methodDefinition.Module, methodDefinition.Module.TypeSystem.CoreLibrary);
+					methodDefinition.Module, methodDefinition.Module.TypeSystem.Corlib);
 				methodImpl.Arguments.Add(MakePrimitive((long)implAttributes, methodImplOptions));
 				attributedNode.Attributes.Add(new AttributeSection(methodImpl));
 			}
@@ -1311,7 +1311,7 @@ namespace ICSharpCode.Decompiler.Ast
 		{
 			MarshalInfo marshalInfo = marshalInfoProvider.MarshalInfo;
 			Ast.Attribute attr = CreateNonCustomAttribute(typeof(MarshalAsAttribute), module);
-			var unmanagedType = new TypeReference("System.Runtime.InteropServices", "UnmanagedType", module, module.TypeSystem.CoreLibrary);
+			var unmanagedType = new TypeReference("System.Runtime.InteropServices", "UnmanagedType", module, module.TypeSystem.Corlib);
 			attr.Arguments.Add(MakePrimitive((int)marshalInfo.NativeType, unmanagedType));
 			
 			FixedArrayMarshalInfo fami = marshalInfo as FixedArrayMarshalInfo;
@@ -1322,7 +1322,7 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 			SafeArrayMarshalInfo sami = marshalInfo as SafeArrayMarshalInfo;
 			if (sami != null && sami.ElementType != VariantType.None) {
-				var varEnum = new TypeReference("System.Runtime.InteropServices", "VarEnum", module, module.TypeSystem.CoreLibrary);
+				var varEnum = new TypeReference("System.Runtime.InteropServices", "VarEnum", module, module.TypeSystem.Corlib);
 				attr.AddNamedArgument("SafeArraySubType", MakePrimitive((int)sami.ElementType, varEnum));
 			}
 			ArrayMarshalInfo ami = marshalInfo as ArrayMarshalInfo;
@@ -1359,7 +1359,7 @@ namespace ICSharpCode.Decompiler.Ast
 			Ast.Attribute attr = new Ast.Attribute();
 			attr.Type = new SimpleType(attributeType.Name.Substring(0, attributeType.Name.Length - "Attribute".Length));
 			if (module != null) {
-				attr.Type.AddAnnotation(new TypeReference(attributeType.Namespace, attributeType.Name, module, module.TypeSystem.CoreLibrary));
+				attr.Type.AddAnnotation(new TypeReference(attributeType.Namespace, attributeType.Name, module, module.TypeSystem.Corlib));
 			}
 			return attr;
 		}
@@ -1461,7 +1461,7 @@ namespace ICSharpCode.Decompiler.Ast
 					}
 					
 					var module = secAttribute.AttributeType.Module;
-					var securityActionType = new TypeReference("System.Security.Permissions", "SecurityAction", module, module.TypeSystem.CoreLibrary);
+					var securityActionType = new TypeReference("System.Security.Permissions", "SecurityAction", module, module.TypeSystem.Corlib);
 					attribute.Arguments.Add(MakePrimitive((int)secDecl.Action, securityActionType));
 					
 					if (secAttribute.HasProperties) {

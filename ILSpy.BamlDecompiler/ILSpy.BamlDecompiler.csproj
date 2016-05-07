@@ -44,6 +44,10 @@
     <DefineConstants>TRACE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Mono.Cecil, Version=0.9.6.0, Culture=neutral, PublicKeyToken=0738eb9f132ed756, processorArchitecture=MSIL">
+      <HintPath>..\packages\Mono.Cecil.0.9.6.1\lib\net40\Mono.Cecil.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="PresentationCore">
       <RequiredTargetFramework>3.0</RequiredTargetFramework>
     </Reference>
@@ -115,11 +119,6 @@
       <Name>ILSpy</Name>
       <Private>False</Private>
     </ProjectReference>
-    <ProjectReference Include="..\cecil\Mono.Cecil.csproj">
-      <Project>{d68133bd-1e63-496e-9ede-4fbdbf77b486}</Project>
-      <Name>Mono.Cecil</Name>
-      <Private>False</Private>
-    </ProjectReference>
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj">
       <Project>{dde2a481-8271-4eac-a330-8fa6a38d13d1}</Project>
       <Name>ICSharpCode.TreeView</Name>
@@ -127,6 +126,7 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="packages.config" />
     <None Include="Ricciolo.StylesExplorer.MarkupReflection\BAML format.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
