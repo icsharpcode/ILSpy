@@ -9,6 +9,7 @@
 		<ProjectDir Condition=" '$(ProjectDir)' == '' ">$(MSBuildProjectDirectory)\..</ProjectDir>
 		
 		<ILSpyBin>$(ProjectDir)\ILSpy\bin\Release</ILSpyBin>
+		<VsixBin>$(ProjectDir)\ILSpy.AddIn\bin\Release</VsixBin>
 		<MSBuildCommunityTasksPath>$(ProjectDir)\BuildTools\MSBuildCommunityTasks</MSBuildCommunityTasksPath>
 		<ArtefactPrefix>ILSpy_</ArtefactPrefix>
 		
@@ -92,6 +93,8 @@
 		     ZipLevel="9"
 		     WorkingDirectory="$(ILSpyBin)"
 		     ZipFileName="$(ArtefactsOutputDir)\$(ArtefactPrefix)$(BuildNumber)_Binaries.zip"/>
+		<Copy SourceFiles="$(VsixBin)\ILSpy.AddIn.vsix"
+			  DestinationFiles="$(ArtefactsOutputDir)\ILSpy.AddIn_$(BuildNumber).vsix"/>
 	</Target>
 	
 	<Target Name="zipsource">
