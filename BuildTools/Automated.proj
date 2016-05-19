@@ -94,7 +94,7 @@
 		     WorkingDirectory="$(ILSpyBin)"
 		     ZipFileName="$(ArtefactsOutputDir)\$(ArtefactPrefix)$(BuildNumber)_Binaries.zip"/>
 		<Copy SourceFiles="$(VsixBin)\ILSpy.AddIn.vsix"
-			  DestinationFiles="$(ArtefactsOutputDir)\ILSpy.AddIn_$(BuildNumber).vsix"/>
+			  DestinationFiles="$(ArtefactsOutputDir)\$(ArtefactPrefix)$(BuildNumber)_Addin.vsix"/>
 	</Target>
 	
 	<Target Name="zipsource">
