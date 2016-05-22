@@ -257,7 +257,15 @@ namespace ICSharpCode.ILSpy
 		
 		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args)
 		{
-			if (args.NavigateTo != null) {
+			// if a SaveDirectory is given, do not start a second concurrent decompilation
+			// by executing JumpoToReference (leads to https://github.com/icsharpcode/ILSpy/issues/710)
+			if (!string.IsNullOrEmpty(args.SaveDirectory)) {
+				foreach (var x in commandLineLoadedAssemblies) {
+					x.ContinueWhenLoaded((Task<ModuleDefinition> moduleTask) => {
+						OnExportAssembly(moduleTask, args.SaveDirectory);
+					}, TaskScheduler.FromCurrentSynchronizationContext());
+				}
+			} else if (args.NavigateTo != null) {
 				bool found = false;
 				if (args.NavigateTo.StartsWith("N:", StringComparison.Ordinal)) {
 					string namespaceName = args.NavigateTo.Substring(2);
@@ -299,13 +307,6 @@ namespace ICSharpCode.ILSpy
 			{
 				SearchPane.Instance.SearchTerm = args.Search;
 				SearchPane.Instance.Show();
-			}
-			if (!string.IsNullOrEmpty(args.SaveDirectory)) {
-				foreach (var x in commandLineLoadedAssemblies) {
-					x.ContinueWhenLoaded( (Task<ModuleDefinition> moduleTask) => {
-						OnExportAssembly(moduleTask, args.SaveDirectory);
-					}, TaskScheduler.FromCurrentSynchronizationContext());
-				}
 			}
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
 		}
