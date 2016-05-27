@@ -17,12 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using System.Resources;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -30,12 +28,10 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.Decompiler.Ast.Transforms;
 using ICSharpCode.ILSpy.XmlDoc;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using CSharp = ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.VB;
 using ICSharpCode.NRefactory.VB.Visitors;
 using Mono.Cecil;
+using CSharp = ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.ILSpy.VB
 {
@@ -318,85 +314,6 @@ namespace ICSharpCode.ILSpy.VB
 				});
 			AstMethodBodyBuilder.PrintNumberOfUnhandledOpcodes();
 			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(module, options, directories));
-		}
-		#endregion
-
-		#region WriteResourceFilesInProject
-		IEnumerable<Tuple<string, string>> WriteResourceFilesInProject(LoadedAssembly assembly, DecompilationOptions options, HashSet<string> directories)
-		{
-			foreach (EmbeddedResource r in assembly.ModuleDefinition.Resources.OfType<EmbeddedResource>()) {
-				Stream stream = r.GetResourceStream();
-				stream.Position = 0;
-
-				IEnumerable<DictionaryEntry> entries;
-				if (r.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase) && GetEntries(stream, out entries) && entries.All(e => e.Value is Stream)) {
-					foreach (var pair in entries) {
-						string fileName = Path.Combine(((string)pair.Key).Split('/').Select(p => TextView.DecompilerTextView.CleanUpName(p)).ToArray());
-						string dirName = Path.GetDirectoryName(fileName);
-						if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName))
-						{
-							Directory.CreateDirectory(Path.Combine(options.SaveAsProjectDirectory, dirName));
-						}
-						Stream entryStream = (Stream)pair.Value;
-						bool handled = false;
-						foreach (var handler in App.CompositionContainer.GetExportedValues<IResourceFileHandler>())
-						{
-							if (handler.CanHandle(fileName, options)) {
-								handled = true;
-								entryStream.Position = 0;
-								yield return Tuple.Create(handler.EntryType, handler.WriteResourceToFile(assembly, fileName, entryStream, options));
-								break;
-							}
-						}
-						if (!handled) {
-							using (FileStream fs = new FileStream(Path.Combine(options.SaveAsProjectDirectory, fileName), FileMode.Create, FileAccess.Write))
-							{
-								entryStream.Position = 0;
-								entryStream.CopyTo(fs);
-							}
-							yield return Tuple.Create("EmbeddedResource", fileName);
-						}
-					}
-				} else {
-					string fileName = GetFileNameForResource(r.Name, directories);
-					using (FileStream fs = new FileStream(Path.Combine(options.SaveAsProjectDirectory, fileName), FileMode.Create, FileAccess.Write))
-					{
-						stream.CopyTo(fs);
-					}
-					yield return Tuple.Create("EmbeddedResource", fileName);
-				}
-			}
-		}
-
-		string GetFileNameForResource(string fullName, HashSet<string> directories)
-		{
-			string[] splitName = fullName.Split('.');
-			string fileName = TextView.DecompilerTextView.CleanUpName(fullName);
-			for (int i = splitName.Length - 1; i > 0; i--)
-			{
-				string ns = string.Join(".", splitName, 0, i);
-				if (directories.Contains(ns))
-				{
-					string name = string.Join(".", splitName, i, splitName.Length - i);
-					fileName = Path.Combine(ns, TextView.DecompilerTextView.CleanUpName(name));
-					break;
-				}
-			}
-			return fileName;
-		}
-
-		bool GetEntries(Stream stream, out IEnumerable<DictionaryEntry> entries)
-		{
-			try
-			{
-				entries = new ResourceSet(stream).Cast<DictionaryEntry>();
-				return true;
-			}
-			catch (ArgumentException)
-			{
-				entries = null;
-				return false;
-			}
 		}
 		#endregion
 
