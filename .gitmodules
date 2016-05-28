@@ -1,6 +1,6 @@
 [submodule "AvalonEdit"]
 	path = AvalonEdit
-	url = https://github.com/icsharpcode/AvalonEdit.git
+	url = https://github.com/glenrgordon/AvalonEdit.git
 [submodule "NRefactory"]
 	path = NRefactory
 	url = https://github.com/icsharpcode/NRefactory.git
