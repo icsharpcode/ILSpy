@@ -194,7 +194,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				ame.Body = body;
 				replacement = ame;
 			}
-			var expectedType = objectCreateExpression.Annotation<TypeInformation>().ExpectedType.Resolve();
+			var expectedType = objectCreateExpression.Annotation<TypeInformation>()?.ExpectedType?.Resolve();
 			if (expectedType != null && !expectedType.IsDelegate()) {
 				var simplifiedDelegateCreation = (ObjectCreateExpression)objectCreateExpression.Clone();
 				simplifiedDelegateCreation.Arguments.Clear();
