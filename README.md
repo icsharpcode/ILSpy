@@ -13,6 +13,8 @@ Visual Studio extension via [VS Gallery](https://visualstudiogallery.msdn.micros
 
 Decompiler NuGet package via [NuGet](https://www.nuget.org/packages/ICSharpCode.Decompiler/)
 
+Get a recent nightly build from [here](http://build.sharpdevelop.net/BuildArtefacts/#ILSpyMaster)
+
 License
 -------
 
