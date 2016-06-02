@@ -1521,7 +1521,8 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 			var type = argument.Type.Resolve();
 			if (type != null && type.IsEnum) {
-				return MakePrimitive(Convert.ToInt64(argument.Value), type);
+				long val = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, argument.Value, false);
+				return MakePrimitive(val, type);
 			} else if (argument.Value is TypeReference) {
 				return CreateTypeOfExpression((TypeReference)argument.Value);
 			} else {

@@ -39,6 +39,11 @@ namespace aa
 			{
 			}
 		}
+		[CustomAttributes.MyAttribute(CustomAttributes.ULongEnum.MaxUInt64)]
+		public enum ULongEnum : ulong
+		{
+			MaxUInt64 = 18446744073709551615uL
+		}
 		[CustomAttributes.MyAttribute(CustomAttributes.EnumWithFlag.Item1 | CustomAttributes.EnumWithFlag.Item2)]
 		private static int field;
 		[CustomAttributes.MyAttribute(CustomAttributes.EnumWithFlag.All)]
