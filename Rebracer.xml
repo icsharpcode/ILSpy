@@ -10,13 +10,13 @@
     <ToolsOptionsCategory name="Environment">
       <ToolsOptionsSubCategory name="TaskList">
         <PropertyValue name="CommentTokens" ArrayType="VT_VARIANT" ArrayElementCount="4">
-          <PropertyValue name="0">TODO:2</PropertyValue>
-          <PropertyValue name="1">HACK:2</PropertyValue>
+          <PropertyValue name="0">HACK:2</PropertyValue>
+          <PropertyValue name="1">TODO:2</PropertyValue>
           <PropertyValue name="2">UNDONE:2</PropertyValue>
           <PropertyValue name="3">UnresolvedMergeConflict:3</PropertyValue>
         </PropertyValue>
-        <PropertyValue name="ConfirmTaskDeletion">true</PropertyValue>
-        <PropertyValue name="DontShowFilePaths">true</PropertyValue>
+        <PropertyValue name="ConfirmTaskDeletion">false</PropertyValue>
+        <PropertyValue name="DontShowFilePaths">false</PropertyValue>
         <PropertyValue name="WarnOnAddingHiddenItem">false</PropertyValue>
       </ToolsOptionsSubCategory>
     </ToolsOptionsCategory>
