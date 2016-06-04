@@ -289,20 +289,7 @@ namespace ICSharpCode.ILSpy
 				    || s.LastSuccessfulUpdateCheck < DateTime.UtcNow.AddDays(-7)
 				    || s.LastSuccessfulUpdateCheck > DateTime.UtcNow)
 				{
-					GetLatestVersionAsync().ContinueWith(
-						delegate (Task<AvailableVersionInfo> task) {
-							try {
-								s.LastSuccessfulUpdateCheck = DateTime.UtcNow;
-								AvailableVersionInfo v = task.Result;
-								if (v.Version > currentVersion)
-									tcs.SetResult(v.DownloadUrl);
-								else
-									tcs.SetResult(null);
-							} catch (AggregateException) {
-								// ignore errors getting the version info
-								tcs.SetResult(null);
-							}
-						});
+					CheckForUpdateInternal(tcs, s);
 				} else {
 					tcs.SetResult(null);
 				}
@@ -310,6 +297,32 @@ namespace ICSharpCode.ILSpy
 				tcs.SetResult(null);
 			}
 			return tcs.Task;
+		}
+
+		public static Task<string> CheckForUpdatesAsync(ILSpySettings spySettings)
+		{
+			var tcs = new TaskCompletionSource<string>();
+			UpdateSettings s = new UpdateSettings(spySettings);
+			CheckForUpdateInternal(tcs, s);
+			return tcs.Task;
+		}
+
+		static void CheckForUpdateInternal(TaskCompletionSource<string> tcs, UpdateSettings s)
+		{
+			GetLatestVersionAsync().ContinueWith(
+				delegate (Task<AvailableVersionInfo> task) {
+					try {
+						s.LastSuccessfulUpdateCheck = DateTime.UtcNow;
+						AvailableVersionInfo v = task.Result;
+						if (v.Version > currentVersion)
+							tcs.SetResult(v.DownloadUrl);
+						else
+							tcs.SetResult(null);
+					} catch (AggregateException) {
+						// ignore errors getting the version info
+						tcs.SetResult(null);
+					}
+				});
 		}
 	}
 	
