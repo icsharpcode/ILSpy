@@ -399,27 +399,44 @@ namespace ICSharpCode.ILSpy
 		#region Update Check
 		string updateAvailableDownloadUrl;
 		
-		void ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings)
+		public void ShowMessageIfUpdatesAvailableAsync(ILSpySettings spySettings, bool forceCheck = false)
 		{
-			AboutPage.CheckForUpdatesIfEnabledAsync(spySettings).ContinueWith(
-				delegate (Task<string> task) {
-					if (task.Result != null) {
-						updateAvailableDownloadUrl = task.Result;
-						updateAvailablePanel.Visibility = Visibility.Visible;
-					}
-				},
-				TaskScheduler.FromCurrentSynchronizationContext()
-			);
+			Task<string> result;
+			if (forceCheck) {
+				result = AboutPage.CheckForUpdatesAsync(spySettings);
+			} else {
+				result = AboutPage.CheckForUpdatesIfEnabledAsync(spySettings);
+			}
+			result.ContinueWith(task => AdjustUpdateUIAfterCheck(task, forceCheck), TaskScheduler.FromCurrentSynchronizationContext());
 		}
 		
-		void updateAvailablePanelCloseButtonClick(object sender, RoutedEventArgs e)
+		void updatePanelCloseButtonClick(object sender, RoutedEventArgs e)
 		{
-			updateAvailablePanel.Visibility = Visibility.Collapsed;
+			updatePanel.Visibility = Visibility.Collapsed;
 		}
 		
-		void downloadUpdateButtonClick(object sender, RoutedEventArgs e)
+		void downloadOrCheckUpdateButtonClick(object sender, RoutedEventArgs e)
 		{
-			Process.Start(updateAvailableDownloadUrl);
+			if (updateAvailableDownloadUrl != null) {
+				Process.Start(updateAvailableDownloadUrl);
+			} else {
+				updatePanel.Visibility = Visibility.Collapsed;
+				AboutPage.CheckForUpdatesAsync(spySettings ?? ILSpySettings.Load())
+					.ContinueWith(task => AdjustUpdateUIAfterCheck(task, true), TaskScheduler.FromCurrentSynchronizationContext());
+			}
+		}
+
+		void AdjustUpdateUIAfterCheck(Task<string> task, bool displayMessage)
+		{
+			updateAvailableDownloadUrl = task.Result;
+			updatePanel.Visibility = displayMessage ? Visibility.Visible : Visibility.Collapsed;
+			if (task.Result != null) {
+				updatePanelMessage.Text = "A new ILSpy version is available.";
+				downloadOrCheckUpdateButton.Content = "Download";
+			} else {
+				updatePanelMessage.Text = "No update for ILSpy found.";
+				downloadOrCheckUpdateButton.Content = "Check again";
+			}
 		}
 		#endregion
 		
