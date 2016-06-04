@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.Ast
 			// remove field prefix:
 			if (name.Length > 2 && name.StartsWith("m_", StringComparison.Ordinal))
 				name = name.Substring(2);
-			else if (name.Length > 1 && name[0] == '_')
+			else if (name.Length > 1 && name[0] == '_' && (char.IsLetter(name[1]) || name[1] == '_'))
 				name = name.Substring(1);
 			
 			if (name.Length == 0)
