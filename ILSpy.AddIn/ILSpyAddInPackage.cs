@@ -98,19 +98,51 @@ namespace ICSharpCode.ILSpy.AddIn
 		private void OpenReferenceInILSpyCallback(object sender, EventArgs e)
 		{
 			var explorer = ((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ToolWindows.SolutionExplorer;
-			var items =(object[]) explorer.SelectedItems;
+			var items = (object[])explorer.SelectedItems;
 
 			foreach (EnvDTE.UIHierarchyItem item in items) {
-				dynamic reference = item.Object;
+				var reference = GetReference(item.Object);
 				string path = null;
-				if (reference.PublicKeyToken != "") {
+				if (!string.IsNullOrEmpty(reference.PublicKeyToken)) {
 					var token = Utils.HexStringToBytes(reference.PublicKeyToken);
-					path = GacInterop.FindAssemblyInNetGac(new AssemblyNameReference(reference.Identity, new Version(reference.Version)) { PublicKeyToken = token });
+					path = GacInterop.FindAssemblyInNetGac(new AssemblyNameReference(reference.Name, reference.Version) { PublicKeyToken = token });
 				}
 				if (path == null)
 					path = reference.Path;
 				OpenAssemblyInILSpy(path);
 			}
+		}
+
+		class ReferenceInfo
+		{
+			public string Name { get; set; }
+			public string PublicKeyToken { get; set; }
+			public string Path { get; set; }
+			public Version Version { get; set; }
+		}
+
+		private ReferenceInfo GetReference(object o)
+		{
+			dynamic obj = o;
+			string referenceType = o.GetType().FullName;
+
+			// C++
+			if (referenceType.StartsWith("Microsoft.VisualStudio.PlatformUI", StringComparison.Ordinal)) {
+				return new ReferenceInfo { Path = obj.Name };
+			}
+
+			// F#
+			if (referenceType.StartsWith("Microsoft.VisualStudio.FSharp", StringComparison.Ordinal)) {
+				obj = obj.Object;
+			}
+
+			// C# and VB
+			return new ReferenceInfo {
+				Name = obj.Identity,
+				PublicKeyToken = obj.PublicKeyToken,
+				Path = obj.Path,
+				Version = new Version(obj.Version)
+			};
 		}
 
 		private void OpenProjectOutputInILSpyCallback(object sender, EventArgs e)

@@ -106,6 +106,8 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		public static byte[] HexStringToBytes(string hex)
 		{
+			if (hex == null)
+				throw new ArgumentNullException(nameof(hex));
 			var result = new byte[hex.Length / 2];
 			for (int i = 0; i < hex.Length / 2; i++) {
 				result[i] = Convert.ToByte(hex.Substring(i * 2, 2), 16);
