@@ -421,8 +421,9 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				return null;
 
 			// Make sure that the enumerator variable is not used inside the body
+			var enumeratorId = Identifier.Create(enumeratorVar.Name);
 			foreach (Statement stmt in m.Get<Statement>("statement")) {
-				if (UsesEnumerator(stmt, enumeratorVar.Name))
+				if (stmt.Descendants.OfType<Identifier>().Any(id => enumeratorId.IsMatch(id)))
 					return null;
 			}
 			
@@ -1164,41 +1165,6 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			}
 			
 			return null;
-		}
-		#endregion
-
-		#region UsesEnumerator helper
-		class UsesEnumeratorVisitor : DepthFirstAstVisitor<bool>
-		{
-			Identifier enumeratorIdentifier;
-			
-			public UsesEnumeratorVisitor(string identifier)
-			{
-				enumeratorIdentifier = Identifier.Create(identifier);
-			}
-
-			protected override bool VisitChildren(AstNode node)
-			{
-				AstNode next;
-				for (var child = node.FirstChild; child != null; child = next) {
-					// Store next to allow the loop to continue
-					// if the visitor removes/replaces child.
-					next = child.NextSibling;
-					if (child.AcceptVisitor(this))
-						return true;
-				}
-				return false;
-			}
-
-			public override bool VisitIdentifier(Identifier identifier)
-			{
-				return identifier.IsMatch(enumeratorIdentifier);
-			}
-		}
-
-		bool UsesEnumerator(Statement statement, string enumeratorVarName)
-		{
-			return statement.AcceptVisitor(new UsesEnumeratorVisitor(enumeratorVarName));
 		}
 		#endregion
 	}
