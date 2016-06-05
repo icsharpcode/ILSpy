@@ -201,7 +201,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: type);
+			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: type.Module);
 			codeDomBuilder.AddType(type);
 			RunTransformsAndGenerateCode(codeDomBuilder, output, options);
 		}
