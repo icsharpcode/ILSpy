@@ -17,16 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows;
 
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(Menu = "_Help", Header = "_Check for Updates", MenuOrder = 5000)]
-	sealed class CheckForUpdates : SimpleCommand
+	sealed class CheckForUpdatesCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{

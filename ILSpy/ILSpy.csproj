@@ -101,7 +101,7 @@
     <Compile Include="AssemblyListManager.cs" />
     <Compile Include="AvalonEdit\ITextMarker.cs" />
     <Compile Include="AvalonEdit\TextMarkerService.cs" />
-    <Compile Include="CheckForUpdates.cs" />
+    <Compile Include="Commands\CheckForUpdatesCommand.cs" />
     <Compile Include="Commands\BrowseBackCommand.cs" />
     <Compile Include="Commands\BrowseForwardCommand.cs" />
     <Compile Include="CommandLineArguments.cs" />
