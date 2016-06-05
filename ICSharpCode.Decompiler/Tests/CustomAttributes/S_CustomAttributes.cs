@@ -39,7 +39,7 @@ namespace aa
 			{
 			}
 		}
-		[CustomAttributes.MyAttribute(CustomAttributes.ULongEnum.MaxUInt64)]
+		[My(ULongEnum.MaxUInt64)]
 		public enum ULongEnum : ulong
 		{
 			MaxUInt64 = 18446744073709551615uL
