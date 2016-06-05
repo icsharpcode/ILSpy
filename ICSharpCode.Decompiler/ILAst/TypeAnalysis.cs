@@ -478,7 +478,7 @@ namespace ICSharpCode.Decompiler.ILAst
 					if (forceInferChildren) {
 						InferTypeForExpression(expr.Arguments[0], typeSystem.TypedReference);
 					}
-					return new TypeReference("System", "RuntimeTypeHandle", module, module.TypeSystem.Corlib, true);
+					return new TypeReference("System", "RuntimeTypeHandle", module, module.TypeSystem.CoreLibrary, true);
 				case ILCode.Refanyval:
 					if (forceInferChildren) {
 						InferTypeForExpression(expr.Arguments[0], typeSystem.TypedReference);
@@ -607,16 +607,16 @@ namespace ICSharpCode.Decompiler.ILAst
 				case ILCode.Ldc_R8:
 					return typeSystem.Double;
 				case ILCode.Ldc_Decimal:
-					return new TypeReference("System", "Decimal", module, module.TypeSystem.Corlib, true);
+					return new TypeReference("System", "Decimal", module, module.TypeSystem.CoreLibrary, true);
 				case ILCode.Ldtoken:
 					if (expr.Operand is TypeReference)
-						return new TypeReference("System", "RuntimeTypeHandle", module, module.TypeSystem.Corlib, true);
+						return new TypeReference("System", "RuntimeTypeHandle", module, module.TypeSystem.CoreLibrary, true);
 					else if (expr.Operand is FieldReference)
-						return new TypeReference("System", "RuntimeFieldHandle", module, module.TypeSystem.Corlib, true);
+						return new TypeReference("System", "RuntimeFieldHandle", module, module.TypeSystem.CoreLibrary, true);
 					else
-						return new TypeReference("System", "RuntimeMethodHandle", module, module.TypeSystem.Corlib, true);
+						return new TypeReference("System", "RuntimeMethodHandle", module, module.TypeSystem.CoreLibrary, true);
 				case ILCode.Arglist:
-					return new TypeReference("System", "RuntimeArgumentHandle", module, module.TypeSystem.Corlib, true);
+					return new TypeReference("System", "RuntimeArgumentHandle", module, module.TypeSystem.CoreLibrary, true);
 					#endregion
 					#region Array instructions
 				case ILCode.Newarr:
@@ -996,7 +996,7 @@ namespace ICSharpCode.Decompiler.ILAst
 		GenericInstanceType CreateNullableType(TypeReference type)
 		{
 			if (type == null) return null;
-			var t = new GenericInstanceType(new TypeReference("System", "Nullable`1", module, module.TypeSystem.Corlib, true));
+			var t = new GenericInstanceType(new TypeReference("System", "Nullable`1", module, module.TypeSystem.CoreLibrary, true));
 			t.GenericArguments.Add(type);
 			return t;
 		}
@@ -1266,6 +1266,9 @@ namespace ICSharpCode.Decompiler.ILAst
 					return TypeCode.Double;
 				case MetadataType.String:
 					return TypeCode.String;
+				case MetadataType.RequiredModifier:
+				case MetadataType.OptionalModifier:
+					return GetTypeCode(((IModifierType)type).ElementType);
 				default:
 					return TypeCode.Object;
 			}

@@ -9,6 +9,7 @@
 		<ProjectDir Condition=" '$(ProjectDir)' == '' ">$(MSBuildProjectDirectory)\..</ProjectDir>
 		
 		<ILSpyBin>$(ProjectDir)\ILSpy\bin\Release</ILSpyBin>
+		<VsixBin>$(ProjectDir)\ILSpy.AddIn\bin\Release</VsixBin>
 		<MSBuildCommunityTasksPath>$(ProjectDir)\BuildTools\MSBuildCommunityTasks</MSBuildCommunityTasksPath>
 		<ArtefactPrefix>ILSpy_</ArtefactPrefix>
 		
@@ -17,7 +18,7 @@
 			properties available for the projects inside the solution 
 			(but this works using the command line) -->
 		<!-- C) We need to use MSBuild 4.0, but the build server uses MSBuild 2.0 -->
-		<MSBuildExecutable>&quot;$(MSBuildBinPath)\..\v4.0.30319\msbuild.exe&quot;</MSBuildExecutable>
+		<MSBuildExecutable>&quot;$(MSBuildBinPath)\msbuild.exe&quot;</MSBuildExecutable>
 		<BuildProperties>/p:Configuration=Release &quot;/p:Platform=Any CPU&quot;</BuildProperties>
 		<BuildProperties>$(BuildProperties) &quot;/p:BranchName=$(BranchName)&quot;</BuildProperties>
 		<BuildProperties>$(BuildProperties) $(AdditionalBuildProperties)</BuildProperties>
@@ -92,6 +93,8 @@
 		     ZipLevel="9"
 		     WorkingDirectory="$(ILSpyBin)"
 		     ZipFileName="$(ArtefactsOutputDir)\$(ArtefactPrefix)$(BuildNumber)_Binaries.zip"/>
+		<Copy SourceFiles="$(VsixBin)\ILSpy.AddIn.vsix"
+			  DestinationFiles="$(ArtefactsOutputDir)\$(ArtefactPrefix)$(BuildNumber)_Addin.vsix"/>
 	</Target>
 	
 	<Target Name="zipsource">

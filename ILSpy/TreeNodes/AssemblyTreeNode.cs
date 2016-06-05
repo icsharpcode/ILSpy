@@ -318,7 +318,39 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntryAttribute(Header = "_Load Dependencies")]
+	[ExportContextMenuEntry(Header = "_Reload", Icon = "images/Refresh.png")]
+	sealed class ReloadAssembly : IContextMenuEntry
+	{
+		public bool IsVisible(TextViewContext context)
+		{
+			if (context.SelectedTreeNodes == null)
+				return false;
+			return context.SelectedTreeNodes.All(n => n is AssemblyTreeNode);
+		}
+
+		public bool IsEnabled(TextViewContext context)
+		{
+			return true;
+		}
+
+		public void Execute(TextViewContext context)
+		{
+			if (context.SelectedTreeNodes == null)
+				return;
+			var paths = new List<string[]>();
+			using (context.TreeView.LockUpdates()) {
+				foreach (var node in context.SelectedTreeNodes) {
+					paths.Add(MainWindow.GetPathForNode(node));
+					var la = ((AssemblyTreeNode)node).LoadedAssembly;
+					la.AssemblyList.ReloadAssembly(la.FileName);
+				}
+			}
+			MainWindow.Instance.SelectNodes(paths.Select(p => MainWindow.Instance.FindNodeByPath(p, true)).ToArray());
+			MainWindow.Instance.RefreshDecompiledView();
+		}
+	}
+
+	[ExportContextMenuEntry(Header = "_Load Dependencies")]
 	sealed class LoadDependencies : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
@@ -349,7 +381,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 	}
 
-	[ExportContextMenuEntryAttribute(Header = "_Add To Main List")]
+	[ExportContextMenuEntry(Header = "_Add To Main List")]
 	sealed class AddToMainList : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)

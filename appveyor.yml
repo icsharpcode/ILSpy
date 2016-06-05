@@ -9,3 +9,5 @@ build:
   project: ILSpy.sln
   parallel: true
   verbosity: minimal
+after_test:
+- python BuildTools\tidy.py

@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.Ast
 								Type = new SimpleType("AssemblyVersion")
 									.WithAnnotation(new TypeReference(
 										"System.Reflection", "AssemblyVersionAttribute",
-										moduleDefinition, moduleDefinition.TypeSystem.Corlib)),
+										moduleDefinition, moduleDefinition.TypeSystem.CoreLibrary)),
 								Arguments = {
 									new PrimitiveExpression(moduleDefinition.Assembly.Name.Version.ToString())
 								}
@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.Ast
 									Type = new SimpleType("TypeForwardedTo")
 										.WithAnnotation(new TypeReference(
 											"System.Runtime.CompilerServices", "TypeForwardedToAttribute",
-											module, module.TypeSystem.Corlib)),
+											module, module.TypeSystem.CoreLibrary)),
 									Arguments = { forwardedType }
 								}
 							}
@@ -331,6 +331,7 @@ namespace ICSharpCode.Decompiler.Ast
 						}
 					} else {
 						EnumMemberDeclaration enumMember = new EnumMemberDeclaration();
+						ConvertCustomAttributes(enumMember, field);
 						enumMember.AddAnnotation(field);
 						enumMember.Name = CleanName(field.Name);
 						long memberValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.Constant, false);
@@ -770,6 +771,7 @@ namespace ICSharpCode.Decompiler.Ast
 			astMethod.Name = CleanName(methodDef.Name);
 			astMethod.TypeParameters.AddRange(MakeTypeParameters(methodDef.GenericParameters));
 			astMethod.Parameters.AddRange(MakeParameters(methodDef));
+			bool createMethodBody = false;
 			// constraints for override and explicit interface implementation methods are inherited from the base method, so they cannot be specified directly
 			if (!methodDef.IsVirtual || (methodDef.IsNewSlot && !methodDef.IsPrivate)) astMethod.Constraints.AddRange(MakeConstraints(methodDef.GenericParameters));
 			if (!methodDef.DeclaringType.IsInterface) {
@@ -780,6 +782,13 @@ namespace ICSharpCode.Decompiler.Ast
 					if (methodDef.IsVirtual == methodDef.IsNewSlot)
 						SetNewModifier(astMethod);
 				}
+				createMethodBody = true;
+			} else if (methodDef.IsStatic) {
+				// decompile static method in interface
+				astMethod.Modifiers = ConvertModifiers(methodDef);
+				createMethodBody = true;
+			}
+			if (createMethodBody) {
 				astMethod.Body = CreateMethodBody(methodDef, astMethod.Parameters);
 				if (context.CurrentMethodIsAsync) {
 					astMethod.Modifiers |= Modifiers.Async;
@@ -1255,7 +1264,7 @@ namespace ICSharpCode.Decompiler.Ast
 				Ast.Attribute methodImpl = CreateNonCustomAttribute(typeof(MethodImplAttribute));
 				TypeReference methodImplOptions = new TypeReference(
 					"System.Runtime.CompilerServices", "MethodImplOptions",
-					methodDefinition.Module, methodDefinition.Module.TypeSystem.Corlib);
+					methodDefinition.Module, methodDefinition.Module.TypeSystem.CoreLibrary);
 				methodImpl.Arguments.Add(MakePrimitive((long)implAttributes, methodImplOptions));
 				attributedNode.Attributes.Add(new AttributeSection(methodImpl));
 			}
@@ -1302,7 +1311,7 @@ namespace ICSharpCode.Decompiler.Ast
 		{
 			MarshalInfo marshalInfo = marshalInfoProvider.MarshalInfo;
 			Ast.Attribute attr = CreateNonCustomAttribute(typeof(MarshalAsAttribute), module);
-			var unmanagedType = new TypeReference("System.Runtime.InteropServices", "UnmanagedType", module, module.TypeSystem.Corlib);
+			var unmanagedType = new TypeReference("System.Runtime.InteropServices", "UnmanagedType", module, module.TypeSystem.CoreLibrary);
 			attr.Arguments.Add(MakePrimitive((int)marshalInfo.NativeType, unmanagedType));
 			
 			FixedArrayMarshalInfo fami = marshalInfo as FixedArrayMarshalInfo;
@@ -1313,7 +1322,7 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 			SafeArrayMarshalInfo sami = marshalInfo as SafeArrayMarshalInfo;
 			if (sami != null && sami.ElementType != VariantType.None) {
-				var varEnum = new TypeReference("System.Runtime.InteropServices", "VarEnum", module, module.TypeSystem.Corlib);
+				var varEnum = new TypeReference("System.Runtime.InteropServices", "VarEnum", module, module.TypeSystem.CoreLibrary);
 				attr.AddNamedArgument("SafeArraySubType", MakePrimitive((int)sami.ElementType, varEnum));
 			}
 			ArrayMarshalInfo ami = marshalInfo as ArrayMarshalInfo;
@@ -1350,7 +1359,7 @@ namespace ICSharpCode.Decompiler.Ast
 			Ast.Attribute attr = new Ast.Attribute();
 			attr.Type = new SimpleType(attributeType.Name.Substring(0, attributeType.Name.Length - "Attribute".Length));
 			if (module != null) {
-				attr.Type.AddAnnotation(new TypeReference(attributeType.Namespace, attributeType.Name, module, module.TypeSystem.Corlib));
+				attr.Type.AddAnnotation(new TypeReference(attributeType.Namespace, attributeType.Name, module, module.TypeSystem.CoreLibrary));
 			}
 			return attr;
 		}
@@ -1452,7 +1461,7 @@ namespace ICSharpCode.Decompiler.Ast
 					}
 					
 					var module = secAttribute.AttributeType.Module;
-					var securityActionType = new TypeReference("System.Security.Permissions", "SecurityAction", module, module.TypeSystem.Corlib);
+					var securityActionType = new TypeReference("System.Security.Permissions", "SecurityAction", module, module.TypeSystem.CoreLibrary);
 					attribute.Arguments.Add(MakePrimitive((int)secDecl.Action, securityActionType));
 					
 					if (secAttribute.HasProperties) {
@@ -1512,7 +1521,8 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 			var type = argument.Type.Resolve();
 			if (type != null && type.IsEnum) {
-				return MakePrimitive(Convert.ToInt64(argument.Value), type);
+				long val = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, argument.Value, false);
+				return MakePrimitive(val, type);
 			} else if (argument.Value is TypeReference) {
 				return CreateTypeOfExpression((TypeReference)argument.Value);
 			} else {

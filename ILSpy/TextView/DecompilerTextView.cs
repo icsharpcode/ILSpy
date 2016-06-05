@@ -97,7 +97,8 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.TextView.MouseDown += TextViewMouseDown;
 			textEditor.SetBinding(Control.FontFamilyProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFont") });
 			textEditor.SetBinding(Control.FontSizeProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFontSize") });
-			
+			textEditor.SetBinding(TextEditor.WordWrapProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("EnableWordWrap") });
+
 			textMarkerService = new TextMarkerService(textEditor.TextArea.TextView);
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
@@ -234,6 +235,9 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			if (waitAdorner.Visibility != Visibility.Visible) {
 				waitAdorner.Visibility = Visibility.Visible;
+				// Work around a WPF bug by setting IsIndeterminate only while the progress bar is visible.
+				// https://github.com/icsharpcode/ILSpy/issues/593
+				progressBar.IsIndeterminate = true;
 				waitAdorner.BeginAnimation(OpacityProperty, new DoubleAnimation(0, 1, new Duration(TimeSpan.FromSeconds(0.5)), FillBehavior.Stop));
 				var taskBar = MainWindow.Instance.TaskbarItemInfo;
 				if (taskBar != null) {
@@ -261,6 +265,7 @@ namespace ICSharpCode.ILSpy.TextView
 					if (currentCancellationTokenSource == myCancellationTokenSource) {
 						currentCancellationTokenSource = null;
 						waitAdorner.Visibility = Visibility.Collapsed;
+						progressBar.IsIndeterminate = false;
 						var taskBar = MainWindow.Instance.TaskbarItemInfo;
 						if (taskBar != null) {
 							taskBar.ProgressState = System.Windows.Shell.TaskbarItemProgressState.None;

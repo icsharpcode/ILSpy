@@ -181,11 +181,11 @@ namespace ICSharpCode.ILSpy
 				manager.DeleteList(listView.SelectedItem.ToString());
 		}
 
-    private void listView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
-    {
-      if (e.ChangedButton == MouseButton.Left && listView.SelectedItem != null)
-        this.DialogResult = true;
-    }
+		private void listView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+		{
+			if (e.ChangedButton == MouseButton.Left && listView.SelectedItem != null)
+				this.DialogResult = true;
+		}
 
 	}
 }
