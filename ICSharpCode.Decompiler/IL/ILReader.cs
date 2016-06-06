@@ -186,7 +186,9 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var eh in body.ExceptionHandlers) {
 				ImmutableStack<ILVariable> ehStack = null;
 				if (eh.HandlerType == Cil.ExceptionHandlerType.Catch || eh.HandlerType == Cil.ExceptionHandlerType.Filter) {
-					var v = new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), eh.HandlerStart.Offset);
+					var v = new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), eh.HandlerStart.Offset) {
+						Name = "E_" + eh.HandlerStart.Offset
+					};
 					variableByExceptionHandler.Add(eh, v);
 					ehStack = ImmutableStack.Create(v);
 				} else {
