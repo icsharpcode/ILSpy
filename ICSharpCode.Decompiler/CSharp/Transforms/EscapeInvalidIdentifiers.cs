@@ -40,7 +40,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		string ReplaceInvalid(string s)
 		{
-			return string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : string.Format("_{0:X4}", (int)ch)));
+			string name = string.Concat(s.Select(ch => IsValid(ch) ? ch.ToString() : string.Format("_{0:X4}", (int)ch)));
+			if (name.Length >= 1 && !(char.IsLetter(name[0]) || name[0] == '_'))
+				name = "_" + name;
+			return name;
 		}
 		
 		public void Run(AstNode rootNode, TransformContext context)
