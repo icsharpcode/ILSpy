@@ -110,6 +110,8 @@ namespace ICSharpCode.ILSpy
 		public ExportContextMenuEntryAttribute()
 			: base(typeof(IContextMenuEntry))
 		{
+			// entries default to end of menu unless given specific order position
+			Order = double.MaxValue;
 		}
 		
 		public string Icon { get; set; }
