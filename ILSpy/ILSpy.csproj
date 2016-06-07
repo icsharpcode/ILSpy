@@ -410,5 +410,8 @@
   <ItemGroup>
     <Resource Include="Images\Sort.png" />
   </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\SearchMsdn.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>
