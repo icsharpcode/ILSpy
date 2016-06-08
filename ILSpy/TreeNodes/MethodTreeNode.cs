@@ -69,7 +69,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			b.Append(") : ");
 			b.Append(language.TypeToString(method.ReturnType, false, method.MethodReturnType));
 			b.Append(method.MetadataToken.ToSuffixString());
-			return HighlightSearchMatch(method.Name, b.ToString());
+			return HighlightSearchMatch(language.FormatMethodName(method), b.ToString());
 		}
 
 		public override object Icon
@@ -93,7 +93,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			if (method.IsSpecialName &&
 				(method.Name == ".ctor" || method.Name == ".cctor")) {
-				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(method.Attributes), false);
+				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(method.Attributes), method.IsStatic);
 			}
 
 			if (method.HasPInvokeInfo)
