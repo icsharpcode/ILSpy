@@ -766,10 +766,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				arrayType  = new ArrayType(compilation, inst.Type, inst.Indices.Count);
 				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}
-			TranslatedExpression expr = new IndexerExpression(arrayExpr, inst.Indices.Select(i => Translate(i).Expression))
+			TranslatedExpression expr = new IndexerExpression(arrayExpr, inst.Indices.Select(TranslateArrayIndex))
 				.WithILInstruction(inst).WithRR(new ResolveResult(arrayType.ElementType));
 			return new DirectionExpression(FieldDirection.Ref, expr)
 				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+		}
+		
+		Expression TranslateArrayIndex(ILInstruction i)
+		{
+			var stackType = i.ResultType == StackType.I4 ? KnownTypeCode.Int32 : KnownTypeCode.Int64;
+			return Translate(i).ConvertTo(compilation.FindType(stackType), this).Expression;
 		}
 		
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst)
