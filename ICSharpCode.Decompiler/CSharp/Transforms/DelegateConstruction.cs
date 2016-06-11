@@ -49,10 +49,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		internal sealed class CapturedVariableAnnotation
-		{
-		}
-		
 		List<string> currentlyUsedVariableNames = new List<string>();
 		
 		public DelegateConstruction(DecompilerContext context) : base(context)

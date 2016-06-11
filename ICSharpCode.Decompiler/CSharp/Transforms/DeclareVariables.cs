@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using ICSharpCode.Decompiler.ILAst;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Analysis;
 
@@ -42,17 +42,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public Statement InsertionPoint;
 		}
 		
-		readonly CancellationToken cancellationToken;
+		CancellationToken cancellationToken;
 		List<VariableToDeclare> variablesToDeclare = new List<VariableToDeclare>();
 		
-		public DeclareVariables(DecompilerContext context)
+		public void Run(AstNode rootNode, TransformContext context)
 		{
 			this.cancellationToken = context.CancellationToken;
-		}
-		
-		public void Run(AstNode node)
-		{
-			Run(node, null);
+			RunInternal(rootNode, null);
 			// Declare all the variables at the end, after all the logic has run.
 			// This is done so that definite assignment analysis can work on a single representation and doesn't have to be updated
 			// when we change the AST.
@@ -89,7 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			variablesToDeclare = null;
 		}
 		
-		void Run(AstNode node, DefiniteAssignmentAnalysis daa)
+		void RunInternal(AstNode node, DefiniteAssignmentAnalysis daa)
 		{
 			BlockStatement block = node as BlockStatement;
 			if (block != null) {
@@ -109,13 +105,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						VariableInitializer initializer = varDecl.Variables.Single();
 						string variableName = initializer.Name;
 						ILVariable v = initializer.Annotation<ILVariable>();
-						bool allowPassIntoLoops = initializer.Annotation<DelegateConstruction.CapturedVariableAnnotation>() == null;
+						bool allowPassIntoLoops = initializer.Annotation<CapturedVariableAnnotation>() == null;
 						DeclareVariableInBlock(daa, block, varDecl.Type, variableName, v, allowPassIntoLoops);
 					}
 				}
 			}
 			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
-				Run(child, daa);
+				RunInternal(child, daa);
 			}
 		}
 		
@@ -213,7 +209,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public static bool FindDeclarationPoint(DefiniteAssignmentAnalysis daa, VariableDeclarationStatement varDecl, BlockStatement block, out Statement declarationPoint)
 		{
 			string variableName = varDecl.Variables.Single().Name;
-			bool allowPassIntoLoops = varDecl.Variables.Single().Annotation<DelegateConstruction.CapturedVariableAnnotation>() == null;
+			bool allowPassIntoLoops = varDecl.Variables.Single().Annotation<CapturedVariableAnnotation>() == null;
 			return FindDeclarationPoint(daa, variableName, allowPassIntoLoops, block, out declarationPoint);
 		}
 		
@@ -319,7 +315,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		static bool HasNestedBlocks(AstNode node)
 		{
-			return node is CatchClause || node is SwitchSection;
+			return node is CatchClause || node is NRefactory.CSharp.SwitchSection;
 		}
 		
 		static bool UsesVariable(AstNode node, string variableName)

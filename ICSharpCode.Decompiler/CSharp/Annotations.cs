@@ -41,6 +41,11 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	public class LdTokenAnnotation {}
 	
+	/// <summary>
+	/// Used by <see cref="Transforms.DeclareVariables"/> and <see cref="Transforms.DelegateConstruction"/>.
+	/// </summary>
+	sealed class CapturedVariableAnnotation {}
+	
 	static class AnnotationExtensions
 	{
 		public static ExpressionWithILInstruction WithILInstruction(this Expression expression, ILInstruction instruction)
