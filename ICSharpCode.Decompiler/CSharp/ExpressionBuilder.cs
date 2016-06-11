@@ -325,13 +325,48 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
-			// TODO: ensure the arguments are signed
-			// or with _Un: ensure the arguments are unsigned; and that float comparisons are performed unordered
-			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
+			// Ensure the inputs have the correct sign:
+			KnownTypeCode inputType = KnownTypeCode.None;
+			switch (inst.OpType) {
+				case StackType.I8:
+					inputType = un ? KnownTypeCode.UInt64 : KnownTypeCode.Int64;
+					break;
+				case StackType.I:
+					inputType = un ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr;
+					break;
+				case StackType.I4:
+					inputType = un ? KnownTypeCode.UInt32 : KnownTypeCode.Int32;
+					break;
+				case StackType.F:
+					if (un) {
+						// for floats, _Un means "unordered":
+						// clt_un returns 1 if left < right or if either input is not-a-number
+						// The C# operators never return true for NaN, so we need to use a negation:
+						// clt_un => !(left >= right)
+						// cgt_un => !(left <= right)
+						if (op == BinaryOperatorType.LessThan)
+							op = BinaryOperatorType.GreaterThanOrEqual;
+						else if (op == BinaryOperatorType.GreaterThan)
+							op = BinaryOperatorType.LessThanOrEqual;
+						else
+							throw new ArgumentException("op");
+					}
+					break;
+			}
+			if (inputType != KnownTypeCode.None) {
+				left = left.ConvertTo(compilation.FindType(inputType), this);
+				right = right.ConvertTo(compilation.FindType(inputType), this);
+			}
+			var result = new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(new OperatorResolveResult(compilation.FindType(TypeCode.Boolean),
 				                                  BinaryOperatorExpression.GetLinqNodeType(op, false),
 				                                  left.ResolveResult, right.ResolveResult));
+			if (un && inst.OpType == StackType.F) {
+				// add negation if we turned around the operator symbol above
+				result = LogicNot(result).WithILInstruction(inst);
+			}
+			return result;
 		}
 		
 		ExpressionWithResolveResult Assignment(TranslatedExpression left, TranslatedExpression right)
@@ -483,9 +518,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			var target = TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
 			return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), new MemberReferenceExpression(target, method.Name))
 				.WithILInstruction(inst)
-				.WithRR(new ConversionResolveResult(method.DeclaringType,
-				                                    new MemberResolveResult(target.ResolveResult, method),
-				                                    Conversion.MethodGroupConversion(method, func.OpCode == OpCode.LdVirtFtn, false))); // TODO handle extension methods capturing the first argument
+				.WithRR(new ConversionResolveResult(
+					method.DeclaringType,
+					new MemberResolveResult(target.ResolveResult, method),
+					// TODO handle extension methods capturing the first argument
+					Conversion.MethodGroupConversion(method, func.OpCode == OpCode.LdVirtFtn, false)));
 		}
 		
 		TranslatedExpression TranslateTarget(IMember member, ILInstruction target, bool nonVirtualInvocation)

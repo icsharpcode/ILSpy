@@ -95,7 +95,6 @@
       <Project>{d68133bd-1e63-496e-9ede-4fbdbf77b486}</Project>
       <Name>Mono.Cecil</Name>
     </ProjectReference>
-
     <ProjectReference Include="..\..\NRefactory\ICSharpCode.NRefactory.CSharp\ICSharpCode.NRefactory.CSharp.csproj">
       <Project>{53dca265-3c3c-42f9-b647-f72ba678122b}</Project>
       <Name>ICSharpCode.NRefactory.CSharp</Name>
@@ -119,6 +118,7 @@
     <Compile Include="TestCases\CompoundAssignment.cs" />
     <Compile Include="TestCases\ControlFlow.cs" />
     <Compile Include="TestCases\DecimalFields.cs" />
+    <Compile Include="TestCases\FloatComparisons.cs" />
     <Compile Include="TestCases\Generics.cs" />
     <Compile Include="TestCases\HelloWorld.cs" />
     <Compile Include="TestCases\InitializerTests.cs" />

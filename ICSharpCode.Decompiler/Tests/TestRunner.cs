@@ -29,6 +29,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void FloatComparisons()
+		{
+			TestCompileDecompileCompileOutputAll("FloatComparisons.cs");
+		}
+
+		[Test]
 		public void HelloWorld()
 		{
 			TestCompileDecompileCompileOutputAll("HelloWorld.cs");
