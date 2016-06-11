@@ -26,6 +26,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static readonly SlotInfo ReturnValueSlot = new SlotInfo("ReturnValue", canInlineInto: true);
 		
+		readonly bool hasArgument;
 		ILInstruction returnValue;
 		
 		/// <summary>
@@ -34,9 +35,12 @@ namespace ICSharpCode.Decompiler.IL
 		public ILInstruction ReturnValue {
 			get { return returnValue; }
 			set {
-				if (value != null)
+				if (hasArgument) {
 					ValidateChild(value);
-				SetChildInstruction(ref returnValue, value, 0);
+					SetChildInstruction(ref returnValue, value, 0);
+				} else {
+					Debug.Assert(value == null);
+				}
 			}
 		}
 		
@@ -46,13 +50,14 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public Return(ILInstruction argument) : base(OpCode.Return)
 		{
+			this.hasArgument = true;
 			this.ReturnValue = argument;
 		}
 		
 		public override ILInstruction Clone()
 		{
 			Return clone = (Return)ShallowClone();
-			if (returnValue != null)
+			if (hasArgument)
 				clone.ReturnValue = returnValue.Clone();
 			return clone;
 		}
@@ -60,7 +65,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			InstructionFlags flags = InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
-			if (returnValue != null) {
+			if (hasArgument) {
 				flags |= returnValue.Flags;
 			}
 			return flags;
@@ -78,12 +83,12 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override int GetChildCount()
 		{
-			return returnValue != null ? 1 : 0;
+			return hasArgument ? 1 : 0;
 		}
 		
 		protected override ILInstruction GetChild(int index)
 		{
-			if (index == 0 && returnValue != null)
+			if (index == 0 && hasArgument)
 				return returnValue;
 			else
 				throw new IndexOutOfRangeException();
@@ -91,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override void SetChild(int index, ILInstruction value)
 		{
-			if (index == 0 && returnValue != null)
+			if (index == 0 && hasArgument)
 				ReturnValue = value;
 			else
 				throw new IndexOutOfRangeException();

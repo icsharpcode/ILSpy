@@ -407,7 +407,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal void SetChildInstruction(ref ILInstruction childPointer, ILInstruction newValue, int index)
 		{
 			ILInstruction oldValue = childPointer;
-			Debug.Assert(this is Return || oldValue == GetChild(index));
+			Debug.Assert(oldValue == GetChild(index));
 			if (oldValue == newValue)
 				return;
 			childPointer = newValue;
