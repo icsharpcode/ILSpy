@@ -522,6 +522,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Creates a deep clone of the ILInstruction.
 		/// </summary>
+		/// <remarks>
+		/// It is valid to clone nodes with stale positions (see remarks on <c>Parent</c>);
+		/// the result of such a clone will not contain any stale positions (nodes at
+		/// multiple positions will be cloned once per position).
+		/// </remarks>
 		public abstract ILInstruction Clone();
 		
 		/// <summary>

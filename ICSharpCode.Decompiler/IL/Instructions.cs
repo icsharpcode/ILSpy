@@ -414,7 +414,7 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (CallInstruction)ShallowClone();
-			clone.Arguments = new InstructionCollection<ILInstruction>(this, 0);
+			clone.Arguments = new InstructionCollection<ILInstruction>(clone, 0);
 			clone.Arguments.AddRange(this.Arguments.Select(arg => arg.Clone()));
 			return clone;
 		}
@@ -2631,7 +2631,7 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (NewArr)ShallowClone();
-			clone.Indices = new InstructionCollection<ILInstruction>(this, 0);
+			clone.Indices = new InstructionCollection<ILInstruction>(clone, 0);
 			clone.Indices.AddRange(this.Indices.Select(arg => arg.Clone()));
 			return clone;
 		}
@@ -2896,7 +2896,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (LdElema)ShallowClone();
 			clone.Array = this.array.Clone();
-			clone.Indices = new InstructionCollection<ILInstruction>(this, 1);
+			clone.Indices = new InstructionCollection<ILInstruction>(clone, 1);
 			clone.Indices.AddRange(this.Indices.Select(arg => arg.Clone()));
 			return clone;
 		}
