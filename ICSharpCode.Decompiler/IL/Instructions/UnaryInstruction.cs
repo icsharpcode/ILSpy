@@ -32,4 +32,3 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 }
- 
