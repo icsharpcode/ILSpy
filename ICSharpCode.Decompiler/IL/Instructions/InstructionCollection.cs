@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int IndexOf(T item)
 		{
-			// If this collection is the item's primary location, we can use ChildIndex:
+			// If this collection is the item's primary position, we can use ChildIndex:
 			int index = item.ChildIndex - firstChildIndex;
 			if (index >= 0 && index <= list.Count && list[index] == item)
 				return index;

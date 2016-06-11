@@ -63,6 +63,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// Gets whether this node is a descendant of <paramref name="possibleAncestor"/>.
 		/// Also returns true if <c>this</c>==<paramref name="possibleAncestor"/>.
 		/// </summary>
+		/// <remarks>
+		/// This method uses the <c>Parent</c> property, so it may produce surprising results
+		/// when called on orphaned nodes or with a possibleAncestor that contains stale positions
+		/// (see remarks on Parent property).
+		/// </remarks>
 		public bool IsDescendantOf(ILInstruction possibleAncestor)
 		{
 			for (ILInstruction ancestor = this; ancestor != null; ancestor = ancestor.Parent) {
@@ -89,6 +94,16 @@ namespace ICSharpCode.Decompiler.IL
 		
 		InstructionFlags flags = invalidFlags;
 		
+		/// <summary>
+		/// Gets the flags describing the behavior of this instruction.
+		/// This property computes the flags on-demand and caches them
+		/// until some change to the ILAst invalidates the cache.
+		/// </summary>
+		/// <remarks>
+		/// Flag cache invalidation makes of the <c>Parent</c> property,
+		/// so it is possible for this property to return a stale value
+		/// if the instruction contains "stale positions" (see remarks on Parent property).
+		/// </remarks>
 		public InstructionFlags Flags {
 			get {
 				if (flags == invalidFlags) {
@@ -150,6 +165,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets the child nodes of this instruction.
 		/// </summary>
+		/// <remarks>
+		/// The ChildrenCollection does not actually store the list of children,
+		/// it merely allows accessing the children stored in the various slots.
+		/// </remarks>
 		public ChildrenCollection Children {
 			get {
 				return new ChildrenCollection(this);
@@ -278,6 +297,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Replaces this ILInstruction with the given replacement instruction.
 		/// </summary>
+		/// <remarks>
+		/// It is temporarily possible for a node to be used in multiple places in the ILAst,
+		/// this method only replaces this node at its primary position (see remarks on <see cref="Parent"/>).
+		/// </remarks>
 		public void ReplaceWith(ILInstruction replacement)
 		{
 			Debug.Assert(parent.GetChild(ChildIndex) == this);
@@ -300,6 +323,10 @@ namespace ICSharpCode.Decompiler.IL
 		public IEnumerable<ILInstruction> Descendants {
 			get {
 				// Copy of TreeTraversal.PostOrder() specialized for ChildrenEnumerator
+				// We could potentially eliminate the stack by using Parent/ChildIndex,
+				// but that makes it difficult to reason about the behavior in the cases
+				// where Parent/ChildIndex is not accurate (stale positions), especially
+				// if the ILAst is modified during enumeration.
 				Stack<ChildrenEnumerator> stack = new Stack<ChildrenEnumerator>();
 				ChildrenEnumerator enumerator = new ChildrenEnumerator(this);
 				try {
@@ -330,7 +357,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Number of parents that refer to this instruction and are connected to the root.
 		/// Usually is 0 for unconnected nodes and 1 for connected nodes, but may temporarily increase to 2
-		/// when the ILAst is re-arranged (e.g. within SetChildInstruction).
+		/// when the ILAst is re-arranged (e.g. within SetChildInstruction),
+		/// or possibly even more (re-arrangement with stale positions).
 		/// </summary>
 		byte refCount;
 		
@@ -352,6 +380,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets whether this ILInstruction is connected to the root node of the ILAst.
 		/// </summary>
+		/// <remarks>
+		/// This property returns true if the ILInstruction is reachable from the root node
+		/// of the ILAst; it does make use of the <c>Parent</c> field so the considerations
+		/// about orphaned nodes and stale positions don't apply.
+		/// </remarks>
 		protected bool IsConnected {
 			get { return refCount > 0; }
 		}
@@ -379,21 +412,51 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Gets the parent of this ILInstruction.
 		/// </summary>
+		/// <remarks>
+		/// It is temporarily possible for a node to be used in multiple places in the ILAst
+		/// (making the ILAst a DAG instead of a tree).
+		/// The <c>Parent</c> and <c>ChildIndex</c> properties are written whenever
+		/// a node is stored in a slot.
+		/// The node's occurrence in that slot is termed the "primary position" of the node,
+		/// and all other (older) uses of the nodes are termed "stale positions".
+		/// 
+		/// A consistent ILAst must not contain any stale positions.
+		/// Debug builds of ILSpy check the ILAst for consistency after every IL transform.
+		/// 
+		/// If a slot containing a node is overwritten with another node, the <c>Parent</c>
+		/// and <c>ChildIndex</c> of the old node are not modified.
+		/// This allows overwriting stale positions to restore consistency of the ILAst.
+		/// 
+		/// If a "primary position" is overwritten, the <c>Parent</c> of the old node also remains unmodified.
+		/// This makes the old node an "orphaned node".
+		/// Orphaned nodes may later be added back to the ILAst (or can just be garbage-collected).
+		/// 
+		/// Note that is it is possible (though unusual) for a stale position to reference an orphaned node.
+		/// </remarks>
 		public ILInstruction Parent {
 			get { return parent; }
 		}
 		
 		/// <summary>
-		/// Gets the index of this node in the Parent.Children collection.
+		/// Gets the index of this node in the <c>Parent.Children</c> collection.
 		/// </summary>
-		public int ChildIndex { get; internal set; }
+		/// <remarks>
+		/// It is temporarily possible for a node to be used in multiple places in the ILAst,
+		/// this property returns the index of the primary position of this node (see remarks on <see cref="Parent"/>).
+		/// </remarks>
+		public int ChildIndex { get; internal set; } = -1;
 		
 		/// <summary>
 		/// Gets information about the slot in which this instruction is stored.
 		/// (i.e., the relation of this instruction to its parent instruction)
 		/// </summary>
+		/// <remarks>
+		/// It is temporarily possible for a node to be used in multiple places in the ILAst,
+		/// this property returns the slot of the primary position of this node (see remarks on <see cref="Parent"/>).
+		/// </remarks>
 		public SlotInfo SlotInfo {
 			get {
+				Debug.Assert(parent.GetChild(this.ChildIndex) == this);
 				return parent.GetChildSlot(this.ChildIndex);
 			}
 		}
@@ -415,6 +478,7 @@ namespace ICSharpCode.Decompiler.IL
 				newValue.parent = this;
 				newValue.ChildIndex = index;
 			}
+			InvalidateFlags();
 			if (refCount > 0) {
 				// The new value may be a subtree of the old value.
 				// We first call AddRef(), then ReleaseRef() to prevent the subtree
@@ -424,7 +488,6 @@ namespace ICSharpCode.Decompiler.IL
 				if (oldValue != null)
 					oldValue.ReleaseRef();
 			}
-			InvalidateFlags();
 		}
 		
 		/// <summary>
