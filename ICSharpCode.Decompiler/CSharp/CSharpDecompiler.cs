@@ -50,6 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new IntroduceExitPoints(),
 			new ConditionDetection(),
 			new ILInlining(),
+			new CopyPropagation(),
 			new InlineCompilerGeneratedVariables(),
 			new TransformingVisitor(),
 			new ExpressionTransforms(),

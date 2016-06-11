@@ -113,6 +113,7 @@
     <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\NRTypeExtensions.cs" />
     <Compile Include="IL\SlotInfo.cs" />
+    <Compile Include="IL\Transforms\CopyPropagation.cs" />
     <Compile Include="IL\Transforms\IILTransform.cs" />
     <Compile Include="IL\Transforms\ILInlining.cs" />
     <Compile Include="IL\Transforms\ExpressionTransforms.cs" />
