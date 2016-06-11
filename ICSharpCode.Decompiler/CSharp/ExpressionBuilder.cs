@@ -416,16 +416,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseOr);
 		}
 		
-		protected internal override TranslatedExpression VisitShl(Shl inst)
-		{
-			return HandleBinaryNumeric(inst, BinaryOperatorType.ShiftLeft);
-		}
-		
-		protected internal override TranslatedExpression VisitShr(Shr inst)
-		{
-			return HandleBinaryNumeric(inst, BinaryOperatorType.ShiftRight);
-		}
-		
 		TranslatedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op)
 		{
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
@@ -471,6 +461,32 @@ namespace ICSharpCode.Decompiler.CSharp
 		bool IsCompatibleWithSign(IType type, Sign sign)
 		{
 			return sign == Sign.None || type.GetSign() == sign;
+		}
+		
+		protected internal override TranslatedExpression VisitShl(Shl inst)
+		{
+			return HandleShift(inst, BinaryOperatorType.ShiftLeft);
+		}
+		
+		protected internal override TranslatedExpression VisitShr(Shr inst)
+		{
+			return HandleShift(inst, BinaryOperatorType.ShiftRight);
+		}
+		
+		TranslatedExpression HandleShift(BinaryNumericInstruction inst, BinaryOperatorType op)
+		{
+			var left = Translate(inst.Left);
+			var right = Translate(inst.Right);
+			
+			IType targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode(inst.Sign));
+			left = left.ConvertTo(targetType, this);
+			
+			// Shift operators in C# always expect type 'int' on the right-hand-side
+			right = right.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
+			
+			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
+					.WithILInstruction(inst)
+					.WithRR(resolver.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult));
 		}
 		
 		protected internal override TranslatedExpression VisitConv(Conv inst)
