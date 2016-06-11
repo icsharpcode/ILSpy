@@ -497,7 +497,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(new ThisResolveResult(member.DeclaringType, nonVirtualInvocation));
 				} else {
 					var translatedTarget = Translate(target);
-					if (member.DeclaringType.IsReferenceType == false && translatedTarget.Expression is DirectionExpression) {
+					if (translatedTarget.Expression is DirectionExpression) {
 						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
 					}
 					return translatedTarget.ConvertTo(member.DeclaringType, this);
