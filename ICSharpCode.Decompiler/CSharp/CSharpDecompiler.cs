@@ -323,6 +323,56 @@ namespace ICSharpCode.Decompiler.CSharp
 			RunTransforms(syntaxTree, new SimpleTypeResolveContext(typeSystem.MainAssembly));
 			return syntaxTree;
 		}
+
+		IEnumerable<EntityDeclaration> AddInterfaceImplHelpers(EntityDeclaration memberDecl, MethodDefinition methodDef,
+		                                                       TypeSystemAstBuilder astBuilder)
+		{
+			if (!memberDecl.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole).IsNull) {
+				yield break; // cannot create forwarder for existing explicit interface impl
+			}
+			foreach (var mr in methodDef.Overrides) {
+				IMethod m = typeSystem.Resolve(mr);
+				if (m == null || m.DeclaringType.Kind != TypeKind.Interface)
+					continue;
+				var methodDecl = new MethodDeclaration();
+				methodDecl.ReturnType = memberDecl.ReturnType.Clone();
+				methodDecl.PrivateImplementationType = astBuilder.ConvertType(m.DeclaringType);
+				methodDecl.Name = m.Name;
+				methodDecl.TypeParameters.AddRange(memberDecl.GetChildrenByRole(Roles.TypeParameter)
+				                                   .Select(n => (TypeParameterDeclaration)n.Clone()));
+				methodDecl.Parameters.AddRange(memberDecl.GetChildrenByRole(Roles.Parameter).Select(n => n.Clone()));
+				methodDecl.Constraints.AddRange(memberDecl.GetChildrenByRole(Roles.Constraint)
+				                                .Select(n => (Constraint)n.Clone()));
+				
+				methodDecl.Body = new BlockStatement();
+				methodDecl.Body.AddChild(new Comment(
+					"ILSpy generated this explicit interface implementation from .override directive in " + memberDecl.Name),
+					Roles.Comment);
+				var forwardingCall = new ThisReferenceExpression().Invoke(
+					memberDecl.Name,
+					methodDecl.TypeParameters.Select(tp => new SimpleType(tp.Name)),
+					methodDecl.Parameters.Select(p => ForwardParameter(p))
+				);
+				if (m.ReturnType.IsKnownType(KnownTypeCode.Void)) {
+					methodDecl.Body.Add(new ExpressionStatement(forwardingCall));
+				} else {
+					methodDecl.Body.Add(new ReturnStatement(forwardingCall));
+				}
+				yield return methodDecl;
+			}
+		}
+		
+		Expression ForwardParameter(ParameterDeclaration p)
+		{
+			switch (p.ParameterModifier) {
+				case ParameterModifier.Ref:
+					return new DirectionExpression(FieldDirection.Ref, new IdentifierExpression(p.Name));
+				case ParameterModifier.Out:
+					return new DirectionExpression(FieldDirection.Out, new IdentifierExpression(p.Name));
+				default:
+					return new IdentifierExpression(p.Name);
+			}
+		}
 		
 		EntityDeclaration DoDecompile(ITypeDefinition typeDef, ITypeResolveContext decompilationContext)
 		{
@@ -363,6 +413,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (methodDef != null && !MemberIsHidden(methodDef, settings)) {
 					var memberDecl = DoDecompile(methodDef, method, decompilationContext.WithCurrentMember(method));
 					typeDecl.Members.Add(memberDecl);
+					typeDecl.Members.AddRange(AddInterfaceImplHelpers(memberDecl, methodDef, typeSystemAstBuilder));
 				}
 			}
 			if (typeDecl.Members.OfType<IndexerDeclaration>().Any(idx => idx.PrivateImplementationType.IsNull)) {
