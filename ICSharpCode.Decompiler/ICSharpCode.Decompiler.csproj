@@ -66,6 +66,7 @@
     <Compile Include="CSharp\DecompilerSettings.cs" />
     <Compile Include="CSharp\Transforms\DecimalConstantTransform.cs" />
     <Compile Include="CSharp\Transforms\EscapeInvalidIdentifiers.cs" />
+    <Compile Include="CSharp\Transforms\FixNameCollisions.cs" />
     <Compile Include="CSharp\Transforms\IntroduceUsingDeclarations.cs" />
     <Compile Include="CSharp\Transforms\TransformContext.cs" />
     <Compile Include="CSharp\TranslatedExpression.cs" />

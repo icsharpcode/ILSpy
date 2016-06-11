@@ -15,6 +15,7 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 using System;
 using System.Linq;
 using ICSharpCode.NRefactory.CSharp;
@@ -27,7 +28,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <remarks>
 	/// This transform is not enabled by default.
 	/// </remarks>
-	public 	class EscapeInvalidIdentifiers : IAstTransform
+	public class EscapeInvalidIdentifiers : IAstTransform
 	{
 		bool IsValid(char ch)
 		{

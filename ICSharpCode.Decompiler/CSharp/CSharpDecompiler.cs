@@ -69,6 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
 			new DecimalConstantTransform(),
 			new IntroduceUsingDeclarations(),
+			new FixNameCollisions(),
 			//new IntroduceExtensionMethods(context), // must run after IntroduceUsingDeclarations
 			//new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
 			//new CombineQueryExpressions(context),
