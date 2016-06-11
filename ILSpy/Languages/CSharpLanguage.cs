@@ -492,6 +492,7 @@ namespace ICSharpCode.ILSpy
 			{
 				CSharpDecompiler decompiler = new CSharpDecompiler(ts, options.DecompilerSettings);
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+				decompiler.AstTransforms.Add(new RemoveCompilerGeneratedAssemblyAttributes());
 				SyntaxTree syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
 
 				string prop = "Properties";
