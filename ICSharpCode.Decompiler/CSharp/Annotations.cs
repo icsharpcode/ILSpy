@@ -35,6 +35,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	//    TODO: actually, we could use the type info instead?
 	//  * AddCheckedBlocks.CheckedAnnotation / AddCheckedBlocks.UnCheckedAnnotation is used on checked/unchecked integer arithmetic
 	//    TODO: here the info is also redundant, we could peek at the BinaryNumericInstruction instead
+	//          but on the other hand, some unchecked casts are not backed by any BinaryNumericInstruction
 	
 	/// <summary>
 	/// Currently unused; we'll probably use the LdToken ILInstruction as annotation instead when LdToken support gets reimplemented.

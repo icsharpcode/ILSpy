@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.Transforms;
@@ -26,12 +27,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug)
 		{
+			List<string> sourceFileNames = new List<string> { sourceFileName };
+			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)""")) {
+				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
+			}
+			
 			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 			CompilerParameters options = new CompilerParameters();
 			options.GenerateExecutable = true;
 			options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-") + (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
 			options.ReferencedAssemblies.Add("System.Core.dll");
-			CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileName);
+			CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 			if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
 				StringBuilder b = new StringBuilder("Compiler error:");
 				foreach (var error in results.Errors) {

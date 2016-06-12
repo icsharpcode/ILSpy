@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -41,7 +42,7 @@ namespace ICSharpCode.Decompiler.IL
 		IntToFloat,
 		/// <summary>
 		/// Float-to-integer conversion.
-		/// (truncates toward zero)
+		/// Truncates toward zero; may perform overflow-checking.
 		/// </summary>
 		FloatToInt,
 		/// <summary>
@@ -56,6 +57,7 @@ namespace ICSharpCode.Decompiler.IL
 		SignExtend,
 		/// <summary>
 		/// Conversion of integer type to larger unsigned integer type.
+		/// May involve overflow checking (when converting from a small signed type).
 		/// </summary>
 		ZeroExtend,
 		/// <summary>
@@ -110,6 +112,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.CheckForOverflow = checkForOverflow;
 			this.Sign = sign;
 			this.Kind = GetConversionKind(targetType, argument.ResultType);
+			Debug.Assert(this.Kind != ConversionKind.Invalid);
 		}
 
 		/// <summary>
@@ -219,6 +222,9 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case ConversionKind.ZeroExtend:
 					output.Write("<zero extend>");
+					break;
+				case ConversionKind.Invalid:
+					output.Write("<invalid>");
 					break;
 			}
 			output.Write('(');

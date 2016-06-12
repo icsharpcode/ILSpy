@@ -117,6 +117,7 @@
     <Compile Include="Loops.cs" />
     <Compile Include="TestCases\CompoundAssignment.cs" />
     <Compile Include="TestCases\ControlFlow.cs" />
+    <Compile Include="TestCases\Conversions.cs" />
     <Compile Include="TestCases\DecimalFields.cs" />
     <Compile Include="TestCases\Comparisons.cs" />
     <Compile Include="TestCases\Generics.cs" />

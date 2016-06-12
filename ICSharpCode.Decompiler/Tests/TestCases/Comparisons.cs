@@ -18,7 +18,7 @@
 
 using System;
 
-//#pragma warning disable 652
+#pragma warning disable 652
 
 namespace ICSharpCode.Decompiler.Tests.TestCases
 {

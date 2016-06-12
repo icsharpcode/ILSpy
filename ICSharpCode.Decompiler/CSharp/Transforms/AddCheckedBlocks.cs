@@ -48,16 +48,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				(where goal 1 has the highest priority)
 				
 				Goal 4a (open checked blocks as late as possible) is necessary so that we don't move variable declarations
-				into checked blocks, as the variable might still be used after the checked block.
-				 (this could cause DeclareVariables to omit the variable declaration, producing incorrect code)
+				  into checked blocks, as the variable might still be used after the checked block.
+				  (this could cause DeclareVariables to omit the variable declaration, producing incorrect code)
 				Goal 4b (close checked blocks as late as possible) makes the code look nicer in this case:
-				   checked {
-				   	int c = a + b;
+					checked {
+						int c = a + b;
 						int r = a + c;
-				   	return r;
-				   }
+						return r;
+					}
 				If the checked block was closed as early as possible, the variable r would have to be declared outside
-				 (this would work, but look badly)
+				  (this would work, but look badly)
 		 */
 		
 		#region struct Cost
@@ -301,6 +301,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				nodesUncheckedContext += stmtResult.NodesToInsertInUncheckedContext;
 				costUncheckedContextCheckedBlockOpen += stmtResult.CostInCheckedContext;
 				nodesUncheckedContextCheckedBlockOpen += stmtResult.NodesToInsertInCheckedContext;
+				
+				if (statement is LabelStatement) {
+					// We can't move labels into blocks because that might cause goto-statements
+					// to be unable to just to the labels.
+					costCheckedContextUncheckedBlockOpen = Cost.Infinite;
+					costUncheckedContextCheckedBlockOpen = Cost.Infinite;
+				}
 				
 				statement = statement.GetNextStatement();
 			}

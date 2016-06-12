@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.NRefactory.CSharp.TypeSystem;
 using ExpressionType = System.Linq.Expressions.ExpressionType;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
@@ -68,6 +69,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		public ExpressionWithResolveResult ConvertConstantValue(ResolveResult rr)
 		{
 			var expr = astBuilder.ConvertConstantValue(rr);
+			var pe = expr as PrimitiveExpression;
+			if (pe != null) {
+				if (pe.Value is sbyte)
+					expr = expr.CastTo(new NRefactory.CSharp.PrimitiveType("sbyte"));
+				else if (pe.Value is byte)
+					expr = expr.CastTo(new NRefactory.CSharp.PrimitiveType("byte"));
+				else if (pe.Value is short)
+					expr = expr.CastTo(new NRefactory.CSharp.PrimitiveType("short"));
+				else if (pe.Value is ushort)
+					expr = expr.CastTo(new NRefactory.CSharp.PrimitiveType("ushort"));
+			}
 			var exprRR = expr.Annotation<ResolveResult>();
 			if (exprRR == null) {
 				exprRR = rr;
@@ -510,9 +522,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var targetType = compilation.FindType(inst.TargetType.ToKnownTypeCode());
 			var rr = resolver.WithCheckForOverflow(inst.CheckForOverflow).ResolveCast(targetType, arg.ResolveResult);
-			return new CastExpression(ConvertType(targetType), arg.Expression)
-				.WithILInstruction(inst)
-				.WithRR(rr);
+			Expression castExpr = new CastExpression(ConvertType(targetType), arg.Expression);
+			if (inst.Kind == ConversionKind.Nop || inst.Kind == ConversionKind.Truncate || inst.Kind == ConversionKind.FloatToInt
+			    || (inst.Kind == ConversionKind.ZeroExtend && arg.Type.GetSign() == Sign.Signed))
+			{
+				castExpr.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			}
+			return castExpr.WithILInstruction(inst).WithRR(rr);
 		}
 		
 		protected internal override TranslatedExpression VisitCall(Call inst)
