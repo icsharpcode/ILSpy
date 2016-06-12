@@ -51,7 +51,7 @@ namespace ICSharpCode.Decompiler
 		public IField Resolve(Mono.Cecil.FieldReference fieldReference)
 		{
 			IField field = context.Resolve(fieldReference);
-			if (field != null && field.Substitution != TypeParameterSubstitution.Identity)
+			if (field != null)
 				field = (IField)field.Specialize(substitution);
 			return field;
 		}
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler
 		public IMethod Resolve(Mono.Cecil.MethodReference methodReference)
 		{
 			IMethod method = context.Resolve(methodReference);
-			if (method != null && method.Substitution != TypeParameterSubstitution.Identity)
+			if (method != null)
 				method = (IMethod)method.Specialize(substitution);
 			return method;
 		}
