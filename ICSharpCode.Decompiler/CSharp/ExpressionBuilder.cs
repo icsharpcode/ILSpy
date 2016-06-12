@@ -683,9 +683,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			ITypeDefinition accessTypeDef = accessType.GetDefinition();
 			if (memoryType.Kind == TypeKind.Enum && memoryTypeDef != null) {
 				memoryType = memoryTypeDef.EnumUnderlyingType;
+				memoryTypeDef = memoryType.GetDefinition();
 			}
 			if (accessType.Kind == TypeKind.Enum && accessTypeDef != null) {
 				accessType = accessTypeDef.EnumUnderlyingType;
+				accessTypeDef = accessType.GetDefinition();
 			}
 			if (memoryType.Equals(accessType))
 				return true;
