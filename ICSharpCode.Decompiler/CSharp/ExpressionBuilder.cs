@@ -632,9 +632,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var target = Translate(inst.Target);
 			if (target.Expression is DirectionExpression && IsCompatibleTypeForMemoryAccess(target.Type, inst.Type, isWrite: false)) {
-				// we can deference the managed reference by stripping away the 'ref'
+				// we can dereference the managed reference by stripping away the 'ref'
 				var result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
-				result = result.ConvertTo(inst.Type, this);
+				// we don't convert result to inst.Type, because the LdObj type
+				// might be inaccurate (it's often System.Object for all reference types),
+				// and our parent node should already insert casts where necessary
 				result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
 				return result;
 			} else {
@@ -737,7 +739,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdLen(LdLen inst)
 		{
 			TranslatedExpression arrayExpr = Translate(inst.Array);
-			// TODO: what if arrayExpr is not an array type?
+			if (arrayExpr.Type.Kind != TypeKind.Array) {
+				arrayExpr = arrayExpr.ConvertTo(compilation.FindType(KnownTypeCode.Array), this);
+			}
 			var lenExpr = arrayExpr.Expression.Member("LongLength")
 				.WithILInstruction(inst)
 				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int64)));
