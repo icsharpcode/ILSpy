@@ -48,4 +48,12 @@ namespace Generics
 			Console.WriteLine(typeof(T1) + " " + typeof(T2));
 		}
 	}
+	
+	class GenericClass<T>
+	{
+		public void M(out GenericClass<T> self)
+		{
+			self = this;
+		}
+	}
 }

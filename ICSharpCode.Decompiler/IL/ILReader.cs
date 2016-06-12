@@ -138,8 +138,32 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILVariable CreateILVariable(ParameterDefinition p)
 		{
-			var variableKind = p.Index == -1 ? VariableKind.This : VariableKind.Parameter;
-			var ilVar = new ILVariable(variableKind, typeSystem.Resolve(p.ParameterType), p.Index);
+			VariableKind variableKind;
+			IType parameterType;
+			if (p.Index == -1) {
+				variableKind = VariableKind.This;
+				// Manually construct ctor parameter type due to Cecil bug:
+				// https://github.com/jbevain/cecil/issues/275
+				ITypeDefinition def = typeSystem.Resolve(body.Method.DeclaringType).GetDefinition();
+				if (def != null && def.TypeParameterCount > 0) {
+					parameterType = new ParameterizedType(def, def.TypeArguments);
+					if (def.IsReferenceType == false) {
+						parameterType = new NRefactory.TypeSystem.ByReferenceType(parameterType);
+					}
+				} else {
+					parameterType = typeSystem.Resolve(p.ParameterType);
+				}
+			} else {
+				variableKind = VariableKind.Parameter;
+				parameterType = typeSystem.Resolve(p.ParameterType);
+			}
+			Debug.Assert(!parameterType.IsUnbound());
+			if (parameterType.IsUnbound()) {
+				// parameter types should not be unbound, the only known cause for these is a Cecil bug:
+				Debug.Assert(p.Index < 0); // cecil bug occurs only for "this"
+				parameterType = new ParameterizedType(parameterType.GetDefinition(), parameterType.TypeArguments);
+			}
+			var ilVar = new ILVariable(variableKind, parameterType, p.Index);
 			ilVar.StoreCount = 1; // count the initial store when the method is called with an argument
 			if (variableKind == VariableKind.This)
 				ilVar.Name = "this";

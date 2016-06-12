@@ -13,6 +13,24 @@ namespace ValueTypeCall
 		}
 	}
 	
+	public struct GenericValueType<T>
+	{
+		T data;
+		int num;
+		
+		public GenericValueType(T data)
+		{
+			this.data = data;
+			this.num = 1;
+		}
+		
+		public void Call(ref GenericValueType<T> v)
+		{
+			num++;
+			Console.WriteLine("Call #{0}: {1} with v=#{2}", num, data, v.num);
+		}
+	}
+	
 	public class Program
 	{
 		public static void Main()
@@ -22,6 +40,8 @@ namespace ValueTypeCall
 			ValueParameter(m);
 			Field();
 			Box();
+			var gvt = new GenericValueType<string>("Test");
+			gvt.Call(ref gvt);
 		}
 		
 		static void RefParameter(ref MutValueType m)
