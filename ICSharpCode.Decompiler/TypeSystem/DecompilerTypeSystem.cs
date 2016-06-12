@@ -168,7 +168,7 @@ namespace ICSharpCode.Decompiler
 			var f = new DefaultUnresolvedField();
 			f.Name = fieldReference.Name;
 			f.ReturnType = typeReferenceCecilLoader.ReadTypeReference(fieldReference.FieldType);
-			return new ResolvedFakeField(f, context, declaringType);
+			return new ResolvedFakeField(f, context.WithCurrentTypeDefinition(declaringType.GetDefinition()), declaringType);
 		}
 
 		class ResolvedFakeField : DefaultResolvedField
@@ -282,7 +282,8 @@ namespace ICSharpCode.Decompiler
 			foreach (var p in methodReference.Parameters) {
 				m.Parameters.Add(new DefaultUnresolvedParameter(typeReferenceCecilLoader.ReadTypeReference(p.ParameterType), p.Name));
 			}
-			return new ResolvedFakeMethod(m, context, declaringTypeReference.Resolve(context));
+			var type = declaringTypeReference.Resolve(context);
+			return new ResolvedFakeMethod(m, context.WithCurrentTypeDefinition(type.GetDefinition()), type);
 		}
 
 		class ResolvedFakeMethod : DefaultResolvedMethod
