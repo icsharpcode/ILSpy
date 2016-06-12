@@ -50,8 +50,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="System.Collections.Immutable">
-      <HintPath>..\packages\Microsoft.Bcl.Immutable.1.1.22-beta\lib\portable-net45+win8+wpa81\System.Collections.Immutable.dll</HintPath>
+    <Reference Include="System.Collections.Immutable, Version=1.2.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>..\packages\System.Collections.Immutable.1.2.0-rc2-24027\lib\portable-net45+win8+wp8+wpa81\System.Collections.Immutable.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -83,6 +84,7 @@
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="FlowAnalysis\ControlFlowNode.cs" />
     <Compile Include="FlowAnalysis\Dominance.cs" />
+    <Compile Include="FlowAnalysis\ReachingDefinitions.cs" />
     <Compile Include="IL\ControlFlow\ConditionDetection.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowSimplification.cs" />
     <Compile Include="IL\ControlFlow\IntroduceExitPoints.cs" />
@@ -187,11 +189,7 @@
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="FlowAnalysis" />
-    <Folder Include="ILAst" />
-    <Folder Include="IL\ControlFlow" />
-    <Folder Include="IL\Transforms" />
-    <Folder Include="TypeSystem" />
+    <Folder Include="ILAst\" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <Target Name="BeforeBuild">
