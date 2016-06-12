@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					ILVariable v;
 					ILInstruction inst;
 					if (ret.ReturnValue != null && ret.ReturnValue.MatchLdLoc(out v)
-					    && v.IsSingleUse && block.Instructions[0].MatchStLoc(v, out inst))
+					    && v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out inst))
 					{
 						inst.AddILRange(ret.ReturnValue.ILRange);
 						inst.AddILRange(block.Instructions[0].ILRange);

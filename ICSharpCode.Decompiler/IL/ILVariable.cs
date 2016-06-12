@@ -84,9 +84,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int AddressCount;
 
-		public bool IsSingleUse {
+		public bool IsSingleDefinition {
 			get {
-				return LoadCount == 1 && StoreCount == 1 && AddressCount == 0;
+				return StoreCount == 1 && AddressCount == 0;
 			}
 		}
 		
