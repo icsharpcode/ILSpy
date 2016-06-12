@@ -163,9 +163,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			tryCatch.TryBlock = ConvertAsBlock(inst.TryBlock);
 			foreach (var handler in inst.Handlers) {
 				var catchClause = new CatchClause();
-				if (handler.Variable != null) {
-					catchClause.Type = exprBuilder.ConvertType(handler.Variable.Type);
-					catchClause.VariableName = handler.Variable.Name;
+				var v = handler.Variable;
+				if (v != null) {
+					if (v.StoreCount > 1 || v.LoadCount > 0 || v.AddressCount > 0) {
+						catchClause.VariableName = v.Name;
+						catchClause.Type = exprBuilder.ConvertType(v.Type);
+					} else if (!v.Type.IsKnownType(KnownTypeCode.Object)) {
+						catchClause.Type = exprBuilder.ConvertType(v.Type);
+					}
 				}
 				if (!handler.Filter.MatchLdcI4(1))
 					catchClause.Condition = exprBuilder.TranslateCondition(handler.Filter);
