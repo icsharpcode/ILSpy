@@ -29,9 +29,9 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void FloatComparisons()
+		public void Comparisons()
 		{
-			TestCompileDecompileCompileOutputAll("FloatComparisons.cs");
+			TestCompileDecompileCompileOutputAll("Comparisons.cs");
 		}
 
 		[Test]
@@ -108,6 +108,11 @@ namespace ICSharpCode.Decompiler.Tests
 				int result1 = Tester.Run(outputFile.PathToAssembly, out output1, out error1);
 				int result2 = Tester.Run(decompiledOutputFile.PathToAssembly, out output2, out error2);
 
+				if (result1 != result2 || output1 != output2 || error1 != error2) {
+					Console.WriteLine("Test {0} failed.", testFileName);
+					Console.WriteLine("Decompiled code in {0}:line 1", decompiledCodeFile);
+				}
+				
 				Assert.AreEqual(result1, result2);
 				Assert.AreEqual(output1, output2);
 				Assert.AreEqual(error1, error2);

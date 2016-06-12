@@ -24,8 +24,9 @@ namespace ICSharpCode.Decompiler
 	{
 		static int GetNativeSize(IType type)
 		{
+			const int NativeIntSize = 6; // between 4 (Int32) and 8 (Int64)
 			if (type.Kind == TypeKind.Pointer)
-				return 6;
+				return NativeIntSize;
 			
 			var typeForConstant = (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
 			var typeDef = typeForConstant.GetDefinition();
@@ -46,7 +47,7 @@ namespace ICSharpCode.Decompiler
 					return 4;
 				case KnownTypeCode.IntPtr:
 				case KnownTypeCode.UIntPtr:
-					return 6;
+					return NativeIntSize;
 				case KnownTypeCode.Int64:
 				case KnownTypeCode.UInt64:
 				case KnownTypeCode.Double:

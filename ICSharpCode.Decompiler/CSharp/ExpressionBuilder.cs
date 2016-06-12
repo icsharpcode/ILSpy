@@ -34,6 +34,14 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// <summary>
 	/// Translates from ILAst to C# expressions.
 	/// </summary>
+	/// <remarks>
+	/// Every translated expression must have:
+	/// * an ILInstruction annotation
+	/// * a ResolveResult annotation
+	///   * The type of the ResolveResult must match the StackType of the corresponding ILInstruction.
+	///   * If the type of the ResolveResult is <c>sbyte</c> or <c>short</c>, the evaluated value of the ILInstruction
+	///     can be obtained by evaluating the C# expression and sign-extending the result to <c>int</c>.
+	/// </remarks>
 	class ExpressionBuilder : ILVisitor<TranslatedExpression>
 	{
 		internal readonly ICompilation compilation;
@@ -284,8 +292,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					return right; // '1 == b' => 'b'
 			}
 			
-			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.Equality, left.ResolveResult, right.ResolveResult);
-			if (rr.IsError) {
+			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.Equality, left.ResolveResult, right.ResolveResult)
+				as OperatorResolveResult;
+			if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
+			    || rr.Operands[0].Type.GetStackType() != inst.OpType)
+			{
 				var targetType = DecompilerTypeSystemUtils.GetLargerType(left.Type, right.Type);
 				if (targetType.Equals(left.Type)) {
 					right = right.ConvertTo(targetType, this);
@@ -492,7 +503,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitConv(Conv inst)
 		{
 			var arg = Translate(inst.Argument);
-			if (arg.Type.GetSign() != inst.Sign) {
+			if (inst.Sign != Sign.None && arg.Type.GetSign() != inst.Sign) {
 				// we need to cast the input to a type of appropriate sign
 				var inputType = inst.Argument.ResultType.ToKnownTypeCode(inst.Sign);
 				arg = arg.ConvertTo(compilation.FindType(inputType), this);

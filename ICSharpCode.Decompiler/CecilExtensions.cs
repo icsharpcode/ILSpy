@@ -140,27 +140,6 @@ namespace ICSharpCode.Decompiler
 				   type.MetadataType == MetadataType.IntPtr;
 		}
 
-		/// <summary>
-		/// checks if the given value is a numeric zero-value.
-		/// NOTE that this only works for types: [sbyte, short, int, long, IntPtr, byte, ushort, uint, ulong, float, double and decimal]
-		/// </summary>
-		public static bool IsZero(this object value)
-		{
-			return value.Equals((sbyte)0) ||
-				   value.Equals((short)0) ||
-				   value.Equals(0) ||
-				   value.Equals(0L) ||
-				   value.Equals(IntPtr.Zero) ||
-				   value.Equals((byte)0) ||
-				   value.Equals((ushort)0) ||
-				   value.Equals(0u) ||
-				   value.Equals(0UL) ||
-				   value.Equals(0.0f) ||
-				   value.Equals(0.0) ||
-				   value.Equals((decimal)0);
-					
-		}
-
 		#endregion
 		
 		/// <summary>

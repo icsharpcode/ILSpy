@@ -18,9 +18,11 @@
 
 using System;
 
+//#pragma warning disable 652
+
 namespace ICSharpCode.Decompiler.Tests.TestCases
 {
-	public class FloatComparisons
+	public class Comparisons
 	{
 		public static int Main()
 		{
@@ -35,6 +37,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 			TestFloatOp("!>", (a, b) => !(a > b));
 			TestFloatOp("!<=", (a, b) => !(a <= b));
 			TestFloatOp("!>=", (a, b) => !(a >= b));
+			
+			TestUInt(0);
+			TestUInt(uint.MaxValue);
+			TestUShort(0);
+			TestUShort(ushort.MaxValue);
 			return 0;
 		}
 		
@@ -43,9 +50,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 			float[] vals = { -1, 0, 3, float.PositiveInfinity, float.NaN };
 			for (int i = 0; i < vals.Length; i++) {
 				for (int j = 0; j < vals.Length; j++) {
-					Console.WriteLine("{0:r} {1} {2:r} = {3}", vals[i], name, vals[j], f(vals[i], vals[j]));
+					Console.WriteLine("Float: {0:r} {1} {2:r} = {3}", vals[i], name, vals[j], f(vals[i], vals[j]));
 				}
 			}
+		}
+		
+		static T Id<T>(T arg)
+		{
+			return arg;
+		}
+		
+		static void TestUShort(ushort i)
+		{
+			Console.WriteLine("ushort: {0} == ushort.MaxValue = {1}", i, i == ushort.MaxValue);
+			Console.WriteLine("ushort: {0} == -1 = {1}", i, i == -1);
+			Console.WriteLine("ushort: {0} == Id<short>(-1) = {1}", i, i == Id<short>(-1));
+			Console.WriteLine("ushort: {0} == 0x1ffff = {1}", i, i == 0x1ffff);
+		}
+		
+		static void TestUInt(uint i)
+		{
+			Console.WriteLine("uint: {0} == uint.MaxValue = {1}", i, i == uint.MaxValue);
+			Console.WriteLine("uint: {0} == Id(uint.MaxValue) = {1}", i, i == Id(uint.MaxValue));
+			Console.WriteLine("uint: {0} == -1 = {1}", i, i == -1);
+			Console.WriteLine("uint: {0} == Id(-1) = {1}", i, i == Id(-1));
 		}
 	}
 }
