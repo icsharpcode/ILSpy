@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (!m.Success)
 						break;
 					
-					IField field = m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IField;
+					IField field = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IField)?.MemberDefinition as IField;
 					if (field == null)
 						break;
 					AstNode fieldOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == field);
