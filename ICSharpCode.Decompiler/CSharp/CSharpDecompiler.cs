@@ -21,8 +21,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
+using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.CSharp.Transforms;
@@ -374,6 +376,89 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		
+		#region SetNewModifier
+		/// <summary>
+		/// Sets new modifier if the member hides some other member from a base type.
+		/// </summary>
+		/// <param name="member">The node of the member which new modifier state should be determined.</param>
+		void SetNewModifier(EntityDeclaration member)
+		{
+			bool addNewModifier = false;
+			if (member is IndexerDeclaration) {
+				var propertyDef = GetDefinitionFromAnnotation(member) as PropertyDefinition;
+				if (propertyDef != null)
+					addNewModifier = TypesHierarchyHelpers.FindBaseProperties(propertyDef).Any();
+			} else
+				addNewModifier = HidesBaseMember(member) == true;
+
+			if (addNewModifier)
+				member.Modifiers |= Modifiers.New;
+		}
+		
+		IMemberDefinition GetDefinitionFromAnnotation(EntityDeclaration member)
+		{
+			if (member is TypeDeclaration) {
+				return (IMemberDefinition)typeSystem.GetCecil(member.Annotation<TypeResolveResult>().Type.GetDefinition());
+			} else {
+				return (IMemberDefinition)typeSystem.GetCecil(member.Annotation<MemberResolveResult>().Member.MemberDefinition);
+			}
+		}
+		
+		bool? HidesBaseMember(EntityDeclaration member)
+		{
+			var memberDefinition = GetDefinitionFromAnnotation(member);
+			if (memberDefinition == null)
+				return null;
+			var methodDefinition = memberDefinition as MethodDefinition;
+			if (methodDefinition != null) {
+				bool? hidesByName = HidesByName(memberDefinition, includeBaseMethods: false);
+				return hidesByName != true && TypesHierarchyHelpers.FindBaseMethods(methodDefinition).Any();
+			} else
+				return HidesByName(memberDefinition, includeBaseMethods: true);
+		}
+		
+		/// <summary>
+		/// Determines whether any base class member has the same name as the given member.
+		/// </summary>
+		/// <param name="member">The derived type's member.</param>
+		/// <param name="includeBaseMethods">true if names of methods declared in base types should also be checked.</param>
+		/// <returns>true if any base member has the same name as given member, otherwise false. Returns null on error.</returns>
+		static bool? HidesByName(IMemberDefinition member, bool includeBaseMethods)
+		{
+			Debug.Assert(!(member is PropertyDefinition) || !((PropertyDefinition)member).IsIndexer());
+
+			if (member.DeclaringType.BaseType != null) {
+				var baseTypeRef = member.DeclaringType.BaseType;
+				while (baseTypeRef != null) {
+					var baseType = baseTypeRef.Resolve();
+					if (baseType == null)
+						return null;
+					if (baseType.HasProperties && AnyIsHiddenBy(baseType.Properties, member, m => !m.IsIndexer()))
+						return true;
+					if (baseType.HasEvents && AnyIsHiddenBy(baseType.Events, member))
+						return true;
+					if (baseType.HasFields && AnyIsHiddenBy(baseType.Fields, member))
+						return true;
+					if (includeBaseMethods && baseType.HasMethods
+					    && AnyIsHiddenBy(baseType.Methods, member, m => !m.IsSpecialName))
+						return true;
+					if (baseType.HasNestedTypes && AnyIsHiddenBy(baseType.NestedTypes, member))
+						return true;
+					baseTypeRef = baseType.BaseType;
+				}
+			}
+			return false;
+		}
+
+		static bool AnyIsHiddenBy<T>(IEnumerable<T> members, IMemberDefinition derived, Predicate<T> condition = null)
+			where T : IMemberDefinition
+		{
+			return members.Any(m => m.Name == derived.Name
+			                   && (condition == null || condition(m))
+			                   && TypesHierarchyHelpers.IsVisibleFromDerived(m, derived.DeclaringType));
+		}
+		#endregion
+
 		EntityDeclaration DoDecompile(ITypeDefinition typeDef, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
@@ -385,7 +470,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				return entityDecl;
 			}
 			foreach (var type in typeDef.NestedTypes) {
-				typeDecl.Members.Add(DoDecompile(type, decompilationContext.WithCurrentTypeDefinition(type)));
+				var nestedType = DoDecompile(type, decompilationContext.WithCurrentTypeDefinition(type));
+				SetNewModifier(nestedType);
+				typeDecl.Members.Add(nestedType);
 			}
 			foreach (var field in typeDef.Fields) {
 				var fieldDef = typeSystem.GetCecil(field) as FieldDefinition;
@@ -437,11 +524,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentMember == method);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
-			var entityDecl = typeSystemAstBuilder.ConvertEntity(method);
+			var methodDecl = typeSystemAstBuilder.ConvertEntity(method);
 			if (methodDefinition.HasBody) {
-				DecompileBody(methodDefinition, method, entityDecl, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(methodDefinition, method, methodDecl, decompilationContext, typeSystemAstBuilder);
 			}
-			return entityDecl;
+			if (decompilationContext.CurrentTypeDefinition.Kind != TypeKind.Interface
+			    && method.SymbolKind == SymbolKind.Method
+			    && methodDefinition.IsVirtual == methodDefinition.IsNewSlot)
+				SetNewModifier(methodDecl);
+			return methodDecl;
 		}
 
 		IDecompilerTypeSystem GetSpecializingTypeSystem(ITypeResolveContext decompilationContext)
@@ -504,21 +595,23 @@ namespace ICSharpCode.Decompiler.CSharp
 				enumDec.Attributes.AddRange(field.Attributes.Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
 				return enumDec;
 			}
-			return typeSystemAstBuilder.ConvertEntity(field);
+			var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
+			SetNewModifier(fieldDecl);
+			return fieldDecl;
 		}
 
 		EntityDeclaration DoDecompile(PropertyDefinition propertyDefinition, IProperty property, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == property);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
-			EntityDeclaration entityDecl = typeSystemAstBuilder.ConvertEntity(property);
+			EntityDeclaration propertyDecl = typeSystemAstBuilder.ConvertEntity(property);
 			Accessor getter, setter;
-			if (entityDecl is PropertyDeclaration) {
-				getter = ((PropertyDeclaration)entityDecl).Getter;
-				setter = ((PropertyDeclaration)entityDecl).Setter;
+			if (propertyDecl is PropertyDeclaration) {
+				getter = ((PropertyDeclaration)propertyDecl).Getter;
+				setter = ((PropertyDeclaration)propertyDecl).Setter;
 			} else {
-				getter = ((IndexerDeclaration)entityDecl).Getter;
-				setter = ((IndexerDeclaration)entityDecl).Setter;
+				getter = ((IndexerDeclaration)propertyDecl).Getter;
+				setter = ((IndexerDeclaration)propertyDecl).Setter;
 			}
 			if (property.CanGet && property.Getter.HasBody) {
 				DecompileBody(propertyDefinition.GetMethod, property.Getter, getter, decompilationContext, typeSystemAstBuilder);
@@ -526,20 +619,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (property.CanSet && property.Setter.HasBody) {
 				DecompileBody(propertyDefinition.SetMethod, property.Setter, setter, decompilationContext, typeSystemAstBuilder);
 			}
-			return entityDecl;
+			var accessor = propertyDefinition.GetMethod ?? propertyDefinition.SetMethod;
+			if (!accessor.HasOverrides && !accessor.DeclaringType.IsInterface && accessor.IsVirtual == accessor.IsNewSlot)
+				SetNewModifier(propertyDecl);
+			return propertyDecl;
 		}
 		
-		EntityDeclaration DoDecompile(EventDefinition propertyDefinition, IEvent ev, ITypeResolveContext decompilationContext)
+		EntityDeclaration DoDecompile(EventDefinition eventDefinition, IEvent ev, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
 			typeSystemAstBuilder.UseCustomEvents = true;
 			var eventDecl = (CustomEventDeclaration)typeSystemAstBuilder.ConvertEntity(ev);
-			if (propertyDefinition.AddMethod != null && propertyDefinition.AddMethod.HasBody) {
-				DecompileBody(propertyDefinition.AddMethod, ev.AddAccessor, eventDecl.AddAccessor, decompilationContext, typeSystemAstBuilder);
+			if (eventDefinition.AddMethod != null && eventDefinition.AddMethod.HasBody) {
+				DecompileBody(eventDefinition.AddMethod, ev.AddAccessor, eventDecl.AddAccessor, decompilationContext, typeSystemAstBuilder);
 			}
-			if (propertyDefinition.RemoveMethod != null && propertyDefinition.RemoveMethod.HasBody) {
-				DecompileBody(propertyDefinition.RemoveMethod, ev.RemoveAccessor, eventDecl.RemoveAccessor, decompilationContext, typeSystemAstBuilder);
+			if (eventDefinition.RemoveMethod != null && eventDefinition.RemoveMethod.HasBody) {
+				DecompileBody(eventDefinition.RemoveMethod, ev.RemoveAccessor, eventDecl.RemoveAccessor, decompilationContext, typeSystemAstBuilder);
+			}
+			var accessor = eventDefinition.AddMethod ?? eventDefinition.RemoveMethod;
+			if (accessor.IsVirtual == accessor.IsNewSlot) {
+				SetNewModifier(eventDecl);
 			}
 			return eventDecl;
 		}
