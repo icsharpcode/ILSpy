@@ -16,43 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-namespace ICSharpCode.ILSpy.TextView
+using System;
+using System.IO;
+
+namespace ICSharpCode.ILSpy
 {
-	[ExportContextMenuEntry(Header = "Copy", Category = "Editor")]
-	sealed class CopyContextMenuEntry : IContextMenuEntry
+	public interface IResourceFileHandler
 	{
-		public bool IsVisible(TextViewContext context)
-		{
-			return context.TextView != null;
-		}
-
-		public bool IsEnabled(TextViewContext context)
-		{
-			return context.TextView != null && context.TextView.textEditor.SelectionLength > 0;
-		}
-
-		public void Execute(TextViewContext context)
-		{
-			context.TextView.textEditor.Copy();
-		}
-	}
-
-	[ExportContextMenuEntry(Header = "Select All", Category = "Editor")]
-	sealed class SelectAllContextMenuEntry : IContextMenuEntry
-	{
-		public bool IsVisible(TextViewContext context)
-		{
-			return context.TextView != null;
-		}
-
-		public bool IsEnabled(TextViewContext context)
-		{
-			return context.TextView != null;
-		}
-
-		public void Execute(TextViewContext context)
-		{
-			context.TextView.textEditor.SelectAll();
-		}
+		string EntryType { get; }
+		bool CanHandle(string name, DecompilationOptions options);
+		string WriteResourceToFile(LoadedAssembly assembly, string fileName, Stream stream, DecompilationOptions options);
 	}
 }

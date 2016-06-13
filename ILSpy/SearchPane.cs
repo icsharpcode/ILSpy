@@ -58,6 +58,7 @@ namespace ICSharpCode.ILSpy
 		private SearchPane()
 		{
 			InitializeComponent();
+			searchModeComboBox.Items.Add(new { Image = Images.Library, Name = "Types and Members" });
 			searchModeComboBox.Items.Add(new { Image = Images.Class, Name = "Type" });
 			searchModeComboBox.Items.Add(new { Image = Images.Property, Name = "Member" });
 			searchModeComboBox.Items.Add(new { Image = Images.Method, Name = "Method" });
@@ -65,7 +66,7 @@ namespace ICSharpCode.ILSpy
 			searchModeComboBox.Items.Add(new { Image = Images.Property, Name = "Property" });
 			searchModeComboBox.Items.Add(new { Image = Images.Event, Name = "Event" });
 			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
-			searchModeComboBox.SelectedIndex = (int)SearchMode.Type;
+			searchModeComboBox.SelectedIndex = (int)SearchMode.TypeAndMember;
 			ContextMenuProvider.Add(listBox);
 			
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
@@ -253,6 +254,9 @@ namespace ICSharpCode.ILSpy
 			AbstractSearchStrategy GetSearchStrategy(SearchMode mode, string[] terms)
 			{
 				if (terms.Length == 1) {
+					if (terms[0].StartsWith("tm:", StringComparison.Ordinal))
+						return new TypeAndMemberSearchStrategy(terms[0].Substring(3));
+
 					if (terms[0].StartsWith("t:", StringComparison.Ordinal))
 						return new TypeSearchStrategy(terms[0].Substring(2));
 
@@ -277,6 +281,8 @@ namespace ICSharpCode.ILSpy
 
 				switch (mode)
 				{
+					case SearchMode.TypeAndMember:
+						return new TypeAndMemberSearchStrategy(terms);
 					case SearchMode.Type:
 						return new TypeSearchStrategy(terms);
 					case SearchMode.Member:
@@ -318,7 +324,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = "_View", Header = "_Search...", MenuIcon = "Images/Find.png", MenuCategory = "ShowPane", MenuOrder = 100)]
+	[ExportMainMenuCommand(Menu = "_View", Header = "_Search...", MenuIcon = "Images/Find.png", MenuCategory = "View", MenuOrder = 100)]
 	[ExportToolbarCommand(ToolTip = "Search (Ctrl+Shift+F or Ctrl+E)", ToolbarIcon = "Images/Find.png", ToolbarCategory = "View", ToolbarOrder = 100)]
 	sealed class ShowSearchCommand : CommandWrapper
 	{
@@ -333,6 +339,7 @@ namespace ICSharpCode.ILSpy
 
 	public enum SearchMode
 	{
+		TypeAndMember,
 		Type,
 		Member,
 		Method,

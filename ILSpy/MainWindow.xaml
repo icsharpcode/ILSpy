@@ -141,12 +141,12 @@
 					<RowDefinition Height="0" />
 					<RowDefinition Height="0" Name="bottomPaneRow" />
 				</Grid.RowDefinitions>
-				<Border BorderBrush="Black" BorderThickness="1" Name="updateAvailablePanel" Visibility="Collapsed">
+				<Border BorderBrush="Black" BorderThickness="1" Name="updatePanel" Visibility="Collapsed">
 					<DockPanel>
-						<Button DockPanel.Dock="Right" Click="updateAvailablePanelCloseButtonClick" MinWidth="0">X</Button>
+						<Button DockPanel.Dock="Right" Click="updatePanelCloseButtonClick" MinWidth="0">X</Button>
 						<StackPanel Orientation="Horizontal">
-							<TextBlock Margin="4,0" VerticalAlignment="Center">A new ILSpy version is available.</TextBlock>
-							<Button Click="downloadUpdateButtonClick">Download</Button>
+							<TextBlock Name="updatePanelMessage" Margin="4,0" VerticalAlignment="Center">A new ILSpy version is available.</TextBlock>
+							<Button Name="downloadOrCheckUpdateButton" Click="downloadOrCheckUpdateButtonClick">Download</Button>
 						</StackPanel>
 					</DockPanel>
 				</Border>

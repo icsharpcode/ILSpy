@@ -419,6 +419,13 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			// We just care that we can move it in front of the loop:
 			if (declarationPoint != loop)
 				return null;
+
+			// Make sure that the enumerator variable is not used inside the body
+			var enumeratorId = Identifier.Create(enumeratorVar.Name);
+			foreach (Statement stmt in m.Get<Statement>("statement")) {
+				if (stmt.Descendants.OfType<Identifier>().Any(id => enumeratorId.IsMatch(id)))
+					return null;
+			}
 			
 			BlockStatement newBody = new BlockStatement();
 			foreach (Statement stmt in m.Get<Statement>("variablesInsideLoop"))

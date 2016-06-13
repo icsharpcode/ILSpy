@@ -137,10 +137,10 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			var right = (Expression)assignmentExpression.Right.AcceptVisitor(this, data);
 			
 			switch (assignmentExpression.Operator) {
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.Assign:
+				case CSharp.AssignmentOperatorType.Assign:
 					op = AssignmentOperatorType.Assign;
 					break;
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.Add:
+				case CSharp.AssignmentOperatorType.Add:
 					if (provider.HasEvent(left)) {
 						var addHandler = new AddRemoveHandlerStatement { IsAddHandler = true };
 						addHandler.EventExpression = left;
@@ -149,7 +149,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 					}
 					op = AssignmentOperatorType.Add;
 					break;
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.Subtract:
+				case CSharp.AssignmentOperatorType.Subtract:
 					if (provider.HasEvent(left)) {
 						var addHandler = new AddRemoveHandlerStatement { IsAddHandler = false };
 						addHandler.EventExpression = left;
@@ -158,31 +158,31 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 					}
 					op = AssignmentOperatorType.Subtract;
 					break;
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.Multiply:
+				case CSharp.AssignmentOperatorType.Multiply:
 					op = AssignmentOperatorType.Multiply;
 					break;
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.Divide:
+				case CSharp.AssignmentOperatorType.Divide:
 					op = AssignmentOperatorType.Divide;
 					break;
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.Modulus:
+				case CSharp.AssignmentOperatorType.Modulus:
 					op = AssignmentOperatorType.Assign;
 					right = new BinaryOperatorExpression((Expression)left.Clone(), BinaryOperatorType.Modulus, right);
 					break;
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.ShiftLeft:
+				case CSharp.AssignmentOperatorType.ShiftLeft:
 					op = AssignmentOperatorType.ShiftLeft;
 					break;
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.ShiftRight:
+				case CSharp.AssignmentOperatorType.ShiftRight:
 					op = AssignmentOperatorType.ShiftRight;
 					break;
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.BitwiseAnd:
+				case CSharp.AssignmentOperatorType.BitwiseAnd:
 					op = AssignmentOperatorType.Assign;
 					right = new BinaryOperatorExpression((Expression)left.Clone(), BinaryOperatorType.BitwiseAnd, right);
 					break;
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.BitwiseOr:
+				case CSharp.AssignmentOperatorType.BitwiseOr:
 					op = AssignmentOperatorType.Assign;
 					right = new BinaryOperatorExpression((Expression)left.Clone(), BinaryOperatorType.BitwiseOr, right);
 					break;
-				case ICSharpCode.NRefactory.CSharp.AssignmentOperatorType.ExclusiveOr:
+				case CSharp.AssignmentOperatorType.ExclusiveOr:
 					op = AssignmentOperatorType.Assign;
 					right = new BinaryOperatorExpression((Expression)left.Clone(), BinaryOperatorType.ExclusiveOr, right);
 					break;
@@ -208,68 +208,68 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			var right = (Expression)binaryOperatorExpression.Right.AcceptVisitor(this, data);
 			
 			switch (binaryOperatorExpression.Operator) {
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.BitwiseAnd:
+				case CSharp.BinaryOperatorType.BitwiseAnd:
 					op = BinaryOperatorType.BitwiseAnd;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.BitwiseOr:
+				case CSharp.BinaryOperatorType.BitwiseOr:
 					op = BinaryOperatorType.BitwiseOr;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.ConditionalAnd:
+				case CSharp.BinaryOperatorType.ConditionalAnd:
 					op = BinaryOperatorType.LogicalAnd;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.ConditionalOr:
+				case CSharp.BinaryOperatorType.ConditionalOr:
 					op = BinaryOperatorType.LogicalOr;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.ExclusiveOr:
+				case CSharp.BinaryOperatorType.ExclusiveOr:
 					op = BinaryOperatorType.ExclusiveOr;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.GreaterThan:
+				case CSharp.BinaryOperatorType.GreaterThan:
 					op = BinaryOperatorType.GreaterThan;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.GreaterThanOrEqual:
+				case CSharp.BinaryOperatorType.GreaterThanOrEqual:
 					op = BinaryOperatorType.GreaterThanOrEqual;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.Equality:
+				case CSharp.BinaryOperatorType.Equality:
 					if (IsReferentialEquality(binaryOperatorExpression))
 						op = BinaryOperatorType.ReferenceEquality;
 					else
 						op = BinaryOperatorType.Equality;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.InEquality:
+				case CSharp.BinaryOperatorType.InEquality:
 					if (IsReferentialEquality(binaryOperatorExpression))
 						op = BinaryOperatorType.ReferenceInequality;
 					else
 						op = BinaryOperatorType.InEquality;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.LessThan:
+				case CSharp.BinaryOperatorType.LessThan:
 					op = BinaryOperatorType.LessThan;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.LessThanOrEqual:
+				case CSharp.BinaryOperatorType.LessThanOrEqual:
 					op = BinaryOperatorType.LessThanOrEqual;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.Add:
+				case CSharp.BinaryOperatorType.Add:
 					// TODO might be string concatenation
 					op = BinaryOperatorType.Add;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.Subtract:
+				case CSharp.BinaryOperatorType.Subtract:
 					op = BinaryOperatorType.Subtract;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.Multiply:
+				case CSharp.BinaryOperatorType.Multiply:
 					op = BinaryOperatorType.Multiply;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.Divide:
+				case CSharp.BinaryOperatorType.Divide:
 					op = BinaryOperatorType.Divide;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.Modulus:
+				case CSharp.BinaryOperatorType.Modulus:
 					op = BinaryOperatorType.Modulus;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.ShiftLeft:
+				case CSharp.BinaryOperatorType.ShiftLeft:
 					op = BinaryOperatorType.ShiftLeft;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.ShiftRight:
+				case CSharp.BinaryOperatorType.ShiftRight:
 					op = BinaryOperatorType.ShiftRight;
 					break;
-				case ICSharpCode.NRefactory.CSharp.BinaryOperatorType.NullCoalescing:
+				case CSharp.BinaryOperatorType.NullCoalescing:
 					var nullCoalescing = new ConditionalExpression {
 						ConditionExpression = left,
 						FalseExpression = right
@@ -653,57 +653,57 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			Expression expr;
 
 			switch (unaryOperatorExpression.Operator) {
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.Not:
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.BitNot:
+				case CSharp.UnaryOperatorType.Not:
+				case CSharp.UnaryOperatorType.BitNot:
 					expr = new UnaryOperatorExpression() {
 						Expression = (Expression)unaryOperatorExpression.Expression.AcceptVisitor(this, data),
 						Operator = UnaryOperatorType.Not
 					};
 					break;
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.Minus:
+				case CSharp.UnaryOperatorType.Minus:
 					expr = new UnaryOperatorExpression() {
 						Expression = (Expression)unaryOperatorExpression.Expression.AcceptVisitor(this, data),
 						Operator = UnaryOperatorType.Minus
 					};
 					break;
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.Plus:
+				case CSharp.UnaryOperatorType.Plus:
 					expr = new UnaryOperatorExpression() {
 						Expression = (Expression)unaryOperatorExpression.Expression.AcceptVisitor(this, data),
 						Operator = UnaryOperatorType.Plus
 					};
 					break;
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.Increment:
+				case CSharp.UnaryOperatorType.Increment:
 					expr = new InvocationExpression();
 					((InvocationExpression)expr).Target = new IdentifierExpression() { Identifier = "__Increment" };
 					((InvocationExpression)expr).Arguments.Add((Expression)unaryOperatorExpression.Expression.AcceptVisitor(this, data));
 					break;
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.PostIncrement:
+				case CSharp.UnaryOperatorType.PostIncrement:
 					expr = new InvocationExpression();
 					((InvocationExpression)expr).Target = new IdentifierExpression() { Identifier = "__PostIncrement" };
 					((InvocationExpression)expr).Arguments.Add((Expression)unaryOperatorExpression.Expression.AcceptVisitor(this, data));
 					break;
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.Decrement:
+				case CSharp.UnaryOperatorType.Decrement:
 					expr = new InvocationExpression();
 					((InvocationExpression)expr).Target = new IdentifierExpression() { Identifier = "__Decrement" };
 					((InvocationExpression)expr).Arguments.Add((Expression)unaryOperatorExpression.Expression.AcceptVisitor(this, data));
 					break;
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.PostDecrement:
+				case CSharp.UnaryOperatorType.PostDecrement:
 					expr = new InvocationExpression();
 					((InvocationExpression)expr).Target = new IdentifierExpression() { Identifier = "__PostDecrement" };
 					((InvocationExpression)expr).Arguments.Add((Expression)unaryOperatorExpression.Expression.AcceptVisitor(this, data));
 					break;
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.AddressOf:
+				case CSharp.UnaryOperatorType.AddressOf:
 					expr = new UnaryOperatorExpression() {
 						Expression = (Expression)unaryOperatorExpression.Expression.AcceptVisitor(this, data),
 						Operator = UnaryOperatorType.AddressOf
 					};
 					break;
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.Dereference:
+				case CSharp.UnaryOperatorType.Dereference:
 					expr = new InvocationExpression();
 					((InvocationExpression)expr).Target = new IdentifierExpression() { Identifier = "__Dereference" };
 					((InvocationExpression)expr).Arguments.Add((Expression)unaryOperatorExpression.Expression.AcceptVisitor(this, data));
 					break;
-				case ICSharpCode.NRefactory.CSharp.UnaryOperatorType.Await:
+				case CSharp.UnaryOperatorType.Await:
 					expr = new UnaryOperatorExpression() {
 						Expression = (Expression)unaryOperatorExpression.Expression.AcceptVisitor(this, data),
 						Operator = UnaryOperatorType.Await
@@ -1482,15 +1482,16 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				var result = new EventDeclaration();
 
 				ConvertNodes(eventDeclaration.Attributes, result.Attributes);
-				if (types.Any() && types.Peek().ClassType == ClassType.Module)
-					eventDeclaration.Modifiers &= ~CSharp.Modifiers.Static;
+				if (types.Any()) {
+					if (types.Peek().ClassType == ClassType.Module)
+						eventDeclaration.Modifiers &= ~CSharp.Modifiers.Static;
+					types.Peek().Members.Add(result);
+				}
 				result.Modifiers = ConvertModifiers(eventDeclaration.Modifiers, eventDeclaration);
 				result.Name = evt.Name;
 				result.ReturnType = (AstType)eventDeclaration.ReturnType.AcceptVisitor(this, data);
 				
 //				CreateImplementsClausesForEvent(result);
-				
-				types.Peek().Members.Add(result);
 			}
 			
 			members.Pop();
@@ -1768,76 +1769,76 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 				ConvertNodes(operatorDeclaration.Attributes.Where(section => section.AttributeTarget != "return"), op.Attributes);
 				ConvertNodes(operatorDeclaration.ModifierTokens, op.ModifierTokens);
 				switch (operatorDeclaration.OperatorType) {
-					case ICSharpCode.NRefactory.CSharp.OperatorType.LogicalNot:
-					case ICSharpCode.NRefactory.CSharp.OperatorType.OnesComplement:
+					case CSharp.OperatorType.LogicalNot:
+					case CSharp.OperatorType.OnesComplement:
 						op.Operator = OverloadableOperatorType.Not;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.True:
+					case CSharp.OperatorType.True:
 						op.Operator = OverloadableOperatorType.IsTrue;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.False:
+					case CSharp.OperatorType.False:
 						op.Operator = OverloadableOperatorType.IsFalse;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.Implicit:
+					case CSharp.OperatorType.Implicit:
 						op.Modifiers |= Modifiers.Widening;
 						op.Operator = OverloadableOperatorType.CType;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.Explicit:
+					case CSharp.OperatorType.Explicit:
 						op.Modifiers |= Modifiers.Narrowing;
 						op.Operator = OverloadableOperatorType.CType;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.Addition:
+					case CSharp.OperatorType.Addition:
 						op.Operator = OverloadableOperatorType.Add;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.Subtraction:
+					case CSharp.OperatorType.Subtraction:
 						op.Operator = OverloadableOperatorType.Subtract;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.UnaryPlus:
+					case CSharp.OperatorType.UnaryPlus:
 						op.Operator = OverloadableOperatorType.UnaryPlus;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.UnaryNegation:
+					case CSharp.OperatorType.UnaryNegation:
 						op.Operator = OverloadableOperatorType.UnaryMinus;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.Multiply:
+					case CSharp.OperatorType.Multiply:
 						op.Operator = OverloadableOperatorType.Multiply;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.Division:
+					case CSharp.OperatorType.Division:
 						op.Operator = OverloadableOperatorType.Divide;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.Modulus:
+					case CSharp.OperatorType.Modulus:
 						op.Operator = OverloadableOperatorType.Modulus;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.BitwiseAnd:
+					case CSharp.OperatorType.BitwiseAnd:
 						op.Operator = OverloadableOperatorType.BitwiseAnd;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.BitwiseOr:
+					case CSharp.OperatorType.BitwiseOr:
 						op.Operator = OverloadableOperatorType.BitwiseOr;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.ExclusiveOr:
+					case CSharp.OperatorType.ExclusiveOr:
 						op.Operator = OverloadableOperatorType.ExclusiveOr;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.LeftShift:
+					case CSharp.OperatorType.LeftShift:
 						op.Operator = OverloadableOperatorType.ShiftLeft;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.RightShift:
+					case CSharp.OperatorType.RightShift:
 						op.Operator = OverloadableOperatorType.ShiftRight;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.Equality:
+					case CSharp.OperatorType.Equality:
 						op.Operator = OverloadableOperatorType.Equality;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.Inequality:
+					case CSharp.OperatorType.Inequality:
 						op.Operator = OverloadableOperatorType.InEquality;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.GreaterThan:
+					case CSharp.OperatorType.GreaterThan:
 						op.Operator = OverloadableOperatorType.GreaterThan;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.LessThan:
+					case CSharp.OperatorType.LessThan:
 						op.Operator = OverloadableOperatorType.LessThan;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.GreaterThanOrEqual:
+					case CSharp.OperatorType.GreaterThanOrEqual:
 						op.Operator = OverloadableOperatorType.GreaterThanOrEqual;
 						break;
-					case ICSharpCode.NRefactory.CSharp.OperatorType.LessThanOrEqual:
+					case CSharp.OperatorType.LessThanOrEqual:
 						op.Operator = OverloadableOperatorType.LessThanOrEqual;
 						break;
 					default:
@@ -1861,7 +1862,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			
 			ConvertNodes(parameterDeclaration.Attributes, param.Attributes);
 			param.Modifiers = ConvertParamModifiers(parameterDeclaration.ParameterModifier);
-			if ((parameterDeclaration.ParameterModifier & ICSharpCode.NRefactory.CSharp.ParameterModifier.Out) == ICSharpCode.NRefactory.CSharp.ParameterModifier.Out) {
+			if ((parameterDeclaration.ParameterModifier & CSharp.ParameterModifier.Out) == CSharp.ParameterModifier.Out) {
 				AttributeBlock block = new AttributeBlock();
 				block.Attributes.Add(new Ast.Attribute() { Type = new SimpleType("Out") });
 				param.Attributes.Add(block);
@@ -1878,13 +1879,13 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 		Modifiers ConvertParamModifiers(CSharp.ParameterModifier mods)
 		{
 			switch (mods) {
-				case ICSharpCode.NRefactory.CSharp.ParameterModifier.None:
-				case ICSharpCode.NRefactory.CSharp.ParameterModifier.This:
+				case CSharp.ParameterModifier.None:
+				case CSharp.ParameterModifier.This:
 					return Modifiers.None;
-				case ICSharpCode.NRefactory.CSharp.ParameterModifier.Ref:
-				case ICSharpCode.NRefactory.CSharp.ParameterModifier.Out:
+				case CSharp.ParameterModifier.Ref:
+				case CSharp.ParameterModifier.Out:
 					return Modifiers.ByRef;
-				case ICSharpCode.NRefactory.CSharp.ParameterModifier.Params:
+				case CSharp.ParameterModifier.Params:
 					return Modifiers.ParamArray;
 				default:
 					throw new Exception("Invalid value for ParameterModifier");
@@ -1934,7 +1935,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			
 			// look for type in parent
 			decl.Type = (AstType)variableInitializer.Parent
-				.GetChildByRole(ICSharpCode.NRefactory.CSharp.Roles.Type)
+				.GetChildByRole(CSharp.Roles.Type)
 				.AcceptVisitor(this, data);
 			decl.Identifiers.Add(new VariableIdentifier() { Name = variableInitializer.Name });
 			decl.Initializer = (Expression)variableInitializer.Initializer.AcceptVisitor(this, data);
@@ -2102,7 +2103,7 @@ namespace ICSharpCode.NRefactory.VB.Visitors
 			};
 			
 			var constraint = typeParameterDeclaration.Parent
-				.GetChildrenByRole(ICSharpCode.NRefactory.CSharp.Roles.Constraint)
+				.GetChildrenByRole(CSharp.Roles.Constraint)
 				.SingleOrDefault(c => c.TypeParameter.Identifier == typeParameterDeclaration.Name);
 			
 			if (constraint != null)

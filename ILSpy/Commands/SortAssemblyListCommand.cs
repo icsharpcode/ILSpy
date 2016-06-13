@@ -16,43 +16,24 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-namespace ICSharpCode.ILSpy.TextView
+using System;
+using System.Collections.Generic;
+
+namespace ICSharpCode.ILSpy
 {
-	[ExportContextMenuEntry(Header = "Copy", Category = "Editor")]
-	sealed class CopyContextMenuEntry : IContextMenuEntry
+	[ExportMainMenuCommand(Menu = "_View", Header = "Sort assembly list by name", MenuIcon = "Images/Sort.png", MenuCategory = "View")]
+	[ExportToolbarCommand(ToolTip = "Sort assembly list by name", ToolbarIcon = "Images/Sort.png", ToolbarCategory = "View")]
+	class SortAssemblyListCommand : SimpleCommand, IComparer<LoadedAssembly>
 	{
-		public bool IsVisible(TextViewContext context)
+		public override void Execute(object parameter)
 		{
-			return context.TextView != null;
+			using (MainWindow.Instance.treeView.LockUpdates())
+				MainWindow.Instance.CurrentAssemblyList.Sort(this);
 		}
 
-		public bool IsEnabled(TextViewContext context)
+		int IComparer<LoadedAssembly>.Compare(LoadedAssembly x, LoadedAssembly y)
 		{
-			return context.TextView != null && context.TextView.textEditor.SelectionLength > 0;
-		}
-
-		public void Execute(TextViewContext context)
-		{
-			context.TextView.textEditor.Copy();
-		}
-	}
-
-	[ExportContextMenuEntry(Header = "Select All", Category = "Editor")]
-	sealed class SelectAllContextMenuEntry : IContextMenuEntry
-	{
-		public bool IsVisible(TextViewContext context)
-		{
-			return context.TextView != null;
-		}
-
-		public bool IsEnabled(TextViewContext context)
-		{
-			return context.TextView != null;
-		}
-
-		public void Execute(TextViewContext context)
-		{
-			context.TextView.textEditor.SelectAll();
+			return string.Compare(x.ShortName, y.ShortName, StringComparison.CurrentCulture);
 		}
 	}
 }
