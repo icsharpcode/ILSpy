@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -33,6 +34,12 @@ namespace ICSharpCode.Decompiler.IL
 			variable.LoadCount--;
 			base.Disconnected();
 		}
+		
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+		}
 	}
 	
 	partial class LdLoca
@@ -48,6 +55,12 @@ namespace ICSharpCode.Decompiler.IL
 			variable.AddressCount--;
 			base.Disconnected();
 		}
+		
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+		}
 	}
 	
 	partial class StLoc
@@ -62,6 +75,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			variable.StoreCount--;
 			base.Disconnected();
+		}
+		
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
 		}
 	}
 }

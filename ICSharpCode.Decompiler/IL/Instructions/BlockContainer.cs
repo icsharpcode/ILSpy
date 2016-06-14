@@ -139,9 +139,9 @@ namespace ICSharpCode.Decompiler.IL
 			return BlockSlot;
 		}
 
-		internal override void CheckInvariant()
+		internal override void CheckInvariant(ILPhase phase)
 		{
-			base.CheckInvariant();
+			base.CheckInvariant(phase);
 			Debug.Assert(EntryPoint == Blocks[0]);
 			Debug.Assert(!IsConnected || EntryPoint.IncomingEdgeCount >= 1);
 			Debug.Assert(Blocks.All(b => b.HasFlag(InstructionFlags.EndPointUnreachable)));

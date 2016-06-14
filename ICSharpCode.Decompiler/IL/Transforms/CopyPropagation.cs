@@ -49,8 +49,9 @@ namespace ICSharpCode.Decompiler.IL
 								};
 								block.Instructions.Insert(i++, new StLoc(uninlinedArgs[j], arg));
 							}
+							v.Scope.Variables.AddRange(uninlinedArgs);
 							// perform copy propagation:
-							foreach (var expr in function.Descendants) {
+							foreach (var expr in v.Scope.Descendants) {
 								if (expr.MatchLdLoc(v)) {
 									var clone = copiedExpr.Clone();
 									for (int j = 0; j < uninlinedArgs.Length; j++) {

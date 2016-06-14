@@ -46,8 +46,6 @@ namespace ICSharpCode.Decompiler.IL
 	/// Try-catch statement.
 	/// </summary>
 	/// <remarks>
-	/// The evaluation stack does not need to be empty when entering or leaving a try-catch-block.
-	/// All try or catch blocks with reachable endpoint must produce compatible stacks.
 	/// The return value of the try or catch blocks is ignored, the TryCatch always returns void.
 	/// </remarks>
 	partial class TryCatch : TryInstruction
@@ -125,20 +123,19 @@ namespace ICSharpCode.Decompiler.IL
 	/// 
 	/// When an exception occurs in the try block of the parent try.catch statement, the runtime searches
 	/// the nearest enclosing TryCatchHandler with a matching variable type and
-	/// assigns the exception object to the <see cref="Variable"/>.
-	/// Then, the evaluation stack is cleared and the <see cref="Filter"/> is executed
-	/// (first phase-1 execution, which should be a no-op given the empty stack, then phase-2 execution).
+	/// assigns the exception object to the <see cref="Variable"/>, and executes the <see cref="Filter"/>.
 	/// If the filter evaluates to 0, the exception is not caught and the runtime looks for the next catch handler.
 	/// If the filter evaluates to 1, the stack is unwound, the exception caught and assigned to the <see cref="Variable"/>,
-	/// the evaluation stack is cleared again, and the <see cref="Body"/> is executed (again, phase-1 + phase-2).
+	/// and the <see cref="Body"/> is executed.
 	/// </summary>
 	partial class TryCatchHandler
 	{
-		internal override void CheckInvariant()
+		internal override void CheckInvariant(ILPhase phase)
 		{
-			base.CheckInvariant();
+			base.CheckInvariant(phase);
 			Debug.Assert(Parent is TryCatch);
 			Debug.Assert(filter.ResultType == StackType.I4);
+			Debug.Assert(this.IsDescendantOf(variable.Scope));
 		}
 		
 		public override StackType ResultType {

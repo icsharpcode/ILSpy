@@ -21,14 +21,11 @@ using System;
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {
 	/// <summary>
-	/// Implements the "reaching defintions" analysis.
+	/// Implements the "reaching definitions" analysis.
 	/// 
 	/// https://en.wikipedia.org/wiki/Reaching_definition
 	/// </summary>
 	public class ReachingDefinitions
 	{
-		public ReachingDefinitions()
-		{
-		}
 	}
 }

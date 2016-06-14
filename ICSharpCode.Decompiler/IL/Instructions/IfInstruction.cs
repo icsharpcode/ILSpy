@@ -40,9 +40,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.FalseInst = falseInst ?? new Nop();
 		}
 		
-		internal override void CheckInvariant()
+		internal override void CheckInvariant(ILPhase phase)
 		{
-			base.CheckInvariant();
+			base.CheckInvariant(phase);
 			Debug.Assert(condition.ResultType == StackType.I4);
 		}
 		

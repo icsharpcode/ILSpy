@@ -27,6 +27,20 @@ using ICSharpCode.Decompiler.CSharp;
 
 namespace ICSharpCode.Decompiler.IL
 {
+	internal enum ILPhase
+	{
+		/// <summary>
+		/// Reading the individual instructions.
+		/// * Variables don't have scopes yet as the ILFunction is not created yet.
+		/// * Branches point to IL offsets, not blocks.
+		/// </summary>
+		InILReader,
+		/// <summary>
+		/// The usual invariants are established.
+		/// </summary>
+		Normal,
+	}
+	
 	/// <summary>
 	/// Represents a decoded IL instruction
 	/// </summary>
@@ -47,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		[Conditional("DEBUG")]
-		internal virtual void CheckInvariant()
+		internal virtual void CheckInvariant(ILPhase phase)
 		{
 			foreach (var child in Children) {
 				Debug.Assert(child.Parent == this);
@@ -55,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL
 				// if child flags are invalid, parent flags must be too
 				Debug.Assert(child.flags != invalidFlags || this.flags == invalidFlags);
 				Debug.Assert(child.IsConnected == this.IsConnected);
-				child.CheckInvariant();
+				child.CheckInvariant(phase);
 			}
 		}
 		

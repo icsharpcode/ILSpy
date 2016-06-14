@@ -31,10 +31,6 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	/// <remarks>
 	/// When jumping to the entrypoint of the current block container, the branch represents a <c>continue</c> statement.
-	/// 
-	/// Phase-1 execution of a branch is a no-op.
-	/// Phase-2 execution removes PopCount elements from the evaluation stack
-	/// and jumps to the target block.
 	/// </remarks>
 	partial class Branch : SimpleInstruction
 	{
@@ -92,10 +88,10 @@ namespace ICSharpCode.Decompiler.IL
 			get { return targetBlock != null ? targetBlock.Label : CecilExtensions.OffsetToString(TargetILOffset); }
 		}
 		
-		internal override void CheckInvariant()
+		internal override void CheckInvariant(ILPhase phase)
 		{
-			base.CheckInvariant();
-			if (targetBlock != null) {
+			base.CheckInvariant(phase);
+			if (phase > ILPhase.InILReader) {
 				Debug.Assert(targetBlock.Parent is BlockContainer);
 				Debug.Assert(this.IsDescendantOf(targetBlock.Parent));
 			}

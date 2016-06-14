@@ -442,7 +442,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>A container of IL blocks.</summary>
-	public sealed partial class ILFunction : ILInstruction
+	public sealed partial class ILFunction : ILVariableScope
 	{
 		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body;

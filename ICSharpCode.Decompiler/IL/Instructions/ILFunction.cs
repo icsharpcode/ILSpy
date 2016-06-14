@@ -26,7 +26,6 @@ namespace ICSharpCode.Decompiler.IL
 	partial class ILFunction
 	{
 		public readonly MethodDefinition Method;
-		public readonly IList<ILVariable> Variables = new List<ILVariable>();
 		
 		public ILFunction(MethodDefinition method, ILInstruction body) : base(OpCode.ILFunction)
 		{

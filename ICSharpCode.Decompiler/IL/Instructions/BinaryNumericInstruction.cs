@@ -110,9 +110,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		internal override void CheckInvariant()
+		internal override void CheckInvariant(ILPhase phase)
 		{
-			base.CheckInvariant();
+			base.CheckInvariant(phase);
 			Debug.Assert(CompoundAssignmentType == CompoundAssignmentType.None || IsValidCompoundAssignmentTarget(Left));
 		}
 

@@ -81,10 +81,10 @@ namespace ICSharpCode.Decompiler.IL
 			get { return targetContainer != null ? targetContainer.EntryPoint.Label : string.Empty; }
 		}
 		
-		internal override void CheckInvariant()
+		internal override void CheckInvariant(ILPhase phase)
 		{
-			base.CheckInvariant();
-			Debug.Assert(targetContainer == null || this.IsDescendantOf(targetContainer));
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(targetContainer));
 		}
 		
 		public override void WriteTo(ITextOutput output)

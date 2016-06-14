@@ -61,6 +61,23 @@ namespace ICSharpCode.Decompiler.IL
 		public string Name { get; set; }
 
 		/// <summary>
+		/// Gets the scope in which this variable is declared.
+		/// </summary>
+		/// <remarks>
+		/// This property is set automatically when the variable is added to the <c>VariableScope.Variables</c> collection.
+		/// </remarks>
+		public ILVariableScope Scope { get; internal set; }
+		
+		/// <summary>
+		/// Gets the index of this variable within the <c>VariableScope.Variables</c> collection.
+		/// </summary>
+		/// <remarks>
+		/// This property is set automatically when the variable is added to the <c>VariableScope.Variables</c> collection.
+		/// It may change if an item with a lower index is removed from the collection.
+		/// </remarks>
+		public int IndexInScope { get; internal set; }
+		
+		/// <summary>
 		/// Number of ldloc instructions referencing this variable.
 		/// </summary>
 		/// <remarks>

@@ -235,7 +235,7 @@ namespace ICSharpCode.Decompiler.IL
 				ILInstruction decodedInstruction = DecodeInstruction();
 				if (decodedInstruction.ResultType == StackType.Unknown)
 					Warn("Unknown result type (might be due to invalid IL)");
-				decodedInstruction.CheckInvariant();
+				decodedInstruction.CheckInvariant(ILPhase.InILReader);
 				decodedInstruction.ILRange = new Interval(start, reader.Position);
 				UnpackPush(decodedInstruction).ILRange = decodedInstruction.ILRange;
 				instructionBuilder.Add(decodedInstruction);
@@ -298,6 +298,7 @@ namespace ICSharpCode.Decompiler.IL
 			function.Variables.AddRange(parameterVariables);
 			function.Variables.AddRange(localVariables);
 			function.Variables.AddRange(stackVariables);
+			function.Variables.AddRange(variableByExceptionHandler.Values);
 			function.AddRef(); // mark the root node
 			return function;
 		}
@@ -968,21 +969,22 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			switch (method.DeclaringType.Kind) {
 				case TypeKind.Array:
-					var type = ((ICSharpCode.NRefactory.TypeSystem.ArrayType)method.DeclaringType).ElementType;
+					var elementType = ((ICSharpCode.NRefactory.TypeSystem.ArrayType)method.DeclaringType).ElementType;
 					if (opCode == OpCode.NewObj)
-						return Push(new NewArr(type, arguments));
+						return Push(new NewArr(elementType, arguments));
 					if (method.Name == "Set") {
 						var target = arguments[0];
 						var value = arguments.Last();
 						var indices = arguments.Skip(1).Take(arguments.Length - 2).ToArray();
-						return new StObj(new LdElema(type, target, indices), value, type);
+						return new StObj(new LdElema(elementType, target, indices), value, elementType);
 					}
 					if (method.Name == "Get") {
 						var target = arguments[0];
 						var indices = arguments.Skip(1).ToArray();
-						return Push(new LdObj(new LdElema(type, target, indices), type));
+						return Push(new LdObj(new LdElema(elementType, target, indices), elementType));
 					}
-					throw new NotImplementedException();
+					Warn("Unknown method called on array type: " + method.Name);
+					goto default;
 				default:
 					var call = CallInstruction.Create(opCode, method);
 					call.Arguments.AddRange(arguments);

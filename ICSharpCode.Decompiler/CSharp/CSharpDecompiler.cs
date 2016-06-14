@@ -557,12 +557,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			var specializingTypeSystem = GetSpecializingTypeSystem(decompilationContext);
 			var ilReader = new ILReader(specializingTypeSystem);
 			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
-			function.CheckInvariant();
+			function.CheckInvariant(ILPhase.Normal);
 			var context = new ILTransformContext { TypeSystem = specializingTypeSystem, CancellationToken = CancellationToken };
 			foreach (var transform in ilTransforms) {
 				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(function, context);
-				function.CheckInvariant();
+				function.CheckInvariant(ILPhase.Normal);
 			}
 			var statementBuilder = new StatementBuilder(decompilationContext, method);
 			var body = statementBuilder.ConvertAsBlock(function.Body);

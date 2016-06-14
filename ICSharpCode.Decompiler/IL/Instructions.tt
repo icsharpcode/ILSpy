@@ -41,7 +41,8 @@
 		new OpCode("ILFunction", "A container of IL blocks.",
 			CustomChildren(new [] {
 				new ChildInfo("body")
-			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("O")),
+			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("O")
+		) { BaseClass = "ILVariableScope" },
 		new OpCode("BlockContainer", "A container of IL blocks.",
 			VoidResult, CustomConstructor, CustomVariableName("container")),
 		new OpCode("Block", "A block of IL instructions.",

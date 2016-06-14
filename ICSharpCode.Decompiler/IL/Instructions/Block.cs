@@ -91,9 +91,9 @@ namespace ICSharpCode.Decompiler.IL
 			return clone;
 		}
 		
-		internal override void CheckInvariant()
+		internal override void CheckInvariant(ILPhase phase)
 		{
-			base.CheckInvariant();
+			base.CheckInvariant(phase);
 			for (int i = 0; i < Instructions.Count - 1; i++) {
 				// only the last instruction may have an unreachable endpoint
 				Debug.Assert(!Instructions[i].HasFlag(InstructionFlags.EndPointUnreachable));
