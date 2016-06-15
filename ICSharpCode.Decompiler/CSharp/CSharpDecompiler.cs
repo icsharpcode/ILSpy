@@ -399,9 +399,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		IMemberDefinition GetDefinitionFromAnnotation(EntityDeclaration member)
 		{
 			if (member is TypeDeclaration) {
-				return (IMemberDefinition)typeSystem.GetCecil(member.Annotation<TypeResolveResult>().Type.GetDefinition());
+				return (IMemberDefinition)typeSystem.GetCecil(member.Annotation<TypeResolveResult>()?.Type.GetDefinition());
 			} else {
-				return (IMemberDefinition)typeSystem.GetCecil(member.Annotation<MemberResolveResult>().Member.MemberDefinition);
+				return (IMemberDefinition)typeSystem.GetCecil(member.Annotation<MemberResolveResult>()?.Member.MemberDefinition);
 			}
 		}
 		
@@ -454,7 +454,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		static bool AnyIsHiddenBy<T>(IEnumerable<T> members, IMemberDefinition derived, Predicate<T> condition = null)
 			where T : IMemberDefinition
 		{
+			int numberOfGenericParameters = (derived as IGenericParameterProvider)?.GenericParameters.Count ?? 0;
 			return members.Any(m => m.Name == derived.Name
+			                   && ((m as IGenericParameterProvider)?.GenericParameters.Count ?? 0) == numberOfGenericParameters
 			                   && (condition == null || condition(m))
 			                   && TypesHierarchyHelpers.IsVisibleFromDerived(m, derived.DeclaringType));
 		}
