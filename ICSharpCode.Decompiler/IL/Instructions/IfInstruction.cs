@@ -52,9 +52,15 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
+			}
+		}
+		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return condition.Flags | CombineFlags(trueInst.Flags, falseInst.Flags);
+			return InstructionFlags.ControlFlow | condition.Flags | CombineFlags(trueInst.Flags, falseInst.Flags);
 		}
 		
 		internal static InstructionFlags CombineFlags(InstructionFlags trueFlags, InstructionFlags falseFlags)

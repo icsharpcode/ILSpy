@@ -71,6 +71,7 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(child.IsConnected == this.IsConnected);
 				child.CheckInvariant(phase);
 			}
+			Debug.Assert((this.DirectFlags & ~this.Flags) == 0, "All DirectFlags must also appear in this.Flags");
 		}
 		
 		/// <summary>
@@ -114,7 +115,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// until some change to the ILAst invalidates the cache.
 		/// </summary>
 		/// <remarks>
-		/// Flag cache invalidation makes of the <c>Parent</c> property,
+		/// Flag cache invalidation makes use of the <c>Parent</c> property,
 		/// so it is possible for this property to return a stale value
 		/// if the instruction contains "stale positions" (see remarks on Parent property).
 		/// </remarks>
@@ -142,6 +143,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		protected abstract InstructionFlags ComputeFlags();
+		
+		/// <summary>
+		/// Gets the flags for this instruction only, without considering the child instructions.
+		/// </summary>
+		public abstract InstructionFlags DirectFlags { get; }
 		
 		/// <summary>
 		/// Gets the ILRange for this instruction alone, ignoring the operands.

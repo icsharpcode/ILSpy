@@ -35,6 +35,7 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				InlineAllInBlock(block);
 			}
+			function.Variables.RemoveDead();
 		}
 
 		public bool InlineAllInBlock(Block block)

@@ -85,7 +85,13 @@ namespace ICSharpCode.Decompiler.IL
 			var flags = TryBlock.Flags;
 			foreach (var handler in Handlers)
 				flags = IfInstruction.CombineFlags(flags, handler.Flags);
-			return flags;
+			return flags | InstructionFlags.ControlFlow;
+		}
+		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
+			}
 		}
 		
 		protected override int GetChildCount()
@@ -144,7 +150,14 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return filter.Flags | body.Flags;
+			return filter.Flags | body.Flags | InstructionFlags.ControlFlow;
+		}
+		
+		public override InstructionFlags DirectFlags {
+			get {
+				// the body is not evaluated if the filter returns 0
+				return InstructionFlags.ControlFlow;
+			}
 		}
 
 		public override void WriteTo(ITextOutput output)
@@ -217,7 +230,13 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			// if the endpoint of either the try or the finally is unreachable, the endpoint of the try-finally will be unreachable
-			return TryBlock.Flags | finallyBlock.Flags;
+			return TryBlock.Flags | finallyBlock.Flags | InstructionFlags.ControlFlow;
+		}
+		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
+			}
 		}
 		
 		protected override int GetChildCount()
@@ -304,7 +323,13 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			// The endpoint of the try-fault is unreachable iff the try endpoint is unreachable
-			return TryBlock.Flags | (faultBlock.Flags & ~InstructionFlags.EndPointUnreachable);
+			return TryBlock.Flags | (faultBlock.Flags & ~InstructionFlags.EndPointUnreachable) | InstructionFlags.ControlFlow;
+		}
+		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
+			}
 		}
 		
 		protected override int GetChildCount()

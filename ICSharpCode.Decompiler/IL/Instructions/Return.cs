@@ -71,6 +71,12 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
+			}
+		}
+		
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);

@@ -49,11 +49,17 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			var sectionFlags = InstructionFlags.None;
+			var sectionFlags = InstructionFlags.ControlFlow;
 			foreach (var section in Sections) {
 				sectionFlags = IfInstruction.CombineFlags(sectionFlags, section.Flags);
 			}
 			return value.Flags | sectionFlags;
+		}
+		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
+			}
 		}
 		
 		public override void WriteTo(ITextOutput output)
@@ -120,6 +126,12 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return body.Flags;
+		}
+		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
 		}
 		
 		public override void WriteTo(ITextOutput output)

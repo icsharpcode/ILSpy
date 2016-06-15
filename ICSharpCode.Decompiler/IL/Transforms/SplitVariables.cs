@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿// Copyright (c) 2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,23 +17,22 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ICSharpCode.NRefactory;
+using ICSharpCode.Decompiler.FlowAnalysis;
 
-namespace ICSharpCode.Decompiler.IL
+namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
-	/// A simple instruction that does not have any arguments.
+	/// Split variables where possible.
 	/// </summary>
-	public abstract partial class SimpleInstruction : ILInstruction
+	public class SplitVariables : IILTransform
 	{
-		public override void WriteTo(ITextOutput output)
+		public void Run(ILFunction function, ILTransformContext context)
 		{
-			output.Write(OpCode);
-			// the non-custom WriteTo would add useless parentheses
+			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
+				container.SortBlocks();
+			}
+			var rd = new ReachingDefinitions(function, v => v.Kind != VariableKind.StackSlot);
 		}
 	}
 }

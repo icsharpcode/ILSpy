@@ -149,7 +149,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			InstructionFlags flags = InstructionFlags.None;
+			InstructionFlags flags = InstructionFlags.ControlFlow;
 			foreach (var block in Blocks) {
 				flags |= block.Flags;
 			}
@@ -159,6 +159,49 @@ namespace ICSharpCode.Decompiler.IL
 			else
 				flags &= ~InstructionFlags.EndPointUnreachable;
 			return flags;
+		}
+		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow;
+			}
+		}
+		
+		/// <summary>
+		/// Sort the blocks in reverse post-order over the control flow graph between the blocks.
+		/// </summary>
+		public void SortBlocks(bool deleteUnreachableBlocks = false)
+		{
+			// Visit blocks in post-order
+			BitSet visited = new BitSet(Blocks.Count);
+			List<Block> postOrder = new List<Block>();
+			
+			Action<Block> visit = null;
+			visit = delegate(Block block) {
+				Debug.Assert(block.Parent == this);
+				if (!visited[block.ChildIndex]) {
+					visited[block.ChildIndex] = true;
+
+					foreach (var branch in block.Descendants.OfType<Branch>()) {
+						if (branch.TargetBlock.Parent == this) {
+							visit(branch.TargetBlock);
+						}
+					}
+
+					postOrder.Add(block);
+				}
+			};
+			visit(EntryPoint);
+			
+			postOrder.Reverse();
+			if (!deleteUnreachableBlocks) {
+				for (int i = 0; i < Blocks.Count; i++) {
+					if (!visited[i])
+						postOrder.Add(Blocks[i]);
+				}
+			}
+			Debug.Assert(postOrder[0] == Blocks[0]);
+			Blocks.ReplaceList(postOrder);
 		}
 	}
 }

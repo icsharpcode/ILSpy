@@ -25,11 +25,11 @@
 <#
 	OpCode[] baseClasses = {
 		new OpCode("SimpleInstruction", "Instruction without any arguments",
-			AbstractBaseClass, CustomArguments(), CustomWriteTo),
+			AbstractBaseClass, CustomArguments(), CustomWriteTo, HasFlag("InstructionFlags.None")),
 		new OpCode("UnaryInstruction", "Instruction with a single argument",
-			AbstractBaseClass, CustomArguments("argument")),
+			AbstractBaseClass, CustomArguments("argument"), HasFlag("InstructionFlags.None")),
 		new OpCode("BinaryInstruction", "Instruction with two arguments: Left and Right",
-			AbstractBaseClass, CustomArguments("left", "right")),
+			AbstractBaseClass, CustomArguments("left", "right"), HasFlag("InstructionFlags.None")),
 		new OpCode("CallInstruction", "Instruction with a list of arguments.",
 			AbstractBaseClass, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}),
 			CustomWriteTo, MayThrow, SideEffect),
@@ -239,6 +239,13 @@ namespace ICSharpCode.Decompiler.IL
 			return <#=string.Join(" | ", opCode.Flags)#>;
 		}
 <#	} #>
+<#	if (opCode.GenerateComputeFlags && opCode.Flags.Any(f => f != "base.ComputeFlags()")) { #>
+		public override InstructionFlags DirectFlags {
+			get {
+				return <#=opCode.DirectFlags.Count > 0 ? string.Join(" | ", opCode.DirectFlags) : "InstructionFlags.None"#>;
+			}
+		}
+<#	} #>
 <#	if (opCode.GenerateWriteTo) { #>
 		public override void WriteTo(ITextOutput output)
 		{<#=Body(opCode.WriteToBody)#>}
@@ -415,7 +422,9 @@ namespace ICSharpCode.Decompiler.IL
 		public List<string> Members = new List<string>();
 		
 		public List<string> Flags = new List<string>();
+		public List<string> DirectFlags = new List<string>();
 		public bool GenerateComputeFlags = true;
+
 
 		public bool GenerateAcceptVisitor = true;
 		
@@ -479,6 +488,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		return opCode => {
 			opCode.Flags.Add(name);
+			opCode.DirectFlags.Add(name);
 		};
 	}
 
@@ -510,13 +520,19 @@ namespace ICSharpCode.Decompiler.IL
 	static Action<OpCode> MayBranch = HasFlag("InstructionFlags.MayBranch");
 	
 	// UnconditionalBranch trait: the instruction does not produce a result normally; it always branches or throws an exception. Implies VoidResult.
+	// UnconditionalBranch should be paired with either MayBranch or MayThrow (or both).
 	static Action<OpCode> UnconditionalBranch = VoidResult + HasFlag("InstructionFlags.EndPointUnreachable");
+	
+	// ControlFlow trait: the instruction involves some form of internal control flow
+	// Instructions without this trait must evaluate all arguments left-to-right before having any effect of their own.
+	static Action<OpCode> ControlFlow = HasFlag("InstructionFlags.ControlFlow");
 	
 	static Action<OpCode> BaseClass(string name)
 	{
 		return opCode => {
 			opCode.BaseClass = name;
 			opCode.Flags.Add("base.ComputeFlags()");
+			opCode.DirectFlags.Add("base.DirectFlags");
 		};
 	}
 	
@@ -527,8 +543,7 @@ namespace ICSharpCode.Decompiler.IL
 	
 	// Unary trait: the instruction has a single argument
 	static Action<OpCode> Unary = opCode => {
-		opCode.BaseClass = "UnaryInstruction";
-		opCode.Flags.Add("base.ComputeFlags()");
+		BaseClass("UnaryInstruction")(opCode);
 		opCode.ConstructorParameters.Add("ILInstruction argument");
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = "argument", FieldName = "Argument" });
 		opCode.BaseConstructorArguments.Add("argument");
@@ -539,8 +554,7 @@ namespace ICSharpCode.Decompiler.IL
 	
 	// Binary trait: the instruction has two arguments named 'Left' and 'Right'
 	static Action<OpCode> Binary = opCode => {
-		opCode.BaseClass = "BinaryInstruction";
-		opCode.Flags.Add("base.ComputeFlags()");
+		BaseClass("BinaryInstruction")(opCode);
 		opCode.ConstructorParameters.Add("ILInstruction left");
 		opCode.ConstructorParameters.Add("ILInstruction right");
 		opCode.BaseConstructorArguments.Add("left");

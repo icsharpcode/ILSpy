@@ -59,7 +59,13 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			// Creating a lambda may throw OutOfMemoryException
 			// We intentionally don't propagate any flags from the lambda body!
-			return InstructionFlags.MayThrow;
+			return InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
+		}
+		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.ControlFlow;
+			}
 		}
 	}
 }

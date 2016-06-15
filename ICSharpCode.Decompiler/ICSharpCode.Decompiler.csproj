@@ -123,6 +123,7 @@
     <Compile Include="IL\Transforms\ILInlining.cs" />
     <Compile Include="IL\Transforms\ExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\InlineCompilerGeneratedVariables.cs" />
+    <Compile Include="IL\Transforms\SplitVariables.cs" />
     <Compile Include="IL\Transforms\TransformArrayInitializers.cs" />
     <Compile Include="IL\Transforms\TransformingVisitor.cs" />
     <Compile Include="CecilExtensions.cs" />
@@ -155,6 +156,7 @@
     <Compile Include="TypeSystem\ReferenceResolvingException.cs" />
     <Compile Include="TypeSystem\TypesHierarchyHelpers.cs" />
     <Compile Include="Util\CollectionExtensions.cs" />
+    <Compile Include="Util\BitSet.cs" />
     <Compile Include="Util\Interval.cs" />
     <Compile Include="Util\UnionFind.cs" />
     <None Include="IL\ILOpCodes.tt">

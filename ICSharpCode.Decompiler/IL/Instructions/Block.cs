@@ -172,5 +172,11 @@ namespace ICSharpCode.Decompiler.IL
 			flags |= FinalInstruction.Flags;
 			return flags;
 		}
+		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
+		}
 	}
 }

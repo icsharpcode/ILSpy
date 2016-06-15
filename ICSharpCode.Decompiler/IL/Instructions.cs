@@ -219,6 +219,15 @@ namespace ICSharpCode.Decompiler.IL
 			var clone = (SimpleInstruction)ShallowClone();
 			return clone;
 		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.None;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
+		}
 	}
 
 	/// <summary>Instruction with a single argument</summary>
@@ -277,7 +286,12 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return argument.Flags;
+			return argument.Flags | InstructionFlags.None;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -362,7 +376,12 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return left.Flags | right.Flags;
+			return left.Flags | right.Flags | InstructionFlags.None;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -421,6 +440,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return Arguments.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			}
 		}
 	}
 
@@ -609,6 +633,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDiv(this);
@@ -629,6 +658,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -1062,6 +1096,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return InstructionFlags.SideEffect;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.SideEffect;
+			}
+		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitDebugBreak(this);
@@ -1201,6 +1240,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -1346,6 +1390,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return value.Flags;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -1423,6 +1472,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return value.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -1625,6 +1679,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -1708,6 +1767,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -1834,6 +1898,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return target.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			if (IsVolatile)
@@ -1919,6 +1988,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow;
+			}
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -2024,6 +2098,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return target.Flags | value.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			if (IsVolatile)
@@ -2067,6 +2146,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.SideEffect;
+			}
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -2182,6 +2266,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return value.Flags | InstructionFlags.SideEffect;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.SideEffect;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			if (IsVolatile)
@@ -2219,6 +2308,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -2336,6 +2430,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return target.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			if (IsVolatile)
@@ -2444,6 +2543,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return target.Flags | value.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			if (IsVolatile)
@@ -2484,6 +2588,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -2518,6 +2627,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -2551,6 +2665,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
+			}
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -2640,6 +2759,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Indices.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -2701,6 +2825,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
+			}
+		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitThrow(this);
@@ -2721,6 +2850,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
+			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2818,6 +2952,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return array.Flags | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -2907,6 +3046,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return array.Flags | Indices.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow;
 		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			if (IsReadOnly)
@@ -2993,6 +3137,11 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
 		}
 		public override void WriteTo(ITextOutput output)
 		{

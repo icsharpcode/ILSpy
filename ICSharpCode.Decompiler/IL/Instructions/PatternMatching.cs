@@ -100,5 +100,16 @@ namespace ICSharpCode.Decompiler.IL
 			var inst = this as Leave;
 			return inst != null && inst.TargetContainer == targetContainer;
 		}
+		
+		public bool MatchTryCatchHandler(out ILVariable variable)
+		{
+			var inst = this as TryCatchHandler;
+			if (inst != null) {
+				variable = inst.Variable;
+				return true;
+			}
+			variable = null;
+			return false;
+		}
 	}
 }

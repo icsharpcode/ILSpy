@@ -66,5 +66,16 @@ namespace ICSharpCode.Decompiler.IL
 		/// (unless the instruction represents an infinite loop).
 		/// </remarks>
 		EndPointUnreachable = 0x400,
+		/// <summary>
+		/// The instruction contains some kind of internal control flow.
+		/// </summary>
+		/// <remarks>
+		/// If this flag is not set, the all descendants of the instruction are fully evaluated (modulo MayThrow/MayBranch)
+		/// in left-to-right pre-order.
+		/// 
+		/// Note that branch instructions don't have this flag set, because their control flow is not internal
+		/// (and they don't have any unusual argument evaluation rules).
+		/// </remarks>
+		ControlFlow = 0x800,
 	}
 }
