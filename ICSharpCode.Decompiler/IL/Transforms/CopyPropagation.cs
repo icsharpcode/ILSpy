@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL
 						case VariableKind.StackSlot:
 							// Variables are be copied only if both they and the target copy variable are generated,
 							// and if the variable has only a single assignment
-							return v.IsSingleDefinition && v.Kind == VariableKind.StackSlot && target.Kind == VariableKind.StackSlot;
+							return v.IsSingleDefinition && target.Kind == VariableKind.StackSlot;
 						default:
 							return false;
 					}
