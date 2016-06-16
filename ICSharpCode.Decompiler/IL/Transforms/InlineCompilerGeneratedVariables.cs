@@ -57,8 +57,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool CanInlineVariable(ILVariable v, IEnumerable<StLoc> stores, /*out*/ List<StLoc> storesToInline, /*out*/ List<StLoc> deadStores)
 		{
-			if (v.Kind != VariableKind.Local)
+			if (v.Kind != VariableKind.Local) {
 				return false;
+			}
+			if (v.HasInitialValue) {
+				return false; // cannot handle variables that are implicitly initialized at the beginning of the function
+			}
 			Debug.Assert(v.StoreCount == stores.Count());
 			// We expect there to be one store for every load,
 			// and potentially also some dead stores.

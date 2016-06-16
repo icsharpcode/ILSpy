@@ -82,6 +82,11 @@ namespace ICSharpCode.Decompiler.IL
 			this.unionFind = new UnionFind<ILVariable>();
 			InitParameterVariables();
 			this.localVariables = body.Variables.SelectArray(CreateILVariable);
+			if (body.InitLocals) {
+				foreach (var v in localVariables) {
+					v.HasInitialValue = true;
+				}
+			}
 			this.instructionBuilder = new List<ILInstruction>();
 			this.isBranchTarget = new BitArray(body.CodeSize);
 			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
@@ -128,7 +133,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILVariable CreateILVariable(Cil.VariableDefinition v)
 		{
-			var ilVar = new ILVariable(VariableKind.Local, typeSystem.Resolve(v.VariableType), v.Index);
+			VariableKind kind = v.IsPinned ? VariableKind.PinnedLocal : VariableKind.Local;
+			ILVariable ilVar = new ILVariable(kind, typeSystem.Resolve(v.VariableType), v.Index);
 			if (string.IsNullOrEmpty(v.Name))
 				ilVar.Name = "V_" + v.Index;
 			else
@@ -138,10 +144,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILVariable CreateILVariable(ParameterDefinition p)
 		{
-			VariableKind variableKind;
 			IType parameterType;
 			if (p.Index == -1) {
-				variableKind = VariableKind.This;
 				// Manually construct ctor parameter type due to Cecil bug:
 				// https://github.com/jbevain/cecil/issues/275
 				ITypeDefinition def = typeSystem.Resolve(body.Method.DeclaringType).GetDefinition();
@@ -154,7 +158,6 @@ namespace ICSharpCode.Decompiler.IL
 					parameterType = typeSystem.Resolve(p.ParameterType);
 				}
 			} else {
-				variableKind = VariableKind.Parameter;
 				parameterType = typeSystem.Resolve(p.ParameterType);
 			}
 			Debug.Assert(!parameterType.IsUnbound());
@@ -163,9 +166,9 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(p.Index < 0); // cecil bug occurs only for "this"
 				parameterType = new ParameterizedType(parameterType.GetDefinition(), parameterType.TypeArguments);
 			}
-			var ilVar = new ILVariable(variableKind, parameterType, p.Index);
-			ilVar.StoreCount = 1; // count the initial store when the method is called with an argument
-			if (variableKind == VariableKind.This)
+			var ilVar = new ILVariable(VariableKind.Parameter, parameterType, p.Index);
+			Debug.Assert(ilVar.StoreCount == 1); // count the initial store when the method is called with an argument
+			if (p.Index < 0)
 				ilVar.Name = "this";
 			else if (string.IsNullOrEmpty(p.Name))
 				ilVar.Name = "P_" + p.Index;
@@ -293,13 +296,17 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Init(body);
 			ReadInstructions(cancellationToken);
-			var container = new BlockBuilder(body, typeSystem, variableByExceptionHandler).CreateBlocks(instructionBuilder, isBranchTarget);
+			var blockBuilder = new BlockBuilder(body, typeSystem, variableByExceptionHandler);
+			var container = blockBuilder.CreateBlocks(instructionBuilder, isBranchTarget);
 			var function = new ILFunction(body.Method, container);
 			function.Variables.AddRange(parameterVariables);
 			function.Variables.AddRange(localVariables);
 			function.Variables.AddRange(stackVariables);
 			function.Variables.AddRange(variableByExceptionHandler.Values);
 			function.AddRef(); // mark the root node
+			foreach (var c in function.Descendants.OfType<BlockContainer>()) {
+				c.SortBlocks();
+			}
 			return function;
 		}
 

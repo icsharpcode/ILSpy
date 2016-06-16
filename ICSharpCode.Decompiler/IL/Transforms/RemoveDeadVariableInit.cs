@@ -17,22 +17,27 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.FlowAnalysis;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
-	/// Split variables where possible.
+	/// Remove <c>HasInitialValue</c> from locals that are definitely assigned before every use
+	/// (=the initial value is a dead store).
 	/// </summary>
-	public class SplitVariables : IILTransform
+	public class RemoveDeadVariableInit : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
-				container.SortBlocks();
+			var visitor = new DefiniteAssignmentVisitor(function);
+			function.Body.AcceptVisitor(visitor);
+			foreach (var v in function.Variables) {
+				if (v.Kind != VariableKind.Parameter && !visitor.IsPotentiallyUsedUninitialized(v)) {
+					v.HasInitialValue = false;
+				}
 			}
-			var rd = new ReachingDefinitions(function, v => v.Kind != VariableKind.StackSlot);
 		}
 	}
 }

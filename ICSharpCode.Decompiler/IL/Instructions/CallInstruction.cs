@@ -29,8 +29,6 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public abstract partial class CallInstruction : ILInstruction
 	{
-		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true, isCollection: true);
-		
 		public static CallInstruction Create(OpCode opCode, IMethod method)
 		{
 			switch (opCode) {

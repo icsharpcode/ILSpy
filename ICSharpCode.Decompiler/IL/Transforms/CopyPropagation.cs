@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL
 					ILVariable v;
 					ILInstruction copiedExpr;
 					if (block.Instructions[i].MatchStLoc(out v, out copiedExpr)) {
-						if (v.IsSingleDefinition && v.Kind != VariableKind.Parameter && CanPerformCopyPropagation(v, copiedExpr)) {
+						if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr)) {
 							// un-inline the arguments of the ldArg instruction
 							ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
 							for (int j = 0; j < uninlinedArgs.Length; j++) {
@@ -82,7 +82,6 @@ namespace ICSharpCode.Decompiler.IL
 				case OpCode.LdLoc:
 					var v = ((LdLoc)value).Variable;
 					switch (v.Kind) {
-						case VariableKind.This:
 						case VariableKind.Parameter:
 							// Parameters can be copied only if they aren't assigned to (directly or indirectly via ldarga)
 							// note: the initialization by the caller is the first store -> StoreCount must be 1

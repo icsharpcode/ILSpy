@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		ExpressionWithResolveResult ConvertVariable(ILVariable variable)
 		{
 			Expression expr;
-			if (variable.Kind == VariableKind.This)
+			if (variable.Kind == VariableKind.Parameter && variable.Index < 0)
 				expr = new ThisReferenceExpression();
 			else
 				expr = new IdentifierExpression(variable.Name);

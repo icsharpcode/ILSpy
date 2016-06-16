@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// The instruction may write to local variables.
 		/// </summary>
 		/// <remarks>
-		/// This flag is not set for indirect write to local variables through pointers.
+		/// This flag is not set for indirect writes to local variables through pointers.
 		/// Ensure you also check the SideEffect flag.
 		/// </remarks>
 		MayWriteLocals = 0x20,
@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// performing system calls, writing to local variables through pointers, etc.
 		/// </summary>
 		/// <remarks>
-		/// Throwing an exception or directly writing to local variables or the evaluation stack
+		/// Throwing an exception or directly writing to local variables
 		/// is not considered a side effect, and is modeled by separate flags.
 		/// </remarks>
 		SideEffect = 0x40,

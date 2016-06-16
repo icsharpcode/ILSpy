@@ -15,7 +15,9 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 using System;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.NRefactory.TypeSystem;
 
@@ -64,23 +66,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		protected internal override void VisitCall(Call inst)
 		{
-			base.VisitCall(inst);
-			if (!inst.Method.IsConstructor || inst.Method.DeclaringType.Kind != TypeKind.Struct)
-				return;
-			if (inst.Arguments.Count != inst.Method.Parameters.Count + 1)
-				return;
-			var newObj = new NewObj(inst.Method);
-			newObj.ILRange = inst.ILRange;
-			newObj.Arguments.AddRange(inst.Arguments.Skip(1));
-			LdcDecimal decimalConstant;
-			ILInstruction result;
-			if (TransformDecimalCtorToConstant(newObj, out decimalConstant)) {
-				result = decimalConstant;
+			if (inst.Method.IsConstructor && !inst.Method.IsStatic && inst.Method.DeclaringType.Kind == TypeKind.Struct) {
+				Debug.Assert(inst.Arguments.Count == inst.Method.Parameters.Count + 1);
+				// Transform call to struct constructor:
+				// call(ref, ...)
+				// => stobj(ref, newobj(...))
+				var newObj = new NewObj(inst.Method);
+				newObj.ILRange = inst.ILRange;
+				newObj.Arguments.AddRange(inst.Arguments.Skip(1));
+				LdcDecimal decimalConstant;
+				ILInstruction result;
+				if (TransformDecimalCtorToConstant(newObj, out decimalConstant)) {
+					result = decimalConstant;
+				} else {
+					result = newObj;
+				}
+				var expr = new StObj(inst.Arguments[0], result, inst.Method.DeclaringType);
+				inst.ReplaceWith(expr);
+				VisitStObj(expr);
 			} else {
-				result = newObj;
+				base.VisitCall(inst);
 			}
-			var expr = new StObj(inst.Arguments[0], result, inst.Method.DeclaringType);
-			inst.ReplaceWith(expr);
 		}
 		
 		protected internal override void VisitNewObj(NewObj inst)

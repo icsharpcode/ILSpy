@@ -46,11 +46,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly DecompilerSettings settings;
 
 		List<IILTransform> ilTransforms = new List<IILTransform> {
+			new RemoveDeadVariableInit(),
 			new ControlFlowSimplification(),
 			new ILInlining(), // temporary pass, just to make the ILAst easier to read while debugging loop detection
 			new LoopDetection(),
 			new IntroduceExitPoints(),
-			new SplitVariables(),
 			new ConditionDetection(),
 			new ILInlining(),
 			new CopyPropagation(),

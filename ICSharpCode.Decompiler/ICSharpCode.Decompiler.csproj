@@ -83,6 +83,8 @@
     <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="FlowAnalysis\ControlFlowNode.cs" />
+    <Compile Include="FlowAnalysis\DataFlowVisitor.cs" />
+    <Compile Include="FlowAnalysis\DefiniteAssignmentVisitor.cs" />
     <Compile Include="FlowAnalysis\Dominance.cs" />
     <Compile Include="FlowAnalysis\ReachingDefinitions.cs" />
     <Compile Include="IL\ControlFlow\ConditionDetection.cs" />
@@ -123,7 +125,7 @@
     <Compile Include="IL\Transforms\ExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\InlineCompilerGeneratedVariables.cs" />
     <Compile Include="IL\Transforms\LoopingTransform.cs" />
-    <Compile Include="IL\Transforms\SplitVariables.cs" />
+    <Compile Include="IL\Transforms\RemoveDeadVariableInit.cs" />
     <Compile Include="IL\Transforms\TransformArrayInitializers.cs" />
     <Compile Include="IL\Transforms\TransformingVisitor.cs" />
     <Compile Include="CecilExtensions.cs" />

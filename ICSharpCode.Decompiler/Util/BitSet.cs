@@ -80,6 +80,16 @@ namespace ICSharpCode.Decompiler
 			bits.Or(other.bits);
 		}
 		
+		public void IntersectWith(BitSet other)
+		{
+			bits.And(other.bits);
+		}
+		
+		public void ClearAll()
+		{
+			bits.SetAll(false);
+		}
+		
 		public void Clear(int index)
 		{
 			bits[index] = false;
@@ -92,11 +102,23 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		public void SetAll()
+		{
+			bits.SetAll(true);
+		}
+		
 		public void Set(int index)
 		{
 			bits[index] = true;
 		}
 		
+		public void Set(int startIndex, int endIndex)
+		{
+			for (int i = startIndex; i < endIndex; i++) {
+				bits[i] = true;
+			}
+		}
+
 		public void ReplaceWith(BitSet incoming)
 		{
 			Debug.Assert(bits.Length == incoming.bits.Length);

@@ -52,18 +52,16 @@ namespace ICSharpCode.ILSpy
 		#if DEBUG
 		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
 		{
-			//DecompilerContext context = new DecompilerContext(ModuleDefinition.CreateModule("dummy", ModuleKind.Dll));
 			var decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
 			string lastTransformName = "no transforms";
 			int transformCount = 0;
 			foreach (var transform in decompiler.AstTransforms) {
-				Type transformType = transform.GetType(); // copy for lambda
 				yield return new CSharpLanguage {
 					transformCount = transformCount,
 					name = "C# - " + lastTransformName,
 					showAllMembers = true
 				};
-				lastTransformName = "after " + transformType.Name;
+				lastTransformName = "after " + transform.GetType().Name;
 				transformCount++;
 			}
 			yield return new CSharpLanguage {

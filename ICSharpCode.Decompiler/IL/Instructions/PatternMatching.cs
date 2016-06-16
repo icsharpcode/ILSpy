@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.IL
 		public bool MatchLdThis()
 		{
 			var inst = this as LdLoc;
-			return inst != null && inst.Variable.Kind == VariableKind.This;
+			return inst != null && inst.Variable.Kind == VariableKind.Parameter && inst.Variable.Index < 0;
 		}
 		
 		public bool MatchStLoc(out ILVariable variable)

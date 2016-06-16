@@ -37,13 +37,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		Parameter,
 		/// <summary>
-		/// The 'this' parameter
-		/// </summary>
-		This,
-		/// <summary>
 		/// Variable created for exception handler
 		/// </summary>
 		Exception,
+		/// <summary>
+		/// Variable created from stack slot.
+		/// </summary>
 		StackSlot
 	}
 
@@ -83,15 +82,22 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// This variable is automatically updated when adding/removing ldloc instructions from the ILAst.
 		/// </remarks>
-		public int LoadCount;
+		public int LoadCount { get; internal set; }
 		
 		/// <summary>
-		/// Number of stloc instructions referencing this variable.
+		/// Number of store instructions referencing this variable.
+		/// 
+		/// Stores are:
+		/// <list type="item">
+		/// <item>stloc</item>
+		/// <item>try.catch.handler (assigning the exception variable)</item>
+		/// <item>initial values (<see cref="HasInitialValue"/>)</item>
+		/// </list>
 		/// </summary>
 		/// <remarks>
-		/// This variable is automatically updated when adding/removing stloc instructions from the ILAst.
+		/// This variable is automatically updated when adding/removing stores instructions from the ILAst.
 		/// </remarks>
-		public int StoreCount;
+		public int StoreCount { get; internal set; }
 		
 		/// <summary>
 		/// Number of ldloca instructions referencing this variable.
@@ -99,8 +105,35 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// This variable is automatically updated when adding/removing ldloca instructions from the ILAst.
 		/// </remarks>
-		public int AddressCount;
+		public int AddressCount { get; internal set; }
 
+		bool hasInitialValue;
+		
+		/// <summary>
+		/// Gets/Sets whether the variable has an initial value.
+		/// This is always <c>true</c> for parameters (incl. <c>this</c>).
+		/// 
+		/// Normal variables have an initial value if the function uses ".locals init"
+		/// and that initialization is not a dead store.
+		/// </summary>
+		/// <remarks>
+		/// An initial value is counted as a store (adds 1 to StoreCount)
+		/// </remarks>
+		public bool HasInitialValue {
+			get { return hasInitialValue; }
+			set {
+				if (hasInitialValue) {
+					if (Kind == VariableKind.Parameter)
+						throw new InvalidOperationException("Cannot remove HasInitialValue from parameters");
+					StoreCount--;
+				}
+				hasInitialValue = value;
+				if (value) {
+					StoreCount++;
+				}
+			}
+		}
+		
 		public bool IsSingleDefinition {
 			get {
 				return StoreCount == 1 && AddressCount == 0;
@@ -115,6 +148,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Type = type;
 			this.StackType = type.GetStackType();
 			this.Index = index;
+			if (kind == VariableKind.Parameter)
+				this.HasInitialValue = true;
 		}
 		
 		public ILVariable(VariableKind kind, IType type, StackType stackType, int index)
@@ -123,6 +158,8 @@ namespace ICSharpCode.Decompiler.IL
 			this.Type = type;
 			this.StackType = stackType;
 			this.Index = index;
+			if (kind == VariableKind.Parameter)
+				this.HasInitialValue = true;
 		}
 		
 		public override string ToString()
@@ -132,12 +169,36 @@ namespace ICSharpCode.Decompiler.IL
 		
 		internal void WriteDefinitionTo(ITextOutput output)
 		{
+			switch (Kind) {
+				case VariableKind.Local:
+					output.Write("local ");
+					break;
+				case VariableKind.PinnedLocal:
+					output.Write("pinned local ");
+					break;
+				case VariableKind.Parameter:
+					output.Write("param ");
+					break;
+				case VariableKind.Exception:
+					output.Write("exception ");
+					break;
+				case VariableKind.StackSlot:
+					output.Write("stack ");
+					break;
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
 			output.WriteDefinition(this.Name, this, isLocal: true);
 			output.Write(" : ");
-			if (Kind == VariableKind.PinnedLocal)
-				output.Write("pinned ");
 			Type.WriteTo(output);
-			output.Write("({0} ldloc, {1} ldloca, {2} stloc)", LoadCount, AddressCount, StoreCount);
+			output.Write('(');
+			if (Kind == VariableKind.Parameter || Kind == VariableKind.Local || Kind == VariableKind.PinnedLocal) {
+				output.Write("Index={0}, ", Index);
+			}
+			output.Write("LoadCount={0}, AddressCount={1}, StoreCount={2})", LoadCount, AddressCount, StoreCount);
+			if (hasInitialValue && Kind != VariableKind.Parameter) {
+				output.Write(" init");
+			}
 		}
 		
 		internal void WriteTo(ITextOutput output)
