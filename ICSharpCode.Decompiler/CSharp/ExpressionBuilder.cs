@@ -774,7 +774,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var lenExpr = arrayExpr.Expression.Member("LongLength")
 				.WithILInstruction(inst)
 				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int64)));
-			return lenExpr.ConvertTo(compilation.FindType(KnownTypeCode.IntPtr), this);
+			return lenExpr.ConvertTo(compilation.FindType(KnownTypeCode.UIntPtr), this);
 		}
 		
 		protected internal override TranslatedExpression VisitLdFlda(LdFlda inst)
