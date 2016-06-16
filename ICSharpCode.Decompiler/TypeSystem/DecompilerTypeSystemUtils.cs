@@ -60,5 +60,10 @@ namespace ICSharpCode.Decompiler
 		{
 			return GetNativeSize(type1) >= GetNativeSize(type2) ? type1 : type2;
 		}
+		
+		public static bool IsSmallIntegerType(this IType type)
+		{
+			return GetNativeSize(type) < 4;
+		}
 	}
 }

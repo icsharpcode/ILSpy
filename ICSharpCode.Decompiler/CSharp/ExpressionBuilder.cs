@@ -663,13 +663,16 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst)
 		{
 			var target = Translate(inst.Target);
-			if (target.Expression is DirectionExpression && IsCompatibleTypeForMemoryAccess(target.Type, inst.Type, isWrite: false)) {
+			if (target.Expression is DirectionExpression && IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
 				// we can dereference the managed reference by stripping away the 'ref'
 				var result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 				// we don't convert result to inst.Type, because the LdObj type
 				// might be inaccurate (it's often System.Object for all reference types),
 				// and our parent node should already insert casts where necessary
 				result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
+				
+				if (target.Type.IsSmallIntegerType() && inst.Type.IsSmallIntegerType() && target.Type.GetSign() != inst.Type.GetSign())
+					return result.ConvertTo(inst.Type, this);
 				return result;
 			} else {
 				// Cast pointer type if necessary:
@@ -685,7 +688,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
 			TranslatedExpression result;
-			if (target.Expression is DirectionExpression && IsCompatibleTypeForMemoryAccess(target.Type, inst.Type, isWrite: true)) {
+			if (target.Expression is DirectionExpression && IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
 				// we can deference the managed reference by stripping away the 'ref'
 				result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 			} else {
@@ -702,7 +705,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// Gets whether reading/writing an element of accessType from the pointer
 		/// is equivalent to reading/writing an element of the pointer's element type.
 		/// </summary>
-		bool IsCompatibleTypeForMemoryAccess(IType pointerType, IType accessType, bool isWrite)
+		bool IsCompatibleTypeForMemoryAccess(IType pointerType, IType accessType)
 		{
 			IType memoryType;
 			if (pointerType is PointerType)
@@ -732,19 +735,23 @@ namespace ICSharpCode.Decompiler.CSharp
 					case KnownTypeCode.SByte:
 						// Reading small integers of different signs is not equivalent due to sign extension,
 						// but writes are equivalent (truncation works the same for signed and unsigned)
-						return isWrite && (accessType.IsKnownType(KnownTypeCode.Byte) || accessType.IsKnownType(KnownTypeCode.SByte));
+						return accessType.IsKnownType(KnownTypeCode.Byte) || accessType.IsKnownType(KnownTypeCode.SByte);
 					case KnownTypeCode.Int16:
 					case KnownTypeCode.UInt16:
-						return isWrite && (accessType.IsKnownType(KnownTypeCode.Int16) || accessType.IsKnownType(KnownTypeCode.UInt16));
+						return accessType.IsKnownType(KnownTypeCode.Int16) || accessType.IsKnownType(KnownTypeCode.UInt16);
 					case KnownTypeCode.Int32:
 					case KnownTypeCode.UInt32:
-						return isWrite && (accessType.IsKnownType(KnownTypeCode.Int32) || accessType.IsKnownType(KnownTypeCode.UInt32));
+						return accessType.IsKnownType(KnownTypeCode.Int32) || accessType.IsKnownType(KnownTypeCode.UInt32);
 					case KnownTypeCode.IntPtr:
 					case KnownTypeCode.UIntPtr:
 						return accessType.IsKnownType(KnownTypeCode.IntPtr) || accessType.IsKnownType(KnownTypeCode.UIntPtr);
 					case KnownTypeCode.Int64:
 					case KnownTypeCode.UInt64:
 						return accessType.IsKnownType(KnownTypeCode.Int64) || accessType.IsKnownType(KnownTypeCode.UInt64);
+					case KnownTypeCode.Char:
+						return accessType.IsKnownType(KnownTypeCode.Char) || accessType.IsKnownType(KnownTypeCode.UInt16) || accessType.IsKnownType(KnownTypeCode.Int16);
+					case KnownTypeCode.Boolean:
+						return accessType.IsKnownType(KnownTypeCode.Boolean) || accessType.IsKnownType(KnownTypeCode.Byte) || accessType.IsKnownType(KnownTypeCode.SByte);
 				}
 			}
 			return false;

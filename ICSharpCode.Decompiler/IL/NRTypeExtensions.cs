@@ -70,7 +70,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public static Sign GetSign(this IType type)
 		{
-			var typeDef = type.GetDefinition();
+			var typeForConstant = (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
+			var typeDef = typeForConstant.GetDefinition();
 			if (typeDef == null)
 				return Sign.None;
 			switch (typeDef.KnownTypeCode) {
@@ -85,6 +86,7 @@ namespace ICSharpCode.Decompiler.IL
 					return Sign.Signed;
 				case KnownTypeCode.UIntPtr:
 				case KnownTypeCode.Char:
+				case KnownTypeCode.Boolean:
 				case KnownTypeCode.Byte:
 				case KnownTypeCode.UInt16:
 				case KnownTypeCode.UInt32:
