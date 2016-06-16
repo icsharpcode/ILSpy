@@ -647,7 +647,12 @@ namespace ICSharpCode.Decompiler.CSharp
 							expr = new IndexerExpression(target.Expression, argumentExpressions);
 					}
 				} else {
-					var mre = new MemberReferenceExpression(target.Expression, inst.Method.Name);
+					Expression targetExpr = target.Expression;
+					// HACK : convert this.Dispose() to ((IDisposable)this).Dispose(), if Dispose is an explicitly implemented interface method.
+					if (inst.Method.IsExplicitInterfaceImplementation && targetExpr is ThisReferenceExpression) {
+						targetExpr = targetExpr.CastTo(ConvertType(inst.Method.ImplementedInterfaceMembers[0].DeclaringType));
+					}
+					var mre = new MemberReferenceExpression(targetExpr, inst.Method.Name);
 					mre.TypeArguments.AddRange(inst.Method.TypeArguments.Select(a => ConvertType(a)));
 					expr = new InvocationExpression(mre, argumentExpressions);
 				}
