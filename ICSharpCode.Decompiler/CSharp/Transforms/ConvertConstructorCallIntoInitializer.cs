@@ -180,7 +180,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						AssignmentExpression assignment = es.Expression as AssignmentExpression;
 						if (assignment == null || assignment.Operator != AssignmentOperatorType.Assign)
 							break;
-						IField field = assignment.Left.GetSymbol() as IField;
+						IField field = (assignment.Left.GetSymbol() as IField)?.MemberDefinition as IField;
 						if (field == null || !field.IsStatic)
 							break;
 						FieldDeclaration fieldDecl = members.OfType<FieldDeclaration>().FirstOrDefault(f => f.GetSymbol() == field);
