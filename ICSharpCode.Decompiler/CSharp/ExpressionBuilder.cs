@@ -639,7 +639,17 @@ namespace ICSharpCode.Decompiler.CSharp
 							expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
 						else
 							expr = new IndexerExpression(target.Expression, argumentExpressions);
-						expr = new AssignmentExpression(expr, value);
+						var op = AssignmentOperatorType.Assign;
+						var parentEvent = method.AccessorOwner as IEvent;
+						if (parentEvent != null) {
+							if (method.Equals(parentEvent.AddAccessor)) {
+								op = AssignmentOperatorType.Add;
+							}
+							if (method.Equals(parentEvent.RemoveAccessor)) {
+								op = AssignmentOperatorType.Subtract;
+							}
+						}
+						expr = new AssignmentExpression(expr, op, value);
 					} else {
 						if (argumentExpressions.Count == 0)
 							expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
