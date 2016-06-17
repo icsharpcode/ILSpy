@@ -562,7 +562,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), new MemberReferenceExpression(target, method.Name))
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
-					method.DeclaringType,
+					inst.Method.DeclaringType,
 					new MemberResolveResult(target.ResolveResult, method),
 					// TODO handle extension methods capturing the first argument
 					Conversion.MethodGroupConversion(method, func.OpCode == OpCode.LdVirtFtn, false)));
