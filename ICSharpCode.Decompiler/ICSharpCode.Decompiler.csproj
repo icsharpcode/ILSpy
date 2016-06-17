@@ -116,7 +116,6 @@
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
     <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\Instructions\VariableScope.cs" />
-    <Compile Include="IL\NRTypeExtensions.cs" />
     <Compile Include="IL\SlotInfo.cs" />
     <Compile Include="IL\Transforms\CopyPropagation.cs" />
     <Compile Include="IL\Transforms\IILTransform.cs" />
@@ -150,7 +149,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Output\TextOutputWriter.cs" />
     <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
-    <Compile Include="TypeSystem\DecompilerTypeSystemUtils.cs" />
+    <Compile Include="TypeSystem\TypeUtils.cs" />
     <Compile Include="TypeSystem\SpecializingDecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\IDecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\ReferenceResolvingException.cs" />

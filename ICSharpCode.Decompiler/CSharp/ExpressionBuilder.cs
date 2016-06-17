@@ -309,7 +309,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
 			    || rr.Operands[0].Type.GetStackType() != inst.OpType)
 			{
-				var targetType = DecompilerTypeSystemUtils.GetLargerType(left.Type, right.Type);
+				var targetType = TypeUtils.GetLargerType(left.Type, right.Type);
 				if (targetType.Equals(left.Type)) {
 					right = right.ConvertTo(targetType, this);
 				} else {
@@ -673,7 +673,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst)
 		{
 			var target = Translate(inst.Target);
-			if (target.Expression is DirectionExpression && DecompilerTypeSystemUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
+			if (target.Expression is DirectionExpression && TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
 				// we can dereference the managed reference by stripping away the 'ref'
 				var result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 				// we don't convert result to inst.Type, because the LdObj type
@@ -698,7 +698,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
 			TranslatedExpression result;
-			if (target.Expression is DirectionExpression && DecompilerTypeSystemUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
+			if (target.Expression is DirectionExpression && TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
 				// we can deference the managed reference by stripping away the 'ref'
 				result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 			} else {
