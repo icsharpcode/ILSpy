@@ -46,8 +46,8 @@ namespace ICSharpCode.Decompiler
 			if (moduleDefinition == null)
 				throw new ArgumentNullException("moduleDefinition");
 			this.moduleDefinition = moduleDefinition;
-			CecilLoader mainAssemblyCecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference };
-			CecilLoader referencedAssemblyCecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true };
+			CecilLoader mainAssemblyCecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
+			CecilLoader referencedAssemblyCecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, ShortenInterfaceImplNames = false };
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
 			IUnresolvedAssembly mainAssembly = mainAssemblyCecilLoader.LoadModule(moduleDefinition);
 			var referencedAssemblies = new List<IUnresolvedAssembly>();
