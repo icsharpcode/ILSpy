@@ -530,6 +530,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var methodDecl = typeSystemAstBuilder.ConvertEntity(method);
 			if (methodDefinition.HasBody) {
 				DecompileBody(methodDefinition, method, methodDecl, decompilationContext, typeSystemAstBuilder);
+			} else if (!method.IsAbstract && method.DeclaringType.Kind != TypeKind.Interface) {
+				methodDecl.Modifiers |= Modifiers.Extern;
 			}
 			if (decompilationContext.CurrentTypeDefinition.Kind != TypeKind.Interface
 			    && method.SymbolKind == SymbolKind.Method
