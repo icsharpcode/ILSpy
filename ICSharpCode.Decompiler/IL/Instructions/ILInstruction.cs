@@ -105,6 +105,20 @@ namespace ICSharpCode.Decompiler.IL
 			return a;
 		}
 		
+		public bool IsDirty { get; private set; }
+		
+		protected void MakeDirty()
+		{
+			for (ILInstruction inst = this; inst != null && !inst.IsDirty; inst = inst.parent)
+				inst.IsDirty = true;
+		}
+		
+		public void ResetDirty()
+		{
+			foreach (ILInstruction inst in Descendants)
+				inst.IsDirty = false;
+		}
+		
 		const InstructionFlags invalidFlags = (InstructionFlags)(-1);
 		
 		InstructionFlags flags = invalidFlags;
@@ -499,6 +513,7 @@ namespace ICSharpCode.Decompiler.IL
 				newValue.ChildIndex = index;
 			}
 			InvalidateFlags();
+			MakeDirty();
 			if (refCount > 0) {
 				// The new value may be a subtree of the old value.
 				// We first call AddRef(), then ReleaseRef() to prevent the subtree
@@ -537,6 +552,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal virtual void InstructionCollectionUpdateComplete()
 		{
 			InvalidateFlags();
+			MakeDirty();
 		}
 		
 		/// <summary>
