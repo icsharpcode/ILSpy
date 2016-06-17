@@ -27,8 +27,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	/// <remarks>
 	/// Should run after inlining so that the expression patterns can be detected.
-	/// 
-	/// The transforms here do not open up new inlining opportunities.
 	/// </remarks>
 	public class ExpressionTransforms : ILVisitor, IILTransform
 	{
@@ -119,6 +117,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			return false;
+		}
+		
+		// This transform is required because ILInlining only works with stloc/ldloc
+		protected internal override void VisitStObj(StObj inst)
+		{
+			ILVariable v;
+			if (inst.Target.MatchLdLoca(out v) && DecompilerTypeSystemUtils.IsCompatibleTypeForMemoryAccess(v.Type, inst.Type) && inst.UnalignedPrefix == 0 && !inst.IsVolatile) {
+				inst.ReplaceWith(new StLoc(v, inst.Value.Clone()));
+			}
+			base.VisitStObj(inst);
 		}
 	}
 }

@@ -673,7 +673,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst)
 		{
 			var target = Translate(inst.Target);
-			if (target.Expression is DirectionExpression && IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
+			if (target.Expression is DirectionExpression && DecompilerTypeSystemUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
 				// we can dereference the managed reference by stripping away the 'ref'
 				var result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 				// we don't convert result to inst.Type, because the LdObj type
@@ -698,7 +698,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
 			TranslatedExpression result;
-			if (target.Expression is DirectionExpression && IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
+			if (target.Expression is DirectionExpression && DecompilerTypeSystemUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
 				// we can deference the managed reference by stripping away the 'ref'
 				result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 			} else {
@@ -709,62 +709,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(inst.Type));
 			}
 			return Assignment(result, value).WithILInstruction(inst);
-		}
-
-		/// <summary>
-		/// Gets whether reading/writing an element of accessType from the pointer
-		/// is equivalent to reading/writing an element of the pointer's element type.
-		/// </summary>
-		bool IsCompatibleTypeForMemoryAccess(IType pointerType, IType accessType)
-		{
-			IType memoryType;
-			if (pointerType is PointerType)
-				memoryType = ((PointerType)pointerType).ElementType;
-			else if (pointerType is ByReferenceType)
-				memoryType = ((ByReferenceType)pointerType).ElementType;
-			else
-				return false;
-			ITypeDefinition memoryTypeDef = memoryType.GetDefinition();
-			ITypeDefinition accessTypeDef = accessType.GetDefinition();
-			if (memoryType.Kind == TypeKind.Enum && memoryTypeDef != null) {
-				memoryType = memoryTypeDef.EnumUnderlyingType;
-				memoryTypeDef = memoryType.GetDefinition();
-			}
-			if (accessType.Kind == TypeKind.Enum && accessTypeDef != null) {
-				accessType = accessTypeDef.EnumUnderlyingType;
-				accessTypeDef = accessType.GetDefinition();
-			}
-			if (memoryType.Equals(accessType))
-				return true;
-			// If the types are not equal, the access still might produce equal results:
-			if (memoryType.IsReferenceType == true && accessType.IsReferenceType == true)
-				return true;
-			if (memoryTypeDef != null) {
-				switch (memoryTypeDef.KnownTypeCode) {
-					case KnownTypeCode.Byte:
-					case KnownTypeCode.SByte:
-						// Reading small integers of different signs is not equivalent due to sign extension,
-						// but writes are equivalent (truncation works the same for signed and unsigned)
-						return accessType.IsKnownType(KnownTypeCode.Byte) || accessType.IsKnownType(KnownTypeCode.SByte);
-					case KnownTypeCode.Int16:
-					case KnownTypeCode.UInt16:
-						return accessType.IsKnownType(KnownTypeCode.Int16) || accessType.IsKnownType(KnownTypeCode.UInt16);
-					case KnownTypeCode.Int32:
-					case KnownTypeCode.UInt32:
-						return accessType.IsKnownType(KnownTypeCode.Int32) || accessType.IsKnownType(KnownTypeCode.UInt32);
-					case KnownTypeCode.IntPtr:
-					case KnownTypeCode.UIntPtr:
-						return accessType.IsKnownType(KnownTypeCode.IntPtr) || accessType.IsKnownType(KnownTypeCode.UIntPtr);
-					case KnownTypeCode.Int64:
-					case KnownTypeCode.UInt64:
-						return accessType.IsKnownType(KnownTypeCode.Int64) || accessType.IsKnownType(KnownTypeCode.UInt64);
-					case KnownTypeCode.Char:
-						return accessType.IsKnownType(KnownTypeCode.Char) || accessType.IsKnownType(KnownTypeCode.UInt16) || accessType.IsKnownType(KnownTypeCode.Int16);
-					case KnownTypeCode.Boolean:
-						return accessType.IsKnownType(KnownTypeCode.Boolean) || accessType.IsKnownType(KnownTypeCode.Byte) || accessType.IsKnownType(KnownTypeCode.SByte);
-				}
-			}
-			return false;
 		}
 		
 		protected internal override TranslatedExpression VisitLdFld(LdFld inst)
