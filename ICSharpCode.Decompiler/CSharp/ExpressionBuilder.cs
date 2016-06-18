@@ -658,11 +658,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				} else {
 					Expression targetExpr = target.Expression;
+					string methodName = inst.Method.Name;
 					// HACK : convert this.Dispose() to ((IDisposable)this).Dispose(), if Dispose is an explicitly implemented interface method.
 					if (inst.Method.IsExplicitInterfaceImplementation && targetExpr is ThisReferenceExpression) {
 						targetExpr = targetExpr.CastTo(ConvertType(inst.Method.ImplementedInterfaceMembers[0].DeclaringType));
+						methodName = inst.Method.ImplementedInterfaceMembers[0].Name;
 					}
-					var mre = new MemberReferenceExpression(targetExpr, inst.Method.Name);
+					var mre = new MemberReferenceExpression(targetExpr, methodName);
 					mre.TypeArguments.AddRange(inst.Method.TypeArguments.Select(a => ConvertType(a)));
 					expr = new InvocationExpression(mre, argumentExpressions);
 				}

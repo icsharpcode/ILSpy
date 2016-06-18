@@ -352,7 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				methodDecl.Body = new BlockStatement();
 				methodDecl.Body.AddChild(new Comment(
 					"ILSpy generated this explicit interface implementation from .override directive in " + memberDecl.Name),
-					Roles.Comment);
+				                         Roles.Comment);
 				var forwardingCall = new ThisReferenceExpression().Invoke(
 					memberDecl.Name,
 					methodDecl.TypeParameters.Select(tp => new SimpleType(tp.Name)),
@@ -530,6 +530,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(decompilationContext.CurrentMember == method);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
 			var methodDecl = typeSystemAstBuilder.ConvertEntity(method);
+			int lastDot = method.Name.LastIndexOf('.');
+			if (method.IsExplicitInterfaceImplementation && lastDot >= 0) {
+				methodDecl.Name = method.Name.Substring(lastDot + 1);
+			}
 			if (methodDefinition.HasBody) {
 				DecompileBody(methodDefinition, method, methodDecl, decompilationContext, typeSystemAstBuilder);
 			} else if (!method.IsAbstract && method.DeclaringType.Kind != TypeKind.Interface) {
@@ -537,8 +541,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (decompilationContext.CurrentTypeDefinition.Kind != TypeKind.Interface
 			    && method.SymbolKind == SymbolKind.Method
-			    && methodDefinition.IsVirtual == methodDefinition.IsNewSlot)
+			    && methodDefinition.IsVirtual == methodDefinition.IsNewSlot) {
 				SetNewModifier(methodDecl);
+			}
 			return methodDecl;
 		}
 
@@ -612,6 +617,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(decompilationContext.CurrentMember == property);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
 			EntityDeclaration propertyDecl = typeSystemAstBuilder.ConvertEntity(property);
+			int lastDot = property.Name.LastIndexOf('.');
+			if (property.IsExplicitInterfaceImplementation && !property.IsIndexer) {
+				propertyDecl.Name = property.Name.Substring(lastDot + 1);
+			}
 			Accessor getter, setter;
 			if (propertyDecl is PropertyDeclaration) {
 				getter = ((PropertyDeclaration)propertyDecl).Getter;
@@ -638,6 +647,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
 			typeSystemAstBuilder.UseCustomEvents = true;
 			var eventDecl = (CustomEventDeclaration)typeSystemAstBuilder.ConvertEntity(ev);
+			int lastDot = ev.Name.LastIndexOf('.');
+			if (ev.IsExplicitInterfaceImplementation) {
+				eventDecl.Name = ev.Name.Substring(lastDot + 1);
+			}
 			if (eventDefinition.AddMethod != null && eventDefinition.AddMethod.HasBody) {
 				DecompileBody(eventDefinition.AddMethod, ev.AddAccessor, eventDecl.AddAccessor, decompilationContext, typeSystemAstBuilder);
 			}
