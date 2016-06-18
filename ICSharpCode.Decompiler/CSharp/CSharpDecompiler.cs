@@ -587,6 +587,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot) {
 					var type = typeSystemAstBuilder.ConvertType(v.Type);
 					var varDecl = new VariableDeclarationStatement(type, v.Name);
+					varDecl.Variables.Single().AddAnnotation(v);
 					body.Statements.InsertAfter(prevVarDecl, varDecl);
 					prevVarDecl = varDecl;
 				}

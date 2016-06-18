@@ -56,11 +56,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (v.ReplacedAssignment == null) {
 					BlockStatement block = (BlockStatement)v.InsertionPoint.Parent;
 					var decl = new VariableDeclarationStatement((AstType)v.Type.Clone(), v.Name);
-					if (v.ILVariable != null)
-						decl.Variables.Single().AddAnnotation(v.ILVariable);
-					block.Statements.InsertBefore(
-						v.InsertionPoint,
-						decl);
+					var ilVar = v.ILVariable;
+					if (ilVar != null) {
+						decl.Variables.Single().AddAnnotation(ilVar);
+						if (ilVar.HasInitialValue && ilVar.Kind == VariableKind.Local)
+							decl.Variables.Single().Initializer = new DefaultValueExpression((AstType)v.Type.Clone());
+					}
+					block.Statements.InsertBefore(v.InsertionPoint, decl);
 				}
 			}
 			// First do all the insertions, then do all the replacements. This is necessary because a replacement might remove our reference point from the AST.
