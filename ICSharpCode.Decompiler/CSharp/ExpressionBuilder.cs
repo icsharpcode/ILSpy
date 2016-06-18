@@ -351,11 +351,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Ensure the inputs have the correct sign:
 			KnownTypeCode inputType = KnownTypeCode.None;
 			switch (inst.OpType) {
+				case StackType.I: // In order to generate valid C# we need to treat (U)IntPtr as (U)Int64 in comparisons.
 				case StackType.I8:
 					inputType = un ? KnownTypeCode.UInt64 : KnownTypeCode.Int64;
-					break;
-				case StackType.I:
-					inputType = un ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr;
 					break;
 				case StackType.I4:
 					inputType = un ? KnownTypeCode.UInt32 : KnownTypeCode.Int32;
@@ -739,10 +737,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (arrayExpr.Type.Kind != TypeKind.Array) {
 				arrayExpr = arrayExpr.ConvertTo(compilation.FindType(KnownTypeCode.Array), this);
 			}
-			var lenExpr = arrayExpr.Expression.Member("LongLength")
-				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int64)));
-			return lenExpr.ConvertTo(compilation.FindType(KnownTypeCode.UIntPtr), this);
+			TranslatedExpression lenExpr;
+			if (inst.ResultType == StackType.I4) {
+				lenExpr = arrayExpr.Expression.Member("Length")
+					.WithILInstruction(inst)
+					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int32)));
+			} else {
+				lenExpr = arrayExpr.Expression.Member("LongLength")
+					.WithILInstruction(inst)
+					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int64)));
+			}
+			return lenExpr.ConvertTo(compilation.FindType(inst.ResultType.ToKnownTypeCode()), this);
 		}
 		
 		protected internal override TranslatedExpression VisitLdFlda(LdFlda inst)
