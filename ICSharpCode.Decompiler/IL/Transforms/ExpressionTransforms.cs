@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		protected internal override void VisitStObj(StObj inst)
 		{
 			ILVariable v;
-			if (inst.Target.MatchLdLoca(out v) && TypeUtils.IsCompatibleTypeForMemoryAccess(v.Type, inst.Type) && inst.UnalignedPrefix == 0 && !inst.IsVolatile) {
+			if (inst.Target.MatchLdLoca(out v) && TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type) && inst.UnalignedPrefix == 0 && !inst.IsVolatile) {
 				inst.ReplaceWith(new StLoc(v, inst.Value.Clone()));
 			}
 			base.VisitStObj(inst);
