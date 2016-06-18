@@ -52,6 +52,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// => logic.not(ceq(left, ldnull))
 				inst.ReplaceWith(new LogicNot(new Ceq(inst.Left, inst.Right) { ILRange = inst.ILRange }));
 			}
+			if (inst.Right.MatchLdcI4(0)) {
+				// cgt.un(left, ldc.i4 0)
+				// => logic.not(ceq(left, ldc.i4 0))
+				ILInstruction array;
+				if (inst.Left.MatchLdLen(StackType.I, out array)) {
+					// cgt.un(ldlen array, ldc.i4 0)
+					// => logic.not(ceq(ldlen.i4 array, ldc.i4 0))
+					inst.Left.ReplaceWith(new LdLen(StackType.I4, array) { ILRange = inst.Left.ILRange });
+				}
+				inst.ReplaceWith(new LogicNot(new Ceq(inst.Left, inst.Right) { ILRange = inst.ILRange }));
+			}
 		}
 		
 		protected internal override void VisitClt_Un(Clt_Un inst)
