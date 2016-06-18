@@ -91,6 +91,12 @@ namespace ICSharpCode.ILSpy
 			yield return new TypedIL();
 			CSharpDecompiler decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
 			for (int i = 0; i <= decompiler.ILTransforms.Count; i++) {
+				var loop = decompiler.ILTransforms.ElementAtOrDefault(i) as LoopingTransform;
+				if (loop != null) {
+					for (int j = 0; j <= loop.Transforms.Count; j++) {
+						yield return new BlockIL(decompiler.ILTransforms.Take(i - 1).Concat(loop.Transforms.Take(j)).ToList());
+					}
+				}
 				yield return new BlockIL(decompiler.ILTransforms.Take(i).ToList());
 			}
 		}

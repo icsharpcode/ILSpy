@@ -56,9 +56,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			new CopyPropagation(),
 			new InlineCompilerGeneratedVariables(),
 			new TransformingVisitor(),
-			new ExpressionTransforms(),
-			new TransformArrayInitializers(),
-			new ILInlining()
+			new LoopingTransform(
+				new ExpressionTransforms(),
+				new TransformArrayInitializers(),
+				new ILInlining()
+			)
 		};
 
 		List<IAstTransform> astTransforms = new List<IAstTransform> {
