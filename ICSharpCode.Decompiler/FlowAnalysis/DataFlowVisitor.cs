@@ -33,6 +33,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// 
 	/// To handle <c>try{} finally{}</c> properly, states should implement <c>MeetWith()</c> as well,
 	/// and thus should form a lattice.
+	/// 
+	/// <c>DataFlowVisitor</c> expects the state to behave like a mutable reference type.
+	/// It might still be a good idea to use a struct to implement it so that .NET uses static dispatch for
+	/// method calls on the type parameter, but that struct must consist only of a <c>readonly</c> field
+	/// referencing some mutable object, to ensure the type parameter behaves as it if was a mutable reference type.
 	/// </remarks>
 	public interface IDataFlowState<Self> where Self: IDataFlowState<Self>
 	{
@@ -43,7 +48,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <remarks>
 		/// The exact meaning of this relation is up to the concrete implementation,
 		/// but usually "less than" means "has less information than".
-		/// A given position in the code starts at the "unreachable state" (=no information)
+		/// A given position in the code starts at the "bottom state" (=no information)
 		/// and then adds more information as the analysis progresses.
 		/// After each change to the state, the old state must be less than the new state,
 		/// so that the analysis does not run into an infinite loop.
@@ -51,16 +56,25 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// to ensure the analysis terminates.
 		/// </remarks>
 		/// <example>
-		/// The simplest possible state, <c>bool isReachable</c>, would implement <c>LessThanOrEqual</c> as:
-		/// <code>(this.isReachable ? 1 : 0) &lt;= (otherState.isReachable ? 1 : 0)</code>
+		/// The simplest possible non-trivial state, <c>bool isReachable</c>, would implement <c>LessThanOrEqual</c> as:
+		/// <code>return (this.isReachable ? 1 : 0) &lt;= (otherState.isReachable ? 1 : 0);</code>
 		/// <para>Which can be simpified to:</para>
-		/// <code>!this.isReachable || otherState.isReachable</code>
+		/// <code>return !this.isReachable || otherState.isReachable;</code>
 		/// </example>
 		bool LessThanOrEqual(Self otherState);
 		
 		/// <summary>
 		/// Creates a new object with a copy of the state.
 		/// </summary>
+		/// <remarks>
+		/// Mutating methods such as <c>ReplaceWith</c> or <c>JoinWith</c> modify the contents of a state object.
+		/// Cloning the object allows the analysis to track multiple independent states,
+		/// such as the
+		/// </remarks>
+		/// <example>
+		/// The simple state "<c>bool isReachable</c>", would implement <c>Clone</c> as:
+		/// <code>return new MyState(this.isReachable);</code>
+		/// </example>
 		Self Clone();
 		
 		/// <summary>
@@ -73,6 +87,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// 
 		/// ReplaceWith() is used to avoid allocating new state objects where possible.
 		/// </remarks>
+		/// <example>
+		/// The simple state "<c>bool isReachable</c>", would implement <c>ReplaceWith</c> as:
+		/// <code>this.isReachable = newContent.isReachable;</code>
+		/// </example>
 		void ReplaceWith(Self newContent);
 		
 		/// <summary>
@@ -80,11 +98,15 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		/// <remarks>
 		/// Postcondition: <c>old(this).LessThanOrEqual(this) &amp;&amp; incomingState.LessThanOrEqual(this)</c>
-		/// This method generally sets <c>this</c> to the smallest state that is greater than (or equal to)
+		/// This method should set <c>this</c> to the smallest state that is greater than (or equal to)
 		/// both input states.
+		/// 
+		/// <c>JoinWith()</c> is used when multiple control flow paths are joined together.
+		/// For example, it is used to combine the <c>thenState</c> with the <c>elseState</c>
+		/// at the end of a if-else construct.
 		/// </remarks>
 		/// <example>
-		/// The simplest possible state, <c>bool isReachable</c>, would implement <c>JoinWith</c> as:
+		/// The simple state "<c>bool isReachable</c>", would implement <c>JoinWith</c> as:
 		/// <code>this.isReachable |= incomingState.isReachable;</code>
 		/// </example>
 		void JoinWith(Self incomingState);
@@ -97,30 +119,50 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// At a minimum, meeting with an unreachable state must result in an unreachable state.
 		/// </summary>
 		/// <remarks>
-		/// MeetWith() is used when control flow passes out of a try-finally construct: the endpoint of the try-finally
+		/// <c>MeetWith()</c> is used when control flow passes out of a try-finally construct: the endpoint of the try-finally
 		/// is reachable only if both the endpoint of the <c>try</c> and the endpoint of the <c>finally</c> blocks are reachable.
 		/// </remarks>
 		/// <example>
-		/// The simplest possible state, <c>bool isReachable</c>, would implement <c>MeetWith</c> as:
+		/// The simple state "<c>bool isReachable</c>", would implement <c>MeetWith</c> as:
 		/// <code>this.isReachable &amp;= incomingState.isReachable;</code>
 		/// </example>
 		void MeetWith(Self incomingState);
 		
 		/// <summary>
-		/// Gets whether this is the "unreachable" state.
-		/// The unreachable state represents that the data flow analysis has not yet
+		/// Gets whether this is the bottom state.
+		/// 
+		/// The bottom state represents that the data flow analysis has not yet
 		/// found a code path from the entry point to this state's position.
+		/// It thus contains no information, and is "less than" all other states.
 		/// </summary>
 		/// <remarks>
-		/// The unreachable state is the bottom element in the semi-lattice:
-		/// the unreachable state is "less than" all other states.
+		/// The bottom state is the bottom element in the semi-lattice.
+		/// 
+		/// Initially, all code blocks not yet visited by the analysis will be in the bottom state.
+		/// Unreachable code will always remain in the bottom state.
+		/// Some analyses may also use the bottom state for reachable code after it was processed by the analysis.
+		/// For example, in <c>DefiniteAssignmentVisitor</c> the bottom states means
+		/// "either this code is unreachable, or all variables are definitely initialized".
 		/// </remarks>
-		bool IsUnreachable { get; }
+		/// <example>
+		/// The simple state "<c>bool isReachable</c>", would implement <c>IsBottom</c> as:
+		/// <code>return !this.isReachable;</code>
+		/// </example>
+		bool IsBottom { get; }
 		
 		/// <summary>
-		/// Equivalent to <c>this.ReplaceWith(unreachableState)</c>, but may be more efficient.
+		/// Equivalent to <c>this.ReplaceWith(bottomState)</c>, but may be implemented more efficiently.
 		/// </summary>
-		void MarkUnreachable();
+		/// <remarks>
+		/// Since the <c>DataFlowVisitor</c> can only create states by cloning from the initial state,
+		/// this method is necessary for the <c>DataFlowVisitor</c> to gain access to the bottom element in
+		/// the first place.
+		/// </remarks>
+		/// <example>
+		/// The simple state "<c>bool isReachable</c>", would implement <c>ReplaceWith</c> as:
+		/// <code>this.isReachable = false;</code>
+		/// </example>
+		void ReplaceWithBottom();
 	}
 	
 	/// <summary>
@@ -128,11 +170,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// </summary>
 	/// <typeparam name="State">
 	/// The state type used for the data flow analysis. See <see cref="IDataFlowState{Self}"/> for details.
-	/// 
-	/// <c>DataFlowVisitor</c> expects the state to behave like a mutable reference type.
-	/// It might still be a good idea to use a struct to implement it so that .NET uses static dispatch for
-	/// method calls on the type parameter, but that struct must consist only of a <c>readonly</c> field
-	/// referencing some mutable object, to ensure the type parameter behaves as it if was a mutable reference type.
 	/// </typeparam>
 	public abstract class DataFlowVisitor<State> : ILVisitor
 		where State : IDataFlowState<State>
@@ -144,27 +181,30 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		//     This state corresponds to the instruction currently being visited,
 		//     and gets mutated as we traverse the ILAst.
 		//  b) the input state for each control flow node
-		//     This also gets mutated as the analysis learns about new control flow edges.
+		//     These also gets mutated as the analysis learns about new control flow edges.
 		
 		/// <summary>
-		/// The unreachable state.
+		/// The bottom state.
 		/// Must not be mutated.
 		/// </summary>
-		readonly State unreachableState;
+		readonly State bottomState;
+		
+		/// <summary>
+		/// Current state.
+		/// 
+		/// Caution: any state object assigned to this member gets mutated as the visitor traverses the ILAst!
+		/// </summary>
+		protected State state;
 		
 		/// <summary>
 		/// Combined state of all possible exceptional control flow paths in the current try block.
 		/// Serves as input state for catch blocks.
 		/// 
+		/// Caution: any state object assigned to this member gets mutated as the visitor encounters instructions that may throw exceptions!
+		/// 
 		/// Within a try block, <c>currentStateOnException == stateOnException[tryBlock.Parent]</c>.
 		/// </summary>
 		State currentStateOnException;
-		
-		/// <summary>
-		/// Current state.
-		/// Gets mutated as the visitor traverses the ILAst.
-		/// </summary>
-		protected State state;
 		
 		/// <summary>
 		/// Creates a new DataFlowVisitor.
@@ -173,10 +213,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		protected DataFlowVisitor(State initialState)
 		{
 			this.state = initialState.Clone();
-			this.unreachableState = initialState.Clone();
-			this.unreachableState.MarkUnreachable();
-			Debug.Assert(unreachableState.IsUnreachable);
-			this.currentStateOnException = unreachableState.Clone();
+			this.bottomState = initialState.Clone();
+			this.bottomState.ReplaceWithBottom();
+			Debug.Assert(bottomState.IsBottom);
+			this.currentStateOnException = bottomState.Clone();
 		}
 		
 		#if DEBUG
@@ -227,7 +267,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			// Since this instruction has normal control flow, we can evaluate our children left-to-right.
 			foreach (var child in inst.Children) {
 				child.AcceptVisitor(this);
-				Debug.Assert(state.IsUnreachable || !child.HasFlag(InstructionFlags.EndPointUnreachable));
+				Debug.Assert(state.IsBottom || !child.HasFlag(InstructionFlags.EndPointUnreachable),
+				             "Unreachable code must be in the bottom state.");
 			}
 			
 			// If this instruction can throw an exception, handle the exceptional control flow edge.
@@ -247,6 +288,14 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		}
 		
 		/// <summary>
+		/// Replace the current state with the bottom state.
+		/// </summary>
+		protected void MarkUnreachable()
+		{
+			state.ReplaceWithBottom();
+		}
+		
+		/// <summary>
 		/// Holds the state for incoming branches.
 		/// </summary>
 		/// <remarks>
@@ -259,13 +308,21 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		readonly Dictionary<BlockContainer, State> stateOnLeave = new Dictionary<BlockContainer, State>();
 
+		/// <summary>
+		/// Gets the state object that holds the state for incoming branches to the block.
+		/// </summary>
+		/// <remarks>
+		/// Returns the a clone of the bottom state on the first call for a given block,
+		/// then returns the same object instance on further calls.
+		/// The caller is expected to mutate the returned state by calling <c>JoinWith()</c>.
+		/// </remarks>
 		State GetBlockInputState(Block block)
 		{
 			State s;
 			if (stateOnBranch.TryGetValue(block, out s)) {
 				return s;
 			} else {
-				s = unreachableState.Clone();
+				s = bottomState.Clone();
 				stateOnBranch.Add(block, s);
 				return s;
 			}
@@ -309,7 +366,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			if (stateOnLeave.TryGetValue(container, out stateOnExit)) {
 				state.ReplaceWith(stateOnExit);
 			} else {
-				state.MarkUnreachable();
+				MarkUnreachable();
 			}
 			DebugEndPoint(container);
 			workLists.Remove(container);
@@ -325,7 +382,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				BlockContainer container = (BlockContainer)targetBlock.Parent;
 				workLists[container].Add(targetBlock.ChildIndex);
 			}
-			state.MarkUnreachable();
+			MarkUnreachable();
 		}
 		
 		protected internal override void VisitLeave(Leave inst)
@@ -339,27 +396,27 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			// Note: We don't have to put the block container onto the work queue,
 			// because it's an ancestor of the Leave instruction, and hence
 			// we are currently somewhere within the VisitBlockContainer() call.
-			state.MarkUnreachable();
+			MarkUnreachable();
 		}
 		
 		protected internal override void VisitReturn(Return inst)
 		{
 			if (inst.ReturnValue != null)
 				inst.ReturnValue.AcceptVisitor(this);
-			state.MarkUnreachable();
+			MarkUnreachable();
 		}
 		
 		protected internal override void VisitThrow(Throw inst)
 		{
 			inst.Argument.AcceptVisitor(this);
 			MayThrow();
-			state.MarkUnreachable();
+			MarkUnreachable();
 		}
 		
 		protected internal override void VisitRethrow(Rethrow inst)
 		{
 			MayThrow();
-			state.MarkUnreachable();
+			MarkUnreachable();
 		}
 		
 		/// <summary>
@@ -377,7 +434,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			State oldStateOnException = currentStateOnException;
 			State newStateOnException;
 			if (!stateOnException.TryGetValue(inst, out newStateOnException)) {
-				newStateOnException = unreachableState.Clone();
+				newStateOnException = bottomState.Clone();
 				stateOnException.Add(inst, newStateOnException);
 			}
 			
@@ -473,7 +530,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugStartPoint(inst);
 			inst.Value.AcceptVisitor(this);
 			State beforeSections = state.Clone();
-			State afterSections = unreachableState.Clone();
+			State afterSections = bottomState.Clone();
 			foreach (var section in inst.Sections) {
 				state.ReplaceWith(beforeSections);
 				section.AcceptVisitor(this);

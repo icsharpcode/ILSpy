@@ -58,6 +58,15 @@ namespace ICSharpCode.Decompiler
 				bits[index] = value;
 			}
 		}
+
+		public bool Any()
+		{
+			for (int i = 0; i < bits.Length; i++) {
+				if (bits[i])
+					return true;
+			}
+			return false;
+		}
 		
 		/// <summary>
 		/// Gets whether this set is a subset of other, or equal.

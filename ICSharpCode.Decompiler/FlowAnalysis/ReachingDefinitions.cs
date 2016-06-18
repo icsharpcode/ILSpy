@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			///          that passes through through <c>allStores[i]</c> and does not pass through another
 			///          store to <c>allStores[i].Variable</c>.
 			/// </summary>
-			readonly internal BitSet bits;
+			readonly BitSet bits;
 			
 			public State(BitSet bits)
 			{
@@ -110,13 +110,32 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				bits.IntersectWith(incomingState.bits);
 			}
 			
-			public void MarkUnreachable()
+			public bool IsBottom {
+				get { return !bits[ReachableBit]; }
+			}
+			
+			public void ReplaceWithBottom()
 			{
+				// We need to clear all bits, not just ReachableBit, so that
+				// the bottom state behaves as expected in joins/meets.
 				bits.ClearAll();
 			}
 			
-			public bool IsUnreachable {
-				get { return !bits[ReachableBit]; }
+			public bool IsReachable {
+				get { return bits[ReachableBit]; }
+			}
+			
+			public void KillStores(int startStoreIndex, int endStoreIndex)
+			{
+				Debug.Assert(startStoreIndex >= FirstStoreIndex);
+				Debug.Assert(endStoreIndex >= startStoreIndex);
+				bits.Clear(startStoreIndex, endStoreIndex);
+			}
+			
+			public void SetStore(int storeIndex)
+			{
+				Debug.Assert(storeIndex >= FirstStoreIndex);
+				bits.Set(storeIndex);
 			}
 		}
 		
@@ -295,11 +314,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 
 			void HandleStore(ILInstruction inst, ILVariable v)
 			{
-				if (v.Scope == rd.scope && rd.activeVariables[v.IndexInScope] && !state.IsUnreachable) {
+				if (v.Scope == rd.scope && rd.activeVariables[v.IndexInScope] && state.IsReachable) {
 					// Clear the set of stores for this variable:
-					state.bits.Clear(rd.firstStoreIndexForVariable[v.IndexInScope], rd.firstStoreIndexForVariable[v.IndexInScope + 1]);
+					state.KillStores(rd.firstStoreIndexForVariable[v.IndexInScope], rd.firstStoreIndexForVariable[v.IndexInScope + 1]);
 					// And replace it with this store:
-					state.bits.Set(rd.storeIndexMap[inst]);
+					state.SetStore(rd.storeIndexMap[inst]);
 				}
 			}
 			

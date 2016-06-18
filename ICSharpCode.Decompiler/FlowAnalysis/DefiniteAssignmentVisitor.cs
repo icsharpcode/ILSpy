@@ -27,8 +27,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// </summary>
 	class DefiniteAssignmentVisitor : DataFlowVisitor<DefiniteAssignmentVisitor.State>
 	{
-		const int ReachableBit = 0;
-		
 		/// <summary>
 		/// State for definite assignment analysis.
 		/// </summary>
@@ -36,12 +34,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		public struct State : IDataFlowState<State>
 		{
 			/// <summary>
-			/// bit 0: This state's position is reachable from the entry point.
-			/// bit i+1: There is a code path from the entry point to this state's position
+			/// bits[i]: There is a code path from the entry point to this state's position
 			///          that does not write to function.Variables[i].
 			/// 
 			/// Initial state: all bits set
-			/// "Unreachable" state: all bits clear
+			/// Bottom state: all bits clear
 			/// </summary>
 			readonly BitSet bits;
 
@@ -50,7 +47,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			/// </summary>
 			public State(int variableCount)
 			{
-				this.bits = new BitSet(1 + variableCount);
+				this.bits = new BitSet(variableCount);
 				this.bits.SetAll();
 			}
 			
@@ -84,23 +81,23 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				bits.IntersectWith(incomingState.bits);
 			}
 
-			public void MarkUnreachable()
+			public void ReplaceWithBottom()
 			{
 				bits.ClearAll();
 			}
 
-			public bool IsUnreachable {
-				get { return !bits[ReachableBit]; }
+			public bool IsBottom {
+				get { return !bits.Any(); }
 			}
 
 			public void MarkVariableInitialized(int variableIndex)
 			{
-				bits.Clear(1 + variableIndex);
+				bits.Clear(variableIndex);
 			}
 
 			public bool IsPotentiallyUninitialized(int variableIndex)
 			{
-				return bits[1 + variableIndex];
+				return bits[variableIndex];
 			}
 		}
 		
@@ -121,9 +118,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		void HandleStore(ILVariable v)
 		{
-			if (v.Scope == scope && !state.IsUnreachable) {
-				// Clear the set of stores for this variable:
+			if (v.Scope == scope) {
+				// Mark the variable as initialized:
 				state.MarkVariableInitialized(v.IndexInScope);
+				// Note that this gets called even if the store is in unreachable code,
+				// but that's OK because bottomState.MarkVariableInitialized() has no effect.
 			}
 		}
 		
