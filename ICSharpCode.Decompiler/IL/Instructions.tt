@@ -192,7 +192,7 @@
 			CustomClassName("SizeOf"), NoArguments, HasTypeOperand, ResultType("I4")),
 		
 		new OpCode("ldlen", "Returns the length of an array as 'native unsigned int'.",
-			CustomClassName("LdLen"), CustomArguments("array"), MayThrow, ResultType("I")),
+			CustomClassName("LdLen"), CustomArguments("array"), CustomConstructor, CustomWriteTo, MayThrow),
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
 			MayThrow, ResultType("Ref"), SupportsReadonlyPrefix),

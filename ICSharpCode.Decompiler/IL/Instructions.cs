@@ -2896,10 +2896,6 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Returns the length of an array as 'native unsigned int'.</summary>
 	public sealed partial class LdLen : ILInstruction
 	{
-		public LdLen(ILInstruction array) : base(OpCode.LdLen)
-		{
-			this.Array = array;
-		}
 		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
 		ILInstruction array;
 		public ILInstruction Array {
@@ -2947,7 +2943,6 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Array = this.array.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return StackType.I; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return array.Flags | InstructionFlags.MayThrow;
@@ -2956,13 +2951,6 @@ namespace ICSharpCode.Decompiler.IL
 			get {
 				return InstructionFlags.MayThrow;
 			}
-		}
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-			output.Write('(');
-			this.array.WriteTo(output);
-			output.Write(')');
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -4529,16 +4517,6 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			type = default(IType);
-			return false;
-		}
-		public bool MatchLdLen(out ILInstruction array)
-		{
-			var inst = this as LdLen;
-			if (inst != null) {
-				array = inst.Array;
-				return true;
-			}
-			array = default(ILInstruction);
 			return false;
 		}
 		public bool MatchLdElema(out IType type, out ILInstruction array)

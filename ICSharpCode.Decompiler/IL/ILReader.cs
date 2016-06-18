@@ -711,7 +711,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stfld:
 					return new StFld(value: Pop(), target: Pop(), field: ReadAndDecodeFieldReference());
 				case ILOpCode.Ldlen:
-					return Push(new LdLen(Pop()));
+					return Push(new LdLen(StackType.I, Pop()));
 				case ILOpCode.Ldobj:
 					return Push(new LdObj(Pop(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldsfld:

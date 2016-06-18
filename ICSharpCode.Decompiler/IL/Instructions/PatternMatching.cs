@@ -67,6 +67,17 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 		
+		public bool MatchLdLen(StackType type, out ILInstruction array)
+		{
+			var inst = this as LdLen;
+			if (inst != null && inst.ResultType == type) {
+				array = inst.Array;
+				return true;
+			}
+			array = null;
+			return false;
+		}
+		
 		public bool MatchBranch(out Block targetBlock)
 		{
 			var inst = this as Branch;
