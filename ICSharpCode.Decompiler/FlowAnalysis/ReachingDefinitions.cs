@@ -72,6 +72,12 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		[DebuggerDisplay("{bits}")]
 		struct State : IDataFlowState<State>
 		{
+			/// <summary>
+			/// bit 0: This state's position is reachable from the entry point.
+			/// bit i+1: There is a code path from the entry point to this state's position
+			///          that passes through through <c>allStores[i]</c> and does not pass through another
+			///          store to <c>allStores[i].Variable</c>.
+			/// </summary>
 			readonly internal BitSet bits;
 			
 			public State(BitSet bits)
@@ -97,6 +103,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			public void JoinWith(State incomingState)
 			{
 				bits.UnionWith(incomingState.bits);
+			}
+			
+			public void MeetWith(State incomingState)
+			{
+				bits.IntersectWith(incomingState.bits);
 			}
 			
 			public void MarkUnreachable()
@@ -137,7 +148,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// All stores for all variables in the scope.
 		/// 
 		/// <c>state[storeIndex]</c> is true iff <c>allStores[storeIndex]</c> is a reaching definition.
-		/// Invariant: <c>state.Length == allStores.Length</c>.
+		/// Invariant: <c>state.bits.Length == allStores.Length</c>.
 		/// </summary>
 		readonly ILInstruction[] allStores;
 		

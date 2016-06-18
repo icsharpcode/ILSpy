@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				bits.UnionWith(incomingState.bits);
 			}
 
-			public void IntersectWith(State incomingState)
+			public void MeetWith(State incomingState)
 			{
 				bits.IntersectWith(incomingState.bits);
 			}
@@ -156,16 +156,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			base.VisitLdLoca(inst);
 			EnsureInitialized(inst.Variable);
-		}
-		
-		protected override void ExitTryFinally(TryFinally inst, State onSuccess)
-		{
-			// We can simply intersect the onSuccess bits with the state after the finally block.
-			// This works because the try-finally endpoint is reached (=control flow continues after the try-finally construct)
-			// without writing to variable i,
-			// only if the endpoint of the try was reached with writing to variable i,
-			// and the endpoint of the finally block was also reached without writing to variable i.
-			state.IntersectWith(onSuccess);
 		}
 	}
 }

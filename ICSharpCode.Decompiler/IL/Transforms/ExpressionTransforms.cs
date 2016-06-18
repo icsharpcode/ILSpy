@@ -85,15 +85,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var newObj = new NewObj(inst.Method);
 				newObj.ILRange = inst.ILRange;
 				newObj.Arguments.AddRange(inst.Arguments.Skip(1));
-				LdcDecimal decimalConstant;
-				ILInstruction result;
-				if (TransformDecimalCtorToConstant(newObj, out decimalConstant)) {
-					result = decimalConstant;
-				} else {
-					result = newObj;
-				}
-				var expr = new StObj(inst.Arguments[0], result, inst.Method.DeclaringType);
+				var expr = new StObj(inst.Arguments[0], newObj, inst.Method.DeclaringType);
 				inst.ReplaceWith(expr);
+				// Both the StObj and the NewObj may trigger further rules, so continue visiting the replacement:
 				VisitStObj(expr);
 			} else {
 				base.VisitCall(inst);
@@ -139,11 +133,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		// This transform is required because ILInlining only works with stloc/ldloc
 		protected internal override void VisitStObj(StObj inst)
 		{
-			ILVariable v;
-			if (inst.Target.MatchLdLoca(out v) && TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type) && inst.UnalignedPrefix == 0 && !inst.IsVolatile) {
-				inst.ReplaceWith(new StLoc(v, inst.Value.Clone()));
-			}
 			base.VisitStObj(inst);
+			ILVariable v;
+			if (inst.Target.MatchLdLoca(out v)
+			    && TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type) 
+			    && inst.UnalignedPrefix == 0 
+			    && !inst.IsVolatile)
+			{
+				// stobj(ldloca(v), ...)
+				// => stloc(v, ...)
+				inst.ReplaceWith(new StLoc(v, inst.Value));
+			}
 		}
 	}
 }

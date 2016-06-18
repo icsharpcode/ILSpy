@@ -29,14 +29,16 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// A mutable container for the state tracked by the data flow analysis.
 	/// </summary>
 	/// <remarks>
-	/// To ensure the data flow analysis terminates, states must form a partially ordered set (poset)
-	/// with finite height.
+	/// States must form a join-semilattice: https://en.wikipedia.org/wiki/Semilattice
+	/// 
+	/// To handle <c>try{} finally{}</c> properly, states should implement <c>MeetWith()</c> as well,
+	/// and thus should form a lattice.
 	/// </remarks>
 	public interface IDataFlowState<Self> where Self: IDataFlowState<Self>
 	{
 		/// <summary>
 		/// Gets whether this state is "less than" (or equal to) another state.
-		/// This is the partial order of the poset.
+		/// This is the partial order of the semi-lattice.
 		/// </summary>
 		/// <remarks>
 		/// The exact meaning of this relation is up to the concrete implementation,
@@ -45,9 +47,15 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// and then adds more information as the analysis progresses.
 		/// After each change to the state, the old state must be less than the new state,
 		/// so that the analysis does not run into an infinite loop.
-		/// The poset must also have finite height (no infinite ascending chains s1 &lt; s2 &lt; ...),
+		/// The partially ordered set must also have finite height (no infinite ascending chains s1 &lt; s2 &lt; ...),
 		/// to ensure the analysis terminates.
 		/// </remarks>
+		/// <example>
+		/// The simplest possible state, <c>bool isReachable</c>, would implement <c>LessThanOrEqual</c> as:
+		/// <code>(this.isReachable ? 1 : 0) &lt;= (otherState.isReachable ? 1 : 0)</code>
+		/// <para>Which can be simpified to:</para>
+		/// <code>!this.isReachable || otherState.isReachable</code>
+		/// </example>
 		bool LessThanOrEqual(Self otherState);
 		
 		/// <summary>
@@ -71,11 +79,32 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// Join the incomingState into this state.
 		/// </summary>
 		/// <remarks>
-		/// Postcondition: <c>old(this).LessThan(this) &amp;&amp; incomingState.LessThan(this)</c>
+		/// Postcondition: <c>old(this).LessThanOrEqual(this) &amp;&amp; incomingState.LessThanOrEqual(this)</c>
 		/// This method generally sets <c>this</c> to the smallest state that is greater than (or equal to)
 		/// both input states.
 		/// </remarks>
+		/// <example>
+		/// The simplest possible state, <c>bool isReachable</c>, would implement <c>JoinWith</c> as:
+		/// <code>this.isReachable |= incomingState.isReachable;</code>
+		/// </example>
 		void JoinWith(Self incomingState);
+		
+		/// <summary>
+		/// The meet operation.
+		/// 
+		/// If possible, this method sets <c>this</c> to the greatest state that is smaller than (or equal to)
+		/// both input states.
+		/// At a minimum, meeting with an unreachable state must result in an unreachable state.
+		/// </summary>
+		/// <remarks>
+		/// MeetWith() is used when control flow passes out of a try-finally construct: the endpoint of the try-finally
+		/// is reachable only if both the endpoint of the <c>try</c> and the endpoint of the <c>finally</c> blocks are reachable.
+		/// </remarks>
+		/// <example>
+		/// The simplest possible state, <c>bool isReachable</c>, would implement <c>MeetWith</c> as:
+		/// <code>this.isReachable &amp;= incomingState.isReachable;</code>
+		/// </example>
+		void MeetWith(Self incomingState);
 		
 		/// <summary>
 		/// Gets whether this is the "unreachable" state.
@@ -83,7 +112,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// found a code path from the entry point to this state's position.
 		/// </summary>
 		/// <remarks>
-		/// The unreachable state is the bottom element in the poset: the unreachable state is "less than" all other states.
+		/// The unreachable state is the bottom element in the semi-lattice:
+		/// the unreachable state is "less than" all other states.
 		/// </remarks>
 		bool IsUnreachable { get; }
 		
@@ -125,8 +155,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// Combined state of all possible exceptional control flow paths in the current try block.
 		/// Serves as input state for catch blocks.
+		/// 
+		/// Within a try block, <c>currentStateOnException == stateOnException[tryBlock.Parent]</c>.
 		/// </summary>
-		State stateOnException;
+		State currentStateOnException;
 		
 		/// <summary>
 		/// Current state.
@@ -144,11 +176,49 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			this.unreachableState = initialState.Clone();
 			this.unreachableState.MarkUnreachable();
 			Debug.Assert(unreachableState.IsUnreachable);
-			this.stateOnException = unreachableState.Clone();
+			this.currentStateOnException = unreachableState.Clone();
+		}
+		
+		#if DEBUG
+		// For debugging, capture the input + output state at every instruction.
+		readonly Dictionary<ILInstruction, State> debugInputState = new Dictionary<ILInstruction, State>();
+		readonly Dictionary<ILInstruction, State> debugOutputState = new Dictionary<ILInstruction, State>();
+		
+		void DebugPoint(Dictionary<ILInstruction, State> debugDict, ILInstruction inst)
+		{
+			#if DEBUG
+			State previousOutputState;
+			if (debugDict.TryGetValue(inst, out previousOutputState)) {
+				Debug.Assert(previousOutputState.LessThanOrEqual(state));
+			} else {
+				// limit the number of tracked instructions to make memory usage in debug builds less horrible
+				if (debugDict.Count < 1000) {
+					debugDict.Add(inst, state.Clone());
+				}
+			}
+			#endif
+		}
+		#endif
+		
+		[Conditional("DEBUG")]
+		void DebugStartPoint(ILInstruction inst)
+		{
+			#if DEBUG
+			DebugPoint(debugInputState, inst);
+			#endif
+		}
+		
+		[Conditional("DEBUG")]
+		void DebugEndPoint(ILInstruction inst)
+		{
+			#if DEBUG
+			DebugPoint(debugOutputState, inst);
+			#endif
 		}
 		
 		protected sealed override void Default(ILInstruction inst)
 		{
+			DebugStartPoint(inst);
 			// This method assumes normal control flow and no branches.
 			if ((inst.DirectFlags & (InstructionFlags.ControlFlow | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable)) != 0) {
 				throw new NotImplementedException("RDVisitor is missing implementation for " + inst.GetType().Name);
@@ -164,6 +234,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			if ((inst.DirectFlags & InstructionFlags.MayThrow) != 0) {
 				MayThrow();
 			}
+			DebugEndPoint(inst);
 		}
 		
 		/// <summary>
@@ -172,7 +243,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		protected void MayThrow()
 		{
-			stateOnException.JoinWith(state);
+			currentStateOnException.JoinWith(state);
 		}
 		
 		/// <summary>
@@ -208,6 +279,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		protected internal override void VisitBlockContainer(BlockContainer container)
 		{
+			DebugStartPoint(container);
 			SortedSet<int> worklist = new SortedSet<int>();
 			// register work list so that branches within this container can add to it
 			workLists.Add(container, worklist);
@@ -239,6 +311,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			} else {
 				state.MarkUnreachable();
 			}
+			DebugEndPoint(container);
+			workLists.Remove(container);
 		}
 		
 		protected internal override void VisitBranch(Branch inst)
@@ -289,42 +363,53 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		}
 		
 		/// <summary>
+		/// Stores the stateOnException per try instruction.
+		/// </summary>
+		readonly Dictionary<TryInstruction, State> stateOnException = new Dictionary<TryInstruction, State>();
+		
+		/// <summary>
 		/// Visits the TryBlock.
 		/// 
 		/// Returns a new State object representing the exceptional control flow transfer out of the try block.
 		/// </summary>
 		protected State HandleTryBlock(TryInstruction inst)
 		{
-			State oldStateOnException = stateOnException;
-			State newStateOnException = unreachableState.Clone();
+			State oldStateOnException = currentStateOnException;
+			State newStateOnException;
+			if (!stateOnException.TryGetValue(inst, out newStateOnException)) {
+				newStateOnException = unreachableState.Clone();
+				stateOnException.Add(inst, newStateOnException);
+			}
 			
-			stateOnException = newStateOnException;
+			currentStateOnException = newStateOnException;
 			inst.TryBlock.AcceptVisitor(this);
-			stateOnException = oldStateOnException;
+			currentStateOnException = oldStateOnException;
 			
 			return newStateOnException;
 		}
 		
 		protected internal override void VisitTryCatch(TryCatch inst)
 		{
-			State caughtState = HandleTryBlock(inst);
-			State endpointState = state.Clone();
+			DebugStartPoint(inst);
+			State onException = HandleTryBlock(inst);
+			State endpoint = state.Clone();
 			// The exception might get propagated if no handler matches the type:
-			stateOnException.JoinWith(caughtState);
+			currentStateOnException.JoinWith(onException);
 			foreach (var handler in inst.Handlers) {
-				state.ReplaceWith(caughtState);
+				state.ReplaceWith(onException);
 				BeginTryCatchHandler(handler);
 				handler.Filter.AcceptVisitor(this);
 				// if the filter return false, any mutations done by the filter
 				// will be visible by the remaining handlers
 				// (but it's also possible that the filter didn't get executed at all
 				// because the exception type doesn't match)
-				caughtState.JoinWith(state);
+				onException.JoinWith(state);
 				
 				handler.Body.AcceptVisitor(this);
-				endpointState.JoinWith(state);
+				endpoint.JoinWith(state);
 			}
-			state = endpointState;
+			state = endpoint;
+			DebugEndPoint(inst);
 		}
 		
 		protected virtual void BeginTryCatchHandler(TryCatchHandler inst)
@@ -341,58 +426,38 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		protected internal override void VisitTryFinally(TryFinally inst)
 		{
-			// I don't think there's a good way to track dataflow across finally blocks
-			// without duplicating the whole finally block.
-			// We'll just approximate 'try { .. } finally { .. }' as 'try { .. } catch {} .. if (?) rethrow; }'
-			State caughtState = HandleTryBlock(inst);
+			DebugStartPoint(inst);
+			// At first, handle 'try { .. } finally { .. }' like 'try { .. } catch {} .. if (?) rethrow; }'
+			State onException = HandleTryBlock(inst);
 			State onSuccess = state.Clone();
-			state.JoinWith(caughtState);
+			state.JoinWith(onException);
 			inst.FinallyBlock.AcceptVisitor(this);
 			MayThrow();
-			// Our approximation allows the impossible code path where the try block wasn't fully executed
-			// and the finally block did not rethrow the exception.
-			// We can't fix up the data flow state in general, but specific analyses may be able to do so.
-			ExitTryFinally(inst, onSuccess);
+			// Use MeetWith() to ensure points after the try-finally are reachable only if both the
+			// try and the finally endpoints are reachable.
+			state.MeetWith(onSuccess);
+			DebugEndPoint(inst);
 		}
-		
-		/// <summary>
-		/// Called when exiting a try-finally construct.
-		/// </summary>
-		/// <param name="inst">The try-finally instruction.</param>
-		/// <param name="onSuccess">The state at the endpoint of the try block.</param>
-		/// <c>state</c>: The current state when ExitTryFinally() is called is the state at the
-		/// endpoint of the finally block.
-		/// After ExitTryFinally() exits, it should be the state at the endpoint
-		/// of the whole try-finally construct.
-		/// <remarks>
-		/// The purpose of this method is to allow the derived class to fix up the state at the end
-		/// of the try-finally construct: the end of the finally block can be reached when
-		/// the the try block has throws an exception, but the endpoint of the whole try-finally
-		/// is only reachable both the try block and the finally block execute normally.
-		/// </remarks>
-		protected virtual void ExitTryFinally(TryFinally inst, State onSuccess)
-		{
-			if (onSuccess.IsUnreachable) {
-				state.MarkUnreachable();
-			}
-		}
-		
+
 		protected internal override void VisitTryFault(TryFault inst)
 		{
+			DebugStartPoint(inst);
 			// try-fault executes fault block if an exception occurs in try,
 			// and always rethrows the exception at the end.
-			State caughtState = HandleTryBlock(inst);
-			State noException = state;
-			state = caughtState;
+			State onException = HandleTryBlock(inst);
+			State onSuccess = state;
+			state = onException;
 			inst.FaultBlock.AcceptVisitor(this);
 			MayThrow(); // rethrow the exception after the fault block
 			
 			// try-fault exits normally only if no exception occurred
-			state = noException;
+			state = onSuccess;
+			DebugEndPoint(inst);
 		}
 		
 		protected internal override void VisitIfInstruction(IfInstruction inst)
 		{
+			DebugStartPoint(inst);
 			inst.Condition.AcceptVisitor(this);
 			State branchState = state.Clone();
 			inst.TrueInst.AcceptVisitor(this);
@@ -400,10 +465,12 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			state = branchState;
 			inst.FalseInst.AcceptVisitor(this);
 			state.JoinWith(afterTrueState);
+			DebugEndPoint(inst);
 		}
 		
 		protected internal override void VisitSwitchInstruction(SwitchInstruction inst)
 		{
+			DebugStartPoint(inst);
 			inst.Value.AcceptVisitor(this);
 			State beforeSections = state.Clone();
 			State afterSections = unreachableState.Clone();
@@ -413,6 +480,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				afterSections.JoinWith(state);
 			}
 			state = afterSections;
+			DebugEndPoint(inst);
 		}
 	}
 }

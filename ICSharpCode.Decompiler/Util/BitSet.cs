@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text;
@@ -73,6 +74,34 @@ namespace ICSharpCode.Decompiler
 		public bool IsSupersetOf(BitSet other)
 		{
 			return other.IsSubsetOf(this);
+		}
+		
+		public bool SetEquals(BitSet other)
+		{
+			for (int i = 0; i < bits.Length; i++) {
+				if (bits[i] != other[i])
+					return false;
+			}
+			return true;
+		}
+		
+		public bool IsProperSubsetOf(BitSet other)
+		{
+			return IsSubsetOf(other) && !SetEquals(other);
+		}
+		
+		public bool IsProperSupersetOf(BitSet other)
+		{
+			return IsSubsetOf(other) && !SetEquals(other);
+		}
+		
+		public bool Overlaps(BitSet other)
+		{
+			for (int i = 0; i < bits.Length; i++) {
+				if (bits[i] && other[i])
+					return true;
+			}
+			return false;
 		}
 		
 		public void UnionWith(BitSet other)
