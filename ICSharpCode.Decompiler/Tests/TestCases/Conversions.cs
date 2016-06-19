@@ -107,6 +107,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 		{
 			RunTest(checkForOverflow: false);
 			RunTest(checkForOverflow: true);
+			
+			Console.WriteLine(ReadZeroTerminatedString("Hello World!".Length));
 		}
 		
 		static void RunTest(bool checkForOverflow)
@@ -132,6 +134,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 			checked {
 				return (UInt64)c;
 			}
+		}
+		
+		static string ReadZeroTerminatedString (int length)
+		{
+			int read = 0;
+			var buffer = new char [length];
+			var bytes = ReadBytes (length);
+			while (read < length) {
+				var current = bytes [read];
+				if (current == 0)
+					break;
+
+				buffer [read++] = (char) current;
+			}
+
+			return new string (buffer, 0, read);
+		}
+		
+		static byte[] ReadBytes(int length) {
+			return System.Text.Encoding.ASCII.GetBytes("Hello World!");
 		}
 	}
 }
