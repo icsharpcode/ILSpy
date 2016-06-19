@@ -506,6 +506,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			if (match.Success) {
 				var condition = match.Get<Expression>("varv").Single();
 				var bodyAssignment = match.Get<Expression>("body").Single() as AssignmentExpression;
+				if (bodyAssignment == null) return null;
 
 				var variables = new List<Expression>();
 				while (condition is AssignmentExpression) {
