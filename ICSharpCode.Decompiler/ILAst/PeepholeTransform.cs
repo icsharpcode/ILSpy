@@ -96,9 +96,7 @@ namespace ICSharpCode.Decompiler.ILAst
 			ILExpression length;
 			ILExpression input;
 			if (expr.Match(ILCode.Newarr, out typeRef, out length)) {
-				if (length.Match(ILCode.Conv_Ovf_I, out input) || length.Match(ILCode.Conv_I, out input)
-				    || length.Match(ILCode.Conv_Ovf_I_Un, out input) || length.Match(ILCode.Conv_U, out input))
-				{
+				if (length.Match(ILCode.Conv_Ovf_I, out input) || length.Match(ILCode.Conv_I, out input)) {
 					expr.Arguments[0] = input;
 					return true;
 				}
@@ -404,7 +402,7 @@ namespace ICSharpCode.Decompiler.ILAst
 			for (int i = 0; i < expr.Arguments.Count - 1; i++) {
 				ILVariable inputVar;
 				if (!expr.Arguments[i].Match(ILCode.Ldloc, out inputVar))
-					break;
+					return false;
 				hasGeneratedVar |= inputVar.IsGenerated;
 			}
 			// At least one of the variables must be generated; otherwise we just keep the expanded form.
@@ -434,7 +432,7 @@ namespace ICSharpCode.Decompiler.ILAst
 				return false;
 			Debug.Assert(ldelem.Arguments.Count == expr.Arguments.Count - 1);
 			for (int i = 0; i < ldelem.Arguments.Count; i++) {
-				if (ldelem.Arguments[i].Code != expr.Arguments[i].Code || !ldelem.Arguments[i].Operand.Equals(expr.Arguments[i].Operand))
+				if (!ldelem.Arguments[i].MatchLdloc((ILVariable)expr.Arguments[i].Operand))
 					return false;
 			}
 			expr.Code = ILCode.CompoundAssignment;

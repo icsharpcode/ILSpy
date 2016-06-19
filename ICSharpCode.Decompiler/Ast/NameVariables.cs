@@ -1,4 +1,4 @@
-// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -44,8 +44,8 @@ namespace ICSharpCode.Decompiler.Ast
 			{ "System.Object", "obj" },
 			{ "System.Char", "c" }
 		};
-
-
+		
+		
 		public static void AssignNamesToVariables(DecompilerContext context, IEnumerable<ILVariable> parameters, IEnumerable<ILVariable> variables, ILBlock methodBody)
 		{
 			NameVariables nv = new NameVariables();
@@ -62,7 +62,8 @@ namespace ICSharpCode.Decompiler.Ast
 					nv.AddExistingName(v.Name);
 				} else if (v.OriginalVariable != null && context.Settings.UseDebugSymbols) {
 					string varName = v.OriginalVariable.Name;
-					if (string.IsNullOrEmpty(varName) || varName.StartsWith("V_", StringComparison.Ordinal) || !IsValidName(varName)) {
+					if (string.IsNullOrEmpty(varName) || varName.StartsWith("V_", StringComparison.Ordinal) || !IsValidName(varName))
+					{
 						// don't use the name from the debug symbols if it looks like a generated name
 						v.Name = null;
 					} else {
@@ -84,7 +85,7 @@ namespace ICSharpCode.Decompiler.Ast
 					varDef.Name = nv.GenerateNameForVariable(varDef, methodBody);
 			}
 		}
-
+		
 		static bool IsValidName(string varName)
 		{
 			if (string.IsNullOrEmpty(varName))
@@ -97,11 +98,11 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 			return true;
 		}
-
+		
 		DecompilerContext context;
 		List<string> fieldNamesInCurrentType;
 		Dictionary<string, int> typeNames = new Dictionary<string, int>();
-
+		
 		public void AddExistingName(string name)
 		{
 			if (string.IsNullOrEmpty(name))
@@ -115,12 +116,12 @@ namespace ICSharpCode.Decompiler.Ast
 				typeNames.Add(nameWithoutDigits, number);
 			}
 		}
-
+		
 		string SplitName(string name, out int number)
 		{
 			// First, identify whether the name already ends with a number:
 			int pos = name.Length;
-			while (pos > 0 && name[pos - 1] >= '0' && name[pos - 1] <= '9')
+			while (pos > 0 && name[pos-1] >= '0' && name[pos-1] <= '9')
 				pos--;
 			if (pos < name.Length) {
 				if (int.TryParse(name.Substring(pos), out number)) {
@@ -130,9 +131,9 @@ namespace ICSharpCode.Decompiler.Ast
 			number = 1;
 			return name;
 		}
-
+		
 		const char maxLoopVariableName = 'n';
-
+		
 		public string GetAlternativeName(string oldVariableName)
 		{
 			if (oldVariableName.Length == 1 && oldVariableName[0] >= 'i' && oldVariableName[0] <= maxLoopVariableName) {
@@ -143,10 +144,10 @@ namespace ICSharpCode.Decompiler.Ast
 					}
 				}
 			}
-
+			
 			int number;
 			string nameWithoutDigits = SplitName(oldVariableName, out number);
-
+			
 			if (!typeNames.ContainsKey(nameWithoutDigits)) {
 				typeNames.Add(nameWithoutDigits, number - 1);
 			}
@@ -157,7 +158,7 @@ namespace ICSharpCode.Decompiler.Ast
 				return nameWithoutDigits;
 			}
 		}
-
+		
 		string GenerateNameForVariable(ILVariable variable, ILBlock methodBody)
 		{
 			string proposedName = null;
@@ -170,19 +171,19 @@ namespace ICSharpCode.Decompiler.Ast
 						expr = expr.Arguments[0];
 					if (expr != null) {
 						switch (expr.Code) {
-						case ILCode.Clt:
-						case ILCode.Clt_Un:
-						case ILCode.Cgt:
-						case ILCode.Cgt_Un:
-						case ILCode.Cle:
-						case ILCode.Cle_Un:
-						case ILCode.Cge:
-						case ILCode.Cge_Un:
-							ILVariable loadVar;
-							if (expr.Arguments[0].Match(ILCode.Ldloc, out loadVar) && loadVar == variable) {
-								isLoopCounter = true;
-							}
-							break;
+							case ILCode.Clt:
+							case ILCode.Clt_Un:
+							case ILCode.Cgt:
+							case ILCode.Cgt_Un:
+							case ILCode.Cle:
+							case ILCode.Cle_Un:
+							case ILCode.Cge:
+							case ILCode.Cge_Un:
+								ILVariable loadVar;
+								if (expr.Arguments[0].Match(ILCode.Ldloc, out loadVar) && loadVar == variable) {
+									isLoopCounter = true;
+								}
+								break;
 						}
 					}
 				}
@@ -221,11 +222,11 @@ namespace ICSharpCode.Decompiler.Ast
 			if (string.IsNullOrEmpty(proposedName)) {
 				proposedName = GetNameByType(variable.Type);
 			}
-
+			
 			// remove any numbers from the proposed name
 			int number;
 			proposedName = SplitName(proposedName, out number);
-
+			
 			if (!typeNames.ContainsKey(proposedName)) {
 				typeNames.Add(proposedName, 0);
 			}
@@ -236,77 +237,77 @@ namespace ICSharpCode.Decompiler.Ast
 				return proposedName;
 			}
 		}
-
+		
 		static string GetNameFromExpression(ILExpression expr)
 		{
 			switch (expr.Code) {
-			case ILCode.Ldfld:
-			case ILCode.Ldsfld:
-				return CleanUpVariableName(((FieldReference)expr.Operand).Name);
-			case ILCode.Call:
-			case ILCode.Callvirt:
-			case ILCode.CallGetter:
-			case ILCode.CallvirtGetter:
-				MethodReference mr = (MethodReference)expr.Operand;
-				if (mr.Name.StartsWith("get_", StringComparison.OrdinalIgnoreCase) && mr.Parameters.Count == 0) {
-					// use name from properties, but not from indexers
-					return CleanUpVariableName(mr.Name.Substring(4));
-				} else if (mr.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase) && mr.Name.Length >= 4 && char.IsUpper(mr.Name[3])) {
-					// use name from Get-methods
-					return CleanUpVariableName(mr.Name.Substring(3));
-				}
-				break;
+				case ILCode.Ldfld:
+				case ILCode.Ldsfld:
+					return CleanUpVariableName(((FieldReference)expr.Operand).Name);
+				case ILCode.Call:
+				case ILCode.Callvirt:
+				case ILCode.CallGetter:
+				case ILCode.CallvirtGetter:
+					MethodReference mr = (MethodReference)expr.Operand;
+					if (mr.Name.StartsWith("get_", StringComparison.OrdinalIgnoreCase) && mr.Parameters.Count == 0) {
+						// use name from properties, but not from indexers
+						return CleanUpVariableName(mr.Name.Substring(4));
+					} else if (mr.Name.StartsWith("Get", StringComparison.OrdinalIgnoreCase) && mr.Name.Length >= 4 && char.IsUpper(mr.Name[3])) {
+						// use name from Get-methods
+						return CleanUpVariableName(mr.Name.Substring(3));
+					}
+					break;
 			}
 			return null;
 		}
-
+		
 		static string GetNameForArgument(ILExpression parent, int i)
 		{
 			switch (parent.Code) {
-			case ILCode.Stfld:
-			case ILCode.Stsfld:
-				if (i == parent.Arguments.Count - 1) // last argument is stored value
-					return CleanUpVariableName(((FieldReference)parent.Operand).Name);
-				else
-					break;
-			case ILCode.Call:
-			case ILCode.Callvirt:
-			case ILCode.Newobj:
-			case ILCode.CallGetter:
-			case ILCode.CallvirtGetter:
-			case ILCode.CallSetter:
-			case ILCode.CallvirtSetter:
-				MethodReference methodRef = (MethodReference)parent.Operand;
-				if (methodRef.Parameters.Count == 1 && i == parent.Arguments.Count - 1) {
-					// argument might be value of a setter
-					if (methodRef.Name.StartsWith("set_", StringComparison.OrdinalIgnoreCase)) {
-						return CleanUpVariableName(methodRef.Name.Substring(4));
-					} else if (methodRef.Name.StartsWith("Set", StringComparison.OrdinalIgnoreCase) && methodRef.Name.Length >= 4 && char.IsUpper(methodRef.Name[3])) {
-						return CleanUpVariableName(methodRef.Name.Substring(3));
+				case ILCode.Stfld:
+				case ILCode.Stsfld:
+					if (i == parent.Arguments.Count - 1) // last argument is stored value
+						return CleanUpVariableName(((FieldReference)parent.Operand).Name);
+					else
+						break;
+				case ILCode.Call:
+				case ILCode.Callvirt:
+				case ILCode.Newobj:
+				case ILCode.CallGetter:
+				case ILCode.CallvirtGetter:
+				case ILCode.CallSetter:
+				case ILCode.CallvirtSetter:
+					MethodReference methodRef = (MethodReference)parent.Operand;
+					if (methodRef.Parameters.Count == 1 && i == parent.Arguments.Count - 1) {
+						// argument might be value of a setter
+						if (methodRef.Name.StartsWith("set_", StringComparison.OrdinalIgnoreCase)) {
+							return CleanUpVariableName(methodRef.Name.Substring(4));
+						} else if (methodRef.Name.StartsWith("Set", StringComparison.OrdinalIgnoreCase) && methodRef.Name.Length >= 4 && char.IsUpper(methodRef.Name[3])) {
+							return CleanUpVariableName(methodRef.Name.Substring(3));
+						}
 					}
-				}
-				MethodDefinition methodDef = methodRef.Resolve();
-				if (methodDef != null) {
-					var p = methodDef.Parameters.ElementAtOrDefault((parent.Code != ILCode.Newobj && methodDef.HasThis) ? i - 1 : i);
-					if (p != null && !string.IsNullOrEmpty(p.Name))
-						return CleanUpVariableName(p.Name);
-				}
-				break;
-			case ILCode.Ret:
-				return "result";
+					MethodDefinition methodDef = methodRef.Resolve();
+					if (methodDef != null) {
+						var p = methodDef.Parameters.ElementAtOrDefault((parent.Code != ILCode.Newobj && methodDef.HasThis) ? i - 1 : i);
+						if (p != null && !string.IsNullOrEmpty(p.Name))
+							return CleanUpVariableName(p.Name);
+					}
+					break;
+				case ILCode.Ret:
+					return "result";
 			}
 			return null;
 		}
-
+		
 		string GetNameByType(TypeReference type)
 		{
 			type = TypeAnalysis.UnpackModifiers(type);
-
+			
 			GenericInstanceType git = type as GenericInstanceType;
 			if (git != null && git.ElementType.FullName == "System.Nullable`1" && git.GenericArguments.Count == 1) {
 				type = ((GenericInstanceType)type).GenericArguments[0];
 			}
-
+			
 			string name;
 			if (type.IsArray) {
 				name = "array";
@@ -323,20 +324,20 @@ namespace ICSharpCode.Decompiler.Ast
 			}
 			return name;
 		}
-
+		
 		static string CleanUpVariableName(string name)
 		{
 			// remove the backtick (generics)
 			int pos = name.IndexOf('`');
 			if (pos >= 0)
 				name = name.Substring(0, pos);
-
+			
 			// remove field prefix:
 			if (name.Length > 2 && name.StartsWith("m_", StringComparison.Ordinal))
 				name = name.Substring(2);
-			else if (name.Length > 1 && name[0] == '_' && (char.IsLetter(name[1]) || name[1] == '_'))
+			else if (name.Length > 1 && name[0] == '_')
 				name = name.Substring(1);
-
+			
 			if (name.Length == 0)
 				return "obj";
 			else
