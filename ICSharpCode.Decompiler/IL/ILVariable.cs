@@ -49,8 +49,19 @@ namespace ICSharpCode.Decompiler.IL
 	public class ILVariable
 	{
 		public readonly VariableKind Kind;
-		public readonly IType Type;
 		public readonly StackType StackType;
+		
+		IType type;
+		public IType Type {
+			get {
+				return type;
+			}
+			internal set {
+				if (value.GetStackType() != StackType)
+					throw new ArgumentException($"Expected stack-type: {StackType} may not be changed. Found: {value.GetStackType()}");
+				type = value;
+			}
+		}
 		
 		/// <summary>
 		/// The index of the local variable or parameter (depending on Kind)
@@ -145,7 +156,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (type == null)
 				throw new ArgumentNullException("type");
 			this.Kind = kind;
-			this.Type = type;
+			this.type = type;
 			this.StackType = type.GetStackType();
 			this.Index = index;
 			if (kind == VariableKind.Parameter)
@@ -155,7 +166,7 @@ namespace ICSharpCode.Decompiler.IL
 		public ILVariable(VariableKind kind, IType type, StackType stackType, int index)
 		{
 			this.Kind = kind;
-			this.Type = type;
+			this.type = type;
 			this.StackType = stackType;
 			this.Index = index;
 			if (kind == VariableKind.Parameter)
