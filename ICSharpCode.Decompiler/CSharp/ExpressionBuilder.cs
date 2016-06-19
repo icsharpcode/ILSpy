@@ -568,7 +568,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				method = ((LdVirtFtn)func).Method;
 			}
 			var target = TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
-			return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), new MemberReferenceExpression(target, method.Name))
+			var mre = new MemberReferenceExpression(target, method.Name);
+			mre.TypeArguments.AddRange(method.TypeArguments.Select(a => ConvertType(a)));
+			return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), mre)
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
 					inst.Method.DeclaringType,
