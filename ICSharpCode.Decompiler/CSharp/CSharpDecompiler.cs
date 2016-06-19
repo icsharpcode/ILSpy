@@ -646,17 +646,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
-			typeSystemAstBuilder.UseCustomEvents = true;
-			var eventDecl = (CustomEventDeclaration)typeSystemAstBuilder.ConvertEntity(ev);
+			typeSystemAstBuilder.UseCustomEvents = ev.DeclaringTypeDefinition.Kind != TypeKind.Interface;
+			var eventDecl = typeSystemAstBuilder.ConvertEntity(ev);
 			int lastDot = ev.Name.LastIndexOf('.');
 			if (ev.IsExplicitInterfaceImplementation) {
 				eventDecl.Name = ev.Name.Substring(lastDot + 1);
 			}
 			if (eventDefinition.AddMethod != null && eventDefinition.AddMethod.HasBody) {
-				DecompileBody(eventDefinition.AddMethod, ev.AddAccessor, eventDecl.AddAccessor, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(eventDefinition.AddMethod, ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompilationContext, typeSystemAstBuilder);
 			}
 			if (eventDefinition.RemoveMethod != null && eventDefinition.RemoveMethod.HasBody) {
-				DecompileBody(eventDefinition.RemoveMethod, ev.RemoveAccessor, eventDecl.RemoveAccessor, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(eventDefinition.RemoveMethod, ev.RemoveAccessor, ((CustomEventDeclaration)eventDecl).RemoveAccessor, decompilationContext, typeSystemAstBuilder);
 			}
 			var accessor = eventDefinition.AddMethod ?? eventDefinition.RemoveMethod;
 			if (accessor.IsVirtual == accessor.IsNewSlot) {
