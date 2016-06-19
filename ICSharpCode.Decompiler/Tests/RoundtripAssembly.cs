@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.Tests
 					Console.WriteLine(line);
 				}
 				p.WaitForExit();
-				Assert.AreEqual(0, p.ExitCode, "Compilation failed");
+				Assert.AreEqual(0, p.ExitCode, $"Compilation of {Path.GetFileName(projectFile)} failed");
 			}
 		}
 		
@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.Tests
 					Console.WriteLine(line);
 				}
 				p.WaitForExit();
-				Assert.AreEqual(0, p.ExitCode, "Test execution failed");
+				Assert.AreEqual(0, p.ExitCode, $"Test execution of {Path.GetFileName(fileToTest)} failed");
 			}
 		}
 	}

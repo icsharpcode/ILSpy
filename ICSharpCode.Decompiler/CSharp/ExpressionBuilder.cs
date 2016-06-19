@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitNewArr(NewArr inst)
 		{
 			var dimensions = inst.Indices.Count;
-			var args = inst.Indices.Select(arg => Translate(arg)).ToArray();
+			var args = inst.Indices.Select(arg => TranslateArrayIndex(arg)).ToArray();
 			var expr = new ArrayCreateExpression { Type = ConvertType(inst.Type) };
 			var ct = expr.Type as ComposedType;
 			if (ct != null) {
@@ -796,16 +796,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				arrayType  = new ArrayType(compilation, inst.Type, inst.Indices.Count);
 				arrayExpr = arrayExpr.ConvertTo(arrayType, this);
 			}
-			TranslatedExpression expr = new IndexerExpression(arrayExpr, inst.Indices.Select(TranslateArrayIndex))
-				.WithILInstruction(inst).WithRR(new ResolveResult(arrayType.ElementType));
+			TranslatedExpression expr = new IndexerExpression(
+				arrayExpr, inst.Indices.Select(i => TranslateArrayIndex(i).Expression)
+			).WithILInstruction(inst).WithRR(new ResolveResult(arrayType.ElementType));
 			return new DirectionExpression(FieldDirection.Ref, expr)
 				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
 		}
 		
-		Expression TranslateArrayIndex(ILInstruction i)
+		TranslatedExpression TranslateArrayIndex(ILInstruction i)
 		{
 			var stackType = i.ResultType == StackType.I4 ? KnownTypeCode.Int32 : KnownTypeCode.Int64;
-			return Translate(i).ConvertTo(compilation.FindType(stackType), this).Expression;
+			return Translate(i).ConvertTo(compilation.FindType(stackType), this);
 		}
 		
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst)

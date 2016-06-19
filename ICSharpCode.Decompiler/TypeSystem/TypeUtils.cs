@@ -18,6 +18,7 @@
 using System;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.NRefactory.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler
 {
@@ -62,71 +63,66 @@ namespace ICSharpCode.Decompiler
 			return GetNativeSize(type1) >= GetNativeSize(type2) ? type1 : type2;
 		}
 		
+		/// <summary>
+		/// Gets whether the type is a small integer type.
+		/// Small integer types are:
+		/// * bool, sbyte, byte, char, short, ushort
+		/// * any enums that have a small integer type as underlying type
+		/// </summary>
 		public static bool IsSmallIntegerType(this IType type)
 		{
 			return GetNativeSize(type) < 4;
 		}
 		
 		/// <summary>
+		/// Gets whether the type is an IL integer type.
+		/// Returns true for I4, I, or I8.
+		/// </summary>
+		public static bool IsIntegerType(this StackType type)
+		{
+			switch (type) {
+				case StackType.I4:
+				case StackType.I:
+				case StackType.I8:
+					return true;
+				default:
+					return false;
+			}
+		}
+		
+		/// <summary>
 		/// Gets whether reading/writing an element of accessType from the pointer
 		/// is equivalent to reading/writing an element of the pointer's element type.
 		/// </summary>
+		/// <remarks>
+		/// The access semantics may sligthly differ on read accesses of small integer types,
+		/// due to zero extension vs. sign extension when the signs differ.
+		/// </remarks>
 		public static bool IsCompatibleTypeForMemoryAccess(IType pointerType, IType accessType)
 		{
 			IType memoryType;
-			if (pointerType is PointerType)
-				memoryType = ((PointerType)pointerType).ElementType;
-			else if (pointerType is ByReferenceType)
-				memoryType = ((ByReferenceType)pointerType).ElementType;
+			if (pointerType is PointerType || pointerType is ByReferenceType)
+				memoryType = ((TypeWithElementType)pointerType).ElementType;
 			else
 				return false;
-			ITypeDefinition memoryTypeDef = memoryType.GetDefinition();
-			ITypeDefinition accessTypeDef = accessType.GetDefinition();
-			if (memoryType.Kind == TypeKind.Enum && memoryTypeDef != null) {
-				memoryType = memoryTypeDef.EnumUnderlyingType;
-				memoryTypeDef = memoryType.GetDefinition();
-			}
-			if (accessType.Kind == TypeKind.Enum && accessTypeDef != null) {
-				accessType = accessTypeDef.EnumUnderlyingType;
-				accessTypeDef = accessType.GetDefinition();
-			}
 			if (memoryType.Equals(accessType))
 				return true;
-			// If the types are not equal, the access still might produce equal results:
+			// If the types are not equal, the access still might produce equal results in some cases:
+			// 1) Both types are reference types
 			if (memoryType.IsReferenceType == true && accessType.IsReferenceType == true)
 				return true;
-			if (memoryTypeDef != null) {
-				switch (memoryTypeDef.KnownTypeCode) {
-					case KnownTypeCode.Byte:
-					case KnownTypeCode.SByte:
-						// Reading small integers of different signs is not equivalent due to sign extension,
-						// but writes are equivalent (truncation works the same for signed and unsigned)
-						return accessType.IsKnownType(KnownTypeCode.Byte) || accessType.IsKnownType(KnownTypeCode.SByte);
-					case KnownTypeCode.Int16:
-					case KnownTypeCode.UInt16:
-						return accessType.IsKnownType(KnownTypeCode.Int16) || accessType.IsKnownType(KnownTypeCode.UInt16);
-					case KnownTypeCode.Int32:
-					case KnownTypeCode.UInt32:
-						return accessType.IsKnownType(KnownTypeCode.Int32) || accessType.IsKnownType(KnownTypeCode.UInt32);
-					case KnownTypeCode.IntPtr:
-					case KnownTypeCode.UIntPtr:
-						return accessType.IsKnownType(KnownTypeCode.IntPtr) || accessType.IsKnownType(KnownTypeCode.UIntPtr);
-					case KnownTypeCode.Int64:
-					case KnownTypeCode.UInt64:
-						return accessType.IsKnownType(KnownTypeCode.Int64) || accessType.IsKnownType(KnownTypeCode.UInt64);
-					case KnownTypeCode.Char:
-						return accessType.IsKnownType(KnownTypeCode.Char) || accessType.IsKnownType(KnownTypeCode.UInt16) || accessType.IsKnownType(KnownTypeCode.Int16);
-					case KnownTypeCode.Boolean:
-						return accessType.IsKnownType(KnownTypeCode.Boolean) || accessType.IsKnownType(KnownTypeCode.Byte) || accessType.IsKnownType(KnownTypeCode.SByte);
-				}
-			}
-			return false;
+			// 2) Both types are integer types of equal size
+			StackType memoryStackType = memoryType.GetStackType();
+			StackType accessStackType = accessType.GetStackType();
+			return memoryStackType == accessStackType && memoryStackType.IsIntegerType() && GetNativeSize(memoryType) == GetNativeSize(accessType);
 		}
 
+		/// <summary>
+		/// Gets the stack type corresponding to this type.
+		/// </summary>
 		public static StackType GetStackType(this IType type)
 		{
-			switch (type.Kind)
-			{
+			switch (type.Kind) {
 				case TypeKind.Unknown:
 					return StackType.Unknown;
 				case TypeKind.ByReference:
@@ -134,14 +130,9 @@ namespace ICSharpCode.Decompiler
 				case TypeKind.Pointer:
 					return StackType.I;
 			}
-			ITypeDefinition typeDef = type.GetDefinition();
+			ITypeDefinition typeDef = type.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
 				return StackType.O;
-			if (typeDef.Kind == TypeKind.Enum) {
-				typeDef = typeDef.EnumUnderlyingType.GetDefinition();
-				if (typeDef == null)
-					return StackType.O;
-			}
 			switch (typeDef.KnownTypeCode) {
 				case KnownTypeCode.Boolean:
 				case KnownTypeCode.Char:
@@ -168,10 +159,28 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 		
+		/// <summary>
+		/// If type is an enumeration type, returns the underlying type.
+		/// Otherwise, returns type unmodified.
+		/// </summary>
+		public static IType GetEnumUnderlyingType(this IType type)
+		{
+			return (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
+		}
+		
+		/// <summary>
+		/// Gets the sign of the input type.
+		/// </summary>
+		/// <remarks>
+		/// Integer types (including IntPtr/UIntPtr) return the sign as expected.
+		/// Floating point types and <c>decimal</c> are considered to be signed.
+		/// <c>char</c> and <c>bool</c> are unsigned.
+		/// Enums have a sign based on their underlying type.
+		/// All other types return <c>Sign.None</c>.
+		/// </remarks>
 		public static Sign GetSign(this IType type)
 		{
-			var typeForConstant = (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
-			var typeDef = typeForConstant.GetDefinition();
+			var typeDef = type.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
 				return Sign.None;
 			switch (typeDef.KnownTypeCode) {
@@ -197,6 +206,9 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 		
+		/// <summary>
+		/// Maps the PrimitiveType values to the corresponding KnownTypeCodes.
+		/// </summary>
 		public static KnownTypeCode ToKnownTypeCode(this PrimitiveType primitiveType)
 		{
 			switch (primitiveType) {
