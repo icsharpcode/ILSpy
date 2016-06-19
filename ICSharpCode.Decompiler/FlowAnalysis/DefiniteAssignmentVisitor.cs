@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			public State(int variableCount)
 			{
 				this.bits = new BitSet(variableCount);
-				this.bits.SetAll();
+				this.bits.Set(0, variableCount);
 			}
 			
 			private State(BitSet bits)

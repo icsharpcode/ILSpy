@@ -30,42 +30,71 @@ namespace ICSharpCode.Decompiler
 	/// </summary>
 	public class BitSet
 	{
-		readonly BitArray bits;
+		const int BitsPerWord = 64;
+		const int Log2BitsPerWord = 6;
+		const ulong Mask = 0xffffffffffffffffUL;
+		
+		readonly ulong[] words;
+		
+		static int WordIndex(int bitIndex)
+		{
+			Debug.Assert(bitIndex >= 0);
+			return bitIndex >> Log2BitsPerWord;
+		}
 		
 		/// <summary>
 		/// Creates a new bitset, where initially all bits are zero.
 		/// </summary>
 		public BitSet(int capacity)
 		{
-			this.bits = new BitArray(capacity);
+			this.words = new ulong[Math.Max(1, WordIndex(capacity + BitsPerWord - 1))];
 		}
 
-		private BitSet(BitArray bits)
+		private BitSet(ulong[] bits)
 		{
-			this.bits = bits;
+			this.words = bits;
 		}
 		
 		public BitSet Clone()
 		{
-			return new BitSet((BitArray)bits.Clone());
+			return new BitSet((ulong[])words.Clone());
 		}
 
 		public bool this[int index] {
 			get {
-				return bits[index];
+				return (words[WordIndex(index)] & (1UL << index)) != 0;
 			}
 			set {
-				bits[index] = value;
+				if (value)
+					Set(index);
+				else
+					Clear(index);
 			}
 		}
 
+		/// <summary>
+		/// Gets whether at least one bit is set.
+		/// </summary>
 		public bool Any()
 		{
-			for (int i = 0; i < bits.Length; i++) {
-				if (bits[i])
+			for (int i = 0; i < words.Length; i++) {
+				if (words[i] != 0)
 					return true;
 			}
 			return false;
+		}
+		
+		/// <summary>
+		/// Gets whether both bitsets have the same content.
+		/// </summary>
+		public bool SetEquals(BitSet other)
+		{
+			Debug.Assert(words.Length == other.words.Length);
+			for (int i = 0; i < words.Length; i++) {
+				if (words[i] != other.words[i])
+					return false;
+			}
+			return true;
 		}
 		
 		/// <summary>
@@ -73,25 +102,19 @@ namespace ICSharpCode.Decompiler
 		/// </summary>
 		public bool IsSubsetOf(BitSet other)
 		{
-			for (int i = 0; i < bits.Length; i++) {
-				if (bits[i] && !other[i])
+			for (int i = 0; i < words.Length; i++) {
+				if ((words[i] & ~other.words[i]) != 0)
 					return false;
 			}
 			return true;
 		}
 		
+		/// <summary>
+		/// Gets whether this set is a superset of other, or equal.
+		/// </summary>
 		public bool IsSupersetOf(BitSet other)
 		{
 			return other.IsSubsetOf(this);
-		}
-		
-		public bool SetEquals(BitSet other)
-		{
-			for (int i = 0; i < bits.Length; i++) {
-				if (bits[i] != other[i])
-					return false;
-			}
-			return true;
 		}
 		
 		public bool IsProperSubsetOf(BitSet other)
@@ -104,10 +127,13 @@ namespace ICSharpCode.Decompiler
 			return IsSubsetOf(other) && !SetEquals(other);
 		}
 		
+		/// <summary>
+		/// Gets whether at least one bit is set in both bitsets.
+		/// </summary>
 		public bool Overlaps(BitSet other)
 		{
-			for (int i = 0; i < bits.Length; i++) {
-				if (bits[i] && other[i])
+			for (int i = 0; i < words.Length; i++) {
+				if ((words[i] & other.words[i]) != 0)
 					return true;
 			}
 			return false;
@@ -115,62 +141,99 @@ namespace ICSharpCode.Decompiler
 		
 		public void UnionWith(BitSet other)
 		{
-			bits.Or(other.bits);
+			Debug.Assert(words.Length == other.words.Length);
+			for (int i = 0; i < words.Length; i++) {
+				words[i] |= other.words[i];
+			}
 		}
 		
 		public void IntersectWith(BitSet other)
 		{
-			bits.And(other.bits);
-		}
-		
-		public void ClearAll()
-		{
-			bits.SetAll(false);
-		}
-		
-		public void Clear(int index)
-		{
-			bits[index] = false;
-		}
-		
-		public void Clear(int startIndex, int endIndex)
-		{
-			for (int i = startIndex; i < endIndex; i++) {
-				bits[i] = false;
+			for (int i = 0; i < words.Length; i++) {
+				words[i] &= other.words[i];
 			}
-		}
-
-		public void SetAll()
-		{
-			bits.SetAll(true);
 		}
 		
 		public void Set(int index)
 		{
-			bits[index] = true;
+			words[WordIndex(index)] |= (1UL << index);
 		}
 		
+		/// <summary>
+		/// Sets all bits i; where startIndex &lt;= i &lt; endIndex.
+		/// </summary>
 		public void Set(int startIndex, int endIndex)
 		{
-			for (int i = startIndex; i < endIndex; i++) {
-				bits[i] = true;
+			Debug.Assert(startIndex <= endIndex);
+			if (startIndex >= endIndex) {
+				return;
+			}
+			int startWordIndex = WordIndex(startIndex);
+			int endWordIndex = WordIndex(endIndex - 1);
+			ulong startMask = Mask << startIndex;
+			ulong endMask = Mask >> -endIndex; // same as (Mask >> (64 - (endIndex % 64)))
+			if (startWordIndex == endWordIndex) {
+				words[startWordIndex] |= (startMask & endMask);
+			} else {
+				words[startWordIndex] |= startMask;
+				for (int i = startWordIndex + 1; i < endWordIndex; i++) {
+					words[i] = 0;
+				}
+				words[endWordIndex] |= endMask;
+			}
+		}
+		
+		// Note: intentionally no SetAll(), because it would also set the
+		// extra bits (due to the capacity being rounded up to a full word).
+		
+		public void Clear(int index)
+		{
+			words[WordIndex(index)] &= ~(1UL << index);
+		}
+		
+		/// <summary>
+		/// Clear all bits i; where startIndex &lt;= i &lt; endIndex.
+		/// </summary>
+		public void Clear(int startIndex, int endIndex)
+		{
+			Debug.Assert(startIndex <= endIndex);
+			if (startIndex >= endIndex) {
+				return;
+			}
+			int startWordIndex = WordIndex(startIndex);
+			int endWordIndex = WordIndex(endIndex - 1);
+			ulong startMask = Mask << startIndex;
+			ulong endMask = Mask >> -endIndex; // same as (Mask >> (64 - (endIndex % 64)))
+			if (startWordIndex == endWordIndex) {
+				words[startWordIndex] &= ~(startMask & endMask);
+			} else {
+				words[startWordIndex] &= ~startMask;
+				for (int i = startWordIndex + 1; i < endWordIndex; i++) {
+					words[i] = 0;
+				}
+				words[endWordIndex] &= ~endMask;
+			}
+		}
+
+		public void ClearAll()
+		{
+			for (int i = 0; i < words.Length; i++) {
+				words[i] = 0;
 			}
 		}
 
 		public void ReplaceWith(BitSet incoming)
 		{
-			Debug.Assert(bits.Length == incoming.bits.Length);
-			for (int i = 0; i < bits.Length; i++) {
-				bits[i] = incoming.bits[i];
-			}
+			Debug.Assert(words.Length == incoming.words.Length);
+			Array.Copy(incoming.words, 0, words, 0, words.Length);
 		}
 		
 		public override string ToString()
 		{
 			StringBuilder b = new StringBuilder();
 			b.Append('{');
-			for (int i = 0; i < bits.Length; i++) {
-				if (bits[i]) {
+			for (int i = 0; i < words.Length; i++) {
+				if (this[i]) {
 					if (b.Length > 1)
 						b.Append(", ");
 					if (b.Length > 500) {

@@ -117,23 +117,27 @@ namespace ICSharpCode.Decompiler.Tests
 				if (result1 != result2 || output1 != output2 || error1 != error2) {
 					Console.WriteLine("Test {0} failed.", testFileName);
 					Console.WriteLine("Decompiled code in {0}:line 1", decompiledCodeFile);
-					string outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
-					File.WriteAllText(outputFileName + ".original.out", output1);
-					File.WriteAllText(outputFileName + ".decompiled.out", output2);
-					int diffLine = 0;
-					foreach (var pair in output1.Split('\n').Zip(output2.Split('\n'), Tuple.Create)) {
-						diffLine++;
-						if (pair.Item1 != pair.Item2) {
-							break;
+					if (error1 == "" && error2 != "") {
+						Console.WriteLine(error2);
+					} else {
+						string outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
+						File.WriteAllText(outputFileName + ".original.out", output1);
+						File.WriteAllText(outputFileName + ".decompiled.out", output2);
+						int diffLine = 0;
+						foreach (var pair in output1.Split('\n').Zip(output2.Split('\n'), Tuple.Create)) {
+							diffLine++;
+							if (pair.Item1 != pair.Item2) {
+								break;
+							}
 						}
+						Console.WriteLine("Output: {0}.original.out:line {1}", outputFileName, diffLine);
+						Console.WriteLine("Output: {0}.decompiled.out:line {1}", outputFileName, diffLine);
 					}
-					Console.WriteLine("Output: {0}.original.out:line {1}", outputFileName, diffLine);
-					Console.WriteLine("Output: {0}.decompiled.out:line {1}", outputFileName, diffLine);
 				}
 				
-				Assert.AreEqual(result1, result2);
-				Assert.AreEqual(output1, output2);
+				Assert.AreEqual(result1, result2, "Exit codes differ; did the decompiled code crash?");
 				Assert.AreEqual(error1, error2);
+				Assert.AreEqual(output1, output2);
 			} finally {
 				if (outputFile != null)
 					outputFile.TempFiles.Delete();
