@@ -258,8 +258,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), ExpressionType.Not));
 		}
 		
+		readonly HashSet<ILVariable> loadedVariablesSet = new HashSet<ILVariable>();
+		
 		protected internal override TranslatedExpression VisitLdLoc(LdLoc inst)
 		{
+			if (inst.Variable.Kind == VariableKind.StackSlot && inst.Variable.IsSingleDefinition) {
+				loadedVariablesSet.Add(inst.Variable);
+			}
 			return ConvertVariable(inst.Variable).WithILInstruction(inst);
 		}
 		
@@ -275,7 +280,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitStLoc(StLoc inst)
 		{
-			return Assignment(ConvertVariable(inst.Variable).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
+			var translatedValue = Translate(inst.Value);
+			if (inst.Variable.Kind == VariableKind.StackSlot && inst.Variable.IsSingleDefinition && !loadedVariablesSet.Contains(inst.Variable)) {
+				inst.Variable.Type = translatedValue.Type;
+			}
+			return Assignment(ConvertVariable(inst.Variable).WithoutILInstruction(), translatedValue).WithILInstruction(inst);
 		}
 		
 		protected internal override TranslatedExpression VisitCeq(Ceq inst)
