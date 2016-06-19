@@ -44,34 +44,75 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 		
-		protected internal override void VisitCgt_Un(Cgt_Un inst)
+		protected internal override void VisitComp(Comp inst)
 		{
-			base.VisitCgt_Un(inst);
+			base.VisitComp(inst);
 			if (inst.Right.MatchLdNull()) {
-				// cgt.un(left, ldnull)
-				// => logic.not(ceq(left, ldnull))
-				inst.ReplaceWith(new LogicNot(new Ceq(inst.Left, inst.Right) { ILRange = inst.ILRange }));
+				// comp(left > ldnull)  => comp(left != ldnull)
+				// comp(left <= ldnull) => comp(left == ldnull)
+				if (inst.Kind == ComparisonKind.GreaterThan)
+					inst.Kind = ComparisonKind.Inequality;
+				else if (inst.Kind == ComparisonKind.LessThanOrEqual)
+					inst.Kind = ComparisonKind.Equality;
+			} else if (inst.Left.MatchLdNull()) {
+				// comp(ldnull < right)  => comp(ldnull != right)
+				// comp(ldnull >= right) => comp(ldnull == right)
+				if (inst.Kind == ComparisonKind.LessThan)
+					inst.Kind = ComparisonKind.Inequality;
+				else if (inst.Kind == ComparisonKind.GreaterThanOrEqual)
+					inst.Kind = ComparisonKind.Equality;
 			}
-			if (inst.Right.MatchLdcI4(0)) {
-				// cgt.un(left, ldc.i4 0)
-				// => logic.not(ceq(left, ldc.i4 0))
+			
+			if (inst.Right.MatchLdcI4(0) && inst.Sign == Sign.Unsigned 
+			    && (inst.Kind == ComparisonKind.GreaterThan || inst.Kind == ComparisonKind.LessThan))
+			{
 				ILInstruction array;
 				if (inst.Left.MatchLdLen(StackType.I, out array)) {
-					// cgt.un(ldlen array, ldc.i4 0)
-					// => logic.not(ceq(ldlen.i4 array, ldc.i4 0))
+					// comp.unsigned(ldlen array > ldc.i4 0)
+					// => comp(ldlen.i4 array > ldc.i4 0)
+					// This is a special case where the C# compiler doesn't generate conv.i4 after ldlen.
 					inst.Left.ReplaceWith(new LdLen(StackType.I4, array) { ILRange = inst.Left.ILRange });
+					inst.InputType = StackType.I4;
 				}
-				inst.ReplaceWith(new LogicNot(new Ceq(inst.Left, inst.Right) { ILRange = inst.ILRange }));
+				// comp.unsigned(left > ldc.i4 0) => comp(left != ldc.i4 0)
+				// comp.unsigned(left <= ldc.i4 0) => comp(left == ldc.i4 0)
+				if (inst.Kind == ComparisonKind.GreaterThan)
+					inst.Kind = ComparisonKind.Inequality;
+				else if (inst.Kind == ComparisonKind.LessThanOrEqual)
+					inst.Kind = ComparisonKind.Equality;
 			}
 		}
 		
-		protected internal override void VisitClt_Un(Clt_Un inst)
+		protected internal override void VisitConv(Conv inst)
 		{
-			base.VisitClt_Un(inst);
-			if (inst.Left.MatchLdNull()) {
-				// clt.un(ldnull, right)
-				// => logic.not(ceq(ldnull, right))
-				inst.ReplaceWith(new LogicNot(new Ceq(inst.Left, inst.Right) { ILRange = inst.ILRange }));
+			inst.Argument.AcceptVisitor(this);
+			ILInstruction array;
+			if (inst.Argument.MatchLdLen(StackType.I, out array) && inst.TargetType.IsIntegerType() && !inst.CheckForOverflow) {
+				// conv.i4(ldlen array) => ldlen.i4(array)
+				inst.AddILRange(inst.Argument.ILRange);
+				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array) { ILRange = inst.ILRange });
+			}
+		}
+		
+		protected internal override void VisitLogicNot(LogicNot inst)
+		{
+			inst.Argument.AcceptVisitor(this);
+			ILInstruction arg;
+			if (inst.Argument.MatchLogicNot(out arg)) {
+				// logic.not(logic.not(arg))
+				// ==> arg
+				Debug.Assert(arg.ResultType == StackType.I4);
+				arg.AddILRange(inst.ILRange);
+				arg.AddILRange(inst.Argument.ILRange);
+				inst.ReplaceWith(arg);
+			} else if (inst.Argument is Comp) {
+				Comp comp = (Comp)inst.Argument;
+				if (comp.InputType != StackType.F || comp.Kind.IsEqualityOrInequality()) {
+					// push negation into comparison:
+					comp.Kind = comp.Kind.Negate();
+					comp.AddILRange(inst.ILRange);
+					inst.ReplaceWith(comp);
+				}
 			}
 		}
 		
@@ -136,8 +177,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			base.VisitStObj(inst);
 			ILVariable v;
 			if (inst.Target.MatchLdLoca(out v)
-			    && TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type) 
-			    && inst.UnalignedPrefix == 0 
+			    && TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type)
+			    && inst.UnalignedPrefix == 0
 			    && !inst.IsVolatile)
 			{
 				// stobj(ldloca(v), ...)

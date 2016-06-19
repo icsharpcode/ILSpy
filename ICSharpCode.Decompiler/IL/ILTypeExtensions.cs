@@ -90,5 +90,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return ((MetadataType)primitiveType).GetStackType();
 		}
+		
+		public static bool IsIntegerType(this PrimitiveType primitiveType)
+		{
+			return primitiveType.GetStackType().IsIntegerType();
+		}
 	}
 }

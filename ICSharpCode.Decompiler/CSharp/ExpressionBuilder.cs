@@ -289,14 +289,33 @@ namespace ICSharpCode.Decompiler.CSharp
 			return Assignment(ConvertVariable(inst.Variable).WithoutILInstruction(), translatedValue).WithILInstruction(inst);
 		}
 		
-		protected internal override TranslatedExpression VisitCeq(Ceq inst)
+		protected internal override TranslatedExpression VisitComp(Comp inst)
+		{
+			if (inst.Kind.IsEqualityOrInequality()) {
+				bool negateOutput;
+				var result = TranslateCeq(inst, out negateOutput);
+				if (negateOutput)
+					return LogicNot(result).WithILInstruction(inst);
+				else
+					return result;
+			} else {
+				return TranslateComp(inst);
+			}
+		}
+		
+		/// <summary>
+		/// Translates the equality comparison between left and right.
+		/// </summary>
+		TranslatedExpression TranslateCeq(Comp inst, out bool negateOutput)
 		{
 			// Translate '(e as T) == null' to '!(e is T)'.
 			// This is necessary for correctness when T is a value type.
 			if (inst.Left.OpCode == OpCode.IsInst && inst.Right.OpCode == OpCode.LdNull) {
-				return LogicNot(IsType((IsInst)inst.Left)).WithILInstruction(inst);
+				negateOutput = inst.Kind == ComparisonKind.Equality;
+				return IsType((IsInst)inst.Left);
 			} else if (inst.Right.OpCode == OpCode.IsInst && inst.Left.OpCode == OpCode.LdNull) {
-				return LogicNot(IsType((IsInst)inst.Right)).WithILInstruction(inst);
+				negateOutput = inst.Kind == ComparisonKind.Equality;
+				return IsType((IsInst)inst.Right);
 			}
 			
 			var left = Translate(inst.Left);
@@ -304,21 +323,37 @@ namespace ICSharpCode.Decompiler.CSharp
 			
 			// Remove redundant bool comparisons
 			if (left.Type.IsKnownType(KnownTypeCode.Boolean)) {
-				if (inst.Right.MatchLdcI4(0))
-					return LogicNot(left).WithILInstruction(inst); // 'b == 0' => '!b'
-				if (inst.Right.MatchLdcI4(1))
-					return left; // 'b == 1' => 'b'
+				if (inst.Right.MatchLdcI4(0)) {
+					// 'b == 0' => '!b'
+					// 'b != 0' => 'b'
+					negateOutput = inst.Kind == ComparisonKind.Equality;
+					return left;
+				}
+				if (inst.Right.MatchLdcI4(1)) {
+					// 'b == 1' => 'b'
+					// 'b != 1' => '!b'
+					negateOutput = inst.Kind == ComparisonKind.Inequality;
+					return left;
+				}
 			} else if (right.Type.IsKnownType(KnownTypeCode.Boolean)) {
-				if (inst.Left.MatchLdcI4(0))
-					return LogicNot(right).WithILInstruction(inst); // '0 == b' => '!b'
-				if (inst.Left.MatchLdcI4(1))
-					return right; // '1 == b' => 'b'
+				if (inst.Left.MatchLdcI4(0)) {
+					// '0 == b' => '!b'
+					// '0 != b' => 'b'
+					negateOutput = inst.Kind == ComparisonKind.Equality;
+					return right;
+				}
+				if (inst.Left.MatchLdcI4(1)) {
+					// '0 == b' => '!b'
+					// '0 != b' => 'b'
+					negateOutput = inst.Kind == ComparisonKind.Equality;
+					return right;
+				}
 			}
 			
-			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.Equality, left.ResolveResult, right.ResolveResult)
+			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
 				as OperatorResolveResult;
 			if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
-			    || rr.Operands[0].Type.GetStackType() != inst.OpType)
+			    || rr.Operands[0].Type.GetStackType() != inst.InputType)
 			{
 				var targetType = TypeUtils.GetLargerType(left.Type, right.Type);
 				if (targetType.Equals(left.Type)) {
@@ -330,75 +365,40 @@ namespace ICSharpCode.Decompiler.CSharp
 				                               BinaryOperatorExpression.GetLinqNodeType(BinaryOperatorType.Equality, false),
 				                               left.ResolveResult, right.ResolveResult);
 			}
-			return new BinaryOperatorExpression(left.Expression, BinaryOperatorType.Equality, right.Expression)
+			negateOutput = false;
+			return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(rr);
 		}
 		
-		protected internal override TranslatedExpression VisitClt(Clt inst)
-		{
-			return Comparison(inst, BinaryOperatorType.LessThan);
-		}
-		
-		protected internal override TranslatedExpression VisitCgt(Cgt inst)
-		{
-			return Comparison(inst, BinaryOperatorType.GreaterThan);
-		}
-		
-		protected internal override TranslatedExpression VisitClt_Un(Clt_Un inst)
-		{
-			return Comparison(inst, BinaryOperatorType.LessThan, un: true);
-		}
-
-		protected internal override TranslatedExpression VisitCgt_Un(Cgt_Un inst)
-		{
-			return Comparison(inst, BinaryOperatorType.GreaterThan, un: true);
-		}
-		
-		TranslatedExpression Comparison(BinaryComparisonInstruction inst, BinaryOperatorType op, bool un = false)
+		/// <summary>
+		/// Handle Comp instruction, operators other than equality/inequality.
+		/// </summary>
+		TranslatedExpression TranslateComp(Comp inst)
 		{
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
 			// Ensure the inputs have the correct sign:
 			KnownTypeCode inputType = KnownTypeCode.None;
-			switch (inst.OpType) {
+			switch (inst.InputType) {
 				case StackType.I: // In order to generate valid C# we need to treat (U)IntPtr as (U)Int64 in comparisons.
 				case StackType.I8:
-					inputType = un ? KnownTypeCode.UInt64 : KnownTypeCode.Int64;
+					inputType = inst.Sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64;
 					break;
 				case StackType.I4:
-					inputType = un ? KnownTypeCode.UInt32 : KnownTypeCode.Int32;
-					break;
-				case StackType.F:
-					if (un) {
-						// for floats, _Un means "unordered":
-						// clt_un returns 1 if left < right or if either input is not-a-number
-						// The C# operators never return true for NaN, so we need to use a negation:
-						// clt_un => !(left >= right)
-						// cgt_un => !(left <= right)
-						if (op == BinaryOperatorType.LessThan)
-							op = BinaryOperatorType.GreaterThanOrEqual;
-						else if (op == BinaryOperatorType.GreaterThan)
-							op = BinaryOperatorType.LessThanOrEqual;
-						else
-							throw new ArgumentException("op");
-					}
+					inputType = inst.Sign == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32;
 					break;
 			}
 			if (inputType != KnownTypeCode.None) {
 				left = left.ConvertTo(compilation.FindType(inputType), this);
 				right = right.ConvertTo(compilation.FindType(inputType), this);
 			}
-			var result = new BinaryOperatorExpression(left.Expression, op, right.Expression)
+			var op = inst.Kind.ToBinaryOperatorType();
+			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(new OperatorResolveResult(compilation.FindType(TypeCode.Boolean),
 				                                  BinaryOperatorExpression.GetLinqNodeType(op, false),
 				                                  left.ResolveResult, right.ResolveResult));
-			if (un && inst.OpType == StackType.F) {
-				// add negation if we turned around the operator symbol above
-				result = LogicNot(result).WithILInstruction(inst);
-			}
-			return result;
 		}
 		
 		ExpressionWithResolveResult Assignment(TranslatedExpression left, TranslatedExpression right)

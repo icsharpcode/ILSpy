@@ -88,16 +88,11 @@
 			BaseClass("TryInstruction"), CustomConstructor, CustomWriteTo, CustomComputeFlags),
 		new OpCode("debug.break", "Breakpoint instruction",
 			NoArguments, VoidResult, SideEffect),
-		new OpCode("ceq", "Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.",
-			BinaryComparison),
-		new OpCode("cgt", "Compare greater than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.",
-			BinaryComparison),
-		new OpCode("cgt.un", "Compare greater than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.",
-			CustomClassName("Cgt_Un"), BinaryComparison),
-		new OpCode("clt", "Compare less than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.",
-			BinaryComparison),
-		new OpCode("clt.un", "Compare less than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.",
-			CustomClassName("Clt_Un"), BinaryComparison),
+		new OpCode("comp", "Comparison. The inputs must be both integers; or both floats; or both object references. "
+			+ "Object references can only be compared for equality or inequality. "
+			+ "Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which "
+			+ "evaluates to 1 (true).",
+			Binary, CustomConstructor, CustomWriteTo, ResultType("I4")),
 		new OpCode("call", "Non-virtual method call.", Call),
 		new OpCode("callvirt", "Virtual method call.", 
 			CustomClassName("CallVirt"), Call),
@@ -580,14 +575,6 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.BaseConstructorArguments.Add("compoundAssignmentType");
 	};
 	
-	// BinaryNumeric trait: the instruction is derived from BinaryComparisonInstruction. Implies Binary and I4Result.
-	static Action<OpCode> BinaryComparison = opCode => {
-		Binary(opCode);
-		opCode.BaseClass = "BinaryComparisonInstruction";
-		opCode.WriteOpCodeSuffix.Add("output.Write('.');");
-		opCode.WriteOpCodeSuffix.Add("output.Write(OpType);");
-	};
-
 	static Action<OpCode> CustomArguments(params string[] arguments)
 	{
 		return CustomChildren(arguments.Select(arg => new ArgumentInfo(arg)).ToArray(), generateInline: true);

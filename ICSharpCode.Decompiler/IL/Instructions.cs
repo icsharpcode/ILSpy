@@ -79,16 +79,8 @@ namespace ICSharpCode.Decompiler.IL
 		TryFault,
 		/// <summary>Breakpoint instruction</summary>
 		DebugBreak,
-		/// <summary>Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.</summary>
-		Ceq,
-		/// <summary>Compare greater than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.</summary>
-		Cgt,
-		/// <summary>Compare greater than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.</summary>
-		Cgt_Un,
-		/// <summary>Compare less than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.</summary>
-		Clt,
-		/// <summary>Compare less than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.</summary>
-		Clt_Un,
+		/// <summary>Comparison. The inputs must be both integers; or both floats; or both object references. Object references can only be compared for equality or inequality. Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which evaluates to 1 (true).</summary>
+		Comp,
 		/// <summary>Non-virtual method call.</summary>
 		Call,
 		/// <summary>Virtual method call.</summary>
@@ -1111,88 +1103,17 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Compare equal. Returns 1 (of type I4) if two numbers or object references are equal; 0 otherwise.</summary>
-	public sealed partial class Ceq : BinaryComparisonInstruction
+	/// <summary>Comparison. The inputs must be both integers; or both floats; or both object references. Object references can only be compared for equality or inequality. Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which evaluates to 1 (true).</summary>
+	public sealed partial class Comp : BinaryInstruction
 	{
-		public Ceq(ILInstruction left, ILInstruction right) : base(OpCode.Ceq, left, right)
-		{
-		}
-
+		public override StackType ResultType { get { return StackType.I4; } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
-			visitor.VisitCeq(this);
+			visitor.VisitComp(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitCeq(this);
-		}
-	}
-
-	/// <summary>Compare greater than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.</summary>
-	public sealed partial class Cgt : BinaryComparisonInstruction
-	{
-		public Cgt(ILInstruction left, ILInstruction right) : base(OpCode.Cgt, left, right)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitCgt(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitCgt(this);
-		}
-	}
-
-	/// <summary>Compare greater than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.</summary>
-	public sealed partial class Cgt_Un : BinaryComparisonInstruction
-	{
-		public Cgt_Un(ILInstruction left, ILInstruction right) : base(OpCode.Cgt_Un, left, right)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitCgt_Un(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitCgt_Un(this);
-		}
-	}
-
-	/// <summary>Compare less than. For integers, perform a signed comparison. For floating-point numbers, return 0 for unordered numbers.</summary>
-	public sealed partial class Clt : BinaryComparisonInstruction
-	{
-		public Clt(ILInstruction left, ILInstruction right) : base(OpCode.Clt, left, right)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitClt(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitClt(this);
-		}
-	}
-
-	/// <summary>Compare less than (unordered/unsigned). For integers, perform a signed comparison. For floating-point numbers, return 1 for unordered numbers.</summary>
-	public sealed partial class Clt_Un : BinaryComparisonInstruction
-	{
-		public Clt_Un(ILInstruction left, ILInstruction right) : base(OpCode.Clt_Un, left, right)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitClt_Un(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitClt_Un(this);
+			return visitor.VisitComp(this);
 		}
 	}
 
@@ -3259,23 +3180,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitCeq(Ceq inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitCgt(Cgt inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitCgt_Un(Cgt_Un inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitClt(Clt inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitClt_Un(Clt_Un inst)
+		protected internal virtual void VisitComp(Comp inst)
 		{
 			Default(inst);
 		}
@@ -3573,23 +3478,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitCeq(Ceq inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitCgt(Cgt inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitCgt_Un(Cgt_Un inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitClt(Clt inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitClt_Un(Clt_Un inst)
+		protected internal virtual T VisitComp(Comp inst)
 		{
 			return Default(inst);
 		}
@@ -3815,16 +3704,6 @@ namespace ICSharpCode.Decompiler.IL
 		public static BinaryComparisonInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right)
 		{
 			switch (opCode) {
-				case OpCode.Ceq:
-					return new Ceq(left, right);
-				case OpCode.Cgt:
-					return new Cgt(left, right);
-				case OpCode.Cgt_Un:
-					return new Cgt_Un(left, right);
-				case OpCode.Clt:
-					return new Clt(left, right);
-				case OpCode.Clt_Un:
-					return new Clt_Un(left, right);
 				default:
 					throw new ArgumentException("opCode is not a binary comparison instruction");
 			}
@@ -3859,11 +3738,7 @@ namespace ICSharpCode.Decompiler.IL
 			"try.finally",
 			"try.fault",
 			"debug.break",
-			"ceq",
-			"cgt",
-			"cgt.un",
-			"clt",
-			"clt.un",
+			"comp",
 			"call",
 			"callvirt",
 			"ckfinite",
@@ -4067,66 +3942,6 @@ namespace ICSharpCode.Decompiler.IL
 			if (inst != null) {
 				return true;
 			}
-			return false;
-		}
-		public bool MatchCeq(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Ceq;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchCgt(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Cgt;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchCgt_Un(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Cgt_Un;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchClt(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Clt;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchClt_Un(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Clt_Un;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
 			return false;
 		}
 		public bool MatchCkfinite(out ILInstruction argument)

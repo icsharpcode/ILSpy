@@ -97,7 +97,7 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>Instructions.tt</DependentUpon>
     </Compile>
-    <Compile Include="IL\Instructions\BinaryComparisonInstruction.cs" />
+    <Compile Include="IL\Instructions\Comp.cs" />
     <Compile Include="IL\Instructions\BinaryNumericInstruction.cs" />
     <Compile Include="IL\Instructions\Block.cs" />
     <Compile Include="IL\Instructions\BlockContainer.cs" />

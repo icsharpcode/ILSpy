@@ -361,45 +361,45 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Arglist:
 					return Push(new Arglist());
 				case ILOpCode.Beq:
-					return DecodeComparisonBranch(false, OpCode.Ceq, OpCode.Ceq, false);
+					return DecodeComparisonBranch(false, ComparisonKind.Equality);
 				case ILOpCode.Beq_S:
-					return DecodeComparisonBranch(true, OpCode.Ceq, OpCode.Ceq, false);
+					return DecodeComparisonBranch(true, ComparisonKind.Equality);
 				case ILOpCode.Bge:
-					return DecodeComparisonBranch(false, OpCode.Clt, OpCode.Clt_Un, true);
+					return DecodeComparisonBranch(false, ComparisonKind.GreaterThanOrEqual);
 				case ILOpCode.Bge_S:
-					return DecodeComparisonBranch(true, OpCode.Clt, OpCode.Clt_Un, true);
+					return DecodeComparisonBranch(true, ComparisonKind.GreaterThanOrEqual);
 				case ILOpCode.Bge_Un:
-					return DecodeComparisonBranch(false, OpCode.Clt_Un, OpCode.Clt, true);
+					return DecodeComparisonBranch(false, ComparisonKind.GreaterThanOrEqual, un: true);
 				case ILOpCode.Bge_Un_S:
-					return DecodeComparisonBranch(true, OpCode.Clt_Un, OpCode.Clt, true);
+					return DecodeComparisonBranch(true, ComparisonKind.GreaterThanOrEqual, un: true);
 				case ILOpCode.Bgt:
-					return DecodeComparisonBranch(false, OpCode.Cgt, OpCode.Cgt, false);
+					return DecodeComparisonBranch(false, ComparisonKind.GreaterThan);
 				case ILOpCode.Bgt_S:
-					return DecodeComparisonBranch(true, OpCode.Cgt, OpCode.Cgt, false);
+					return DecodeComparisonBranch(true, ComparisonKind.GreaterThan);
 				case ILOpCode.Bgt_Un:
-					return DecodeComparisonBranch(false, OpCode.Cgt_Un, OpCode.Clt_Un, false);
+					return DecodeComparisonBranch(false, ComparisonKind.GreaterThan, un: true);
 				case ILOpCode.Bgt_Un_S:
-					return DecodeComparisonBranch(true, OpCode.Cgt_Un, OpCode.Clt_Un, false);
+					return DecodeComparisonBranch(true, ComparisonKind.GreaterThan, un: true);
 				case ILOpCode.Ble:
-					return DecodeComparisonBranch(false, OpCode.Cgt, OpCode.Cgt_Un, true);
+					return DecodeComparisonBranch(false, ComparisonKind.LessThanOrEqual);
 				case ILOpCode.Ble_S:
-					return DecodeComparisonBranch(true, OpCode.Cgt, OpCode.Cgt_Un, true);
+					return DecodeComparisonBranch(true, ComparisonKind.LessThanOrEqual);
 				case ILOpCode.Ble_Un:
-					return DecodeComparisonBranch(false, OpCode.Cgt_Un, OpCode.Cgt, true);
+					return DecodeComparisonBranch(false, ComparisonKind.LessThanOrEqual, un: true);
 				case ILOpCode.Ble_Un_S:
-					return DecodeComparisonBranch(true, OpCode.Cgt_Un, OpCode.Cgt, true);
+					return DecodeComparisonBranch(true, ComparisonKind.LessThanOrEqual, un: true);
 				case ILOpCode.Blt:
-					return DecodeComparisonBranch(false, OpCode.Clt, OpCode.Clt, false);
+					return DecodeComparisonBranch(false, ComparisonKind.LessThan);
 				case ILOpCode.Blt_S:
-					return DecodeComparisonBranch(true, OpCode.Clt, OpCode.Clt, false);
+					return DecodeComparisonBranch(true, ComparisonKind.LessThan);
 				case ILOpCode.Blt_Un:
-					return DecodeComparisonBranch(false, OpCode.Clt_Un, OpCode.Clt_Un, false);
+					return DecodeComparisonBranch(false, ComparisonKind.LessThan, un: true);
 				case ILOpCode.Blt_Un_S:
-					return DecodeComparisonBranch(true, OpCode.Clt_Un, OpCode.Clt_Un, false);
+					return DecodeComparisonBranch(true, ComparisonKind.LessThan, un: true);
 				case ILOpCode.Bne_Un:
-					return DecodeComparisonBranch(false, OpCode.Ceq, OpCode.Ceq, true);
+					return DecodeComparisonBranch(false, ComparisonKind.Inequality, un: true);
 				case ILOpCode.Bne_Un_S:
-					return DecodeComparisonBranch(true, OpCode.Ceq, OpCode.Ceq, true);
+					return DecodeComparisonBranch(true, ComparisonKind.Inequality, un: true);
 				case ILOpCode.Br:
 					return DecodeUnconditionalBranch(false);
 				case ILOpCode.Br_S:
@@ -421,15 +421,15 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Calli:
 					throw new NotImplementedException();
 				case ILOpCode.Ceq:
-					return Push(Comparison(OpCode.Ceq, OpCode.Ceq));
+					return Push(Comparison(ComparisonKind.Equality));
 				case ILOpCode.Cgt:
-					return Push(Comparison(OpCode.Cgt, OpCode.Cgt));
+					return Push(Comparison(ComparisonKind.GreaterThan));
 				case ILOpCode.Cgt_Un:
-					return Push(Comparison(OpCode.Cgt_Un, OpCode.Cgt_Un));
+					return Push(Comparison(ComparisonKind.GreaterThan, un: true));
 				case ILOpCode.Clt:
-					return Push(Comparison(OpCode.Clt, OpCode.Clt));
+					return Push(Comparison(ComparisonKind.LessThan));
 				case ILOpCode.Clt_Un:
-					return Push(Comparison(OpCode.Clt_Un, OpCode.Clt_Un));
+					return Push(Comparison(ComparisonKind.LessThan, un: true));
 				case ILOpCode.Ckfinite:
 					return new Ckfinite(Peek());
 				case ILOpCode.Conv_I1:
@@ -1017,29 +1017,35 @@ namespace ICSharpCode.Decompiler.IL
 			return popCount;
 		}
 
-		ILInstruction Comparison(OpCode opCode_I, OpCode opCode_F)
+		ILInstruction Comparison(ComparisonKind kind, bool un = false)
 		{
 			var right = Pop();
 			var left = Pop();
 			// Based on Table 4: Binary Comparison or Branch Operation
-			OpCode opCode;
-			if (left.ResultType == StackType.F && right.ResultType == StackType.F)
-				opCode = opCode_F;
-			else
-				opCode = opCode_I;
-			return BinaryComparisonInstruction.Create(opCode, left, right);
+			if (left.ResultType == StackType.F && right.ResultType == StackType.F) {
+				if (un) {
+					// for floats, 'un' means 'unordered'
+					return new LogicNot(new Comp(kind.Negate(), Sign.None, left, right));
+				} else {
+					return new Comp(kind, Sign.None, left, right);
+				}
+			} else if (left.ResultType.IsIntegerType() && !kind.IsEqualityOrInequality()) {
+				// integer comparison where the sign matters
+				Debug.Assert(right.ResultType.IsIntegerType());
+				return new Comp(kind, un ? Sign.Unsigned : Sign.Signed, left, right);
+			} else {
+				// object reference or managed reference comparison
+				return new Comp(kind, Sign.None, left, right);
+			}
 		}
 
-		ILInstruction DecodeComparisonBranch(bool shortForm, OpCode comparisonOpCodeForInts, OpCode comparisonOpCodeForFloats, bool negate)
+		ILInstruction DecodeComparisonBranch(bool shortForm, ComparisonKind kind, bool un = false)
 		{
 			int start = reader.Position - 1;
-			var condition = Comparison(comparisonOpCodeForInts, comparisonOpCodeForFloats);
+			var condition = Comparison(kind, un);
 			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
 			target += reader.Position;
 			condition.ILRange = new Interval(start, reader.Position);
-			if (negate) {
-				condition = new LogicNot(condition);
-			}
 			MarkBranchTarget(target);
 			return new IfInstruction(condition, new Branch(target));
 		}
@@ -1052,18 +1058,15 @@ namespace ICSharpCode.Decompiler.IL
 			switch (condition.ResultType) {
 				case StackType.O:
 					// introduce explicit comparison with null
-					condition = new Ceq(condition, new LdNull());
-					negate = !negate;
+					condition = new Comp(ComparisonKind.Inequality, Sign.None, condition, new LdNull());
 					break;
 				case StackType.I:
 					// introduce explicit comparison with 0
-					condition = new Ceq(condition, new LdcI4(0));
-					negate = !negate;
+					condition = new Comp(ComparisonKind.Inequality, Sign.None, condition, new LdcI4(0));
 					break;
 				case StackType.I8:
 					// introduce explicit comparison with 0
-					condition = new Ceq(condition, new LdcI8(0));
-					negate = !negate;
+					condition = new Comp(ComparisonKind.Inequality, Sign.None, condition, new LdcI8(0));
 					break;
 			}
 			if (negate) {
