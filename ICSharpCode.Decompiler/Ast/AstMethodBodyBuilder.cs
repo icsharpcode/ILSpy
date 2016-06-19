@@ -715,7 +715,7 @@ namespace ICSharpCode.Decompiler.Ast
 						}
 						return new StackAllocExpression {
 							Type = AstBuilder.ConvertType(type),
-                            CountExpression = arg1
+							CountExpression = arg1
 						};
 					}
 				case ILCode.Mkrefany:
@@ -754,26 +754,28 @@ namespace ICSharpCode.Decompiler.Ast
 								return ace;
 							}
 						}
-						if (declaringType.IsAnonymousType()) {
-							MethodDefinition ctor = ((MethodReference)operand).Resolve();
-							if (methodDef != null) {
-								AnonymousTypeCreateExpression atce = new AnonymousTypeCreateExpression();
-								if (CanInferAnonymousTypePropertyNamesFromArguments(args, ctor.Parameters)) {
-									atce.Initializers.AddRange(args);
-								} else {
-									for (int i = 0; i < args.Count; i++) {
-										atce.Initializers.Add(
-											new NamedExpression {
-												Name = ctor.Parameters[i].Name,
-												Expression = args[i]
-											});
-									}
+						MethodDefinition ctor = ((MethodReference)operand).Resolve();
+						if (declaringType.IsAnonymousType() && methodDef != null) {
+							AnonymousTypeCreateExpression atce = new AnonymousTypeCreateExpression();
+							if (CanInferAnonymousTypePropertyNamesFromArguments(args, ctor.Parameters)) {
+								atce.Initializers.AddRange(args);
+							} else {
+								for (int i = 0; i < args.Count; i++) {
+									atce.Initializers.Add(
+										new NamedExpression {
+											Name = ctor.Parameters[i].Name,
+											Expression = args[i]
+										});
 								}
-								return atce;
 							}
+							return atce;
 						}
 						var oce = new Ast.ObjectCreateExpression();
 						oce.Type = AstBuilder.ConvertType(declaringType);
+						// seems like IsIn/IsOut information for parameters is only correct on the ctor's MethodDefinition
+						if (ctor != null) {
+							AdjustArgumentsForMethodCall(ctor, args);
+						}
 						oce.Arguments.AddRange(args);
 						return oce.WithAnnotation(operand);
 					}

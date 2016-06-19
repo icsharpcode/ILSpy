@@ -1,0 +1,9 @@
+[submodule "AvalonEdit"]
+	path = AvalonEdit
+	url = https://github.com/icsharpcode/AvalonEdit.git
+[submodule "NRefactory"]
+	path = NRefactory
+	url = https://github.com/icsharpcode/NRefactory.git
+[submodule "cecil"]
+	path = cecil
+	url = https://github.com/jbevain/cecil.git

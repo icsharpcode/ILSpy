@@ -20,26 +20,26 @@ using System.Linq;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
-	[ExportContextMenuEntryAttribute(Header = "Remove", Icon = "images/Delete.png")]
+	[ExportContextMenuEntry(Header = "Remove", Icon = "images/Delete.png", Category = "Analyze", Order = 200)]
 	internal sealed class RemoveAnalyzeContextMenuEntry : IContextMenuEntry
 	{
 		public bool IsVisible(TextViewContext context)
 		{
 			if (context.TreeView is AnalyzerTreeView && context.SelectedTreeNodes != null && context.SelectedTreeNodes.All(n => n.Parent.IsRoot))
 				return true;
-            return false;
+			return false;
 		}
 
 		public bool IsEnabled(TextViewContext context)
 		{
-            return true;
+			return true;
 		}
 
 		public void Execute(TextViewContext context)
 		{
-			if (context.SelectedTreeNodes != null) {                
+			if (context.SelectedTreeNodes != null) {
 				foreach (var node in context.SelectedTreeNodes) {
-                    node.Parent.Children.Remove(node);
+					node.Parent.Children.Remove(node);
 				}
 			}
 		}

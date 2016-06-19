@@ -17,12 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
-using System.Resources;
 using System.Threading.Tasks;
 using System.Xml;
 
@@ -30,12 +28,10 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.Decompiler.Ast.Transforms;
 using ICSharpCode.ILSpy.XmlDoc;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using CSharp = ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.VB;
 using ICSharpCode.NRefactory.VB.Visitors;
 using Mono.Cecil;
+using CSharp = ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.ILSpy.VB
 {
@@ -321,84 +317,6 @@ namespace ICSharpCode.ILSpy.VB
 		}
 		#endregion
 
-		#region WriteResourceFilesInProject
-		IEnumerable<Tuple<string, string>> WriteResourceFilesInProject(LoadedAssembly assembly, DecompilationOptions options, HashSet<string> directories)
-		{
-			//AppDomain bamlDecompilerAppDomain = null;
-			//try {
-				foreach (EmbeddedResource r in assembly.ModuleDefinition.Resources.OfType<EmbeddedResource>()) {
-					string fileName;
-					Stream s = r.GetResourceStream();
-					s.Position = 0;
-					if (r.Name.EndsWith(".g.resources", StringComparison.OrdinalIgnoreCase)) {
-						IEnumerable<DictionaryEntry> rs = null;
-						try {
-							rs = new ResourceSet(s).Cast<DictionaryEntry>();
-						}
-						catch (ArgumentException) {
-						}
-						if (rs != null && rs.All(e => e.Value is Stream)) {
-							foreach (var pair in rs) {
-								fileName = Path.Combine(((string)pair.Key).Split('/').Select(p => TextView.DecompilerTextView.CleanUpName(p)).ToArray());
-								string dirName = Path.GetDirectoryName(fileName);
-								if (!string.IsNullOrEmpty(dirName) && directories.Add(dirName)) {
-									Directory.CreateDirectory(Path.Combine(options.SaveAsProjectDirectory, dirName));
-								}
-								Stream entryStream = (Stream)pair.Value;
-								entryStream.Position = 0;
-								if (fileName.EndsWith(".baml", StringComparison.OrdinalIgnoreCase)) {
-									//MemoryStream ms = new MemoryStream();
-									//entryStream.CopyTo(ms);
-									// TODO implement extension point
-//									var decompiler = Baml.BamlResourceEntryNode.CreateBamlDecompilerInAppDomain(ref bamlDecompilerAppDomain, assembly.FileName);
-//									string xaml = null;
-//									try {
-//										xaml = decompiler.DecompileBaml(ms, assembly.FileName, new ConnectMethodDecompiler(assembly), new AssemblyResolver(assembly));
-//									}
-//									catch (XamlXmlWriterException) { } // ignore XAML writer exceptions
-//									if (xaml != null) {
-//										File.WriteAllText(Path.Combine(options.SaveAsProjectDirectory, Path.ChangeExtension(fileName, ".xaml")), xaml);
-//										yield return Tuple.Create("Page", Path.ChangeExtension(fileName, ".xaml"));
-//										continue;
-//									}
-								}
-								using (FileStream fs = new FileStream(Path.Combine(options.SaveAsProjectDirectory, fileName), FileMode.Create, FileAccess.Write)) {
-									entryStream.CopyTo(fs);
-								}
-								yield return Tuple.Create("Resource", fileName);
-							}
-							continue;
-						}
-					}
-					fileName = GetFileNameForResource(r.Name, directories);
-					using (FileStream fs = new FileStream(Path.Combine(options.SaveAsProjectDirectory, fileName), FileMode.Create, FileAccess.Write)) {
-						s.CopyTo(fs);
-					}
-					yield return Tuple.Create("EmbeddedResource", fileName);
-				}
-			//}
-			//finally {
-			//    if (bamlDecompilerAppDomain != null)
-			//        AppDomain.Unload(bamlDecompilerAppDomain);
-			//}
-		}
-
-		string GetFileNameForResource(string fullName, HashSet<string> directories)
-		{
-			string[] splitName = fullName.Split('.');
-			string fileName = TextView.DecompilerTextView.CleanUpName(fullName);
-			for (int i = splitName.Length - 1; i > 0; i--) {
-				string ns = string.Join(".", splitName, 0, i);
-				if (directories.Contains(ns)) {
-					string name = string.Join(".", splitName, i, splitName.Length - i);
-					fileName = Path.Combine(ns, TextView.DecompilerTextView.CleanUpName(name));
-					break;
-				}
-			}
-			return fileName;
-		}
-		#endregion
-		
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
@@ -433,7 +351,7 @@ namespace ICSharpCode.ILSpy.VB
 		
 		public override void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: type);
+			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentModule: type.Module);
 			codeDomBuilder.AddType(type);
 			RunTransformsAndGenerateCode(codeDomBuilder, output, options, type.Module);
 		}
@@ -483,7 +401,15 @@ namespace ICSharpCode.ILSpy.VB
 					Settings = settings
 				});
 		}
-		
+
+		public override string FormatMethodName(MethodDefinition method)
+		{
+			if (method == null)
+				throw new ArgumentNullException("method");
+
+			return (method.IsConstructor) ? method.DeclaringType.Name : method.Name;
+		}
+
 		public override string FormatTypeName(TypeDefinition type)
 		{
 			if (type == null)
