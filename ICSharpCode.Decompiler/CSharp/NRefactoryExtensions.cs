@@ -84,5 +84,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				next = next.NextSibling;
 			return (Statement)next;
 		}
+		
+		public static bool IsArgList(this AstType type)
+		{
+			var simpleType = type as SimpleType;
+			return simpleType != null && simpleType.Identifier == "__arglist";
+		}
 	}
 }

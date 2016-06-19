@@ -464,6 +464,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 		#endregion
 
+		void FixParameterNames(EntityDeclaration entity)
+		{
+			int i = 0;
+			foreach (var parameter in entity.GetChildrenByRole(Roles.Parameter)) {
+				if (string.IsNullOrEmpty(parameter.Name) && !parameter.Type.IsArgList()) {
+					// needs to be consistent with logic in ILReader.CreateILVarable(ParameterDefinition)
+					parameter.Name = "P_" + i;
+				}
+				i++;
+			}
+		}
+		
 		EntityDeclaration DoDecompile(ITypeDefinition typeDef, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
@@ -534,6 +546,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method.IsExplicitInterfaceImplementation && lastDot >= 0) {
 				methodDecl.Name = method.Name.Substring(lastDot + 1);
 			}
+			FixParameterNames(methodDecl);
 			if (methodDefinition.HasBody) {
 				DecompileBody(methodDefinition, method, methodDecl, decompilationContext, typeSystemAstBuilder);
 			} else if (!method.IsAbstract && method.DeclaringType.Kind != TypeKind.Interface) {
@@ -622,6 +635,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (property.IsExplicitInterfaceImplementation && !property.IsIndexer) {
 				propertyDecl.Name = property.Name.Substring(lastDot + 1);
 			}
+			FixParameterNames(propertyDecl);
 			Accessor getter, setter;
 			if (propertyDecl is PropertyDeclaration) {
 				getter = ((PropertyDeclaration)propertyDecl).Getter;
