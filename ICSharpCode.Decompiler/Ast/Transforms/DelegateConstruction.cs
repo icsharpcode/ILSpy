@@ -48,17 +48,17 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				this.IsVirtual = isVirtual;
 			}
 		}
-
+		
 		internal sealed class CapturedVariableAnnotation
 		{
 		}
-
+		
 		List<string> currentlyUsedVariableNames = new List<string>();
-
+		
 		public DelegateConstruction(DecompilerContext context) : base(context)
 		{
 		}
-
+		
 		public override object VisitObjectCreateExpression(ObjectCreateExpression objectCreateExpression, object data)
 		{
 			if (objectCreateExpression.Arguments.Count == 2) {
@@ -69,10 +69,8 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					IdentifierExpression methodIdent = (IdentifierExpression)((InvocationExpression)func).Arguments.Single();
 					MethodReference method = methodIdent.Annotation<MethodReference>();
 					if (method != null) {
-						if (HandleAnonymousMethod(objectCreateExpression, obj, method)) {
-
+						if (HandleAnonymousMethod(objectCreateExpression, obj, method))
 							return null;
-						}
 						// Perform the transformation to "new Action(obj.func)".
 						obj.Remove();
 						methodIdent.Remove();
@@ -114,7 +112,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			}
 			return base.VisitObjectCreateExpression(objectCreateExpression, data);
 		}
-
+		
 		internal static bool IsAnonymousMethod(DecompilerContext context, MethodDefinition method)
 		{
 			if (method == null || !(method.HasGeneratedName() || method.Name.Contains("$")))
@@ -123,7 +121,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				return false;
 			return true;
 		}
-
+		
 		bool IsSingetonDisplayClass(Expression expr)
 		{
 			var mm = expr as MemberReferenceExpression;
@@ -133,9 +131,9 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			}
 			return false;
 		}
-
+		
 		List<Expression> lambdasInCache = new List<Expression>();
-
+		
 		bool HandleAnonymousMethod(ObjectCreateExpression objectCreateExpression, Expression target, MethodReference methodRef)
 		{
 			if (!context.Settings.AnonymousMethods)
@@ -224,7 +222,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 
 			return true;
 		}
-
+		
 		internal static bool IsPotentialClosure(DecompilerContext context, TypeDefinition potentialDisplayClass)
 		{
 			if (potentialDisplayClass == null || !potentialDisplayClass.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
@@ -237,7 +235,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			}
 			return true;
 		}
-
+		
 		public override object VisitInvocationExpression(InvocationExpression invocationExpression, object data)
 		{
 			if (context.Settings.ExpressionTrees && ExpressionTreeConverter.CouldBeExpressionTree(invocationExpression)) {
@@ -249,7 +247,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			}
 			return base.VisitInvocationExpression(invocationExpression, data);
 		}
-
+		
 		#region Track current variables
 		public override object VisitMethodDeclaration(MethodDeclaration methodDeclaration, object data)
 		{
@@ -324,7 +322,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			return base.VisitFixedStatement(fixedStatement, data);
 		}
 		#endregion
-
+		
 		static readonly ExpressionStatement displayClassAssignmentPattern =
 			new ExpressionStatement(new AssignmentExpression(
 				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
