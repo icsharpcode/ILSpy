@@ -281,7 +281,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitStLoc(StLoc inst)
 		{
 			var translatedValue = Translate(inst.Value);
-			if (inst.Variable.Kind == VariableKind.StackSlot && inst.Variable.IsSingleDefinition && !loadedVariablesSet.Contains(inst.Variable)) {
+			if (inst.Variable.Kind == VariableKind.StackSlot && inst.Variable.IsSingleDefinition
+			    && inst.Variable.StackType == translatedValue.Type.GetStackType()
+			    && translatedValue.Type.Kind != TypeKind.Null && !loadedVariablesSet.Contains(inst.Variable)) {
 				inst.Variable.Type = translatedValue.Type;
 			}
 			return Assignment(ConvertVariable(inst.Variable).WithoutILInstruction(), translatedValue).WithILInstruction(inst);
