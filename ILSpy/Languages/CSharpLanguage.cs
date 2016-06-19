@@ -17,10 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
+using System.Resources;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
@@ -152,7 +154,7 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 		}
-		*/
+		 */
 
 		public override void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
@@ -160,7 +162,7 @@ namespace ICSharpCode.ILSpy
 			CSharpDecompiler decompiler = CreateDecompiler(property.Module, options);
 			WriteCode(output, decompiler.Decompile(property));
 		}
-/*
+		/*
 		public override void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
@@ -208,7 +210,7 @@ namespace ICSharpCode.ILSpy
 					codeDomBuilder.AddMethod(ctor);
 			}
 		}
-*/
+		 */
 		public override void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(ev.DeclaringType, includeNamespace: true));
@@ -223,7 +225,7 @@ namespace ICSharpCode.ILSpy
 			WriteCode(output, decompiler.Decompile(type));
 		}
 
-/*		
+		/*
 		void RunTransformsAndGenerateCode(AstBuilder astBuilder, ITextOutput output, DecompilationOptions options, IAstTransform additionalTransform = null)
 		{
 			astBuilder.RunTransformations(transformAbortCondition);
@@ -261,25 +263,6 @@ namespace ICSharpCode.ILSpy
 					return module.Architecture.ToString();
 			}
 		}
-		
-		public static string GetPlatformName(ModuleDefinition module)
-		{
-			switch (module.Architecture) {
-				case TargetArchitecture.I386:
-					if ((module.Attributes & ModuleAttributes.Preferred32Bit) == ModuleAttributes.Preferred32Bit)
-						return "AnyCPU";
-					else if ((module.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
-						return "x86";
-					else
-						return "AnyCPU";
-				case TargetArchitecture.AMD64:
-					return "x64";
-				case TargetArchitecture.IA64:
-					return "Itanium";
-				default:
-					return module.Architecture.ToString();
-			}
-		}
 
 		public static string GetRuntimeDisplayName(ModuleDefinition module)
 		{
@@ -299,10 +282,9 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
-				HashSet<string> directories = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-				var files = WriteCodeFilesInProject(assembly.ModuleDefinition, options, directories).ToList();
-				files.AddRange(WriteResourceFilesInProject(assembly, options, directories));
-				WriteProjectFile(new TextOutputWriter(output), files, assembly.ModuleDefinition);
+				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
+				decompiler.ProjectGuid = App.CommandLineArguments.FixedGuid;
+				decompiler.DecompileProject(assembly.ModuleDefinition, options.SaveAsProjectDirectory, new TextOutputWriter(output));
 			} else {
 				base.DecompileAssembly(assembly, output, options);
 				output.WriteLine();
@@ -341,199 +323,41 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		
-		#region WriteProjectFile
-		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module)
+		class ILSpyWholeProjectDecompiler : WholeProjectDecompiler
 		{
-			const string ns = "http://schemas.microsoft.com/developer/msbuild/2003";
-			string platformName = GetPlatformName(module);
-			Guid guid = App.CommandLineArguments.FixedGuid ?? Guid.NewGuid();
-			using (XmlTextWriter w = new XmlTextWriter(writer)) {
-				w.Formatting = Formatting.Indented;
-				w.WriteStartDocument();
-				w.WriteStartElement("Project", ns);
-				w.WriteAttributeString("ToolsVersion", "4.0");
-				w.WriteAttributeString("DefaultTargets", "Build");
-
-				w.WriteStartElement("PropertyGroup");
-				w.WriteElementString("ProjectGuid", guid.ToString("B").ToUpperInvariant());
-
-				w.WriteStartElement("Configuration");
-				w.WriteAttributeString("Condition", " '$(Configuration)' == '' ");
-				w.WriteValue("Debug");
-				w.WriteEndElement(); // </Configuration>
-
-				w.WriteStartElement("Platform");
-				w.WriteAttributeString("Condition", " '$(Platform)' == '' ");
-				w.WriteValue(platformName);
-				w.WriteEndElement(); // </Platform>
-
-				switch (module.Kind) {
-					case ModuleKind.Windows:
-						w.WriteElementString("OutputType", "WinExe");
-						break;
-					case ModuleKind.Console:
-						w.WriteElementString("OutputType", "Exe");
-						break;
-					default:
-						w.WriteElementString("OutputType", "Library");
-						break;
-				}
-
-				w.WriteElementString("AssemblyName", module.Assembly.Name.Name);
-				bool useTargetFrameworkAttribute = false;
-				var targetFrameworkAttribute = module.Assembly.CustomAttributes.FirstOrDefault(a => a.AttributeType.FullName == "System.Runtime.Versioning.TargetFrameworkAttribute");
-				if (targetFrameworkAttribute != null && targetFrameworkAttribute.ConstructorArguments.Any()) {
-					string frameworkName = (string)targetFrameworkAttribute.ConstructorArguments[0].Value;
-					string[] frameworkParts = frameworkName.Split(',');
-					string frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase));
-					if (frameworkVersion != null) {
-						w.WriteElementString("TargetFrameworkVersion", frameworkVersion.Substring("Version=".Length));
-						useTargetFrameworkAttribute = true;
-					}
-					string frameworkProfile = frameworkParts.FirstOrDefault(a => a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
-					if (frameworkProfile != null)
-						w.WriteElementString("TargetFrameworkProfile", frameworkProfile.Substring("Profile=".Length));
-				}
-				if (!useTargetFrameworkAttribute) {
-					switch (module.Runtime) {
-						case TargetRuntime.Net_1_0:
-							w.WriteElementString("TargetFrameworkVersion", "v1.0");
-							break;
-						case TargetRuntime.Net_1_1:
-							w.WriteElementString("TargetFrameworkVersion", "v1.1");
-							break;
-						case TargetRuntime.Net_2_0:
-							w.WriteElementString("TargetFrameworkVersion", "v2.0");
-							// TODO: Detect when .NET 3.0/3.5 is required
-							break;
-						default:
-							w.WriteElementString("TargetFrameworkVersion", "v4.0");
-							break;
-					}
-				}
-				w.WriteElementString("WarningLevel", "4");
-				w.WriteElementString("AllowUnsafeBlocks", "True");
-
-				w.WriteEndElement(); // </PropertyGroup>
-
-				w.WriteStartElement("PropertyGroup"); // platform-specific
-				w.WriteAttributeString("Condition", " '$(Platform)' == '" + platformName + "' ");
-				w.WriteElementString("PlatformTarget", platformName);
-				w.WriteEndElement(); // </PropertyGroup> (platform-specific)
-
-				w.WriteStartElement("PropertyGroup"); // Debug
-				w.WriteAttributeString("Condition", " '$(Configuration)' == 'Debug' ");
-				w.WriteElementString("OutputPath", "bin\\Debug\\");
-				w.WriteElementString("DebugSymbols", "true");
-				w.WriteElementString("DebugType", "full");
-				w.WriteElementString("Optimize", "false");
-				w.WriteEndElement(); // </PropertyGroup> (Debug)
-
-				w.WriteStartElement("PropertyGroup"); // Release
-				w.WriteAttributeString("Condition", " '$(Configuration)' == 'Release' ");
-				w.WriteElementString("OutputPath", "bin\\Release\\");
-				w.WriteElementString("DebugSymbols", "true");
-				w.WriteElementString("DebugType", "pdbonly");
-				w.WriteElementString("Optimize", "true");
-				w.WriteEndElement(); // </PropertyGroup> (Release)
-
-
-				w.WriteStartElement("ItemGroup"); // References
-				foreach (AssemblyNameReference r in module.AssemblyReferences) {
-					if (r.Name != "mscorlib") {
-						w.WriteStartElement("Reference");
-						w.WriteAttributeString("Include", r.Name);
-						if (GacInterop.FindAssemblyInNetGac(r) == null) {
-							var asm = module.AssemblyResolver.Resolve(r);
-							if (asm != null) {
-								w.WriteElementString("HintPath", asm.MainModule.FullyQualifiedName);
-							}
-						}
-						w.WriteEndElement();
-					}
-				}
-				w.WriteEndElement(); // </ItemGroup> (References)
-
-				foreach (IGrouping<string, string> gr in (from f in files group f.Item2 by f.Item1 into g orderby g.Key select g)) {
-					w.WriteStartElement("ItemGroup");
-					foreach (string file in gr.OrderBy(f => f, StringComparer.OrdinalIgnoreCase)) {
-						w.WriteStartElement(gr.Key);
-						w.WriteAttributeString("Include", file);
-						w.WriteEndElement();
-					}
-					w.WriteEndElement();
-				}
-
-				w.WriteStartElement("Import");
-				w.WriteAttributeString("Project", "$(MSBuildToolsPath)\\Microsoft.CSharp.targets");
-				w.WriteEndElement();
-
-				w.WriteEndDocument();
-			}
-		}
-		#endregion
-
-		#region WriteCodeFilesInProject
-		bool IncludeTypeWhenDecompilingProject(TypeDefinition type, DecompilationOptions options)
-		{
-			if (type.Name == "<Module>" || CSharpDecompiler.MemberIsHidden(type, options.DecompilerSettings))
-				return false;
-			if (type.Namespace == "XamlGeneratedNamespace" && type.Name == "GeneratedInternalTypeHelper")
-				return false;
-			return true;
-		}
-
-		IEnumerable<Tuple<string, string>> WriteAssemblyInfo(DecompilerTypeSystem ts, DecompilationOptions options, HashSet<string> directories)
-		{
-			// don't automatically load additional assemblies when an assembly node is selected in the tree view
-			using (LoadedAssembly.DisableAssemblyLoad())
+			readonly LoadedAssembly assembly;
+			readonly DecompilationOptions options;
+			
+			public ILSpyWholeProjectDecompiler(LoadedAssembly assembly, DecompilationOptions options)
 			{
-				CSharpDecompiler decompiler = new CSharpDecompiler(ts, options.DecompilerSettings);
-				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-				decompiler.AstTransforms.Add(new RemoveCompilerGeneratedAssemblyAttributes());
-				SyntaxTree syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
-
-				string prop = "Properties";
-				if (directories.Add("Properties"))
-					Directory.CreateDirectory(Path.Combine(options.SaveAsProjectDirectory, prop));
-				string assemblyInfo = Path.Combine(prop, "AssemblyInfo" + this.FileExtension);
-				using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, assemblyInfo))) {
-					syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, options.DecompilerSettings.CSharpFormattingOptions));
+				this.assembly = assembly;
+				this.options = options;
+				base.Settings = options.DecompilerSettings;
+			}
+			
+			protected override IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
+			{
+				if (fileName.EndsWith(".resource", StringComparison.OrdinalIgnoreCase)) {
+					using (ResourceReader reader = new ResourceReader(entryStream))
+					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
+					using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
+						foreach (DictionaryEntry entry in reader) {
+							writer.AddResource((string)entry.Key, entry.Value);
+						}
+					}
+					return new[] { Tuple.Create("EmbeddedResource", fileName) };
 				}
-				return new Tuple<string, string>[] { Tuple.Create("Compile", assemblyInfo) };
+				foreach (var handler in App.CompositionContainer.GetExportedValues<IResourceFileHandler>()) {
+					if (handler.CanHandle(fileName, options)) {
+						entryStream.Position = 0;
+						return new[] { Tuple.Create(handler.EntryType, handler.WriteResourceToFile(assembly, fileName, entryStream, options)) };
+					}
+				}
+				return base.WriteResourceToFile(fileName, resourceName, entryStream);
 			}
 		}
-
-		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(ModuleDefinition module, DecompilationOptions options, HashSet<string> directories)
-		{
-			var files = module.Types.Where(t => IncludeTypeWhenDecompilingProject(t, options)).GroupBy(
-				delegate(TypeDefinition type) {
-					string file = TextView.DecompilerTextView.CleanUpName(type.Name) + this.FileExtension;
-					if (string.IsNullOrEmpty(type.Namespace)) {
-						return file;
-					} else {
-						string dir = TextView.DecompilerTextView.CleanUpName(type.Namespace);
-						if (directories.Add(dir))
-							Directory.CreateDirectory(Path.Combine(options.SaveAsProjectDirectory, dir));
-						return Path.Combine(dir, file);
-					}
-				}, StringComparer.OrdinalIgnoreCase).ToList();
-			DecompilerTypeSystem ts = new DecompilerTypeSystem(module);
-			Parallel.ForEach(
-				files,
-				new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount },
-				delegate(IGrouping<string, TypeDefinition> file) {
-					using (StreamWriter w = new StreamWriter(Path.Combine(options.SaveAsProjectDirectory, file.Key))) {
-						CSharpDecompiler decompiler = new CSharpDecompiler(ts, options.DecompilerSettings);
-						decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-						var syntaxTree = decompiler.DecompileTypes(file.ToArray());
-						syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, options.DecompilerSettings.CSharpFormattingOptions));
-					}
-				});
-			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, options, directories));
-		}
-		#endregion
-/*
+		
+		/*
 		AstBuilder CreateAstBuilder(DecompilationOptions options, ModuleDefinition currentModule = null, TypeDefinition currentType = null, bool isSingleMember = false)
 		{
 			if (currentModule == null)
@@ -579,7 +403,7 @@ namespace ICSharpCode.ILSpy
 			astType.AcceptVisitor(new CSharpOutputVisitor(w, FormattingOptionsFactory.CreateAllman()));
 			return w.ToString();
 		}
-		*/
+		 */
 		public override string FormatPropertyName(PropertyDefinition property, bool? isIndexer)
 		{
 			if (property == null)
@@ -623,7 +447,7 @@ namespace ICSharpCode.ILSpy
 		{
 			return showAllMembers || !AstBuilder.MemberIsHidden(member, new DecompilationOptions().DecompilerSettings);
 		}
-		*/
+		 */
 		public override MemberReference GetOriginalCodeLocation(MemberReference member)
 		{
 			if (showAllMembers || !DecompilerSettingsPanel.CurrentDecompilerSettings.AnonymousMethods)

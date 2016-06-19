@@ -23,6 +23,8 @@ namespace ICSharpCode.Decompiler.Tests
 				.Select(m => m.Name)
 				.ToArray();
 			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles()) {
+				if (file.Extension == ".txt")
+					continue;
 				var testName = Path.GetFileNameWithoutExtension(file.Name);
 				Assert.Contains(testName, testNames);
 			}

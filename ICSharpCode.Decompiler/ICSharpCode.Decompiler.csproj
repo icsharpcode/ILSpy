@@ -82,6 +82,7 @@
     <Compile Include="CSharp\Transforms\IAstTransform.cs" />
     <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
+    <Compile Include="CSharp\WholeProjectDecompiler.cs" />
     <Compile Include="FlowAnalysis\ControlFlowNode.cs" />
     <Compile Include="FlowAnalysis\DataFlowVisitor.cs" />
     <Compile Include="FlowAnalysis\DefiniteAssignmentVisitor.cs" />

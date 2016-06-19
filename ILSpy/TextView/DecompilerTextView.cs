@@ -42,6 +42,7 @@ using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.AvalonEdit.Search;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -684,16 +685,7 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		internal static string CleanUpName(string text)
 		{
-			int pos = text.IndexOf(':');
-			if (pos > 0)
-				text = text.Substring(0, pos);
-			pos = text.IndexOf('`');
-			if (pos > 0)
-				text = text.Substring(0, pos);
-			text = text.Trim();
-			foreach (char c in Path.GetInvalidFileNameChars())
-				text = text.Replace(c, '-');
-			return text;
+			return WholeProjectDecompiler.CleanUpFileName(text);
 		}
 		#endregion
 
