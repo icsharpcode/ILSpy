@@ -129,6 +129,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			} else if (method.HasThis) {
 				writer.Write("instance ");
 			}
+			if (method.CallingConvention == MethodCallingConvention.VarArg) {
+				writer.Write("vararg ");
+			}
 			method.ReturnType.WriteTo(writer, ILNameSyntax.SignatureNoNamedTypeParameters);
 			writer.Write(' ');
 			if (method.DeclaringType != null) {
@@ -154,7 +157,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			writer.Write("(");
 			var parameters = method.Parameters;
 			for (int i = 0; i < parameters.Count; ++i) {
-				if (i > 0) writer.Write(", ");
+				if (i > 0)
+					writer.Write(", ");
 				parameters[i].ParameterType.WriteTo(writer, ILNameSyntax.SignatureNoNamedTypeParameters);
 			}
 			writer.Write(")");
@@ -285,6 +289,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.Write(" modreq(");
 				((RequiredModifierType)type).ModifierType.WriteTo(writer, ILNameSyntax.TypeName);
 				writer.Write(") ");
+			} else if (type is SentinelType) {
+				writer.Write("..., ");
+				((SentinelType)type).ElementType.WriteTo(writer, syntax);
 			} else {
 				string name = PrimitiveTypeName(type.FullName);
 				if (syntax == ILNameSyntax.ShortTypeName) {

@@ -120,6 +120,9 @@ namespace ICSharpCode.Decompiler
 		{
 			if (typeReference == null)
 				return SpecialType.UnknownType;
+			if (typeReference is SentinelType) {
+				typeReference = ((SentinelType)typeReference).ElementType;
+			}
 			ITypeReference typeRef;
 			if (typeReference is PinnedType) {
 				typeRef = new NRefactory.TypeSystem.ByReferenceType(Resolve(((PinnedType)typeReference).ElementType)).ToTypeReference();
@@ -197,7 +200,12 @@ namespace ICSharpCode.Decompiler
 				IMethod method;
 				if (!methodLookupCache.TryGetValue(methodReference, out method)) {
 					method = FindNonGenericMethod(methodReference.GetElementMethod());
-					if (methodReference.IsGenericInstance || methodReference.DeclaringType.IsGenericInstance) {
+					if (methodReference.CallingConvention == MethodCallingConvention.VarArg) {
+						method = new VarArgInstanceMethod(
+							method,
+							methodReference.Parameters.SkipWhile(p => !p.ParameterType.IsSentinel).Select(p => Resolve(p.ParameterType))
+						);
+					} else if (methodReference.IsGenericInstance || methodReference.DeclaringType.IsGenericInstance) {
 						IList<IType> classTypeArguments = null;
 						IList<IType> methodTypeArguments = null;
 						if (methodReference.IsGenericInstance) {
@@ -234,7 +242,16 @@ namespace ICSharpCode.Decompiler
 				if (GetCecil(method) == methodReference)
 					return method;
 			}
-			var parameterTypes = methodReference.Parameters.SelectArray(p => Resolve(p.ParameterType));
+			IType[] parameterTypes;
+			if (methodReference.CallingConvention == MethodCallingConvention.VarArg) {
+				parameterTypes = methodReference.Parameters
+					.TakeWhile(p => !p.ParameterType.IsSentinel)
+					.Select(p => Resolve(p.ParameterType))
+					.Concat(new[] { SpecialType.ArgList })
+					.ToArray();
+			} else {
+				parameterTypes = methodReference.Parameters.SelectArray(p => Resolve(p.ParameterType));
+			}
 			var returnType = Resolve(methodReference.ReturnType);
 			foreach (var method in methods) {
 				if (method.TypeParameters.Count != methodReference.GenericParameters.Count)
@@ -245,12 +262,17 @@ namespace ICSharpCode.Decompiler
 			}
 			return CreateFakeMethod(methodReference);
 		}
-
+		
 		static bool CompareTypes(IType a, IType b)
 		{
 			IType type1 = DummyTypeParameter.NormalizeAllTypeParameters(a);
 			IType type2 = DummyTypeParameter.NormalizeAllTypeParameters(b);
 			return type1.Equals(type2);
+		}
+		
+		static bool IsVarArgMethod(IMethod method)
+		{
+			return method.Parameters.Count > 0 && method.Parameters[method.Parameters.Count - 1].Type.Kind == TypeKind.ArgList;
 		}
 		
 		static bool CompareSignatures(IList<IParameter> parameters, IType[] parameterTypes)

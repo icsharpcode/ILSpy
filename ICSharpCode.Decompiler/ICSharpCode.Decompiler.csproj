@@ -158,6 +158,7 @@
     <Compile Include="TypeSystem\IDecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\ReferenceResolvingException.cs" />
     <Compile Include="TypeSystem\TypesHierarchyHelpers.cs" />
+    <Compile Include="TypeSystem\VarArgInstanceMethod.cs" />
     <Compile Include="Util\CollectionExtensions.cs" />
     <Compile Include="Util\BitSet.cs" />
     <Compile Include="Util\Interval.cs" />

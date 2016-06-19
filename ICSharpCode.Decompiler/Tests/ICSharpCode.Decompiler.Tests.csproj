@@ -125,6 +125,7 @@
     <Compile Include="TestCases\InitializerTests.cs" />
     <Compile Include="TestCases\PropertiesAndEvents.cs" />
     <Compile Include="TestCases\Switch.cs" />
+    <Compile Include="TestCases\UndocumentedExpressions.cs" />
     <Compile Include="TestCases\ValueTypeCall.cs" />
     <Compile Include="TestRunner.cs" />
     <Compile Include="Util\IntervalTests.cs" />

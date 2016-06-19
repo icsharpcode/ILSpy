@@ -93,6 +93,12 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			TestCompileDecompileCompileOutputAll("DecimalFields.cs");
 		}
+		
+		[Test]
+		public void UndocumentedExpressions()
+		{
+			TestCompileDecompileCompileOutputAll("UndocumentedExpressions.cs");
+		}
 
 		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{
@@ -138,6 +144,10 @@ namespace ICSharpCode.Decompiler.Tests
 				Assert.AreEqual(result1, result2, "Exit codes differ; did the decompiled code crash?");
 				Assert.AreEqual(error1, error2);
 				Assert.AreEqual(output1, output2);
+				
+				File.Delete(decompiledCodeFile);
+				File.Delete(outputFile.PathToAssembly);
+				File.Delete(decompiledOutputFile.PathToAssembly);
 			} finally {
 				if (outputFile != null)
 					outputFile.TempFiles.Delete();

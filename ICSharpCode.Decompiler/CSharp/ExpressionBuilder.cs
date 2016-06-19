@@ -602,6 +602,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		TranslatedExpression HandleCallInstruction(CallInstruction inst)
 		{
+			IMethod method = inst.Method;
 			// Used for Call, CallVirt and NewObj
 			TranslatedExpression target;
 			if (inst.OpCode == OpCode.NewObj) {
@@ -610,30 +611,41 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				target = default(TranslatedExpression); // no target
 			} else {
-				target = TranslateTarget(inst.Method, inst.Arguments.FirstOrDefault(), inst.OpCode == OpCode.Call);
+				target = TranslateTarget(method, inst.Arguments.FirstOrDefault(), inst.OpCode == OpCode.Call);
 			}
 			
 			var arguments = inst.Arguments.SelectArray(Translate);
-			int firstParamIndex = (inst.Method.IsStatic || inst.OpCode == OpCode.NewObj) ? 0 : 1;
+			int firstParamIndex = (method.IsStatic || inst.OpCode == OpCode.NewObj) ? 0 : 1;
 			
 			// Translate arguments to the expected parameter types
 			Debug.Assert(arguments.Length == firstParamIndex + inst.Method.Parameters.Count);
 			for (int i = firstParamIndex; i < arguments.Length; i++) {
-				var parameter = inst.Method.Parameters[i - firstParamIndex];
+				var parameter = method.Parameters[i - firstParamIndex];
 				arguments[i] = arguments[i].ConvertTo(parameter.Type, this);
 				
 				if (parameter.IsOut && arguments[i].Expression is DirectionExpression) {
 					((DirectionExpression)arguments[i].Expression).FieldDirection = FieldDirection.Out;
 				}
 			}
+			
+			if (method is VarArgInstanceMethod) {
+				int regularParameterCount = ((VarArgInstanceMethod)method).RegularParameterCount;
+				var argListArg = new UndocumentedExpression();
+				argListArg.UndocumentedExpressionType = UndocumentedExpressionType.ArgList;
+				argListArg.Arguments.AddRange(arguments.Skip(regularParameterCount).Select(arg => arg.Expression));
+				var argListRR = new ResolveResult(SpecialType.ArgList);
+				arguments = arguments.Take(regularParameterCount)
+					.Concat(new[] { argListArg.WithoutILInstruction().WithRR(argListRR) }).ToArray();
+				method = (IMethod)method.MemberDefinition;
+			}
 
 			var argumentResolveResults = arguments.Skip(firstParamIndex).Select(arg => arg.ResolveResult).ToList();
 
 			ResolveResult rr;
 			if (inst.Method.IsAccessor)
-				rr = new MemberResolveResult(target.ResolveResult, inst.Method.AccessorOwner);
+				rr = new MemberResolveResult(target.ResolveResult, method.AccessorOwner);
 			else
-				rr = new CSharpInvocationResolveResult(target.ResolveResult, inst.Method, argumentResolveResults);
+				rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults);
 			
 			var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression).ToList();
 			if (inst.OpCode == OpCode.NewObj) {
@@ -641,7 +653,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst).WithRR(rr);
 			} else {
 				Expression expr;
-				IMethod method = inst.Method;
 				if (method.IsAccessor) {
 					if (method.ReturnType.IsKnownType(KnownTypeCode.Void)) {
 						var value = argumentExpressions.Last();
@@ -669,14 +680,14 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				} else {
 					Expression targetExpr = target.Expression;
-					string methodName = inst.Method.Name;
+					string methodName = method.Name;
 					// HACK : convert this.Dispose() to ((IDisposable)this).Dispose(), if Dispose is an explicitly implemented interface method.
 					if (inst.Method.IsExplicitInterfaceImplementation && targetExpr is ThisReferenceExpression) {
-						targetExpr = targetExpr.CastTo(ConvertType(inst.Method.ImplementedInterfaceMembers[0].DeclaringType));
-						methodName = inst.Method.ImplementedInterfaceMembers[0].Name;
+						targetExpr = targetExpr.CastTo(ConvertType(method.ImplementedInterfaceMembers[0].DeclaringType));
+						methodName = method.ImplementedInterfaceMembers[0].Name;
 					}
 					var mre = new MemberReferenceExpression(targetExpr, methodName);
-					mre.TypeArguments.AddRange(inst.Method.TypeArguments.Select(a => ConvertType(a)));
+					mre.TypeArguments.AddRange(method.TypeArguments.Select(a => ConvertType(a)));
 					expr = new InvocationExpression(mre, argumentExpressions);
 				}
 				return expr.WithILInstruction(inst).WithRR(rr);
@@ -869,7 +880,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var expr = new UndocumentedExpression {
 				UndocumentedExpressionType = UndocumentedExpressionType.RefValue,
 				Arguments = { Translate(inst.Argument).Expression, new TypeReferenceExpression(ConvertType(inst.Type)) }
-			};
+			}.WithRR(new ResolveResult(inst.Type));
 			return new DirectionExpression(FieldDirection.Ref, expr.WithILInstruction(inst)).WithoutILInstruction()
 				.WithRR(new ByReferenceResolveResult(inst.Type, false));
 		}
