@@ -45,7 +45,8 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				new IntroduceExtensionMethods(context), // must run after IntroduceUsingDeclarations
 				new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
 				new CombineQueryExpressions(context),
-				new FlattenSwitchBlocks(), 
+				new FlattenSwitchBlocks(),
+				new UseVarKeywordTransform(context.Settings)
 			};
 		}
 		

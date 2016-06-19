@@ -12,3 +12,4 @@ _ReSharper*/
 *.patch
 /packages
 *.ide/
+/.vs/config/applicationhost.config

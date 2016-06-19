@@ -266,6 +266,18 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
+
+		VarKeywordUsage useVar = VarKeywordUsage.WhenTypeIsEvidentOrLong;
+
+		public VarKeywordUsage UseVar {
+			get { return useVar; }
+			set {
+				if(value != useVar) {
+					useVar = value;
+					OnPropertyChanged(nameof(UseVar));
+				}
+			}
+		}
 		
 		#region Options to aid VB decompilation
 		bool introduceIncrementAndDecrement = true;
@@ -352,5 +364,13 @@ namespace ICSharpCode.Decompiler
 			settings.PropertyChanged = null;
 			return settings;
 		}
+	}
+
+	public enum VarKeywordUsage
+	{
+		Never,
+		WhenTypeIsEvident,
+		WhenTypeIsEvidentOrLong,
+		Always,
 	}
 }
