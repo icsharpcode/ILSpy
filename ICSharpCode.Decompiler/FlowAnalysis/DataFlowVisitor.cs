@@ -204,7 +204,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// 
 		/// Within a try block, <c>currentStateOnException == stateOnException[tryBlock.Parent]</c>.
 		/// </summary>
-		State currentStateOnException;
+		/// <seealso cref="PropagateStateOnException"/>
+		protected State currentStateOnException;
 		
 		/// <summary>
 		/// Creates a new DataFlowVisitor.
@@ -216,7 +217,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			this.bottomState = initialState.Clone();
 			this.bottomState.ReplaceWithBottom();
 			Debug.Assert(bottomState.IsBottom);
-			this.currentStateOnException = bottomState.Clone();
+			this.currentStateOnException = state.Clone();
 		}
 		
 		#if DEBUG
@@ -236,6 +237,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					debugDict.Add(inst, state.Clone());
 				}
 			}
+			
+			// currentStateOnException should be all states within the try block joined together
+			// -> state should already have been joined into currentStateOnException.
+			Debug.Assert(state.LessThanOrEqual(currentStateOnException));
 			#endif
 		}
 		#endif
@@ -271,10 +276,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				             "Unreachable code must be in the bottom state.");
 			}
 			
-			// If this instruction can throw an exception, handle the exceptional control flow edge.
-			if ((inst.DirectFlags & InstructionFlags.MayThrow) != 0) {
-				MayThrow();
-			}
 			DebugEndPoint(inst);
 		}
 		
@@ -282,7 +283,18 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// Handle control flow when the current instruction throws an exception:
 		/// joins the current state into the "exception state" of the current try block.
 		/// </summary>
-		protected void MayThrow()
+		/// <remarks>
+		/// This should not only be called for instructions that may throw an exception,
+		/// but for all instructions (due to async exceptions like ThreadAbortException)!
+		/// 
+		/// To avoid redundant calls, every Visit() call may assume that the current state
+		/// is already propagated, and has to guarantee the same at the end.
+		/// This means this method should be called after every state change.
+		/// Alternatively, derived classes may directly modify both <c>state</c>
+		/// and <c>currentStateOnException</c>, so that a full <c>JoinWith()</c> call
+		/// is not necessary.
+		/// </remarks>
+		protected void PropagateStateOnException()
 		{
 			currentStateOnException.JoinWith(state);
 		}
@@ -409,13 +421,12 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		protected internal override void VisitThrow(Throw inst)
 		{
 			inst.Argument.AcceptVisitor(this);
-			MayThrow();
 			MarkUnreachable();
 		}
 		
 		protected internal override void VisitRethrow(Rethrow inst)
 		{
-			MayThrow();
+			PropagateStateOnException();
 			MarkUnreachable();
 		}
 		
@@ -434,13 +445,19 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			State oldStateOnException = currentStateOnException;
 			State newStateOnException;
 			if (!stateOnException.TryGetValue(inst, out newStateOnException)) {
-				newStateOnException = bottomState.Clone();
+				newStateOnException = state.Clone();
 				stateOnException.Add(inst, newStateOnException);
 			}
 			
 			currentStateOnException = newStateOnException;
 			inst.TryBlock.AcceptVisitor(this);
+			// swap back to the old object instance
 			currentStateOnException = oldStateOnException;
+			
+			// No matter what kind of try-instruction this is, it's possible
+			// that an async exception is thrown immediately in the handler block,
+			// so propagate the state:
+			oldStateOnException.JoinWith(newStateOnException);
 			
 			return newStateOnException;
 		}
@@ -450,8 +467,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugStartPoint(inst);
 			State onException = HandleTryBlock(inst);
 			State endpoint = state.Clone();
-			// The exception might get propagated if no handler matches the type:
-			currentStateOnException.JoinWith(onException);
 			foreach (var handler in inst.Handlers) {
 				state.ReplaceWith(onException);
 				BeginTryCatchHandler(handler);
@@ -489,7 +504,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			State onSuccess = state.Clone();
 			state.JoinWith(onException);
 			inst.FinallyBlock.AcceptVisitor(this);
-			MayThrow();
+			PropagateStateOnException();
 			// Use MeetWith() to ensure points after the try-finally are reachable only if both the
 			// try and the finally endpoints are reachable.
 			state.MeetWith(onSuccess);
@@ -505,7 +520,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			State onSuccess = state;
 			state = onException;
 			inst.FaultBlock.AcceptVisitor(this);
-			MayThrow(); // rethrow the exception after the fault block
+			PropagateStateOnException(); // rethrow the exception after the fault block
 			
 			// try-fault exits normally only if no exception occurred
 			state = onSuccess;

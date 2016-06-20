@@ -318,7 +318,16 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					// Clear the set of stores for this variable:
 					state.KillStores(rd.firstStoreIndexForVariable[v.IndexInScope], rd.firstStoreIndexForVariable[v.IndexInScope + 1]);
 					// And replace it with this store:
-					state.SetStore(rd.storeIndexMap[inst]);
+					int si = rd.storeIndexMap[inst];
+					state.SetStore(si);
+					
+					// We should call PropagateStateOnException() here because we changed the state.
+					// But that's equal to: currentStateOnException.UnionWith(state);
+					
+					// Because we're already guaranteed that state.LessThanOrEqual(currentStateOnException)
+					// when entering HandleStore(), all we really need to do to achieve what PropagateStateOnException() does
+					// is to add the single additional store to the exceptional state as well:
+					currentStateOnException.SetStore(si);
 				}
 			}
 			

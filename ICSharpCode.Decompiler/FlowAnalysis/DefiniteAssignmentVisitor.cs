@@ -123,6 +123,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				state.MarkVariableInitialized(v.IndexInScope);
 				// Note that this gets called even if the store is in unreachable code,
 				// but that's OK because bottomState.MarkVariableInitialized() has no effect.
+				
+				// After the state change, we have to call
+				//  PropagateStateOnException() = currentStateOnException.JoinWith(state);
+				// but because MarkVariableInitialized() only clears a bit,
+				// this is guaranteed to be a no-op.
 			}
 		}
 		
