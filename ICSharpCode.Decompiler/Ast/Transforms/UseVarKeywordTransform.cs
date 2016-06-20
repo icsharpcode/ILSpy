@@ -18,17 +18,22 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 
 		public override void VisitVariableDeclarationStatement(VariableDeclarationStatement variableDeclarationStatement)
 		{
-			if (variableDeclarationStatement.Variables.Count != 1 || variableDeclarationStatement.Type.IsVar()) return;
+			var type = variableDeclarationStatement.Type;
+			if (variableDeclarationStatement.Variables.Count != 1 || type.IsVar()) return;
 			var variable = variableDeclarationStatement.Variables.Single();
 			if (variable.Initializer.IsNull) return; // has to have an initializer
+			if (variable.Initializer is IdentifierExpression && ((IdentifierExpression)variable.Initializer).Identifier == "null" ||
+				variable.Initializer is NullReferenceExpression ||
+				variable.Initializer is AnonymousMethodExpression ||
+				variable.Initializer is LambdaExpression) return; // and can't be null or anonymous method
 
 			var useVar = false;
 			switch (settings.UseVar) {
 				case VarKeywordUsage.WhenTypeIsEvident:
-					useVar = IsTypeEvident(variableDeclarationStatement.Type, variable.Initializer);
+					useVar = IsTypeEvident(type, variable.Initializer);
 					break;
 				case VarKeywordUsage.WhenTypeIsEvidentOrLong:
-					useVar = IsLongName(variableDeclarationStatement.Type) || IsTypeEvident(variableDeclarationStatement.Type, variable.Initializer);
+					useVar = IsLongName(type) || IsTypeEvident(type, variable.Initializer);
 					break;
 				case VarKeywordUsage.Always:
 					useVar = true;
@@ -37,7 +42,9 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					break;
 			}
 
-			if(useVar) variableDeclarationStatement.Type = new SimpleType("var");
+			if (useVar) {
+				variableDeclarationStatement.Type = new SimpleType("var").CopyAnnotationsFrom(type);
+			}
 
 			base.VisitVariableDeclarationStatement(variableDeclarationStatement);
 		}
