@@ -49,7 +49,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var code = RemoveIgnorableLines(File.ReadLines(fileName));
 			AssemblyDefinition assembly = CompileLegacy(code, optimize, useDebug, compilerVersion);
 
-			AstBuilder decompiler = new AstBuilder(new DecompilerContext(assembly.MainModule));
+			AstBuilder decompiler = new AstBuilder(new DecompilerContext(assembly.MainModule) { Settings = new DecompilerSettings() { UseVar = VarKeywordUsage.Never } });
 			decompiler.AddAssembly(assembly);
 			new Helpers.RemoveCompilerAttribute().Run(decompiler.SyntaxTree);
 
