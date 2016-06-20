@@ -104,10 +104,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		readonly ILVariableScope scope;
 		readonly BitSet variablesWithUninitializedUsage;
 		
-		public DefiniteAssignmentVisitor(ILVariableScope scope) : base(new State(scope.Variables.Count))
+		public DefiniteAssignmentVisitor(ILVariableScope scope)
 		{
 			this.scope = scope;
 			this.variablesWithUninitializedUsage = new BitSet(scope.Variables.Count);
+			Initialize(new State(scope.Variables.Count));
 		}
 		
 		public bool IsPotentiallyUsedUninitialized(ILVariable v)

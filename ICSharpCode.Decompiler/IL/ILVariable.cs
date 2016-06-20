@@ -217,4 +217,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteReference(this.Name, this, isLocal: true);
 		}
 	}
+	
+	public interface IInstructionWithVariableOperand
+	{
+		ILVariable Variable { get; set; }
+	}
 }

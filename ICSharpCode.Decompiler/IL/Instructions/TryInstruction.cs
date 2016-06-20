@@ -175,6 +175,20 @@ namespace ICSharpCode.Decompiler.IL
 			body.WriteTo(output);
 		}
 		
+		ILVariable variable;
+		
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.StoreCount--;
+				variable = value;
+				if (IsConnected)
+					variable.StoreCount++;
+			}
+		}
+		
 		protected override void Connected()
 		{
 			base.Connected();

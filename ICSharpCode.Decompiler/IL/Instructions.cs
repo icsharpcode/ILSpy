@@ -963,7 +963,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Catch handler within a try-catch statement.</summary>
-	public sealed partial class TryCatchHandler : ILInstruction
+	public sealed partial class TryCatchHandler : ILInstruction, IInstructionWithVariableOperand
 	{
 		public TryCatchHandler(ILInstruction filter, ILInstruction body, ILVariable variable) : base(OpCode.TryCatchHandler)
 		{
@@ -1036,9 +1036,6 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Body = this.body.Clone();
 			return clone;
 		}
-		readonly ILVariable variable;
-		/// <summary>Returns the variable operand.</summary>
-		public ILVariable Variable { get { return variable; } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitTryCatchHandler(this);
@@ -1192,16 +1189,13 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Loads the value of a local variable. (ldarg/ldloc)</summary>
-	public sealed partial class LdLoc : SimpleInstruction
+	public sealed partial class LdLoc : SimpleInstruction, IInstructionWithVariableOperand
 	{
 		public LdLoc(ILVariable variable) : base(OpCode.LdLoc)
 		{
 			Debug.Assert(variable != null);
 			this.variable = variable;
 		}
-		readonly ILVariable variable;
-		/// <summary>Returns the variable operand.</summary>
-		public ILVariable Variable { get { return variable; } }
 		public override StackType ResultType { get { return variable.StackType; } }
 		public override void WriteTo(ITextOutput output)
 		{
@@ -1220,7 +1214,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Loads the address of a local variable. (ldarga/ldloca)</summary>
-	public sealed partial class LdLoca : SimpleInstruction
+	public sealed partial class LdLoca : SimpleInstruction, IInstructionWithVariableOperand
 	{
 		public LdLoca(ILVariable variable) : base(OpCode.LdLoca)
 		{
@@ -1228,9 +1222,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.variable = variable;
 		}
 		public override StackType ResultType { get { return StackType.Ref; } }
-		readonly ILVariable variable;
-		/// <summary>Returns the variable operand.</summary>
-		public ILVariable Variable { get { return variable; } }
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -1248,7 +1239,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
-	public sealed partial class StLoc : ILInstruction
+	public sealed partial class StLoc : ILInstruction, IInstructionWithVariableOperand
 	{
 		public StLoc(ILVariable variable, ILInstruction value) : base(OpCode.StLoc)
 		{
@@ -1256,9 +1247,6 @@ namespace ICSharpCode.Decompiler.IL
 			this.variable = variable;
 			this.Value = value;
 		}
-		readonly ILVariable variable;
-		/// <summary>Returns the variable operand.</summary>
-		public ILVariable Variable { get { return variable; } }
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value;
 		public ILInstruction Value {

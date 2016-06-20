@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// The bottom state.
 		/// Must not be mutated.
 		/// </summary>
-		readonly State bottomState;
+		State bottomState;
 		
 		/// <summary>
 		/// Current state.
@@ -207,12 +207,22 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <seealso cref="PropagateStateOnException"/>
 		protected State currentStateOnException;
 		
+		bool initialized;
+		
 		/// <summary>
-		/// Creates a new DataFlowVisitor.
+		/// Initializes the DataFlowVisitor.
+		/// This method must be called once before any Visit()-methods can be called.
+		/// It must not be called more than once.
 		/// </summary>
 		/// <param name="initialState">The initial state at the entry point of the analysis.</param>
-		protected DataFlowVisitor(State initialState)
+		/// <remarks>
+		/// This is a method instead of a constructor because derived classes might need complex initialization
+		/// before they can construct the initial state.
+		/// </remarks>
+		protected void Initialize(State initialState)
 		{
+			Debug.Assert(!initialized);
+			initialized = true;
 			this.state = initialState.Clone();
 			this.bottomState = initialState.Clone();
 			this.bottomState.ReplaceWithBottom();
@@ -228,6 +238,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		void DebugPoint(Dictionary<ILInstruction, State> debugDict, ILInstruction inst)
 		{
 			#if DEBUG
+			Debug.Assert(initialized, "Initialize() was not called");
+			
 			State previousOutputState;
 			if (debugDict.TryGetValue(inst, out previousOutputState)) {
 				Debug.Assert(previousOutputState.LessThanOrEqual(state));
@@ -444,7 +456,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			State oldStateOnException = currentStateOnException;
 			State newStateOnException;
-			if (!stateOnException.TryGetValue(inst, out newStateOnException)) {
+			if (stateOnException.TryGetValue(inst, out newStateOnException)) {
+				newStateOnException.JoinWith(state);
+			} else {
 				newStateOnException = state.Clone();
 				stateOnException.Add(inst, newStateOnException);
 			}

@@ -23,6 +23,20 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class LdLoc
 	{
+		ILVariable variable;
+		
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.LoadCount--;
+				variable = value;
+				if (IsConnected)
+					variable.LoadCount++;
+			}
+		}
+		
 		protected override void Connected()
 		{
 			base.Connected();
@@ -44,6 +58,20 @@ namespace ICSharpCode.Decompiler.IL
 	
 	partial class LdLoca
 	{
+		ILVariable variable;
+		
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.AddressCount--;
+				variable = value;
+				if (IsConnected)
+					variable.AddressCount++;
+			}
+		}
+		
 		protected override void Connected()
 		{
 			base.Connected();
@@ -65,6 +93,20 @@ namespace ICSharpCode.Decompiler.IL
 	
 	partial class StLoc
 	{
+		ILVariable variable;
+		
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.StoreCount--;
+				variable = value;
+				if (IsConnected)
+					variable.StoreCount++;
+			}
+		}
+		
 		protected override void Connected()
 		{
 			base.Connected();

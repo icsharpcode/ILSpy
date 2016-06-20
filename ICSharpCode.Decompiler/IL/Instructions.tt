@@ -774,15 +774,13 @@ namespace ICSharpCode.Decompiler.IL
 	// HasVariableOperand trait: the instruction refers to a local variable
 	static Action<OpCode> HasVariableOperand = opCode => {
 		opCode.ConstructorParameters.Add("ILVariable variable");
-		opCode.Members.Add("readonly ILVariable variable;");
 		opCode.ConstructorBody.Add("Debug.Assert(variable != null);");
 		opCode.ConstructorBody.Add("this.variable = variable;");
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILVariable", Name = "variable", FieldName = "Variable" });
-		opCode.Members.Add("/// <summary>Returns the variable operand.</summary>" + Environment.NewLine
-						+ "public ILVariable Variable { get { return variable; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("variable.WriteTo(output);");
+		opCode.Interfaces.Add("IInstructionWithVariableOperand");
 	};
 	
 	static Action<OpCode> HasFieldOperand = opCode => {

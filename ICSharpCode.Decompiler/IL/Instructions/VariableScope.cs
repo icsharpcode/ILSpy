@@ -123,7 +123,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			for (int i = 0; i < list.Count;) {
 				var v = list[i];
-				if (v.StoreCount == 0 && v.LoadCount == 0 && v.AddressCount == 0) {
+				int deadStoreCount = v.HasInitialValue ? 1 : 0;
+				if (v.StoreCount == deadStoreCount && v.LoadCount == 0 && v.AddressCount == 0) {
 					RemoveAt(i);
 				} else {
 					i++;

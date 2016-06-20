@@ -37,11 +37,17 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// Possible "definitions" that store to a variable are:
 	/// * <c>StLoc</c>
 	/// * <c>TryCatchHandler</c> (for the exception variable)
-	/// * <c>ReachingDefinitions.UninitializedVariable</c> for uninitialized variables.
+	/// * <c>ReachingDefinitionsVisitor.UninitializedVariable</c> for uninitialized variables.
 	/// Note that we do not keep track of <c>LdLoca</c>/references/pointers.
 	/// The analysis will likely be wrong/incomplete for variables with <c>AddressCount != 0</c>.
+	/// 
+	/// Note: this class does not store the computed information, because doing so
+	/// would significantly increase the number of states we need to store.
+	/// The only way to get the computed information out of this class is to
+	/// derive from the class and override the Visit methods at the points of interest
+	/// (usually the load instructions).
 	/// </remarks>
-	public class ReachingDefinitions
+	class ReachingDefinitionsVisitor : DataFlowVisitor<ReachingDefinitionsVisitor.State>
 	{
 		#region State representation
 		/// <summary>
@@ -70,14 +76,33 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// which allows us to efficient clear out all stores that get overwritten by a new store.
 		/// </remarks>
 		[DebuggerDisplay("{bits}")]
-		struct State : IDataFlowState<State>
+		public struct State : IDataFlowState<State>
 		{
 			/// <summary>
-			/// bit 0: This state's position is reachable from the entry point.
-			/// bit i+1: There is a code path from the entry point to this state's position
-			///          that passes through through <c>allStores[i]</c> and does not pass through another
-			///          store to <c>allStores[i].Variable</c>.
+			/// This bitset contains three different kinds of bits:
+			/// Reachable bit: (bit 0)
+			///     This state's position is reachable from the entry point.
+			/// 
+			/// Reaching uninitialized variable bit: (bit si, where si > 0 and <c>allStores[si] == null</c>)
+			///     There is a code path from the scope's entry point to this state's position
+			///     that does not pass through any store to the variable.
+			/// 
+			/// <c>firstStoreIndexForVariable[v.IndexInScope]</c> gives the index of that variable's uninitialized bit.
+			/// 
+			/// Reaching store bit (bit si, where <c>allStores[si] != null</c>):
+			///     There is a code path from the entry point to this state's position
+			///     that passes through through <c>allStores[i]</c> and does not pass through another
+			///     store to <c>allStores[i].Variable</c>.
+			/// 
+			/// The indices for a variable's reaching store bits are between <c>firstStoreIndexForVariable[v.IndexInScope]</c>
+			/// to <c>firstStoreIndexForVariable[v.IndexInScope + 1]</c> (both endpoints exclusive!).
 			/// </summary>
+			/// <remarks>
+			/// The initial state has the "reachable bit" and the "reaching uninitialized variable bits" set,
+			/// and the "reaching store bits" unset.
+			/// 
+			/// The bottom state has all bits unset.
+			/// </remarks>
 			readonly BitSet bits;
 			
 			public State(BitSet bits)
@@ -102,11 +127,17 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			
 			public void JoinWith(State incomingState)
 			{
+				// When control flow is joined together, we can simply union our bitsets.
+				// (joined node is reachable iff either input is reachable)
 				bits.UnionWith(incomingState.bits);
 			}
 			
 			public void MeetWith(State incomingState)
 			{
+				// At the end of a try-finally construct, we intersect the try-bitset
+				// with the finally-bitset
+				// (the try-finally-endpoint is reachable if both the try-block-endpoint and
+				// the finally-block-endpoint are reachable)
 				bits.IntersectWith(incomingState.bits);
 			}
 			
@@ -125,11 +156,19 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				get { return bits[ReachableBit]; }
 			}
 			
+			/// <summary>
+			/// Clears all store bits between startStoreIndex (incl.) and endStoreIndex (excl.)
+			/// </summary>
 			public void KillStores(int startStoreIndex, int endStoreIndex)
 			{
 				Debug.Assert(startStoreIndex >= FirstStoreIndex);
 				Debug.Assert(endStoreIndex >= startStoreIndex);
 				bits.Clear(startStoreIndex, endStoreIndex);
+			}
+			
+			public bool IsReachingStore(int storeIndex)
+			{
+				return bits[storeIndex];
 			}
 			
 			public void SetStore(int storeIndex)
@@ -153,15 +192,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		#region Documentation + member fields
 		/// <summary>
-		/// A special Nop instruction that gets used as a fake store if the variable
-		/// is possibly uninitialized.
-		/// </summary>
-		public static readonly ILInstruction UninitializedVariable = new Nop();
-
-		/// <summary>
 		/// The function being analyzed.
 		/// </summary>
-		readonly ILVariableScope scope;
+		protected readonly ILVariableScope scope;
 		
 		/// <summary>
 		/// All stores for all variables in the scope.
@@ -190,16 +223,19 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		readonly int[] firstStoreIndexForVariable;
 		
 		/// <summary>
-		/// <c>activeVariable[v.IndexInScope]</c> is true iff RD analysis is enabled for the variable.
+		/// <c>analyzedVariables[v.IndexInScope]</c> is true iff RD analysis is enabled for the variable.
 		/// </summary>
-		readonly BitSet activeVariables;
+		readonly BitSet analyzedVariables;
 		#endregion
 		
 		#region Constructor
 		/// <summary>
-		/// Run reaching definitions analysis for the specified variable scope.
+		/// Prepare reaching definitions analysis for the specified variable scope.
+		/// 
+		/// The analysis will track all variables in the scope for which the predicate returns true
+		/// ("analyzed variables").
 		/// </summary>
-		public ReachingDefinitions(ILVariableScope scope, Predicate<ILVariable> pred)
+		public ReachingDefinitionsVisitor(ILVariableScope scope, Predicate<ILVariable> pred)
 			: this(scope, GetActiveVariableBitSet(scope, pred))
 		{
 		}
@@ -216,19 +252,21 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		}
 
 		/// <summary>
-		/// Run reaching definitions analysis for the specified variable scope.
+		/// Prepare reaching definitions analysis for the specified variable scope.
+		/// 
+		/// The analysis will track all variables in the scope for which <c>analyzedVariables[v.IndexInScope]</c> is true.
 		/// </summary>
-		public ReachingDefinitions(ILVariableScope scope, BitSet activeVariables)
+		public ReachingDefinitionsVisitor(ILVariableScope scope, BitSet analyzedVariables)
 		{
 			if (scope == null)
 				throw new ArgumentNullException("scope");
-			if (activeVariables == null)
-				throw new ArgumentNullException("activeVariables");
+			if (analyzedVariables == null)
+				throw new ArgumentNullException("analyzedVariables");
 			this.scope = scope;
-			this.activeVariables = activeVariables;
+			this.analyzedVariables = analyzedVariables;
 			
 			// Fill `allStores` and `storeIndexMap` and `firstStoreIndexForVariable`.
-			var storesByVar = FindAllStoresByVariable(scope, activeVariables);
+			var storesByVar = FindAllStoresByVariable(scope, analyzedVariables);
 			allStores = new ILInstruction[FirstStoreIndex + storesByVar.Sum(l => l != null ? l.Count : 0)];
 			firstStoreIndexForVariable = new int[scope.Variables.Count + 1];
 			int si = FirstStoreIndex;
@@ -238,14 +276,15 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				if (stores != null) {
 					int expectedStoreCount = scope.Variables[vi].StoreCount;
 					if (!scope.Variables[vi].HasInitialValue) {
-						// Extra store for UninitializedVariable
+						// Extra store for the uninitialized state.
 						expectedStoreCount += 1;
 						// Note that for variables with HasInitialValue=true,
 						// this extra store is already accounted for in ILVariable.StoreCount.
 					}
 					Debug.Assert(stores.Count == expectedStoreCount);
 					stores.CopyTo(allStores, si);
-					// Add all stores except for UninitializedVariable to storeIndexMap.
+					// Add all stores except for the first (representing the uninitialized state)
+					// to storeIndexMap.
 					for (int i = 1; i < stores.Count; i++) {
 						storeIndexMap.Add(stores[i], si + i);
 					}
@@ -255,8 +294,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			firstStoreIndexForVariable[scope.Variables.Count] = si;
 			Debug.Assert(si == allStores.Length);
 			
-			RDVisitor visitor = new RDVisitor(this);
-			scope.Children.Single().AcceptVisitor(visitor);
+			Initialize(CreateInitialState());
 		}
 
 		/// <summary>
@@ -268,7 +306,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			List<ILInstruction>[] storesByVar = new List<ILInstruction>[scope.Variables.Count];
 			for (int vi = 0; vi < storesByVar.Length; vi++) {
 				if (activeVariables[vi])
-					storesByVar[vi] = new List<ILInstruction> { UninitializedVariable };
+					storesByVar[vi] = new List<ILInstruction> { null };
 			}
 			foreach (var inst in scope.Descendants) {
 				ILVariable v;
@@ -280,19 +318,17 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			}
 			return storesByVar;
 		}
-		#endregion
 		
-		#region CreateInitialState
 		/// <summary>
-		/// Create the initial state (reachable + all variables uninitialized).
+		/// Create the initial state (reachable bit + uninit variable bits set, store bits unset).
 		/// </summary>
 		State CreateInitialState()
 		{
 			BitSet initialState = new BitSet(allStores.Length);
 			initialState.Set(ReachableBit);
 			for (int vi = 0; vi < scope.Variables.Count; vi++) {
-				if (activeVariables[vi]) {
-					Debug.Assert(allStores[firstStoreIndexForVariable[vi]] == UninitializedVariable);
+				if (analyzedVariables[vi]) {
+					Debug.Assert(allStores[firstStoreIndexForVariable[vi]] == null);
 					initialState.Set(firstStoreIndexForVariable[vi]);
 				}
 			}
@@ -300,47 +336,70 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		}
 		#endregion
 		
-		/// <summary>
-		/// Visitor that traverses the ILInstruction tree.
-		/// </summary>
-		class RDVisitor : DataFlowVisitor<State>
+		#region Analysis
+		void HandleStore(ILInstruction inst, ILVariable v)
 		{
-			readonly ReachingDefinitions rd;
-			
-			internal RDVisitor(ReachingDefinitions rd) : base(rd.CreateInitialState())
-			{
-				this.rd = rd;
-			}
-
-			void HandleStore(ILInstruction inst, ILVariable v)
-			{
-				if (v.Scope == rd.scope && rd.activeVariables[v.IndexInScope] && state.IsReachable) {
-					// Clear the set of stores for this variable:
-					state.KillStores(rd.firstStoreIndexForVariable[v.IndexInScope], rd.firstStoreIndexForVariable[v.IndexInScope + 1]);
-					// And replace it with this store:
-					int si = rd.storeIndexMap[inst];
-					state.SetStore(si);
-					
-					// We should call PropagateStateOnException() here because we changed the state.
-					// But that's equal to: currentStateOnException.UnionWith(state);
-					
-					// Because we're already guaranteed that state.LessThanOrEqual(currentStateOnException)
-					// when entering HandleStore(), all we really need to do to achieve what PropagateStateOnException() does
-					// is to add the single additional store to the exceptional state as well:
-					currentStateOnException.SetStore(si);
-				}
-			}
-			
-			protected internal override void VisitStLoc(StLoc inst)
-			{
-				base.VisitStLoc(inst);
-				HandleStore(inst, inst.Variable);
-			}
-			
-			protected override void BeginTryCatchHandler(TryCatchHandler inst)
-			{
-				HandleStore(inst, inst.Variable);
+			if (v.Scope == scope && analyzedVariables[v.IndexInScope] && state.IsReachable) {
+				// Clear the set of stores for this variable:
+				state.KillStores(firstStoreIndexForVariable[v.IndexInScope], firstStoreIndexForVariable[v.IndexInScope + 1]);
+				// And replace it with this store:
+				int si = storeIndexMap[inst];
+				state.SetStore(si);
+				
+				// We should call PropagateStateOnException() here because we changed the state.
+				// But that's equal to: currentStateOnException.UnionWith(state);
+				
+				// Because we're already guaranteed that state.LessThanOrEqual(currentStateOnException)
+				// when entering HandleStore(), all we really need to do to achieve what PropagateStateOnException() does
+				// is to add the single additional store to the exceptional state as well:
+				currentStateOnException.SetStore(si);
 			}
 		}
+		
+		protected internal override void VisitStLoc(StLoc inst)
+		{
+			base.VisitStLoc(inst);
+			HandleStore(inst, inst.Variable);
+		}
+		
+		protected override void BeginTryCatchHandler(TryCatchHandler inst)
+		{
+			base.BeginTryCatchHandler(inst);
+			HandleStore(inst, inst.Variable);
+		}
+		
+		public bool IsAnalyzedVariable(ILVariable v)
+		{
+			return v.Scope == scope && analyzedVariables[v.IndexInScope];
+		}
+		
+		/// <summary>
+		/// Gets all stores to <c>v</c> that reach the specified state.
+		/// 
+		/// Precondition: v is an analyzed variable.
+		/// </summary>
+		protected IEnumerable<ILInstruction> GetStores(State state, ILVariable v)
+		{
+			Debug.Assert(v.Scope == scope && analyzedVariables[v.IndexInScope]);
+			int endIndex = firstStoreIndexForVariable[v.IndexInScope + 1];
+			for (int si = firstStoreIndexForVariable[v.IndexInScope] + 1; si < endIndex; si++) {
+				if (state.IsReachingStore(si)) {
+					Debug.Assert(((IInstructionWithVariableOperand)allStores[si]).Variable == v);
+					yield return allStores[si];
+				}
+			}
+		}
+		
+		/// <summary>
+		/// Gets whether <c>v</c> is potentially uninitialized in the specified state.
+		/// 
+		/// Precondition: v is an analyzed variable.
+		/// </summary>
+		protected bool IsPotentiallyUninitialized(State state, ILVariable v)
+		{
+			Debug.Assert(v.Scope == scope && analyzedVariables[v.IndexInScope]);
+			return state.IsReachingStore(firstStoreIndexForVariable[v.IndexInScope]);
+		}
+		#endregion
 	}
 }

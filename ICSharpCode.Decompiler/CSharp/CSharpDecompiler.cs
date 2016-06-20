@@ -46,7 +46,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly DecompilerSettings settings;
 
 		List<IILTransform> ilTransforms = new List<IILTransform> {
-			new RemoveDeadVariableInit(),
+			//new RemoveDeadVariableInit(),
+			new SplitVariables(),
 			new ControlFlowSimplification(),
 			new ILInlining(), // temporary pass, just to make the ILAst easier to read while debugging loop detection
 			new LoopDetection(),
@@ -70,7 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new ReplaceMethodCallsWithOperators(),
 			new IntroduceUnsafeModifier(),
 			new AddCheckedBlocks(),
-			new DeclareVariables(), // should run after most transforms that modify statements
+			//new DeclareVariables(), // should run after most transforms that modify statements
 			new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
 			new DecimalConstantTransform(),
 			new IntroduceUsingDeclarations(),
@@ -591,20 +592,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var statementBuilder = new StatementBuilder(decompilationContext, method);
 			var body = statementBuilder.ConvertAsBlock(function.Body);
-			
-			// insert variables at start of body
-			Statement prevVarDecl = null;
-			foreach (var v in function.Variables) {
-				if (v.LoadCount == 0 && v.StoreCount == 0 && v.AddressCount == 0)
-					continue;
-				if (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot) {
-					var type = typeSystemAstBuilder.ConvertType(v.Type);
-					var varDecl = new VariableDeclarationStatement(type, v.Name);
-					varDecl.Variables.Single().AddAnnotation(v);
-					body.Statements.InsertAfter(prevVarDecl, varDecl);
-					prevVarDecl = varDecl;
-				}
-			}
 
 			entityDecl.AddChild(body, Roles.Body);
 		}
