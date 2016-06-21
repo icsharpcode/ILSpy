@@ -559,7 +559,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugStartPoint(inst);
 			inst.Value.AcceptVisitor(this);
 			State beforeSections = state.Clone();
-			State afterSections = bottomState.Clone();
+			// It's possible for none of the cases to match,
+			// so afterSections is reachable without executing any section
+			State afterSections = state.Clone();
 			foreach (var section in inst.Sections) {
 				state.ReplaceWith(beforeSections);
 				section.AcceptVisitor(this);

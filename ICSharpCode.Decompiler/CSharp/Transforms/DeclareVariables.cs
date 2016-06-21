@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		Dictionary<ILVariable, VariableToDeclare> variableDict = new Dictionary<ILVariable, VariableToDeclare>();
+		readonly Dictionary<ILVariable, VariableToDeclare> variableDict = new Dictionary<ILVariable, VariableToDeclare>();
 		
 		TransformContext context;
 		
@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			try {
 				this.context = context;
 				FindInsertionPoints(rootNode, 0);
-				ResolveOverlap();
+				ResolveCollisions();
 				InsertVariableDeclarations();
 			} finally {
 				variableDict.Clear();
@@ -118,6 +118,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// 
 		/// `level` == nesting depth of `node` within root node.
 		/// </summary>
+		/// <remarks>
+		/// Insertion point for a variable = common parent of all uses of that variable
+		/// = smallest possible scope that contains all the uses of the variable
+		/// </remarks>
 		void FindInsertionPoints(AstNode node, int nodeLevel)
 		{
 			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
@@ -160,11 +164,43 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 		#endregion
 		
-		void ResolveOverlap()
+		/// <summary>
+		/// Some variable declarations in C# are illegal (colliding),
+		/// even though the variable live ranges are not overlapping.
+		/// 
+		/// Multiple declarations in same block:
+		/// <code>
+		/// int i = 1; use(1);
+		/// int i = 2; use(2);
+		/// </code>
+		/// 
+		/// "Hiding" declaration in nested block:
+		/// <code>
+		/// int i = 1; use(1);
+		/// if (...) {
+		///   int i = 2; use(2);
+		/// }
+		/// </code>
+		/// 
+		/// Nested blocks are illegal even if the parent block
+		/// declares the variable later:
+		/// <code>
+		/// if (...) {
+		///   int i = 1; use(i);
+		/// }
+		/// int i = 2; use(i);
+		/// </code>
+		/// 
+		/// ResolveCollisions() detects all these cases, and combines the variable declarations
+		/// to a single declaration that is usable for the combined scopes.
+		/// </summary>
+		void ResolveCollisions()
 		{
 			var multiDict = new MultiDictionary<string, VariableToDeclare>();
 			foreach (var v in variableDict.Values) {
-				// Go up to the next BlockStatement (we can't add variable declarations anywhere else in the AST)
+				// We can only insert variable declarations in blocks, but FindInsertionPoints() didn't
+				// guarantee that it finds only blocks.
+				// Fix that up now.
 				while (!(v.InsertionPoint.nextNode.Parent is BlockStatement)) {
 					v.InsertionPoint = v.InsertionPoint.Up();
 				}
@@ -176,6 +212,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					// Go up until both nodes are on the same level:
 					InsertionPoint point1 = prev.InsertionPoint.UpTo(v.InsertionPoint.level);
 					InsertionPoint point2 = v.InsertionPoint.UpTo(prev.InsertionPoint.level);
+					Debug.Assert(point1.level == point2.level);
 					if (point1.nextNode.Parent == point2.nextNode.Parent) {
 						// We found a collision!
 						prev.RemovedDueToCollision = true;
