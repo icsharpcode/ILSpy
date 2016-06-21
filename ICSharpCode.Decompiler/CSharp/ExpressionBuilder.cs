@@ -109,7 +109,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				expr = new ThisReferenceExpression();
 			else
 				expr = new IdentifierExpression(variable.Name);
-			// TODO: use LocalResolveResult instead
 			if (variable.Type.Kind == TypeKind.ByReference) {
 				// When loading a by-ref parameter, use 'ref paramName'.
 				// We'll strip away the 'ref' when dereferencing.
@@ -117,11 +116,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Ensure that the IdentifierExpression itself also gets a resolve result, as that might
 				// get used after the 'ref' is stripped away:
 				var elementType = ((ByReferenceType)variable.Type).ElementType;
-				expr.WithRR(new ResolveResult(elementType));
+				expr.WithRR(new ILVariableResolveResult(variable, elementType));
 				
 				expr = new DirectionExpression(FieldDirection.Ref, expr);
+				return expr.WithRR(new ResolveResult(variable.Type));
+			} else {
+				return expr.WithRR(new ILVariableResolveResult(variable, variable.Type));
 			}
-			return expr.WithRR(new ResolveResult(variable.Type));
 		}
 
 		ExpressionWithResolveResult ConvertField(IField field, ILInstruction target = null)

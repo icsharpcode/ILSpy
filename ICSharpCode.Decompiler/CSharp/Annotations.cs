@@ -111,4 +111,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			return node.Annotation<ResolveResult>() ?? ErrorResolveResult.UnknownError;
 		}
 	}
+	
+	public class ILVariableResolveResult : ResolveResult
+	{
+		public readonly ILVariable Variable;
+		
+		public ILVariableResolveResult(ILVariable v, IType type) : base(type)
+		{
+			this.Variable = v;
+		}
+	}
 }
