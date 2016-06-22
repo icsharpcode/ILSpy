@@ -3,6 +3,7 @@ configuration: Debug
 platform: Any CPU
 install:
 - git submodule update --init --recursive
+- git checkout https://github.com/icsharpcode/ILSpy-tests
 before_build:
 - nuget restore ILSpy.sln
 build:
