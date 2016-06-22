@@ -10,5 +10,9 @@ build:
   project: ILSpy.sln
   parallel: true
   verbosity: minimal
+test:
+  assemblies:
+    - 'ICSharpCode.Decompiler\bin\Debug\ICSharpCode.Decompiler.Tests.dll'
+    - 'ILSpy.BamlDecompiler\bin\Debug\ILSpy.BamlDecompiler.Tests.dll'
 after_test:
 - python BuildTools\tidy.py
