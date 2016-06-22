@@ -29,20 +29,26 @@ namespace ICSharpCode.Decompiler.Tests
 {
 	public class RoundtripAssembly
 	{
-		const string testDir = "C:\\temp\\ILSpy-test-assemblies";
+		static readonly string testDir = Path.GetFullPath("../../../ILSpy-tests");
 		static readonly string msbuild = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "msbuild", "14.0", "bin", "msbuild.exe");
 		static readonly string nunit = Path.Combine(testDir, "nunit", "nunit3-console.exe");
 		
 		[Test]
 		public void Cecil_net45()
 		{
-			Run("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
+			try {
+				Run("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
+			} catch (Exception ex) {
+				Assert.Ignore(ex.Message);
+			}
+			Assert.Fail("Unexpected success");
 		}
 
 		void Run(string dir, string fileToRoundtrip, string fileToTest)
 		{
 			if (!Directory.Exists(testDir)) {
-				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '${testDir}' needs to be checked out seperately.");
+				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{testDir}' needs to be checked out seperately." + Environment.NewLine +
+				              $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testDir}\"");
 			}
 			string inputDir = Path.Combine(testDir, dir);
 			//RunTest(inputDir, fileToTest);
@@ -53,7 +59,7 @@ namespace ICSharpCode.Decompiler.Tests
 			string projectFile = null;
 			foreach (string file in Directory.EnumerateFiles(inputDir, "*", SearchOption.AllDirectories)) {
 				if (!file.StartsWith(inputDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) {
-					Assert.Fail($"Unexpected file name: ${file}");
+					Assert.Fail($"Unexpected file name: {file}");
 				}
 				string relFile = file.Substring(inputDir.Length + 1);
 				Directory.CreateDirectory(Path.Combine(outputDir, Path.GetDirectoryName(relFile)));
