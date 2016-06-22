@@ -140,8 +140,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 			{
 				var previousContext = context.Peek();
-				var currentUsingScope = new UsingScope(previousContext.CurrentUsingScope.UnresolvedUsingScope, namespaceDeclaration.Identifiers.Last());
-				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, currentUsingScope.Resolve(previousContext.Compilation));
+				var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
+				foreach (string ident in namespaceDeclaration.Identifiers) {
+					usingScope = new UsingScope(usingScope, ident);
+				}
+				var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, usingScope.Resolve(previousContext.Compilation));
 				context.Push(currentContext);
 				try {
 					astBuilder = CreateAstBuilder(currentContext);
@@ -166,7 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public override void VisitSimpleType(SimpleType simpleType)
 			{
 				TypeResolveResult rr;
-				if (simpleType.Ancestors.OfType<UsingDeclaration>().Any() || (rr = simpleType.Annotation<TypeResolveResult>()) == null) {
+				if ((rr = simpleType.Annotation<TypeResolveResult>()) == null) {
 					base.VisitSimpleType(simpleType);
 					return;
 				}
@@ -174,6 +177,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (simpleType.Parent is NRefactory.CSharp.Attribute) {
 					base.VisitSimpleType(simpleType);
 					return;
+				}
+				astBuilder.NameLookupMode = simpleType.GetNameLookupMode();
+				if (astBuilder.NameLookupMode == NameLookupMode.Type) {
+					AstType outermostType = simpleType;
+					while (outermostType.Parent is AstType)
+						outermostType = (AstType)outermostType.Parent;
+					if (outermostType.Parent is TypeReferenceExpression) {
+						// ILSpy uses TypeReferenceExpression in expression context even when the C# parser
+						// wouldn't know that it's a type reference.
+						// Fall back to expression-mode lookup in these cases:
+						astBuilder.NameLookupMode = NameLookupMode.Expression;
+					}
 				}
 				simpleType.ReplaceWith(astBuilder.ConvertType(rr.Type));
 			}
