@@ -38,10 +38,9 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			try {
 				Run("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
-			} catch (Exception ex) {
+			} catch (CompilationFailedException ex) {
 				Assert.Ignore(ex.Message);
 			}
-			Assert.Fail("Unexpected success");
 		}
 
 		void Run(string dir, string fileToRoundtrip, string fileToTest)
@@ -118,7 +117,8 @@ namespace ICSharpCode.Decompiler.Tests
 					Console.WriteLine(line);
 				}
 				p.WaitForExit();
-				Assert.AreEqual(0, p.ExitCode, $"Compilation of {Path.GetFileName(projectFile)} failed");
+				if (p.ExitCode != 0)
+					throw new CompilationFailedException($"Compilation of {Path.GetFileName(projectFile)} failed");
 			}
 		}
 		
@@ -137,7 +137,22 @@ namespace ICSharpCode.Decompiler.Tests
 					Console.WriteLine(line);
 				}
 				p.WaitForExit();
-				Assert.AreEqual(0, p.ExitCode, $"Test execution of {Path.GetFileName(fileToTest)} failed");
+				if (p.ExitCode != 0)
+					throw new TestRunFailedException($"Test execution of {Path.GetFileName(fileToTest)} failed");
+			}
+		}
+		
+		class CompilationFailedException : Exception
+		{
+			public CompilationFailedException(string message) : base(message)
+			{
+			}
+		}
+		
+		class TestRunFailedException : Exception
+		{
+			public TestRunFailedException(string message) : base(message)
+			{
 			}
 		}
 	}
