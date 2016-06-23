@@ -238,13 +238,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		void InsertVariableDeclarations()
 		{
 			var replacements = new List<KeyValuePair<AstNode, AstNode>>();
-			foreach (var v in variableDict.Values) {
+			foreach (var p in variableDict) {
+				var v = p.Value;
 				if (v.RemovedDueToCollision)
 					continue;
 				
 				AstType type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 				
-				var boe = v.InsertionPoint.nextNode as BinaryOperatorExpression;
+				var boe = (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
 				if (boe != null && boe.Left.IsMatch(new IdentifierExpression(v.Name))) {
 					
 					var vds = new VariableDeclarationStatement(type, v.Name, boe.Right.Detach());
@@ -261,9 +262,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (v.DefaultInitialization) {
 						initializer = new DefaultValueExpression(type.Clone());
 					}
+					var vds = new VariableDeclarationStatement(type, v.Name, initializer);
+					vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(p.Key, p.Key.Type));
 					v.InsertionPoint.nextNode.Parent.InsertChildBefore(
 						v.InsertionPoint.nextNode,
-						new VariableDeclarationStatement(type, v.Name, initializer),
+						vds,
 						BlockStatement.StatementRole);
 				}
 			}

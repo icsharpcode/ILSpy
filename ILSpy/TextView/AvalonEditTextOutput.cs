@@ -202,7 +202,7 @@ namespace ICSharpCode.ILSpy.TextView
 			}
 		}
 		
-		public void WriteDefinition(string text, object definition, bool isLocal)
+		public void WriteDefinition(string text, object definition, bool isLocal = true)
 		{
 			WriteIndent();
 			int start = this.TextLength;
@@ -212,7 +212,7 @@ namespace ICSharpCode.ILSpy.TextView
 			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = definition, IsLocal = isLocal, IsLocalTarget = true });
 		}
 		
-		public void WriteReference(string text, object reference, bool isLocal)
+		public void WriteReference(string text, object reference, bool isLocal = false)
 		{
 			WriteIndent();
 			int start = this.TextLength;
@@ -221,7 +221,7 @@ namespace ICSharpCode.ILSpy.TextView
 			references.Add(new ReferenceSegment { StartOffset = start, EndOffset = end, Reference = reference, IsLocal = isLocal });
 		}
 		
-		public void MarkFoldStart(string collapsedText, bool defaultCollapsed)
+		public void MarkFoldStart(string collapsedText = "...", bool defaultCollapsed = false)
 		{
 			WriteIndent();
 			openFoldings.Push(

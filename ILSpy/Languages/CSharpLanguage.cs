@@ -96,16 +96,19 @@ namespace ICSharpCode.ILSpy
 			return decompiler;
 		}
 		
-		void WriteCode(ITextOutput output, SyntaxTree syntaxTree)
+		void WriteCode(ITextOutput output, DecompilerSettings settings, SyntaxTree syntaxTree)
 		{
-			output.WriteLine(syntaxTree.ToString());
+			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
+			var outputFormatter = new TextTokenWriter(output, settings) { FoldBraces = settings.FoldBraces };
+			var formattingPolicy = settings.CSharpFormattingOptions;
+			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(outputFormatter, formattingPolicy));
 		}
 		
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
-			WriteCode(output, decompiler.Decompile(method));
+			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(method));
 			/*
 			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: method.DeclaringType, isSingleMember: true);
 			if (method.IsConstructor && !method.IsStatic && !method.DeclaringType.IsValueType) {
@@ -160,7 +163,7 @@ namespace ICSharpCode.ILSpy
 		{
 			WriteCommentLine(output, TypeToString(property.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(property.Module, options);
-			WriteCode(output, decompiler.Decompile(property));
+			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property));
 		}
 		/*
 		public override void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
@@ -215,14 +218,14 @@ namespace ICSharpCode.ILSpy
 		{
 			WriteCommentLine(output, TypeToString(ev.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(ev.Module, options);
-			WriteCode(output, decompiler.Decompile(ev));
+			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(ev));
 		}
 
 		public override void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(type.Module, options);
-			WriteCode(output, decompiler.Decompile(type));
+			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type));
 		}
 
 		/*
@@ -339,8 +342,8 @@ namespace ICSharpCode.ILSpy
 			{
 				if (fileName.EndsWith(".resource", StringComparison.OrdinalIgnoreCase)) {
 					using (ResourceReader reader = new ResourceReader(entryStream))
-					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
-					using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
+						using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
+							using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
 						foreach (DictionaryEntry entry in reader) {
 							writer.AddResource((string)entry.Key, entry.Value);
 						}

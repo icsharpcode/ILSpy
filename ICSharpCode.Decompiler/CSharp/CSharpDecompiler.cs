@@ -593,6 +593,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var statementBuilder = new StatementBuilder(decompilationContext, method);
 			var body = statementBuilder.ConvertAsBlock(function.Body);
+			
+			int i = 0;
+			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter)) {
+				parameter.AddAnnotation(new ILVariableResolveResult(function.Variables.First(v => v.Kind == VariableKind.Parameter && v.Index == i), method.Parameters[i].Type));
+				i++;
+			}
 
 			entityDecl.AddChild(body, Roles.Body);
 		}
