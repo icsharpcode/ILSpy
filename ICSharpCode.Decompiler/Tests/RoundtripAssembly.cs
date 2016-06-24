@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 			Assert.IsNotNull(projectFile, $"Could not find {fileToRoundtrip}");
 			
-			Compile(projectFile);
+			Compile(projectFile, outputDir);
 			RunTest(outputDir, fileToTest);
 		}
 
@@ -94,10 +94,10 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 		
-		static void Compile(string projectFile)
+		static void Compile(string projectFile, string outputDir)
 		{
 			var info = new ProcessStartInfo(msbuild);
-			info.Arguments = $"/nologo /v:minimal \"{projectFile}\"";
+			info.Arguments = $"/nologo /v:minimal /p:OutputPath=\"{outputDir}\" \"{projectFile}\"";
 			info.CreateNoWindow = true;
 			info.UseShellExecute = false;
 			info.RedirectStandardOutput = true;
