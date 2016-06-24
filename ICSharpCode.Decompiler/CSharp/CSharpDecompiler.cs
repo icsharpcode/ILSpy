@@ -585,6 +585,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			var ilReader = new ILReader(specializingTypeSystem);
 			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
 			function.CheckInvariant(ILPhase.Normal);
+			
+			int i = 0;
+			var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
+			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter)) {
+				ILVariable v;
+				if (parameters.TryGetValue(i, out v))
+					parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
+				i++;
+			}
+			
 			var context = new ILTransformContext { TypeSystem = specializingTypeSystem, CancellationToken = CancellationToken };
 			foreach (var transform in ilTransforms) {
 				CancellationToken.ThrowIfCancellationRequested();
@@ -593,12 +603,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var statementBuilder = new StatementBuilder(decompilationContext, method);
 			var body = statementBuilder.ConvertAsBlock(function.Body);
-			
-			int i = 0;
-			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter)) {
-				parameter.AddAnnotation(new ILVariableResolveResult(function.Variables.First(v => v.Kind == VariableKind.Parameter && v.Index == i), method.Parameters[i].Type));
-				i++;
-			}
 
 			entityDecl.AddChild(body, Roles.Body);
 		}
