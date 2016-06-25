@@ -1,4 +1,22 @@
-﻿using System;
+﻿// Copyright (c) 2015 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.CodeDom.Compiler;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -12,6 +30,7 @@ using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.NRefactory.CSharp;
 using Microsoft.CSharp;
 using Mono.Cecil;
+using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
@@ -85,6 +104,39 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			File.WriteAllText(fileName, output.ToString());
 
 			return fileName;
+		}
+		
+		public static void RunAndCompareOutput(string testFileName, string outputFile, string decompiledOutputFile, string decompiledCodeFile = null)
+		{
+			string output1, output2, error1, error2;
+			int result1 = Tester.Run(outputFile, out output1, out error1);
+			int result2 = Tester.Run(decompiledOutputFile, out output2, out error2);
+			
+			if (result1 != result2 || output1 != output2 || error1 != error2) {
+				Console.WriteLine("Test {0} failed.", testFileName);
+				if (decompiledCodeFile != null)
+					Console.WriteLine("Decompiled code in {0}:line 1", decompiledCodeFile);
+				if (error1 == "" && error2 != "") {
+					Console.WriteLine(error2);
+				} else {
+					string outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
+					File.WriteAllText(outputFileName + ".original.out", output1);
+					File.WriteAllText(outputFileName + ".decompiled.out", output2);
+					int diffLine = 0;
+					foreach (var pair in output1.Split('\n').Zip(output2.Split('\n'), Tuple.Create)) {
+						diffLine++;
+						if (pair.Item1 != pair.Item2) {
+							break;
+						}
+					}
+					Console.WriteLine("Output: {0}.original.out:line {1}", outputFileName, diffLine);
+					Console.WriteLine("Output: {0}.decompiled.out:line {1}", outputFileName, diffLine);
+				}
+			}
+			Assert.AreEqual(0, result1, "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
+			Assert.AreEqual(0, result2, "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
+			Assert.AreEqual(error1, error2);
+			Assert.AreEqual(output1, output2);
 		}
 	}
 }

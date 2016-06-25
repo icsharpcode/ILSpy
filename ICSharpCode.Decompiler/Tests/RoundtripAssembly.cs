@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Tests.Helpers;
 using ICSharpCode.NRefactory.Utils;
 using Mono.Cecil;
 using NUnit.Framework;
@@ -37,13 +38,35 @@ namespace ICSharpCode.Decompiler.Tests
 		public void Cecil_net45()
 		{
 			try {
-				Run("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
+				RunWithTest("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
+			} catch (CompilationFailedException ex) {
+				Assert.Ignore(ex.Message);
+			}
+		}
+		
+		[Test]
+		public void Random_Tests_TestCases()
+		{
+			try {
+				RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", "TestCase-1.out");
 			} catch (CompilationFailedException ex) {
 				Assert.Ignore(ex.Message);
 			}
 		}
 
-		void Run(string dir, string fileToRoundtrip, string fileToTest)
+		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest)
+		{
+			RunInternal(dir, fileToRoundtrip, () => RunTest(Path.Combine(testDir, dir) + "-output", fileToTest));
+		}
+		
+		void RunWithOutput(string dir, string fileToRoundtrip, string outputFile)
+		{
+			string inputDir = Path.Combine(testDir, dir);
+			string outputDir = inputDir + "-output";
+			RunInternal(dir, fileToRoundtrip, () => Tester.RunAndCompareOutput(fileToRoundtrip, Path.Combine(inputDir, fileToRoundtrip), Path.Combine(outputDir, fileToRoundtrip)));
+		}
+		
+		void RunInternal(string dir, string fileToRoundtrip, Action testAction)
 		{
 			if (!Directory.Exists(testDir)) {
 				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{testDir}' needs to be checked out separately." + Environment.NewLine +
@@ -79,7 +102,7 @@ namespace ICSharpCode.Decompiler.Tests
 			Assert.IsNotNull(projectFile, $"Could not find {fileToRoundtrip}");
 			
 			Compile(projectFile, outputDir);
-			RunTest(outputDir, fileToTest);
+			testAction();
 		}
 
 		static void ClearDirectory(string dir)

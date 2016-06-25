@@ -119,40 +119,13 @@ namespace ICSharpCode.Decompiler.Tests
 		void TestCompileDecompileCompileOutput(string testFileName, CompilerOptions options = CompilerOptions.UseDebug)
 		{
 			CompilerResults outputFile = null, decompiledOutputFile = null;
-			string output1, output2, error1, error2;
 
 			try {
 				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options);
 				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly);
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
-				int result1 = Tester.Run(outputFile.PathToAssembly, out output1, out error1);
-				int result2 = Tester.Run(decompiledOutputFile.PathToAssembly, out output2, out error2);
-
-				if (result1 != result2 || output1 != output2 || error1 != error2) {
-					Console.WriteLine("Test {0} failed.", testFileName);
-					Console.WriteLine("Decompiled code in {0}:line 1", decompiledCodeFile);
-					if (error1 == "" && error2 != "") {
-						Console.WriteLine(error2);
-					} else {
-						string outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
-						File.WriteAllText(outputFileName + ".original.out", output1);
-						File.WriteAllText(outputFileName + ".decompiled.out", output2);
-						int diffLine = 0;
-						foreach (var pair in output1.Split('\n').Zip(output2.Split('\n'), Tuple.Create)) {
-							diffLine++;
-							if (pair.Item1 != pair.Item2) {
-								break;
-							}
-						}
-						Console.WriteLine("Output: {0}.original.out:line {1}", outputFileName, diffLine);
-						Console.WriteLine("Output: {0}.decompiled.out:line {1}", outputFileName, diffLine);
-					}
-				}
 				
-				Assert.AreEqual(0, result1, "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
-				Assert.AreEqual(0, result2, "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
-				Assert.AreEqual(error1, error2);
-				Assert.AreEqual(output1, output2);
+				Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
 				
 				File.Delete(decompiledCodeFile);
 				File.Delete(outputFile.PathToAssembly);
