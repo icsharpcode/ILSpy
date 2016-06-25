@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics;
@@ -94,7 +95,7 @@ namespace ICSharpCode.Decompiler
 			if (End == int.MinValue)
 				return string.Format("[{0}..int.MaxValue]", Start);
 			else
-			return string.Format("[{0}..{1})", Start, End);
+				return string.Format("[{0}..{1})", Start, End);
 		}
 		
 		#region Equals and GetHashCode implementation
@@ -111,7 +112,7 @@ namespace ICSharpCode.Decompiler
 		public override int GetHashCode()
 		{
 			return Start ^ End ^ (End << 7);
-			}
+		}
 
 		public static bool operator ==(Interval lhs, Interval rhs)
 		{
@@ -230,7 +231,7 @@ namespace ICSharpCode.Decompiler
 			if (End == long.MinValue)
 				return string.Format("[{0}..long.MaxValue]", Start);
 			else
-			return string.Format("[{0}..{1})", Start, End);
+				return string.Format("[{0}..{1})", Start, End);
 		}
 		
 		#region Equals and GetHashCode implementation
@@ -283,6 +284,81 @@ namespace ICSharpCode.Decompiler
 			get { return Intervals.IsDefaultOrEmpty; }
 		}
 
+		IEnumerable<LongInterval> DoIntersectWith(LongSet other)
+		{
+			var enumA = this.Intervals.GetEnumerator();
+			var enumB = other.Intervals.GetEnumerator();
+			bool moreA = enumA.MoveNext();
+			bool moreB = enumB.MoveNext();
+			while (moreA && moreB) {
+				LongInterval a = enumA.Current;
+				LongInterval b = enumB.Current;
+				LongInterval intersection = a.Intersect(b);
+				if (!intersection.IsEmpty) {
+					yield return intersection;
+				}
+				if (a.InclusiveEnd < b.InclusiveEnd) {
+					moreA = enumA.MoveNext();
+				} else {
+					moreB = enumB.MoveNext();
+				}
+			}
+		}
+		
+		public bool Intersects(LongSet other)
+		{
+			return DoIntersectWith(other).Any();
+		}
+		
+		public LongSet IntersectWith(LongSet other)
+		{
+			return new LongSet(DoIntersectWith(other).ToImmutableArray());
+		}
+		
+		IEnumerable<LongInterval> DoUnionWith(LongSet other)
+		{
+			long start = long.MinValue;
+			long end = long.MinValue;
+			bool empty = true;
+			foreach (var element in this.Intervals.Merge(other.Intervals, (a, b) => a.Start.CompareTo(b.Start))) {
+				Debug.Assert(start <= element.Start);
+				
+				if (!empty && element.Start < end - 1) {
+					// element overlaps or touches [start, end), so combine the intervals:
+					if (element.End == long.MinValue) {
+						// special case: element goes all the way up to long.MaxValue inclusive
+						yield return new LongInterval(start, element.End);
+						break;
+					} else {
+						end = Math.Max(end, element.End);
+					}
+				} else {
+					// flush existing interval:
+					if (!empty) {
+						yield return new LongInterval(start, end);
+					} else {
+						empty = false;
+					}
+					start = element.Start;
+					end = element.End;
+				}
+				if (end == long.MinValue) {
+					// special case: element goes all the way up to long.MaxValue inclusive
+					// all further intervals in the input must be contained in [start, end),
+					// so ignore them (and avoid trouble due to the overflow in `end`).
+					break;
+				}
+			}
+			if (!empty) {
+				yield return new LongInterval(start, end);
+			}
+		}
+		
+		public LongSet UnionWith(LongSet other)
+		{
+			return new LongSet(DoUnionWith(other).ToImmutableArray());
+		}
+		
 		public bool Contains(long val)
 		{
 			int index = upper_bound(val);

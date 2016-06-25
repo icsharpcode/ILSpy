@@ -41,29 +41,76 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				// Remove 'nop' instructions
 				block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.Nop);
-				// Ensure return blocks are inlined:
-				if (block.Instructions.Count == 2 && block.Instructions[1].OpCode == OpCode.Return) {
-					Return ret = (Return)block.Instructions[1];
-					ILVariable v;
-					ILInstruction inst;
-					if (ret.ReturnValue != null && ret.ReturnValue.MatchLdLoc(out v)
-					    && v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out inst))
-					{
-						inst.AddILRange(ret.ReturnValue.ILRange);
-						inst.AddILRange(block.Instructions[0].ILRange);
-						ret.ReturnValue = inst;
-						block.Instructions.RemoveAt(0);
-					}
+				
+				InlineReturnBlock(block);
+				// due to our of of basic blocks at this point,
+				// switch instructions can only appear as second-to-last insturction
+				SimplifySwitchInstruction(block.Instructions.ElementAtOrDefault(block.Instructions.Count - 2) as SwitchInstruction);
+			}
+			SimplifyBranchChains(function);
+			CleanUpEmptyBlocks(function);
+		}
+		
+		void InlineReturnBlock(Block block)
+		{
+			// In debug mode, the C#-compiler generates 'return blocks' that
+			// unnecessarily store the return value to a local and then load it again:
+			//   v = <inst>
+			//   ret(v)
+			// (where 'v' has no other uses)
+			// Simplify these to a simple `ret(<inst>)` so that they match the release build version.
+			// 
+			if (block.Instructions.Count == 2 && block.Instructions[1].OpCode == OpCode.Return) {
+				Return ret = (Return)block.Instructions[1];
+				ILVariable v;
+				ILInstruction inst;
+				if (ret.ReturnValue != null && ret.ReturnValue.MatchLdLoc(out v)
+				    && v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out inst))
+				{
+					inst.AddILRange(ret.ReturnValue.ILRange);
+					inst.AddILRange(block.Instructions[0].ILRange);
+					ret.ReturnValue = inst;
+					block.Instructions.RemoveAt(0);
 				}
 			}
+		}
+		
+		void SimplifySwitchInstruction(SwitchInstruction sw)
+		{
+			if (sw == null)
+				return;
+			
+			// ControlFlowSimplification runs early (before any other control flow transforms).
+			// Any switch instructions will only have branch instructions in the sections.
+			
+			// dict from branch target to switch section
+			var dict = new Dictionary<Block, SwitchSection>();
+			sw.Sections.RemoveAll(
+				section => {
+					Block target;
+					if (section.Body.MatchBranch(out target)) {
+						SwitchSection primarySection;
+						if (dict.TryGetValue(target, out primarySection)) {
+							primarySection.Labels = primarySection.Labels.UnionWith(section.Labels);
+							return true; // remove this section
+						} else {
+							dict.Add(target, section);
+						}
+					}
+					return false;
+				});
+		}
+		
+		void SimplifyBranchChains(ILFunction function)
+		{
 			HashSet<Block> visitedBlocks = new HashSet<Block>();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
-				// Resolve indirect branches
+				// Resolve chained branches to the final target:
 				var targetBlock = branch.TargetBlock;
 				visitedBlocks.Clear();
 				while (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0].OpCode == OpCode.Branch) {
 					if (!visitedBlocks.Add(targetBlock)) {
-						// prevent infinite loop when indirect branches point in infinite loop
+						// prevent infinite loop when branch chain is cyclic
 						break;
 					}
 					var nextBranch = (Branch)targetBlock.Instructions[0];
@@ -75,14 +122,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (IsReturnBlock(targetBlock)) {
 					// Replace branches to 'return blocks' with the return instruction
 					branch.ReplaceWith(targetBlock.Instructions[0].Clone());
-				} else if (branch.TargetBlock.Instructions.Count == 1 && branch.TargetBlock.Instructions[0].OpCode == OpCode.Leave) {
+				} else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0].OpCode == OpCode.Leave) {
 					// Replace branches to 'leave' instruction with the leave instruction
-					Leave leave = (Leave)branch.TargetBlock.Instructions[0];
+					Leave leave = (Leave)targetBlock.Instructions[0];
 					branch.ReplaceWith(new Leave(leave.TargetContainer) { ILRange = branch.ILRange });
 				}
 				if (targetBlock.IncomingEdgeCount == 0)
 					targetBlock.Instructions.Clear(); // mark the block for deletion
 			}
+		}
+		
+		void CleanUpEmptyBlocks(ILFunction function)
+		{
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
 				foreach (var block in container.Blocks) {
 					if (block.Instructions.Count == 0)
@@ -123,5 +174,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			targetBlock.Instructions.Clear(); // mark targetBlock for deletion
 			return true;
 		}
+		
 	}
 }

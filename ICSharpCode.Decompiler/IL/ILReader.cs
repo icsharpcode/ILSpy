@@ -1042,7 +1042,7 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(right.ResultType.IsIntegerType());
 				return new Comp(kind, un ? Sign.Unsigned : Sign.Signed, left, right);
 			} else {
-				// object reference or managed reference comparison
+				// integer equality, object reference or managed reference comparison
 				return new Comp(kind, Sign.None, left, right);
 			}
 		}

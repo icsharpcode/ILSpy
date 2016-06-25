@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
@@ -110,6 +112,16 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = value.Clone();
 			clone.Sections.AddRange(this.Sections.Select(h => (SwitchSection)h.Clone()));
 			return clone;
+		}
+		
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			LongSet sets = new LongSet(ImmutableArray<LongInterval>.Empty);
+			foreach (var section in Sections) {
+				Debug.Assert(!section.Labels.Intersects(sets));
+				sets = sets.UnionWith(section.Labels);
+			}
 		}
 	}
 	

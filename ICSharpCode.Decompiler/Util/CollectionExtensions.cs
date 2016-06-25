@@ -46,5 +46,33 @@ namespace ICSharpCode.Decompiler
 			}
 			return result;
 		}
+		
+		/// <summary>
+		/// The merge step of merge sort.
+		/// </summary>
+		public static IEnumerable<T> Merge<T>(this IEnumerable<T> input1, IEnumerable<T> input2, Comparison<T> comparison)
+		{
+			var enumA = input1.GetEnumerator();
+			var enumB = input2.GetEnumerator();
+			bool moreA = enumA.MoveNext();
+			bool moreB = enumB.MoveNext();
+			while (moreA && moreB) {
+				if (comparison(enumA.Current, enumB.Current) <= 0) {
+					yield return enumA.Current;
+					moreA = enumA.MoveNext();
+				} else {
+					yield return enumB.Current;
+					moreB = enumB.MoveNext();
+				}
+			}
+			while (moreA) {
+				yield return enumA.Current;
+				moreA = enumA.MoveNext();
+			}
+			while (moreB) {
+				yield return enumB.Current;
+				moreB = enumB.MoveNext();
+			}
+		}
 	}
 }
