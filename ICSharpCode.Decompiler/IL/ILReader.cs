@@ -189,11 +189,17 @@ namespace ICSharpCode.Decompiler.IL
 
 		void MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
 		{
-			Debug.Assert(a.Count() == b.Count());
 			var enum1 = a.GetEnumerator();
 			var enum2 = b.GetEnumerator();
-			while (enum1.MoveNext() && enum2.MoveNext()) {
+			bool ok1 = enum1.MoveNext();
+			bool ok2 = enum2.MoveNext();
+			while (ok1 && ok2) {
 				unionFind.Merge(enum1.Current, enum2.Current);
+				ok1 = enum1.MoveNext();
+				ok2 = enum2.MoveNext();
+			}
+			if (ok1 || ok2) {
+				Warn("Incompatible stack heights: " + a.Count() + " vs " + b.Count());
 			}
 		}
 
