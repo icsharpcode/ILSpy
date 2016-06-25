@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			throw new ArgumentException("descendant must be a descendant of the current node");
 		}
 		
-		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder)
+		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false, bool addUncheckedAnnotations = true)
 		{
 			var type = this.Type;
 			if (targetType.IsKnownType(KnownTypeCode.Boolean))
@@ -177,7 +177,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// perform remaining pointer cast, if necessary
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
 			}
-			if (type.IsKnownType(KnownTypeCode.Boolean) && targetType.GetStackType() == StackType.I4) {
+			if (type.IsKnownType(KnownTypeCode.Boolean) && targetType.GetStackType().IsIntegerType()) {
 				// convert from boolean to integer (or enum)
 				return new ConditionalExpression(
 					this.Expression,
@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					LdcI4(expressionBuilder.compilation, 0).ConvertTo(targetType, expressionBuilder)
 				).WithoutILInstruction().WithRR(new ResolveResult(targetType));
 			}
-			var rr = expressionBuilder.resolver.ResolveCast(targetType, ResolveResult);
+			var rr = expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult);
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
 				return expressionBuilder.ConvertConstantValue(rr)
 					.WithILInstruction(this.ILInstructions);

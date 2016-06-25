@@ -551,14 +551,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				arg = arg.ConvertTo(compilation.FindType(inputType), this);
 			}
 			var targetType = compilation.FindType(inst.TargetType.ToKnownTypeCode());
-			var rr = resolver.WithCheckForOverflow(inst.CheckForOverflow).ResolveCast(targetType, arg.ResolveResult);
-			Expression castExpr = new CastExpression(ConvertType(targetType), arg.Expression);
+			ExpressionWithResolveResult castExpr = arg.ConvertTo(targetType, this, inst.CheckForOverflow, addUncheckedAnnotations: false);
 			if (inst.Kind == ConversionKind.Nop || inst.Kind == ConversionKind.Truncate || inst.Kind == ConversionKind.FloatToInt
 			    || (inst.Kind == ConversionKind.ZeroExtend && arg.Type.GetSign() == Sign.Signed))
 			{
-				castExpr.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+				castExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
 			}
-			return castExpr.WithILInstruction(inst).WithRR(rr);
+			return castExpr.WithILInstruction(inst);
 		}
 		
 		protected internal override TranslatedExpression VisitCall(Call inst)
