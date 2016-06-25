@@ -521,15 +521,25 @@ namespace ICSharpCode.Decompiler.CSharp
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
 			
-			IType targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode(inst.Sign));
+			IType targetType;
+			if (inst.ResultType == StackType.I4)
+				targetType = compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
+			else
+				targetType = compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64);
 			left = left.ConvertTo(targetType, this);
 			
 			// Shift operators in C# always expect type 'int' on the right-hand-side
 			right = right.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
 			
-			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
+			TranslatedExpression result = new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(resolver.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult));
+			if (inst.ResultType == StackType.I) {
+				// C# doesn't have shift operators for IntPtr, so we first shifted a long/ulong,
+				// and now have to case back down to IntPtr/UIntPtr:
+				result = result.ConvertTo(compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr), this);
+			}
+			return result;
 		}
 		
 		protected internal override TranslatedExpression VisitConv(Conv inst)
