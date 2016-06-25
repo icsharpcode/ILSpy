@@ -36,6 +36,8 @@
 	};
 	
 	OpCode[] opCodes = {
+		new OpCode("invalid", "Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.",
+			CustomClassName("InvalidInstruction"), NoArguments, MayThrow, UnconditionalBranch),
 		new OpCode("nop", "No operation. Takes 0 arguments and returns void.",
 			VoidResult, NoArguments),
 		new OpCode("ILFunction", "A container of IL blocks.",

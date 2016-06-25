@@ -278,7 +278,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugStartPoint(inst);
 			// This method assumes normal control flow and no branches.
 			if ((inst.DirectFlags & (InstructionFlags.ControlFlow | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable)) != 0) {
-				throw new NotImplementedException("RDVisitor is missing implementation for " + inst.GetType().Name);
+				throw new NotImplementedException(GetType().Name + " is missing implementation for " + inst.GetType().Name);
 			}
 			
 			// Since this instruction has normal control flow, we can evaluate our children left-to-right.
@@ -438,7 +438,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		protected internal override void VisitRethrow(Rethrow inst)
 		{
-			PropagateStateOnException();
+			MarkUnreachable();
+		}
+		
+		protected internal override void VisitInvalidInstruction(InvalidInstruction inst)
+		{
 			MarkUnreachable();
 		}
 		

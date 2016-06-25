@@ -29,6 +29,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public enum OpCode
 	{
+		/// <summary>Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.</summary>
+		InvalidInstruction,
 		/// <summary>No operation. Takes 0 arguments and returns void.</summary>
 		Nop,
 		/// <summary>A container of IL blocks.</summary>
@@ -437,6 +439,32 @@ namespace ICSharpCode.Decompiler.IL
 			get {
 				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
 			}
+		}
+	}
+
+	/// <summary>Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.</summary>
+	public sealed partial class InvalidInstruction : SimpleInstruction
+	{
+		public InvalidInstruction() : base(OpCode.InvalidInstruction)
+		{
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitInvalidInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitInvalidInstruction(this);
 		}
 	}
 
@@ -3068,6 +3096,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Called by Visit*() methods that were not overridden</summary>
 		protected abstract void Default(ILInstruction inst);
 		
+		protected internal virtual void VisitInvalidInstruction(InvalidInstruction inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitNop(Nop inst)
 		{
 			Default(inst);
@@ -3366,6 +3398,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Called by Visit*() methods that were not overridden</summary>
 		protected abstract T Default(ILInstruction inst);
 		
+		protected internal virtual T VisitInvalidInstruction(InvalidInstruction inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitNop(Nop inst)
 		{
 			return Default(inst);
@@ -3701,6 +3737,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class InstructionOutputExtensions
 	{
 		static readonly string[] originalOpCodeNames = {
+			"invalid",
 			"nop",
 			"ILFunction",
 			"BlockContainer",
@@ -3778,6 +3815,14 @@ namespace ICSharpCode.Decompiler.IL
 	
 	partial class ILInstruction
 	{
+		public bool MatchInvalidInstruction()
+		{
+			var inst = this as InvalidInstruction;
+			if (inst != null) {
+				return true;
+			}
+			return false;
+		}
 		public bool MatchNop()
 		{
 			var inst = this as Nop;

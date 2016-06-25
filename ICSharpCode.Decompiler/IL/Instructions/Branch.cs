@@ -55,6 +55,12 @@ namespace ICSharpCode.Decompiler.IL
 			return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 		}
 		
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
+			}
+		}
+		
 		public int TargetILOffset {
 			get { return targetBlock != null ? targetBlock.ILRange.Start : targetILOffset; }
 		}

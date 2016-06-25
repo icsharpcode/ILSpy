@@ -36,4 +36,24 @@ namespace ICSharpCode.Decompiler.IL
 			// the non-custom WriteTo would add useless parentheses
 		}
 	}
+	
+	partial class InvalidInstruction : SimpleInstruction
+	{
+		public string Message;
+		
+		public InvalidInstruction(string message) : this()
+		{
+			this.Message = message;
+		}
+		
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			if (!string.IsNullOrEmpty(Message)) {
+				output.Write('(');
+				output.Write(Message);
+				output.Write(')');
+			}
+		}
+	}
 }

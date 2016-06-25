@@ -953,11 +953,23 @@ namespace ICSharpCode.Decompiler.CSharp
 			return true;
 		}
 		
+		protected internal override TranslatedExpression VisitInvalidInstruction(InvalidInstruction inst)
+		{
+			string message = "Invalid IL";
+			if (inst.ILRange.Start != 0) {
+				message += $" near IL_{inst.ILRange.Start:x4}";
+			}
+			if (!string.IsNullOrEmpty(inst.Message)) {
+				message += ": " + inst.Message;
+			}
+			return ErrorExpression(message);
+		}
+		
 		protected override TranslatedExpression Default(ILInstruction inst)
 		{
 			return ErrorExpression("OpCode not supported: " + inst.OpCode);
 		}
-
+		
 		static TranslatedExpression ErrorExpression(string message)
 		{
 			var e = new ErrorExpression();

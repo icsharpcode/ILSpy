@@ -242,7 +242,7 @@ namespace ICSharpCode.Decompiler.IL
 				decodedInstruction.ILRange = new Interval(start, reader.Position);
 				UnpackPush(decodedInstruction).ILRange = decodedInstruction.ILRange;
 				instructionBuilder.Add(decodedInstruction);
-				if (decodedInstruction.HasFlag(InstructionFlags.EndPointUnreachable)) {
+				if ((decodedInstruction.DirectFlags & InstructionFlags.EndPointUnreachable) != 0) {
 					if (!stackByOffset.TryGetValue(reader.Position, out currentStack)) {
 						currentStack = ImmutableStack<ILVariable>.Empty;
 					}
@@ -763,7 +763,7 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Unbox_Any:
 					return Push(new UnboxAny(Pop(), ReadAndDecodeTypeReference()));
 				default:
-					throw new NotImplementedException(ilOpCode.ToString());
+					return new InvalidInstruction("Unknown opcode: " + ilOpCode.ToString());
 			}
 		}
 
@@ -832,17 +832,19 @@ namespace ICSharpCode.Decompiler.IL
 			return new StLoc(v, inst);
 		}
 		
-		LdLoc Peek()
+		ILInstruction Peek()
 		{
-			Debug.Assert(!currentStack.IsEmpty);
-			// TODO: handle stack underflow?
+			if (currentStack.IsEmpty) {
+				return new InvalidInstruction("Stack underflow") { ILRange = new Interval(reader.Position, reader.Position) };
+			}
 			return new LdLoc(currentStack.Peek());
 		}
 		
-		LdLoc Pop()
+		ILInstruction Pop()
 		{
-			Debug.Assert(!currentStack.IsEmpty);
-			// TODO: handle stack underflow?
+			if (currentStack.IsEmpty) {
+				return new InvalidInstruction("Stack underflow") { ILRange = new Interval(reader.Position, reader.Position) };
+			}
 			ILVariable v;
 			currentStack = currentStack.Pop(out v);
 			return new LdLoc(v);
