@@ -16,19 +16,22 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System.Diagnostics;
-using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.NRefactory.CSharp.TypeSystem;
-using ExpressionType = System.Linq.Expressions.ExpressionType;
-using ICSharpCode.NRefactory.CSharp.Refactoring;
-using ICSharpCode.NRefactory.CSharp.Resolver;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.Decompiler.IL;
-using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.TypeSystem;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+
+using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.IL;
+using ICSharpCode.NRefactory;
+using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.NRefactory.CSharp.Refactoring;
+using ICSharpCode.NRefactory.CSharp.Resolver;
+using ICSharpCode.NRefactory.CSharp.TypeSystem;
+using ICSharpCode.NRefactory.Semantics;
+using ICSharpCode.NRefactory.TypeSystem;
+
+using ExpressionType = System.Linq.Expressions.ExpressionType;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -127,7 +130,14 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		ExpressionWithResolveResult ConvertField(IField field, ILInstruction target = null)
 		{
+			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 			var targetExpression = TranslateTarget(field, target, true);
+			
+			var result = lookup.Lookup(targetExpression.ResolveResult, field.Name, EmptyList<IType>.Instance, false) as MemberResolveResult;
+			
+			if (result == null || !result.Member.Equals(field))
+				targetExpression = targetExpression.ConvertTo(field.DeclaringType, this);
+			
 			return new MemberReferenceExpression(targetExpression, field.Name)
 				.WithRR(new MemberResolveResult(targetExpression.ResolveResult, field));
 		}
@@ -518,8 +528,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			right = right.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
 			
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
-					.WithILInstruction(inst)
-					.WithRR(resolver.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult));
+				.WithILInstruction(inst)
+				.WithRR(resolver.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult));
 		}
 		
 		protected internal override TranslatedExpression VisitConv(Conv inst)
@@ -569,6 +579,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				method = ((LdVirtFtn)func).Method;
 			}
 			var target = TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
+			
+			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
+			var result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, true) as MethodGroupResolveResult;
+			
+			if (result == null) {
+				target = target.ConvertTo(method.DeclaringType, this);
+			} else {
+				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
+				if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, func.OpCode == OpCode.LdVirtFtn))
+					target = target.ConvertTo(method.DeclaringType, this);
+			}
+			
 			var mre = new MemberReferenceExpression(target, method.Name);
 			mre.TypeArguments.AddRange(method.TypeArguments.Select(a => ConvertType(a)));
 			return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), mre)
@@ -592,7 +615,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (translatedTarget.Expression is DirectionExpression) {
 						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
 					}
-					return translatedTarget.ConvertTo(member.DeclaringType, this);
+					return translatedTarget;
 				}
 			} else {
 				return new TypeReferenceExpression(ConvertType(member.DeclaringType))
@@ -655,31 +678,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				Expression expr;
 				if (method.IsAccessor) {
-					if (method.ReturnType.IsKnownType(KnownTypeCode.Void)) {
-						var value = argumentExpressions.Last();
-						argumentExpressions.Remove(value);
-						if (argumentExpressions.Count == 0)
-							expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
-						else
-							expr = new IndexerExpression(target.Expression, argumentExpressions);
-						var op = AssignmentOperatorType.Assign;
-						var parentEvent = method.AccessorOwner as IEvent;
-						if (parentEvent != null) {
-							if (method.Equals(parentEvent.AddAccessor)) {
-								op = AssignmentOperatorType.Add;
-							}
-							if (method.Equals(parentEvent.RemoveAccessor)) {
-								op = AssignmentOperatorType.Subtract;
-							}
-						}
-						expr = new AssignmentExpression(expr, op, value);
-					} else {
-						if (argumentExpressions.Count == 0)
-							expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
-						else
-							expr = new IndexerExpression(target.Expression, argumentExpressions);
-					}
+					expr = HandleAccessorCall(target, method, argumentExpressions);
 				} else {
+					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+					var or = new OverloadResolution(resolver.Compilation, arguments.Skip(firstParamIndex).Select(a => a.ResolveResult).ToArray());
+					var result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, true) as MethodGroupResolveResult;
+					
+					if (result == null) {
+						target = target.ConvertTo(method.DeclaringType, this);
+					} else {
+						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
+						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt))
+							target = target.ConvertTo(method.DeclaringType, this);
+					}
+					
 					Expression targetExpr = target.Expression;
 					string methodName = method.Name;
 					// HACK : convert this.Dispose() to ((IDisposable)this).Dispose(), if Dispose is an explicitly implemented interface method.
@@ -693,6 +705,51 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return expr.WithILInstruction(inst).WithRR(rr);
 			}
+		}
+		
+		Expression HandleAccessorCall(TranslatedExpression target, IMethod method, IList<Expression> argumentExpressions)
+		{
+			if (method.ReturnType.IsKnownType(KnownTypeCode.Void)) {
+				var value = argumentExpressions.Last();
+				argumentExpressions.Remove(value);
+				Expression expr;
+				if (argumentExpressions.Count == 0)
+					expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
+				else
+					expr = new IndexerExpression(target.Expression, argumentExpressions);
+				var op = AssignmentOperatorType.Assign;
+				var parentEvent = method.AccessorOwner as IEvent;
+				if (parentEvent != null) {
+					if (method.Equals(parentEvent.AddAccessor)) {
+						op = AssignmentOperatorType.Add;
+					}
+					if (method.Equals(parentEvent.RemoveAccessor)) {
+						op = AssignmentOperatorType.Subtract;
+					}
+				}
+				return new AssignmentExpression(expr, op, value);
+			} else {
+				if (argumentExpressions.Count == 0)
+					return new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
+				else
+					return new IndexerExpression(target.Expression, argumentExpressions);
+			}
+		}
+
+		bool IsAppropriateCallTarget(IMember expectedTarget, IMember actualTarget, bool isVirtCall)
+		{
+			if (expectedTarget.Equals(actualTarget))
+				return true;
+			
+			if (isVirtCall && actualTarget.IsOverride) {
+				foreach (var possibleTarget in InheritanceHelper.GetBaseMembers(actualTarget, false)) {
+					if (expectedTarget.Equals(possibleTarget))
+						return true;
+					if (!possibleTarget.IsOverride)
+						break;
+				}
+			}
+			return false;
 		}
 		
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst)

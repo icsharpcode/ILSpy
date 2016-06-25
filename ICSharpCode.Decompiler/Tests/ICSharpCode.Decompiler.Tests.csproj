@@ -124,6 +124,7 @@
     <Compile Include="TestCases\Generics.cs" />
     <Compile Include="TestCases\HelloWorld.cs" />
     <Compile Include="TestCases\InitializerTests.cs" />
+    <Compile Include="TestCases\MemberLookup.cs" />
     <Compile Include="TestCases\PropertiesAndEvents.cs" />
     <Compile Include="TestCases\Switch.cs" />
     <Compile Include="TestCases\UndocumentedExpressions.cs" />

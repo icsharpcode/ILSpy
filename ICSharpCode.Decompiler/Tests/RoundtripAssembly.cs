@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Tests
 		void Run(string dir, string fileToRoundtrip, string fileToTest)
 		{
 			if (!Directory.Exists(testDir)) {
-				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{testDir}' needs to be checked out seperately." + Environment.NewLine +
+				Assert.Ignore($"Assembly-roundtrip test ignored: test directory '{testDir}' needs to be checked out separately." + Environment.NewLine +
 				              $"git clone https://github.com/icsharpcode/ILSpy-tests \"{testDir}\"");
 			}
 			string inputDir = Path.Combine(testDir, dir);

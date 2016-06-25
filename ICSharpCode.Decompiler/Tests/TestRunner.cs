@@ -101,6 +101,12 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			TestCompileDecompileCompileOutputAll("UndocumentedExpressions.cs");
 		}
+		
+		[Test]
+		public void MemberLookup()
+		{
+			TestCompileDecompileCompileOutputAll("MemberLookup.cs");
+		}
 
 		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{
@@ -143,7 +149,8 @@ namespace ICSharpCode.Decompiler.Tests
 					}
 				}
 				
-				Assert.AreEqual(result1, result2, "Exit codes differ; did the decompiled code crash?");
+				Assert.AreEqual(0, result1, "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
+				Assert.AreEqual(0, result2, "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
 				Assert.AreEqual(error1, error2);
 				Assert.AreEqual(output1, output2);
 				
