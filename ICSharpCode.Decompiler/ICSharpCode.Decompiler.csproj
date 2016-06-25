@@ -130,7 +130,6 @@
     <Compile Include="IL\Transforms\RemoveDeadVariableInit.cs" />
     <Compile Include="IL\Transforms\SplitVariables.cs" />
     <Compile Include="IL\Transforms\TransformArrayInitializers.cs" />
-    <Compile Include="IL\Transforms\TransformingVisitor.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />
     <Compile Include="Disassembler\ILStructure.cs" />

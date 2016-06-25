@@ -57,7 +57,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			new ILInlining(),
 			new CopyPropagation(),
 			new InlineCompilerGeneratedVariables(),
-			new TransformingVisitor(),
 			new LoopingTransform(
 				new ExpressionTransforms(),
 				new TransformArrayInitializers(),
