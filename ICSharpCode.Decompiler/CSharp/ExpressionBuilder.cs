@@ -258,9 +258,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst)
 		{
 			var argument = Translate(inst.Argument);
+			var type = argument.Type;
+			
+			if (type.IsKnownType(KnownTypeCode.IntPtr)) {
+				argument = argument.ConvertTo(compilation.FindType(KnownTypeCode.Int64), this);
+			}
+			if (type.IsKnownType(KnownTypeCode.UIntPtr)) {
+				argument = argument.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), this);
+			}
+			
 			return new UnaryOperatorExpression(UnaryOperatorType.BitNot, argument)
 				.WithRR(argument.ResolveResult)
-				.WithILInstruction(inst);
+				.WithILInstruction(inst)
+				.ConvertTo(type, this);
 		}
 		
 		ExpressionWithResolveResult LogicNot(TranslatedExpression expr)
