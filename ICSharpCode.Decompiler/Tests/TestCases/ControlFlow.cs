@@ -34,7 +34,8 @@ class ControlFlow
 		NormalIf3("test", ref result);
 		Test("none", ref result);
 		Test("test", ref result);
-		return result;
+		Console.WriteLine(result);
+		return 0;
 	}
 
 	static void EmptyIf(string input, ref int result)

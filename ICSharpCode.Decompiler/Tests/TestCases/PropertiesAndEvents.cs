@@ -17,7 +17,7 @@ namespace PropertiesAndEvents
 			i[1] = 2;
 			Console.WriteLine("{0} {1}", i[0], i[5]);
 			Console.WriteLine("PI² = {0}", i.PISquare);
-			return -1;
+			return 0;
 		}
 	}
 

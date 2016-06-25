@@ -27,7 +27,9 @@ public class InitializerTests
 		test[0,0] = 0;
 		test[0,1] = 1;
 		test[0,2] = 2;
-		return test.Length + test[0, 0] + test[0, 2];
+		int result = test.Length + test[0, 0] + test[0, 2];
+		Console.WriteLine(result);
+		return 0;
 	}
 	
 	private enum MyEnum
