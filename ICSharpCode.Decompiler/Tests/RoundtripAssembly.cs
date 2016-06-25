@@ -37,11 +37,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Cecil_net45()
 		{
-			try {
-				RunWithTest("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
-			} catch (CompilationFailedException ex) {
-				Assert.Ignore(ex.Message);
-			}
+			RunWithTest("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
 		}
 		
 		[Test]
@@ -49,7 +45,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			try {
 				RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
-			} catch (CompilationFailedException ex) {
+			} catch (AssertionException ex) {
 				Assert.Ignore(ex.Message);
 			}
 		}

@@ -499,6 +499,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				var resultExpr = new BinaryOperatorExpression(left.Expression, op, right.Expression)
 					.WithILInstruction(inst)
 					.WithRR(rr);
+				if (BinaryOperatorMightCheckForOverflow(op))
+					resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
 				return resultExpr.ConvertTo(compilation.FindType(inst.ResultType.ToKnownTypeCode()), this);
 			} else {
 				rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
@@ -511,12 +513,29 @@ namespace ICSharpCode.Decompiler.CSharp
 					right = right.ConvertTo(targetType, this);
 					rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 				}
-				return new BinaryOperatorExpression(left.Expression, op, right.Expression)
+				var resultExpr = new BinaryOperatorExpression(left.Expression, op, right.Expression)
 					.WithILInstruction(inst)
 					.WithRR(rr);
+				if (BinaryOperatorMightCheckForOverflow(op))
+					resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+				return resultExpr;
 			}
 		}
 
+		static bool BinaryOperatorMightCheckForOverflow(BinaryOperatorType op)
+		{
+			switch (op) {
+				case BinaryOperatorType.BitwiseAnd:
+				case BinaryOperatorType.BitwiseOr:
+				case BinaryOperatorType.ExclusiveOr:
+				case BinaryOperatorType.ShiftLeft:
+				case BinaryOperatorType.ShiftRight:
+					return false;
+				default:
+					return true;
+			}
+		}
+		
 		/// <summary>
 		/// Gets whether <paramref name="type"/> has the specified <paramref name="sign"/>.
 		/// If <paramref name="sign"/> is None, always returns true.
