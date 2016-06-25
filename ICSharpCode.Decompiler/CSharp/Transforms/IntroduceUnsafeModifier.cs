@@ -18,6 +18,7 @@
 
 using System;
 using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -105,6 +106,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			base.VisitStackAllocExpression(stackAllocExpression);
 			return true;
+		}
+		
+		public override bool VisitInvocationExpression(InvocationExpression invocationExpression)
+		{
+			bool result = base.VisitInvocationExpression(invocationExpression);
+			var rr = invocationExpression.GetResolveResult();
+			if (rr != null && rr.Type is PointerType)
+				return true;
+			return result;
 		}
 	}
 }

@@ -160,6 +160,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				return ConvertToBoolean(expressionBuilder);
 			if (type.Equals(targetType))
 				return this;
+			if ((type.IsKnownType(KnownTypeCode.IntPtr) && targetType.IsKnownType(KnownTypeCode.UIntPtr))
+			    || (type.IsKnownType(KnownTypeCode.UIntPtr) && targetType.IsKnownType(KnownTypeCode.IntPtr))) {
+				return Expression.Invoke("ToPointer")
+					.WithoutILInstruction()
+					.WithRR(new ResolveResult(new PointerType(expressionBuilder.compilation.FindType(KnownTypeCode.Void))))
+					.ConvertTo(targetType, expressionBuilder);
+			}
 			if (type.Kind == TypeKind.ByReference && targetType.Kind == TypeKind.Pointer && Expression is DirectionExpression) {
 				// convert from reference to pointer
 				Expression arg = ((DirectionExpression)Expression).Expression.Detach();
