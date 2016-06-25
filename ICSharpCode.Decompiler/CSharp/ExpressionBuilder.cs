@@ -258,15 +258,25 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst)
 		{
 			var argument = Translate(inst.Argument);
-			var type = argument.Type;
+			var compatibleType = argument.Type.GetEnumUnderlyingType();
+			var type = compatibleType.GetDefinition();
 			
-			if (type.IsKnownType(KnownTypeCode.IntPtr)) {
-				argument = argument.ConvertTo(compilation.FindType(KnownTypeCode.Int64), this);
-			}
-			if (type.IsKnownType(KnownTypeCode.UIntPtr)) {
-				argument = argument.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), this);
+			if (type != null) {
+				switch (type.KnownTypeCode) {
+					case KnownTypeCode.Boolean:
+					case KnownTypeCode.Char:
+						compatibleType = compilation.FindType(KnownTypeCode.UInt32);
+						break;
+					case KnownTypeCode.IntPtr:
+						compatibleType = compilation.FindType(KnownTypeCode.Int64);
+						break;
+					case KnownTypeCode.UIntPtr:
+						compatibleType = compilation.FindType(KnownTypeCode.UInt64);
+						break;
+				}
 			}
 			
+			argument = argument.ConvertTo(compatibleType, this);
 			return new UnaryOperatorExpression(UnaryOperatorType.BitNot, argument)
 				.WithRR(argument.ResolveResult)
 				.WithILInstruction(inst)
