@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Tests
 		public void Random_Tests_TestCases()
 		{
 			try {
-				RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe", "TestCase-1.out");
+				RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
 			} catch (CompilationFailedException ex) {
 				Assert.Ignore(ex.Message);
 			}
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.Tests
 			RunInternal(dir, fileToRoundtrip, () => RunTest(Path.Combine(testDir, dir) + "-output", fileToTest));
 		}
 		
-		void RunWithOutput(string dir, string fileToRoundtrip, string outputFile)
+		void RunWithOutput(string dir, string fileToRoundtrip)
 		{
 			string inputDir = Path.Combine(testDir, dir);
 			string outputDir = inputDir + "-output";
