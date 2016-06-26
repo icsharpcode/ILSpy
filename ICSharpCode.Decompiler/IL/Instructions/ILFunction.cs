@@ -43,10 +43,12 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteLine(" {");
 			output.Indent();
 			
+			output.MarkFoldStart(Variables.Count + " variable(s)", true);
 			foreach (var variable in Variables) {
 				variable.WriteDefinitionTo(output);
 				output.WriteLine();
 			}
+			output.MarkFoldEnd();
 			output.WriteLine();
 			body.WriteTo(output);
 			

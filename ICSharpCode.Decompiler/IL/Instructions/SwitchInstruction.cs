@@ -68,7 +68,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write("switch (");
 			value.WriteTo(output);
-			output.WriteLine(") {");
+			output.Write(") ");
+			output.MarkFoldStart("{...}");
+			output.WriteLine("{");
 			output.Indent();
 			foreach (var section in this.Sections) {
 				section.WriteTo(output);
@@ -76,6 +78,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			output.Unindent();
 			output.Write('}');
+			output.MarkFoldEnd();
 		}
 		
 		protected override int GetChildCount()

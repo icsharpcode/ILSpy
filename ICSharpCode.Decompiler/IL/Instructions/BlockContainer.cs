@@ -107,7 +107,9 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output)
 		{
 			output.WriteDefinition("BlockContainer", this);
-			output.WriteLine(" {");
+			output.Write(' ');
+			output.MarkFoldStart("{...}");
+			output.WriteLine("{");
 			output.Indent();
 			foreach (var inst in Blocks) {
 				inst.WriteTo(output);
@@ -116,6 +118,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			output.Unindent();
 			output.Write("}");
+			output.MarkFoldEnd();
 		}
 		
 		protected override int GetChildCount()

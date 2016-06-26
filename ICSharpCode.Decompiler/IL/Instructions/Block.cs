@@ -120,6 +120,8 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteDefinition(Label, this);
 			if (Parent is BlockContainer)
 				output.Write(" (incoming: {0})", IncomingEdgeCount);
+			output.Write(' ');
+			output.MarkFoldStart("{...}");
 			output.WriteLine(" {");
 			output.Indent();
 			foreach (var inst in Instructions) {
@@ -133,6 +135,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			output.Unindent();
 			output.Write("}");
+			output.MarkFoldEnd();
 		}
 		
 		protected override int GetChildCount()
