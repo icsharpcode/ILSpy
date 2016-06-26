@@ -22,6 +22,7 @@ public static class Switch
 {
 	public static void Main()
 	{
+		TestCase(SparseIntegerSwitch, -100, 1, 2, 3, 4);
 		TestCase(ShortSwitchOverString, "First case", "Else");
 		TestCase(SwitchOverString1, "First case", "Second case", "2nd case", "Third case", "Fourth case", "Fifth case", "Sixth case", null, "default", "else");
 		Console.WriteLine(SwitchOverString2());
@@ -29,13 +30,30 @@ public static class Switch
 		Console.WriteLine(SwitchOverBool(false));
 	}
 	
-	static void TestCase(Func<string, string> target, params string[] args)
+	static void TestCase<T>(Func<T, string> target, params T[] args)
 	{
 		foreach (var arg in args) {
 			Console.WriteLine(target(arg));
 		}
 	}
 
+	public static string SparseIntegerSwitch(int i)
+	{
+		switch (i) {
+			case -10000000: return "-10 mln";
+			case -100: return "-hundred";
+			case -1: return "-1";
+			case 0: return "0";
+			case 1: return "1";
+			case 2: return "2";
+			case 100: return "hundred";
+			case 10000: return "ten thousand";
+			case 10001: return "ten thousand and one";
+			case int.MaxValue: return "int.MaxValue";
+			default: return "something else";
+		}
+	}
+	
 	public static string ShortSwitchOverString(string text)
 	{
 		switch (text) {

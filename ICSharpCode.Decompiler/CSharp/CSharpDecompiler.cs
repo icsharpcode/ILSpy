@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			//new RemoveDeadVariableInit(),
 			new SplitVariables(),
 			new ControlFlowSimplification(),
-			new ILInlining(), // temporary pass, just to make the ILAst easier to read while debugging loop detection
+			//new ILInlining(), // temporary pass, just to make the ILAst easier to read while debugging loop detection
 			new LoopDetection(),
 			new IntroduceExitPoints(),
 			new ConditionDetection(),
