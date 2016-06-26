@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -26,86 +27,81 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// <summary>
 	/// Base class for AST visitors that need the current type/method context info.
 	/// </summary>
-	public abstract class ContextTrackingVisitor<TResult> : DepthFirstAstVisitor<object, TResult>, IAstTransform
+	public abstract class ContextTrackingVisitor<TResult> : DepthFirstAstVisitor<TResult>
 	{
-		protected readonly DecompilerContext context;
+		protected ITypeDefinition currentTypeDefinition;
+		protected IMethod currentMethod;
 		
-		protected ContextTrackingVisitor(DecompilerContext context)
+		protected void Initialize(TransformContext context)
 		{
-			if (context == null)
-				throw new ArgumentNullException("context");
-			this.context = context;
+			currentTypeDefinition = context.DecompiledTypeDefinition;
+			currentMethod = context.DecompiledMember as IMethod;
 		}
 		
-		public override TResult VisitTypeDeclaration(TypeDeclaration typeDeclaration, object data)
+		public override TResult VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
-			TypeDefinition oldType = context.CurrentType;
+			ITypeDefinition oldType = currentTypeDefinition;
 			try {
-				context.CurrentType = typeDeclaration.Annotation<TypeDefinition>();
-				return base.VisitTypeDeclaration(typeDeclaration, data);
+				currentTypeDefinition = typeDeclaration.GetSymbol() as ITypeDefinition;
+				return base.VisitTypeDeclaration(typeDeclaration);
 			} finally {
-				context.CurrentType = oldType;
+				currentTypeDefinition = oldType;
 			}
 		}
 		
-		public override TResult VisitMethodDeclaration(MethodDeclaration methodDeclaration, object data)
+		public override TResult VisitMethodDeclaration(MethodDeclaration methodDeclaration)
 		{
-			Debug.Assert(context.CurrentMethod == null);
+			Debug.Assert(currentMethod == null);
 			try {
-				context.CurrentMethod = methodDeclaration.Annotation<MethodDefinition>();
-				return base.VisitMethodDeclaration(methodDeclaration, data);
+				currentMethod = methodDeclaration.GetSymbol() as IMethod;
+				return base.VisitMethodDeclaration(methodDeclaration);
 			} finally {
-				context.CurrentMethod = null;
+				currentMethod = null;
 			}
 		}
 		
-		public override TResult VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration, object data)
+		public override TResult VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
 		{
-			Debug.Assert(context.CurrentMethod == null);
+			Debug.Assert(currentMethod == null);
 			try {
-				context.CurrentMethod = constructorDeclaration.Annotation<MethodDefinition>();
-				return base.VisitConstructorDeclaration(constructorDeclaration, data);
+				currentMethod = constructorDeclaration.GetSymbol() as IMethod;
+				return base.VisitConstructorDeclaration(constructorDeclaration);
 			} finally {
-				context.CurrentMethod = null;
+				currentMethod = null;
 			}
 		}
 		
-		public override TResult VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration, object data)
+		public override TResult VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
 		{
-			Debug.Assert(context.CurrentMethod == null);
+			Debug.Assert(currentMethod == null);
 			try {
-				context.CurrentMethod = destructorDeclaration.Annotation<MethodDefinition>();
-				return base.VisitDestructorDeclaration(destructorDeclaration, data);
+				currentMethod = destructorDeclaration.GetSymbol() as IMethod;
+				return base.VisitDestructorDeclaration(destructorDeclaration);
 			} finally {
-				context.CurrentMethod = null;
+				currentMethod = null;
 			}
 		}
 		
-		public override TResult VisitOperatorDeclaration(OperatorDeclaration operatorDeclaration, object data)
+		public override TResult VisitOperatorDeclaration(OperatorDeclaration operatorDeclaration)
 		{
-			Debug.Assert(context.CurrentMethod == null);
+			Debug.Assert(currentMethod == null);
 			try {
-				context.CurrentMethod = operatorDeclaration.Annotation<MethodDefinition>();
-				return base.VisitOperatorDeclaration(operatorDeclaration, data);
+				currentMethod = operatorDeclaration.GetSymbol() as IMethod;
+				return base.VisitOperatorDeclaration(operatorDeclaration);
 			} finally {
-				context.CurrentMethod = null;
+				currentMethod = null;
 			}
 		}
 		
-		public override TResult VisitAccessor(Accessor accessor, object data)
+		public override TResult VisitAccessor(Accessor accessor)
 		{
-			Debug.Assert(context.CurrentMethod == null);
+			Debug.Assert(currentMethod == null);
 			try {
-				context.CurrentMethod = accessor.Annotation<MethodDefinition>();
-				return base.VisitAccessor(accessor, data);
+				currentMethod = accessor.GetSymbol() as IMethod;
+				return base.VisitAccessor(accessor);
 			} finally {
-				context.CurrentMethod = null;
+				currentMethod = null;
 			}
-		}
-		
-		void IAstTransform.Run(AstNode node)
-		{
-			node.AcceptVisitor(this, null);
 		}
 	}
 }

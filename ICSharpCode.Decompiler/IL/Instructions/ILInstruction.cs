@@ -105,6 +105,12 @@ namespace ICSharpCode.Decompiler.IL
 			return a;
 		}
 		
+		/// <summary>
+		/// Gets whether this node (or any subnode) was modified since the last <c>ResetDirty()</c> call.
+		/// </summary>
+		/// <remarks>
+		/// IsDirty is used by the LoopingTransform, and must not be used by individual transforms within the loop.
+		/// </remarks>
 		public bool IsDirty { get; private set; }
 		
 		protected void MakeDirty()
@@ -113,6 +119,12 @@ namespace ICSharpCode.Decompiler.IL
 				inst.IsDirty = true;
 		}
 		
+		/// <summary>
+		/// Marks this node (and all subnodes) as <c>IsDirty=false</c>.
+		/// </summary>
+		/// <remarks>
+		/// IsDirty is used by the LoopingTransform, and must not be used by individual transforms within the loop.
+		/// </remarks>
 		public void ResetDirty()
 		{
 			foreach (ILInstruction inst in Descendants)

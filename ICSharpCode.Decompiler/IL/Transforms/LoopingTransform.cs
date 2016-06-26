@@ -22,6 +22,9 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>
+	/// Repeats the child transforms until the ILAst no longer changes.
+	/// </summary>
 	public class LoopingTransform : IILTransform
 	{
 		readonly IReadOnlyCollection<IILTransform> children;

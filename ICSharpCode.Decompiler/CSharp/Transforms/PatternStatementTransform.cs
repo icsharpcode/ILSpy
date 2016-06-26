@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 
-using ICSharpCode.Decompiler.ILAst;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Analysis;
 using ICSharpCode.NRefactory.PatternMatching;
@@ -34,12 +33,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public sealed class PatternStatementTransform : ContextTrackingVisitor<AstNode>, IAstTransform
 	{
-		public PatternStatementTransform(DecompilerContext context) : base(context)
-		{
-		}
+		TransformContext context;
 		
+		public void Run(AstNode rootNode, TransformContext context)
+		{
+			this.context = context;
+			base.Initialize(context);
+			rootNode.AcceptVisitor(this);
+		}
+
 		#region Visitor Overrides
-		protected override AstNode VisitChildren(AstNode node, object data)
+		protected override AstNode VisitChildren(AstNode node)
 		{
 			// Go through the children, and keep visiting a node as long as it changes.
 			// Because some transforms delete/replace nodes before and after the node being transformed, we rely
@@ -48,14 +52,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				AstNode oldChild;
 				do {
 					oldChild = child;
-					child = child.AcceptVisitor(this, data);
+					child = child.AcceptVisitor(this);
 					Debug.Assert(child != null && child.Parent == node);
 				} while (child != oldChild);
 			}
 			return node;
 		}
 		
-		public override AstNode VisitExpressionStatement(ExpressionStatement expressionStatement, object data)
+		public override AstNode VisitExpressionStatement(ExpressionStatement expressionStatement)
 		{
 			AstNode result;
 			if (context.Settings.UsingStatement)
@@ -75,25 +79,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (result != null)
 					return result;
 			}
-			return base.VisitExpressionStatement(expressionStatement, data);
+			return base.VisitExpressionStatement(expressionStatement);
 		}
 		
-		public override AstNode VisitUsingStatement(UsingStatement usingStatement, object data)
+		public override AstNode VisitUsingStatement(UsingStatement usingStatement)
 		{
 			if (context.Settings.ForEachStatement) {
 				AstNode result = TransformForeach(usingStatement);
 				if (result != null)
 					return result;
 			}
-			return base.VisitUsingStatement(usingStatement, data);
+			return base.VisitUsingStatement(usingStatement);
 		}
 		
-		public override AstNode VisitWhileStatement(WhileStatement whileStatement, object data)
+		public override AstNode VisitWhileStatement(WhileStatement whileStatement)
 		{
-			return TransformDoWhile(whileStatement) ?? base.VisitWhileStatement(whileStatement, data);
+			return TransformDoWhile(whileStatement) ?? base.VisitWhileStatement(whileStatement);
 		}
 		
-		public override AstNode VisitIfElseStatement(IfElseStatement ifElseStatement, object data)
+		public override AstNode VisitIfElseStatement(IfElseStatement ifElseStatement)
 		{
 			if (context.Settings.SwitchStatementOnString) {
 				AstNode result = TransformSwitchOnString(ifElseStatement);
@@ -103,23 +107,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			AstNode simplifiedIfElse = SimplifyCascadingIfElseStatements(ifElseStatement);
 			if (simplifiedIfElse != null)
 				return simplifiedIfElse;
-			return base.VisitIfElseStatement(ifElseStatement, data);
+			return base.VisitIfElseStatement(ifElseStatement);
 		}
 		
-		public override AstNode VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration, object data)
+		public override AstNode VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
 			if (context.Settings.AutomaticProperties) {
 				AstNode result = TransformAutomaticProperties(propertyDeclaration);
 				if (result != null)
 					return result;
 			}
-			return base.VisitPropertyDeclaration(propertyDeclaration, data);
+			return base.VisitPropertyDeclaration(propertyDeclaration);
 		}
 		
-		public override AstNode VisitCustomEventDeclaration(CustomEventDeclaration eventDeclaration, object data)
+		public override AstNode VisitCustomEventDeclaration(CustomEventDeclaration eventDeclaration)
 		{
 			// first apply transforms to the accessor bodies
-			base.VisitCustomEventDeclaration(eventDeclaration, data);
+			base.VisitCustomEventDeclaration(eventDeclaration);
 			if (context.Settings.AutomaticEvents) {
 				AstNode result = TransformAutomaticEvents(eventDeclaration);
 				if (result != null)
@@ -128,14 +132,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return eventDeclaration;
 		}
 		
-		public override AstNode VisitMethodDeclaration(MethodDeclaration methodDeclaration, object data)
+		public override AstNode VisitMethodDeclaration(MethodDeclaration methodDeclaration)
 		{
-			return TransformDestructor(methodDeclaration) ?? base.VisitMethodDeclaration(methodDeclaration, data);
+			return TransformDestructor(methodDeclaration) ?? base.VisitMethodDeclaration(methodDeclaration);
 		}
 		
-		public override AstNode VisitTryCatchStatement(TryCatchStatement tryCatchStatement, object data)
+		public override AstNode VisitTryCatchStatement(TryCatchStatement tryCatchStatement)
 		{
-			return TransformTryCatchFinally(tryCatchStatement) ?? base.VisitTryCatchStatement(tryCatchStatement, data);
+			return TransformTryCatchFinally(tryCatchStatement) ?? base.VisitTryCatchStatement(tryCatchStatement);
 		}
 		#endregion
 		
@@ -216,13 +220,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			TryCatchStatement tryCatch = node.NextSibling as TryCatchStatement;
 			Match m2 = usingTryCatchPattern.Match(tryCatch);
 			if (!m2.Success) return null;
+			IL.ILVariable variable = m1.Get<IdentifierExpression>("variable").Single().GetILVariable();
 			string variableName = m1.Get<IdentifierExpression>("variable").Single().Identifier;
-			if (variableName != m2.Get<IdentifierExpression>("ident").Single().Identifier)
+			if (variable == null || variableName != m2.Get<IdentifierExpression>("ident").Single().Identifier)
 				return null;
 			if (m2.Has("valueType")) {
 				// if there's no if(x!=null), then it must be a value type
-				ILVariable v = m1.Get<AstNode>("variable").Single().Annotation<ILVariable>();
-				if (v == null || v.Type == null || !v.Type.IsValueType)
+				if (variable.Type.IsReferenceType != false)
 					return null;
 			}
 			
@@ -271,7 +275,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							Name = variableName,
 							Initializer = m1.Get<Expression>("initializer").Single().Detach()
 						}.CopyAnnotationsFrom(node.Expression)
-							.WithAnnotation(m1.Get<AstNode>("variable").Single().Annotation<ILVariable>())
+							.WithAnnotation(variable)
 					}
 				}.CopyAnnotationsFrom(node);
 			} else {
@@ -328,12 +332,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			blocks.Reverse(); // go from parent blocks to child blocks
 			DefiniteAssignmentAnalysis daa = new DefiniteAssignmentAnalysis(blocks[0], context.CancellationToken);
 			declarationPoint = null;
-			foreach (BlockStatement block in blocks) {
+			return false;
+			/*foreach (BlockStatement block in blocks) {
 				if (!DeclareVariables.FindDeclarationPoint(daa, varDecl, block, out declarationPoint)) {
 					return false;
 				}
 			}
-			return true;
+			return true;*/
 		}
 		
 		/// <summary>
@@ -438,7 +443,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				VariableName = itemVar.Identifier,
 				InExpression = m.Get<Expression>("collection").Single().Detach(),
 				EmbeddedStatement = newBody
-			}.WithAnnotation(itemVarDecl.Variables.Single().Annotation<ILVariable>());
+			}.WithAnnotation(itemVarDecl.Variables.Single().Annotation<IL.ILVariable>());
 			if (foreachStatement.InExpression is BaseReferenceExpression) {
 				foreachStatement.InExpression = new ThisReferenceExpression().CopyAnnotationsFrom(foreachStatement.InExpression);
 			}
@@ -532,7 +537,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			{
 				VariableType = itemVarDecl.Type.Clone(),
 				VariableName = itemVar.Identifier,
-			}.WithAnnotation(itemVarDecl.Variables.Single().Annotation<ILVariable>());
+			}.WithAnnotation(itemVarDecl.Variables.Single().Annotation<IL.ILVariable>());
 			BlockStatement body = new BlockStatement();
 			foreachStatement.EmbeddedStatement = body;
 			((BlockStatement)node.Parent).Statements.InsertBefore(node, foreachStatement);
@@ -628,7 +633,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (m.Success) {
 				DoWhileStatement doLoop = new DoWhileStatement();
 				doLoop.Condition = new UnaryOperatorExpression(UnaryOperatorType.Not, m.Get<Expression>("condition").Single().Detach());
-				doLoop.Condition.AcceptVisitor(new PushNegation(), null);
+				//doLoop.Condition.AcceptVisitor(new PushNegation(), null);
 				BlockStatement block = (BlockStatement)whileLoop.EmbeddedStatement;
 				block.Statements.Last().Remove(); // remove if statement
 				doLoop.EmbeddedStatement = block.Detach();
@@ -1069,7 +1074,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				FieldDefinition field = eventDef.DeclaringType.Fields.FirstOrDefault(f => f.Name == ev.Name);
 				if (field != null) {
 					ed.AddAnnotation(field);
-					AstBuilder.ConvertAttributes(ed, field, "field");
+					// TODO AstBuilder.ConvertAttributes(ed, field, "field");
 				}
 			}
 			
@@ -1102,7 +1107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				methodDef.Attributes.MoveTo(dd.Attributes);
 				dd.Modifiers = methodDef.Modifiers & ~(Modifiers.Protected | Modifiers.Override);
 				dd.Body = m.Get<BlockStatement>("body").Single().Detach();
-				dd.Name = AstBuilder.CleanName(context.CurrentType.Name);
+				dd.Name = currentTypeDefinition.Name;
 				methodDef.ReplaceWith(dd);
 				return dd;
 			}

@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		List<IAstTransform> astTransforms = new List<IAstTransform> {
 			//new PushNegation(),
 			//new DelegateConstruction(context),
-			//new PatternStatementTransform(context),
+			new PatternStatementTransform(),
 			new ReplaceMethodCallsWithOperators(),
 			new IntroduceUnsafeModifier(),
 			new AddCheckedBlocks(),
@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		void RunTransforms(AstNode rootNode, ITypeResolveContext decompilationContext)
 		{
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
-			var context = new TransformContext(typeSystem, decompilationContext, typeSystemAstBuilder, CancellationToken);
+			var context = new TransformContext(typeSystem, decompilationContext, typeSystemAstBuilder, settings, CancellationToken);
 			foreach (var transform in astTransforms) {
 				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(rootNode, context);

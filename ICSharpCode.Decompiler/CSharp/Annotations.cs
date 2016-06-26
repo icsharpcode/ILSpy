@@ -110,6 +110,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return node.Annotation<ResolveResult>() ?? ErrorResolveResult.UnknownError;
 		}
+		
+		public static ILVariable GetILVariable(this IdentifierExpression expr)
+		{
+			var rr = expr.Annotation<ResolveResult>() as ILVariableResolveResult;
+			if (rr != null)
+				return rr.Variable;
+			else
+				return null;
+		}
 	}
 	
 	public class ILVariableResolveResult : ResolveResult

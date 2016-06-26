@@ -74,8 +74,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (block == null)
 					return false;
 				ILInstruction next = block.Instructions.ElementAtOrDefault(stloc.ChildIndex + 1);
-				if (next == null)
-					continue; // store at end of block might still be a dead store
+				// NB: next==null is considerd as a dead store
 				if (ILInlining.CanInlineInto(next, v, stloc.Value)) {
 					loadsAccountedFor++;
 					storesToInline.Add(stloc);
