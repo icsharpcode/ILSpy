@@ -38,12 +38,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 			
 			protected virtual void TestMethod()
 			{
+				Property = 5;
 				Console.WriteLine("Base1.TestMethod()");
+				Console.WriteLine(Property);
 			}
 			
 			public void TestAction()
 			{
 				Console.WriteLine("Base1.TestAction()");
+			}
+			
+			public int Property { get; set; }
+			
+			public virtual int VirtProp {
+				get {
+					return 3;
+				}
 			}
 		}
 		
@@ -57,19 +67,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 				var o = new Child1();
 				o.child = new Child1();
 				o.TestMethod();
+				
+				Console.WriteLine(((Base1)o).Property);
+				Console.WriteLine(o.Property);
+				Console.WriteLine(((Base1)o).VirtProp);
+				Console.WriteLine(o.VirtProp);
 			}
 			
 			protected override void TestMethod()
 			{
+				Property = 10;
 				base.TestMethod();
 				if (child != null)
 					child.TestMethod();
 				Console.WriteLine("Child1.TestMethod()");
+				Console.WriteLine("Property = " + Property + " " + base.Property);
 			}
 			
 			new public void TestAction()
 			{
 				Console.WriteLine("Child1.TestAction()");
+			}
+			
+			new public int Property { get; set; }
+			
+			public override int VirtProp {
+				get {
+					return base.VirtProp * 2;
+				}
 			}
 		}
 	}

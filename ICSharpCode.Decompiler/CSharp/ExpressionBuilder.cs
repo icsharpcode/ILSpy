@@ -719,14 +719,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 				rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults);
 			
-			var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression).ToList();
 			if (inst.OpCode == OpCode.NewObj) {
+				var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression).ToList();
 				return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), argumentExpressions)
 					.WithILInstruction(inst).WithRR(rr);
 			} else {
 				Expression expr;
-				if (method.IsAccessor) {
-					expr = HandleAccessorCall(target, method, argumentExpressions);
+				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
+				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || method.Parameters.Count == allowedParamCount)) {
+					expr = HandleAccessorCall(inst, target, method, arguments.Skip(firstParamIndex).ToList());
 				} else {
 					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 					var or = new OverloadResolution(resolver.Compilation, arguments.Skip(firstParamIndex).Select(a => a.ResolveResult).ToArray());
@@ -749,22 +750,29 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					var mre = new MemberReferenceExpression(targetExpr, methodName);
 					mre.TypeArguments.AddRange(method.TypeArguments.Select(a => ConvertType(a)));
+					var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression).ToList();
 					expr = new InvocationExpression(mre, argumentExpressions);
 				}
 				return expr.WithILInstruction(inst).WithRR(rr);
 			}
 		}
 		
-		Expression HandleAccessorCall(TranslatedExpression target, IMethod method, IList<Expression> argumentExpressions)
+		Expression HandleAccessorCall(ILInstruction inst, TranslatedExpression target, IMethod method, IList<TranslatedExpression> arguments)
 		{
+			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+			var result = lookup.Lookup(target.ResolveResult, method.AccessorOwner.Name, EmptyList<IType>.Instance, isInvocation:false);
+			
+			if (result.IsError || (result is MemberResolveResult && !IsAppropriateCallTarget(method.AccessorOwner, ((MemberResolveResult)result).Member, inst.OpCode == OpCode.CallVirt)))
+				target = target.ConvertTo(method.AccessorOwner.DeclaringType, this);
+
 			if (method.ReturnType.IsKnownType(KnownTypeCode.Void)) {
-				var value = argumentExpressions.Last();
-				argumentExpressions.Remove(value);
+				var value = arguments.Last();
+				arguments.Remove(value);
 				Expression expr;
-				if (argumentExpressions.Count == 0)
+				if (arguments.Count == 0)
 					expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
 				else
-					expr = new IndexerExpression(target.Expression, argumentExpressions);
+					expr = new IndexerExpression(target.Expression, arguments.Select(a => a.Expression));
 				var op = AssignmentOperatorType.Assign;
 				var parentEvent = method.AccessorOwner as IEvent;
 				if (parentEvent != null) {
@@ -775,12 +783,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						op = AssignmentOperatorType.Subtract;
 					}
 				}
-				return new AssignmentExpression(expr, op, value);
+				return new AssignmentExpression(expr, op, value.Expression);
 			} else {
-				if (argumentExpressions.Count == 0)
+				if (arguments.Count == 0)
 					return new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
 				else
-					return new IndexerExpression(target.Expression, argumentExpressions);
+					return new IndexerExpression(target.Expression, arguments.Select(a => a.Expression));
 			}
 		}
 
