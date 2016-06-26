@@ -44,6 +44,31 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 	public static class Tester
 	{
+		public static string AssembleIL(string sourceFileName)
+		{
+			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
+			string outputFile = Path.GetTempFileName();
+			
+			ProcessStartInfo info = new ProcessStartInfo(ilasmPath);
+			info.Arguments = $"/nologo /exe /output=\"{outputFile}\" \"{sourceFileName}\"";
+			info.RedirectStandardError = true;
+			info.RedirectStandardOutput = true;
+			info.UseShellExecute = false;
+
+			Process process = Process.Start(info);
+
+			var outputTask = process.StandardOutput.ReadToEndAsync();
+			var errorTask = process.StandardError.ReadToEndAsync();
+
+			Task.WaitAll(outputTask, errorTask);
+			process.WaitForExit();
+
+			Console.WriteLine("output: " + outputTask.Result);
+			Console.WriteLine("errors: " + errorTask.Result);
+
+			return outputFile;
+		}
+		
 		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };

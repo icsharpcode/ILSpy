@@ -107,6 +107,12 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			TestCompileDecompileCompileOutputAll("MemberLookup.cs");
 		}
+		
+		[Test]
+		public void ILTest()
+		{
+			TestAssembleDecompileCompileOutput("ILTest.il");
+		}
 
 		void TestCompileDecompileCompileOutputAll(string testFileName)
 		{
@@ -133,6 +139,27 @@ namespace ICSharpCode.Decompiler.Tests
 			} finally {
 				if (outputFile != null)
 					outputFile.TempFiles.Delete();
+				if (decompiledOutputFile != null)
+					decompiledOutputFile.TempFiles.Delete();
+			}
+		}
+		
+		void TestAssembleDecompileCompileOutput(string testFileName, CompilerOptions options = CompilerOptions.UseDebug)
+		{
+			string outputFile = null;
+			CompilerResults decompiledOutputFile = null;
+
+			try {
+				outputFile = Tester.AssembleIL(Path.Combine(TestCasePath, testFileName));
+				string decompiledCodeFile = Tester.DecompileCSharp(outputFile);
+				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
+				
+				Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
+				
+				File.Delete(decompiledCodeFile);
+				File.Delete(outputFile);
+				File.Delete(decompiledOutputFile.PathToAssembly);
+			} finally {
 				if (decompiledOutputFile != null)
 					decompiledOutputFile.TempFiles.Delete();
 			}
