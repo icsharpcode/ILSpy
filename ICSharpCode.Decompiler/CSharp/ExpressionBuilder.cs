@@ -589,6 +589,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitConv(Conv inst)
 		{
 			var arg = Translate(inst.Argument);
+			if (inst.Kind == ConversionKind.StopGCTracking && arg.Type.Kind == TypeKind.ByReference) {
+				// cast to corresponding pointer type:
+				var pointerType = new PointerType(((ByReferenceType)arg.Type).ElementType);
+				arg = arg.ConvertTo(pointerType, this);
+				// if we want a native int, just return the pointer directly
+				if (inst.ResultType == StackType.I)
+					return arg;
+				// otherwise, continue converting
+			}
 			if (inst.Sign != Sign.None && arg.Type.GetSign() != inst.Sign) {
 				// we need to cast the input to a type of appropriate sign
 				var inputType = inst.Argument.ResultType.ToKnownTypeCode(inst.Sign);

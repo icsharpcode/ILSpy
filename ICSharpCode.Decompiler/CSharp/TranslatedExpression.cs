@@ -176,6 +176,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(pointerType));
 				// perform remaining pointer cast, if necessary
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
+			} else if (targetType.Kind == TypeKind.ByReference) {
+				// Convert from integer/pointer to reference.
+				// First, convert to the corresponding pointer type:
+				var elementType = ((ByReferenceType)targetType).ElementType;
+				var arg = this.ConvertTo(new PointerType(elementType), expressionBuilder, checkForOverflow, addUncheckedAnnotations);
+				// Then dereference the pointer:
+				var derefExpr = new UnaryOperatorExpression(UnaryOperatorType.Dereference, arg.Expression);
+				var elementRR = new ResolveResult(elementType);
+				derefExpr.AddAnnotation(elementRR);
+				// And then take a reference:
+				return new DirectionExpression(FieldDirection.Ref, derefExpr)
+					.WithoutILInstruction()
+					.WithRR(new ByReferenceResolveResult(elementRR, false));
 			}
 			if (type.IsKnownType(KnownTypeCode.Boolean) && targetType.GetStackType().IsIntegerType()) {
 				// convert from boolean to integer (or enum)
