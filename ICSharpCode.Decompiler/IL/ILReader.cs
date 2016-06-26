@@ -998,6 +998,11 @@ namespace ICSharpCode.Decompiler.IL
 						var indices = arguments.Skip(1).ToArray();
 						return Push(new LdObj(new LdElema(elementType, target, indices), elementType));
 					}
+					if (method.Name == "Address") {
+						var target = arguments[0];
+						var indices = arguments.Skip(1).ToArray();
+						return Push(new LdElema(elementType, target, indices));
+					}
 					Warn("Unknown method called on array type: " + method.Name);
 					goto default;
 				default:

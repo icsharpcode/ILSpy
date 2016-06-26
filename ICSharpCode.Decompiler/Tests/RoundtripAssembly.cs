@@ -41,6 +41,16 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 		
 		[Test]
+		public void NRefactory_CSharp()
+		{
+			try {
+				RunWithTest("NRefactory", "ICSharpCode.NRefactory.CSharp.dll", "ICSharpCode.NRefactory.Tests.dll");
+			} catch (CompilationFailedException ex) {
+				Assert.Ignore(ex.Message);
+			}
+		}
+		
+		[Test]
 		public void Random_Tests_TestCases()
 		{
 			try {
@@ -88,6 +98,8 @@ namespace ICSharpCode.Decompiler.Tests
 					resolver.AddSearchDirectory(inputDir);
 					var module = ModuleDefinition.ReadModule(file, new ReaderParameters { AssemblyResolver = resolver });
 					var decompiler = new WholeProjectDecompiler();
+					// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
+					decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
 					decompiler.DecompileProject(module, decompiledDir);
 					Console.WriteLine($"Decompiled {fileToRoundtrip} in {w.Elapsed.TotalSeconds:f2}");
 					projectFile = Path.Combine(decompiledDir, module.Assembly.Name.Name + ".csproj");
