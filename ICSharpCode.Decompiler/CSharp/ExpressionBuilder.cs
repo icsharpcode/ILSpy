@@ -278,7 +278,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			
 			argument = argument.ConvertTo(compatibleType, this);
 			return new UnaryOperatorExpression(UnaryOperatorType.BitNot, argument)
-				.WithRR(argument.ResolveResult)
+				.WithRR(new OperatorResolveResult(compatibleType, ExpressionType.Not, argument.ResolveResult))
 				.WithILInstruction(inst)
 				.ConvertTo(type, this);
 		}
@@ -286,7 +286,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		ExpressionWithResolveResult LogicNot(TranslatedExpression expr)
 		{
 			return new UnaryOperatorExpression(UnaryOperatorType.Not, expr.Expression)
-				.WithRR(new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), ExpressionType.Not));
+				.WithRR(new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), ExpressionType.Not, expr.ResolveResult));
 		}
 		
 		readonly HashSet<ILVariable> loadedVariablesSet = new HashSet<ILVariable>();
