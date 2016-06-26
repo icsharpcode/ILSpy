@@ -30,10 +30,10 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			var useVar = false;
 			switch (settings.UseVar) {
 				case VarKeywordUsage.WhenTypeIsEvident:
-					useVar = IsTypeEvident(type, variable.Initializer);
+					useVar = type.StartLocation.Column + 6 < type.EndLocation.Column && IsTypeEvident(type, variable.Initializer);
 					break;
 				case VarKeywordUsage.WhenTypeIsEvidentOrLong:
-					useVar = IsLongName(type) || IsTypeEvident(type, variable.Initializer);
+					useVar = type.StartLocation.Column + 6 < type.EndLocation.Column && IsLongName(type) || IsTypeEvident(type, variable.Initializer);
 					break;
 				case VarKeywordUsage.Always:
 					useVar = true;
