@@ -277,10 +277,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			
 			argument = argument.ConvertTo(compatibleType, this);
-			return new UnaryOperatorExpression(UnaryOperatorType.BitNot, argument)
-				.WithRR(new OperatorResolveResult(compatibleType, ExpressionType.Not, argument.ResolveResult))
-				.WithILInstruction(inst)
-				.ConvertTo(type, this);
+			var rr = resolver.ResolveUnaryOperator(UnaryOperatorType.BitNot, argument.ResolveResult);
+			var result = new UnaryOperatorExpression(UnaryOperatorType.BitNot, argument)
+				.WithRR(rr)
+				.WithILInstruction(inst);
+			if (type != null && (type.KnownTypeCode == KnownTypeCode.IntPtr || type.KnownTypeCode == KnownTypeCode.UIntPtr)) {
+				return result.ConvertTo(type, this);
+			} else {
+				return result;
+			}
 		}
 		
 		ExpressionWithResolveResult LogicNot(TranslatedExpression expr)
