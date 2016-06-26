@@ -39,6 +39,8 @@ namespace ICSharpCode.Decompiler.IL
 		BlockContainer,
 		/// <summary>A block of IL instructions.</summary>
 		Block,
+		/// <summary>A region where a pinned variable is used (initial representation of future fixed statement)</summary>
+		PinnedRegion,
 		/// <summary>Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).</summary>
 		LogicNot,
 		/// <summary>Adds two numbers.</summary>
@@ -571,6 +573,107 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBlock(this);
+		}
+	}
+
+	/// <summary>A region where a pinned variable is used (initial representation of future fixed statement)</summary>
+	public sealed partial class PinnedRegion : ILInstruction
+	{
+		public PinnedRegion(ILInstruction pin, ILInstruction body) : base(OpCode.PinnedRegion)
+		{
+			this.Pin = pin;
+			this.Body = body;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		public static readonly SlotInfo PinSlot = new SlotInfo("Pin", canInlineInto: true);
+		ILInstruction pin;
+		public ILInstruction Pin {
+			get { return this.pin; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.pin, value, 0);
+			}
+		}
+		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
+		ILInstruction body;
+		public ILInstruction Body {
+			get { return this.body; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.body, value, 1);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.pin;
+				case 1:
+					return this.body;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Pin = value;
+					break;
+				case 1:
+					this.Body = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return PinSlot;
+				case 1:
+					return BodySlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (PinnedRegion)ShallowClone();
+			clone.Pin = this.pin.Clone();
+			clone.Body = this.body.Clone();
+			return clone;
+		}
+		protected override InstructionFlags ComputeFlags()
+		{
+			return pin.Flags | body.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			this.pin.WriteTo(output);
+			output.Write(", ");
+			this.body.WriteTo(output);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitPinnedRegion(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitPinnedRegion(this);
 		}
 	}
 
@@ -3116,6 +3219,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(block);
 		}
+		protected internal virtual void VisitPinnedRegion(PinnedRegion inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitLogicNot(LogicNot inst)
 		{
 			Default(inst);
@@ -3417,6 +3524,10 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal virtual T VisitBlock(Block block)
 		{
 			return Default(block);
+		}
+		protected internal virtual T VisitPinnedRegion(PinnedRegion inst)
+		{
+			return Default(inst);
 		}
 		protected internal virtual T VisitLogicNot(LogicNot inst)
 		{
@@ -3742,6 +3853,7 @@ namespace ICSharpCode.Decompiler.IL
 			"ILFunction",
 			"BlockContainer",
 			"Block",
+			"PinnedRegion",
 			"logic.not",
 			"add",
 			"sub",
@@ -3829,6 +3941,18 @@ namespace ICSharpCode.Decompiler.IL
 			if (inst != null) {
 				return true;
 			}
+			return false;
+		}
+		public bool MatchPinnedRegion(out ILInstruction pin, out ILInstruction body)
+		{
+			var inst = this as PinnedRegion;
+			if (inst != null) {
+				pin = inst.Pin;
+				body = inst.Body;
+				return true;
+			}
+			pin = default(ILInstruction);
+			body = default(ILInstruction);
 			return false;
 		}
 		public bool MatchLogicNot(out ILInstruction argument)

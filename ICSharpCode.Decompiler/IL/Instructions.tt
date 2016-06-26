@@ -49,6 +49,12 @@
 			VoidResult, CustomConstructor, CustomVariableName("container")),
 		new OpCode("Block", "A block of IL instructions.",
 			CustomConstructor, CustomVariableName("block")),
+		new OpCode("PinnedRegion", "A region where a pinned variable is used (initial representation of future fixed statement)",
+			ResultType("Void"),
+			CustomChildren(new []{
+				new ChildInfo("pin") { CanInlineInto = true },
+				new ChildInfo("body")
+			})),
 		new OpCode("logic.not", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).",
 			ResultType("I4"), Unary),
 		new OpCode("add", "Adds two numbers.", BinaryNumeric),

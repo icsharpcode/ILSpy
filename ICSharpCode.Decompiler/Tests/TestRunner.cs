@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.Tests
 			TestAssembleDecompileCompileOutput("ILTest.il");
 		}
 
-		[Test, Ignore("Fixed statements and pointer arithmetic are broken")]
+		[Test, Ignore("Fixed statements are broken")]
 		public void UnsafeCode()
 		{
 			TestCompileDecompileCompileOutputAll("UnsafeCode.cs");

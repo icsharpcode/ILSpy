@@ -23,7 +23,7 @@ public class UnsafeCode
 	static void Main()
 	{
 		// TODO: test behavior, or convert this into a pretty-test
-		// (but for now, it's already valuable knowing that the decompiled code can be re-compiled)
+		// (but for now, it's already valuable knowing whether the decompiled code can be re-compiled)
 	}
 	
 	public unsafe int* NullPointer
@@ -72,7 +72,25 @@ public class UnsafeCode
 		fixed (double* ptr = &matrix[1, 2])
 		{
 			this.PointerReferenceExpression(ptr);
+			this.PointerReferenceExpression(ptr);
 		}
+	}
+	
+	public unsafe int MultipleExitsOutOfFixedBlock(int[] arr)
+	{
+		fixed (int* ptr = &arr[0])
+		{
+			if (*ptr < 0)
+				return *ptr;
+			if (*ptr == 21)
+				return 42;
+			if (*ptr == 42)
+				goto outside;
+		}
+		return 1;
+	outside:
+		Console.WriteLine("outside");
+		return 2;
 	}
 	
 	public unsafe void FixedStringAccess(string text)

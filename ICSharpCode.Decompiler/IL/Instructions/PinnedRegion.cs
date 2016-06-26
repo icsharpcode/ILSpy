@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016 Siegfried Pammer
+﻿// Copyright (c) 2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,35 +17,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>
-	/// Repeats the child transforms until the ILAst no longer changes.
-	/// </summary>
-	public class LoopingTransform : IILTransform
+	partial class PinnedRegion
 	{
-		readonly IReadOnlyCollection<IILTransform> children;
-		
-		public LoopingTransform(params IILTransform[] children)
+		internal override void CheckInvariant(ILPhase phase)
 		{
-			this.children = children;
-		}
-		
-		public void Run(ILFunction function, ILTransformContext context)
-		{
-			do {
-				function.ResetDirty();
-				function.RunTransforms(children, context);
-			} while (function.IsDirty);
-		}
-
-		public IReadOnlyCollection<IILTransform> Transforms {
-			get { return children; }
+			base.CheckInvariant(phase);
+			Debug.Assert(((StLoc)this.pin).Variable.Kind == VariableKind.PinnedLocal);
 		}
 	}
 }
-
-

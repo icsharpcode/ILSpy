@@ -120,16 +120,12 @@ namespace ICSharpCode.Decompiler
 		{
 			if (typeReference == null)
 				return SpecialType.UnknownType;
-			if (typeReference is SentinelType) {
-				typeReference = ((SentinelType)typeReference).ElementType;
+			if (typeReference is SentinelType || typeReference is PinnedType) {
+				typeReference = ((TypeSpecification)typeReference).ElementType;
 			}
 			ITypeReference typeRef;
-			if (typeReference is PinnedType) {
-				typeRef = new NRefactory.TypeSystem.ByReferenceType(Resolve(((PinnedType)typeReference).ElementType)).ToTypeReference();
-			} else {
-				lock (typeReferenceCecilLoader)
-					typeRef = typeReferenceCecilLoader.ReadTypeReference(typeReference);
-			}
+			lock (typeReferenceCecilLoader)
+				typeRef = typeReferenceCecilLoader.ReadTypeReference(typeReference);
 			return typeRef.Resolve(context);
 		}
 		#endregion

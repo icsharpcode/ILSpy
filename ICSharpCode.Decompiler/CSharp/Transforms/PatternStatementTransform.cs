@@ -1107,7 +1107,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				methodDef.Attributes.MoveTo(dd.Attributes);
 				dd.Modifiers = methodDef.Modifiers & ~(Modifiers.Protected | Modifiers.Override);
 				dd.Body = m.Get<BlockStatement>("body").Single().Detach();
-				dd.Name = currentTypeDefinition.Name;
+				dd.Name = currentTypeDefinition?.Name;
 				methodDef.ReplaceWith(dd);
 				return dd;
 			}

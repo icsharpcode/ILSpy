@@ -49,7 +49,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		List<IILTransform> ilTransforms = new List<IILTransform> {
 			new SplitVariables(),
 			new ControlFlowSimplification(),
-			//new ILInlining(), // temporary pass, just to make the ILAst easier to read while debugging loop detection
+			new ILInlining(),
+			new DetectPinnedRegions(),
 			new LoopDetection(),
 			new IntroduceExitPoints(),
 			new ConditionDetection(),
@@ -287,6 +288,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (definitions == null)
 				throw new ArgumentNullException("definitions");
+			ITypeDefinition parentTypeDef = null;
 			var syntaxTree = new SyntaxTree();
 			foreach (var def in definitions) {
 				if (def == null)
@@ -301,31 +303,36 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (typeDef == null)
 						throw new InvalidOperationException("Could not find type definition in NR type system");
 					syntaxTree.Members.Add(DoDecompile(typeDef, new SimpleTypeResolveContext(typeDef)));
+					parentTypeDef = typeDef.DeclaringTypeDefinition;
 				} else if (methodDefinition != null) {
 					IMethod method = typeSystem.Resolve(methodDefinition);
 					if (method == null)
 						throw new InvalidOperationException("Could not find method definition in NR type system");
 					syntaxTree.Members.Add(DoDecompile(methodDefinition, method, new SimpleTypeResolveContext(method)));
+					parentTypeDef = method.DeclaringTypeDefinition;
 				} else if (fieldDefinition != null) {
 					IField field = typeSystem.Resolve(fieldDefinition);
 					if (field == null)
 						throw new InvalidOperationException("Could not find field definition in NR type system");
 					syntaxTree.Members.Add(DoDecompile(fieldDefinition, field, new SimpleTypeResolveContext(field)));
+					parentTypeDef = field.DeclaringTypeDefinition;
 				} else if (propertyDefinition != null) {
 					IProperty property = typeSystem.Resolve(propertyDefinition);
 					if (property == null)
 						throw new InvalidOperationException("Could not find field definition in NR type system");
 					syntaxTree.Members.Add(DoDecompile(propertyDefinition, property, new SimpleTypeResolveContext(property)));
+					parentTypeDef = property.DeclaringTypeDefinition;
 				} else if (eventDefinition != null) {
 					IEvent ev = typeSystem.Resolve(eventDefinition);
 					if (ev == null)
 						throw new InvalidOperationException("Could not find field definition in NR type system");
 					syntaxTree.Members.Add(DoDecompile(eventDefinition, ev, new SimpleTypeResolveContext(ev)));
+					parentTypeDef = ev.DeclaringTypeDefinition;
 				} else {
 					throw new NotSupportedException(def.GetType().Name);
 				}
 			}
-			RunTransforms(syntaxTree, new SimpleTypeResolveContext(typeSystem.MainAssembly));
+			RunTransforms(syntaxTree, parentTypeDef != null ? new SimpleTypeResolveContext(parentTypeDef) : new SimpleTypeResolveContext(typeSystem.MainAssembly));
 			return syntaxTree;
 		}
 

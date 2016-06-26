@@ -1071,19 +1071,27 @@ namespace ICSharpCode.Decompiler.IL
 			switch (condition.ResultType) {
 				case StackType.O:
 					// introduce explicit comparison with null
-					condition = new Comp(ComparisonKind.Inequality, Sign.None, condition, new LdNull());
+					condition = new Comp(
+						negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
+						Sign.None, condition, new LdNull());
 					break;
 				case StackType.I:
 					// introduce explicit comparison with 0
-					condition = new Comp(ComparisonKind.Inequality, Sign.None, condition, new LdcI4(0));
+					condition = new Comp(
+						negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
+						Sign.None, condition, new LdcI4(0));
 					break;
 				case StackType.I8:
 					// introduce explicit comparison with 0
-					condition = new Comp(ComparisonKind.Inequality, Sign.None, condition, new LdcI8(0));
+					condition = new Comp(
+						negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
+						Sign.None, condition, new LdcI8(0));
 					break;
-			}
-			if (negate) {
-				condition = new LogicNot(condition);
+				default:
+					if (negate) {
+						condition = new LogicNot(condition);
+					}
+					break;
 			}
 			MarkBranchTarget(target);
 			return new IfInstruction(condition, new Branch(target));

@@ -267,6 +267,16 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return false;
 		}
+		
+		public void RemoveRange(int index, int count)
+		{
+			parentInstruction.AssertNoEnumerators();
+			for (int i = 0; i < count; i++) {
+				parentInstruction.InstructionCollectionRemoved(list[index + i]);
+			}
+			list.RemoveRange(index, count);
+			parentInstruction.InstructionCollectionUpdateComplete();
+		}
 
 		/// <summary>
 		/// Removes all elements for which the predicate returns true.
@@ -308,6 +318,11 @@ namespace ICSharpCode.Decompiler.IL
 		public T Last()
 		{
 			return list[list.Count - 1];
+		}
+		
+		public T LastOrDefault()
+		{
+			return list.Count > 0 ? list[list.Count - 1] : null;
 		}
 		
 		public T ElementAtOrDefault(int index)

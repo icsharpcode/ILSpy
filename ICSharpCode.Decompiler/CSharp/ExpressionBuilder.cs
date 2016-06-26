@@ -490,8 +490,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
 			ResolveResult rr;
-			if (left.Type.IsKnownType(KnownTypeCode.IntPtr) || left.Type.IsKnownType(KnownTypeCode.UIntPtr)
-			    || right.Type.IsKnownType(KnownTypeCode.IntPtr) || right.Type.IsKnownType(KnownTypeCode.UIntPtr)) {
+			if (left.Type.GetStackType() == StackType.I || right.Type.GetStackType() == StackType.I) {
+				// IntPtr or pointers as input.
+				// C# doesn't allow adding IntPtr values, and adding pointer values has the wrong semantics
+				// (adding number of elements instead of number of bytes), so switch to long/ulong in both cases.
 				IType targetType;
 				if (inst.Sign == Sign.Unsigned) {
 					targetType = compilation.FindType(KnownTypeCode.UInt64);

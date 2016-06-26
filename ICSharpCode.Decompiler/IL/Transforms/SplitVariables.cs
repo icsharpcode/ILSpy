@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					// parameters: avoid splitting parameters
 					// stack slots: are already split by construction
-					// pinned locals: not sure if splitting those would be legal
+					// pinned locals: must not split (doing so would extend the life of the pin to the end of the method)
 					return false;
 			}
 		}

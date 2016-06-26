@@ -36,10 +36,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// the FinalInstruction (which is not part of the list) will be executed.
 	/// The block returns returns the result value of the FinalInstruction.
 	/// For blocks returning void, the FinalInstruction will usually be 'nop'.
-	/// 
-	/// TODO: now that 'implicit push' is gone, reconsider whether we need
-	/// a separate slot for FinalInstruction
 	/// </para>
+	/// 
+	/// TODO: consider splitting inline blocks (with FinalInstruction) from those
+	/// used in containers for control flow purposes -- these are very different things
+	/// which should not share a class.
 	/// </summary>
 	partial class Block : ILInstruction
 	{
@@ -59,6 +60,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int IncomingEdgeCount { get; internal set; }
 
+		/// <summary>
+		/// A 'final instruction' that gets executed after the <c>Instructions</c> collection.
+		/// Provides the return value for the block.
+		/// </summary>
+		/// <remarks>
+		/// Blocks in containers must have 'Nop' as a final instruction.
+		/// </remarks>
 		public ILInstruction FinalInstruction {
 			get {
 				return finalInstruction;
