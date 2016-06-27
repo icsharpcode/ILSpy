@@ -132,8 +132,6 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			return false;
 		}
 		
-		List<Expression> lambdasInCache = new List<Expression>();
-		
 		bool HandleAnonymousMethod(ObjectCreateExpression objectCreateExpression, Expression target, MethodReference methodRef)
 		{
 			if (!context.Settings.AnonymousMethods)
@@ -214,12 +212,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				replacement = simplifiedDelegateCreation;
 			}
 			objectCreateExpression.ReplaceWith(replacement);
-
-			// cached lambda in variable
-			if (replacement.Parent is AssignmentExpression) {
-				lambdasInCache.Add(replacement);
-			}
-
+			
 			return true;
 		}
 		
@@ -333,7 +326,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 		{
 			int numberOfVariablesOutsideBlock = currentlyUsedVariableNames.Count;
 			base.VisitBlockStatement(blockStatement, data);
-			foreach (ExpressionStatement stmt in blockStatement.Statements.OfType<ExpressionStatement>().ToArray()) {
+			foreach (ExpressionStatement stmt in blockStatement.Statements.OfType<ExpressionStatement>().ToArray().Reverse()) { 
 				Match displayClassAssignmentMatch = displayClassAssignmentPattern.Match(stmt);
 				if (!displayClassAssignmentMatch.Success)
 					continue;
@@ -361,8 +354,8 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 
 				// Delete the variable declaration statement:
 				VariableDeclarationStatement displayClassVarDecl = PatternStatementTransform.FindVariableDeclaration(stmt, variable.Name);
-				if (displayClassVarDecl != null)
-					displayClassVarDecl.Remove();
+				var variableDeclarationBlock = displayClassVarDecl.Parent as BlockStatement ?? blockStatement;
+				displayClassVarDecl?.Remove();
 
 				// Delete the assignment statement:
 				AstNode cur = stmt.NextSibling;
@@ -464,12 +457,12 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					}
 				}
 				// Now insert the variable declarations (we can do this after the replacements only so that the scope detection works):
-				Statement insertionPoint = blockStatement.Statements.FirstOrDefault();
+				Statement insertionPoint = variableDeclarationBlock.Statements.FirstOrDefault();
 				foreach (var tuple in variablesToDeclare) {
 					var newVarDecl = new VariableDeclarationStatement(tuple.Item1, tuple.Item2.Name);
 					newVarDecl.Variables.Single().AddAnnotation(new CapturedVariableAnnotation());
 					newVarDecl.Variables.Single().AddAnnotation(tuple.Item2);
-					blockStatement.Statements.InsertBefore(insertionPoint, newVarDecl);
+					variableDeclarationBlock.Statements.InsertBefore(insertionPoint, newVarDecl);
 				}
 			}
 			currentlyUsedVariableNames.RemoveRange(numberOfVariablesOutsideBlock, currentlyUsedVariableNames.Count - numberOfVariablesOutsideBlock);
@@ -485,7 +478,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				if (targetTypeRef != null && targetTypeRef.Type != null) {
 					return targetTypeRef.Type.Annotation<TypeReference>().ResolveWithinSameModule().IsCompilerGeneratedOrIsInCompilerGeneratedClass() == true;
 				}
-				if(memberRef.Target is IdentifierExpression) {
+				if(memberRef.Target is IdentifierExpression || memberRef.Target is ThisReferenceExpression) {
 					return memberRef.Target.Annotation<TypeInformation>().InferredType.ResolveWithinSameModule().IsCompilerGeneratedOrIsInCompilerGeneratedClass();
 				}
 			}
@@ -532,8 +525,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 
 				if (!bitmap.All(b => b)) return null;
 
-				var lamda = body as LambdaExpression;
-				if (lamda == null) return null;
+				if (!(body is LambdaExpression || body is AnonymousMethodExpression)) return null;
 
 				var uu = variables.SelectMany(FindSameExpressions).Where(rr => !rr.Ancestors.Contains(ifElseStatement)).ToArray();
 				if (uu.Length > 1) return null;
@@ -545,7 +537,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				ifElseStatement.Remove();
 
 				foreach (var v in uu) {
-					v.ReplaceWith(lamda.Clone());
+					v.ReplaceWith(body.Clone());
 				}
 			}
 

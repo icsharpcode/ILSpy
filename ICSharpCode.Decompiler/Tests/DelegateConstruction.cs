@@ -26,24 +26,29 @@ public static class DelegateConstruction
 	{
 		public Action CaptureOfThis()
 		{
-			return delegate {
-				CaptureOfThis();
+			return delegate
+			{
+				this.CaptureOfThis();
 			};
 		}
 		
 		public Action CaptureOfThisAndParameter(int a)
 		{
-			return delegate {
-				CaptureOfThisAndParameter(a);
+			return delegate
+			{
+				this.CaptureOfThisAndParameter(a);
 			};
 		}
 		
 		public Action CaptureOfThisAndParameterInForEach(int a)
 		{
-			foreach (int item in Enumerable.Empty<int>()) {
-				if (item > 0) {
-					return delegate {
-						CaptureOfThisAndParameter(item + a);
+			foreach (int item in Enumerable.Empty<int>())
+			{
+				if (item > 0)
+				{
+					return delegate
+					{
+						this.CaptureOfThisAndParameter(item + a);
 					};
 				}
 			}
@@ -52,11 +57,14 @@ public static class DelegateConstruction
 		
 		public Action CaptureOfThisAndParameterInForEachWithItemCopy(int a)
 		{
-			foreach (int item in Enumerable.Empty<int>()) {
+			foreach (int item in Enumerable.Empty<int>())
+			{
 				int copyOfItem = item;
-				if (item > 0) {
-					return delegate {
-						CaptureOfThisAndParameter(item + a + copyOfItem);
+				if (item > 0)
+				{
+					return delegate
+					{
+						this.CaptureOfThisAndParameter(item + a + copyOfItem);
 					};
 				}
 			}
@@ -65,8 +73,9 @@ public static class DelegateConstruction
 		
 		public void LambdaInForLoop()
 		{
-			for (int i = 0; i < 100000; i++) {
-			    Bar(() => Foo());
+			for (int i = 0; i < 100000; i++)
+			{
+			    Bar(() => this.Foo());
 			}
 		}
 		
@@ -186,8 +195,10 @@ public static class DelegateConstruction
 
 	public static Action<int> NameConflict3(int i)
 	{
-		return delegate(int j) {
-			for (int k = 0; k < j; k++) {
+		return delegate(int j)
+		{
+			for (int k = 0; k < j; k++)
+			{
 				Console.WriteLine(k);
 			}
 		};
@@ -201,5 +212,10 @@ public static class DelegateConstruction
 	public static Func<int, Func<int, Func<int, int>>> CurriedAddition2(int a)
 	{
 		return b => c => d => a + b + c + d;
+	}
+
+	public static int BitCompicatedLinqExpression(int a, int b, int c, int d, IEnumerable<int> integers)
+	{
+		return Enumerable.Range(a, a).Select(f => Enumerable.Range(f, a).Where(i => i + f == d + integers.Sum(ii => ii + b + f)).First(iDontHaveClueWhatWillThisDo => iDontHaveClueWhatWillThisDo % c == a)).First();
 	}
 }
