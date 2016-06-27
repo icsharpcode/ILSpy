@@ -22,7 +22,7 @@ using System.Linq;
 
 public static class DelegateConstruction
 {
-	class InstanceTests
+	private class InstanceTests
 	{
 		public Action CaptureOfThis()
 		{
@@ -75,7 +75,7 @@ public static class DelegateConstruction
 		{
 			for (int i = 0; i < 100000; i++)
 			{
-			    Bar(() => this.Foo());
+				this.Bar(() => this.Foo());
 			}
 		}
 		
@@ -130,10 +130,9 @@ public static class DelegateConstruction
 		{
 			int counter;
 			list.Add(delegate(int x)
-			         {
+			{
 			         	counter = x;
-			         }
-			        );
+			});
 		}
 		return list;
 	}
@@ -145,10 +144,9 @@ public static class DelegateConstruction
 		for (int i = 0; i < 10; i++)
 		{
 			list.Add(delegate(int x)
-			         {
+			{
 			         	counter = x;
-			         }
-			        );
+			});
 		}
 		return list;
 	}
@@ -169,12 +167,15 @@ public static class DelegateConstruction
 		// l is local in main method
 		// Ensure that the decompiler doesn't introduce name conflicts
 		List<Action<int>> list = new List<Action<int>>();
-		for (int l = 0; l < 10; l++) {
+		for (int l = 0; l < 10; l++)
+		{
 			int i;
-			for (i = 0; i < 10; i++) {
-				list.Add(
-					delegate (int j) {
-						for (int k = 0; k < i; k += j) {
+			for (i = 0; i < 10; i++)
+			{
+				list.Add(delegate(int j)
+					{
+						for (int k = 0; k < i; k += j)
+						{
 							Console.WriteLine();
 						}
 					});
@@ -185,11 +186,12 @@ public static class DelegateConstruction
 	public static void NameConflict2(int j)
 	{
 		List<Action<int>> list = new List<Action<int>>();
-		for (int k = 0; k < 10; k++) {
-			list.Add(
-				delegate(int i) {
-					Console.WriteLine(i);
-				});
+		for (int k = 0; k < 10; k++)
+		{
+			list.Add(delegate(int i)
+			{
+				Console.WriteLine(i);
+			});
 		}
 	}
 
@@ -206,16 +208,21 @@ public static class DelegateConstruction
 	
 	public static Func<int, Func<int, int>> CurriedAddition(int a)
 	{
-		return b => c => a + b + c;
+		return (int b) => (int c) => a + b + c;
 	}
 	
 	public static Func<int, Func<int, Func<int, int>>> CurriedAddition2(int a)
 	{
-		return b => c => d => a + b + c + d;
+		return (int b) => (int c) => (int d) => a + b + c + d;
 	}
 
 	public static int BitCompicatedLinqExpression(int a, int b, int c, int d, IEnumerable<int> integers)
 	{
-		return Enumerable.Range(a, a).Select(f => Enumerable.Range(f, a).Where(i => i + f == d + integers.Sum(ii => ii + b + f)).First(iDontHaveClueWhatWillThisDo => iDontHaveClueWhatWillThisDo % c == a)).First();
+		return DelegateConstruction.Bar<int>((int f) => DelegateConstruction.Bar<int>((int i) => i + f - d + integers.Sum((int ii) => ii + b + f)).First((int iDontHaveClueWhatWillThisDo) => iDontHaveClueWhatWillThisDo % c == a)).First<int>();
+	}
+
+	private static IEnumerable<T> Bar<T>(Func<int, T> f)
+	{
+		return null;
 	}
 }
