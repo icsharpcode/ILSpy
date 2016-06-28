@@ -128,9 +128,7 @@ namespace ICSharpCode.ILSpy
 			if (DecompilerSettingsPanel.CurrentDecompilerSettings.UseDebugSymbols) {
 				try {
 					LoadSymbols(module);
-				} catch (IOException) {
-				} catch (UnauthorizedAccessException) {
-				} catch (InvalidOperationException) {
+				} catch {
 					// ignore any errors during symbol loading
 				}
 			}
