@@ -8,7 +8,7 @@ sourceDownload: https://github.com/icsharpcode/ILSpy/archive/v2.4.zip
 
 ILSpy is the open-source .NET assembly browser and decompiler.
 
-Development started after Red Gate [announced](http://www.red-gate.com/products/dotnet-development/reflector/announcement) that the free version of .NET Reflector would cease to exist by end of February 2011.
+Development started after Red Gate [announced](https://web.archive.org/web/20110205074826/http://www.red-gate.com/products/dotnet-development/reflector/announcement) that the free version of .NET Reflector would cease to exist by end of February 2011.
 
 ILSpy requires the [.NET Framework 4.0](http://www.microsoft.com/downloads/en/details.aspx?FamilyID=5765d7a8-7722-4888-a970-ac39b33fd8ab&amp;displaylang=en).
 
