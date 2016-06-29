@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				InlineReturnBlock(block);
 				// due to our of of basic blocks at this point,
 				// switch instructions can only appear as second-to-last insturction
-				SimplifySwitchInstruction(block.Instructions.ElementAtOrDefault(block.Instructions.Count - 2) as SwitchInstruction);
+				SimplifySwitchInstruction(block.Instructions.SecondToLastOrDefault() as SwitchInstruction);
 			}
 			SimplifyBranchChains(function);
 			CleanUpEmptyBlocks(function);

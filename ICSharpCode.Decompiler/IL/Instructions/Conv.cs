@@ -239,5 +239,10 @@ namespace ICSharpCode.Decompiler.IL
 				flags |= InstructionFlags.MayThrow;
 			return flags;
 		}
+		
+		public override ILInstruction UnwrapConv()
+		{
+			return Argument.UnwrapConv();
+		}
 	}
 }

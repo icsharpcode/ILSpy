@@ -171,6 +171,8 @@ namespace ICSharpCode.Decompiler.IL
 		LdLen,
 		/// <summary>Load address of array element.</summary>
 		LdElema,
+		/// <summary>Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.</summary>
+		ArrayToPointer,
 		/// <summary>Push a typed reference of type class onto the stack.</summary>
 		MakeRefAny,
 		/// <summary>Push the type token stored in a typed reference.</summary>
@@ -3104,6 +3106,87 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
+	/// <summary>Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.</summary>
+	public sealed partial class ArrayToPointer : ILInstruction
+	{
+		public ArrayToPointer(ILInstruction array) : base(OpCode.ArrayToPointer)
+		{
+			this.Array = array;
+		}
+		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
+		ILInstruction array;
+		public ILInstruction Array {
+			get { return this.array; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.array, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.array;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Array = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ArraySlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (ArrayToPointer)ShallowClone();
+			clone.Array = this.array.Clone();
+			return clone;
+		}
+		public override StackType ResultType { get { return StackType.Ref; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return array.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			this.array.WriteTo(output);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitArrayToPointer(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitArrayToPointer(this);
+		}
+	}
+
 	/// <summary>Push a typed reference of type class onto the stack.</summary>
 	public sealed partial class MakeRefAny : UnaryInstruction
 	{
@@ -3483,6 +3566,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitArrayToPointer(ArrayToPointer inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitMakeRefAny(MakeRefAny inst)
 		{
 			Default(inst);
@@ -3789,6 +3876,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitArrayToPointer(ArrayToPointer inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitMakeRefAny(MakeRefAny inst)
 		{
 			return Default(inst);
@@ -3919,6 +4010,7 @@ namespace ICSharpCode.Decompiler.IL
 			"sizeof",
 			"ldlen",
 			"ldelema",
+			"array.to.pointer",
 			"mkrefany",
 			"refanytype",
 			"refanyval",
@@ -4500,6 +4592,16 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			type = default(IType);
+			array = default(ILInstruction);
+			return false;
+		}
+		public bool MatchArrayToPointer(out ILInstruction array)
+		{
+			var inst = this as ArrayToPointer;
+			if (inst != null) {
+				array = inst.Array;
+				return true;
+			}
 			array = default(ILInstruction);
 			return false;
 		}

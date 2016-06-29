@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new SplitVariables(),
 			new ControlFlowSimplification(),
 			new ILInlining(),
-			new DetectPinnedRegions(),
+			new DetectPinRegions(),
 			new LoopDetection(),
 			new IntroduceExitPoints(),
 			new ConditionDetection(),

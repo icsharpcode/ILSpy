@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.Tests
 			info.RedirectStandardOutput = true;
 			Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
 			using (var p = Process.Start(info)) {
-				Regex errorRegex = new Regex(@"^[\w\d.\\]+\(\d+,\d+\):");
+				Regex errorRegex = new Regex(@"^[\w\d.\\-]+\(\d+,\d+\):");
 				string suffix = $" [{projectFile}]";
 				string line;
 				while ((line = p.StandardOutput.ReadLine()) != null) {

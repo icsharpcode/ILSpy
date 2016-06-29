@@ -195,6 +195,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var output = new PlainTextOutput();
 			WriteTo(output);
+			if (!ILRange.IsEmpty) {
+				output.Write(" at IL_" + ILRange.Start.ToString("x4"));
+			}
 			return output.ToString();
 		}
 		

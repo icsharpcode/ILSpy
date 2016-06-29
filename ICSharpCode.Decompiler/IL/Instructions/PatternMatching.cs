@@ -112,6 +112,37 @@ namespace ICSharpCode.Decompiler.IL
 			return inst != null && inst.TargetContainer == targetContainer;
 		}
 		
+		public bool MatchIfInstruction(out ILInstruction condition, out ILInstruction trueInst, out ILInstruction falseInst)
+		{
+			var inst = this as IfInstruction;
+			if (inst != null) {
+				condition = inst.Condition;
+				trueInst = inst.TrueInst;
+				falseInst = inst.FalseInst;
+				return true;
+			}
+			condition = null;
+			trueInst = null;
+			falseInst = null;
+			return false;
+		}
+		
+		/// <summary>
+		/// Matches an if instruction where the false instruction is a nop.
+		/// </summary>
+		public bool MatchIfInstruction(out ILInstruction condition, out ILInstruction trueInst)
+		{
+			var inst = this as IfInstruction;
+			if (inst != null && inst.FalseInst.MatchNop()) {
+				condition = inst.Condition;
+				trueInst = inst.TrueInst;
+				return true;
+			}
+			condition = null;
+			trueInst = null;
+			return false;
+		}
+		
 		public bool MatchTryCatchHandler(out ILVariable variable)
 		{
 			var inst = this as TryCatchHandler;
@@ -121,6 +152,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			variable = null;
 			return false;
+		}
+		
+		public virtual ILInstruction UnwrapConv()
+		{
+			return this;
 		}
 	}
 }

@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (slot == Block.InstructionSlot) {
 				Block block = (Block)inst.Parent;
 				return block.Instructions.ElementAtOrDefault(inst.ChildIndex + 1);
-			} else if (slot == TryInstruction.TryBlockSlot || slot == TryCatchHandler.BodySlot || slot == TryCatch.HandlerSlot) {
+			} else if (slot == TryInstruction.TryBlockSlot || slot == TryCatchHandler.BodySlot || slot == TryCatch.HandlerSlot || slot == PinnedRegion.BodySlot) {
 				return GetExit(inst.Parent);
 			} else if (slot == ILFunction.BodySlot) {
 				return ReturnExit;

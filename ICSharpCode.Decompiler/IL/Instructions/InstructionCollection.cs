@@ -325,6 +325,11 @@ namespace ICSharpCode.Decompiler.IL
 			return list.Count > 0 ? list[list.Count - 1] : null;
 		}
 		
+		public T SecondToLastOrDefault()
+		{
+			return list.Count > 1 ? list[list.Count - 2] : null;
+		}
+		
 		public T ElementAtOrDefault(int index)
 		{
 			if (index >= 0 && index < list.Count)

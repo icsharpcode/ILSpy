@@ -199,7 +199,9 @@
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
 			MayThrow, ResultType("Ref"), SupportsReadonlyPrefix),
-		
+		new OpCode("array.to.pointer", "Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.",
+			CustomArguments("array"), ResultType("Ref")),
+
 		new OpCode("mkrefany", "Push a typed reference of type class onto the stack.",
 			CustomClassName("MakeRefAny"), Unary, HasTypeOperand, ResultType("O")),
 		new OpCode("refanytype", "Push the type token stored in a typed reference.",

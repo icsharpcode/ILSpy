@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			
 			// Previous-to-last instruction might have conditional control flow,
 			// usually an IfInstruction with a branch:
-			IfInstruction ifInst = block.Instructions.ElementAtOrDefault(block.Instructions.Count - 2) as IfInstruction;
+			IfInstruction ifInst = block.Instructions.SecondToLastOrDefault() as IfInstruction;
 			if (ifInst != null && ifInst.FalseInst.OpCode == OpCode.Nop) {
 				if (IsBranchToLaterTarget(ifInst.TrueInst, exitInst)) {
 					// "if (c) goto lateBlock; goto earlierBlock;"
