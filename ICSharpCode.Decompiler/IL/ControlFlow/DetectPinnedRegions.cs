@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// If the variable is a stack slot, that might be due to an inline assignment,
 				// so check the previous instruction:
 				var previous = block.Instructions.ElementAtOrDefault(block.Instructions.Count - 3) as StLoc;
-				if (previous.Value.MatchLdLoc(v)) {
+				if (previous != null && previous.Value.MatchLdLoc(v)) {
 					// stloc V(ldloc S)
 					// if (comp(ldloc S == ldnull)) ...
 					v = previous.Variable;
