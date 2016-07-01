@@ -39,18 +39,36 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		None,
 		Optimize,
-		UseDebug
+		UseDebug,
+		Force32Bit
+	}
+	
+	[Flags]
+	public enum AssemblerOptions
+	{
+		None,
+		UseDebug,
+		Force32Bit
 	}
 
 	public static class Tester
 	{
-		public static string AssembleIL(string sourceFileName)
+		public static string AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
 			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
 			string outputFile = Path.GetTempFileName();
 			
+			string otherOptions = " ";
+			
+			if (options.HasFlag(AssemblerOptions.UseDebug)) {
+				otherOptions += "/debug ";
+			}
+			if (options.HasFlag(AssemblerOptions.Force32Bit)) {
+				otherOptions += "/32BitPreferred ";
+			}
+			
 			ProcessStartInfo info = new ProcessStartInfo(ilasmPath);
-			info.Arguments = $"/nologo /exe /output=\"{outputFile}\" \"{sourceFileName}\"";
+			info.Arguments = $"/nologo /exe{otherOptions}/output=\"{outputFile}\" \"{sourceFileName}\"";
 			info.RedirectStandardError = true;
 			info.RedirectStandardOutput = true;
 			info.UseShellExecute = false;
@@ -79,7 +97,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 			CompilerParameters options = new CompilerParameters();
 			options.GenerateExecutable = true;
-			options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-") + (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
+			options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-") + (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "") + (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
 			options.ReferencedAssemblies.Add("System.Core.dll");
 			CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 			if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
@@ -138,6 +156,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			int result2 = Tester.Run(decompiledOutputFile, out output2, out error2);
 			
 			if (result1 != result2 || output1 != output2 || error1 != error2) {
+				Console.WriteLine("original: " + outputFile);
+				Console.WriteLine("decompiled: " + decompiledOutputFile);
+				
 				Console.WriteLine("Test {0} failed.", testFileName);
 				if (decompiledCodeFile != null)
 					Console.WriteLine("Decompiled code in {0}:line 1", decompiledCodeFile);
