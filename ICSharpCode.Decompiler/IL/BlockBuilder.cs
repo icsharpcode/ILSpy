@@ -185,8 +185,12 @@ namespace ICSharpCode.Decompiler.IL
 				case OpCode.BlockContainer:
 					var container = (BlockContainer)inst;
 					containerStack.Push(container);
-					foreach (var block in container.Blocks)
+					foreach (var block in container.Blocks) {
 						ConnectBranches(block);
+						if (block.Instructions.Count == 0 || !block.Instructions.Last().HasFlag(InstructionFlags.EndPointUnreachable)) {
+							block.Instructions.Add(new InvalidInstruction("Unexpected end of block"));
+						}
+					}
 					containerStack.Pop();
 					break;
 				default:

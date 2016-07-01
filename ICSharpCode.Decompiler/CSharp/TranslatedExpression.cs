@@ -156,24 +156,29 @@ namespace ICSharpCode.Decompiler.CSharp
 		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false, bool addUncheckedAnnotations = true)
 		{
 			var type = this.Type;
-			if (targetType.IsKnownType(KnownTypeCode.Boolean))
-				return ConvertToBoolean(expressionBuilder);
 			if (type.Equals(targetType))
 				return this;
-			if ((type.IsKnownType(KnownTypeCode.IntPtr) && targetType.IsKnownType(KnownTypeCode.UIntPtr))
-			    || (type.IsKnownType(KnownTypeCode.UIntPtr) && targetType.IsKnownType(KnownTypeCode.IntPtr))) {
-				return Expression.Invoke("ToPointer")
-					.WithoutILInstruction()
-					.WithRR(new ResolveResult(new PointerType(expressionBuilder.compilation.FindType(KnownTypeCode.Void))))
-					.ConvertTo(targetType, expressionBuilder);
+			var compilation = expressionBuilder.compilation;
+			if (targetType.IsKnownType(KnownTypeCode.Boolean)) {
+				// convert to boolean through byte, to simulate the truncation to 8 bits
+				return this.ConvertTo(compilation.FindType(KnownTypeCode.Byte), expressionBuilder, checkForOverflow, addUncheckedAnnotations)
+					.ConvertToBoolean(expressionBuilder);
 			}
-			if (targetType.IsKnownType(KnownTypeCode.IntPtr) || targetType.IsKnownType(KnownTypeCode.UIntPtr)) {
-				return Expression.CastTo(expressionBuilder.ConvertType(new PointerType(expressionBuilder.compilation.FindType(KnownTypeCode.Void))))
-					.CastTo(expressionBuilder.ConvertType(targetType))
-					.WithoutILInstruction()
-					.WithRR(expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult));
+			if ((targetType.IsKnownType(KnownTypeCode.IntPtr) || targetType.IsKnownType(KnownTypeCode.UIntPtr)) && type.Kind != TypeKind.Pointer) {
+				// (u)long -> IntPtr/UIntPtr casts in C# throw overflow exceptions, even in unchecked context.
+				// To avoid those, convert via void*.
+				return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow, addUncheckedAnnotations)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow, addUncheckedAnnotations);
 			}
-			if (type.Kind == TypeKind.ByReference && targetType.Kind == TypeKind.Pointer && Expression is DirectionExpression) {
+			if (targetType.Kind == TypeKind.Pointer && type.Kind == TypeKind.Enum) {
+				// enum to pointer: convert via underlying type
+				return this.ConvertTo(type.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow, addUncheckedAnnotations)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow, addUncheckedAnnotations);
+			} else if (targetType.Kind == TypeKind.Pointer && (type.IsKnownType(KnownTypeCode.Boolean) || type.IsKnownType(KnownTypeCode.Char))) {
+				// bool/char to pointer: convert via uint
+				return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt32), expressionBuilder, checkForOverflow, addUncheckedAnnotations)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow, addUncheckedAnnotations);
+			} else if (targetType.Kind == TypeKind.Pointer && type.Kind == TypeKind.ByReference && Expression is DirectionExpression) {
 				// convert from reference to pointer
 				Expression arg = ((DirectionExpression)Expression).Expression.Detach();
 				var pointerType = new PointerType(((ByReferenceType)type).ElementType);
@@ -182,7 +187,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(pointerType));
 				// perform remaining pointer cast, if necessary
 				return pointerExpr.ConvertTo(targetType, expressionBuilder);
-			} else if (targetType.Kind == TypeKind.ByReference) {
+			}
+			if (targetType.Kind == TypeKind.ByReference) {
 				// Convert from integer/pointer to reference.
 				// First, convert to the corresponding pointer type:
 				var elementType = ((ByReferenceType)targetType).ElementType;
@@ -200,8 +206,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				// convert from boolean to integer (or enum)
 				return new ConditionalExpression(
 					this.Expression,
-					LdcI4(expressionBuilder.compilation, 1).ConvertTo(targetType, expressionBuilder),
-					LdcI4(expressionBuilder.compilation, 0).ConvertTo(targetType, expressionBuilder)
+					LdcI4(compilation, 1).ConvertTo(targetType, expressionBuilder),
+					LdcI4(compilation, 0).ConvertTo(targetType, expressionBuilder)
 				).WithoutILInstruction().WithRR(new ResolveResult(targetType));
 			}
 			var rr = expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult);
@@ -231,8 +237,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				return this;
 			}
 			IType boolType = expressionBuilder.compilation.FindType(KnownTypeCode.Boolean);
-			if (Expression is PrimitiveExpression && Type.IsKnownType(KnownTypeCode.Int32)) {
-				bool val = (int)((PrimitiveExpression)Expression).Value != 0;
+			if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is int) {
+				bool val = (int)ResolveResult.ConstantValue != 0;
+				return new PrimitiveExpression(val)
+					.WithILInstruction(this.ILInstructions)
+					.WithRR(new ConstantResolveResult(boolType, val));
+			} else if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is byte) {
+				bool val = (byte)ResolveResult.ConstantValue != 0;
 				return new PrimitiveExpression(val)
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(boolType, val));
