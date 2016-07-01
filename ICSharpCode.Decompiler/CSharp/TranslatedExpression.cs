@@ -167,6 +167,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(new PointerType(expressionBuilder.compilation.FindType(KnownTypeCode.Void))))
 					.ConvertTo(targetType, expressionBuilder);
 			}
+			if (targetType.IsKnownType(KnownTypeCode.IntPtr) || targetType.IsKnownType(KnownTypeCode.UIntPtr)) {
+				return Expression.CastTo(expressionBuilder.ConvertType(new PointerType(expressionBuilder.compilation.FindType(KnownTypeCode.Void))))
+					.CastTo(expressionBuilder.ConvertType(targetType))
+					.WithoutILInstruction()
+					.WithRR(expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult));
+			}
 			if (type.Kind == TypeKind.ByReference && targetType.Kind == TypeKind.Pointer && Expression is DirectionExpression) {
 				// convert from reference to pointer
 				Expression arg = ((DirectionExpression)Expression).Expression.Detach();

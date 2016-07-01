@@ -113,6 +113,13 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			TestAssembleDecompileCompileOutput("ILTest.il");
 		}
+		
+		[Test]
+		public void ConvTest()
+		{
+			TestAssembleDecompileCompileOutput("ConvTest.il");
+			TestAssembleDecompileCompileOutput("ConvTest.il", CompilerOptions.UseDebug | CompilerOptions.Force32Bit, AssemblerOptions.Force32Bit);
+		}
 
 		[Test, Ignore("Fixed statements are broken")]
 		public void UnsafeCode()
@@ -150,13 +157,13 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 		
-		void TestAssembleDecompileCompileOutput(string testFileName, CompilerOptions options = CompilerOptions.UseDebug)
+		void TestAssembleDecompileCompileOutput(string testFileName, CompilerOptions options = CompilerOptions.UseDebug, AssemblerOptions asmOptions = AssemblerOptions.None)
 		{
 			string outputFile = null;
 			CompilerResults decompiledOutputFile = null;
 
 			try {
-				outputFile = Tester.AssembleIL(Path.Combine(TestCasePath, testFileName));
+				outputFile = Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions);
 				string decompiledCodeFile = Tester.DecompileCSharp(outputFile);
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
 				

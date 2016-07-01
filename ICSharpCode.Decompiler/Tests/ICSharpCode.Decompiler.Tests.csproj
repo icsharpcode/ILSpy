@@ -89,6 +89,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
+    <None Include="TestCases\ConvTest.il" />
+    <None Include="TestCases\ILTest.il" />
     <None Include="TestCases\Readme.txt" />
   </ItemGroup>
   <ItemGroup>
