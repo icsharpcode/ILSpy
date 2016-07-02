@@ -24,6 +24,8 @@ using System.Linq;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Analysis;
 using ICSharpCode.NRefactory.PatternMatching;
+using ICSharpCode.NRefactory.Semantics;
+using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -955,14 +957,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		PropertyDeclaration TransformAutomaticProperties(PropertyDeclaration property)
 		{
-			PropertyDefinition cecilProperty = property.Annotation<PropertyDefinition>();
-			if (cecilProperty == null || cecilProperty.GetMethod == null || cecilProperty.SetMethod == null)
+			var propertyInfo = property.GetSymbol() as IProperty;
+			if (propertyInfo == null)
+				return null;
+			PropertyDefinition cecilProperty = context.TypeSystem.GetCecil(propertyInfo) as PropertyDefinition;
+			if (cecilProperty == null || propertyInfo.Getter == null || propertyInfo.Setter == null)
 				return null;
 			if (!(cecilProperty.GetMethod.IsCompilerGenerated() && cecilProperty.SetMethod.IsCompilerGenerated()))
 				return null;
 			Match m = automaticPropertyPattern.Match(property);
 			if (m.Success) {
-				FieldDefinition field = m.Get<AstNode>("fieldReference").Single().Annotation<FieldReference>().ResolveWithinSameModule();
+				var fieldInfo = m.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
+				if (fieldInfo == null)
+					return null;
+				FieldDefinition field = context.TypeSystem.GetCecil(fieldInfo) as FieldDefinition;
 				if (field.IsCompilerGenerated() && field.DeclaringType == cecilProperty.DeclaringType) {
 					RemoveCompilerGeneratedAttribute(property.Getter.Attributes);
 					RemoveCompilerGeneratedAttribute(property.Setter.Attributes);
@@ -970,7 +978,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					property.Setter.Body = null;
 				}
 			}
-			// Since the event instance is not changed, we can continue in the visitor as usual, so return null
+			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
 			return null;
 		}
 		
@@ -978,7 +986,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			foreach (AttributeSection section in attributeSections) {
 				foreach (var attr in section.Attributes) {
-					TypeReference tr = attr.Type.Annotation<TypeReference>();
+					var tr = attr.Type.GetSymbol() as IType;
 					if (tr != null && tr.Namespace == "System.Runtime.CompilerServices" && tr.Name == "CompilerGeneratedAttribute") {
 						attr.Remove();
 					}

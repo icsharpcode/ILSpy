@@ -144,8 +144,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (field.IsCompilerGenerated()) {
 //					if (settings.AnonymousMethods && IsAnonymousMethodCacheField(field))
 //						return true;
-//					if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field))
-//						return true;
+					if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field))
+						return true;
 //					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
 //						return true;
 				}
