@@ -57,6 +57,36 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Random_Tests_Implicit_Conversions_32()
+		{
+			try {
+				RunWithOutput("Random Tests\\TestCases", "ImplicitConversions_32.exe");
+			} catch (AssertionException ex) {
+				Assert.Ignore(ex.Message);
+			}
+		}
+
+		[Test]
+		public void Random_Tests_Explicit_Conversions()
+		{
+			try {
+				RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe");
+			} catch (AssertionException ex) {
+				Assert.Ignore(ex.Message);
+			}
+		}
+
+		[Test]
+		public void Random_Tests_Explicit_Conversions_32()
+		{
+			try {
+				RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe");
+			} catch (AssertionException ex) {
+				Assert.Ignore(ex.Message);
+			}
+		}
+
+		[Test]
 		public void Random_Tests_TestCases()
 		{
 			try {
