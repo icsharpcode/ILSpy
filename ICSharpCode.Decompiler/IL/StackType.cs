@@ -31,12 +31,28 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		Unknown,
 		/// <summary>32-bit integer</summary>
+		/// <remarks>
+		/// Used for C# <c>int</c>, <c>uint</c>,
+		/// C# small integer types <c>byte</c>, <c>sbyte</c>, <c>short</c>, <c>ushort</c>,
+		/// <c>bool</c> and <c>char</c>,
+		/// and any enums with one of the above as underlying type.
+		/// </remarks>
 		I4,
 		/// <summary>64-bit integer</summary>
+		/// <remarks>
+		/// Used for C# <c>long</c>, <c>ulong</c>,
+		/// and any enums with one of the above as underlying type.
+		/// </remarks>
 		I8,
 		/// <summary>native-size integer, or unmanaged pointer</summary>
+		/// <remarks>
+		/// Used for C# <c>IntPtr</c>, <c>UIntPtr</c> and any native pointer types (<c>void*</c> etc.)
+		/// </remarks>
 		I,
 		/// <summary>Floating point number</summary>
+		/// <remarks>
+		/// Used for C# <c>float</c> and <c>double</c>.
+		/// </remarks>
 		F,
 		/// <summary>Another stack type. Includes objects, value types, function pointers, ...</summary>
 		O,

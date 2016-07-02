@@ -194,6 +194,9 @@ namespace ICSharpCode.Decompiler.IL
 			bool ok1 = enum1.MoveNext();
 			bool ok2 = enum2.MoveNext();
 			while (ok1 && ok2) {
+				if (enum1.Current.StackType != enum2.Current.StackType) {
+					Warn("Incompatible stack types: " + enum1.Current.StackType + " vs " + enum2.Current.StackType);
+				}
 				unionFind.Merge(enum1.Current, enum2.Current);
 				ok1 = enum1.MoveNext();
 				ok2 = enum2.MoveNext();
@@ -330,8 +333,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (PeekStackType()) {
 				case StackType.I4:
-				case StackType.I:
 					return Push(new Sub(new LdcI4(0), Pop(), checkForOverflow: false, sign: Sign.None));
+				case StackType.I:
+					return Push(new Sub(new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.Signed), Pop(), checkForOverflow: false, sign: Sign.None));
 				case StackType.I8:
 					return Push(new Sub(new LdcI8(0), Pop(), checkForOverflow: false, sign: Sign.None));
 				case StackType.F:
@@ -560,27 +564,27 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldftn:
 					return Push(new LdFtn(ReadAndDecodeMethodReference()));
 				case ILOpCode.Ldind_I1:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.SByte)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.SByte)));
 				case ILOpCode.Ldind_I2:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.Int16)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Int16)));
 				case ILOpCode.Ldind_I4:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.Int32)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Int32)));
 				case ILOpCode.Ldind_I8:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.Int64)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Int64)));
 				case ILOpCode.Ldind_U1:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.Byte)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Byte)));
 				case ILOpCode.Ldind_U2:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.UInt16)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.UInt16)));
 				case ILOpCode.Ldind_U4:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.UInt32)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.UInt32)));
 				case ILOpCode.Ldind_R4:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.Single)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Single)));
 				case ILOpCode.Ldind_R8:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.Double)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Double)));
 				case ILOpCode.Ldind_I:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.IntPtr)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.IntPtr)));
 				case ILOpCode.Ldind_Ref:
-					return Push(new LdObj(Pop(), compilation.FindType(KnownTypeCode.Object)));
+					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Object)));
 				case ILOpCode.Ldloc:
 					return Push(Ldloc(reader.ReadUInt16()));
 				case ILOpCode.Ldloc_S:
@@ -636,21 +640,21 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Starg_S:
 					return Starg(reader.ReadByte());
 				case ILOpCode.Stind_I1:
-					return new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.SByte));
+					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.SByte));
 				case ILOpCode.Stind_I2:
-					return new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Int16));
+					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int16));
 				case ILOpCode.Stind_I4:
-					return new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Int32));
+					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int32));
 				case ILOpCode.Stind_I8:
-					return new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Int64));
+					return new StObj(value: Pop(StackType.I8), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int64));
 				case ILOpCode.Stind_R4:
-					return new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Single));
+					return new StObj(value: Pop(StackType.F), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Single));
 				case ILOpCode.Stind_R8:
-					return new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Double));
+					return new StObj(value: Pop(StackType.F), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Double));
 				case ILOpCode.Stind_I:
-					return new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.IntPtr));
+					return new StObj(value: Pop(StackType.I), target: PopPointer(), type: compilation.FindType(KnownTypeCode.IntPtr));
 				case ILOpCode.Stind_Ref:
-					return new StObj(value: Pop(), target: Pop(), type: compilation.FindType(KnownTypeCode.Object));
+					return new StObj(value: Pop(StackType.O), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Stloc:
 					return Stloc(reader.ReadUInt16());
 				case ILOpCode.Stloc_S:
@@ -671,19 +675,22 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Xor:
 					return BinaryNumeric(OpCode.BitXor);
 				case ILOpCode.Box:
-					return Push(new Box(Pop(), ReadAndDecodeTypeReference()));
+					{
+						var type = ReadAndDecodeTypeReference();
+						return Push(new Box(Pop(type.GetStackType()), type));
+					}
 				case ILOpCode.Castclass:
-					return Push(new CastClass(Pop(), ReadAndDecodeTypeReference()));
+					return Push(new CastClass(Pop(StackType.O), ReadAndDecodeTypeReference()));
 				case ILOpCode.Cpobj:
 					{
 						var type = ReadAndDecodeTypeReference();
-						var ld = new LdObj(Pop(), type);
-						return new StObj(Pop(), ld, type);
+						var ld = new LdObj(PopPointer(), type);
+						return new StObj(PopPointer(), ld, type);
 					}
 				case ILOpCode.Initobj:
-					return InitObj(Pop(), ReadAndDecodeTypeReference());
+					return InitObj(PopPointer(), ReadAndDecodeTypeReference());
 				case ILOpCode.Isinst:
-					return Push(new IsInst(Pop(), ReadAndDecodeTypeReference()));
+					return Push(new IsInst(Pop(StackType.O), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldelem:
 					return LdElem(ReadAndDecodeTypeReference());
 				case ILOpCode.Ldelem_I1:
@@ -715,23 +722,29 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldflda:
 					return Push(new LdFlda(Pop(), ReadAndDecodeFieldReference()));
 				case ILOpCode.Stfld:
-					return new StFld(value: Pop(), target: Pop(), field: ReadAndDecodeFieldReference());
+					{
+						var field = ReadAndDecodeFieldReference();
+						return new StFld(value: Pop(field.Type.GetStackType()), target: Pop(), field: field);
+					}
 				case ILOpCode.Ldlen:
 					return Push(new LdLen(StackType.I, Pop()));
 				case ILOpCode.Ldobj:
-					return Push(new LdObj(Pop(), ReadAndDecodeTypeReference()));
+					return Push(new LdObj(PopPointer(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldsfld:
 					return Push(new LdsFld(ReadAndDecodeFieldReference()));
 				case ILOpCode.Ldsflda:
 					return Push(new LdsFlda(ReadAndDecodeFieldReference()));
 				case ILOpCode.Stsfld:
-					return new StsFld(Pop(), ReadAndDecodeFieldReference());
+					{
+						var field = ReadAndDecodeFieldReference();
+						return new StsFld(Pop(field.Type.GetStackType()), field);
+					}
 				case ILOpCode.Ldtoken:
 					return Push(LdToken(ReadAndDecodeMetadataToken()));
 				case ILOpCode.Ldvirtftn:
 					return Push(new LdVirtFtn(Pop(), ReadAndDecodeMethodReference()));
 				case ILOpCode.Mkrefany:
-					return Push(new MakeRefAny(Pop(), ReadAndDecodeTypeReference()));
+					return Push(new MakeRefAny(PopPointer(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Newarr:
 					return Push(new NewArr(ReadAndDecodeTypeReference(), Pop()));
 				case ILOpCode.Refanytype:
@@ -761,7 +774,10 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stelem_Ref:
 					return StElem(compilation.FindType(KnownTypeCode.Object));
 				case ILOpCode.Stobj:
-					return new StObj(value: Pop(), target: Pop(), type: ReadAndDecodeTypeReference());
+					{
+						var type = ReadAndDecodeTypeReference();
+						return new StObj(value: Pop(type.GetStackType()), target: PopPointer(), type: type);
+					}
 				case ILOpCode.Throw:
 					return new Throw(Pop());
 				case ILOpCode.Unbox:
@@ -856,12 +872,42 @@ namespace ICSharpCode.Decompiler.IL
 			return new LdLoc(v);
 		}
 
+		ILInstruction Pop(StackType expectedType)
+		{
+			ILInstruction inst = Pop();
+			if (expectedType != inst.ResultType) {
+				if (expectedType == StackType.I && inst.ResultType == StackType.I4) {
+					inst = new Conv(inst, PrimitiveType.I, false, Sign.Signed);
+				} else {
+					Warn($"Expected {expectedType}, but got {inst.ResultType}");
+				}
+			}
+			return inst;
+		}
+		
+		ILInstruction PopPointer()
+		{
+			ILInstruction inst = Pop();
+			switch (inst.ResultType) {
+				case StackType.I4:
+					return new Conv(inst, PrimitiveType.I, false, Sign.Signed);
+				case StackType.I:
+				case StackType.Ref:
+				case StackType.Unknown:
+					return inst;
+				default:
+					Warn("Expected native int or pointer, but got " + inst.ResultType);
+					return inst;
+			}
+		}
+		
 		private ILInstruction Return()
 		{
-			if (body.Method.ReturnType.GetStackType() == StackType.Void)
+			var stackType = body.Method.ReturnType.GetStackType();
+			if (stackType == StackType.Void)
 				return new IL.Return();
 			else
-				return new IL.Return(Pop());
+				return new IL.Return(Pop(stackType));
 		}
 
 		private ILInstruction DecodeLdstr()
@@ -882,7 +928,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction Starg(ushort v)
 		{
-			return new StLoc(parameterVariables[v], Pop());
+			return new StLoc(parameterVariables[v], Pop(parameterVariables[v].StackType));
 		}
 
 		private ILInstruction Ldloc(ushort v)
@@ -897,7 +943,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction Stloc(ushort v)
 		{
-			return new StLoc(localVariables[v], Pop());
+			return new StLoc(localVariables[v], Pop(localVariables[v].StackType));
 		}
 		
 		private ILInstruction LdElem(IType type)
@@ -907,7 +953,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		private ILInstruction StElem(IType type)
 		{
-			var value = Pop();
+			var value = Pop(type.GetStackType());
 			var index = Pop();
 			var array = Pop();
 			return new StObj(new LdElema(type, array, index), value, type);
@@ -978,9 +1024,13 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction DecodeCall(OpCode opCode)
 		{
 			var method = ReadAndDecodeMethodReference();
-			var arguments = new ILInstruction[GetPopCount(opCode, method)];
-			for (int i = arguments.Length - 1; i >= 0; i--) {
-				arguments[i] = Pop();
+			int firstArgument = (opCode != OpCode.NewObj && !method.IsStatic) ? 1 : 0;
+			var arguments = new ILInstruction[firstArgument + method.Parameters.Count];
+			for (int i = method.Parameters.Count - 1; i >= 0; i--) {
+				arguments[firstArgument + i] = Pop(method.Parameters[i].Type.GetStackType());
+			}
+			if (firstArgument == 1) {
+				arguments[0] = Pop();
 			}
 			switch (method.DeclaringType.Kind) {
 				case TypeKind.Array:
@@ -1034,6 +1084,13 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var right = Pop();
 			var left = Pop();
+			// make the implicit I4->I conversion explicit:
+			if (left.ResultType == StackType.I4 && right.ResultType == StackType.I) {
+				left = new Conv(left, PrimitiveType.I, false, Sign.Signed);
+			} else if (left.ResultType == StackType.I && right.ResultType == StackType.I4) {
+				right = new Conv(right, PrimitiveType.I, false, Sign.Signed);
+			}
+			
 			// Based on Table 4: Binary Comparison or Branch Operation
 			if (left.ResultType == StackType.F && right.ResultType == StackType.F) {
 				if (un) {
@@ -1079,7 +1136,7 @@ namespace ICSharpCode.Decompiler.IL
 					// introduce explicit comparison with 0
 					condition = new Comp(
 						negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
-						Sign.None, condition, new LdcI4(0));
+						Sign.None, condition, new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.Signed));
 					break;
 				case StackType.I8:
 					// introduce explicit comparison with 0
@@ -1118,7 +1175,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			uint length = reader.ReadUInt32();
 			int baseOffset = 4 * (int)length + reader.Position;
-			var instr = new SwitchInstruction(Pop());
+			var instr = new SwitchInstruction(Pop(StackType.I4));
 			
 			for (uint i = 0; i < length; i++) {
 				var section = new SwitchSection();
@@ -1136,6 +1193,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var right = Pop();
 			var left = Pop();
+			if (opCode != OpCode.Shl && opCode != OpCode.Shr) {
+				// make the implicit I4->I conversion explicit:
+				if (left.ResultType == StackType.I4 && right.ResultType == StackType.I) {
+					left = new Conv(left, PrimitiveType.I, false, Sign.Signed);
+				} else if (left.ResultType == StackType.I && right.ResultType == StackType.I4) {
+					right = new Conv(right, PrimitiveType.I, false, Sign.Signed);
+				}
+			}
 			return Push(BinaryNumericInstruction.Create(opCode, left, right, checkForOverflow, sign));
 		}
 

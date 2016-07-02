@@ -53,11 +53,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Random_Tests_Implicit_Conversions()
 		{
-			try {
-				RunWithOutput("Random Tests\\TestCases", "ImplicitConversions.exe");
-			} catch (AssertionException ex) {
-				Assert.Ignore(ex.Message);
-			}
+			RunWithOutput("Random Tests\\TestCases", "ImplicitConversions.exe");
 		}
 
 		[Test]

@@ -119,17 +119,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.kind = kind;
 			this.Sign = sign;
-			this.inputType = ComputeInputType(left.ResultType, right.ResultType);
+			this.inputType = left.ResultType;
+			Debug.Assert(left.ResultType == right.ResultType);
 		}
 
-		static StackType ComputeInputType(StackType left, StackType right)
-		{
-			if (left == StackType.I || right == StackType.I)
-				return StackType.I;
-			Debug.Assert(left == right);
-			return left;
-		}
-		
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);

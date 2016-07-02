@@ -99,8 +99,6 @@ namespace ICSharpCode.Decompiler.IL
 					return StackType.Ref;
 				}
 			}
-			if (left == StackType.I || right == StackType.I)
-				return StackType.I;
 			return StackType.Unknown;
 		}
 		
