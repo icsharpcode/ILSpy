@@ -28,33 +28,6 @@ namespace ICSharpCode.Decompiler.IL
 {
 	static class ILTypeExtensions
 	{
-		/*public static ImmutableArray<StackType> GetStackTypes(this TypeSignatureCollection typeSignatureCollection)
-		{
-			var result = new StackType[typeSignatureCollection.Count];
-			int i = 0;
-			foreach (var typeSig in typeSignatureCollection) {
-				result[i++] = GetStackType(typeSig);
-			}
-			return ImmutableArray.Create(result);
-		}*/
-
-		public static StackType GetStackType(this TypeReference typeRef)
-		{
-			typeRef = typeRef.SkipModifiers();
-			TypeDefinition typeDef = typeRef.Resolve();
-			if (typeDef != null && typeDef.IsEnum) {
-				typeRef = typeDef.GetEnumUnderlyingType();
-			}
-			return typeRef.MetadataType.GetStackType();
-		}
-
-		public static TypeReference SkipModifiers(this TypeReference typeRef)
-		{
-			while (typeRef.IsOptionalModifier || typeRef.IsRequiredModifier)
-				typeRef = ((IModifierType)typeRef).ElementType;
-			return typeRef;
-		}
-
 		public static StackType GetStackType(this MetadataType typeCode)
 		{
 			switch (typeCode) {

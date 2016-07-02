@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		Cil.MethodBody body;
+		StackType methodReturnStackType;
 		BlobReader reader;
 		ImmutableStack<ILVariable> currentStack;
 		ILVariable[] parameterVariables;
@@ -80,6 +81,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.reader = body.GetILReader();
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new UnionFind<ILVariable>();
+			this.methodReturnStackType = typeSystem.Resolve(body.Method.ReturnType).GetStackType();
 			InitParameterVariables();
 			this.localVariables = body.Variables.SelectArray(CreateILVariable);
 			if (body.InitLocals) {
@@ -903,11 +905,10 @@ namespace ICSharpCode.Decompiler.IL
 		
 		private ILInstruction Return()
 		{
-			var stackType = body.Method.ReturnType.GetStackType();
-			if (stackType == StackType.Void)
+			if (methodReturnStackType == StackType.Void)
 				return new IL.Return();
 			else
-				return new IL.Return(Pop(stackType));
+				return new IL.Return(Pop(methodReturnStackType));
 		}
 
 		private ILInstruction DecodeLdstr()
