@@ -80,6 +80,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
 		}
 		
+		public static TranslatedExpression WithILInstruction(this TranslatedExpression expression, ILInstruction instruction)
+		{
+			expression.Expression.AddAnnotation(instruction);
+			return expression;
+		}
+		
 		public static TranslatedExpression WithoutILInstruction(this ExpressionWithResolveResult expression)
 		{
 			return new TranslatedExpression(expression.Expression, expression.ResolveResult);

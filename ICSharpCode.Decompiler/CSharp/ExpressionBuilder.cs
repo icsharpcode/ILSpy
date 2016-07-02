@@ -42,9 +42,21 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// Every translated expression must have:
 	/// * an ILInstruction annotation
 	/// * a ResolveResult annotation
-	///   * The type of the ResolveResult must match the StackType of the corresponding ILInstruction.
-	///   * If the type of the ResolveResult is <c>sbyte</c> or <c>short</c>, the evaluated value of the ILInstruction
-	///     can be obtained by evaluating the C# expression and sign-extending the result to <c>int</c>.
+	/// Post-condition for Translate() calls:
+	///   * The type of the ResolveResult must match the StackType of the corresponding ILInstruction,
+	///     except that the width of integer types does not need to match (I4, I and I8 count as the same stack type here)
+	///   * Evaluating the resulting C# expression shall produce the same side effects as evaluating the ILInstruction.
+	///   * If the IL instruction has <c>ResultType == StackType.Void</c>, the C# expression may evaluate to an arbitrary type and value.
+	///   * Otherwise, evaluating the resulting C# expression shall produce a similar value as evaluating the ILInstruction.
+	///      * If the IL instruction evaluates to an integer stack type (I4, I, or I8),
+	///        the C# type of the resulting expression shall also be an integer (or enum/pointer/char/bool) type.
+	///        * If sizeof(C# type) == sizeof(IL stack type), the values must be the same.
+	///        * If sizeof(C# type) > sizeof(IL stack type), the C# value truncated to the width of the IL stack type must equal the IL value.
+	///        * If sizeof(C# type) &lt; sizeof(IL stack type), the C# value (sign/zero-)extended to the width of the IL stack type
+	///          must equal the IL value.
+	///          Whether sign or zero extension is used depends on the sign of the C# type (as determined by <c>IType.GetSign()</c>).
+	///      * If the IL instruction evaluates to a non-integer type, the C# type of the resulting expression shall match the IL stack type,
+	///        and the evaluated values shall be the same.
 	/// </remarks>
 	class ExpressionBuilder : ILVisitor<TranslatedExpression>
 	{
@@ -95,7 +107,16 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(inst != null);
 			var cexpr = inst.AcceptVisitor(this);
-			Debug.Assert(cexpr.Type.GetStackType() == inst.ResultType || cexpr.Type.Kind == TypeKind.Unknown || inst.ResultType == StackType.Void);
+			#if DEBUG
+			if (inst.ResultType != StackType.Void && cexpr.Type.Kind != TypeKind.Unknown) {
+				if (inst.ResultType.IsIntegerType()) {
+					Debug.Assert(cexpr.Type.GetStackType().IsIntegerType(), "IL instructions of integer type must convert into C# expressions of integer type");
+					Debug.Assert(cexpr.Type.GetSign() != Sign.None, "Must have a sign specified for zero/sign-extension");
+				} else {
+					Debug.Assert(cexpr.Type.GetStackType() == inst.ResultType);
+				}
+			}
+			#endif
 			return cexpr;
 		}
 		
@@ -591,28 +612,133 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitConv(Conv inst)
 		{
 			var arg = Translate(inst.Argument);
-			if (inst.Kind == ConversionKind.StopGCTracking && arg.Type.Kind == TypeKind.ByReference) {
-				// cast to corresponding pointer type:
-				var pointerType = new PointerType(((ByReferenceType)arg.Type).ElementType);
-				arg = arg.ConvertTo(pointerType, this);
-				// if we want a native int, just return the pointer directly
-				if (inst.ResultType == StackType.I)
-					return arg;
-				// otherwise, continue converting
+			StackType inputStackType = inst.Argument.ResultType;
+			// Note: we're dealing with two conversions here:
+			// a) the implicit conversion from `arg.Type` to `inputStackType`
+			//    (due to the ExpressionBuilder post-condition being flexible with regards to the integer type width)
+			//    If this is a widening conversion, I'm calling the argument C# type "oversized".
+			//    If this is a narrowing conversion, I'm calling the argument C# type "undersized".
+			// b) the actual conversion instruction from `inputStackType` to `inst.TargetType`
+			
+			// Also, we need to be very careful with regards to the conversions we emit:
+			// In C#, zero vs. sign-extension depends on the input type,
+			// but in the ILAst Conv instruction it depends on the output type.
+			switch (inst.Kind) {
+				case ConversionKind.StopGCTracking:
+					if (arg.Type.Kind == TypeKind.ByReference) {
+						// cast to corresponding pointer type:
+						var pointerType = new PointerType(((ByReferenceType)arg.Type).ElementType);
+						return arg.ConvertTo(pointerType, this).WithILInstruction(inst);
+					} else {
+						Debug.Fail("ConversionKind.StopGCTracking should only be used with managed references");
+						goto default;
+					}
+				case ConversionKind.SignExtend:
+					// Sign extension is easy because it can never fail due to overflow checking.
+					
+					// We just need to ensure the input type before the conversion is signed.
+					// Also, if the argument was translated into an oversized C# type,
+					// we need to perform the truncatation to the input stack type.
+					if (arg.Type.GetSign() != Sign.Signed || arg.Type.GetSize() > inputStackType.GetSize()) {
+						// Note that an undersized C# type is handled just fine:
+						// If it is unsigned we'll zero-extend it to the width of the inputStackType here,
+						// and it is signed we just combine the two sign-extensions into a single sign-extending conversion.
+						arg = arg.ConvertTo(compilation.FindType(inputStackType.ToKnownTypeCode(Sign.Signed)), this);
+					}
+					// Then, we can just return the argument as-is: the ExpressionBuilder post-condition allows us
+					// to force our parent instruction to handle the actual sign-extension conversion.
+					// (our caller may have more information to pick a better fitting target type)
+					return arg.WithILInstruction(inst);
+				case ConversionKind.ZeroExtend:
+					// Zero extension may involve an overflow check.
+					
+					if (!inst.CheckForOverflow || inst.InputSign == Sign.Unsigned) {
+						// If overflow check cannot fail, handle this just like sign extension (except for swapped signs)
+						if (arg.Type.GetSign() != Sign.Unsigned || arg.Type.GetSize() > inputStackType.GetSize()) {
+							arg = arg.ConvertTo(compilation.FindType(inputStackType.ToKnownTypeCode(Sign.Unsigned)), this);
+						}
+						return arg.WithILInstruction(inst);
+					}
+					// Zero extension that should fail if the input type is negative.
+					// Split this conversion into steps:
+					// 1) perform input truncation if necessary, and perform unchecked cast to signed input type
+					if (arg.Type.GetSize() > inputStackType.GetSize() || arg.Type.GetSign() != inst.InputSign) {
+						arg = arg.ConvertTo(compilation.FindType(inputStackType.ToKnownTypeCode(inst.InputSign)), this);
+					}
+					// 2) perform sign conversion to unsigned with overflow check (input zero/sign extension can be combined with this step),
+					arg = arg.ConvertTo(compilation.FindType(inputStackType.ToKnownTypeCode(Sign.Unsigned)), this, true);
+					// 3) leave the actual zero extension to our caller.
+					return arg.WithILInstruction(inst);
+				case ConversionKind.Nop:
+					// Conversion between two types of same size; possibly sign-changing; may involve overflow checking.
+					if (!inst.CheckForOverflow || inst.InputSign == inst.TargetType.GetSign()) {
+						// a true nop: no need to generate any C# code
+						return arg.WithILInstruction(inst);
+					}
+					// sign-changing, overflow-checking conversion
+					
+					// If the input conversion is a truncation, we need to perform it (without overflow-checking).
+					// If the argument has a different type than that expected by the overflow check,
+					// we need to ensure we use the correct input type.
+					if (arg.Type.GetSize() > inputStackType.GetSize() || arg.Type.GetSign() != inst.InputSign) {
+						arg = arg.ConvertTo(compilation.FindType(inputStackType.ToKnownTypeCode(inst.InputSign)), this);
+					}
+					// Note that an input conversion that is a sign/zero-extension can be combined with the
+					// overflow-checking conversion
+					
+					goto default; // Perform the actual overflow-checking conversion
+				case ConversionKind.Truncate:
+					// Note: there are three sizes involved here:
+					// A = arg.Type.GetSize()
+					// B = inputStackType.GetSize()
+					// C = inst.TargetType.GetSize().
+					// We know that C <= B (otherwise this wouldn't be the truncation case).
+					// 1) If C < B < A, we just combine the two truncations into one.
+					// 2) If C < B = A, there's no input conversion, just the truncation
+					// 3) If C <= A < B, all the extended bits get removed again by the truncation.
+					// 4) If A < C < B, some extended bits remain even after truncation.
+					// In cases 1-3, the overall conversion is a truncation or no-op.
+					// In case 4, the overall conversion is a zero/sign extension, but to a smaller
+					// size than the original conversion.
+					if (!inst.CheckForOverflow) {
+						// Truncation without overflow check.
+						
+						if (inst.TargetType.IsSmallIntegerType()) {
+							// If the target type is a small integer type, IL will implicitly sign- or zero-extend
+							// the result after the truncation back to StackType.I4.
+							// (which means there's actually 3 conversions involved!)
+							
+							if (arg.Type.GetSize() <= inst.TargetType.GetSize() && arg.Type.GetSign() == inst.TargetType.GetSign()) {
+								// There's no actual truncation involved, and the result of the Conv instruciton is extended
+								// the same way as the original instruction
+								// -> we can return arg directly
+								return arg.WithILInstruction(inst);
+							} else {
+								// We need to actually truncate; *or* we need to change the sign for the remaining extension to I4.
+								goto default; // Emit simple cast to inst.TargetType
+							}
+						} else {
+							Debug.Assert(inst.TargetType.GetSize() == inst.ResultType.GetSize());
+							// For non-small integer types, we can let the whole unchecked truncation
+							// get handled by our caller (using the ExpressionBuilder post-condition).
+							
+							// Case 4 (left-over extension from implicit conversion) can also be handled by our caller.
+							return arg.WithILInstruction(inst);
+						}
+					}
+					// Truncation with overflow check
+					// Similar to nop-case: perform input truncation without overflow checking + ensure correct input sign.
+					if (arg.Type.GetSize() > inputStackType.GetSize() || arg.Type.GetSign() != inst.InputSign) {
+						arg = arg.ConvertTo(compilation.FindType(inputStackType.ToKnownTypeCode(inst.InputSign)), this);
+					}
+					goto default; // perform cast with overflow-check
+				case ConversionKind.IntToFloat: // TODO: handle these conversions correctly
+				case ConversionKind.FloatToInt:
+				case ConversionKind.FloatPrecisionChange:
+				default:
+					return arg.ConvertTo(compilation.FindType(inst.TargetType.ToKnownTypeCode()), this, inst.CheckForOverflow)
+						.WithILInstruction(inst);
 			}
-			if (inst.Sign != Sign.None && arg.Type.GetSign() != inst.Sign) {
-				// we need to cast the input to a type of appropriate sign
-				var inputType = inst.Argument.ResultType.ToKnownTypeCode(inst.Sign);
-				arg = arg.ConvertTo(compilation.FindType(inputType), this);
-			}
-			var targetType = compilation.FindType(inst.TargetType.ToKnownTypeCode());
-			ExpressionWithResolveResult castExpr = arg.ConvertTo(targetType, this, inst.CheckForOverflow, addUncheckedAnnotations: false);
-			if (inst.Kind == ConversionKind.Nop || inst.Kind == ConversionKind.Truncate || inst.Kind == ConversionKind.FloatToInt
-			    || (inst.Kind == ConversionKind.ZeroExtend && arg.Type.GetSign() == Sign.Signed))
-			{
-				castExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
-			}
-			return castExpr.WithILInstruction(inst);
 		}
 		
 		protected internal override TranslatedExpression VisitCall(Call inst)

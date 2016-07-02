@@ -24,14 +24,26 @@ namespace ICSharpCode.Decompiler
 {
 	public static class TypeUtils
 	{
-		static int GetNativeSize(IType type)
+		public const int NativeIntSize = 6; // between 4 (Int32) and 8 (Int64)
+		
+		/// <summary>
+		/// Gets the size (in bytes) of the input type.
+		/// Returns <c>NativeIntSize</c> for pointer-sized types.
+		/// Returns 0 for structs and other types of unknown size.
+		/// </summary>
+		public static int GetSize(this IType type)
 		{
-			const int NativeIntSize = 6; // between 4 (Int32) and 8 (Int64)
-			if (type.Kind == TypeKind.Pointer)
-				return NativeIntSize;
+			switch (type.Kind) {
+				case TypeKind.Pointer:
+				case TypeKind.ByReference:
+				case TypeKind.Class:
+					return NativeIntSize;
+				case TypeKind.Enum:
+					type = type.GetEnumUnderlyingType();
+					break;
+			}
 			
-			var typeForConstant = (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
-			var typeDef = typeForConstant.GetDefinition();
+			var typeDef = type.GetDefinition();
 			if (typeDef == null)
 				return 0;
 			switch (typeDef.KnownTypeCode) {
@@ -58,9 +70,33 @@ namespace ICSharpCode.Decompiler
 			return 0;
 		}
 		
+		/// <summary>
+		/// Gets the size of the input stack type.
+		/// </summary>
+		/// <returns>
+		/// * 4 for <c>I4</c>,
+		/// * 8 for <c>I8</c>,
+		/// * <c>NativeIntSize</c> for <c>I</c> and <c>Ref</c>,
+		/// * 0 otherwise (O, F, Void, Unknown).
+		/// </returns>
+		public static int GetSize(this StackType type)
+		{
+			switch (type) {
+				case StackType.I4:
+					return 4;
+				case StackType.I8:
+					return 8;
+				case StackType.I:
+				case StackType.Ref:
+					return NativeIntSize;
+				default:
+					return 0;
+			}
+		}
+		
 		public static IType GetLargerType(IType type1, IType type2)
 		{
-			return GetNativeSize(type1) >= GetNativeSize(type2) ? type1 : type2;
+			return GetSize(type1) >= GetSize(type2) ? type1 : type2;
 		}
 		
 		/// <summary>
@@ -71,7 +107,7 @@ namespace ICSharpCode.Decompiler
 		/// </summary>
 		public static bool IsSmallIntegerType(this IType type)
 		{
-			return GetNativeSize(type) < 4;
+			return GetSize(type) < 4;
 		}
 		
 		/// <summary>
@@ -114,7 +150,7 @@ namespace ICSharpCode.Decompiler
 			// 2) Both types are integer types of equal size
 			StackType memoryStackType = memoryType.GetStackType();
 			StackType accessStackType = accessType.GetStackType();
-			return memoryStackType == accessStackType && memoryStackType.IsIntegerType() && GetNativeSize(memoryType) == GetNativeSize(accessType);
+			return memoryStackType == accessStackType && memoryStackType.IsIntegerType() && GetSize(memoryType) == GetSize(accessType);
 		}
 
 		/// <summary>
@@ -174,12 +210,14 @@ namespace ICSharpCode.Decompiler
 		/// <remarks>
 		/// Integer types (including IntPtr/UIntPtr) return the sign as expected.
 		/// Floating point types and <c>decimal</c> are considered to be signed.
-		/// <c>char</c> and <c>bool</c> are unsigned.
+		/// <c>char</c>, <c>bool</c> and pointer types (e.g. <c>void*</c>) are unsigned.
 		/// Enums have a sign based on their underlying type.
 		/// All other types return <c>Sign.None</c>.
 		/// </remarks>
 		public static Sign GetSign(this IType type)
 		{
+			if (type.Kind == TypeKind.Pointer)
+				return Sign.Unsigned;
 			var typeDef = type.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
 				return Sign.None;

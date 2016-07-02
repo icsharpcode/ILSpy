@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
@@ -89,6 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// TranslatedExpression as a separate type is still useful to ensure that no case in the expression builder
 	/// forgets to add the annotation.
 	/// </remarks>
+	[DebuggerDisplay("{Expression} : {ResolveResult}")]
 	struct TranslatedExpression
 	{
 		public readonly Expression Expression;
@@ -153,32 +155,74 @@ namespace ICSharpCode.Decompiler.CSharp
 			throw new ArgumentException("descendant must be a descendant of the current node");
 		}
 		
-		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false, bool addUncheckedAnnotations = true)
+		/// <summary>
+		/// Adds casts (if necessary) to convert this expression to the specified target type.
+		/// </summary>
+		/// <remarks>
+		/// If the target type is narrower than the source type, the value is truncated.
+		/// If the target type is wider than the source type, the value is sign- or zero-extended based on the
+		/// sign of the source type.
+		/// This fits with the ExpressionBuilder's post-condition, so e.g. an assignment can simply
+		/// call <c>Translate(stloc.Value).ConvertTo(stloc.Variable.Type)</c> and have the overall C# semantics match the IL semantics.
+		/// </remarks>
+		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false)
 		{
 			var type = this.Type;
 			if (type.Equals(targetType))
 				return this;
 			var compilation = expressionBuilder.compilation;
+			if (type.IsKnownType(KnownTypeCode.Boolean) && targetType.GetStackType().IsIntegerType()) {
+				// convert from boolean to integer (or enum)
+				return new ConditionalExpression(
+					this.Expression,
+					LdcI4(compilation, 1).ConvertTo(targetType, expressionBuilder, checkForOverflow),
+					LdcI4(compilation, 0).ConvertTo(targetType, expressionBuilder, checkForOverflow)
+				).WithoutILInstruction().WithRR(new ResolveResult(targetType));
+			}
+			// Special-case IntPtr and UIntPtr: they behave slightly weird, e.g. converting to them always checks for overflow,
+			// but converting from them never checks for overflow.
+			if (checkForOverflow && type.IsKnownType(KnownTypeCode.IntPtr) && !targetType.IsKnownType(KnownTypeCode.Int64)) {
+				// Convert through `long` instead.
+				return this.ConvertTo(compilation.FindType(KnownTypeCode.Int64), expressionBuilder, checkForOverflow)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+			} else if (checkForOverflow && type.IsKnownType(KnownTypeCode.UIntPtr) && !targetType.IsKnownType(KnownTypeCode.UInt64)) {
+				// Convert through `ulong` instead.
+				return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), expressionBuilder, checkForOverflow)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+			}
+			
 			if (targetType.IsKnownType(KnownTypeCode.Boolean)) {
 				// convert to boolean through byte, to simulate the truncation to 8 bits
-				return this.ConvertTo(compilation.FindType(KnownTypeCode.Byte), expressionBuilder, checkForOverflow, addUncheckedAnnotations)
+				return this.ConvertTo(compilation.FindType(KnownTypeCode.Byte), expressionBuilder, checkForOverflow)
 					.ConvertToBoolean(expressionBuilder);
 			}
-			if ((targetType.IsKnownType(KnownTypeCode.IntPtr) || targetType.IsKnownType(KnownTypeCode.UIntPtr)) && type.Kind != TypeKind.Pointer) {
-				// (u)long -> IntPtr/UIntPtr casts in C# throw overflow exceptions, even in unchecked context.
-				// To avoid those, convert via void*.
-				return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow, addUncheckedAnnotations)
-					.ConvertTo(targetType, expressionBuilder, checkForOverflow, addUncheckedAnnotations);
+			if ((targetType.IsKnownType(KnownTypeCode.IntPtr) || targetType.IsKnownType(KnownTypeCode.UIntPtr))
+			    && type.Kind != TypeKind.Pointer && !checkForOverflow)
+			{
+				// (u)long -> (U)IntPtr casts in C# can throw overflow exceptions in 32-bit mode, even in unchecked context.
+				// To avoid those, convert via `void*`.
+				return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
 			}
 			if (targetType.Kind == TypeKind.Pointer && type.Kind == TypeKind.Enum) {
-				// enum to pointer: convert via underlying type
-				return this.ConvertTo(type.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow, addUncheckedAnnotations)
-					.ConvertTo(targetType, expressionBuilder, checkForOverflow, addUncheckedAnnotations);
-			} else if (targetType.Kind == TypeKind.Pointer && (type.IsKnownType(KnownTypeCode.Boolean) || type.IsKnownType(KnownTypeCode.Char))) {
-				// bool/char to pointer: convert via uint
-				return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt32), expressionBuilder, checkForOverflow, addUncheckedAnnotations)
-					.ConvertTo(targetType, expressionBuilder, checkForOverflow, addUncheckedAnnotations);
-			} else if (targetType.Kind == TypeKind.Pointer && type.Kind == TypeKind.ByReference && Expression is DirectionExpression) {
+				// enum to pointer: C# doesn't allow such casts
+				// -> convert via underlying type
+				return this.ConvertTo(type.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+			} else if (targetType.Kind == TypeKind.Enum && type.Kind == TypeKind.Pointer) {
+				// pointer to enum: C# doesn't allow such casts
+				// -> convert via underlying type
+				return this.ConvertTo(targetType.GetEnumUnderlyingType(), expressionBuilder, checkForOverflow)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+			}
+			if (targetType.Kind == TypeKind.Pointer && type.IsKnownType(KnownTypeCode.Char)
+			   || targetType.IsKnownType(KnownTypeCode.Char) && type.Kind == TypeKind.Pointer) {
+				// char <-> pointer: C# doesn't allow such casts
+				// -> convert via ushort
+				return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt16), expressionBuilder, checkForOverflow)
+					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+			}
+			if (targetType.Kind == TypeKind.Pointer && type.Kind == TypeKind.ByReference && Expression is DirectionExpression) {
 				// convert from reference to pointer
 				Expression arg = ((DirectionExpression)Expression).Expression.Detach();
 				var pointerType = new PointerType(((ByReferenceType)type).ElementType);
@@ -192,7 +236,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Convert from integer/pointer to reference.
 				// First, convert to the corresponding pointer type:
 				var elementType = ((ByReferenceType)targetType).ElementType;
-				var arg = this.ConvertTo(new PointerType(elementType), expressionBuilder, checkForOverflow, addUncheckedAnnotations);
+				var arg = this.ConvertTo(new PointerType(elementType), expressionBuilder, checkForOverflow);
 				// Then dereference the pointer:
 				var derefExpr = new UnaryOperatorExpression(UnaryOperatorType.Dereference, arg.Expression);
 				var elementRR = new ResolveResult(elementType);
@@ -202,26 +246,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithoutILInstruction()
 					.WithRR(new ByReferenceResolveResult(elementRR, false));
 			}
-			if (type.IsKnownType(KnownTypeCode.Boolean) && targetType.GetStackType().IsIntegerType()) {
-				// convert from boolean to integer (or enum)
-				return new ConditionalExpression(
-					this.Expression,
-					LdcI4(compilation, 1).ConvertTo(targetType, expressionBuilder),
-					LdcI4(compilation, 0).ConvertTo(targetType, expressionBuilder)
-				).WithoutILInstruction().WithRR(new ResolveResult(targetType));
-			}
 			var rr = expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult);
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
 				return expressionBuilder.ConvertConstantValue(rr)
 					.WithILInstruction(this.ILInstructions);
 			}
 			if (targetType.Kind == TypeKind.Pointer && 0.Equals(ResolveResult.ConstantValue)) {
-				return new NullReferenceExpression()
+				return new NullReferenceExpression().CastTo(expressionBuilder.ConvertType(targetType))
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(targetType, null));
 			}
-			return Expression.CastTo(expressionBuilder.ConvertType(targetType))
-				.WithoutILInstruction().WithRR(rr);
+			var castExpr = new CastExpression(expressionBuilder.ConvertType(targetType), Expression);
+			castExpr.AddAnnotation(checkForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			return castExpr.WithoutILInstruction().WithRR(rr);
 		}
 		
 		TranslatedExpression LdcI4(ICompilation compilation, int val)
@@ -231,11 +268,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), val));
 		}
 		
+		/// <summary>
+		/// Converts this expression to a boolean expression.
+		/// 
+		/// Expects that the input expression is an integer expression; produces an expression
+		/// that returns <c>true</c> iff the integer value is not 0.
+		/// </summary>
 		public TranslatedExpression ConvertToBoolean(ExpressionBuilder expressionBuilder)
 		{
 			if (Type.IsKnownType(KnownTypeCode.Boolean) || Type.Kind == TypeKind.Unknown) {
 				return this;
 			}
+			Debug.Assert(Type.GetStackType().IsIntegerType());
 			IType boolType = expressionBuilder.compilation.FindType(KnownTypeCode.Boolean);
 			if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is int) {
 				bool val = (int)ResolveResult.ConstantValue != 0;

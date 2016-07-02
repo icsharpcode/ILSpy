@@ -53,11 +53,12 @@ namespace ICSharpCode.Decompiler.IL
 		FloatPrecisionChange,
 		/// <summary>
 		/// Conversion of integer type to larger signed integer type.
+		/// May involve overflow checking (when converting from U4 to I on 32-bit).
 		/// </summary>
 		SignExtend,
 		/// <summary>
 		/// Conversion of integer type to larger unsigned integer type.
-		/// May involve overflow checking (when converting from a small signed type).
+		/// May involve overflow checking (when converting from a signed type).
 		/// </summary>
 		ZeroExtend,
 		/// <summary>
@@ -104,13 +105,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// The input sign does not have any effect on whether the conversion zero-extends or sign-extends;
 		/// that is purely determined by the <c>TargetType</c>.
 		/// </remarks>
-		public readonly Sign Sign;
+		public readonly Sign InputSign;
 		
-		public Conv(ILInstruction argument, PrimitiveType targetType, bool checkForOverflow, Sign sign) : base(OpCode.Conv, argument)
+		public Conv(ILInstruction argument, PrimitiveType targetType, bool checkForOverflow, Sign inputSign) : base(OpCode.Conv, argument)
 		{
 			this.TargetType = targetType;
 			this.CheckForOverflow = checkForOverflow;
-			this.Sign = sign;
+			this.InputSign = inputSign;
 			this.Kind = GetConversionKind(targetType, argument.ResultType);
 			Debug.Assert(this.Kind != ConversionKind.Invalid);
 		}
@@ -207,9 +208,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(OpCode);
 			if (CheckForOverflow)
 				output.Write(".ovf");
-			if (Sign == Sign.Unsigned)
+			if (InputSign == Sign.Unsigned)
 				output.Write(".unsigned");
-			else if (Sign == Sign.Signed)
+			else if (InputSign == Sign.Signed)
 				output.Write(".signed");
 			output.Write(' ');
 			output.Write(Argument.ResultType);

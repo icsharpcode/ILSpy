@@ -879,7 +879,7 @@ namespace ICSharpCode.Decompiler.IL
 			ILInstruction inst = Pop();
 			if (expectedType != inst.ResultType) {
 				if (expectedType == StackType.I && inst.ResultType == StackType.I4) {
-					inst = new Conv(inst, PrimitiveType.I, false, Sign.Signed);
+					inst = new Conv(inst, PrimitiveType.I, false, Sign.None);
 				} else {
 					Warn($"Expected {expectedType}, but got {inst.ResultType}");
 				}
@@ -892,7 +892,7 @@ namespace ICSharpCode.Decompiler.IL
 			ILInstruction inst = Pop();
 			switch (inst.ResultType) {
 				case StackType.I4:
-					return new Conv(inst, PrimitiveType.I, false, Sign.Signed);
+					return new Conv(inst, PrimitiveType.I, false, Sign.None);
 				case StackType.I:
 				case StackType.Ref:
 				case StackType.Unknown:
@@ -1087,9 +1087,9 @@ namespace ICSharpCode.Decompiler.IL
 			var left = Pop();
 			// make the implicit I4->I conversion explicit:
 			if (left.ResultType == StackType.I4 && right.ResultType == StackType.I) {
-				left = new Conv(left, PrimitiveType.I, false, Sign.Signed);
+				left = new Conv(left, PrimitiveType.I, false, Sign.None);
 			} else if (left.ResultType == StackType.I && right.ResultType == StackType.I4) {
-				right = new Conv(right, PrimitiveType.I, false, Sign.Signed);
+				right = new Conv(right, PrimitiveType.I, false, Sign.None);
 			}
 			
 			// Based on Table 4: Binary Comparison or Branch Operation
@@ -1137,7 +1137,7 @@ namespace ICSharpCode.Decompiler.IL
 					// introduce explicit comparison with 0
 					condition = new Comp(
 						negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
-						Sign.None, condition, new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.Signed));
+						Sign.None, condition, new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.None));
 					break;
 				case StackType.I8:
 					// introduce explicit comparison with 0
@@ -1197,9 +1197,9 @@ namespace ICSharpCode.Decompiler.IL
 			if (opCode != OpCode.Shl && opCode != OpCode.Shr) {
 				// make the implicit I4->I conversion explicit:
 				if (left.ResultType == StackType.I4 && right.ResultType == StackType.I) {
-					left = new Conv(left, PrimitiveType.I, false, Sign.Signed);
+					left = new Conv(left, PrimitiveType.I, false, Sign.None);
 				} else if (left.ResultType == StackType.I && right.ResultType == StackType.I4) {
-					right = new Conv(right, PrimitiveType.I, false, Sign.Signed);
+					right = new Conv(right, PrimitiveType.I, false, Sign.None);
 				}
 			}
 			return Push(BinaryNumericInstruction.Create(opCode, left, right, checkForOverflow, sign));

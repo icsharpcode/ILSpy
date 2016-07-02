@@ -64,6 +64,70 @@ namespace ICSharpCode.Decompiler.IL
 			return ((MetadataType)primitiveType).GetStackType();
 		}
 		
+		public static Sign GetSign(this PrimitiveType primitiveType)
+		{
+			switch (primitiveType) {
+				case PrimitiveType.I1:
+				case PrimitiveType.I2:
+				case PrimitiveType.I4:
+				case PrimitiveType.I8:
+				case PrimitiveType.R4:
+				case PrimitiveType.R8:
+				case PrimitiveType.I:
+					return Sign.Signed;
+				case PrimitiveType.U1:
+				case PrimitiveType.U2:
+				case PrimitiveType.U4:
+				case PrimitiveType.U8:
+				case PrimitiveType.U:
+					return Sign.Unsigned;
+				default:
+					return Sign.None;
+			}
+		}
+		
+		/// <summary>
+		/// Gets whether the type is a small integer type.
+		/// Small integer types are:
+		/// * bool, sbyte, byte, char, short, ushort
+		/// * any enums that have a small integer type as underlying type
+		/// </summary>
+		public static int GetSize(this PrimitiveType type)
+		{
+			switch (type) {
+				case PrimitiveType.I1:
+				case PrimitiveType.U1:
+					return 1;
+				case PrimitiveType.I2:
+				case PrimitiveType.U2:
+					return 2;
+				case PrimitiveType.I4:
+				case PrimitiveType.U4:
+				case PrimitiveType.R4:
+					return 4;
+				case PrimitiveType.I8:
+				case PrimitiveType.R8:
+				case PrimitiveType.U8:
+					return 8;
+				case PrimitiveType.I:
+				case PrimitiveType.U:
+					return TypeUtils.NativeIntSize;
+				default:
+					return 0;
+			}
+		}
+		
+		/// <summary>
+		/// Gets whether the type is a small integer type.
+		/// Small integer types are:
+		/// * bool, sbyte, byte, char, short, ushort
+		/// * any enums that have a small integer type as underlying type
+		/// </summary>
+		public static bool IsSmallIntegerType(this PrimitiveType type)
+		{
+			return GetSize(type) < 4;
+		}
+		
 		public static bool IsIntegerType(this PrimitiveType primitiveType)
 		{
 			return primitiveType.GetStackType().IsIntegerType();
