@@ -1082,6 +1082,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			return true;
 		}
 		
+		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst)
+		{
+			var condition = TranslateCondition(inst.Condition);
+			var targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			var trueBranch = Translate(inst.TrueInst).ConvertTo(targetType, this);
+			var falseBranch = Translate(inst.FalseInst).ConvertTo(targetType, this);
+			return new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(trueBranch.Type));
+		}
+		
 		protected internal override TranslatedExpression VisitInvalidInstruction(InvalidInstruction inst)
 		{
 			string message = "Invalid IL";

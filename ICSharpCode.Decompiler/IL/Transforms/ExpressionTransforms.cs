@@ -186,5 +186,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.ReplaceWith(new StLoc(v, inst.Value));
 			}
 		}
+		
+		protected internal override void VisitIfInstruction(IfInstruction inst)
+		{
+			base.VisitIfInstruction(inst);
+			// if (cond) stloc (A, V1) else stloc (A, V2) --> stloc (A, if (cond) V1 else V2)
+			Block trueInst = inst.TrueInst as Block;
+			if (trueInst == null || trueInst.Instructions.Count != 1)
+				return;
+			Block falseInst = inst.FalseInst as Block;
+			if (falseInst == null || falseInst.Instructions.Count != 1)
+				return;
+			ILVariable v1, v2;
+			ILInstruction value1, value2;
+			if (trueInst.Instructions[0].MatchStLoc(out v1, out value1) && falseInst.Instructions[0].MatchStLoc(out v2, out value2) && v1 == v2) {
+				inst.ReplaceWith(new StLoc(v1, new IfInstruction(inst.Condition, value1, value2)));
+			}
+		}
 	}
 }
