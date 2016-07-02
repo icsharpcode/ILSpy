@@ -445,12 +445,12 @@ namespace ICSharpCode.ILSpy
 			
 			return TypeToString(ConvertTypeOptions.DoNotUsePrimitiveTypeNames | ConvertTypeOptions.IncludeTypeParameterDefinitions, type);
 		}
-
+		*/
 		public override bool ShowMember(MemberReference member)
 		{
-			return showAllMembers || !AstBuilder.MemberIsHidden(member, new DecompilationOptions().DecompilerSettings);
+			return showAllMembers || !CSharpDecompiler.MemberIsHidden(member, new DecompilationOptions().DecompilerSettings);
 		}
-		 */
+
 		public override MemberReference GetOriginalCodeLocation(MemberReference member)
 		{
 			if (showAllMembers || !DecompilerSettingsPanel.CurrentDecompilerSettings.AnonymousMethods)
