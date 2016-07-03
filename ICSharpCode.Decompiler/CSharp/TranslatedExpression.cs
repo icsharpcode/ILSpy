@@ -164,6 +164,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// sign of the source type.
 		/// This fits with the ExpressionBuilder's post-condition, so e.g. an assignment can simply
 		/// call <c>Translate(stloc.Value).ConvertTo(stloc.Variable.Type)</c> and have the overall C# semantics match the IL semantics.
+		/// 
+		/// From the caller's perspective, IntPtr/UIntPtr behave like normal C# integers except that they have native int size.
+		/// All the special cases necessary to make IntPtr/UIntPtr behave sanely are handled internally in ConvertTo().
 		/// </remarks>
 		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false)
 		{
@@ -179,31 +182,66 @@ namespace ICSharpCode.Decompiler.CSharp
 					LdcI4(compilation, 0).ConvertTo(targetType, expressionBuilder, checkForOverflow)
 				).WithoutILInstruction().WithRR(new ResolveResult(targetType));
 			}
-			// Special-case IntPtr and UIntPtr: they behave slightly weird, e.g. converting to them always checks for overflow,
-			// but converting from them never checks for overflow.
-			if (checkForOverflow && type.IsKnownType(KnownTypeCode.IntPtr) && !targetType.IsKnownType(KnownTypeCode.Int64)) {
-				// Convert through `long` instead.
-				return this.ConvertTo(compilation.FindType(KnownTypeCode.Int64), expressionBuilder, checkForOverflow)
-					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
-			} else if (checkForOverflow && type.IsKnownType(KnownTypeCode.UIntPtr) && !targetType.IsKnownType(KnownTypeCode.UInt64)) {
-				// Convert through `ulong` instead.
-				return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), expressionBuilder, checkForOverflow)
-					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
-			}
-			
 			if (targetType.IsKnownType(KnownTypeCode.Boolean)) {
 				// convert to boolean through byte, to simulate the truncation to 8 bits
 				return this.ConvertTo(compilation.FindType(KnownTypeCode.Byte), expressionBuilder, checkForOverflow)
 					.ConvertToBoolean(expressionBuilder);
 			}
-			if ((targetType.IsKnownType(KnownTypeCode.IntPtr) || targetType.IsKnownType(KnownTypeCode.UIntPtr))
-			    && type.Kind != TypeKind.Pointer && !checkForOverflow)
-			{
-				// (u)long -> (U)IntPtr casts in C# can throw overflow exceptions in 32-bit mode, even in unchecked context.
-				// To avoid those, convert via `void*`.
-				return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow)
-					.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+			
+			// Special-case IntPtr and UIntPtr: they behave extremely weird, see IntPtr.txt for details.
+			if (type.IsKnownType(KnownTypeCode.IntPtr)) { // Conversion from IntPtr
+				// Direct cast only works correctly for IntPtr -> long.
+				// IntPtr -> int works correctly only in checked context.
+				// Everything else can be worked around by casting via long.
+				if (!(targetType.IsKnownType(KnownTypeCode.Int64) || checkForOverflow && targetType.IsKnownType(KnownTypeCode.Int32))) {
+					return this.ConvertTo(compilation.FindType(KnownTypeCode.Int64), expressionBuilder, checkForOverflow)
+						.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+				}
+			} else if (type.IsKnownType(KnownTypeCode.UIntPtr)) { // Conversion from UIntPtr
+				// Direct cast only works correctly for UIntPtr -> ulong.
+				// UIntPtr -> uint works correctly only in checked context.
+				// Everything else can be worked around by casting via ulong.
+				if (!(targetType.IsKnownType(KnownTypeCode.UInt64) || checkForOverflow && targetType.IsKnownType(KnownTypeCode.UInt32))) {
+					return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), expressionBuilder, checkForOverflow)
+						.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+				}
 			}
+			if (targetType.IsKnownType(KnownTypeCode.IntPtr)) { // Conversion to IntPtr
+				if (type.IsKnownType(KnownTypeCode.Int32)) {
+					// normal casts work for int (both in checked and unchecked context)
+				} else if (checkForOverflow) {
+					// if overflow-checking is enabled, we can simply cast via long:
+					// (and long itself works directly in checked context)
+					if (!type.IsKnownType(KnownTypeCode.Int64)) {
+						return this.ConvertTo(compilation.FindType(KnownTypeCode.Int64), expressionBuilder, checkForOverflow)
+							.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+					}
+				} else {
+					// If overflow-checking is disabled, the only way to truncate to native size
+					// without throwing an exception in 32-bit mode is to use a pointer type.
+					if (type.Kind != TypeKind.Pointer) {
+						return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow)
+							.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+					}
+				}
+			} else if (targetType.IsKnownType(KnownTypeCode.UIntPtr)) { // Conversion to UIntPtr
+				if (type.IsKnownType(KnownTypeCode.UInt32) || type.Kind == TypeKind.Pointer) {
+					// normal casts work for uint and pointers (both in checked and unchecked context)
+				} else if (checkForOverflow) {
+					// if overflow-checking is enabled, we can simply cast via ulong:
+					// (and ulong itself works directly in checked context)
+					if (!type.IsKnownType(KnownTypeCode.UInt64)) {
+						return this.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), expressionBuilder, checkForOverflow)
+							.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+					}
+				} else {
+					// If overflow-checking is disabled, the only way to truncate to native size
+					// without throwing an exception in 32-bit mode is to use a pointer type.
+					return this.ConvertTo(new PointerType(compilation.FindType(KnownTypeCode.Void)), expressionBuilder, checkForOverflow)
+						.ConvertTo(targetType, expressionBuilder, checkForOverflow);
+				}
+			}
+
 			if (targetType.Kind == TypeKind.Pointer && type.Kind == TypeKind.Enum) {
 				// enum to pointer: C# doesn't allow such casts
 				// -> convert via underlying type

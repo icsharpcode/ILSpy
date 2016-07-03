@@ -485,11 +485,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		
-		/// <summary>
-		/// Whether we need to generate helper methods for u4->i or u->i8 conversions.
-		/// </summary>
-		internal bool needs_conv_i_ovf_un, needs_conv_i8_ovf_un;
-		
 		EntityDeclaration DoDecompile(ITypeDefinition typeDef, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
@@ -547,30 +542,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						section.Remove();
 				}
 			}
-			if (needs_conv_i_ovf_un) {
-				typeDecl.Members.Add(GenerateConvHelper(
-					"conv_i_ovf_un", KnownTypeCode.UInt32, KnownTypeCode.IntPtr, typeSystemAstBuilder,
-					// on 32-bit, 'conv.ovf u4->i' is like 'conv.ovf u4->i4'
-					new CheckedExpression(new CastExpression(
-						new NRefactory.CSharp.PrimitiveType("int"),
-						new IdentifierExpression("input")
-					)),
-					// on 64-bit, 'conv.ovf u4->i' is like 'conv.ovf u4->i8'
-					new IdentifierExpression("input")
-				));
-				needs_conv_i_ovf_un = false;
-			}
-			if (needs_conv_i8_ovf_un) {
-				typeDecl.Members.Add(GenerateConvHelper(
-					"conv_i8_ovf_un", KnownTypeCode.UIntPtr, KnownTypeCode.Int64, typeSystemAstBuilder,
-					// on 32-bit, 'conv.ovf u->i8' is like 'conv.ovf u4->i8'
-					new IdentifierExpression("input"),
-					// on 64-bit, 'conv.ovf u->i8' is like 'conv.ovf u8->i8'
-					new IdentifierExpression("input")
-				));
-				needs_conv_i8_ovf_un = false;
-			}
-			
 			return typeDecl;
 		}
 
@@ -675,9 +646,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			var statementBuilder = new StatementBuilder(decompilationContext, method);
 			var body = statementBuilder.ConvertAsBlock(function.Body);
 			
-			needs_conv_i_ovf_un |= statementBuilder.exprBuilder.needs_conv_i_ovf_un;
-			needs_conv_i8_ovf_un |= statementBuilder.exprBuilder.needs_conv_i8_ovf_un;
-
 			entityDecl.AddChild(body, Roles.Body);
 		}
 

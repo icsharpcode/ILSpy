@@ -609,11 +609,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			return result;
 		}
 		
-		/// <summary>
-		/// Whether we need to generate helper methods for u4->i or u->i8 conversions.
-		/// </summary>
-		internal bool needs_conv_i_ovf_un, needs_conv_i8_ovf_un;
-		
 		protected internal override TranslatedExpression VisitConv(Conv inst)
 		{
 			var arg = Translate(inst.Argument);
@@ -627,7 +622,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			
 			// Also, we need to be very careful with regards to the conversions we emit:
 			// In C#, zero vs. sign-extension depends on the input type,
-			// but in the ILAst Conv instruction it depends on the output type.
+			// but in the ILAst conv instruction it depends on the output type.
+			// However, in the conv.ovf instructions, the .NET runtime behavior seems to depend on the input type,
+			// in violation of the ECMA-335 spec!
 			
 			if (inst.CheckForOverflow || inst.Kind == ConversionKind.IntToFloat) {
 				// We need to first convert the argument to the expected sign.
@@ -636,51 +633,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (arg.Type.GetSize() > inputStackType.GetSize() || arg.Type.GetSign() != inst.InputSign) {
 					arg = arg.ConvertTo(compilation.FindType(inputStackType.ToKnownTypeCode(inst.InputSign)), this);
 				}
-				if (inst.Kind == ConversionKind.ZeroExtend) {
-					// Zero extension with overflow check -> throws if the input value is negative.
-					// C# sign/zero extension depends on the source type, so we can't directly
-					// cast from the signed input type to the target type.
-					// Instead, perform a checked cast to the unsigned version of the input type
-					// (to throw an exception for negative values).
-					// Then the actual zero extension can be left to our parent instruction
-					// (due to the ExpressionBuilder post-condition being flexible with regards to the integer type width).
-					return arg.ConvertTo(compilation.FindType(inputStackType.ToKnownTypeCode(Sign.Unsigned)), this, true)
-						.WithILInstruction(inst);
-				} else if (inst.Kind == ConversionKind.SignExtend) {
-					// Sign extension with overflow check.
-					// Sign-extending conversions can fail when the "larger type" isn't actually larger, that is, in exactly two cases:
-					// * U4 -> I  on 32-bit
-					// * U -> I8 on 64-bit
-					if (inst.InputSign == Sign.Unsigned && inputStackType == StackType.I4 && inst.TargetType == IL.PrimitiveType.I) {
-						// conv u4->i
-						// on 32-bit, this is a sign-changing conversion with overflow-check
-						// on 64-bit, this is a sign extension
-						needs_conv_i_ovf_un = true;
-						arg = arg.ConvertTo(compilation.FindType(KnownTypeCode.UInt32), this);
-						return new InvocationExpression(new IdentifierExpression("conv_i_ovf_un"), arg.Expression)
-							.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
-							.WithILInstruction(inst);
-					} else if (inst.InputSign == Sign.Unsigned && (inputStackType == StackType.I && inst.TargetType == IL.PrimitiveType.I8)) {
-						// conv u->i8
-						// on 32-bit, this is a sign extension
-						// on 64-bit, this is a sign-changing conversion with overflow-check
-						needs_conv_i8_ovf_un = true;
-						arg = arg.ConvertTo(compilation.FindType(KnownTypeCode.UIntPtr), this);
-						return new InvocationExpression(new IdentifierExpression("conv_i8_ovf_un"), arg.Expression)
-							.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.IntPtr)))
-							.WithILInstruction(inst);
-					} else {
-						// The overflow check cannot actually fail, so we can take the simple solution of performing
-						// an unchecked cast to signed int and let the parent instruction handle the actual sign extension.
-						return arg.ConvertTo(compilation.FindType(inputStackType.ToKnownTypeCode(Sign.Signed)), this)
-							.WithILInstruction(inst);
-					}
-				} else {
-					// Size-preserving sign-changing conversion, or int-to-float conversion:
-					// We can directly cast to the target type.
-					return arg.ConvertTo(compilation.FindType(inst.TargetType.ToKnownTypeCode()), this, true)
-						.WithILInstruction(inst);
-				}
+				// Because casts with overflow check match C# semantics (zero/sign-extension depends on source type),
+				// we can just directly cast to the target type.
+				return arg.ConvertTo(compilation.FindType(inst.TargetType.ToKnownTypeCode()), this, true)
+					.WithILInstruction(inst);
 			}
 			
 			switch (inst.Kind) {
@@ -756,7 +712,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(inst);
 			}
 		}
-		
+
 		protected internal override TranslatedExpression VisitCall(Call inst)
 		{
 			return HandleCallInstruction(inst);

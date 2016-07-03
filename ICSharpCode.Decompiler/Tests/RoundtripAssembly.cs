@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			try {
 				RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
-			} catch (AssertionException ex) {
+			} catch (CompilationFailedException ex) {
 				Assert.Ignore(ex.Message);
 			}
 		}
