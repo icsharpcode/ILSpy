@@ -226,12 +226,14 @@ namespace ICSharpCode.Decompiler.Tests
 
 			public TestProjectDecompiler(string baseDir)
 			{
-				localAssemblies = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => f.Name).ToArray();
+				localAssemblies = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => f.FullName).ToArray();
 			}
 
-			protected override bool IsGacAssembly(AssemblyNameReference r)
+			protected override bool IsGacAssembly(AssemblyNameReference r, AssemblyDefinition asm)
 			{
-				return !localAssemblies.Contains(r.Name + ".dll");
+				if (asm == null)
+					return false;
+				return !localAssemblies.Contains(asm.MainModule.FullyQualifiedName);
 			}
 		}
 

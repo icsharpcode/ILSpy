@@ -193,8 +193,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (r.Name != "mscorlib") {
 						w.WriteStartElement("Reference");
 						w.WriteAttributeString("Include", r.Name);
-						if (!IsGacAssembly(r)) {
-							var asm = module.AssemblyResolver.Resolve(r);
+						var asm = module.AssemblyResolver.Resolve(r);
+						if (!IsGacAssembly(r, asm)) {
 							if (asm != null) {
 								w.WriteElementString("HintPath", asm.MainModule.FullyQualifiedName);
 							}
@@ -222,7 +222,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		
-		protected virtual bool IsGacAssembly(AssemblyNameReference r)
+		protected virtual bool IsGacAssembly(AssemblyNameReference r, AssemblyDefinition asm)
 		{
 			return false;
 		}
