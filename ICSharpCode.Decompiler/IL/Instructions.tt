@@ -303,12 +303,12 @@ namespace ICSharpCode.Decompiler.IL
 	
 	partial class BinaryNumericInstruction
 	{
-		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None)
+		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
 		{
 			switch (opCode) {
 <#	foreach (OpCode opCode in opCodes.Where(c => c.BaseClass == "BinaryNumericInstruction")) { #>
 				case OpCode.<#=opCode.Name#>:
-					return new <#=opCode.Name#>(left, right, checkForOverflow, sign, compoundAssignmentType);
+					return new <#=opCode.Name#>(left, right, checkForOverflow, sign);
 <#	} #>
 				default:
 					throw new ArgumentException("opCode is not a binary numeric instruction");
@@ -581,8 +581,6 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.BaseConstructorArguments.Add("checkForOverflow");
 		opCode.ConstructorParameters.Add("Sign sign");
 		opCode.BaseConstructorArguments.Add("sign");
-		opCode.ConstructorParameters.Add("CompoundAssignmentType compoundAssignmentType = CompoundAssignmentType.None");
-		opCode.BaseConstructorArguments.Add("compoundAssignmentType");
 	};
 	
 	static Action<OpCode> CustomArguments(params string[] arguments)

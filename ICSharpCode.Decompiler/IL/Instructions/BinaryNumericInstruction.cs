@@ -34,11 +34,6 @@ namespace ICSharpCode.Decompiler.IL
 	public abstract partial class BinaryNumericInstruction : BinaryInstruction
 	{
 		/// <summary>
-		/// Gets whether this instruction is a compound assignment.
-		/// </summary>
-		public readonly CompoundAssignmentType CompoundAssignmentType;
-		
-		/// <summary>
 		/// Gets whether the instruction checks for overflow.
 		/// </summary>
 		public readonly bool CheckForOverflow;
@@ -52,15 +47,14 @@ namespace ICSharpCode.Decompiler.IL
 
 		readonly StackType resultType;
 
-		protected BinaryNumericInstruction(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssignmentType)
+		protected BinaryNumericInstruction(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
 			: base(opCode, left, right)
 		{
 			this.CheckForOverflow = checkForOverflow;
 			this.Sign = sign;
-			this.CompoundAssignmentType = compoundAssignmentType;
 			this.resultType = ComputeResultType(opCode, left.ResultType, right.ResultType);
 			Debug.Assert(resultType != StackType.Unknown);
-			Debug.Assert(CompoundAssignmentType == CompoundAssignmentType.None || IsValidCompoundAssignmentTarget(Left));
+			//Debug.Assert(CompoundAssignmentType == CompoundAssignmentType.None || IsValidCompoundAssignmentTarget(Left));
 		}
 		
 		internal static bool IsValidCompoundAssignmentTarget(ILInstruction inst)
@@ -108,54 +102,16 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		internal override void CheckInvariant(ILPhase phase)
-		{
-			base.CheckInvariant(phase);
-			Debug.Assert(CompoundAssignmentType == CompoundAssignmentType.None || IsValidCompoundAssignmentTarget(Left));
-		}
-
-		protected override void Connected()
-		{
-			base.Connected();
-			// Count the local variable store due to the compound assignment:
-			ILVariable v;
-			if (CompoundAssignmentType != CompoundAssignmentType.None && Left.MatchLdLoc(out v)) {
-				v.StoreCount++;
-			}
-		}
-		
-		protected override void Disconnected()
-		{
-			base.Disconnected();
-			// Count the local variable store due to the compound assignment:
-			ILVariable v;
-			if (CompoundAssignmentType != CompoundAssignmentType.None && Left.MatchLdLoc(out v)) {
-				v.StoreCount--;
-			}
-		}
-		
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = base.ComputeFlags();
 			if (CheckForOverflow)
 				flags |= InstructionFlags.MayThrow;
-			// Set MayWriteLocals if this is a compound assignment to a local variable
-			if (CompoundAssignmentType != CompoundAssignmentType.None && Left.OpCode == OpCode.LdLoc)
-				flags |= InstructionFlags.MayWriteLocals;
 			return flags;
 		}
 
 		public override void WriteTo(ITextOutput output)
 		{
-			switch (CompoundAssignmentType) {
-				case CompoundAssignmentType.EvaluatesToNewValue:
-					output.Write("compound.assign");
-					break;
-				case CompoundAssignmentType.EvaluatesToOldValue:
-					output.Write("compound.assign.oldvalue");
-					break;
-			}
-			
 			output.Write(OpCode);
 			if (CheckForOverflow)
 				output.Write(".ovf");
