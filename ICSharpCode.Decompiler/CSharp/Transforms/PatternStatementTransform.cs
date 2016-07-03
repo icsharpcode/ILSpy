@@ -957,11 +957,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		PropertyDeclaration TransformAutomaticProperties(PropertyDeclaration property)
 		{
-			var propertyInfo = property.GetSymbol() as IProperty;
-			if (propertyInfo == null)
-				return null;
-			PropertyDefinition cecilProperty = context.TypeSystem.GetCecil(propertyInfo) as PropertyDefinition;
-			if (cecilProperty == null || propertyInfo.Getter == null || propertyInfo.Setter == null)
+			PropertyDefinition cecilProperty = context.TypeSystem.GetCecil(property.GetSymbol() as IProperty) as PropertyDefinition;
+			if (cecilProperty == null || cecilProperty.GetMethod == null || cecilProperty.SetMethod == null)
 				return null;
 			if (!(cecilProperty.GetMethod.IsCompilerGenerated() && cecilProperty.SetMethod.IsCompilerGenerated()))
 				return null;
