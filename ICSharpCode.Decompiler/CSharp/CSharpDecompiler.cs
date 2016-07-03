@@ -47,7 +47,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly DecompilerSettings settings;
 
 		List<IILTransform> ilTransforms = new List<IILTransform> {
-			new RemoveDeadVariableInit(),
 			new SplitVariables(),
 			new ControlFlowSimplification(),
 			new ILInlining(),
@@ -58,6 +57,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			new ILInlining(),
 			new CopyPropagation(),
 			new InlineCompilerGeneratedVariables(),
+			new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit
+			new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
 			new LoopingTransform(
 				new ExpressionTransforms(),
 				new TransformArrayInitializers(),
