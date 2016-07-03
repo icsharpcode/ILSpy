@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Tests.Helpers;
@@ -143,7 +144,7 @@ namespace ICSharpCode.Decompiler.Tests
 					DefaultAssemblyResolver resolver = new DefaultAssemblyResolver();
 					resolver.AddSearchDirectory(inputDir);
 					var module = ModuleDefinition.ReadModule(file, new ReaderParameters { AssemblyResolver = resolver });
-					var decompiler = new WholeProjectDecompiler();
+					var decompiler = new TestProjectDecompiler(inputDir);
 					// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
 					decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");
 					decompiler.DecompileProject(module, decompiledDir);
@@ -218,7 +219,22 @@ namespace ICSharpCode.Decompiler.Tests
 					throw new TestRunFailedException($"Test execution of {Path.GetFileName(fileToTest)} failed");
 			}
 		}
-		
+
+		class TestProjectDecompiler : WholeProjectDecompiler
+		{
+			readonly string[] localAssemblies;
+
+			public TestProjectDecompiler(string baseDir)
+			{
+				localAssemblies = new DirectoryInfo(baseDir).EnumerateFiles("*.dll").Select(f => f.Name).ToArray();
+			}
+
+			protected override bool IsGacAssembly(AssemblyNameReference r)
+			{
+				return !localAssemblies.Contains(r.Name + ".dll");
+			}
+		}
+
 		class CompilationFailedException : Exception
 		{
 			public CompilationFailedException(string message) : base(message)
