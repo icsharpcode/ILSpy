@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.IL;
 
@@ -152,7 +153,7 @@ namespace ICSharpCode.Decompiler.IL
 			ILInstruction loadInst;
 			if (FindLoadInNext(next, v, inlinedExpression, out loadInst) == true) {
 				if (loadInst.OpCode == OpCode.LdLoca) {
-					if (!IsGeneratedValueTypeTemporary(next, loadInst.Parent, loadInst.ChildIndex, v))
+					if (!IsGeneratedValueTypeTemporary(next, loadInst.Parent, loadInst.ChildIndex, v, inlinedExpression))
 						return false;
 				} else {
 					Debug.Assert(loadInst.OpCode == OpCode.LdLoc);
@@ -182,9 +183,50 @@ namespace ICSharpCode.Decompiler.IL
 		/// <param name="parent">The direct parent of the load within 'next'</param>
 		/// <param name="pos">Index of the load within 'parent'</param>
 		/// <param name="v">The variable being inlined.</param>
-		static bool IsGeneratedValueTypeTemporary(ILInstruction next, ILInstruction parent, int pos, ILVariable v)
+		static bool IsGeneratedValueTypeTemporary(ILInstruction next, ILInstruction parent, int pos, ILVariable v, ILInstruction inlinedExpression)
 		{
 			if (pos == 0 && v.Type != null && v.Type.IsReferenceType == false) {
+				// Inlining a value type variable is allowed only if the resulting code will maintain the semantics
+				// that the method is operating on a copy.
+				// Thus, we have to disallow inlining of other locals, fields, array elements, dereferenced pointers
+				switch (inlinedExpression.OpCode) {
+					case OpCode.LdLoc:
+					case OpCode.StLoc:
+					case OpCode.LdElema:
+						return false;
+					case OpCode.LdFld:
+					case OpCode.StFld:
+					case OpCode.LdsFld:
+					case OpCode.StsFld:
+						// allow inlining field access only if it's a readonly field
+						IField f = ((IInstructionWithFieldOperand)inlinedExpression).Field;
+						if (!f.IsReadOnly)
+							return false;
+						break;
+					case OpCode.Call:
+						var m = ((CallInstruction)inlinedExpression).Method;
+						// ensure that it's not an multi-dimensional array getter
+						if (m.DeclaringType.Kind == TypeKind.Array)
+							return false;
+						goto case OpCode.CallVirt;
+					case OpCode.CallVirt:
+						// don't inline foreach loop variables:
+						m = ((CallInstruction)inlinedExpression).Method;
+						if (m.Name == "get_Current" && !m.IsStatic)
+							return false;
+						break;
+					case OpCode.CastClass:
+					case OpCode.UnboxAny:
+						// These are valid, but might occur as part of a foreach loop variable.
+						ILInstruction arg = inlinedExpression.Children[0];
+						if (arg.OpCode == OpCode.Call || arg.OpCode == OpCode.CallVirt) {
+							m = ((CallInstruction)arg).Method;
+							if (m.Name == "get_Current" && !m.IsStatic)
+								return false; // looks like a foreach loop variable, so don't inline it
+						}
+						break;
+				}
+				
 				// inline the compiler-generated variable that are used when accessing a member on a value type:
 				switch (parent.OpCode) {
 					case OpCode.Call:
