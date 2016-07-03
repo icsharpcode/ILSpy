@@ -599,4 +599,9 @@ namespace ICSharpCode.Decompiler.IL
 			return inst;
 		}
 	}
+	
+	public interface IInstructionWithFieldOperand
+	{
+		ICSharpCode.NRefactory.TypeSystem.IField Field { get; }
+	}
 }

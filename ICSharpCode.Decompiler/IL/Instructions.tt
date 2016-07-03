@@ -803,6 +803,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, field);");
+		opCode.Interfaces.Add("IInstructionWithFieldOperand");
 	};
 
 	static Action<OpCode> HasTypeOperand = opCode => {

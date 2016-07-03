@@ -1874,7 +1874,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Load instance field</summary>
-	public sealed partial class LdFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class LdFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix, IInstructionWithFieldOperand
 	{
 		public LdFld(ILInstruction target, IField field) : base(OpCode.LdFld)
 		{
@@ -1969,7 +1969,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Load address of instance field</summary>
-	public sealed partial class LdFlda : ILInstruction
+	public sealed partial class LdFlda : ILInstruction, IInstructionWithFieldOperand
 	{
 		public LdFlda(ILInstruction target, IField field) : base(OpCode.LdFlda)
 		{
@@ -2056,7 +2056,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Store value to instance field</summary>
-	public sealed partial class StFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class StFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix, IInstructionWithFieldOperand
 	{
 		public StFld(ILInstruction target, ILInstruction value, IField field) : base(OpCode.StFld)
 		{
@@ -2171,7 +2171,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Load static field</summary>
-	public sealed partial class LdsFld : SimpleInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class LdsFld : SimpleInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix, IInstructionWithFieldOperand
 	{
 		public LdsFld(IField field) : base(OpCode.LdsFld)
 		{
@@ -2215,7 +2215,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Load static field address</summary>
-	public sealed partial class LdsFlda : SimpleInstruction
+	public sealed partial class LdsFlda : SimpleInstruction, IInstructionWithFieldOperand
 	{
 		public LdsFlda(IField field) : base(OpCode.LdsFlda)
 		{
@@ -2242,7 +2242,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Store value to static field</summary>
-	public sealed partial class StsFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	public sealed partial class StsFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix, IInstructionWithFieldOperand
 	{
 		public StsFld(ILInstruction value, IField field) : base(OpCode.StsFld)
 		{
