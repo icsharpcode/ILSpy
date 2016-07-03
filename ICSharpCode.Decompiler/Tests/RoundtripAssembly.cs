@@ -62,25 +62,25 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 		
 		[Test]
-		public void Implicit_Conversions()
+		public void ImplicitConversions()
 		{
 			RunWithOutput("Random Tests\\TestCases", "ImplicitConversions.exe");
 		}
 
 		[Test]
-		public void Implicit_Conversions_32()
+		public void ImplicitConversions_32()
 		{
 			RunWithOutput("Random Tests\\TestCases", "ImplicitConversions_32.exe");
 		}
 
 		[Test]
-		public void Explicit_Conversions()
+		public void ExplicitConversions()
 		{
 			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe");
 		}
 
 		[Test]
-		public void Explicit_Conversions_32()
+		public void ExplicitConversions_32()
 		{
 			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe");
 		}

@@ -452,7 +452,7 @@ namespace ICSharpCode.Decompiler.IL
 		public InvalidInstruction() : base(OpCode.InvalidInstruction)
 		{
 		}
-		public override StackType ResultType { get { return StackType.Void; } }
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;

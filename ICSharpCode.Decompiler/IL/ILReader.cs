@@ -337,7 +337,7 @@ namespace ICSharpCode.Decompiler.IL
 				case StackType.I4:
 					return Push(new Sub(new LdcI4(0), Pop(), checkForOverflow: false, sign: Sign.None));
 				case StackType.I:
-					return Push(new Sub(new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.Signed), Pop(), checkForOverflow: false, sign: Sign.None));
+					return Push(new Sub(new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.None), Pop(), checkForOverflow: false, sign: Sign.None));
 				case StackType.I8:
 					return Push(new Sub(new LdcI8(0), Pop(), checkForOverflow: false, sign: Sign.None));
 				case StackType.F:
@@ -880,6 +880,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (expectedType != inst.ResultType) {
 				if (expectedType == StackType.I && inst.ResultType == StackType.I4) {
 					inst = new Conv(inst, PrimitiveType.I, false, Sign.None);
+				} else if (inst is InvalidInstruction) {
+					((InvalidInstruction)inst).ExpectedResultType = expectedType;
 				} else {
 					Warn($"Expected {expectedType}, but got {inst.ResultType}");
 				}

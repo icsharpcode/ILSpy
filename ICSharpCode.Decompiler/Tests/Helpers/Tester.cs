@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static string AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
 			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
-			string outputFile = Path.GetTempFileName();
+			string outputFile = sourceFileName + ".exe";
 			
 			string otherOptions = " ";
 			
@@ -155,34 +155,52 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			int result1 = Tester.Run(outputFile, out output1, out error1);
 			int result2 = Tester.Run(decompiledOutputFile, out output2, out error2);
 			
-			if (result1 != result2 || output1 != output2 || error1 != error2) {
-				Console.WriteLine("original: " + outputFile);
-				Console.WriteLine("decompiled: " + decompiledOutputFile);
-				
-				Console.WriteLine("Test {0} failed.", testFileName);
-				if (decompiledCodeFile != null)
-					Console.WriteLine("Decompiled code in {0}:line 1", decompiledCodeFile);
-				if (error1 == "" && error2 != "") {
-					Console.WriteLine(error2);
-				} else {
+			Assert.AreEqual(0, result1, "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
+			Assert.AreEqual(0, result2, "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
+			
+			if (output1 != output2 || error1 != error2) {
+				StringBuilder b = new StringBuilder();
+				b.AppendLine($"Test {testFileName} failed: output does not match.");
+				if (decompiledCodeFile != null) {
+					b.AppendLine($"Decompiled code in {decompiledCodeFile}:line 1");
+				}
+				if (error1 != error2) {
+					b.AppendLine("Got different error output.");
+					b.AppendLine("Original error:");
+					b.AppendLine(error1);
+					b.AppendLine();
+					b.AppendLine("Error after de+re-compiling:");
+					b.AppendLine(error2);
+					b.AppendLine();
+				}
+				if (output1 != output2) {
 					string outputFileName = Path.Combine(Path.GetTempPath(), Path.GetFileNameWithoutExtension(testFileName));
 					File.WriteAllText(outputFileName + ".original.out", output1);
 					File.WriteAllText(outputFileName + ".decompiled.out", output2);
 					int diffLine = 0;
-					foreach (var pair in output1.Split('\n').Zip(output2.Split('\n'), Tuple.Create)) {
+					string lastHeader = null;
+					Tuple<string, string> errorItem = null;
+					foreach (var pair in output1.Replace("\r", "").Split('\n').Zip(output2.Replace("\r", "").Split('\n'), Tuple.Create)) {
 						diffLine++;
 						if (pair.Item1 != pair.Item2) {
+							errorItem = pair;
 							break;
 						}
+						if (pair.Item1.EndsWith(":", StringComparison.Ordinal)) {
+							lastHeader = pair.Item1;
+						}
 					}
-					Console.WriteLine("Output: {0}.original.out:line {1}", outputFileName, diffLine);
-					Console.WriteLine("Output: {0}.decompiled.out:line {1}", outputFileName, diffLine);
+					b.AppendLine($"Output differs; first difference in line {diffLine}");
+					if (lastHeader != null) {
+						b.AppendLine(lastHeader);
+					}
+					b.AppendLine($"{outputFileName}.original.out:line {diffLine}");
+					b.AppendLine(errorItem.Item1);
+					b.AppendLine($"{outputFileName}.decompiled.out:line {diffLine}");
+					b.AppendLine(errorItem.Item2);
 				}
+				Assert.Fail(b.ToString());
 			}
-			Assert.AreEqual(0, result1, "Exit code != 0; did the test case crash?" + Environment.NewLine + error1);
-			Assert.AreEqual(0, result2, "Exit code != 0; did the decompiled code crash?" + Environment.NewLine + error2);
-			Assert.AreEqual(error1, error2);
-			Assert.AreEqual(output1, output2);
 		}
 	}
 }

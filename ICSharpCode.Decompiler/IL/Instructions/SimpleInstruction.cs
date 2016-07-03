@@ -40,10 +40,15 @@ namespace ICSharpCode.Decompiler.IL
 	partial class InvalidInstruction : SimpleInstruction
 	{
 		public string Message;
+		public StackType ExpectedResultType = StackType.Unknown;
 		
 		public InvalidInstruction(string message) : this()
 		{
 			this.Message = message;
+		}
+		
+		public override StackType ResultType {
+			get { return ExpectedResultType; }
 		}
 		
 		public override void WriteTo(ITextOutput output)

@@ -279,34 +279,38 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst)
 		{
 			var argument = Translate(inst.Argument);
-			var compatibleType = argument.Type.GetEnumUnderlyingType();
-			var type = compatibleType.GetDefinition();
 			
+			if (argument.Type.GetStackType().GetSize() < inst.ResultType.GetSize()
+			    || argument.Type.Kind == TypeKind.Enum && argument.Type.IsSmallIntegerType())
+			{
+				// Argument is undersized (even after implicit integral promotion to I4)
+				// -> we need to perform sign/zero-extension before the BitNot.
+				// Same if the argument is an enum based on a small integer type
+				// (those don't undergo numeric promotion in C# the way non-enum small integer types do).
+				argument = argument.ConvertTo(compilation.FindType(inst.ResultType.ToKnownTypeCode(argument.Type.GetSign())), this);
+			}
+			
+			var type = argument.Type.GetDefinition();
 			if (type != null) {
+				// Handle those types that don't support operator ~
+				// Note that it's OK to use a type that's larger than necessary.
 				switch (type.KnownTypeCode) {
 					case KnownTypeCode.Boolean:
 					case KnownTypeCode.Char:
-						compatibleType = compilation.FindType(KnownTypeCode.UInt32);
+						argument = argument.ConvertTo(compilation.FindType(KnownTypeCode.UInt32), this);
 						break;
 					case KnownTypeCode.IntPtr:
-						compatibleType = compilation.FindType(KnownTypeCode.Int64);
+						argument = argument.ConvertTo(compilation.FindType(KnownTypeCode.Int64), this);
 						break;
 					case KnownTypeCode.UIntPtr:
-						compatibleType = compilation.FindType(KnownTypeCode.UInt64);
+						argument = argument.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), this);
 						break;
 				}
 			}
 			
-			argument = argument.ConvertTo(compatibleType, this);
-			var rr = resolver.ResolveUnaryOperator(UnaryOperatorType.BitNot, argument.ResolveResult);
-			var result = new UnaryOperatorExpression(UnaryOperatorType.BitNot, argument)
-				.WithRR(rr)
+			return new UnaryOperatorExpression(UnaryOperatorType.BitNot, argument)
+				.WithRR(resolver.ResolveUnaryOperator(UnaryOperatorType.BitNot, argument.ResolveResult))
 				.WithILInstruction(inst);
-			if (type != null && (type.KnownTypeCode == KnownTypeCode.IntPtr || type.KnownTypeCode == KnownTypeCode.UIntPtr)) {
-				return result.ConvertTo(type, this);
-			} else {
-				return result;
-			}
 		}
 		
 		ExpressionWithResolveResult LogicNot(TranslatedExpression expr)
@@ -510,46 +514,56 @@ namespace ICSharpCode.Decompiler.CSharp
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
-			ResolveResult rr;
-			if (left.Type.GetStackType() == StackType.I || right.Type.GetStackType() == StackType.I) {
-				// IntPtr or pointers as input.
-				// C# doesn't allow adding IntPtr values, and adding pointer values has the wrong semantics
-				// (adding number of elements instead of number of bytes), so switch to long/ulong in both cases.
-				IType targetType;
-				if (inst.Sign == Sign.Unsigned) {
-					targetType = compilation.FindType(KnownTypeCode.UInt64);
-				} else {
-					targetType = compilation.FindType(KnownTypeCode.Int64);
-				}
+			left = PrepareArithmeticArgument(left, inst.Left.ResultType, inst.Sign);
+			right = PrepareArithmeticArgument(right, inst.Right.ResultType, inst.Sign);
+			
+			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
+			if (rr.IsError || rr.Type.GetStackType() != inst.ResultType
+			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
+			{
+				// Left and right operands are incompatible, so convert them to a common type
+				StackType targetStackType = inst.ResultType == StackType.I ? StackType.I8 : inst.ResultType;
+				IType targetType = compilation.FindType(targetStackType.ToKnownTypeCode(inst.Sign));
 				left = left.ConvertTo(targetType, this);
 				right = right.ConvertTo(targetType, this);
-				rr = new OperatorResolveResult(targetType, BinaryOperatorExpression.GetLinqNodeType(op, inst.CheckForOverflow), left.ResolveResult, right.ResolveResult);
-				var resultExpr = new BinaryOperatorExpression(left.Expression, op, right.Expression)
-					.WithILInstruction(inst)
-					.WithRR(rr);
-				if (BinaryOperatorMightCheckForOverflow(op))
-					resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
-				return resultExpr.ConvertTo(compilation.FindType(inst.ResultType.ToKnownTypeCode()), this);
-			} else {
 				rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
-				if (rr.IsError || rr.Type.GetStackType() != inst.ResultType
-				    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
-				{
-					// Left and right operands are incompatible, so convert them to a common type
-					IType targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode(inst.Sign));
-					left = left.ConvertTo(targetType, this);
-					right = right.ConvertTo(targetType, this);
-					rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
-				}
-				var resultExpr = new BinaryOperatorExpression(left.Expression, op, right.Expression)
-					.WithILInstruction(inst)
-					.WithRR(rr);
-				if (BinaryOperatorMightCheckForOverflow(op))
-					resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
-				return resultExpr;
 			}
+			var resultExpr = new BinaryOperatorExpression(left.Expression, op, right.Expression)
+				.WithILInstruction(inst)
+				.WithRR(rr);
+			if (BinaryOperatorMightCheckForOverflow(op))
+				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			return resultExpr;
 		}
 
+		/// <summary>
+		/// Handle oversized arguments needing truncation; and avoid IntPtr/pointers in arguments.
+		/// </summary>
+		TranslatedExpression PrepareArithmeticArgument(TranslatedExpression arg, StackType argStackType, Sign sign)
+		{
+			if (argStackType.IsIntegerType() && argStackType.GetSize() < arg.Type.GetSize()) {
+				// If the argument is oversized (needs truncation to match stack size of its ILInstruction),
+				// perform the truncation now.
+				arg = arg.ConvertTo(compilation.FindType(argStackType.ToKnownTypeCode(sign)), this);
+			}
+			if (arg.Type.GetStackType() == StackType.I) {
+				// None of the operators we might want to apply are supported by IntPtr/UIntPtr.
+				// Also, pointer arithmetic has different semantics (works in number of elements, not bytes).
+				// So any inputs of size StackType.I must be converted to long/ulong.
+				arg = arg.ConvertTo(compilation.FindType(StackType.I8.ToKnownTypeCode(sign)), this);
+			}
+			return arg;
+		}
+		
+		/// <summary>
+		/// Gets whether <paramref name="type"/> has the specified <paramref name="sign"/>.
+		/// If <paramref name="sign"/> is None, always returns true.
+		/// </summary>
+		static bool IsCompatibleWithSign(IType type, Sign sign)
+		{
+			return sign == Sign.None || type.GetSign() == sign;
+		}
+		
 		static bool BinaryOperatorMightCheckForOverflow(BinaryOperatorType op)
 		{
 			switch (op) {
@@ -562,15 +576,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				default:
 					return true;
 			}
-		}
-		
-		/// <summary>
-		/// Gets whether <paramref name="type"/> has the specified <paramref name="sign"/>.
-		/// If <paramref name="sign"/> is None, always returns true.
-		/// </summary>
-		bool IsCompatibleWithSign(IType type, Sign sign)
-		{
-			return sign == Sign.None || type.GetSign() == sign;
 		}
 		
 		protected internal override TranslatedExpression VisitShl(Shl inst)
@@ -689,6 +694,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						// If the target type is a small integer type, IL will implicitly sign- or zero-extend
 						// the result after the truncation back to StackType.I4.
 						// (which means there's actually 3 conversions involved!)
+						// Note that we must handle truncation to small integer types ourselves:
+						// our caller only sees the StackType.I4 and doesn't know to truncate to the small type.
 						
 						if (arg.Type.GetSize() <= inst.TargetType.GetSize() && arg.Type.GetSign() == inst.TargetType.GetSign()) {
 							// There's no actual truncation involved, and the result of the Conv instruction is extended
@@ -989,17 +996,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (arrayExpr.Type.Kind != TypeKind.Array) {
 				arrayExpr = arrayExpr.ConvertTo(compilation.FindType(KnownTypeCode.Array), this);
 			}
-			TranslatedExpression lenExpr;
 			if (inst.ResultType == StackType.I4) {
-				lenExpr = arrayExpr.Expression.Member("Length")
+				return arrayExpr.Expression.Member("Length")
 					.WithILInstruction(inst)
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int32)));
 			} else {
-				lenExpr = arrayExpr.Expression.Member("LongLength")
+				return arrayExpr.Expression.Member("LongLength")
 					.WithILInstruction(inst)
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int64)));
 			}
-			return lenExpr.ConvertTo(compilation.FindType(inst.ResultType.ToKnownTypeCode()), this);
 		}
 		
 		protected internal override TranslatedExpression VisitLdFlda(LdFlda inst)

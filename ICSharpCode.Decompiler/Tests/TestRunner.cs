@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.Tests
 				.Select(m => m.Name)
 				.ToArray();
 			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles()) {
-				if (file.Extension == ".txt")
+				if (file.Extension == ".txt" || file.Extension == ".exe")
 					continue;
 				var testName = Path.GetFileNameWithoutExtension(file.Name);
 				Assert.Contains(testName, testNames);
@@ -121,6 +121,13 @@ namespace ICSharpCode.Decompiler.Tests
 			TestAssembleDecompileCompileOutput("ConvTest.il", CompilerOptions.UseDebug | CompilerOptions.Force32Bit, AssemblerOptions.Force32Bit);
 		}
 
+		[Test]
+		public void BitNot()
+		{
+			TestAssembleDecompileCompileOutput("BitNot.il");
+			TestAssembleDecompileCompileOutput("BitNot.il", CompilerOptions.UseDebug | CompilerOptions.Force32Bit, AssemblerOptions.Force32Bit);
+		}
+
 		[Test, Ignore("Fixed statements are broken")]
 		public void UnsafeCode()
 		{
@@ -170,7 +177,6 @@ namespace ICSharpCode.Decompiler.Tests
 				Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
 				
 				File.Delete(decompiledCodeFile);
-				File.Delete(outputFile);
 				File.Delete(decompiledOutputFile.PathToAssembly);
 			} finally {
 				if (decompiledOutputFile != null)
