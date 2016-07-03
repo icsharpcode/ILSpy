@@ -1093,6 +1093,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ResolveResult(trueBranch.Type));
 		}
 		
+		protected internal override TranslatedExpression VisitAddressOf(AddressOf inst)
+		{
+			// HACK: this is only correct if the argument is an R-value; otherwise we're missing the copy to the temporary
+			var value = Translate(inst.Value);
+			return new DirectionExpression(FieldDirection.Ref, value)
+				.WithILInstruction(inst)
+				.WithRR(new ByReferenceResolveResult(value.ResolveResult, false));
+		}
+		
 		protected internal override TranslatedExpression VisitInvalidInstruction(InvalidInstruction inst)
 		{
 			string message = "Invalid IL";
