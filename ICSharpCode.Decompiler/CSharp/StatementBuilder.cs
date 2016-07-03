@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.CSharp
 {
 	class StatementBuilder : ILVisitor<Statement>
 	{
-		readonly ExpressionBuilder exprBuilder;
+		internal readonly ExpressionBuilder exprBuilder;
 		readonly IMethod currentMethod;
 
 		public StatementBuilder(ITypeResolveContext decompilationContext, IMethod currentMethod)
