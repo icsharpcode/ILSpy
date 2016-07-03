@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void Random_Tests_TestCases()
+		public void Random_TestCase_1()
 		{
 			try {
 				RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");

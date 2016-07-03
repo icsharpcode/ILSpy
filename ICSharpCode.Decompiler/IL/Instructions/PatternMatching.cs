@@ -154,7 +154,11 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 		
-		public virtual ILInstruction UnwrapConv()
+		/// <summary>
+		/// If this instruction is a conversion of the specified kind, return its argument.
+		/// Otherwise, return the instruction itself.
+		/// </summary>
+		public virtual ILInstruction UnwrapConv(ConversionKind kind)
 		{
 			return this;
 		}

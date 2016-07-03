@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Block notNullAndNotEmptyBlock;
 			return block.Instructions.Count == 2
 				&& block.Instructions[0].MatchIfInstruction(out condition, out trueInst)
-				&& condition.UnwrapConv().MatchLdLen(StackType.I, out array)
+				&& condition.UnwrapConv(ConversionKind.Truncate).MatchLdLen(StackType.I, out array)
 				&& array.MatchLdLoc(v)
 				&& trueInst.MatchBranch(out notNullAndNotEmptyBlock)
 				&& notNullAndNotEmptyBlock.Parent == block.Parent

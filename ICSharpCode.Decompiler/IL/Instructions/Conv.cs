@@ -241,9 +241,12 @@ namespace ICSharpCode.Decompiler.IL
 			return flags;
 		}
 		
-		public override ILInstruction UnwrapConv()
+		public override ILInstruction UnwrapConv(ConversionKind kind)
 		{
-			return Argument.UnwrapConv();
+			if (this.Kind == kind)
+				return Argument.UnwrapConv(kind);
+			else
+				return this;
 		}
 	}
 }
