@@ -47,6 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly DecompilerSettings settings;
 
 		List<IILTransform> ilTransforms = new List<IILTransform> {
+			new RemoveDeadVariableInit(),
 			new SplitVariables(),
 			new ControlFlowSimplification(),
 			new ILInlining(),

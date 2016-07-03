@@ -131,6 +131,7 @@
     <Compile Include="IL\Transforms\ExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\InlineCompilerGeneratedVariables.cs" />
     <Compile Include="IL\Transforms\LoopingTransform.cs" />
+    <Compile Include="IL\Transforms\RemoveDeadVariableInit.cs" />
     <Compile Include="IL\Transforms\SplitVariables.cs" />
     <Compile Include="IL\Transforms\TransformArrayInitializers.cs" />
     <Compile Include="CecilExtensions.cs" />
