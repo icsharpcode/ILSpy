@@ -112,14 +112,15 @@ namespace ICSharpCode.Decompiler.IL
 			this.TargetType = targetType;
 			this.CheckForOverflow = checkForOverflow;
 			this.InputSign = inputSign;
-			this.Kind = GetConversionKind(targetType, argument.ResultType);
+			Debug.Assert((inputSign != Sign.None) == (checkForOverflow || targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8));
+			this.Kind = GetConversionKind(targetType, argument.ResultType, inputSign);
 			Debug.Assert(this.Kind != ConversionKind.Invalid);
 		}
 
 		/// <summary>
 		/// Implements Ecma-335 Table 8: Conversion Operators.
 		/// </summary>
-		static ConversionKind GetConversionKind(PrimitiveType targetType, StackType inputType)
+		static ConversionKind GetConversionKind(PrimitiveType targetType, StackType inputType, Sign inputSign)
 		{
 			switch (targetType) {
 				case PrimitiveType.I1:
@@ -154,7 +155,10 @@ namespace ICSharpCode.Decompiler.IL
 					switch (inputType) {
 						case StackType.I4:
 						case StackType.I:
-							return targetType == PrimitiveType.I8 ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
+							if (inputSign == Sign.None)
+								return targetType == PrimitiveType.I8 ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
+							else
+								return inputSign == Sign.Signed ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
 						case StackType.I8:
 							return ConversionKind.Nop;
 						case StackType.F:
@@ -169,7 +173,10 @@ namespace ICSharpCode.Decompiler.IL
 				case PrimitiveType.U:
 					switch (inputType) {
 						case StackType.I4:
-							return targetType == PrimitiveType.I ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
+							if (inputSign == Sign.None)
+								return targetType == PrimitiveType.I ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
+							else
+								return inputSign == Sign.Signed ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
 						case StackType.I:
 							return ConversionKind.Nop;
 						case StackType.I8:
