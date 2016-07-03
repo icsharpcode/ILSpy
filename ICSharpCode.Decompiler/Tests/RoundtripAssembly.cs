@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			try {
 				RunWithTest("Newtonsoft.Json-net40", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
-			} catch (CompilationFailedException ex) {
+			} catch (TestRunFailedException ex) {
 				Assert.Ignore(ex.Message);
 			}
 		}
@@ -76,21 +76,13 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Explicit_Conversions()
 		{
-			try {
-				RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe");
-			} catch (AssertionException ex) {
-				Assert.Ignore(ex.Message);
-			}
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions.exe");
 		}
 
 		[Test]
 		public void Explicit_Conversions_32()
 		{
-			try {
-				RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe");
-			} catch (AssertionException ex) {
-				Assert.Ignore(ex.Message);
-			}
+			RunWithOutput("Random Tests\\TestCases", "ExplicitConversions_32.exe");
 		}
 
 		[Test]
