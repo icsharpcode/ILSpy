@@ -87,6 +87,22 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 		
+		bool _automaticReadonlyProperties = true;
+		
+		/// <summary>
+		/// Decompile automatic properties
+		/// </summary>
+		public bool AutomaticReadonlyProperties
+        {
+			get { return _automaticReadonlyProperties; }
+			set {
+				if (_automaticReadonlyProperties != value) {
+                    _automaticReadonlyProperties = value;
+					OnPropertyChanged("AutomaticReadonlyProperties");
+				}
+			}
+		}
+		
 		bool automaticProperties = true;
 		
 		/// <summary>

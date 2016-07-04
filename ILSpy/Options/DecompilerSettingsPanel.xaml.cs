@@ -59,10 +59,17 @@ namespace ICSharpCode.ILSpy.Options
 			s.UseDebugSymbols = (bool?)e.Attribute("useDebugSymbols") ?? s.UseDebugSymbols;
 			s.ShowXmlDocumentation = (bool?)e.Attribute("xmlDoc") ?? s.ShowXmlDocumentation;
 			s.FoldBraces = (bool?)e.Attribute("foldBraces") ?? s.FoldBraces;
+			s.AutomaticProperties = (bool?)e.Attribute("automaticProperties") ?? s.AutomaticProperties;
+			s.AutomaticReadonlyProperties = (bool?)e.Attribute("automaticReadonlyProperties") ?? s.AutomaticReadonlyProperties;
+			s.AutomaticEvents = (bool?)e.Attribute("automaticEvents") ?? s.AutomaticEvents;
+			s.UsingStatement = (bool?)e.Attribute("usingStatement") ?? s.UsingStatement;
+			s.ForEachStatement = (bool?)e.Attribute("forEachStatement") ?? s.ForEachStatement;
+			s.SwitchStatementOnString = (bool?)e.Attribute("switchStatementOnString") ?? s.SwitchStatementOnString;
+			s.UsingDeclarations = (bool?)e.Attribute("usingDeclarations") ?? s.UsingDeclarations;
 			return s;
-		}
-		
-		public void Save(XElement root)
+        }
+
+        public void Save(XElement root)
 		{
 			DecompilerSettings s = (DecompilerSettings)this.DataContext;
 			XElement section = new XElement("DecompilerSettings");
@@ -74,6 +81,13 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("useDebugSymbols", s.UseDebugSymbols);
 			section.SetAttributeValue("xmlDoc", s.ShowXmlDocumentation);
 			section.SetAttributeValue("foldBraces", s.FoldBraces);
+			section.SetAttributeValue("automaticProperties", s.AutomaticProperties);
+			section.SetAttributeValue("automaticReadonlyProperties", s.AutomaticReadonlyProperties);
+			section.SetAttributeValue("automaticEvents", s.AutomaticEvents);
+			section.SetAttributeValue("usingStatement", s.UsingStatement);
+			section.SetAttributeValue("forEachStatement", s.ForEachStatement);
+			section.SetAttributeValue("switchStatementOnString", s.SwitchStatementOnString);
+			section.SetAttributeValue("usingDeclarations", s.UsingDeclarations);
 			
 			XElement existingElement = root.Element("DecompilerSettings");
 			if (existingElement != null)
