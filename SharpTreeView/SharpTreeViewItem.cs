@@ -44,6 +44,11 @@ namespace ICSharpCode.TreeView
 			}
 		}
 
+		protected override System.Windows.Automation.Peers.AutomationPeer OnCreateAutomationPeer()
+		{
+			return new SharpTreeViewItemAutomationPeer(this);
+		}
+
 		#region Mouse
 
 		Point startPoint;

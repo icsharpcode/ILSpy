@@ -955,5 +955,24 @@ namespace ICSharpCode.ILSpy
 		{
 			return toolBar.Items;
 		}
+
+		private void MyPreviewKeyDown(object sender, KeyEventArgs e)
+		{
+			if (Keyboard.IsKeyDown(Key.LeftAlt) ||
+				Keyboard.IsKeyDown(Key.RightAlt) ||
+				Keyboard.IsKeyDown(Key.LeftCtrl) ||
+				Keyboard.IsKeyDown(Key.RightCtrl))
+				return;
+			if (e.Key == Key.Tab && decompilerTextView.IsKeyboardFocusWithin)
+			{
+				FrameworkElement current = Keyboard.FocusedElement as FrameworkElement;
+				bool shifted = Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift);
+				if (shifted)
+					current = decompilerTextView;
+				current.MoveFocus(new TraversalRequest(shifted ? FocusNavigationDirection.Previous : FocusNavigationDirection.Next));
+				e.Handled = true;
+				return;
+			}
+		}
 	}
 }

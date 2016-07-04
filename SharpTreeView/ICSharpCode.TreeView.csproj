@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -62,6 +62,8 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xaml" />
+    <Reference Include="UIAutomationProvider" />
+    <Reference Include="UIAutomationTypes" />
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
@@ -89,7 +91,9 @@
     <Compile Include="SharpTreeNodeCollection.cs" />
     <Compile Include="SharpTreeNodeView.cs" />
     <Compile Include="SharpTreeView.cs" />
+    <Compile Include="SharpTreeViewAutomationPeer.cs" />
     <Compile Include="SharpTreeViewItem.cs" />
+    <Compile Include="SharpTreeViewItemAutomationPeer.cs" />
     <Compile Include="TreeFlattener.cs" />
     <AppDesigner Include="Properties\" />
     <Compile Include="TreeTraversal.cs" />
