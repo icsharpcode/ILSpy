@@ -350,7 +350,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				IdentifierExpression ident = node as IdentifierExpression;
 				if (ident != null && ident.Identifier == variableName) {
 					if (ident.Parent is AssignmentExpression && ident.Role == AssignmentExpression.LeftRole
-					    || ident.Parent is DirectionExpression)
+						|| ident.Parent is DirectionExpression)
 					{
 						return true;
 					}
@@ -987,89 +987,89 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					section.Remove();
 			}
 		}
-        #endregion
+		#endregion
 
-        #region Automatic Readonly Properties
+		#region Automatic Readonly Properties
 
-        static readonly PropertyDeclaration automaticReadonlyPropertyPattern = new PropertyDeclaration
-        {
-            Attributes = { new Repeat(new AnyNode()) },
-            Modifiers = Modifiers.Any,
-            ReturnType = new AnyNode(),
-            PrivateImplementationType = new OptionalNode(new AnyNode()),
-            Name = Pattern.AnyString,
-            Getter = new Accessor
-            {
-                Attributes = { new Repeat(new AnyNode()) },
-                Modifiers = Modifiers.Any,
-                Body = new BlockStatement {
-                    new ReturnStatement {
-                        Expression = new AnyNode("fieldReference")
-                    }
-                }
-            }
-        };
+		static readonly PropertyDeclaration automaticReadonlyPropertyPattern = new PropertyDeclaration
+		{
+			Attributes = { new Repeat(new AnyNode()) },
+			Modifiers = Modifiers.Any,
+			ReturnType = new AnyNode(),
+			PrivateImplementationType = new OptionalNode(new AnyNode()),
+			Name = Pattern.AnyString,
+			Getter = new Accessor
+			{
+				Attributes = { new Repeat(new AnyNode()) },
+				Modifiers = Modifiers.Any,
+				Body = new BlockStatement {
+					new ReturnStatement {
+						Expression = new AnyNode("fieldReference")
+					}
+				}
+			}
+		};
 
-	    static ExpressionStatement automaticReadonlyPropertyUsagePattern(string fieldName)
-	    {
-	        return new ExpressionStatement
-	        {
-	            Expression = new AssignmentExpression
-	            {
-	                Left = new MemberReferenceExpression
-	                {
-	                    MemberName = Pattern.AnyString,
-	                    MemberNameToken = Identifier.Create(fieldName),
-	                    Target = new AnyNode("this")
-	                },
-	                Right = new AnyNodeOrNull(),
-	                Operator = AssignmentOperatorType.Assign
-	            }
-	        };
-	    }
+		static ExpressionStatement automaticReadonlyPropertyUsagePattern(string fieldName)
+		{
+			return new ExpressionStatement
+			{
+				Expression = new AssignmentExpression
+				{
+					Left = new MemberReferenceExpression
+					{
+						MemberName = Pattern.AnyString,
+						MemberNameToken = Identifier.Create(fieldName),
+						Target = new AnyNode("this")
+					},
+					Right = new AnyNodeOrNull(),
+					Operator = AssignmentOperatorType.Assign
+				}
+			};
+		}
 
-	    PropertyDeclaration TransformAutomaticReadonlyProperties(PropertyDeclaration property)
-        {
-            PropertyDefinition cecilProperty = property.Annotation<PropertyDefinition>();
-            if (cecilProperty == null || cecilProperty.GetMethod == null || cecilProperty.SetMethod != null)
-                return null;
-            if (!cecilProperty.GetMethod.IsCompilerGenerated())
-                return null;
-            Match m = automaticReadonlyPropertyPattern.Match(property);
-            if (m.Success)
-            {
-                FieldDefinition field = m.Get<AstNode>("fieldReference").Single().Annotation<FieldReference>().ResolveWithinSameModule();
-                if (field.IsCompilerGenerated() && field.DeclaringType == cecilProperty.DeclaringType)
-                {
-                    RemoveCompilerGeneratedAttribute(property.Getter.Attributes);
-                    property.Getter.Body = null;
+		PropertyDeclaration TransformAutomaticReadonlyProperties(PropertyDeclaration property)
+		{
+			PropertyDefinition cecilProperty = property.Annotation<PropertyDefinition>();
+			if (cecilProperty == null || cecilProperty.GetMethod == null || cecilProperty.SetMethod != null)
+				return null;
+			if (!cecilProperty.GetMethod.IsCompilerGenerated())
+				return null;
+			Match m = automaticReadonlyPropertyPattern.Match(property);
+			if (m.Success)
+			{
+				FieldDefinition field = m.Get<AstNode>("fieldReference").Single().Annotation<FieldReference>().ResolveWithinSameModule();
+				if (field.IsCompilerGenerated() && field.DeclaringType == cecilProperty.DeclaringType)
+				{
+					RemoveCompilerGeneratedAttribute(property.Getter.Attributes);
+					property.Getter.Body = null;
 
-                    var parent = (TypeDeclaration) property.Parent;
+					var parent = (TypeDeclaration) property.Parent;
 
-                    // automatic readonly properties can only be set in the constructor
-                    foreach (var ctor in parent.Children.OfType<ConstructorDeclaration>())
-                    {
-                        foreach (var expressionStatement in ctor.Body.Children.OfType<ExpressionStatement>())
-                        {
-                            var match = automaticReadonlyPropertyUsagePattern(field.Name).Match(expressionStatement);
+					// automatic readonly properties can only be set in the constructor
+					foreach (var ctor in parent.Children.OfType<ConstructorDeclaration>())
+					{
+						foreach (var expressionStatement in ctor.Body.Children.OfType<ExpressionStatement>())
+						{
+							var match = automaticReadonlyPropertyUsagePattern(field.Name).Match(expressionStatement);
 
-                            if (match.Success)
-                            {
-                                var assignment = (AssignmentExpression) expressionStatement.Expression;
+							if (match.Success)
+							{
+								var assignment = (AssignmentExpression) expressionStatement.Expression;
 
-                                ((MemberReferenceExpression)assignment.Left).MemberName = property.Name;
-                            }
-                        }
-                    }
-                }
-            }
-            // Since the event instance is not changed, we can continue in the visitor as usual, so return null
-            return null;
-        }
-        #endregion
+								((MemberReferenceExpression)assignment.Left).MemberName = property.Name;
+							}
+						}
+					}
+				}
+			}
+			// Since the event instance is not changed, we can continue in the visitor as usual, so return null
+			return null;
+		}
+		#endregion
 
-        #region Automatic Events
-        static readonly Accessor automaticEventPatternV4 = new Accessor {
+		#region Automatic Events
+		static readonly Accessor automaticEventPatternV4 = new Accessor {
 			Attributes = { new Repeat(new AnyNode()) },
 			Body = new BlockStatement {
 				new VariableDeclarationStatement { Type = new AnyNode("type"), Variables = { new AnyNode() } },
