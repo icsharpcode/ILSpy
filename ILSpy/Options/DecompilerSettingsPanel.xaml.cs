@@ -67,9 +67,9 @@ namespace ICSharpCode.ILSpy.Options
 			s.SwitchStatementOnString = (bool?)e.Attribute("switchStatementOnString") ?? s.SwitchStatementOnString;
 			s.UsingDeclarations = (bool?)e.Attribute("usingDeclarations") ?? s.UsingDeclarations;
 			return s;
-        }
+		}
 
-        public void Save(XElement root)
+		public void Save(XElement root)
 		{
 			DecompilerSettings s = (DecompilerSettings)this.DataContext;
 			XElement section = new XElement("DecompilerSettings");
