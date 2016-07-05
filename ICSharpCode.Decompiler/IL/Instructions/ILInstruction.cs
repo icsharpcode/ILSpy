@@ -604,4 +604,9 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		ICSharpCode.NRefactory.TypeSystem.IField Field { get; }
 	}
+	
+	public interface IInstructionWithMethodOperand
+	{
+		ICSharpCode.NRefactory.TypeSystem.IMethod Method { get; }
+	}
 }

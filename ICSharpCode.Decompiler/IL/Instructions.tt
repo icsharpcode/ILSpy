@@ -826,6 +826,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, method);");
+		opCode.Interfaces.Add("IInstructionWithMethodOperand");
 	};
 	
 	static Action<OpCode> HasMemberOperand = opCode => {

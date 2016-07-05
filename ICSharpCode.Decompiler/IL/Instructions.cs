@@ -1680,7 +1680,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Load method pointer</summary>
-	public sealed partial class LdFtn : SimpleInstruction
+	public sealed partial class LdFtn : SimpleInstruction, IInstructionWithMethodOperand
 	{
 		public LdFtn(IMethod method) : base(OpCode.LdFtn)
 		{
@@ -1707,7 +1707,7 @@ namespace ICSharpCode.Decompiler.IL
 	}
 
 	/// <summary>Load method pointer</summary>
-	public sealed partial class LdVirtFtn : UnaryInstruction
+	public sealed partial class LdVirtFtn : UnaryInstruction, IInstructionWithMethodOperand
 	{
 		public LdVirtFtn(ILInstruction argument, IMethod method) : base(OpCode.LdVirtFtn, argument)
 		{
