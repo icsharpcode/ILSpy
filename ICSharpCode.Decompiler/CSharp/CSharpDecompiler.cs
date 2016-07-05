@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new InlineCompilerGeneratedVariables(),
 			new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit
 			new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
+			new RemoveCachedDelegateInitialization(),
 			new LoopingTransform(
 				new ExpressionTransforms(),
 				new TransformArrayInitializers(),
@@ -68,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		List<IAstTransform> astTransforms = new List<IAstTransform> {
 			//new PushNegation(),
-			//new DelegateConstruction(context),
+			new DelegateConstruction(),
 			new PatternStatementTransform(),
 			new ReplaceMethodCallsWithOperators(),
 			new IntroduceUnsafeModifier(),
@@ -120,8 +121,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method != null) {
 				if (method.IsGetter || method.IsSetter || method.IsAddOn || method.IsRemoveOn)
 					return true;
-//				if (settings.AnonymousMethods && method.HasGeneratedName() && method.IsCompilerGenerated())
-//					return true;
+				if (settings.AnonymousMethods && method.HasGeneratedName() && method.IsCompilerGenerated())
+					return true;
 			}
 
 			TypeDefinition type = member as TypeDefinition;
@@ -144,8 +145,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			FieldDefinition field = member as FieldDefinition;
 			if (field != null) {
 				if (field.IsCompilerGenerated()) {
-//					if (settings.AnonymousMethods && IsAnonymousMethodCacheField(field))
-//						return true;
+					if (settings.AnonymousMethods && IsAnonymousMethodCacheField(field))
+						return true;
 					if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field))
 						return true;
 //					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
@@ -592,7 +593,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			FixParameterNames(methodDecl);
 			if (methodDefinition.HasBody) {
-				DecompileBody(methodDefinition, method, methodDecl, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(methodDefinition, method, methodDecl, decompilationContext);
 			} else if (!method.IsAbstract && method.DeclaringType.Kind != TypeKind.Interface) {
 				methodDecl.Modifiers |= Modifiers.Extern;
 			}
@@ -621,20 +622,29 @@ namespace ICSharpCode.Decompiler.CSharp
 				return typeSystem;
 		}
 		
-		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext, TypeSystemAstBuilder typeSystemAstBuilder)
+		BlockStatement DecompileBodyInternal(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext, string variablesPrefix = null)
 		{
 			var specializingTypeSystem = GetSpecializingTypeSystem(decompilationContext);
 			var ilReader = new ILReader(specializingTypeSystem);
 			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
 			function.CheckInvariant(ILPhase.Normal);
 			
-			int i = 0;
-			var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
-			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter)) {
-				ILVariable v;
-				if (parameters.TryGetValue(i, out v))
-					parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
-				i++;
+			if (entityDecl != null) {
+				int i = 0;
+				var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
+				foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter)) {
+					ILVariable v;
+					if (parameters.TryGetValue(i, out v))
+						parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
+					i++;
+				}
+			}
+			
+			if (!string.IsNullOrWhiteSpace(variablesPrefix)) {
+				var variables = function.Variables.Where(v => v.Kind != VariableKind.Parameter);
+				foreach (var v in variables) {
+					v.Name = variablesPrefix + v.Name;
+				}
 			}
 			
 			var context = new ILTransformContext { TypeSystem = specializingTypeSystem, CancellationToken = CancellationToken };
@@ -643,10 +653,24 @@ namespace ICSharpCode.Decompiler.CSharp
 				transform.Run(function, context);
 				function.CheckInvariant(ILPhase.Normal);
 			}
+			
 			var statementBuilder = new StatementBuilder(decompilationContext, method);
 			var body = statementBuilder.ConvertAsBlock(function.Body);
-			
-			entityDecl.AddChild(body, Roles.Body);
+			body.AddAnnotation(function.Variables);
+			return body;
+		}
+		
+		internal BlockStatement DecompileLambdaBody(IMethod method)
+		{
+			MethodDefinition definition = typeSystem.GetCecil(method) as MethodDefinition;
+			if (definition == null)
+				throw new InvalidOperationException("Could not find method in type system");
+			return DecompileBodyInternal(definition, method, null, new SimpleTypeResolveContext(method), method.Name + "_");
+		}
+		
+		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext)
+		{
+			entityDecl.AddChild(DecompileBodyInternal(methodDefinition, method, entityDecl, decompilationContext), Roles.Body);
 		}
 
 		EntityDeclaration DoDecompile(FieldDefinition fieldDefinition, IField field, ITypeResolveContext decompilationContext)
@@ -685,10 +709,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				setter = ((IndexerDeclaration)propertyDecl).Setter;
 			}
 			if (property.CanGet && property.Getter.HasBody) {
-				DecompileBody(propertyDefinition.GetMethod, property.Getter, getter, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(propertyDefinition.GetMethod, property.Getter, getter, decompilationContext);
 			}
 			if (property.CanSet && property.Setter.HasBody) {
-				DecompileBody(propertyDefinition.SetMethod, property.Setter, setter, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(propertyDefinition.SetMethod, property.Setter, setter, decompilationContext);
 			}
 			var accessor = propertyDefinition.GetMethod ?? propertyDefinition.SetMethod;
 			if (!accessor.HasOverrides && !accessor.DeclaringType.IsInterface && accessor.IsVirtual == accessor.IsNewSlot)
@@ -707,10 +731,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				eventDecl.Name = ev.Name.Substring(lastDot + 1);
 			}
 			if (eventDefinition.AddMethod != null && eventDefinition.AddMethod.HasBody) {
-				DecompileBody(eventDefinition.AddMethod, ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(eventDefinition.AddMethod, ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompilationContext);
 			}
 			if (eventDefinition.RemoveMethod != null && eventDefinition.RemoveMethod.HasBody) {
-				DecompileBody(eventDefinition.RemoveMethod, ev.RemoveAccessor, ((CustomEventDeclaration)eventDecl).RemoveAccessor, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(eventDefinition.RemoveMethod, ev.RemoveAccessor, ((CustomEventDeclaration)eventDecl).RemoveAccessor, decompilationContext);
 			}
 			var accessor = eventDefinition.AddMethod ?? eventDefinition.RemoveMethod;
 			if (accessor.IsVirtual == accessor.IsNewSlot) {

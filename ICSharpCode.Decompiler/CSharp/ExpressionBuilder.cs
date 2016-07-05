@@ -730,7 +730,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return HandleCallInstruction(inst);
 		}
 
-		static bool IsDelegateConstruction(CallInstruction inst)
+		internal static bool IsDelegateConstruction(CallInstruction inst)
 		{
 			return inst.Arguments.Count == 2
 				&& (inst.Arguments[1].OpCode == OpCode.LdFtn
@@ -764,6 +764,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var mre = new MemberReferenceExpression(target, method.Name);
 			mre.TypeArguments.AddRange(method.TypeArguments.Select(a => ConvertType(a)));
 			return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), mre)
+				.WithAnnotation(new DelegateConstruction.Annotation(func.OpCode == OpCode.LdVirtFtn, target, method.Name))
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
 					inst.Method.DeclaringType,

@@ -27,6 +27,17 @@ namespace ICSharpCode.Decompiler
 			return stack.Peek();
 		}
 		
+		public static int MaxOrDefault<T>(this IEnumerable<T> input, Func<T, int> selector)
+		{
+			int max = 0;
+			foreach (var element in input) {
+				int value = selector(element);
+				if (value > max)
+					max = value;
+			}
+			return max;
+		}
+		
 		public static void AddRange<T>(this ICollection<T> collection, IEnumerable<T> input)
 		{
 			foreach (T item in input)

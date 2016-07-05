@@ -68,6 +68,7 @@
     <Compile Include="CSharp\Transforms\ContextTrackingVisitor.cs" />
     <Compile Include="CSharp\Transforms\DecimalConstantTransform.cs" />
     <Compile Include="CSharp\Transforms\DeclareVariables.cs" />
+    <Compile Include="CSharp\Transforms\DelegateConstruction.cs" />
     <Compile Include="CSharp\Transforms\EscapeInvalidIdentifiers.cs" />
     <Compile Include="CSharp\Transforms\FixNameCollisions.cs" />
     <Compile Include="CSharp\Transforms\IntroduceUsingDeclarations.cs" />
@@ -131,6 +132,7 @@
     <Compile Include="IL\Transforms\ExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\InlineCompilerGeneratedVariables.cs" />
     <Compile Include="IL\Transforms\LoopingTransform.cs" />
+    <Compile Include="IL\Transforms\RemoveCachedDelegateInitialization.cs" />
     <Compile Include="IL\Transforms\RemoveDeadVariableInit.cs" />
     <Compile Include="IL\Transforms\SplitVariables.cs" />
     <Compile Include="IL\Transforms\TransformArrayInitializers.cs" />
@@ -153,6 +155,7 @@
     <Compile Include="IL\InstructionOutputExtensions.cs" />
     <Compile Include="IL\PrimitiveType.cs" />
     <Compile Include="IL\StackType.cs" />
+    <Compile Include="NRExtensions.cs" />
     <Compile Include="Output\ITextOutput.cs" />
     <Compile Include="Output\PlainTextOutput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
