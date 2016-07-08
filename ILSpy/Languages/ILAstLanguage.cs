@@ -154,7 +154,7 @@ namespace ICSharpCode.ILSpy
 				var typeSystem = new DecompilerTypeSystem(method.Module);
 				ILReader reader = new ILReader(typeSystem);
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
-				il.RunTransforms(transforms, new ILTransformContext { TypeSystem = typeSystem });
+				il.RunTransforms(transforms, new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem });
 				il.WriteTo(output);
 			}
 		}

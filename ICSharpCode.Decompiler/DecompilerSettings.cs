@@ -20,7 +20,7 @@ using System;
 using System.ComponentModel;
 using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.Decompiler.CSharp
+namespace ICSharpCode.Decompiler
 {
 	/// <summary>
 	/// Settings for the decompiler.

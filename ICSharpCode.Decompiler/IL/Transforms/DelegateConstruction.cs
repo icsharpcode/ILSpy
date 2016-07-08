@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
-			if (!new DecompilerSettings().AnonymousMethods)
+			if (!context.Settings.AnonymousMethods)
 				return;
 			this.context = context;
 			this.decompilationContext = new SimpleTypeResolveContext(context.TypeSystem.Resolve(function.Method));
@@ -81,7 +81,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (potentialDisplayClass == null || !potentialDisplayClass.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
-			// check that methodContainingType is within containingType
 			while (potentialDisplayClass != decompiledTypeDefinition) {
 				potentialDisplayClass = potentialDisplayClass.DeclaringTypeDefinition;
 				if (potentialDisplayClass == null)
@@ -107,7 +106,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				
 				function.RunTransforms(CSharpDecompiler.GetILTransforms(), context, t => t is DelegateConstruction);
 				function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
-				((IILTransform)this).Run(function, new ILTransformContext { CancellationToken = context.CancellationToken, TypeSystem = localTypeSystem });
+				// handle nested lambdas
+				((IILTransform)new DelegateConstruction()).Run(function, new ILTransformContext { Settings = context.Settings, CancellationToken = context.CancellationToken, TypeSystem = localTypeSystem });
 				return function;
 			}
 			return null;

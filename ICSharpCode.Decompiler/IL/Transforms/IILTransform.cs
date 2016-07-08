@@ -24,6 +24,7 @@ namespace ICSharpCode.Decompiler.IL
 	public class ILTransformContext
 	{
 		public IDecompilerTypeSystem TypeSystem { get; set; }
+		public DecompilerSettings Settings { get; set; }
 		public CancellationToken CancellationToken { get; set; }
 	}
 

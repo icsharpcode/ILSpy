@@ -625,7 +625,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			
-			var context = new ILTransformContext { TypeSystem = specializingTypeSystem, CancellationToken = CancellationToken };
+			var context = new ILTransformContext { Settings = settings, TypeSystem = specializingTypeSystem, CancellationToken = CancellationToken };
 			foreach (var transform in ilTransforms) {
 				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(function, context);
