@@ -46,30 +46,34 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly DecompilerTypeSystem typeSystem;
 		readonly DecompilerSettings settings;
 
-		List<IILTransform> ilTransforms = new List<IILTransform> {
-			new SplitVariables(),
-			new ControlFlowSimplification(),
-			new ILInlining(),
-			new DetectPinRegions(),
-			new LoopDetection(),
-			new IntroduceExitPoints(),
-			new ConditionDetection(),
-			new ILInlining(),
-			new CopyPropagation(),
-			new InlineCompilerGeneratedVariables(),
-			new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit
-			new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
-			new RemoveCachedDelegateInitialization(),
-			new LoopingTransform(
-				new ExpressionTransforms(),
-				new TransformArrayInitializers(),
-				new ILInlining()
-			)
-		};
+		List<IILTransform> ilTransforms = GetILTransforms();
+
+		public static List<IILTransform> GetILTransforms()
+		{
+			return new List<IILTransform> {
+				new SplitVariables(),
+				new ControlFlowSimplification(),
+				new ILInlining(),
+				new DetectPinRegions(),
+				new LoopDetection(),
+				new IntroduceExitPoints(),
+				new ConditionDetection(),
+				new ILInlining(),
+				new CopyPropagation(),
+				new InlineCompilerGeneratedVariables(),
+				new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit
+				new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
+				new DelegateConstruction(),
+				new LoopingTransform(
+					new ExpressionTransforms(),
+					new TransformArrayInitializers(),
+					new ILInlining()
+				)
+			};
+		}
 
 		List<IAstTransform> astTransforms = new List<IAstTransform> {
 			//new PushNegation(),
-			new DelegateConstruction(),
 			new PatternStatementTransform(),
 			new ReplaceMethodCallsWithOperators(),
 			new IntroduceUnsafeModifier(),
@@ -605,29 +609,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			return methodDecl;
 		}
 
-		IDecompilerTypeSystem GetSpecializingTypeSystem(ITypeResolveContext decompilationContext)
+		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext)
 		{
-			IList<IType> classTypeParameters = null;
-			IList<IType> methodTypeParameters = null;
-			
-			if (decompilationContext.CurrentTypeDefinition != null)
-				classTypeParameters = decompilationContext.CurrentTypeDefinition.TypeArguments;
-			IMethod method = decompilationContext.CurrentMember as IMethod;
-			if (method != null)
-				methodTypeParameters = method.TypeArguments;
-			
-			if ((classTypeParameters != null && classTypeParameters.Count > 0) || (methodTypeParameters != null && methodTypeParameters.Count > 0))
-				return new SpecializingDecompilerTypeSystem(typeSystem, new TypeParameterSubstitution(classTypeParameters, methodTypeParameters));
-			else
-				return typeSystem;
-		}
-		
-		BlockStatement DecompileBodyInternal(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext, string variablesPrefix = null)
-		{
-			var specializingTypeSystem = GetSpecializingTypeSystem(decompilationContext);
-			var ilReader = new ILReader(specializingTypeSystem);
-			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
-			function.CheckInvariant(ILPhase.Normal);
+			var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(decompilationContext);
+			ILFunction function = ILFunction.Read(specializingTypeSystem, methodDefinition, CancellationToken);
 			
 			if (entityDecl != null) {
 				int i = 0;
@@ -640,13 +625,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			
-			if (!string.IsNullOrWhiteSpace(variablesPrefix)) {
-				var variables = function.Variables.Where(v => v.Kind != VariableKind.Parameter);
-				foreach (var v in variables) {
-					v.Name = variablesPrefix + v.Name;
-				}
-			}
-			
 			var context = new ILTransformContext { TypeSystem = specializingTypeSystem, CancellationToken = CancellationToken };
 			foreach (var transform in ilTransforms) {
 				CancellationToken.ThrowIfCancellationRequested();
@@ -654,23 +632,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				function.CheckInvariant(ILPhase.Normal);
 			}
 			
-			var statementBuilder = new StatementBuilder(decompilationContext, method);
-			var body = statementBuilder.ConvertAsBlock(function.Body);
-			body.AddAnnotation(function.Variables);
-			return body;
-		}
-		
-		internal BlockStatement DecompileLambdaBody(IMethod method)
-		{
-			MethodDefinition definition = typeSystem.GetCecil(method) as MethodDefinition;
-			if (definition == null)
-				throw new InvalidOperationException("Could not find method in type system");
-			return DecompileBodyInternal(definition, method, null, new SimpleTypeResolveContext(method), method.Name + "_");
-		}
-		
-		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext)
-		{
-			entityDecl.AddChild(DecompileBodyInternal(methodDefinition, method, entityDecl, decompilationContext), Roles.Body);
+			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method);
+			entityDecl.AddChild(statementBuilder.ConvertAsBlock(function.Body), Roles.Body);
 		}
 
 		EntityDeclaration DoDecompile(FieldDefinition fieldDefinition, IField field, ITypeResolveContext decompilationContext)

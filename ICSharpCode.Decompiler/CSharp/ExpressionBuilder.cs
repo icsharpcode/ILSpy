@@ -60,13 +60,17 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </remarks>
 	class ExpressionBuilder : ILVisitor<TranslatedExpression>
 	{
+		readonly IDecompilerTypeSystem typeSystem;
+		readonly ITypeResolveContext decompilationContext;
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
 		readonly TypeSystemAstBuilder astBuilder;
 		
-		public ExpressionBuilder(ITypeResolveContext decompilationContext)
+		public ExpressionBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext != null);
+			this.typeSystem = typeSystem;
+			this.decompilationContext = decompilationContext;
 			this.compilation = decompilationContext.Compilation;
 			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainAssembly, null, decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
 			this.astBuilder = new TypeSystemAstBuilder(resolver);
@@ -730,22 +734,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			return HandleCallInstruction(inst);
 		}
 
-		internal static bool IsDelegateConstruction(CallInstruction inst)
-		{
-			return inst.Arguments.Count == 2
-				&& (inst.Arguments[1].OpCode == OpCode.LdFtn
-				    || inst.Arguments[1].OpCode == OpCode.LdVirtFtn)
-				&& inst.Method.DeclaringType.Kind == TypeKind.Delegate;
-		}
-
 		TranslatedExpression HandleDelegateConstruction(CallInstruction inst)
 		{
 			ILInstruction func = inst.Arguments[1];
 			IMethod method;
-			if (func.OpCode == OpCode.LdFtn) {
-				method = ((LdFtn)func).Method;
-			} else {
-				method = ((LdVirtFtn)func).Method;
+			switch (func.OpCode) {
+				case OpCode.LdFtn:
+					method = ((LdFtn)func).Method;
+					break;
+				case OpCode.LdVirtFtn:
+					method = ((LdVirtFtn)func).Method;
+					break;
+				default:
+					method = (IMethod)typeSystem.Resolve(((ILFunction)func).Method);
+					break;
 			}
 			var target = TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
 			
@@ -763,14 +765,97 @@ namespace ICSharpCode.Decompiler.CSharp
 			
 			var mre = new MemberReferenceExpression(target, method.Name);
 			mre.TypeArguments.AddRange(method.TypeArguments.Select(a => ConvertType(a)));
-			return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), mre)
-				.WithAnnotation(new DelegateConstruction.Annotation(func.OpCode == OpCode.LdVirtFtn, target, method.Name))
+			var oce = new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), mre)
+//				.WithAnnotation(new DelegateConstruction.Annotation(func.OpCode == OpCode.LdVirtFtn, target, method.Name))
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
 					inst.Method.DeclaringType,
 					new MemberResolveResult(target.ResolveResult, method),
 					// TODO handle extension methods capturing the first argument
 					Conversion.MethodGroupConversion(method, func.OpCode == OpCode.LdVirtFtn, false)));
+			
+			if (func is ILFunction) {
+				return TranslateFunction(oce, target, (ILFunction)func);
+			} else {
+				return oce;
+			}
+		}
+
+		TranslatedExpression TranslateFunction(TranslatedExpression objectCreateExpression, TranslatedExpression target, ILFunction function)
+		{
+			var method = typeSystem.Resolve(function.Method) as IMethod;
+			Debug.Assert(method != null);
+			
+			// Create AnonymousMethodExpression and prepare parameters
+			AnonymousMethodExpression ame = new AnonymousMethodExpression();
+			ame.Parameters.AddRange(MakeParameters(method, function));
+			ame.HasParameterList = true;
+			
+			StatementBuilder builder = new StatementBuilder(typeSystem, decompilationContext, method);
+			var body = builder.ConvertAsBlock(function.Body);
+			
+			bool isLambda = false;
+			if (ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None)) {
+				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
+			}
+			// Remove the parameter list from an AnonymousMethodExpression if the original method had no names,
+			// and the parameters are not used in the method body
+			if (!isLambda && method.Parameters.All(p => string.IsNullOrEmpty(p.Name))) {
+				var parameterReferencingIdentifiers =
+					from ident in body.Descendants.OfType<IdentifierExpression>()
+					let v = ident.Annotation<ILVariable>()
+					where v != null && v.Kind == VariableKind.Parameter
+					select ident;
+				if (!parameterReferencingIdentifiers.Any()) {
+					ame.Parameters.Clear();
+					ame.HasParameterList = false;
+				}
+			}
+			
+			// Replace all occurrences of 'this' in the method body with the delegate's target:
+			foreach (AstNode node in body.Descendants) {
+				if (node is ThisReferenceExpression)
+					node.ReplaceWith(target.Expression.Clone());
+			}
+			Expression replacement;
+			if (isLambda) {
+				LambdaExpression lambda = new LambdaExpression();
+				lambda.CopyAnnotationsFrom(ame);
+				ame.Parameters.MoveTo(lambda.Parameters);
+				Expression returnExpr = ((ReturnStatement)body.Statements.Single()).Expression;
+				returnExpr.Remove();
+				lambda.Body = returnExpr;
+				replacement = lambda;
+			} else {
+				ame.Body = body;
+				replacement = ame;
+			}
+			var expectedType = objectCreateExpression.ResolveResult.Type.GetDefinition();
+			if (expectedType != null && expectedType.Kind != TypeKind.Delegate) {
+				var simplifiedDelegateCreation = (ObjectCreateExpression)objectCreateExpression.Expression.Clone();
+				simplifiedDelegateCreation.Arguments.Clear();
+				simplifiedDelegateCreation.Arguments.Add(replacement);
+				replacement = simplifiedDelegateCreation;
+			}
+			return replacement
+				.WithILInstruction(function)
+				.WithRR(objectCreateExpression.ResolveResult);
+		}
+		
+		IEnumerable<ParameterDeclaration> MakeParameters(IMethod method, ILFunction function)
+		{
+			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
+			int i = 0;
+			foreach (var parameter in method.Parameters) {
+				var pd = astBuilder.ConvertParameter(parameter);
+				if (parameter.Type.ContainsAnonymousType())
+					pd.Type = null;
+				ILVariable v;
+				if (variables.TryGetValue(i, out v))
+					pd.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
+				yield return pd;
+				i++;
+			}
 		}
 		
 		TranslatedExpression TranslateTarget(IMember member, ILInstruction target, bool nonVirtualInvocation)
@@ -800,7 +885,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Used for Call, CallVirt and NewObj
 			TranslatedExpression target;
 			if (inst.OpCode == OpCode.NewObj) {
-				if (IsDelegateConstruction(inst)) {
+				if (IL.Transforms.DelegateConstruction.IsDelegateConstruction((NewObj)inst, true)) {
 					return HandleDelegateConstruction(inst);
 				}
 				target = default(TranslatedExpression); // no target

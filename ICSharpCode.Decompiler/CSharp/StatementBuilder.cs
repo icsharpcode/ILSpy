@@ -33,10 +33,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ExpressionBuilder exprBuilder;
 		readonly IMethod currentMethod;
 
-		public StatementBuilder(ITypeResolveContext decompilationContext, IMethod currentMethod)
+		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IMethod currentMethod)
 		{
-			Debug.Assert(decompilationContext != null && currentMethod != null);
-			this.exprBuilder = new ExpressionBuilder(decompilationContext);
+			Debug.Assert(typeSystem != null && decompilationContext != null && currentMethod != null);
+			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext);
 			this.currentMethod = currentMethod;
 		}
 		

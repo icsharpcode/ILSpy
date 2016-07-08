@@ -16,12 +16,30 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 using System;
+using System.Collections.Generic;
 using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler
 {
 	public static class NRExtensions
 	{
+		public static IDecompilerTypeSystem GetSpecializingTypeSystem(this IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext)
+		{
+			IList<IType> classTypeParameters = null;
+			IList<IType> methodTypeParameters = null;
+			
+			if (decompilationContext.CurrentTypeDefinition != null)
+				classTypeParameters = decompilationContext.CurrentTypeDefinition.TypeArguments;
+			IMethod method = decompilationContext.CurrentMember as IMethod;
+			if (method != null)
+				methodTypeParameters = method.TypeArguments;
+			
+			if ((classTypeParameters != null && classTypeParameters.Count > 0) || (methodTypeParameters != null && methodTypeParameters.Count > 0))
+				return new SpecializingDecompilerTypeSystem(typeSystem, new TypeParameterSubstitution(classTypeParameters, methodTypeParameters));
+			else
+				return typeSystem;
+		}
+		
 		public static bool IsCompilerGenerated(this IEntity entity)
 		{
 			if (entity != null) {

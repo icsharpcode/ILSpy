@@ -18,6 +18,8 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.Disassembler;
 
@@ -73,13 +75,28 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Apply a list of transforms to this function.
 		/// </summary>
-		public void RunTransforms(IEnumerable<IILTransform> transforms, ILTransformContext context)
+		public void RunTransforms(IEnumerable<IILTransform> transforms, ILTransformContext context, Func<IILTransform, bool> stopTransform = null)
 		{
 			foreach (var transform in transforms) {
 				context.CancellationToken.ThrowIfCancellationRequested();
+				if (stopTransform != null && stopTransform(transform))
+					break;
 				transform.Run(this, context);
 				this.CheckInvariant(ILPhase.Normal);
 			}
+		}
+		
+		public static ILFunction Read(IDecompilerTypeSystem context, IMethod method, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			return Read(context, (MethodDefinition)context.GetCecil(method), cancellationToken);
+		}
+
+		public static ILFunction Read(IDecompilerTypeSystem context, MethodDefinition methodDefinition, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			var ilReader = new ILReader(context);
+			var function = ilReader.ReadIL(methodDefinition.Body, cancellationToken);
+			function.CheckInvariant(ILPhase.Normal);
+			return function;
 		}
 	}
 }
