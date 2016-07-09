@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void Warn(string message)
 		{
-			Debug.Fail(message);
+			Debug.Fail(string.Format("IL_{0:x4}: {1}", reader.Position, message));
 		}
 
 		void MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
@@ -880,6 +880,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (expectedType != inst.ResultType) {
 				if (expectedType == StackType.I && inst.ResultType == StackType.I4) {
 					inst = new Conv(inst, PrimitiveType.I, false, Sign.None);
+				} else if (expectedType == StackType.Ref && inst.ResultType == StackType.I) {
+					// implicitly start GC tracking
 				} else if (inst is InvalidInstruction) {
 					((InvalidInstruction)inst).ExpectedResultType = expectedType;
 				} else {

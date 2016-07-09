@@ -76,6 +76,13 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
+		/// <summary>
+		/// Gets the BlockContainer that contains the target block.
+		/// </summary>
+		public BlockContainer TargetContainer {
+			get { return (BlockContainer)targetBlock?.Parent; }
+		}
+		
 		protected override void Connected()
 		{
 			base.Connected();

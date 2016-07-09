@@ -22,7 +22,12 @@ namespace ICSharpCode.Decompiler.IL
 {
 	static class SemanticHelper
 	{
-		// TODO: consider moving IfInstruction.CombineFlags here
+		internal static InstructionFlags CombineBranches(InstructionFlags trueFlags, InstructionFlags falseFlags)
+		{
+			// the endpoint of the 'if' is only unreachable if both branches have an unreachable endpoint
+			const InstructionFlags combineWithAnd = InstructionFlags.EndPointUnreachable;
+			return (trueFlags & falseFlags) | ((trueFlags | falseFlags) & ~combineWithAnd);
+		}
 		
 		/// <summary>
 		/// Gets whether instruction is pure:
@@ -32,7 +37,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal static bool IsPure(InstructionFlags inst)
 		{
-			// ControlFlow is fine, internal control flow is pure as long as it's not an infinite loop,
+			// ControlFlow is fine: internal control flow is pure as long as it's not an infinite loop,
 			// and infinite loops are impossible without MayBranch.
 			const InstructionFlags pureFlags = InstructionFlags.MayReadLocals | InstructionFlags.ControlFlow;
 			return (inst & ~pureFlags) == 0;

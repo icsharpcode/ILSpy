@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL
 		BlockContainer,
 		/// <summary>A block of IL instructions.</summary>
 		Block,
-		/// <summary>A region where a pinned variable is used (initial representation of future fixed statement)</summary>
+		/// <summary>A region where a pinned variable is used (initial representation of future fixed statement).</summary>
 		PinnedRegion,
 		/// <summary>Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).</summary>
 		LogicNot,
@@ -171,7 +171,8 @@ namespace ICSharpCode.Decompiler.IL
 		LdLen,
 		/// <summary>Load address of array element.</summary>
 		LdElema,
-		/// <summary>Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.</summary>
+		/// <summary>Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.
+		/// Also used to convert a string to a reference to the first character.</summary>
 		ArrayToPointer,
 		/// <summary>Push a typed reference of type class onto the stack.</summary>
 		MakeRefAny,
@@ -578,22 +579,53 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>A region where a pinned variable is used (initial representation of future fixed statement)</summary>
-	public sealed partial class PinnedRegion : ILInstruction
+	/// <summary>A region where a pinned variable is used (initial representation of future fixed statement).</summary>
+	public sealed partial class PinnedRegion : ILInstruction, IInstructionWithVariableOperand
 	{
-		public PinnedRegion(ILInstruction pin, ILInstruction body) : base(OpCode.PinnedRegion)
+		public PinnedRegion(ILVariable variable, ILInstruction init, ILInstruction body) : base(OpCode.PinnedRegion)
 		{
-			this.Pin = pin;
+			Debug.Assert(variable != null);
+			this.variable = variable;
+			this.Init = init;
 			this.Body = body;
 		}
 		public override StackType ResultType { get { return StackType.Void; } }
-		public static readonly SlotInfo PinSlot = new SlotInfo("Pin", canInlineInto: true);
-		ILInstruction pin;
-		public ILInstruction Pin {
-			get { return this.pin; }
+		ILVariable variable;
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.StoreCount--;
+				variable = value;
+				if (IsConnected)
+					variable.StoreCount++;
+			}
+		}
+		protected override void Connected()
+		{
+			base.Connected();
+			variable.StoreCount++;
+		}
+		
+		protected override void Disconnected()
+		{
+			variable.StoreCount--;
+			base.Disconnected();
+		}
+		
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+		}
+		public static readonly SlotInfo InitSlot = new SlotInfo("Init", canInlineInto: true);
+		ILInstruction init;
+		public ILInstruction Init {
+			get { return this.init; }
 			set {
 				ValidateChild(value);
-				SetChildInstruction(ref this.pin, value, 0);
+				SetChildInstruction(ref this.init, value, 0);
 			}
 		}
 		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
@@ -613,7 +645,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				case 0:
-					return this.pin;
+					return this.init;
 				case 1:
 					return this.body;
 				default:
@@ -624,7 +656,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				case 0:
-					this.Pin = value;
+					this.Init = value;
 					break;
 				case 1:
 					this.Body = value;
@@ -637,7 +669,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (index) {
 				case 0:
-					return PinSlot;
+					return InitSlot;
 				case 1:
 					return BodySlot;
 				default:
@@ -647,24 +679,26 @@ namespace ICSharpCode.Decompiler.IL
 		public sealed override ILInstruction Clone()
 		{
 			var clone = (PinnedRegion)ShallowClone();
-			clone.Pin = this.pin.Clone();
+			clone.Init = this.init.Clone();
 			clone.Body = this.body.Clone();
 			return clone;
 		}
 		protected override InstructionFlags ComputeFlags()
 		{
-			return pin.Flags | body.Flags;
+			return InstructionFlags.MayWriteLocals | init.Flags | body.Flags;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return InstructionFlags.None;
+				return InstructionFlags.MayWriteLocals;
 			}
 		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
+			output.Write(' ');
+			variable.WriteTo(output);
 			output.Write('(');
-			this.pin.WriteTo(output);
+			this.init.WriteTo(output);
 			output.Write(", ");
 			this.body.WriteTo(output);
 			output.Write(')');
@@ -1169,6 +1203,30 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Body = this.body.Clone();
 			return clone;
 		}
+		ILVariable variable;
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.StoreCount--;
+				variable = value;
+				if (IsConnected)
+					variable.StoreCount++;
+			}
+		}
+		protected override void Connected()
+		{
+			base.Connected();
+			variable.StoreCount++;
+		}
+		
+		protected override void Disconnected()
+		{
+			variable.StoreCount--;
+			base.Disconnected();
+		}
+		
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitTryCatchHandler(this);
@@ -1329,7 +1387,45 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(variable != null);
 			this.variable = variable;
 		}
+		ILVariable variable;
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.LoadCount--;
+				variable = value;
+				if (IsConnected)
+					variable.LoadCount++;
+			}
+		}
+		protected override void Connected()
+		{
+			base.Connected();
+			variable.LoadCount++;
+		}
+		
+		protected override void Disconnected()
+		{
+			variable.LoadCount--;
+			base.Disconnected();
+		}
+		
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+		}
 		public override StackType ResultType { get { return variable.StackType; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.MayReadLocals;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayReadLocals;
+			}
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -1355,6 +1451,35 @@ namespace ICSharpCode.Decompiler.IL
 			this.variable = variable;
 		}
 		public override StackType ResultType { get { return StackType.Ref; } }
+		ILVariable variable;
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.AddressCount--;
+				variable = value;
+				if (IsConnected)
+					variable.AddressCount++;
+			}
+		}
+		protected override void Connected()
+		{
+			base.Connected();
+			variable.AddressCount++;
+		}
+		
+		protected override void Disconnected()
+		{
+			variable.AddressCount--;
+			base.Disconnected();
+		}
+		
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+		}
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
@@ -1379,6 +1504,35 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(variable != null);
 			this.variable = variable;
 			this.Value = value;
+		}
+		ILVariable variable;
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.StoreCount--;
+				variable = value;
+				if (IsConnected)
+					variable.StoreCount++;
+			}
+		}
+		protected override void Connected()
+		{
+			base.Connected();
+			variable.StoreCount++;
+		}
+		
+		protected override void Disconnected()
+		{
+			variable.StoreCount--;
+			base.Disconnected();
+		}
+		
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
 		}
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value;
@@ -1430,11 +1584,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return variable.StackType; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return value.Flags;
+			return InstructionFlags.MayWriteLocals | value.Flags;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return InstructionFlags.None;
+				return InstructionFlags.MayWriteLocals;
 			}
 		}
 		public override void WriteTo(ITextOutput output)
@@ -3106,7 +3260,8 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.</summary>
+	/// <summary>Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.
+	/// Also used to convert a string to a reference to the first character.</summary>
 	public sealed partial class ArrayToPointer : ILInstruction
 	{
 		public ArrayToPointer(ILInstruction array) : base(OpCode.ArrayToPointer)
@@ -4035,15 +4190,17 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return false;
 		}
-		public bool MatchPinnedRegion(out ILInstruction pin, out ILInstruction body)
+		public bool MatchPinnedRegion(out ILVariable variable, out ILInstruction init, out ILInstruction body)
 		{
 			var inst = this as PinnedRegion;
 			if (inst != null) {
-				pin = inst.Pin;
+				variable = inst.Variable;
+				init = inst.Init;
 				body = inst.Body;
 				return true;
 			}
-			pin = default(ILInstruction);
+			variable = default(ILVariable);
+			init = default(ILInstruction);
 			body = default(ILInstruction);
 			return false;
 		}

@@ -197,6 +197,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			tryCatch.CatchClauses.Add(new CatchClause { Body = faultBlock });
 			return tryCatch;
 		}
+		
+		protected internal override Statement VisitPinnedRegion(PinnedRegion inst)
+		{
+			var fixedStmt = new FixedStatement();
+			fixedStmt.Type = exprBuilder.ConvertType(inst.Variable.Type);
+			Expression initExpr;
+			if (inst.Init.OpCode == OpCode.ArrayToPointer) {
+				initExpr = exprBuilder.Translate(((ArrayToPointer)inst.Init).Array);
+			} else {
+				initExpr = exprBuilder.Translate(inst.Init).ConvertTo(inst.Variable.Type, exprBuilder);
+			}
+			fixedStmt.Variables.Add(new VariableInitializer(inst.Variable.Name, initExpr).WithILVariable(inst.Variable));
+			fixedStmt.EmbeddedStatement = Convert(inst.Body);
+			return fixedStmt;
+		}
 
 		protected internal override Statement VisitBlock(Block block)
 		{

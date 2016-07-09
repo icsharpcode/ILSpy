@@ -154,6 +154,19 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 		
+		public bool MatchCompEquals(out ILInstruction left, out ILInstruction right)
+		{
+			Comp comp = this as Comp;
+			if (comp != null && comp.Kind == ComparisonKind.Equality) {
+				left = comp.Left;
+				right = comp.Right;
+				return true;
+			}
+			left = null;
+			right = null;
+			return false;
+		}
+		
 		/// <summary>
 		/// If this instruction is a conversion of the specified kind, return its argument.
 		/// Otherwise, return the instruction itself.

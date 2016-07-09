@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(),
 				new ControlFlowSimplification(),
 				new ILInlining(),
-				new DetectPinRegions(),
+				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new LoopDetection(),
 				new IntroduceExitPoints(),
 				new ConditionDetection(),
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit
 				new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
 				new DelegateConstruction(),
-				new LoopingTransform(
+				new LoopingTransform( // the loop: transforms that cyclicly depend on each other
 					new ExpressionTransforms(),
 					new TransformArrayInitializers(),
 					new ILInlining()

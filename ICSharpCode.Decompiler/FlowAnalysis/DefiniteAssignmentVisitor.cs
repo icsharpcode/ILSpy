@@ -108,6 +108,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			this.scope = scope;
 			this.variablesWithUninitializedUsage = new BitSet(scope.Variables.Count);
+			base.flagsRequiringManualImpl |= InstructionFlags.MayReadLocals | InstructionFlags.MayWriteLocals;
 			Initialize(new State(scope.Variables.Count));
 		}
 		
@@ -141,7 +142,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		protected internal override void VisitStLoc(StLoc inst)
 		{
-			base.VisitStLoc(inst);
+			inst.Value.AcceptVisitor(this);
 			HandleStore(inst.Variable);
 		}
 		
@@ -151,15 +152,20 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			base.BeginTryCatchHandler(inst);
 		}
 		
+		protected internal override void VisitPinnedRegion(PinnedRegion inst)
+		{
+			inst.Init.AcceptVisitor(this);
+			HandleStore(inst.Variable);
+			inst.Body.AcceptVisitor(this);
+		}
+		
 		protected internal override void VisitLdLoc(LdLoc inst)
 		{
-			base.VisitLdLoc(inst);
 			EnsureInitialized(inst.Variable);
 		}
 		
 		protected internal override void VisitLdLoca(LdLoca inst)
 		{
-			base.VisitLdLoca(inst);
 			EnsureInitialized(inst.Variable);
 		}
 	}

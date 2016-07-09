@@ -264,6 +264,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				throw new ArgumentNullException("analyzedVariables");
 			this.scope = scope;
 			this.analyzedVariables = analyzedVariables;
+			base.flagsRequiringManualImpl |= InstructionFlags.MayWriteLocals;
 			
 			// Fill `allStores` and `storeIndexMap` and `firstStoreIndexForVariable`.
 			var storesByVar = FindAllStoresByVariable(scope, analyzedVariables);
@@ -309,8 +310,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					storesByVar[vi] = new List<ILInstruction> { null };
 			}
 			foreach (var inst in scope.Descendants) {
-				ILVariable v;
-				if (inst.MatchStLoc(out v) || inst.MatchTryCatchHandler(out v)) {
+				if ((inst.DirectFlags & InstructionFlags.MayWriteLocals) != 0) {
+					ILVariable v = ((IInstructionWithVariableOperand)inst).Variable;
 					if (v.Scope == scope && activeVariables[v.IndexInScope]) {
 						storesByVar[v.IndexInScope].Add(inst);
 					}
@@ -358,7 +359,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		protected internal override void VisitStLoc(StLoc inst)
 		{
-			base.VisitStLoc(inst);
+			inst.Value.AcceptVisitor(this);
 			HandleStore(inst, inst.Variable);
 		}
 		
@@ -366,6 +367,13 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			base.BeginTryCatchHandler(inst);
 			HandleStore(inst, inst.Variable);
+		}
+		
+		protected internal override void VisitPinnedRegion(PinnedRegion inst)
+		{
+			inst.Init.AcceptVisitor(this);
+			HandleStore(inst, inst.Variable);
+			inst.Body.AcceptVisitor(this);
 		}
 		
 		public bool IsAnalyzedVariable(ILVariable v)

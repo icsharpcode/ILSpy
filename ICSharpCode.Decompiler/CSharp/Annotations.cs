@@ -125,6 +125,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			else
 				return null;
 		}
+		
+		public static ILVariable GetILVariable(this VariableInitializer vi)
+		{
+			return vi.Annotation<ILVariable>();
+		}
+		
+		public static VariableInitializer WithILVariable(this VariableInitializer vi, ILVariable v)
+		{
+			vi.AddAnnotation(v);
+			return vi;
+		}
 	}
 	
 	public class ILVariableResolveResult : ResolveResult

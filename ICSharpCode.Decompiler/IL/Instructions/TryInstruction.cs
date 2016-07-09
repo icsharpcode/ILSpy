@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var flags = TryBlock.Flags;
 			foreach (var handler in Handlers)
-				flags = IfInstruction.CombineFlags(flags, handler.Flags);
+				flags = SemanticHelper.CombineBranches(flags, handler.Flags);
 			return flags | InstructionFlags.ControlFlow;
 		}
 		
@@ -150,13 +150,13 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return filter.Flags | body.Flags | InstructionFlags.ControlFlow;
+			return filter.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.MayWriteLocals;
 		}
 		
 		public override InstructionFlags DirectFlags {
 			get {
 				// the body is not evaluated if the filter returns 0
-				return InstructionFlags.ControlFlow;
+				return InstructionFlags.ControlFlow | InstructionFlags.MayWriteLocals;
 			}
 		}
 
@@ -173,32 +173,6 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 			output.Write(' ');
 			body.WriteTo(output);
-		}
-		
-		ILVariable variable;
-		
-		public ILVariable Variable {
-			get { return variable; }
-			set {
-				Debug.Assert(value != null);
-				if (IsConnected)
-					variable.StoreCount--;
-				variable = value;
-				if (IsConnected)
-					variable.StoreCount++;
-			}
-		}
-		
-		protected override void Connected()
-		{
-			base.Connected();
-			variable.StoreCount++;
-		}
-		
-		protected override void Disconnected()
-		{
-			variable.StoreCount--;
-			base.Disconnected();
 		}
 	}
 	

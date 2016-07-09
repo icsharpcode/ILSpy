@@ -31,6 +31,7 @@ using ICSharpCode.NRefactory.CSharp.TypeSystem;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
 
+using ICSharpCode.NRefactory.TypeSystem.Implementation;
 using ExpressionType = System.Linq.Expressions.ExpressionType;
 
 namespace ICSharpCode.Decompiler.CSharp
@@ -1048,10 +1049,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
 			} else {
 				// Cast pointer type if necessary:
-				target = target.ConvertTo(new PointerType(inst.Type), this);
+				if (!TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
+					target = target.ConvertTo(new PointerType(inst.Type), this);
+				}
 				result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
 					.WithoutILInstruction()
-					.WithRR(new ResolveResult(inst.Type));
+					.WithRR(new ResolveResult(((TypeWithElementType)target.Type).ElementType));
 			}
 			return Assignment(result, value).WithILInstruction(inst);
 		}

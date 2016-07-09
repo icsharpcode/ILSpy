@@ -60,14 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return InstructionFlags.ControlFlow | condition.Flags | CombineFlags(trueInst.Flags, falseInst.Flags);
-		}
-		
-		internal static InstructionFlags CombineFlags(InstructionFlags trueFlags, InstructionFlags falseFlags)
-		{
-			// the endpoint of the 'if' is only unreachable if both branches have an unreachable endpoint
-			const InstructionFlags combineWithAnd = InstructionFlags.EndPointUnreachable;
-			return (trueFlags & falseFlags) | ((trueFlags | falseFlags) & ~combineWithAnd);
+			return InstructionFlags.ControlFlow | condition.Flags | SemanticHelper.CombineBranches(trueInst.Flags, falseInst.Flags);
 		}
 		
 		public override void WriteTo(ITextOutput output)
