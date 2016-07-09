@@ -13,3 +13,4 @@ _ReSharper*/
 *.patch
 /packages
 *.ide/
+/ICSharpCode.Decompiler/Tests/TestCases/*.exe

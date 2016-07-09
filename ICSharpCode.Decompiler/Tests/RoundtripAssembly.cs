@@ -88,11 +88,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Random_TestCase_1()
 		{
-			try {
-				RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
-			} catch (CompilationFailedException ex) {
-				Assert.Ignore(ex.Message);
-			}
+			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
 		}
 
 		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest)
