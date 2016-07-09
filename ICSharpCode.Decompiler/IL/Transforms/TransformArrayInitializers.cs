@@ -24,13 +24,19 @@ using ICSharpCode.NRefactory.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
+	/// <summary>
+	/// Transforms array initialization pattern of System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray.
+	/// For collection and object initializers see <see cref="TransformInitializers"/>
+	/// </summary>
 	public class TransformArrayInitializers : IILTransform
 	{
 		ILTransformContext context;
+		ILFunction function;
 		
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
 			this.context = context;
+			this.function = function;
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					if (!DoTransform(block, i))
@@ -38,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 		}
-		
+
 		bool DoTransform(Block body, int pos)
 		{
 			if (pos >= body.Instructions.Count - 2)
@@ -52,9 +58,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction[] values;
 				int initArrayPos;
 				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, arrayLength, out values, out initArrayPos)) {
-					var block = BlockFromInitializer(v, elementType, arrayLength, values);
+					var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
+					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
 					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
 					body.Instructions.RemoveAt(initArrayPos);
+					new ILInlining().InlineIfPossible(body, ref pos);
+					return true;
+				}
+				ILVariable finalStore;
+				if (arrayLength.Length == 1 && HandleSimpleArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out finalStore, out values)) {
+					var block = new Block();
+					var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
+					block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
+					block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value.Clone(), elementType)));
+					block.FinalInstruction = new LdLoc(tempStore);
+					body.Instructions[pos].ReplaceWith(new StLoc(finalStore, block));
+					for (int n = 0; n <= values.Length; n++)
+						body.Instructions.RemoveAt(pos + 1);
+					//body.Instructions.RemoveRange(pos + 1, values.Length + 1);
 					new ILInlining().InlineIfPossible(body, ref pos);
 					return true;
 				}
@@ -85,6 +106,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			}
 			return false;
+		}
+
+		/// <summary>
+		/// Handle simple case where RuntimeHelpers.InitializeArray is not used.
+		/// </summary>
+		bool HandleSimpleArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILVariable finalStore, out ILInstruction[] values)
+		{
+			values = null;
+			finalStore = null;
+			if (pos + length >= block.Instructions.Count)
+				return false;
+			values = new ILInstruction[length];
+			for (int i = pos; i < block.Instructions.Count; i++) {
+				ILInstruction target, value;
+				IType type;
+				int offset = i - pos;
+				if (offset >= length)
+					break;
+				if (!block.Instructions[i].MatchStObj(out target, out value, out type) || !elementType.Equals(type))
+					return false;
+				var ldelem = target as LdElema;
+				if (ldelem == null || !ldelem.Array.MatchLdLoc(store) || ldelem.Indices.Count != 1 || !ldelem.Indices[0].MatchLdcI4(offset))
+					return false;
+				values[offset] = value;
+			}
+			ILInstruction array;
+			return block.Instructions[pos + length].MatchStLoc(out finalStore, out array) && array.MatchLdLoc(store);
 		}
 
 		bool DoTransformMultiDim(Block body, int pos)
@@ -146,7 +194,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 		
-		bool MatchNewArr(ILInstruction instruction, out IType arrayType, out int[] length)
+		internal static bool MatchNewArr(ILInstruction instruction, out IType arrayType, out int[] length)
 		{
 			NewArr newArr = instruction as NewArr;
 			length = null;

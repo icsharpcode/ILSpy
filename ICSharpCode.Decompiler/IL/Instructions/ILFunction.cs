@@ -22,6 +22,7 @@ using System.Threading;
 using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.Disassembler;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -84,6 +85,34 @@ namespace ICSharpCode.Decompiler.IL
 				transform.Run(this, context);
 				this.CheckInvariant(ILPhase.Normal);
 			}
+		}
+
+		public ILVariable RegisterVariable(VariableKind kind, IType type, string name = null)
+		{
+			int index = Variables.Where(v => v.Kind == kind).MaxOrDefault(v => v.Index, -1) + 1;
+			if (string.IsNullOrWhiteSpace(name)) {
+				switch (kind) {
+					case VariableKind.Local:
+						name = "V_";
+						break;
+					case VariableKind.Parameter:
+						name = "P_";
+						break;
+					case VariableKind.Exception:
+						name = "E_";
+						break;
+					case VariableKind.StackSlot:
+						name = "S_";
+						break;
+					default:
+						throw new NotSupportedException();
+				}
+				name += index;
+			}
+			var variable = new ILVariable(kind, type, index);
+			variable.Name = name;
+			Variables.Add(variable);
+			return variable;
 		}
 		
 		public static ILFunction Read(IDecompilerTypeSystem context, IMethod method, CancellationToken cancellationToken = default(CancellationToken))

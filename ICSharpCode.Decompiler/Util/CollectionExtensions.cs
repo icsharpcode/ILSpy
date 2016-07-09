@@ -27,9 +27,9 @@ namespace ICSharpCode.Decompiler
 			return stack.Peek();
 		}
 		
-		public static int MaxOrDefault<T>(this IEnumerable<T> input, Func<T, int> selector)
+		public static int MaxOrDefault<T>(this IEnumerable<T> input, Func<T, int> selector, int defaultValue = 0)
 		{
-			int max = 0;
+			int max = defaultValue;
 			foreach (var element in input) {
 				int value = selector(element);
 				if (value > max)
@@ -56,6 +56,13 @@ namespace ICSharpCode.Decompiler
 				result[index++] = func(element);
 			}
 			return result;
+		}
+
+		public static IEnumerable<U> SelectWithIndex<T, U>(this IEnumerable<T> source, Func<int, T, U> func)
+		{
+			int index = 0;
+			foreach	(var element in source)
+				yield return func(index++, element);
 		}
 		
 		/// <summary>
