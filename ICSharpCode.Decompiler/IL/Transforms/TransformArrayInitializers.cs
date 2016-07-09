@@ -66,18 +66,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				}
 				ILVariable finalStore;
-				if (arrayLength.Length == 1 && HandleSimpleArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out finalStore, out values)) {
-					var block = new Block();
-					var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
-					block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
-					block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value.Clone(), elementType)));
-					block.FinalInstruction = new LdLoc(tempStore);
-					body.Instructions[pos].ReplaceWith(new StLoc(finalStore, block));
-					for (int n = 0; n <= values.Length; n++)
-						body.Instructions.RemoveAt(pos + 1);
-					//body.Instructions.RemoveRange(pos + 1, values.Length + 1);
-					new ILInlining().InlineIfPossible(body, ref pos);
-					return true;
+				if (arrayLength.Length == 1) {
+					if (HandleSimpleArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out finalStore, out values)) {
+						var block = new Block();
+						var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
+						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
+						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value.Clone(), elementType)));
+						block.FinalInstruction = new LdLoc(tempStore);
+						body.Instructions[pos].ReplaceWith(new StLoc(finalStore, block));
+						for (int n = 0; n <= values.Length; n++)
+							body.Instructions.RemoveAt(pos + 1);
+						//body.Instructions.RemoveRange(pos + 1, values.Length + 1);
+						new ILInlining().InlineIfPossible(body, ref pos);
+						return true;
+					}
+					if (HandleJaggedArrayInitializer(body, pos + 1, v, elementType, arrayLength[0], out finalStore, out values)) {
+						var block = new Block();
+						var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
+						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
+						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value.Clone(), elementType)));
+						block.FinalInstruction = new LdLoc(tempStore);
+						body.Instructions[pos].ReplaceWith(new StLoc(finalStore, block));
+						for (int n = 0; n <= values.Length * 3; n++)
+							body.Instructions.RemoveAt(pos + 1);
+						new ILInlining().InlineIfPossible(body, ref pos);
+						return true;
+					}
 				}
 				// Put in a limit so that we don't consume too much memory if the code allocates a huge array
 				// and populates it extremely sparsly. However, 255 "null" elements in a row actually occur in the Mono C# compiler!
@@ -133,6 +147,47 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			ILInstruction array;
 			return block.Instructions[pos + length].MatchStLoc(out finalStore, out array) && array.MatchLdLoc(store);
+		}
+
+		bool HandleJaggedArrayInitializer(Block block, int pos, ILVariable store, IType elementType, int length, out ILVariable finalStore, out ILInstruction[] values)
+		{
+			finalStore = null;
+			values = null;
+			if (pos + length * 3 >= block.Instructions.Count)
+				return false;
+			values = new ILInstruction[length];
+			ILInstruction initializer;
+			for (int i = 0; i < length; i++) {
+				if (!MatchJaggedArrayStore(block, pos, store, i, out initializer))
+					return false;
+				values[i] = initializer;
+				pos += 3;
+			}
+			ILInstruction array;
+			return block.Instructions[pos].MatchStLoc(out finalStore, out array) && array.MatchLdLoc(store);
+		}
+
+		bool MatchJaggedArrayStore(Block block, int pos, ILVariable store, int index, out ILInstruction initializer)
+		{
+			ILVariable temp;
+			ILInstruction storeLoad;
+			initializer = null;
+			// 1. Instruction: temporary copy of store
+			if (!block.Instructions[pos].MatchStLoc(out temp, out storeLoad) || !storeLoad.MatchLdLoc(store))
+				return false;
+			// 3. Instruction: stobj(ldelema(ldloc temp, ldc.i4 0), ldloc tempArrayLoad)
+			var finalInstruction = block.Instructions.ElementAtOrDefault(pos + 2);
+			ILInstruction tempAccess, tempAccessLoad, tempArrayLoad;
+			IType type;
+			ILVariable initializerStore;
+			if (finalInstruction == null || !finalInstruction.MatchStObj(out tempAccess, out tempArrayLoad, out type) || !tempArrayLoad.MatchLdLoc(out initializerStore))
+				return false;
+			var elemLoad = tempAccess as LdElema;
+			if (elemLoad == null || !elemLoad.Array.MatchLdLoc(temp) || elemLoad.Indices.Count != 1 || !elemLoad.Indices[0].MatchLdcI4(index))
+				return false;
+			// 2. Instruction: stloc(temp) with block (array initializer)
+			var nextInstruction = block.Instructions.ElementAtOrDefault(pos + 1);
+			return nextInstruction != null && nextInstruction.MatchStLoc(initializerStore, out initializer) && initializer.OpCode == OpCode.Block;
 		}
 
 		bool DoTransformMultiDim(Block body, int pos)
