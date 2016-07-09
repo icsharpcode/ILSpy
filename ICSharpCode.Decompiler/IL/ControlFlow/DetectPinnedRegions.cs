@@ -62,6 +62,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					CreatePinnedRegion(block);
 				container.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
 			}
+			// Sometimes there's leftover writes to the original pinned locals
+			foreach (var block in function.Descendants.OfType<Block>()) {
+				for (int i = 0; i < block.Instructions.Count; i++) {
+					var stloc = block.Instructions[i] as StLoc;
+					if (stloc != null && stloc.Variable.Kind == VariableKind.PinnedLocal && stloc.Variable.LoadCount == 0 && stloc.Variable.AddressCount == 0) {
+						if (SemanticHelper.IsPure(stloc.Value.Flags)) {
+							block.Instructions.RemoveAt(i--);
+						} else {
+							stloc.ReplaceWith(stloc.Value);
+						}
+					}
+				}
+			}
 		}
 		
 		/// <summary>
@@ -335,7 +348,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (body.EntryPoint.IncomingEdgeCount == 1
 				    && body.EntryPoint.Instructions.Count == 3
 				    && body.EntryPoint.Instructions[0].MatchStLoc(out nativeVar, out initInst)
-				    && nativeVar.Type.Kind == TypeKind.Pointer
+				    && nativeVar.Type.GetStackType() == StackType.I
 				    && nativeVar.StoreCount == 2
 				    && initInst.UnwrapConv(ConversionKind.StopGCTracking).MatchLdLoc(pinnedRegion.Variable)
 				    && IsBranchOnNull(body.EntryPoint.Instructions[1], nativeVar, out targetBlock)
@@ -351,6 +364,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					body.Blocks.RemoveAt(targetBlock.ChildIndex);
 					body.Blocks.Insert(0, targetBlock);
 					pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init);
+					
+					ILVariable otherVar;
+					ILInstruction otherVarInit;
+					// In optimized builds, the 'nativeVar' may end up being a stack slot,
+					// and only gets assigned to a real variable after the offset adjustment.
+					if (nativeVar.Kind == VariableKind.StackSlot && nativeVar.LoadCount == 1
+					    && body.EntryPoint.Instructions[0].MatchStLoc(out otherVar, out otherVarInit)
+					    && otherVarInit.MatchLdLoc(nativeVar)
+					    && otherVar.IsSingleDefinition)
+					{
+						body.EntryPoint.Instructions.RemoveAt(0);
+						nativeVar = otherVar;
+					}
 					ILVariable newVar;
 					if (nativeVar.Kind == VariableKind.Local) {
 						newVar = new ILVariable(VariableKind.PinnedLocal, nativeVar.Type, nativeVar.Index);

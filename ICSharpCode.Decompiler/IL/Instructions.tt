@@ -200,7 +200,7 @@
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
 			MayThrow, ResultType("Ref"), SupportsReadonlyPrefix),
-		new OpCode("array.to.pointer", "Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.\n"
+		new OpCode("array.to.pointer", "Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty." + Environment.NewLine
 			+ "Also used to convert a string to a reference to the first character.",
 			CustomArguments("array"), ResultType("Ref")),
 
