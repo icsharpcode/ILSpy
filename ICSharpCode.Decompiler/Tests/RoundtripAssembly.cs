@@ -162,6 +162,9 @@ namespace ICSharpCode.Decompiler.Tests
 			info.CreateNoWindow = true;
 			info.UseShellExecute = false;
 			info.RedirectStandardOutput = true;
+			// Don't let environment variables (e.g. set by AppVeyor) influence the build.
+			info.EnvironmentVariables.Remove("Configuration");
+			info.EnvironmentVariables.Remove("Platform");
 			Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
 			using (var p = Process.Start(info)) {
 				Regex errorRegex = new Regex(@"^[\w\d.\\-]+\(\d+,\d+\):");

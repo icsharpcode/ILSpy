@@ -1,4 +1,4 @@
-@if not exist "AvalonEdit\ICSharpCode.AvalonEdit.sln" (
+@if not exist "NRefactory\NRefactory.sln" (
 	git submodule update --init || exit /b 1
 )
 %windir%\microsoft.net\framework\v4.0.30319\msbuild /m ILSpy.sln /t:clean "/p:Platform=Any CPU" /p:Configuration=Debug
