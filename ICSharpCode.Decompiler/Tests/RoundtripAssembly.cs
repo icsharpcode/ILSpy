@@ -44,11 +44,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void NewtonsoftJson_net40()
 		{
-			try {
-				RunWithTest("Newtonsoft.Json-net40", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
-			} catch (TestRunFailedException ex) {
-				Assert.Ignore(ex.Message);
-			}
+			RunWithTest("Newtonsoft.Json-net40", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
 		}
 		
 		[Test]

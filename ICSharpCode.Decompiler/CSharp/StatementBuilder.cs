@@ -282,7 +282,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			string label;
 			if (endContainerLabels.TryGetValue(container, out label)) {
+				if (isLoop) {
+					blockStatement.Add(new ContinueStatement());
+				}
 				blockStatement.Add(new LabelStatement { Label = label });
+				if (isLoop) {
+					blockStatement.Add(new BreakStatement());
+				}
 			}
 			return blockStatement;
 		}
