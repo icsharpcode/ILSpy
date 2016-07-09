@@ -1259,11 +1259,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					container.Pop();
 				}
 			}
-			
+			ArraySpecifier[] additionalSpecifiers;
+			var typeExpression = ConvertType(type);
+			if (typeExpression is ComposedType) {
+				additionalSpecifiers = ((ComposedType)typeExpression).ArraySpecifiers.SelectArray(a => (ArraySpecifier)a.Clone());
+				typeExpression = ((ComposedType)typeExpression).BaseType.Clone();
+			} else {
+				additionalSpecifiers = new ArraySpecifier[0];
+			}
 			var expr = new ArrayCreateExpression {
-				Type = ConvertType(type),
+				Type = typeExpression,
 				Initializer = root
 			};
+			expr.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
 			expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
 			result = expr.WithILInstruction(block)
 				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
