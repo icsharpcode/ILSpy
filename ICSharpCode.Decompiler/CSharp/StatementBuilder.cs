@@ -85,6 +85,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override Statement VisitSwitchInstruction(SwitchInstruction inst)
 		{
+			var oldBreakTarget = breakTarget;
+			breakTarget = null; // 'break' within a switch would only leave the switch
+			
 			var value = exprBuilder.Translate(inst.Value);
 			var stmt = new SwitchStatement() { Expression = value };	
 			foreach (var section in inst.Sections) {
@@ -93,6 +96,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				astSection.Statements.Add(Convert(section.Body));
 				stmt.SwitchSections.Add(astSection);
 			}
+			
+			breakTarget = oldBreakTarget;
 			return stmt;
 		}
 		
