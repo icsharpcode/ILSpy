@@ -94,7 +94,8 @@ namespace ICSharpCode.Decompiler.IL
 							return false;
 					}
 				default:
-					return false;
+					// All instructions without special behavior that target a stack-variable can be copied.
+					return value.DirectFlags == InstructionFlags.None && target.Kind == VariableKind.StackSlot;
 			}
 		}
 	}
