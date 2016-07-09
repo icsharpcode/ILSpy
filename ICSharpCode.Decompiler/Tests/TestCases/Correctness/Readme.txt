@@ -1,6 +1,6 @@
 ﻿The files in this folder are correctness tests for the decompiler.
 
-The NUnit class running these tests is ../TestRunner.cs.
+The NUnit class running these tests is ../../CorrectnessTestRunner.cs.
 
 We:
 * compile/assemble a test case (call the result "executable 1")

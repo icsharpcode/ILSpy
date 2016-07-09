@@ -11,14 +11,14 @@ using NUnit.Framework;
 namespace ICSharpCode.Decompiler.Tests
 {
 	[TestFixture]
-	public class TestRunner
+	public class CorrectnessTestRunner
 	{
-		const string TestCasePath = @"../../Tests/TestCases";
+		const string TestCasePath = @"../../Tests/TestCases/Correctness";
 
 		[Test]
 		public void AllFilesHaveTests()
 		{
-			var testNames = typeof(TestRunner).GetMethods()
+			var testNames = typeof(CorrectnessTestRunner).GetMethods()
 				.Where(m => m.GetCustomAttributes(typeof(TestAttribute), false).Any())
 				.Select(m => m.Name)
 				.ToArray();
@@ -106,19 +106,6 @@ namespace ICSharpCode.Decompiler.Tests
 		public void MemberLookup()
 		{
 			TestCompileDecompileCompileOutputAll("MemberLookup.cs");
-		}
-		
-		[Test]
-		public void ILTest()
-		{
-			TestAssembleDecompileCompileOutput("ILTest.il");
-		}
-		
-		[Test]
-		public void ConvTest()
-		{
-			TestAssembleDecompileCompileOutput("ConvTest.il");
-			TestAssembleDecompileCompileOutput("ConvTest.il", CompilerOptions.UseDebug | CompilerOptions.Force32Bit, AssemblerOptions.Force32Bit);
 		}
 
 		[Test]
