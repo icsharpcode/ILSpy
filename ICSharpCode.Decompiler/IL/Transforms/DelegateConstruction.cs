@@ -49,8 +49,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							block.Instructions.RemoveAt(i);
 							continue;
 						}
-						if (CachedDelegateInitializationWithLocal(inst)) {
+						bool hasFieldStore;
+						if (CachedDelegateInitializationWithLocal(inst, out hasFieldStore)) {
 							block.Instructions.RemoveAt(i);
+							if (hasFieldStore) {
+								block.Instructions.RemoveAt(i - 1);
+							}
 							continue;
 						}
 					}
@@ -96,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var targetMethod = ((IInstructionWithMethodOperand)value.Arguments[1]).Method;
 			if (IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod)) {
 				var target = value.Arguments[0];
-				var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(decompilationContext);
+				var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(targetMethod));
 				var function = ILFunction.Read(localTypeSystem, targetMethod, context.CancellationToken);
 				
 				var contextPrefix = targetMethod.Name;
@@ -173,9 +177,48 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool CachedDelegateInitializationWithLocal(IfInstruction inst)
+		bool CachedDelegateInitializationWithLocal(IfInstruction inst, out bool hasFieldStore)
 		{
-			return false;
+			// [stloc v(ldsfld CachedAnonMethodDelegate)]
+			// if (comp(ldloc v == ldnull) {
+			//     stloc v(DelegateConstruction)
+			//     [stsfld CachedAnonMethodDelegate(v)]
+			// }
+			// ... one usage of v ...
+			// =>
+			// ... one usage of DelegateConstruction ...
+			Block trueInst = inst.TrueInst as Block;
+			var condition = inst.Condition as Comp;
+			hasFieldStore = false;
+			if (condition == null || trueInst == null || (trueInst.Instructions.Count != 1 && trueInst.Instructions.Count != 2) || !inst.FalseInst.MatchNop())
+				return false;
+			ILVariable v;
+			ILInstruction value, value2;
+			var storeInst = trueInst.Instructions[0];
+			var optionalFieldStore = trueInst.Instructions.ElementAtOrDefault(1);
+			if (!condition.Left.MatchLdLoc(out v) || !condition.Right.MatchLdNull())
+				return false;
+			if (!storeInst.MatchStLoc(v, out value))
+				return false;
+			if (optionalFieldStore != null) {
+				IField field, field2;
+				if (!optionalFieldStore.MatchStsFld(out value2, out field) || !value2.MatchLdLoc(v) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+					return false;
+				var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
+				if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdsFld(out field2) || !field.Equals(field2))
+					return false;
+				hasFieldStore = true;
+			}
+			if (!IsDelegateConstruction(value as NewObj, true))
+				return false;
+			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
+			if (nextInstruction == null)
+				return false;
+			var usages = nextInstruction.Descendants.OfType<LdLoc>().Where(i => i.Variable == v).ToArray();
+			if (usages.Length != 1)
+				return false;
+			usages[0].ReplaceWith(value);
+			return true;
 		}
 	}
 }

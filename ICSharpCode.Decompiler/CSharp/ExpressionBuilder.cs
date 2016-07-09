@@ -783,15 +783,15 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		TranslatedExpression TranslateFunction(TranslatedExpression objectCreateExpression, TranslatedExpression target, ILFunction function)
 		{
-			var method = typeSystem.Resolve(function.Method) as IMethod;
+			var method = typeSystem.Resolve(function.Method)?.MemberDefinition as IMethod;
 			Debug.Assert(method != null);
-			
+
 			// Create AnonymousMethodExpression and prepare parameters
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.Parameters.AddRange(MakeParameters(method, function));
 			ame.HasParameterList = true;
-			
-			StatementBuilder builder = new StatementBuilder(typeSystem, decompilationContext, method);
+			var context = new SimpleTypeResolveContext(method);
+			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(context), context, method);
 			var body = builder.ConvertAsBlock(function.Body);
 			
 			bool isLambda = false;
@@ -1274,12 +1274,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst)
 		{
 			var condition = TranslateCondition(inst.Condition);
-			var targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
-			var trueBranch = Translate(inst.TrueInst).ConvertTo(targetType, this);
-			var falseBranch = Translate(inst.FalseInst).ConvertTo(targetType, this);
-			return new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
+			var trueBranch = Translate(inst.TrueInst);
+			var falseBranch = Translate(inst.FalseInst);
+			IType targetType;
+			if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType)) {
+				targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			} else {
+				targetType = trueBranch.Type.Equals(SpecialType.NullType) ? falseBranch.Type : trueBranch.Type;
+			}
+			return new ConditionalExpression(condition.Expression, trueBranch.ConvertTo(targetType, this).Expression, falseBranch.ConvertTo(targetType, this).Expression)
 				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(trueBranch.Type));
+				.WithRR(new ResolveResult(targetType));
 		}
 		
 		protected internal override TranslatedExpression VisitAddressOf(AddressOf inst)
