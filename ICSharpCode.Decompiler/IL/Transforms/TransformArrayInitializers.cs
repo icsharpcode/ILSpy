@@ -76,8 +76,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							(i, value) => {
 								if (value == null)
 									value = GetNullExpression(elementType);
-								else
-									value = value.Clone();
 								return StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType);
 							}
 						));
@@ -92,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						var block = new Block();
 						var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
-						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value.Clone(), elementType)));
+						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType)));
 						block.FinalInstruction = new LdLoc(tempStore);
 						body.Instructions[pos].ReplaceWith(new StLoc(finalStore, block));
 						RemoveInstructions(body, pos + 1, instructionsToRemove);
