@@ -36,20 +36,52 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-					var inst = block.Instructions[i] as StLoc;
-					var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
-					ILVariable localVariable;
-					// stloc s(value)
-                    // stloc l(ldloc s)
-					// -->
-					// stloc s(stloc l(value))
-					if (inst != null && nextInst != null && nextInst.Variable.Kind != VariableKind.StackSlot && nextInst.Value.MatchLdLoc(inst.Variable)) {
-						block.Instructions.RemoveAt(i + 1);
-						var value = inst.Value.Clone();
-						inst.Value.ReplaceWith(new StLoc(nextInst.Variable, value));
-					}
+					TransformInlineAssignmentFields(block, i);
+					TransformInlineAssignmentLocal(block, i);
 				}
 			}
+		}
+
+		/// <code>
+		/// stloc s(value)
+		/// stloc l(ldloc s)
+		/// -->
+		/// stloc s(stloc l(value))
+		/// </code>
+		static void TransformInlineAssignmentLocal(Block block, int i)
+		{
+			var inst = block.Instructions[i] as StLoc;
+			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
+			if (inst == null || nextInst == null)
+				return;
+			if (nextInst.Variable.Kind == VariableKind.StackSlot || !nextInst.Value.MatchLdLoc(inst.Variable))
+				return;
+			block.Instructions.RemoveAt(i + 1);
+			var value = inst.Value.Clone();
+			inst.Value.ReplaceWith(new StLoc(nextInst.Variable, value));
+		}
+
+		/// <code>
+		/// stloc s(value)
+		/// stloc l(ldloc s)
+		/// stfld f(..., ldloc s)
+		/// -->
+		/// stloc l(stfld f(..., value))
+		/// </code>
+		static void TransformInlineAssignmentFields(Block block, int i)
+		{
+//			var inst = block.Instructions[i] as StLoc;
+//			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
+//			var fieldStore = block.Instructions.ElementAtOrDefault(i + 2) as StObj;
+//			if (inst == null || nextInst == null || fieldStore == null)
+//				return;
+//			if (nextInst.Variable.Kind == VariableKind.StackSlot || !nextInst.Value.MatchLdLoc(inst.Variable) || !fieldStore.Value.MatchLdLoc(inst.Variable))
+//				return;
+//			var value = inst.Value.Clone();
+//			var locVar = nextInst.Variable;
+//			block.Instructions.RemoveAt(i + 1);
+//			block.Instructions.RemoveAt(i + 1);
+//			inst.ReplaceWith(new StLoc(locVar, new StObj(fieldStore.Target, value, fieldStore.Field)));
 		}
 	}
 }

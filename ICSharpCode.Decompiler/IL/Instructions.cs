@@ -129,18 +129,10 @@ namespace ICSharpCode.Decompiler.IL
 		Shl,
 		/// <summary>Shift right</summary>
 		Shr,
-		/// <summary>Load instance field</summary>
-		LdFld,
 		/// <summary>Load address of instance field</summary>
 		LdFlda,
-		/// <summary>Store value to instance field</summary>
-		StFld,
-		/// <summary>Load static field</summary>
-		LdsFld,
 		/// <summary>Load static field address</summary>
 		LdsFlda,
-		/// <summary>Store value to static field</summary>
-		StsFld,
 		/// <summary>Casts an object to a class.</summary>
 		CastClass,
 		/// <summary>Test if object is instance of class or interface.</summary>
@@ -2027,101 +2019,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Load instance field</summary>
-	public sealed partial class LdFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix, IInstructionWithFieldOperand
-	{
-		public LdFld(ILInstruction target, IField field) : base(OpCode.LdFld)
-		{
-			this.Target = target;
-			this.field = field;
-		}
-		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
-		ILInstruction target;
-		public ILInstruction Target {
-			get { return this.target; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.target, value, 0);
-			}
-		}
-		protected sealed override int GetChildCount()
-		{
-			return 1;
-		}
-		protected sealed override ILInstruction GetChild(int index)
-		{
-			switch (index) {
-				case 0:
-					return this.target;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		protected sealed override void SetChild(int index, ILInstruction value)
-		{
-			switch (index) {
-				case 0:
-					this.Target = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		protected sealed override SlotInfo GetChildSlot(int index)
-		{
-			switch (index) {
-				case 0:
-					return TargetSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		public sealed override ILInstruction Clone()
-		{
-			var clone = (LdFld)ShallowClone();
-			clone.Target = this.target.Clone();
-			return clone;
-		}
-		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
-		public bool IsVolatile { get; set; }
-		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
-		public byte UnalignedPrefix { get; set; }
-		readonly IField field;
-		/// <summary>Returns the field operand.</summary>
-		public IField Field { get { return field; } }
-		public override StackType ResultType { get { return field.Type.GetStackType(); } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return target.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-			}
-		}
-		public override void WriteTo(ITextOutput output)
-		{
-			if (IsVolatile)
-				output.Write("volatile.");
-			if (UnalignedPrefix > 0)
-				output.Write("unaligned(" + UnalignedPrefix + ").");
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
-			output.Write('(');
-			this.target.WriteTo(output);
-			output.Write(')');
-		}
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitLdFld(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitLdFld(this);
-		}
-	}
-
 	/// <summary>Load address of instance field</summary>
 	public sealed partial class LdFlda : ILInstruction, IInstructionWithFieldOperand
 	{
@@ -2210,165 +2107,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Store value to instance field</summary>
-	public sealed partial class StFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix, IInstructionWithFieldOperand
-	{
-		public StFld(ILInstruction target, ILInstruction value, IField field) : base(OpCode.StFld)
-		{
-			this.Target = target;
-			this.Value = value;
-			this.field = field;
-		}
-		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
-		ILInstruction target;
-		public ILInstruction Target {
-			get { return this.target; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.target, value, 0);
-			}
-		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
-		ILInstruction value;
-		public ILInstruction Value {
-			get { return this.value; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.value, value, 1);
-			}
-		}
-		protected sealed override int GetChildCount()
-		{
-			return 2;
-		}
-		protected sealed override ILInstruction GetChild(int index)
-		{
-			switch (index) {
-				case 0:
-					return this.target;
-				case 1:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		protected sealed override void SetChild(int index, ILInstruction value)
-		{
-			switch (index) {
-				case 0:
-					this.Target = value;
-					break;
-				case 1:
-					this.Value = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		protected sealed override SlotInfo GetChildSlot(int index)
-		{
-			switch (index) {
-				case 0:
-					return TargetSlot;
-				case 1:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		public sealed override ILInstruction Clone()
-		{
-			var clone = (StFld)ShallowClone();
-			clone.Target = this.target.Clone();
-			clone.Value = this.value.Clone();
-			return clone;
-		}
-		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
-		public bool IsVolatile { get; set; }
-		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
-		public byte UnalignedPrefix { get; set; }
-		readonly IField field;
-		/// <summary>Returns the field operand.</summary>
-		public IField Field { get { return field; } }
-		public override StackType ResultType { get { return field.Type.GetStackType(); } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return target.Flags | value.Flags | InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
-			}
-		}
-		public override void WriteTo(ITextOutput output)
-		{
-			if (IsVolatile)
-				output.Write("volatile.");
-			if (UnalignedPrefix > 0)
-				output.Write("unaligned(" + UnalignedPrefix + ").");
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
-			output.Write('(');
-			this.target.WriteTo(output);
-			output.Write(", ");
-			this.value.WriteTo(output);
-			output.Write(')');
-		}
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitStFld(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitStFld(this);
-		}
-	}
-
-	/// <summary>Load static field</summary>
-	public sealed partial class LdsFld : SimpleInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix, IInstructionWithFieldOperand
-	{
-		public LdsFld(IField field) : base(OpCode.LdsFld)
-		{
-			this.field = field;
-		}
-		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
-		public bool IsVolatile { get; set; }
-		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
-		public byte UnalignedPrefix { get; set; }
-		readonly IField field;
-		/// <summary>Returns the field operand.</summary>
-		public IField Field { get { return field; } }
-		public override StackType ResultType { get { return field.Type.GetStackType(); } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return InstructionFlags.SideEffect;
-		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.SideEffect;
-			}
-		}
-		public override void WriteTo(ITextOutput output)
-		{
-			if (IsVolatile)
-				output.Write("volatile.");
-			if (UnalignedPrefix > 0)
-				output.Write("unaligned(" + UnalignedPrefix + ").");
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
-		}
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitLdsFld(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitLdsFld(this);
-		}
-	}
-
 	/// <summary>Load static field address</summary>
 	public sealed partial class LdsFlda : SimpleInstruction, IInstructionWithFieldOperand
 	{
@@ -2393,101 +2131,6 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdsFlda(this);
-		}
-	}
-
-	/// <summary>Store value to static field</summary>
-	public sealed partial class StsFld : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix, IInstructionWithFieldOperand
-	{
-		public StsFld(ILInstruction value, IField field) : base(OpCode.StsFld)
-		{
-			this.Value = value;
-			this.field = field;
-		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
-		ILInstruction value;
-		public ILInstruction Value {
-			get { return this.value; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.value, value, 0);
-			}
-		}
-		protected sealed override int GetChildCount()
-		{
-			return 1;
-		}
-		protected sealed override ILInstruction GetChild(int index)
-		{
-			switch (index) {
-				case 0:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		protected sealed override void SetChild(int index, ILInstruction value)
-		{
-			switch (index) {
-				case 0:
-					this.Value = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		protected sealed override SlotInfo GetChildSlot(int index)
-		{
-			switch (index) {
-				case 0:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		public sealed override ILInstruction Clone()
-		{
-			var clone = (StsFld)ShallowClone();
-			clone.Value = this.value.Clone();
-			return clone;
-		}
-		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
-		public bool IsVolatile { get; set; }
-		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
-		public byte UnalignedPrefix { get; set; }
-		readonly IField field;
-		/// <summary>Returns the field operand.</summary>
-		public IField Field { get { return field; } }
-		public override StackType ResultType { get { return field.Type.GetStackType(); } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return value.Flags | InstructionFlags.SideEffect;
-		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.SideEffect;
-			}
-		}
-		public override void WriteTo(ITextOutput output)
-		{
-			if (IsVolatile)
-				output.Write("volatile.");
-			if (UnalignedPrefix > 0)
-				output.Write("unaligned(" + UnalignedPrefix + ").");
-			output.Write(OpCode);
-			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
-			output.Write('(');
-			this.value.WriteTo(output);
-			output.Write(')');
-		}
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitStsFld(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitStsFld(this);
 		}
 	}
 
@@ -3639,27 +3282,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitLdFld(LdFld inst)
-		{
-			Default(inst);
-		}
 		protected internal virtual void VisitLdFlda(LdFlda inst)
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitStFld(StFld inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitLdsFld(LdsFld inst)
-		{
-			Default(inst);
-		}
 		protected internal virtual void VisitLdsFlda(LdsFlda inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitStsFld(StsFld inst)
 		{
 			Default(inst);
 		}
@@ -3949,27 +3576,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitLdFld(LdFld inst)
-		{
-			return Default(inst);
-		}
 		protected internal virtual T VisitLdFlda(LdFlda inst)
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitStFld(StFld inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitLdsFld(LdsFld inst)
-		{
-			return Default(inst);
-		}
 		protected internal virtual T VisitLdsFlda(LdsFlda inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitStsFld(StsFld inst)
 		{
 			return Default(inst);
 		}
@@ -4146,12 +3757,8 @@ namespace ICSharpCode.Decompiler.IL
 			"ret",
 			"shl",
 			"shr",
-			"ldfld",
 			"ldflda",
-			"stfld",
-			"ldsfld",
 			"ldsflda",
-			"stsfld",
 			"castclass",
 			"isinst",
 			"ldobj",
@@ -4538,18 +4145,6 @@ namespace ICSharpCode.Decompiler.IL
 			right = default(ILInstruction);
 			return false;
 		}
-		public bool MatchLdFld(out ILInstruction target, out IField field)
-		{
-			var inst = this as LdFld;
-			if (inst != null) {
-				target = inst.Target;
-				field = inst.Field;
-				return true;
-			}
-			target = default(ILInstruction);
-			field = default(IField);
-			return false;
-		}
 		public bool MatchLdFlda(out ILInstruction target, out IField field)
 		{
 			var inst = this as LdFlda;
@@ -4562,30 +4157,6 @@ namespace ICSharpCode.Decompiler.IL
 			field = default(IField);
 			return false;
 		}
-		public bool MatchStFld(out ILInstruction target, out ILInstruction value, out IField field)
-		{
-			var inst = this as StFld;
-			if (inst != null) {
-				target = inst.Target;
-				value = inst.Value;
-				field = inst.Field;
-				return true;
-			}
-			target = default(ILInstruction);
-			value = default(ILInstruction);
-			field = default(IField);
-			return false;
-		}
-		public bool MatchLdsFld(out IField field)
-		{
-			var inst = this as LdsFld;
-			if (inst != null) {
-				field = inst.Field;
-				return true;
-			}
-			field = default(IField);
-			return false;
-		}
 		public bool MatchLdsFlda(out IField field)
 		{
 			var inst = this as LdsFlda;
@@ -4593,18 +4164,6 @@ namespace ICSharpCode.Decompiler.IL
 				field = inst.Field;
 				return true;
 			}
-			field = default(IField);
-			return false;
-		}
-		public bool MatchStsFld(out ILInstruction value, out IField field)
-		{
-			var inst = this as StsFld;
-			if (inst != null) {
-				value = inst.Value;
-				field = inst.Field;
-				return true;
-			}
-			value = default(ILInstruction);
 			field = default(IField);
 			return false;
 		}

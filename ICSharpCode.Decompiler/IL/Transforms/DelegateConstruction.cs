@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
 			if (nextInstruction == null)
 				return false;
-			var usages = nextInstruction.Descendants.OfType<LdsFld>().Where(i => i.Field.Equals(field)).ToArray();
+			var usages = nextInstruction.Descendants.Where(i => i.MatchLdsFld(field)).ToArray();
 			if (usages.Length != 1)
 				return false;
 			usages[0].ReplaceWith(value);

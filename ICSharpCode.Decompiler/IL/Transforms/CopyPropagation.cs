@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 							block.Instructions.RemoveAt(i);
 							int c = new ILInlining().InlineInto(block, i, aggressive: false);
-							i -= uninlinedArgs.Length + c + 1;
+							i -= c + 1;
 						}
 					}
 				}
@@ -73,8 +73,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (value.OpCode) {
 				case OpCode.LdLoca:
-				case OpCode.LdElema:
-				case OpCode.LdFlda:
+//				case OpCode.LdElema:
+//				case OpCode.LdFlda:
 				case OpCode.LdsFlda:
 					// All address-loading instructions always return the same value for a given operand/argument combination,
 					// so they can be safely copied.

@@ -61,8 +61,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (inst.OpCode) {
 				case OpCode.LdLoc:
-				case OpCode.LdFld:
-				case OpCode.LdsFld:
 				case OpCode.LdObj:
 					return true;
 				case OpCode.Call:

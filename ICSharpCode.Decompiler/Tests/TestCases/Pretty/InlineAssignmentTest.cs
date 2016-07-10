@@ -22,6 +22,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class InlineAssignmentTest
 	{
+		private int field1;
+		private InlineAssignmentTest field2;
+		
 		public static void Main()
 		{
 			
@@ -35,6 +38,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			InlineAssignmentTest V_1;
 			Console.WriteLine((object)(V_1 = new InlineAssignmentTest()));
 			Console.WriteLine((object)V_1);
+		}
+		
+		public void SimpleInlineWithFields()
+		{
+			Console.WriteLine(this.field1 = 5);
+			Console.WriteLine((object)(this.field2 = new InlineAssignmentTest()));
+		}
+		
+		public void SimpleInlineWithFields2()
+		{
+			Console.WriteLine(this.field1 = 5);
+			Console.WriteLine(this.field1);
+			Console.WriteLine((object)(this.field2 = new InlineAssignmentTest()));
+			Console.WriteLine((object)this.field2);
 		}
 	}
 }

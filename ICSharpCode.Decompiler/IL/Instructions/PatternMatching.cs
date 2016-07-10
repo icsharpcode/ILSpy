@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -164,6 +165,40 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			left = null;
 			right = null;
+			return false;
+		}
+		
+		public bool MatchLdsFld(IField field)
+		{
+			LdsFlda ldsflda = (this as LdObj)?.Target as LdsFlda;
+			if (ldsflda != null) {
+				return field.Equals(ldsflda.Field);
+			}
+			return false;
+		}
+		
+		public bool MatchLdsFld(out IField field)
+		{
+			LdsFlda ldsflda = (this as LdObj)?.Target as LdsFlda;
+			if (ldsflda != null) {
+				field = ldsflda.Field;
+				return true;
+			}
+			field = null;
+			return false;
+		}
+		
+		public bool MatchStsFld(out ILInstruction value, out IField field)
+		{
+			var stobj = this as StObj;
+			LdsFlda ldsflda = stobj?.Target as LdsFlda;
+			if (ldsflda != null) {
+				value = stobj.Value;
+				field = ldsflda.Field;
+				return true;
+			}
+			value = null;
+			field = null;
 			return false;
 		}
 		

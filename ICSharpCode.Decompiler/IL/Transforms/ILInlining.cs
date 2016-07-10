@@ -192,17 +192,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switch (inlinedExpression.OpCode) {
 					case OpCode.LdLoc:
 					case OpCode.StLoc:
-					case OpCode.LdElema:
 						return false;
-					case OpCode.LdFld:
-					case OpCode.StFld:
-					case OpCode.LdsFld:
-					case OpCode.StsFld:
+					case OpCode.LdObj:
 						// allow inlining field access only if it's a readonly field
-						IField f = ((IInstructionWithFieldOperand)inlinedExpression).Field;
-						if (!f.IsReadOnly)
-							return false;
-						break;
+						IField f = (((LdObj)inlinedExpression).Target as IInstructionWithFieldOperand)?.Field;
+						if (f != null && f.IsReadOnly)
+							return true;
+						return f != null && f.IsReadOnly;
 					case OpCode.Call:
 						var m = ((CallInstruction)inlinedExpression).Method;
 						// ensure that it's not an multi-dimensional array getter
@@ -233,8 +229,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return !((Call)parent).Method.IsStatic;
 					case OpCode.CallVirt:
 						return !((CallVirt)parent).Method.IsStatic;
-					case OpCode.StFld:
-					case OpCode.LdFld:
 					case OpCode.LdFlda:
 					// TODO : Reimplement Await
 					//case OpCode.Await:

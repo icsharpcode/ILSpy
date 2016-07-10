@@ -720,26 +720,32 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldelema:
 					return Push(new LdElema(indices: Pop(), array: Pop(), type: ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldfld:
-					return Push(new LdFld(Pop(), ReadAndDecodeFieldReference()));
+					{
+						var field = ReadAndDecodeFieldReference();
+						return Push(new LdObj(new LdFlda(Pop(), field) { DelayExceptions = true }, field.Type));
+					}
 				case ILOpCode.Ldflda:
 					return Push(new LdFlda(Pop(), ReadAndDecodeFieldReference()));
 				case ILOpCode.Stfld:
 					{
 						var field = ReadAndDecodeFieldReference();
-						return new StFld(value: Pop(field.Type.GetStackType()), target: Pop(), field: field);
+						return new StObj(value: Pop(field.Type.GetStackType()), target: new LdFlda(Pop(), field) { DelayExceptions = true }, type: field.Type);
 					}
 				case ILOpCode.Ldlen:
 					return Push(new LdLen(StackType.I, Pop()));
 				case ILOpCode.Ldobj:
 					return Push(new LdObj(PopPointer(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldsfld:
-					return Push(new LdsFld(ReadAndDecodeFieldReference()));
+					{
+						var field = ReadAndDecodeFieldReference();
+						return Push(new LdObj(new LdsFlda(field), field.Type));
+					}
 				case ILOpCode.Ldsflda:
 					return Push(new LdsFlda(ReadAndDecodeFieldReference()));
 				case ILOpCode.Stsfld:
 					{
 						var field = ReadAndDecodeFieldReference();
-						return new StsFld(Pop(field.Type.GetStackType()), field);
+						return new StObj(value: Pop(field.Type.GetStackType()), target: new LdsFlda(field), type: field.Type);
 					}
 				case ILOpCode.Ldtoken:
 					return Push(LdToken(ReadAndDecodeMetadataToken()));
