@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		/// <remarks>
 		/// This flag is not set for indirect writes to local variables through pointers.
-		/// Ensure you also check the SideEffect flag.
+		/// Ensure you also check the SideEffect flag when checking for instructions that might write to locals.
 		/// </remarks>
 		MayWriteLocals = 0x20,
 		/// <summary>

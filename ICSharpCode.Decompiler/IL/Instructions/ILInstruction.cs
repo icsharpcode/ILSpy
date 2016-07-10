@@ -155,11 +155,19 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
-		/// Returns whether the instruction has at least one of the specified flags.
+		/// Returns whether the instruction (or one of its child instructions) has at least one of the specified flags.
 		/// </summary>
 		public bool HasFlag(InstructionFlags flags)
 		{
 			return (this.Flags & flags) != 0;
+		}
+		
+		/// <summary>
+		/// Returns whether the instruction (without considering child instructions) has at least one of the specified flags.
+		/// </summary>
+		public bool HasDirectFlag(InstructionFlags flags)
+		{
+			return (this.DirectFlags & flags) != 0;
 		}
 		
 		protected void InvalidateFlags()

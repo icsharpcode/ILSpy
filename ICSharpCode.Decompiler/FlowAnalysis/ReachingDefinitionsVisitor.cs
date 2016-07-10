@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 					storesByVar[vi] = new List<ILInstruction> { null };
 			}
 			foreach (var inst in scope.Descendants) {
-				if ((inst.DirectFlags & InstructionFlags.MayWriteLocals) != 0) {
+				if (inst.HasDirectFlag(InstructionFlags.MayWriteLocals)) {
 					ILVariable v = ((IInstructionWithVariableOperand)inst).Variable;
 					if (v.Scope == scope && activeVariables[v.IndexInScope]) {
 						storesByVar[v.IndexInScope].Add(inst);

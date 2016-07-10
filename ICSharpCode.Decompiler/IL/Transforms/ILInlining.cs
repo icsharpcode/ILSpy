@@ -318,20 +318,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		static bool IsSafeForInlineOver(ILInstruction expr, ILInstruction expressionBeingMoved)
 		{
-			ILVariable v;
-			if (expr.MatchLdLoc(out v) && v.AddressCount == 0) {
-				// MayReorder() only looks at flags, so it doesn't
-				// allow reordering 'stloc x y; ldloc v' to 'ldloc v; stloc x y'
-				
-				// We'll allow the reordering unless x==v
-				if (expressionBeingMoved.HasFlag(InstructionFlags.MayWriteLocals)) {
-					foreach (var stloc in expressionBeingMoved.Descendants.OfType<StLoc>()) {
-						if (stloc.Variable == v)
-							return false;
-					}
-				}
-				return true;
-			}
 			return SemanticHelper.MayReorder(expressionBeingMoved.Flags, expr.Flags);
 		}
 	}

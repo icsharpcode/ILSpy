@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.IL
 				decodedInstruction.ILRange = new Interval(start, reader.Position);
 				UnpackPush(decodedInstruction).ILRange = decodedInstruction.ILRange;
 				instructionBuilder.Add(decodedInstruction);
-				if ((decodedInstruction.DirectFlags & InstructionFlags.EndPointUnreachable) != 0) {
+				if (decodedInstruction.HasDirectFlag(InstructionFlags.EndPointUnreachable)) {
 					if (!stackByOffset.TryGetValue(reader.Position, out currentStack)) {
 						currentStack = ImmutableStack<ILVariable>.Empty;
 					}
