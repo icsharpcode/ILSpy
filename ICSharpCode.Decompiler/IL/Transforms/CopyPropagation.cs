@@ -78,6 +78,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.LdsFlda:
 					// All address-loading instructions always return the same value for a given operand/argument combination,
 					// so they can be safely copied.
+					// ... except for LdElema and LdFlda, because those might throw an exception, and we don't want to
+					// change the place where the exception is thrown.
 					return true;
 				case OpCode.LdLoc:
 					var v = ((LdLoc)value).Variable;
