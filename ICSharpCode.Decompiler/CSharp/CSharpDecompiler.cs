@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new ConditionDetection(),
 				new ILInlining(),
 				new TransformInlineAssignment(),
-//				new CopyPropagation(),
+				new CopyPropagation(),
 				new InlineCompilerGeneratedVariables(),
 				new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit
 				new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
@@ -74,7 +74,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		List<IAstTransform> astTransforms = new List<IAstTransform> {
-			//new PushNegation(),
 			new PatternStatementTransform(),
 			new ReplaceMethodCallsWithOperators(),
 			new IntroduceUnsafeModifier(),
