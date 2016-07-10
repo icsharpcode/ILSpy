@@ -249,8 +249,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Debug.Assert(loadInst.IsDescendantOf(next));
 			
 			// decide based on the source expression being inlined
-			if (inlinedExpression.OpCode == OpCode.DefaultValue)
-				return true;
+			switch (inlinedExpression.OpCode) {
+				case OpCode.DefaultValue:
+					return true;
+				case OpCode.StObj:
+					return true;
+			}
 			
 			// decide based on the target into which we are inlining
 			var parent = loadInst.Parent;

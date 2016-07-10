@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-					TransformInlineAssignmentFields(block, i);
+					TransformInlineAssignmentStObj(block, i);
 					TransformInlineAssignmentLocal(block, i);
 				}
 			}
@@ -64,24 +64,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <code>
 		/// stloc s(value)
 		/// stloc l(ldloc s)
-		/// stfld f(..., ldloc s)
+		/// stobj(..., ldloc s)
 		/// -->
-		/// stloc l(stfld f(..., value))
+		/// stloc l(stobj (..., value))
 		/// </code>
-		static void TransformInlineAssignmentFields(Block block, int i)
+		static void TransformInlineAssignmentStObj(Block block, int i)
 		{
-//			var inst = block.Instructions[i] as StLoc;
-//			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
-//			var fieldStore = block.Instructions.ElementAtOrDefault(i + 2) as StObj;
-//			if (inst == null || nextInst == null || fieldStore == null)
-//				return;
-//			if (nextInst.Variable.Kind == VariableKind.StackSlot || !nextInst.Value.MatchLdLoc(inst.Variable) || !fieldStore.Value.MatchLdLoc(inst.Variable))
-//				return;
-//			var value = inst.Value.Clone();
-//			var locVar = nextInst.Variable;
-//			block.Instructions.RemoveAt(i + 1);
-//			block.Instructions.RemoveAt(i + 1);
-//			inst.ReplaceWith(new StLoc(locVar, new StObj(fieldStore.Target, value, fieldStore.Field)));
+			var inst = block.Instructions[i] as StLoc;
+			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
+			var fieldStore = block.Instructions.ElementAtOrDefault(i + 2) as StObj;
+			if (inst == null || nextInst == null || fieldStore == null)
+				return;
+			if (nextInst.Variable.Kind == VariableKind.StackSlot || !nextInst.Value.MatchLdLoc(inst.Variable) || !fieldStore.Value.MatchLdLoc(inst.Variable))
+				return;
+			var value = inst.Value.Clone();
+			var locVar = nextInst.Variable;
+			block.Instructions.RemoveAt(i + 1);
+			block.Instructions.RemoveAt(i + 1);
+			inst.ReplaceWith(new StLoc(locVar, new StObj(fieldStore.Target, value, fieldStore.Type)));
 		}
 	}
 }
