@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new InlineCompilerGeneratedVariables(),
 				new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit
 				new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
-				//new DelegateConstruction(), causes assertions in NR.CSharp roundtrip
+				new DelegateConstruction(),
 				new LoopingTransform( // the loop: transforms that cyclicly depend on each other
 					new ExpressionTransforms(),
 					new TransformArrayInitializers(),
