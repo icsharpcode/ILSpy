@@ -942,7 +942,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					expr = HandleAccessorCall(inst, target, method, arguments.ToList());
 				} else {
 					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
-					var or = new OverloadResolution(resolver.Compilation, arguments.Skip(firstParamIndex).Select(a => a.ResolveResult).ToArray());
+					var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
 					var result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, true) as MethodGroupResolveResult;
 					
 					if (result == null) {
