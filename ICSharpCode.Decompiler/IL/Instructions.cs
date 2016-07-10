@@ -2177,17 +2177,18 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Target = this.target.Clone();
 			return clone;
 		}
+		public bool DelayExceptions;
 		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
 		public IField Field { get { return field; } }
 		public override StackType ResultType { get { return StackType.Ref; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return target.Flags | InstructionFlags.MayThrow;
+			return target.Flags | (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return InstructionFlags.MayThrow;
+				return (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
 			}
 		}
 		public override void WriteTo(ITextOutput output)
@@ -3223,16 +3224,17 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Indices.AddRange(this.Indices.Select(arg => arg.Clone()));
 			return clone;
 		}
+		public bool DelayExceptions;
 		public override StackType ResultType { get { return StackType.Ref; } }
 		/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>
 		public bool IsReadOnly { get; set; }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return array.Flags | Indices.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | InstructionFlags.MayThrow;
+			return array.Flags | Indices.Aggregate(InstructionFlags.None, (f, arg) => f | arg.Flags) | (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return InstructionFlags.MayThrow;
+				return (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);
 			}
 		}
 		public override void WriteTo(ITextOutput output)

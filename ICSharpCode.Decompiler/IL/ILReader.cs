@@ -953,7 +953,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		private ILInstruction LdElem(IType type)
 		{
-			return Push(new LdObj(new LdElema(indices: Pop(), array: Pop(), type: type), type));
+			return Push(new LdObj(new LdElema(indices: Pop(), array: Pop(), type: type) { DelayExceptions = true }, type));
 		}
 		
 		private ILInstruction StElem(IType type)
@@ -961,7 +961,7 @@ namespace ICSharpCode.Decompiler.IL
 			var value = Pop(type.GetStackType());
 			var index = Pop();
 			var array = Pop();
-			return new StObj(new LdElema(type, array, index), value, type);
+			return new StObj(new LdElema(type, array, index) { DelayExceptions = true }, value, type);
 		}
 
 		ILInstruction InitObj(ILInstruction target, IType type)
