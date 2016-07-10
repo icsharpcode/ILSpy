@@ -868,6 +868,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(new ThisResolveResult(member.DeclaringType, nonVirtualInvocation));
 				} else {
 					var translatedTarget = Translate(target);
+					if (member.DeclaringType.IsReferenceType == false) {
+						// when accessing members on value types, ensure we use a reference and not a pointer
+						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(member.DeclaringType), this);
+					}
 					if (translatedTarget.Expression is DirectionExpression) {
 						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
 					}
@@ -894,14 +898,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				target = TranslateTarget(method, inst.Arguments.FirstOrDefault(), inst.OpCode == OpCode.Call);
 			}
 			
-			var arguments = inst.Arguments.SelectArray(Translate);
 			int firstParamIndex = (method.IsStatic || inst.OpCode == OpCode.NewObj) ? 0 : 1;
 			
 			// Translate arguments to the expected parameter types
-			Debug.Assert(arguments.Length == firstParamIndex + inst.Method.Parameters.Count);
-			for (int i = firstParamIndex; i < arguments.Length; i++) {
-				var parameter = method.Parameters[i - firstParamIndex];
-				arguments[i] = arguments[i].ConvertTo(parameter.Type, this);
+			TranslatedExpression[] arguments = new TranslatedExpression[inst.Method.Parameters.Count];
+			Debug.Assert(inst.Arguments.Count == firstParamIndex + inst.Method.Parameters.Count);
+			for (int i = 0; i < arguments.Length; i++) {
+				var parameter = method.Parameters[i];
+				arguments[i] = Translate(inst.Arguments[firstParamIndex + i]).ConvertTo(parameter.Type, this);
 				
 				if (parameter.IsOut && arguments[i].Expression is DirectionExpression) {
 					((DirectionExpression)arguments[i].Expression).FieldDirection = FieldDirection.Out;
@@ -919,7 +923,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				method = (IMethod)method.MemberDefinition;
 			}
 
-			var argumentResolveResults = arguments.Skip(firstParamIndex).Select(arg => arg.ResolveResult).ToList();
+			var argumentResolveResults = arguments.Select(arg => arg.ResolveResult).ToList();
 
 			ResolveResult rr;
 			if (inst.Method.IsAccessor)
@@ -928,14 +932,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults);
 			
 			if (inst.OpCode == OpCode.NewObj) {
-				var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression).ToList();
+				var argumentExpressions = arguments.Select(arg => arg.Expression);
 				return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), argumentExpressions)
 					.WithILInstruction(inst).WithRR(rr);
 			} else {
 				Expression expr;
 				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || method.Parameters.Count == allowedParamCount)) {
-					expr = HandleAccessorCall(inst, target, method, arguments.Skip(firstParamIndex).ToList());
+					expr = HandleAccessorCall(inst, target, method, arguments.ToList());
 				} else {
 					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 					var or = new OverloadResolution(resolver.Compilation, arguments.Skip(firstParamIndex).Select(a => a.ResolveResult).ToArray());
@@ -958,7 +962,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					var mre = new MemberReferenceExpression(targetExpr, methodName);
 					mre.TypeArguments.AddRange(method.TypeArguments.Select(a => ConvertType(a)));
-					var argumentExpressions = arguments.Skip(firstParamIndex).Select(arg => arg.Expression).ToList();
+					var argumentExpressions = arguments.Select(arg => arg.Expression);
 					expr = new InvocationExpression(mre, argumentExpressions);
 				}
 				return expr.WithILInstruction(inst).WithRR(rr);
