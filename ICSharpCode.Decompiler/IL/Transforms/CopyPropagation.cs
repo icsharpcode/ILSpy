@@ -19,7 +19,7 @@
 using System;
 using System.Linq;
 
-namespace ICSharpCode.Decompiler.IL
+namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Runs a very simple form of copy propagation.

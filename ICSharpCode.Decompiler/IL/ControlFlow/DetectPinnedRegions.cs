@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow

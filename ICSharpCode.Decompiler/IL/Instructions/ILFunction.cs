@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Threading;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.Disassembler;

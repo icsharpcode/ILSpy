@@ -20,7 +20,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 
-namespace ICSharpCode.Decompiler.IL
+namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Repeats the child transforms until the ILAst no longer changes.

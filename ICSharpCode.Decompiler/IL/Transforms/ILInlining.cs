@@ -24,7 +24,7 @@ using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.IL;
 
-namespace ICSharpCode.Decompiler.IL
+namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Performs inlining transformations.
@@ -254,9 +254,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Debug.Assert(loadInst.IsDescendantOf(next));
 			
+			// decide based on the source expression being inlined
 			if (inlinedExpression.OpCode == OpCode.DefaultValue)
 				return true;
 			
+			// decide based on the target into which we are inlining
 			var parent = loadInst.Parent;
 			switch (next.OpCode) {
 				case OpCode.Return:
