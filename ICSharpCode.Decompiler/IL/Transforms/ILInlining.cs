@@ -318,7 +318,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		static bool IsSafeForInlineOver(ILInstruction expr, ILInstruction expressionBeingMoved)
 		{
-			return SemanticHelper.MayReorder(expressionBeingMoved.Flags, expr.Flags);
+			return SemanticHelper.MayReorder(expressionBeingMoved, expr);
 		}
 	}
 }
