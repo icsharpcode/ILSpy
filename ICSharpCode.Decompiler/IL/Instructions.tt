@@ -711,8 +711,12 @@ namespace ICSharpCode.Decompiler.IL
 				if (children[i].IsCollection) {
 					b.AppendLine("\tclone." + children[i].PropertyName + " = new InstructionCollection<ILInstruction>(clone, " + i + ");");
 					b.AppendLine("\tclone." + children[i].PropertyName + ".AddRange(this." + children[i].PropertyName + ".Select(arg => arg.Clone()));");
-				} else
+				} else {
 					b.AppendLine("\tclone." + children[i].PropertyName + " = this." + children[i].Name + ".Clone();");
+				}
+			}
+			if (opCode.Name == "ILFunction") {
+				b.AppendLine("\tclone.CloneVariables();");
 			}
 			b.AppendLine("\treturn clone;");
 			b.Append("}");

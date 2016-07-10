@@ -514,6 +514,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var clone = (ILFunction)ShallowClone();
 			clone.Body = this.body.Clone();
+			clone.CloneVariables();
 			return clone;
 		}
 		public override StackType ResultType { get { return StackType.O; } }

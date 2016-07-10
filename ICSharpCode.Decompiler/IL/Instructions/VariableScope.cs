@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -41,6 +42,11 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(Variables[i].IndexInScope == i);
 			}
 			base.CheckInvariant(phase);
+		}
+		
+		protected void CloneVariables()
+		{
+			throw new NotImplementedException();
 		}
 	}
 	
