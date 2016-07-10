@@ -135,6 +135,7 @@
     <Compile Include="TestCases\Correctness\ValueTypeCall.cs" />
     <Compile Include="CorrectnessTestRunner.cs" />
     <Compile Include="TestCases\Pretty\HelloWorld.cs" />
+    <Compile Include="TestCases\Pretty\InlineAssignmentTest.cs" />
     <Compile Include="Util\IntervalTests.cs" />
     <Compile Include="Util\LongSetTests.cs" />
     <Compile Include="CustomAttributes\CustomAttributeTests.cs" />
@@ -150,6 +151,9 @@
   <ItemGroup>
     <None Include="TestCases\Pretty\HelloWorld.il">
       <DependentUpon>HelloWorld.cs</DependentUpon>
+    </None>
+    <None Include="TestCases\Pretty\InlineAssignmentTest.il">
+      <DependentUpon>InlineAssignmentTest.cs</DependentUpon>
     </None>
     <None Include="TestCases\Pretty\Readme.txt" />
   </ItemGroup>

@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new IntroduceExitPoints(),
 				new ConditionDetection(),
 				new ILInlining(),
+				new TransformInlineAssignment(),
 				new CopyPropagation(),
 				new InlineCompilerGeneratedVariables(),
 				new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit

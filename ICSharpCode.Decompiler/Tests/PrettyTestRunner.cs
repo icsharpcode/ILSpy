@@ -55,6 +55,13 @@ namespace ICSharpCode.Decompiler.Tests
 			Run("HelloWorld", AssemblerOptions.UseDebug);
 		}
 		
+		[Test]
+		public void InlineAssignmentTest()
+		{
+			Run("InlineAssignmentTest");
+			Run("InlineAssignmentTest", AssemblerOptions.UseDebug);
+		}
+		
 		void Run(string testName, AssemblerOptions asmOptions = AssemblerOptions.None)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");

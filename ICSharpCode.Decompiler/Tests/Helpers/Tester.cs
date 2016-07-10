@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static string AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
 			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
-			string outputFile = sourceFileName + ".exe";
+			string outputFile = Path.GetFileNameWithoutExtension(sourceFileName) + ".exe";
 			
 			string otherOptions = " ";
 			

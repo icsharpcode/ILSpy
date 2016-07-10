@@ -18,13 +18,23 @@
 
 using System;
 
-namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.HelloWorld
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public class HelloWorld
+	public class InlineAssignmentTest
 	{
 		public static void Main()
 		{
-			Console.WriteLine("Hello World!");
+			
+		}
+		
+		public void SimpleInlineWithLocals()
+		{
+			int V_0;
+			Console.WriteLine(V_0 = 5);
+			Console.WriteLine(V_0);
+			InlineAssignmentTest V_1;
+			Console.WriteLine((object)(V_1 = new InlineAssignmentTest()));
+			Console.WriteLine((object)V_1);
 		}
 	}
 }
