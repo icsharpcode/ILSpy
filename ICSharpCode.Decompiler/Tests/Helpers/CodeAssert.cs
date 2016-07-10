@@ -10,6 +10,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 {
 	public class CodeAssert
 	{
+		public static void FilesAreEqual(string fileName1, string fileName2)
+		{
+			AreEqual(File.ReadAllText(fileName1), File.ReadAllText(fileName2));
+		}
+		
 		public static void AreEqual(string input1, string input2)
 		{
 			var diff = new StringWriter();

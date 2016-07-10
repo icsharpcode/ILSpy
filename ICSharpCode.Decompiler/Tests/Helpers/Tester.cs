@@ -87,6 +87,30 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return outputFile;
 		}
 		
+		public static string Disassemble(string sourceFileName, string outputFile)
+		{
+			string ildasmPath = SdkUtility.GetSdkPath("ildasm.exe");
+			
+			ProcessStartInfo info = new ProcessStartInfo(ildasmPath);
+			info.Arguments = $"/out=\"{outputFile}\" \"{sourceFileName}\"";
+			info.RedirectStandardError = true;
+			info.RedirectStandardOutput = true;
+			info.UseShellExecute = false;
+
+			Process process = Process.Start(info);
+
+			var outputTask = process.StandardOutput.ReadToEndAsync();
+			var errorTask = process.StandardError.ReadToEndAsync();
+
+			Task.WaitAll(outputTask, errorTask);
+			process.WaitForExit();
+
+			Console.WriteLine("output: " + outputTask.Result);
+			Console.WriteLine("errors: " + errorTask.Result);
+
+			return outputFile;
+		}
+
 		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
