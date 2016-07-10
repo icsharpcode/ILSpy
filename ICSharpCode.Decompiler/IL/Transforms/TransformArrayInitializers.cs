@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				IType type;
 				if (index >= length)
 					break;
-				if (!block.Instructions[i].MatchStObj(out target, out value, out type) || !IsPrimitiveValue(value))
+				if (!block.Instructions[i].MatchStObj(out target, out value, out type) || value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
 					return false;
 				var ldelem = target as LdElema;
 				if (ldelem == null || !ldelem.Array.MatchLdLoc(store) || ldelem.Indices.Count != 1 || !ldelem.Indices[0].MatchLdcI4(out index))
@@ -204,21 +204,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return array.MatchLdLoc(store);
 			}
 			return true;
-		}
-		
-		bool IsPrimitiveValue(ILInstruction value)
-		{
-			switch (value.OpCode) {
-				case OpCode.LdLoc:
-				case OpCode.LdNull:
-				case OpCode.LdcI4:
-				case OpCode.LdcI8:
-				case OpCode.LdcF:
-				case OpCode.LdcDecimal:
-					return true;
-				default:
-					return false;
-			}
 		}
 
 		bool HandleJaggedArrayInitializer(Block block, int pos, ILVariable store, int length, out ILVariable finalStore, out ILInstruction[] values, out int instructionsToRemove)
