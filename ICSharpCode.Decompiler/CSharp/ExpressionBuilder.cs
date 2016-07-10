@@ -868,10 +868,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(new ThisResolveResult(member.DeclaringType, nonVirtualInvocation));
 				} else {
 					var translatedTarget = Translate(target);
-					if (member.DeclaringType.IsReferenceType == false) {
-						// when accessing members on value types, ensure we use a reference and not a pointer
-						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(member.DeclaringType), this);
-					}
+//					if (member.DeclaringType.IsReferenceType == false) {
+//						// when accessing members on value types, ensure we use a reference and not a pointer
+//						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(member.DeclaringType), this);
+//					}
 					if (translatedTarget.Expression is DirectionExpression) {
 						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
 					}
