@@ -5,12 +5,6 @@ namespace ICSharpCode.Updater
 {
 	public class Downloader
 	{
-		/*
-			Should Probably have the Second Arg being a String of Path be Application.StartupPath.
-			Note: I Recommend Adding a Option to ILSpy for the Extractor to Re-execute ILSpy right before it Closes.
-			And for ILSpy to Close when and if the file is done Updating.
-			Luckily I have it return a bool on the updater. So that means if it returns true then close ILSpy and execute the extractor.
-		*/
 		public bool DownloadUpdate(String url, String path)
 		{
 			bool result = StartDownload(url, path + "\\ILSpy_Update.zip");
@@ -20,7 +14,7 @@ namespace ICSharpCode.Updater
 			}
 			else
 			{
-				return false;  //Downloading update failed?
+				return false;  //Downloading update has failed.
 			}
 		}
 
