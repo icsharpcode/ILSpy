@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	public class InlineAssignmentTest
 	{
 		private int field1;
-		private InlineAssignmentTest field2;
+		private static InlineAssignmentTest field2;
 		
 		public static void Main()
 		{
@@ -43,15 +43,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void SimpleInlineWithFields()
 		{
 			Console.WriteLine(this.field1 = 5);
-			Console.WriteLine((object)(this.field2 = new InlineAssignmentTest()));
+			Console.WriteLine((object)(InlineAssignmentTest.field2 = new InlineAssignmentTest()));
 		}
 		
 		public void SimpleInlineWithFields2()
 		{
 			Console.WriteLine(this.field1 = 5);
 			Console.WriteLine(this.field1);
-			Console.WriteLine((object)(this.field2 = new InlineAssignmentTest()));
-			Console.WriteLine((object)this.field2);
+			Console.WriteLine((object)(InlineAssignmentTest.field2 = new InlineAssignmentTest()));
+			Console.WriteLine((object)InlineAssignmentTest.field2);
+		}
+		
+//		public void ReadLoop1(TextReader r)
+//		{
+//			string V_0;
+//			while ((V_0 = r.ReadLine()) != null)
+//			{
+//				Console.WriteLine(V_0);
+//			}
+//		}
+		
+		public void AccessArray(int[] a)
+		{
+			int V_0;
+			Console.WriteLine(V_0 = a[0]);
+			Console.WriteLine(a[V_0] = V_0);
+		}
+		
+		public int Return(ref int a)
+		{
+			return a = 3;
 		}
 	}
 }

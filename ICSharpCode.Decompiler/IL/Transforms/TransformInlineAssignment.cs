@@ -37,9 +37,54 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					TransformInlineAssignmentStObj(block, i);
-					TransformInlineAssignmentLocal(block, i);
 				}
 			}
+		}
+
+		/// <code>
+		/// stloc s(value)
+		/// stloc l(ldloc s)
+		/// stobj(..., ldloc s)
+		/// -->
+		/// stloc l(stobj (..., value))
+		/// </code>
+		/// -or-
+		/// <code>
+		/// stloc s(value)
+		/// stobj (..., ldloc s)
+		/// -->
+		/// stloc s(stobj (..., value))
+		/// </code>
+		static void TransformInlineAssignmentStObj(Block block, int i)
+		{
+			var inst = block.Instructions[i] as StLoc;
+			if (inst == null || inst.Variable.Kind != VariableKind.StackSlot)
+				return;
+			var nextInst = block.Instructions.ElementAtOrDefault(i + 1);
+			ILInstruction value;
+			StObj fieldStore;
+			ILVariable local;
+			if (nextInst is StLoc) { // instance fields
+				var localStore = (StLoc)nextInst;
+				fieldStore = block.Instructions.ElementAtOrDefault(i + 2) as StObj;
+				if (fieldStore == null) { // otherwise it must local
+					TransformInlineAssignmentLocal(block, i);
+					return;
+				}
+				if (localStore.Variable.Kind == VariableKind.StackSlot || !localStore.Value.MatchLdLoc(inst.Variable) || !fieldStore.Value.MatchLdLoc(inst.Variable))
+					return;
+				value = inst.Value;
+				local = localStore.Variable;
+				block.Instructions.RemoveAt(i + 1);
+			} else if (nextInst is StObj) { // static fields
+				fieldStore = (StObj)nextInst;
+				if (!fieldStore.Value.MatchLdLoc(inst.Variable))
+					return;
+				value = inst.Value;
+				local = inst.Variable;
+			} else return;
+			block.Instructions.RemoveAt(i + 1);
+			inst.ReplaceWith(new StLoc(local, new StObj(fieldStore.Target, value, fieldStore.Type)));
 		}
 
 		/// <code>
@@ -56,32 +101,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			if (nextInst.Variable.Kind == VariableKind.StackSlot || !nextInst.Value.MatchLdLoc(inst.Variable))
 				return;
-			block.Instructions.RemoveAt(i + 1);
-			var value = inst.Value.Clone();
-			inst.Value.ReplaceWith(new StLoc(nextInst.Variable, value));
-		}
-
-		/// <code>
-		/// stloc s(value)
-		/// stloc l(ldloc s)
-		/// stobj(..., ldloc s)
-		/// -->
-		/// stloc l(stobj (..., value))
-		/// </code>
-		static void TransformInlineAssignmentStObj(Block block, int i)
-		{
-			var inst = block.Instructions[i] as StLoc;
-			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
-			var fieldStore = block.Instructions.ElementAtOrDefault(i + 2) as StObj;
-			if (inst == null || nextInst == null || fieldStore == null)
-				return;
-			if (nextInst.Variable.Kind == VariableKind.StackSlot || !nextInst.Value.MatchLdLoc(inst.Variable) || !fieldStore.Value.MatchLdLoc(inst.Variable))
-				return;
-			var value = inst.Value.Clone();
-			var locVar = nextInst.Variable;
-			block.Instructions.RemoveAt(i + 1);
-			block.Instructions.RemoveAt(i + 1);
-			inst.ReplaceWith(new StLoc(locVar, new StObj(fieldStore.Target, value, fieldStore.Type)));
+			var value = inst.Value;
+			var var = nextInst.Variable;
+			var stackVar = inst.Variable;
+			block.Instructions.RemoveAt(i);
+			nextInst.ReplaceWith(new StLoc(stackVar, new StLoc(var, value)));
 		}
 	}
 }
