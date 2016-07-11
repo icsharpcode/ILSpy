@@ -1,13 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
+using System.Diagnostics;
 using System.IO;
-using System.IO.Compression;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace ICSharpCode.ILSpy.Updater
@@ -21,7 +14,6 @@ namespace ICSharpCode.ILSpy.Updater
 
 		private void Form1_Load(object sender, EventArgs e)
 		{
-			// Method intentionally left empty.
 			ExtractUpdate();
 		}
 
@@ -53,24 +45,63 @@ namespace ICSharpCode.ILSpy.Updater
 				File.Delete(Application.StartupPath + "\\ICSharpCode.TreeView.dll");
 				File.Delete(Application.StartupPath + "\\Mono.Cecil.dll");
 				File.Delete(Application.StartupPath + "\\Mono.Cecil.Pdb.dll");
-				ZipArchive zar = ZipFile.OpenRead(Application.StartupPath + "\\ILSpy_Update.zip");
-				/*
-					Not Sure how I can get it to fill the Progress bar. I think I would need some help here on this part.
-					Maybe this is why 4.5 was not good enough before.
-				*/
-				zar.ExtractToDirectory(Application.StartupPath);
-				zar.Dispose();
-				this.Close();
+				ReadAndExtract(Application.StartupPath + "\\ILSpy_Update.zip", Application.StartupPath);
 			}
 			else if (result == 2)
 			{
-				/*
-					File is missing so that means the File was either not Downloaded of got removed for some reason before this check.
-					I like to check everything unlike most developers just to save time and to be sure that IT DOES in fact exist.
-				*/
 				MessageBox.Show("Error while Attempting to Extract the Update. The Update file does not exist.", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
 				this.Close();
 			}
+		}
+
+		int fileCount = 0;
+		long totalSize = 0, total = 0, lastVal = 0, sum = 0;
+
+		public void ReadAndExtract(string openPath, string savePath)
+		{
+			try
+			{
+				fileCount = 0;
+				Ionic.Zip.ZipFile zar = new Ionic.Zip.ZipFile();
+				zar = Ionic.Zip.ZipFile.Read(openPath);
+				foreach (var entry in zar)
+				{
+					fileCount++;
+					totalSize += entry.UncompressedSize;
+				}
+				progressBar1.Maximum = (Int32)totalSize;
+				zar.ExtractProgress += new EventHandler<Ionic.Zip.ExtractProgressEventArgs>(zar_ExtractProgress);
+				zar.ExtractAll(savePath, Ionic.Zip.ExtractExistingFileAction.OverwriteSilently);
+			}
+			catch (Exception ex)
+			{
+				MessageBox.Show(ex.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+				this.Close();
+			}
+		}
+
+		void zar_ExtractProgress(object sender, Ionic.Zip.ExtractProgressEventArgs e)
+		{
+			Application.DoEvents();
+			if (total != e.TotalBytesToTransfer)
+			{
+				sum += total - lastVal + e.BytesTransferred;
+				total = e.TotalBytesToTransfer;
+			}
+			else
+				sum += e.BytesTransferred - lastVal;
+			lastVal = e.BytesTransferred;
+			progressBar1.Value = (Int32)sum;
+			if (progressBar1.Value == total)
+			{
+				RestartILSpy();
+			}
+		}
+
+		private void RestartILSpy()
+		{
+			Process.Start(Application.StartupPath + "\\ILSpy.exe");
+			this.Close();
 		}
 	}
 }
