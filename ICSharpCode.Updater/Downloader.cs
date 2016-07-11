@@ -26,23 +26,28 @@ namespace ICSharpCode.Updater
 
 		private bool StartDownload(String url, String path)
 		{
-			String downloadconst = "0";
-			WebClient webClient = new WebClient();
-			webClient.Headers["User-Agent"] = "Mozilla/5.0";
-			webClient.DownloadProgressChanged += delegate (object sender, DownloadProgressChangedEventArgs args)
+			try
 			{
-				downloadconst = args.ProgressPercentage.ToString();
-			};
-			webClient.DownloadFileAsync(new Uri(url), path);
-			if (downloadconst == "100")
-			{
-				webClient.Dispose();
+				String downloadconst = "0";
+				WebClient webClient = new WebClient();
+				webClient.Headers["User-Agent"] = "Mozilla/5.0";
+				webClient.DownloadProgressChanged += delegate (object sender, DownloadProgressChangedEventArgs args)
+				{
+					downloadconst = args.ProgressPercentage.ToString();
+				};
+				webClient.DownloadFileAsync(new Uri(url), path);
+				if (downloadconst == "100")
+				{
+					webClient.Dispose();
+				}
 				return true;
 			}
-			else //Lets hope this is never reachable. Although it could mean that the download failed?
+			#pragma warning disable CS0168
+			catch (Exception ex)
 			{
 				return false;
 			}
+			#pragma warning restore CS0168
 		}
 	}
 }
