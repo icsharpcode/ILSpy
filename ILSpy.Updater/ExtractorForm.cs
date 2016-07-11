@@ -34,17 +34,19 @@ namespace ICSharpCode.ILSpy.Updater
 			int result = GetIfUpdateFileExists(Application.StartupPath);
 			if (result == 1)
 			{
-				File.Delete(Application.StartupPath + "\\ILSpy.exe");
-				File.Delete(Application.StartupPath + "\\ICSharpCode.AvalonEdit.dll");
-				File.Delete(Application.StartupPath + "\\ILSpy.exe.config");
-				File.Delete(Application.StartupPath + "\\ICSharpCode.Decompiler.dll");
-				File.Delete(Application.StartupPath + "\\ILSpy.BamlDecompiler.Plugin.dll");
-				File.Delete(Application.StartupPath + "\\ICSharpCode.NRefactory.CSharp.dll");
-				File.Delete(Application.StartupPath + "\\ICSharpCode.NRefactory.dll");
-				File.Delete(Application.StartupPath + "\\ICSharpCode.NRefactory.VB.dll");
-				File.Delete(Application.StartupPath + "\\ICSharpCode.TreeView.dll");
-				File.Delete(Application.StartupPath + "\\Mono.Cecil.dll");
-				File.Delete(Application.StartupPath + "\\Mono.Cecil.Pdb.dll");
+				/*	Deleting files not Required first for Ionic.Zip unlike System.IO.Compression because of Overwrites.
+					File.Delete(Application.StartupPath + "\\ILSpy.exe");
+					File.Delete(Application.StartupPath + "\\ICSharpCode.AvalonEdit.dll");
+					File.Delete(Application.StartupPath + "\\ILSpy.exe.config");
+					File.Delete(Application.StartupPath + "\\ICSharpCode.Decompiler.dll");
+					File.Delete(Application.StartupPath + "\\ILSpy.BamlDecompiler.Plugin.dll");
+					File.Delete(Application.StartupPath + "\\ICSharpCode.NRefactory.CSharp.dll");
+					File.Delete(Application.StartupPath + "\\ICSharpCode.NRefactory.dll");
+					File.Delete(Application.StartupPath + "\\ICSharpCode.NRefactory.VB.dll");
+					File.Delete(Application.StartupPath + "\\ICSharpCode.TreeView.dll");
+					File.Delete(Application.StartupPath + "\\Mono.Cecil.dll");
+					File.Delete(Application.StartupPath + "\\Mono.Cecil.Pdb.dll");
+				*/
 				ReadAndExtract(Application.StartupPath + "\\ILSpy_Update.zip", Application.StartupPath);
 			}
 			else if (result == 2)
