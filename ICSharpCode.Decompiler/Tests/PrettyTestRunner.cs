@@ -51,18 +51,25 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void HelloWorld()
 		{
-			Run("HelloWorld");
-			Run("HelloWorld", AssemblerOptions.UseDebug);
+			Run();
+			Run(asmOptions: AssemblerOptions.UseDebug);
 		}
 		
 		[Test]
 		public void InlineAssignmentTest()
 		{
-			Run("InlineAssignmentTest");
-			Run("InlineAssignmentTest", AssemblerOptions.UseDebug);
+			Run();
+			Run(asmOptions: AssemblerOptions.UseDebug);
 		}
 		
-		void Run(string testName, AssemblerOptions asmOptions = AssemblerOptions.None)
+		[Test]
+		public void CompoundAssignmentTest()
+		{
+			Run();
+			Run(asmOptions: AssemblerOptions.UseDebug);
+		}
+		
+		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");

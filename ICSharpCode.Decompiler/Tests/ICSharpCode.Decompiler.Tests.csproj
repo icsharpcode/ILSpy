@@ -134,6 +134,7 @@
     <Compile Include="TestCases\Correctness\UnsafeCode.cs" />
     <Compile Include="TestCases\Correctness\ValueTypeCall.cs" />
     <Compile Include="CorrectnessTestRunner.cs" />
+    <Compile Include="TestCases\Pretty\CompoundAssignmentTest.cs" />
     <Compile Include="TestCases\Pretty\HelloWorld.cs" />
     <Compile Include="TestCases\Pretty\InlineAssignmentTest.cs" />
     <Compile Include="TestTraceListener.cs" />
