@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-// #include "../../../NRefactory/ICSharpCode.NRefactory/Utils/CSharpPrimitiveCast.cs"
+// #include "../../../../NRefactory/ICSharpCode.NRefactory/Utils/CSharpPrimitiveCast.cs"
 
 using System;
 using ICSharpCode.NRefactory.Utils;

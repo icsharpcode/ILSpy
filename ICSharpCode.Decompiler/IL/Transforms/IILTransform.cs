@@ -19,11 +19,12 @@
 using System;
 using System.Threading;
 
-namespace ICSharpCode.Decompiler.IL
+namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	public class ILTransformContext
 	{
 		public IDecompilerTypeSystem TypeSystem { get; set; }
+		public DecompilerSettings Settings { get; set; }
 		public CancellationToken CancellationToken { get; set; }
 	}
 

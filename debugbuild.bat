@@ -1,4 +1,4 @@
-@if not exist "AvalonEdit\ICSharpCode.AvalonEdit.sln" (
+@if not exist "NRefactory\NRefactory.sln" (
 	git submodule update --init || exit /b 1
 )
 "%ProgramFiles(x86)%\MSBuild\14.0\Bin\msbuild.exe" /m ILSpy.sln /p:Configuration=Debug "/p:Platform=Any CPU"

@@ -49,10 +49,11 @@
 			VoidResult, CustomConstructor, CustomVariableName("container")),
 		new OpCode("Block", "A block of IL instructions.",
 			CustomConstructor, CustomVariableName("block")),
-		new OpCode("PinnedRegion", "A region where a pinned variable is used (initial representation of future fixed statement)",
+		new OpCode("PinnedRegion", "A region where a pinned variable is used (initial representation of future fixed statement).",
 			ResultType("Void"),
+			HasVariableOperand("Store"),
 			CustomChildren(new []{
-				new ChildInfo("pin") { CanInlineInto = true },
+				new ChildInfo("init") { CanInlineInto = true },
 				new ChildInfo("body")
 			})),
 		new OpCode("logic.not", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).",
@@ -89,7 +90,7 @@
 			CustomChildren(new [] {
 				new ChildInfo("filter"),
 				new ChildInfo("body"),
-			}), HasVariableOperand, CustomWriteTo, CustomComputeFlags),
+			}), HasVariableOperand("Store", generateCheckInvariant: false), CustomWriteTo, CustomComputeFlags),
 		new OpCode("try.finally", "Try-finally statement",
 			BaseClass("TryInstruction"), CustomConstructor, CustomWriteTo, CustomComputeFlags),
 		new OpCode("try.fault", "Try-fault statement",
@@ -109,11 +110,11 @@
 		new OpCode("conv", "Numeric cast.",
 			Unary, CustomConstructor),
 		new OpCode("ldloc", "Loads the value of a local variable. (ldarg/ldloc)",
-			CustomClassName("LdLoc"), NoArguments, HasVariableOperand, ResultType("variable.StackType")),
+			CustomClassName("LdLoc"), NoArguments, HasVariableOperand("Load"), ResultType("variable.StackType")),
 		new OpCode("ldloca", "Loads the address of a local variable. (ldarga/ldloca)",
-			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand),
+			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand("Address")),
 		new OpCode("stloc", "Stores a value into a local variable. (starg/stloc)",
-			CustomClassName("StLoc"), HasVariableOperand, CustomArguments("value"),
+			CustomClassName("StLoc"), HasVariableOperand("Store"), CustomArguments("value"),
 			ResultType("variable.StackType")),
 		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
 			CustomClassName("AddressOf"), CustomArguments("value"), ResultType("Ref")),
@@ -145,24 +146,10 @@
 		new OpCode("shl", "Shift left", BinaryNumeric),
 		new OpCode("shr", "Shift right", BinaryNumeric),
 		
-		new OpCode("ldfld", "Load instance field",
-			CustomClassName("LdFld"), CustomArguments("target"), MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow,
-			HasFieldOperand, ResultType("field.Type.GetStackType()")),
 		new OpCode("ldflda", "Load address of instance field",
-			CustomClassName("LdFlda"), CustomArguments("target"), MayThrow, HasFieldOperand, ResultType("Ref")),
-		new OpCode("stfld", "Store value to instance field",
-			CustomClassName("StFld"), CustomArguments("target", "value"),
-			MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, HasFieldOperand,
-			ResultType("field.Type.GetStackType()")),
-		new OpCode("ldsfld", "Load static field",
-			CustomClassName("LdsFld"), NoArguments, MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix,
-			HasFieldOperand, ResultType("field.Type.GetStackType()")),
+			CustomClassName("LdFlda"), CustomArguments("target"), MayThrowIfNotDelayed, HasFieldOperand, ResultType("Ref")),
 		new OpCode("ldsflda", "Load static field address",
 			CustomClassName("LdsFlda"), NoArguments, ResultType("Ref"), HasFieldOperand),
-		new OpCode("stsfld", "Store value to static field",
-			CustomClassName("StsFld"), CustomArguments("value"),
-			MemoryAccess, SupportsVolatilePrefix, SupportsUnalignedPrefix, HasFieldOperand,
-			ResultType("field.Type.GetStackType()")),
 
 		new OpCode("castclass", "Casts an object to a class.",
 			CustomClassName("CastClass"), Unary, HasTypeOperand, MayThrow, ResultType("type.GetStackType()")),
@@ -198,8 +185,9 @@
 			CustomClassName("LdLen"), CustomArguments("array"), CustomConstructor, CustomWriteTo, MayThrow),
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
-			MayThrow, ResultType("Ref"), SupportsReadonlyPrefix),
-		new OpCode("array.to.pointer", "Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.",
+			MayThrowIfNotDelayed, ResultType("Ref"), SupportsReadonlyPrefix),
+		new OpCode("array.to.pointer", "Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty." + Environment.NewLine
+			+ "Also used to convert a string to a reference to the first character.",
 			CustomArguments("array"), ResultType("Ref")),
 
 		new OpCode("mkrefany", "Push a typed reference of type class onto the stack.",
@@ -532,6 +520,10 @@ namespace ICSharpCode.Decompiler.IL
 	// Instructions without this trait must evaluate all arguments left-to-right before having any effect of their own.
 	static Action<OpCode> ControlFlow = HasFlag("InstructionFlags.ControlFlow");
 	
+	static Action<OpCode> MayThrowIfNotDelayed = HasFlag("(DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow)") + (opCode => {
+		opCode.Members.Add("public bool DelayExceptions;");
+	});
+	
 	static Action<OpCode> BaseClass(string name)
 	{
 		return opCode => {
@@ -780,16 +772,59 @@ namespace ICSharpCode.Decompiler.IL
 	};
 
 	// HasVariableOperand trait: the instruction refers to a local variable
-	static Action<OpCode> HasVariableOperand = opCode => {
-		opCode.ConstructorParameters.Add("ILVariable variable");
-		opCode.ConstructorBody.Add("Debug.Assert(variable != null);");
-		opCode.ConstructorBody.Add("this.variable = variable;");
-		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILVariable", Name = "variable", FieldName = "Variable" });
-		opCode.GenerateWriteTo = true;
-		opCode.WriteOperand.Add("output.Write(' ');");
-		opCode.WriteOperand.Add("variable.WriteTo(output);");
-		opCode.Interfaces.Add("IInstructionWithVariableOperand");
-	};
+	static Action<OpCode> HasVariableOperand(string accessType, bool generateCheckInvariant = true)
+	{
+		Action<OpCode> action = opCode => {
+			opCode.ConstructorParameters.Add("ILVariable variable");
+			opCode.Members.Add("ILVariable variable;");
+			opCode.ConstructorBody.Add("Debug.Assert(variable != null);");
+			opCode.ConstructorBody.Add("this.variable = variable;");
+			opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILVariable", Name = "variable", FieldName = "Variable" });
+			opCode.GenerateWriteTo = true;
+			opCode.WriteOperand.Add("output.Write(' ');");
+			opCode.WriteOperand.Add("variable.WriteTo(output);");
+			opCode.Interfaces.Add("IInstructionWithVariableOperand");
+			opCode.Members.Add(@"public ILVariable Variable {
+	get { return variable; }
+	set {
+		Debug.Assert(value != null);
+		if (IsConnected)
+			variable.AccessCount--;
+		variable = value;
+		if (IsConnected)
+			variable.AccessCount++;
+	}
+}
+protected override void Connected()
+{
+	base.Connected();
+	variable.AccessCount++;
+}
+
+protected override void Disconnected()
+{
+	variable.AccessCount--;
+	base.Disconnected();
+}
+".Replace("Access", accessType));
+			if (generateCheckInvariant) {
+				opCode.Members.Add(@"internal override void CheckInvariant(ILPhase phase)
+{
+	base.CheckInvariant(phase);
+	Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+}");
+			}
+		};
+		if (accessType == "Load") {
+			action += HasFlag("InstructionFlags.MayReadLocals");
+		} else if (accessType == "Store") {
+			action += HasFlag("InstructionFlags.MayWriteLocals");
+		} else {
+			if (accessType != "Address")
+				throw new ArgumentException();
+		} 
+		return action;
+	}
 	
 	static Action<OpCode> HasFieldOperand = opCode => {
 		opCode.ConstructorParameters.Add("IField field");
@@ -826,6 +861,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, method);");
+		opCode.Interfaces.Add("IInstructionWithMethodOperand");
 	};
 	
 	static Action<OpCode> HasMemberOperand = opCode => {

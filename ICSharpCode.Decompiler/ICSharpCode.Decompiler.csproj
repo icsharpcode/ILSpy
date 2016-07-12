@@ -64,7 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
-    <Compile Include="CSharp\DecompilerSettings.cs" />
+    <Compile Include="DecompilerSettings.cs" />
     <Compile Include="CSharp\Transforms\ContextTrackingVisitor.cs" />
     <Compile Include="CSharp\Transforms\DecimalConstantTransform.cs" />
     <Compile Include="CSharp\Transforms\DeclareVariables.cs" />
@@ -113,10 +113,8 @@
     <Compile Include="IL\Instructions\InstructionCollection.cs" />
     <Compile Include="IL\Instructions\LdLen.cs" />
     <Compile Include="IL\Instructions\Leave.cs" />
-    <Compile Include="IL\Instructions\LocalVarInstructions.cs" />
     <Compile Include="IL\Instructions\MemoryInstructions.cs" />
     <Compile Include="IL\Instructions\PatternMatching.cs" />
-    <Compile Include="IL\Instructions\PinnedRegion.cs" />
     <Compile Include="IL\Instructions\Return.cs" />
     <Compile Include="IL\Instructions\SimpleInstruction.cs" />
     <Compile Include="IL\Instructions\SwitchInstruction.cs" />
@@ -131,6 +129,7 @@
     <Compile Include="IL\Transforms\ExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\InlineCompilerGeneratedVariables.cs" />
     <Compile Include="IL\Transforms\LoopingTransform.cs" />
+    <Compile Include="IL\Transforms\DelegateConstruction.cs" />
     <Compile Include="IL\Transforms\RemoveDeadVariableInit.cs" />
     <Compile Include="IL\Transforms\SplitVariables.cs" />
     <Compile Include="IL\Transforms\TransformArrayInitializers.cs" />
@@ -153,6 +152,8 @@
     <Compile Include="IL\InstructionOutputExtensions.cs" />
     <Compile Include="IL\PrimitiveType.cs" />
     <Compile Include="IL\StackType.cs" />
+    <Compile Include="IL\Transforms\TransformInlineAssignment.cs" />
+    <Compile Include="NRExtensions.cs" />
     <Compile Include="Output\ITextOutput.cs" />
     <Compile Include="Output\PlainTextOutput.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

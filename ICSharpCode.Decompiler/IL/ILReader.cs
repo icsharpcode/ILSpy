@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void Warn(string message)
 		{
-			Debug.Fail(message);
+			Debug.Fail(string.Format("IL_{0:x4}: {1}", reader.Position, message));
 		}
 
 		void MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
@@ -253,7 +253,7 @@ namespace ICSharpCode.Decompiler.IL
 				decodedInstruction.ILRange = new Interval(start, reader.Position);
 				UnpackPush(decodedInstruction).ILRange = decodedInstruction.ILRange;
 				instructionBuilder.Add(decodedInstruction);
-				if ((decodedInstruction.DirectFlags & InstructionFlags.EndPointUnreachable) != 0) {
+				if (decodedInstruction.HasDirectFlag(InstructionFlags.EndPointUnreachable)) {
 					if (!stackByOffset.TryGetValue(reader.Position, out currentStack)) {
 						currentStack = ImmutableStack<ILVariable>.Empty;
 					}
@@ -720,26 +720,32 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Ldelema:
 					return Push(new LdElema(indices: Pop(), array: Pop(), type: ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldfld:
-					return Push(new LdFld(Pop(), ReadAndDecodeFieldReference()));
+					{
+						var field = ReadAndDecodeFieldReference();
+						return Push(new LdObj(new LdFlda(Pop(), field) { DelayExceptions = true }, field.Type));
+					}
 				case ILOpCode.Ldflda:
 					return Push(new LdFlda(Pop(), ReadAndDecodeFieldReference()));
 				case ILOpCode.Stfld:
 					{
 						var field = ReadAndDecodeFieldReference();
-						return new StFld(value: Pop(field.Type.GetStackType()), target: Pop(), field: field);
+						return new StObj(value: Pop(field.Type.GetStackType()), target: new LdFlda(Pop(), field) { DelayExceptions = true }, type: field.Type);
 					}
 				case ILOpCode.Ldlen:
 					return Push(new LdLen(StackType.I, Pop()));
 				case ILOpCode.Ldobj:
 					return Push(new LdObj(PopPointer(), ReadAndDecodeTypeReference()));
 				case ILOpCode.Ldsfld:
-					return Push(new LdsFld(ReadAndDecodeFieldReference()));
+					{
+						var field = ReadAndDecodeFieldReference();
+						return Push(new LdObj(new LdsFlda(field), field.Type));
+					}
 				case ILOpCode.Ldsflda:
 					return Push(new LdsFlda(ReadAndDecodeFieldReference()));
 				case ILOpCode.Stsfld:
 					{
 						var field = ReadAndDecodeFieldReference();
-						return new StsFld(Pop(field.Type.GetStackType()), field);
+						return new StObj(value: Pop(field.Type.GetStackType()), target: new LdsFlda(field), type: field.Type);
 					}
 				case ILOpCode.Ldtoken:
 					return Push(LdToken(ReadAndDecodeMetadataToken()));
@@ -880,6 +886,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (expectedType != inst.ResultType) {
 				if (expectedType == StackType.I && inst.ResultType == StackType.I4) {
 					inst = new Conv(inst, PrimitiveType.I, false, Sign.None);
+				} else if (expectedType == StackType.Ref && inst.ResultType == StackType.I) {
+					// implicitly start GC tracking
 				} else if (inst is InvalidInstruction) {
 					((InvalidInstruction)inst).ExpectedResultType = expectedType;
 				} else {
@@ -951,7 +959,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		private ILInstruction LdElem(IType type)
 		{
-			return Push(new LdObj(new LdElema(indices: Pop(), array: Pop(), type: type), type));
+			return Push(new LdObj(new LdElema(indices: Pop(), array: Pop(), type: type) { DelayExceptions = true }, type));
 		}
 		
 		private ILInstruction StElem(IType type)
@@ -959,7 +967,7 @@ namespace ICSharpCode.Decompiler.IL
 			var value = Pop(type.GetStackType());
 			var index = Pop();
 			var array = Pop();
-			return new StObj(new LdElema(type, array, index), value, type);
+			return new StObj(new LdElema(type, array, index) { DelayExceptions = true }, value, type);
 		}
 
 		ILInstruction InitObj(ILInstruction target, IType type)

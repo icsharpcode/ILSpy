@@ -19,7 +19,7 @@
 using System;
 using System.Linq;
 
-namespace ICSharpCode.Decompiler.IL
+namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Runs a very simple form of copy propagation.
@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.IL
 							}
 							block.Instructions.RemoveAt(i);
 							int c = new ILInlining().InlineInto(block, i, aggressive: false);
-							i -= uninlinedArgs.Length + c + 1;
+							i -= c + 1;
 						}
 					}
 				}
@@ -73,11 +73,13 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (value.OpCode) {
 				case OpCode.LdLoca:
-				case OpCode.LdElema:
-				case OpCode.LdFlda:
+//				case OpCode.LdElema:
+//				case OpCode.LdFlda:
 				case OpCode.LdsFlda:
 					// All address-loading instructions always return the same value for a given operand/argument combination,
 					// so they can be safely copied.
+					// ... except for LdElema and LdFlda, because those might throw an exception, and we don't want to
+					// change the place where the exception is thrown.
 					return true;
 				case OpCode.LdLoc:
 					var v = ((LdLoc)value).Variable;
@@ -94,7 +96,8 @@ namespace ICSharpCode.Decompiler.IL
 							return false;
 					}
 				default:
-					return false;
+					// All instructions without special behavior that target a stack-variable can be copied.
+					return value.DirectFlags == InstructionFlags.None && target.Kind == VariableKind.StackSlot;
 			}
 		}
 	}

@@ -38,6 +38,10 @@ namespace ICSharpCode.Decompiler
 			this.context = context;
 			this.substitution = substitution;
 		}
+
+		internal IDecompilerTypeSystem Context {
+			get { return context; }
+		}
 		
 		public ICompilation Compilation {
 			get { return context.Compilation; }

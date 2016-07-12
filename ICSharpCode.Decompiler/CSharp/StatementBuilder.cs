@@ -33,10 +33,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ExpressionBuilder exprBuilder;
 		readonly IMethod currentMethod;
 
-		public StatementBuilder(ITypeResolveContext decompilationContext, IMethod currentMethod)
+		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IMethod currentMethod)
 		{
-			Debug.Assert(decompilationContext != null && currentMethod != null);
-			this.exprBuilder = new ExpressionBuilder(decompilationContext);
+			Debug.Assert(typeSystem != null && decompilationContext != null && currentMethod != null);
+			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext);
 			this.currentMethod = currentMethod;
 		}
 		
@@ -85,6 +85,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override Statement VisitSwitchInstruction(SwitchInstruction inst)
 		{
+			var oldBreakTarget = breakTarget;
+			breakTarget = null; // 'break' within a switch would only leave the switch
+			
 			var value = exprBuilder.Translate(inst.Value);
 			var stmt = new SwitchStatement() { Expression = value };	
 			foreach (var section in inst.Sections) {
@@ -93,6 +96,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				astSection.Statements.Add(Convert(section.Body));
 				stmt.SwitchSections.Add(astSection);
 			}
+			
+			breakTarget = oldBreakTarget;
 			return stmt;
 		}
 		
@@ -197,6 +202,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			tryCatch.CatchClauses.Add(new CatchClause { Body = faultBlock });
 			return tryCatch;
 		}
+		
+		protected internal override Statement VisitPinnedRegion(PinnedRegion inst)
+		{
+			var fixedStmt = new FixedStatement();
+			fixedStmt.Type = exprBuilder.ConvertType(inst.Variable.Type);
+			Expression initExpr;
+			if (inst.Init.OpCode == OpCode.ArrayToPointer) {
+				initExpr = exprBuilder.Translate(((ArrayToPointer)inst.Init).Array);
+			} else {
+				initExpr = exprBuilder.Translate(inst.Init).ConvertTo(inst.Variable.Type, exprBuilder);
+			}
+			fixedStmt.Variables.Add(new VariableInitializer(inst.Variable.Name, initExpr).WithILVariable(inst.Variable));
+			fixedStmt.EmbeddedStatement = Convert(inst.Body);
+			return fixedStmt;
+		}
 
 		protected internal override Statement VisitBlock(Block block)
 		{
@@ -262,7 +282,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			string label;
 			if (endContainerLabels.TryGetValue(container, out label)) {
+				if (isLoop) {
+					blockStatement.Add(new ContinueStatement());
+				}
 				blockStatement.Add(new LabelStatement { Label = label });
+				if (isLoop) {
+					blockStatement.Add(new BreakStatement());
+				}
 			}
 			return blockStatement;
 		}

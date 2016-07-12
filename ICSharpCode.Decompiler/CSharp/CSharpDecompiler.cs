@@ -46,29 +46,34 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly DecompilerTypeSystem typeSystem;
 		readonly DecompilerSettings settings;
 
-		List<IILTransform> ilTransforms = new List<IILTransform> {
-			new SplitVariables(),
-			new ControlFlowSimplification(),
-			new ILInlining(),
-			new DetectPinRegions(),
-			new LoopDetection(),
-			new IntroduceExitPoints(),
-			new ConditionDetection(),
-			new ILInlining(),
-			new CopyPropagation(),
-			new InlineCompilerGeneratedVariables(),
-			new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit
-			new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
-			new LoopingTransform(
-				new ExpressionTransforms(),
-				new TransformArrayInitializers(),
-				new ILInlining()
-			)
-		};
+		List<IILTransform> ilTransforms = GetILTransforms();
+
+		public static List<IILTransform> GetILTransforms()
+		{
+			return new List<IILTransform> {
+				new SplitVariables(),
+				new ControlFlowSimplification(),
+				new ILInlining(),
+				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
+				new LoopDetection(),
+				new IntroduceExitPoints(),
+				new ConditionDetection(),
+				new ILInlining(),
+				new TransformInlineAssignment(),
+				new CopyPropagation(),
+				new InlineCompilerGeneratedVariables(),
+				new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit
+				new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
+				new DelegateConstruction(),
+				new LoopingTransform( // the loop: transforms that cyclicly depend on each other
+					new ExpressionTransforms(),
+					new TransformArrayInitializers(),
+					new ILInlining()
+				)
+			};
+		}
 
 		List<IAstTransform> astTransforms = new List<IAstTransform> {
-			//new PushNegation(),
-			//new DelegateConstruction(context),
 			new PatternStatementTransform(),
 			new ReplaceMethodCallsWithOperators(),
 			new IntroduceUnsafeModifier(),
@@ -120,8 +125,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (method != null) {
 				if (method.IsGetter || method.IsSetter || method.IsAddOn || method.IsRemoveOn)
 					return true;
-//				if (settings.AnonymousMethods && method.HasGeneratedName() && method.IsCompilerGenerated())
-//					return true;
+				if (settings.AnonymousMethods && method.HasGeneratedName() && method.IsCompilerGenerated())
+					return true;
 			}
 
 			TypeDefinition type = member as TypeDefinition;
@@ -144,8 +149,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			FieldDefinition field = member as FieldDefinition;
 			if (field != null) {
 				if (field.IsCompilerGenerated()) {
-//					if (settings.AnonymousMethods && IsAnonymousMethodCacheField(field))
-//						return true;
+					if (settings.AnonymousMethods && IsAnonymousMethodCacheField(field))
+						return true;
 					if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field))
 						return true;
 //					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
@@ -592,7 +597,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			FixParameterNames(methodDecl);
 			if (methodDefinition.HasBody) {
-				DecompileBody(methodDefinition, method, methodDecl, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(methodDefinition, method, methodDecl, decompilationContext);
 			} else if (!method.IsAbstract && method.DeclaringType.Kind != TypeKind.Interface) {
 				methodDecl.Modifiers |= Modifiers.Extern;
 			}
@@ -604,49 +609,31 @@ namespace ICSharpCode.Decompiler.CSharp
 			return methodDecl;
 		}
 
-		IDecompilerTypeSystem GetSpecializingTypeSystem(ITypeResolveContext decompilationContext)
+		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext)
 		{
-			IList<IType> classTypeParameters = null;
-			IList<IType> methodTypeParameters = null;
+			var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(decompilationContext);
+			ILFunction function = ILFunction.Read(specializingTypeSystem, methodDefinition, CancellationToken);
 			
-			if (decompilationContext.CurrentTypeDefinition != null)
-				classTypeParameters = decompilationContext.CurrentTypeDefinition.TypeArguments;
-			IMethod method = decompilationContext.CurrentMember as IMethod;
-			if (method != null)
-				methodTypeParameters = method.TypeArguments;
-			
-			if ((classTypeParameters != null && classTypeParameters.Count > 0) || (methodTypeParameters != null && methodTypeParameters.Count > 0))
-				return new SpecializingDecompilerTypeSystem(typeSystem, new TypeParameterSubstitution(classTypeParameters, methodTypeParameters));
-			else
-				return typeSystem;
-		}
-		
-		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext, TypeSystemAstBuilder typeSystemAstBuilder)
-		{
-			var specializingTypeSystem = GetSpecializingTypeSystem(decompilationContext);
-			var ilReader = new ILReader(specializingTypeSystem);
-			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
-			function.CheckInvariant(ILPhase.Normal);
-			
-			int i = 0;
-			var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
-			foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter)) {
-				ILVariable v;
-				if (parameters.TryGetValue(i, out v))
-					parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
-				i++;
+			if (entityDecl != null) {
+				int i = 0;
+				var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
+				foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter)) {
+					ILVariable v;
+					if (parameters.TryGetValue(i, out v))
+						parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
+					i++;
+				}
 			}
 			
-			var context = new ILTransformContext { TypeSystem = specializingTypeSystem, CancellationToken = CancellationToken };
+			var context = new ILTransformContext { Settings = settings, TypeSystem = specializingTypeSystem, CancellationToken = CancellationToken };
 			foreach (var transform in ilTransforms) {
 				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(function, context);
 				function.CheckInvariant(ILPhase.Normal);
 			}
-			var statementBuilder = new StatementBuilder(decompilationContext, method);
-			var body = statementBuilder.ConvertAsBlock(function.Body);
 			
-			entityDecl.AddChild(body, Roles.Body);
+			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method);
+			entityDecl.AddChild(statementBuilder.ConvertAsBlock(function.Body), Roles.Body);
 		}
 
 		EntityDeclaration DoDecompile(FieldDefinition fieldDefinition, IField field, ITypeResolveContext decompilationContext)
@@ -685,10 +672,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				setter = ((IndexerDeclaration)propertyDecl).Setter;
 			}
 			if (property.CanGet && property.Getter.HasBody) {
-				DecompileBody(propertyDefinition.GetMethod, property.Getter, getter, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(propertyDefinition.GetMethod, property.Getter, getter, decompilationContext);
 			}
 			if (property.CanSet && property.Setter.HasBody) {
-				DecompileBody(propertyDefinition.SetMethod, property.Setter, setter, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(propertyDefinition.SetMethod, property.Setter, setter, decompilationContext);
 			}
 			var accessor = propertyDefinition.GetMethod ?? propertyDefinition.SetMethod;
 			if (!accessor.HasOverrides && !accessor.DeclaringType.IsInterface && accessor.IsVirtual == accessor.IsNewSlot)
@@ -707,10 +694,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				eventDecl.Name = ev.Name.Substring(lastDot + 1);
 			}
 			if (eventDefinition.AddMethod != null && eventDefinition.AddMethod.HasBody) {
-				DecompileBody(eventDefinition.AddMethod, ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(eventDefinition.AddMethod, ev.AddAccessor, ((CustomEventDeclaration)eventDecl).AddAccessor, decompilationContext);
 			}
 			if (eventDefinition.RemoveMethod != null && eventDefinition.RemoveMethod.HasBody) {
-				DecompileBody(eventDefinition.RemoveMethod, ev.RemoveAccessor, ((CustomEventDeclaration)eventDecl).RemoveAccessor, decompilationContext, typeSystemAstBuilder);
+				DecompileBody(eventDefinition.RemoveMethod, ev.RemoveAccessor, ((CustomEventDeclaration)eventDecl).RemoveAccessor, decompilationContext);
 			}
 			var accessor = eventDefinition.AddMethod ?? eventDefinition.RemoveMethod;
 			if (accessor.IsVirtual == accessor.IsNewSlot) {

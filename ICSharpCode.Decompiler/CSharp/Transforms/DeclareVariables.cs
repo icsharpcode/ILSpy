@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var identExpr = node as IdentifierExpression;
 			if (identExpr != null) {
 				var rr = identExpr.GetResolveResult() as ILVariableResolveResult;
-				if (rr != null && rr.Variable.Kind != VariableKind.Parameter && rr.Variable.Kind != VariableKind.Exception) {
+				if (rr != null && VariableNeedsDeclaration(rr.Variable.Kind)) {
 					var newPoint = new InsertionPoint { level = nodeLevel, nextNode = identExpr };
 					VariableToDeclare v;
 					if (variableDict.TryGetValue(rr.Variable, out v)) {
@@ -145,6 +145,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
+		bool VariableNeedsDeclaration(VariableKind kind)
+		{
+			switch (kind) {
+				case VariableKind.PinnedLocal:
+				case VariableKind.Parameter:
+				case VariableKind.Exception:
+					return false;
+				default:
+					return true;
+			}
+		}
+		
 		/// <summary>
 		/// Finds an insertion point in a common parent instruction.
 		/// </summary>

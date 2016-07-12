@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2016 Siegfried Pammer
+﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,35 +17,14 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
-using System.Collections.Generic;
 
-namespace ICSharpCode.Decompiler.IL.Transforms
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.HelloWorld
 {
-	/// <summary>
-	/// Repeats the child transforms until the ILAst no longer changes.
-	/// </summary>
-	public class LoopingTransform : IILTransform
+	public class HelloWorld
 	{
-		readonly IReadOnlyCollection<IILTransform> children;
-		
-		public LoopingTransform(params IILTransform[] children)
+		public static void Main()
 		{
-			this.children = children;
-		}
-		
-		public void Run(ILFunction function, ILTransformContext context)
-		{
-			do {
-				function.ResetDirty();
-				function.RunTransforms(children, context);
-			} while (function.IsDirty);
-		}
-
-		public IReadOnlyCollection<IILTransform> Transforms {
-			get { return children; }
+			Console.WriteLine("Hello World!");
 		}
 	}
 }
-
-

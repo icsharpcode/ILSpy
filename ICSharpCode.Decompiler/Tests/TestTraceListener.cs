@@ -18,15 +18,30 @@
 
 using System;
 using System.Diagnostics;
+using NUnit.Core;
+using NUnit.Framework;
 
-namespace ICSharpCode.Decompiler.IL
+namespace ICSharpCode.Decompiler.Tests
 {
-	partial class PinnedRegion
+	[SetUpFixture]
+	public class TestTraceListener : DefaultTraceListener
 	{
-		internal override void CheckInvariant(ILPhase phase)
+		[SetUp]
+		public void RunBeforeAnyTests()
 		{
-			base.CheckInvariant(phase);
-			Debug.Assert(((StLoc)this.pin).Variable.Kind == VariableKind.PinnedLocal);
+			Debug.Listeners.Insert(0, this);
+		}
+		
+		
+		[TearDown]
+		public void RunAfterAnyTests()
+		{
+			Debug.Listeners.Remove(this);
+		}
+		
+		public override void Fail(string message, string detailMessage)
+		{
+			Assert.Fail(message + " " + detailMessage);
 		}
 	}
 }

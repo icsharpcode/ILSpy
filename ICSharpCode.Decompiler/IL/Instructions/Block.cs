@@ -38,6 +38,11 @@ namespace ICSharpCode.Decompiler.IL
 	/// For blocks returning void, the FinalInstruction will usually be 'nop'.
 	/// </para>
 	/// 
+	/// There are three different uses for blocks:
+	/// 1) Blocks in block containers. Used as targets for Branch instructions.
+	/// 2) Blocks to group a bunch of statements, e.g. the TrueInst of an IfInstruction.
+	/// 3) Inline blocks that evaluate to a value, e.g. for array initializers.
+	/// 
 	/// TODO: consider splitting inline blocks (with FinalInstruction) from those
 	/// used in containers for control flow purposes -- these are very different things
 	/// which should not share a class.

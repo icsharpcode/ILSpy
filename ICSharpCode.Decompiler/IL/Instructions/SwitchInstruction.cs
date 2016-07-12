@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var sectionFlags = InstructionFlags.ControlFlow;
 			foreach (var section in Sections) {
-				sectionFlags = IfInstruction.CombineFlags(sectionFlags, section.Flags);
+				sectionFlags = SemanticHelper.CombineBranches(sectionFlags, section.Flags);
 			}
 			return value.Flags | sectionFlags;
 		}

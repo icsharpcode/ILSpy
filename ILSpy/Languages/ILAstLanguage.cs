@@ -24,6 +24,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
@@ -154,7 +155,7 @@ namespace ICSharpCode.ILSpy
 				var typeSystem = new DecompilerTypeSystem(method.Module);
 				ILReader reader = new ILReader(typeSystem);
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
-				il.RunTransforms(transforms, new ILTransformContext { TypeSystem = typeSystem });
+				il.RunTransforms(transforms, new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem });
 				il.WriteTo(output);
 			}
 		}

@@ -271,13 +271,19 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			#if DEBUG
 			DebugPoint(debugOutputState, inst);
 			#endif
+		
 		}
+		
+		/// <summary>
+		/// Derived classes may add to this set of flags to ensure they don't forget to override an interesting method.
+		/// </summary>
+		protected InstructionFlags flagsRequiringManualImpl = InstructionFlags.ControlFlow | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 		
 		protected sealed override void Default(ILInstruction inst)
 		{
 			DebugStartPoint(inst);
 			// This method assumes normal control flow and no branches.
-			if ((inst.DirectFlags & (InstructionFlags.ControlFlow | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable)) != 0) {
+			if ((inst.DirectFlags & flagsRequiringManualImpl) != 0) {
 				throw new NotImplementedException(GetType().Name + " is missing implementation for " + inst.GetType().Name);
 			}
 			

@@ -101,7 +101,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// Stores are:
 		/// <list type="item">
 		/// <item>stloc</item>
-		/// <item>try.catch.handler (assigning the exception variable)</item>
+		/// <item>TryCatchHandler (assigning the exception variable)</item>
+		/// <item>PinnedRegion (assigning the pointer variable)</item>
 		/// <item>initial values (<see cref="HasInitialValue"/>)</item>
 		/// </list>
 		/// </summary>
@@ -133,9 +134,9 @@ namespace ICSharpCode.Decompiler.IL
 		public bool HasInitialValue {
 			get { return hasInitialValue; }
 			set {
+				if (Kind == VariableKind.Parameter && !value)
+					throw new InvalidOperationException("Cannot remove HasInitialValue from parameters");
 				if (hasInitialValue) {
-					if (Kind == VariableKind.Parameter)
-						throw new InvalidOperationException("Cannot remove HasInitialValue from parameters");
 					StoreCount--;
 				}
 				hasInitialValue = value;

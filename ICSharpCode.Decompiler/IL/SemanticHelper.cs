@@ -17,12 +17,18 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
 {
 	static class SemanticHelper
 	{
-		// TODO: consider moving IfInstruction.CombineFlags here
+		internal static InstructionFlags CombineBranches(InstructionFlags trueFlags, InstructionFlags falseFlags)
+		{
+			// the endpoint of the 'if' is only unreachable if both branches have an unreachable endpoint
+			const InstructionFlags combineWithAnd = InstructionFlags.EndPointUnreachable;
+			return (trueFlags & falseFlags) | ((trueFlags | falseFlags) & ~combineWithAnd);
+		}
 		
 		/// <summary>
 		/// Gets whether instruction is pure:
@@ -32,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		internal static bool IsPure(InstructionFlags inst)
 		{
-			// ControlFlow is fine, internal control flow is pure as long as it's not an infinite loop,
+			// ControlFlow is fine: internal control flow is pure as long as it's not an infinite loop,
 			// and infinite loops are impossible without MayBranch.
 			const InstructionFlags pureFlags = InstructionFlags.MayReadLocals | InstructionFlags.ControlFlow;
 			return (inst & ~pureFlags) == 0;
@@ -57,6 +63,45 @@ namespace ICSharpCode.Decompiler.IL
 			// if one instruction has the read flag and the other the write flag, that's a conflict
 			return (inst1 & readFlag) != 0 && (inst2 & writeFlag) != 0
 				|| (inst2 & readFlag) != 0 && (inst1 & writeFlag) != 0;
+		}
+		
+		/// <summary>
+		/// Gets whether the instruction sequence 'inst1; inst2;' may be ordered to 'inst2; inst1;'
+		/// </summary>
+		internal static bool MayReorder(ILInstruction inst1, ILInstruction inst2)
+		{
+			// If both instructions perform an impure action, we cannot reorder them
+			if (!IsPure(inst1.Flags) && !IsPure(inst2.Flags))
+				return false;
+			// We cannot reorder if inst2 might write what inst1 looks at
+			if (Inst2MightWriteToVariableReadByInst1(inst1, inst2))
+				return false;
+			// and the same in reverse:
+			if (Inst2MightWriteToVariableReadByInst1(inst2, inst1))
+				return false;
+			return true;
+		}
+
+		static bool Inst2MightWriteToVariableReadByInst1(ILInstruction inst1, ILInstruction inst2)
+		{
+			if (!inst1.HasFlag(InstructionFlags.MayReadLocals)) {
+				// quick exit if inst1 doesn't read any variables
+				return false;
+			}
+			var variables = inst1.Descendants.OfType<LdLoc>().Select(load => load.Variable).ToHashSet();
+			if (inst2.HasFlag(InstructionFlags.SideEffect) && variables.Any(v => v.AddressCount > 0)) {
+				// If inst2 might have indirect writes, we cannot reorder with any loads of variables that have their address taken.
+				return true;
+			}
+			foreach (var inst in inst2.Descendants) {
+				if (inst.HasDirectFlag(InstructionFlags.MayWriteLocals)) {
+					ILVariable v = ((IInstructionWithVariableOperand)inst).Variable;
+					if (variables.Contains(v)) {
+						return true;
+					}
+				}
+			}
+			return false;
 		}
 	}
 }

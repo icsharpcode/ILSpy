@@ -41,14 +41,10 @@ namespace ICSharpCode.Decompiler.Tests
 			RunWithTest("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
 		}
 		
-		[Test]
+		[Test, Ignore("Needs compound assignment")]
 		public void NewtonsoftJson_net40()
 		{
-			try {
-				RunWithTest("Newtonsoft.Json-net40", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
-			} catch (TestRunFailedException ex) {
-				Assert.Ignore(ex.Message);
-			}
+			RunWithTest("Newtonsoft.Json-net40", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
 		}
 		
 		[Test]
@@ -88,11 +84,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void Random_TestCase_1()
 		{
-			try {
-				RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
-			} catch (CompilationFailedException ex) {
-				Assert.Ignore(ex.Message);
-			}
+			RunWithOutput("Random Tests\\TestCases", "TestCase-1.exe");
 		}
 
 		void RunWithTest(string dir, string fileToRoundtrip, string fileToTest)
@@ -166,6 +158,9 @@ namespace ICSharpCode.Decompiler.Tests
 			info.CreateNoWindow = true;
 			info.UseShellExecute = false;
 			info.RedirectStandardOutput = true;
+			// Don't let environment variables (e.g. set by AppVeyor) influence the build.
+			info.EnvironmentVariables.Remove("Configuration");
+			info.EnvironmentVariables.Remove("Platform");
 			Console.WriteLine($"\"{info.FileName}\" {info.Arguments}");
 			using (var p = Process.Start(info)) {
 				Regex errorRegex = new Regex(@"^[\w\d.\\-]+\(\d+,\d+\):");

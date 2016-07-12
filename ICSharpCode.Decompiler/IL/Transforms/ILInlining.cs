@@ -24,7 +24,7 @@ using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.IL;
 
-namespace ICSharpCode.Decompiler.IL
+namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Performs inlining transformations.
@@ -192,17 +192,13 @@ namespace ICSharpCode.Decompiler.IL
 				switch (inlinedExpression.OpCode) {
 					case OpCode.LdLoc:
 					case OpCode.StLoc:
-					case OpCode.LdElema:
 						return false;
-					case OpCode.LdFld:
-					case OpCode.StFld:
-					case OpCode.LdsFld:
-					case OpCode.StsFld:
+					case OpCode.LdObj:
 						// allow inlining field access only if it's a readonly field
-						IField f = ((IInstructionWithFieldOperand)inlinedExpression).Field;
-						if (!f.IsReadOnly)
-							return false;
-						break;
+						IField f = (((LdObj)inlinedExpression).Target as IInstructionWithFieldOperand)?.Field;
+						if (f != null && f.IsReadOnly)
+							return true;
+						return f != null && f.IsReadOnly;
 					case OpCode.Call:
 						var m = ((CallInstruction)inlinedExpression).Method;
 						// ensure that it's not an multi-dimensional array getter
@@ -233,8 +229,6 @@ namespace ICSharpCode.Decompiler.IL
 						return !((Call)parent).Method.IsStatic;
 					case OpCode.CallVirt:
 						return !((CallVirt)parent).Method.IsStatic;
-					case OpCode.StFld:
-					case OpCode.LdFld:
 					case OpCode.LdFlda:
 					// TODO : Reimplement Await
 					//case OpCode.Await:
@@ -254,9 +248,15 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Debug.Assert(loadInst.IsDescendantOf(next));
 			
-			if (inlinedExpression.OpCode == OpCode.DefaultValue)
-				return true;
+			// decide based on the source expression being inlined
+			switch (inlinedExpression.OpCode) {
+				case OpCode.DefaultValue:
+					return true;
+				case OpCode.StObj:
+					return true;
+			}
 			
+			// decide based on the target into which we are inlining
 			var parent = loadInst.Parent;
 			switch (next.OpCode) {
 				case OpCode.Return:
@@ -316,21 +316,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		static bool IsSafeForInlineOver(ILInstruction expr, ILInstruction expressionBeingMoved)
 		{
-			ILVariable v;
-			if (expr.MatchLdLoc(out v) && v.AddressCount == 0) {
-				// MayReorder() only looks at flags, so it doesn't
-				// allow reordering 'stloc x y; ldloc v' to 'ldloc v; stloc x y'
-				
-				// We'll allow the reordering unless x==v
-				if (expressionBeingMoved.HasFlag(InstructionFlags.MayWriteLocals)) {
-					foreach (var stloc in expressionBeingMoved.Descendants.OfType<StLoc>()) {
-						if (stloc.Variable == v)
-							return false;
-					}
-				}
-				return true;
-			}
-			return SemanticHelper.MayReorder(expressionBeingMoved.Flags, expr.Flags);
+			return SemanticHelper.MayReorder(expressionBeingMoved, expr);
 		}
 	}
 }

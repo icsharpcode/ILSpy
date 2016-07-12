@@ -18,8 +18,12 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.Disassembler;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -73,13 +77,56 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Apply a list of transforms to this function.
 		/// </summary>
-		public void RunTransforms(IEnumerable<IILTransform> transforms, ILTransformContext context)
+		public void RunTransforms(IEnumerable<IILTransform> transforms, ILTransformContext context, Func<IILTransform, bool> stopTransform = null)
 		{
 			foreach (var transform in transforms) {
 				context.CancellationToken.ThrowIfCancellationRequested();
+				if (stopTransform != null && stopTransform(transform))
+					break;
 				transform.Run(this, context);
 				this.CheckInvariant(ILPhase.Normal);
 			}
+		}
+
+		public ILVariable RegisterVariable(VariableKind kind, IType type, string name = null)
+		{
+			int index = Variables.Where(v => v.Kind == kind).MaxOrDefault(v => v.Index, -1) + 1;
+			if (string.IsNullOrWhiteSpace(name)) {
+				switch (kind) {
+					case VariableKind.Local:
+						name = "V_";
+						break;
+					case VariableKind.Parameter:
+						name = "P_";
+						break;
+					case VariableKind.Exception:
+						name = "E_";
+						break;
+					case VariableKind.StackSlot:
+						name = "S_";
+						break;
+					default:
+						throw new NotSupportedException();
+				}
+				name += index;
+			}
+			var variable = new ILVariable(kind, type, index);
+			variable.Name = name;
+			Variables.Add(variable);
+			return variable;
+		}
+		
+		public static ILFunction Read(IDecompilerTypeSystem context, IMethod method, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			return Read(context, (MethodDefinition)context.GetCecil(method), cancellationToken);
+		}
+
+		public static ILFunction Read(IDecompilerTypeSystem context, MethodDefinition methodDefinition, CancellationToken cancellationToken = default(CancellationToken))
+		{
+			var ilReader = new ILReader(context);
+			var function = ilReader.ReadIL(methodDefinition.Body, cancellationToken);
+			function.CheckInvariant(ILPhase.Normal);
+			return function;
 		}
 	}
 }

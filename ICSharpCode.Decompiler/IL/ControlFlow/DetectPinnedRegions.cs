@@ -20,6 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -50,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// This means this transform must run before LoopDetection.
 	/// To make our detection job easier, we must run after variable inlining.
 	/// </summary>
-	public class DetectPinRegions : IILTransform
+	public class DetectPinnedRegions : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -58,8 +60,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				SplitBlocksAtWritesToPinnedLocals(container);
 				DetectNullSafeArrayToPointer(container);
 				foreach (var block in container.Blocks)
-					Run(block);
+					CreatePinnedRegion(block);
 				container.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
+			}
+			// Sometimes there's leftover writes to the original pinned locals
+			foreach (var block in function.Descendants.OfType<Block>()) {
+				for (int i = 0; i < block.Instructions.Count; i++) {
+					var stloc = block.Instructions[i] as StLoc;
+					if (stloc != null && stloc.Variable.Kind == VariableKind.PinnedLocal && stloc.Variable.LoadCount == 0 && stloc.Variable.AddressCount == 0) {
+						if (SemanticHelper.IsPure(stloc.Value.Flags)) {
+							block.Instructions.RemoveAt(i--);
+						} else {
+							stloc.ReplaceWith(stloc.Value);
+						}
+					}
+				}
 			}
 		}
 		
@@ -214,16 +229,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 		#endregion
 
-		void Run(Block block)
+		#region CreatePinnedRegion
+		bool CreatePinnedRegion(Block block)
 		{
 			// After SplitBlocksAtWritesToPinnedLocals(), only the second-to-last instruction in each block
 			// can be a write to a pinned local.
 			var stLoc = block.Instructions.SecondToLastOrDefault() as StLoc;
 			if (stLoc == null || stLoc.Variable.Kind != VariableKind.PinnedLocal)
-				return;
+				return false;
 			// stLoc is a store to a pinned local.
 			if (IsNullOrZero(stLoc.Value))
-				return; // ignore unpin instructions
+				return false; // ignore unpin instructions
 			// stLoc is a store that starts a new pinned region
 			
 			// Collect the blocks to be moved into the region:
@@ -231,55 +247,67 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			int[] reachedEdgesPerBlock = new int[sourceContainer.Blocks.Count];
 			Queue<Block> workList = new Queue<Block>();
 			Block entryBlock = ((Branch)block.Instructions.Last()).TargetBlock;
-			if (entryBlock.Parent == sourceContainer) {
-				reachedEdgesPerBlock[entryBlock.ChildIndex]++;
-				workList.Enqueue(entryBlock);
-				while (workList.Count > 0) {
-					Block workItem = workList.Dequeue();
-					StLoc workStLoc = workItem.Instructions.SecondToLastOrDefault() as StLoc;
-					int instructionCount;
-					if (workStLoc != null && workStLoc.Variable == stLoc.Variable && IsNullOrZero(workStLoc.Value)) {
-						// found unpin instruction: only consider branches prior to that instruction
-						instructionCount = workStLoc.ChildIndex;
-					} else {
-						instructionCount = workItem.Instructions.Count;
-					}
-					for (int i = 0; i < instructionCount; i++) {
-						foreach (var branch in workItem.Instructions[i].Descendants.OfType<Branch>()) {
-							if (branch.TargetBlock.Parent == sourceContainer) {
-								Debug.Assert(branch.TargetBlock != block);
-								if (reachedEdgesPerBlock[branch.TargetBlock.ChildIndex]++ == 0) {
-									// detected first edge to that block: add block as work item
-									workList.Enqueue(branch.TargetBlock);
-								}
+			if (entryBlock.Parent != sourceContainer) {
+				// we didn't find a single block to be added to the pinned region
+				return false;
+			}
+			reachedEdgesPerBlock[entryBlock.ChildIndex]++;
+			workList.Enqueue(entryBlock);
+			while (workList.Count > 0) {
+				Block workItem = workList.Dequeue();
+				StLoc workStLoc = workItem.Instructions.SecondToLastOrDefault() as StLoc;
+				int instructionCount;
+				if (workStLoc != null && workStLoc.Variable == stLoc.Variable && IsNullOrZero(workStLoc.Value)) {
+					// found unpin instruction: only consider branches prior to that instruction
+					instructionCount = workStLoc.ChildIndex;
+				} else {
+					instructionCount = workItem.Instructions.Count;
+				}
+				for (int i = 0; i < instructionCount; i++) {
+					foreach (var branch in workItem.Instructions[i].Descendants.OfType<Branch>()) {
+						if (branch.TargetBlock.Parent == sourceContainer) {
+							Debug.Assert(branch.TargetBlock != block);
+							if (reachedEdgesPerBlock[branch.TargetBlock.ChildIndex]++ == 0) {
+								// detected first edge to that block: add block as work item
+								workList.Enqueue(branch.TargetBlock);
 							}
 						}
 					}
 				}
-				
-				// Validate that all uses of a block consistently are inside or outside the pinned region.
-				// (we cannot do this anymore after we start moving blocks around)
-				for (int i = 0; i < sourceContainer.Blocks.Count; i++) {
-					if (reachedEdgesPerBlock[i] != 0 && reachedEdgesPerBlock[i] != sourceContainer.Blocks[i].IncomingEdgeCount) {
-						return;
-					}
-				}
-				
-				BlockContainer body = new BlockContainer();
-				for (int i = 0; i < sourceContainer.Blocks.Count; i++) {
-					if (reachedEdgesPerBlock[i] > 0) {
-						body.Blocks.Add(sourceContainer.Blocks[i]); // move block into body
-						sourceContainer.Blocks[i] = new Block(); // replace with dummy block
-						// we'll delete the dummy block later
-					}
-				}
-				
-				block.Instructions[block.Instructions.Count - 2] = new PinnedRegion(stLoc, body);
-			} else {
-				// we didn't find a single block to be added to the pinned region
-				block.Instructions[block.Instructions.Count - 2] = new PinnedRegion(stLoc, new Nop());
 			}
-			block.Instructions.RemoveAt(block.Instructions.Count - 1);
+			
+			// Validate that all uses of a block consistently are inside or outside the pinned region.
+			// (we cannot do this anymore after we start moving blocks around)
+			for (int i = 0; i < sourceContainer.Blocks.Count; i++) {
+				if (reachedEdgesPerBlock[i] != 0 && reachedEdgesPerBlock[i] != sourceContainer.Blocks[i].IncomingEdgeCount) {
+					return false;
+				}
+			}
+			
+			BlockContainer body = new BlockContainer();
+			for (int i = 0; i < sourceContainer.Blocks.Count; i++) {
+				if (reachedEdgesPerBlock[i] > 0) {
+					var innerBlock = sourceContainer.Blocks[i];
+					Branch br = innerBlock.Instructions.LastOrDefault() as Branch;
+					if (br != null && br.TargetContainer == sourceContainer && reachedEdgesPerBlock[br.TargetBlock.ChildIndex] == 0) {
+						// branch that leaves body.
+						// Should have an instruction that resets the pin; delete that instruction:
+						StLoc innerStLoc = innerBlock.Instructions.SecondToLastOrDefault() as StLoc;
+						if (innerStLoc != null && innerStLoc.Variable == stLoc.Variable && IsNullOrZero(innerStLoc.Value)) {
+							innerBlock.Instructions.RemoveAt(innerBlock.Instructions.Count - 2);
+						}
+					}
+					
+					body.Blocks.Add(innerBlock); // move block into body
+					sourceContainer.Blocks[i] = new Block(); // replace with dummy block
+					// we'll delete the dummy block later
+				}
+			}
+			
+			stLoc.ReplaceWith(new PinnedRegion(stLoc.Variable, stLoc.Value, body));
+			block.Instructions.RemoveAt(block.Instructions.Count - 1); // remove branch into body
+			ProcessPinnedRegion((PinnedRegion)block.Instructions.Last());
+			return true;
 		}
 
 		static bool IsNullOrZero(ILInstruction inst)
@@ -290,5 +318,135 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			return inst.MatchLdcI4(0) || inst.MatchLdNull();
 		}
+		#endregion
+		
+		#region ProcessPinnedRegion
+		/// <summary>
+		/// After a pinned region was detected; process its body; replacing the pin variable
+		/// with a native pointer as far as possible.
+		/// </summary>
+		void ProcessPinnedRegion(PinnedRegion pinnedRegion)
+		{
+			BlockContainer body = (BlockContainer)pinnedRegion.Body;
+			if (pinnedRegion.Variable.Type.Kind == TypeKind.ByReference) {
+				// C# doesn't support a "by reference" variable, so replace it with a native pointer
+				ILVariable oldVar = pinnedRegion.Variable;
+				ILVariable newVar = new ILVariable(
+					VariableKind.PinnedLocal,
+					new PointerType(((ByReferenceType)oldVar.Type).ElementType),
+					oldVar.Index);
+				newVar.Name = oldVar.Name;
+				oldVar.Scope.Variables.Add(newVar);
+				ReplacePinnedVar(oldVar, newVar, pinnedRegion);
+			} else if (pinnedRegion.Variable.Type.IsKnownType(KnownTypeCode.String)) {
+				// fixing a string
+				ILVariable nativeVar;
+				ILInstruction initInst;
+				// stloc nativeVar(conv o->i (ldloc pinnedVar))
+				// if (comp(ldloc nativeVar == conv i4->i <sign extend>(ldc.i4 0))) br targetBlock
+				// br adjustOffsetToStringData
+				Block targetBlock, adjustOffsetToStringData;
+				if (body.EntryPoint.IncomingEdgeCount == 1
+				    && body.EntryPoint.Instructions.Count == 3
+				    && body.EntryPoint.Instructions[0].MatchStLoc(out nativeVar, out initInst)
+				    && nativeVar.Type.GetStackType() == StackType.I
+				    && nativeVar.StoreCount == 2
+				    && initInst.UnwrapConv(ConversionKind.StopGCTracking).MatchLdLoc(pinnedRegion.Variable)
+				    && IsBranchOnNull(body.EntryPoint.Instructions[1], nativeVar, out targetBlock)
+				    && targetBlock.Parent == body
+					&& body.EntryPoint.Instructions[2].MatchBranch(out adjustOffsetToStringData)
+				    && adjustOffsetToStringData.Parent == body && adjustOffsetToStringData.IncomingEdgeCount == 1
+					&& IsOffsetToStringDataBlock(adjustOffsetToStringData, nativeVar, targetBlock))
+				{
+					// remove old entry point
+					body.Blocks.RemoveAt(0);
+					body.Blocks.RemoveAt(adjustOffsetToStringData.ChildIndex);
+					// make targetBlock the new entry point
+					body.Blocks.RemoveAt(targetBlock.ChildIndex);
+					body.Blocks.Insert(0, targetBlock);
+					pinnedRegion.Init = new ArrayToPointer(pinnedRegion.Init);
+					
+					ILVariable otherVar;
+					ILInstruction otherVarInit;
+					// In optimized builds, the 'nativeVar' may end up being a stack slot,
+					// and only gets assigned to a real variable after the offset adjustment.
+					if (nativeVar.Kind == VariableKind.StackSlot && nativeVar.LoadCount == 1
+					    && body.EntryPoint.Instructions[0].MatchStLoc(out otherVar, out otherVarInit)
+					    && otherVarInit.MatchLdLoc(nativeVar)
+					    && otherVar.IsSingleDefinition)
+					{
+						body.EntryPoint.Instructions.RemoveAt(0);
+						nativeVar = otherVar;
+					}
+					ILVariable newVar;
+					if (nativeVar.Kind == VariableKind.Local) {
+						newVar = new ILVariable(VariableKind.PinnedLocal, nativeVar.Type, nativeVar.Index);
+						newVar.Name = nativeVar.Name;
+						nativeVar.Scope.Variables.Add(newVar);
+						ReplacePinnedVar(nativeVar, newVar, pinnedRegion);
+					} else {
+						newVar = nativeVar;
+					}
+					ReplacePinnedVar(pinnedRegion.Variable, newVar, pinnedRegion);
+				}
+			}
+			// Detect nested pinned regions:
+			foreach (var block in body.Blocks)
+				CreatePinnedRegion(block);
+			body.Blocks.RemoveAll(b => b.Instructions.Count == 0); // remove dummy blocks
+		}
+
+		void ReplacePinnedVar(ILVariable oldVar, ILVariable newVar, ILInstruction inst)
+		{
+			Conv conv = inst as Conv;
+			if (conv != null && conv.Kind == ConversionKind.StopGCTracking && conv.Argument.MatchLdLoc(oldVar)) {
+				// conv ref->i (ldloc oldVar)
+				//  => ldloc newVar
+				conv.AddILRange(conv.Argument.ILRange);
+				conv.ReplaceWith(new LdLoc(newVar) { ILRange = conv.ILRange });
+				return;
+			}
+			var iwvo = inst as IInstructionWithVariableOperand;
+			if (iwvo != null && iwvo.Variable == oldVar) {
+				iwvo.Variable = newVar;
+				if (inst is StLoc && oldVar.Type.Kind == TypeKind.ByReference) {
+					((StLoc)inst).Value = new Conv(((StLoc)inst).Value, PrimitiveType.I, false, Sign.None);
+				}
+			}
+			foreach (var child in inst.Children) {
+				ReplacePinnedVar(oldVar, newVar, child);
+			}
+		}
+
+		bool IsBranchOnNull(ILInstruction condBranch, ILVariable nativeVar, out Block targetBlock)
+		{
+			targetBlock = null;
+			// if (comp(ldloc nativeVar == conv i4->i <sign extend>(ldc.i4 0))) br targetBlock
+			ILInstruction condition, trueInst, left, right;
+			return condBranch.MatchIfInstruction(out condition, out trueInst)
+				&& condition.MatchCompEquals(out left, out right)
+				&& left.MatchLdLoc(nativeVar) && IsNullOrZero(right)
+				&& trueInst.MatchBranch(out targetBlock);
+		}
+		
+		bool IsOffsetToStringDataBlock(Block block, ILVariable nativeVar, Block targetBlock)
+		{
+			// stloc nativeVar(add(ldloc nativeVar, conv i4->i <sign extend>(call [Accessor System.Runtime.CompilerServices.RuntimeHelpers.get_OffsetToStringData():System.Int32]())))
+			// br IL_0011
+			ILInstruction left, right, value;
+			return block.Instructions.Count == 2
+				&& block.Instructions[0].MatchStLoc(nativeVar, out value)
+				&& value.MatchAdd(out left, out right)
+				&& left.MatchLdLoc(nativeVar)
+				&& IsOffsetToStringDataCall(right)
+				&& block.Instructions[1].MatchBranch(targetBlock);
+		}
+
+		bool IsOffsetToStringDataCall(ILInstruction inst)
+		{
+			Call call = inst.UnwrapConv(ConversionKind.SignExtend) as Call;
+			return call != null && call.Method.FullName == "System.Runtime.CompilerServices.RuntimeHelpers.get_OffsetToStringData";
+		}
+		#endregion
 	}
 }

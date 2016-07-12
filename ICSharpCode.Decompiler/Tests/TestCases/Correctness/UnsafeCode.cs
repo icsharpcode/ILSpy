@@ -34,6 +34,11 @@ public class UnsafeCode
 		}
 	}
 	
+	public unsafe int* PointerCast(long* p)
+	{
+		return (int*)p;
+	}
+	
 	public unsafe long ConvertDoubleToLong(double d)
 	{
 		return *(long*)(&d);

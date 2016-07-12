@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
