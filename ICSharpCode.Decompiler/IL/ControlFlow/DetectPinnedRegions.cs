@@ -436,7 +436,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			ILInstruction left, right, value;
 			return block.Instructions.Count == 2
 				&& block.Instructions[0].MatchStLoc(nativeVar, out value)
-				&& value.MatchAdd(out left, out right)
+				&& value.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out left, out right)
 				&& left.MatchLdLoc(nativeVar)
 				&& IsOffsetToStringDataCall(right)
 				&& block.Instructions[1].MatchBranch(targetBlock);

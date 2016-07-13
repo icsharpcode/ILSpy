@@ -474,44 +474,32 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new OperatorResolveResult(left.Type, ExpressionType.Assign, left.ResolveResult, right.ResolveResult));
 		}
 		
-		protected internal override TranslatedExpression VisitAdd(Add inst)
+		protected internal override TranslatedExpression VisitBinaryNumericInstruction(BinaryNumericInstruction inst)
 		{
-			return HandleBinaryNumeric(inst, BinaryOperatorType.Add);
-		}
-		
-		protected internal override TranslatedExpression VisitSub(Sub inst)
-		{
-			return HandleBinaryNumeric(inst, BinaryOperatorType.Subtract);
-		}
-		
-		protected internal override TranslatedExpression VisitMul(Mul inst)
-		{
-			return HandleBinaryNumeric(inst, BinaryOperatorType.Multiply);
-		}
-		
-		protected internal override TranslatedExpression VisitDiv(Div inst)
-		{
-			return HandleBinaryNumeric(inst, BinaryOperatorType.Divide);
-		}
-		
-		protected internal override TranslatedExpression VisitRem(Rem inst)
-		{
-			return HandleBinaryNumeric(inst, BinaryOperatorType.Modulus);
-		}
-		
-		protected internal override TranslatedExpression VisitBitXor(BitXor inst)
-		{
-			return HandleBinaryNumeric(inst, BinaryOperatorType.ExclusiveOr);
-		}
-		
-		protected internal override TranslatedExpression VisitBitAnd(BitAnd inst)
-		{
-			return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseAnd);
-		}
-		
-		protected internal override TranslatedExpression VisitBitOr(BitOr inst)
-		{
-			return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseOr);
+			switch (inst.Operator) {
+				case BinaryNumericOperator.Add:
+					return HandleBinaryNumeric(inst, BinaryOperatorType.Add);
+				case BinaryNumericOperator.Sub:
+					return HandleBinaryNumeric(inst, BinaryOperatorType.Subtract);
+				case BinaryNumericOperator.Mul:
+					return HandleBinaryNumeric(inst, BinaryOperatorType.Multiply);
+				case BinaryNumericOperator.Div:
+					return HandleBinaryNumeric(inst, BinaryOperatorType.Divide);
+				case BinaryNumericOperator.Rem:
+					return HandleBinaryNumeric(inst, BinaryOperatorType.Modulus);
+				case BinaryNumericOperator.BitAnd:
+					return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseAnd);
+				case BinaryNumericOperator.BitOr:
+					return HandleBinaryNumeric(inst, BinaryOperatorType.BitwiseOr);
+				case BinaryNumericOperator.BitXor:
+					return HandleBinaryNumeric(inst, BinaryOperatorType.ExclusiveOr);
+				case BinaryNumericOperator.ShiftLeft:
+					return HandleShift(inst, BinaryOperatorType.ShiftLeft);
+				case BinaryNumericOperator.ShiftRight:
+					return HandleShift(inst, BinaryOperatorType.ShiftRight);
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
 		}
 		
 		TranslatedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op)
@@ -581,16 +569,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				default:
 					return true;
 			}
-		}
-		
-		protected internal override TranslatedExpression VisitShl(Shl inst)
-		{
-			return HandleShift(inst, BinaryOperatorType.ShiftLeft);
-		}
-		
-		protected internal override TranslatedExpression VisitShr(Shr inst)
-		{
-			return HandleShift(inst, BinaryOperatorType.ShiftRight);
 		}
 		
 		TranslatedExpression HandleShift(BinaryNumericInstruction inst, BinaryOperatorType op)

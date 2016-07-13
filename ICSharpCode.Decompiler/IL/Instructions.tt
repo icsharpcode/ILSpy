@@ -58,14 +58,8 @@
 			})),
 		new OpCode("logic.not", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).",
 			ResultType("I4"), Unary),
-		new OpCode("add", "Adds two numbers.", BinaryNumeric),
-		new OpCode("sub", "Subtracts two numbers", BinaryNumeric),
-		new OpCode("mul", "Multiplies two numbers", BinaryNumeric),
-		new OpCode("div", "Divides two numbers", BinaryNumeric, MayThrow),
-		new OpCode("rem", "Division remainder", BinaryNumeric, MayThrow),
-		new OpCode("bit.and", "Bitwise AND", BinaryNumeric),
-		new OpCode("bit.or", "Bitwise OR", BinaryNumeric),
-		new OpCode("bit.xor", "Bitwise XOR", BinaryNumeric),
+		new OpCode("binary", "Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.",
+			CustomClassName("BinaryNumericInstruction"), Binary, CustomWriteTo, CustomConstructor, CustomComputeFlags),
 		new OpCode("bit.not", "Bitwise NOT", Unary),
 		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
 		new OpCode("br", "Unconditional branch. <c>goto target;</c>",
@@ -143,8 +137,6 @@
 			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
 		new OpCode("ret", "Returns from the current method or lambda.",
 			CustomClassName("Return"), CustomConstructor, CustomComputeFlags, MayBranch, UnconditionalBranch),
-		new OpCode("shl", "Shift left", BinaryNumeric),
-		new OpCode("shr", "Shift right", BinaryNumeric),
 		
 		new OpCode("ldflda", "Load address of instance field",
 			CustomClassName("LdFlda"), CustomArguments("target"), MayThrowIfNotDelayed, HasFieldOperand, ResultType("Ref")),
@@ -287,21 +279,6 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(<#=opCode.VariableName#>);
 		}
 <#	} #>
-	}
-	
-	partial class BinaryNumericInstruction
-	{
-		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
-		{
-			switch (opCode) {
-<#	foreach (OpCode opCode in opCodes.Where(c => c.BaseClass == "BinaryNumericInstruction")) { #>
-				case OpCode.<#=opCode.Name#>:
-					return new <#=opCode.Name#>(left, right, checkForOverflow, sign);
-<#	} #>
-				default:
-					throw new ArgumentException("opCode is not a binary numeric instruction");
-			}
-		}
 	}
 	
 	partial class BinaryComparisonInstruction
@@ -563,16 +540,6 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.WriteArguments.Add("output.Write(\", \");");
 		opCode.WriteArguments.Add("Right.WriteTo(output);");
 		opCode.WriteArguments.Add("output.Write(')');");
-	};
-
-	// BinaryNumeric trait: the instruction is derived from BinaryNumericInstruction. Implies Binary; and implies MayThrow if the overflow mode is checked.
-	static Action<OpCode> BinaryNumeric = opCode => {
-		Binary(opCode);
-		opCode.BaseClass = "BinaryNumericInstruction";
-		opCode.ConstructorParameters.Add("bool checkForOverflow");
-		opCode.BaseConstructorArguments.Add("checkForOverflow");
-		opCode.ConstructorParameters.Add("Sign sign");
-		opCode.BaseConstructorArguments.Add("sign");
 	};
 	
 	static Action<OpCode> CustomArguments(params string[] arguments)

@@ -43,22 +43,8 @@ namespace ICSharpCode.Decompiler.IL
 		PinnedRegion,
 		/// <summary>Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).</summary>
 		LogicNot,
-		/// <summary>Adds two numbers.</summary>
-		Add,
-		/// <summary>Subtracts two numbers</summary>
-		Sub,
-		/// <summary>Multiplies two numbers</summary>
-		Mul,
-		/// <summary>Divides two numbers</summary>
-		Div,
-		/// <summary>Division remainder</summary>
-		Rem,
-		/// <summary>Bitwise AND</summary>
-		BitAnd,
-		/// <summary>Bitwise OR</summary>
-		BitOr,
-		/// <summary>Bitwise XOR</summary>
-		BitXor,
+		/// <summary>Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.</summary>
+		BinaryNumericInstruction,
 		/// <summary>Bitwise NOT</summary>
 		BitNot,
 		/// <summary>Retrieves the RuntimeArgumentHandle.</summary>
@@ -125,10 +111,6 @@ namespace ICSharpCode.Decompiler.IL
 		LocAlloc,
 		/// <summary>Returns from the current method or lambda.</summary>
 		Return,
-		/// <summary>Shift left</summary>
-		Shl,
-		/// <summary>Shift right</summary>
-		Shr,
 		/// <summary>Load address of instance field</summary>
 		LdFlda,
 		/// <summary>Load static field address</summary>
@@ -722,157 +704,17 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Adds two numbers.</summary>
-	public sealed partial class Add : BinaryNumericInstruction
+	/// <summary>Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.</summary>
+	public sealed partial class BinaryNumericInstruction : BinaryInstruction
 	{
-		public Add(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Add, left, right, checkForOverflow, sign)
-		{
-		}
 
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
-			visitor.VisitAdd(this);
+			visitor.VisitBinaryNumericInstruction(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitAdd(this);
-		}
-	}
-
-	/// <summary>Subtracts two numbers</summary>
-	public sealed partial class Sub : BinaryNumericInstruction
-	{
-		public Sub(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Sub, left, right, checkForOverflow, sign)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitSub(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitSub(this);
-		}
-	}
-
-	/// <summary>Multiplies two numbers</summary>
-	public sealed partial class Mul : BinaryNumericInstruction
-	{
-		public Mul(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Mul, left, right, checkForOverflow, sign)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitMul(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitMul(this);
-		}
-	}
-
-	/// <summary>Divides two numbers</summary>
-	public sealed partial class Div : BinaryNumericInstruction
-	{
-		public Div(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Div, left, right, checkForOverflow, sign)
-		{
-		}
-
-		protected override InstructionFlags ComputeFlags()
-		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow;
-		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitDiv(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitDiv(this);
-		}
-	}
-
-	/// <summary>Division remainder</summary>
-	public sealed partial class Rem : BinaryNumericInstruction
-	{
-		public Rem(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Rem, left, right, checkForOverflow, sign)
-		{
-		}
-
-		protected override InstructionFlags ComputeFlags()
-		{
-			return base.ComputeFlags() | InstructionFlags.MayThrow;
-		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return base.DirectFlags | InstructionFlags.MayThrow;
-			}
-		}
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitRem(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitRem(this);
-		}
-	}
-
-	/// <summary>Bitwise AND</summary>
-	public sealed partial class BitAnd : BinaryNumericInstruction
-	{
-		public BitAnd(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.BitAnd, left, right, checkForOverflow, sign)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitBitAnd(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitBitAnd(this);
-		}
-	}
-
-	/// <summary>Bitwise OR</summary>
-	public sealed partial class BitOr : BinaryNumericInstruction
-	{
-		public BitOr(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.BitOr, left, right, checkForOverflow, sign)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitBitOr(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitBitOr(this);
-		}
-	}
-
-	/// <summary>Bitwise XOR</summary>
-	public sealed partial class BitXor : BinaryNumericInstruction
-	{
-		public BitXor(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.BitXor, left, right, checkForOverflow, sign)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitBitXor(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitBitXor(this);
+			return visitor.VisitBinaryNumericInstruction(this);
 		}
 	}
 
@@ -1985,40 +1827,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
-	/// <summary>Shift left</summary>
-	public sealed partial class Shl : BinaryNumericInstruction
-	{
-		public Shl(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Shl, left, right, checkForOverflow, sign)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitShl(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitShl(this);
-		}
-	}
-
-	/// <summary>Shift right</summary>
-	public sealed partial class Shr : BinaryNumericInstruction
-	{
-		public Shr(ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign) : base(OpCode.Shr, left, right, checkForOverflow, sign)
-		{
-		}
-
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitShr(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitShr(this);
-		}
-	}
-
 	/// <summary>Load address of instance field</summary>
 	public sealed partial class LdFlda : ILInstruction, IInstructionWithFieldOperand
 	{
@@ -3110,35 +2918,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitAdd(Add inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitSub(Sub inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitMul(Mul inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitDiv(Div inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitRem(Rem inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitBitAnd(BitAnd inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitBitOr(BitOr inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitBitXor(BitXor inst)
+		protected internal virtual void VisitBinaryNumericInstruction(BinaryNumericInstruction inst)
 		{
 			Default(inst);
 		}
@@ -3274,14 +3054,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitShl(Shl inst)
-		{
-			Default(inst);
-		}
-		protected internal virtual void VisitShr(Shr inst)
-		{
-			Default(inst);
-		}
 		protected internal virtual void VisitLdFlda(LdFlda inst)
 		{
 			Default(inst);
@@ -3404,35 +3176,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitAdd(Add inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitSub(Sub inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitMul(Mul inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitDiv(Div inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitRem(Rem inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitBitAnd(BitAnd inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitBitOr(BitOr inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitBitXor(BitXor inst)
+		protected internal virtual T VisitBinaryNumericInstruction(BinaryNumericInstruction inst)
 		{
 			return Default(inst);
 		}
@@ -3568,14 +3312,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitShl(Shl inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitShr(Shr inst)
-		{
-			return Default(inst);
-		}
 		protected internal virtual T VisitLdFlda(LdFlda inst)
 		{
 			return Default(inst);
@@ -3662,37 +3398,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 	
-	partial class BinaryNumericInstruction
-	{
-		public static BinaryNumericInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
-		{
-			switch (opCode) {
-				case OpCode.Add:
-					return new Add(left, right, checkForOverflow, sign);
-				case OpCode.Sub:
-					return new Sub(left, right, checkForOverflow, sign);
-				case OpCode.Mul:
-					return new Mul(left, right, checkForOverflow, sign);
-				case OpCode.Div:
-					return new Div(left, right, checkForOverflow, sign);
-				case OpCode.Rem:
-					return new Rem(left, right, checkForOverflow, sign);
-				case OpCode.BitAnd:
-					return new BitAnd(left, right, checkForOverflow, sign);
-				case OpCode.BitOr:
-					return new BitOr(left, right, checkForOverflow, sign);
-				case OpCode.BitXor:
-					return new BitXor(left, right, checkForOverflow, sign);
-				case OpCode.Shl:
-					return new Shl(left, right, checkForOverflow, sign);
-				case OpCode.Shr:
-					return new Shr(left, right, checkForOverflow, sign);
-				default:
-					throw new ArgumentException("opCode is not a binary numeric instruction");
-			}
-		}
-	}
-	
 	partial class BinaryComparisonInstruction
 	{
 		public static BinaryComparisonInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right)
@@ -3714,14 +3419,7 @@ namespace ICSharpCode.Decompiler.IL
 			"Block",
 			"PinnedRegion",
 			"logic.not",
-			"add",
-			"sub",
-			"mul",
-			"div",
-			"rem",
-			"bit.and",
-			"bit.or",
-			"bit.xor",
+			"binary",
 			"bit.not",
 			"arglist",
 			"br",
@@ -3755,8 +3453,6 @@ namespace ICSharpCode.Decompiler.IL
 			"ldmembertoken",
 			"localloc",
 			"ret",
-			"shl",
-			"shr",
 			"ldflda",
 			"ldsflda",
 			"castclass",
@@ -3821,102 +3517,6 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			argument = default(ILInstruction);
-			return false;
-		}
-		public bool MatchAdd(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Add;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchSub(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Sub;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchMul(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Mul;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchDiv(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Div;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchRem(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Rem;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchBitAnd(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as BitAnd;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchBitOr(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as BitOr;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchBitXor(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as BitXor;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
 			return false;
 		}
 		public bool MatchBitNot(out ILInstruction argument)
@@ -4119,30 +3719,6 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			argument = default(ILInstruction);
-			return false;
-		}
-		public bool MatchShl(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Shl;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchShr(out ILInstruction left, out ILInstruction right)
-		{
-			var inst = this as Shr;
-			if (inst != null) {
-				left = inst.Left;
-				right = inst.Right;
-				return true;
-			}
-			left = default(ILInstruction);
-			right = default(ILInstruction);
 			return false;
 		}
 		public bool MatchLdFlda(out ILInstruction target, out IField field)

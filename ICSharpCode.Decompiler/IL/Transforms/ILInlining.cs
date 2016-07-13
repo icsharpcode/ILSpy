@@ -267,7 +267,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					return parent == next;
 				case OpCode.SwitchInstruction:
-					return parent == next || (parent.OpCode == OpCode.Sub && parent.Parent == next);
+					return parent == next || (parent.MatchBinaryNumericInstruction(BinaryNumericOperator.Sub) && parent.Parent == next);
 				default:
 					return false;
 			}

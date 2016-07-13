@@ -31,7 +31,21 @@ namespace ICSharpCode.Decompiler.IL
 		EvaluatesToNewValue
 	}
 	
-	public abstract partial class BinaryNumericInstruction : BinaryInstruction
+	public enum BinaryNumericOperator : byte
+	{
+		Add,
+		Sub,
+		Mul,
+		Div,
+		Rem,
+		BitAnd,
+		BitOr,
+		BitXor,
+		ShiftLeft,
+		ShiftRight
+	}
+	
+	public partial class BinaryNumericInstruction : BinaryInstruction
 	{
 		/// <summary>
 		/// Gets whether the instruction checks for overflow.
@@ -44,15 +58,21 @@ namespace ICSharpCode.Decompiler.IL
 		/// For instructions that produce the same result for either sign, returns Sign.None.
 		/// </summary>
 		public readonly Sign Sign;
-
+		
+		/// <summary>
+		/// The operator used by this binary operator instruction.
+		/// </summary>
+		public readonly BinaryNumericOperator Operator;
+		
 		readonly StackType resultType;
 
-		protected BinaryNumericInstruction(OpCode opCode, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
-			: base(opCode, left, right)
+		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
+			: base(OpCode.BinaryNumericInstruction, left, right)
 		{
 			this.CheckForOverflow = checkForOverflow;
 			this.Sign = sign;
-			this.resultType = ComputeResultType(opCode, left.ResultType, right.ResultType);
+			this.Operator = op;
+			this.resultType = ComputeResultType(op, left.ResultType, right.ResultType);
 			Debug.Assert(resultType != StackType.Unknown);
 			//Debug.Assert(CompoundAssignmentType == CompoundAssignmentType.None || IsValidCompoundAssignmentTarget(Left));
 		}
@@ -71,23 +91,23 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		internal static StackType ComputeResultType(OpCode opCode, StackType left, StackType right)
+		internal static StackType ComputeResultType(BinaryNumericOperator op, StackType left, StackType right)
 		{
 			// Based on Table 2: Binary Numeric Operations
 			// also works for Table 5: Integer Operations
 			// and for Table 7: Overflow Arithmetic Operations
-			if (left == right || opCode == OpCode.Shl || opCode == OpCode.Shr) {
+			if (left == right || op == BinaryNumericOperator.ShiftLeft || op == BinaryNumericOperator.ShiftRight) {
 				// Shift op codes use Table 6
 				return left;
 			}
 			if (left == StackType.Ref || right == StackType.Ref) {
 				if (left == StackType.Ref && right == StackType.Ref) {
 					// sub(&, &) = I
-					Debug.Assert(opCode == OpCode.Sub);
+					Debug.Assert(op == BinaryNumericOperator.Sub);
 					return StackType.I;
 				} else {
 					// add/sub with I or I4 and &
-					Debug.Assert(opCode == OpCode.Add || opCode == OpCode.Sub);
+					Debug.Assert(op == BinaryNumericOperator.Add || op == BinaryNumericOperator.Sub);
 					return StackType.Ref;
 				}
 			}
@@ -103,14 +123,51 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var flags = base.ComputeFlags();
-			if (CheckForOverflow)
+			if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
 				flags |= InstructionFlags.MayThrow;
 			return flags;
+		}
+		
+		public override InstructionFlags DirectFlags {
+			get {
+				if (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem)
+					return base.DirectFlags | InstructionFlags.MayThrow;
+				return base.DirectFlags;
+			}
+		}
+
+		string GetOperatorName(BinaryNumericOperator @operator)
+		{
+			switch (@operator) {
+				case BinaryNumericOperator.Add:
+					return "add";
+				case BinaryNumericOperator.Sub:
+					return "sub";
+				case BinaryNumericOperator.Mul:
+					return "mul";
+				case BinaryNumericOperator.Div:
+					return "div";
+				case BinaryNumericOperator.Rem:
+					return "rem";
+				case BinaryNumericOperator.BitAnd:
+					return "bit.and";
+				case BinaryNumericOperator.BitOr:
+					return "bit.or";
+				case BinaryNumericOperator.BitXor:
+					return "bit.xor";
+				case BinaryNumericOperator.ShiftLeft:
+					return "bit.shl";
+				case BinaryNumericOperator.ShiftRight:
+					return "bit.shr";
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
 		}
 
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
+			output.Write("." + GetOperatorName(Operator));
 			if (CheckForOverflow)
 				output.Write(".ovf");
 			if (Sign == Sign.Unsigned)

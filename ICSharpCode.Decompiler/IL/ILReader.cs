@@ -335,13 +335,13 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			switch (PeekStackType()) {
 				case StackType.I4:
-					return Push(new Sub(new LdcI4(0), Pop(), checkForOverflow: false, sign: Sign.None));
+					return Push(new BinaryNumericInstruction(BinaryNumericOperator.Sub, new LdcI4(0), Pop(), checkForOverflow: false, sign: Sign.None));
 				case StackType.I:
-					return Push(new Sub(new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.None), Pop(), checkForOverflow: false, sign: Sign.None));
+					return Push(new BinaryNumericInstruction(BinaryNumericOperator.Sub, new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.None), Pop(), checkForOverflow: false, sign: Sign.None));
 				case StackType.I8:
-					return Push(new Sub(new LdcI8(0), Pop(), checkForOverflow: false, sign: Sign.None));
+					return Push(new BinaryNumericInstruction(BinaryNumericOperator.Sub, new LdcI8(0), Pop(), checkForOverflow: false, sign: Sign.None));
 				case StackType.F:
-					return Push(new Sub(new LdcF(0), Pop(), checkForOverflow: false, sign: Sign.None));
+					return Push(new BinaryNumericInstruction(BinaryNumericOperator.Sub, new LdcF(0), Pop(), checkForOverflow: false, sign: Sign.None));
 				default:
 					Warn("Unsupported input type for neg.");
 					goto case StackType.I4;
@@ -363,13 +363,13 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Volatile:
 					return DecodeVolatile();
 				case ILOpCode.Add:
-					return BinaryNumeric(OpCode.Add);
+					return BinaryNumeric(BinaryNumericOperator.Add);
 				case ILOpCode.Add_Ovf:
-					return BinaryNumeric(OpCode.Add, true, Sign.Signed);
+					return BinaryNumeric(BinaryNumericOperator.Add, true, Sign.Signed);
 				case ILOpCode.Add_Ovf_Un:
-					return BinaryNumeric(OpCode.Add, true, Sign.Unsigned);
+					return BinaryNumeric(BinaryNumericOperator.Add, true, Sign.Unsigned);
 				case ILOpCode.And:
-					return BinaryNumeric(OpCode.BitAnd);
+					return BinaryNumeric(BinaryNumericOperator.BitAnd);
 				case ILOpCode.Arglist:
 					return Push(new Arglist());
 				case ILOpCode.Beq:
@@ -513,9 +513,9 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Cpblk:
 					throw new NotImplementedException();
 				case ILOpCode.Div:
-					return BinaryNumeric(OpCode.Div, false, Sign.Signed);
+					return BinaryNumeric(BinaryNumericOperator.Div, false, Sign.Signed);
 				case ILOpCode.Div_Un:
-					return BinaryNumeric(OpCode.Div, false, Sign.Unsigned);
+					return BinaryNumeric(BinaryNumericOperator.Div, false, Sign.Unsigned);
 				case ILOpCode.Dup:
 					return Push(Peek());
 				case ILOpCode.Endfilter:
@@ -607,11 +607,11 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Localloc:
 					return Push(new LocAlloc(Pop()));
 				case ILOpCode.Mul:
-					return BinaryNumeric(OpCode.Mul, false, Sign.None);
+					return BinaryNumeric(BinaryNumericOperator.Mul, false, Sign.None);
 				case ILOpCode.Mul_Ovf:
-					return BinaryNumeric(OpCode.Mul, true, Sign.Signed);
+					return BinaryNumeric(BinaryNumericOperator.Mul, true, Sign.Signed);
 				case ILOpCode.Mul_Ovf_Un:
-					return BinaryNumeric(OpCode.Mul, true, Sign.Unsigned);
+					return BinaryNumeric(BinaryNumericOperator.Mul, true, Sign.Unsigned);
 				case ILOpCode.Neg:
 					return Neg();
 				case ILOpCode.Newobj:
@@ -621,22 +621,22 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Not:
 					return Push(new BitNot(Pop()));
 				case ILOpCode.Or:
-					return BinaryNumeric(OpCode.BitOr);
+					return BinaryNumeric(BinaryNumericOperator.BitOr);
 				case ILOpCode.Pop:
 					Pop();
 					return new Nop();
 				case ILOpCode.Rem:
-					return BinaryNumeric(OpCode.Rem, false, Sign.Signed);
+					return BinaryNumeric(BinaryNumericOperator.Rem, false, Sign.Signed);
 				case ILOpCode.Rem_Un:
-					return BinaryNumeric(OpCode.Rem, false, Sign.Unsigned);
+					return BinaryNumeric(BinaryNumericOperator.Rem, false, Sign.Unsigned);
 				case ILOpCode.Ret:
 					return Return();
 				case ILOpCode.Shl:
-					return BinaryNumeric(OpCode.Shl, false, Sign.None);
+					return BinaryNumeric(BinaryNumericOperator.ShiftLeft, false, Sign.None);
 				case ILOpCode.Shr:
-					return BinaryNumeric(OpCode.Shr, false, Sign.Signed);
+					return BinaryNumeric(BinaryNumericOperator.ShiftRight, false, Sign.Signed);
 				case ILOpCode.Shr_Un:
-					return BinaryNumeric(OpCode.Shr, false, Sign.Unsigned);
+					return BinaryNumeric(BinaryNumericOperator.ShiftRight, false, Sign.Unsigned);
 				case ILOpCode.Starg:
 					return Starg(reader.ReadUInt16());
 				case ILOpCode.Starg_S:
@@ -667,15 +667,15 @@ namespace ICSharpCode.Decompiler.IL
 				case ILOpCode.Stloc_3:
 					return Stloc(ilOpCode - ILOpCode.Stloc_0);
 				case ILOpCode.Sub:
-					return BinaryNumeric(OpCode.Sub, false, Sign.None);
+					return BinaryNumeric(BinaryNumericOperator.Sub, false, Sign.None);
 				case ILOpCode.Sub_Ovf:
-					return BinaryNumeric(OpCode.Sub, true, Sign.Signed);
+					return BinaryNumeric(BinaryNumericOperator.Sub, true, Sign.Signed);
 				case ILOpCode.Sub_Ovf_Un:
-					return BinaryNumeric(OpCode.Sub, true, Sign.Unsigned);
+					return BinaryNumeric(BinaryNumericOperator.Sub, true, Sign.Unsigned);
 				case ILOpCode.Switch:
 					return DecodeSwitch();
 				case ILOpCode.Xor:
-					return BinaryNumeric(OpCode.BitXor);
+					return BinaryNumeric(BinaryNumericOperator.BitXor);
 				case ILOpCode.Box:
 					{
 						var type = ReadAndDecodeTypeReference();
@@ -1200,11 +1200,11 @@ namespace ICSharpCode.Decompiler.IL
 			return instr;
 		}
 		
-		ILInstruction BinaryNumeric(OpCode opCode, bool checkForOverflow = false, Sign sign = Sign.None)
+		ILInstruction BinaryNumeric(BinaryNumericOperator @operator, bool checkForOverflow = false, Sign sign = Sign.None)
 		{
 			var right = Pop();
 			var left = Pop();
-			if (opCode != OpCode.Shl && opCode != OpCode.Shr) {
+			if (@operator != BinaryNumericOperator.ShiftLeft && @operator != BinaryNumericOperator.ShiftRight) {
 				// make the implicit I4->I conversion explicit:
 				if (left.ResultType == StackType.I4 && right.ResultType == StackType.I) {
 					left = new Conv(left, PrimitiveType.I, false, Sign.None);
@@ -1212,7 +1212,7 @@ namespace ICSharpCode.Decompiler.IL
 					right = new Conv(right, PrimitiveType.I, false, Sign.None);
 				}
 			}
-			return Push(BinaryNumericInstruction.Create(opCode, left, right, checkForOverflow, sign));
+			return Push(new BinaryNumericInstruction(@operator, left, right, checkForOverflow, sign));
 		}
 
 		ILInstruction LdToken(IMetadataTokenProvider token)
