@@ -67,7 +67,8 @@ namespace ICSharpCode.Decompiler.IL
 				Debug.Assert(child.Parent == this);
 				Debug.Assert(this.GetChild(child.ChildIndex) == child);
 				// if child flags are invalid, parent flags must be too
-				Debug.Assert(child.flags != invalidFlags || this.flags == invalidFlags);
+				// exception: nested ILFunctions (lambdas)
+				Debug.Assert(this is ILFunction || child.flags != invalidFlags || this.flags == invalidFlags);
 				Debug.Assert(child.IsConnected == this.IsConnected);
 				child.CheckInvariant(phase);
 			}
