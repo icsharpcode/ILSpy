@@ -597,6 +597,101 @@ namespace ICSharpCode.Decompiler.CSharp
 			return result;
 		}
 		
+		protected internal override TranslatedExpression VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst)
+		{
+			switch (inst.Operator) {
+				case BinaryNumericOperator.Add:
+					return HandleCompoundAssigment(inst, AssignmentOperatorType.Add);
+				case BinaryNumericOperator.Sub:
+					return HandleCompoundAssigment(inst, AssignmentOperatorType.Subtract);
+				case BinaryNumericOperator.Mul:
+					return HandleCompoundAssigment(inst, AssignmentOperatorType.Multiply);
+				case BinaryNumericOperator.Div:
+					return HandleCompoundAssigment(inst, AssignmentOperatorType.Divide);
+				case BinaryNumericOperator.Rem:
+					return HandleCompoundAssigment(inst, AssignmentOperatorType.Modulus);
+				case BinaryNumericOperator.BitAnd:
+					return HandleCompoundAssigment(inst, AssignmentOperatorType.BitwiseAnd);
+				case BinaryNumericOperator.BitOr:
+					return HandleCompoundAssigment(inst, AssignmentOperatorType.BitwiseOr);
+				case BinaryNumericOperator.BitXor:
+					return HandleCompoundAssigment(inst, AssignmentOperatorType.ExclusiveOr);
+				case BinaryNumericOperator.ShiftLeft:
+					return HandleCompoundShift(inst, AssignmentOperatorType.ShiftLeft);
+				case BinaryNumericOperator.ShiftRight:
+					return HandleCompoundShift(inst, AssignmentOperatorType.ShiftRight);
+				default:
+					throw new ArgumentOutOfRangeException();
+			}
+		}
+		
+		TranslatedExpression HandleCompoundAssigment(CompoundAssignmentInstruction inst, AssignmentOperatorType op)
+		{
+			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
+			var target = Translate(inst.Target);
+			var value = Translate(inst.Value);
+			value = PrepareArithmeticArgument(value, inst.Value.ResultType, inst.Sign);
+			
+			var rr = resolverWithOverflowCheck.ResolveAssignment(op, target.ResolveResult, value.ResolveResult);
+			if (rr.IsError || rr.Type.GetStackType() != inst.ResultType
+			    || !IsCompatibleWithSign(target.Type, inst.Sign) || !IsCompatibleWithSign(value.Type, inst.Sign))
+			{
+				// Target and value are incompatible, so convert value to the target type
+				// inst.ResultType should match inst.Target.ResultType
+				Debug.Assert(inst.ResultType == inst.Target.ResultType);
+				StackType targetStackType = inst.ResultType == StackType.I ? StackType.I8 : inst.ResultType;
+				IType targetType = compilation.FindType(targetStackType.ToKnownTypeCode(inst.Sign));
+				value = value.ConvertTo(targetType, this);
+				rr = resolverWithOverflowCheck.ResolveAssignment(op, target.ResolveResult, value.ResolveResult);
+			}
+			var resultExpr = new AssignmentExpression(target.Expression, op, value.Expression)
+				.WithILInstruction(inst)
+				.WithRR(rr);
+			if (AssignmentOperatorMightCheckForOverflow(op))
+				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			return resultExpr;
+		}
+		
+		TranslatedExpression HandleCompoundShift(CompoundAssignmentInstruction inst, AssignmentOperatorType op)
+		{
+			var target = Translate(inst.Target);
+			var value = Translate(inst.Value);
+			
+			IType targetType;
+			if (inst.ResultType == StackType.I4)
+				targetType = compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
+			else
+				targetType = compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64);
+			target = target.ConvertTo(targetType, this);
+			
+			// Shift operators in C# always expect type 'int' on the right-hand-side
+			value = value.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
+			
+			TranslatedExpression result = new AssignmentExpression(target.Expression, op, value.Expression)
+				.WithILInstruction(inst)
+				.WithRR(resolver.ResolveAssignment(op, target.ResolveResult, value.ResolveResult));
+			if (inst.ResultType == StackType.I) {
+				// C# doesn't have shift operators for IntPtr, so we first shifted a long/ulong,
+				// and now have to case back down to IntPtr/UIntPtr:
+				result = result.ConvertTo(compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr), this);
+			}
+			return result;
+		}
+		
+		static bool AssignmentOperatorMightCheckForOverflow(AssignmentOperatorType op)
+		{
+			switch (op) {
+				case AssignmentOperatorType.BitwiseAnd:
+				case AssignmentOperatorType.BitwiseOr:
+				case AssignmentOperatorType.ExclusiveOr:
+				case AssignmentOperatorType.ShiftLeft:
+				case AssignmentOperatorType.ShiftRight:
+					return false;
+				default:
+					return true;
+			}
+		}
+		
 		protected internal override TranslatedExpression VisitConv(Conv inst)
 		{
 			var arg = Translate(inst.Argument);
@@ -1050,12 +1145,12 @@ namespace ICSharpCode.Decompiler.CSharp
 //		{
 //			return Assignment(ConvertField(inst.Field, inst.Target).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
 //		}
-//		
+//
 //		protected internal override TranslatedExpression VisitLdsFld(LdsFld inst)
 //		{
 //			return ConvertField(inst.Field).WithILInstruction(inst);
 //		}
-//		
+//
 //		protected internal override TranslatedExpression VisitStsFld(StsFld inst)
 //		{
 //			return Assignment(ConvertField(inst.Field).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);

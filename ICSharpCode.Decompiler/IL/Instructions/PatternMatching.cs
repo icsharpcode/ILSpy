@@ -221,6 +221,21 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 		
+		public bool MatchBinaryNumericInstruction(out BinaryNumericOperator @operator, out ILInstruction left, out ILInstruction right)
+		{
+			var op = this as BinaryNumericInstruction;
+			if (op != null) {
+				@operator = op.Operator;
+				left = op.Left;
+				right = op.Right;
+				return true;
+			}
+			@operator = BinaryNumericOperator.None;
+			left = null;
+			right = null;
+			return false;
+		}
+		
 		/// <summary>
 		/// If this instruction is a conversion of the specified kind, return its argument.
 		/// Otherwise, return the instruction itself.

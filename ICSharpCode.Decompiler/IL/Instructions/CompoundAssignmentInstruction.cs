@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿// Copyright (c) 2016 Siegfried Pammer
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -23,23 +23,14 @@ using System.Linq;
 using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
-{	
-	public enum BinaryNumericOperator : byte
+{
+	public enum CompoundAssignmentType : byte
 	{
-		None,
-		Add,
-		Sub,
-		Mul,
-		Div,
-		Rem,
-		BitAnd,
-		BitOr,
-		BitXor,
-		ShiftLeft,
-		ShiftRight
+		EvaluatesToOldValue,
+		EvaluatesToNewValue
 	}
-	
-	public partial class BinaryNumericInstruction : BinaryInstruction
+
+	public partial class CompoundAssignmentInstruction : ILInstruction
 	{
 		/// <summary>
 		/// Gets whether the instruction checks for overflow.
@@ -54,54 +45,43 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly Sign Sign;
 		
 		/// <summary>
-		/// The operator used by this binary operator instruction.
+		/// The operator used by this assignment operator instruction.
 		/// </summary>
 		public readonly BinaryNumericOperator Operator;
 		
-		readonly StackType resultType;
+		public readonly CompoundAssignmentType CompoundAssignmentType;
 
-		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
-			: base(OpCode.BinaryNumericInstruction, left, right)
+		public CompoundAssignmentInstruction(BinaryNumericOperator op, ILInstruction target, ILInstruction value, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssigmentType)
+			: base(OpCode.CompoundAssignmentInstruction)
 		{
 			this.CheckForOverflow = checkForOverflow;
 			this.Sign = sign;
 			this.Operator = op;
-			this.resultType = ComputeResultType(op, left.ResultType, right.ResultType);
-			Debug.Assert(resultType != StackType.Unknown);
+			this.Target = target;
+			this.Value = value;
+			this.CompoundAssignmentType = compoundAssigmentType;
+			Debug.Assert(compoundAssigmentType == CompoundAssignmentType.EvaluatesToNewValue || (op == BinaryNumericOperator.Add || op == BinaryNumericOperator.Sub));
+			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
 		}
 		
-		internal static StackType ComputeResultType(BinaryNumericOperator op, StackType left, StackType right)
+		internal static bool IsValidCompoundAssignmentTarget(ILInstruction inst)
 		{
-			// Based on Table 2: Binary Numeric Operations
-			// also works for Table 5: Integer Operations
-			// and for Table 7: Overflow Arithmetic Operations
-			if (left == right || op == BinaryNumericOperator.ShiftLeft || op == BinaryNumericOperator.ShiftRight) {
-				// Shift op codes use Table 6
-				return left;
-			}
-			if (left == StackType.Ref || right == StackType.Ref) {
-				if (left == StackType.Ref && right == StackType.Ref) {
-					// sub(&, &) = I
-					Debug.Assert(op == BinaryNumericOperator.Sub);
-					return StackType.I;
-				} else {
-					// add/sub with I or I4 and &
-					Debug.Assert(op == BinaryNumericOperator.Add || op == BinaryNumericOperator.Sub);
-					return StackType.Ref;
-				}
-			}
-			return StackType.Unknown;
-		}
-		
-		public sealed override StackType ResultType {
-			get {
-				return resultType;
+			switch (inst.OpCode) {
+				case OpCode.LdLoc:
+				case OpCode.LdObj:
+					return true;
+				case OpCode.Call:
+				case OpCode.CallVirt:
+					var owner = ((CallInstruction)inst).Method.AccessorOwner as IProperty;
+					return owner != null && owner.CanSet;
+				default:
+					return false;
 			}
 		}
 
 		protected override InstructionFlags ComputeFlags()
 		{
-			var flags = base.ComputeFlags();
+			var flags = target.Flags | value.Flags | InstructionFlags.SideEffect;
 			if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
 				flags |= InstructionFlags.MayThrow;
 			return flags;
@@ -109,9 +89,10 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override InstructionFlags DirectFlags {
 			get {
+				var flags = InstructionFlags.SideEffect;
 				if (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem)
-					return base.DirectFlags | InstructionFlags.MayThrow;
-				return base.DirectFlags;
+					flags |= InstructionFlags.MayThrow;
+				return flags;
 			}
 		}
 
@@ -147,6 +128,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write("." + GetOperatorName(Operator));
+			if (CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue)
+				output.Write(".new");
+			else
+				output.Write(".old");
 			if (CheckForOverflow)
 				output.Write(".ovf");
 			if (Sign == Sign.Unsigned)
@@ -154,9 +139,9 @@ namespace ICSharpCode.Decompiler.IL
 			else if (Sign == Sign.Signed)
 				output.Write(".signed");
 			output.Write('(');
-			Left.WriteTo(output);
+			Target.WriteTo(output);
 			output.Write(", ");
-			Right.WriteTo(output);
+			Value.WriteTo(output);
 			output.Write(')');
 		}
 	}

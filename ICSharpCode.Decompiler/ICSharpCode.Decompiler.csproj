@@ -106,6 +106,7 @@
     <Compile Include="IL\Instructions\BlockContainer.cs" />
     <Compile Include="IL\Instructions\Branch.cs" />
     <Compile Include="IL\Instructions\CallInstruction.cs" />
+    <Compile Include="IL\Instructions\CompoundAssignmentInstruction.cs" />
     <Compile Include="IL\Instructions\Conv.cs" />
     <Compile Include="IL\Instructions\IfInstruction.cs" />
     <Compile Include="IL\Instructions\ILFunction.cs" />

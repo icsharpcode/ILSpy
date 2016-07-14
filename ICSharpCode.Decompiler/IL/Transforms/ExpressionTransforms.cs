@@ -188,6 +188,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// => stloc(v, ...)
 				inst.ReplaceWith(new StLoc(v, inst.Value));
 			}
+			
+			ILInstruction target;
+			IType t;
+			BinaryNumericInstruction binary = inst.Value as BinaryNumericInstruction;
+			if (binary != null && binary.Left.MatchLdObj(out target, out t) && IsSameTarget(inst.Target, target)) {
+				// stobj(target, binary.op(ldobj(target), ...))
+				// => compound.op(target, ...)
+				inst.ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, binary.Left, binary.Right, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
+			}
+		}
+
+		bool IsSameTarget(ILInstruction target, ILInstruction left)
+		{
+			IField f, f2;
+			ILInstruction t, t2;
+			if (target.MatchLdFlda(out t, out f) && left.MatchLdFlda(out t2, out f2) && f.Equals(f2))
+				return true;
+			return false;
 		}
 		
 		protected internal override void VisitIfInstruction(IfInstruction inst)

@@ -22,6 +22,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class CompoundAssignmentTest
 	{
+		private int test1;
+		
 		public static void Main()
 		{
 			
@@ -36,6 +38,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			else {
 				V_0 -= i;
 			}
+		}
+		
+		public void IntegerWithInline(int i)
+		{
+			Console.WriteLine(i += 5);
+			Console.WriteLine(i);
+		}
+		
+		public void IntegerField(int i)
+		{
+			Console.WriteLine(this.test1 += i);
+			Console.WriteLine(this.test1);
+			Console.WriteLine(this.test1 -= i);
+			Console.WriteLine(this.test1);
 		}
 	}
 }

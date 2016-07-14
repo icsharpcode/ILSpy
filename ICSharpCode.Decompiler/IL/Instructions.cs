@@ -45,6 +45,8 @@ namespace ICSharpCode.Decompiler.IL
 		LogicNot,
 		/// <summary>Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.</summary>
 		BinaryNumericInstruction,
+		/// <summary>Common instruction for compound assignments.</summary>
+		CompoundAssignmentInstruction,
 		/// <summary>Bitwise NOT</summary>
 		BitNot,
 		/// <summary>Retrieves the RuntimeArgumentHandle.</summary>
@@ -715,6 +717,84 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBinaryNumericInstruction(this);
+		}
+	}
+
+	/// <summary>Common instruction for compound assignments.</summary>
+	public sealed partial class CompoundAssignmentInstruction : ILInstruction
+	{
+		public static readonly SlotInfo TargetSlot = new SlotInfo("Target", canInlineInto: true);
+		ILInstruction target;
+		public ILInstruction Target {
+			get { return this.target; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.target, value, 0);
+			}
+		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.value, value, 1);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.target;
+				case 1:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Target = value;
+					break;
+				case 1:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return TargetSlot;
+				case 1:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (CompoundAssignmentInstruction)ShallowClone();
+			clone.Target = this.target.Clone();
+			clone.Value = this.value.Clone();
+			return clone;
+		}
+		public override StackType ResultType { get { return target.ResultType; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCompoundAssignmentInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitCompoundAssignmentInstruction(this);
 		}
 	}
 
@@ -2922,6 +3002,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitBitNot(BitNot inst)
 		{
 			Default(inst);
@@ -3180,6 +3264,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitBitNot(BitNot inst)
 		{
 			return Default(inst);
@@ -3420,6 +3508,7 @@ namespace ICSharpCode.Decompiler.IL
 			"PinnedRegion",
 			"logic.not",
 			"binary",
+			"compound",
 			"bit.not",
 			"arglist",
 			"br",
