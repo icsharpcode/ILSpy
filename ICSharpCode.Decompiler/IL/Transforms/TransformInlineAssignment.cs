@@ -36,6 +36,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+					if (InlineLdElemaUsages(block, i)) {
+						block.Instructions.RemoveAt(i);
+						continue;
+					}
 					TransformInlineAssignmentStObj(block, i);
 				}
 			}
@@ -106,6 +110,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var stackVar = inst.Variable;
 			block.Instructions.RemoveAt(i);
 			nextInst.ReplaceWith(new StLoc(stackVar, new StLoc(var, value)));
+		}
+		
+		/// <code>
+		/// stloc s(ldelema)
+		/// usages of ldobj(ldloc s) or stobj(ldloc s, ...) in next instruction
+		/// -->
+		/// use ldelema instead of ldloc s
+		/// </code>
+		static bool InlineLdElemaUsages(Block block, int i)
+		{
+			var inst = block.Instructions[i] as StLoc;
+			if (inst == null || inst.Variable.Kind != VariableKind.StackSlot || !(inst.Value is LdElema))
+				return false;
+			var valueToCopy = inst.Value;
+			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
+			if (nextInstruction == null)
+				return false;
+			var affectedUsages = nextInstruction.Descendants
+				.OfType<IInstructionWithVariableOperand>().Where(ins => ins.Variable == inst.Variable)
+				.Cast<ILInstruction>().ToArray();
+			if (affectedUsages.Any(ins => !(ins.Parent is StObj || ins.Parent is LdObj)))
+				return false;
+			foreach (var usage in affectedUsages) {
+				usage.ReplaceWith(valueToCopy.Clone());
+			}
+			return true;
 		}
 	}
 }
