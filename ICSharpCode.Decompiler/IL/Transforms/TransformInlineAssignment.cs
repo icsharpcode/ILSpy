@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-					if (InlineLdElemaUsages(block, i)) {
+					if (InlineLdAddressUsages(block, i)) {
 						block.Instructions.RemoveAt(i);
 						continue;
 					}
@@ -112,16 +112,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			nextInst.ReplaceWith(new StLoc(stackVar, new StLoc(var, value)));
 		}
 		
+		/// ldaddress ::= ldelema | ldflda | ldsflda;
 		/// <code>
-		/// stloc s(ldelema)
+		/// stloc s(ldaddress)
 		/// usages of ldobj(ldloc s) or stobj(ldloc s, ...) in next instruction
 		/// -->
-		/// use ldelema instead of ldloc s
+		/// use ldaddress instead of ldloc s
 		/// </code>
-		static bool InlineLdElemaUsages(Block block, int i)
+		static bool InlineLdAddressUsages(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
-			if (inst == null || inst.Variable.Kind != VariableKind.StackSlot || !(inst.Value is LdElema))
+			if (inst == null || inst.Variable.Kind != VariableKind.StackSlot || !(inst.Value is LdElema || inst.Value is LdFlda || inst.Value is LdsFlda))
 				return false;
 			var valueToCopy = inst.Value;
 			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
