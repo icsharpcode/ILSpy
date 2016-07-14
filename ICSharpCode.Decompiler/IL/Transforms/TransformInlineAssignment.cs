@@ -131,7 +131,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var affectedUsages = nextInstruction.Descendants
 				.OfType<IInstructionWithVariableOperand>().Where(ins => ins.Variable == inst.Variable)
 				.Cast<ILInstruction>().ToArray();
-			if (affectedUsages.Any(ins => !(ins.Parent is StObj || ins.Parent is LdObj)))
+			if (affectedUsages.Length == 0 || affectedUsages.Any(ins => !(ins.Parent is StObj || ins.Parent is LdObj)))
 				return false;
 			foreach (var usage in affectedUsages) {
 				usage.ReplaceWith(valueToCopy.Clone());
