@@ -22,7 +22,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class CompoundAssignmentTest
 	{
+		private struct StructContainer
+		{
+			public bool HasIndex;
+			public int Field;
+		}
+		
 		private int test1;
+		private int[] array1;
+		private StructContainer field1;
 		
 		public static void Main()
 		{
@@ -52,6 +60,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(this.test1);
 			Console.WriteLine(this.test1 -= i);
 			Console.WriteLine(this.test1);
+		}
+		
+		public void Array(int i)
+		{
+			Console.WriteLine(this.array1[i] += i);
+			Console.WriteLine(this.array1[i * 2] += i * 2);
+		}
+		
+		
+		public void NestedField()
+		{
+			if (this.field1.HasIndex) {
+				this.field1.Field++;
+			}
 		}
 	}
 }

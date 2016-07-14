@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly xdhcadn4
+.assembly siuuofgg
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module xdhcadn4.exe
-// MVID: {013854B0-173B-4858-BB3C-CA652EACC772}
+.module siuuofgg.exe
+// MVID: {7C4F4FA4-F91C-4C75-A521-2E31EFBCDAC8}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x00400000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x011B0000
+// Image base: 0x016A0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -38,6 +38,7 @@
 {
   .field private int32 field1
   .field private static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest field2
+  .field private int32[] field3
   .method public hidebysig static void  Main() cil managed
   {
     .entrypoint
@@ -174,6 +175,52 @@
     IL_000a:  ldloc.0
     IL_000b:  ret
   } // end of method InlineAssignmentTest::Return
+
+  .method public hidebysig instance int32 
+          Array(int32[] a,
+                int32 i) cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  4
+    .locals init (int32 V_0,
+             int32 V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  ldarg.2
+    IL_0004:  dup
+    IL_0005:  stloc.1
+    IL_0006:  stelem.i4
+    IL_0007:  ldloc.1
+    IL_0008:  stloc.0
+    IL_0009:  br.s       IL_000b
+
+    IL_000b:  ldloc.0
+    IL_000c:  ret
+  } // end of method InlineAssignmentTest::Array
+
+  .method public hidebysig instance int32 
+          Array2(int32 i) cil managed
+  {
+    // Code size       18 (0x12)
+    .maxstack  4
+    .locals init (int32 V_0,
+             int32 V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      int32[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field3
+    IL_0007:  ldarg.1
+    IL_0008:  ldc.i4.1
+    IL_0009:  dup
+    IL_000a:  stloc.1
+    IL_000b:  stelem.i4
+    IL_000c:  ldloc.1
+    IL_000d:  stloc.0
+    IL_000e:  br.s       IL_0010
+
+    IL_0010:  ldloc.0
+    IL_0011:  ret
+  } // end of method InlineAssignmentTest::Array2
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

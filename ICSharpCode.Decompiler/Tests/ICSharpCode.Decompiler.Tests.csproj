@@ -151,6 +151,9 @@
     <Service Include="{82A7F48D-3B50-4B1E-B82E-3ADA8210C358}" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="TestCases\Pretty\CompoundAssignmentTest.il">
+      <DependentUpon>CompoundAssignmentTest.cs</DependentUpon>
+    </None>
     <None Include="TestCases\Pretty\HelloWorld.il">
       <DependentUpon>HelloWorld.cs</DependentUpon>
     </None>

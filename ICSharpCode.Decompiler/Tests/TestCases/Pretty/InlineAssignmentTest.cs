@@ -24,6 +24,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		private int field1;
 		private static InlineAssignmentTest field2;
+		private int[] field3;
 		
 		public static void Main()
 		{
@@ -73,6 +74,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int Return(ref int a)
 		{
 			return a = 3;
+		}
+		
+		public int Array(int[] a, int i)
+		{
+			return a[i] = i;
+		}
+		
+		public int Array2(int i)
+		{
+			return this.field3[i] = 1;
 		}
 	}
 }
