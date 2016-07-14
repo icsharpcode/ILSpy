@@ -190,23 +190,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Block trueInst = inst.TrueInst as Block;
 			var condition = inst.Condition as Comp;
 			hasFieldStore = false;
-			if (condition == null || trueInst == null || (trueInst.Instructions.Count != 1 && trueInst.Instructions.Count != 2) || !inst.FalseInst.MatchNop())
+			if (condition == null || trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
 			ILVariable v;
 			ILInstruction value, value2;
 			var storeInst = trueInst.Instructions[0];
-			var optionalFieldStore = trueInst.Instructions.ElementAtOrDefault(1);
 			if (!condition.Left.MatchLdLoc(out v) || !condition.Right.MatchLdNull())
 				return false;
 			if (!storeInst.MatchStLoc(v, out value))
 				return false;
-			if (optionalFieldStore != null) {
+			// the optional field store was moved into storeInst by inline assignment:
+			if (!(value is NewObj)) {
 				IField field, field2;
-				if (!optionalFieldStore.MatchStsFld(out value2, out field) || !value2.MatchLdLoc(v) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+				if (!value.MatchStsFld(out value2, out field) || !(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 					return false;
 				var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
 				if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdsFld(out field2) || !field.Equals(field2))
 					return false;
+				value = value2;
 				hasFieldStore = true;
 			}
 			if (!IsDelegateConstruction(value as NewObj, true))
