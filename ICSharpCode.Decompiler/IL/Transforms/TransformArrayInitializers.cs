@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ILVariable finalStore;
 					int instructionsToRemove;
 					if (HandleSimpleArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
-						var block = new Block();
+						var block = new Block(BlockType.ArrayInitializer);
 						var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 						block.Instructions.AddRange(values.SelectWithIndex(
@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return true;
 					}
 					if (HandleJaggedArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
-						var block = new Block();
+						var block = new Block(BlockType.ArrayInitializer);
 						var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType)));
@@ -277,7 +277,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		Block BlockFromInitializer(ILVariable v, IType elementType, int[] arrayLength, ILInstruction[] values)
 		{
-			var block = new Block();
+			var block = new Block(BlockType.ArrayInitializer);
 			block.Instructions.Add(new StLoc(v, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 			int step = arrayLength.Length + 1;
 			for (int i = 0; i < values.Length / step; i++) {

@@ -52,6 +52,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo InstructionSlot = new SlotInfo("Instruction", isCollection: true);
 		public static readonly SlotInfo FinalInstructionSlot = new SlotInfo("FinalInstruction");
 		
+		public readonly BlockType Type;
 		public readonly InstructionCollection<ILInstruction> Instructions;
 		ILInstruction finalInstruction;
 		
@@ -89,15 +90,16 @@ namespace ICSharpCode.Decompiler.IL
 				finalInstruction.ChildIndex = Instructions.Count;
 		}
 		
-		public Block() : base(OpCode.Block)
+		public Block(BlockType type = BlockType.ControlFlow) : base(OpCode.Block)
 		{
+			this.Type = type;
 			this.Instructions = new InstructionCollection<ILInstruction>(this, 0);
 			this.FinalInstruction = new Nop();
 		}
 		
 		public override ILInstruction Clone()
 		{
-			Block clone = new Block();
+			Block clone = new Block(Type);
 			clone.ILRange = this.ILRange;
 			clone.Instructions.AddRange(this.Instructions.Select(inst => inst.Clone()));
 			clone.FinalInstruction = this.FinalInstruction.Clone();
@@ -194,5 +196,11 @@ namespace ICSharpCode.Decompiler.IL
 				return InstructionFlags.None;
 			}
 		}
+	}
+	
+	public enum BlockType {
+		ControlFlow,
+		ArrayInitializer,
+		CompoundOperator
 	}
 }
