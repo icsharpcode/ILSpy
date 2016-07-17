@@ -1287,29 +1287,27 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitBlock(Block block)
 		{
-			TranslatedExpression expr;
-			if (TranslateArrayInitializer(block, out expr))
-				return expr;
-			
-			return base.VisitBlock(block);
+			switch (block.Type) {
+				case BlockType.ArrayInitializer:
+					return TranslateArrayInitializer(block);
+				default:
+					return base.VisitBlock(block);
+			}
 		}
 
-		bool TranslateArrayInitializer(Block block, out TranslatedExpression result)
+		TranslatedExpression TranslateArrayInitializer(Block block)
 		{
-			result = default(TranslatedExpression);
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
 			var final = block.FinalInstruction as LdLoc;
 			IType type;
-			if (stloc == null || final == null || !stloc.Value.MatchNewArr(out type))
-				return false;
-			if (stloc.Variable != final.Variable)
-				return false;
+			if (stloc == null || final == null || !stloc.Value.MatchNewArr(out type) || stloc.Variable != final.Variable)
+				throw new ArgumentException("given Block is invalid!");
 			var newArr = (NewArr)stloc.Value;
 			
 			var translatedDimensions = newArr.Indices.Select(i => Translate(i)).ToArray();
 			
 			if (!translatedDimensions.All(dim => dim.ResolveResult.IsCompileTimeConstant))
-				return false;
+				throw new ArgumentException("given Block is invalid!");
 			int dimensions = newArr.Indices.Count;
 			int[] dimensionSizes = translatedDimensions.Select(dim => (int)dim.ResolveResult.ConstantValue).ToArray();
 			var container = new Stack<ArrayInitializerExpression>();
@@ -1322,11 +1320,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				IType t;
 				ILVariable v;
 				if (!block.Instructions[i].MatchStObj(out target, out value, out t) || !type.Equals(t))
-					return false;
+					throw new ArgumentException("given Block is invalid!");
 				if (!target.MatchLdElema(out t, out array) || !type.Equals(t))
-					return false;
+					throw new ArgumentException("given Block is invalid!");
 				if (!array.MatchLdLoc(out v) || v != final.Variable)
-					return false;
+					throw new ArgumentException("given Block is invalid!");
 				while (container.Count < dimensions) {
 					var aie = new ArrayInitializerExpression();
 					container.Peek().Elements.Add(aie);
@@ -1353,10 +1351,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			expr.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
 			expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
-			result = expr.WithILInstruction(block)
+			return expr.WithILInstruction(block)
 				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
-			
-			return true;
 		}
 		
 		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst)
