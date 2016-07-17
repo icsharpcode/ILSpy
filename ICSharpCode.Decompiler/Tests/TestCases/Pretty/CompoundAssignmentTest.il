@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly s32trvk2
+.assembly kb1brdcl
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module s32trvk2.exe
-// MVID: {09E6012F-15AE-4E0C-B48E-2644E4707595}
+.module kb1brdcl.exe
+// MVID: {FA9A1DD3-2F44-4DB4-BC5E-6EF79C457314}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x00400000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01510000
+// Image base: 0x01190000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -56,40 +56,240 @@
   } // end of method CompoundAssignmentTest::Main
 
   .method public hidebysig instance void 
-          Integer(int32 i) cil managed
+          Int32_Local_Add(int32 i) cil managed
   {
-    // Code size       29 (0x1d)
-    .maxstack  2
-    .locals init (int32 V_0,
-             bool V_1)
+    // Code size       48 (0x30)
+    .maxstack  8
     IL_0000:  nop
-    IL_0001:  ldc.i4.0
-    IL_0002:  stloc.0
-    IL_0003:  ldarg.1
-    IL_0004:  ldc.i4.5
-    IL_0005:  cgt
-    IL_0007:  ldc.i4.0
-    IL_0008:  ceq
-    IL_000a:  stloc.1
-    IL_000b:  ldloc.1
-    IL_000c:  brtrue.s   IL_0016
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.1
+    IL_0003:  add
+    IL_0004:  starg.s    i
+    IL_0006:  ldarg.1
+    IL_0007:  dup
+    IL_0008:  ldc.i4.1
+    IL_0009:  add
+    IL_000a:  starg.s    i
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0011:  nop
+    IL_0012:  ldarg.1
+    IL_0013:  ldc.i4.1
+    IL_0014:  add
+    IL_0015:  dup
+    IL_0016:  starg.s    i
+    IL_0018:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_001d:  nop
+    IL_001e:  ldarg.1
+    IL_001f:  ldc.i4.5
+    IL_0020:  add
+    IL_0021:  starg.s    i
+    IL_0023:  ldarg.1
+    IL_0024:  ldc.i4.5
+    IL_0025:  add
+    IL_0026:  dup
+    IL_0027:  starg.s    i
+    IL_0029:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_002e:  nop
+    IL_002f:  ret
+  } // end of method CompoundAssignmentTest::Int32_Local_Add
 
-    IL_000e:  nop
-    IL_000f:  ldloc.0
-    IL_0010:  ldarg.1
-    IL_0011:  add
-    IL_0012:  stloc.0
-    IL_0013:  nop
-    IL_0014:  br.s       IL_001c
+  .method public hidebysig instance void 
+          Int32_Local_Sub(int32 i) cil managed
+  {
+    // Code size       48 (0x30)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.1
+    IL_0003:  sub
+    IL_0004:  starg.s    i
+    IL_0006:  ldarg.1
+    IL_0007:  dup
+    IL_0008:  ldc.i4.1
+    IL_0009:  sub
+    IL_000a:  starg.s    i
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0011:  nop
+    IL_0012:  ldarg.1
+    IL_0013:  ldc.i4.1
+    IL_0014:  sub
+    IL_0015:  dup
+    IL_0016:  starg.s    i
+    IL_0018:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_001d:  nop
+    IL_001e:  ldarg.1
+    IL_001f:  ldc.i4.5
+    IL_0020:  sub
+    IL_0021:  starg.s    i
+    IL_0023:  ldarg.1
+    IL_0024:  ldc.i4.5
+    IL_0025:  sub
+    IL_0026:  dup
+    IL_0027:  starg.s    i
+    IL_0029:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_002e:  nop
+    IL_002f:  ret
+  } // end of method CompoundAssignmentTest::Int32_Local_Sub
 
-    IL_0016:  nop
-    IL_0017:  ldloc.0
-    IL_0018:  ldarg.1
-    IL_0019:  sub
-    IL_001a:  stloc.0
-    IL_001b:  nop
-    IL_001c:  ret
-  } // end of method CompoundAssignmentTest::Integer
+  .method public hidebysig instance void 
+          Int32_Local_Mul(int32 i) cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.5
+    IL_0003:  mul
+    IL_0004:  starg.s    i
+    IL_0006:  ldarg.1
+    IL_0007:  ldc.i4.5
+    IL_0008:  mul
+    IL_0009:  dup
+    IL_000a:  starg.s    i
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0011:  nop
+    IL_0012:  ret
+  } // end of method CompoundAssignmentTest::Int32_Local_Mul
+
+  .method public hidebysig instance void 
+          Int32_Local_Div(int32 i) cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.5
+    IL_0003:  div
+    IL_0004:  starg.s    i
+    IL_0006:  ldarg.1
+    IL_0007:  ldc.i4.5
+    IL_0008:  div
+    IL_0009:  dup
+    IL_000a:  starg.s    i
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0011:  nop
+    IL_0012:  ret
+  } // end of method CompoundAssignmentTest::Int32_Local_Div
+
+  .method public hidebysig instance void 
+          Int32_Local_Rem(int32 i) cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.5
+    IL_0003:  rem
+    IL_0004:  starg.s    i
+    IL_0006:  ldarg.1
+    IL_0007:  ldc.i4.5
+    IL_0008:  rem
+    IL_0009:  dup
+    IL_000a:  starg.s    i
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0011:  nop
+    IL_0012:  ret
+  } // end of method CompoundAssignmentTest::Int32_Local_Rem
+
+  .method public hidebysig instance void 
+          Int32_Local_BitAnd(int32 i) cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.5
+    IL_0003:  and
+    IL_0004:  starg.s    i
+    IL_0006:  ldarg.1
+    IL_0007:  ldc.i4.5
+    IL_0008:  and
+    IL_0009:  dup
+    IL_000a:  starg.s    i
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0011:  nop
+    IL_0012:  ret
+  } // end of method CompoundAssignmentTest::Int32_Local_BitAnd
+
+  .method public hidebysig instance void 
+          Int32_Local_BitOr(int32 i) cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.5
+    IL_0003:  or
+    IL_0004:  starg.s    i
+    IL_0006:  ldarg.1
+    IL_0007:  ldc.i4.5
+    IL_0008:  or
+    IL_0009:  dup
+    IL_000a:  starg.s    i
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0011:  nop
+    IL_0012:  ret
+  } // end of method CompoundAssignmentTest::Int32_Local_BitOr
+
+  .method public hidebysig instance void 
+          Int32_Local_BitXor(int32 i) cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.5
+    IL_0003:  xor
+    IL_0004:  starg.s    i
+    IL_0006:  ldarg.1
+    IL_0007:  ldc.i4.5
+    IL_0008:  xor
+    IL_0009:  dup
+    IL_000a:  starg.s    i
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0011:  nop
+    IL_0012:  ret
+  } // end of method CompoundAssignmentTest::Int32_Local_BitXor
+
+  .method public hidebysig instance void 
+          Int32_Local_ShiftLeft(int32 i) cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.5
+    IL_0003:  shl
+    IL_0004:  starg.s    i
+    IL_0006:  ldarg.1
+    IL_0007:  ldc.i4.5
+    IL_0008:  shl
+    IL_0009:  dup
+    IL_000a:  starg.s    i
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0011:  nop
+    IL_0012:  ret
+  } // end of method CompoundAssignmentTest::Int32_Local_ShiftLeft
+
+  .method public hidebysig instance void 
+          Int32_Local_ShiftRight(int32 i) cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.5
+    IL_0003:  shr
+    IL_0004:  starg.s    i
+    IL_0006:  ldarg.1
+    IL_0007:  ldc.i4.5
+    IL_0008:  shr
+    IL_0009:  dup
+    IL_000a:  starg.s    i
+    IL_000c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0011:  nop
+    IL_0012:  ret
+  } // end of method CompoundAssignmentTest::Int32_Local_ShiftRight
 
   .method public hidebysig instance void 
           IntegerWithInline(int32 i) cil managed
@@ -192,12 +392,85 @@
     IL_0049:  ret
   } // end of method CompoundAssignmentTest::Array
 
+  .method public hidebysig instance int32 
+          GetIndex() cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  3
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  newobj     instance void [mscorlib]System.Random::.ctor()
+    IL_0006:  ldc.i4.0
+    IL_0007:  ldc.i4.s   100
+    IL_0009:  callvirt   instance int32 [mscorlib]System.Random::Next(int32,
+                                                                      int32)
+    IL_000e:  stloc.0
+    IL_000f:  br.s       IL_0011
+
+    IL_0011:  ldloc.0
+    IL_0012:  ret
+  } // end of method CompoundAssignmentTest::GetIndex
+
+  .method public hidebysig instance int32[] 
+          GetArray() cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0006:  throw
+  } // end of method CompoundAssignmentTest::GetArray
+
+  .method public hidebysig instance int32 
+          GetValue(int32 'value') cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  1
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  stloc.0
+    IL_0003:  br.s       IL_0005
+
+    IL_0005:  ldloc.0
+    IL_0006:  ret
+  } // end of method CompoundAssignmentTest::GetValue
+
+  .method public hidebysig instance int32 
+          ArrayUsageWithMethods() cil managed
+  {
+    // Code size       39 (0x27)
+    .maxstack  3
+    .locals init (int32 V_0,
+             int32 V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  call       instance int32[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::GetArray()
+    IL_0007:  ldarg.0
+    IL_0008:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::GetIndex()
+    IL_000d:  ldelema    [mscorlib]System.Int32
+    IL_0012:  dup
+    IL_0013:  ldobj      [mscorlib]System.Int32
+    IL_0018:  dup
+    IL_0019:  stloc.1
+    IL_001a:  ldc.i4.1
+    IL_001b:  add
+    IL_001c:  stobj      [mscorlib]System.Int32
+    IL_0021:  ldloc.1
+    IL_0022:  stloc.0
+    IL_0023:  br.s       IL_0025
+
+    IL_0025:  ldloc.0
+    IL_0026:  ret
+  } // end of method CompoundAssignmentTest::ArrayUsageWithMethods
+
   .method public hidebysig instance void 
           NestedField() cil managed
   {
-    // Code size       41 (0x29)
+    // Code size       50 (0x32)
     .maxstack  3
-    .locals init (bool V_0)
+    .locals init (bool V_0,
+             int32 V_1)
     IL_0000:  nop
     IL_0001:  ldarg.0
     IL_0002:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::field1
@@ -206,18 +479,23 @@
     IL_000d:  ceq
     IL_000f:  stloc.0
     IL_0010:  ldloc.0
-    IL_0011:  brtrue.s   IL_0028
+    IL_0011:  brtrue.s   IL_0031
 
     IL_0013:  nop
     IL_0014:  ldarg.0
     IL_0015:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::field1
     IL_001a:  dup
     IL_001b:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer::Field
-    IL_0020:  ldc.i4.1
-    IL_0021:  add
-    IL_0022:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer::Field
-    IL_0027:  nop
-    IL_0028:  ret
+    IL_0020:  dup
+    IL_0021:  stloc.1
+    IL_0022:  ldc.i4.1
+    IL_0023:  add
+    IL_0024:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer::Field
+    IL_0029:  ldloc.1
+    IL_002a:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_002f:  nop
+    IL_0030:  nop
+    IL_0031:  ret
   } // end of method CompoundAssignmentTest::NestedField
 
   .method public hidebysig specialname rtspecialname 

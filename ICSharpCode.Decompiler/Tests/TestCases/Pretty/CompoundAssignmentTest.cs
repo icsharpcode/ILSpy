@@ -37,15 +37,70 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			
 		}
 		
-		public void Integer(int i)
+		public void Int32_Local_Add(int i)
 		{
-			int V_0 = 0;
-			if (i > 5) {
-				V_0 += i;
-			}
-			else {
-				V_0 -= i;
-			}
+			i++;
+			Console.WriteLine(i++);
+			Console.WriteLine(++i);
+			i += 5;
+			Console.WriteLine(i += 5);
+		}
+		
+		public void Int32_Local_Sub(int i)
+		{
+			i--;
+			Console.WriteLine(i--);
+			Console.WriteLine(--i);
+			i -= 5;
+			Console.WriteLine(i -= 5);
+		}
+		
+		public void Int32_Local_Mul(int i)
+		{
+			i *= 5;
+			Console.WriteLine(i *= 5);
+		}
+		
+		public void Int32_Local_Div(int i)
+		{
+			i /= 5;
+			Console.WriteLine(i /= 5);
+		}
+		
+		public void Int32_Local_Rem(int i)
+		{
+			i %= 5;
+			Console.WriteLine(i %= 5);
+		}
+		
+		public void Int32_Local_BitAnd(int i)
+		{
+			i &= 5;
+			Console.WriteLine(i &= 5);
+		}
+		
+		public void Int32_Local_BitOr(int i)
+		{
+			i |= 5;
+			Console.WriteLine(i |= 5);
+		}
+		
+		public void Int32_Local_BitXor(int i)
+		{
+			i ^= 5;
+			Console.WriteLine(i ^= 5);
+		}
+		
+		public void Int32_Local_ShiftLeft(int i)
+		{
+			i <<= 5;
+			Console.WriteLine(i <<= 5);
+		}
+		
+		public void Int32_Local_ShiftRight(int i)
+		{
+			i >>= 5;
+			Console.WriteLine(i >>= 5);
 		}
 		
 		public void IntegerWithInline(int i)
@@ -68,11 +123,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(this.array1[i * 2] += i * 2);
 		}
 		
+		public int GetIndex()
+		{
+			return new Random().Next(0, 100);
+		}
+		
+		public int[] GetArray()
+		{
+			throw new NotImplementedException();
+		}
+		
+		public int GetValue(int value)
+		{
+			return value;
+		}
+		
+		public int ArrayUsageWithMethods()
+		{
+			return this.GetArray()[this.GetIndex()]++;
+		}
 		
 		public void NestedField()
 		{
 			if (this.field1.HasIndex) {
-				this.field1.Field++;
+				Console.WriteLine(this.field1.Field++);
 			}
 		}
 	}

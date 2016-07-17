@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				default:
 					// All instructions without special behavior that target a stack-variable can be copied.
-					return value.DirectFlags == InstructionFlags.None && target.Kind == VariableKind.StackSlot;
+					return value.Flags == InstructionFlags.None && value.Children.Count == 0 && target.Kind == VariableKind.StackSlot;
 			}
 		}
 	}

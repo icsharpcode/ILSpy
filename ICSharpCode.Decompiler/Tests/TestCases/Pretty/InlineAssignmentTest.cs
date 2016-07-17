@@ -85,5 +85,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return this.field3[i] = 1;
 		}
+		
+		public int GetIndex()
+		{
+			return new Random().Next(0, 100);
+		}
+		
+		public int[] GetArray()
+		{
+			throw new NotImplementedException();
+		}
+		
+		public int GetValue(int value)
+		{
+			return value;
+		}
+		
+		public int ArrayUsageWithMethods()
+		{
+			return this.GetArray()[this.GetIndex()] = this.GetValue(this.GetIndex());
+		}
 	}
 }

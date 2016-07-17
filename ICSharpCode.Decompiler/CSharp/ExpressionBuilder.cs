@@ -601,21 +601,21 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			switch (inst.Operator) {
 				case BinaryNumericOperator.Add:
-					return HandleCompoundAssigment(inst, AssignmentOperatorType.Add);
+					return HandleCompoundAssignment(inst, AssignmentOperatorType.Add);
 				case BinaryNumericOperator.Sub:
-					return HandleCompoundAssigment(inst, AssignmentOperatorType.Subtract);
+					return HandleCompoundAssignment(inst, AssignmentOperatorType.Subtract);
 				case BinaryNumericOperator.Mul:
-					return HandleCompoundAssigment(inst, AssignmentOperatorType.Multiply);
+					return HandleCompoundAssignment(inst, AssignmentOperatorType.Multiply);
 				case BinaryNumericOperator.Div:
-					return HandleCompoundAssigment(inst, AssignmentOperatorType.Divide);
+					return HandleCompoundAssignment(inst, AssignmentOperatorType.Divide);
 				case BinaryNumericOperator.Rem:
-					return HandleCompoundAssigment(inst, AssignmentOperatorType.Modulus);
+					return HandleCompoundAssignment(inst, AssignmentOperatorType.Modulus);
 				case BinaryNumericOperator.BitAnd:
-					return HandleCompoundAssigment(inst, AssignmentOperatorType.BitwiseAnd);
+					return HandleCompoundAssignment(inst, AssignmentOperatorType.BitwiseAnd);
 				case BinaryNumericOperator.BitOr:
-					return HandleCompoundAssigment(inst, AssignmentOperatorType.BitwiseOr);
+					return HandleCompoundAssignment(inst, AssignmentOperatorType.BitwiseOr);
 				case BinaryNumericOperator.BitXor:
-					return HandleCompoundAssigment(inst, AssignmentOperatorType.ExclusiveOr);
+					return HandleCompoundAssignment(inst, AssignmentOperatorType.ExclusiveOr);
 				case BinaryNumericOperator.ShiftLeft:
 					return HandleCompoundShift(inst, AssignmentOperatorType.ShiftLeft);
 				case BinaryNumericOperator.ShiftRight:
@@ -625,7 +625,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		
-		TranslatedExpression HandleCompoundAssigment(CompoundAssignmentInstruction inst, AssignmentOperatorType op)
+		TranslatedExpression HandleCompoundAssignment(CompoundAssignmentInstruction inst, AssignmentOperatorType op)
 		{
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
 			var target = Translate(inst.Target);
@@ -644,9 +644,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				value = value.ConvertTo(targetType, this);
 				rr = resolverWithOverflowCheck.ResolveAssignment(op, target.ResolveResult, value.ResolveResult);
 			}
-			var resultExpr = new AssignmentExpression(target.Expression, op, value.Expression)
-				.WithILInstruction(inst)
-				.WithRR(rr);
+			TranslatedExpression resultExpr;
+			if (inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToOldValue) {
+				Debug.Assert(op == AssignmentOperatorType.Add || op == AssignmentOperatorType.Subtract);
+				Debug.Assert(value.ResolveResult.IsCompileTimeConstant && 1.Equals(value.ResolveResult.ConstantValue));
+				resultExpr = new UnaryOperatorExpression(op == AssignmentOperatorType.Add ? UnaryOperatorType.PostIncrement : UnaryOperatorType.PostDecrement, target)
+					.WithILInstruction(inst)
+					.WithRR(rr);
+			} else {
+				resultExpr = new AssignmentExpression(target.Expression, op, value.Expression)
+					.WithILInstruction(inst)
+					.WithRR(rr);
+			}
 			if (AssignmentOperatorMightCheckForOverflow(op))
 				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
 			return resultExpr;
@@ -1290,6 +1299,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			switch (block.Type) {
 				case BlockType.ArrayInitializer:
 					return TranslateArrayInitializer(block);
+				case BlockType.CompoundOperator:
+					return TranslateCompoundOperator(block);
 				default:
 					return base.VisitBlock(block);
 			}
@@ -1353,6 +1364,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
 			return expr.WithILInstruction(block)
 				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
+		}
+		
+		TranslatedExpression TranslateCompoundOperator(Block block)
+		{
+			var targetInst = (block.Instructions.ElementAtOrDefault(0) as StLoc)?.Value;
+			var inst = (block.Instructions.ElementAtOrDefault(1) as StLoc)?.Value as BinaryNumericInstruction;
+			if (targetInst == null || inst == null || (inst.Operator != BinaryNumericOperator.Add && inst.Operator != BinaryNumericOperator.Sub))
+				throw new ArgumentException("given Block is invalid!");
+			var op = inst.Operator == BinaryNumericOperator.Add ? UnaryOperatorType.PostIncrement : UnaryOperatorType.PostDecrement;
+			var target = Translate(targetInst);
+			return new UnaryOperatorExpression(op, target)
+				.WithILInstruction(block)
+				.WithRR(resolver.WithCheckForOverflow(inst.CheckForOverflow).ResolveUnaryOperator(op, target.ResolveResult));
 		}
 		
 		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst)

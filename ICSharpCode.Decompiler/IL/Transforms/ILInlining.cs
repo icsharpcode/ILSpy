@@ -254,6 +254,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				case OpCode.StObj:
 					return true;
+				case OpCode.CompoundAssignmentInstruction:
+					return true;
 			}
 			
 			// decide based on the target into which we are inlining

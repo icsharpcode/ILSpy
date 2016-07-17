@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly siuuofgg
+.assembly ddqu2emz
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module siuuofgg.exe
-// MVID: {7C4F4FA4-F91C-4C75-A521-2E31EFBCDAC8}
+.module ddqu2emz.exe
+// MVID: {E3C9CEDE-53B1-4B60-977E-6E7ECB67DB34}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x00400000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x016A0000
+// Image base: 0x03080000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -221,6 +221,77 @@
     IL_0010:  ldloc.0
     IL_0011:  ret
   } // end of method InlineAssignmentTest::Array2
+
+  .method public hidebysig instance int32 
+          GetIndex() cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  3
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  newobj     instance void [mscorlib]System.Random::.ctor()
+    IL_0006:  ldc.i4.0
+    IL_0007:  ldc.i4.s   100
+    IL_0009:  callvirt   instance int32 [mscorlib]System.Random::Next(int32,
+                                                                      int32)
+    IL_000e:  stloc.0
+    IL_000f:  br.s       IL_0011
+
+    IL_0011:  ldloc.0
+    IL_0012:  ret
+  } // end of method InlineAssignmentTest::GetIndex
+
+  .method public hidebysig instance int32[] 
+          GetArray() cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0006:  throw
+  } // end of method InlineAssignmentTest::GetArray
+
+  .method public hidebysig instance int32 
+          GetValue(int32 'value') cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  1
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  stloc.0
+    IL_0003:  br.s       IL_0005
+
+    IL_0005:  ldloc.0
+    IL_0006:  ret
+  } // end of method InlineAssignmentTest::GetValue
+
+  .method public hidebysig instance int32 
+          ArrayUsageWithMethods() cil managed
+  {
+    // Code size       34 (0x22)
+    .maxstack  4
+    .locals init (int32 V_0,
+             int32 V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  call       instance int32[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::GetArray()
+    IL_0007:  ldarg.0
+    IL_0008:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::GetIndex()
+    IL_000d:  ldarg.0
+    IL_000e:  ldarg.0
+    IL_000f:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::GetIndex()
+    IL_0014:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::GetValue(int32)
+    IL_0019:  dup
+    IL_001a:  stloc.1
+    IL_001b:  stelem.i4
+    IL_001c:  ldloc.1
+    IL_001d:  stloc.0
+    IL_001e:  br.s       IL_0020
+
+    IL_0020:  ldloc.0
+    IL_0021:  ret
+  } // end of method InlineAssignmentTest::ArrayUsageWithMethods
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

@@ -609,6 +609,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 	
+	public interface IInstructionWithTypeOperand
+	{
+		ICSharpCode.NRefactory.TypeSystem.IType Type { get; }
+	}
+	
 	public interface IInstructionWithFieldOperand
 	{
 		ICSharpCode.NRefactory.TypeSystem.IField Field { get; }
