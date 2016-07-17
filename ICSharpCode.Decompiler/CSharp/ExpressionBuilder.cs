@@ -1144,26 +1144,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return Assignment(result, value).WithILInstruction(inst);
 		}
-		
-//		protected internal override TranslatedExpression VisitLdFld(LdFld inst)
-//		{
-//			return ConvertField(inst.Field, inst.Target).WithILInstruction(inst);
-//		}
-//
-//		protected internal override TranslatedExpression VisitStFld(StFld inst)
-//		{
-//			return Assignment(ConvertField(inst.Field, inst.Target).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
-//		}
-//
-//		protected internal override TranslatedExpression VisitLdsFld(LdsFld inst)
-//		{
-//			return ConvertField(inst.Field).WithILInstruction(inst);
-//		}
-//
-//		protected internal override TranslatedExpression VisitStsFld(StsFld inst)
-//		{
-//			return Assignment(ConvertField(inst.Field).WithoutILInstruction(), Translate(inst.Value)).WithILInstruction(inst);
-//		}
 
 		protected internal override TranslatedExpression VisitLdLen(LdLen inst)
 		{
