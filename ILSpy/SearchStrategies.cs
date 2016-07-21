@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.Utils;
+
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -89,6 +89,27 @@ namespace ICSharpCode.ILSpy
 		protected virtual bool IsMatch(MethodDefinition m)
 		{
 			return false;
+		}
+		
+		protected virtual bool MatchName(MemberReference m)
+		{
+			if (m.DeclaringType == null)
+				return IsMatch(m.Name);
+			return IsMatch(m.Name) || IsMatch(GetLanguageSpecificFullName(m));
+		}
+
+		string GetLanguageSpecificFullName(MemberReference m, string nestedTypeSeparator = ".", string memberSeparator = ".")
+		{
+			if (m.DeclaringType != null)
+				return GetLanguageSpecificFullName(m.DeclaringType, nestedTypeSeparator) + memberSeparator + m.Name;
+			return m.Name;
+		}
+
+		string GetLanguageSpecificFullName(TypeReference t, string nestedTypeSeparator = ".")
+		{
+			if (t.DeclaringType != null)
+				return GetLanguageSpecificFullName(t.DeclaringType, nestedTypeSeparator) + nestedTypeSeparator + t.Name;
+			return t.Namespace + "." + t.Name;
 		}
 
 		void Add<T>(IEnumerable<T> items, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, bool> matcher, Func<T, ImageSource> image) where T : MemberReference
@@ -333,22 +354,22 @@ namespace ICSharpCode.ILSpy
 
 		protected override bool IsMatch(FieldDefinition field)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Field) && IsMatch(field.Name);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Field) && MatchName(field);
 		}
 
 		protected override bool IsMatch(PropertyDefinition property)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Property) && IsMatch(property.Name);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Property) && MatchName(property);
 		}
 
 		protected override bool IsMatch(EventDefinition ev)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Event) && IsMatch(ev.Name);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Event) && MatchName(ev);
 		}
 
 		protected override bool IsMatch(MethodDefinition m)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Method) && IsMatch(m.Name);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Method) && MatchName(m);
 		}
 	}
 
@@ -361,7 +382,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			if (IsMatch(type.Name) || IsMatch(type.FullName)) {
+			if (MatchName(type)) {
 				addResult(new SearchResult {
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),
@@ -386,7 +407,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			if (IsMatch(type.Name) || IsMatch(type.FullName))
+			if (MatchName(type))
 			{
 				addResult(new SearchResult
 				{
@@ -408,22 +429,22 @@ namespace ICSharpCode.ILSpy
 
 		protected override bool IsMatch(FieldDefinition field)
 		{
-			return IsMatch(field.Name);
+			return MatchName(field);
 		}
 
 		protected override bool IsMatch(PropertyDefinition property)
 		{
-			return IsMatch(property.Name);
+			return MatchName(property);
 		}
 
 		protected override bool IsMatch(EventDefinition ev)
 		{
-			return IsMatch(ev.Name);
+			return MatchName(ev);
 		}
 
 		protected override bool IsMatch(MethodDefinition m)
 		{
-			return IsMatch(m.Name);
+			return MatchName(m);
 		}
 	}
 }
