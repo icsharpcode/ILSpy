@@ -6,6 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 
 namespace ILSpy.BamlDecompiler
@@ -16,8 +20,6 @@ namespace ILSpy.BamlDecompiler
 	sealed class EventRegistration
 	{
 		public string EventName, MethodName;
-		public TypeDefinition AttachSourceType;
-		public bool IsAttached;
 	}
 	
 	/// <summary>
@@ -32,141 +34,132 @@ namespace ILSpy.BamlDecompiler
 			this.assembly = assembly;
 		}
 		
-		public Dictionary<int, EventRegistration[]> DecompileEventMappings(string fullTypeName)
+		public Dictionary<long, EventRegistration[]> DecompileEventMappings(string fullTypeName)
 		{
-			var result = new Dictionary<int, EventRegistration[]>();
+			var result = new Dictionary<long, EventRegistration[]>();
 			TypeDefinition type = this.assembly.MainModule.GetType(fullTypeName);
 			
 			if (type == null)
 				return result;
 			
-			MethodDefinition def = null;
+			MethodDefinition method = null;
 			
-			foreach (var method in type.Methods) {
-				if (method.Name == "System.Windows.Markup.IComponentConnector.Connect") {
-					def = method;
+			foreach (var m in type.Methods) {
+				if (m.Name == "System.Windows.Markup.IComponentConnector.Connect") {
+					method = m;
 					break;
 				}
 			}
 			
-			if (def == null)
+			if (method == null)
 				return result;
-
-			throw new NotImplementedException();
-			/*
-			// decompile method and optimize the switch
-			ILBlock ilMethod = new ILBlock();
-			ILAstBuilder astBuilder = new ILAstBuilder();
-			ILAstOptimizer optimizer = new ILAstOptimizer();
-			var context = new DecompilerContext(type.Module) { CurrentMethod = def, CurrentType = type };
-			ilMethod.Body = astBuilder.Build(def, true, context);
-			optimizer.Optimize(context, ilMethod, ILAstOptimizationStep.RemoveRedundantCode3);
 			
-			ILSwitch ilSwitch = ilMethod.Body.OfType<ILSwitch>().FirstOrDefault();
-			ILCondition condition = ilMethod.Body.OfType<ILCondition>().FirstOrDefault();
+			// decompile method and optimize the switch
+			var typeSystem = new DecompilerTypeSystem(method.Module);
+			ILFunction function = ILFunction.Read(typeSystem, method);
+			
+			var context = new ILTransformContext { Settings = new DecompilerSettings(), TypeSystem = typeSystem };
+			function.RunTransforms(CSharpDecompiler.GetILTransforms(), context);
+			
+			var block = function.Body.Children.OfType<Block>().First();
+			var ilSwitch = block.Children.OfType<SwitchInstruction>().FirstOrDefault();
 			
 			if (ilSwitch != null) {
-				foreach (var caseBlock in ilSwitch.CaseBlocks) {
-					if (caseBlock.Values == null)
-						continue;
-					var events = FindEvents(caseBlock);
-					foreach (int id in caseBlock.Values)
+				foreach (var section in ilSwitch.Sections) {
+					var events = FindEvents(section.Body);
+					foreach (long id in section.Labels.Range())
 						result.Add(id, events);
 				}
-			} else if (condition != null) {
-				result.Add(1, FindEvents(condition.FalseBlock));
+			} else {
+				foreach (var ifInst in function.Descendants.OfType<IfInstruction>()) {
+					var comp = ifInst.Condition as Comp;
+					if (comp.Kind != ComparisonKind.Inequality && comp.Kind != ComparisonKind.Equality)
+						continue;
+					int id;
+					if (!comp.Right.MatchLdcI4(out id))
+						continue;
+					var events = FindEvents(comp.Kind == ComparisonKind.Inequality ? ifInst.FalseInst : ifInst.TrueInst);
+					result.Add(id, events);
+				}
 			}
-			return result;*/
+			return result;
 		}
-		/*
-		EventRegistration[] FindEvents(ILBlock block)
+		
+		EventRegistration[] FindEvents(ILInstruction inst)
 		{
 			var events = new List<EventRegistration>();
 			
-			foreach (var node in block.Body) {
-				var expr = node as ILExpression;
-				string eventName, handlerName;
-				TypeDefinition attachSource;
-				if (IsAddEvent(expr, out eventName, out handlerName))
-					events.Add(new EventRegistration {
-					           	EventName = eventName,
-					           	MethodName = handlerName
-					           });
-				else if (IsAddAttachedEvent(expr, out eventName, out handlerName, out attachSource))
-					events.Add(new EventRegistration {
-					           	EventName = eventName,
-					           	MethodName = handlerName,
-					           	AttachSourceType = attachSource,
-					           	IsAttached = true
-					           });
+			if (inst is Block) {
+				foreach (var node in ((Block)inst).Instructions) {
+					FindEvents(node, events);
+				}
+				FindEvents(((Block)inst).FinalInstruction, events);
+			} else {
+				FindEvents(inst, events);
 			}
-			
 			return events.ToArray();
 		}
 		
-		bool IsAddAttachedEvent(ILExpression expr, out string eventName, out string handlerName, out TypeDefinition attachSource)
+		void FindEvents(ILInstruction inst, List<EventRegistration> events)
+		{
+			CallInstruction call = inst as CallInstruction;
+			if (call == null || call.OpCode == OpCode.NewObj)
+				return;
+			
+			string eventName, handlerName;
+			if (IsAddEvent(call, out eventName, out handlerName) || IsAddAttachedEvent(call, out eventName, out handlerName))
+				events.Add(new EventRegistration { EventName = eventName, MethodName = handlerName });
+		}
+		
+		bool IsAddAttachedEvent(CallInstruction call, out string eventName, out string handlerName)
 		{
 			eventName = "";
 			handlerName = "";
-			attachSource = null;
 			
-			if (expr == null || !(expr.Code == ILCode.Callvirt || expr.Code == ILCode.Call))
-				return false;
-			
-			if (expr.Operand is MethodReference && expr.Arguments.Count == 3) {
-				var addMethod = expr.Operand as MethodReference;
+			if (call.Arguments.Count == 3) {
+				var addMethod = call.Method;
 				if (addMethod.Name != "AddHandler" || addMethod.Parameters.Count != 2)
 					return false;
-				var arg = expr.Arguments[1];
-				if (arg.Code != ILCode.Ldsfld || arg.Arguments.Any() || !(arg.Operand is FieldReference))
+				IField field;
+				if (!call.Arguments[1].MatchLdsFld(out field))
 					return false;
-				FieldReference fldRef = (FieldReference)arg.Operand;
-				attachSource = fldRef.DeclaringType.Resolve();
-				eventName = fldRef.Name;
-				if (eventName.EndsWith("Event") && eventName.Length > "Event".Length)
+				eventName = field.DeclaringType.Name + "." + field.Name;
+				if (eventName.EndsWith("Event", StringComparison.Ordinal) && eventName.Length > "Event".Length)
 					eventName = eventName.Remove(eventName.Length - "Event".Length);
-				var arg1 = expr.Arguments[2];
-				if (arg1.Code != ILCode.Newobj)
+				var newObj = call.Arguments[2] as NewObj;
+				if (newObj == null || newObj.Arguments.Count != 2)
 					return false;
-				var arg2 = arg1.Arguments[1];
-				if (arg2.Code != ILCode.Ldftn && arg2.Code != ILCode.Ldvirtftn)
+				var ldftn = newObj.Arguments[1];
+				if (ldftn.OpCode != OpCode.LdFtn && ldftn.OpCode != OpCode.LdVirtFtn)
 					return false;
-				if (arg2.Operand is MethodReference) {
-					var m = arg2.Operand as MethodReference;
-					handlerName = m.Name;
-					return true;
-				}
+				handlerName = ((IInstructionWithMethodOperand)ldftn).Method.Name;
+				return true;
 			}
 			
 			return false;
 		}
 		
-		bool IsAddEvent(ILExpression expr, out string eventName, out string handlerName)
+		bool IsAddEvent(CallInstruction call, out string eventName, out string handlerName)
 		{
 			eventName = "";
 			handlerName = "";
 			
-			if (expr == null || !(expr.Code == ILCode.Callvirt || expr.Code == ILCode.Call))
-				return false;
-			
-			if (expr.Operand is MethodReference && expr.Arguments.Count == 2) {
-				var addMethod = expr.Operand as MethodReference;
-				if (addMethod.Name.StartsWith("add_") && addMethod.Parameters.Count == 1)
-					eventName = addMethod.Name.Substring("add_".Length);
-				var arg = expr.Arguments[1];
-				if (arg.Code != ILCode.Newobj || arg.Arguments.Count != 2)
+			if (call.Arguments.Count == 2) {
+				var addMethod = call.Method;
+				if (!addMethod.Name.StartsWith("add_", StringComparison.Ordinal) || addMethod.Parameters.Count != 1)
 					return false;
-				var arg1 = arg.Arguments[1];
-				if (arg1.Code != ILCode.Ldftn && arg1.Code != ILCode.Ldvirtftn)
+				eventName = addMethod.Name.Substring("add_".Length);
+				var newObj = call.Arguments[1] as NewObj;
+				if (newObj == null || newObj.Arguments.Count != 2)
 					return false;
-				if (arg1.Operand is MethodReference) {
-					var m = arg1.Operand as MethodReference;
-					handlerName = m.Name;
-					return true;
-				}
+				var ldftn = newObj.Arguments[1];
+				if (ldftn.OpCode != OpCode.LdFtn && ldftn.OpCode != OpCode.LdVirtFtn)
+					return false;
+				handlerName = ((IInstructionWithMethodOperand)ldftn).Method.Name;
+				return true;
 			}
 			
 			return false;
-		}*/
+		}
 	}
 }

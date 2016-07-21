@@ -3,12 +3,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
 using System.Xml.Linq;
+
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TextView;
@@ -110,7 +110,7 @@ namespace ILSpy.BamlDecompiler
 			}
 		}
 		
-		static void RemoveConnectionIds(XElement element, Dictionary<int, EventRegistration[]> eventMappings)
+		static void RemoveConnectionIds(XElement element, Dictionary<long, EventRegistration[]> eventMappings)
 		{
 			foreach (var child in element.Elements())
 				RemoveConnectionIds(child, eventMappings);
@@ -123,11 +123,7 @@ namespace ILSpy.BamlDecompiler
 					var map = eventMappings[id];
 					foreach (var entry in map) {
 						string xmlns = ""; // TODO : implement xmlns resolver!
-						if (entry.IsAttached) {
-							addableAttrs.Add(new XAttribute(xmlns + entry.AttachSourceType.Name + "." + entry.EventName, entry.MethodName));
-						} else {
-							addableAttrs.Add(new XAttribute(xmlns + entry.EventName, entry.MethodName));
-						}
+						addableAttrs.Add(new XAttribute(xmlns + entry.EventName, entry.MethodName));
 					}
 					removableAttrs.Add(attr);
 				}
