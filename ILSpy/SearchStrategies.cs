@@ -21,8 +21,12 @@ namespace ICSharpCode.ILSpy
 		{
 			if (terms.Length == 1 && terms[0].Length > 2) {
 				var search = terms[0];
-				if (search.StartsWith("/", StringComparison.Ordinal) && search.EndsWith("/", StringComparison.Ordinal) && search.Length > 4)
-					regex = SafeNewRegex(search.Substring(1, search.Length - 2));
+				if (search.StartsWith("/", StringComparison.Ordinal) && search.Length > 4) {
+					var regexString = search.Substring(1, search.Length - 1);
+					if (regexString.EndsWith("/", StringComparison.Ordinal))
+						regexString = regexString.Substring(0, regexString.Length - 1);
+					regex = SafeNewRegex(regexString);
+				}
 
 				terms[0] = search;
 			}
