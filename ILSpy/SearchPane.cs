@@ -243,8 +243,14 @@ namespace ICSharpCode.ILSpy
 				}
 				dispatcher.BeginInvoke(
 					DispatcherPriority.Normal,
-					new Action(delegate { this.Results.Insert(this.Results.Count - 1, result); }));
+					new Action(delegate { InsertResult(this.Results, result); }));
 				cts.Token.ThrowIfCancellationRequested();
+			}
+
+			void InsertResult(ObservableCollection<SearchResult> results, SearchResult result)
+			{
+				int index = results.BinarySearch(result, 0, results.Count - 1, SearchResult.Comparer);
+				results.Insert(index < 0 ? ~index : index, result);
 			}
 
 			AbstractSearchStrategy GetSearchStrategy(SearchMode mode, string[] terms)
@@ -306,17 +312,27 @@ namespace ICSharpCode.ILSpy
 			add { }
 			remove { }
 		}
-			
+		
+		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
+		
 		public MemberReference Member { get; set; }
-			
+		
 		public string Location { get; set; }
 		public string Name { get; set; }
 		public ImageSource Image { get; set; }
 		public ImageSource LocationImage { get; set; }
-			
+		
 		public override string ToString()
 		{
 			return Name;
+		}
+		
+		class SearchResultComparer : System.Collections.Generic.IComparer<SearchResult>
+		{
+			public int Compare(SearchResult x, SearchResult y)
+			{
+				return StringComparer.Ordinal.Compare(x?.Name ?? "", y?.Name ?? "");
+			}
 		}
 	}
 

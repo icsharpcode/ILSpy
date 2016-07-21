@@ -34,6 +34,28 @@ namespace ICSharpCode.ILSpy
 				if (!list.Contains(item))
 					list.Add(item);
 		}
+		
+		public static int BinarySearch<T>(this IList<T> list, T item, int start, int count, IComparer<T> comparer)
+		{
+			if (list == null)
+				throw new ArgumentNullException("list");
+			if (start < 0 || start >= list.Count)
+				throw new ArgumentOutOfRangeException("start", start, "Value must be between 0 and " + (list.Count - 1));
+			if (count < 0 || count > list.Count - start)
+				throw new ArgumentOutOfRangeException("count", count, "Value must be between 0 and " + (list.Count - start));
+			int end = start + count - 1;
+			while (start <= end) {
+				int pivot = (start + end) / 2;
+				int result = comparer.Compare(item, list[pivot]);
+				if (result == 0)
+					return pivot;
+				if (result < 0)
+					end = pivot - 1;
+				else
+					start = pivot + 1;
+			}
+			return ~start;
+		}
 
 		public static bool IsCustomAttribute(this TypeDefinition type)
 		{
