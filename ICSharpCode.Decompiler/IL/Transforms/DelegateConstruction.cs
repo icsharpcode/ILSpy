@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL;
@@ -35,6 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			this.context = context;
 			this.decompilationContext = new SimpleTypeResolveContext(context.TypeSystem.Resolve(function.Method));
+			var orphanedVariableInits = new List<StLoc>();
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					foreach (var call in block.Instructions[i].Descendants.OfType<NewObj>()) {
@@ -50,15 +52,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							continue;
 						}
 						bool hasFieldStore;
-						if (CachedDelegateInitializationWithLocal(inst, out hasFieldStore)) {
+						ILVariable v;
+						if (CachedDelegateInitializationWithLocal(inst, out hasFieldStore, out v)) {
 							block.Instructions.RemoveAt(i);
 							if (hasFieldStore) {
 								block.Instructions.RemoveAt(i - 1);
+							}
+							if (v.IsSingleDefinition && v.LoadCount == 0) {
+								var store = v.Scope.Descendants.OfType<StLoc>().SingleOrDefault(stloc => stloc.Variable == v);
+								if (store != null) {
+									orphanedVariableInits.Add(store);
+								}
 							}
 							continue;
 						}
 					}
 				}
+			}
+			foreach (var store in orphanedVariableInits) {
+				ILInstruction containingBlock = store.Parent as Block;
+				if (containingBlock != null)
+					((Block)containingBlock).Instructions.Remove(store);
 			}
 		}
 
@@ -177,7 +191,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool CachedDelegateInitializationWithLocal(IfInstruction inst, out bool hasFieldStore)
+		bool CachedDelegateInitializationWithLocal(IfInstruction inst, out bool hasFieldStore, out ILVariable local)
 		{
 			// [stloc v(ldsfld CachedAnonMethodDelegate)]
 			// if (comp(ldloc v == ldnull) {
@@ -190,6 +204,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Block trueInst = inst.TrueInst as Block;
 			var condition = inst.Condition as Comp;
 			hasFieldStore = false;
+			local = null;
 			if (condition == null || trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
 			ILVariable v;
@@ -218,6 +233,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var usages = nextInstruction.Descendants.OfType<LdLoc>().Where(i => i.Variable == v).ToArray();
 			if (usages.Length != 1)
 				return false;
+			local = v;
 			usages[0].ReplaceWith(value);
 			return true;
 		}
