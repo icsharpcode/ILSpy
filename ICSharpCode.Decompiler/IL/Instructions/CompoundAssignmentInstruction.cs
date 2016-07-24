@@ -91,7 +91,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override InstructionFlags DirectFlags {
 			get {
 				var flags = InstructionFlags.SideEffect;
-				if (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem)
+				if (CheckForOverflow || (Operator == BinaryNumericOperator.Div || Operator == BinaryNumericOperator.Rem))
 					flags |= InstructionFlags.MayThrow;
 				return flags;
 			}
