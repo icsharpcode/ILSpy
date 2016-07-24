@@ -1014,9 +1014,28 @@ namespace ICSharpCode.Decompiler.CSharp
 				rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults);
 			
 			if (inst.OpCode == OpCode.NewObj) {
-				var argumentExpressions = arguments.Select(arg => arg.Expression);
-				return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), argumentExpressions)
-					.WithILInstruction(inst).WithRR(rr);
+				var argumentExpressions = arguments.SelectArray(arg => arg.Expression);
+				if (method.DeclaringType.IsAnonymousType()) {
+					AnonymousTypeCreateExpression atce = new AnonymousTypeCreateExpression();
+					var parameters = inst.Method.Parameters;
+					if (CanInferAnonymousTypePropertyNamesFromArguments(argumentExpressions, parameters)) {
+						atce.Initializers.AddRange(argumentExpressions);
+					} else {
+						for (int i = 0; i < argumentExpressions.Length; i++) {
+							atce.Initializers.Add(
+								new NamedExpression {
+									Name = parameters[i].Name,
+									Expression = argumentExpressions[i]
+								});
+						}
+					}
+					return atce
+						.WithILInstruction(inst)
+						.WithRR(rr);
+				} else {
+					return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), argumentExpressions)
+						.WithILInstruction(inst).WithRR(rr);
+				}
 			} else {
 				Expression expr;
 				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
@@ -1051,6 +1070,24 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		
+		static bool CanInferAnonymousTypePropertyNamesFromArguments(IList<Expression> args, IList<IParameter> parameters)
+		{
+			for (int i = 0; i < args.Count; i++) {
+				string inferredName;
+				if (args[i] is IdentifierExpression)
+					inferredName = ((IdentifierExpression)args[i]).Identifier;
+				else if (args[i] is MemberReferenceExpression)
+					inferredName = ((MemberReferenceExpression)args[i]).MemberName;
+				else
+					inferredName = null;
+				
+				if (inferredName != parameters[i].Name) {
+					return false;
+				}
+			}
+			return true;
+		}
+
 		Expression HandleAccessorCall(ILInstruction inst, TranslatedExpression target, IMethod method, IList<TranslatedExpression> arguments)
 		{
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);

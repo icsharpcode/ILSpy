@@ -255,11 +255,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (v.RemovedDueToCollision)
 					continue;
 				
-				AstType type = context.TypeSystemAstBuilder.ConvertType(v.Type);
-				
 				var boe = (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
 				if (boe != null && boe.Left.IsMatch(new IdentifierExpression(v.Name))) {
-					
+					AstType type;
+					if (v.Type.ContainsAnonymousType()) {
+						type = new SimpleType("var");
+					} else {
+						type = context.TypeSystemAstBuilder.ConvertType(v.Type);
+					}
 					var vds = new VariableDeclarationStatement(type, v.Name, boe.Right.Detach());
 					var init = vds.Variables.Single();
 					init.AddAnnotation(boe.Left.GetResolveResult());
@@ -271,6 +274,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					replacements.Add(new KeyValuePair<AstNode, AstNode>(v.InsertionPoint.nextNode, vds));
 				} else {
 					Expression initializer = null;
+					AstType type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 					if (v.DefaultInitialization) {
 						initializer = new DefaultValueExpression(type.Clone());
 					}
