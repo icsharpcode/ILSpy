@@ -876,9 +876,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			var context = new SimpleTypeResolveContext(method);
 			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(context), context, method);
 			var body = builder.ConvertAsBlock(function.Body);
-			
 			bool isLambda = false;
-			if (ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None)) {
+			bool isMultiLineLambda = false;
+			
+			// if there is an anonymous type involved, we are forced to use a lambda expression.
+			if (ame.Parameters.Any(p => p.Type.IsNull)) {
+				isLambda = true;
+				isMultiLineLambda = body.Statements.Count > 1;
+			} else if (ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None)) {
 				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
 			}
 			// Remove the parameter list from an AnonymousMethodExpression if the original method had no names,
@@ -895,19 +900,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			
-			// Replace all occurrences of 'this' in the method body with the delegate's target:
-			foreach (AstNode node in body.Descendants) {
-				if (node is ThisReferenceExpression)
-					node.ReplaceWith(target.Expression.Clone());
-			}
 			Expression replacement;
 			if (isLambda) {
 				LambdaExpression lambda = new LambdaExpression();
 				lambda.CopyAnnotationsFrom(ame);
 				ame.Parameters.MoveTo(lambda.Parameters);
-				Expression returnExpr = ((ReturnStatement)body.Statements.Single()).Expression;
-				returnExpr.Remove();
-				lambda.Body = returnExpr;
+				if (isMultiLineLambda) {
+					lambda.Body = body;
+				} else {
+					Expression returnExpr = ((ReturnStatement)body.Statements.Single()).Expression;
+					returnExpr.Remove();
+					lambda.Body = returnExpr;
+				}
 				replacement = lambda;
 			} else {
 				ame.Body = body;
@@ -1062,7 +1066,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						methodName = method.ImplementedInterfaceMembers[0].Name;
 					}
 					var mre = new MemberReferenceExpression(targetExpr, methodName);
-					mre.TypeArguments.AddRange(method.TypeArguments.Select(a => ConvertType(a)));
+					if (!method.TypeArguments.Any(t => t.ContainsAnonymousType()))
+						mre.TypeArguments.AddRange(method.TypeArguments.Select(a => ConvertType(a)));
 					var argumentExpressions = arguments.Select(arg => arg.Expression);
 					expr = new InvocationExpression(mre, argumentExpressions);
 				}

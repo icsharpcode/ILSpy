@@ -121,7 +121,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (method == null || !(method.HasGeneratedName() || method.Name.Contains("$")))
 				return false;
-			if (!(method.IsCompilerGenerated() || IsPotentialClosure(decompiledTypeDefinition, method.DeclaringTypeDefinition)))
+			if (!(method.IsCompilerGeneratedOrIsInCompilerGeneratedClass() || IsPotentialClosure(decompiledTypeDefinition, method.DeclaringTypeDefinition)))
 				return false;
 			return true;
 		}

@@ -99,6 +99,13 @@ namespace ICSharpCode.Decompiler
 					ContainsAnonType = true;
 				return base.VisitOtherType(type);
 			}
+			
+			public override IType VisitTypeDefinition(ITypeDefinition type)
+			{
+				if (IsAnonymousType(type))
+					ContainsAnonType = true;
+				return base.VisitTypeDefinition(type);
+			}
 		}
 	}
 }

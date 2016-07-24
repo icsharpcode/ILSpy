@@ -132,8 +132,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			TypeDefinition type = member as TypeDefinition;
 			if (type != null) {
 				if (type.DeclaringType != null) {
-//					if (settings.AnonymousMethods && IsClosureType(type))
-//						return true;
+					if (settings.AnonymousMethods && IsClosureType(type))
+						return true;
 //					if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
 //						return true;
 //					if (settings.AsyncAwait && AsyncDecompiler.IsCompilerGeneratedStateMachine(type))
@@ -141,8 +141,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else if (type.IsCompilerGenerated()) {
 //					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 //						return true;
-//					if (type.IsAnonymousType())
-//						return true;
+					if (type.IsAnonymousType())
+						return true;
 				}
 			}
 			
@@ -188,7 +188,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static bool IsClosureType(TypeDefinition type)
 		{
-			return type.HasGeneratedName() && type.IsCompilerGenerated() && (type.Name.Contains("DisplayClass") || type.Name.Contains("AnonStorey"));
+			if (!type.HasGeneratedName() || !type.IsCompilerGenerated())
+				return false;
+			if (type.Name.Contains("DisplayClass") || type.Name.Contains("AnonStorey"))
+				return true;
+			return type.BaseType.FullName == "System.Object" && !type.HasInterfaces;
 		}
 		#endregion
 		
@@ -501,9 +505,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				return entityDecl;
 			}
 			foreach (var type in typeDef.NestedTypes) {
-				var nestedType = DoDecompile(type, decompilationContext.WithCurrentTypeDefinition(type));
-				SetNewModifier(nestedType);
-				typeDecl.Members.Add(nestedType);
+				var cecilType = typeSystem.GetCecil(type);
+				if (cecilType != null && !MemberIsHidden(cecilType, settings)) {
+					var nestedType = DoDecompile(type, decompilationContext.WithCurrentTypeDefinition(type));
+					SetNewModifier(nestedType);
+					typeDecl.Members.Add(nestedType);
+				}
 			}
 			foreach (var field in typeDef.Fields) {
 				var fieldDef = typeSystem.GetCecil(field) as FieldDefinition;
