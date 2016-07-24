@@ -177,6 +177,17 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 		
+		public bool MatchLdFld(out IField field)
+		{
+			LdFlda ldflda = (this as LdObj)?.Target as LdFlda;
+			if (ldflda != null) {
+				field = ldflda.Field;
+				return true;
+			}
+			field = null;
+			return false;
+		}
+		
 		public bool MatchLdsFld(out IField field)
 		{
 			LdsFlda ldsflda = (this as LdObj)?.Target as LdsFlda;
@@ -195,6 +206,20 @@ namespace ICSharpCode.Decompiler.IL
 			if (ldsflda != null) {
 				value = stobj.Value;
 				field = ldsflda.Field;
+				return true;
+			}
+			value = null;
+			field = null;
+			return false;
+		}
+		
+		public bool MatchStFld(out ILInstruction value, out IField field)
+		{
+			var stobj = this as StObj;
+			LdFlda ldflda = stobj?.Target as LdFlda;
+			if (ldflda != null) {
+				value = stobj.Value;
+				field = ldflda.Field;
 				return true;
 			}
 			value = null;

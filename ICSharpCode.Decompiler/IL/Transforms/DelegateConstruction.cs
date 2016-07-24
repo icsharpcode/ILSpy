@@ -36,13 +36,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			this.context = context;
 			this.decompilationContext = new SimpleTypeResolveContext(context.TypeSystem.Resolve(function.Method));
-			var orphanedVariableInits = new List<StLoc>();
+			var orphanedVariableInits = new List<ILInstruction>();
+			var targetsToReplace = new List<ILInstruction>();
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					foreach (var call in block.Instructions[i].Descendants.OfType<NewObj>()) {
-						ILFunction f = TransformDelegateConstruction(call);
-						if (f != null)
+						ILInstruction target;
+						ILFunction f = TransformDelegateConstruction(call, out target);
+						if (f != null) {
+							targetsToReplace.Add(target);
 							call.Arguments[1].ReplaceWith(f);
+						}
 					}
 					
 					var inst = block.Instructions[i] as IfInstruction;
@@ -67,13 +71,40 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							continue;
 						}
 					}
+					
+					ILVariable targetVariable;
+					ILInstruction value;
+					if (block.Instructions[i].MatchStLoc(out targetVariable, out value)) {
+						var newObj = value as NewObj;
+						// TODO : it is probably not a good idea to remove *all* display-classes
+						// is there a way to minimize the false-positives?
+						if (newObj != null && IsSimpleDisplayClass(newObj.Method)) {
+							targetsToReplace.Add(block.Instructions[i]);
+						}
+					}
 				}
+			}
+			foreach (var target in targetsToReplace) {
+				if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
+					function.AcceptVisitor(new TransformDisplayClassUsages((IInstructionWithVariableOperand)target, orphanedVariableInits));
 			}
 			foreach (var store in orphanedVariableInits) {
 				ILInstruction containingBlock = store.Parent as Block;
 				if (containingBlock != null)
 					((Block)containingBlock).Instructions.Remove(store);
 			}
+		}
+
+		bool IsSimpleDisplayClass(IMethod method)
+		{
+			if (!method.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+				return false;
+			var type = method.DeclaringType;
+			if (!type.HasGeneratedName() || (!type.Name.Contains("DisplayClass") && !type.Name.Contains("AnonStorey")))
+				return false;
+			if (type.DirectBaseTypes.Any(t => !t.IsKnownType(KnownTypeCode.Object)))
+				return false;
+			return true;
 		}
 
 		#region TransformDelegateConstruction
@@ -107,13 +138,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 		
-		ILFunction TransformDelegateConstruction(NewObj value)
+		ILFunction TransformDelegateConstruction(NewObj value, out ILInstruction target)
 		{
+			target = null;
 			if (!IsDelegateConstruction(value))
 				return null;
 			var targetMethod = ((IInstructionWithMethodOperand)value.Arguments[1]).Method;
 			if (IsAnonymousMethod(decompilationContext.CurrentTypeDefinition, targetMethod)) {
-				var target = value.Arguments[0];
+				target = value.Arguments[0];
 				var localTypeSystem = context.TypeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(targetMethod));
 				var function = ILFunction.Read(localTypeSystem, targetMethod, context.CancellationToken);
 				
@@ -156,6 +188,101 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				}
 				base.VisitLdLoc(inst);
+			}
+		}
+		
+		class TransformDisplayClassUsages : ILVisitor
+		{
+			ILFunction currentFunction;
+			readonly IInstructionWithVariableOperand targetLoad;
+			readonly List<ILVariable> targetAndCopies = new List<ILVariable>();
+			readonly List<ILInstruction> orphanedVariableInits;
+			readonly Dictionary<IField, DisplayClassVariable> initValues = new Dictionary<IField, DisplayClassVariable>();
+			
+			struct DisplayClassVariable
+			{
+				public ILVariable variable;
+				public ILInstruction value;
+			}
+			
+			public TransformDisplayClassUsages(IInstructionWithVariableOperand targetLoad, List<ILInstruction> orphanedVariableInits)
+			{
+				this.targetLoad = targetLoad;
+				this.orphanedVariableInits = orphanedVariableInits;
+				this.targetAndCopies.Add(targetLoad.Variable);
+			}
+			
+			protected override void Default(ILInstruction inst)
+			{
+				foreach (var child in inst.Children) {
+					child.AcceptVisitor(this);
+				}
+			}
+			
+			protected internal override void VisitILFunction(ILFunction function)
+			{
+				var old = currentFunction;
+				currentFunction = function;
+				try {
+					base.VisitILFunction(function);
+				} finally {
+					currentFunction = old;
+				}
+			}
+			
+			protected internal override void VisitStLoc(StLoc inst)
+			{
+				base.VisitStLoc(inst);
+				if (inst.Variable == targetLoad.Variable)
+					orphanedVariableInits.Add(inst);
+				if (MatchesTargetOrCopyLoad(inst.Value)) {
+					targetAndCopies.Add(inst.Variable);
+					orphanedVariableInits.Add(inst);
+				}
+			}
+			
+			bool MatchesTargetOrCopyLoad(ILInstruction inst)
+			{
+				return targetAndCopies.Any(v => inst.MatchLdLoc(v));
+			}
+			
+			protected internal override void VisitStObj(StObj inst)
+			{
+				base.VisitStObj(inst);
+				ILInstruction target;
+				IField field;
+				if (!inst.Target.MatchLdFlda(out target, out field) || !MatchesTargetOrCopyLoad(target))
+					return;
+				field = (IField)field.MemberDefinition;
+				DisplayClassVariable info;
+				if (initValues.TryGetValue(field, out info) && info.variable != null) {
+					inst.ReplaceWith(new StLoc(info.variable, inst.Value));
+				} else {
+					ILInstruction value;
+					ILVariable v;
+					if (inst.Value.MatchLdLoc(out v)) {
+						orphanedVariableInits.Add(inst);
+						value = inst.Value;
+					} else {
+						v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+						inst.ReplaceWith(new StLoc(v, inst.Value));
+						value = new LdLoc(v);
+					}
+					initValues.Add(field, new DisplayClassVariable { value = value, variable = v });
+				}
+			}
+			
+			protected internal override void VisitLdObj(LdObj inst)
+			{
+				base.VisitLdObj(inst);
+				ILInstruction target;
+				IField field;
+				if (!inst.Target.MatchLdFlda(out target, out field) || !MatchesTargetOrCopyLoad(target))
+					return;
+				DisplayClassVariable info;
+				if (!initValues.TryGetValue((IField)field.MemberDefinition, out info))
+					return;
+				inst.ReplaceWith(info.value.Clone());
 			}
 		}
 		#endregion
@@ -205,11 +332,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var condition = inst.Condition as Comp;
 			hasFieldStore = false;
 			local = null;
-			if (condition == null || trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
+			if (condition == null || trueInst == null || (trueInst.Instructions.Count < 1) || !inst.FalseInst.MatchNop())
 				return false;
 			ILVariable v;
 			ILInstruction value, value2;
-			var storeInst = trueInst.Instructions[0];
+			var storeInst = trueInst.Instructions.Last();
 			if (!condition.Left.MatchLdLoc(out v) || !condition.Right.MatchLdNull())
 				return false;
 			if (!storeInst.MatchStLoc(v, out value))
@@ -217,13 +344,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// the optional field store was moved into storeInst by inline assignment:
 			if (!(value is NewObj)) {
 				IField field, field2;
-				if (!value.MatchStsFld(out value2, out field) || !(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+				if (value.MatchStsFld(out value2, out field)) {
+					if (!(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+						return false;
+					var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
+					if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdsFld(out field2) || !field.Equals(field2))
+						return false;
+					value = value2;
+					hasFieldStore = true;
+				} else if (value.MatchStFld(out value2, out field)) {
+					if (!(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+						return false;
+					var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
+					if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdFld(out field2) || !field.Equals(field2))
+						return false;
+					value = value2;
+					hasFieldStore = true;
+				} else {
 					return false;
-				var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
-				if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdsFld(out field2) || !field.Equals(field2))
-					return false;
-				value = value2;
-				hasFieldStore = true;
+				}
 			}
 			if (!IsDelegateConstruction(value as NewObj, true))
 				return false;
