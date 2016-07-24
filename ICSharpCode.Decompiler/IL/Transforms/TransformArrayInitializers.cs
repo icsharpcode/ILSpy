@@ -197,9 +197,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction array;
 			if (pos + elementCount >= block.Instructions.Count)
 				return false;
-			if (block.Instructions[pos + elementCount].MatchStLoc(out finalStore, out array)) {
+			if (block.Instructions[pos + elementCount].MatchStLoc(out finalStore, out array) && array.MatchLdLoc(store)) {
 				instructionsToRemove++;
-				return array.MatchLdLoc(store);
+			} else {
+				finalStore = store;
 			}
 			return true;
 		}
