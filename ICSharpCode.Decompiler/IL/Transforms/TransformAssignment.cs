@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-					if (TransformPostIncDecOperatorOnAddress(block, i) || TransformCSharp4PostIncDecOperatorOnAddress(block, i)) {
+					if (TransformPostIncDecOperatorOnAddress(block, i) || TransformPostIncDecOnStaticField(block, i) || TransformCSharp4PostIncDecOperatorOnAddress(block, i)) {
 						block.Instructions.RemoveAt(i);
 						continue;
 					}
@@ -241,7 +241,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction baseFieldAddressLoad3;
 				if (!targetFieldLoad.MatchLdFlda(out baseFieldAddressLoad2, out targetField) || !baseFieldAddressLoad2.MatchLdLoc(baseFieldAddress.Variable))
 					return false;
-				if (!stobj.Target.MatchLdFlda(out baseFieldAddressLoad3, out targetField2) || !baseFieldAddressLoad3.MatchLdLoc(baseFieldAddress.Variable) || !targetField.Equals(targetField2))
+				if (!stobj.Target.MatchLdFlda(out baseFieldAddressLoad3, out targetField2) || !baseFieldAddressLoad3.MatchLdLoc(baseFieldAddress.Variable) || !SameField(targetField, targetField2))
 					return false;
 				baseAddress = new LdFlda(baseFieldAddress.Value, targetField);
 			} else if (baseFieldAddress.Value is LdElema) {
@@ -260,6 +260,40 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions.RemoveAt(i + 2);
 			block.Instructions.RemoveAt(i + 1);
 			return true;
+		}
+		
+		/// <code>
+		/// stloc s(ldobj(ldsflda))
+		/// stobj (ldsflda, binary.op(ldloc s, ldc.i4 1))
+		/// -->
+		/// stloc s(compound.op.old(ldobj(ldsflda), ldc.i4 1))
+		/// </code>
+		static bool TransformPostIncDecOnStaticField(Block block, int i)
+		{
+			var inst = block.Instructions[i] as StLoc;
+			var stobj = block.Instructions.ElementAtOrDefault(i + 1) as StObj;
+			if (inst == null || stobj == null)
+				return false;
+			ILInstruction target;
+			IType type;
+			IField field, field2;
+			if (inst.Variable.Kind != VariableKind.StackSlot || !inst.Value.MatchLdObj(out target, out type) || !target.MatchLdsFlda(out field))
+				return false;
+			if (!stobj.Target.MatchLdsFlda(out field2) || !SameField(field, field2))
+				return false;
+			var binary = stobj.Value as BinaryNumericInstruction;
+			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
+				return false;
+			var assignment = new CompoundAssignmentInstruction(binary.Operator, inst.Value, binary.Right, type, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
+			stobj.ReplaceWith(new StLoc(inst.Variable, assignment));
+			return true;
+		}
+		
+		static bool SameField(IField a, IField b)
+		{
+			a = (IField)a.MemberDefinition;
+			b = (IField)b.MemberDefinition;
+			return a.Equals(b);
 		}
 	}
 }
