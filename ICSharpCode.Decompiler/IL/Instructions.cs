@@ -788,7 +788,10 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		public override StackType ResultType { get { return target.ResultType; } }
+		readonly IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type { get { return type; } }
+		public override StackType ResultType { get { return type.GetStackType(); } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitCompoundAssignmentInstruction(this);

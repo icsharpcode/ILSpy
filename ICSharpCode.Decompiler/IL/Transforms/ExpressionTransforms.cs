@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary != null && binary.Left.MatchLdObj(out target, out t) && IsSameTarget(inst.Target, target)) {
 				// stobj(target, binary.op(ldobj(target), ...))
 				// => compound.op(target, ...)
-				inst.ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, binary.Left, binary.Right, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
+				inst.ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, binary.Left, binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
 			}
 		}
 

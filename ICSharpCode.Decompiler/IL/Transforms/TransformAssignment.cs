@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary == null || !binary.Left.MatchLdLoc(nextInst.Variable) || !binary.Right.MatchLdcI4(1)
 			    || (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
 				return false;
-			var assignment = new CompoundAssignmentInstruction(binary.Operator, new LdObj(inst.Value, targetType), binary.Right, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
+			var assignment = new CompoundAssignmentInstruction(binary.Operator, new LdObj(inst.Value, targetType), binary.Right, targetType, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
 			stobj.ReplaceWith(new StLoc(nextInst.Variable, assignment));
 			block.Instructions.RemoveAt(i + 1);
 			return true;
@@ -255,7 +255,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary == null || !binary.Left.MatchLdLoc(fieldValue.Variable) || !binary.Right.MatchLdcI4(1)
 			    || (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
 				return false;
-			var assignment = new CompoundAssignmentInstruction(binary.Operator, new LdObj(baseAddress, t), binary.Right, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
+			var assignment = new CompoundAssignmentInstruction(binary.Operator, new LdObj(baseAddress, t), binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
 			stobj.ReplaceWith(new StLoc(fieldValueCopyToLocal.Variable, assignment));
 			block.Instructions.RemoveAt(i + 2);
 			block.Instructions.RemoveAt(i + 1);

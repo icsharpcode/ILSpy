@@ -62,7 +62,7 @@
 			CustomClassName("BinaryNumericInstruction"), Binary, CustomWriteTo, CustomConstructor, CustomComputeFlags),
 		new OpCode("compound", "Common instruction for compound assignments.",
 			CustomClassName("CompoundAssignmentInstruction"), CustomConstructor, CustomComputeFlags,
-			MayThrow, CustomArguments("target", "value"), ResultType("target.ResultType"), CustomWriteTo),
+			MayThrow, CustomArguments("target", "value"), HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo),
 		new OpCode("bit.not", "Bitwise NOT", Unary),
 		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
 		new OpCode("br", "Unconditional branch. <c>goto target;</c>",

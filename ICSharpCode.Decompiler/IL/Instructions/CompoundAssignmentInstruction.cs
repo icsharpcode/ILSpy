@@ -51,13 +51,14 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public readonly CompoundAssignmentType CompoundAssignmentType;
 
-		public CompoundAssignmentInstruction(BinaryNumericOperator op, ILInstruction target, ILInstruction value, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssigmentType)
+		public CompoundAssignmentInstruction(BinaryNumericOperator op, ILInstruction target, ILInstruction value, IType type, bool checkForOverflow, Sign sign, CompoundAssignmentType compoundAssigmentType)
 			: base(OpCode.CompoundAssignmentInstruction)
 		{
 			this.CheckForOverflow = checkForOverflow;
 			this.Sign = sign;
 			this.Operator = op;
 			this.Target = target;
+			this.type = type;
 			this.Value = value;
 			this.CompoundAssignmentType = compoundAssigmentType;
 			Debug.Assert(compoundAssigmentType == CompoundAssignmentType.EvaluatesToNewValue || (op == BinaryNumericOperator.Add || op == BinaryNumericOperator.Sub));

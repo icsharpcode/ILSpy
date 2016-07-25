@@ -639,9 +639,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// Target and value are incompatible, so convert value to the target type
 				// inst.ResultType should match inst.Target.ResultType
 				Debug.Assert(inst.ResultType == inst.Target.ResultType);
-				StackType targetStackType = inst.ResultType == StackType.I ? StackType.I8 : inst.ResultType;
-				IType targetType = compilation.FindType(targetStackType.ToKnownTypeCode(inst.Sign));
-				value = value.ConvertTo(targetType, this);
+				value = value.ConvertTo(inst.Type, this);
 				rr = resolverWithOverflowCheck.ResolveAssignment(op, target.ResolveResult, value.ResolveResult);
 			}
 			TranslatedExpression resultExpr;
