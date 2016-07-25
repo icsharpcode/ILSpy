@@ -33,8 +33,8 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 	/// When leaving those calls (whether with a successful match or not), the outer PerformMatch() calls may push additional state onto
 	/// all of the added backtracking-savepoints.
 	/// When the overall list match fails but savepoints exists, the most recently added savepoint is restored by calling PerformMatch()
-	/// with listMatch.restoreFrom set to that savepoint. Each PerformMatch() call must pop its state from the savepoint
-	/// This state is popped again when resuming from the checkpoint.
+	/// with listMatch.restoreStack set to that savepoint. Each PerformMatch() call must pop its state from that stack before
+	/// recursively calling its child patterns.
 	/// </remarks>
 	public struct ListMatch
 	{
