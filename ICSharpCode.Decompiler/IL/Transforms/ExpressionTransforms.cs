@@ -191,25 +191,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction target;
 			IType t;
 			BinaryNumericInstruction binary = inst.Value as BinaryNumericInstruction;
-			if (binary != null && binary.Left.MatchLdObj(out target, out t) && IsSameTarget(inst.Target, target)) {
+			if (binary != null && binary.Left.MatchLdObj(out target, out t) && inst.Target.Match(target).Success) {
 				// stobj(target, binary.op(ldobj(target), ...))
 				// => compound.op(target, ...)
 				inst.ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, binary.Left, binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
 			}
-		}
-
-		bool IsSameTarget(ILInstruction target, ILInstruction left)
-		{
-			IField f, f2;
-			ILInstruction t, t2, a, a2;
-			IType type, type2;
-			ILVariable v;
-			if (target.MatchLdFlda(out t, out f) && left.MatchLdFlda(out t2, out f2) && f.Equals(f2))
-				return !t.MatchLdLoc(out v) || t2.MatchLdLoc(v);
-			// match ldelmena(ldobj(...))
-			if (target.MatchLdElema(out type, out a) && left.MatchLdElema(out type2, out a2) && type.Equals(type2))
-				return a.MatchLdObj(out target, out type) && a2.MatchLdObj(out left, out type2) && IsSameTarget(target, left);
-			return false;
 		}
 		
 		protected internal override void VisitIfInstruction(IfInstruction inst)
