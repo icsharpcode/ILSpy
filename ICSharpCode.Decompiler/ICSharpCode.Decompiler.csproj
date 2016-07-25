@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
+    <Compile Include="CSharp\TranslationContext.cs" />
     <Compile Include="DecompilerSettings.cs" />
     <Compile Include="CSharp\Transforms\ContextTrackingVisitor.cs" />
     <Compile Include="CSharp\Transforms\DecimalConstantTransform.cs" />

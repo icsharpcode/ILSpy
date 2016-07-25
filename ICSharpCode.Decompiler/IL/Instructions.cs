@@ -447,6 +447,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitInvalidInstruction(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitInvalidInstruction(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as InvalidInstruction;
@@ -468,6 +472,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNop(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitNop(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -536,6 +544,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitILFunction(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitILFunction(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as ILFunction;
@@ -555,6 +567,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitBlockContainer(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitBlockContainer(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as BlockContainer;
@@ -573,6 +589,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBlock(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitBlock(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -713,6 +733,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitPinnedRegion(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitPinnedRegion(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as PinnedRegion;
@@ -735,6 +759,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLogicNot(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLogicNot(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LogicNot;
@@ -753,6 +781,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBinaryNumericInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitBinaryNumericInstruction(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -840,6 +872,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitCompoundAssignmentInstruction(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitCompoundAssignmentInstruction(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as CompoundAssignmentInstruction;
@@ -861,6 +897,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitNot(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitBitNot(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -884,6 +924,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitArglist(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitArglist(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as Arglist;
@@ -903,6 +947,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitBranch(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitBranch(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as Branch;
@@ -921,6 +969,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLeave(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLeave(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1021,6 +1073,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitIfInstruction(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitIfInstruction(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as IfInstruction;
@@ -1039,6 +1095,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitSwitchInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitSwitchInstruction(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1106,6 +1166,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitSwitchSection(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitSwitchSection(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as SwitchSection;
@@ -1124,6 +1188,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryCatch(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitTryCatch(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1238,6 +1306,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitTryCatchHandler(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitTryCatchHandler(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as TryCatchHandler;
@@ -1257,6 +1329,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitTryFinally(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitTryFinally(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as TryFinally;
@@ -1275,6 +1351,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryFault(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitTryFault(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1307,6 +1387,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitDebugBreak(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDebugBreak(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as DebugBreak;
@@ -1325,6 +1409,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitComp(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitComp(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1348,6 +1436,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitCall(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitCall(this, context);
+		}
 	}
 
 	/// <summary>Virtual method call.</summary>
@@ -1364,6 +1456,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitCallVirt(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitCallVirt(this, context);
 		}
 	}
 
@@ -1391,6 +1487,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitCkfinite(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitCkfinite(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as Ckfinite;
@@ -1409,6 +1509,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitConv(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitConv(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1478,6 +1582,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdLoc(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdLoc(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdLoc;
@@ -1536,6 +1644,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLoca(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdLoca(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1656,6 +1768,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitStLoc(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitStLoc(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as StLoc;
@@ -1742,6 +1858,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitAddressOf(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitAddressOf(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as AddressOf;
@@ -1771,6 +1891,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdStr(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdStr(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1802,6 +1926,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdcI4(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdcI4(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdcI4;
@@ -1831,6 +1959,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcI8(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdcI8(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1862,6 +1994,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdcF(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdcF(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdcF;
@@ -1892,6 +2028,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdcDecimal(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdcDecimal(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdcDecimal;
@@ -1913,6 +2053,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdNull(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdNull(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1945,6 +2089,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdFtn(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdFtn(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -1990,6 +2138,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdVirtFtn(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdVirtFtn(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdVirtFtn;
@@ -2021,6 +2173,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdTypeToken(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdTypeToken(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -2054,6 +2210,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdMemberToken(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdMemberToken(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdMemberToken;
@@ -2085,6 +2245,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLocAlloc(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLocAlloc(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LocAlloc;
@@ -2103,6 +2267,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitReturn(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitReturn(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -2197,6 +2365,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdFlda(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdFlda(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdFlda;
@@ -2228,6 +2400,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdsFlda(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdsFlda(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -2273,6 +2449,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitCastClass(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitCastClass(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as CastClass;
@@ -2307,6 +2487,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitIsInst(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitIsInst(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -2407,6 +2591,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdObj(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdObj(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -2528,6 +2716,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitStObj(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitStObj(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as StObj;
@@ -2571,6 +2763,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBox(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitBox(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -2616,6 +2812,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitUnbox(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitUnbox(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as Unbox;
@@ -2660,6 +2860,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitUnboxAny(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitUnboxAny(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as UnboxAny;
@@ -2681,6 +2885,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNewObj(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitNewObj(this, context);
 		}
 	}
 
@@ -2762,6 +2970,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitNewArr(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitNewArr(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as NewArr;
@@ -2794,6 +3006,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitDefaultValue(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitDefaultValue(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as DefaultValue;
@@ -2824,6 +3040,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitThrow(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitThrow(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -2856,6 +3076,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitRethrow(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitRethrow(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as Rethrow;
@@ -2887,6 +3111,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitSizeOf(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitSizeOf(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -2961,6 +3189,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLen(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdLen(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -3070,6 +3302,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdElema(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdElema(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as LdElema;
@@ -3157,6 +3393,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitArrayToPointer(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitArrayToPointer(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as ArrayToPointer;
@@ -3192,6 +3432,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitMakeRefAny(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitMakeRefAny(this, context);
+		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as MakeRefAny;
@@ -3213,6 +3457,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitRefAnyType(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitRefAnyType(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -3257,6 +3505,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitRefAnyValue(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitRefAnyValue(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
@@ -3787,6 +4039,268 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal virtual T VisitRefAnyValue(RefAnyValue inst)
 		{
 			return Default(inst);
+		}
+	}
+
+	/// <summary>
+	/// Base class for visitor pattern.
+	/// </summary>
+	public abstract class ILVisitor<C, T>
+	{
+		/// <summary>Called by Visit*() methods that were not overridden</summary>
+		protected abstract T Default(ILInstruction inst, C context);
+		
+		protected internal virtual T VisitInvalidInstruction(InvalidInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitNop(Nop inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitILFunction(ILFunction function, C context)
+		{
+			return Default(function, context);
+		}
+		protected internal virtual T VisitBlockContainer(BlockContainer container, C context)
+		{
+			return Default(container, context);
+		}
+		protected internal virtual T VisitBlock(Block block, C context)
+		{
+			return Default(block, context);
+		}
+		protected internal virtual T VisitPinnedRegion(PinnedRegion inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLogicNot(LogicNot inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitBinaryNumericInstruction(BinaryNumericInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitBitNot(BitNot inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitArglist(Arglist inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitBranch(Branch inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLeave(Leave inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitIfInstruction(IfInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitSwitchInstruction(SwitchInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitSwitchSection(SwitchSection inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitTryCatch(TryCatch inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitTryCatchHandler(TryCatchHandler inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitTryFinally(TryFinally inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitTryFault(TryFault inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDebugBreak(DebugBreak inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitComp(Comp inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitCall(Call inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitCallVirt(CallVirt inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitCkfinite(Ckfinite inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitConv(Conv inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdLoc(LdLoc inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdLoca(LdLoca inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitStLoc(StLoc inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitAddressOf(AddressOf inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdStr(LdStr inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdcI4(LdcI4 inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdcI8(LdcI8 inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdcF(LdcF inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdcDecimal(LdcDecimal inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdNull(LdNull inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdFtn(LdFtn inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdVirtFtn(LdVirtFtn inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdTypeToken(LdTypeToken inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdMemberToken(LdMemberToken inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLocAlloc(LocAlloc inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitReturn(Return inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdFlda(LdFlda inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdsFlda(LdsFlda inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitCastClass(CastClass inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitIsInst(IsInst inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdObj(LdObj inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitStObj(StObj inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitBox(Box inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitUnbox(Unbox inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitUnboxAny(UnboxAny inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitNewObj(NewObj inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitNewArr(NewArr inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitDefaultValue(DefaultValue inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitThrow(Throw inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitRethrow(Rethrow inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitSizeOf(SizeOf inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdLen(LdLen inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdElema(LdElema inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitArrayToPointer(ArrayToPointer inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitMakeRefAny(MakeRefAny inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitRefAnyType(RefAnyType inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitRefAnyValue(RefAnyValue inst, C context)
+		{
+			return Default(inst, context);
 		}
 	}
 	

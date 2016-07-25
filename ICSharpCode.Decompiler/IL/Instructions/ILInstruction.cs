@@ -222,6 +222,11 @@ namespace ICSharpCode.Decompiler.IL
 		public abstract T AcceptVisitor<T>(ILVisitor<T> visitor);
 		
 		/// <summary>
+		/// Calls the Visit*-method on the visitor corresponding to the concrete type of this instruction.
+		/// </summary>
+		public abstract T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context);
+		
+		/// <summary>
 		/// Gets the child nodes of this instruction.
 		/// </summary>
 		/// <remarks>

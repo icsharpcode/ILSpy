@@ -254,6 +254,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.Visit<#=opCode.Name#>(this);
 		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.Visit<#=opCode.Name#>(this, context);
+		}
 <#	} #>
 <#		if (opCode.GeneratePerformMatch) { #>
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
@@ -294,6 +298,22 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal virtual T Visit<#=opCode.Name#>(<#=opCode.Name#> <#=opCode.VariableName#>)
 		{
 			return Default(<#=opCode.VariableName#>);
+		}
+<#	} #>
+	}
+
+	/// <summary>
+	/// Base class for visitor pattern.
+	/// </summary>
+	public abstract class ILVisitor<C, T>
+	{
+		/// <summary>Called by Visit*() methods that were not overridden</summary>
+		protected abstract T Default(ILInstruction inst, C context);
+		
+<#	foreach (OpCode opCode in opCodes) { #>
+		protected internal virtual T Visit<#=opCode.Name#>(<#=opCode.Name#> <#=opCode.VariableName#>, C context)
+		{
+			return Default(<#=opCode.VariableName#>, context);
 		}
 <#	} #>
 	}
