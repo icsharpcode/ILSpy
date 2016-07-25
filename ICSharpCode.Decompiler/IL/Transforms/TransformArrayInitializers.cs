@@ -400,6 +400,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case TypeCode.Double:
 					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcF(BitConverter.ToDouble(d, i)));
 				case TypeCode.Object:
+				case TypeCode.Empty:
 					var typeDef = type.GetDefinition();
 					if (typeDef != null && typeDef.Kind == TypeKind.Enum)
 						return DecodeArrayInitializer(typeDef.EnumUnderlyingType, array, initialValue, arrayLength, output);
