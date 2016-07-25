@@ -631,6 +631,7 @@ namespace ICSharpCode.Decompiler.IL
 					opCode.ConstructorParameters.Add("params ILInstruction[] " + arg);
 					opCode.ConstructorBody.Add("this." + argProp + " = new InstructionCollection<ILInstruction>(this, " + i + ");");
 					opCode.ConstructorBody.Add("this." + argProp + ".AddRange(" + arg + ");");
+					opCode.PerformMatchConditions.Add("Patterns.ListMatch.DoMatch(this." + argProp + ", o." + argProp + ", ref match)");
 					if (i == 0)
 						opCode.WriteArguments.Add("bool first = true;");
 					opCode.WriteArguments.Add("foreach (var " + arg + " in " + argProp + ") {");
