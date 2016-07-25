@@ -871,8 +871,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.Parameters.AddRange(MakeParameters(method, function));
 			ame.HasParameterList = true;
-			var context = new SimpleTypeResolveContext(method);
-			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(context), context, method);
+			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method);
 			var body = builder.ConvertAsBlock(function.Body);
 			bool isLambda = false;
 			bool isMultiLineLambda = false;
