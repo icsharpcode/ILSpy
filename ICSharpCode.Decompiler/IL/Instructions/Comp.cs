@@ -97,17 +97,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		StackType inputType;
-		
 		/// <summary>
 		/// Gets the stack type of the comparison inputs.
 		/// </summary>
 		public StackType InputType {
-			get { return inputType; }
-			set {
-				inputType = value;
-				MakeDirty();
-			}
+			get { return Left.ResultType; }
 		}
 		
 		/// <summary>
@@ -119,7 +113,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.kind = kind;
 			this.Sign = sign;
-			this.inputType = left.ResultType;
 			Debug.Assert(left.ResultType == right.ResultType);
 		}
 

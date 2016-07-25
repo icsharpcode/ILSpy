@@ -447,6 +447,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitInvalidInstruction(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as InvalidInstruction;
+			return o != null;
+		}
 	}
 
 	/// <summary>No operation. Takes 0 arguments and returns void.</summary>
@@ -463,6 +468,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitNop(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Nop;
+			return o != null;
 		}
 	}
 
@@ -526,6 +536,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitILFunction(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as ILFunction;
+			return o != null && this.body.PerformMatch(o.body, ref match);
+		}
 	}
 
 	/// <summary>A container of IL blocks.</summary>
@@ -540,6 +555,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitBlockContainer(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as BlockContainer;
+			return o != null && Patterns.ListMatch.DoMatch(this.Blocks, o.Blocks, ref match);
+		}
 	}
 
 	/// <summary>A block of IL instructions.</summary>
@@ -553,6 +573,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBlock(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Block;
+			return o != null && this.Type == o.Type && Patterns.ListMatch.DoMatch(this.Instructions, o.Instructions, ref match) && this.FinalInstruction.PerformMatch(o.FinalInstruction, ref match);
 		}
 	}
 
@@ -688,6 +713,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitPinnedRegion(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as PinnedRegion;
+			return o != null && variable == o.variable && this.init.PerformMatch(o.init, ref match) && this.body.PerformMatch(o.body, ref match);
+		}
 	}
 
 	/// <summary>Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).</summary>
@@ -705,6 +735,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLogicNot(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LogicNot;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+		}
 	}
 
 	/// <summary>Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.</summary>
@@ -718,6 +753,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBinaryNumericInstruction(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as BinaryNumericInstruction;
+			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator;
 		}
 	}
 
@@ -800,6 +840,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitCompoundAssignmentInstruction(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as CompoundAssignmentInstruction;
+			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match);
+		}
 	}
 
 	/// <summary>Bitwise NOT</summary>
@@ -816,6 +861,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBitNot(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as BitNot;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 
@@ -834,6 +884,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitArglist(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Arglist;
+			return o != null;
+		}
 	}
 
 	/// <summary>Unconditional branch. <c>goto target;</c></summary>
@@ -848,6 +903,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitBranch(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Branch;
+			return o != null && this.TargetBlock == o.TargetBlock;
+		}
 	}
 
 	/// <summary>Unconditional branch to end of block container. <c>goto container_end;</c>, often <c>break;</c></summary>
@@ -861,6 +921,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLeave(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Leave;
+			return o != null;
 		}
 	}
 
@@ -956,6 +1021,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitIfInstruction(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as IfInstruction;
+			return o != null && this.condition.PerformMatch(o.condition, ref match) && this.trueInst.PerformMatch(o.trueInst, ref match) && this.falseInst.PerformMatch(o.falseInst, ref match);
+		}
 	}
 
 	/// <summary>Switch statement</summary>
@@ -969,6 +1039,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitSwitchInstruction(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as SwitchInstruction;
+			return o != null;
 		}
 	}
 
@@ -1031,6 +1106,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitSwitchSection(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as SwitchSection;
+			return o != null && this.body.PerformMatch(o.body, ref match);
+		}
 	}
 
 	/// <summary>Try-catch statement.</summary>
@@ -1044,6 +1124,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryCatch(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as TryCatch;
+			return o != null;
 		}
 	}
 
@@ -1153,6 +1238,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitTryCatchHandler(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as TryCatchHandler;
+			return o != null && this.filter.PerformMatch(o.filter, ref match) && this.body.PerformMatch(o.body, ref match) && variable == o.variable;
+		}
 	}
 
 	/// <summary>Try-finally statement</summary>
@@ -1167,6 +1257,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitTryFinally(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as TryFinally;
+			return o != null;
+		}
 	}
 
 	/// <summary>Try-fault statement</summary>
@@ -1180,6 +1275,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitTryFault(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as TryFault;
+			return o != null;
 		}
 	}
 
@@ -1207,6 +1307,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitDebugBreak(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DebugBreak;
+			return o != null;
+		}
 	}
 
 	/// <summary>Comparison. The inputs must be both integers; or both floats; or both object references. Object references can only be compared for equality or inequality. Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which evaluates to 1 (true).</summary>
@@ -1220,6 +1325,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitComp(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Comp;
+			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && this.Kind == o.Kind;
 		}
 	}
 
@@ -1281,6 +1391,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitCkfinite(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Ckfinite;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+		}
 	}
 
 	/// <summary>Numeric cast.</summary>
@@ -1294,6 +1409,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitConv(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Conv;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 
@@ -1358,6 +1478,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdLoc(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdLoc;
+			return o != null && variable == o.variable;
+		}
 	}
 
 	/// <summary>Loads the address of a local variable. (ldarga/ldloca)</summary>
@@ -1411,6 +1536,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLoca(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdLoca;
+			return o != null && variable == o.variable;
 		}
 	}
 
@@ -1526,6 +1656,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitStLoc(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as StLoc;
+			return o != null && variable == o.variable && this.value.PerformMatch(o.value, ref match);
+		}
 	}
 
 	/// <summary>Stores the value into an anonymous temporary variable, and returns the address of that variable.</summary>
@@ -1607,6 +1742,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitAddressOf(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as AddressOf;
+			return o != null && this.value.PerformMatch(o.value, ref match);
+		}
 	}
 
 	/// <summary>Loads a constant string.</summary>
@@ -1631,6 +1771,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdStr(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdStr;
+			return o != null && this.Value == o.Value;
 		}
 	}
 
@@ -1657,6 +1802,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdcI4(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdcI4;
+			return o != null && this.Value == o.Value;
+		}
 	}
 
 	/// <summary>Loads a constant 64-bit integer.</summary>
@@ -1681,6 +1831,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdcI8(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdcI8;
+			return o != null && this.Value == o.Value;
 		}
 	}
 
@@ -1707,6 +1862,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdcF(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdcF;
+			return o != null && this.Value == o.Value;
+		}
 	}
 
 	/// <summary>Loads a constant decimal.</summary>
@@ -1732,6 +1892,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdcDecimal(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdcDecimal;
+			return o != null && this.Value == o.Value;
+		}
 	}
 
 	/// <summary>Loads the null reference.</summary>
@@ -1748,6 +1913,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdNull(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdNull;
+			return o != null;
 		}
 	}
 
@@ -1775,6 +1945,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdFtn(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdFtn;
+			return o != null && method.Equals(o.method);
 		}
 	}
 
@@ -1815,6 +1990,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdVirtFtn(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdVirtFtn;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && method.Equals(o.method);
+		}
 	}
 
 	/// <summary>Loads runtime representation of metadata token</summary>
@@ -1841,6 +2021,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdTypeToken(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdTypeToken;
+			return o != null && type.Equals(o.type);
 		}
 	}
 
@@ -1869,6 +2054,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdMemberToken(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdMemberToken;
+			return o != null && member.Equals(o.member);
+		}
 	}
 
 	/// <summary>Allocates space in the stack frame</summary>
@@ -1895,6 +2085,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLocAlloc(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LocAlloc;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+		}
 	}
 
 	/// <summary>Returns from the current method or lambda.</summary>
@@ -1908,6 +2103,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitReturn(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Return;
+			return o != null;
 		}
 	}
 
@@ -1997,6 +2197,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdFlda(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdFlda;
+			return o != null && this.target.PerformMatch(o.target, ref match) && field.Equals(o.field);
+		}
 	}
 
 	/// <summary>Load static field address</summary>
@@ -2023,6 +2228,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdsFlda(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdsFlda;
+			return o != null && field.Equals(o.field);
 		}
 	}
 
@@ -2063,6 +2273,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitCastClass(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as CastClass;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+		}
 	}
 
 	/// <summary>Test if object is instance of class or interface.</summary>
@@ -2092,6 +2307,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitIsInst(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as IsInst;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 
@@ -2187,6 +2407,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdObj(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdObj;
+			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
 	}
 
@@ -2303,6 +2528,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitStObj(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as StObj;
+			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
+		}
 	}
 
 	/// <summary>Boxes a value.</summary>
@@ -2341,6 +2571,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitBox(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Box;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 
@@ -2381,6 +2616,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitUnbox(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Unbox;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+		}
 	}
 
 	/// <summary>Unbox a value.</summary>
@@ -2419,6 +2659,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitUnboxAny(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as UnboxAny;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 
@@ -2517,6 +2762,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitNewArr(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as NewArr;
+			return o != null && type.Equals(o.type);
+		}
 	}
 
 	/// <summary>Returns the default value for a type.</summary>
@@ -2544,6 +2794,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitDefaultValue(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as DefaultValue;
+			return o != null && type.Equals(o.type);
+		}
 	}
 
 	/// <summary>Throws an exception.</summary>
@@ -2569,6 +2824,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitThrow(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Throw;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 
@@ -2596,6 +2856,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitRethrow(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Rethrow;
+			return o != null;
+		}
 	}
 
 	/// <summary>Gets the size of a type in bytes.</summary>
@@ -2622,6 +2887,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitSizeOf(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as SizeOf;
+			return o != null && type.Equals(o.type);
 		}
 	}
 
@@ -2691,6 +2961,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitLdLen(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdLen;
+			return o != null && this.array.PerformMatch(o.array, ref match);
 		}
 	}
 
@@ -2795,6 +3070,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitLdElema(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdElema;
+			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && IsReadOnly == o.IsReadOnly;
+		}
 	}
 
 	/// <summary>Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.
@@ -2877,6 +3157,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitArrayToPointer(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as ArrayToPointer;
+			return o != null && this.array.PerformMatch(o.array, ref match);
+		}
 	}
 
 	/// <summary>Push a typed reference of type class onto the stack.</summary>
@@ -2907,6 +3192,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return visitor.VisitMakeRefAny(this);
 		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as MakeRefAny;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+		}
 	}
 
 	/// <summary>Push the type token stored in a typed reference.</summary>
@@ -2923,6 +3213,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitRefAnyType(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as RefAnyType;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 
@@ -2962,6 +3257,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
 			return visitor.VisitRefAnyValue(this);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as RefAnyValue;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
 

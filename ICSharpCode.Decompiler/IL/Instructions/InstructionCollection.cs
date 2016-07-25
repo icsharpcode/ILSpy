@@ -24,7 +24,7 @@ using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public sealed class InstructionCollection<T> : IList<T> where T : ILInstruction
+	public sealed class InstructionCollection<T> : IList<T>, IReadOnlyList<T> where T : ILInstruction
 	{
 		readonly ILInstruction parentInstruction;
 		readonly int firstChildIndex;

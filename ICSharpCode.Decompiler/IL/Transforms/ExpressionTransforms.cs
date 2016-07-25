@@ -74,7 +74,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// => comp(ldlen.i4 array > ldc.i4 0)
 					// This is a special case where the C# compiler doesn't generate conv.i4 after ldlen.
 					inst.Left.ReplaceWith(new LdLen(StackType.I4, array) { ILRange = inst.Left.ILRange });
-					inst.InputType = StackType.I4;
 					inst.Right = rightWithoutConv;
 				}
 				// comp.unsigned(left > ldc.i4 0) => comp(left != ldc.i4 0)

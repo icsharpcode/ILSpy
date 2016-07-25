@@ -123,6 +123,8 @@
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
     <Compile Include="IL\IInlineContext.cs" />
     <Compile Include="IL\Instructions\VariableScope.cs" />
+    <Compile Include="IL\Patterns\ListMatch.cs" />
+    <Compile Include="IL\Patterns\Match.cs" />
     <Compile Include="IL\SlotInfo.cs" />
     <Compile Include="IL\Transforms\CopyPropagation.cs" />
     <Compile Include="IL\Transforms\IILTransform.cs" />
@@ -204,6 +206,7 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ILAst\" />
+    <Folder Include="IL\Patterns" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <Target Name="BeforeBuild">

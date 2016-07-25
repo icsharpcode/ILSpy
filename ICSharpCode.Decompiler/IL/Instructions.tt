@@ -46,9 +46,13 @@
 			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("O")
 		) { BaseClass = "ILVariableScope" },
 		new OpCode("BlockContainer", "A container of IL blocks.",
-			VoidResult, CustomConstructor, CustomVariableName("container")),
+			VoidResult, CustomConstructor, CustomVariableName("container"),
+			MatchCondition("Patterns.ListMatch.DoMatch(this.Blocks, o.Blocks, ref match)")),
 		new OpCode("Block", "A block of IL instructions.",
-			CustomConstructor, CustomVariableName("block")),
+			CustomConstructor, CustomVariableName("block"),
+			MatchCondition("this.Type == o.Type"),
+			MatchCondition("Patterns.ListMatch.DoMatch(this.Instructions, o.Instructions, ref match)"),
+			MatchCondition("this.FinalInstruction.PerformMatch(o.FinalInstruction, ref match)")),
 		new OpCode("PinnedRegion", "A region where a pinned variable is used (initial representation of future fixed statement).",
 			ResultType("Void"),
 			HasVariableOperand("Store"),
@@ -59,14 +63,16 @@
 		new OpCode("logic.not", "Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).",
 			ResultType("I4"), Unary),
 		new OpCode("binary", "Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.",
-			CustomClassName("BinaryNumericInstruction"), Binary, CustomWriteTo, CustomConstructor, CustomComputeFlags),
+			CustomClassName("BinaryNumericInstruction"), Binary, CustomWriteTo, CustomConstructor, CustomComputeFlags,
+			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator")),
 		new OpCode("compound", "Common instruction for compound assignments.",
 			CustomClassName("CompoundAssignmentInstruction"), CustomConstructor, CustomComputeFlags,
 			MayThrow, CustomArguments("target", "value"), HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo),
 		new OpCode("bit.not", "Bitwise NOT", Unary),
 		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
 		new OpCode("br", "Unconditional branch. <c>goto target;</c>",
-			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch, CustomComputeFlags),
+			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch, CustomComputeFlags,
+			MatchCondition("this.TargetBlock == o.TargetBlock")),
 		new OpCode("leave", "Unconditional branch to end of block container. <c>goto container_end;</c>, often <c>break;</c>",
 			NoArguments, CustomConstructor, UnconditionalBranch, MayBranch, CustomComputeFlags),
 		new OpCode("if", "If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c>",
@@ -98,7 +104,8 @@
 			+ "Object references can only be compared for equality or inequality. "
 			+ "Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which "
 			+ "evaluates to 1 (true).",
-			Binary, CustomConstructor, CustomWriteTo, ResultType("I4")),
+			Binary, CustomConstructor, CustomWriteTo, ResultType("I4"),
+			MatchCondition("this.Kind == o.Kind")),
 		new OpCode("call", "Non-virtual method call.", Call),
 		new OpCode("callvirt", "Virtual method call.", 
 			CustomClassName("CallVirt"), Call),
@@ -248,6 +255,13 @@ namespace ICSharpCode.Decompiler.IL
 			return visitor.Visit<#=opCode.Name#>(this);
 		}
 <#	} #>
+<#		if (opCode.GeneratePerformMatch) { #>
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as <#=opCode.Name#>;
+			return <#=string.Join(" && ", opCode.PerformMatchConditions)#>;
+		}
+<#		} #>
 	}
 
 <#	} #>
@@ -387,7 +401,9 @@ namespace ICSharpCode.Decompiler.IL
 		public List<string> ConstructorBody = new List<string>();
 		
 		public bool GenerateMatch = true;
+		public bool GeneratePerformMatch = true;
 		public List<MatchParamInfo> MatchParameters = new List<MatchParamInfo>();
+		public List<string> PerformMatchConditions = new List<string>() { "o != null" };
 
 		public string BaseClass = "ILInstruction";
 		public List<string> Interfaces = new List<string>();
@@ -400,6 +416,7 @@ namespace ICSharpCode.Decompiler.IL
 
 
 		public bool GenerateAcceptVisitor = true;
+		
 		
 		public bool GenerateWriteTo = false;
 		public List<string> WriteOpCodePrefix = new List<string>();
@@ -456,6 +473,14 @@ namespace ICSharpCode.Decompiler.IL
 	static Action<OpCode> CustomComputeFlags = opCode => {
 		opCode.GenerateComputeFlags = false;
 	};
+	
+	// Call trait: the instruction performs a method call
+	static Action<OpCode> MatchCondition(string name)
+	{
+		return opCode => {
+			opCode.PerformMatchConditions.Add(name);
+		};
+	}
 	
 	static Action<OpCode> HasFlag(string name)
 	{
@@ -523,6 +548,7 @@ namespace ICSharpCode.Decompiler.IL
 		BaseClass("UnaryInstruction")(opCode);
 		opCode.ConstructorParameters.Add("ILInstruction argument");
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = "argument", FieldName = "Argument" });
+		opCode.PerformMatchConditions.Add("this.Argument.PerformMatch(o.Argument, ref match)");
 		opCode.BaseConstructorArguments.Add("argument");
 		opCode.WriteArguments.Add("output.Write('(');");
 		opCode.WriteArguments.Add("Argument.WriteTo(output);");
@@ -538,6 +564,8 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.BaseConstructorArguments.Add("right");
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = "left", FieldName = "Left" });
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = "right", FieldName = "Right" });
+		opCode.PerformMatchConditions.Add("this.Left.PerformMatch(o.Left, ref match)");
+		opCode.PerformMatchConditions.Add("this.Right.PerformMatch(o.Right, ref match)");
 		opCode.WriteArguments.Add("output.Write('(');");
 		opCode.WriteArguments.Add("Left.WriteTo(output);");
 		opCode.WriteArguments.Add("output.Write(\", \");");
@@ -619,6 +647,7 @@ namespace ICSharpCode.Decompiler.IL
 					opCode.ConstructorParameters.Add("ILInstruction " + arg);
 					opCode.ConstructorBody.Add("this." + argProp + " = " + arg + ";");
 					opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILInstruction", Name = arg, FieldName = argProp });
+					opCode.PerformMatchConditions.Add("this." + arg + ".PerformMatch(o." + arg + ", ref match)");
 					if (i > 0)
 						opCode.WriteArguments.Add("output.Write(\", \");");
 					opCode.WriteArguments.Add("this." + arg + ".WriteTo(output);");
@@ -731,6 +760,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorParameters.Add("OpCode opCode");
 		opCode.BaseConstructorArguments.Add("opCode");
 		opCode.GenerateMatch = false;
+		opCode.GeneratePerformMatch = false;
 	};
 
 	// SideEffect trait: the instruction has a non-local side effect
@@ -743,6 +773,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.ConstructorParameters.Add("IMethod method");
 		opCode.BaseConstructorArguments.Add("method");
 		opCode.GenerateMatch = false;
+		opCode.GeneratePerformMatch = false;
 	};
 
 	// HasVariableOperand trait: the instruction refers to a local variable
@@ -754,6 +785,7 @@ namespace ICSharpCode.Decompiler.IL
 			opCode.ConstructorBody.Add("Debug.Assert(variable != null);");
 			opCode.ConstructorBody.Add("this.variable = variable;");
 			opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "ILVariable", Name = "variable", FieldName = "Variable" });
+			opCode.PerformMatchConditions.Add("variable == o.variable");
 			opCode.GenerateWriteTo = true;
 			opCode.WriteOperand.Add("output.Write(' ');");
 			opCode.WriteOperand.Add("variable.WriteTo(output);");
@@ -805,6 +837,7 @@ protected override void Disconnected()
 		opCode.Members.Add("readonly IField field;");
 		opCode.ConstructorBody.Add("this.field = field;");
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IField", Name = "field", FieldName = "Field" });
+		opCode.PerformMatchConditions.Add("field.Equals(o.field)");
 		opCode.Members.Add("/// <summary>Returns the field operand.</summary>" + Environment.NewLine
 						+ "public IField Field { get { return field; } }");
 		opCode.GenerateWriteTo = true;
@@ -818,6 +851,7 @@ protected override void Disconnected()
 		opCode.Members.Add("readonly IType type;");
 		opCode.ConstructorBody.Add("this.type = type;");
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IType", Name = "type", FieldName = "Type" });
+		opCode.PerformMatchConditions.Add("type.Equals(o.type)");
 		opCode.Members.Add("/// <summary>Returns the type operand.</summary>" + Environment.NewLine
 						+ "public IType Type { get { return type; } }");
 		opCode.GenerateWriteTo = true;
@@ -830,6 +864,7 @@ protected override void Disconnected()
 		opCode.Members.Add("readonly IMethod method;");
 		opCode.ConstructorBody.Add("this.method = method;");
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IMethod", Name = "method", FieldName = "Method" });
+		opCode.PerformMatchConditions.Add("method.Equals(o.method)");
 		opCode.Members.Add("/// <summary>Returns the method operand.</summary>" + Environment.NewLine
 						+ "public IMethod Method { get { return method; } }");
 		opCode.GenerateWriteTo = true;
@@ -843,6 +878,7 @@ protected override void Disconnected()
 		opCode.Members.Add("readonly IMember member;");
 		opCode.ConstructorBody.Add("this.member = member;");
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IMember", Name = "member", FieldName = "Member" });
+		opCode.PerformMatchConditions.Add("member.Equals(o.member)");
 		opCode.Members.Add("/// <summary>Returns the token operand.</summary>" + Environment.NewLine
 						+ "public IMember Member { get { return member; } }");
 		opCode.GenerateWriteTo = true;
@@ -857,6 +893,7 @@ protected override void Disconnected()
 			NoArguments(opCode);
 			opCode.ConstructorParameters.Add(operandType + " value");
 			opCode.MatchParameters.Add(new MatchParamInfo { TypeName = operandType, Name = "value", FieldName = "Value" });
+			opCode.PerformMatchConditions.Add("this.Value == o.Value");
 			opCode.Members.Add("public readonly " + operandType + " Value;");
 			opCode.ConstructorBody.Add("this.Value = value;");
 			opCode.GenerateWriteTo = true;
@@ -871,6 +908,7 @@ protected override void Disconnected()
 						+ "public bool IsVolatile { get; set; }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOpCodePrefix.Add("if (IsVolatile)" + Environment.NewLine + "\toutput.Write(\"volatile.\");");
+		opCode.PerformMatchConditions.Add("IsVolatile == o.IsVolatile");
 	};
 	
 	static Action<OpCode> SupportsUnalignedPrefix = opCode => {
@@ -879,6 +917,7 @@ protected override void Disconnected()
 						+ "public byte UnalignedPrefix { get; set; }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOpCodePrefix.Add("if (UnalignedPrefix > 0)" + Environment.NewLine + "\toutput.Write(\"unaligned(\" + UnalignedPrefix + \").\");");
+		opCode.PerformMatchConditions.Add("UnalignedPrefix == o.UnalignedPrefix");
 	};
 	
 	static Action<OpCode> SupportsReadonlyPrefix = opCode => {
@@ -886,5 +925,6 @@ protected override void Disconnected()
 						+ "public bool IsReadOnly { get; set; }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOpCodePrefix.Add("if (IsReadOnly)" + Environment.NewLine + "\toutput.Write(\"readonly.\");");
+		opCode.PerformMatchConditions.Add("IsReadOnly == o.IsReadOnly");
 	};
 #>

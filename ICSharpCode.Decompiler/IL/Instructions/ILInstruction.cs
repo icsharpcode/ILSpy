@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.Decompiler.IL.Patterns;
 using ICSharpCode.NRefactory.Utils;
 using ICSharpCode.Decompiler.CSharp;
 
@@ -606,6 +607,57 @@ namespace ICSharpCode.Decompiler.IL
 			inst.activeEnumerators = 0;
 			#endif
 			return inst;
+		}
+		
+		/// <summary>
+		/// Attempts to match the specified node against the pattern.
+		/// </summary>
+		/// <c>this</c>: The syntactic pattern.
+		/// <param name="node">The syntax node to test against the pattern.</param>
+		/// <returns>
+		/// Returns a match object describing the result of the matching operation.
+		/// Check the <see cref="Match.Success"/> property to see whether the match was successful.
+		/// For successful matches, the match object allows retrieving the nodes that were matched with the captured groups.
+		/// </returns>
+		public Match Match(ILInstruction node)
+		{
+			Match match = new Match();
+			match.Success = PerformMatch(node, ref match);
+			return match;
+		}
+		
+		/// <summary>
+		/// Attempts matching this instruction against the other instruction.
+		/// </summary>
+		/// <param name="other">The instruction to compare with.</param>
+		/// <param name="match">The match object, used to store global state during the match (such as the results of capture groups).</param>
+		/// <returns>Returns whether the (partial) match was successful.
+		/// If the method returns true, it adds the capture groups (if any) to the match.
+		/// If the method returns false, the match object may remain in a partially-updated state and
+		/// needs to be restored before it can be reused.</returns>
+		protected internal abstract bool PerformMatch(ILInstruction other, ref Match match);
+		
+		/// <summary>
+		/// Attempts matching this instruction against a list of other instructions (or a part of said list).
+		/// </summary>
+		/// <param name="listMatch">Stores state about the current list match.</param>
+		/// <param name="match">The match object, used to store global state during the match (such as the results of capture groups).</param>
+		/// <returns>Returns whether the (partial) match was successful.
+		/// If the method returns true, it updates listMatch.SyntaxIndex to point to the next node that was not part of the match,
+		/// and adds the capture groups (if any) to the match.
+		/// If the method returns false, the listMatch and match objects remain in a partially-updated state and need to be restored
+		/// before they can be reused.</returns>
+		protected internal virtual bool PerformMatch(ref ListMatch listMatch, ref Match match)
+		{
+			// Base implementation expects the node to match a single element.
+			// Any patterns matching 0 or more than 1 element must override this method.
+			if (listMatch.SyntaxIndex < listMatch.SyntaxList.Count) {
+				if (PerformMatch(listMatch.SyntaxList[listMatch.SyntaxIndex], ref match)) {
+					listMatch.SyntaxIndex++;
+					return true;
+				}
+			}
+			return false;
 		}
 	}
 	

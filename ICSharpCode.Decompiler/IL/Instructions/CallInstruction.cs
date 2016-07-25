@@ -91,5 +91,13 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			output.Write(')');
 		}
+		
+		protected internal sealed override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			CallInstruction o = other as CallInstruction;
+			return o != null && this.OpCode == o.OpCode && this.Method.Equals(o.Method) && this.IsTail == o.IsTail
+				&& object.Equals(this.ConstrainedTo, o.ConstrainedTo)
+				&& Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
+		}
 	}
 }
