@@ -141,7 +141,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					
 					allSame = true;
 					for (int i = 1; i < instanceCtorsNotChainingWithThis.Length; i++) {
-						if (!instanceCtors[0].Body.First().IsMatch(instanceCtorsNotChainingWithThis[i].Body.FirstOrDefault()))
+						if (!instanceCtorsNotChainingWithThis[0].Body.First().IsMatch(instanceCtorsNotChainingWithThis[i].Body.FirstOrDefault()))
 							allSame = false;
 					}
 					if (allSame) {
