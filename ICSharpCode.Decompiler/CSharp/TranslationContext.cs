@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -25,6 +26,10 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	public struct TranslationContext
 	{
-		
+		/// <summary>
+		/// The expected type during ILAst->C# translation; or <c>SpecialType.Unknown</c>
+		/// if no specific type is expected.
+		/// </summary>
+		public IType TypeHint;
 	}
 }

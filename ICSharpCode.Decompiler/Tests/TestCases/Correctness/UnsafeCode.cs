@@ -20,6 +20,12 @@ using System;
 
 public class UnsafeCode
 {
+	struct SimpleStruct
+	{
+		public int X;
+		public double Y;
+	}
+	
 	static void Main()
 	{
 		// TODO: test behavior, or convert this into a pretty-test
@@ -145,6 +151,7 @@ public class UnsafeCode
 	public unsafe string StackAlloc(int count)
 	{
 		char* ptr = stackalloc char[count];
+		char* ptr2 = stackalloc char[100];
 		for (int i = 0; i < count; i++)
 		{
 			ptr[i] = (char)i;
@@ -152,6 +159,13 @@ public class UnsafeCode
 		return this.PointerReferenceExpression((double*)ptr);
 	}
 
+	public unsafe string StackAllocStruct(int count)
+	{
+		SimpleStruct* s = stackalloc SimpleStruct[checked(count * 2)];
+		SimpleStruct* p = stackalloc SimpleStruct[10];
+		return this.PointerReferenceExpression(&s->Y);
+	}
+	
 	public unsafe int* PointerArithmetic(int* p)
 	{
 		return p + 2;

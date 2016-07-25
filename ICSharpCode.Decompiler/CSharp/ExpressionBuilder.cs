@@ -108,10 +108,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new ExpressionWithResolveResult(expr, exprRR);
 		}
 		
-		public TranslatedExpression Translate(ILInstruction inst)
+		public TranslatedExpression Translate(ILInstruction inst, IType typeHint = null)
 		{
 			Debug.Assert(inst != null);
-			var cexpr = inst.AcceptVisitor(this, new TranslationContext());
+			TranslationContext context = new TranslationContext {
+				TypeHint = typeHint ?? SpecialType.UnknownType
+			};
+			var cexpr = inst.AcceptVisitor(this, context);
 			#if DEBUG
 			if (inst.ResultType != StackType.Void && cexpr.Type.Kind != TypeKind.Unknown) {
 				if (inst.ResultType.IsIntegerType()) {
@@ -127,7 +130,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		public TranslatedExpression TranslateCondition(ILInstruction condition)
 		{
-			var expr = Translate(condition);
+			var expr = Translate(condition, compilation.FindType(KnownTypeCode.Boolean));
 			return expr.ConvertToBoolean(this);
 		}
 		
@@ -206,11 +209,51 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLocAlloc(LocAlloc inst, TranslationContext context)
 		{
-			var byteType = compilation.FindType(KnownTypeCode.Byte);
+			IType elementType;
+			TranslatedExpression countExpression = TranslatePointerArgument(inst.Argument, context, out elementType);
+			countExpression = countExpression.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
 			return new StackAllocExpression {
-				Type = ConvertType(byteType),
-				CountExpression = Translate(inst.Argument)
-			}.WithILInstruction(inst).WithRR(new ResolveResult(new PointerType(byteType)));
+				Type = ConvertType(elementType ?? compilation.FindType(KnownTypeCode.Byte)),
+				CountExpression = countExpression
+			}.WithILInstruction(inst).WithRR(new ResolveResult(new PointerType(elementType)));
+		}
+		
+		/// <summary>
+		/// Translate the argument of an operation that deals with pointers:
+		/// * undoes the implicit multiplication with `sizeof(elementType)` and returns `elementType`
+		/// * on failure, translates the whole expression and returns `elementType = null`.
+		/// </summary>
+		TranslatedExpression TranslatePointerArgument(ILInstruction countExpr, TranslationContext context, out IType elementType)
+		{
+			ILInstruction left;
+			ILInstruction right;
+			if (countExpr.MatchBinaryNumericInstruction(BinaryNumericOperator.Mul, out left, out right)
+			    && right.UnwrapConv(ConversionKind.SignExtend).UnwrapConv(ConversionKind.ZeroExtend).MatchSizeOf(out elementType))
+			{
+				return Translate(left);
+			}
+			
+			var pointerTypeHint = context.TypeHint as PointerType;
+			if (pointerTypeHint == null) {
+				elementType = null;
+				return Translate(countExpr);
+			}
+			ResolveResult sizeofRR = resolver.ResolveSizeOf(pointerTypeHint.ElementType);
+			if (!(sizeofRR.IsCompileTimeConstant && sizeofRR.ConstantValue is int)) {
+				elementType = null;
+				return Translate(countExpr);
+			}
+			int typeSize = (int)sizeofRR.ConstantValue;
+			
+			if (countExpr.MatchBinaryNumericInstruction(BinaryNumericOperator.Mul, out left, out right)
+			    && right.UnwrapConv(ConversionKind.SignExtend).UnwrapConv(ConversionKind.ZeroExtend).MatchLdcI4(typeSize))
+			{
+				elementType = pointerTypeHint.ElementType;
+				return Translate(left);
+			}
+			
+			elementType = null;
+			return Translate(countExpr);
 		}
 
 		protected internal override TranslatedExpression VisitLdcI4(LdcI4 inst, TranslationContext context)
@@ -346,7 +389,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitStLoc(StLoc inst, TranslationContext context)
 		{
-			var translatedValue = Translate(inst.Value);
+			var translatedValue = Translate(inst.Value, typeHint: inst.Variable.Type);
 			if (inst.Variable.Kind == VariableKind.StackSlot && inst.Variable.IsSingleDefinition
 			    && inst.Variable.StackType == translatedValue.Type.GetStackType()
 			    && translatedValue.Type.Kind != TypeKind.Null && !loadedVariablesSet.Contains(inst.Variable)) {
@@ -1167,7 +1210,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitStObj(StObj inst, TranslationContext context)
 		{
 			var target = Translate(inst.Target);
-			var value = Translate(inst.Value);
 			TranslatedExpression result;
 			if (target.Expression is DirectionExpression && TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
 				// we can deference the managed reference by stripping away the 'ref'
@@ -1181,6 +1223,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithoutILInstruction()
 					.WithRR(new ResolveResult(((TypeWithElementType)target.Type).ElementType));
 			}
+			var value = Translate(inst.Value, typeHint: result.Type);
 			return Assignment(result, value).WithILInstruction(inst);
 		}
 
@@ -1261,7 +1304,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitBox(Box inst, TranslationContext context)
 		{
 			var obj = compilation.FindType(KnownTypeCode.Object);
-			var arg = Translate(inst.Argument).ConvertTo(inst.Type, this);
+			var arg = Translate(inst.Argument, typeHint: inst.Type).ConvertTo(inst.Type, this);
 			return new CastExpression(ConvertType(obj), arg.Expression)
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(obj, arg.ResolveResult, Conversion.BoxingConversion));

@@ -99,6 +99,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				pre.CopyAnnotationsFrom(memberReferenceExpression);
 				memberReferenceExpression.ReplaceWith(pre);
 			}
+			var rr = memberReferenceExpression.GetResolveResult();
+			if (rr != null && rr.Type is PointerType)
+				return true;
 			return result;
 		}
 		

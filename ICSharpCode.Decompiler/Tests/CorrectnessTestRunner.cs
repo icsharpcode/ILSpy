@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.Tests
 			TestAssembleDecompileCompileOutput("BitNot.il", CompilerOptions.UseDebug | CompilerOptions.Force32Bit, AssemblerOptions.Force32Bit);
 		}
 
-		[Test, Ignore("Fixed statements are broken")]
+		[Test, Ignore("Pointer reference expression is not supported")]
 		public void UnsafeCode()
 		{
 			TestCompileDecompileCompileOutputAll("UnsafeCode.cs");
