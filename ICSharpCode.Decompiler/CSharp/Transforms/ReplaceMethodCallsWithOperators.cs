@@ -255,7 +255,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// detect increment/decrement
 				if (assignment.Right.IsMatch(new PrimitiveExpression(1))) {
 					// only if it's not a custom operator
-					if (assignment.Annotation<MethodReference>() == null) {
+					if (assignment.Annotation<IL.CallInstruction>() == null) {
 						UnaryOperatorType type;
 						// When the parent is an expression statement, pre- or post-increment doesn't matter;
 						// so we can pick post-increment which is more commonly used (for (int i = 0; i < x; i++))
