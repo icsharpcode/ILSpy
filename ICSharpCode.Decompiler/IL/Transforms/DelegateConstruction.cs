@@ -284,6 +284,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				inst.ReplaceWith(info.value.Clone());
 			}
+			
+			protected internal override void VisitLdFlda(LdFlda inst)
+			{
+				base.VisitLdFlda(inst);
+				if (inst.Parent is LdObj || inst.Parent is StObj)
+					return;
+				if (!MatchesTargetOrCopyLoad(inst.Target))
+					return;
+				var field = (IField)inst.Field.MemberDefinition;
+				DisplayClassVariable info;
+				if (!initValues.TryGetValue(field, out info)) {
+					var v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+					inst.ReplaceWith(new LdLoca(v));
+					var value = new LdLoc(v);
+					initValues.Add(field, new DisplayClassVariable { value = value, variable = v });
+				} else if (info.value is LdLoc) {
+					inst.ReplaceWith(new LdLoca(((LdLoc)info.value).Variable));
+				} else {
+					throw new NotImplementedException();
+				}
+			}
 		}
 		#endregion
 
