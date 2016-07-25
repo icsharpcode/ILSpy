@@ -144,6 +144,8 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		
 		internal void PushToSavePoints(int startMarker, int data)
 		{
+			if (backtrackingStack == null)
+				return;
 			for (int i = startMarker; i < backtrackingStack.Count; i++) {
 				backtrackingStack[i].stack.Push(data);
 			}
