@@ -957,12 +957,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				ame.Body = body;
 				replacement = ame;
 			}
-			var expectedType = objectCreateExpression.ResolveResult.Type.GetDefinition();
-			if (expectedType != null && expectedType.Kind != TypeKind.Delegate) {
+			var expectedType = objectCreateExpression.ResolveResult.Type;
+			var expectedTypeDefinition = expectedType.GetDefinition();
+			if (expectedTypeDefinition != null && expectedTypeDefinition.Kind != TypeKind.Delegate) {
 				var simplifiedDelegateCreation = (ObjectCreateExpression)objectCreateExpression.Expression.Clone();
 				simplifiedDelegateCreation.Arguments.Clear();
 				simplifiedDelegateCreation.Arguments.Add(replacement);
 				replacement = simplifiedDelegateCreation;
+			} else if (!expectedType.ContainsAnonymousType()) {
+				replacement = replacement.CastTo(ConvertType(expectedType));
 			}
 			return replacement
 				.WithILInstruction(function)
@@ -1447,7 +1450,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var trueBranch = Translate(inst.TrueInst);
 			var falseBranch = Translate(inst.FalseInst);
 			IType targetType;
-			if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType)) {
+			if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType) && !trueBranch.Type.Equals(falseBranch.Type)) {
 				targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
 			} else {
 				targetType = trueBranch.Type.Equals(SpecialType.NullType) ? falseBranch.Type : trueBranch.Type;
