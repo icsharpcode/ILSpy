@@ -1034,7 +1034,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(inst.Arguments.Count == firstParamIndex + inst.Method.Parameters.Count);
 			for (int i = 0; i < arguments.Length; i++) {
 				var parameter = method.Parameters[i];
-				arguments[i] = Translate(inst.Arguments[firstParamIndex + i]).ConvertTo(parameter.Type, this);
+				arguments[i] = Translate(inst.Arguments[firstParamIndex + i]);
+				// HACK : do not add casts to anonymous types, in order to avoid compile errors.
+				// Ideally we should be able to remove casts to any type, if not explicitly required.
+				if (!parameter.Type.ContainsAnonymousType())
+					arguments[i] = arguments[i].ConvertTo(parameter.Type, this);
 				
 				if (parameter.IsOut && arguments[i].Expression is DirectionExpression) {
 					((DirectionExpression)arguments[i].Expression).FieldDirection = FieldDirection.Out;
