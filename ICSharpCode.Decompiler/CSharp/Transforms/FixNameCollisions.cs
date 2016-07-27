@@ -37,16 +37,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			var renamedSymbols = new Dictionary<ISymbol, string>();
 			foreach (var typeDecl in rootNode.DescendantsAndSelf.OfType<TypeDeclaration>()) {
-				var memberNames = typeDecl.Members.Select(m => m.Name).ToHashSet();
+				var memberNames = typeDecl.Members.Select(m => {
+				                                          	var type = m.GetChildByRole(EntityDeclaration.PrivateImplementationTypeRole);
+				                                          	return type.IsNull ? m.Name : type + "." + m.Name;
+				                                          }).ToHashSet();
 				// memberNames does not include fields or non-custom events because those
 				// don't have a single name, but a list of VariableInitializers.
 				foreach (var fieldDecl in typeDecl.Members.OfType<FieldDeclaration>()) {
 					if (fieldDecl.Variables.Count != 1)
 						continue;
 					string oldName = fieldDecl.Variables.Single().Name;
-					if (memberNames.Contains(oldName)) {
+					ISymbol symbol = fieldDecl.GetSymbol();
+					if (memberNames.Contains(oldName) && ((IField)symbol).IsPrivate) {
 						string newName = PickNewName(memberNames, oldName);
-						ISymbol symbol = fieldDecl.GetSymbol();
 						if (symbol != null) {
 							fieldDecl.Variables.Single().Name = newName;
 							renamedSymbols[symbol] = newName;
