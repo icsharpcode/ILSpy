@@ -24,6 +24,7 @@ using System.Threading;
 using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Refactoring;
+using ICSharpCode.NRefactory.CSharp.Resolver;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
@@ -397,7 +398,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		
-		#region SetNewModifier
 		/// <summary>
 		/// Sets new modifier if the member hides some other member from a base type.
 		/// </summary>
@@ -405,82 +405,34 @@ namespace ICSharpCode.Decompiler.CSharp
 		void SetNewModifier(EntityDeclaration member)
 		{
 			bool addNewModifier = false;
-			if (member is IndexerDeclaration) {
-				var propertyDef = GetDefinitionFromAnnotation(member) as PropertyDefinition;
-				if (propertyDef != null)
-					addNewModifier = TypesHierarchyHelpers.FindBaseProperties(propertyDef).Any();
-			} else
-				addNewModifier = HidesBaseMember(member) == true;
+			var entity = (IEntity)member.GetSymbol();
+			var lookup = new MemberLookup(entity.DeclaringTypeDefinition, entity.ParentAssembly);
+			
+			var baseTypes = entity.DeclaringType.GetNonInterfaceBaseTypes().Where(t => entity.DeclaringType != t);
+			if (entity is ITypeDefinition) {
+				addNewModifier = baseTypes.SelectMany(b => b.GetNestedTypes(t => t.Name == entity.Name && lookup.IsAccessible(t, true))).Any();
+			} else {
+				var members = baseTypes.SelectMany(b => b.GetMembers(m => m.Name == entity.Name).Where(m => lookup.IsAccessible(m, true)));
+				switch (entity.SymbolKind) {
+					case SymbolKind.Field:
+					case SymbolKind.Property:
+					case SymbolKind.Event:
+						addNewModifier = members.Any();
+						break;
+					case SymbolKind.Method:
+					case SymbolKind.Constructor:
+					case SymbolKind.Indexer:
+					case SymbolKind.Operator:
+						addNewModifier = members.Any(m => SignatureComparer.Ordinal.Equals(m, (IMember)entity));
+						break;
+					default:
+						throw new NotSupportedException();
+				}
+			}
 
 			if (addNewModifier)
 				member.Modifiers |= Modifiers.New;
 		}
-		
-		IMemberDefinition GetDefinitionFromAnnotation(EntityDeclaration member)
-		{
-			if (member is TypeDeclaration) {
-				return (IMemberDefinition)typeSystem.GetCecil(member.Annotation<TypeResolveResult>()?.Type.GetDefinition());
-			} else {
-				return (IMemberDefinition)typeSystem.GetCecil(member.Annotation<MemberResolveResult>()?.Member.MemberDefinition);
-			}
-		}
-		
-		bool? HidesBaseMember(EntityDeclaration member)
-		{
-			var memberDefinition = GetDefinitionFromAnnotation(member);
-			if (memberDefinition == null)
-				return null;
-			var methodDefinition = memberDefinition as MethodDefinition;
-			if (methodDefinition != null) {
-				bool? hidesByName = HidesByName(memberDefinition, includeBaseMethods: false);
-				return hidesByName != true && TypesHierarchyHelpers.FindBaseMethods(methodDefinition).Any();
-			} else
-				return HidesByName(memberDefinition, includeBaseMethods: true);
-		}
-		
-		/// <summary>
-		/// Determines whether any base class member has the same name as the given member.
-		/// </summary>
-		/// <param name="member">The derived type's member.</param>
-		/// <param name="includeBaseMethods">true if names of methods declared in base types should also be checked.</param>
-		/// <returns>true if any base member has the same name as given member, otherwise false. Returns null on error.</returns>
-		static bool? HidesByName(IMemberDefinition member, bool includeBaseMethods)
-		{
-			Debug.Assert(!(member is PropertyDefinition) || !((PropertyDefinition)member).IsIndexer());
-
-			if (member.DeclaringType.BaseType != null) {
-				var baseTypeRef = member.DeclaringType.BaseType;
-				while (baseTypeRef != null) {
-					var baseType = baseTypeRef.Resolve();
-					if (baseType == null)
-						return null;
-					if (baseType.HasProperties && AnyIsHiddenBy(baseType.Properties, member, m => !m.IsIndexer()))
-						return true;
-					if (baseType.HasEvents && AnyIsHiddenBy(baseType.Events, member))
-						return true;
-					if (baseType.HasFields && AnyIsHiddenBy(baseType.Fields, member))
-						return true;
-					if (includeBaseMethods && baseType.HasMethods
-					    && AnyIsHiddenBy(baseType.Methods, member, m => !m.IsSpecialName))
-						return true;
-					if (baseType.HasNestedTypes && AnyIsHiddenBy(baseType.NestedTypes, member))
-						return true;
-					baseTypeRef = baseType.BaseType;
-				}
-			}
-			return false;
-		}
-
-		static bool AnyIsHiddenBy<T>(IEnumerable<T> members, IMemberDefinition derived, Predicate<T> condition = null)
-			where T : IMemberDefinition
-		{
-			int numberOfGenericParameters = (derived as IGenericParameterProvider)?.GenericParameters.Count ?? 0;
-			return members.Any(m => m.Name == derived.Name
-			                   && ((m as IGenericParameterProvider)?.GenericParameters.Count ?? 0) == numberOfGenericParameters
-			                   && (condition == null || condition(m))
-			                   && TypesHierarchyHelpers.IsVisibleFromDerived(m, derived.DeclaringType));
-		}
-		#endregion
 
 		void FixParameterNames(EntityDeclaration entity)
 		{
@@ -608,9 +560,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else if (!method.IsAbstract && method.DeclaringType.Kind != TypeKind.Interface) {
 				methodDecl.Modifiers |= Modifiers.Extern;
 			}
-			if (decompilationContext.CurrentTypeDefinition.Kind != TypeKind.Interface
-			    && method.SymbolKind == SymbolKind.Method
-			    && methodDefinition.IsVirtual == methodDefinition.IsNewSlot) {
+			if (method.SymbolKind == SymbolKind.Method && !method.IsExplicitInterfaceImplementation && methodDefinition.IsVirtual == methodDefinition.IsNewSlot) {
 				SetNewModifier(methodDecl);
 			}
 			return methodDecl;
@@ -685,7 +635,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				DecompileBody(propertyDefinition.SetMethod, property.Setter, setter, decompilationContext);
 			}
 			var accessor = propertyDefinition.GetMethod ?? propertyDefinition.SetMethod;
-			if (!accessor.HasOverrides && !accessor.DeclaringType.IsInterface && accessor.IsVirtual == accessor.IsNewSlot)
+			if (!accessor.HasOverrides && accessor.IsVirtual == accessor.IsNewSlot)
 				SetNewModifier(propertyDecl);
 			return propertyDecl;
 		}
