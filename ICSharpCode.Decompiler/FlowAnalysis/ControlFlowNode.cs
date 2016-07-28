@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
@@ -25,8 +26,17 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 	/// <summary>
 	/// Represents a block in the control flow graph.
 	/// </summary>
+	[DebuggerDisplay("CFG UserIndex={UserIndex}, UserData={UserData}")]
 	public class ControlFlowNode
 	{
+		/// <summary>
+		/// User index, can be used to look up additional information in an array.
+		/// </summary>
+		public int UserIndex;
+		
+		/// <summary>
+		/// User data.
+		/// </summary>
 		public object UserData;
 		
 		/// <summary>

@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.NRefactory.Utils;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -33,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// * LoopDetection should run before other control flow structures are detected.
 	/// * Blocks should be basic blocks (not extended basic blocks) so that the natural loops
 	/// don't include more instructions than strictly necessary.
-	/// * (depending on future loop detection improvements:) Loop detection should run after the 'return block' is duplicated (ControlFlowSimplification).
+	/// * Loop detection should run after the 'return block' is duplicated (ControlFlowSimplification).
 	/// </remarks>
 	public class LoopDetection : IILTransform
 	{
@@ -47,8 +48,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		internal static ControlFlowNode[] BuildCFG(BlockContainer bc)
 		{
 			ControlFlowNode[] nodes = new ControlFlowNode[bc.Blocks.Count];
-			for (int i = 0; i < nodes.Length; i++) {
-				nodes[i] = new ControlFlowNode { UserData = bc.Blocks[i] };
+			for (int i = 0; i < bc.Blocks.Count; i++) {
+				nodes[i] = new ControlFlowNode { UserIndex = i, UserData = bc.Blocks[i] };
 			}
 			
 			// Create edges:
@@ -82,15 +83,33 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 		
+		ControlFlowNode[] cfg;
+		
+		/// <summary>
+		/// nodeHasReachableExit[i] == true iff there is a path from cfg[i] to a node not dominated by cfg[i],
+		/// or if there is a path from cfg[i] to a branch/leave instruction leaving the currentBlockContainer.
+		/// </summary>
+		BitSet nodeHasReachableExit;
+		
+		/// <summary>Block container corresponding to the current cfg.</summary>
+		BlockContainer currentBlockContainer;
+		
 		/// <summary>
 		/// Run loop detection for blocks in the block container.
 		/// </summary>
 		public void Run(BlockContainer blockContainer, ILTransformContext context)
 		{
-			var cfg = BuildCFG(blockContainer);
+			this.currentBlockContainer = blockContainer;
+			this.cfg = BuildCFG(blockContainer);
+			this.nodeHasReachableExit = null; // will be computed on-demand
+			
 			var entryPoint = cfg[0];
 			Dominance.ComputeDominance(entryPoint, context.CancellationToken);
 			FindLoops(entryPoint);
+			
+			this.cfg = null;
+			this.nodeHasReachableExit = null;
+			this.currentBlockContainer = null;
 		}
 		
 		/// <summary>
@@ -126,7 +145,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (loop != null) {
 				// loop now is the union of all natural loops with loop head h.
 				// Try to extend the loop to reduce the number of exit points:
-				ExtendLoop(h, loop, h);
+				ExtendLoop(h, loop);
 				
 				// Sort blocks in the loop in reverse post-order to make the output look a bit nicer.
 				// (if the loop doesn't contain nested loops, this is a topological sort)
@@ -150,43 +169,186 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// We do this because C# only allows reaching a single exit point (with 'break'
 		/// statements or when the loop condition evaluates to false), so we'd have
 		/// to introduce 'goto' statements for any additional exit points.
-		/// 
+		/// </summary>
+		/// <remarks>
 		/// Definition: a loop exit point is a CFG node that is not itself part of the loop,
 		/// but has at least one predecessor which is part of the loop.
 		/// 
 		/// Nodes can only be added to the loop if they are dominated by the loop head.
-		/// When adding a node to the loop, we implicitly also add all of that node's predecessors
+		/// When adding a node to the loop, we must also add all of that node's predecessors
 		/// to the loop. (this ensures that the loop keeps its single entry point)
+		/// 
+		/// Goal: If possible, find a set of nodes that can be added to the loop so that there
+		/// remains only a single exit point.
+		/// Add as little code as possible to the loop to reach this goal.
+		/// 
+		/// This means we need to partition the set of nodes dominated by the loop entry point
+		/// into two sets (in-loop and out-of-loop).
+		/// Constraints:
+		///  * the loop head itself is in-loop
+		///  * there must not be any edge from an out-of-loop node to an in-loop node
+		///    -> all predecessors of in-loop nodes are also in-loop
+		///    -> all nodes in a cycle are part of the same partition
+		/// Optimize:
+		///  * use only a single exit point if at all possible
+		///  * minimize the amount of code in the in-loop partition
+		///    (thus: maximize the amount of code in the out-of-loop partition)
+		///   "amount of code" could be measured as:
+		///     * number of basic blocks
+		///     * number of instructions directly in those basic blocks (~= number of statements)
+		///     * number of instructions in those basic blocks (~= number of expressions)
+		/// 
+		/// Observations:
+		///  * If a node is in-loop, so are all its ancestors in the dominator tree (up to the loop entry point)
+		///  * If there are no exits reachable from a node (i.e. all paths from that node lead to a return/throw instruction),
+		///    it is valid to put the dominator tree rooted at that node into either partition independently of
+		///    any other nodes except for the ancestors in the dominator tree.
+		///       (exception: the loop head itself must always be in-loop)
+		/// 
+		/// There are two different cases we need to consider:
+		/// a) There are no exits reachable at all from the loop head.
+		///    ->  it is possible to create a loop with zero exit points by adding all nodes
+		///        dominated by the loop to the loop.
+		///    -> the only way to exit the loop is by "return;" or "throw;"
+		/// b) There are some exits reachable from the loop head.
+		/// 
+		/// In case 1, we can pick a single exit point freely by picking any node that has no reachable exits
+		/// (other than the loop head).
+		/// All nodes dominated by the exit point are out-of-loop, all other nodes are in-loop.
+		/// Maximizing the amount of code in the out-of-loop partition is thus simple: sum up the amount of code
+		/// over the dominator tree and pick the node with the maximum amount of code.
+		/// 
+		/// In case 2, we need to pick our exit point so that all paths from the loop head
+		/// to the nodes in the loop head's dominance frontier run through that exit point.
+		/// 
+		/// This is a form of postdominance where the nodes in the loop head's dominance frontier
+		/// are considered exit nodes, while "return;" or "throw;" instructions are not considered exit nodes.
+		/// 
+		/// Using this form of postdominance, we are looking for an exit point that post-dominates all nodes in the natural loop.
+		/// --> a common ancestor in post-dominator tree.
+		/// To minimize the amount of code in-loop, we pick the lowest common ancestor.
+		/// All nodes dominated by the exit point are out-of-loop, all other nodes are in-loop.
+		/// (using normal dominance as in case 1, not post-dominance!)
+		/// 
+		/// If it is impossible to use a single exit point for the loop, the lowest common ancestor will be the fake "exit node"
+		/// used by the post-dominance analysis. In this case, we fall back to the old heuristic algorithm.
+		/// 
+		/// Precondition: Requires that a node is marked as visited iff it is contained in the loop.
+		/// </remarks>
+		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop)
+		{
+			ComputeNodesWithReachableExits();
+			ControlFlowNode exitPoint = FindExitPoint(loopHead, loop);
+			Debug.Assert(!loop.Contains(exitPoint), "Cannot pick an exit point that is part of the natural loop");
+			if (exitPoint != null) {
+				foreach (var node in TreeTraversal.PreOrder(loopHead, n => (n != exitPoint) ? n.DominatorTreeChildren : null)) {
+					// TODO: did FindExitPoint really not touch the visited flag?
+					if (node != exitPoint && !node.Visited) {
+						loop.Add(node);
+					}
+				}
+			} else {
+				// TODO: did FindExitPoint really not touch the visited flag?
+				ExtendLoopHeuristic(loopHead, loop, loopHead);
+			}
+		}
+		
+		void ComputeNodesWithReachableExits()
+		{
+			if (nodeHasReachableExit != null)
+				return;
+			nodeHasReachableExit = Dominance.MarkNodesWithReachableExits(cfg);
+			// Also mark the nodes that exit the block container altogether.
+			// Invariant: leaving[n.UserIndex] == true implies leaving[n.ImmediateDominator.UserIndex] == true
+			var leaving = new BitSet(cfg.Length);
+			foreach (var node in cfg) {
+				if (leaving[node.UserIndex])
+					continue;
+				Block block = (Block)node.UserData;
+				foreach (var branch in block.Descendants.OfType<Branch>()) {
+					if (!branch.TargetBlock.IsDescendantOf(currentBlockContainer)) {
+						// control flow that isn't internal to the block container
+						MarkAsLeaving(node, leaving);
+						break;
+					}
+				}
+				foreach (var leave in block.Descendants.OfType<Leave>()) {
+					if (!leave.TargetContainer.IsDescendantOf(block)) {
+						MarkAsLeaving(node, leaving);
+						break;
+					}
+				}
+			}
+			nodeHasReachableExit.UnionWith(leaving);
+		}
+
+		void MarkAsLeaving(ControlFlowNode node, BitSet leaving)
+		{
+			while (node != null && !leaving[node.UserIndex]) {
+				leaving.Set(node.UserIndex);
+				node = node.ImmediateDominator;
+			}
+		}
+		
+		ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop)
+		{
+			if (!nodeHasReachableExit[loopHead.UserIndex]) {
+				// There are no nodes n so that loopHead dominates a predecessor of n but not n itself
+				// -> we could build a loop with zero exit points.
+				ControlFlowNode exitPoint = null;
+				int exitPointCodeAmount = -1;
+				foreach (var node in loopHead.DominatorTreeChildren) {
+					PickExitPoint(node, ref exitPoint, ref exitPointCodeAmount);
+				}
+				return exitPoint;
+			} else {
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Pick exit point by picking any node that has no reachable exits.
+		/// 
+		/// Maximizing the amount of code in the out-of-loop partition is thus simple: sum up the amount of code
+		/// over the dominator tree and pick the node with the maximum amount of code.
+		/// </summary>
+		/// <returns>Code amount in <paramref name="node"/> and its dominated nodes.</returns>
+		int PickExitPoint(ControlFlowNode node, ref ControlFlowNode exitPoint, ref int exitPointCodeAmount)
+		{
+			if (node.UserData == null) {
+				// special exit block
+				return 0;
+			}
+			int codeAmount = ((Block)node.UserData).Children.Count;
+			foreach (var child in node.DominatorTreeChildren) {
+				codeAmount += PickExitPoint(child, ref exitPoint, ref exitPointCodeAmount);
+			}
+			if (codeAmount > exitPointCodeAmount && !nodeHasReachableExit[node.UserIndex]) {
+				// dominanceFrontier(node) is empty
+				// -> there are no nodes n so that `node` dominates a predecessor of n but not n itself
+				// -> there is no control flow out of `node` back into the loop, so it's usable as exit point
+				exitPoint = node;
+				exitPointCodeAmount = codeAmount;
+			}
+			return codeAmount;
+		}
+		
+		/// <summary>
+		/// This function implements a heuristic algorithm that tries to reduce the number of exit
+		/// points. It is only used as fall-back when it is impossible to use a single exit point.
+		/// </summary>
+		/// <remarks>
+		/// This heuristic loop extension algorithm traverses the loop head's dominator tree in pre-order.
+		/// For each candidate node, we detect whether adding it to the loop reduces the number of exit points.
+		/// If it does, the candidate is added to the loop.
 		/// 
 		/// Adding a node to the loop has two effects on the the number of exit points:
 		/// * exit points that were added to the loop are no longer exit points, thus reducing the total number of exit points
 		/// * successors of the newly added nodes might be new, additional exit points
 		/// 
-		/// The loop extension algorithm proceeds traverses the loop head's dominator tree in pre-order.
-		/// For each candidate node, we detect whether adding it to the loop reduces the number of exit points.
-		/// If it does, the candidate is added to the loop.
-		/// </summary>
-		/// <remarks>
 		/// Requires and maintains the invariant that a node is marked as visited iff it is contained in the loop.
-		/// 
-		/// Note: I don't think this works reliably to minimize the number of exit points,
-		/// it's just a heuristic that should reduce the number of exit points in most cases.
-		/// I think what we're really looking for is a minimum vertex cut of the following flow graph:
-		/// * all nodes that are part of the natural loop are combined into a single node (the source node)
-		/// * all control flow nodes that are dominated by the loop head (but not part of the loop)
-		///   are nodes in the graph
-		/// * all nodes that in the loop's dominance frontier are nodes in the graph
-		/// * connections are as usual in the CFG
-		/// * the nodes in the loop's dominance frontier are additionally connected to the sink node.
-		/// 
-		/// Also, if the only way to leave the loop is through 'ret' or 'leave' instructions, or 'br' instructions
-		/// that leave the block container, this method has the effect of adding more code than necessary to the loop,
-		/// as those instructions do not have corresponding control flow edges.
-		/// Ideally, 'leave' and 'br' should be also considered exit points; and if there are no other exit points,
-		/// we can afford to introduce an additional exit point so that 'ret' instructions and nested infinite loops
-		/// don't have to be moved into the loop.
 		/// </remarks>
-		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop, ControlFlowNode candidate)
+		void ExtendLoopHeuristic(ControlFlowNode loopHead, List<ControlFlowNode> loop, ControlFlowNode candidate)
 		{
 			Debug.Assert(candidate.Visited == loop.Contains(candidate));
 			if (!candidate.Visited) {
@@ -212,7 +374,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			// Pre-order traversal of dominator tree
 			foreach (var node in candidate.DominatorTreeChildren) {
-				ExtendLoop(loopHead, loop, node);
+				ExtendLoopHeuristic(loopHead, loop, node);
 			}
 		}
 		
@@ -236,7 +398,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void ConstructLoop(List<ControlFlowNode> loop)
 		{
 			Block oldEntryPoint = (Block)loop[0].UserData;
-			BlockContainer oldContainer = (BlockContainer)oldEntryPoint.Parent;
 			
 			BlockContainer loopContainer = new BlockContainer();
 			Block newEntryPoint = new Block();
@@ -253,11 +414,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// and thus cannot be the target of branch instructions outside the loop.
 			for (int i = 1; i < loop.Count; i++) {
 				Block block = (Block)loop[i].UserData;
-				Debug.Assert(block.Parent == oldContainer);
+				Debug.Assert(block.ChildIndex != 0);
+				var oldParent = ((BlockContainer)block.Parent);
+				int oldChildIndex = block.ChildIndex;
 				loopContainer.Blocks.Add(block);
+				oldParent.Blocks.SwapRemoveAt(oldChildIndex);
 			}
-			// Remove all blocks that were moved into the body from the old container
-			oldContainer.Blocks.RemoveAll(b => b.Parent != oldContainer);
 			
 			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
 			foreach (var branch in loopContainer.Descendants.OfType<Branch>()) {

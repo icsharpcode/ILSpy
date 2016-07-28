@@ -131,10 +131,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					var oldTrue = ifInst.TrueInst;
 					ifInst.TrueInst = ifInst.FalseInst;
 					ifInst.FalseInst = oldTrue;
-					if (ifInst.Condition.OpCode == OpCode.LogicNot)
-						ifInst.Condition = ifInst.Condition.Children.Single();
-					else
-						ifInst.Condition = new LogicNot(ifInst.Condition);
+					ifInst.Condition = new LogicNot(ifInst.Condition);
 				}
 			}
 			if (IsUsableBranchToChild(cfgNode, exitInst)) {

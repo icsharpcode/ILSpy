@@ -247,6 +247,21 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			parentInstruction.InstructionCollectionUpdateComplete();
 		}
+		
+		/// <summary>
+		/// Remove item at index <c>index</c> in O(1) by swapping it with the last element in the collection.
+		/// </summary>
+		public void SwapRemoveAt(int index)
+		{
+			parentInstruction.AssertNoEnumerators();
+			parentInstruction.InstructionCollectionRemoved(list[index]);
+			int removeIndex = list.Count - 1;
+			T movedItem = list[index] = list[removeIndex];
+			list.RemoveAt(removeIndex);
+			if (movedItem.Parent == parentInstruction && movedItem.ChildIndex == removeIndex + firstChildIndex)
+				movedItem.ChildIndex = index + firstChildIndex;
+			parentInstruction.InstructionCollectionUpdateComplete();
+		}
 
 		public void Clear()
 		{
@@ -275,6 +290,11 @@ namespace ICSharpCode.Decompiler.IL
 				parentInstruction.InstructionCollectionRemoved(list[index + i]);
 			}
 			list.RemoveRange(index, count);
+			for (int i = index; i < list.Count; i++) {
+				var other_item = list[i];
+				if (other_item.Parent == parentInstruction && other_item.ChildIndex == i + firstChildIndex + count)
+					other_item.ChildIndex = i + firstChildIndex;
+			}
 			parentInstruction.InstructionCollectionUpdateComplete();
 		}
 

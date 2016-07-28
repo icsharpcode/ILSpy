@@ -232,7 +232,7 @@ namespace ICSharpCode.Decompiler
 		{
 			StringBuilder b = new StringBuilder();
 			b.Append('{');
-			for (int i = 0; i < words.Length; i++) {
+			for (int i = 0; i < words.Length * BitsPerWord; i++) {
 				if (this[i]) {
 					if (b.Length > 1)
 						b.Append(", ");

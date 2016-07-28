@@ -113,5 +113,37 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			}
 			return a;
 		}
+		
+		/// <summary>
+		/// Computes a BitSet where
+		///  <c>result[i] == true</c> iff cfg[i] is reachable and there is some node that is reachable from cfg[i] but not dominated by cfg[i].
+		/// This is similar to "does cfg[i] have a non-empty dominance frontier", except that it uses non-strict dominance
+		/// where the definition of dominance frontiers uses "strictly dominates".
+		/// 
+		/// Precondition:
+		///  Dominance was computed for cfg and <c>cfg[i].UserIndex == i</c> for all i.
+		/// </summary>
+		public static BitSet MarkNodesWithReachableExits(IReadOnlyList<ControlFlowNode> cfg)
+		{
+			#if DEBUG
+			for (int i = 0; i < cfg.Count; i++) {
+				Debug.Assert(cfg[i].UserIndex == i);
+			}
+			#endif
+			BitSet nonEmpty = new BitSet(cfg.Count);
+			foreach (var j in cfg) {
+				// If j is a join-point (more than one incoming edge):
+				// `j.IsReachable && j.ImmediateDominator == null` is the root node, which counts as an extra incoming edge
+				if (j.IsReachable && (j.Predecessors.Count >= 2 || (j.Predecessors.Count >= 1 && j.ImmediateDominator == null))) {
+					// Add j to frontier of all predecessors and their dominators up to j's immediate dominator.
+					foreach (var p in j.Predecessors) {
+						for (var runner = p; runner != j.ImmediateDominator && runner != j; runner = runner.ImmediateDominator) {
+							nonEmpty.Set(runner.UserIndex);
+						}
+					}
+				}
+			}
+			return nonEmpty;
+		}
 	}
 }
