@@ -83,6 +83,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 		
+		ILTransformContext context;
+		
 		ControlFlowNode[] cfg;
 		
 		/// <summary>
@@ -90,6 +92,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// or if there is a path from cfg[i] to a branch/leave instruction leaving the currentBlockContainer.
 		/// </summary>
 		BitSet nodeHasReachableExit;
+		
+		/// <summary>
+		/// nodeHasDirectExitOutOfContainer[i] == true iff cfg[i] directly contains a branch/leave instruction leaving the currentBlockContainer.
+		/// </summary>
+		BitSet nodeHasDirectExitOutOfContainer;
 		
 		/// <summary>Block container corresponding to the current cfg.</summary>
 		BlockContainer currentBlockContainer;
@@ -99,9 +106,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		public void Run(BlockContainer blockContainer, ILTransformContext context)
 		{
+			this.context = context;
 			this.currentBlockContainer = blockContainer;
 			this.cfg = BuildCFG(blockContainer);
 			this.nodeHasReachableExit = null; // will be computed on-demand
+			this.nodeHasDirectExitOutOfContainer = null; // will be computed on-demand
 			
 			var entryPoint = cfg[0];
 			Dominance.ComputeDominance(entryPoint, context.CancellationToken);
@@ -109,7 +118,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			
 			this.cfg = null;
 			this.nodeHasReachableExit = null;
+			this.nodeHasDirectExitOutOfContainer = null;
 			this.currentBlockContainer = null;
+			this.context = null;
 		}
 		
 		/// <summary>
@@ -163,6 +174,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 		
+		#region ExtendLoop
 		/// <summary>
 		/// Given a natural loop, add additional CFG nodes to the loop in order
 		/// to reduce the number of exit points out of the loop.
@@ -171,8 +183,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// to introduce 'goto' statements for any additional exit points.
 		/// </summary>
 		/// <remarks>
-		/// Definition: a loop exit point is a CFG node that is not itself part of the loop,
+		/// Definition:
+		/// A "reachable exit" is a branch/leave target that is reachable from the loop,
+		/// but not dominated by the loop head. A reachable exit may or may not have a
+		/// corresponding CFG node (depending on whether it is a block in the current block container).
+		///   -> reachable exits are leaving the code region dominated by the loop
+		/// 
+		/// Definition:
+		/// A loop "exit point" is a CFG node that is not itself part of the loop,
 		/// but has at least one predecessor which is part of the loop.
+		///   -> exit points are leaving the loop itself
 		/// 
 		/// Nodes can only be added to the loop if they are dominated by the loop head.
 		/// When adding a node to the loop, we must also add all of that node's predecessors
@@ -197,6 +217,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		///     * number of basic blocks
 		///     * number of instructions directly in those basic blocks (~= number of statements)
 		///     * number of instructions in those basic blocks (~= number of expressions)
+		///       (we currently use the number of statements)
 		/// 
 		/// Observations:
 		///  * If a node is in-loop, so are all its ancestors in the dominator tree (up to the loop entry point)
@@ -219,10 +240,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// over the dominator tree and pick the node with the maximum amount of code.
 		/// 
 		/// In case 2, we need to pick our exit point so that all paths from the loop head
-		/// to the nodes in the loop head's dominance frontier run through that exit point.
+		/// to the reachable exits run through that exit point.
 		/// 
-		/// This is a form of postdominance where the nodes in the loop head's dominance frontier
-		/// are considered exit nodes, while "return;" or "throw;" instructions are not considered exit nodes.
+		/// This is a form of postdominance where the reachable exits are considered exit nodes,
+		/// while "return;" or "throw;" instructions are not considered exit nodes.
 		/// 
 		/// Using this form of postdominance, we are looking for an exit point that post-dominates all nodes in the natural loop.
 		/// --> a common ancestor in post-dominator tree.
@@ -258,41 +279,47 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (nodeHasReachableExit != null)
 				return;
 			nodeHasReachableExit = Dominance.MarkNodesWithReachableExits(cfg);
+			nodeHasDirectExitOutOfContainer = new BitSet(cfg.Length);
 			// Also mark the nodes that exit the block container altogether.
 			// Invariant: leaving[n.UserIndex] == true implies leaving[n.ImmediateDominator.UserIndex] == true
 			var leaving = new BitSet(cfg.Length);
 			foreach (var node in cfg) {
 				if (leaving[node.UserIndex])
 					continue;
-				Block block = (Block)node.UserData;
-				foreach (var branch in block.Descendants.OfType<Branch>()) {
-					if (!branch.TargetBlock.IsDescendantOf(currentBlockContainer)) {
-						// control flow that isn't internal to the block container
-						MarkAsLeaving(node, leaving);
-						break;
-					}
-				}
-				foreach (var leave in block.Descendants.OfType<Leave>()) {
-					if (!leave.TargetContainer.IsDescendantOf(block)) {
-						MarkAsLeaving(node, leaving);
-						break;
+				if (LeavesCurrentBlockContainer((Block)node.UserData)) {
+					nodeHasDirectExitOutOfContainer.Set(node.UserIndex);
+					for (ControlFlowNode p = node; p != null; p = p.ImmediateDominator) {
+						if (leaving[p.UserIndex]) {
+							// we can stop marking when we've reached an already-marked node
+							break;
+						}
+						leaving.Set(p.UserIndex);
 					}
 				}
 			}
 			nodeHasReachableExit.UnionWith(leaving);
 		}
 
-		void MarkAsLeaving(ControlFlowNode node, BitSet leaving)
+		bool LeavesCurrentBlockContainer(Block block)
 		{
-			while (node != null && !leaving[node.UserIndex]) {
-				leaving.Set(node.UserIndex);
-				node = node.ImmediateDominator;
+			foreach (var branch in block.Descendants.OfType<Branch>()) {
+				if (!branch.TargetBlock.IsDescendantOf(currentBlockContainer)) {
+					// control flow that isn't internal to the block container
+					return true;
+				}
 			}
+			foreach (var leave in block.Descendants.OfType<Leave>()) {
+				if (!leave.TargetContainer.IsDescendantOf(block)) {
+					return true;
+				}
+			}
+			return false;
 		}
 		
 		ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop)
 		{
 			if (!nodeHasReachableExit[loopHead.UserIndex]) {
+				// Case 1:
 				// There are no nodes n so that loopHead dominates a predecessor of n but not n itself
 				// -> we could build a loop with zero exit points.
 				ControlFlowNode exitPoint = null;
@@ -302,6 +329,32 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				return exitPoint;
 			} else {
+				// Case 2:
+				// We need to pick our exit point so that all paths from the loop head
+				// to the reachable exits run through that exit point.
+				var revCfg = PrepareReverseCFG(loopHead);
+				//ControlFlowNode.ExportGraph(cfg).Show("cfg");
+				//ControlFlowNode.ExportGraph(revCfg).Show("rev");
+				ControlFlowNode commonAncestor = revCfg[loopHead.UserIndex];
+				Debug.Assert(commonAncestor.IsReachable);
+				foreach (ControlFlowNode cfgNode in naturalLoop) {
+					ControlFlowNode revNode = revCfg[cfgNode.UserIndex];
+					if (revNode.IsReachable) {
+						commonAncestor = Dominance.FindCommonDominator(commonAncestor, revNode);
+					}
+				}
+				ControlFlowNode exitPoint;
+				while (commonAncestor.UserIndex >= 0) {
+					exitPoint = cfg[commonAncestor.UserIndex];
+					Debug.Assert(exitPoint.Visited == naturalLoop.Contains(exitPoint));
+					if (exitPoint.Visited) {
+						commonAncestor = commonAncestor.ImmediateDominator;
+						continue;
+					} else {
+						return exitPoint;
+					}
+				}
+				// least common dominator is the artificial exit node
 				return null;
 			}
 		}
@@ -315,10 +368,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <returns>Code amount in <paramref name="node"/> and its dominated nodes.</returns>
 		int PickExitPoint(ControlFlowNode node, ref ControlFlowNode exitPoint, ref int exitPointCodeAmount)
 		{
-			if (node.UserData == null) {
-				// special exit block
-				return 0;
-			}
 			int codeAmount = ((Block)node.UserData).Children.Count;
 			foreach (var child in node.DominatorTreeChildren) {
 				codeAmount += PickExitPoint(child, ref exitPoint, ref exitPointCodeAmount);
@@ -333,6 +382,36 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return codeAmount;
 		}
 		
+		ControlFlowNode[] PrepareReverseCFG(ControlFlowNode loopHead)
+		{
+			ControlFlowNode[] cfg = this.cfg;
+			ControlFlowNode[] rev = new ControlFlowNode[cfg.Length + 1];
+			for (int i = 0; i < cfg.Length; i++) {
+				rev[i] = new ControlFlowNode { UserIndex = i, UserData = cfg[i].UserData };
+			}
+			ControlFlowNode exitNode = new ControlFlowNode { UserIndex = -1 };
+			rev[cfg.Length] = exitNode;
+			for (int i = 0; i < cfg.Length; i++) {
+				if (!loopHead.Dominates(cfg[i]))
+					continue;
+				// Add reverse edges for all edges in cfg
+				foreach (var succ in cfg[i].Successors) {
+					if (loopHead.Dominates(succ)) {
+						rev[succ.UserIndex].AddEdgeTo(rev[i]);
+					} else {
+						exitNode.AddEdgeTo(rev[i]);
+					}
+				}
+				if (nodeHasDirectExitOutOfContainer[i]) {
+					exitNode.AddEdgeTo(rev[i]);
+				}
+			}
+			Dominance.ComputeDominance(exitNode, context.CancellationToken);
+			return rev;
+		}
+		#endregion
+		
+		#region ExtendLoop (fall-back heuristic)
 		/// <summary>
 		/// This function implements a heuristic algorithm that tries to reduce the number of exit
 		/// points. It is only used as fall-back when it is impossible to use a single exit point.
@@ -377,7 +456,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ExtendLoopHeuristic(loopHead, loop, node);
 			}
 		}
-		
+
 		/// <summary>
 		/// Gets whether 'node' is an exit point for the loop marked by the Visited flag.
 		/// </summary>
@@ -391,6 +470,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			return false;
 		}
+		#endregion
 		
 		/// <summary>
 		/// Move the blocks associated with the loop into a new block container.
