@@ -212,8 +212,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			IType elementType;
 			TranslatedExpression countExpression = TranslatePointerArgument(inst.Argument, context, out elementType);
 			countExpression = countExpression.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
+			if (elementType == null)
+				elementType = compilation.FindType(KnownTypeCode.Byte);
 			return new StackAllocExpression {
-				Type = ConvertType(elementType ?? compilation.FindType(KnownTypeCode.Byte)),
+				Type = ConvertType(elementType),
 				CountExpression = countExpression
 			}.WithILInstruction(inst).WithRR(new ResolveResult(new PointerType(elementType)));
 		}
@@ -997,10 +999,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(new ThisResolveResult(member.DeclaringType, nonVirtualInvocation));
 				} else {
 					var translatedTarget = Translate(target);
-//					if (member.DeclaringType.IsReferenceType == false) {
-//						// when accessing members on value types, ensure we use a reference and not a pointer
-//						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(member.DeclaringType), this);
-//					}
+					if (member.DeclaringType.IsReferenceType == false && translatedTarget.Type.GetStackType().IsIntegerType()) {
+						// when accessing members on value types, ensure we use a reference and not a pointer
+						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(member.DeclaringType), this);
+					}
 					if (translatedTarget.Expression is DirectionExpression) {
 						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
 					}

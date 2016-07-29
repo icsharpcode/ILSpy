@@ -31,6 +31,16 @@ namespace ValueTypeCall
 		}
 	}
 	
+	public struct ValueTypeWithReadOnlyMember
+	{
+		public readonly int Member;
+		
+		public ValueTypeWithReadOnlyMember(int member)
+		{
+			this.Member = member;
+		}
+	}
+	
 	public class Program
 	{
 		public static void Main()
@@ -42,6 +52,7 @@ namespace ValueTypeCall
 			Box();
 			var gvt = new GenericValueType<string>("Test");
 			gvt.Call(ref gvt);
+			new Program().InstanceFieldTests();
 		}
 		
 		static void RefParameter(ref MutValueType m)
@@ -77,6 +88,17 @@ namespace ValueTypeCall
 			object o = new MutValueType { val = 300 };
 			((MutValueType)o).Increment();
 			((MutValueType)o).Increment();
+		}
+		
+		MutValueType instanceField;
+		ValueTypeWithReadOnlyMember mutableInstanceFieldWithReadOnlyMember;
+		
+		void InstanceFieldTests()
+		{
+			this.instanceField.val = 42;
+			Console.WriteLine(this.instanceField.val);
+			mutableInstanceFieldWithReadOnlyMember = new ValueTypeWithReadOnlyMember(45);
+			Console.WriteLine(this.mutableInstanceFieldWithReadOnlyMember.Member);
 		}
 	}
 }

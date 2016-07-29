@@ -138,6 +138,11 @@ public class UnsafeCode
 		return d->ToString();
 	}
 	
+	public unsafe string PointerReferenceExpression2(long addr)
+	{
+		return ((int*)addr)->ToString();
+	}
+	
 	public unsafe void FixMultipleStrings(string text)
 	{
 		fixed (char* ptr = text, userName = Environment.UserName, ptr2 = text)
