@@ -672,32 +672,44 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		TranslatedExpression HandleCompoundAssignment(CompoundAssignmentInstruction inst, AssignmentOperatorType op)
 		{
-			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
 			value = PrepareArithmeticArgument(value, inst.Value.ResultType, inst.Sign);
 			
-			var rr = resolverWithOverflowCheck.ResolveAssignment(op, target.ResolveResult, value.ResolveResult);
-			if (rr.IsError || rr.Type.GetStackType() != inst.ResultType
-			    || !IsCompatibleWithSign(target.Type, inst.Sign) || !IsCompatibleWithSign(value.Type, inst.Sign))
-			{
-				// Target and value are incompatible, so convert value to the target type
-				// inst.ResultType should match inst.Target.ResultType
-				Debug.Assert(inst.ResultType == inst.Target.ResultType);
-				value = value.ConvertTo(inst.Type, this);
-				rr = resolverWithOverflowCheck.ResolveAssignment(op, target.ResolveResult, value.ResolveResult);
-			}
 			TranslatedExpression resultExpr;
 			if (inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToOldValue) {
 				Debug.Assert(op == AssignmentOperatorType.Add || op == AssignmentOperatorType.Subtract);
 				Debug.Assert(value.ResolveResult.IsCompileTimeConstant && 1.Equals(value.ResolveResult.ConstantValue));
-				resultExpr = new UnaryOperatorExpression(op == AssignmentOperatorType.Add ? UnaryOperatorType.PostIncrement : UnaryOperatorType.PostDecrement, target)
+				UnaryOperatorType unary;
+				ExpressionType exprType;
+				if (op == AssignmentOperatorType.Add) {
+					unary = UnaryOperatorType.PostIncrement;
+					exprType = ExpressionType.PostIncrementAssign;
+				} else {
+					unary = UnaryOperatorType.PostDecrement;
+					exprType = ExpressionType.PostDecrementAssign;
+				}
+				resultExpr = new UnaryOperatorExpression(unary, target)
 					.WithILInstruction(inst)
-					.WithRR(rr);
+					.WithRR(new OperatorResolveResult(target.Type, exprType, target.ResolveResult));
 			} else {
+				switch (op) {
+					case AssignmentOperatorType.Add:
+					case AssignmentOperatorType.Subtract:
+						value = value.ConvertTo(target.Type.GetEnumUnderlyingType(), this, inst.CheckForOverflow);
+						break;
+					case AssignmentOperatorType.Multiply:
+					case AssignmentOperatorType.Divide:
+					case AssignmentOperatorType.Modulus:
+					case AssignmentOperatorType.BitwiseAnd:
+					case AssignmentOperatorType.BitwiseOr:
+					case AssignmentOperatorType.ExclusiveOr:
+						value = value.ConvertTo(target.Type, this, inst.CheckForOverflow);
+						break;
+				}
 				resultExpr = new AssignmentExpression(target.Expression, op, value.Expression)
 					.WithILInstruction(inst)
-					.WithRR(rr);
+					.WithRR(new OperatorResolveResult(target.Type, AssignmentExpression.GetLinqNodeType(op, inst.CheckForOverflow), target.ResolveResult, value.ResolveResult));
 			}
 			if (AssignmentOperatorMightCheckForOverflow(op))
 				resultExpr.Expression.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
