@@ -37,16 +37,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			this.decompilationContext = new SimpleTypeResolveContext(context.TypeSystem.Resolve(function.Method));
 			var orphanedVariableInits = new List<ILInstruction>();
-			var targetsToReplace = new List<ILInstruction>();
+			var targetsToReplace = new List<IInstructionWithVariableOperand>();
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					foreach (var call in block.Instructions[i].Descendants.OfType<NewObj>()) {
 						ILInstruction target;
 						ILFunction f = TransformDelegateConstruction(call, out target);
 						if (f != null) {
-							targetsToReplace.Add(target);
+							call.Arguments[0].ReplaceWith(new Nop());
 							call.Arguments[1].ReplaceWith(f);
 						}
+						if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
+							targetsToReplace.Add((IInstructionWithVariableOperand)target);
 					}
 					
 					var inst = block.Instructions[i] as IfInstruction;
@@ -79,14 +81,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// TODO : it is probably not a good idea to remove *all* display-classes
 						// is there a way to minimize the false-positives?
 						if (newObj != null && IsSimpleDisplayClass(newObj.Method)) {
-							targetsToReplace.Add(block.Instructions[i]);
+							targetsToReplace.Add((IInstructionWithVariableOperand)block.Instructions[i]);
 						}
 					}
 				}
 			}
-			foreach (var target in targetsToReplace) {
-				if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
-					function.AcceptVisitor(new TransformDisplayClassUsages((IInstructionWithVariableOperand)target, orphanedVariableInits));
+			foreach (var target in targetsToReplace.OrderByDescending(t => ((ILInstruction)t).ILRange.Start)) {
+				function.AcceptVisitor(new TransformDisplayClassUsages(target, orphanedVariableInits));
 			}
 			foreach (var store in orphanedVariableInits) {
 				ILInstruction containingBlock = store.Parent as Block;
