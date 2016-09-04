@@ -872,10 +872,40 @@ namespace ICSharpCode.ILSpy
 		}
 		
 		#region Top/Bottom Pane management
+
+		/// <summary>
+		///   When grid is resized using splitter, row height value could become greater than 1.
+		///   As result, when a new pane is shown, both textView and pane could become very small.
+		///   This method normalizes two rows and ensures that height is less then 1.
+		/// </summary>
+		void NormalizePaneRowHeightValues(RowDefinition pane1Row, RowDefinition pane2Row)
+		{
+			var pane1Height = pane1Row.Height;
+			var pane2Height = pane2Row.Height;
+
+			//only star height values are normalized.
+			if (!pane1Height.IsStar || !pane2Height.IsStar)
+			{
+				return;
+			}
+
+			var totalHeight = pane1Height.Value + pane2Height.Value;
+			if (totalHeight == 0)
+			{
+				return;
+			}
+
+			pane1Row.Height = new GridLength(pane1Height.Value / totalHeight, GridUnitType.Star);
+			pane2Row.Height = new GridLength(pane2Height.Value / totalHeight, GridUnitType.Star);
+		}
+
 		public void ShowInTopPane(string title, object content)
 		{
 			topPaneRow.MinHeight = 100;
 			if (sessionSettings.TopPaneSplitterPosition > 0 && sessionSettings.TopPaneSplitterPosition < 1) {
+				//Ensure all 3 blocks are in fair conditions
+				NormalizePaneRowHeightValues(bottomPaneRow, textViewRow);
+
 				textViewRow.Height = new GridLength(1 - sessionSettings.TopPaneSplitterPosition, GridUnitType.Star);
 				topPaneRow.Height = new GridLength(sessionSettings.TopPaneSplitterPosition, GridUnitType.Star);
 			}
@@ -906,6 +936,9 @@ namespace ICSharpCode.ILSpy
 		{
 			bottomPaneRow.MinHeight = 100;
 			if (sessionSettings.BottomPaneSplitterPosition > 0 && sessionSettings.BottomPaneSplitterPosition < 1) {
+				//Ensure all 3 blocks are in fair conditions
+				NormalizePaneRowHeightValues(topPaneRow, textViewRow);
+
 				textViewRow.Height = new GridLength(1 - sessionSettings.BottomPaneSplitterPosition, GridUnitType.Star);
 				bottomPaneRow.Height = new GridLength(sessionSettings.BottomPaneSplitterPosition, GridUnitType.Star);
 			}
