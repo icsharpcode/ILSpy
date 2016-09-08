@@ -22,15 +22,80 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class CompoundAssignmentTest
 	{
+		[Flags]
+		private enum MyEnum
+		{
+			None = 0,
+			One = 1,
+			Two = 2,
+			Four = 4
+		}
+		
 		private struct StructContainer
 		{
 			public bool HasIndex;
 			public int Field;
 		}
 		
+		public class MutableClass
+		{
+			public int Field;
+			
+			public int Property {
+				get;
+				set;
+			}
+			
+			public uint this[string name] {
+				get {
+					return 0u;
+				}
+				set {
+				}
+			}
+		}
+		
 		private int test1;
 		private int[] array1;
 		private StructContainer field1;
+		private MyEnum enumField;
+		public static int StaticField;
+		
+		public static int StaticProperty {
+			get;
+			set;
+		}
+		
+		private MutableClass M()
+		{
+			return new MutableClass();
+		}
+		
+		private int[,] Array()
+		{
+			return (int[,])null;
+		}
+		
+		private unsafe int* GetPointer()
+		{
+//			return null;
+			return (int*)0u;
+		}
+		
+		public int GetIndex()
+		{
+			return new Random().Next(0, 100);
+		}
+		
+		public int[] GetArray()
+		{
+			throw new NotImplementedException();
+		}
+		
+		public int GetValue(int value)
+		{
+			return value;
+		}
 		
 		public static void Main()
 		{
@@ -123,21 +188,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(this.array1[i * 2] += i * 2);
 		}
 		
-		public int GetIndex()
-		{
-			return new Random().Next(0, 100);
-		}
-		
-		public int[] GetArray()
-		{
-			throw new NotImplementedException();
-		}
-		
-		public int GetValue(int value)
-		{
-			return value;
-		}
-		
 		public int ArrayUsageWithMethods()
 		{
 			return this.GetArray()[this.GetIndex()]++;
@@ -148,6 +198,47 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			if (this.field1.HasIndex) {
 				Console.WriteLine(this.field1.Field++);
 			}
+		}
+		
+		public void Enum()
+		{
+			this.enumField |= MyEnum.Two;
+			this.enumField &= ~MyEnum.Four;
+		}
+		
+		public int PreIncrementInAddition(int i, int j)
+		{
+			return i + ++j;
+		}
+		
+		public int PreIncrementArrayElement(int[] array, int pos)
+		{
+			return --array[pos];
+		}
+		
+		public int PreIncrementInstanceField()
+		{
+			return ++this.M().Field;
+		}
+		
+		public int PreIncrementInstanceField2(MutableClass m)
+		{
+			return ++m.Field;
+		}
+		
+		public int PreIncrementInstanceProperty()
+		{
+			return ++this.M().Property;
+		}
+		
+		public int PreIncrementStaticField()
+		{
+			return ++CompoundAssignmentTest.StaticField;
+		}
+		
+		public int PreIncrementStaticProperty()
+		{
+			return ++CompoundAssignmentTest.StaticProperty;
 		}
 	}
 }

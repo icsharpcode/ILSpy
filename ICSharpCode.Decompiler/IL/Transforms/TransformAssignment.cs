@@ -48,7 +48,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						block.Instructions.RemoveAt(i);
 						continue;
 					}
-					TransformInlineAssignmentStObj(block, i);
+					if (TransformInlineAssignmentStObj(block, i))
+						continue;
+					if (TransformInlineAssignmentCall(block, i))
+						continue;
 				}
 			}
 		}
@@ -67,36 +70,93 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc s(stobj (..., value))
 		/// </code>
-		static void TransformInlineAssignmentStObj(Block block, int i)
+		static bool TransformInlineAssignmentStObj(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
-			if (inst == null || inst.Variable.Kind != VariableKind.StackSlot)
-				return;
+			// in some cases it can be a compiler-generated local
+			if (inst == null || (inst.Variable.Kind != VariableKind.StackSlot && inst.Variable.Kind != VariableKind.Local))
+				return false;
 			var nextInst = block.Instructions.ElementAtOrDefault(i + 1);
-			ILInstruction value;
+			ILInstruction replacement;
 			StObj fieldStore;
 			ILVariable local;
 			if (nextInst is StLoc) { // instance fields
 				var localStore = (StLoc)nextInst;
-				fieldStore = block.Instructions.ElementAtOrDefault(i + 2) as StObj;
-				if (fieldStore == null) { // otherwise it must local
+				if (localStore.Variable.Kind == VariableKind.StackSlot || !localStore.Value.MatchLdLoc(inst.Variable))
+					return false;
+				var memberStore = block.Instructions.ElementAtOrDefault(i + 2);
+				if (memberStore is StObj) {
+					fieldStore = memberStore as StObj;
+					if (!fieldStore.Value.MatchLdLoc(inst.Variable))
+						return false;
+					replacement = new StObj(fieldStore.Target, inst.Value, fieldStore.Type);
+				} else { // otherwise it must be local
 					TransformInlineAssignmentLocal(block, i);
-					return;
+					return false;
 				}
-				if (localStore.Variable.Kind == VariableKind.StackSlot || !localStore.Value.MatchLdLoc(inst.Variable) || !fieldStore.Value.MatchLdLoc(inst.Variable))
-					return;
-				value = inst.Value;
 				local = localStore.Variable;
 				block.Instructions.RemoveAt(i + 1);
 			} else if (nextInst is StObj) { // static fields
 				fieldStore = (StObj)nextInst;
 				if (!fieldStore.Value.MatchLdLoc(inst.Variable))
-					return;
-				value = inst.Value;
+					return false;
 				local = inst.Variable;
-			} else return;
+				replacement = new StObj(fieldStore.Target, inst.Value, fieldStore.Type);
+			} else return false;
 			block.Instructions.RemoveAt(i + 1);
-			inst.ReplaceWith(new StLoc(local, new StObj(fieldStore.Target, value, fieldStore.Type)));
+			inst.ReplaceWith(new StLoc(local, replacement));
+			return true;
+		}
+		
+		/// <code>
+		/// stloc s(binary(callvirt(getter), value))
+		/// callvirt (setter, ldloc s)
+		/// ... usage of s ...
+		/// -->
+		/// ... compound.op.new(callvirt(getter), value) ...
+		/// </code>
+		/// -or-
+		/// <code>
+		/// stloc s(stloc v(binary(callvirt(getter), value)))
+		/// callvirt (setter, ldloc s)
+		/// ... usage of v ...
+		/// -->
+		/// ... compound.op.new(callvirt(getter), value) ...
+		/// </code>
+		static bool TransformInlineAssignmentCall(Block block, int i)
+		{
+			var inst = block.Instructions[i] as StLoc;
+			// in some cases it can be a compiler-generated local
+			if (inst == null || (inst.Variable.Kind != VariableKind.StackSlot && inst.Variable.Kind != VariableKind.Local))
+				return false;
+			BinaryNumericInstruction binary;
+			ILVariable localVariable;
+			if (inst.Value is StLoc) {
+				var tmp = (StLoc)inst.Value;
+				binary = tmp.Value as BinaryNumericInstruction;
+				localVariable = tmp.Variable;
+			} else {
+				binary = inst.Value as BinaryNumericInstruction;
+				localVariable = inst.Variable;
+			}
+			var getterCall = binary?.Left as CallInstruction;
+			var setterCall = block.Instructions.ElementAtOrDefault(i + 1) as CallInstruction;
+			if (getterCall == null || setterCall == null || !IsSameMember(getterCall.Method.AccessorOwner, setterCall.Method.AccessorOwner))
+				return false;
+			var owner = getterCall.Method.AccessorOwner as IProperty;
+			if (owner == null || !IsSameMember(getterCall.Method, owner.Getter) || !IsSameMember(setterCall.Method, owner.Setter))
+				return false;
+			var next = block.Instructions.ElementAtOrDefault(i + 2);
+			if (next == null)
+				return false;
+			var usages = next.Descendants.Where(d => d.MatchLdLoc(localVariable)).ToArray();
+			if (usages.Length != 1)
+				return false;
+			block.Instructions.RemoveAt(i + 1);
+			block.Instructions.RemoveAt(i);
+			usages[0].ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, getterCall, binary.Right,
+			                                                   getterCall.Method.ReturnType, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
+			return true;
 		}
 
 		/// <code>
@@ -241,7 +301,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction baseFieldAddressLoad3;
 				if (!targetFieldLoad.MatchLdFlda(out baseFieldAddressLoad2, out targetField) || !baseFieldAddressLoad2.MatchLdLoc(baseFieldAddress.Variable))
 					return false;
-				if (!stobj.Target.MatchLdFlda(out baseFieldAddressLoad3, out targetField2) || !baseFieldAddressLoad3.MatchLdLoc(baseFieldAddress.Variable) || !SameField(targetField, targetField2))
+				if (!stobj.Target.MatchLdFlda(out baseFieldAddressLoad3, out targetField2) || !baseFieldAddressLoad3.MatchLdLoc(baseFieldAddress.Variable) || !IsSameMember(targetField, targetField2))
 					return false;
 				baseAddress = new LdFlda(baseFieldAddress.Value, targetField);
 			} else if (baseFieldAddress.Value is LdElema) {
@@ -279,7 +339,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			IField field, field2;
 			if (inst.Variable.Kind != VariableKind.StackSlot || !inst.Value.MatchLdObj(out target, out type) || !target.MatchLdsFlda(out field))
 				return false;
-			if (!stobj.Target.MatchLdsFlda(out field2) || !SameField(field, field2))
+			if (!stobj.Target.MatchLdsFlda(out field2) || !IsSameMember(field, field2))
 				return false;
 			var binary = stobj.Value as BinaryNumericInstruction;
 			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
@@ -289,10 +349,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 		
-		static bool SameField(IField a, IField b)
+		static bool IsSameMember(IMember a, IMember b)
 		{
-			a = (IField)a.MemberDefinition;
-			b = (IField)b.MemberDefinition;
+			if (a == null || b == null)
+				return false;
+			a = a.MemberDefinition;
+			b = b.MemberDefinition;
 			return a.Equals(b);
 		}
 	}
