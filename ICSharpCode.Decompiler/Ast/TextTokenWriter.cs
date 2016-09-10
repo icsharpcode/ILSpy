@@ -188,6 +188,15 @@ namespace ICSharpCode.Decompiler.Ast
 		
 		public override void WriteKeyword(Role role, string keyword)
 		{
+			//To make reference for 'this' and 'base' keywords in the ClassName():this() expression
+			if (role == ConstructorInitializer.ThisKeywordRole || role == ConstructorInitializer.BaseKeywordRole) {
+				var reference = GetCurrentMemberReference();
+				if (reference != null) {
+					output.WriteReference(keyword, reference);
+					return;
+				}
+			}
+
 			output.Write(keyword);
 		}
 		
