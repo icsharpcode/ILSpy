@@ -25,7 +25,7 @@ using ICSharpCode.ILSpy.TextView;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_File", Header = "DEBUG -- Decompile All", MenuCategory = "Open", MenuOrder = 2.5)]
+	[ExportMainMenuCommand(Menu = "_File", Header = "DEBUG -- Decompile All", MenuCategory = "Open", MenuOrder = 6)]
 	sealed class DecompileAllCommand : SimpleCommand
 	{
 		public override bool CanExecute(object parameter)

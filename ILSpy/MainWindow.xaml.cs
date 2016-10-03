@@ -678,7 +678,24 @@ namespace ICSharpCode.ILSpy
 				OpenFiles(dlg.FileNames);
 			}
 		}
-		
+
+		public void OpenDirectory()
+		{
+			var dlg = new System.Windows.Forms.FolderBrowserDialog();
+			if (dlg.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+			{
+				var directory = new DirectoryInfo(dlg.SelectedPath);
+				var patterns = new[] { "*.exe", "*.dll", "*.winmd" };
+
+				var files = patterns
+					.SelectMany(pattern => directory.GetFiles(pattern, SearchOption.AllDirectories))
+					.Select(file => file.FullName)
+					.ToArray();
+
+				OpenFiles(files);
+			}
+		}
+
 		public void OpenFiles(string[] fileNames, bool focusNode = true)
 		{
 			if (fileNames == null)
