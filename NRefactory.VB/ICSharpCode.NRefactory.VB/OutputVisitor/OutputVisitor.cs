@@ -67,11 +67,17 @@ namespace ICSharpCode.NRefactory.VB
 		
 		public object VisitBlockStatement(BlockStatement blockStatement, object data)
 		{
+			// prepare new block
+			NewLine();
+			Indent();
+
 			StartNode(blockStatement);
 			foreach (var stmt in blockStatement) {
 				stmt.AcceptVisitor(this, data);
 				NewLine();
 			}
+			// finish block
+			Unindent();
 			return EndNode(blockStatement);
 		}
 		
@@ -238,6 +244,7 @@ namespace ICSharpCode.NRefactory.VB
 			WriteModifiers(typeDeclaration.ModifierTokens);
 			WriteClassTypeKeyword(typeDeclaration);
 			WriteIdentifier(typeDeclaration.Name.Name);
+			WriteTypeParameters(typeDeclaration.TypeParameters);
 			MarkFoldStart();
 			NewLine();
 			
@@ -519,12 +526,7 @@ namespace ICSharpCode.NRefactory.VB
 			WriteKeyword("New");
 			WriteCommaSeparatedListInParenthesis(constructorDeclaration.Parameters, false);
 			MarkFoldStart();
-			NewLine();
-			
-			Indent();
 			WriteBlock(constructorDeclaration.Body);
-			Unindent();
-			
 			WriteKeyword("End");
 			WriteKeyword("Sub");
 			MarkFoldEnd();
@@ -556,10 +558,7 @@ namespace ICSharpCode.NRefactory.VB
 			WriteImplementsClause(methodDeclaration.ImplementsClause);
 			if (!methodDeclaration.Body.IsNull) {
 				MarkFoldStart();
-				NewLine();
-				Indent();
 				WriteBlock(methodDeclaration.Body);
-				Unindent();
 				WriteKeyword("End");
 				if (methodDeclaration.IsSub)
 					WriteKeyword("Sub");
@@ -854,17 +853,17 @@ namespace ICSharpCode.NRefactory.VB
 		void WriteIdentifier(string identifier, Role<Identifier> identifierRole = null)
 		{
 			WriteSpecialsUpToRole(identifierRole ?? AstNode.Roles.Identifier);
-			if (IsKeyword(identifier, containerStack.Peek())) {
-				if (lastWritten == LastWritten.KeywordOrIdentifier)
-					Space(); // this space is not strictly required, so we call Space()
+
+			if (lastWritten == LastWritten.KeywordOrIdentifier)
+				Space(); // this space is not strictly required, so we call Space()
+
+			if (IsKeyword(identifier, containerStack.Peek()))
 				formatter.WriteToken("[");
-			} else if (lastWritten == LastWritten.KeywordOrIdentifier) {
-				formatter.Space(); // this space is strictly required, so we directly call the formatter
-			}
+
 			formatter.WriteIdentifier(identifier);
-			if (IsKeyword(identifier, containerStack.Peek())) {
+			if (IsKeyword(identifier, containerStack.Peek()))
 				formatter.WriteToken("]");
-			}
+
 			lastWritten = LastWritten.KeywordOrIdentifier;
 		}
 		
@@ -1013,7 +1012,7 @@ namespace ICSharpCode.NRefactory.VB
 			"GetType", "GetXmlNamespace", "Global", "GoSub", "GoTo", "Handles", "If", "Implements",
 			"Imports", "In", "Inherits", "Integer", "Interface", "Is", "IsNot", "Let", "Lib", "Like",
 			"Long", "Loop", "Me", "Mod", "Module", "MustInherit", "MustOverride", "MyBase", "MyClass",
-			"Namespace", "Narrowing", "New", "Next", "Not", "Nothing", "NotInheritable", "NotOverridable",
+			"Namespace", "Narrowing", "Next", "Not", "Nothing", "NotInheritable", "NotOverridable",
 			"Object", "Of", "On", "Operator", "Option", "Optional", "Or", "OrElse", "Overloads",
 			"Overridable", "Overrides", "ParamArray", "Partial", "Private", "Property", "Protected",
 			"Public", "RaiseEvent", "ReadOnly", "ReDim", "REM", "RemoveHandler", "Resume", "Return",
@@ -1032,6 +1031,11 @@ namespace ICSharpCode.NRefactory.VB
 		/// </summary>
 		public static bool IsKeyword(string identifier, AstNode context)
 		{
+			if (identifier == "New") {
+				if (context.PrevSibling is InstanceExpression)
+					return false;
+				return true;
+			}
 			if (unconditionalKeywords.Contains(identifier))
 				return true;
 //			if (context.Ancestors.Any(a => a is QueryExpression)) {
@@ -1109,9 +1113,12 @@ namespace ICSharpCode.NRefactory.VB
 		
 		void WriteBlock(BlockStatement body)
 		{
-			if (body.IsNull)
+			if (body.IsNull) {
 				NewLine();
-			else
+				Indent();
+				NewLine();
+				Unindent();
+			} else
 				VisitBlockStatement(body, null);
 		}
 		
@@ -1236,16 +1243,15 @@ namespace ICSharpCode.NRefactory.VB
 				lastWritten = LastWritten.KeywordOrIdentifier;
 			} else if (val is IFormattable) {
 				StringBuilder b = new StringBuilder();
-//				if (primitiveExpression.LiteralFormat == LiteralFormat.HexadecimalNumber) {
-//					b.Append("0x");
-//					b.Append(((IFormattable)val).ToString("x", NumberFormatInfo.InvariantInfo));
-//				} else {
 				b.Append(((IFormattable)val).ToString(null, NumberFormatInfo.InvariantInfo));
-//				}
-				if (val is uint || val is ulong) {
+				if (val is ushort || val is ulong) {
 					b.Append("U");
 				}
-				if (val is long || val is ulong) {
+				if (val is short || val is ushort) {
+					b.Append("S");
+				} else if (val is uint) {
+					b.Append("UI");
+				} else if (val is long || val is ulong) {
 					b.Append("L");
 				}
 				formatter.WriteToken(b.ToString());
@@ -1307,10 +1313,7 @@ namespace ICSharpCode.NRefactory.VB
 			}
 			if (accessor.Parameters.Any())
 				WriteCommaSeparatedListInParenthesis(accessor.Parameters, false);
-			NewLine();
-			Indent();
 			WriteBlock(accessor.Body);
-			Unindent();
 			WriteKeyword("End");
 
 			if (accessor.Role == PropertyDeclaration.GetterRole) {
@@ -1356,10 +1359,7 @@ namespace ICSharpCode.NRefactory.VB
 			StartNode(withStatement);
 			WriteKeyword("With");
 			withStatement.Expression.AcceptVisitor(this, data);
-			NewLine();
-			Indent();
 			withStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("End");
 			WriteKeyword("With");
 			return EndNode(withStatement);
@@ -1370,10 +1370,7 @@ namespace ICSharpCode.NRefactory.VB
 			StartNode(syncLockStatement);
 			WriteKeyword("SyncLock");
 			syncLockStatement.Expression.AcceptVisitor(this, data);
-			NewLine();
-			Indent();
 			syncLockStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("End");
 			WriteKeyword("SyncLock");
 			return EndNode(syncLockStatement);
@@ -1383,19 +1380,13 @@ namespace ICSharpCode.NRefactory.VB
 		{
 			StartNode(tryStatement);
 			WriteKeyword("Try");
-			NewLine();
-			Indent();
 			tryStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			foreach (var clause in tryStatement.CatchBlocks) {
 				clause.AcceptVisitor(this, data);
 			}
 			if (!tryStatement.FinallyBlock.IsNull) {
 				WriteKeyword("Finally");
-				NewLine();
-				Indent();
 				tryStatement.FinallyBlock.AcceptVisitor(this, data);
-				Unindent();
 			}
 			WriteKeyword("End");
 			WriteKeyword("Try");
@@ -1445,19 +1436,17 @@ namespace ICSharpCode.NRefactory.VB
 			ifElseStatement.Condition.AcceptVisitor(this, data);
 			Space();
 			WriteKeyword("Then");
-			NewLine();
-			Indent();
+			bool needsEndIf = ifElseStatement.Body is BlockStatement;
 			ifElseStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			if (!ifElseStatement.ElseBlock.IsNull) {
 				WriteKeyword("Else");
-				NewLine();
-				Indent();
+				needsEndIf = ifElseStatement.ElseBlock is BlockStatement;
 				ifElseStatement.ElseBlock.AcceptVisitor(this, data);
-				Unindent();
 			}
-			WriteKeyword("End");
-			WriteKeyword("If");
+			if (needsEndIf) {
+				WriteKeyword("End");
+				WriteKeyword("If");
+			}
 			return EndNode(ifElseStatement);
 		}
 		
@@ -1635,7 +1624,8 @@ namespace ICSharpCode.NRefactory.VB
 			WriteKeyword("New");
 			Space();
 			arrayCreateExpression.Type.AcceptVisitor(this, data);
-			WriteCommaSeparatedListInParenthesis(arrayCreateExpression.Arguments, false);
+			if (arrayCreateExpression.Arguments.Any())
+				WriteCommaSeparatedListInParenthesis(arrayCreateExpression.Arguments, false);
 			foreach (var specifier in arrayCreateExpression.AdditionalArraySpecifiers) {
 				specifier.AcceptVisitor(this, data);
 			}
@@ -1881,10 +1871,7 @@ namespace ICSharpCode.NRefactory.VB
 			WriteKeyword("While");
 			Space();
 			whileStatement.Condition.AcceptVisitor(this, data);
-			NewLine();
-			Indent();
 			whileStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("End");
 			WriteKeyword("While");
 			
@@ -1942,10 +1929,7 @@ namespace ICSharpCode.NRefactory.VB
 				Space();
 				forStatement.StepExpression.AcceptVisitor(this, data);
 			}
-			NewLine();
-			Indent();
 			forStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("Next");
 			
 			return EndNode(forStatement);
@@ -1961,10 +1945,7 @@ namespace ICSharpCode.NRefactory.VB
 			Space();
 			WriteKeyword("In");
 			forEachStatement.InExpression.AcceptVisitor(this, data);
-			NewLine();
-			Indent();
 			forEachStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("Next");
 			
 			return EndNode(forEachStatement);
@@ -2064,10 +2045,7 @@ namespace ICSharpCode.NRefactory.VB
 			}
 			if (!operatorDeclaration.Body.IsNull) {
 				MarkFoldStart();
-				NewLine();
-				Indent();
 				WriteBlock(operatorDeclaration.Body);
-				Unindent();
 				WriteKeyword("End");
 				WriteKeyword("Operator");
 				MarkFoldEnd();
@@ -2109,10 +2087,7 @@ namespace ICSharpCode.NRefactory.VB
 				Space();
 				WriteCommaSeparatedList(caseStatement.Clauses);
 			}
-			NewLine();
-			Indent();
 			caseStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			
 			return EndNode(caseStatement);
 		}
@@ -2238,10 +2213,7 @@ namespace ICSharpCode.NRefactory.VB
 				WriteKeyword("While");
 				doLoopStatement.Expression.AcceptVisitor(this, data);
 			}
-			NewLine();
-			Indent();
 			doLoopStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("Loop");
 			if (doLoopStatement.ConditionType == ConditionType.LoopUntil) {
 				WriteKeyword("Until");
@@ -2261,10 +2233,7 @@ namespace ICSharpCode.NRefactory.VB
 			
 			WriteKeyword("Using");
 			WriteCommaSeparatedList(usingStatement.Resources);
-			NewLine();
-			Indent();
 			usingStatement.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("End");
 			WriteKeyword("Using");
 			
@@ -2317,10 +2286,7 @@ namespace ICSharpCode.NRefactory.VB
 			else
 				WriteKeyword("Function");
 			WriteCommaSeparatedListInParenthesis(multiLineLambdaExpression.Parameters, false);
-			NewLine();
-			Indent();
 			multiLineLambdaExpression.Body.AcceptVisitor(this, data);
-			Unindent();
 			WriteKeyword("End");
 			if (multiLineLambdaExpression.IsSub)
 				WriteKeyword("Sub");

@@ -139,6 +139,20 @@ namespace ICSharpCode.ILSpy
 		
 		private void LoadSymbols(ModuleDefinition module)
 		{
+			if (!module.HasDebugHeader) {
+				return;
+			}
+			byte[] headerBytes;
+			var debugHeader = module.GetDebugHeader(out headerBytes);
+			if (debugHeader.Type != 2) {
+				// the debug type is not IMAGE_DEBUG_TYPE_CODEVIEW
+				return;
+			}
+			if (debugHeader.MajorVersion != 0 || debugHeader.MinorVersion != 0) {
+				// the PDB type is not compatible with PdbReaderProvider. It is probably a Portable PDB
+				return;
+			}
+
 			// search for pdb in same directory as dll
 			string pdbName = Path.Combine(Path.GetDirectoryName(fileName), Path.GetFileNameWithoutExtension(fileName) + ".pdb");
 			if (File.Exists(pdbName)) {
