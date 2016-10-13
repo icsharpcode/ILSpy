@@ -104,7 +104,7 @@ namespace ICSharpCode.ILSpy
 		
 		public static readonly DependencyProperty SearchTermProperty =
 			DependencyProperty.Register("SearchTerm", typeof(string), typeof(SearchPane),
-			                            new FrameworkPropertyMetadata(string.Empty, OnSearchTermChanged));
+										new FrameworkPropertyMetadata(string.Empty, OnSearchTermChanged));
 		
 		public string SearchTerm {
 			get { return (string)GetValue(SearchTermProperty); }
@@ -266,11 +266,11 @@ namespace ICSharpCode.ILSpy
 						}
 					}
 					this.Results.Insert(this.Results.Count - 1, result);
-                }
-                else
-                {
-                    // Original code
-                    this.Results.Insert(this.Results.Count - 1, result);
+				}
+				else
+				{
+					// Original code
+					this.Results.Insert(this.Results.Count - 1, result);
 				}
 			}
 
