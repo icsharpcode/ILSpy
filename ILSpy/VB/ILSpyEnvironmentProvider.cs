@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.VB
 
 		//readonly CecilLoader loader = new CecilLoader();
 		
-		public string GetTypeNameForAttribute(ICSharpCode.NRefactory.CSharp.Attribute attribute)
+		public string GetTypeNameForAttribute(NRefactory.CSharp.Attribute attribute)
 		{
 			return attribute.Type.Annotations
 				.OfType<Mono.Cecil.MemberReference>()
@@ -63,7 +63,7 @@ namespace ICSharpCode.ILSpy.VB
 			return SpecialType.UnknownType;
 		}
 		
-		public TypeKind GetTypeKindForAstType(ICSharpCode.NRefactory.CSharp.AstType type)
+		public TypeKind GetTypeKindForAstType(NRefactory.CSharp.AstType type)
 		{
 			var annotation = type.Annotation<TypeReference>();
 			if (annotation == null)
@@ -84,7 +84,7 @@ namespace ICSharpCode.ILSpy.VB
 			return TypeKind.Unknown;
 		}
 		
-		public TypeCode ResolveExpression(ICSharpCode.NRefactory.CSharp.Expression expression)
+		public TypeCode ResolveExpression(NRefactory.CSharp.Expression expression)
 		{
 			var annotation = expression.Annotations.OfType<TypeInformation>().FirstOrDefault();
 			
@@ -106,9 +106,9 @@ namespace ICSharpCode.ILSpy.VB
 			return TypeCode.Object;
 		}
 		
-		public Nullable<bool> IsReferenceType(ICSharpCode.NRefactory.CSharp.Expression expression)
+		public bool? IsReferenceType(NRefactory.CSharp.Expression expression)
 		{
-			if (expression is ICSharpCode.NRefactory.CSharp.NullReferenceExpression)
+			if (expression is NRefactory.CSharp.NullReferenceExpression)
 				return true;
 			
 			var annotation = expression.Annotations.OfType<TypeInformation>().FirstOrDefault();
@@ -129,7 +129,7 @@ namespace ICSharpCode.ILSpy.VB
 			foreach (var type in interfaces) {
 				var def = type.Annotation<TypeReference>().Resolve();
 				if (def == null) continue;
-				foreach (var method in def.Methods.Where(m => !m.Name.StartsWith("get_") && !m.Name.StartsWith("set_"))) {
+				foreach (var method in def.Methods.Where(m => !m.Name.StartsWith("get_", StringComparison.Ordinal) && !m.Name.StartsWith("set_", StringComparison.Ordinal))) {
 					yield return new NRefactory.VB.Ast.InterfaceMemberSpecifier((NRefactory.VB.Ast.AstType)type.Clone(), method.Name);
 				}
 				
@@ -144,14 +144,34 @@ namespace ICSharpCode.ILSpy.VB
 			return expression.Annotation<EventDefinition>() != null;
 		}
 		
-		public bool IsMethodGroup(ICSharpCode.NRefactory.CSharp.Expression expression)
+		public bool IsMethodGroup(NRefactory.CSharp.Expression expression)
 		{
-			var annotation = expression.Annotation<MethodDefinition>();
-			if (annotation != null) {
-				return true;
+			var methodInfo = expression.Annotation<MethodReference>()?.Resolve();
+			if (methodInfo != null) {
+				return !methodInfo.IsGetter && !methodInfo.IsSetter && !methodInfo.IsAddOn && !methodInfo.IsRemoveOn;
 			}
 			
 			return false;
+		}
+
+		public NRefactory.CSharp.ParameterDeclaration[] GetParametersForProperty(NRefactory.CSharp.PropertyDeclaration property)
+		{
+			var propInfo = property.Annotation<PropertyReference>();
+
+			if (propInfo == null)
+				return new NRefactory.CSharp.ParameterDeclaration[0];
+
+			return propInfo.Parameters.Select(p => new NRefactory.CSharp.ParameterDeclaration(AstBuilder.ConvertType(p.ParameterType), p.Name, GetModifiers(p))).ToArray();
+		}
+
+		NRefactory.CSharp.ParameterModifier GetModifiers(ParameterDefinition p)
+		{
+			if (p.IsOut && p.IsIn)
+				return NRefactory.CSharp.ParameterModifier.Ref;
+			if (p.IsOut)
+				return NRefactory.CSharp.ParameterModifier.Out;
+
+			return NRefactory.CSharp.ParameterModifier.None;
 		}
 	}
 }

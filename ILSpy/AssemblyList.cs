@@ -178,8 +178,26 @@ namespace ICSharpCode.ILSpy
 			var index = this.assemblies.IndexOf(target);
 			var newAsm = new LoadedAssembly(this, file, stream);
 			newAsm.IsAutoLoaded = target.IsAutoLoaded;
-			lock (assemblies)
-			{
+			lock (assemblies) {
+				this.assemblies.Remove(target);
+				this.assemblies.Insert(index, newAsm);
+			}
+			return newAsm;
+		}
+
+		public LoadedAssembly ReloadAssembly(string file)
+		{
+			App.Current.Dispatcher.VerifyAccess();
+			file = Path.GetFullPath(file);
+
+			var target = this.assemblies.FirstOrDefault(asm => file.Equals(asm.FileName, StringComparison.OrdinalIgnoreCase));
+			if (target == null)
+				return null;
+
+			var index = this.assemblies.IndexOf(target);
+			var newAsm = new LoadedAssembly(this, file);
+			newAsm.IsAutoLoaded = target.IsAutoLoaded;
+			lock (assemblies) {
 				this.assemblies.Remove(target);
 				this.assemblies.Insert(index, newAsm);
 			}
