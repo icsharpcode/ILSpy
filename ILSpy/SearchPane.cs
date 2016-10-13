@@ -257,11 +257,12 @@ namespace ICSharpCode.ILSpy
 						if (this.Results[i].Fitness < result.Fitness)
 						{
 							this.Results.Insert(i, result);
-							break;
+							return;
 						}
 					}
-				}
-				else
+					this.Results.Insert(this.Results.Count - 1, result);
+                }
+                else
 				{
 					// Original code
 					this.Results.Insert(this.Results.Count - 1, result);
