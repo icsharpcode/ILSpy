@@ -268,9 +268,9 @@ namespace ICSharpCode.ILSpy
 					this.Results.Insert(this.Results.Count - 1, result);
                 }
                 else
-				{
-					// Original code
-					this.Results.Insert(this.Results.Count - 1, result);
+                {
+                    // Original code
+                    this.Results.Insert(this.Results.Count - 1, result);
 				}
 			}
 

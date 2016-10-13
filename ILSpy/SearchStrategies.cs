@@ -32,19 +32,19 @@ namespace ICSharpCode.ILSpy
 
 		protected float CalculateFitness(MemberReference member, string text)
 		{
-            // Ignore generic arguments, it not possible to search based on them either
-            int length = 0;
-            int generics = 0;
-            for (int i = 0; i < text.Length; i++)
-            {
-                if (text[i] == '<')
-                    generics++;
-                else if (text[i] == '>')
-                    generics--;
-                else if (generics == 0)
-                    length++;
-            }
-            return 1.0f / length;
+			// Ignore generic arguments, it not possible to search based on them either
+			int length = 0;
+			int generics = 0;
+			for (int i = 0; i < text.Length; i++)
+			{
+				if (text[i] == '<')
+					generics++;
+				else if (text[i] == '>')
+					generics--;
+				else if (generics == 0)
+					length++;
+			}
+			return 1.0f / length;
 		}
 
 		protected bool IsMatch(string text)
