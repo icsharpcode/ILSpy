@@ -30,35 +30,21 @@ namespace ICSharpCode.ILSpy
 			searchTerm = terms;
 		}
 
-		protected float GetFitness(string text)
+		protected float CalculateFitness(MemberReference member, string text)
 		{
-			// TODO: Is it possible to get fitness for regex?
-			if (regex != null)
-				return 1;
-
-			float result = 0;
-			for (int i = 0; i < searchTerm.Length; ++i) {
-				// How to handle overlapping matches?
-				var term = searchTerm[i];
-				switch (term[0])
-				{
-					case '+': // must contain
-						term = term.Substring(1);
-						goto default;
-					case '-': // should not contain, ignore
-						break;
-					case '=': // exact match
-						term = term.Substring(1);
-						goto default;
-					default:
-						if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) >= 0)
-						{
-							result += term.Length / (float)text.Length;
-						}
-						break;
-				}
-			}
-			return result;
+            // Ignore generic arguments, it not possible to search based on them either
+            int length = 0;
+            int generics = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (text[i] == '<')
+                    generics++;
+                else if (text[i] == '>')
+                    generics--;
+                else if (generics == 0)
+                    length++;
+            }
+            return 1.0f / length;
 		}
 
 		protected bool IsMatch(string text)
@@ -125,7 +111,7 @@ namespace ICSharpCode.ILSpy
 					addResult(new SearchResult
 					{
 						Member = item,
-						Fitness = GetFitness(item.Name),
+						Fitness = CalculateFitness(item, item.Name),
 						Image = image(item),
 						Name = item.Name,
 						LocationImage = TypeTreeNode.GetIcon(type),
@@ -393,7 +379,7 @@ namespace ICSharpCode.ILSpy
 				string name = language.TypeToString(type, includeNamespace: false);
 				addResult(new SearchResult {
 					Member = type,
-					Fitness = GetFitness(name),
+					Fitness = CalculateFitness(type, name),
 					Image = TypeTreeNode.GetIcon(type),
 					Name = name,
 					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
