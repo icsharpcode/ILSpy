@@ -404,11 +404,13 @@ namespace ICSharpCode.ILSpy
 		{
 			if (IsMatch(type.Name) || IsMatch(type.FullName))
 			{
+				string name = language.TypeToString(type, includeNamespace: false);
 				addResult(new SearchResult
 				{
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),
-					Name = language.TypeToString(type, includeNamespace: false),
+					Fitness = CalculateFitness(type, name),
+					Name = name,
 					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
 					Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
 				});
