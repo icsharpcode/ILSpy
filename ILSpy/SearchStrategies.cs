@@ -32,6 +32,12 @@ namespace ICSharpCode.ILSpy
 
 		protected float CalculateFitness(MemberReference member, string text)
 		{
+			// Probably compiler generated types without meaningful names, show them last
+			if (text.StartsWith("<"))
+			{
+				return 0;
+			}
+
 			// Ignore generic arguments, it not possible to search based on them either
 			int length = 0;
 			int generics = 0;
