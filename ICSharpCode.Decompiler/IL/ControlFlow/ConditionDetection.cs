@@ -40,10 +40,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Run(container, context);
 			}
 		}
-		
+
 		BlockContainer currentContainer;
 		ControlFlowNode[] controlFlowGraph;
-		
+
 		void Run(BlockContainer container, ILTransformContext context)
 		{
 			currentContainer = container;
@@ -73,65 +73,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// (guaranteed by combination of BlockContainer and Block invariants)
 			Debug.Assert(block.Instructions.Last().HasFlag(InstructionFlags.EndPointUnreachable));
 			ILInstruction exitInst = block.Instructions.Last();
-			
+
 			// Previous-to-last instruction might have conditional control flow,
 			// usually an IfInstruction with a branch:
 			IfInstruction ifInst = block.Instructions.SecondToLastOrDefault() as IfInstruction;
 			if (ifInst != null && ifInst.FalseInst.OpCode == OpCode.Nop) {
-				if (IsBranchToLaterTarget(ifInst.TrueInst, exitInst)) {
-					// "if (c) goto lateBlock; goto earlierBlock;"
-					// -> "if (!c)" goto earlierBlock; goto lateBlock;
-					// This reordering should make the if structure correspond more closely to the original C# source code
-					block.Instructions[block.Instructions.Count - 1] = ifInst.TrueInst;
-					ifInst.TrueInst = exitInst;
-					exitInst = block.Instructions.Last();
-					ifInst.Condition = new LogicNot(ifInst.Condition);
-				}
-				
-				ILInstruction trueExitInst;
-				if (IsUsableBranchToChild(cfgNode, ifInst.TrueInst)) {
-					// "if (...) goto targetBlock; exitInst;"
-					// -> "if (...) { targetBlock } exitInst;"
-					var targetBlock = ((Branch)ifInst.TrueInst).TargetBlock;
-					// The targetBlock was already processed, we can embed it into the if statement:
-					ifInst.TrueInst = targetBlock;
-					trueExitInst = targetBlock.Instructions.LastOrDefault();
-					if (CompatibleExitInstruction(exitInst, trueExitInst)) {
-						// "if (...) { ...; goto exitPoint } goto exitPoint;"
-						// -> "if (...) { ... } goto exitPoint;"
-						targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
-						trueExitInst = null;
-					}
-				} else {
-					trueExitInst = ifInst.TrueInst;
-				}
-				if (IsUsableBranchToChild(cfgNode, exitInst)) {
-					var targetBlock = ((Branch)exitInst).TargetBlock;
-					var falseExitInst = targetBlock.Instructions.LastOrDefault();
-					if (CompatibleExitInstruction(trueExitInst, falseExitInst)) {
-						// if (...) { ...; goto exitPoint; } goto nextBlock; nextBlock: ...; goto exitPoint;
-						// -> if (...) { ... } else { ... } goto exitPoint;
-						targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
-						ifInst.FalseInst = targetBlock;
-						exitInst = block.Instructions[block.Instructions.Count - 1] = falseExitInst;
-						Block trueBlock = ifInst.TrueInst as Block;
-						if (trueBlock != null) {
-							Debug.Assert(trueExitInst == trueBlock.Instructions.Last());
-							trueBlock.Instructions.RemoveAt(trueBlock.Instructions.Count - 1);
-						} else {
-							Debug.Assert(trueExitInst == ifInst.TrueInst);
-							ifInst.TrueInst = new Nop { ILRange = ifInst.TrueInst.ILRange };
-						}
-					}
-				}
-				if (ifInst.FalseInst.OpCode != OpCode.Nop && ifInst.FalseInst.ILRange.Start < ifInst.TrueInst.ILRange.Start
-				    || ifInst.TrueInst.OpCode == OpCode.Nop)
-				{
-					// swap true and false branches of if, to bring them in the same order as the IL code
-					var oldTrue = ifInst.TrueInst;
-					ifInst.TrueInst = ifInst.FalseInst;
-					ifInst.FalseInst = oldTrue;
-					ifInst.Condition = new LogicNot(ifInst.Condition);
+				HandleIfInstruction(cfgNode, block, ifInst, ref exitInst);
+			} else {
+				SwitchInstruction switchInst = block.Instructions.SecondToLastOrDefault() as SwitchInstruction;
+				if (switchInst != null) {
+					HandleSwitchInstruction(cfgNode, block, switchInst, ref exitInst);
 				}
 			}
 			if (IsUsableBranchToChild(cfgNode, exitInst)) {
@@ -145,6 +96,64 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
+		private void HandleIfInstruction(ControlFlowNode cfgNode, Block block, IfInstruction ifInst, ref ILInstruction exitInst)
+		{
+			if (IsBranchToLaterTarget(ifInst.TrueInst, exitInst)) {
+				// "if (c) goto lateBlock; goto earlierBlock;"
+				// -> "if (!c)" goto earlierBlock; goto lateBlock;
+				// This reordering should make the if structure correspond more closely to the original C# source code
+				block.Instructions[block.Instructions.Count - 1] = ifInst.TrueInst;
+				ifInst.TrueInst = exitInst;
+				exitInst = block.Instructions.Last();
+				ifInst.Condition = new LogicNot(ifInst.Condition);
+			}
+
+			ILInstruction trueExitInst;
+			if (IsUsableBranchToChild(cfgNode, ifInst.TrueInst)) {
+				// "if (...) goto targetBlock; exitInst;"
+				// -> "if (...) { targetBlock } exitInst;"
+				var targetBlock = ((Branch)ifInst.TrueInst).TargetBlock;
+				// The targetBlock was already processed, we can embed it into the if statement:
+				ifInst.TrueInst = targetBlock;
+				trueExitInst = targetBlock.Instructions.LastOrDefault();
+				if (CompatibleExitInstruction(exitInst, trueExitInst)) {
+					// "if (...) { ...; goto exitPoint } goto exitPoint;"
+					// -> "if (...) { ... } goto exitPoint;"
+					targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
+					trueExitInst = null;
+				}
+			} else {
+				trueExitInst = ifInst.TrueInst;
+			}
+			if (IsUsableBranchToChild(cfgNode, exitInst)) {
+				var targetBlock = ((Branch)exitInst).TargetBlock;
+				var falseExitInst = targetBlock.Instructions.LastOrDefault();
+				if (CompatibleExitInstruction(trueExitInst, falseExitInst)) {
+					// if (...) { ...; goto exitPoint; } goto nextBlock; nextBlock: ...; goto exitPoint;
+					// -> if (...) { ... } else { ... } goto exitPoint;
+					targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
+					ifInst.FalseInst = targetBlock;
+					exitInst = block.Instructions[block.Instructions.Count - 1] = falseExitInst;
+					Block trueBlock = ifInst.TrueInst as Block;
+					if (trueBlock != null) {
+						Debug.Assert(trueExitInst == trueBlock.Instructions.Last());
+						trueBlock.Instructions.RemoveAt(trueBlock.Instructions.Count - 1);
+					} else {
+						Debug.Assert(trueExitInst == ifInst.TrueInst);
+						ifInst.TrueInst = new Nop { ILRange = ifInst.TrueInst.ILRange };
+					}
+				}
+			}
+			if (ifInst.FalseInst.OpCode != OpCode.Nop && ifInst.FalseInst.ILRange.Start < ifInst.TrueInst.ILRange.Start
+				|| ifInst.TrueInst.OpCode == OpCode.Nop) {
+				// swap true and false branches of if, to bring them in the same order as the IL code
+				var oldTrue = ifInst.TrueInst;
+				ifInst.TrueInst = ifInst.FalseInst;
+				ifInst.FalseInst = oldTrue;
+				ifInst.Condition = new LogicNot(ifInst.Condition);
+			}
+		}
+
 		bool IsBranchToLaterTarget(ILInstruction inst1, ILInstruction inst2)
 		{
 			Block block1, block2;
@@ -153,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			return false;
 		}
-		
+
 		bool IsUsableBranchToChild(ControlFlowNode cfgNode, ILInstruction potentialBranchInstruction)
 		{
 			Branch br = potentialBranchInstruction as Branch;
@@ -163,7 +172,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return targetBlock.Parent == currentContainer && cfgNode.Dominates(controlFlowGraph[targetBlock.ChildIndex])
 				&& targetBlock.IncomingEdgeCount == 1 && targetBlock.FinalInstruction.OpCode == OpCode.Nop;
 		}
-		
+
 		internal static bool CompatibleExitInstruction(ILInstruction exit1, ILInstruction exit2)
 		{
 			if (exit1 == null || exit2 == null || exit1.OpCode != exit2.OpCode)
@@ -184,6 +193,39 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				default:
 					return false;
 			}
+		}
+
+		private void HandleSwitchInstruction(ControlFlowNode cfgNode, Block block, SwitchInstruction sw, ref ILInstruction exitInst)
+		{
+			Debug.Assert(sw.DefaultBody is Nop);
+			foreach (var section in sw.Sections) {
+				if (IsUsableBranchToChild(cfgNode, section.Body)) {
+					// case ...: goto targetBlock;
+					var targetBlock = ((Branch)section.Body).TargetBlock;
+					section.Body = targetBlock;
+				}
+			}
+			if (IsUsableBranchToChild(cfgNode, exitInst)) {
+				// switch(...){} goto targetBlock;
+				// ---> switch(..) { default: { targetBlock } }
+				var targetBlock = ((Branch)exitInst).TargetBlock;
+				sw.DefaultBody = targetBlock;
+				if (targetBlock.Instructions.Last().OpCode == OpCode.Branch || targetBlock.Instructions.Last().OpCode == OpCode.Leave) {
+					exitInst = block.Instructions[block.Instructions.Count - 1] = targetBlock.Instructions.Last();
+					targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
+				} else {
+					exitInst = null;
+					block.Instructions.RemoveAt(block.Instructions.Count - 1);
+				}
+			}
+			// Remove compatible exitInsts from switch sections:
+			foreach (var section in sw.Sections) {
+				Block sectionBlock = section.Body as Block;
+				if (sectionBlock != null && CompatibleExitInstruction(exitInst, sectionBlock.Instructions.Last())) {
+					sectionBlock.Instructions.RemoveAt(sectionBlock.Instructions.Count - 1);
+				}
+			}
+			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => s.Body.ILRange.Start));
 		}
 	}
 }

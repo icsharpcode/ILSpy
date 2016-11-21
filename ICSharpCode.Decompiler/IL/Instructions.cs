@@ -1103,7 +1103,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as SwitchInstruction;
-			return o != null && Value.PerformMatch(o.Value, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match);
+			return o != null && Value.PerformMatch(o.Value, ref match) && DefaultBody.PerformMatch(o.DefaultBody, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match);
 		}
 	}
 

@@ -131,6 +131,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		private bool AnalyzeSwitch(SwitchInstruction inst, LongSet inputValues, out LongSet anyMatchValues)
 		{
+			Debug.Assert(inst.DefaultBody is Nop);
 			anyMatchValues = LongSet.Empty;
 			long offset;
 			if (MatchSwitchVar(inst.Value)) {

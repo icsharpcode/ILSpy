@@ -52,8 +52,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		public static List<IILTransform> GetILTransforms()
 		{
 			return new List<IILTransform> {
-				new SplitVariables(),
 				new ControlFlowSimplification(),
+				// Run SplitVariables only after ControlFlowSimplification duplicates return blocks,
+				// so that the return variable is split and can be inlined.
+				new SplitVariables(),
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new SwitchDetection(),

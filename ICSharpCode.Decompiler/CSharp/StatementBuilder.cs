@@ -93,12 +93,34 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var section in inst.Sections) {
 				var astSection = new ICSharpCode.NRefactory.CSharp.SwitchSection();
 				astSection.CaseLabels.AddRange(section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type)));
-				astSection.Statements.Add(Convert(section.Body));
+				ConvertSwitchSectionBody(astSection, section.Body);
 				stmt.SwitchSections.Add(astSection);
 			}
 			
+			if (inst.DefaultBody.OpCode != OpCode.Nop) {
+				var astSection = new ICSharpCode.NRefactory.CSharp.SwitchSection();
+				astSection.CaseLabels.Add(new CaseLabel());
+				ConvertSwitchSectionBody(astSection, inst.DefaultBody);
+				stmt.SwitchSections.Add(astSection);
+			}
+
 			breakTarget = oldBreakTarget;
 			return stmt;
+		}
+
+		private void ConvertSwitchSectionBody(NRefactory.CSharp.SwitchSection astSection, ILInstruction bodyInst)
+		{
+			var body = Convert(bodyInst);
+			astSection.Statements.Add(body);
+			if (!bodyInst.HasFlag(InstructionFlags.EndPointUnreachable)) {
+				// we need to insert 'break;'
+				BlockStatement block = body as BlockStatement;
+				if (block != null) {
+					block.Add(new BreakStatement());
+				} else {
+					astSection.Statements.Add(new BreakStatement());
+				}
+			}
 		}
 		
 		/// <summary>Target block that a 'continue;' statement would jump to</summary>

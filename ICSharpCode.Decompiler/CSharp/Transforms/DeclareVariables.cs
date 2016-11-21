@@ -65,10 +65,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			public readonly IType Type;
 			public readonly string Name;
+
 			/// <summary>
 			/// Whether the variable needs to be default-initialized.
 			/// </summary>
-			public readonly bool DefaultInitialization;
+			public bool DefaultInitialization;
 			
 			/// <summary>
 			/// Integer value that can be used to compare to VariableToDeclare instances
@@ -237,6 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						} else {
 							v.InsertionPoint = point2;
 						}
+						v.DefaultInitialization |= prev.DefaultInitialization;
 						// I think we don't need to re-check the dict entries that we already checked earlier,
 						// because the new v.InsertionPoint only collides with another point x if either
 						// the old v.InsertionPoint or the old prev.InsertionPoint already collided with x.

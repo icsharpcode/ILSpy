@@ -33,13 +33,15 @@ namespace ICSharpCode.Decompiler.IL
 	partial class SwitchInstruction
 	{
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		public static readonly SlotInfo DefaultBodySlot = new SlotInfo("DefaultBody");
 		public static readonly SlotInfo SectionSlot = new SlotInfo("Section", isCollection: true);
 		
 		public SwitchInstruction(ILInstruction value)
 			: base(OpCode.SwitchInstruction)
 		{
 			this.Value = value;
-			this.Sections = new InstructionCollection<SwitchSection>(this, 1);
+			this.DefaultBody = new Nop();
+			this.Sections = new InstructionCollection<SwitchSection>(this, 2);
 		}
 		
 		ILInstruction value;
@@ -51,16 +53,25 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
+		ILInstruction defaultBody;
+
+		public ILInstruction DefaultBody {
+			get { return this.defaultBody; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.defaultBody, value, 1);
+			}
+		}
+
 		public readonly InstructionCollection<SwitchSection> Sections;
-		
+
 		protected override InstructionFlags ComputeFlags()
 		{
-			var sectionFlags = InstructionFlags.ControlFlow;
-			// note: the initial sectionFlags also represent the implicit empty 'default' case
+			var sectionFlags = defaultBody.Flags;
 			foreach (var section in Sections) {
 				sectionFlags = SemanticHelper.CombineBranches(sectionFlags, section.Flags);
 			}
-			return value.Flags | sectionFlags;
+			return value.Flags | InstructionFlags.ControlFlow | sectionFlags;
 		}
 		
 		public override InstructionFlags DirectFlags {
@@ -77,6 +88,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.MarkFoldStart("{...}");
 			output.WriteLine("{");
 			output.Indent();
+			output.Write("default: ");
+			defaultBody.WriteTo(output);
+			output.WriteLine();
 			foreach (var section in this.Sections) {
 				section.WriteTo(output);
 				output.WriteLine();
@@ -88,28 +102,34 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override int GetChildCount()
 		{
-			return 1 + Sections.Count;
+			return 2 + Sections.Count;
 		}
 		
 		protected override ILInstruction GetChild(int index)
 		{
 			if (index == 0)
 				return value;
-			return Sections[index - 1];
+			else if (index == 1)
+				return defaultBody;
+			return Sections[index - 2];
 		}
 		
 		protected override void SetChild(int index, ILInstruction value)
 		{
 			if (index == 0)
 				Value = value;
+			else if (index == 1)
+				DefaultBody = value;
 			else
-				Sections[index - 1] = (SwitchSection)value;
+				Sections[index - 2] = (SwitchSection)value;
 		}
 		
 		protected override SlotInfo GetChildSlot(int index)
 		{
 			if (index == 0)
 				return ValueSlot;
+			else if (index == 1)
+				return DefaultBodySlot;
 			return SectionSlot;
 		}
 		
@@ -118,6 +138,7 @@ namespace ICSharpCode.Decompiler.IL
 			var clone = new SwitchInstruction(value.Clone());
 			clone.ILRange = this.ILRange;
 			clone.Value = value.Clone();
+			this.DefaultBody = defaultBody.Clone();
 			clone.Sections.AddRange(this.Sections.Select(h => (SwitchSection)h.Clone()));
 			return clone;
 		}
