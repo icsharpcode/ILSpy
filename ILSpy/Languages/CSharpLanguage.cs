@@ -481,7 +481,11 @@ namespace ICSharpCode.ILSpy
 					if (string.IsNullOrEmpty(type.Namespace)) {
 						return file;
 					} else {
-						string dir = TextView.DecompilerTextView.CleanUpName(type.Namespace);
+						string dir = type.Namespace;
+						// Cut root namespace from sub-directory name for decompiled source files
+						if (dir.StartsWith(module.Assembly.Name.Name + ".", StringComparison.Ordinal))
+							dir = dir.Substring(module.Assembly.Name.Name.Length + 1);
+						dir = TextView.DecompilerTextView.CleanUpName(dir);
 						if (directories.Add(dir))
 							Directory.CreateDirectory(Path.Combine(options.SaveAsProjectDirectory, dir));
 						return Path.Combine(dir, file);
