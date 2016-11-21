@@ -198,6 +198,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		private void HandleSwitchInstruction(ControlFlowNode cfgNode, Block block, SwitchInstruction sw, ref ILInstruction exitInst)
 		{
 			Debug.Assert(sw.DefaultBody is Nop);
+			// First, move blocks into the switch section
 			foreach (var section in sw.Sections) {
 				if (IsUsableBranchToChild(cfgNode, section.Body)) {
 					// case ...: goto targetBlock;
@@ -205,12 +206,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					section.Body = targetBlock;
 				}
 			}
+			// Move the code following the switch into the default section
 			if (IsUsableBranchToChild(cfgNode, exitInst)) {
 				// switch(...){} goto targetBlock;
 				// ---> switch(..) { default: { targetBlock } }
 				var targetBlock = ((Branch)exitInst).TargetBlock;
 				sw.DefaultBody = targetBlock;
-				if (targetBlock.Instructions.Last().OpCode == OpCode.Branch || targetBlock.Instructions.Last().OpCode == OpCode.Leave) {
+				if (IsBranchOrLeave(targetBlock.Instructions.Last())) {
 					exitInst = block.Instructions[block.Instructions.Count - 1] = targetBlock.Instructions.Last();
 					targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
 				} else {
@@ -221,11 +223,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Remove compatible exitInsts from switch sections:
 			foreach (var section in sw.Sections) {
 				Block sectionBlock = section.Body as Block;
-				if (sectionBlock != null && CompatibleExitInstruction(exitInst, sectionBlock.Instructions.Last())) {
+				if (sectionBlock != null && exitInst == null && IsBranchOrLeave(sectionBlock.Instructions.Last())) {
+					exitInst = sectionBlock.Instructions.Last();
+					sectionBlock.Instructions.RemoveAt(sectionBlock.Instructions.Count - 1);
+					block.Instructions.Add(exitInst);
+				} else if (sectionBlock != null && CompatibleExitInstruction(exitInst, sectionBlock.Instructions.Last())) {
 					sectionBlock.Instructions.RemoveAt(sectionBlock.Instructions.Count - 1);
 				}
 			}
 			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => s.Body.ILRange.Start));
+		}
+
+		private bool IsBranchOrLeave(ILInstruction inst)
+		{
+			switch (inst.OpCode) {
+				case OpCode.Branch:
+				case OpCode.Leave:
+					return true;
+				default:
+					return false;
+			}
 		}
 	}
 }
