@@ -44,9 +44,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.Nop);
 				
 				InlineReturnBlock(block);
-				// due to our of of basic blocks at this point,
-				// switch instructions can only appear as second-to-last insturction
-				SimplifySwitchInstruction(block.Instructions.SecondToLastOrDefault() as SwitchInstruction);
+				// 1st pass SimplifySwitchInstruction before SimplifyBranchChains()
+				// starts duplicating return instructions.
+				SwitchDetection.SimplifySwitchInstruction(block);
 			}
 			SimplifyBranchChains(function);
 			CleanUpEmptyBlocks(function);
@@ -74,32 +74,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					block.Instructions.RemoveAt(0);
 				}
 			}
-		}
-		
-		void SimplifySwitchInstruction(SwitchInstruction sw)
-		{
-			if (sw == null)
-				return;
-			
-			// ControlFlowSimplification runs early (before any other control flow transforms).
-			// Any switch instructions will only have branch instructions in the sections.
-			
-			// dict from branch target to switch section
-			var dict = new Dictionary<Block, SwitchSection>();
-			sw.Sections.RemoveAll(
-				section => {
-					Block target;
-					if (section.Body.MatchBranch(out target)) {
-						SwitchSection primarySection;
-						if (dict.TryGetValue(target, out primarySection)) {
-							primarySection.Labels = primarySection.Labels.UnionWith(section.Labels);
-							return true; // remove this section
-						} else {
-							dict.Add(target, section);
-						}
-					}
-					return false;
-				});
 		}
 		
 		void SimplifyBranchChains(ILFunction function)

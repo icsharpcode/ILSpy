@@ -46,6 +46,7 @@ public static class Switch
 			case 0: return "0";
 			case 1: return "1";
 			case 2: return "2";
+			case 4: return "4";
 			case 100: return "hundred";
 			case 10000: return "ten thousand";
 			case 10001: return "ten thousand and one";

@@ -40,39 +40,84 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
-				bool needBlockCleanup = false;
+				bool blockContainerNeedsCleanup = false;
 				foreach (var block in container.Blocks) {
-					if (analysis.AnalyzeBlock(block) && UseCSharpSwitch(analysis)) {
-						var hugeSection = analysis.Sections.Single(s => s.Key.Count() > 50);
-
-						var sw = new SwitchInstruction(new LdLoc(analysis.SwitchVariable));
-						foreach (var section in analysis.Sections) {
-							if (!section.Key.SetEquals(hugeSection.Key)) {
-								sw.Sections.Add(new SwitchSection
-								{
-									Labels = section.Key,
-									Body = section.Value
-								});
-							}
-						}
-						block.Instructions[block.Instructions.Count - 2] = sw;
-						block.Instructions[block.Instructions.Count - 1] = hugeSection.Value;
-						// mark all inner blocks that were converted to the switch statement for deletion
-						foreach (var innerBlock in analysis.InnerBlocks) {
-							Debug.Assert(innerBlock.Parent == container);
-							Debug.Assert(innerBlock != container.EntryPoint);
-							innerBlock.Instructions.Clear();
-						}
-						needBlockCleanup = true;
-					}
+					ProcessBlock(block, ref blockContainerNeedsCleanup);
 				}
-				if (needBlockCleanup) {
+				if (blockContainerNeedsCleanup) {
 					Debug.Assert(container.Blocks.All(b => b.Instructions.Count != 0 || b.IncomingEdgeCount == 0));
 					container.Blocks.RemoveAll(b => b.Instructions.Count == 0);
 				}
 			}
 		}
-		
+
+		void ProcessBlock(Block block, ref bool blockContainerNeedsCleanup)
+		{
+			if (analysis.AnalyzeBlock(block) && UseCSharpSwitch(analysis)) {
+				// complex multi-block switch that can be combined into a single SwitchInstruction
+				var hugeSection = analysis.Sections.Single(s => s.Key.Count() > 50);
+
+				var sw = new SwitchInstruction(new LdLoc(analysis.SwitchVariable));
+				foreach (var section in analysis.Sections) {
+					if (!section.Key.SetEquals(hugeSection.Key)) {
+						sw.Sections.Add(new SwitchSection
+						{
+							Labels = section.Key,
+							Body = section.Value
+						});
+					}
+				}
+				block.Instructions[block.Instructions.Count - 2] = sw;
+				block.Instructions[block.Instructions.Count - 1] = hugeSection.Value;
+				// mark all inner blocks that were converted to the switch statement for deletion
+				foreach (var innerBlock in analysis.InnerBlocks) {
+					Debug.Assert(innerBlock.Parent == block.Parent);
+					Debug.Assert(innerBlock != ((BlockContainer)block.Parent).EntryPoint);
+					innerBlock.Instructions.Clear();
+				}
+				blockContainerNeedsCleanup = true;
+			} else {
+				// 2nd pass of SimplifySwitchInstruction (after duplicating return blocks),
+				// (1st pass was in ControlFlowSimplification)
+				SimplifySwitchInstruction(block);
+			}
+		}
+
+		internal static void SimplifySwitchInstruction(Block block)
+		{
+			// due to our of of basic blocks at this point,
+			// switch instructions can only appear as second-to-last insturction
+			var sw = block.Instructions.SecondToLastOrDefault() as SwitchInstruction;
+			if (sw == null)
+				return;
+
+			// ControlFlowSimplification runs early (before any other control flow transforms).
+			// Any switch instructions will only have branch instructions in the sections.
+
+			// Combine sections with identical branch target:
+			Block defaultTarget;
+			block.Instructions.Last().MatchBranch(out defaultTarget);
+			var dict = new Dictionary<Block, SwitchSection>(); // branch target -> switch section
+			sw.Sections.RemoveAll(
+				section => {
+					Block target;
+					if (section.Body.MatchBranch(out target)) {
+						SwitchSection primarySection;
+						if (target == defaultTarget) {
+							// This section is just an alternative for 'default'.
+							Debug.Assert(sw.DefaultBody is Nop);
+							return true; // remove this section
+						} else if (dict.TryGetValue(target, out primarySection)) {
+							primarySection.Labels = primarySection.Labels.UnionWith(section.Labels);
+							return true; // remove this section
+						} else {
+							dict.Add(target, section);
+						}
+					}
+					return false;
+				});
+		}
+
 		const ulong MaxValuesPerSection = 50;
 
 		/// <summary>
