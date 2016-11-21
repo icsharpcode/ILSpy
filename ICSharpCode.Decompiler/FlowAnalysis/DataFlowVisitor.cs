@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// the first place.
 		/// </remarks>
 		/// <example>
-		/// The simple state "<c>bool isReachable</c>", would implement <c>ReplaceWith</c> as:
+		/// The simple state "<c>bool isReachable</c>", would implement <c>ReplaceWithBottom</c> as:
 		/// <code>this.isReachable = false;</code>
 		/// </example>
 		void ReplaceWithBottom();

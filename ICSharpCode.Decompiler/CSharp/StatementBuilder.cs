@@ -76,9 +76,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				value = i != 0;
 			} else if (type.Kind == TypeKind.Enum) {
 				var enumType = type.GetDefinition().EnumUnderlyingType;
-				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), i, true);
+				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), i, false);
 			} else {
-				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, true);
+				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, false);
 			}
 			return new CaseLabel(exprBuilder.ConvertConstantValue(new ConstantResolveResult(type, value)));
 		}
@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var stmt = new SwitchStatement() { Expression = value };	
 			foreach (var section in inst.Sections) {
 				var astSection = new ICSharpCode.NRefactory.CSharp.SwitchSection();
-				astSection.CaseLabels.AddRange(section.Labels.Range().Select(i => CreateTypedCaseLabel(i, value.Type)));
+				astSection.CaseLabels.AddRange(section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type)));
 				astSection.Statements.Add(Convert(section.Body));
 				stmt.SwitchSections.Add(astSection);
 			}

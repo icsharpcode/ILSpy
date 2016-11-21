@@ -96,6 +96,8 @@
     <Compile Include="IL\ControlFlow\DetectPinnedRegions.cs" />
     <Compile Include="IL\ControlFlow\IntroduceExitPoints.cs" />
     <Compile Include="IL\ControlFlow\LoopDetection.cs" />
+    <Compile Include="IL\ControlFlow\SwitchAnalysis.cs" />
+    <Compile Include="IL\ControlFlow\SwitchDetection.cs" />
     <Compile Include="IL\Instructions.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -172,6 +174,7 @@
     <Compile Include="Util\CollectionExtensions.cs" />
     <Compile Include="Util\BitSet.cs" />
     <Compile Include="Util\Interval.cs" />
+    <Compile Include="Util\LongSet.cs" />
     <Compile Include="Util\UnionFind.cs" />
     <None Include="IL\ILOpCodes.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
@@ -207,7 +210,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="ILAst\" />
-    <Folder Include="IL\Patterns" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <Target Name="BeforeBuild">

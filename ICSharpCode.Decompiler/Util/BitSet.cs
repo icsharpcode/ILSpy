@@ -17,9 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text;
 
@@ -124,7 +121,7 @@ namespace ICSharpCode.Decompiler
 		
 		public bool IsProperSupersetOf(BitSet other)
 		{
-			return IsSubsetOf(other) && !SetEquals(other);
+			return IsSupersetOf(other) && !SetEquals(other);
 		}
 		
 		/// <summary>

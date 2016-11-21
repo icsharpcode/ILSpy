@@ -56,6 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new ControlFlowSimplification(),
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
+				new SwitchDetection(),
 				new LoopDetection(),
 				new IntroduceExitPoints(),
 				new ConditionDetection(),

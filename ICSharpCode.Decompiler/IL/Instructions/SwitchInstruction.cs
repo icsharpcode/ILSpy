@@ -24,7 +24,11 @@ using System.Linq;
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
-	/// Description of SwitchInstruction.
+	/// Generalization of IL switch-case: like a VB switch over integers, this instruction
+	/// supports integer value ranges as labels.
+	/// 
+	/// The section labels are using 'long' as integer type.
+	/// If the Value instruction produces StackType.I4 or I, the value is implicitly sign-extended to I8.
 	/// </summary>
 	partial class SwitchInstruction
 	{
@@ -52,6 +56,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected override InstructionFlags ComputeFlags()
 		{
 			var sectionFlags = InstructionFlags.ControlFlow;
+			// note: the initial sectionFlags also represent the implicit empty 'default' case
 			foreach (var section in Sections) {
 				sectionFlags = SemanticHelper.CombineBranches(sectionFlags, section.Flags);
 			}
@@ -120,9 +125,9 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			LongSet sets = new LongSet(ImmutableArray<LongInterval>.Empty);
+			LongSet sets = LongSet.Empty;
 			foreach (var section in Sections) {
-				Debug.Assert(!section.Labels.Intersects(sets));
+				Debug.Assert(!section.Labels.Overlaps(sets));
 				sets = sets.UnionWith(section.Labels);
 			}
 		}
@@ -133,7 +138,7 @@ namespace ICSharpCode.Decompiler.IL
 		public SwitchSection()
 			: base(OpCode.SwitchSection)
 		{
-			
+			this.Labels = LongSet.Empty;
 		}
 
 		public LongSet Labels { get; set; }

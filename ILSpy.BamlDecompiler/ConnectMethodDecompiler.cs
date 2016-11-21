@@ -67,7 +67,7 @@ namespace ILSpy.BamlDecompiler
 			if (ilSwitch != null) {
 				foreach (var section in ilSwitch.Sections) {
 					var events = FindEvents(section.Body);
-					foreach (long id in section.Labels.Range())
+					foreach (long id in section.Labels.Values)
 						result.Add(id, events);
 				}
 			} else {

@@ -107,6 +107,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (phase > ILPhase.InILReader) {
 				Debug.Assert(targetBlock.Parent is BlockContainer);
 				Debug.Assert(this.IsDescendantOf(targetBlock.Parent));
+				Debug.Assert(targetBlock.Parent.Children[targetBlock.ChildIndex] == targetBlock);
 			}
 		}
 		

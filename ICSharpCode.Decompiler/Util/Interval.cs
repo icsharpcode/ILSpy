@@ -1,11 +1,23 @@
-﻿using System;
-using System.Collections;
+﻿// Copyright (c) 2016 Daniel Grunwald
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler
 {
@@ -133,7 +145,7 @@ namespace ICSharpCode.Decompiler
 	/// <remarks>
 	/// Start &lt;= unchecked(End - 1): normal interval
 	/// Start == End: empty interval
-	/// Special case: Start == End == int.MinValue: interval containing all integers, not an empty interval!
+	/// Special case: Start == End == long.MinValue: interval containing all integers, not an empty interval!
 	/// </remarks>
 	public struct LongInterval : IEquatable<LongInterval>
 	{
@@ -151,20 +163,39 @@ namespace ICSharpCode.Decompiler
 		/// If possible, prefer using InclusiveEnd for comparisons, as that does not have an overflow problem.
 		/// </remarks>
 		public readonly long End;
-		
+
 		/// <summary>
 		/// Creates a new interval.
 		/// </summary>
 		/// <param name="start">Start position (inclusive)</param>
 		/// <param name="end">End position (exclusive).
-		/// Note that it is possible to create an interval that includes int.MaxValue
-		/// by using end==int.MaxValue+1==int.MinValue.</param>
+		/// Note that it is possible to create an interval that includes long.MaxValue
+		/// by using end==long.MaxValue+1==long.MinValue.</param>
+		/// <remarks>
+		/// This method can be used to create an empty interval by specifying start==end,
+		/// however this is error-prone due to the special case of
+		/// start==end==long.MinValue being interpreted as the full interval [long.MinValue,long.MaxValue].
+		/// </remarks>
 		public LongInterval(long start, long end)
 		{
 			if (!(start <= unchecked(end - 1) || start == end))
 				throw new ArgumentException("The end must be after the start", "end");
 			this.Start = start;
 			this.End = end;
+		}
+
+		/// <summary>
+		/// Creates a new interval from start to end.
+		/// Unlike the constructor where the end position is exclusive,
+		/// this method interprets the end position as inclusive.
+		/// 
+		/// This method cannot be used to construct an empty interval.
+		/// </summary>
+		public static LongInterval Inclusive(long start, long inclusiveEnd)
+		{
+			if (!(start <= inclusiveEnd))
+				throw new ArgumentException();
+			return new LongInterval(start, unchecked(inclusiveEnd + 1));
 		}
 		
 		/// <summary>
@@ -190,7 +221,7 @@ namespace ICSharpCode.Decompiler
 		
 		public bool Contains(long val)
 		{
-			// Use 'val <= InclusiveEnd' instead of 'val < End' to allow intervals to include int.MaxValue.
+			// Use 'val <= InclusiveEnd' instead of 'val < End' to allow intervals to include long.MaxValue.
 			return Start <= val && val <= InclusiveEnd;
 		}
 		
@@ -260,138 +291,5 @@ namespace ICSharpCode.Decompiler
 			return !(lhs == rhs);
 		}
 		#endregion
-	}
-
-	/// <summary>
-	/// An immutable set of longs, that is implemented as a list of intervals.
-	/// </summary>
-	public struct LongSet
-	{
-		public readonly ImmutableArray<LongInterval> Intervals;
-
-		public LongSet(ImmutableArray<LongInterval> intervals)
-		{
-			this.Intervals = intervals;
-		}
-		
-		public LongSet(long value)
-			: this(ImmutableArray.Create(new LongInterval(value, unchecked(value + 1))))
-		{
-		}
-		
-		public bool IsEmpty
-		{
-			get { return Intervals.IsDefaultOrEmpty; }
-		}
-
-		IEnumerable<LongInterval> DoIntersectWith(LongSet other)
-		{
-			var enumA = this.Intervals.GetEnumerator();
-			var enumB = other.Intervals.GetEnumerator();
-			bool moreA = enumA.MoveNext();
-			bool moreB = enumB.MoveNext();
-			while (moreA && moreB) {
-				LongInterval a = enumA.Current;
-				LongInterval b = enumB.Current;
-				LongInterval intersection = a.Intersect(b);
-				if (!intersection.IsEmpty) {
-					yield return intersection;
-				}
-				if (a.InclusiveEnd < b.InclusiveEnd) {
-					moreA = enumA.MoveNext();
-				} else {
-					moreB = enumB.MoveNext();
-				}
-			}
-		}
-		
-		public bool Intersects(LongSet other)
-		{
-			return DoIntersectWith(other).Any();
-		}
-		
-		public LongSet IntersectWith(LongSet other)
-		{
-			return new LongSet(DoIntersectWith(other).ToImmutableArray());
-		}
-		
-		IEnumerable<LongInterval> DoUnionWith(LongSet other)
-		{
-			long start = long.MinValue;
-			long end = long.MinValue;
-			bool empty = true;
-			foreach (var element in this.Intervals.Merge(other.Intervals, (a, b) => a.Start.CompareTo(b.Start))) {
-				Debug.Assert(start <= element.Start);
-				
-				if (!empty && element.Start < end - 1) {
-					// element overlaps or touches [start, end), so combine the intervals:
-					if (element.End == long.MinValue) {
-						// special case: element goes all the way up to long.MaxValue inclusive
-						yield return new LongInterval(start, element.End);
-						break;
-					} else {
-						end = Math.Max(end, element.End);
-					}
-				} else {
-					// flush existing interval:
-					if (!empty) {
-						yield return new LongInterval(start, end);
-					} else {
-						empty = false;
-					}
-					start = element.Start;
-					end = element.End;
-				}
-				if (end == long.MinValue) {
-					// special case: element goes all the way up to long.MaxValue inclusive
-					// all further intervals in the input must be contained in [start, end),
-					// so ignore them (and avoid trouble due to the overflow in `end`).
-					break;
-				}
-			}
-			if (!empty) {
-				yield return new LongInterval(start, end);
-			}
-		}
-		
-		public LongSet UnionWith(LongSet other)
-		{
-			return new LongSet(DoUnionWith(other).ToImmutableArray());
-		}
-		
-		public bool Contains(long val)
-		{
-			int index = upper_bound(val);
-			return index > 0 && Intervals[index - 1].Contains(val);
-		}
-		
-		internal int upper_bound(long val)
-		{
-			int min = 0, max = Intervals.Length - 1;
-			while (max >= min) {
-				int m = min + (max - min) / 2;
-				LongInterval i = Intervals[m];
-				if (val < i.Start) {
-					max = m - 1;
-					continue;
-				}
-				if (val > i.End) {
-					min = m + 1;
-					continue;
-				}
-				return m + 1;
-			}
-			return min;
-		}
-
-		public IEnumerable<long> Range()
-		{
-			return Intervals.SelectMany(i => i.Range());
-		}
-		
-		public override string ToString()
-		{
-			return string.Join(",", Intervals);
-		}
 	}
 }
