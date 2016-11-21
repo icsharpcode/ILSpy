@@ -478,14 +478,16 @@ namespace ICSharpCode.ILSpy
 			var files = module.Types.Where(t => IncludeTypeWhenDecompilingProject(t, options)).GroupBy(
 				delegate(TypeDefinition type) {
 					string file = TextView.DecompilerTextView.CleanUpName(type.Name) + this.FileExtension;
-					if (string.IsNullOrEmpty(type.Namespace)) {
+					// Cut root namespace from sub-directory name for decompiled source files
+					// TODO Control namespaces cutting with some assembly settings option?
+					if (string.IsNullOrEmpty(type.Namespace) || type.Namespace.Equals(module.Assembly.Name.Name, StringComparison.Ordinal)) {
 						return file;
 					} else {
 						string dir = type.Namespace;
-						// Cut root namespace from sub-directory name for decompiled source files
 						if (dir.StartsWith(module.Assembly.Name.Name + ".", StringComparison.Ordinal))
 							dir = dir.Substring(module.Assembly.Name.Name.Length + 1);
-						dir = TextView.DecompilerTextView.CleanUpName(dir);
+						// Create sub-directories for each namespace part
+						dir = TextView.DecompilerTextView.CleanUpName(dir).Replace('.', Path.DirectorySeparatorChar);
 						if (directories.Add(dir))
 							Directory.CreateDirectory(Path.Combine(options.SaveAsProjectDirectory, dir));
 						return Path.Combine(dir, file);
