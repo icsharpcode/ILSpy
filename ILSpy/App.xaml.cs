@@ -122,8 +122,7 @@ namespace ICSharpCode.ILSpy
 		#region Exception Handling
 		static void Dispatcher_UnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
 		{
-			Debug.WriteLine(e.Exception.ToString());
-			MessageBox.Show(e.Exception.ToString(), "Sorry, we crashed");
+			UnhandledException(e.Exception);
 			e.Handled = true;
 		}
 		
@@ -131,12 +130,25 @@ namespace ICSharpCode.ILSpy
 		{
 			Exception ex = e.ExceptionObject as Exception;
 			if (ex != null) {
-				Debug.WriteLine(ex.ToString());
-				MessageBox.Show(ex.ToString(), "Sorry, we crashed");
+				UnhandledException(ex);
 			}
 		}
+
+		static void UnhandledException(Exception exception)
+		{
+			Debug.WriteLine(exception.ToString());
+			for (Exception ex = exception; ex != null; ex = ex.InnerException) {
+				ReflectionTypeLoadException rtle = ex as ReflectionTypeLoadException;
+				if (rtle != null && rtle.LoaderExceptions.Length > 0) {
+					exception = rtle.LoaderExceptions[0];
+					Debug.WriteLine(exception.ToString());
+					break;
+				}
+			}
+			MessageBox.Show(exception.ToString(), "Sorry, we crashed");
+		}
 		#endregion
-		
+
 		#region Pass Command Line Arguments to previous instance
 		bool SendToPreviousInstance(string message, bool activate)
 		{

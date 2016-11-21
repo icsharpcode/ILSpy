@@ -21,12 +21,17 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.Composition.Hosting;
 using System.Linq;
+using ICSharpCode.NRefactory;
 
 namespace ICSharpCode.ILSpy
 {
 	public static class Languages
 	{
-		private static ReadOnlyCollection<Language> allLanguages;
+		// Start with a dummy list with an IL entry so that crashes
+		// in Initialize() (e.g. due to invalid plugins) don't lead to
+		// confusing follow-up errors in GetLanguage().
+		private static ReadOnlyCollection<Language> allLanguages = new ReadOnlyCollection<Language>(
+			new Language[] { new ILLanguage() });
 
 		/// <summary>
 		/// A list of all languages.

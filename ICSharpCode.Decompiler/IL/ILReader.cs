@@ -33,20 +33,6 @@ namespace ICSharpCode.Decompiler.IL
 {
 	public class ILReader
 	{
-		internal static ILOpCode ReadOpCode(ref BlobReader reader)
-		{
-			byte b = reader.ReadByte();
-			if (b == 0xfe)
-				return (ILOpCode)(0x100 | reader.ReadByte());
-			else
-				return (ILOpCode)b;
-		}
-
-		internal static MetadataToken ReadMetadataToken(ref BlobReader reader)
-		{
-			return new MetadataToken(reader.ReadUInt32());
-		}
-		
 		readonly ICompilation compilation;
 		readonly IDecompilerTypeSystem typeSystem;
 
@@ -60,7 +46,8 @@ namespace ICSharpCode.Decompiler.IL
 
 		Cil.MethodBody body;
 		StackType methodReturnStackType;
-		BlobReader reader;
+		Cil.Instruction currentInstruction;
+		int nextInstructionIndex;
 		ImmutableStack<ILVariable> currentStack;
 		ILVariable[] parameterVariables;
 		ILVariable[] localVariables;
@@ -78,7 +65,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (body == null)
 				throw new ArgumentNullException("body");
 			this.body = body;
-			this.reader = body.GetILReader();
+			this.currentInstruction = null;
+			this.nextInstructionIndex = 0;
 			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new UnionFind<ILVariable>();
 			this.methodReturnStackType = typeSystem.Resolve(body.Method.ReturnType).GetStackType();
@@ -97,28 +85,24 @@ namespace ICSharpCode.Decompiler.IL
 
 		IMetadataTokenProvider ReadAndDecodeMetadataToken()
 		{
-			var token = ReadMetadataToken(ref reader);
-			return body.LookupToken(token);
+			return (IMetadataTokenProvider)currentInstruction.Operand;
 		}
 
 		IType ReadAndDecodeTypeReference()
 		{
-			var token = ReadMetadataToken(ref reader);
-			var typeReference = body.LookupToken(token) as TypeReference;
+			var typeReference = (TypeReference)currentInstruction.Operand;
 			return typeSystem.Resolve(typeReference);
 		}
 
 		IMethod ReadAndDecodeMethodReference()
 		{
-			var token = ReadMetadataToken(ref reader);
-			var methodReference = body.LookupToken(token) as MethodReference;
+			var methodReference = (MethodReference)currentInstruction.Operand;
 			return typeSystem.Resolve(methodReference);
 		}
 
 		IField ReadAndDecodeFieldReference()
 		{
-			var token = ReadMetadataToken(ref reader);
-			var fieldReference = body.LookupToken(token) as FieldReference;
+			var fieldReference = (FieldReference)currentInstruction.Operand;
 			return typeSystem.Resolve(fieldReference);
 		}
 
@@ -186,7 +170,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void Warn(string message)
 		{
-			Debug.Fail(string.Format("IL_{0:x4}: {1}", reader.Position, message));
+			Debug.Fail(string.Format("IL_{0:x4}: {1}", currentInstruction.Offset, message));
 		}
 
 		void MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
@@ -242,22 +226,24 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			
-			while (reader.Position < reader.Length) {
+			while (nextInstructionIndex < body.Instructions.Count) {
 				cancellationToken.ThrowIfCancellationRequested();
-				int start = reader.Position;
+				int start = body.Instructions[nextInstructionIndex].Offset;
 				StoreStackForOffset(start, currentStack);
 				ILInstruction decodedInstruction = DecodeInstruction();
 				if (decodedInstruction.ResultType == StackType.Unknown)
 					Warn("Unknown result type (might be due to invalid IL)");
 				decodedInstruction.CheckInvariant(ILPhase.InILReader);
-				decodedInstruction.ILRange = new Interval(start, reader.Position);
+				int end = currentInstruction.GetEndOffset();
+				decodedInstruction.ILRange = new Interval(start, end);
 				UnpackPush(decodedInstruction).ILRange = decodedInstruction.ILRange;
 				instructionBuilder.Add(decodedInstruction);
 				if (decodedInstruction.HasDirectFlag(InstructionFlags.EndPointUnreachable)) {
-					if (!stackByOffset.TryGetValue(reader.Position, out currentStack)) {
+					if (!stackByOffset.TryGetValue(end, out currentStack)) {
 						currentStack = ImmutableStack<ILVariable>.Empty;
 					}
 				}
+				Debug.Assert(currentInstruction.Next == null || currentInstruction.Next.Offset == end);
 			}
 			
 			var visitor = new CollectStackVariablesVisitor(unionFind);
@@ -350,450 +336,465 @@ namespace ICSharpCode.Decompiler.IL
 		
 		ILInstruction DecodeInstruction()
 		{
-			var ilOpCode = ReadOpCode(ref reader);
-			switch (ilOpCode) {
-				case ILOpCode.Constrained:
+			if (nextInstructionIndex >= body.Instructions.Count)
+				return new InvalidInstruction("Unexpected end of body");
+			var cecilInst = body.Instructions[nextInstructionIndex++];
+			currentInstruction = cecilInst;
+			switch (cecilInst.OpCode.Code) {
+				case Cil.Code.Constrained:
 					return DecodeConstrainedCall();
-				case ILOpCode.Readonly:
+				case Cil.Code.Readonly:
 					return DecodeReadonly();
-				case ILOpCode.Tailcall:
+				case Cil.Code.Tail:
 					return DecodeTailCall();
-				case ILOpCode.Unaligned:
+				case Cil.Code.Unaligned:
 					return DecodeUnaligned();
-				case ILOpCode.Volatile:
+				case Cil.Code.Volatile:
 					return DecodeVolatile();
-				case ILOpCode.Add:
+				case Cil.Code.Add:
 					return BinaryNumeric(BinaryNumericOperator.Add);
-				case ILOpCode.Add_Ovf:
+				case Cil.Code.Add_Ovf:
 					return BinaryNumeric(BinaryNumericOperator.Add, true, Sign.Signed);
-				case ILOpCode.Add_Ovf_Un:
+				case Cil.Code.Add_Ovf_Un:
 					return BinaryNumeric(BinaryNumericOperator.Add, true, Sign.Unsigned);
-				case ILOpCode.And:
+				case Cil.Code.And:
 					return BinaryNumeric(BinaryNumericOperator.BitAnd);
-				case ILOpCode.Arglist:
+				case Cil.Code.Arglist:
 					return Push(new Arglist());
-				case ILOpCode.Beq:
+				case Cil.Code.Beq:
 					return DecodeComparisonBranch(false, ComparisonKind.Equality);
-				case ILOpCode.Beq_S:
+				case Cil.Code.Beq_S:
 					return DecodeComparisonBranch(true, ComparisonKind.Equality);
-				case ILOpCode.Bge:
+				case Cil.Code.Bge:
 					return DecodeComparisonBranch(false, ComparisonKind.GreaterThanOrEqual);
-				case ILOpCode.Bge_S:
+				case Cil.Code.Bge_S:
 					return DecodeComparisonBranch(true, ComparisonKind.GreaterThanOrEqual);
-				case ILOpCode.Bge_Un:
+				case Cil.Code.Bge_Un:
 					return DecodeComparisonBranch(false, ComparisonKind.GreaterThanOrEqual, un: true);
-				case ILOpCode.Bge_Un_S:
+				case Cil.Code.Bge_Un_S:
 					return DecodeComparisonBranch(true, ComparisonKind.GreaterThanOrEqual, un: true);
-				case ILOpCode.Bgt:
+				case Cil.Code.Bgt:
 					return DecodeComparisonBranch(false, ComparisonKind.GreaterThan);
-				case ILOpCode.Bgt_S:
+				case Cil.Code.Bgt_S:
 					return DecodeComparisonBranch(true, ComparisonKind.GreaterThan);
-				case ILOpCode.Bgt_Un:
+				case Cil.Code.Bgt_Un:
 					return DecodeComparisonBranch(false, ComparisonKind.GreaterThan, un: true);
-				case ILOpCode.Bgt_Un_S:
+				case Cil.Code.Bgt_Un_S:
 					return DecodeComparisonBranch(true, ComparisonKind.GreaterThan, un: true);
-				case ILOpCode.Ble:
+				case Cil.Code.Ble:
 					return DecodeComparisonBranch(false, ComparisonKind.LessThanOrEqual);
-				case ILOpCode.Ble_S:
+				case Cil.Code.Ble_S:
 					return DecodeComparisonBranch(true, ComparisonKind.LessThanOrEqual);
-				case ILOpCode.Ble_Un:
+				case Cil.Code.Ble_Un:
 					return DecodeComparisonBranch(false, ComparisonKind.LessThanOrEqual, un: true);
-				case ILOpCode.Ble_Un_S:
+				case Cil.Code.Ble_Un_S:
 					return DecodeComparisonBranch(true, ComparisonKind.LessThanOrEqual, un: true);
-				case ILOpCode.Blt:
+				case Cil.Code.Blt:
 					return DecodeComparisonBranch(false, ComparisonKind.LessThan);
-				case ILOpCode.Blt_S:
+				case Cil.Code.Blt_S:
 					return DecodeComparisonBranch(true, ComparisonKind.LessThan);
-				case ILOpCode.Blt_Un:
+				case Cil.Code.Blt_Un:
 					return DecodeComparisonBranch(false, ComparisonKind.LessThan, un: true);
-				case ILOpCode.Blt_Un_S:
+				case Cil.Code.Blt_Un_S:
 					return DecodeComparisonBranch(true, ComparisonKind.LessThan, un: true);
-				case ILOpCode.Bne_Un:
+				case Cil.Code.Bne_Un:
 					return DecodeComparisonBranch(false, ComparisonKind.Inequality, un: true);
-				case ILOpCode.Bne_Un_S:
+				case Cil.Code.Bne_Un_S:
 					return DecodeComparisonBranch(true, ComparisonKind.Inequality, un: true);
-				case ILOpCode.Br:
+				case Cil.Code.Br:
 					return DecodeUnconditionalBranch(false);
-				case ILOpCode.Br_S:
+				case Cil.Code.Br_S:
 					return DecodeUnconditionalBranch(true);
-				case ILOpCode.Break:
+				case Cil.Code.Break:
 					return new DebugBreak();
-				case ILOpCode.Brfalse:
+				case Cil.Code.Brfalse:
 					return DecodeConditionalBranch(false, true);
-				case ILOpCode.Brfalse_S:
+				case Cil.Code.Brfalse_S:
 					return DecodeConditionalBranch(true, true);
-				case ILOpCode.Brtrue:
+				case Cil.Code.Brtrue:
 					return DecodeConditionalBranch(false, false);
-				case ILOpCode.Brtrue_S:
+				case Cil.Code.Brtrue_S:
 					return DecodeConditionalBranch(true, false);
-				case ILOpCode.Call:
+				case Cil.Code.Call:
 					return DecodeCall(OpCode.Call);
-				case ILOpCode.Callvirt:
+				case Cil.Code.Callvirt:
 					return DecodeCall(OpCode.CallVirt);
-				case ILOpCode.Calli:
+				case Cil.Code.Calli:
 					throw new NotImplementedException();
-				case ILOpCode.Ceq:
+				case Cil.Code.Ceq:
 					return Push(Comparison(ComparisonKind.Equality));
-				case ILOpCode.Cgt:
+				case Cil.Code.Cgt:
 					return Push(Comparison(ComparisonKind.GreaterThan));
-				case ILOpCode.Cgt_Un:
+				case Cil.Code.Cgt_Un:
 					return Push(Comparison(ComparisonKind.GreaterThan, un: true));
-				case ILOpCode.Clt:
+				case Cil.Code.Clt:
 					return Push(Comparison(ComparisonKind.LessThan));
-				case ILOpCode.Clt_Un:
+				case Cil.Code.Clt_Un:
 					return Push(Comparison(ComparisonKind.LessThan, un: true));
-				case ILOpCode.Ckfinite:
+				case Cil.Code.Ckfinite:
 					return new Ckfinite(Peek());
-				case ILOpCode.Conv_I1:
+				case Cil.Code.Conv_I1:
 					return Push(new Conv(Pop(), PrimitiveType.I1, false, Sign.None));
-				case ILOpCode.Conv_I2:
+				case Cil.Code.Conv_I2:
 					return Push(new Conv(Pop(), PrimitiveType.I2, false, Sign.None));
-				case ILOpCode.Conv_I4:
+				case Cil.Code.Conv_I4:
 					return Push(new Conv(Pop(), PrimitiveType.I4, false, Sign.None));
-				case ILOpCode.Conv_I8:
+				case Cil.Code.Conv_I8:
 					return Push(new Conv(Pop(), PrimitiveType.I8, false, Sign.None));
-				case ILOpCode.Conv_R4:
+				case Cil.Code.Conv_R4:
 					return Push(new Conv(Pop(), PrimitiveType.R4, false, Sign.Signed));
-				case ILOpCode.Conv_R8:
+				case Cil.Code.Conv_R8:
 					return Push(new Conv(Pop(), PrimitiveType.R8, false, Sign.Signed));
-				case ILOpCode.Conv_U1:
+				case Cil.Code.Conv_U1:
 					return Push(new Conv(Pop(), PrimitiveType.U1, false, Sign.None));
-				case ILOpCode.Conv_U2:
+				case Cil.Code.Conv_U2:
 					return Push(new Conv(Pop(), PrimitiveType.U2, false, Sign.None));
-				case ILOpCode.Conv_U4:
+				case Cil.Code.Conv_U4:
 					return Push(new Conv(Pop(), PrimitiveType.U4, false, Sign.None));
-				case ILOpCode.Conv_U8:
+				case Cil.Code.Conv_U8:
 					return Push(new Conv(Pop(), PrimitiveType.U8, false, Sign.None));
-				case ILOpCode.Conv_I:
+				case Cil.Code.Conv_I:
 					return Push(new Conv(Pop(), PrimitiveType.I, false, Sign.None));
-				case ILOpCode.Conv_U:
+				case Cil.Code.Conv_U:
 					return Push(new Conv(Pop(), PrimitiveType.U, false, Sign.None));
-				case ILOpCode.Conv_R_Un:
+				case Cil.Code.Conv_R_Un:
 					return Push(new Conv(Pop(), PrimitiveType.R8, false, Sign.Unsigned));
-				case ILOpCode.Conv_Ovf_I1:
+				case Cil.Code.Conv_Ovf_I1:
 					return Push(new Conv(Pop(), PrimitiveType.I1, true, Sign.Signed));
-				case ILOpCode.Conv_Ovf_I2:
+				case Cil.Code.Conv_Ovf_I2:
 					return Push(new Conv(Pop(), PrimitiveType.I2, true, Sign.Signed));
-				case ILOpCode.Conv_Ovf_I4:
+				case Cil.Code.Conv_Ovf_I4:
 					return Push(new Conv(Pop(), PrimitiveType.I4, true, Sign.Signed));
-				case ILOpCode.Conv_Ovf_I8:
+				case Cil.Code.Conv_Ovf_I8:
 					return Push(new Conv(Pop(), PrimitiveType.I8, true, Sign.Signed));
-				case ILOpCode.Conv_Ovf_U1:
+				case Cil.Code.Conv_Ovf_U1:
 					return Push(new Conv(Pop(), PrimitiveType.U1, true, Sign.Signed));
-				case ILOpCode.Conv_Ovf_U2:
+				case Cil.Code.Conv_Ovf_U2:
 					return Push(new Conv(Pop(), PrimitiveType.U2, true, Sign.Signed));
-				case ILOpCode.Conv_Ovf_U4:
+				case Cil.Code.Conv_Ovf_U4:
 					return Push(new Conv(Pop(), PrimitiveType.U4, true, Sign.Signed));
-				case ILOpCode.Conv_Ovf_U8:
+				case Cil.Code.Conv_Ovf_U8:
 					return Push(new Conv(Pop(), PrimitiveType.U8, true, Sign.Signed));
-				case ILOpCode.Conv_Ovf_I:
+				case Cil.Code.Conv_Ovf_I:
 					return Push(new Conv(Pop(), PrimitiveType.I, true, Sign.Signed));
-				case ILOpCode.Conv_Ovf_U:
+				case Cil.Code.Conv_Ovf_U:
 					return Push(new Conv(Pop(), PrimitiveType.U, true, Sign.Signed));
-				case ILOpCode.Conv_Ovf_I1_Un:
+				case Cil.Code.Conv_Ovf_I1_Un:
 					return Push(new Conv(Pop(), PrimitiveType.I1, true, Sign.Unsigned));
-				case ILOpCode.Conv_Ovf_I2_Un:
+				case Cil.Code.Conv_Ovf_I2_Un:
 					return Push(new Conv(Pop(), PrimitiveType.I2, true, Sign.Unsigned));
-				case ILOpCode.Conv_Ovf_I4_Un:
+				case Cil.Code.Conv_Ovf_I4_Un:
 					return Push(new Conv(Pop(), PrimitiveType.I4, true, Sign.Unsigned));
-				case ILOpCode.Conv_Ovf_I8_Un:
+				case Cil.Code.Conv_Ovf_I8_Un:
 					return Push(new Conv(Pop(), PrimitiveType.I8, true, Sign.Unsigned));
-				case ILOpCode.Conv_Ovf_U1_Un:
+				case Cil.Code.Conv_Ovf_U1_Un:
 					return Push(new Conv(Pop(), PrimitiveType.U1, true, Sign.Unsigned));
-				case ILOpCode.Conv_Ovf_U2_Un:
+				case Cil.Code.Conv_Ovf_U2_Un:
 					return Push(new Conv(Pop(), PrimitiveType.U2, true, Sign.Unsigned));
-				case ILOpCode.Conv_Ovf_U4_Un:
+				case Cil.Code.Conv_Ovf_U4_Un:
 					return Push(new Conv(Pop(), PrimitiveType.U4, true, Sign.Unsigned));
-				case ILOpCode.Conv_Ovf_U8_Un:
+				case Cil.Code.Conv_Ovf_U8_Un:
 					return Push(new Conv(Pop(), PrimitiveType.U8, true, Sign.Unsigned));
-				case ILOpCode.Conv_Ovf_I_Un:
+				case Cil.Code.Conv_Ovf_I_Un:
 					return Push(new Conv(Pop(), PrimitiveType.I, true, Sign.Unsigned));
-				case ILOpCode.Conv_Ovf_U_Un:
+				case Cil.Code.Conv_Ovf_U_Un:
 					return Push(new Conv(Pop(), PrimitiveType.U, true, Sign.Unsigned));
-				case ILOpCode.Cpblk:
+				case Cil.Code.Cpblk:
 					throw new NotImplementedException();
-				case ILOpCode.Div:
+				case Cil.Code.Div:
 					return BinaryNumeric(BinaryNumericOperator.Div, false, Sign.Signed);
-				case ILOpCode.Div_Un:
+				case Cil.Code.Div_Un:
 					return BinaryNumeric(BinaryNumericOperator.Div, false, Sign.Unsigned);
-				case ILOpCode.Dup:
+				case Cil.Code.Dup:
 					return Push(Peek());
-				case ILOpCode.Endfilter:
-				case ILOpCode.Endfinally:
+				case Cil.Code.Endfilter:
+				case Cil.Code.Endfinally:
 					return new Leave(null);
-				case ILOpCode.Initblk:
+				case Cil.Code.Initblk:
 					throw new NotImplementedException();
-				case ILOpCode.Jmp:
+				case Cil.Code.Jmp:
 					throw new NotImplementedException();
-				case ILOpCode.Ldarg:
-					return Push(Ldarg(reader.ReadUInt16()));
-				case ILOpCode.Ldarg_S:
-					return Push(Ldarg(reader.ReadByte()));
-				case ILOpCode.Ldarg_0:
-				case ILOpCode.Ldarg_1:
-				case ILOpCode.Ldarg_2:
-				case ILOpCode.Ldarg_3:
-					return Push(Ldarg(ilOpCode - ILOpCode.Ldarg_0));
-				case ILOpCode.Ldarga:
-					return Push(Ldarga(reader.ReadUInt16()));
-				case ILOpCode.Ldarga_S:
-					return Push(Ldarga(reader.ReadByte()));
-				case ILOpCode.Ldc_I4:
-					return Push(new LdcI4(reader.ReadInt32()));
-				case ILOpCode.Ldc_I8:
-					return Push(new LdcI8(reader.ReadInt64()));
-				case ILOpCode.Ldc_R4:
-					return Push(new LdcF(reader.ReadSingle()));
-				case ILOpCode.Ldc_R8:
-					return Push(new LdcF(reader.ReadDouble()));
-				case ILOpCode.Ldc_I4_M1:
-				case ILOpCode.Ldc_I4_0:
-				case ILOpCode.Ldc_I4_1:
-				case ILOpCode.Ldc_I4_2:
-				case ILOpCode.Ldc_I4_3:
-				case ILOpCode.Ldc_I4_4:
-				case ILOpCode.Ldc_I4_5:
-				case ILOpCode.Ldc_I4_6:
-				case ILOpCode.Ldc_I4_7:
-				case ILOpCode.Ldc_I4_8:
-					return Push(new LdcI4((int)ilOpCode - (int)ILOpCode.Ldc_I4_0));
-				case ILOpCode.Ldc_I4_S:
-					return Push(new LdcI4(reader.ReadSByte()));
-				case ILOpCode.Ldnull:
+				case Cil.Code.Ldarg:
+				case Cil.Code.Ldarg_S:
+					return Push(Ldarg(((ParameterDefinition)cecilInst.Operand).Sequence));
+				case Cil.Code.Ldarg_0:
+					return Push(Ldarg(0));
+				case Cil.Code.Ldarg_1:
+					return Push(Ldarg(1));
+				case Cil.Code.Ldarg_2:
+					return Push(Ldarg(2));
+				case Cil.Code.Ldarg_3:
+					return Push(Ldarg(3));
+				case Cil.Code.Ldarga:
+				case Cil.Code.Ldarga_S:
+					return Push(Ldarga(((ParameterDefinition)cecilInst.Operand).Sequence));
+				case Cil.Code.Ldc_I4:
+					return Push(new LdcI4((int)cecilInst.Operand));
+				case Cil.Code.Ldc_I8:
+					return Push(new LdcI8((long)cecilInst.Operand));
+				case Cil.Code.Ldc_R4:
+					return Push(new LdcF((float)cecilInst.Operand));
+				case Cil.Code.Ldc_R8:
+					return Push(new LdcF((double)cecilInst.Operand));
+				case Cil.Code.Ldc_I4_M1:
+					return Push(new LdcI4(-1));
+				case Cil.Code.Ldc_I4_0:
+					return Push(new LdcI4(0));
+				case Cil.Code.Ldc_I4_1:
+					return Push(new LdcI4(1));
+				case Cil.Code.Ldc_I4_2:
+					return Push(new LdcI4(2));
+				case Cil.Code.Ldc_I4_3:
+					return Push(new LdcI4(3));
+				case Cil.Code.Ldc_I4_4:
+					return Push(new LdcI4(4));
+				case Cil.Code.Ldc_I4_5:
+					return Push(new LdcI4(5));
+				case Cil.Code.Ldc_I4_6:
+					return Push(new LdcI4(6));
+				case Cil.Code.Ldc_I4_7:
+					return Push(new LdcI4(7));
+				case Cil.Code.Ldc_I4_8:
+					return Push(new LdcI4(8));
+				case Cil.Code.Ldc_I4_S:
+					return Push(new LdcI4((sbyte)cecilInst.Operand));
+				case Cil.Code.Ldnull:
 					return Push(new LdNull());
-				case ILOpCode.Ldstr:
+				case Cil.Code.Ldstr:
 					return Push(DecodeLdstr());
-				case ILOpCode.Ldftn:
+				case Cil.Code.Ldftn:
 					return Push(new LdFtn(ReadAndDecodeMethodReference()));
-				case ILOpCode.Ldind_I1:
+				case Cil.Code.Ldind_I1:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.SByte)));
-				case ILOpCode.Ldind_I2:
+				case Cil.Code.Ldind_I2:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Int16)));
-				case ILOpCode.Ldind_I4:
+				case Cil.Code.Ldind_I4:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Int32)));
-				case ILOpCode.Ldind_I8:
+				case Cil.Code.Ldind_I8:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Int64)));
-				case ILOpCode.Ldind_U1:
+				case Cil.Code.Ldind_U1:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Byte)));
-				case ILOpCode.Ldind_U2:
+				case Cil.Code.Ldind_U2:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.UInt16)));
-				case ILOpCode.Ldind_U4:
+				case Cil.Code.Ldind_U4:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.UInt32)));
-				case ILOpCode.Ldind_R4:
+				case Cil.Code.Ldind_R4:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Single)));
-				case ILOpCode.Ldind_R8:
+				case Cil.Code.Ldind_R8:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Double)));
-				case ILOpCode.Ldind_I:
+				case Cil.Code.Ldind_I:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.IntPtr)));
-				case ILOpCode.Ldind_Ref:
+				case Cil.Code.Ldind_Ref:
 					return Push(new LdObj(PopPointer(), compilation.FindType(KnownTypeCode.Object)));
-				case ILOpCode.Ldloc:
-					return Push(Ldloc(reader.ReadUInt16()));
-				case ILOpCode.Ldloc_S:
-					return Push(Ldloc(reader.ReadByte()));
-				case ILOpCode.Ldloc_0:
-				case ILOpCode.Ldloc_1:
-				case ILOpCode.Ldloc_2:
-				case ILOpCode.Ldloc_3:
-					return Push(Ldloc(ilOpCode - ILOpCode.Ldloc_0));
-				case ILOpCode.Ldloca:
-					return Push(Ldloca(reader.ReadUInt16()));
-				case ILOpCode.Ldloca_S:
-					return Push(Ldloca(reader.ReadByte()));
-				case ILOpCode.Leave:
+				case Cil.Code.Ldloc:
+				case Cil.Code.Ldloc_S:
+					return Push(Ldloc(((Cil.VariableDefinition)cecilInst.Operand).Index));
+				case Cil.Code.Ldloc_0:
+					return Push(Ldloc(0));
+				case Cil.Code.Ldloc_1:
+					return Push(Ldloc(1));
+				case Cil.Code.Ldloc_2:
+					return Push(Ldloc(2));
+				case Cil.Code.Ldloc_3:
+					return Push(Ldloc(3));
+				case Cil.Code.Ldloca:
+				case Cil.Code.Ldloca_S:
+					return Push(Ldloca(((Cil.VariableDefinition)cecilInst.Operand).Index));
+				case Cil.Code.Leave:
 					return DecodeUnconditionalBranch(false, isLeave: true);
-				case ILOpCode.Leave_S:
+				case Cil.Code.Leave_S:
 					return DecodeUnconditionalBranch(true, isLeave: true);
-				case ILOpCode.Localloc:
+				case Cil.Code.Localloc:
 					return Push(new LocAlloc(Pop()));
-				case ILOpCode.Mul:
+				case Cil.Code.Mul:
 					return BinaryNumeric(BinaryNumericOperator.Mul, false, Sign.None);
-				case ILOpCode.Mul_Ovf:
+				case Cil.Code.Mul_Ovf:
 					return BinaryNumeric(BinaryNumericOperator.Mul, true, Sign.Signed);
-				case ILOpCode.Mul_Ovf_Un:
+				case Cil.Code.Mul_Ovf_Un:
 					return BinaryNumeric(BinaryNumericOperator.Mul, true, Sign.Unsigned);
-				case ILOpCode.Neg:
+				case Cil.Code.Neg:
 					return Neg();
-				case ILOpCode.Newobj:
+				case Cil.Code.Newobj:
 					return DecodeCall(OpCode.NewObj);
-				case ILOpCode.Nop:
+				case Cil.Code.Nop:
 					return new Nop();
-				case ILOpCode.Not:
+				case Cil.Code.Not:
 					return Push(new BitNot(Pop()));
-				case ILOpCode.Or:
+				case Cil.Code.Or:
 					return BinaryNumeric(BinaryNumericOperator.BitOr);
-				case ILOpCode.Pop:
+				case Cil.Code.Pop:
 					Pop();
 					return new Nop();
-				case ILOpCode.Rem:
+				case Cil.Code.Rem:
 					return BinaryNumeric(BinaryNumericOperator.Rem, false, Sign.Signed);
-				case ILOpCode.Rem_Un:
+				case Cil.Code.Rem_Un:
 					return BinaryNumeric(BinaryNumericOperator.Rem, false, Sign.Unsigned);
-				case ILOpCode.Ret:
+				case Cil.Code.Ret:
 					return Return();
-				case ILOpCode.Shl:
+				case Cil.Code.Shl:
 					return BinaryNumeric(BinaryNumericOperator.ShiftLeft, false, Sign.None);
-				case ILOpCode.Shr:
+				case Cil.Code.Shr:
 					return BinaryNumeric(BinaryNumericOperator.ShiftRight, false, Sign.Signed);
-				case ILOpCode.Shr_Un:
+				case Cil.Code.Shr_Un:
 					return BinaryNumeric(BinaryNumericOperator.ShiftRight, false, Sign.Unsigned);
-				case ILOpCode.Starg:
-					return Starg(reader.ReadUInt16());
-				case ILOpCode.Starg_S:
-					return Starg(reader.ReadByte());
-				case ILOpCode.Stind_I1:
+				case Cil.Code.Starg:
+				case Cil.Code.Starg_S:
+					return Starg(((ParameterDefinition)cecilInst.Operand).Sequence);
+				case Cil.Code.Stind_I1:
 					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.SByte));
-				case ILOpCode.Stind_I2:
+				case Cil.Code.Stind_I2:
 					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int16));
-				case ILOpCode.Stind_I4:
+				case Cil.Code.Stind_I4:
 					return new StObj(value: Pop(StackType.I4), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int32));
-				case ILOpCode.Stind_I8:
+				case Cil.Code.Stind_I8:
 					return new StObj(value: Pop(StackType.I8), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Int64));
-				case ILOpCode.Stind_R4:
+				case Cil.Code.Stind_R4:
 					return new StObj(value: Pop(StackType.F), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Single));
-				case ILOpCode.Stind_R8:
+				case Cil.Code.Stind_R8:
 					return new StObj(value: Pop(StackType.F), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Double));
-				case ILOpCode.Stind_I:
+				case Cil.Code.Stind_I:
 					return new StObj(value: Pop(StackType.I), target: PopPointer(), type: compilation.FindType(KnownTypeCode.IntPtr));
-				case ILOpCode.Stind_Ref:
+				case Cil.Code.Stind_Ref:
 					return new StObj(value: Pop(StackType.O), target: PopPointer(), type: compilation.FindType(KnownTypeCode.Object));
-				case ILOpCode.Stloc:
-					return Stloc(reader.ReadUInt16());
-				case ILOpCode.Stloc_S:
-					return Stloc(reader.ReadByte());
-				case ILOpCode.Stloc_0:
-				case ILOpCode.Stloc_1:
-				case ILOpCode.Stloc_2:
-				case ILOpCode.Stloc_3:
-					return Stloc(ilOpCode - ILOpCode.Stloc_0);
-				case ILOpCode.Sub:
+				case Cil.Code.Stloc:
+				case Cil.Code.Stloc_S:
+					return Stloc(((Cil.VariableDefinition)cecilInst.Operand).Index);
+				case Cil.Code.Stloc_0:
+					return Stloc(0);
+				case Cil.Code.Stloc_1:
+					return Stloc(1);
+				case Cil.Code.Stloc_2:
+					return Stloc(2);
+				case Cil.Code.Stloc_3:
+					return Stloc(3);
+				case Cil.Code.Sub:
 					return BinaryNumeric(BinaryNumericOperator.Sub, false, Sign.None);
-				case ILOpCode.Sub_Ovf:
+				case Cil.Code.Sub_Ovf:
 					return BinaryNumeric(BinaryNumericOperator.Sub, true, Sign.Signed);
-				case ILOpCode.Sub_Ovf_Un:
+				case Cil.Code.Sub_Ovf_Un:
 					return BinaryNumeric(BinaryNumericOperator.Sub, true, Sign.Unsigned);
-				case ILOpCode.Switch:
+				case Cil.Code.Switch:
 					return DecodeSwitch();
-				case ILOpCode.Xor:
+				case Cil.Code.Xor:
 					return BinaryNumeric(BinaryNumericOperator.BitXor);
-				case ILOpCode.Box:
+				case Cil.Code.Box:
 					{
 						var type = ReadAndDecodeTypeReference();
 						return Push(new Box(Pop(type.GetStackType()), type));
 					}
-				case ILOpCode.Castclass:
+				case Cil.Code.Castclass:
 					return Push(new CastClass(Pop(StackType.O), ReadAndDecodeTypeReference()));
-				case ILOpCode.Cpobj:
+				case Cil.Code.Cpobj:
 					{
 						var type = ReadAndDecodeTypeReference();
 						var ld = new LdObj(PopPointer(), type);
 						return new StObj(PopPointer(), ld, type);
 					}
-				case ILOpCode.Initobj:
+				case Cil.Code.Initobj:
 					return InitObj(PopPointer(), ReadAndDecodeTypeReference());
-				case ILOpCode.Isinst:
+				case Cil.Code.Isinst:
 					return Push(new IsInst(Pop(StackType.O), ReadAndDecodeTypeReference()));
-				case ILOpCode.Ldelem:
+				case Cil.Code.Ldelem_Any:
 					return LdElem(ReadAndDecodeTypeReference());
-				case ILOpCode.Ldelem_I1:
+				case Cil.Code.Ldelem_I1:
 					return LdElem(compilation.FindType(KnownTypeCode.SByte));
-				case ILOpCode.Ldelem_I2:
+				case Cil.Code.Ldelem_I2:
 					return LdElem(compilation.FindType(KnownTypeCode.Int16));
-				case ILOpCode.Ldelem_I4:
+				case Cil.Code.Ldelem_I4:
 					return LdElem(compilation.FindType(KnownTypeCode.Int32));
-				case ILOpCode.Ldelem_I8:
+				case Cil.Code.Ldelem_I8:
 					return LdElem(compilation.FindType(KnownTypeCode.Int64));
-				case ILOpCode.Ldelem_U1:
+				case Cil.Code.Ldelem_U1:
 					return LdElem(compilation.FindType(KnownTypeCode.Byte));
-				case ILOpCode.Ldelem_U2:
+				case Cil.Code.Ldelem_U2:
 					return LdElem(compilation.FindType(KnownTypeCode.UInt16));
-				case ILOpCode.Ldelem_U4:
+				case Cil.Code.Ldelem_U4:
 					return LdElem(compilation.FindType(KnownTypeCode.UInt32));
-				case ILOpCode.Ldelem_R4:
+				case Cil.Code.Ldelem_R4:
 					return LdElem(compilation.FindType(KnownTypeCode.Single));
-				case ILOpCode.Ldelem_R8:
+				case Cil.Code.Ldelem_R8:
 					return LdElem(compilation.FindType(KnownTypeCode.Double));
-				case ILOpCode.Ldelem_I:
+				case Cil.Code.Ldelem_I:
 					return LdElem(compilation.FindType(KnownTypeCode.IntPtr));
-				case ILOpCode.Ldelem_Ref:
+				case Cil.Code.Ldelem_Ref:
 					return LdElem(compilation.FindType(KnownTypeCode.Object));
-				case ILOpCode.Ldelema:
+				case Cil.Code.Ldelema:
 					return Push(new LdElema(indices: Pop(), array: Pop(), type: ReadAndDecodeTypeReference()));
-				case ILOpCode.Ldfld:
+				case Cil.Code.Ldfld:
 					{
 						var field = ReadAndDecodeFieldReference();
 						return Push(new LdObj(new LdFlda(Pop(), field) { DelayExceptions = true }, field.Type));
 					}
-				case ILOpCode.Ldflda:
+				case Cil.Code.Ldflda:
 					return Push(new LdFlda(Pop(), ReadAndDecodeFieldReference()));
-				case ILOpCode.Stfld:
+				case Cil.Code.Stfld:
 					{
 						var field = ReadAndDecodeFieldReference();
 						return new StObj(value: Pop(field.Type.GetStackType()), target: new LdFlda(Pop(), field) { DelayExceptions = true }, type: field.Type);
 					}
-				case ILOpCode.Ldlen:
+				case Cil.Code.Ldlen:
 					return Push(new LdLen(StackType.I, Pop()));
-				case ILOpCode.Ldobj:
+				case Cil.Code.Ldobj:
 					return Push(new LdObj(PopPointer(), ReadAndDecodeTypeReference()));
-				case ILOpCode.Ldsfld:
+				case Cil.Code.Ldsfld:
 					{
 						var field = ReadAndDecodeFieldReference();
 						return Push(new LdObj(new LdsFlda(field), field.Type));
 					}
-				case ILOpCode.Ldsflda:
+				case Cil.Code.Ldsflda:
 					return Push(new LdsFlda(ReadAndDecodeFieldReference()));
-				case ILOpCode.Stsfld:
+				case Cil.Code.Stsfld:
 					{
 						var field = ReadAndDecodeFieldReference();
 						return new StObj(value: Pop(field.Type.GetStackType()), target: new LdsFlda(field), type: field.Type);
 					}
-				case ILOpCode.Ldtoken:
+				case Cil.Code.Ldtoken:
 					return Push(LdToken(ReadAndDecodeMetadataToken()));
-				case ILOpCode.Ldvirtftn:
+				case Cil.Code.Ldvirtftn:
 					return Push(new LdVirtFtn(Pop(), ReadAndDecodeMethodReference()));
-				case ILOpCode.Mkrefany:
+				case Cil.Code.Mkrefany:
 					return Push(new MakeRefAny(PopPointer(), ReadAndDecodeTypeReference()));
-				case ILOpCode.Newarr:
+				case Cil.Code.Newarr:
 					return Push(new NewArr(ReadAndDecodeTypeReference(), Pop()));
-				case ILOpCode.Refanytype:
+				case Cil.Code.Refanytype:
 					return Push(new RefAnyType(Pop()));
-				case ILOpCode.Refanyval:
+				case Cil.Code.Refanyval:
 					return Push(new RefAnyValue(Pop(), ReadAndDecodeTypeReference()));
-				case ILOpCode.Rethrow:
+				case Cil.Code.Rethrow:
 					return new Rethrow();
-				case ILOpCode.Sizeof:
+				case Cil.Code.Sizeof:
 					return Push(new SizeOf(ReadAndDecodeTypeReference()));
-				case ILOpCode.Stelem:
+				case Cil.Code.Stelem_Any:
 					return StElem(ReadAndDecodeTypeReference());
-				case ILOpCode.Stelem_I1:
+				case Cil.Code.Stelem_I1:
 					return StElem(compilation.FindType(KnownTypeCode.SByte));
-				case ILOpCode.Stelem_I2:
+				case Cil.Code.Stelem_I2:
 					return StElem(compilation.FindType(KnownTypeCode.Int16));
-				case ILOpCode.Stelem_I4:
+				case Cil.Code.Stelem_I4:
 					return StElem(compilation.FindType(KnownTypeCode.Int32));
-				case ILOpCode.Stelem_I8:
+				case Cil.Code.Stelem_I8:
 					return StElem(compilation.FindType(KnownTypeCode.Int64));
-				case ILOpCode.Stelem_R4:
+				case Cil.Code.Stelem_R4:
 					return StElem(compilation.FindType(KnownTypeCode.Single));
-				case ILOpCode.Stelem_R8:
+				case Cil.Code.Stelem_R8:
 					return StElem(compilation.FindType(KnownTypeCode.Double));
-				case ILOpCode.Stelem_I:
+				case Cil.Code.Stelem_I:
 					return StElem(compilation.FindType(KnownTypeCode.IntPtr));
-				case ILOpCode.Stelem_Ref:
+				case Cil.Code.Stelem_Ref:
 					return StElem(compilation.FindType(KnownTypeCode.Object));
-				case ILOpCode.Stobj:
-					{
-						var type = ReadAndDecodeTypeReference();
-						return new StObj(value: Pop(type.GetStackType()), target: PopPointer(), type: type);
-					}
-				case ILOpCode.Throw:
+				case Cil.Code.Stobj:
+				{
+					var type = ReadAndDecodeTypeReference();
+					return new StObj(value: Pop(type.GetStackType()), target: PopPointer(), type: type);
+				}
+				case Cil.Code.Throw:
 					return new Throw(Pop());
-				case ILOpCode.Unbox:
+				case Cil.Code.Unbox:
 					return Push(new Unbox(Pop(), ReadAndDecodeTypeReference()));
-				case ILOpCode.Unbox_Any:
+				case Cil.Code.Unbox_Any:
 					return Push(new UnboxAny(Pop(), ReadAndDecodeTypeReference()));
 				default:
-					return new InvalidInstruction("Unknown opcode: " + ilOpCode.ToString());
+					return new InvalidInstruction("Unknown opcode: " + cecilInst.OpCode.ToString());
 			}
 		}
 
@@ -862,10 +863,15 @@ namespace ICSharpCode.Decompiler.IL
 			return new StLoc(v, inst);
 		}
 		
+		Interval GetCurrentInstructionInterval()
+		{
+			return new Interval(currentInstruction.Offset, currentInstruction.GetEndOffset());
+		}
+		
 		ILInstruction Peek()
 		{
 			if (currentStack.IsEmpty) {
-				return new InvalidInstruction("Stack underflow") { ILRange = new Interval(reader.Position, reader.Position) };
+				return new InvalidInstruction("Stack underflow") { ILRange = GetCurrentInstructionInterval() };
 			}
 			return new LdLoc(currentStack.Peek());
 		}
@@ -873,7 +879,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Pop()
 		{
 			if (currentStack.IsEmpty) {
-				return new InvalidInstruction("Stack underflow") { ILRange = new Interval(reader.Position, reader.Position) };
+				return new InvalidInstruction("Stack underflow") { ILRange = GetCurrentInstructionInterval() };
 			}
 			ILVariable v;
 			currentStack = currentStack.Pop(out v);
@@ -923,36 +929,35 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction DecodeLdstr()
 		{
-			var metadataToken = ReadMetadataToken(ref reader);
-			return new LdStr(body.LookupStringToken(metadataToken));
+			return new LdStr((string)currentInstruction.Operand);
 		}
 
-		private ILInstruction Ldarg(ushort v)
+		private ILInstruction Ldarg(int v)
 		{
 			return new LdLoc(parameterVariables[v]);
 		}
 
-		private ILInstruction Ldarga(ushort v)
+		private ILInstruction Ldarga(int v)
 		{
 			return new LdLoca(parameterVariables[v]);
 		}
 
-		private ILInstruction Starg(ushort v)
+		private ILInstruction Starg(int v)
 		{
 			return new StLoc(parameterVariables[v], Pop(parameterVariables[v].StackType));
 		}
 
-		private ILInstruction Ldloc(ushort v)
+		private ILInstruction Ldloc(int v)
 		{
 			return new LdLoc(localVariables[v]);
 		}
 
-		private ILInstruction Ldloca(ushort v)
+		private ILInstruction Ldloca(int v)
 		{
 			return new LdLoca(localVariables[v]);
 		}
 
-		private ILInstruction Stloc(ushort v)
+		private ILInstruction Stloc(int v)
 		{
 			return new StLoc(localVariables[v], Pop(localVariables[v].StackType));
 		}
@@ -1000,7 +1005,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		private ILInstruction DecodeUnaligned()
 		{
-			byte alignment = reader.ReadByte();
+			byte alignment = (byte)currentInstruction.Operand;
 			var inst = DecodeInstruction();
 			var sup = UnpackPush(inst) as ISupportsUnalignedPrefix;
 			if (sup != null)
@@ -1120,21 +1125,26 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		int DecodeBranchTarget(bool shortForm)
+		{
+//			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
+//			target += reader.Position;
+//			return target;
+			return ((Cil.Instruction)currentInstruction.Operand).Offset;
+		}
+		
 		ILInstruction DecodeComparisonBranch(bool shortForm, ComparisonKind kind, bool un = false)
 		{
-			int start = reader.Position - 1;
+			int target = DecodeBranchTarget(shortForm);
 			var condition = Comparison(kind, un);
-			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
-			target += reader.Position;
-			condition.ILRange = new Interval(start, reader.Position);
+			condition.ILRange = GetCurrentInstructionInterval();
 			MarkBranchTarget(target);
 			return new IfInstruction(condition, new Branch(target));
 		}
 
 		ILInstruction DecodeConditionalBranch(bool shortForm, bool negate)
 		{
-			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
-			target += reader.Position;
+			int target = DecodeBranchTarget(shortForm);
 			ILInstruction condition = Pop();
 			switch (condition.ResultType) {
 				case StackType.O:
@@ -1167,8 +1177,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction DecodeUnconditionalBranch(bool shortForm, bool isLeave = false)
 		{
-			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
-			target += reader.Position;
+			int target = DecodeBranchTarget(shortForm);
 			if (isLeave) {
 				currentStack = currentStack.Clear();
 			}
@@ -1184,14 +1193,15 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction DecodeSwitch()
 		{
-			uint length = reader.ReadUInt32();
-			int baseOffset = 4 * (int)length + reader.Position;
+//			uint length = reader.ReadUInt32();
+//			int baseOffset = 4 * (int)length + reader.Position;
+			var labels = (Cil.Instruction[])currentInstruction.Operand;
 			var instr = new SwitchInstruction(Pop(StackType.I4));
 			
-			for (uint i = 0; i < length; i++) {
+			for (int i = 0; i < labels.Length; i++) {
 				var section = new SwitchSection();
 				section.Labels = new LongSet(i);
-				int target = baseOffset + reader.ReadInt32();
+				int target = labels[i].Offset; // baseOffset + reader.ReadInt32();
 				MarkBranchTarget(target);
 				section.Body = new Branch(target);
 				instr.Sections.Add(section);
