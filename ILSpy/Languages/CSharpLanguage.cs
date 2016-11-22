@@ -416,7 +416,7 @@ namespace ICSharpCode.ILSpy
 
 
 				w.WriteStartElement("ItemGroup"); // References
-				foreach (AssemblyNameReference r in module.AssemblyReferences) {
+				foreach (AssemblyNameReference r in module.AssemblyReferences.OrderBy(a => a.Name, StringComparer.OrdinalIgnoreCase)) {
 					if (r.Name != "mscorlib") {
 						w.WriteStartElement("Reference");
 						w.WriteAttributeString("Include", r.Name);
@@ -478,14 +478,16 @@ namespace ICSharpCode.ILSpy
 			var files = module.Types.Where(t => IncludeTypeWhenDecompilingProject(t, options)).GroupBy(
 				delegate(TypeDefinition type) {
 					string file = TextView.DecompilerTextView.CleanUpName(type.Name) + this.FileExtension;
+					// TODO Find more proper way to know root namespace?
+					string rootNs = type.Module.Assembly.Name.Name;
 					// Cut root namespace from sub-directory name for decompiled source files
 					// TODO Control namespaces cutting with some assembly settings option?
-					if (string.IsNullOrEmpty(type.Namespace) || type.Namespace.Equals(module.Assembly.Name.Name, StringComparison.Ordinal)) {
+					if (string.IsNullOrEmpty(type.Namespace) || type.Namespace.Equals(rootNs, StringComparison.Ordinal)) {
 						return file;
 					} else {
 						string dir = type.Namespace;
-						if (dir.StartsWith(module.Assembly.Name.Name + ".", StringComparison.Ordinal))
-							dir = dir.Substring(module.Assembly.Name.Name.Length + 1);
+						if (dir.StartsWith(rootNs + ".", StringComparison.Ordinal))
+							dir = dir.Substring(rootNs.Length + 1);
 						// Create sub-directories for each namespace part
 						dir = TextView.DecompilerTextView.CleanUpName(dir).Replace('.', Path.DirectorySeparatorChar);
 						if (directories.Add(dir))
