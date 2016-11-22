@@ -25,10 +25,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Repeats the child transforms until the ILAst no longer changes.
 	/// </summary>
-	public class LoopingTransform : IILTransform
+	public class LoopingTransform : IILTransform, ISingleStep
 	{
+		public int MaxStepCount { get; set; } = int.MaxValue;
 		readonly IReadOnlyCollection<IILTransform> children;
-		
+
 		public LoopingTransform(params IILTransform[] children)
 		{
 			this.children = children;
@@ -36,9 +37,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		public void Run(ILFunction function, ILTransformContext context)
 		{
+			var stepper = new Stepper(MaxStepCount);
 			do {
 				function.ResetDirty();
 				function.RunTransforms(children, context);
+				stepper.Stepped();
 			} while (function.IsDirty);
 		}
 

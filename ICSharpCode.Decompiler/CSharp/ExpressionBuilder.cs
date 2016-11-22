@@ -1465,8 +1465,27 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst, TranslationContext context)
 		{
 			var condition = TranslateCondition(inst.Condition);
-			var trueBranch = Translate(inst.TrueInst);
 			var falseBranch = Translate(inst.FalseInst);
+			if (falseBranch.Type.IsKnownType(KnownTypeCode.Boolean)) {
+				if (inst.TrueInst.MatchLdcI4(1)) {
+					// "a ? true : b" ==> "a || b"
+					return new BinaryOperatorExpression(
+						condition,
+						BinaryOperatorType.ConditionalOr,
+						falseBranch)
+					.WithILInstruction(inst)
+					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
+				} else if (inst.TrueInst.MatchLdcI4(0)) {
+					// "a ? false : b" ==> "!a && b"
+					return new BinaryOperatorExpression(
+						LogicNot(condition),
+						BinaryOperatorType.ConditionalAnd,
+						falseBranch)
+					.WithILInstruction(inst)
+					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
+				}
+			}
+			var trueBranch = Translate(inst.TrueInst);
 			IType targetType;
 			if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType) && !trueBranch.Type.Equals(falseBranch.Type)) {
 				targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());

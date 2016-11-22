@@ -30,10 +30,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <remarks>
 	/// Should run after inlining so that the expression patterns can be detected.
 	/// </remarks>
-	public class ExpressionTransforms : ILVisitor, IILTransform
+	public class ExpressionTransforms : ILVisitor, IILTransform, ISingleStep
 	{
+		public int MaxStepCount { get; set; } = int.MaxValue;
+		Stepper stepper;
+
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
+			stepper = new Stepper(MaxStepCount);
 			function.AcceptVisitor(this);
 		}
 		
@@ -82,6 +86,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.Kind = ComparisonKind.Inequality;
 				else if (inst.Kind == ComparisonKind.LessThanOrEqual)
 					inst.Kind = ComparisonKind.Equality;
+				stepper.Stepped();
 			}
 		}
 		
@@ -93,6 +98,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// conv.i4(ldlen array) => ldlen.i4(array)
 				inst.AddILRange(inst.Argument.ILRange);
 				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array) { ILRange = inst.ILRange });
+				stepper.Stepped();
 			}
 		}
 		
@@ -107,6 +113,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				arg.AddILRange(inst.ILRange);
 				arg.AddILRange(inst.Argument.ILRange);
 				inst.ReplaceWith(arg);
+				stepper.Stepped();
 			} else if (inst.Argument is Comp) {
 				Comp comp = (Comp)inst.Argument;
 				if (comp.InputType != StackType.F || comp.Kind.IsEqualityOrInequality()) {
@@ -114,6 +121,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					comp.Kind = comp.Kind.Negate();
 					comp.AddILRange(inst.ILRange);
 					inst.ReplaceWith(comp);
+					stepper.Stepped();
 				}
 			}
 		}
@@ -130,6 +138,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				newObj.Arguments.AddRange(inst.Arguments.Skip(1));
 				var expr = new StObj(inst.Arguments[0], newObj, inst.Method.DeclaringType);
 				inst.ReplaceWith(expr);
+				stepper.Stepped();
 				// Both the StObj and the NewObj may trigger further rules, so continue visiting the replacement:
 				VisitStObj(expr);
 			} else {
@@ -142,6 +151,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			LdcDecimal decimalConstant;
 			if (TransformDecimalCtorToConstant(inst, out decimalConstant)) {
 				inst.ReplaceWith(decimalConstant);
+				stepper.Stepped();
 				return;
 			}
 			base.VisitNewObj(inst);
@@ -186,6 +196,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// stobj(ldloca(v), ...)
 				// => stloc(v, ...)
 				inst.ReplaceWith(new StLoc(v, inst.Value));
+				stepper.Stepped();
 			}
 			
 			ILInstruction target;
@@ -195,6 +206,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// stobj(target, binary.op(ldobj(target), ...))
 				// => compound.op(target, ...)
 				inst.ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, binary.Left, binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
+				stepper.Stepped();
 			}
 		}
 		
@@ -211,7 +223,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILVariable v1, v2;
 			ILInstruction value1, value2;
 			if (trueInst.Instructions[0].MatchStLoc(out v1, out value1) && falseInst.Instructions[0].MatchStLoc(out v2, out value2) && v1 == v2) {
-				inst.ReplaceWith(new StLoc(v1, new IfInstruction(inst.Condition, value1, value2)));
+				inst.ReplaceWith(new StLoc(v1, new IfInstruction(new LogicNot(inst.Condition), value2, value1)));
+				stepper.Stepped();
 			}
 		}
 	}

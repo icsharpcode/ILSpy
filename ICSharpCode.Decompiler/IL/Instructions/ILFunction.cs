@@ -77,12 +77,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Apply a list of transforms to this function.
 		/// </summary>
-		public void RunTransforms(IEnumerable<IILTransform> transforms, ILTransformContext context, Func<IILTransform, bool> stopTransform = null)
+		public void RunTransforms(IEnumerable<IILTransform> transforms, ILTransformContext context)
 		{
 			foreach (var transform in transforms) {
 				context.CancellationToken.ThrowIfCancellationRequested();
-				if (stopTransform != null && stopTransform(transform))
-					break;
 				transform.Run(this, context);
 				this.CheckInvariant(ILPhase.Normal);
 			}

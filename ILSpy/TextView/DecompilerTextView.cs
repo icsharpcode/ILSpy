@@ -107,9 +107,8 @@ namespace ICSharpCode.ILSpy.TextView
 			DisplaySettingsPanel.CurrentDisplaySettings.PropertyChanged += CurrentDisplaySettings_PropertyChanged;
 
 			// SearchPanel
-			SearchPanel.Install(textEditor.TextArea);
-			// TODO: re-enable the RegisterCommands call after updating to AvalonEdit 5.0.3
-			//	.RegisterCommands(Application.Current.MainWindow.CommandBindings);
+			SearchPanel.Install(textEditor.TextArea)
+				.RegisterCommands(Application.Current.MainWindow.CommandBindings);
 			
 			ShowLineMargin();
 			

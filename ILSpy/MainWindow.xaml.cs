@@ -778,8 +778,34 @@ namespace ICSharpCode.ILSpy
 				return treeView.GetTopLevelSelection().OfType<ILSpyTreeNode>();
 			}
 		}
-		#endregion
 		
+		protected override void OnPreviewKeyDown(KeyEventArgs e)
+		{
+			if (CurrentLanguage is Decompiler.IL.Transforms.ISingleStep) {
+				var step = (Decompiler.IL.Transforms.ISingleStep)CurrentLanguage;
+				if (e.Key == Key.OemPlus || e.Key == Key.Add) {
+					if (step.MaxStepCount == int.MaxValue) {
+						step.MaxStepCount = 0;
+					} else {
+						step.MaxStepCount++;
+					}
+					DecompileSelectedNodes(recordHistory: false);
+					e.Handled = true;
+				} else if (e.Key == Key.OemMinus || e.Key == Key.Subtract) {
+					if (step.MaxStepCount == 0) {
+						step.MaxStepCount = int.MaxValue;
+					} else {
+						step.MaxStepCount--;
+					}
+					DecompileSelectedNodes(recordHistory: false);
+					e.Handled = true;
+				}
+			} else {
+				base.OnPreviewKeyDown(e);
+			}
+		}
+		#endregion
+
 		#region Back/Forward navigation
 		void BackCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{

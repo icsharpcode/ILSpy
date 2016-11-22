@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// Blocks should be basic blocks prior to this transform.
 	/// After this transform, they will be extended basic blocks.
 	/// </remarks>
-	public class ConditionDetection : IILTransform
+	public class ConditionDetection : IILTransform, ISingleStep
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -41,11 +41,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
+		public int MaxStepCount { get; set; } = int.MaxValue;
+		Stepper stepper;
+
 		BlockContainer currentContainer;
 		ControlFlowNode[] controlFlowGraph;
 
 		void Run(BlockContainer container, ILTransformContext context)
 		{
+			stepper = new Stepper(MaxStepCount);
 			currentContainer = container;
 			controlFlowGraph = LoopDetection.BuildCFG(container);
 			Dominance.ComputeDominance(controlFlowGraph[0], context.CancellationToken);
@@ -54,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			currentContainer = null;
 			container.Blocks.RemoveAll(b => b.Parent != container || b.Instructions.Count == 0);
 		}
-
+		
 		/// <summary>
 		/// Builds structured control flow for the block associated with the control flow node.
 		/// </summary>
@@ -93,6 +97,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				block.Instructions.RemoveAt(block.Instructions.Count - 1);
 				block.Instructions.AddRange(targetBlock.Instructions);
 				targetBlock.Instructions.Clear();
+				stepper.Stepped();
 			}
 		}
 
@@ -106,6 +111,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ifInst.TrueInst = exitInst;
 				exitInst = block.Instructions.Last();
 				ifInst.Condition = new LogicNot(ifInst.Condition);
+				stepper.Stepped();
 			}
 
 			ILInstruction trueExitInst;
@@ -122,6 +128,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
 					trueExitInst = null;
 				}
+				stepper.Stepped();
 			} else {
 				trueExitInst = ifInst.TrueInst;
 			}
@@ -142,6 +149,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						Debug.Assert(trueExitInst == ifInst.TrueInst);
 						ifInst.TrueInst = new Nop { ILRange = ifInst.TrueInst.ILRange };
 					}
+					stepper.Stepped();
 				}
 			}
 			if (ifInst.FalseInst.OpCode != OpCode.Nop && ifInst.FalseInst.ILRange.Start < ifInst.TrueInst.ILRange.Start
@@ -151,6 +159,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ifInst.TrueInst = ifInst.FalseInst;
 				ifInst.FalseInst = oldTrue;
 				ifInst.Condition = new LogicNot(ifInst.Condition);
+				stepper.Stepped();
 			}
 		}
 

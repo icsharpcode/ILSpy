@@ -25,11 +25,14 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 	/// <remarks>
 	/// The condition must return StackType.I4, use comparison instructions like Ceq to check if other types are non-zero.
-	/// Phase-1 execution of an IfInstruction consists of phase-1 execution of the condition.
-	/// Phase-2 execution of an IfInstruction will phase-2-execute the condition.
-	/// If the condition evaluates to a non-zero, the TrueInst is executed (both phase-1 and phase-2).
-	/// If the condition evaluates to zero, the FalseInst is executed (both phase-1 and phase-2).
+	///
+	/// If the condition evaluates to non-zero, the TrueInst is executed.
+	/// If the condition evaluates to zero, the FalseInst is executed.
 	/// The return value of the IfInstruction is the return value of the TrueInst or FalseInst.
+	/// 
+	/// IfInstruction is also used to represent logical operators:
+	///   "a || b" ==> if (a) (ldc.i4 1) else (b)
+	///   "a && b" ==> if (logic.not(a)) (ldc.i4 0) else (b)
 	/// </remarks>
 	partial class IfInstruction : ILInstruction
 	{

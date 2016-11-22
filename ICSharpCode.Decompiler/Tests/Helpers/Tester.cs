@@ -38,17 +38,18 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	public enum CompilerOptions
 	{
 		None,
-		Optimize,
-		UseDebug,
-		Force32Bit
+		Optimize = 0x1,
+		UseDebug = 0x2,
+		Force32Bit = 0x4
 	}
 	
 	[Flags]
 	public enum AssemblerOptions
 	{
 		None,
-		UseDebug,
-		Force32Bit
+		UseDebug = 0x1,
+		Force32Bit = 0x2,
+		Library = 0x4,
 	}
 
 	public static class Tester
@@ -56,9 +57,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static string AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
 			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
-			string outputFile = Path.GetFileNameWithoutExtension(sourceFileName) + ".exe";
-			
+			string outputFile = Path.GetFileNameWithoutExtension(sourceFileName);
 			string otherOptions = " ";
+			if (options.HasFlag(AssemblerOptions.Library)) {
+				outputFile += ".dll";
+				otherOptions += "/dll ";
+			} else {
+				outputFile += ".exe";
+				otherOptions += "/exe ";
+			}
+			
 			
 			if (options.HasFlag(AssemblerOptions.UseDebug)) {
 				otherOptions += "/debug ";
@@ -68,7 +76,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 			
 			ProcessStartInfo info = new ProcessStartInfo(ilasmPath);
-			info.Arguments = $"/nologo /exe{otherOptions}/output=\"{outputFile}\" \"{sourceFileName}\"";
+			info.Arguments = $"/nologo {otherOptions}/output=\"{outputFile}\" \"{sourceFileName}\"";
 			info.RedirectStandardError = true;
 			info.RedirectStandardOutput = true;
 			info.UseShellExecute = false;
@@ -83,6 +91,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 			Console.WriteLine("output: " + outputTask.Result);
 			Console.WriteLine("errors: " + errorTask.Result);
+			Assert.AreEqual(0, process.ExitCode, "ilasm failed");
 
 			return outputFile;
 		}

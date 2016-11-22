@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
@@ -92,14 +93,23 @@ namespace ICSharpCode.ILSpy
 			yield return new TypedIL();
 			CSharpDecompiler decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
 			for (int i = 0; i <= decompiler.ILTransforms.Count; i++) {
-				yield return new BlockIL(decompiler.ILTransforms.Take(i).ToList());
+				yield return MakeDebugLanguage(decompiler.ILTransforms.Take(i));
 				var loop = decompiler.ILTransforms.ElementAtOrDefault(i) as LoopingTransform;
 				if (loop != null) {
 					for (int j = 1; j <= loop.Transforms.Count; j++) {
-						yield return new BlockIL(decompiler.ILTransforms.Take(i).Concat(loop.Transforms.Take(j)).ToList());
+						yield return MakeDebugLanguage(decompiler.ILTransforms.Take(i).Concat(loop.Transforms.Take(j)));
 					}
 				}
 			}
+		}
+
+		static ILAstLanguage MakeDebugLanguage(IEnumerable<IILTransform> transforms)
+		{
+			var list = transforms.ToList();
+			if (list.LastOrDefault() is ISingleStep)
+				return new SingleSteppableIL(list);
+			else
+				return new BlockIL(list);
 		}
 
 		public override string FileExtension {
@@ -156,6 +166,43 @@ namespace ICSharpCode.ILSpy
 				ILReader reader = new ILReader(typeSystem);
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
 				il.RunTransforms(transforms, new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem });
+				il.WriteTo(output);
+			}
+		}
+
+		class SingleSteppableIL : ILAstLanguage, ISingleStep
+		{
+			readonly IReadOnlyList<IILTransform> transforms;
+			readonly ISingleStep steppingTransform;
+
+			public SingleSteppableIL(IReadOnlyList<IILTransform> transforms) : base("ILAst (" + transforms.Last().GetType().Name + ")")
+			{
+				this.transforms = transforms;
+				this.steppingTransform = (ISingleStep)transforms.Last();
+			}
+
+			public int MaxStepCount { get; set; } = int.MaxValue;
+
+			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+			{
+				base.DecompileMethod(method, output, options);
+				output.WriteLine("// This transform support single-stepping. Press '+' or '-' to change the step limit.");
+				output.WriteLine("// Current step limit: " + MaxStepCount);
+				if (!method.HasBody)
+					return;
+				var typeSystem = new DecompilerTypeSystem(method.Module);
+				ILReader reader = new ILReader(typeSystem);
+				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
+				steppingTransform.MaxStepCount = this.MaxStepCount;
+				try {
+					il.RunTransforms(transforms, new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem });
+					output.WriteLine("// The transform ran to completion.");
+				} catch (StepLimitReachedException) {
+					output.WriteLine("// The transform was aborted after reaching the step limit.");
+				} finally {
+					steppingTransform.MaxStepCount = int.MaxValue; // unlimit again so that other languages can use the transform
+				}
+				output.WriteLine();
 				il.WriteTo(output);
 			}
 		}

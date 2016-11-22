@@ -68,14 +68,21 @@ namespace ICSharpCode.Decompiler.Tests
 			Run();
 			Run(asmOptions: AssemblerOptions.UseDebug);
 		}
-		
+
+		[Test]
+		public void ShortCircuit()
+		{
+			Run();
+			Run(asmOptions: AssemblerOptions.UseDebug);
+		}
+
 		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 			EnsureSourceFilesExist(Path.Combine(TestCasePath, testName));
 			
-			var executable = Tester.AssembleIL(ilFile, asmOptions);
+			var executable = Tester.AssembleIL(ilFile, asmOptions | AssemblerOptions.Library);
 			var decompiled = Tester.DecompileCSharp(executable);
 			
 			CodeAssert.FilesAreEqual(csFile, decompiled);
