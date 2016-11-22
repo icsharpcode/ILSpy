@@ -137,6 +137,7 @@
     <Compile Include="TestCases\Pretty\CompoundAssignmentTest.cs" />
     <Compile Include="TestCases\Pretty\HelloWorld.cs" />
     <Compile Include="TestCases\Pretty\InlineAssignmentTest.cs" />
+    <Compile Include="TestCases\Pretty\ShortCircuit.cs" />
     <Compile Include="TestTraceListener.cs" />
     <Compile Include="Util\IntervalTests.cs" />
     <Compile Include="Util\LongSetTests.cs" />

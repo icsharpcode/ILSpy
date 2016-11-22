@@ -141,6 +141,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// -> "if (... && !nestedCondition) { ... } goto exitPoint;"
 						ifInst.Condition = IfInstruction.LogicAnd(ifInst.Condition, new LogicNot(nestedCondition));
 						targetBlock.Instructions.RemoveAt(0);
+						// Update targetBlock label now that we've removed the first instruction
+						if (targetBlock.Instructions.FirstOrDefault()?.ILRange.IsEmpty == false) {
+							int offset = targetBlock.Instructions[0].ILRange.Start;
+							targetBlock.ILRange = new Interval(offset, offset);
+						}
 					}
 				}
 

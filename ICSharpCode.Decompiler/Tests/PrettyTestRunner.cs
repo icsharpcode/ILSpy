@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler.Tests
 			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles()) {
 				if (file.Extension == ".txt" || file.Extension == ".exe")
 					continue;
-				var testName = Path.GetFileNameWithoutExtension(file.Name);
+				var testName = file.Name.Split('.')[0];
 				Assert.Contains(testName, testNames);
 			}
 		}
@@ -68,38 +68,41 @@ namespace ICSharpCode.Decompiler.Tests
 			Run();
 			Run(asmOptions: AssemblerOptions.UseDebug);
 		}
-
-		[Test]
-		public void ShortCircuit()
-		{
-			Run();
-			Run(asmOptions: AssemblerOptions.UseDebug);
-		}
-
-		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None)
-		{
-			var ilFile = Path.Combine(TestCasePath, testName + ".il");
-			var csFile = Path.Combine(TestCasePath, testName + ".cs");
-			EnsureSourceFilesExist(Path.Combine(TestCasePath, testName));
-			
-			var executable = Tester.AssembleIL(ilFile, asmOptions | AssemblerOptions.Library);
-			var decompiled = Tester.DecompileCSharp(executable);
-			
-			CodeAssert.FilesAreEqual(csFile, decompiled);
-		}
 		
-		void EnsureSourceFilesExist(string fileName)
+		[Test]
+		public void ShortCircuit([Values(CompilerOptions.None, CompilerOptions.Optimize)] CompilerOptions cscOptions)
 		{
-			if (!File.Exists(fileName + ".il")) {
+			Run(cscOptions: cscOptions);
+		}
+
+		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None)
+		{
+			var ilFile = Path.Combine(TestCasePath, testName);
+			if ((cscOptions & CompilerOptions.Optimize) != 0)
+				ilFile += ".opt";
+			if ((cscOptions & CompilerOptions.Force32Bit) != 0)
+				ilFile += ".32";
+			if ((cscOptions & CompilerOptions.UseDebug) != 0)
+				ilFile += ".dbg";
+			ilFile += ".il";
+			var csFile = Path.Combine(TestCasePath, testName + ".cs");
+
+			if (!File.Exists(ilFile)) {
+				// re-create .il file if necessary
 				CompilerResults output = null;
 				try {
-					output = Tester.CompileCSharp(fileName + ".cs", CompilerOptions.None);
-					Tester.Disassemble(output.PathToAssembly, fileName + ".il");
+					output = Tester.CompileCSharp(csFile, cscOptions | CompilerOptions.Library);
+					Tester.Disassemble(output.PathToAssembly, ilFile);
 				} finally {
 					if (output != null)
 						output.TempFiles.Delete();
 				}
 			}
+
+			var executable = Tester.AssembleIL(ilFile, asmOptions | AssemblerOptions.Library);
+			var decompiled = Tester.DecompileCSharp(executable);
+			
+			CodeAssert.FilesAreEqual(csFile, decompiled);
 		}
 	}
 }

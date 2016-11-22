@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		protected internal override void VisitLogicNot(LogicNot inst)
 		{
-			ILInstruction arg;
+			ILInstruction arg, lhs, rhs;
 			if (inst.Argument.MatchLogicNot(out arg)) {
 				// logic.not(logic.not(arg))
 				// ==> arg
@@ -124,14 +124,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					stepper.Stepped();
 				}
 				comp.AcceptVisitor(this);
-			} else if (inst.Argument is IfInstruction && ((IfInstruction)inst.Argument).TrueInst is LdcI4) {
-				// Likely a logic and/or:
-				// logic.not(if (a) (ldc.i4 val) (c))
-				// ==> if (a) (ldc.i4 opposite_val) (logic.not(c))
+			} else if (inst.Argument.MatchLogicAnd(out lhs, out rhs)) {
+				// logic.not(if (lhs) rhs else ldc.i4 0)
+				// ==> if (logic.not(lhs)) ldc.i4 1 else logic.not(rhs)
 				IfInstruction ifInst = (IfInstruction)inst.Argument;
-				LdcI4 trueInst = (LdcI4)ifInst.TrueInst;
-				ifInst.TrueInst = new LdcI4(trueInst.Value != 0 ? 0 : 1) { ILRange = trueInst.ILRange };
-				ifInst.FalseInst = new LogicNot(ifInst.FalseInst) { ILRange = inst.ILRange };
+				var ldc0 = ifInst.FalseInst;
+				Debug.Assert(ldc0.MatchLdcI4(0));
+				ifInst.Condition = new LogicNot(lhs) { ILRange = inst.ILRange };
+				ifInst.TrueInst = new LdcI4(1) { ILRange = ldc0.ILRange };
+				ifInst.FalseInst = new LogicNot(rhs) { ILRange = inst.ILRange };
+				inst.ReplaceWith(ifInst);
+				stepper.Stepped();
+				ifInst.AcceptVisitor(this);
+			} else if (inst.Argument.MatchLogicOr(out lhs, out rhs)) {
+				// logic.not(if (lhs) ldc.i4 1 else rhs)
+				// ==> if (logic.not(lhs)) logic.not(rhs) else ldc.i4 0)
+				IfInstruction ifInst = (IfInstruction)inst.Argument;
+				var ldc1 = ifInst.TrueInst;
+				Debug.Assert(ldc1.MatchLdcI4(1));
+				ifInst.Condition = new LogicNot(lhs) { ILRange = inst.ILRange };
+				ifInst.TrueInst = new LogicNot(rhs) { ILRange = inst.ILRange };
+				ifInst.FalseInst = new LdcI4(0) { ILRange = ldc1.ILRange };
 				inst.ReplaceWith(ifInst);
 				stepper.Stepped();
 				ifInst.AcceptVisitor(this);
@@ -226,7 +239,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		protected internal override void VisitIfInstruction(IfInstruction inst)
 		{
+			// Bring LogicAnd/LogicOr into their canonical forms:
+			// if (cond) ldc.i4 0 else RHS --> if (!cond) RHS else ldc.i4 0
+			// if (cond) RHS else ldc.i4 1 --> if (!cond) ldc.i4 1 else RHS
+			if (inst.TrueInst.MatchLdcI4(0) || inst.FalseInst.MatchLdcI4(1)) {
+				var t = inst.TrueInst;
+				inst.TrueInst = inst.FalseInst;
+				inst.FalseInst = t;
+				inst.Condition = new LogicNot(inst.Condition);
+			}
+
 			base.VisitIfInstruction(inst);
+
 			// if (cond) stloc (A, V1) else stloc (A, V2) --> stloc (A, if (cond) V1 else V2)
 			Block trueInst = inst.TrueInst as Block;
 			if (trueInst == null || trueInst.Instructions.Count != 1)

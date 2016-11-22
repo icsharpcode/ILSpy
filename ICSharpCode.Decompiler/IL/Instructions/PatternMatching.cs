@@ -143,7 +143,43 @@ namespace ICSharpCode.Decompiler.IL
 			trueInst = null;
 			return false;
 		}
-		
+
+		/// <summary>
+		/// Matches a 'logic and' instruction ("if (a) b else ldc.i4 0").
+		/// Note: unlike C# '&amp;&amp;', this instruction is not limited to booleans,
+		/// but allows passing through arbitrary I4 values on the rhs (but not on the lhs).
+		/// </summary>
+		public bool MatchLogicAnd(out ILInstruction lhs, out ILInstruction rhs)
+		{
+			var inst = this as IfInstruction;
+			if (inst != null && inst.FalseInst.MatchLdcI4(0)) {
+				lhs = inst.Condition;
+				rhs = inst.TrueInst;
+				return true;
+			}
+			lhs = null;
+			rhs = null;
+			return false;
+		}
+
+		/// <summary>
+		/// Matches a 'logic or' instruction ("if (a) ldc.i4 1 else b").
+		/// Note: unlike C# '||', this instruction is not limited to booleans,
+		/// but allows passing through arbitrary I4 values on the rhs (but not on the lhs).
+		/// </summary>
+		public bool MatchLogicOr(out ILInstruction lhs, out ILInstruction rhs)
+		{
+			var inst = this as IfInstruction;
+			if (inst != null && inst.TrueInst.MatchLdcI4(1)) {
+				lhs = inst.Condition;
+				rhs = inst.FalseInst;
+				return true;
+			}
+			lhs = null;
+			rhs = null;
+			return false;
+		}
+
 		public bool MatchTryCatchHandler(out ILVariable variable)
 		{
 			var inst = this as TryCatchHandler;

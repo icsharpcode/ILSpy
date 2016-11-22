@@ -1464,35 +1464,31 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst, TranslationContext context)
 		{
-			var falseBranch = Translate(inst.FalseInst);
-			if (falseBranch.Type.IsKnownType(KnownTypeCode.Boolean)) {
-				if (inst.TrueInst.MatchLdcI4(1)) {
-					// "a ? true : b" ==> "a || b"
-					return new BinaryOperatorExpression(
-						TranslateCondition(inst.Condition),
-						BinaryOperatorType.ConditionalOr,
-						falseBranch)
-					.WithILInstruction(inst)
-					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
-				} else if (inst.TrueInst.MatchLdcI4(0)) {
-					// "!a ? false : b" ==> "a && b"
-					ILInstruction conditionInst;
-					Expression conditionExpr;
-					if (inst.Condition.MatchLogicNot(out conditionInst)) {
-						conditionExpr = TranslateCondition(conditionInst);
-					} else {
-						conditionExpr = LogicNot(TranslateCondition(inst.Condition));
-					}
-					return new BinaryOperatorExpression(
-						conditionExpr,
-						BinaryOperatorType.ConditionalAnd,
-						falseBranch)
-					.WithILInstruction(inst)
-					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
-				}
-			}
 			var condition = TranslateCondition(inst.Condition);
 			var trueBranch = Translate(inst.TrueInst);
+			var falseBranch = Translate(inst.FalseInst);
+
+			ILInstruction lhsInst, rhsInst;
+			BinaryOperatorType op = BinaryOperatorType.Any;
+			TranslatedExpression rhs = default(TranslatedExpression);
+			if (inst.MatchLogicAnd(out lhsInst, out rhsInst)) {
+				op = BinaryOperatorType.ConditionalAnd;
+				Debug.Assert(rhsInst == inst.TrueInst);
+				rhs = trueBranch;
+			} else if (inst.MatchLogicOr(out lhsInst, out rhsInst)) {
+				op = BinaryOperatorType.ConditionalOr;
+				Debug.Assert(rhsInst == inst.FalseInst);
+				rhs = falseBranch;
+			}
+			// ILAst LogicAnd/LogicOr can return a different value than 0 or 1
+			// if the rhs is evaluated.
+			// We can only correctly translate it to C# if the rhs is of type boolean:
+			if (op != BinaryOperatorType.Any && rhs.Type.IsKnownType(KnownTypeCode.Boolean)) {
+				return new BinaryOperatorExpression(condition, op, rhs)
+					.WithILInstruction(inst)
+					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
+			}
+
 			IType targetType;
 			if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType) && !trueBranch.Type.Equals(falseBranch.Type)) {
 				targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());

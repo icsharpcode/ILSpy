@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public static void WriteTo(this ISymbol symbol, ITextOutput output)
 		{
-			output.WriteReference(symbol.ToString(), symbol);
+			output.WriteReference(symbol.Name, symbol);
 		}
 	}
 }
