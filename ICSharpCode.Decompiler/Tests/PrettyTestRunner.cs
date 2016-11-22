@@ -41,10 +41,11 @@ namespace ICSharpCode.Decompiler.Tests
 				.Select(m => m.Name)
 				.ToArray();
 			foreach (var file in new DirectoryInfo(TestCasePath).EnumerateFiles()) {
-				if (file.Extension == ".txt" || file.Extension == ".exe")
-					continue;
-				var testName = file.Name.Split('.')[0];
-				Assert.Contains(testName, testNames);
+				if (file.Extension.Equals(".il", StringComparison.OrdinalIgnoreCase)
+					|| file.Extension.Equals(".cs", StringComparison.OrdinalIgnoreCase)) {
+					var testName = file.Name.Split('.')[0];
+					Assert.Contains(testName, testNames);
+				}
 			}
 		}
 
