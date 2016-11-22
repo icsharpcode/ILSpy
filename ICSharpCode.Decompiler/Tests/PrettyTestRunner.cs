@@ -47,7 +47,21 @@ namespace ICSharpCode.Decompiler.Tests
 				Assert.Contains(testName, testNames);
 			}
 		}
-		
+
+		static readonly CompilerOptions[] noRoslynOptions =
+		{
+			CompilerOptions.None,
+			CompilerOptions.Optimize
+		};
+
+		static readonly CompilerOptions[] defaultOptions =
+		{
+			CompilerOptions.None,
+			CompilerOptions.Optimize,
+			CompilerOptions.UseRoslyn,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+		};
+
 		[Test]
 		public void HelloWorld()
 		{
@@ -56,21 +70,19 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 		
 		[Test]
-		public void InlineAssignmentTest()
+		public void InlineAssignmentTest([ValueSource("noRoslynOptions")] CompilerOptions cscOptions)
 		{
-			Run();
-			Run(asmOptions: AssemblerOptions.UseDebug);
+			Run(cscOptions: cscOptions);
 		}
-		
+
 		[Test]
-		public void CompoundAssignmentTest()
+		public void CompoundAssignmentTest([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
-			Run();
-			Run(asmOptions: AssemblerOptions.UseDebug);
+			Run(cscOptions: cscOptions);
 		}
-		
+
 		[Test]
-		public void ShortCircuit([Values(CompilerOptions.None, CompilerOptions.Optimize)] CompilerOptions cscOptions)
+		public void ShortCircuit([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
 		}
@@ -84,6 +96,8 @@ namespace ICSharpCode.Decompiler.Tests
 				ilFile += ".32";
 			if ((cscOptions & CompilerOptions.UseDebug) != 0)
 				ilFile += ".dbg";
+			if ((cscOptions & CompilerOptions.UseRoslyn) != 0)
+				ilFile += ".roslyn";
 			ilFile += ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 

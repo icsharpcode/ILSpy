@@ -28,6 +28,9 @@ using System.Threading.Tasks;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.NRefactory.CSharp;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.Text;
 using Microsoft.CSharp;
 using Mono.Cecil;
 using NUnit.Framework;
@@ -41,7 +44,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		Optimize = 0x1,
 		UseDebug = 0x2,
 		Force32Bit = 0x4,
-		Library = 0x8
+		Library = 0x8,
+		UseRoslyn = 0x10,
 	}
 	
 	[Flags]
@@ -121,27 +125,62 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return outputFile;
 		}
 
+		static readonly Lazy<IEnumerable<MetadataReference>> defaultReferences = new Lazy<IEnumerable<MetadataReference>>(delegate {
+			string refAsmPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
+				@"Reference Assemblies\Microsoft\Framework\.NETFramework\v4.5");
+			return new[]
+			{
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "mscorlib.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.dll")),
+					MetadataReference.CreateFromFile(Path.Combine(refAsmPath, "System.Core.dll"))
+			};
+		});
+		
 		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
 			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)""")) {
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
-			
-			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
-			CompilerParameters options = new CompilerParameters();
-			options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
-			options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-") + (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "") + (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
-			options.ReferencedAssemblies.Add("System.Core.dll");
-			CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
-			if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
-				StringBuilder b = new StringBuilder("Compiler error:");
-				foreach (var error in results.Errors) {
-					b.AppendLine(error.ToString());
+
+			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
+				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), path: f));
+				var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
+					syntaxTrees, defaultReferences.Value,
+					new CSharpCompilationOptions(
+					flags.HasFlag(CompilerOptions.Library) ? OutputKind.DynamicallyLinkedLibrary : OutputKind.ConsoleApplication,
+					platform: flags.HasFlag(CompilerOptions.Force32Bit) ? Platform.X86 : Platform.AnyCpu,
+					optimizationLevel: flags.HasFlag(CompilerOptions.Optimize) ? OptimizationLevel.Release : OptimizationLevel.Debug,
+					allowUnsafe: true,
+					deterministic: true
+				));
+				CompilerResults results = new CompilerResults(new TempFileCollection());
+				results.PathToAssembly = Path.GetTempFileName();
+				var emitResult = compilation.Emit(results.PathToAssembly);
+				if (!emitResult.Success) {
+					StringBuilder b = new StringBuilder("Compiler error:");
+					foreach (var diag in emitResult.Diagnostics) {
+						b.AppendLine(diag.ToString());
+					}
+					throw new Exception(b.ToString());
 				}
-				throw new Exception(b.ToString());
+				return results;
+			} else {
+				var provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
+				CompilerParameters options = new CompilerParameters();
+				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
+				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-") + (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "") + (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
+				options.ReferencedAssemblies.Add("System.Core.dll");
+				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
+				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {
+					StringBuilder b = new StringBuilder("Compiler error:");
+					foreach (var error in results.Errors) {
+						b.AppendLine(error.ToString());
+					}
+					throw new Exception(b.ToString());
+				}
+				return results;
 			}
-			return results;
 		}
 
 		public static int Run(string assemblyFileName, out string output, out string error)

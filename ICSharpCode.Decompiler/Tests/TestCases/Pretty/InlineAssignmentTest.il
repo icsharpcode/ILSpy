@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.18020
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly ddqu2emz
+.assembly ibag1kve
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module ddqu2emz.exe
-// MVID: {E3C9CEDE-53B1-4B60-977E-6E7ECB67DB34}
+.module ibag1kve.dll
+// MVID: {C798271E-70DB-47E6-B4B1-8CCE369C32D9}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
-.imagebase 0x00400000
+.imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03080000
+// Image base: 0x01380000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -39,15 +39,6 @@
   .field private int32 field1
   .field private static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest field2
   .field private int32[] field3
-  .method public hidebysig static void  Main() cil managed
-  {
-    .entrypoint
-    // Code size       2 (0x2)
-    .maxstack  8
-    IL_0000:  nop
-    IL_0001:  ret
-  } // end of method InlineAssignmentTest::Main
-
   .method public hidebysig instance void 
           SimpleInlineWithLocals() cil managed
   {

@@ -20,6 +20,7 @@ using System;
 using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using NUnit.Framework;
 
@@ -45,107 +46,108 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 
-		[Test]
-		public void Comparisons()
+		static readonly CompilerOptions[] defaultOptions =
 		{
-			TestCompileDecompileCompileOutputAll("Comparisons.cs");
+			CompilerOptions.None,
+			CompilerOptions.Optimize,
+			CompilerOptions.UseRoslyn,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+		};
+
+		[Test]
+		public void Comparisons([ValueSource("defaultOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
 		}
 
 		[Test]
-		public void Conversions()
+		public void Conversions([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("Conversions.cs");
+			RunCS(options: options);
 		}
 
 		[Test]
-		public void HelloWorld()
+		public void HelloWorld([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("HelloWorld.cs");
+			RunCS(options: options);
 		}
 
 		[Test]
-		public void ControlFlow()
+		public void ControlFlow([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("ControlFlow.cs");
+			RunCS(options: options);
 		}
 
 		[Test]
-		public void CompoundAssignment()
+		public void CompoundAssignment([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("CompoundAssignment.cs");
+			RunCS(options: options);
 		}
 
 		[Test]
-		public void PropertiesAndEvents()
+		public void PropertiesAndEvents([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("PropertiesAndEvents.cs");
+			RunCS(options: options);
 		}
 
 		[Test]
-		public void Switch()
+		public void Switch([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("Switch.cs");
+			RunCS(options: options);
 		}
 
 		[Test]
-		public void Generics()
+		public void Generics([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("Generics.cs");
+			RunCS(options: options);
 		}
 
 		[Test]
-		public void ValueTypeCall()
+		public void ValueTypeCall([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("ValueTypeCall.cs");
+			RunCS(options: options);
 		}
-		
+
 		[Test]
-		public void InitializerTests()
+		public void InitializerTests([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("InitializerTests.cs");
+			RunCS(options: options);
 		}
-		
+
 		[Test]
-		public void DecimalFields()
+		public void DecimalFields([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("DecimalFields.cs");
+			RunCS(options: options);
 		}
-		
+
 		[Test]
-		public void UndocumentedExpressions()
+		public void UndocumentedExpressions([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("UndocumentedExpressions.cs");
+			RunCS(options: options);
 		}
-		
+
 		[Test]
-		public void MemberLookup()
+		public void MemberLookup([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("MemberLookup.cs");
+			RunCS(options: options);
 		}
 
 		[Test]
 		public void BitNot()
 		{
-			TestAssembleDecompileCompileOutput("BitNot.il");
-			TestAssembleDecompileCompileOutput("BitNot.il", CompilerOptions.UseDebug | CompilerOptions.Force32Bit, AssemblerOptions.Force32Bit);
+			RunIL("BitNot.il");
+			RunIL("BitNot.il", CompilerOptions.UseDebug | CompilerOptions.Force32Bit, AssemblerOptions.Force32Bit);
 		}
 
 		[Test]
-		public void UnsafeCode()
+		public void UnsafeCode([ValueSource("defaultOptions")] CompilerOptions options)
 		{
-			TestCompileDecompileCompileOutputAll("UnsafeCode.cs");
+			RunCS(options: options);
 		}
 
-		void TestCompileDecompileCompileOutputAll(string testFileName)
+		void RunCS([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug)
 		{
-			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.None);
-			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.UseDebug);
-			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.Optimize);
-			TestCompileDecompileCompileOutput(testFileName, CompilerOptions.UseDebug | CompilerOptions.Optimize);
-		}
-
-		void TestCompileDecompileCompileOutput(string testFileName, CompilerOptions options = CompilerOptions.UseDebug)
-		{
+			string testFileName = testName + ".cs";
 			CompilerResults outputFile = null, decompiledOutputFile = null;
 
 			try {
@@ -166,7 +168,7 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 		
-		void TestAssembleDecompileCompileOutput(string testFileName, CompilerOptions options = CompilerOptions.UseDebug, AssemblerOptions asmOptions = AssemblerOptions.None)
+		void RunIL(string testFileName, CompilerOptions options = CompilerOptions.UseDebug, AssemblerOptions asmOptions = AssemblerOptions.None)
 		{
 			string outputFile = null;
 			CompilerResults decompiledOutputFile = null;

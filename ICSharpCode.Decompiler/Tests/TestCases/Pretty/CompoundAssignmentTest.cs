@@ -97,11 +97,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return value;
 		}
 		
-		public static void Main()
-		{
-			
-		}
-		
 		public void Int32_Local_Add(int i)
 		{
 			i++;

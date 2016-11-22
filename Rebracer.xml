@@ -22,9 +22,13 @@
     </ToolsOptionsCategory>
     <ToolsOptionsCategory name="TextEditor">
       <ToolsOptionsSubCategory name="CSharp-Specific">
+        <PropertyValue name="AddImport_SuggestForTypesInNuGetPackages">0</PropertyValue>
+        <PropertyValue name="AddImport_SuggestForTypesInReferenceAssemblies">0</PropertyValue>
         <PropertyValue name="AutoComment">1</PropertyValue>
+        <PropertyValue name="AutoInsertAsteriskForNewLinesOfBlockComments">1</PropertyValue>
         <PropertyValue name="BringUpOnIdentifier">1</PropertyValue>
-        <PropertyValue name="ClosedFileDiagnostics">1</PropertyValue>
+        <PropertyValue name="CSharpClosedFileDiagnostics">-1</PropertyValue>
+        <PropertyValue name="ClosedFileDiagnostics">-1</PropertyValue>
         <PropertyValue name="CodeDefinitionWindow_DocumentationComment_IndentBase">1</PropertyValue>
         <PropertyValue name="CodeDefinitionWindow_DocumentationComment_IndentOffset">2</PropertyValue>
         <PropertyValue name="CodeDefinitionWindow_DocumentationComment_WrapLength">80</PropertyValue>
@@ -96,7 +100,7 @@
         <PropertyValue name="Style_PreferIntrinsicPredefinedTypeKeywordInMemberAccess">1</PropertyValue>
         <PropertyValue name="Style_QualifyMemberAccessWithThisOrMe">0</PropertyValue>
         <PropertyValue name="Style_UseVarWhenDeclaringLocals">1</PropertyValue>
-        <PropertyValue name="WarnOnBuildErrors">1</PropertyValue>
+        <PropertyValue name="WarnOnBuildErrors">0</PropertyValue>
         <PropertyValue name="WarnWhenMembersCauseCompilerGeneratedReferences">1</PropertyValue>
         <PropertyValue name="Wrapping_IgnoreSpacesAroundBinaryOperators">0</PropertyValue>
         <PropertyValue name="Wrapping_IgnoreSpacesAroundVariableDeclaration">0</PropertyValue>

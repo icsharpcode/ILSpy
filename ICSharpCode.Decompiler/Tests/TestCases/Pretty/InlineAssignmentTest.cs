@@ -26,11 +26,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private static InlineAssignmentTest field2;
 		private int[] field3;
 		
-		public static void Main()
-		{
-			
-		}
-		
 		public void SimpleInlineWithLocals()
 		{
 			int V_0;
