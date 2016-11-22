@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// IfInstruction is also used to represent logical operators:
 	///   "a || b" ==> if (a) (ldc.i4 1) else (b)
 	///   "a && b" ==> if (logic.not(a)) (ldc.i4 0) else (b)
+	///   "a ? b : c" ==> if (a) (b) else (c)
 	/// </remarks>
 	partial class IfInstruction : ILInstruction
 	{
@@ -42,7 +43,25 @@ namespace ICSharpCode.Decompiler.IL
 			this.TrueInst = trueInst;
 			this.FalseInst = falseInst ?? new Nop();
 		}
-		
+
+		public static IfInstruction LogicAnd(ILInstruction lhs, ILInstruction rhs)
+		{
+			return new IfInstruction(
+				new LogicNot(lhs),
+				new LdcI4(0),
+				rhs
+			);
+		}
+
+		public static IfInstruction LogicOr(ILInstruction lhs, ILInstruction rhs)
+		{
+			return new IfInstruction(
+				lhs,
+				new LdcI4(1),
+				rhs
+			);
+		}
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);

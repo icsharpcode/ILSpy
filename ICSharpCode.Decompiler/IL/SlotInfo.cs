@@ -37,6 +37,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public readonly bool CanInlineInto;
 
+		/// <summary>
+		/// Gets whether this slot belongs to a collection.
+		/// </summary>
 		public readonly bool IsCollection;
 		
 		public SlotInfo(string name, bool canInlineInto = false, bool isCollection = false)

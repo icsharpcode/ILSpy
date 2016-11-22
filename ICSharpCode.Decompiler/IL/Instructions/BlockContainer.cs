@@ -112,7 +112,12 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteLine("{");
 			output.Indent();
 			foreach (var inst in Blocks) {
-				inst.WriteTo(output);
+				if (inst.Parent == this) {
+					inst.WriteTo(output);
+				} else {
+					output.Write("stale reference to ");
+					output.WriteReference(inst.Label, inst, isLocal: true);
+				}
 				output.WriteLine();
 				output.WriteLine();
 			}

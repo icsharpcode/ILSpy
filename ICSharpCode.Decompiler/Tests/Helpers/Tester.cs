@@ -40,7 +40,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		None,
 		Optimize = 0x1,
 		UseDebug = 0x2,
-		Force32Bit = 0x4
+		Force32Bit = 0x4,
+		Library = 0x8
 	}
 	
 	[Flags]
@@ -129,7 +130,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			
 			CSharpCodeProvider provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 			CompilerParameters options = new CompilerParameters();
-			options.GenerateExecutable = true;
+			options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
 			options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-") + (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "") + (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
 			options.ReferencedAssemblies.Add("System.Core.dll");
 			CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());

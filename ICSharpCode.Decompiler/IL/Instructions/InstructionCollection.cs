@@ -334,7 +334,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return list[0];
 		}
-		
+
+		public T FirstOrDefault()
+		{
+			return list.Count > 0 ? list[0] : null;
+		}
+
 		public T Last()
 		{
 			return list[list.Count - 1];

@@ -97,7 +97,7 @@ namespace ICSharpCode.ILSpy
 			EventManager.RegisterClassHandler(typeof(Window),
 			                                  Hyperlink.RequestNavigateEvent,
 			                                  new RequestNavigateEventHandler(Window_RequestNavigate));
-			
+			ILSpyTraceListener.Install();
 		}
 		
 		string FullyQualifyPath(string argument)

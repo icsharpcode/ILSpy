@@ -104,7 +104,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		protected internal override void VisitLogicNot(LogicNot inst)
 		{
-			inst.Argument.AcceptVisitor(this);
 			ILInstruction arg;
 			if (inst.Argument.MatchLogicNot(out arg)) {
 				// logic.not(logic.not(arg))
@@ -114,6 +113,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				arg.AddILRange(inst.Argument.ILRange);
 				inst.ReplaceWith(arg);
 				stepper.Stepped();
+				arg.AcceptVisitor(this);
 			} else if (inst.Argument is Comp) {
 				Comp comp = (Comp)inst.Argument;
 				if (comp.InputType != StackType.F || comp.Kind.IsEqualityOrInequality()) {
@@ -123,6 +123,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.ReplaceWith(comp);
 					stepper.Stepped();
 				}
+				comp.AcceptVisitor(this);
+			} else if (inst.Argument is IfInstruction && ((IfInstruction)inst.Argument).TrueInst is LdcI4) {
+				// Likely a logic and/or:
+				// logic.not(if (a) (ldc.i4 val) (c))
+				// ==> if (a) (ldc.i4 opposite_val) (logic.not(c))
+				IfInstruction ifInst = (IfInstruction)inst.Argument;
+				LdcI4 trueInst = (LdcI4)ifInst.TrueInst;
+				ifInst.TrueInst = new LdcI4(trueInst.Value != 0 ? 0 : 1) { ILRange = trueInst.ILRange };
+				ifInst.FalseInst = new LogicNot(ifInst.FalseInst) { ILRange = inst.ILRange };
+				inst.ReplaceWith(ifInst);
+				stepper.Stepped();
+				ifInst.AcceptVisitor(this);
+			} else {
+				inst.Argument.AcceptVisitor(this);
 			}
 		}
 		

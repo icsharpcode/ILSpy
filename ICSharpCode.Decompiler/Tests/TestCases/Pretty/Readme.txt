@@ -12,3 +12,7 @@ We:
 * compare "decompiled.cs" to "source.cs"
 
 The tests pass if the code looks exactly the same as the input code, ignoring comments, empty lines and preprocessor directives.
+
+Note: If you delete an .il file, it will be re-created on the next test run.
+This can be helpful when modifying the test case; but it also might have unexpected results when your C# compiler differs
+from the compiler previously used to create the .il file.

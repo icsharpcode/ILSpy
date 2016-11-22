@@ -19,12 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using ICSharpCode.Decompiler.IL.Patterns;
-using ICSharpCode.NRefactory.Utils;
-using ICSharpCode.Decompiler.CSharp;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -517,6 +512,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// It is temporarily possible for a node to be used in multiple places in the ILAst,
 		/// this property returns the slot of the primary position of this node (see remarks on <see cref="Parent"/>).
+		/// 
+		/// Precondition: this node must not be orphaned.
 		/// </remarks>
 		public SlotInfo SlotInfo {
 			get {

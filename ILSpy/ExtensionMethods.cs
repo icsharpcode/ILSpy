@@ -77,5 +77,16 @@ namespace ICSharpCode.ILSpy
 			
 			return " @" + token.ToInt32().ToString("x8");
 		}
+
+		/// <summary>
+		/// Takes at most <paramref name="length" /> first characters from string, and appends '...' if string is longer.
+		/// String can be null.
+		/// </summary>
+		public static string TakeStartEllipsis(this string s, int length)
+		{
+			if (string.IsNullOrEmpty(s) || length >= s.Length)
+				return s;
+			return s.Substring(0, length) + "...";
+		}
 	}
 }
