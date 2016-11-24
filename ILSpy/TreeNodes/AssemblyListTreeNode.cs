@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public AssemblyListTreeNode(AssemblyList assemblyList)
 		{
 			if (assemblyList == null)
-				throw new ArgumentNullException("assemblyList");
+				throw new ArgumentNullException(nameof(assemblyList));
 			this.assemblyList = assemblyList;
 			BindToObservableCollection(assemblyList.assemblies);
 		}

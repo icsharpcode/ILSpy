@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy.XmlDoc
 		public static XmlDocumentationProvider LoadDocumentation(ModuleDefinition module)
 		{
 			if (module == null)
-				throw new ArgumentNullException("module");
+				throw new ArgumentNullException(nameof(module));
 			lock (cache) {
 				XmlDocumentationProvider xmlDoc;
 				if (!cache.TryGetValue(module, out xmlDoc)) {

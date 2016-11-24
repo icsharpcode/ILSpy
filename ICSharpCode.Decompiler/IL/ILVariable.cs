@@ -155,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL
 		public ILVariable(VariableKind kind, IType type, int index)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			this.Kind = kind;
 			this.type = type;
 			this.StackType = type.GetStackType();

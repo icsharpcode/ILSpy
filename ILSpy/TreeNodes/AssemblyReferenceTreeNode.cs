@@ -33,9 +33,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public AssemblyReferenceTreeNode(AssemblyNameReference r, AssemblyTreeNode parentAssembly)
 		{
 			if (parentAssembly == null)
-				throw new ArgumentNullException("parentAssembly");
+				throw new ArgumentNullException(nameof(parentAssembly));
 			if (r == null)
-				throw new ArgumentNullException("r");
+				throw new ArgumentNullException(nameof(r));
 			this.r = r;
 			this.parentAssembly = parentAssembly;
 			this.LazyLoading = true;

@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public MethodBodyDisassembler(ITextOutput output, bool detectControlStructure, CancellationToken cancellationToken)
 		{
 			if (output == null)
-				throw new ArgumentNullException("output");
+				throw new ArgumentNullException(nameof(output));
 			this.output = output;
 			this.detectControlStructure = detectControlStructure;
 			this.cancellationToken = cancellationToken;

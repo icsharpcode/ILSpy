@@ -57,9 +57,9 @@ namespace ICSharpCode.Decompiler.Ast
 		public static bool IsBaseMethod(MethodDefinition parentMethod, MethodDefinition childMethod)
 		{
 			if (parentMethod == null)
-				throw new ArgumentNullException("parentMethod");
+				throw new ArgumentNullException(nameof(parentMethod));
 			if (childMethod == null)
-				throw new ArgumentNullException("childMethod");
+				throw new ArgumentNullException(nameof(childMethod));
 
 			if (parentMethod.Name != childMethod.Name)
 				return false;
@@ -81,9 +81,9 @@ namespace ICSharpCode.Decompiler.Ast
 		public static bool IsBaseProperty(PropertyDefinition parentProperty, PropertyDefinition childProperty)
 		{
 			if (parentProperty == null)
-				throw new ArgumentNullException("parentProperty");
+				throw new ArgumentNullException(nameof(parentProperty));
 			if (childProperty == null)
-				throw new ArgumentNullException("childProperty");
+				throw new ArgumentNullException(nameof(childProperty));
 
 			if (parentProperty.Name != childProperty.Name)
 				return false;
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.Ast
 		public static IEnumerable<MethodDefinition> FindBaseMethods(MethodDefinition method)
 		{
 			if (method == null)
-				throw new ArgumentNullException("method");
+				throw new ArgumentNullException(nameof(method));
 
 			var typeContext = CreateGenericContext(method.DeclaringType);
 			var gMethod = typeContext.ApplyTo(method);
@@ -133,7 +133,7 @@ namespace ICSharpCode.Decompiler.Ast
 		public static IEnumerable<PropertyDefinition> FindBaseProperties(PropertyDefinition property)
 		{
 			if (property == null)
-				throw new ArgumentNullException("property");
+				throw new ArgumentNullException(nameof(property));
 
 			if ((property.GetMethod ?? property.SetMethod).HasOverrides)
 				yield break;
@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.Ast
 		public static IEnumerable<EventDefinition> FindBaseEvents(EventDefinition eventDef)
 		{
 			if (eventDef == null)
-				throw new ArgumentNullException("eventDef");
+				throw new ArgumentNullException(nameof(eventDef));
 
 			var typeContext = CreateGenericContext(eventDef.DeclaringType);
 			var gEvent = typeContext.ApplyTo(eventDef);
@@ -183,9 +183,9 @@ namespace ICSharpCode.Decompiler.Ast
 		public static bool IsVisibleFromDerived(IMemberDefinition baseMember, TypeDefinition derivedType)
 		{
 			if (baseMember == null)
-				throw new ArgumentNullException("baseMember");
+				throw new ArgumentNullException(nameof(baseMember));
 			if (derivedType == null)
-				throw new ArgumentNullException("derivedType");
+				throw new ArgumentNullException(nameof(derivedType));
 
 			MethodAttributes attrs = GetAccessAttributes(baseMember) & MethodAttributes.MemberAccessMask;
 			if (attrs == MethodAttributes.Private)
@@ -399,7 +399,7 @@ namespace ICSharpCode.Decompiler.Ast
 			public GenericContext(T item)
 			{
 				if (item == null)
-					throw new ArgumentNullException("item");
+					throw new ArgumentNullException(nameof(item));
 
 				Item = item;
 				TypeArguments = Empty;
@@ -408,7 +408,7 @@ namespace ICSharpCode.Decompiler.Ast
 			public GenericContext(T item, IEnumerable<TypeReference> typeArguments)
 			{
 				if (item == null)
-					throw new ArgumentNullException("item");
+					throw new ArgumentNullException(nameof(item));
 
 				Item = item;
 				var list = new List<TypeReference>();

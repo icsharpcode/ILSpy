@@ -34,7 +34,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public PropertyTreeNode(PropertyDefinition property)
 		{
 			if (property == null)
-				throw new ArgumentNullException("property");
+				throw new ArgumentNullException(nameof(property));
 			this.property = property;
 			using (LoadedAssembly.DisableAssemblyLoad()) {
 				this.isIndexer = property.IsIndexer();

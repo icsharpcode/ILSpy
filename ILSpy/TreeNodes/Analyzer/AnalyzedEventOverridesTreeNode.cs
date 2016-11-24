@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedEventOverridesTreeNode(EventDefinition analyzedEvent)
 		{
 			if (analyzedEvent == null)
-				throw new ArgumentNullException("analyzedEvent");
+				throw new ArgumentNullException(nameof(analyzedEvent));
 
 			this.analyzedEvent = analyzedEvent;
 		}

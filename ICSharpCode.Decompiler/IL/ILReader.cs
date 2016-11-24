@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL
 		public ILReader(IDecompilerTypeSystem typeSystem)
 		{
 			if (typeSystem == null)
-				throw new ArgumentNullException("typeSystem");
+				throw new ArgumentNullException(nameof(typeSystem));
 			this.typeSystem = typeSystem;
 			this.compilation = typeSystem.Compilation;
 		}
@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.IL
 		void Init(Cil.MethodBody body)
 		{
 			if (body == null)
-				throw new ArgumentNullException("body");
+				throw new ArgumentNullException(nameof(body));
 			this.body = body;
 			this.currentInstruction = null;
 			this.nextInstructionIndex = 0;

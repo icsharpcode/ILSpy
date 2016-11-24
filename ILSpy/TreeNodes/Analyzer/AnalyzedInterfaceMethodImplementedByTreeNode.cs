@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedInterfaceMethodImplementedByTreeNode(MethodDefinition analyzedMethod)
 		{
 			if (analyzedMethod == null)
-				throw new ArgumentNullException("analyzedMethod");
+				throw new ArgumentNullException(nameof(analyzedMethod));
 
 			this.analyzedMethod = analyzedMethod;
 		}

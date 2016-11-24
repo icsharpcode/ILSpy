@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected void ValidateChild(ILInstruction inst)
 		{
 			if (inst == null)
-				throw new ArgumentNullException("inst");
+				throw new ArgumentNullException(nameof(inst));
 			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
 		}
 		

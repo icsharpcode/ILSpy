@@ -135,14 +135,14 @@ namespace ICSharpCode.ILSpy
 		public virtual string FormatPropertyName(PropertyDefinition property, bool? isIndexer = null)
 		{
 			if (property == null)
-				throw new ArgumentNullException("property");
+				throw new ArgumentNullException(nameof(property));
 			return property.Name;
 		}
 		
 		public virtual string FormatTypeName(TypeDefinition type)
 		{
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			return type.Name;
 		}
 

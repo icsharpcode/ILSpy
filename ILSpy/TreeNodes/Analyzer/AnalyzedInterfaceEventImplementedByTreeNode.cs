@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedInterfaceEventImplementedByTreeNode(EventDefinition analyzedEvent)
 		{
 			if (analyzedEvent == null)
-				throw new ArgumentNullException("analyzedEvent");
+				throw new ArgumentNullException(nameof(analyzedEvent));
 
 			this.analyzedEvent = analyzedEvent;
 			this.analyzedMethod = this.analyzedEvent.AddMethod ?? this.analyzedEvent.RemoveMethod;

@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public AssemblyTreeNode(LoadedAssembly assembly)
 		{
 			if (assembly == null)
-				throw new ArgumentNullException("assembly");
+				throw new ArgumentNullException(nameof(assembly));
 
 			this.assembly = assembly;
 

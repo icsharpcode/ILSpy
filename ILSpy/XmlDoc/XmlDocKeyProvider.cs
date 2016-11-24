@@ -165,7 +165,7 @@ namespace ICSharpCode.ILSpy.XmlDoc
 		public static MemberReference FindMemberByKey(ModuleDefinition module, string key)
 		{
 			if (module == null)
-				throw new ArgumentNullException("module");
+				throw new ArgumentNullException(nameof(module));
 			if (key == null || key.Length < 2 || key[1] != ':')
 				return null;
 			switch (key[0]) {

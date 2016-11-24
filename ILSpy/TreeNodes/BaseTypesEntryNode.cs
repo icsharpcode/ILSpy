@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public BaseTypesEntryNode(TypeReference tr, bool isInterface)
 		{
 			if (tr == null)
-				throw new ArgumentNullException("tr");
+				throw new ArgumentNullException(nameof(tr));
 			this.tr = tr;
 			this.def = tr.Resolve();
 			this.isInterface = isInterface;

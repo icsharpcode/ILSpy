@@ -45,9 +45,9 @@ namespace ICSharpCode.ILSpy
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings)
 		{
 			if (output == null)
-				throw new ArgumentNullException("output");
+				throw new ArgumentNullException(nameof(output));
 			if (settings == null)
-				throw new ArgumentNullException("settings");
+				throw new ArgumentNullException(nameof(settings));
 			this.output = output;
 			this.settings = settings;
 		}

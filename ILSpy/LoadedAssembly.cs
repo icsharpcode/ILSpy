@@ -38,9 +38,9 @@ namespace ICSharpCode.ILSpy
 		public LoadedAssembly(AssemblyList assemblyList, string fileName, Stream stream = null)
 		{
 			if (assemblyList == null)
-				throw new ArgumentNullException("assemblyList");
+				throw new ArgumentNullException(nameof(assemblyList));
 			if (fileName == null)
-				throw new ArgumentNullException("fileName");
+				throw new ArgumentNullException(nameof(fileName));
 			this.assemblyList = assemblyList;
 			this.fileName = fileName;
 			
@@ -217,7 +217,7 @@ namespace ICSharpCode.ILSpy
 		public LoadedAssembly LookupReferencedAssembly(AssemblyNameReference name)
 		{
 			if (name == null)
-				throw new ArgumentNullException("name");
+				throw new ArgumentNullException(nameof(name));
 			if (name.IsWindowsRuntime) {
 				return assemblyList.winRTMetadataLookupCache.GetOrAdd(name.Name, LookupWinRTMetadata);
 			} else {

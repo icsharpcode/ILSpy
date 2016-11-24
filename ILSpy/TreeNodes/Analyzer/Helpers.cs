@@ -30,9 +30,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			// TODO: move it to a better place after adding support for more cases.
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			if (typeRef == null)
-				throw new ArgumentNullException("typeRef");
+				throw new ArgumentNullException(nameof(typeRef));
 
 			if (type == typeRef)
 				return true;

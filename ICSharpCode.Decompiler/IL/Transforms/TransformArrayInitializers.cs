@@ -454,7 +454,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case TypeCode.Double:
 					return 8;
 				default:
-					throw new ArgumentOutOfRangeException("elementType");
+					throw new ArgumentOutOfRangeException(nameof(elementType));
 			}
 		}
 	}

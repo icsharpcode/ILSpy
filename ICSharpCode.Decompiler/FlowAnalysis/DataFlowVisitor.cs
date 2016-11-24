@@ -517,7 +517,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		protected internal override sealed void VisitTryCatchHandler(TryCatchHandler inst)
 		{
-			throw new NotImplementedException();
+			throw new NotSupportedException();
 		}
 		
 		protected internal override void VisitTryFinally(TryFinally inst)

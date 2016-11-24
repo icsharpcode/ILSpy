@@ -61,7 +61,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SwitchDetection(),
 				new LoopDetection(),
 				new IntroduceExitPoints(),
-				new ConditionDetection(),
+				new BlockILTransform( // per-block transforms
+					new ConditionDetection(),
+					new LoopingBlockTransform( // per-block transforms that depend on each other, and thus need to loop
+					)
+				),
 				new ILInlining(),
 				new TransformAssignment(),
 				new CopyPropagation(),
@@ -117,7 +121,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public CSharpDecompiler(DecompilerTypeSystem typeSystem, DecompilerSettings settings)
 		{
 			if (typeSystem == null)
-				throw new ArgumentNullException("typeSystem");
+				throw new ArgumentNullException(nameof(typeSystem));
 			this.typeSystem = typeSystem;
 			this.settings = settings;
 		}
@@ -288,7 +292,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public SyntaxTree DecompileTypes(IEnumerable<TypeDefinition> types)
 		{
 			if (types == null)
-				throw new ArgumentNullException("types");
+				throw new ArgumentNullException(nameof(types));
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
 			SyntaxTree syntaxTree = new SyntaxTree();
 			DoDecompileTypes(types, decompilationContext, syntaxTree);
@@ -302,7 +306,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public SyntaxTree Decompile(params IMemberDefinition[] definitions)
 		{
 			if (definitions == null)
-				throw new ArgumentNullException("definitions");
+				throw new ArgumentNullException(nameof(definitions));
 			ITypeDefinition parentTypeDef = null;
 			var syntaxTree = new SyntaxTree();
 			foreach (var def in definitions) {
@@ -601,7 +605,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(decompilationContext.CurrentMember == field);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
 			if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum) {
-				var enumDec = new EnumMemberDeclaration() {
+				var enumDec = new EnumMemberDeclaration {
 					Name = field.Name,
 					Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue),
 				};

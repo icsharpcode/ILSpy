@@ -129,6 +129,7 @@
     <Compile Include="IL\Patterns\ListMatch.cs" />
     <Compile Include="IL\Patterns\Match.cs" />
     <Compile Include="IL\SlotInfo.cs" />
+    <Compile Include="IL\Transforms\BlockTransform.cs" />
     <Compile Include="IL\Transforms\CopyPropagation.cs" />
     <Compile Include="IL\Transforms\IILTransform.cs" />
     <Compile Include="IL\Transforms\ILInlining.cs" />
@@ -138,6 +139,7 @@
     <Compile Include="IL\Transforms\DelegateConstruction.cs" />
     <Compile Include="IL\Transforms\RemoveDeadVariableInit.cs" />
     <Compile Include="IL\Transforms\SplitVariables.cs" />
+    <Compile Include="IL\Transforms\Stepper.cs" />
     <Compile Include="IL\Transforms\TransformArrayInitializers.cs" />
     <Compile Include="CecilExtensions.cs" />
     <Compile Include="Disassembler\DisassemblerHelpers.cs" />

@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedPropertyOverridesTreeNode(PropertyDefinition analyzedProperty)
 		{
 			if (analyzedProperty == null)
-				throw new ArgumentNullException("analyzedProperty");
+				throw new ArgumentNullException(nameof(analyzedProperty));
 
 			this.analyzedProperty = analyzedProperty;
 		}

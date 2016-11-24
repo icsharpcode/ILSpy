@@ -17,10 +17,19 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
+	/// <summary>
+	/// Per-function IL transform.
+	/// </summary>
+	public interface IILTransform
+	{
+		void Run(ILFunction function, ILTransformContext context);
+	}
+
 	/// <summary>
 	/// Parameter class holding various arguments for <see cref="IILTransform.Run(ILFunction, ILTransformContext)"/>.
 	/// </summary>
@@ -29,59 +38,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public IDecompilerTypeSystem TypeSystem { get; set; }
 		public DecompilerSettings Settings { get; set; }
 		public CancellationToken CancellationToken { get; set; }
-	}
-	
-	public interface IILTransform
-	{
-		void Run(ILFunction function, ILTransformContext context);
-	}
+		public Stepper Stepper { get; set; }
 
-	/// <summary>
-	/// Interface for transforms that can be "single-stepped" for debug purposes.
-	/// 
-	/// After the transform has performed MaxStepCount steps, it throws a
-	/// <see cref="StepLimitReachedException"/>.
-	/// </summary>
-	public interface ISingleStep
-	{
-		/// <summary>
-		/// Limits the number of steps performed by the transform.
-		/// 
-		/// The default is int.MaxValue = unlimited.
-		/// </summary>
-		int MaxStepCount { get; set; }
-	}
-
-	/// <summary>
-	/// Exception thrown when an IL transform runs into the <see cref="ISingleStep.MaxStepCount"/> limit.
-	/// </summary>
-	public class StepLimitReachedException : Exception
-	{
-	}
-
-	/// <summary>
-	/// Helper struct for use in transforms that implement ISingleStep.
-	/// </summary>
-	internal struct Stepper
-	{
-		public readonly int MaxStepCount;
-		public int StepCount;
-
-		public Stepper(int maxStepCount)
+		public ILTransformContext()
 		{
-			this.StepCount = 0;
-			this.MaxStepCount = maxStepCount;
-			if (maxStepCount == 0)
-				throw new StepLimitReachedException();
+		}
+
+		public ILTransformContext(ILTransformContext context)
+		{
+			this.TypeSystem = context.TypeSystem;
+			this.Settings = context.Settings;
+			this.CancellationToken = context.CancellationToken;
 		}
 
 		/// <summary>
-		/// Called immediately after a transform step was taken.
+		/// Call this method immediately before performing a transform step.
+		/// Unlike <c>context.Stepper.Step()</c>, calls to this method are only compiled in debug builds.
 		/// </summary>
-		public void Stepped()
+		[Conditional("STEP")]
+		internal void Step(string description, ILInstruction near)
 		{
-			if (++StepCount == MaxStepCount)
-				throw new StepLimitReachedException();
+			Stepper.Step(description, near);
 		}
 	}
 }

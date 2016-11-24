@@ -410,7 +410,7 @@ namespace ICSharpCode.ILSpy
 		public override string FormatPropertyName(PropertyDefinition property, bool? isIndexer)
 		{
 			if (property == null)
-				throw new ArgumentNullException("property");
+				throw new ArgumentNullException(nameof(property));
 
 			if (!isIndexer.HasValue) {
 				isIndexer = property.IsIndexer();

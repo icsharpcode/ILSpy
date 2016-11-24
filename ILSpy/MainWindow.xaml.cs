@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy
 			InitToolbar();
 			ContextMenuProvider.Add(treeView, decompilerTextView);
 			
-			this.Loaded += new RoutedEventHandler(MainWindow_Loaded);
+			this.Loaded += MainWindow_Loaded;
 		}
 		
 		void SetWindowBounds(Rect bounds)
@@ -656,8 +656,11 @@ namespace ICSharpCode.ILSpy
 				string link = "http://msdn.microsoft.com/library/system.reflection.emit.opcodes." + ((Mono.Cecil.Cil.OpCode)reference).Code.ToString().ToLowerInvariant() + ".aspx";
 				try {
 					Process.Start(link);
-				} catch {
-					
+#pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
+				} catch (Exception) {
+#pragma warning restore RECS0022 // A catch clause that catches System.Exception and has an empty body
+					// Process.Start can throw several errors (not all of them documented),
+					// just ignore all of them.
 				}
 			}
 			return decompilationTask;
@@ -680,7 +683,7 @@ namespace ICSharpCode.ILSpy
 		public void OpenFiles(string[] fileNames, bool focusNode = true)
 		{
 			if (fileNames == null)
-				throw new ArgumentNullException("fileNames");
+				throw new ArgumentNullException(nameof(fileNames));
 			
 			if (focusNode)
 				treeView.UnselectAll();
@@ -742,7 +745,7 @@ namespace ICSharpCode.ILSpy
 				if (node != null && node.View(decompilerTextView))
 					return;
 			}
-			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
+			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions { TextViewState = state });
 		}
 		
 		void SaveCommandExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -753,7 +756,7 @@ namespace ICSharpCode.ILSpy
 			}
 			this.TextView.SaveToDisk(this.CurrentLanguage,
 				this.SelectedNodes,
-				new DecompilationOptions() { FullDecompilation = true });
+				new DecompilationOptions { FullDecompilation = true });
 		}
 		
 		public void RefreshDecompiledView()
@@ -776,32 +779,6 @@ namespace ICSharpCode.ILSpy
 		public IEnumerable<ILSpyTreeNode> SelectedNodes {
 			get {
 				return treeView.GetTopLevelSelection().OfType<ILSpyTreeNode>();
-			}
-		}
-		
-		protected override void OnPreviewKeyDown(KeyEventArgs e)
-		{
-			if (CurrentLanguage is Decompiler.IL.Transforms.ISingleStep) {
-				var step = (Decompiler.IL.Transforms.ISingleStep)CurrentLanguage;
-				if (e.Key == Key.OemPlus || e.Key == Key.Add) {
-					if (step.MaxStepCount == int.MaxValue) {
-						step.MaxStepCount = 0;
-					} else {
-						step.MaxStepCount++;
-					}
-					DecompileSelectedNodes(recordHistory: false);
-					e.Handled = true;
-				} else if (e.Key == Key.OemMinus || e.Key == Key.Subtract) {
-					if (step.MaxStepCount == 0) {
-						step.MaxStepCount = int.MaxValue;
-					} else {
-						step.MaxStepCount--;
-					}
-					DecompileSelectedNodes(recordHistory: false);
-					e.Handled = true;
-				}
-			} else {
-				base.OnPreviewKeyDown(e);
 			}
 		}
 		#endregion

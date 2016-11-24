@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL
 		public InstructionCollection(ILInstruction parentInstruction, int firstChildIndex)
 		{
 			if (parentInstruction == null)
-				throw new ArgumentNullException("parentInstruction");
+				throw new ArgumentNullException(nameof(parentInstruction));
 			this.parentInstruction = parentInstruction;
 			this.firstChildIndex = firstChildIndex;
 		}

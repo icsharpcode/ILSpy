@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedInterfacePropertyImplementedByTreeNode(PropertyDefinition analyzedProperty)
 		{
 			if (analyzedProperty == null)
-				throw new ArgumentNullException("analyzedProperty");
+				throw new ArgumentNullException(nameof(analyzedProperty));
 
 			this.analyzedProperty = analyzedProperty;
 			this.analyzedMethod = this.analyzedProperty.GetMethod ?? this.analyzedProperty.SetMethod;

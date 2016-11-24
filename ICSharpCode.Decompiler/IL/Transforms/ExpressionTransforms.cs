@@ -30,14 +30,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <remarks>
 	/// Should run after inlining so that the expression patterns can be detected.
 	/// </remarks>
-	public class ExpressionTransforms : ILVisitor, IILTransform, ISingleStep
+	public class ExpressionTransforms : ILVisitor, IILTransform
 	{
-		public int MaxStepCount { get; set; } = int.MaxValue;
-		Stepper stepper;
+		ILTransformContext context;
 
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
-			stepper = new Stepper(MaxStepCount);
+			this.context = context;
 			function.AcceptVisitor(this);
 		}
 		
@@ -52,19 +51,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			base.VisitComp(inst);
 			if (inst.Right.MatchLdNull()) {
-				// comp(left > ldnull)  => comp(left != ldnull)
-				// comp(left <= ldnull) => comp(left == ldnull)
-				if (inst.Kind == ComparisonKind.GreaterThan)
+				if (inst.Kind == ComparisonKind.GreaterThan) {
+					context.Step("comp(left > ldnull)  => comp(left != ldnull)", inst);
 					inst.Kind = ComparisonKind.Inequality;
-				else if (inst.Kind == ComparisonKind.LessThanOrEqual)
+				} else if (inst.Kind == ComparisonKind.LessThanOrEqual) {
+					context.Step("comp(left <= ldnull) => comp(left == ldnull)", inst);
 					inst.Kind = ComparisonKind.Equality;
+				}
 			} else if (inst.Left.MatchLdNull()) {
-				// comp(ldnull < right)  => comp(ldnull != right)
-				// comp(ldnull >= right) => comp(ldnull == right)
-				if (inst.Kind == ComparisonKind.LessThan)
+				if (inst.Kind == ComparisonKind.LessThan) {
+					context.Step("comp(ldnull < right)  => comp(ldnull != right)", inst);
 					inst.Kind = ComparisonKind.Inequality;
-				else if (inst.Kind == ComparisonKind.GreaterThanOrEqual)
+				} else if (inst.Kind == ComparisonKind.GreaterThanOrEqual) {
+					context.Step("comp(ldnull >= right) => comp(ldnull == right)", inst);
 					inst.Kind = ComparisonKind.Equality;
+				}
 			}
 			
 			var rightWithoutConv = inst.Right.UnwrapConv(ConversionKind.SignExtend).UnwrapConv(ConversionKind.ZeroExtend);
@@ -77,16 +78,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// comp.unsigned(ldlen array > conv i4->i(ldc.i4 0))
 					// => comp(ldlen.i4 array > ldc.i4 0)
 					// This is a special case where the C# compiler doesn't generate conv.i4 after ldlen.
+					context.Step("comp(ldlen.i4 array > ldc.i4 0)", inst);
 					inst.Left.ReplaceWith(new LdLen(StackType.I4, array) { ILRange = inst.Left.ILRange });
 					inst.Right = rightWithoutConv;
 				}
-				// comp.unsigned(left > ldc.i4 0) => comp(left != ldc.i4 0)
-				// comp.unsigned(left <= ldc.i4 0) => comp(left == ldc.i4 0)
-				if (inst.Kind == ComparisonKind.GreaterThan)
+				if (inst.Kind == ComparisonKind.GreaterThan) {
+					context.Step("comp.unsigned(left > ldc.i4 0) => comp(left != ldc.i4 0)", inst);
 					inst.Kind = ComparisonKind.Inequality;
-				else if (inst.Kind == ComparisonKind.LessThanOrEqual)
+				} else if (inst.Kind == ComparisonKind.LessThanOrEqual) {
+					context.Step("comp.unsigned(left <= ldc.i4 0) => comp(left == ldc.i4 0)", inst);
 					inst.Kind = ComparisonKind.Equality;
-				stepper.Stepped();
+				}
 			}
 		}
 		
@@ -95,10 +97,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			inst.Argument.AcceptVisitor(this);
 			ILInstruction array;
 			if (inst.Argument.MatchLdLen(StackType.I, out array) && inst.TargetType.IsIntegerType() && !inst.CheckForOverflow) {
-				// conv.i4(ldlen array) => ldlen.i4(array)
+				context.Step("conv.i4(ldlen array) => ldlen.i4(array)", inst);
 				inst.AddILRange(inst.Argument.ILRange);
 				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array) { ILRange = inst.ILRange });
-				stepper.Stepped();
 			}
 		}
 		
@@ -106,27 +107,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			ILInstruction arg, lhs, rhs;
 			if (inst.Argument.MatchLogicNot(out arg)) {
-				// logic.not(logic.not(arg))
-				// ==> arg
+				context.Step("logic.not(logic.not(arg)) => arg", inst);
 				Debug.Assert(arg.ResultType == StackType.I4);
 				arg.AddILRange(inst.ILRange);
 				arg.AddILRange(inst.Argument.ILRange);
 				inst.ReplaceWith(arg);
-				stepper.Stepped();
 				arg.AcceptVisitor(this);
 			} else if (inst.Argument is Comp) {
 				Comp comp = (Comp)inst.Argument;
 				if (comp.InputType != StackType.F || comp.Kind.IsEqualityOrInequality()) {
-					// push negation into comparison:
+					context.Step("push negation into comparison", inst);
 					comp.Kind = comp.Kind.Negate();
 					comp.AddILRange(inst.ILRange);
 					inst.ReplaceWith(comp);
-					stepper.Stepped();
 				}
 				comp.AcceptVisitor(this);
 			} else if (inst.Argument.MatchLogicAnd(out lhs, out rhs)) {
 				// logic.not(if (lhs) rhs else ldc.i4 0)
 				// ==> if (logic.not(lhs)) ldc.i4 1 else logic.not(rhs)
+				context.Step("push negation into logic.and", inst);
 				IfInstruction ifInst = (IfInstruction)inst.Argument;
 				var ldc0 = ifInst.FalseInst;
 				Debug.Assert(ldc0.MatchLdcI4(0));
@@ -134,11 +133,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ifInst.TrueInst = new LdcI4(1) { ILRange = ldc0.ILRange };
 				ifInst.FalseInst = new LogicNot(rhs) { ILRange = inst.ILRange };
 				inst.ReplaceWith(ifInst);
-				stepper.Stepped();
 				ifInst.AcceptVisitor(this);
 			} else if (inst.Argument.MatchLogicOr(out lhs, out rhs)) {
 				// logic.not(if (lhs) ldc.i4 1 else rhs)
 				// ==> if (logic.not(lhs)) logic.not(rhs) else ldc.i4 0)
+				context.Step("push negation into logic.or", inst);
 				IfInstruction ifInst = (IfInstruction)inst.Argument;
 				var ldc1 = ifInst.TrueInst;
 				Debug.Assert(ldc1.MatchLdcI4(1));
@@ -146,7 +145,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ifInst.TrueInst = new LogicNot(rhs) { ILRange = inst.ILRange };
 				ifInst.FalseInst = new LdcI4(0) { ILRange = ldc1.ILRange };
 				inst.ReplaceWith(ifInst);
-				stepper.Stepped();
 				ifInst.AcceptVisitor(this);
 			} else {
 				inst.Argument.AcceptVisitor(this);
@@ -157,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (inst.Method.IsConstructor && !inst.Method.IsStatic && inst.Method.DeclaringType.Kind == TypeKind.Struct) {
 				Debug.Assert(inst.Arguments.Count == inst.Method.Parameters.Count + 1);
-				// Transform call to struct constructor:
+				context.Step("Transform call to struct constructor", inst);
 				// call(ref, ...)
 				// => stobj(ref, newobj(...))
 				var newObj = new NewObj(inst.Method);
@@ -165,7 +163,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				newObj.Arguments.AddRange(inst.Arguments.Skip(1));
 				var expr = new StObj(inst.Arguments[0], newObj, inst.Method.DeclaringType);
 				inst.ReplaceWith(expr);
-				stepper.Stepped();
 				// Both the StObj and the NewObj may trigger further rules, so continue visiting the replacement:
 				VisitStObj(expr);
 			} else {
@@ -177,8 +174,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			LdcDecimal decimalConstant;
 			if (TransformDecimalCtorToConstant(inst, out decimalConstant)) {
+				context.Step("TransformDecimalCtorToConstant", inst);
 				inst.ReplaceWith(decimalConstant);
-				stepper.Stepped();
 				return;
 			}
 			base.VisitNewObj(inst);
@@ -220,20 +217,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			    && inst.UnalignedPrefix == 0
 			    && !inst.IsVolatile)
 			{
-				// stobj(ldloca(v), ...)
-				// => stloc(v, ...)
+				context.Step("stobj(ldloca(v), ...) => stloc(v, ...)", inst);
 				inst.ReplaceWith(new StLoc(v, inst.Value));
-				stepper.Stepped();
 			}
 			
 			ILInstruction target;
 			IType t;
 			BinaryNumericInstruction binary = inst.Value as BinaryNumericInstruction;
 			if (binary != null && binary.Left.MatchLdObj(out target, out t) && inst.Target.Match(target).Success) {
+				context.Step("compound assignment", inst);
 				// stobj(target, binary.op(ldobj(target), ...))
 				// => compound.op(target, ...)
 				inst.ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, binary.Left, binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
-				stepper.Stepped();
 			}
 		}
 		
@@ -243,6 +238,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// if (cond) ldc.i4 0 else RHS --> if (!cond) RHS else ldc.i4 0
 			// if (cond) RHS else ldc.i4 1 --> if (!cond) ldc.i4 1 else RHS
 			if (inst.TrueInst.MatchLdcI4(0) || inst.FalseInst.MatchLdcI4(1)) {
+				context.Step("canonicalize logic and/or", inst);
 				var t = inst.TrueInst;
 				inst.TrueInst = inst.FalseInst;
 				inst.FalseInst = t;
@@ -258,11 +254,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Block falseInst = inst.FalseInst as Block;
 			if (falseInst == null || falseInst.Instructions.Count != 1)
 				return;
-			ILVariable v1, v2;
+			ILVariable v;
 			ILInstruction value1, value2;
-			if (trueInst.Instructions[0].MatchStLoc(out v1, out value1) && falseInst.Instructions[0].MatchStLoc(out v2, out value2) && v1 == v2) {
-				inst.ReplaceWith(new StLoc(v1, new IfInstruction(new LogicNot(inst.Condition), value2, value1)));
-				stepper.Stepped();
+			if (trueInst.Instructions[0].MatchStLoc(out v, out value1) && falseInst.Instructions[0].MatchStLoc(v, out value2)) {
+				context.Step("conditional operator", inst);
+				inst.ReplaceWith(new StLoc(v, new IfInstruction(new LogicNot(inst.Condition), value2, value1)));
 			}
 		}
 	}

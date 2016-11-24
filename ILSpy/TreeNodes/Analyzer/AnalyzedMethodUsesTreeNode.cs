@@ -35,7 +35,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedMethodUsesTreeNode(MethodDefinition analyzedMethod)
 		{
 			if (analyzedMethod == null)
-				throw new ArgumentNullException("analyzedMethod");
+				throw new ArgumentNullException(nameof(analyzedMethod));
 
 			this.analyzedMethod = analyzedMethod;
 		}

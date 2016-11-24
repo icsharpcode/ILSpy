@@ -38,11 +38,11 @@ namespace ICSharpCode.ILSpy
 		public static int BinarySearch<T>(this IList<T> list, T item, int start, int count, IComparer<T> comparer)
 		{
 			if (list == null)
-				throw new ArgumentNullException("list");
+				throw new ArgumentNullException(nameof(list));
 			if (start < 0 || start >= list.Count)
-				throw new ArgumentOutOfRangeException("start", start, "Value must be between 0 and " + (list.Count - 1));
+				throw new ArgumentOutOfRangeException(nameof(start), start, "Value must be between 0 and " + (list.Count - 1));
 			if (count < 0 || count > list.Count - start)
-				throw new ArgumentOutOfRangeException("count", count, "Value must be between 0 and " + (list.Count - start));
+				throw new ArgumentOutOfRangeException(nameof(count), count, "Value must be between 0 and " + (list.Count - start));
 			int end = start + count - 1;
 			while (start <= end) {
 				int pivot = (start + end) / 2;

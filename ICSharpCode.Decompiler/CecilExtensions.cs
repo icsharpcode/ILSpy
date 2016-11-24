@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler
 		public static int GetEndOffset(this Instruction inst)
 		{
 			if (inst == null)
-				throw new ArgumentNullException("inst");
+				throw new ArgumentNullException(nameof(inst));
 			return inst.Offset + inst.GetSize();
 		}
 		
@@ -241,7 +241,7 @@ namespace ICSharpCode.Decompiler
 		public static TypeReference GetEnumUnderlyingType(this TypeDefinition type)
 		{
 			if (!type.IsEnum)
-				throw new ArgumentException("Type must be an enum", "type");
+				throw new ArgumentException("Type must be an enum", nameof(type));
 
 			var fields = type.Fields;
 

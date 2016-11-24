@@ -40,7 +40,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public MethodTreeNode(MethodDefinition method)
 		{
 			if (method == null)
-				throw new ArgumentNullException("method");
+				throw new ArgumentNullException(nameof(method));
 			this.method = method;
 		}
 

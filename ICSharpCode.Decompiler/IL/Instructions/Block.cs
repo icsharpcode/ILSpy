@@ -196,6 +196,21 @@ namespace ICSharpCode.Decompiler.IL
 				return InstructionFlags.None;
 			}
 		}
+
+		/// <summary>
+		/// Deletes this block from its parent container.
+		/// This may cause the indices of other blocks in that container to change.
+		/// 
+		/// It is an error to call this method on blocks that are not directly within a container.
+		/// It is also an error to call this method on the entry-point block.
+		/// </summary>
+		public void Remove()
+		{
+			Debug.Assert(ChildIndex > 0);
+			var container = (BlockContainer)Parent;
+			Debug.Assert(container.Blocks[ChildIndex] == this);
+			container.Blocks.SwapRemoveAt(ChildIndex);
+		}
 	}
 	
 	public enum BlockType {

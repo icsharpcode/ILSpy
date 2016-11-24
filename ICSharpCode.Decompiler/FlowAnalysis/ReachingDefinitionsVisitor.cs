@@ -243,7 +243,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		static BitSet GetActiveVariableBitSet(ILVariableScope scope, Predicate<ILVariable> pred)
 		{
 			if (scope == null)
-				throw new ArgumentNullException("scope");
+				throw new ArgumentNullException(nameof(scope));
 			BitSet activeVariables = new BitSet(scope.Variables.Count);
 			for (int vi = 0; vi < scope.Variables.Count; vi++) {
 				activeVariables[vi] = pred(scope.Variables[vi]);
@@ -259,9 +259,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		public ReachingDefinitionsVisitor(ILVariableScope scope, BitSet analyzedVariables)
 		{
 			if (scope == null)
-				throw new ArgumentNullException("scope");
+				throw new ArgumentNullException(nameof(scope));
 			if (analyzedVariables == null)
-				throw new ArgumentNullException("analyzedVariables");
+				throw new ArgumentNullException(nameof(analyzedVariables));
 			this.scope = scope;
 			this.analyzedVariables = analyzedVariables;
 			base.flagsRequiringManualImpl |= InstructionFlags.MayWriteLocals;

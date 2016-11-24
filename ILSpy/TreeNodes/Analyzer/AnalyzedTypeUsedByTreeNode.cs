@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedTypeUsedByTreeNode(TypeDefinition analyzedType)
 		{
 			if (analyzedType == null)
-				throw new ArgumentNullException("analyzedType");
+				throw new ArgumentNullException(nameof(analyzedType));
 
 			this.analyzedType = analyzedType;
 		}

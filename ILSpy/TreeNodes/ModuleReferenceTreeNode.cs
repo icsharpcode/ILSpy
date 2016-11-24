@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public ModuleReferenceTreeNode(ModuleReference r)
 		{
 			if (r == null)
-				throw new ArgumentNullException("r");
+				throw new ArgumentNullException(nameof(r));
 			this.r = r;
 		}
 		

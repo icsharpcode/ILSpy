@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler
 		public Interval(int start, int end)
 		{
 			if (!(start <= unchecked(end - 1) || start == end))
-				throw new ArgumentException("The end must be after the start", "end");
+				throw new ArgumentException("The end must be after the start", nameof(end));
 			this.Start = start;
 			this.End = end;
 		}
@@ -179,7 +179,7 @@ namespace ICSharpCode.Decompiler
 		public LongInterval(long start, long end)
 		{
 			if (!(start <= unchecked(end - 1) || start == end))
-				throw new ArgumentException("The end must be after the start", "end");
+				throw new ArgumentException("The end must be after the start", nameof(end));
 			this.Start = start;
 			this.End = end;
 		}

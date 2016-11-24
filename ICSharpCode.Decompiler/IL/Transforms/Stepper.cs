@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -17,39 +17,48 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	public class TextOutputWriter : TextWriter
+	/// <summary>
+	/// Exception thrown when an IL transform runs into the <see cref="Stepper.MaxStepCount"/> limit.
+	/// </summary>
+	public class StepLimitReachedException : Exception
 	{
-		readonly ITextOutput output;
-		
-		public TextOutputWriter(ITextOutput output)
-		{
-			if (output == null)
-				throw new ArgumentNullException(nameof(output));
-			this.output = output;
+	}
+
+	/// <summary>
+	/// Helper class that manages recording transform steps.
+	/// </summary>
+	public class Stepper
+	{
+		/// <summary>
+		/// Gets whether stepping of built-in transforms is supported in this build of ICSharpCode.Decompiler.
+		/// Usually only debug builds support transform stepping.
+		/// </summary>
+		public static bool SteppingAvailable {
+			get {
+#if STEP
+				return true;
+#else
+				return false;
+#endif
+			}
 		}
 		
-		public override Encoding Encoding {
-			get { return Encoding.UTF8; }
-		}
-		
-		public override void Write(char value)
+		/// <summary>
+		/// Call this method immediately before performing a transform step.
+		/// Used for debugging the IL transforms. Has no effect in release mode.
+		/// 
+		/// May throw <see cref="StepLimitReachedException"/> in debug mode.
+		/// </summary>
+		public void Step(string description, ILInstruction near)
 		{
-			output.Write(value);
-		}
-		
-		public override void Write(string value)
-		{
-			output.Write(value);
-		}
-		
-		public override void WriteLine()
-		{
-			output.WriteLine();
+			// TODO: implement stepping
 		}
 	}
 }

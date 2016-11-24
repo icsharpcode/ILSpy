@@ -32,9 +32,9 @@ namespace ICSharpCode.Decompiler
 		public SpecializingDecompilerTypeSystem(IDecompilerTypeSystem context, TypeParameterSubstitution substitution)
 		{
 			if (context == null)
-				throw new ArgumentNullException("context");
+				throw new ArgumentNullException(nameof(context));
 			if (substitution == null)
-				throw new ArgumentNullException("substitution");
+				throw new ArgumentNullException(nameof(substitution));
 			this.context = context;
 			this.substitution = substitution;
 		}

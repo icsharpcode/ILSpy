@@ -321,7 +321,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public static void WriteOperand(ITextOutput writer, object operand)
 		{
 			if (operand == null)
-				throw new ArgumentNullException("operand");
+				throw new ArgumentNullException(nameof(operand));
 
 			Instruction targetInstruction = operand as Instruction;
 			if (targetInstruction != null) {

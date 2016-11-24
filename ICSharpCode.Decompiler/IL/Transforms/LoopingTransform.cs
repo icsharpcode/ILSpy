@@ -19,33 +19,67 @@
 using System;
 using System.Linq;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Repeats the child transforms until the ILAst no longer changes.
 	/// </summary>
-	public class LoopingTransform : IILTransform, ISingleStep
+	public class LoopingTransform : IILTransform
 	{
-		public int MaxStepCount { get; set; } = int.MaxValue;
-		readonly IReadOnlyCollection<IILTransform> children;
+		readonly IILTransform[] children;
 
 		public LoopingTransform(params IILTransform[] children)
 		{
 			this.children = children;
 		}
-		
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			var stepper = new Stepper(MaxStepCount);
 			do {
 				function.ResetDirty();
-				function.RunTransforms(children, context);
-				stepper.Stepped();
+				function.CheckInvariant(ILPhase.Normal);
+				foreach (var transform in children) {
+					context.CancellationToken.ThrowIfCancellationRequested();
+					transform.Run(function, context);
+					function.CheckInvariant(ILPhase.Normal);
+				}
 			} while (function.IsDirty);
 		}
 
-		public IReadOnlyCollection<IILTransform> Transforms {
+		public IReadOnlyCollection<IILTransform> Transforms
+		{
+			get { return children; }
+		}
+	}
+
+	/// <summary>
+	/// Repeats the child transforms until the ILAst no longer changes.
+	/// </summary>
+	public class LoopingBlockTransform : IBlockTransform
+	{
+		readonly IBlockTransform[] children;
+		
+		public LoopingBlockTransform(params IBlockTransform[] children)
+		{
+			this.children = children;
+		}
+		
+		public void Run(Block block, BlockTransformContext context)
+		{
+			do {
+				block.ResetDirty();
+				block.CheckInvariant(ILPhase.Normal);
+				foreach (var transform in children) {
+					context.CancellationToken.ThrowIfCancellationRequested();
+					transform.Run(block, context);
+					block.CheckInvariant(ILPhase.Normal);
+				}
+			} while (block.IsDirty);
+		}
+
+		public IReadOnlyCollection<IBlockTransform> Transforms {
 			get { return children; }
 		}
 	}

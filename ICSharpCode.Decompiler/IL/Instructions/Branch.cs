@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL
 		public Branch(Block targetBlock) : base(OpCode.Branch)
 		{
 			if (targetBlock == null)
-				throw new ArgumentNullException("targetBlock");
+				throw new ArgumentNullException(nameof(targetBlock));
 			this.targetBlock = targetBlock;
 			this.targetILOffset = targetBlock.ILRange.Start;
 		}

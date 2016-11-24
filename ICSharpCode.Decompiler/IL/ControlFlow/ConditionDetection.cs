@@ -33,35 +33,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// Blocks should be basic blocks prior to this transform.
 	/// After this transform, they will be extended basic blocks.
 	/// </remarks>
-	public class ConditionDetection : IILTransform, ISingleStep
+	public class ConditionDetection : IBlockTransform
 	{
-		public void Run(ILFunction function, ILTransformContext context)
-		{
-			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
-				Run(container, context);
-			}
-		}
+		BlockTransformContext context;
 
-		public int MaxStepCount { get; set; } = int.MaxValue;
-		Stepper stepper;
-
-		BlockContainer currentContainer;
-		ControlFlowNode[] controlFlowGraph;
-
-		void Run(BlockContainer container, ILTransformContext context)
-		{
-			stepper = new Stepper(MaxStepCount);
-			currentContainer = container;
-			controlFlowGraph = LoopDetection.BuildCFG(container);
-			Dominance.ComputeDominance(controlFlowGraph[0], context.CancellationToken);
-			BuildConditionStructure(controlFlowGraph[0]);
-			// If there are multiple blocks remaining, keep them sorted.
-			// (otherwise we end up with a more-or-less random order due to the SwapRemove() calls).
-			container.SortBlocks();
-			controlFlowGraph = null;
-			currentContainer = null;
-		}
-		
 		/// <summary>
 		/// Builds structured control flow for the block associated with the control flow node.
 		/// </summary>
@@ -69,13 +44,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// After a block was processed, it should use structured control flow
 		/// and have just a single 'regular' exit point (last branch instruction in the block)
 		/// </remarks>
-		void BuildConditionStructure(ControlFlowNode cfgNode)
+		public void Run(Block block, BlockTransformContext context)
 		{
-			Block block = (Block)cfgNode.UserData;
-			// First, process the children in the dominator tree.
-			// This ensures that blocks being embedded into this block are already fully processed.
-			foreach (var child in cfgNode.DominatorTreeChildren)
-				BuildConditionStructure(child);
+			this.context = context;
+
+			// We only embed blocks into this block if they aren't referenced anywhere else,
+			// so those blocks are dominated by this block.
+			// BlockILTransform thus guarantees that the blocks being embedded are already
+			// fully processed.
+
+			var cfgNode = context.ControlFlowNode;
+			Debug.Assert(cfgNode.UserData == block);
+
+			// Because this transform runs at the beginning of the block transforms,
+			// we know that `block` is still a (non-extended) basic block.
+
 			// Last instruction is one with unreachable endpoint
 			// (guaranteed by combination of BlockContainer and Block invariants)
 			Debug.Assert(block.Instructions.Last().HasFlag(InstructionFlags.EndPointUnreachable));
@@ -99,16 +82,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Debug.Assert(exitInst == block.Instructions.Last());
 				block.Instructions.RemoveAt(block.Instructions.Count - 1);
 				block.Instructions.AddRange(targetBlock.Instructions);
-				DeleteBlockFromContainer(targetBlock);
-				stepper.Stepped();
+				targetBlock.Remove();
 			}
-		}
-
-		void DeleteBlockFromContainer(Block block)
-		{
-			Debug.Assert(block.Parent == currentContainer);
-			Debug.Assert(currentContainer.Blocks[block.ChildIndex] == block);
-			currentContainer.Blocks.SwapRemoveAt(block.ChildIndex);
 		}
 
 		private void HandleIfInstruction(ControlFlowNode cfgNode, Block block, IfInstruction ifInst, ref ILInstruction exitInst)
@@ -117,20 +92,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// "if (c) goto lateBlock; goto earlierBlock;"
 				// -> "if (!c)" goto earlierBlock; goto lateBlock;
 				// This reordering should make the if structure correspond more closely to the original C# source code
+				context.Step("Negate if", ifInst);
 				block.Instructions[block.Instructions.Count - 1] = ifInst.TrueInst;
 				ifInst.TrueInst = exitInst;
 				exitInst = block.Instructions.Last();
 				ifInst.Condition = new LogicNot(ifInst.Condition);
-				stepper.Stepped();
 			}
 
 			ILInstruction trueExitInst;
 			if (IsUsableBranchToChild(cfgNode, ifInst.TrueInst)) {
 				// "if (...) goto targetBlock; exitInst;"
 				// -> "if (...) { targetBlock } exitInst;"
+				context.Step("Inline block as then-branch", ifInst);
 				var targetBlock = ((Branch)ifInst.TrueInst).TargetBlock;
 				// The targetBlock was already processed, we can embed it into the if statement:
-				DeleteBlockFromContainer(targetBlock);
+				targetBlock.Remove();
 				ifInst.TrueInst = targetBlock;
 				ILInstruction nestedCondition, nestedTrueInst;
 				while (targetBlock.Instructions.Count > 0
@@ -140,6 +116,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (CompatibleExitInstruction(exitInst, nestedTrueInst)) {
 						// "if (...) { if (nestedCondition) goto exitPoint; ... } goto exitPoint;"
 						// -> "if (... && !nestedCondition) { ... } goto exitPoint;"
+						context.Step("Combine 'if (cond1 && !cond2)' in then-branch", ifInst);
 						ifInst.Condition = IfInstruction.LogicAnd(ifInst.Condition, new LogicNot(nestedCondition));
 						targetBlock.Instructions.RemoveAt(0);
 						// Update targetBlock label now that we've removed the first instruction
@@ -157,17 +134,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (CompatibleExitInstruction(exitInst, trueExitInst)) {
 					// "if (...) { ...; goto exitPoint } goto exitPoint;"
 					// -> "if (...) { ... } goto exitPoint;"
+					context.Step("Remove redundant 'goto exitPoint;' in then-branch", ifInst);
 					targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
 					trueExitInst = null;
 					if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0].MatchIfInstruction(out nestedCondition, out nestedTrueInst)) {
 						// "if (...) { if (nestedCondition) nestedTrueInst; } exitInst;"
 						// --> "if (... && nestedCondition) nestedTrueInst; } exitInst"
+						context.Step("Combine if conditions into logic.and (in then-branch)", ifInst);
 						ifInst.Condition = IfInstruction.LogicAnd(ifInst.Condition, nestedCondition);
 						ifInst.TrueInst = nestedTrueInst;
 						trueExitInst = (nestedTrueInst as Block)?.Instructions.LastOrDefault();
 					}
 				}
-				stepper.Stepped();
 			} else {
 				trueExitInst = ifInst.TrueInst;
 			}
@@ -177,8 +155,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (CompatibleExitInstruction(trueExitInst, falseExitInst)) {
 					// if (...) { ...; goto exitPoint; } goto nextBlock; nextBlock: ...; goto exitPoint;
 					// -> if (...) { ... } else { ... } goto exitPoint;
+					context.Step("Inline block as else-branch", ifInst);
 					targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
-					DeleteBlockFromContainer(targetBlock);
+					targetBlock.Remove();
 					ifInst.FalseInst = targetBlock;
 					exitInst = block.Instructions[block.Instructions.Count - 1] = falseExitInst;
 					Block trueBlock = ifInst.TrueInst as Block;
@@ -189,16 +168,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						Debug.Assert(trueExitInst == ifInst.TrueInst);
 						ifInst.TrueInst = new Nop { ILRange = ifInst.TrueInst.ILRange };
 					}
-					stepper.Stepped();
 				}
 			}
 			if (IsEmpty(ifInst.TrueInst)) {
 				// prefer empty true-branch to empty-else branch
+				context.Step("Swap empty then-branch with else-branch", ifInst);
 				var oldTrue = ifInst.TrueInst;
 				ifInst.TrueInst = ifInst.FalseInst;
 				ifInst.FalseInst = new Nop { ILRange = oldTrue.ILRange };
 				ifInst.Condition = new LogicNot(ifInst.Condition);
-				stepper.Stepped();
 
 				// After swapping, it's possible that we can introduce a short-circuit operator:
 				Block trueBlock = ifInst.TrueInst as Block;
@@ -208,18 +186,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					&& trueBlock.Instructions[0].MatchIfInstruction(out nestedCondition, out nestedTrueInst)) {
 					// if (cond) if (nestedCond) nestedTrueInst
 					// ==> if (cond && nestedCond) nestedTrueInst
+					context.Step("Combine if conditions into logic.and (after branch swapping)", ifInst);
 					ifInst.Condition = IfInstruction.LogicAnd(ifInst.Condition, nestedCondition);
 					ifInst.TrueInst = nestedTrueInst;
-					stepper.Stepped();
 				}
 			} else if (ifInst.FalseInst.OpCode != OpCode.Nop && ifInst.FalseInst.ILRange.Start < ifInst.TrueInst.ILRange.Start) {
 				// swap true and false branches of if/else construct,
 				// to bring them in the same order as the IL code
+				context.Step("Swap then-branch with else-branch", ifInst);
 				var oldTrue = ifInst.TrueInst;
 				ifInst.TrueInst = ifInst.FalseInst;
 				ifInst.FalseInst = oldTrue;
 				ifInst.Condition = new LogicNot(ifInst.Condition);
-				stepper.Stepped();
 			}
 		}
 
@@ -265,7 +243,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (br == null)
 				return false;
 			var targetBlock = br.TargetBlock;
-			return targetBlock.Parent == currentContainer && cfgNode.Dominates(controlFlowGraph[targetBlock.ChildIndex])
+			return targetBlock.Parent == context.Container && cfgNode.Dominates(context.GetNode(targetBlock))
 				&& targetBlock.IncomingEdgeCount == 1 && targetBlock.FinalInstruction.OpCode == OpCode.Nop;
 		}
 
@@ -299,7 +277,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (IsUsableBranchToChild(cfgNode, section.Body)) {
 					// case ...: goto targetBlock;
 					var targetBlock = ((Branch)section.Body).TargetBlock;
-					DeleteBlockFromContainer(targetBlock);
+					targetBlock.Remove();
 					section.Body = targetBlock;
 				}
 			}
@@ -308,7 +286,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// switch(...){} goto targetBlock;
 				// ---> switch(..) { default: { targetBlock } }
 				var targetBlock = ((Branch)exitInst).TargetBlock;
-				DeleteBlockFromContainer(targetBlock);
+				targetBlock.Remove();
 				sw.DefaultBody = targetBlock;
 				if (IsBranchOrLeave(targetBlock.Instructions.Last())) {
 					exitInst = block.Instructions[block.Instructions.Count - 1] = targetBlock.Instructions.Last();

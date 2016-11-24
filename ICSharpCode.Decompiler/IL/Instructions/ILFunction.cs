@@ -79,6 +79,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public void RunTransforms(IEnumerable<IILTransform> transforms, ILTransformContext context)
 		{
+			this.CheckInvariant(ILPhase.Normal);
 			foreach (var transform in transforms) {
 				context.CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(this, context);

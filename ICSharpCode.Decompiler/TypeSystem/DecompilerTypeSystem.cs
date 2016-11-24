@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler
 		public DecompilerTypeSystem(ModuleDefinition moduleDefinition)
 		{
 			if (moduleDefinition == null)
-				throw new ArgumentNullException("moduleDefinition");
+				throw new ArgumentNullException(nameof(moduleDefinition));
 			this.moduleDefinition = moduleDefinition;
 			CecilLoader mainAssemblyCecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
 			CecilLoader referencedAssemblyCecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, ShortenInterfaceImplNames = false };
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler
 		public IField Resolve(FieldReference fieldReference)
 		{
 			if (fieldReference == null)
-				throw new ArgumentNullException("fieldReference");
+				throw new ArgumentNullException(nameof(fieldReference));
 			lock (fieldLookupCache) {
 				IField field;
 				if (!fieldLookupCache.TryGetValue(fieldReference, out field)) {
@@ -191,7 +191,7 @@ namespace ICSharpCode.Decompiler
 		public IMethod Resolve(MethodReference methodReference)
 		{
 			if (methodReference == null)
-				throw new ArgumentNullException("methodReference");
+				throw new ArgumentNullException(nameof(methodReference));
 			lock (methodLookupCache) {
 				IMethod method;
 				if (!methodLookupCache.TryGetValue(methodReference, out method)) {
@@ -325,7 +325,7 @@ namespace ICSharpCode.Decompiler
 		public IProperty Resolve(PropertyReference propertyReference)
 		{
 			if (propertyReference == null)
-				throw new ArgumentNullException("propertyReference");
+				throw new ArgumentNullException(nameof(propertyReference));
 			lock (propertyLookupCache) {
 				IProperty property;
 				if (!propertyLookupCache.TryGetValue(propertyReference, out property)) {

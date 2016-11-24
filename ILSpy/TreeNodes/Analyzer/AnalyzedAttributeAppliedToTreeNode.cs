@@ -45,7 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedAttributeAppliedToTreeNode(TypeDefinition analyzedType)
 		{
 			if (analyzedType == null)
-				throw new ArgumentNullException("analyzedType");
+				throw new ArgumentNullException(nameof(analyzedType));
 
 			this.analyzedType = analyzedType;
 			attributeName = this.analyzedType.FullName;
