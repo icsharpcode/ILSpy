@@ -119,5 +119,30 @@ public static class Switch
 				return null;
 		}
 	}
+
+	public static void SwitchInLoop(int i)
+	{
+		while (true) {
+			switch (i) {
+				case 1:
+					Console.WriteLine("one");
+					break;
+				case 2:
+					Console.WriteLine("two");
+					break;
+				case 3:
+					Console.WriteLine("three");
+					continue;
+				case 4:
+					Console.WriteLine("four");
+					return;
+				default:
+					Console.WriteLine("default");
+					Console.WriteLine("more code");
+					throw new ArgumentException();
+			}
+			i++;
+		}
+	}
 }
 
