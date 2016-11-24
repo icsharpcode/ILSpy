@@ -190,7 +190,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			if (ifInst.FalseInst.OpCode != OpCode.Nop && ifInst.FalseInst.ILRange.Start < ifInst.TrueInst.ILRange.Start
 				|| ifInst.TrueInst.OpCode == OpCode.Nop) {
-				// swap true and false branches of if, to bring them in the same order as the IL code
+				// swap true and false branches of if/else construct,
+				// to bring them in the same order as the IL code
 				var oldTrue = ifInst.TrueInst;
 				ifInst.TrueInst = ifInst.FalseInst;
 				ifInst.FalseInst = oldTrue;
@@ -210,9 +211,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		bool IsBranchToLaterTarget(ILInstruction inst1, ILInstruction inst2)
 		{
-			Block block1, block2;
+			Block block1 = null, block2 = null;
 			if (inst1.MatchBranch(out block1) && inst2.MatchBranch(out block2)) {
 				return block1.ILRange.Start > block2.ILRange.Start;
+			}
+			BlockContainer container1, container2;
+			if (inst1.MatchLeave(out container1) && container1.Parent is TryInstruction) {
+				// 'leave tryBlock' is considered to have a later target than
+				// any branch within the container, and also a later target
+				// than a return instruction.
+				// This is necessary to avoid "goto" statements in the
+				// ExceptionHandling.ConditionalReturnInThrow test.
+				if (!inst2.MatchLeave(out container2))
+					container2 = block2?.Parent as BlockContainer;
+				return container2 == null || container2.IsDescendantOf(container1);
 			}
 			return false;
 		}

@@ -181,6 +181,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public void SortBlocks(bool deleteUnreachableBlocks = false)
 		{
+			if (Blocks.Count < 2)
+				return;
+
 			// Visit blocks in post-order
 			BitSet visited = new BitSet(Blocks.Count);
 			List<Block> postOrder = new List<Block>();

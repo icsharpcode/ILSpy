@@ -90,6 +90,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					var nextBranch = (Branch)targetBlock.Instructions[0];
 					branch.TargetBlock = nextBranch.TargetBlock;
+					branch.AddILRange(nextBranch.ILRange);
 					if (targetBlock.IncomingEdgeCount == 0)
 						targetBlock.Instructions.Clear(); // mark the block for deletion
 					targetBlock = branch.TargetBlock;
