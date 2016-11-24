@@ -53,13 +53,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void ProcessBlock(Block block, ref bool blockContainerNeedsCleanup)
 		{
-			if (analysis.AnalyzeBlock(block) && UseCSharpSwitch(analysis)) {
+			bool analysisSuccess = analysis.AnalyzeBlock(block);
+			KeyValuePair<LongSet, ILInstruction> defaultSection;
+			if (analysisSuccess && UseCSharpSwitch(analysis, out defaultSection)) {
 				// complex multi-block switch that can be combined into a single SwitchInstruction
-				var hugeSection = analysis.Sections.Single(s => s.Key.Count() > 50);
 
 				var sw = new SwitchInstruction(new LdLoc(analysis.SwitchVariable));
 				foreach (var section in analysis.Sections) {
-					if (!section.Key.SetEquals(hugeSection.Key)) {
+					if (!section.Key.SetEquals(defaultSection.Key)) {
 						sw.Sections.Add(new SwitchSection
 						{
 							Labels = section.Key,
@@ -68,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 				}
 				block.Instructions[block.Instructions.Count - 2] = sw;
-				block.Instructions[block.Instructions.Count - 1] = hugeSection.Value;
+				block.Instructions[block.Instructions.Count - 1] = defaultSection.Value;
 				// mark all inner blocks that were converted to the switch statement for deletion
 				foreach (var innerBlock in analysis.InnerBlocks) {
 					Debug.Assert(innerBlock.Parent == block.Parent);
@@ -123,10 +124,31 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Tests whether we should prefer a switch statement over an if statement.
 		/// </summary>
-		static bool UseCSharpSwitch(SwitchAnalysis analysis)
+		static bool UseCSharpSwitch(SwitchAnalysis analysis, out KeyValuePair<LongSet, ILInstruction> defaultSection)
 		{
-			return analysis.InnerBlocks.Any()
-				&& analysis.Sections.Count(s => s.Key.Count() > MaxValuesPerSection) == 1;
+			if (!analysis.InnerBlocks.Any()) {
+				defaultSection = default(KeyValuePair<LongSet, ILInstruction>);
+				return false;
+			}
+			defaultSection = analysis.Sections.FirstOrDefault(s => s.Key.Count() > MaxValuesPerSection);
+			if (defaultSection.Key.IsEmpty) {
+				return false;
+			}
+			ulong valuePerSectionLimit = MaxValuesPerSection;
+			if (!analysis.ContainsILSwitch) {
+				// If there's no IL switch involved, limit the number of keys per section
+				// much more drastically to avoid generating switches where an if condition
+				// would be shorter.
+				valuePerSectionLimit = Math.Min(
+					valuePerSectionLimit,
+					(ulong)analysis.InnerBlocks.Count);
+			}
+			var defaultSectionKey = defaultSection.Key;
+			if (analysis.Sections.Any(s => !s.Key.SetEquals(defaultSectionKey)
+										&& s.Key.Count() > valuePerSectionLimit)) {
+				return false;
+			}
+			return analysis.InnerBlocks.Any();
 		}
 	}
 }

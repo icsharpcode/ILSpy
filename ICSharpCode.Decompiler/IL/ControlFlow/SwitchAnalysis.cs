@@ -34,6 +34,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 
 		/// <summary>
+		/// Whether at least one the analyzed blocks contained an IL switch constructors.
+		/// </summary>
+		public bool ContainsILSwitch { get; private set; }
+
+		/// <summary>
 		/// Gets the sections that were detected by the previoous AnalyzeBlock() call.
 		/// </summary>
 		public readonly List<KeyValuePair<LongSet, ILInstruction>> Sections = new List<KeyValuePair<LongSet, ILInstruction>>();
@@ -59,6 +64,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			targetBlockToSectionIndex.Clear();
 			Sections.Clear();
 			InnerBlocks.Clear();
+			ContainsILSwitch = false;
 			return AnalyzeBlock(block, LongSet.Universe, tailOnly: true);
 		}
 
@@ -108,7 +114,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			} else if (inst.OpCode == OpCode.SwitchInstruction) {
 				if (AnalyzeSwitch((SwitchInstruction)inst, inputValues, out trueValues)) {
-					// OK
+					ContainsILSwitch = true; // OK
 				} else { // switch analysis failed (e.g. switchVar mismatch)
 					return false;
 				}

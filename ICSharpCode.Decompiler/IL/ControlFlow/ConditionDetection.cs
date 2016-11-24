@@ -133,8 +133,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				DeleteBlockFromContainer(targetBlock);
 				ifInst.TrueInst = targetBlock;
 				ILInstruction nestedCondition, nestedTrueInst;
-				if (targetBlock.Instructions.Count > 0
-					&& targetBlock.Instructions[0].MatchIfInstruction(out nestedCondition, out nestedTrueInst)) {
+				while (targetBlock.Instructions.Count > 0
+					&& targetBlock.Instructions[0].MatchIfInstruction(out nestedCondition, out nestedTrueInst))
+				{
 					nestedTrueInst = UnpackBlockContainingOnlyBranch(nestedTrueInst);
 					if (CompatibleExitInstruction(exitInst, nestedTrueInst)) {
 						// "if (...) { if (nestedCondition) goto exitPoint; ... } goto exitPoint;"
@@ -146,6 +147,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							int offset = targetBlock.Instructions[0].ILRange.Start;
 							targetBlock.ILRange = new Interval(offset, offset);
 						}
+						continue; // try to find more nested conditions
+					} else {
+						break;
 					}
 				}
 
@@ -188,8 +192,27 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					stepper.Stepped();
 				}
 			}
-			if (ifInst.FalseInst.OpCode != OpCode.Nop && ifInst.FalseInst.ILRange.Start < ifInst.TrueInst.ILRange.Start
-				|| ifInst.TrueInst.OpCode == OpCode.Nop) {
+			if (IsEmpty(ifInst.TrueInst)) {
+				// prefer empty true-branch to empty-else branch
+				var oldTrue = ifInst.TrueInst;
+				ifInst.TrueInst = ifInst.FalseInst;
+				ifInst.FalseInst = new Nop { ILRange = oldTrue.ILRange };
+				ifInst.Condition = new LogicNot(ifInst.Condition);
+				stepper.Stepped();
+
+				// After swapping, it's possible that we can introduce a short-circuit operator:
+				Block trueBlock = ifInst.TrueInst as Block;
+				ILInstruction nestedCondition, nestedTrueInst;
+				if (trueBlock != null && trueBlock.Instructions.Count == 1
+					&& trueBlock.FinalInstruction is Nop
+					&& trueBlock.Instructions[0].MatchIfInstruction(out nestedCondition, out nestedTrueInst)) {
+					// if (cond) if (nestedCond) nestedTrueInst
+					// ==> if (cond && nestedCond) nestedTrueInst
+					ifInst.Condition = IfInstruction.LogicAnd(ifInst.Condition, nestedCondition);
+					ifInst.TrueInst = nestedTrueInst;
+					stepper.Stepped();
+				}
+			} else if (ifInst.FalseInst.OpCode != OpCode.Nop && ifInst.FalseInst.ILRange.Start < ifInst.TrueInst.ILRange.Start) {
 				// swap true and false branches of if/else construct,
 				// to bring them in the same order as the IL code
 				var oldTrue = ifInst.TrueInst;
@@ -198,6 +221,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ifInst.Condition = new LogicNot(ifInst.Condition);
 				stepper.Stepped();
 			}
+		}
+
+		static bool IsEmpty(ILInstruction inst)
+		{
+			var block = inst as Block;
+			return block != null && block.Instructions.Count == 0 && block.FinalInstruction is Nop
+				|| inst is Nop;
 		}
 
 		private ILInstruction UnpackBlockContainingOnlyBranch(ILInstruction inst)

@@ -47,6 +47,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			this.B(this.F(0) ? this.F(1) : this.F(2));
 		}
 		
+		public void ExprCondAnd()
+		{
+			this.B((this.F(0) && this.F(1)) ? this.F(2) : this.F(3));
+		}
+
 		public void StmtAnd2()
 		{
 			if (this.F(0) && this.F(1)) {
@@ -90,6 +95,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void StmtComplex()
 		{
 			if (this.F(0) && this.F(1) && !this.F(2) && (this.F(3) || this.F(4))) {
+				this.M1();
+			} else {
+				this.M2();
+			}
+			this.E();
+		}
+
+		public void StmtComplex2(int i)
+		{
+			if (i > 1000 || (i >= 1 && i <= 8) || i == 42) {
+				this.M1();
+			} else {
+				this.M2();
+			}
+			this.E();
+		}
+
+		public void StmtComplex3(int i)
+		{
+			if (i > 1000 || (i >= 1 && i <= 8) || (i >= 100 && i <= 200) || i == 42) {
+				this.M1();
+			} else {
+				this.M2();
+			}
+			this.E();
+		}
+
+		public void StmtComplex4(int i)
+		{
+			if (i > 1000 || (i >= 1 && i <= 8) || i == 42 || i == 23) {
 				this.M1();
 			} else {
 				this.M2();
