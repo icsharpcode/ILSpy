@@ -33,8 +33,6 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: SuppressMessage("Microsoft.Usage", "CA2243:AttributeStringLiteralsShouldParseCorrectly",
 	Justification = "AssemblyInformationalVersion does not need to be a parsable version")]
 
-[assembly: SuppressMessage("Language Usage Opportunities", "RECS0091:Use 'var' keyword when possible")]
-[assembly: SuppressMessage("Redundancies in Code", "RECS0113:Redundant comma in array initializer")]
 [assembly: SuppressMessage("Redundancies in Symbol Declarations", "RECS0122:Initializing field with default value is redundant",
 	Justification = "Explicit default initialization is necessary to avoid compiler warning with MEF")]
 

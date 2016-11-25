@@ -45,9 +45,11 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|AnyCPU'">
     <Prefer32Bit>false</Prefer32Bit>
     <DefineConstants>TRACE;DEBUG;STEP</DefineConstants>
+    <CodeAnalysisRuleSet>ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <Prefer32Bit>false</Prefer32Bit>
+    <CodeAnalysisRuleSet>ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -179,6 +181,7 @@
     <Compile Include="Util\Interval.cs" />
     <Compile Include="Util\LongSet.cs" />
     <Compile Include="Util\UnionFind.cs" />
+    <None Include="ICSharpCode.Decompiler.ruleset" />
     <None Include="IL\ILOpCodes.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ILOpCodes.cs</LastGenOutput>

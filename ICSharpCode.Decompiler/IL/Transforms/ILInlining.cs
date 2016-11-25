@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Performs inlining transformations.
 	/// </summary>
-	public class ILInlining : IILTransform
+	public class ILInlining : IILTransform, IBlockTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -37,6 +37,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				InlineAllInBlock(block);
 			}
 			function.Variables.RemoveDead();
+		}
+
+		public void Run(Block block, BlockTransformContext context)
+		{
+			InlineAllInBlock(block);
 		}
 
 		public bool InlineAllInBlock(Block block)
@@ -312,13 +317,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			else
 				return false; // abort, inlining not possible
 		}
-		
+
 		/// <summary>
 		/// Determines whether it is safe to move 'expressionBeingMoved' past 'expr'
 		/// </summary>
 		static bool IsSafeForInlineOver(ILInstruction expr, ILInstruction expressionBeingMoved)
 		{
 			return SemanticHelper.MayReorder(expressionBeingMoved, expr);
+
 		}
 	}
 }

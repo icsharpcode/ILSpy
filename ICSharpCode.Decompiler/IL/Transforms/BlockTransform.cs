@@ -22,7 +22,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	public class BlockTransformContext : ILTransformContext
 	{
 		/// <summary>
-		/// The container currently being processed.
+		/// The function containing the block currently being processed.
+		/// </summary>
+		public ILFunction Function { get; set; }
+
+		/// <summary>
+		/// The container containing the block currently being processed.
 		/// </summary>
 		public BlockContainer Container { get; set; }
 
@@ -72,6 +77,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			var blockContext = new BlockTransformContext(context);
+			blockContext.Function = function;
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
 				context.CancellationToken.ThrowIfCancellationRequested();
 				var cfg = LoopDetection.BuildCFG(container);
@@ -100,11 +106,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			context.ControlFlowNode = cfgNode;
 			context.Block = block;
-			context.Block.CheckInvariant(ILPhase.Normal);
+			block.CheckInvariant(ILPhase.Normal);
 			foreach (var transform in blockTransforms) {
 				context.CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(context.Block, context);
-				context.Block.CheckInvariant(ILPhase.Normal);
+				block.CheckInvariant(ILPhase.Normal);
 			}
 			context.Stepper.EndGroup();
 		}

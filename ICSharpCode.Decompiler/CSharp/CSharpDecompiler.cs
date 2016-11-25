@@ -63,21 +63,23 @@ namespace ICSharpCode.Decompiler.CSharp
 				new IntroduceExitPoints(),
 				new BlockILTransform( // per-block transforms
 					new ConditionDetection(),
-					new LoopingBlockTransform( // per-block transforms that depend on each other, and thus need to loop
+					new ILInlining(),
+					new TransformAssignment(),
+					new CopyPropagation(),
+					new LoopingBlockTransform(
+						// per-block transforms that depend on each other, and thus need to loop.
+						// Pretty much all transforms that open up new expression inlining
+						// opportunities belong in this category.
+						new ExpressionTransforms(),
+						new TransformArrayInitializers(),
+						new ILInlining()
 					)
 				),
-				new ILInlining(),
-				new TransformAssignment(),
-				new CopyPropagation(),
-				new InlineCompilerGeneratedVariables(),
-				new ExpressionTransforms(), // must run once before "the loop" to allow RemoveDeadVariablesInit
+				//new InlineCompilerGeneratedVariables(),
+				// -- isn't InlineCompilerGeneratedVariables redundant now that we have variable splitting?
 				new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
-				new DelegateConstruction(),
-				new LoopingTransform( // the loop: transforms that cyclicly depend on each other
-					new ExpressionTransforms(),
-					new TransformArrayInitializers(),
-					new ILInlining()
-				)
+				//new DelegateConstruction(),
+				// DelegateConstruction disabled because its broken since the BlockILTransform change
 			};
 		}
 

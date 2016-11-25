@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler
 	/// </summary>
 	public class DecompilerSettings : INotifyPropertyChanged
 	{
-		bool anonymousMethods = true;
+		bool anonymousMethods = false;
 		
 		/// <summary>
 		/// Decompile anonymous methods/lambdas.

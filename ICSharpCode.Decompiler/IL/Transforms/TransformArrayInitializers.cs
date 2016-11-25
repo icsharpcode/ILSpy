@@ -28,20 +28,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// Transforms array initialization pattern of System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray.
 	/// For collection and object initializers see <see cref="TransformInitializers"/>
 	/// </summary>
-	public class TransformArrayInitializers : IILTransform
+	public class TransformArrayInitializers : IBlockTransform
 	{
-		ILTransformContext context;
-		ILFunction function;
+		BlockTransformContext context;
 		
-		void IILTransform.Run(ILFunction function, ILTransformContext context)
+		void IBlockTransform.Run(Block block, BlockTransformContext context)
 		{
 			this.context = context;
-			this.function = function;
-			foreach (var block in function.Descendants.OfType<Block>()) {
-				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-					if (!DoTransform(block, i))
-						DoTransformMultiDim(block, i);
-				}
+			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+				if (!DoTransform(block, i))
+					DoTransformMultiDim(block, i);
 			}
 		}
 
@@ -58,7 +54,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction[] values;
 				int initArrayPos;
 				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, arrayLength, out values, out initArrayPos)) {
-					var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
+					var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
 					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
 					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
 					body.Instructions.RemoveAt(initArrayPos);
@@ -70,7 +66,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					int instructionsToRemove;
 					if (HandleSimpleArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
 						var block = new Block(BlockType.ArrayInitializer);
-						var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
+						var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 						block.Instructions.AddRange(values.SelectWithIndex(
 							(i, value) => {
@@ -88,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 					if (HandleJaggedArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
 						var block = new Block(BlockType.ArrayInitializer);
-						var tempStore = function.RegisterVariable(VariableKind.StackSlot, v.Type);
+						var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType)));
 						block.FinalInstruction = new LdLoc(tempStore);

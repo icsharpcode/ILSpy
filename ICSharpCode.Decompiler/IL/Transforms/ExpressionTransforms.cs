@@ -30,14 +30,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <remarks>
 	/// Should run after inlining so that the expression patterns can be detected.
 	/// </remarks>
-	public class ExpressionTransforms : ILVisitor, IILTransform
+	public class ExpressionTransforms : ILVisitor, IBlockTransform
 	{
 		ILTransformContext context;
-
-		void IILTransform.Run(ILFunction function, ILTransformContext context)
+		
+		public void Run(Block block, BlockTransformContext context)
 		{
 			this.context = context;
-			function.AcceptVisitor(this);
+			Default(block);
 		}
 		
 		protected override void Default(ILInstruction inst)
@@ -46,7 +46,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				child.AcceptVisitor(this);
 			}
 		}
-		
+
+		protected internal override void VisitBlock(Block block)
+		{
+			// Don't visit child blocks; since this is a block transform
+			// we know those were already handled previously.
+		}
+
 		protected internal override void VisitComp(Comp inst)
 		{
 			base.VisitComp(inst);

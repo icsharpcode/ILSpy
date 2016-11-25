@@ -29,41 +29,39 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	///    then we can replace the variable with the argument.
 	/// 2) assignments of address-loading instructions to local variables
 	/// </summary>
-	public class CopyPropagation : IILTransform
+	public class CopyPropagation : IBlockTransform
 	{
-		public void Run(ILFunction function, ILTransformContext context)
+		public void Run(Block block, BlockTransformContext context)
 		{
-			foreach (var block in function.Descendants.OfType<Block>()) {
-				for (int i = 0; i < block.Instructions.Count; i++) {
-					ILVariable v;
-					ILInstruction copiedExpr;
-					if (block.Instructions[i].MatchStLoc(out v, out copiedExpr)) {
-						if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr)) {
-							// un-inline the arguments of the ldArg instruction
-							ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
-							for (int j = 0; j < uninlinedArgs.Length; j++) {
-								var arg = copiedExpr.Children[j];
-								var type = context.TypeSystem.Compilation.FindType(arg.ResultType.ToKnownTypeCode());
-								uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType, arg.ILRange.Start) {
-									Name = "C_" + arg.ILRange.Start
-								};
-								block.Instructions.Insert(i++, new StLoc(uninlinedArgs[j], arg));
-							}
-							v.Scope.Variables.AddRange(uninlinedArgs);
-							// perform copy propagation:
-							foreach (var expr in v.Scope.Descendants) {
-								if (expr.MatchLdLoc(v)) {
-									var clone = copiedExpr.Clone();
-									for (int j = 0; j < uninlinedArgs.Length; j++) {
-										clone.Children[j].ReplaceWith(new LdLoc(uninlinedArgs[j]));
-									}
-									expr.ReplaceWith(clone);
-								}
-							}
-							block.Instructions.RemoveAt(i);
-							int c = new ILInlining().InlineInto(block, i, aggressive: false);
-							i -= c + 1;
+			for (int i = 0; i < block.Instructions.Count; i++) {
+				ILVariable v;
+				ILInstruction copiedExpr;
+				if (block.Instructions[i].MatchStLoc(out v, out copiedExpr)) {
+					if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr)) {
+						// un-inline the arguments of the ldArg instruction
+						ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
+						for (int j = 0; j < uninlinedArgs.Length; j++) {
+							var arg = copiedExpr.Children[j];
+							var type = context.TypeSystem.Compilation.FindType(arg.ResultType.ToKnownTypeCode());
+							uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType, arg.ILRange.Start) {
+								Name = "C_" + arg.ILRange.Start
+							};
+							block.Instructions.Insert(i++, new StLoc(uninlinedArgs[j], arg));
 						}
+						v.Scope.Variables.AddRange(uninlinedArgs);
+						// perform copy propagation:
+						foreach (var expr in v.Scope.Descendants) {
+							if (expr.MatchLdLoc(v)) {
+								var clone = copiedExpr.Clone();
+								for (int j = 0; j < uninlinedArgs.Length; j++) {
+									clone.Children[j].ReplaceWith(new LdLoc(uninlinedArgs[j]));
+								}
+								expr.ReplaceWith(clone);
+							}
+						}
+						block.Instructions.RemoveAt(i);
+						int c = new ILInlining().InlineInto(block, i, aggressive: false);
+						i -= c + 1;
 					}
 				}
 			}

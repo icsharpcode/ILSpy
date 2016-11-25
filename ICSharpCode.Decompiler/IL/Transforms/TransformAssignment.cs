@@ -27,32 +27,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Description of TransformAssignment.
 	/// </summary>
-	public class TransformAssignment : IILTransform
+	public class TransformAssignment : IBlockTransform
 	{
-		ILTransformContext context;
+		BlockTransformContext context;
 		
-		void IILTransform.Run(ILFunction function, ILTransformContext context)
+		void IBlockTransform.Run(Block block, BlockTransformContext context)
 		{
 			this.context = context;
-			foreach (var block in function.Descendants.OfType<Block>()) {
-				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-					if (TransformPostIncDecOperatorOnAddress(block, i) || TransformPostIncDecOnStaticField(block, i) || TransformCSharp4PostIncDecOperatorOnAddress(block, i)) {
-						block.Instructions.RemoveAt(i);
-						continue;
-					}
-					if (InlineLdAddressUsages(block, i)) {
-						block.Instructions.RemoveAt(i);
-						continue;
-					}
-					if (TransformPostIncDecOperator(block, i, function)) {
-						block.Instructions.RemoveAt(i);
-						continue;
-					}
-					if (TransformInlineAssignmentStObj(block, i))
-						continue;
-					if (TransformInlineAssignmentCall(block, i))
-						continue;
+			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+				if (TransformPostIncDecOperatorOnAddress(block, i) || TransformPostIncDecOnStaticField(block, i) || TransformCSharp4PostIncDecOperatorOnAddress(block, i)) {
+					block.Instructions.RemoveAt(i);
+					continue;
 				}
+				if (InlineLdAddressUsages(block, i)) {
+					block.Instructions.RemoveAt(i);
+					continue;
+				}
+				if (TransformPostIncDecOperator(block, i)) {
+					block.Instructions.RemoveAt(i);
+					continue;
+				}
+				if (TransformInlineAssignmentStObj(block, i))
+					continue;
+				if (TransformInlineAssignmentCall(block, i))
+					continue;
 			}
 		}
 
@@ -219,7 +217,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	final: ldloc s2
 		/// })
 		/// </code>
-		static bool TransformPostIncDecOperator(Block block, int i, ILFunction function)
+		bool TransformPostIncDecOperator(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
 			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
@@ -230,7 +228,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if ((binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub) || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
 				return false;
-			var tempStore = function.RegisterVariable(VariableKind.StackSlot, inst.Variable.Type);
+			var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, inst.Variable.Type);
 			var assignment = new Block(BlockType.CompoundOperator);
 			assignment.Instructions.Add(new StLoc(tempStore, new LdLoc(nextInst.Variable)));
 			assignment.Instructions.Add(new StLoc(nextInst.Variable, new BinaryNumericInstruction(binary.Operator, new LdLoc(tempStore), new LdcI4(1), binary.CheckForOverflow, binary.Sign)));
