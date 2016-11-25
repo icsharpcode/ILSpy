@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -60,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public ILInstruction Position { get; set; }
 			public int Step { get; set; }
 
-			public ICollection<Node> Children { get; } = new List<Node>();
+			public IList<Node> Children { get; } = new List<Node>();
 		}
 
 		readonly Stack<Node> groups;
@@ -79,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 
 		/// May throw <see cref="StepLimitReachedException"/> in debug mode.
 		/// </summary>
-		public void Step(string description, ILInstruction near)
+		public void Step(string description, ILInstruction near = null)
 		{
 			StepInternal(description, near);
 		}
@@ -88,7 +89,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (step >= StepLimit)
 				throw new StepLimitReachedException();
-			var stepNode = new Node { Description = $"{description} ({step})", Position = near, Step = step };
+			var stepNode = new Node {
+				Description = $"{step}: {description}",
+				Position = near,
+				Step = step
+			};
 			var p = groups.PeekOrDefault();
 			if (p != null)
 				p.Children.Add(stepNode);
@@ -98,14 +103,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return stepNode;
 		}
 
-		public void StartGroup(string description, ILInstruction near)
+		public void StartGroup(string description, ILInstruction near = null)
 		{
 			groups.Push(StepInternal(description, near));
 		}
 
-		public void EndGroup()
+		public void EndGroup(bool keepIfEmpty = false)
 		{
-			groups.Pop();
+			var node = groups.Pop();
+			if (!keepIfEmpty && node.Children.Count == 0) {
+				var col = groups.PeekOrDefault()?.Children ?? steps;
+				Debug.Assert(col.Last() == node);
+				col.RemoveAt(col.Count - 1);
+			}
 		}
 	}
 }

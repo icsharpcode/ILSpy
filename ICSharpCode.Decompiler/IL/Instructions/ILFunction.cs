@@ -82,7 +82,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.CheckInvariant(ILPhase.Normal);
 			foreach (var transform in transforms) {
 				context.CancellationToken.ThrowIfCancellationRequested();
+				context.Stepper.StartGroup(transform.GetType().Name);
 				transform.Run(this, context);
+				context.Stepper.EndGroup(keepIfEmpty: true);
 				this.CheckInvariant(ILPhase.Normal);
 			}
 		}

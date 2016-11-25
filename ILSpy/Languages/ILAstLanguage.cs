@@ -99,22 +99,9 @@ namespace ICSharpCode.ILSpy
 		{
 			yield return new TypedIL();
 			CSharpDecompiler decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
-			for (int i = 0; i <= decompiler.ILTransforms.Count; i++) {
-				yield return MakeDebugLanguage(decompiler.ILTransforms.Take(i));
-				var loop = decompiler.ILTransforms.ElementAtOrDefault(i) as LoopingTransform;
-				if (loop != null) {
-					for (int j = 1; j <= loop.Transforms.Count; j++) {
-						yield return MakeDebugLanguage(decompiler.ILTransforms.Take(i).Concat(loop.Transforms.Take(j)));
-					}
-				}
-			}
+			yield return new BlockIL(decompiler.ILTransforms.ToList());
 		}
-
-		static ILAstLanguage MakeDebugLanguage(IEnumerable<IILTransform> transforms)
-		{
-			return new BlockIL(transforms.ToList());
-		}
-
+		
 		public override string FileExtension {
 			get {
 				return ".il";
@@ -155,7 +142,7 @@ namespace ICSharpCode.ILSpy
 		{
 			readonly IReadOnlyList<IILTransform> transforms;
 			
-			public BlockIL(IReadOnlyList<IILTransform> transforms) : base(transforms.Count == 0 ? "ILAst (blocks)" :  "ILAst (" + transforms.Last().GetType().Name + ")")
+			public BlockIL(IReadOnlyList<IILTransform> transforms) : base("ILAst")
 			{
 				this.transforms = transforms;
 			}
@@ -170,6 +157,8 @@ namespace ICSharpCode.ILSpy
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
 				ILTransformContext context = new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem };
 				context.Stepper.StepLimit = options.StepLimit;
+				// Because the UI only allows viewing the result of a step, add a dummy initial step.
+				context.Stepper.Step("Initial");
 				try {
 					il.RunTransforms(transforms, context);
 				} catch (StepLimitReachedException) {
