@@ -112,7 +112,10 @@ namespace ICSharpCode.ILSpy
 		private void tree_KeyDown(object sender, KeyEventArgs e)
 		{
 			if (e.Key == Key.Enter || e.Key == Key.Return) {
-				ShowStateAfter_Click(sender, e);
+				if (e.KeyboardDevice.Modifiers == ModifierKeys.Shift)
+					ShowStateBefore_Click(sender, e);
+				else
+					ShowStateAfter_Click(sender, e);
 				e.Handled = true;
 			}
 		}

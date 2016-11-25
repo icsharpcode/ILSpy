@@ -15,8 +15,8 @@
 			</TreeView.ItemTemplate>
 			<TreeView.ContextMenu>
 				<ContextMenu>
-					<MenuItem Header="Show state before this step" Click="ShowStateBefore_Click" />
-					<MenuItem Header="Show state after this step" Click="ShowStateAfter_Click" />
+					<MenuItem Header="Show state before this step" Click="ShowStateBefore_Click" InputGestureText="Shift+Enter" />
+					<MenuItem Header="Show state after this step" Click="ShowStateAfter_Click" InputGestureText="Enter" />
 					<MenuItem Header="Debug this step" Click="DebugStep_Click" />
 				</ContextMenu>
 			</TreeView.ContextMenu>
