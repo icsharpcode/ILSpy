@@ -1,6 +1,7 @@
 version: 1.0.{build}
 configuration: Debug
 platform: Any CPU
+image: Visual Studio 2017 RC
 install:
 - git submodule update --init --recursive
 - git clone https://github.com/icsharpcode/ILSpy-tests
