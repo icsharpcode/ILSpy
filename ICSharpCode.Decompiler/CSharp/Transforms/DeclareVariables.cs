@@ -23,7 +23,6 @@ using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.CSharp.Analysis;
 using ICSharpCode.NRefactory.PatternMatching;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;

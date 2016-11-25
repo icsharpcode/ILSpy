@@ -155,7 +155,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 	}
-
+	/*
 	class LiteralSearchStrategy : AbstractSearchStrategy
 	{
 		readonly TypeCode searchTermLiteralType;
@@ -326,7 +326,7 @@ namespace ICSharpCode.ILSpy
 			}
 			return false;
 		}
-	}
+	}*/
 
 	enum MemberSearchKind
 	{

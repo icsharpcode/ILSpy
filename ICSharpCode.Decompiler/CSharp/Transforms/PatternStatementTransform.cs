@@ -23,6 +23,7 @@ using System.Linq;
 
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.CSharp.Analysis;
+using ICSharpCode.NRefactory.CSharp.TypeSystem;
 using ICSharpCode.NRefactory.PatternMatching;
 using ICSharpCode.NRefactory.Semantics;
 using ICSharpCode.NRefactory.TypeSystem;
@@ -310,7 +311,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			Debug.Assert(targetStatement.Ancestors.Contains(varDecl.Parent));
 			BlockStatement block = (BlockStatement)varDecl.Parent;
-			DefiniteAssignmentAnalysis daa = new DefiniteAssignmentAnalysis(block, context.CancellationToken);
+			DefiniteAssignmentAnalysis daa = CreateDAA(block);
 			daa.SetAnalyzedRange(targetStatement, block, startInclusive: false);
 			daa.Analyze(varDecl.Variables.Single().Name);
 			return daa.UnassignedVariableUses.Count == 0;
@@ -332,7 +333,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			List<BlockStatement> blocks = targetStatement.Ancestors.TakeWhile(block => block != varDecl.Parent).OfType<BlockStatement>().ToList();
 			blocks.Add((BlockStatement)varDecl.Parent); // also handle the varDecl.Parent block itself
 			blocks.Reverse(); // go from parent blocks to child blocks
-			DefiniteAssignmentAnalysis daa = new DefiniteAssignmentAnalysis(blocks[0], context.CancellationToken);
+			var daa = CreateDAA(blocks[0]);
 			declarationPoint = null;
 			return false;
 			/*foreach (BlockStatement block in blocks) {
@@ -342,7 +343,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			return true;*/
 		}
-		
+
+		private DefiniteAssignmentAnalysis CreateDAA(BlockStatement block)
+		{
+			var typeResolveContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly);
+			return new DefiniteAssignmentAnalysis(block, (node, ct) => node.GetResolveResult(), typeResolveContext, context.CancellationToken);
+		}
+
 		/// <summary>
 		/// Gets whether there is an assignment to 'variableName' anywhere within the given node.
 		/// </summary>

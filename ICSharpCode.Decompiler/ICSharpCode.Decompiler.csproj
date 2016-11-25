@@ -46,6 +46,7 @@
     <Prefer32Bit>false</Prefer32Bit>
     <DefineConstants>TRACE;DEBUG;STEP</DefineConstants>
     <CodeAnalysisRuleSet>ICSharpCode.Decompiler.ruleset</CodeAnalysisRuleSet>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
     <Prefer32Bit>false</Prefer32Bit>
@@ -66,8 +67,178 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CSharp\Analysis\AnnotationNames.cs" />
+    <Compile Include="CSharp\Analysis\ControlFlow.cs" />
+    <Compile Include="CSharp\Analysis\DeclarationSpace\LocalDeclarationSpace.cs" />
+    <Compile Include="CSharp\Analysis\DeclarationSpace\LocalDeclarationSpaceVisitor.cs" />
+    <Compile Include="CSharp\Analysis\DefiniteAssignmentAnalysis.cs" />
     <Compile Include="CSharp\Annotations.cs" />
+    <Compile Include="CSharp\Ast\AstNode.cs" />
+    <Compile Include="CSharp\Ast\AstNodeCollection.cs" />
+    <Compile Include="CSharp\Ast\AstType.cs" />
+    <Compile Include="CSharp\Ast\ComposedType.cs" />
+    <Compile Include="CSharp\Ast\CSharpModifierToken.cs" />
+    <Compile Include="CSharp\Ast\CSharpTokenNode.cs" />
+    <Compile Include="CSharp\Ast\CSharpUtil.cs" />
+    <Compile Include="CSharp\Ast\DepthFirstAstVisitor.cs" />
+    <Compile Include="CSharp\Ast\DocumentationReference.cs" />
+    <Compile Include="CSharp\Ast\ErrorNode.cs" />
+    <Compile Include="CSharp\Ast\Expressions\AnonymousMethodExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\AnonymousTypeCreateExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\ArrayCreateExpression.cs">
+      <DependentUpon>ArrayInitializerExpression.cs</DependentUpon>
+    </Compile>
+    <Compile Include="CSharp\Ast\Expressions\ArrayInitializerExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\AsExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\AssignmentExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\BaseReferenceExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\BinaryOperatorExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\CastExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\CheckedExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\ConditionalExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\DefaultValueExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\DirectionExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\ErrorExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\Expression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\IdentifierExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\IndexerExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\InvocationExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\IsExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\LambdaExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\MemberReferenceExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\NamedArgumentExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\NamedExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\NullReferenceExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\ObjectCreateExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\ParenthesizedExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\PointerReferenceExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\PrimitiveExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\QueryExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\SizeOfExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\StackAllocExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\ThisReferenceExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\TypeOfExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\TypeReferenceExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\UnaryOperatorExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\UncheckedExpression.cs" />
+    <Compile Include="CSharp\Ast\Expressions\UndocumentedExpression.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\Attribute.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\AttributeSection.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\Comment.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\Constraint.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\DelegateDeclaration.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\ExternAliasDeclaration.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\NamespaceDeclaration.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\NewLineNode.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\PreProcessorDirective.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\TextNode.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\TypeDeclaration.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\TypeParameterDeclaration.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\UsingAliasDeclaration.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\UsingDeclaration.cs" />
+    <Compile Include="CSharp\Ast\GeneralScope\WhitespaceNode.cs" />
+    <Compile Include="CSharp\Ast\IAstVisitor.cs" />
+    <Compile Include="CSharp\Ast\Identifier.cs" />
+    <Compile Include="CSharp\Ast\IdentifierExpressionBackreference.cs" />
+    <Compile Include="CSharp\Ast\MemberType.cs" />
+    <Compile Include="CSharp\Ast\Modifiers.cs" />
+    <Compile Include="CSharp\Ast\NodeType.cs" />
+    <Compile Include="CSharp\Ast\ObservableAstVisitor.cs" />
+    <Compile Include="CSharp\Ast\PrimitiveType.cs" />
+    <Compile Include="CSharp\Ast\Roles.cs" />
+    <Compile Include="CSharp\Ast\SimpleType.cs" />
+    <Compile Include="CSharp\Ast\Statements\BlockStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\BreakStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\CheckedStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\ContinueStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\DoWhileStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\EmptyStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\ExpressionStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\FixedStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\ForeachStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\ForStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\GotoStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\IfElseStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\LabelStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\LockStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\ReturnStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\Statement.cs" />
+    <Compile Include="CSharp\Ast\Statements\SwitchStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\ThrowStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\TryCatchStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\UncheckedStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\UnsafeStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\UsingStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\VariableDeclarationStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\WhileStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\YieldBreakStatement.cs" />
+    <Compile Include="CSharp\Ast\Statements\YieldReturnStatement.cs" />
+    <Compile Include="CSharp\Ast\SyntaxExtensions.cs" />
+    <Compile Include="CSharp\Ast\SyntaxTree.cs" />
+    <Compile Include="CSharp\Ast\TokenRole.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\Accessor.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\ConstructorDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\DestructorDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\EntityDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\EnumMemberDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\EventDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\FieldDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\FixedFieldDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\FixedVariableInitializer.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\IndexerDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\MethodDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\OperatorDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\ParameterDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\PropertyDeclaration.cs" />
+    <Compile Include="CSharp\Ast\TypeMembers\VariableInitializer.cs" />
+    <Compile Include="CSharp\Ast\TypeSystemAstBuilder.cs" />
+    <Compile Include="CSharp\OutputVisitor\CSharpAmbience.cs" />
+    <Compile Include="CSharp\OutputVisitor\CSharpFormattingOptions.cs" />
+    <Compile Include="CSharp\OutputVisitor\CSharpOutputVisitor.cs" />
+    <Compile Include="CSharp\OutputVisitor\FormattingOptionsFactory.cs" />
+    <Compile Include="CSharp\OutputVisitor\InsertMissingTokensDecorator.cs" />
+    <Compile Include="CSharp\OutputVisitor\InsertParenthesesVisitor.cs" />
+    <Compile Include="CSharp\OutputVisitor\InsertRequiredSpacesDecorator.cs" />
+    <Compile Include="CSharp\OutputVisitor\InsertSpecialsDecorator.cs" />
+    <Compile Include="CSharp\OutputVisitor\ITokenWriter.cs" />
+    <Compile Include="CSharp\OutputVisitor\TextWriterOutputFormatter.cs" />
+    <Compile Include="CSharp\Resolver\AliasNamespaceResolveResult.cs" />
+    <Compile Include="CSharp\Resolver\AliasTypeResolveResult.cs" />
+    <Compile Include="CSharp\Resolver\AwaitResolveResult.cs" />
+    <Compile Include="CSharp\Resolver\CastResolveResult.cs" />
+    <Compile Include="CSharp\Resolver\CompositeResolveVisitorNavigator.cs" />
+    <Compile Include="CSharp\Resolver\CSharpConversions.cs" />
+    <Compile Include="CSharp\Resolver\CSharpInvocationResolveResult.cs" />
+    <Compile Include="CSharp\Resolver\CSharpOperators.cs" />
+    <Compile Include="CSharp\Resolver\CSharpResolver.cs" />
+    <Compile Include="CSharp\Resolver\DetectSkippableNodesNavigator.cs" />
+    <Compile Include="CSharp\Resolver\DynamicInvocationResolveResult.cs" />
+    <Compile Include="CSharp\Resolver\DynamicMemberResolveResult.cs" />
+    <Compile Include="CSharp\Resolver\FindReferencedEntities.cs" />
+    <Compile Include="CSharp\Resolver\IResolveVisitorNavigator.cs" />
+    <Compile Include="CSharp\Resolver\LambdaResolveResult.cs" />
+    <Compile Include="CSharp\Resolver\Log.cs" />
+    <Compile Include="CSharp\Resolver\MemberLookup.cs" />
+    <Compile Include="CSharp\Resolver\MethodGroupResolveResult.cs" />
+    <Compile Include="CSharp\Resolver\NameLookupMode.cs" />
+    <Compile Include="CSharp\Resolver\NodeListResolveVisitorNavigator.cs" />
+    <Compile Include="CSharp\Resolver\OverloadResolution.cs" />
+    <Compile Include="CSharp\Resolver\OverloadResolutionErrors.cs" />
+    <Compile Include="CSharp\Resolver\ReducedExtensionMethod.cs" />
+    <Compile Include="CSharp\Resolver\RenameCallbackArguments.cs" />
+    <Compile Include="CSharp\Resolver\TypeInference.cs" />
     <Compile Include="CSharp\TranslationContext.cs" />
+    <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />
+    <Compile Include="CSharp\TypeSystem\AttributeTypeReference.cs" />
+    <Compile Include="CSharp\TypeSystem\ConstantValues.cs" />
+    <Compile Include="CSharp\TypeSystem\CSharpAttribute.cs" />
+    <Compile Include="CSharp\TypeSystem\CSharpTypeResolveContext.cs" />
+    <Compile Include="CSharp\TypeSystem\MemberTypeOrNamespaceReference.cs" />
+    <Compile Include="CSharp\TypeSystem\MethodTypeParameterWithInheritedConstraints.cs" />
+    <Compile Include="CSharp\TypeSystem\ResolvedUsingScope.cs" />
+    <Compile Include="CSharp\TypeSystem\SimpleTypeOrNamespaceReference.cs" />
+    <Compile Include="CSharp\TypeSystem\TypeOrNamespaceReference.cs" />
+    <Compile Include="CSharp\TypeSystem\UsingScope.cs" />
     <Compile Include="DecompilerSettings.cs" />
     <Compile Include="CSharp\Transforms\ContextTrackingVisitor.cs" />
     <Compile Include="CSharp\Transforms\DecimalConstantTransform.cs" />
@@ -201,10 +372,6 @@
     <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory.Cecil\ICSharpCode.NRefactory.Cecil.csproj">
       <Project>{2B8F4F83-C2B3-4E84-A27B-8DEE1BE0E006}</Project>
       <Name>ICSharpCode.NRefactory.Cecil</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory.CSharp\ICSharpCode.NRefactory.CSharp.csproj">
-      <Project>{53dca265-3c3c-42f9-b647-f72ba678122b}</Project>
-      <Name>ICSharpCode.NRefactory.CSharp</Name>
     </ProjectReference>
     <ProjectReference Include="..\NRefactory\ICSharpCode.NRefactory\ICSharpCode.NRefactory.csproj">
       <Project>{3b2a5653-ec97-4001-bb9b-d90f1af2c371}</Project>

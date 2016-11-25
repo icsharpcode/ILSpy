@@ -169,10 +169,10 @@ namespace ICSharpCode.ILSpy
 			} else if (e.Key == Key.M && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
 				searchModeComboBox.SelectedIndex = (int)SearchMode.Member;
 				e.Handled = true;
-			} else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
+			} /*else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
 				searchModeComboBox.SelectedIndex = (int)SearchMode.Literal;
 				e.Handled = true;
-			}
+			}*/
 		}
 		
 		void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -277,8 +277,8 @@ namespace ICSharpCode.ILSpy
 					if (terms[0].StartsWith("e:", StringComparison.Ordinal))
 						return new MemberSearchStrategy(terms[0].Substring(2), MemberSearchKind.Event);
 
-					if (terms[0].StartsWith("c:", StringComparison.Ordinal))
-						return new LiteralSearchStrategy(terms[0].Substring(2));
+					//if (terms[0].StartsWith("c:", StringComparison.Ordinal))
+					//	return new LiteralSearchStrategy(terms[0].Substring(2));
 				}
 
 				switch (mode)
@@ -289,8 +289,8 @@ namespace ICSharpCode.ILSpy
 						return new TypeSearchStrategy(terms);
 					case SearchMode.Member:
 						return new MemberSearchStrategy(terms);
-					case SearchMode.Literal:
-						return new LiteralSearchStrategy(terms);
+					//case SearchMode.Literal:
+					//	return new LiteralSearchStrategy(terms);
 					case SearchMode.Method:
 						return new MemberSearchStrategy(terms, MemberSearchKind.Method);
 					case SearchMode.Field:
@@ -358,6 +358,6 @@ namespace ICSharpCode.ILSpy
 		Field,
 		Property,
 		Event,
-		Literal
+		//Literal
 	}
 }
