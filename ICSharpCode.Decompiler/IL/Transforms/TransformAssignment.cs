@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc s(stobj (..., value))
 		/// </code>
-		static bool TransformInlineAssignmentStObj(Block block, int i)
+		bool TransformInlineAssignmentStObj(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
 			// in some cases it can be a compiler-generated local
@@ -92,15 +92,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					TransformInlineAssignmentLocal(block, i);
 					return false;
 				}
+				context.Step("Inline assignment to instance field", fieldStore);
 				local = localStore.Variable;
 				block.Instructions.RemoveAt(i + 1);
 			} else if (nextInst is StObj) { // static fields
 				fieldStore = (StObj)nextInst;
 				if (!fieldStore.Value.MatchLdLoc(inst.Variable))
 					return false;
+				context.Step("Inline assignment to static field", fieldStore);
 				local = inst.Variable;
 				replacement = new StObj(fieldStore.Target, inst.Value, fieldStore.Type);
-			} else return false;
+			} else {
+				return false;
+			}
 			block.Instructions.RemoveAt(i + 1);
 			inst.ReplaceWith(new StLoc(local, replacement));
 			return true;
@@ -121,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// ... compound.op.new(callvirt(getter), value) ...
 		/// </code>
-		static bool TransformInlineAssignmentCall(Block block, int i)
+		bool TransformInlineAssignmentCall(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
 			// in some cases it can be a compiler-generated local
@@ -150,6 +154,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var usages = next.Descendants.Where(d => d.MatchLdLoc(localVariable)).ToArray();
 			if (usages.Length != 1)
 				return false;
+			context.Step($"Compound assignment to '{owner.Name}'", setterCall);
 			block.Instructions.RemoveAt(i + 1);
 			block.Instructions.RemoveAt(i);
 			usages[0].ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, getterCall, binary.Right,
@@ -163,7 +168,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc s(stloc l(value))
 		/// </code>
-		static void TransformInlineAssignmentLocal(Block block, int i)
+		void TransformInlineAssignmentLocal(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
 			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
@@ -171,6 +176,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			if (nextInst.Variable.Kind == VariableKind.StackSlot || !nextInst.Value.MatchLdLoc(inst.Variable))
 				return;
+			context.Step("Inline assignment to local variable", inst);
 			var value = inst.Value;
 			var var = nextInst.Variable;
 			var stackVar = inst.Variable;
@@ -185,7 +191,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// use ldaddress instead of ldloc s
 		/// </code>
-		static bool InlineLdAddressUsages(Block block, int i)
+		bool InlineLdAddressUsages(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
 			if (inst == null || inst.Variable.Kind != VariableKind.StackSlot || !(inst.Value is LdElema || inst.Value is LdFlda || inst.Value is LdsFlda))
@@ -201,6 +207,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				.Cast<ILInstruction>().ToArray();
 			if (affectedUsages.Length == 0 || affectedUsages.Any(ins => !(ins.Parent is StObj || ins.Parent is LdObj)))
 				return false;
+			context.Step($"InlineLdAddressUsage", inst);
 			foreach (var usage in affectedUsages) {
 				usage.ReplaceWith(valueToCopy.Clone());
 			}
@@ -228,6 +235,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if ((binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub) || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
 				return false;
+			context.Step($"TransformPostIncDecOperator", inst);
 			var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, inst.Variable.Type);
 			var assignment = new Block(BlockType.CompoundOperator);
 			assignment.Instructions.Add(new StLoc(tempStore, new LdLoc(nextInst.Variable)));
@@ -245,7 +253,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc l(compound.op.old(ldobj(ldaddress), ldc.i4 1))
 		/// </code>
-		static bool TransformPostIncDecOperatorOnAddress(Block block, int i)
+		bool TransformPostIncDecOperatorOnAddress(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
 			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
@@ -264,6 +272,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary == null || !binary.Left.MatchLdLoc(nextInst.Variable) || !binary.Right.MatchLdcI4(1)
 			    || (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
 				return false;
+			context.Step($"TransformPostIncDecOperator", inst);
 			var assignment = new CompoundAssignmentInstruction(binary.Operator, new LdObj(inst.Value, targetType), binary.Right, targetType, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
 			stobj.ReplaceWith(new StLoc(nextInst.Variable, assignment));
 			block.Instructions.RemoveAt(i + 1);
@@ -278,7 +287,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc l(compound.op.old(ldobj(ldflda(ldflda)), ldc.i4 1))
 		/// </code>
-		static bool TransformCSharp4PostIncDecOperatorOnAddress(Block block, int i)
+		bool TransformCSharp4PostIncDecOperatorOnAddress(Block block, int i)
 		{
 			var baseFieldAddress = block.Instructions[i] as StLoc;
 			var fieldValue = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
@@ -313,6 +322,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary == null || !binary.Left.MatchLdLoc(fieldValue.Variable) || !binary.Right.MatchLdcI4(1)
 			    || (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
 				return false;
+			context.Step($"TransformCSharp4PostIncDecOperatorOnAddress", baseFieldAddress);
 			var assignment = new CompoundAssignmentInstruction(binary.Operator, new LdObj(baseAddress, t), binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
 			stobj.ReplaceWith(new StLoc(fieldValueCopyToLocal.Variable, assignment));
 			block.Instructions.RemoveAt(i + 2);
@@ -326,7 +336,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc s(compound.op.old(ldobj(ldsflda), ldc.i4 1))
 		/// </code>
-		static bool TransformPostIncDecOnStaticField(Block block, int i)
+		bool TransformPostIncDecOnStaticField(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
 			var stobj = block.Instructions.ElementAtOrDefault(i + 1) as StObj;
@@ -342,6 +352,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var binary = stobj.Value as BinaryNumericInstruction;
 			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
 				return false;
+			context.Step($"TransformPostIncDecOnStaticField", inst);
 			var assignment = new CompoundAssignmentInstruction(binary.Operator, inst.Value, binary.Right, type, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
 			stobj.ReplaceWith(new StLoc(inst.Variable, assignment));
 			return true;

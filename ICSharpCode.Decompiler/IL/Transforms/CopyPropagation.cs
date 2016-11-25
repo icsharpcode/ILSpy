@@ -38,6 +38,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction copiedExpr;
 				if (block.Instructions[i].MatchStLoc(out v, out copiedExpr)) {
 					if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr)) {
+						context.Step($"Copy propagate {v.Name}", copiedExpr);
 						// un-inline the arguments of the ldArg instruction
 						ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
 						for (int j = 0; j < uninlinedArgs.Length; j++) {
@@ -60,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 						}
 						block.Instructions.RemoveAt(i);
-						int c = new ILInlining().InlineInto(block, i, aggressive: false);
+						int c = ILInlining.InlineInto(block, i, aggressive: false, context: context);
 						i -= c + 1;
 					}
 				}

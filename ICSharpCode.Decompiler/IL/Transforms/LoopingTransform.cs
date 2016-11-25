@@ -40,6 +40,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			do {
 				function.ResetDirty();
 				function.RunTransforms(children, context);
+				if (function.IsDirty)
+					context.Step("Function is dirty; running another loop iteration.", function);
 			} while (function.IsDirty);
 		}
 
@@ -66,6 +68,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			do {
 				block.ResetDirty();
 				block.RunTransforms(children, context);
+				if (block.IsDirty)
+					context.Step("Block is dirty; running another loop iteration.", block);
 			} while (block.IsDirty);
 		}
 

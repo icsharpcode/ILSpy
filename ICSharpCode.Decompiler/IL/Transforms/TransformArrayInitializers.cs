@@ -54,17 +54,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction[] values;
 				int initArrayPos;
 				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, arrayLength, out values, out initArrayPos)) {
+					context.Step($"ForwardScanInitializeArrayRuntimeHelper", inst);
 					var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
 					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
 					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
 					body.Instructions.RemoveAt(initArrayPos);
-					new ILInlining().InlineIfPossible(body, ref pos);
+					ILInlining.InlineIfPossible(body, ref pos, context);
 					return true;
 				}
 				if (arrayLength.Length == 1) {
 					ILVariable finalStore;
 					int instructionsToRemove;
 					if (HandleSimpleArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
+						context.Step($"HandleSimpleArrayInitializer", inst);
 						var block = new Block(BlockType.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
@@ -79,10 +81,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						body.Instructions[pos].ReplaceWith(new StLoc(finalStore ?? v, block));
 						RemoveInstructions(body, pos + 1, instructionsToRemove);
 						//body.Instructions.RemoveRange(pos + 1, values.Length + 1);
-						new ILInlining().InlineIfPossible(body, ref pos);
+						ILInlining.InlineIfPossible(body, ref pos, context);
 						return true;
 					}
 					if (HandleJaggedArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
+						context.Step($"HandleJaggedArrayInitializer", inst);
 						var block = new Block(BlockType.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
@@ -90,7 +93,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						block.FinalInstruction = new LdLoc(tempStore);
 						body.Instructions[pos].ReplaceWith(new StLoc(finalStore, block));
 						RemoveInstructions(body, pos + 1, instructionsToRemove);
-						new ILInlining().InlineIfPossible(body, ref pos);
+						ILInlining.InlineIfPossible(body, ref pos, context);
 						return true;
 					}
 				}
@@ -265,7 +268,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					var block = BlockFromInitializer(v, arrayType, length, values);
 					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
 					body.Instructions.RemoveAt(initArrayPos);
-					new ILInlining().InlineIfPossible(body, ref pos);
+					ILInlining.InlineIfPossible(body, ref pos, context);
 					return true;
 				}
 			}

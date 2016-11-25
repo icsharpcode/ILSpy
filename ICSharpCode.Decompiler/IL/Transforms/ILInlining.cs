@@ -31,8 +31,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class ILInlining : IILTransform, IBlockTransform
 	{
+		ILTransformContext context;
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
+			this.context = context;
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				InlineAllInBlock(block);
 			}
@@ -41,6 +44,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, BlockTransformContext context)
 		{
+			this.context = context;
 			InlineAllInBlock(block);
 		}
 
@@ -49,7 +53,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool modified = false;
 			int i = 0;
 			while (i < block.Instructions.Count) {
-				if (InlineOneIfPossible(block, i, aggressive: false)) {
+				if (InlineOneIfPossible(block, i, aggressive: false, context: context)) {
 					modified = true;
 					i = Math.Max(0, i - 1);
 					// Go back one step
@@ -64,13 +68,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Inlines instructions before pos into block.Instructions[pos].
 		/// </summary>
 		/// <returns>The number of instructions that were inlined.</returns>
-		public int InlineInto(Block block, int pos, bool aggressive)
+		public static int InlineInto(Block block, int pos, bool aggressive, ILTransformContext context)
 		{
 			if (pos >= block.Instructions.Count)
 				return 0;
 			int count = 0;
 			while (--pos >= 0) {
-				if (InlineOneIfPossible(block, pos, aggressive))
+				if (InlineOneIfPossible(block, pos, aggressive, context))
 					count++;
 				else
 					break;
@@ -85,10 +89,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <remarks>
 		/// After the operation, pos will point to the new combined instruction.
 		/// </remarks>
-		public bool InlineIfPossible(Block block, ref int pos)
+		public static bool InlineIfPossible(Block block, ref int pos, ILTransformContext context)
 		{
-			if (InlineOneIfPossible(block, pos, true)) {
-				pos -= InlineInto(block, pos, false);
+			if (InlineOneIfPossible(block, pos, true, context)) {
+				pos -= InlineInto(block, pos, false, context);
 				return true;
 			}
 			return false;
@@ -97,8 +101,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Inlines the stloc instruction at block.Instructions[pos] into the next instruction, if possible.
 		/// </summary>
-		public bool InlineOneIfPossible(Block block, int pos, bool aggressive)
+		public static bool InlineOneIfPossible(Block block, int pos, bool aggressive, ILTransformContext context)
 		{
+			context.CancellationToken.ThrowIfCancellationRequested();
 			StLoc stloc = block.Instructions[pos] as StLoc;
 			if (stloc == null || stloc.Variable.Kind == VariableKind.PinnedLocal)
 				return false;
@@ -108,7 +113,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (v.LoadCount > 1 || v.LoadCount + v.AddressCount != 1)
 				return false;
-			return InlineOne(stloc, aggressive);
+			return InlineOne(stloc, aggressive, context);
 		}
 		
 		/// <summary>
@@ -117,12 +122,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Note that this method does not check whether 'v' has only one use;
 		/// the caller is expected to validate whether inlining 'v' has any effects on other uses of 'v'.
 		/// </summary>
-		public static bool InlineOne(StLoc stloc, bool aggressive)
+		public static bool InlineOne(StLoc stloc, bool aggressive, ILTransformContext context)
 		{
 			ILVariable v = stloc.Variable;
 			Block block = (Block)stloc.Parent;
 			int pos = stloc.ChildIndex;
-			if (DoInline(v, stloc.Value, block.Instructions.ElementAtOrDefault(pos + 1), aggressive)) {
+			if (DoInline(v, stloc.Value, block.Instructions.ElementAtOrDefault(pos + 1), aggressive, context)) {
 				// Assign the ranges of the stloc instruction:
 				stloc.Value.AddILRange(stloc.ILRange);
 				// Remove the stloc instruction:
@@ -134,9 +139,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (SemanticHelper.IsPure(stloc.Value.Flags)) {
 					// Remove completely if the instruction has no effects
 					// (except for reading locals)
+					context.Step("Remove dead store without side effects", stloc);
 					block.Instructions.RemoveAt(pos);
 					return true;
 				} else if (v.Kind == VariableKind.StackSlot) {
+					context.Step("Remove dead store, but keep expression", stloc);
 					// Assign the ranges of the stloc instruction:
 					stloc.Value.AddILRange(stloc.ILRange);
 					// Remove the stloc, but keep the inner expression
@@ -153,7 +160,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Note that this method does not check whether 'v' has only one use;
 		/// the caller is expected to validate whether inlining 'v' has any effects on other uses of 'v'.
 		/// </summary>
-		static bool DoInline(ILVariable v, ILInstruction inlinedExpression, ILInstruction next, bool aggressive)
+		static bool DoInline(ILVariable v, ILInstruction inlinedExpression, ILInstruction next, bool aggressive, ILTransformContext context)
 		{
 			ILInstruction loadInst;
 			if (FindLoadInNext(next, v, inlinedExpression, out loadInst) == true) {
@@ -165,7 +172,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (!aggressive && v.Kind != VariableKind.StackSlot && !NonAggressiveInlineInto(next, loadInst, inlinedExpression))
 						return false;
 				}
-				
+
+				context.Step($"Inline variable '{v.Name}'", inlinedExpression);
 				// Assign the ranges of the ldloc instruction:
 				inlinedExpression.AddILRange(loadInst.ILRange);
 				

@@ -44,7 +44,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				deadStores.Clear();
 				if (CanInlineVariable(g.Key, g, storesToInline, deadStores)) {
 					foreach (var stloc in storesToInline) {
-						ILInlining.InlineOne(stloc, aggressive: false);
+						ILInlining.InlineOne(stloc, aggressive: false, context: context);
 					}
 					foreach (var stloc in deadStores) {
 						if (SemanticHelper.IsPure(stloc.Flags)) {
