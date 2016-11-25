@@ -58,6 +58,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(),
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
+				new BlockILTransform(new ExpressionTransforms()), // for RemoveDeadVariableInit
+				new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
 				new SwitchDetection(),
 				new LoopDetection(),
 				new IntroduceExitPoints(),
@@ -76,9 +78,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						new ILInlining()
 					)
 				),
-				//new InlineCompilerGeneratedVariables(),
-				// -- isn't InlineCompilerGeneratedVariables redundant now that we have variable splitting?
-				new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
 				new DelegateConstruction(),
 			};
 		}
