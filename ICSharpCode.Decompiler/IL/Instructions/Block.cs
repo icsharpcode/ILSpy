@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿// Copyright (c) 2014-2016 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -23,6 +23,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.NRefactory.TypeSystem.Implementation;
 
@@ -210,6 +211,21 @@ namespace ICSharpCode.Decompiler.IL
 			var container = (BlockContainer)Parent;
 			Debug.Assert(container.Blocks[ChildIndex] == this);
 			container.Blocks.SwapRemoveAt(ChildIndex);
+		}
+
+		/// <summary>
+		/// Apply a list of transforms to this function.
+		/// </summary>
+		public void RunTransforms(IEnumerable<IBlockTransform> transforms, BlockTransformContext context)
+		{
+			this.CheckInvariant(ILPhase.Normal);
+			foreach (var transform in transforms) {
+				context.CancellationToken.ThrowIfCancellationRequested();
+				context.Stepper.StartGroup(transform.GetType().Name);
+				transform.Run(this, context);
+				this.CheckInvariant(ILPhase.Normal);
+				context.Stepper.EndGroup();
+			}
 		}
 	}
 	

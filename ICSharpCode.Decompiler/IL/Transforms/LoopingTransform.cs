@@ -39,12 +39,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			do {
 				function.ResetDirty();
-				function.CheckInvariant(ILPhase.Normal);
-				foreach (var transform in children) {
-					context.CancellationToken.ThrowIfCancellationRequested();
-					transform.Run(function, context);
-					function.CheckInvariant(ILPhase.Normal);
-				}
+				function.RunTransforms(children, context);
 			} while (function.IsDirty);
 		}
 
@@ -70,12 +65,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			do {
 				block.ResetDirty();
-				block.CheckInvariant(ILPhase.Normal);
-				foreach (var transform in children) {
-					context.CancellationToken.ThrowIfCancellationRequested();
-					transform.Run(block, context);
-					block.CheckInvariant(ILPhase.Normal);
-				}
+				block.RunTransforms(children, context);
 			} while (block.IsDirty);
 		}
 

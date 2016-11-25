@@ -106,12 +106,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			context.ControlFlowNode = cfgNode;
 			context.Block = block;
-			block.CheckInvariant(ILPhase.Normal);
-			foreach (var transform in blockTransforms) {
-				context.CancellationToken.ThrowIfCancellationRequested();
-				transform.Run(context.Block, context);
-				block.CheckInvariant(ILPhase.Normal);
-			}
+			block.RunTransforms(blockTransforms, context);
 			context.Stepper.EndGroup();
 		}
 	}

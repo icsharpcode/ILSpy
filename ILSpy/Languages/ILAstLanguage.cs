@@ -157,17 +157,17 @@ namespace ICSharpCode.ILSpy
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
 				ILTransformContext context = new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem };
 				context.Stepper.StepLimit = options.StepLimit;
-				// Because the UI only allows viewing the result of a step, add a dummy initial step.
-				context.Stepper.Step("Initial");
 				try {
 					il.RunTransforms(transforms, context);
 				} catch (StepLimitReachedException) {
 					il.WriteTo(output);
 					return;
 				}
-				Stepper = context.Stepper;
 				il.WriteTo(output);
-				OnStepperUpdated(new EventArgs());
+				if (options.StepLimit == int.MaxValue) {
+					Stepper = context.Stepper;
+					OnStepperUpdated(new EventArgs());
+				}
 			}
 		}
 	}
