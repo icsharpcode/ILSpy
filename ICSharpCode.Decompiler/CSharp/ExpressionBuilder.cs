@@ -466,7 +466,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
 			    || rr.Operands[0].Type.GetStackType() != inst.InputType)
 			{
-				var targetType = TypeUtils.GetLargerType(left.Type, right.Type);
+				IType targetType;
+				if (inst.InputType == StackType.O) {
+					targetType = compilation.FindType(KnownTypeCode.Object);
+				} else {
+					targetType = TypeUtils.GetLargerType(left.Type, right.Type);
+				}
 				if (targetType.Equals(left.Type)) {
 					right = right.ConvertTo(targetType, this);
 				} else {

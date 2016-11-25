@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 	{
 		public static int Main()
 		{
-			// disable CompareOfFloatsByEqualityOperator
+#pragma warning disable RECS0018 // Comparison of floating point numbers with equality operator
 			TestFloatOp("==", (a, b) => a == b);
 			TestFloatOp("!=", (a, b) => a != b);
 			TestFloatOp("<", (a, b) => a < b);
@@ -42,6 +42,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 			TestUInt(uint.MaxValue);
 			TestUShort(0);
 			TestUShort(ushort.MaxValue);
+
+			Console.WriteLine(IsNotNull(new OverloadedOperators()));
+			Console.WriteLine(IsNull(new OverloadedOperators()));
 			return 0;
 		}
 		
@@ -74,6 +77,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 			Console.WriteLine("uint: {0} == Id(uint.MaxValue) = {1}", i, i == Id(uint.MaxValue));
 			Console.WriteLine("uint: {0} == -1 = {1}", i, i == -1);
 			Console.WriteLine("uint: {0} == Id(-1) = {1}", i, i == Id(-1));
+		}
+
+		static bool IsNull(OverloadedOperators oo)
+		{
+			return (object)oo == null;
+		}
+
+		static bool IsNotNull(OverloadedOperators oo)
+		{
+			return (object)oo != null;
+		}
+	}
+
+#pragma warning disable CS0660 // Type defines operator == or operator != but does not override Object.Equals(object o)
+#pragma warning disable CS0661 // Type defines operator == or operator != but does not override Object.GetHashCode()
+	class OverloadedOperators
+	{
+		public static bool operator ==(OverloadedOperators oo, object b)
+		{
+			throw new NotSupportedException("Not supported to call the user-defined operator");
+		}
+
+		public static bool operator !=(OverloadedOperators oo, object b)
+		{
+			throw new NotSupportedException("Not supported to call the user-defined operator");
 		}
 	}
 }

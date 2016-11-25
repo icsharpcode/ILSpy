@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			try {
 				RunWithTest("NRefactory", "ICSharpCode.NRefactory.CSharp.dll", "ICSharpCode.NRefactory.Tests.dll");
-			} catch (CompilationFailedException ex) {
+			} catch (TestRunFailedException ex) {
 				Assert.Ignore(ex.Message);
 			}
 		}
