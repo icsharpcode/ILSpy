@@ -233,7 +233,7 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 			return conditionNodeDict[statement].NodeStatus;
 		}
 		
-		/// <summary>
+		/*/// <summary>
 		/// Exports the CFG. This method is intended to help debugging issues related to definite assignment.
 		/// </summary>
 		public GraphVizGraph ExportGraph()
@@ -279,7 +279,7 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 				}
 			}
 			return g;
-		}
+		}*/
 		
 		static DefiniteAssignmentStatus MergeStatus(DefiniteAssignmentStatus a, DefiniteAssignmentStatus b)
 		{

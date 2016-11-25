@@ -734,53 +734,53 @@ namespace ICSharpCode.NRefactory.CSharp.Analysis
 		/// <summary>
 		/// Debugging helper that exports a control flow graph.
 		/// </summary>
-		public static GraphVizGraph ExportGraph(IList<ControlFlowNode> nodes)
-		{
-			GraphVizGraph g = new GraphVizGraph();
-			GraphVizNode[] n = new GraphVizNode[nodes.Count];
-			Dictionary<ControlFlowNode, int> dict = new Dictionary<ControlFlowNode, int>();
-			for (int i = 0; i < n.Length; i++) {
-				dict.Add(nodes[i], i);
-				n[i] = new GraphVizNode(i);
-				string name = "#" + i + " = ";
-				switch (nodes[i].Type) {
-					case ControlFlowNodeType.StartNode:
-					case ControlFlowNodeType.BetweenStatements:
-						name += nodes[i].NextStatement.DebugToString();
-						break;
-					case ControlFlowNodeType.EndNode:
-						name += "End of " + nodes[i].PreviousStatement.DebugToString();
-						break;
-					case ControlFlowNodeType.LoopCondition:
-						name += "Condition in " + nodes[i].NextStatement.DebugToString();
-						break;
-					default:
-						name += "?";
-						break;
-				}
-				n[i].label = name;
-				g.AddNode(n[i]);
-			}
-			for (int i = 0; i < n.Length; i++) {
-				foreach (ControlFlowEdge edge in nodes[i].Outgoing) {
-					GraphVizEdge ge = new GraphVizEdge(i, dict[edge.To]);
-					if (edge.IsLeavingTryFinally)
-						ge.style = "dashed";
-					switch (edge.Type) {
-						case ControlFlowEdgeType.ConditionTrue:
-							ge.color = "green";
-							break;
-						case ControlFlowEdgeType.ConditionFalse:
-							ge.color = "red";
-							break;
-						case ControlFlowEdgeType.Jump:
-							ge.color = "blue";
-							break;
-					}
-					g.AddEdge(ge);
-				}
-			}
-			return g;
-		}
+		//public static GraphVizGraph ExportGraph(IList<ControlFlowNode> nodes)
+		//{
+		//	GraphVizGraph g = new GraphVizGraph();
+		//	GraphVizNode[] n = new GraphVizNode[nodes.Count];
+		//	Dictionary<ControlFlowNode, int> dict = new Dictionary<ControlFlowNode, int>();
+		//	for (int i = 0; i < n.Length; i++) {
+		//		dict.Add(nodes[i], i);
+		//		n[i] = new GraphVizNode(i);
+		//		string name = "#" + i + " = ";
+		//		switch (nodes[i].Type) {
+		//			case ControlFlowNodeType.StartNode:
+		//			case ControlFlowNodeType.BetweenStatements:
+		//				name += nodes[i].NextStatement.DebugToString();
+		//				break;
+		//			case ControlFlowNodeType.EndNode:
+		//				name += "End of " + nodes[i].PreviousStatement.DebugToString();
+		//				break;
+		//			case ControlFlowNodeType.LoopCondition:
+		//				name += "Condition in " + nodes[i].NextStatement.DebugToString();
+		//				break;
+		//			default:
+		//				name += "?";
+		//				break;
+		//		}
+		//		n[i].label = name;
+		//		g.AddNode(n[i]);
+		//	}
+		//	for (int i = 0; i < n.Length; i++) {
+		//		foreach (ControlFlowEdge edge in nodes[i].Outgoing) {
+		//			GraphVizEdge ge = new GraphVizEdge(i, dict[edge.To]);
+		//			if (edge.IsLeavingTryFinally)
+		//				ge.style = "dashed";
+		//			switch (edge.Type) {
+		//				case ControlFlowEdgeType.ConditionTrue:
+		//					ge.color = "green";
+		//					break;
+		//				case ControlFlowEdgeType.ConditionFalse:
+		//					ge.color = "red";
+		//					break;
+		//				case ControlFlowEdgeType.Jump:
+		//					ge.color = "blue";
+		//					break;
+		//			}
+		//			g.AddEdge(ge);
+		//		}
+		//	}
+		//	return g;
+		//}
 	}
 }
