@@ -66,15 +66,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// =>
 			// ... one usage of DelegateConstruction ...
 			Block trueInst = inst.TrueInst as Block;
-			var condition = inst.Condition as Comp;
-			if (condition == null || trueInst == null || trueInst.Instructions.Count != 1 || !inst.FalseInst.MatchNop())
+			if (trueInst == null || trueInst.Instructions.Count != 1 || !inst.FalseInst.MatchNop())
 				return false;
-			IField field, field2;
-			ILInstruction value;
 			var storeInst = trueInst.Instructions[0];
-			if (!condition.Left.MatchLdsFld(out field) || !condition.Right.MatchLdNull())
+			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdsFld(out IField field) || !right.MatchLdNull())
 				return false;
-			if (!storeInst.MatchStsFld(out value, out field2) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+			if (!storeInst.MatchStsFld(out ILInstruction value, out IField field2) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
 			if (!DelegateConstruction.IsDelegateConstruction(value as NewObj, true))
 				return false;
