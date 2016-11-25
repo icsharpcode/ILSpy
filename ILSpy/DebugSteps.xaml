@@ -7,12 +7,19 @@
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
 	<Grid>
-		<TreeView Name="tree" MouseDoubleClick="tree_MouseDoubleClick">
+		<TreeView Name="tree" MouseDoubleClick="ShowStateAfter_Click">
 			<TreeView.ItemTemplate>
 				<HierarchicalDataTemplate ItemsSource="{Binding Children}">
 					<TextBlock Text="{Binding Description}" />
 				</HierarchicalDataTemplate>
 			</TreeView.ItemTemplate>
+			<TreeView.ContextMenu>
+				<ContextMenu>
+					<MenuItem Header="Show state before this step" Click="ShowStateBefore_Click" />
+					<MenuItem Header="Show state after this step" Click="ShowStateAfter_Click" />
+					<MenuItem Header="Debug this step" Click="DebugStep_Click" />
+				</ContextMenu>
+			</TreeView.ContextMenu>
 		</TreeView>
 	</Grid>
 </UserControl>

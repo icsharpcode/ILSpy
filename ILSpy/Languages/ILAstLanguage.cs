@@ -157,6 +157,7 @@ namespace ICSharpCode.ILSpy
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
 				ILTransformContext context = new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem };
 				context.Stepper.StepLimit = options.StepLimit;
+				context.Stepper.IsDebug = options.IsDebug;
 				try {
 					il.RunTransforms(transforms, context);
 				} catch (StepLimitReachedException) {

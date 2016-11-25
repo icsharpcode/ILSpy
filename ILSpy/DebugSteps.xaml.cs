@@ -76,12 +76,31 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private void tree_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+		private void ShowStateAfter_Click(object sender, RoutedEventArgs e)
 		{
 			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
 			if (n == null) return;
+			DecompileAsync(n.EndStep);
+		}
+
+		private void ShowStateBefore_Click(object sender, RoutedEventArgs e)
+		{
+			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
+			if (n == null) return;
+			DecompileAsync(n.BeginStep);
+		}
+
+		private void DebugStep_Click(object sender, RoutedEventArgs e)
+		{
+			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
+			if (n == null) return;
+			DecompileAsync(n.BeginStep, true);
+		}
+
+		void DecompileAsync(int step, bool isDebug = false)
+		{
 			var window = MainWindow.Instance;
-			window.TextView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes, new DecompilationOptions() { StepLimit = n.Step + 1 });
+			window.TextView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes, new DecompilationOptions() { StepLimit = step, IsDebug = isDebug });
 		}
 	}
 }

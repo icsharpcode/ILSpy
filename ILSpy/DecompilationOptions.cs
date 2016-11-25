@@ -66,6 +66,7 @@ namespace ICSharpCode.ILSpy
 		/// Used internally for debugging.
 		/// </summary>
 		internal int StepLimit = int.MaxValue;
+		internal bool IsDebug = false;
 
 		public DecompilationOptions()
 		{

@@ -54,12 +54,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public IList<Node> Steps => steps;
 
 		public int StepLimit { get; set; } = int.MaxValue;
+		public bool IsDebug { get; set; }
 
 		public class Node
 		{
 			public string Description { get; set; }
 			public ILInstruction Position { get; set; }
-			public int Step { get; set; }
+			/// <summary>
+			/// BeginStep is inclusive.
+			/// </summary>
+			public int BeginStep { get; set; }
+			/// <summary>
+			/// EndStep is exclusive.
+			/// </summary>
+			public int EndStep { get; set; }
 
 			public IList<Node> Children { get; } = new List<Node>();
 		}
@@ -87,12 +95,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private Node StepInternal(string description, ILInstruction near)
 		{
-			if (step >= StepLimit)
-				throw new StepLimitReachedException();
+			if (step >= StepLimit) {
+				if (IsDebug)
+					Debugger.Break();
+				else
+					throw new StepLimitReachedException();
+			}
 			var stepNode = new Node {
 				Description = $"{step}: {description}",
 				Position = near,
-				Step = step
+				BeginStep = step,
+				EndStep = step + 1
 			};
 			var p = groups.PeekOrDefault();
 			if (p != null)
@@ -116,6 +129,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Debug.Assert(col.Last() == node);
 				col.RemoveAt(col.Count - 1);
 			}
+			node.EndStep = step;
 		}
 	}
 }
