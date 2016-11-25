@@ -79,8 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				//new InlineCompilerGeneratedVariables(),
 				// -- isn't InlineCompilerGeneratedVariables redundant now that we have variable splitting?
 				new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
-				//new DelegateConstruction(),
-				// DelegateConstruction disabled because its broken since the BlockILTransform change
+				new DelegateConstruction(),
 			};
 		}
 
