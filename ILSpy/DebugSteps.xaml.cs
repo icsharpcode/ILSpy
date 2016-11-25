@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy
 
 		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
-			if (e.PropertyName == "CurrentLanguage") {
+			if (e.PropertyName == "Language") {
 				if (language != null) {
 					language.StepperUpdated -= ILAstStepperUpdated;
 				}
@@ -79,6 +79,7 @@ namespace ICSharpCode.ILSpy
 		private void tree_MouseDoubleClick(object sender, MouseButtonEventArgs e)
 		{
 			Stepper.Node n = (Stepper.Node)tree.SelectedItem;
+			if (n == null) return;
 			var window = MainWindow.Instance;
 			window.TextView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes, new DecompilationOptions() { StepLimit = n.Step + 1 });
 		}
