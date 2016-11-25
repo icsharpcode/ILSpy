@@ -1467,11 +1467,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			var condition = TranslateCondition(inst.Condition);
 			var trueBranch = Translate(inst.TrueInst);
 			var falseBranch = Translate(inst.FalseInst);
-
-			ILInstruction lhsInst, rhsInst;
 			BinaryOperatorType op = BinaryOperatorType.Any;
 			TranslatedExpression rhs = default(TranslatedExpression);
-			if (inst.MatchLogicAnd(out lhsInst, out rhsInst)) {
+
+			if (inst.MatchLogicAnd(out var lhsInst, out var rhsInst)) {
 				op = BinaryOperatorType.ConditionalAnd;
 				Debug.Assert(rhsInst == inst.TrueInst);
 				rhs = trueBranch;
@@ -1489,15 +1488,21 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
 			}
 
-			IType targetType;
-			if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType) && !trueBranch.Type.Equals(falseBranch.Type)) {
-				targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
-			} else {
-				targetType = trueBranch.Type.Equals(SpecialType.NullType) ? falseBranch.Type : trueBranch.Type;
+			var rr = resolver.ResolveConditional(condition.ResolveResult, trueBranch.ResolveResult, falseBranch.ResolveResult);
+			if (rr.IsError) {
+				IType targetType;
+				if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType) && !trueBranch.Type.Equals(falseBranch.Type)) {
+					targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+				} else {
+					targetType = trueBranch.Type.Equals(SpecialType.NullType) ? falseBranch.Type : trueBranch.Type;
+				}
+				trueBranch = trueBranch.ConvertTo(targetType, this);
+				falseBranch = falseBranch.ConvertTo(targetType, this);
+				rr = new ResolveResult(targetType);
 			}
-			return new ConditionalExpression(condition.Expression, trueBranch.ConvertTo(targetType, this).Expression, falseBranch.ConvertTo(targetType, this).Expression)
+			return new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
 				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(targetType));
+				.WithRR(rr);
 		}
 		
 		protected internal override TranslatedExpression VisitAddressOf(AddressOf inst, TranslationContext context)
