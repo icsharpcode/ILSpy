@@ -27,8 +27,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	public class CachedDelegateInitialization : IBlockTransform
 	{
+		BlockTransformContext context;
+
 		public void Run(Block block, BlockTransformContext context)
 		{
+			this.context = context;
+			if (!context.Settings.AnonymousMethods)
+				return;
 			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 				if (block.Instructions[i] is IfInstruction inst) {
 					if (CachedDelegateInitializationWithField(inst)) {
@@ -79,6 +84,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var usages = nextInstruction.Descendants.Where(i => i.MatchLdsFld(field)).ToArray();
 			if (usages.Length != 1)
 				return false;
+			context.Step("CachedDelegateInitializationWithField", inst);
 			usages[0].ReplaceWith(value);
 			return true;
 		}
@@ -135,6 +141,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var usages = nextInstruction.Descendants.OfType<LdLoc>().Where(i => i.Variable == v).ToArray();
 			if (usages.Length != 1)
 				return false;
+			context.Step("CachedDelegateInitializationWithLocal", inst);
 			local = v;
 			usages[0].ReplaceWith(value);
 			return true;
