@@ -7,7 +7,7 @@
              mc:Ignorable="d" 
              d:DesignHeight="300" d:DesignWidth="300">
 	<Grid>
-		<TreeView Name="tree" MouseDoubleClick="ShowStateAfter_Click">
+		<TreeView Name="tree" MouseDoubleClick="ShowStateAfter_Click" KeyDown="tree_KeyDown">
 			<TreeView.ItemTemplate>
 				<HierarchicalDataTemplate ItemsSource="{Binding Children}">
 					<TextBlock Text="{Binding Description}" />

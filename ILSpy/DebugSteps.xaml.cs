@@ -100,7 +100,21 @@ namespace ICSharpCode.ILSpy
 		void DecompileAsync(int step, bool isDebug = false)
 		{
 			var window = MainWindow.Instance;
-			window.TextView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes, new DecompilationOptions() { StepLimit = step, IsDebug = isDebug });
+			var state = window.TextView.GetState();
+			window.TextView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes,
+				new DecompilationOptions() {
+					StepLimit = step,
+					IsDebug = isDebug,
+					TextViewState = state
+				});
+		}
+
+		private void tree_KeyDown(object sender, KeyEventArgs e)
+		{
+			if (e.Key == Key.Enter || e.Key == Key.Return) {
+				ShowStateAfter_Click(sender, e);
+				e.Handled = true;
+			}
 		}
 	}
 }
