@@ -49,6 +49,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 #endif
 			}
 		}
+
+		public IList<Node> Steps => steps;
+
+		public int StepLimit { get; set; } = int.MaxValue;
+
+		public class Node
+		{
+			public string Description { get; set; }
+			public ILInstruction Position { get; set; }
+			public int Step { get; set; }
+
+			public ICollection<Node> Children { get; } = new List<Node>();
+		}
+
+		readonly Stack<Node> groups;
+		readonly IList<Node> steps;
+		int step = 0;
+
+		public Stepper()
+		{
+			steps = new List<Node>();
+			groups = new Stack<Node>();
+		}
 		
 		/// <summary>
 		/// Call this method immediately before performing a transform step.
@@ -58,7 +81,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public void Step(string description, ILInstruction near)
 		{
-			// TODO: implement stepping
+			StepInternal(description, near);
+		}
+
+		private Node StepInternal(string description, ILInstruction near)
+		{
+			if (step >= StepLimit)
+				throw new StepLimitReachedException();
+			var stepNode = new Node { Description = $"{description} ({step})", Position = near, Step = step };
+			var p = groups.PeekOrDefault();
+			if (p != null)
+				p.Children.Add(stepNode);
+			else
+				steps.Add(stepNode);
+			step++;
+			return stepNode;
+		}
+
+		public void StartGroup(string description, ILInstruction near)
+		{
+			groups.Push(StepInternal(description, near));
+		}
+
+		public void EndGroup()
+		{
+			groups.Pop();
 		}
 	}
 }

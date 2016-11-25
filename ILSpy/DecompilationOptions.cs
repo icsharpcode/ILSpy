@@ -62,6 +62,11 @@ namespace ICSharpCode.ILSpy
 		/// </remarks>
 		public TextView.DecompilerTextViewState TextViewState { get; set; }
 
+		/// <summary>
+		/// Used internally for debugging.
+		/// </summary>
+		internal int StepLimit = int.MaxValue;
+
 		public DecompilationOptions()
 		{
 			this.DecompilerSettings = DecompilerSettingsPanel.CurrentDecompilerSettings;

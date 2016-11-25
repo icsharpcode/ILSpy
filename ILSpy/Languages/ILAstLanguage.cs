@@ -36,7 +36,14 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	abstract class ILAstLanguage : Language
 	{
-		//ILAstOptimizationStep? abortBeforeStep;
+		public event EventHandler StepperUpdated;
+
+		protected virtual void OnStepperUpdated(EventArgs e = null)
+		{
+			StepperUpdated?.Invoke(this, e ?? new EventArgs());
+		}
+
+		public Stepper Stepper { get; set; } = new Stepper();
 
 		readonly string name;
 		
@@ -161,8 +168,17 @@ namespace ICSharpCode.ILSpy
 				var typeSystem = new DecompilerTypeSystem(method.Module);
 				ILReader reader = new ILReader(typeSystem);
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
-				il.RunTransforms(transforms, new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem });
+				ILTransformContext context = new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem };
+				context.Stepper.StepLimit = options.StepLimit;
+				try {
+					il.RunTransforms(transforms, context);
+				} catch (StepLimitReachedException) {
+					il.WriteTo(output);
+					return;
+				}
+				Stepper = context.Stepper;
 				il.WriteTo(output);
+				OnStepperUpdated(new EventArgs());
 			}
 		}
 	}

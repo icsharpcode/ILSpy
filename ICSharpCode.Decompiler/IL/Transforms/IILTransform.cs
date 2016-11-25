@@ -42,6 +42,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public ILTransformContext()
 		{
+			Stepper = new Stepper();
 		}
 
 		public ILTransformContext(ILTransformContext context)
@@ -49,6 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.TypeSystem = context.TypeSystem;
 			this.Settings = context.Settings;
 			this.CancellationToken = context.CancellationToken;
+			this.Stepper = context.Stepper;
 		}
 
 		/// <summary>

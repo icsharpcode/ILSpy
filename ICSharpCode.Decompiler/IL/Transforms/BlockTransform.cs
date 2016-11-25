@@ -89,6 +89,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void VisitBlock(ControlFlowNode cfgNode, BlockTransformContext context)
 		{
+			Block block = (Block)cfgNode.UserData;
+			context.Stepper.StartGroup(block.Label, block);
 			// First, process the children in the dominator tree.
 			// The ConditionDetection transform requires dominated blocks to
 			// be already processed.
@@ -97,13 +99,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			context.ControlFlowNode = cfgNode;
-			context.Block = (Block)cfgNode.UserData;
+			context.Block = block;
 			context.Block.CheckInvariant(ILPhase.Normal);
 			foreach (var transform in blockTransforms) {
 				context.CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(context.Block, context);
 				context.Block.CheckInvariant(ILPhase.Normal);
 			}
+			context.Stepper.EndGroup();
 		}
 	}
 }
