@@ -24,6 +24,7 @@ using System.Text.RegularExpressions;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using ICSharpCode.NRefactory.Utils;
+using Microsoft.Win32;
 using Mono.Cecil;
 using NUnit.Framework;
 
@@ -32,7 +33,6 @@ namespace ICSharpCode.Decompiler.Tests
 	public class RoundtripAssembly
 	{
 		static readonly string testDir = Path.GetFullPath("../../../ILSpy-tests");
-		static readonly string msbuild = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "msbuild", "14.0", "bin", "msbuild.exe");
 		static readonly string nunit = Path.Combine(testDir, "nunit", "nunit3-console.exe");
 		
 		[Test]
@@ -151,9 +151,26 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 		}
 		
+		static string FindVS2017()
+		{
+			using (var key = RegistryKey.OpenBaseKey(RegistryHive.LocalMachine, RegistryView.Registry32)) {
+				using (var subkey = key.OpenSubKey(@"SOFTWARE\Microsoft\VisualStudio\SxS\VS7")) {
+					return subkey?.GetValue("15.0") as string;
+				}
+			}
+		}
+
+		static string FindMSBuild()
+		{
+			string vsPath = FindVS2017();
+			if (vsPath == null)
+				throw new InvalidOperationException("Could not find VS2017");
+			return Path.Combine(vsPath, @"MSBuild\15.0\bin\MSBuild.exe");
+		}
+
 		static void Compile(string projectFile, string outputDir)
 		{
-			var info = new ProcessStartInfo(msbuild);
+			var info = new ProcessStartInfo(FindMSBuild());
 			info.Arguments = $"/nologo /v:minimal /p:OutputPath=\"{outputDir}\" \"{projectFile}\"";
 			info.CreateNoWindow = true;
 			info.UseShellExecute = false;

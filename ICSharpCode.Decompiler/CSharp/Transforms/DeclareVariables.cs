@@ -258,7 +258,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					continue;
 				
 				var boe = (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
-				if (boe != null && boe.Left.IsMatch(new IdentifierExpression(v.Name))) {
+				Expression expectedExpr = new IdentifierExpression(v.Name);
+				if (v.Type.Kind == TypeKind.ByReference) {
+					expectedExpr = new DirectionExpression(FieldDirection.Ref, expectedExpr);
+				}
+				if (boe != null && boe.Left.IsMatch(expectedExpr)) {
 					AstType type;
 					if (v.Type.ContainsAnonymousType()) {
 						type = new SimpleType("var");

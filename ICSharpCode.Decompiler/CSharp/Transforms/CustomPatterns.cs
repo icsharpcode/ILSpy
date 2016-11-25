@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			ComposedType ct = other as ComposedType;
 			AstType o;
-			if (ct != null && !ct.HasNullableSpecifier && ct.PointerRank == 0 && !ct.ArraySpecifiers.Any()) {
+			if (ct != null && !ct.HasRefSpecifier && !ct.HasNullableSpecifier && ct.PointerRank == 0 && !ct.ArraySpecifiers.Any()) {
 				// Special case: ILSpy sometimes produces a ComposedType but then removed all array specifiers
 				// from it. In that case, we need to look at the base type for the annotations.
 				o = ct.BaseType;
