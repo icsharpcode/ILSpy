@@ -4304,17 +4304,6 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 	
-	partial class BinaryComparisonInstruction
-	{
-		public static BinaryComparisonInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right)
-		{
-			switch (opCode) {
-				default:
-					throw new ArgumentException("opCode is not a binary comparison instruction");
-			}
-		}
-	}
-	
 	partial class InstructionOutputExtensions
 	{
 		static readonly string[] originalOpCodeNames = {

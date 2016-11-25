@@ -329,21 +329,6 @@ namespace ICSharpCode.Decompiler.IL
 <#	} #>
 	}
 	
-	partial class BinaryComparisonInstruction
-	{
-		public static BinaryComparisonInstruction Create(OpCode opCode, ILInstruction left, ILInstruction right)
-		{
-			switch (opCode) {
-<#	foreach (OpCode opCode in opCodes.Where(c => c.BaseClass == "BinaryComparisonInstruction")) { #>
-				case OpCode.<#=opCode.Name#>:
-					return new <#=opCode.Name#>(left, right);
-<#	} #>
-				default:
-					throw new ArgumentException("opCode is not a binary comparison instruction");
-			}
-		}
-	}
-	
 	partial class InstructionOutputExtensions
 	{
 		static readonly string[] originalOpCodeNames = {
