@@ -1307,9 +1307,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				// ensure we treat the input as a reference type
 				arg = arg.ConvertTo(compilation.FindType(KnownTypeCode.Object), this);
 			}
-			return new CastExpression(ConvertType(inst.Type), arg.Expression)
+
+			IType targetType = inst.Type;
+			if (targetType.Kind == TypeKind.TypeParameter) {
+				var rr = resolver.ResolveCast(targetType, arg.ResolveResult);
+				if (rr.IsError) {
+					// C# 6.2.7 Explicit conversions involving type parameters:
+					// if we can't directly convert to a type parameter,
+					// try via its effective base class.
+					arg = arg.ConvertTo(((ITypeParameter)targetType).EffectiveBaseClass, this);
+				}
+			}
+			return new CastExpression(ConvertType(targetType), arg.Expression)
 				.WithILInstruction(inst)
-				.WithRR(new ConversionResolveResult(inst.Type, arg.ResolveResult, Conversion.UnboxingConversion));
+				.WithRR(new ConversionResolveResult(targetType, arg.ResolveResult, Conversion.UnboxingConversion));
 		}
 		
 		protected internal override TranslatedExpression VisitUnbox(Unbox inst, TranslationContext context)

@@ -47,6 +47,11 @@ namespace Generics
 		{
 			Console.WriteLine(typeof(T1) + " " + typeof(T2));
 		}
+
+		public T CastToTypeParameter<T>(DerivedClass d) where T: BaseClass
+		{
+			return (T)(BaseClass)d;
+		}
 	}
 	
 	class GenericClass<T>
@@ -55,5 +60,13 @@ namespace Generics
 		{
 			self = this;
 		}
+	}
+
+	public class BaseClass
+	{
+	}
+
+	public class DerivedClass : BaseClass
+	{
 	}
 }

@@ -248,7 +248,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				} else {
 					ILInstruction value;
 					ILVariable v;
-					if (inst.Value.MatchLdLoc(out v)) {
+					if (inst.Value.MatchLdLoc(out v) && v.Kind != VariableKind.PinnedLocal) {
 						orphanedVariableInits.Add(inst);
 						value = inst.Value;
 					} else {
