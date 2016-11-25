@@ -191,10 +191,21 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 		
+		/// <summary>
+		/// Matches comp(left == right) or logic.not(comp(left != right)).
+		/// </summary>
 		public bool MatchCompEquals(out ILInstruction left, out ILInstruction right)
 		{
-			Comp comp = this as Comp;
-			if (comp != null && comp.Kind == ComparisonKind.Equality) {
+			ComparisonKind op;
+			Comp comp;
+			if (this is LogicNot logicNot) {
+				op = ComparisonKind.Inequality;
+				comp = logicNot.Argument as Comp;
+			} else {
+				op = ComparisonKind.Equality;
+				comp = this as Comp;
+			}
+			if (comp != null && comp.Kind == op) {
 				left = comp.Left;
 				right = comp.Right;
 				return true;

@@ -63,6 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new IntroduceExitPoints(),
 				new BlockILTransform( // per-block transforms
 					new ConditionDetection(),
+					new CachedDelegateInitialization(), // must run after ConditionDetection and before/in LoopingBlockTransform.
 					new ILInlining(),
 					new TransformAssignment(),
 					new CopyPropagation(),

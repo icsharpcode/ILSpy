@@ -51,29 +51,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							targetsToReplace.Add((IInstructionWithVariableOperand)target);
 					}
 					
-					var inst = block.Instructions[i] as IfInstruction;
-					if (inst != null) {
-						if (CachedDelegateInitializationWithField(inst)) {
-							block.Instructions.RemoveAt(i);
-							continue;
-						}
-						bool hasFieldStore;
-						ILVariable v;
-						if (CachedDelegateInitializationWithLocal(inst, out hasFieldStore, out v)) {
-							block.Instructions.RemoveAt(i);
-							if (hasFieldStore) {
-								block.Instructions.RemoveAt(i - 1);
-							}
-							if (v.IsSingleDefinition && v.LoadCount == 0) {
-								var store = v.Scope.Descendants.OfType<StLoc>().SingleOrDefault(stloc => stloc.Variable == v);
-								if (store != null) {
-									orphanedVariableInits.Add(store);
-								}
-							}
-							continue;
-						}
-					}
-					
 					ILVariable targetVariable;
 					ILInstruction value;
 					if (block.Instructions[i].MatchStLoc(out targetVariable, out value)) {
@@ -158,12 +135,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)), context);
 				function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 				// handle nested lambdas
-				((IILTransform)new DelegateConstruction()).Run(function, new ILTransformContext { Settings = context.Settings, CancellationToken = context.CancellationToken, TypeSystem = localTypeSystem });
+				((IILTransform)new DelegateConstruction()).Run(function, new ILTransformContext(context) { TypeSystem = localTypeSystem });
 				return function;
 			}
 			return null;
 		}
 		
+		/// <summary>
+		/// Replaces loads of 'this' with the target expression.
+		/// </summary>
 		class ReplaceDelegateTargetVisitor : ILVisitor
 		{
 			readonly ILVariable thisVariable;
@@ -192,6 +172,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 		
+		/// <summary>
+		/// 1. Stores to display class fields are replaced with stores to local variables (in some
+		///    cases existing variables are used; otherwise fresh variables are added to the
+		///    ILFunction-container) and all usages of those fields are replaced with the local variable.
+		///    (see initValues)
+		/// 2. Usages of the display class container (or any copy) are removed.
+		/// </summary>
 		class TransformDisplayClassUsages : ILVisitor
 		{
 			ILFunction currentFunction;
@@ -308,95 +295,5 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 		#endregion
-
-		bool CachedDelegateInitializationWithField(IfInstruction inst)
-		{
-			// if (comp(ldsfld CachedAnonMethodDelegate == ldnull) {
-			//     stsfld CachedAnonMethodDelegate(DelegateConstruction)
-			// }
-			// ... one usage of CachedAnonMethodDelegate ...
-			// =>
-			// ... one usage of DelegateConstruction ...
-			Block trueInst = inst.TrueInst as Block;
-			var condition = inst.Condition as Comp;
-			if (condition == null || trueInst == null || trueInst.Instructions.Count != 1 || !inst.FalseInst.MatchNop())
-				return false;
-			IField field, field2;
-			ILInstruction value;
-			var storeInst = trueInst.Instructions[0];
-			if (!condition.Left.MatchLdsFld(out field) || !condition.Right.MatchLdNull())
-				return false;
-			if (!storeInst.MatchStsFld(out value, out field2) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
-				return false;
-			if (!IsDelegateConstruction(value as NewObj, true))
-				return false;
-			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
-			if (nextInstruction == null)
-				return false;
-			var usages = nextInstruction.Descendants.Where(i => i.MatchLdsFld(field)).ToArray();
-			if (usages.Length != 1)
-				return false;
-			usages[0].ReplaceWith(value);
-			return true;
-		}
-
-		bool CachedDelegateInitializationWithLocal(IfInstruction inst, out bool hasFieldStore, out ILVariable local)
-		{
-			// [stloc v(ldsfld CachedAnonMethodDelegate)]
-			// if (comp(ldloc v == ldnull) {
-			//     stloc v(DelegateConstruction)
-			//     [stsfld CachedAnonMethodDelegate(v)]
-			// }
-			// ... one usage of v ...
-			// =>
-			// ... one usage of DelegateConstruction ...
-			Block trueInst = inst.TrueInst as Block;
-			var condition = inst.Condition as Comp;
-			hasFieldStore = false;
-			local = null;
-			if (condition == null || trueInst == null || (trueInst.Instructions.Count < 1) || !inst.FalseInst.MatchNop())
-				return false;
-			ILVariable v;
-			ILInstruction value, value2;
-			var storeInst = trueInst.Instructions.Last();
-			if (!condition.Left.MatchLdLoc(out v) || !condition.Right.MatchLdNull())
-				return false;
-			if (!storeInst.MatchStLoc(v, out value))
-				return false;
-			// the optional field store was moved into storeInst by inline assignment:
-			if (!(value is NewObj)) {
-				IField field, field2;
-				if (value.MatchStsFld(out value2, out field)) {
-					if (!(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
-						return false;
-					var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
-					if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdsFld(out field2) || !field.Equals(field2))
-						return false;
-					value = value2;
-					hasFieldStore = true;
-				} else if (value.MatchStFld(out value2, out field)) {
-					if (!(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
-						return false;
-					var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
-					if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdFld(out field2) || !field.Equals(field2))
-						return false;
-					value = value2;
-					hasFieldStore = true;
-				} else {
-					return false;
-				}
-			}
-			if (!IsDelegateConstruction(value as NewObj, true))
-				return false;
-			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
-			if (nextInstruction == null)
-				return false;
-			var usages = nextInstruction.Descendants.OfType<LdLoc>().Where(i => i.Variable == v).ToArray();
-			if (usages.Length != 1)
-				return false;
-			local = v;
-			usages[0].ReplaceWith(value);
-			return true;
-		}
 	}
 }
