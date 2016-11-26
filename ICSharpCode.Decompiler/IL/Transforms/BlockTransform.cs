@@ -64,12 +64,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class BlockILTransform : IILTransform
 	{
-		readonly IBlockTransform[] blockTransforms;
-
-		public BlockILTransform(params IBlockTransform[] blockTransforms)
-		{
-			this.blockTransforms = blockTransforms;
-		}
+		public IList<IBlockTransform> PreOrderTransforms { get; } = new List<IBlockTransform>();
+		public IList<IBlockTransform> PostOrderTransforms { get; } = new List<IBlockTransform>();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -94,6 +90,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			Block block = (Block)cfgNode.UserData;
 			context.Stepper.StartGroup(block.Label, block);
+
+			context.ControlFlowNode = cfgNode;
+			context.Block = block;
+			block.RunTransforms(PreOrderTransforms, context);
+
 			// First, process the children in the dominator tree.
 			// The ConditionDetection transform requires dominated blocks to
 			// be already processed.
@@ -103,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			context.ControlFlowNode = cfgNode;
 			context.Block = block;
-			block.RunTransforms(blockTransforms, context);
+			block.RunTransforms(PostOrderTransforms, context);
 			context.Stepper.EndGroup();
 		}
 	}

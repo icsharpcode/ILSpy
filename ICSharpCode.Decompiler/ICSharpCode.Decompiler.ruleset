@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<RuleSet Name="Rules for ICSharpCode.Decompiler" Description="Code analysis rules for ICSharpCode.Decompiler.csproj." ToolsVersion="14.0">
+<RuleSet Name="Rules for ICSharpCode.Decompiler" Description="Code analysis rules for ICSharpCode.Decompiler.csproj." ToolsVersion="15.0">
   <Rules AnalyzerId="Microsoft.Analyzers.ManagedCodeAnalysis" RuleNamespace="Microsoft.Rules.Managed">
     <Rule Id="CA1001" Action="Warning" />
     <Rule Id="CA1009" Action="Warning" />
@@ -64,6 +64,9 @@
     <Rule Id="CA2241" Action="Warning" />
     <Rule Id="CA2242" Action="Warning" />
   </Rules>
+  <Rules AnalyzerId="Microsoft.CodeAnalysis.CSharp.Features" RuleNamespace="Microsoft.CodeAnalysis.CSharp.Features">
+    <Rule Id="IDE0017" Action="None" />
+  </Rules>
   <Rules AnalyzerId="RefactoringEssentials" RuleNamespace="RefactoringEssentials">
     <Rule Id="CS0126ReturnMustBeFollowedByAnyExpression" Action="None" />
     <Rule Id="CS0169FieldIsNeverUsedAnalyzer" Action="None" />
@@ -75,7 +78,5 @@
     <Rule Id="InconsistentNaming" Action="None" />
     <Rule Id="ProhibitedModifiersAnalyzer" Action="None" />
     <Rule Id="RECS0001" Action="Info" />
-    <Rule Id="RECS0091" Action="Hidden" />
-    <Rule Id="RECS0113" Action="Hidden" />
   </Rules>
 </RuleSet>

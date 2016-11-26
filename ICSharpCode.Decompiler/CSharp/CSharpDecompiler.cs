@@ -57,26 +57,35 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(),
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
-				new BlockILTransform(new ExpressionTransforms()), // for RemoveDeadVariableInit
-				new RemoveDeadVariableInit(), // must run after ExpressionTransforms because it does not handle stobj(ldloca V, ...)
+				new BlockILTransform {
+					PostOrderTransforms = {
+						new ExpressionTransforms() // for RemoveDeadVariableInit// for RemoveDeadVariableInit
+					}
+				},
+				// RemoveDeadVariableInit must run after ExpressionTransforms so that stobj(ldloca V, ...)
+				// is already collapsed into stloc(V, ...).
+				new RemoveDeadVariableInit(),
 				new SwitchDetection(),
 				new LoopDetection(),
 				new IntroduceExitPoints(),
-				new BlockILTransform( // per-block transforms
-					new ConditionDetection(),
-					new CachedDelegateInitialization(), // must run after ConditionDetection and before/in LoopingBlockTransform.
-					new ILInlining(),
-					new TransformAssignment(),
-					new CopyPropagation(),
-					new LoopingBlockTransform(
-						// per-block transforms that depend on each other, and thus need to loop.
-						// Pretty much all transforms that open up new expression inlining
-						// opportunities belong in this category.
-						new ExpressionTransforms(),
-						new TransformArrayInitializers(),
-						new ILInlining()
-					)
-				),
+				new BlockILTransform { // per-block transforms
+					PostOrderTransforms = {
+						new ConditionDetection(),
+						// CachedDelegateInitialization must run after ConditionDetection and before/in LoopingBlockTransform.
+						new CachedDelegateInitialization(),
+						new ILInlining(),
+						new TransformAssignment(),
+						new CopyPropagation(),
+						new LoopingBlockTransform(
+							// per-block transforms that depend on each other, and thus need to loop.
+							// Pretty much all transforms that open up new expression inlining
+							// opportunities belong in this category.
+							new ExpressionTransforms(),
+							new TransformArrayInitializers(),
+							new ILInlining()
+						)
+					}
+				},
 				new DelegateConstruction(),
 			};
 		}
