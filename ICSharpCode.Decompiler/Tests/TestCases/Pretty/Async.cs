@@ -133,7 +133,27 @@ public class Async
 			Console.WriteLine("Crash");
 		}
 	}
-	
+
+	public async Task AwaitCatch(Task<int> task)
+	{
+		try {
+			Console.WriteLine("Before throw");
+			throw new Exception();
+		} catch {
+			Console.WriteLine(await task);
+		}
+	}
+
+	public async Task AwaitFinally(Task<int> task)
+	{
+		try {
+			Console.WriteLine("Before throw");
+			throw new Exception();
+		} finally {
+			Console.WriteLine(await task);
+		}
+	}
+
 	public async Task<int> NestedAwait(Task<Task<int>> task)
 	{
 		return await(await task);

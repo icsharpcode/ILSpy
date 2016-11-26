@@ -45,13 +45,23 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunWithTest("Newtonsoft.Json-net40", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
 		}
-		
+
 		[Test]
 		public void NRefactory_CSharp()
 		{
 			RunWithTest("NRefactory", "ICSharpCode.NRefactory.CSharp.dll", "ICSharpCode.NRefactory.Tests.dll");
 		}
-		
+
+		[Test]
+		public void ICSharpCode_Decompiler()
+		{
+			try {
+				RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.dll");
+			} catch (CompilationFailedException) {
+				Assert.Ignore("Ignored because yield return is not yet implemented!");
+			}
+		}
+
 		[Test]
 		public void ImplicitConversions()
 		{
