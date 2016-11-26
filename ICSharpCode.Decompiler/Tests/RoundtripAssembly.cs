@@ -128,7 +128,10 @@ namespace ICSharpCode.Decompiler.Tests
 					Stopwatch w = Stopwatch.StartNew();
 					DefaultAssemblyResolver resolver = new DefaultAssemblyResolver();
 					resolver.AddSearchDirectory(inputDir);
-					var module = ModuleDefinition.ReadModule(file, new ReaderParameters { AssemblyResolver = resolver });
+					var module = ModuleDefinition.ReadModule(file, new ReaderParameters {
+						AssemblyResolver = resolver,
+						InMemory  = true
+					});
 					var decompiler = new TestProjectDecompiler(inputDir);
 					// use a fixed GUID so that we can diff the output between different ILSpy runs without spurious changes
 					decompiler.ProjectGuid = Guid.Parse("{127C83E4-4587-4CF9-ADCA-799875F3DFE6}");

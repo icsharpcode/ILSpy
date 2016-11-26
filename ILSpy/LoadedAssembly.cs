@@ -113,6 +113,7 @@ namespace ICSharpCode.ILSpy
 			// runs on background thread
 			ReaderParameters p = new ReaderParameters();
 			p.AssemblyResolver = new MyAssemblyResolver(this);
+			p.InMemory = true;
 
 			if (stream != null)
 			{
@@ -206,6 +207,10 @@ namespace ICSharpCode.ILSpy
 			{
 				var node = parent.LookupReferencedAssembly(fullName);
 				return node != null ? node.AssemblyDefinition : null;
+			}
+
+			public void Dispose()
+			{
 			}
 		}
 		

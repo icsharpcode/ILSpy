@@ -70,8 +70,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				foreach (TypeDefinition td in TreeTraversal.PreOrder(module.Types, t => t.NestedTypes)) {
 					cancellationToken.ThrowIfCancellationRequested();
 					if (type.IsInterface && td.HasInterfaces) {
-						foreach (TypeReference typeRef in td.Interfaces) {
-							if (IsSameType(typeRef, type))
+						foreach (var iface in td.Interfaces) {
+							if (IsSameType(iface.InterfaceType, type))
 								yield return new DerivedTypesEntryNode(td, assemblies);
 						}
 					} else if (!type.IsInterface && td.BaseType != null && IsSameType(td.BaseType, type)) {

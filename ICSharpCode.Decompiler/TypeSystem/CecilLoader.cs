@@ -272,8 +272,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (fileName == null)
 				throw new ArgumentNullException("fileName");
 			var param = new ReaderParameters { AssemblyResolver = new DummyAssemblyResolver() };
-			ModuleDefinition module = ModuleDefinition.ReadModule(fileName, param);
-			return LoadModule(module);
+			using (ModuleDefinition module = ModuleDefinition.ReadModule(fileName, param)) {
+				return LoadModule(module);
+			}
 		}
 		
 		// used to prevent Cecil from loading referenced assemblies
@@ -297,6 +298,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			public AssemblyDefinition Resolve(string fullName, ReaderParameters parameters)
 			{
 				return null;
+			}
+
+			public void Dispose()
+			{
 			}
 		}
 		#endregion
@@ -898,8 +903,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					baseTypes.Add(ReadTypeReference(typeDefinition.BaseType));
 				}
 				if (typeDefinition.HasInterfaces) {
-					foreach (TypeReference iface in typeDefinition.Interfaces) {
-						baseTypes.Add(ReadTypeReference(iface));
+					foreach (var iface in typeDefinition.Interfaces) {
+						baseTypes.Add(ReadTypeReference(iface.InterfaceType));
 					}
 				}
 			}

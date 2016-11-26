@@ -31,8 +31,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 	{
 		static readonly Lazy<DecompilerTypeSystem> decompilerTypeSystem = new Lazy<DecompilerTypeSystem>(
 			delegate {
-				var module = ModuleDefinition.ReadModule(typeof(TypeSystem).Module.FullyQualifiedName);
-				return new DecompilerTypeSystem(module);
+				using (var module = ModuleDefinition.ReadModule(typeof(TypeSystem).Module.FullyQualifiedName)) {
+					return new DecompilerTypeSystem(module);
+				}
 			});
 		
 		public static DecompilerTypeSystem Instance {

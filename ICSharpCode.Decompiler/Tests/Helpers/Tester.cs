@@ -206,20 +206,22 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static string DecompileCSharp(string assemblyFileName)
 		{
-			var typeSystem = new DecompilerTypeSystem(ModuleDefinition.ReadModule(assemblyFileName));
-			CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, new DecompilerSettings());
-			decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
-			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
-			var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
-			
-			StringWriter output = new StringWriter();
-			var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());
-			syntaxTree.AcceptVisitor(visitor);
+			using (var module = ModuleDefinition.ReadModule(assemblyFileName)) {
+				var typeSystem = new DecompilerTypeSystem(module);
+				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, new DecompilerSettings());
+				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
+				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
 
-			string fileName = Path.GetTempFileName();
-			File.WriteAllText(fileName, output.ToString());
+				StringWriter output = new StringWriter();
+				var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());
+				syntaxTree.AcceptVisitor(visitor);
 
-			return fileName;
+				string fileName = Path.GetTempFileName();
+				File.WriteAllText(fileName, output.ToString());
+
+				return fileName;
+			}
 		}
 		
 		public static void RunAndCompareOutput(string testFileName, string outputFile, string decompiledOutputFile, string decompiledCodeFile = null)

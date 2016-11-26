@@ -122,10 +122,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			VariableKind kind = v.IsPinned ? VariableKind.PinnedLocal : VariableKind.Local;
 			ILVariable ilVar = new ILVariable(kind, typeSystem.Resolve(v.VariableType), v.Index);
-			if (string.IsNullOrEmpty(v.Name))
-				ilVar.Name = "V_" + v.Index;
-			else
-				ilVar.Name = v.Name;
+			ilVar.Name = "V_" + v.Index;
 			return ilVar;
 		}
 

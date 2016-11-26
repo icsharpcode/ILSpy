@@ -92,10 +92,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 				foreach (var v in body.Variables) {
 					output.WriteDefinition("[" + v.Index + "] ", v);
 					v.VariableType.WriteTo(output);
-					if (!string.IsNullOrEmpty(v.Name)) {
-						output.Write(' ');
-						output.Write(DisassemblerHelpers.Escape(v.Name));
-					}
 					if (v.Index + 1 < body.Variables.Count)
 						output.Write(',');
 					output.WriteLine();

@@ -43,7 +43,7 @@ namespace ILSpy.BamlDecompiler
 				if (t == ct.type)
 					return true;
 				foreach (var @interface in t.Interfaces) {
-					var resolved = @interface.Resolve();
+					var resolved = @interface.InterfaceType.Resolve();
 					if (resolved == ct.type)
 						return true;
 				}
