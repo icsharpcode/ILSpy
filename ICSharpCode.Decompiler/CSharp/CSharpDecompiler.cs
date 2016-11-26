@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new BlockILTransform {
 					PostOrderTransforms = {
-						new ExpressionTransforms() // for RemoveDeadVariableInit// for RemoveDeadVariableInit
+						new ExpressionTransforms() // for RemoveDeadVariableInit
 					}
 				},
 				// RemoveDeadVariableInit must run after ExpressionTransforms so that stobj(ldloca V, ...)

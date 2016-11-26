@@ -40,8 +40,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var requiredImports = new FindRequiredImports(context);
 			compilationUnit.AcceptVisitor(requiredImports);
 			
-			requiredImports.ImportedNamespaces.Add("System"); // always import System, even when not necessary
-			
 			var usingScope = new UsingScope();
 
 			var insertionPoint = compilationUnit.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
