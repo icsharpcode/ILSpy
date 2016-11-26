@@ -16,17 +16,21 @@ using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.ILSpy
 {
+
 	/// <summary>
 	/// Interaktionslogik für DebugSteps.xaml
 	/// </summary>
 	public partial class DebugSteps : UserControl, IPane
 	{
+#if DEBUG
 		ILAstLanguage language;
+#endif
 
 		DebugSteps()
 		{
 			InitializeComponent();
 
+#if DEBUG
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
 
@@ -35,6 +39,7 @@ namespace ICSharpCode.ILSpy
 				language = l;
 				ILAstStepperUpdated(null, null);
 			}
+#endif
 		}
 
 		private void SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -44,6 +49,7 @@ namespace ICSharpCode.ILSpy
 
 		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
 		{
+#if DEBUG
 			if (e.PropertyName == "Language") {
 				if (language != null) {
 					language.StepperUpdated -= ILAstStepperUpdated;
@@ -54,12 +60,15 @@ namespace ICSharpCode.ILSpy
 					ILAstStepperUpdated(null, null);
 				}
 			}
+#endif
 		}
 
 		private void ILAstStepperUpdated(object sender, EventArgs e)
 		{
+#if DEBUG
 			if (language == null) return;
 			Dispatcher.Invoke(() => tree.ItemsSource = language.Stepper.Steps);
+#endif
 		}
 
 		public static void Show()
@@ -69,11 +78,13 @@ namespace ICSharpCode.ILSpy
 
 		void IPane.Closed()
 		{
+#if DEBUG
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged -= SelectionChanged;
 			if (language != null) {
 				language.StepperUpdated -= ILAstStepperUpdated;
 			}
+#endif
 		}
 
 		private void ShowStateAfter_Click(object sender, RoutedEventArgs e)
