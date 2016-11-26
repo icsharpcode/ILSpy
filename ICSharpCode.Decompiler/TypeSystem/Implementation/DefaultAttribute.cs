@@ -19,9 +19,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ICSharpCode.NRefactory.Semantics;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// IAttribute implementation for already-resolved attributes.

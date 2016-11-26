@@ -20,11 +20,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-namespace ICSharpCode.NRefactory.CSharp.Resolver
+namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	sealed class CSharpOperators
 	{
@@ -168,7 +169,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 				get { return EmptyList<IAttribute>.Instance; }
 			}
 			
-			Documentation.DocumentationComment IEntity.Documentation {
+			NRefactory.Documentation.DocumentationComment IEntity.Documentation {
 				get { return null; }
 			}
 			

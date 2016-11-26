@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.IL.Transforms;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {

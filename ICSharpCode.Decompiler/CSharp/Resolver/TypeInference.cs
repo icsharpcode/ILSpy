@@ -20,12 +20,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-
-namespace ICSharpCode.NRefactory.CSharp.Resolver
+namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	public enum TypeInferenceAlgorithm
 	{

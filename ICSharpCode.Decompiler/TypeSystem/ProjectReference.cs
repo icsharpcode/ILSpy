@@ -18,7 +18,7 @@
 
 using System;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// References another project content in the same solution.

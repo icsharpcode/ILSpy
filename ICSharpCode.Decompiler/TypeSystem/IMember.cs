@@ -18,9 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.NRefactory.TypeSystem;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Method/field/property/event.

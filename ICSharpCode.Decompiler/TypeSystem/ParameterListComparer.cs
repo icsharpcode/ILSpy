@@ -18,10 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Compares parameter lists by comparing the types of all parameters.

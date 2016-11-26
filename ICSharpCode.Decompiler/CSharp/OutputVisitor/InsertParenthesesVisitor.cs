@@ -17,8 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.NRefactory.CSharp
+namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	/// <summary>
 	/// Inserts the parentheses into the AST that are needed to ensure the AST can be printed correctly.

@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Holds the name of a top-level type.

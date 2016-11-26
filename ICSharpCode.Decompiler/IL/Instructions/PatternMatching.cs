@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {

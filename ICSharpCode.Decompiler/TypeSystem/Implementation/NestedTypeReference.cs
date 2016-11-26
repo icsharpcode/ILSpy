@@ -18,7 +18,7 @@
 
 using System;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Type reference used to reference nested types.

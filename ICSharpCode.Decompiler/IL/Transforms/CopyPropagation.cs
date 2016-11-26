@@ -18,6 +18,8 @@
 
 using System;
 using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -49,7 +51,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							};
 							block.Instructions.Insert(i++, new StLoc(uninlinedArgs[j], arg));
 						}
-						v.Scope.Variables.AddRange(uninlinedArgs);
+						CollectionExtensions.AddRange(v.Scope.Variables, uninlinedArgs);
 						// perform copy propagation:
 						foreach (var expr in v.Scope.Descendants) {
 							if (expr.MatchLdLoc(v)) {

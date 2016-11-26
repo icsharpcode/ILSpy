@@ -23,16 +23,15 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Threading;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.Documentation;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Utils;
 using Mono.Cecil;
 
-
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
-	using BlobReader = ICSharpCode.NRefactory.TypeSystem.Implementation.BlobReader;
+	using BlobReader = BlobReader;
 
 	/// <summary>
 	/// Allows loading an IProjectContent from an already compiled assembly.
@@ -107,14 +106,14 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		CecilUnresolvedAssembly currentAssembly;
 		
 		/// <summary>
-		/// Initializes a new instance of the <see cref="ICSharpCode.NRefactory.TypeSystem.CecilLoader"/> class.
+		/// Initializes a new instance of the <see cref="CecilLoader"/> class.
 		/// </summary>
 		public CecilLoader()
 		{
 		}
 		
 		/// <summary>
-		/// Initializes a new instance of the <see cref="ICSharpCode.NRefactory.TypeSystem.CecilLoader"/> class.
+		/// Initializes a new instance of the <see cref="CecilLoader"/> class.
 		/// </summary>
 		/// <param name='createCecilReferences'>
 		/// If true references to the cecil objects are hold. In this case the cecil loader can do a type system -> cecil mapping.
@@ -183,8 +182,8 @@ namespace ICSharpCode.NRefactory.TypeSystem
 			
 			this.currentAssembly = new CecilUnresolvedAssembly(assemblyDefinition != null ? assemblyDefinition.Name.FullName : moduleDefinition.Name, this.DocumentationProvider);
 			currentAssembly.Location = moduleDefinition.FullyQualifiedName;
-			currentAssembly.AssemblyAttributes.AddRange(assemblyAttributes);
-			currentAssembly.ModuleAttributes.AddRange(assemblyAttributes);
+			ExtensionMethods.AddRange(currentAssembly.AssemblyAttributes, assemblyAttributes);
+			ExtensionMethods.AddRange(currentAssembly.ModuleAttributes, assemblyAttributes);
 			
 			// Register type forwarders:
 			foreach (ExportedType type in moduleDefinition.ExportedTypes) {
@@ -859,7 +858,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 				return; // https://github.com/icsharpcode/SharpDevelop/issues/284
 			}
 			var blobSecDecl = new UnresolvedSecurityDeclarationBlob((int)secDecl.Action, blob);
-			targetCollection.AddRange(blobSecDecl.UnresolvedAttributes);
+			ExtensionMethods.AddRange(targetCollection, blobSecDecl.UnresolvedAttributes);
 		}
 		#endregion
 		#endregion

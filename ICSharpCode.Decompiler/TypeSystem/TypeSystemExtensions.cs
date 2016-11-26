@@ -19,11 +19,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Contains extension methods for the type system.

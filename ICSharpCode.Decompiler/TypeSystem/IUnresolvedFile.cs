@@ -18,8 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	[Obsolete("IParsedFile was renamed to IUnresolvedFile", true)]
 	public interface IParsedFile {}

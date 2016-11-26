@@ -17,10 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Diagnostics;
 using System.Threading;
 
-namespace ICSharpCode.NRefactory.Utils
+namespace ICSharpCode.Decompiler.Util
 {
 	/// <summary>
 	/// Invokes an action when it is disposed.

@@ -21,13 +21,11 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Runtime.Serialization;
 using System.Threading;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.Util;
 
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.Utils;
-
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Default implementation for <see cref="IUnresolvedAssembly"/>.

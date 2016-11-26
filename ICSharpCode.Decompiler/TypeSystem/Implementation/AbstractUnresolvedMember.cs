@@ -19,9 +19,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Base class for <see cref="IUnresolvedMember"/> implementations.

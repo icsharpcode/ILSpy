@@ -6,7 +6,6 @@ using System.ComponentModel.Composition;
 using System.Linq;
 using System.Windows.Controls;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.ILSpy;
 using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;

@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {

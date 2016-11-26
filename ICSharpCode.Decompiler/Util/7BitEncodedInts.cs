@@ -19,7 +19,7 @@
 using System;
 using System.IO;
 
-namespace ICSharpCode.NRefactory.Utils
+namespace ICSharpCode.Decompiler.Util
 {
 	/// <summary>
 	/// A binary reader that can read the output of BinaryWriterWith7BitEncodedInts.

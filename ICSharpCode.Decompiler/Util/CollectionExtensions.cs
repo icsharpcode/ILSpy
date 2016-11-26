@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.Util
 {
 	static class CollectionExtensions
 	{

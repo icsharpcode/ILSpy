@@ -20,7 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.NRefactory.Editor
 {

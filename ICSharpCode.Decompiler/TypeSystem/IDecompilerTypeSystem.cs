@@ -15,11 +15,10 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-using System;
-using ICSharpCode.NRefactory.TypeSystem;
+
 using Mono.Cecil;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Allows resolving cecil types into the NRefactory type system.

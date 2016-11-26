@@ -20,6 +20,7 @@ using System;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {

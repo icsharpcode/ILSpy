@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	[Serializable]
 	public sealed class SpecializingMemberReference : IMemberReference

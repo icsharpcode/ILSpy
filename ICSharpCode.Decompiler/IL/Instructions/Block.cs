@@ -24,8 +24,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.IL.Transforms;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.IL
 {

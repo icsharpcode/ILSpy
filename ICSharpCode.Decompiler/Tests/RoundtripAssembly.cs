@@ -23,7 +23,6 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Tests.Helpers;
-using ICSharpCode.NRefactory.Utils;
 using Microsoft.Win32;
 using Mono.Cecil;
 using NUnit.Framework;

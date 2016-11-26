@@ -20,7 +20,7 @@ using System;
 using System.Collections.Generic;
 using ICSharpCode.NRefactory.Documentation;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Implementation of <see cref="IEntity"/> that resolves an unresolved entity.

@@ -19,8 +19,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {

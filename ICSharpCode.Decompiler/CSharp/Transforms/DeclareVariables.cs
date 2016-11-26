@@ -21,12 +21,13 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.Utils;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {

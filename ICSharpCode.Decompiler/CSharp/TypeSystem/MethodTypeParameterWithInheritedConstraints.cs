@@ -19,11 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-namespace ICSharpCode.NRefactory.CSharp.TypeSystem
+namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 {
 	[Serializable]
 	public sealed class MethodTypeParameterWithInheritedConstraints : DefaultUnresolvedTypeParameter

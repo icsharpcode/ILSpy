@@ -18,8 +18,8 @@
 
 using System;
 using System.Threading;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {

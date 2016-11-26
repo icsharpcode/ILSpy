@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.CSharp;

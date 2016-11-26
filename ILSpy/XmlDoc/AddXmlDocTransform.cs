@@ -18,6 +18,7 @@
 
 using System;
 using System.IO;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 

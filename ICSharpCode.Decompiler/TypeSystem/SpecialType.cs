@@ -17,10 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Contains static implementations of special types.

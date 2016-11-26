@@ -19,7 +19,7 @@
 using System;
 using System.Runtime.Serialization;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Represents an error while parsing a reflection name.

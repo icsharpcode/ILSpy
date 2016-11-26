@@ -18,6 +18,7 @@
 
 using System;
 using System.ComponentModel;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler

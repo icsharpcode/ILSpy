@@ -18,7 +18,7 @@
 
 using System;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Helper class for dealing with System.Threading.Tasks.Task.

@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Default implementation of <see cref="IUnresolvedMethod" /> interface.

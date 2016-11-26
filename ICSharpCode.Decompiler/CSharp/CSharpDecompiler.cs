@@ -21,17 +21,16 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-using ICSharpCode.Decompiler.Ast;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.CSharp.Resolver;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
-using ICSharpCode.NRefactory.CSharp.Refactoring;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp
 {

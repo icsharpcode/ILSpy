@@ -19,9 +19,8 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 
-namespace ICSharpCode.NRefactory
+namespace ICSharpCode.Decompiler.Util
 {
 	[Serializable]
 	public sealed class EmptyList<T> : IList<T>, IEnumerator<T>

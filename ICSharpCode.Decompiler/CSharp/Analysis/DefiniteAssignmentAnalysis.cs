@@ -21,13 +21,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
-
-using ICSharpCode.NRefactory.CSharp.Resolver;
-using ICSharpCode.NRefactory.CSharp.TypeSystem;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.NRefactory.CSharp.Analysis
 {

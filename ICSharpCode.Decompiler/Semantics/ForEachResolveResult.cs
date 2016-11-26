@@ -17,9 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.NRefactory.Semantics
+namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
 	/// Resolve result representing a 'foreach' loop.

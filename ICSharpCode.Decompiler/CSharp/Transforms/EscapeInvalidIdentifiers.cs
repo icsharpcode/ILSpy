@@ -18,8 +18,9 @@
 
 using System;
 using System.Linq;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.Semantics;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {

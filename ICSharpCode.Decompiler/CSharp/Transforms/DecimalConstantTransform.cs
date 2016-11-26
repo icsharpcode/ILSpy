@@ -17,9 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
-using ICSharpCode.NRefactory.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {

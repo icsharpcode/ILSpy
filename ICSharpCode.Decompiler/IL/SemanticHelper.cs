@@ -18,6 +18,7 @@
 
 using System;
 using System.Linq;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {

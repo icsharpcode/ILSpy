@@ -18,9 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.NRefactory.Semantics
+namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
 	/// Represents an implicit or explicit type conversion.

@@ -15,10 +15,10 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
-using System;
-using ICSharpCode.NRefactory.TypeSystem;
 
-namespace ICSharpCode.Decompiler
+using System;
+
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Decompiler type system for generic types or methods:

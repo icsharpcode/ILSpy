@@ -17,8 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 
-namespace ICSharpCode.NRefactory.CSharp.Resolver
+namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	/// <summary>
 	/// Arguments for the callback of <see cref="FindReferences.RenameReferencesInFile"/>.

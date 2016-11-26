@@ -18,10 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Text;
 
-namespace ICSharpCode.NRefactory.Utils
+namespace ICSharpCode.Decompiler.Util
 {
 	/// <summary>
 	/// An immutable stack.

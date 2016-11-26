@@ -18,7 +18,7 @@
 
 using System;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Represents some well-known types.

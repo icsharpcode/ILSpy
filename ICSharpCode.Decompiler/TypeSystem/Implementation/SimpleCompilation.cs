@@ -18,9 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Simple compilation implementation.

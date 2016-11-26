@@ -19,7 +19,7 @@
 // #include "../../../Util/CSharpPrimitiveCast.cs"
 
 using System;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases
 {

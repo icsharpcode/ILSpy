@@ -21,8 +21,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {

@@ -17,9 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	public sealed class ByReferenceType : TypeWithElementType
 	{

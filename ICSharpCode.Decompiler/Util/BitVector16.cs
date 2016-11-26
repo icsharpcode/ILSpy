@@ -19,7 +19,7 @@
 using System;
 using System.Globalization;
 
-namespace ICSharpCode.NRefactory.Utils
+namespace ICSharpCode.Decompiler.Util
 {
 	/// <summary>
 	/// Holds 16 boolean values.

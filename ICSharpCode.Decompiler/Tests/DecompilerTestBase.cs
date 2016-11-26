@@ -22,13 +22,12 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-
-using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using Microsoft.CSharp;
 using Mono.Cecil;
 using NUnit.Framework;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.Tests

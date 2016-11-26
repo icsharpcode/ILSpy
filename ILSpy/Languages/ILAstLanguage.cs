@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy

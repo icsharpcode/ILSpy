@@ -19,9 +19,9 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using ICSharpCode.NRefactory.Semantics;
+using ICSharpCode.Decompiler.Semantics;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	[Serializable]
 	public sealed class UnresolvedSecurityDeclarationBlob

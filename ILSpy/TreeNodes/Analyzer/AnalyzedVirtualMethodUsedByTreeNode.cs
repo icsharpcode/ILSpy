@@ -21,9 +21,9 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using ICSharpCode.Decompiler.Ast;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {

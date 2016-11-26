@@ -22,8 +22,8 @@ using System.Linq;
 using System.Threading;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using ICSharpCode.NRefactory.Utils;
 using System.Collections.Concurrent;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {

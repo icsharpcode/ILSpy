@@ -18,7 +18,7 @@
 
 using System;
 using System.IO;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.NRefactory.Documentation
 {

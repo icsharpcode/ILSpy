@@ -18,8 +18,9 @@
 
 using System;
 using System.Diagnostics;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms

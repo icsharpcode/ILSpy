@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// This interface represents a resolved type in the type system.

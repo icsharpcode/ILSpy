@@ -21,6 +21,7 @@ using System.Diagnostics;
 using ICSharpCode.Decompiler.IL;
 using NUnit.Framework;
 using ICSharpCode.Decompiler.Tests.Helpers;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.Tests.Util
 {

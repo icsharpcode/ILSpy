@@ -17,16 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem;
 
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-
-namespace ICSharpCode.NRefactory.CSharp.TypeSystem
+namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 {
 	/// <summary>
 	/// Type reference used within an attribute.

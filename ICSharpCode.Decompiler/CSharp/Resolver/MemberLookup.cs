@@ -20,11 +20,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
 
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
-
-namespace ICSharpCode.NRefactory.CSharp.Resolver
+namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	/// <summary>
 	/// Implementation of member lookup (C# 4.0 spec, §7.4).

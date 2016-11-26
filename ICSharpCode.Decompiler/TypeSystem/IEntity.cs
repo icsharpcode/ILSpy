@@ -18,10 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.Contracts;
 using ICSharpCode.NRefactory.Documentation;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Represents an unresolved entity.

@@ -19,10 +19,9 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using ICSharpCode.Decompiler.Util;
 
-using ICSharpCode.NRefactory.Utils;
-
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Default implementation of <see cref="IUnresolvedTypeParameter"/>.

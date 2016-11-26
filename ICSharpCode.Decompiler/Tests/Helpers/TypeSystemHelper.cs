@@ -21,8 +21,7 @@ using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using ICSharpCode.Decompiler.IL;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers

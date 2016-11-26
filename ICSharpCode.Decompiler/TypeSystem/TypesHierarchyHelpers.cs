@@ -20,10 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Text;
 using Mono.Cecil;
 
-namespace ICSharpCode.Decompiler.Ast
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	public static class TypesHierarchyHelpers
 	{
@@ -444,18 +443,18 @@ namespace ICSharpCode.Decompiler.Ast
 
 			private TypeReference ReplaceElementType(TypeSpecification ts, TypeReference newElementType)
 			{
-				var arrayType = ts as ArrayType;
+				var arrayType = ts as Mono.Cecil.ArrayType;
 				if (arrayType != null) {
 					if (newElementType == arrayType.ElementType)
 						return arrayType;
-					var newArrayType = new ArrayType(newElementType, arrayType.Rank);
+					var newArrayType = new Mono.Cecil.ArrayType(newElementType, arrayType.Rank);
 					for (int dimension = 0; dimension < arrayType.Rank; dimension++)
 						newArrayType.Dimensions[dimension] = arrayType.Dimensions[dimension];
 					return newArrayType;
 				}
-				var byReferenceType = ts as ByReferenceType;
+				var byReferenceType = ts as Mono.Cecil.ByReferenceType;
 				if (byReferenceType != null) {
-					return new ByReferenceType(newElementType);
+					return new Mono.Cecil.ByReferenceType(newElementType);
 			}
 				// TODO: should we throw an exception instead calling Resolve method?
 				return ts.ResolveOrThrow();

@@ -20,9 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {

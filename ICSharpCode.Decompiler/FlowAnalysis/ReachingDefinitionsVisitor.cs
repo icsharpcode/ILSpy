@@ -23,6 +23,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {

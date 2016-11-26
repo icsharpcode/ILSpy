@@ -22,10 +22,9 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Represents the intersection of several types.

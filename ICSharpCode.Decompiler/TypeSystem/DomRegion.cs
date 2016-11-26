@@ -18,8 +18,9 @@
 
 using System;
 using System.Globalization;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	[Serializable]
 	public struct DomRegion : IEquatable<DomRegion>

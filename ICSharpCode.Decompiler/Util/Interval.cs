@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.Util
 {
 	/// <summary>
 	/// Represents a half-closed interval.

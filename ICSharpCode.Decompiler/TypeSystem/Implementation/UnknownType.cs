@@ -19,7 +19,7 @@
 using System;
 using System.Diagnostics;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// An unknown type where (part) of the name is known.

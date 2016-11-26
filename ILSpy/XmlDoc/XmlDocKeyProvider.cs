@@ -21,7 +21,11 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
+using ArrayType = Mono.Cecil.ArrayType;
+using ByReferenceType = Mono.Cecil.ByReferenceType;
+using PointerType = Mono.Cecil.PointerType;
 
 namespace ICSharpCode.ILSpy.XmlDoc
 {
@@ -146,7 +150,7 @@ namespace ICSharpCode.ILSpy.XmlDoc
 				b.Append('.');
 			}
 			int localTypeParameterCount = 0;
-			b.Append(NRefactory.TypeSystem.ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out localTypeParameterCount));
+			b.Append(ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out localTypeParameterCount));
 			
 			if (localTypeParameterCount > 0) {
 				int totalTypeParameterCount = outerTypeParameterCount + localTypeParameterCount;

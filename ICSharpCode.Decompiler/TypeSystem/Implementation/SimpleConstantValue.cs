@@ -17,9 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.NRefactory.Semantics;
+using ICSharpCode.Decompiler.Semantics;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// A simple constant value that is independent of the resolve context.

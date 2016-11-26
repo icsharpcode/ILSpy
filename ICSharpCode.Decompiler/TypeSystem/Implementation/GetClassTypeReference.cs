@@ -17,10 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Linq;
-using System.Threading;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Type Reference used when the fully qualified type name is known.

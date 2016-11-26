@@ -19,10 +19,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.Documentation;
-using ICSharpCode.NRefactory.Utils;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Default implementation of <see cref="ITypeDefinition"/>.
@@ -801,7 +802,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 		public virtual IEnumerable<IMethod> GetMethods(Predicate<IUnresolvedMethod> filter = null, GetMemberOptions options = GetMemberOptions.None)
 		{
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
-				return GetFilteredMethods(Utils.ExtensionMethods.And(m => !m.IsConstructor, filter));
+				return GetFilteredMethods(ExtensionMethods.And(m => !m.IsConstructor, filter));
 			} else {
 				return GetMembersHelper.GetMethods(this, filter, options);
 			}
@@ -825,7 +826,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 				return EmptyList<IMethod>.Instance;
 			}
 			if ((options & GetMemberOptions.IgnoreInheritedMembers) == GetMemberOptions.IgnoreInheritedMembers) {
-				return GetFilteredMethods(Utils.ExtensionMethods.And(m => m.IsConstructor && !m.IsStatic, filter));
+				return GetFilteredMethods(ExtensionMethods.And(m => m.IsConstructor && !m.IsStatic, filter));
 			} else {
 				return GetMembersHelper.GetConstructors(this, filter, options);
 			}

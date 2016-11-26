@@ -5,8 +5,6 @@ using System.Text.RegularExpressions;
 using System.Windows.Media;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.Utils;
-
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 

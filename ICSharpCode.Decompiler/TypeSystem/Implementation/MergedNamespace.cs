@@ -20,9 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// A merged namespace.

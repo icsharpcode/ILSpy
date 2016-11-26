@@ -18,10 +18,12 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.NRefactory.CSharp.Resolver
+namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	/// <summary>
 	/// <see cref="IResolveVisitorNavigator"/> implementation that resolves a list of nodes.

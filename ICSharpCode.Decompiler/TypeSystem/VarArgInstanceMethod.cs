@@ -21,10 +21,9 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Used when calling a vararg method. Stores the actual parameter types being passed.

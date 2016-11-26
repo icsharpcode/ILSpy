@@ -19,10 +19,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.NRefactory.Semantics
+namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
 	/// Resolve result representing an array creation.

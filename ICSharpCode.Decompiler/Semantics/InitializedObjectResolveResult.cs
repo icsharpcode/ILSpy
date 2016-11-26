@@ -16,10 +16,9 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.NRefactory.Semantics
+namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
 	/// Refers to the object that is currently being initialized.

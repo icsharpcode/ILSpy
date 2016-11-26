@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.NRefactory.Utils
+namespace ICSharpCode.Decompiler.Util
 {
 	/// <summary>
 	/// Contains extension methods for use within NRefactory.

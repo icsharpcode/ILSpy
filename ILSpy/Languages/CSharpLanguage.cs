@@ -34,6 +34,8 @@ using ICSharpCode.ILSpy.XmlDoc;
 using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.ILSpy
 {

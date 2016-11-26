@@ -17,11 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Represents an error while resolving a reference to a type or a member.

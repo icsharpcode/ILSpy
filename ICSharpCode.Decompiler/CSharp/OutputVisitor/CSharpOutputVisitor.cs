@@ -15,19 +15,19 @@
 // FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ICSharpCode.NRefactory.PatternMatching;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.NRefactory.PatternMatching;
+using Attribute = ICSharpCode.NRefactory.CSharp.Attribute;
 
-namespace ICSharpCode.NRefactory.CSharp
+namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	/// <summary>
 	/// Outputs the AST.
@@ -2276,7 +2276,7 @@ namespace ICSharpCode.NRefactory.CSharp
 		#endregion
 
 		#region Pattern Nodes
-		public virtual void VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern)
+		public virtual void VisitPatternPlaceholder(AstNode placeholder, NRefactory.PatternMatching.Pattern pattern)
 		{
 			StartNode(placeholder);
 			VisitNodeInPattern(pattern);

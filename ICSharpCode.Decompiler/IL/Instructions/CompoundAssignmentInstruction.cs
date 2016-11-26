@@ -19,8 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {

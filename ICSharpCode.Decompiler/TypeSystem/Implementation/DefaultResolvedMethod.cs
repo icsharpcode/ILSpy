@@ -20,10 +20,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-using ICSharpCode.NRefactory.Semantics;
-
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Default implementation of <see cref="IMethod"/> that resolves an unresolved method.

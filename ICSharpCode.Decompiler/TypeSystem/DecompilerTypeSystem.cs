@@ -1,16 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
-using ICSharpCode.NRefactory;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
 using Mono.Cecil;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	/// <summary>
 	/// Manages the NRefactory type system for the decompiler.

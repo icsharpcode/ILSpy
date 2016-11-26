@@ -18,14 +18,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using ICSharpCode.NRefactory.CSharp.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.NRefactory.CSharp.TypeSystem
+namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 {
 	/// <summary>
 	/// Represents a scope that contains "using" statements.

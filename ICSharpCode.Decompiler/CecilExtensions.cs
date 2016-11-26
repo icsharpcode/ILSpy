@@ -19,8 +19,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using ArrayType = Mono.Cecil.ArrayType;
 
 namespace ICSharpCode.Decompiler
 {
@@ -362,9 +364,9 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public static ICSharpCode.NRefactory.TypeSystem.FullTypeName GetFullTypeName(this TypeDefinition typeDef)
+		public static FullTypeName GetFullTypeName(this TypeDefinition typeDef)
 		{
-			return new ICSharpCode.NRefactory.TypeSystem.FullTypeName(typeDef.FullName);
+			return new FullTypeName(typeDef.FullName);
 		}
 
 		public static bool IsDelegate(this TypeDefinition type)

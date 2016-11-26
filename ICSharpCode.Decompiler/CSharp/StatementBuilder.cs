@@ -17,14 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Diagnostics;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.Utils;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.TypeSystem;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp
 {

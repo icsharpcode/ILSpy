@@ -18,9 +18,10 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// References an entity by its type and name.

@@ -20,6 +20,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using ICSharpCode.Decompiler.IL.Patterns;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -665,16 +667,16 @@ namespace ICSharpCode.Decompiler.IL
 	
 	public interface IInstructionWithTypeOperand
 	{
-		ICSharpCode.NRefactory.TypeSystem.IType Type { get; }
+		IType Type { get; }
 	}
 	
 	public interface IInstructionWithFieldOperand
 	{
-		ICSharpCode.NRefactory.TypeSystem.IField Field { get; }
+		IField Field { get; }
 	}
 	
 	public interface IInstructionWithMethodOperand
 	{
-		ICSharpCode.NRefactory.TypeSystem.IMethod Method { get; }
+		IMethod Method { get; }
 	}
 }

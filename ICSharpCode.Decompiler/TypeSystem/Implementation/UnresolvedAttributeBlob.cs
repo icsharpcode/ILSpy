@@ -27,7 +27,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// <c>IUnresolvedAttribute</c> implementation that loads the arguments from a binary blob.

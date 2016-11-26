@@ -9,7 +9,7 @@ using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
 
 namespace ILSpy.BamlDecompiler

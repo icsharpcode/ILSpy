@@ -24,9 +24,12 @@ using System.Linq;
 using System.Resources;
 using System.Threading.Tasks;
 using System.Xml;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.Utils;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp

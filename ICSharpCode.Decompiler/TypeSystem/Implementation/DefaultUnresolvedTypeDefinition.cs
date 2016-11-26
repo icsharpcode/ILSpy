@@ -18,10 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Represents an unresolved type definition.

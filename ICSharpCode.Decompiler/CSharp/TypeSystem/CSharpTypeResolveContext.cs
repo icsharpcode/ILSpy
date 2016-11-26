@@ -17,9 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.NRefactory.CSharp.TypeSystem
+namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 {
 	public sealed class CSharpTypeResolveContext : ITypeResolveContext
 	{

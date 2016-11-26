@@ -20,19 +20,19 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-
+using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.CSharp.Refactoring;
-using ICSharpCode.NRefactory.CSharp.Resolver;
-using ICSharpCode.NRefactory.CSharp.TypeSystem;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
-
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
 using ExpressionType = System.Linq.Expressions.ExpressionType;
+using PrimitiveType = ICSharpCode.Decompiler.CSharp.Syntax.PrimitiveType;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -92,13 +92,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			var pe = expr as PrimitiveExpression;
 			if (pe != null) {
 				if (pe.Value is sbyte)
-					expr = expr.CastTo(new NRefactory.CSharp.PrimitiveType("sbyte"));
+					expr = expr.CastTo(new PrimitiveType("sbyte"));
 				else if (pe.Value is byte)
-					expr = expr.CastTo(new NRefactory.CSharp.PrimitiveType("byte"));
+					expr = expr.CastTo(new PrimitiveType("byte"));
 				else if (pe.Value is short)
-					expr = expr.CastTo(new NRefactory.CSharp.PrimitiveType("short"));
+					expr = expr.CastTo(new PrimitiveType("short"));
 				else if (pe.Value is ushort)
-					expr = expr.CastTo(new NRefactory.CSharp.PrimitiveType("ushort"));
+					expr = expr.CastTo(new PrimitiveType("ushort"));
 			}
 			var exprRR = expr.Annotation<ResolveResult>();
 			if (exprRR == null) {

@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {

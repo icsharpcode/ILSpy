@@ -18,14 +18,14 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using ICSharpCode.NRefactory.CSharp.Resolver;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
+using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.NRefactory.CSharp.TypeSystem.ConstantValues
+namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 {
 	// Contains representations for constant C# expressions.
 	// We use these instead of storing the full AST to reduce the memory usage.

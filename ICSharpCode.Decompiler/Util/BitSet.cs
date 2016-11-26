@@ -20,7 +20,7 @@ using System;
 using System.Diagnostics;
 using System.Text;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.Util
 {
 	/// <summary>
 	/// Improved version of BitArray

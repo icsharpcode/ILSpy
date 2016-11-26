@@ -18,10 +18,11 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	/// <summary>
 	/// Default implementation of <see cref="IUnresolvedAttribute"/>.
@@ -47,7 +48,7 @@ namespace ICSharpCode.NRefactory.TypeSystem.Implementation
 			if (attributeType == null)
 				throw new ArgumentNullException("attributeType");
 			this.attributeType = attributeType;
-			this.ConstructorParameterTypes.AddRange(constructorParameterTypes);
+			ExtensionMethods.AddRange(this.ConstructorParameterTypes, constructorParameterTypes);
 		}
 		
 		protected override void FreezeInternal()

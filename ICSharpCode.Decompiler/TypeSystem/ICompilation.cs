@@ -18,9 +18,9 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.NRefactory.TypeSystem
+namespace ICSharpCode.Decompiler.TypeSystem
 {
 	public interface ICompilation
 	{

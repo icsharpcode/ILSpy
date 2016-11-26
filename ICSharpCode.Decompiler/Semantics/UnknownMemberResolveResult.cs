@@ -21,9 +21,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
-using ICSharpCode.NRefactory.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.NRefactory.Semantics
+namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
 	/// Represents an unknown member.

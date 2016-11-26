@@ -19,7 +19,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.NRefactory.Utils
+namespace ICSharpCode.Decompiler.Util
 {
 	public sealed class ProjectedList<TInput, TOutput> : IList<TOutput> where TOutput : class
 	{

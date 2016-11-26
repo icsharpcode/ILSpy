@@ -20,13 +20,16 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using ICSharpCode.NRefactory.CSharp.TypeSystem;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
+using ICSharpCode.NRefactory.CSharp;
 
-namespace ICSharpCode.NRefactory.CSharp.Resolver
+namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
 	/// <summary>
 	/// Contains the main resolver logic.
@@ -1386,7 +1389,7 @@ namespace ICSharpCode.NRefactory.CSharp.Resolver
 		
 		internal object CSharpPrimitiveCast(TypeCode targetType, object input)
 		{
-			return Utils.CSharpPrimitiveCast.Cast(targetType, input, this.CheckForOverflow);
+			return Util.CSharpPrimitiveCast.Cast(targetType, input, this.CheckForOverflow);
 		}
 		#endregion
 		

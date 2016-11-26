@@ -23,11 +23,14 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Immutable;
 using System.Diagnostics;
-using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using Cil = Mono.Cecil.Cil;
 using System.Collections;
 using System.Threading;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
+using ArrayType = ICSharpCode.Decompiler.TypeSystem.ArrayType;
+using ByReferenceType = ICSharpCode.Decompiler.TypeSystem.ByReferenceType;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -48,14 +51,14 @@ namespace ICSharpCode.Decompiler.IL
 		StackType methodReturnStackType;
 		Cil.Instruction currentInstruction;
 		int nextInstructionIndex;
-		ImmutableStack<ILVariable> currentStack;
+	    System.Collections.Immutable.ImmutableStack<ILVariable> currentStack;
 		ILVariable[] parameterVariables;
 		ILVariable[] localVariables;
 		BitArray isBranchTarget;
 		List<ILInstruction> instructionBuilder;
 
 		// Dictionary that stores stacks for each IL instruction
-		Dictionary<int, ImmutableStack<ILVariable>> stackByOffset;
+		Dictionary<int, System.Collections.Immutable.ImmutableStack<ILVariable>> stackByOffset;
 		Dictionary<Cil.ExceptionHandler, ILVariable> variableByExceptionHandler;
 		UnionFind<ILVariable> unionFind;
 		IEnumerable<ILVariable> stackVariables;
@@ -67,7 +70,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.body = body;
 			this.currentInstruction = null;
 			this.nextInstructionIndex = 0;
-			this.currentStack = ImmutableStack<ILVariable>.Empty;
+			this.currentStack = System.Collections.Immutable.ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new UnionFind<ILVariable>();
 			this.methodReturnStackType = typeSystem.Resolve(body.Method.ReturnType).GetStackType();
 			InitParameterVariables();
@@ -79,7 +82,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			this.instructionBuilder = new List<ILInstruction>();
 			this.isBranchTarget = new BitArray(body.CodeSize);
-			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
+			this.stackByOffset = new Dictionary<int, System.Collections.Immutable.ImmutableStack<ILVariable>>();
 			this.variableByExceptionHandler = new Dictionary<Cil.ExceptionHandler, ILVariable>();
 		}
 
@@ -138,7 +141,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (def != null && def.TypeParameterCount > 0) {
 					parameterType = new ParameterizedType(def, def.TypeArguments);
 					if (def.IsReferenceType == false) {
-						parameterType = new NRefactory.TypeSystem.ByReferenceType(parameterType);
+						parameterType = new ByReferenceType(parameterType);
 					}
 				} else {
 					parameterType = typeSystem.Resolve(p.ParameterType);
@@ -173,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Fail(string.Format("IL_{0:x4}: {1}", currentInstruction.Offset, message));
 		}
 
-		void MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
+		void MergeStacks(System.Collections.Immutable.ImmutableStack<ILVariable> a, System.Collections.Immutable.ImmutableStack<ILVariable> b)
 		{
 			var enum1 = a.GetEnumerator();
 			var enum2 = b.GetEnumerator();
@@ -192,9 +195,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		void StoreStackForOffset(int offset, ImmutableStack<ILVariable> stack)
+		void StoreStackForOffset(int offset, System.Collections.Immutable.ImmutableStack<ILVariable> stack)
 		{
-			ImmutableStack<ILVariable> existing;
+		    System.Collections.Immutable.ImmutableStack<ILVariable> existing;
 			if (stackByOffset.TryGetValue(offset, out existing)) {
 				MergeStacks(existing, stack);
 			} else {
@@ -206,7 +209,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			// Fill isBranchTarget and branchStackDict based on exception handlers
 			foreach (var eh in body.ExceptionHandlers) {
-				ImmutableStack<ILVariable> ehStack = null;
+			    System.Collections.Immutable.ImmutableStack<ILVariable> ehStack = null;
 				if (eh.HandlerType == Cil.ExceptionHandlerType.Catch || eh.HandlerType == Cil.ExceptionHandlerType.Filter) {
 					var v = new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), eh.HandlerStart.Offset) {
 						Name = "E_" + eh.HandlerStart.Offset
@@ -214,7 +217,7 @@ namespace ICSharpCode.Decompiler.IL
 					variableByExceptionHandler.Add(eh, v);
 					ehStack = ImmutableStack.Create(v);
 				} else {
-					ehStack = ImmutableStack<ILVariable>.Empty;
+					ehStack = System.Collections.Immutable.ImmutableStack<ILVariable>.Empty;
 				}
 				if (eh.FilterStart != null) {
 					isBranchTarget[eh.FilterStart.Offset] = true;
@@ -240,7 +243,7 @@ namespace ICSharpCode.Decompiler.IL
 				instructionBuilder.Add(decodedInstruction);
 				if (decodedInstruction.HasDirectFlag(InstructionFlags.EndPointUnreachable)) {
 					if (!stackByOffset.TryGetValue(end, out currentStack)) {
-						currentStack = ImmutableStack<ILVariable>.Empty;
+						currentStack = System.Collections.Immutable.ImmutableStack<ILVariable>.Empty;
 					}
 				}
 				Debug.Assert(currentInstruction.Next == null || currentInstruction.Next.Offset == end);
@@ -296,10 +299,10 @@ namespace ICSharpCode.Decompiler.IL
 			var blockBuilder = new BlockBuilder(body, typeSystem, variableByExceptionHandler);
 			var container = blockBuilder.CreateBlocks(instructionBuilder, isBranchTarget);
 			var function = new ILFunction(body.Method, container);
-			function.Variables.AddRange(parameterVariables);
-			function.Variables.AddRange(localVariables);
-			function.Variables.AddRange(stackVariables);
-			function.Variables.AddRange(variableByExceptionHandler.Values);
+			CollectionExtensions.AddRange(function.Variables, parameterVariables);
+			CollectionExtensions.AddRange(function.Variables, localVariables);
+			CollectionExtensions.AddRange(function.Variables, stackVariables);
+			CollectionExtensions.AddRange(function.Variables, variableByExceptionHandler.Values);
 			function.AddRef(); // mark the root node
 			foreach (var c in function.Descendants.OfType<BlockContainer>()) {
 				c.SortBlocks();
@@ -1050,7 +1053,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			switch (method.DeclaringType.Kind) {
 				case TypeKind.Array:
-					var elementType = ((ICSharpCode.NRefactory.TypeSystem.ArrayType)method.DeclaringType).ElementType;
+					var elementType = ((ArrayType)method.DeclaringType).ElementType;
 					if (opCode == OpCode.NewObj)
 						return Push(new NewArr(elementType, arguments));
 					if (method.Name == "Set") {

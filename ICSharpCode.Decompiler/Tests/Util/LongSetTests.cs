@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Linq;
+using ICSharpCode.Decompiler.Util;
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Util

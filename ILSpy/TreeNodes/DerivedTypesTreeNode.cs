@@ -21,7 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using ICSharpCode.Decompiler;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.Util;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes

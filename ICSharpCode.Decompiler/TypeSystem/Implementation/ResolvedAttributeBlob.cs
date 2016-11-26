@@ -28,10 +28,11 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	sealed class CecilResolvedAttribute : IAttribute
 	{

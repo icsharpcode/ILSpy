@@ -19,6 +19,7 @@
 using System;
 using System.Linq;
 using System.Reflection;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.NRefactory.CSharp;
 using ICSharpCode.NRefactory.PatternMatching;
 using Mono.Cecil;

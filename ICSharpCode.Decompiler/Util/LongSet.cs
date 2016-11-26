@@ -22,7 +22,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Linq;
 
-namespace ICSharpCode.Decompiler
+namespace ICSharpCode.Decompiler.Util
 {
 	/// <summary>
 	/// An immutable set of longs, that is implemented as a list of intervals.

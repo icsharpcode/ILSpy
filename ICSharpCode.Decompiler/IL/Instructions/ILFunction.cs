@@ -20,10 +20,11 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using ICSharpCode.Decompiler.IL.Transforms;
-using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.Disassembler;
 using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {

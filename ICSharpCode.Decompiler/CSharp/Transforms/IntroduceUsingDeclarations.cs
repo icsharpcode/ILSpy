@@ -19,12 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.CSharp.Refactoring;
-using ICSharpCode.NRefactory.CSharp.Resolver;
-using ICSharpCode.NRefactory.CSharp.TypeSystem;
-using ICSharpCode.NRefactory.Semantics;
-using ICSharpCode.NRefactory.TypeSystem;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms

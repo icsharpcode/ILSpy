@@ -19,10 +19,10 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using ICSharpCode.Decompiler.Util;
+using ICSharpCode.NRefactory;
 
-using ICSharpCode.NRefactory.Utils;
-
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public abstract class AbstractTypeParameter : ITypeParameter, ICompilationProvider
 	{

@@ -18,9 +18,9 @@
 
 using System;
 using System.Globalization;
-using ICSharpCode.NRefactory.Utils;
+using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	[Serializable]
 	public sealed class TypeParameterReference : ITypeReference, ISymbolReference

@@ -18,8 +18,8 @@
 
 using System;
 using System.Linq;
-using ICSharpCode.NRefactory.TypeSystem;
-using ICSharpCode.NRefactory.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.NRefactory.Documentation
 {

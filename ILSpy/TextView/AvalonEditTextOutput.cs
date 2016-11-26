@@ -27,6 +27,7 @@ using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.Decompiler;
+using TextLocation = ICSharpCode.Decompiler.CSharp.Syntax.TextLocation;
 
 namespace ICSharpCode.ILSpy.TextView
 {
@@ -119,9 +120,9 @@ namespace ICSharpCode.ILSpy.TextView
 			get { return b.Length; }
 		}
 		
-		public ICSharpCode.NRefactory.TextLocation Location {
+		public TextLocation Location {
 			get {
-				return new ICSharpCode.NRefactory.TextLocation(lineNumber, b.Length - lastLineStart + 1 + (needsIndent ? indent : 0));
+				return new TextLocation(lineNumber, b.Length - lastLineStart + 1 + (needsIndent ? indent : 0));
 			}
 		}
 		

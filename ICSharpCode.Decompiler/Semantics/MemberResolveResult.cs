@@ -16,14 +16,12 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem;
 
-using ICSharpCode.NRefactory.TypeSystem;
-
-namespace ICSharpCode.NRefactory.Semantics
+namespace ICSharpCode.Decompiler.Semantics
 {
 	/// <summary>
 	/// Represents the result of a member invocation.

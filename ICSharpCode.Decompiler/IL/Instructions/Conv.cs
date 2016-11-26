@@ -18,6 +18,7 @@
 
 using System;
 using System.Diagnostics;
+using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
 {

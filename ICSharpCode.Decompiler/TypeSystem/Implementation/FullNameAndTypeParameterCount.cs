@@ -17,9 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 
-namespace ICSharpCode.NRefactory.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	[Obsolete("This struct was renamed to 'TopLevelTypeName'.", true)]
 	public struct FullNameAndTypeParameterCount
