@@ -16,7 +16,7 @@
     <WarningLevel>4</WarningLevel>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\NRefactory\ICSharpCode.NRefactory.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
     <DelaySign>False</DelaySign>
     <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
   </PropertyGroup>
@@ -538,6 +538,7 @@
     <Compile Include="Util\TreeTraversal.cs" />
     <Compile Include="Util\UnionFind.cs" />
     <None Include="ICSharpCode.Decompiler.ruleset" />
+    <None Include="ICSharpCode.Decompiler.snk" />
     <None Include="IL\ILOpCodes.tt">
       <Generator>TextTemplatingFileGenerator</Generator>
       <LastGenOutput>ILOpCodes.cs</LastGenOutput>

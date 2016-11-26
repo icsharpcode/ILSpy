@@ -20,7 +20,7 @@
     <RunCodeAnalysis>False</RunCodeAnalysis>
     <StartArguments>/separate</StartArguments>
     <SignAssembly>True</SignAssembly>
-    <AssemblyOriginatorKeyFile>..\NRefactory\ICSharpCode.NRefactory.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
     <DelaySign>False</DelaySign>
     <AssemblyOriginatorKeyMode>File</AssemblyOriginatorKeyMode>
   </PropertyGroup>
@@ -283,6 +283,7 @@
     <Resource Include="Images\Breakpoint.png" />
     <Resource Include="Images\CurrentLine.png" />
     <Resource Include="Images\DisabledBreakpoint.png" />
+    <None Include="ICSharpCode.Decompiler.snk" />
     <None Include="Images\ResourceXsl.png" />
     <None Include="packages.config" />
     <None Include="Properties\app.config.template" />
