@@ -23,8 +23,6 @@ using System.IO;
 using System.Runtime.Serialization;
 using System.Text;
 using System.Xml;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.NRefactory.Editor;
 
 namespace ICSharpCode.NRefactory.Documentation
 {

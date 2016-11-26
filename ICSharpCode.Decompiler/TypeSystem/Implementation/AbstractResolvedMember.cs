@@ -19,7 +19,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory.Documentation;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {

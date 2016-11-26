@@ -25,7 +25,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory.Documentation;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.TypeSystem

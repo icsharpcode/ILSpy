@@ -1,6 +1,6 @@
 using System;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
-using ICSharpCode.NRefactory.Editor;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {

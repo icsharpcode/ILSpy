@@ -25,7 +25,7 @@
 // THE SOFTWARE.
 
 using System;
-using ICSharpCode.NRefactory.Editor;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {

@@ -28,7 +28,6 @@ using System;
 using System.Reflection;
 using System.Threading;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.Documentation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {

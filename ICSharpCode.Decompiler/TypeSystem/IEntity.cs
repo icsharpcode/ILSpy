@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using ICSharpCode.NRefactory.Documentation;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
