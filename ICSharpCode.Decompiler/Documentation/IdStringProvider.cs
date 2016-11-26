@@ -22,7 +22,7 @@ using System.Text;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
-namespace ICSharpCode.NRefactory.Documentation
+namespace ICSharpCode.Decompiler.Documentation
 {
 	/// <summary>
 	/// Provides ID strings for entities. (C# 4.0 spec, §A.3.1)

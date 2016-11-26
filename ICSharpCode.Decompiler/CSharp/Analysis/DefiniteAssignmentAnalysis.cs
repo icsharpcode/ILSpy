@@ -26,7 +26,7 @@ using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
-namespace ICSharpCode.NRefactory.CSharp.Analysis
+namespace ICSharpCode.Decompiler.CSharp.Analysis
 {
 	/// <summary>
 	/// Represents the definite assignment status of a variable at a specific location.

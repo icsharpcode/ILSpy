@@ -1,18 +1,6 @@
 ﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
 // This code is distributed under the GNU LGPL (for details please see \doc\license.txt)
 
-using System;
-using System.Collections;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
-using System.Resources;
-using System.Xml.Linq;
-using ICSharpCode.Decompiler.Tests.Helpers;
-using ICSharpCode.ILSpy;
-using Mono.Cecil;
-using NUnit.Framework;
-using Ricciolo.StylesExplorer.MarkupReflection;
 
 namespace ILSpy.BamlDecompiler.Tests
 {

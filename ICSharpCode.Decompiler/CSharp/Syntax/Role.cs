@@ -33,7 +33,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		readonly uint index;
 		
-		[CLSCompliant(false)]
 		public uint Index {
 			get { return index; }
 		}
@@ -55,7 +54,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		/// <summary>
 		/// Gets the role with the specified index.
 		/// </summary>
-		[CLSCompliant(false)]
 		public static Role GetByIndex(uint index)
 		{
 			return roles[index];

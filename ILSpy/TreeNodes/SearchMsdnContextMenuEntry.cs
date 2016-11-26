@@ -16,13 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Linq;
-using System.Windows;
 using System.Diagnostics;
-using Mono.Cecil;
-using ICSharpCode.TreeView;
-using ICSharpCode.ILSpy.TreeNodes.Analyzer;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {

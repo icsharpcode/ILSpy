@@ -24,8 +24,6 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
-using ICSharpCode.NRefactory;
-using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy

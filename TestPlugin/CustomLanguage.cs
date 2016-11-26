@@ -1,13 +1,10 @@
 ﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
-using System;
 using System.ComponentModel.Composition;
-using System.Linq;
 using System.Windows.Controls;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy;
-using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 
 namespace TestPlugin

@@ -2,8 +2,6 @@
 // This code is distributed under the MS-PL (for details please see \doc\MS-PL.txt)
 
 using System;
-using System.Linq;
-using ICSharpCode.ILSpy;
 using Mono.Cecil;
 using Ricciolo.StylesExplorer.MarkupReflection;
 

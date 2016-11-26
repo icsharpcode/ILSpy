@@ -23,15 +23,9 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Resources;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Xml;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.ILSpy.Options;
-using ICSharpCode.ILSpy.XmlDoc;
-using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;

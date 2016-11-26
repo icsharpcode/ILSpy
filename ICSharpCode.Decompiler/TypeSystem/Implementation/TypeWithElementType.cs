@@ -22,7 +22,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {
 	public abstract class TypeWithElementType : AbstractType
 	{
-		[CLSCompliant(false)]
 		protected IType elementType;
 		
 		protected TypeWithElementType(IType elementType)

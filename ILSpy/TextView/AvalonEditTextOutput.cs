@@ -26,7 +26,6 @@ using System.Windows;
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
 using ICSharpCode.AvalonEdit.Rendering;
-using ICSharpCode.Decompiler;
 using TextLocation = ICSharpCode.Decompiler.CSharp.Syntax.TextLocation;
 
 namespace ICSharpCode.ILSpy.TextView

@@ -5,13 +5,9 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.ComponentModel;
-using System.Collections.ObjectModel;
-using System.Windows.Controls;
 using System.Collections.Specialized;
-using System.Windows.Input;
 using System.Windows.Media;
 
 namespace ICSharpCode.TreeView

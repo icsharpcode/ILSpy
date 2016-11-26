@@ -20,7 +20,6 @@
 //     csc ShortCircuit.cs /t:Library && ildasm /text ShortCircuit.dll >ShortCircuit.il
 //     csc ShortCircuit.cs /t:Library /o /out:ShortCircuit.opt.dll && ildasm /text ShortCircuit.opt.dll >ShortCircuit.opt.il
 
-using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {

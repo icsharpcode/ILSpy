@@ -68,10 +68,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="CSharp\Analysis\AnnotationNames.cs" />
     <Compile Include="CSharp\Analysis\ControlFlow.cs" />
-    <Compile Include="CSharp\Analysis\DeclarationSpace\LocalDeclarationSpace.cs" />
-    <Compile Include="CSharp\Analysis\DeclarationSpace\LocalDeclarationSpaceVisitor.cs" />
     <Compile Include="CSharp\Analysis\DefiniteAssignmentAnalysis.cs" />
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
@@ -504,7 +501,6 @@
     <Compile Include="TypeSystem\TypesHierarchyHelpers.cs" />
     <Compile Include="TypeSystem\TypeVisitor.cs" />
     <Compile Include="TypeSystem\VarArgInstanceMethod.cs" />
-    <Compile Include="Util\7BitEncodedInts.cs" />
     <Compile Include="Util\BitVector16.cs" />
     <Compile Include="Util\BusyManager.cs" />
     <Compile Include="Util\CacheManager.cs" />
@@ -514,7 +510,6 @@
     <Compile Include="Util\CSharpPrimitiveCast.cs" />
     <Compile Include="Util\EmptyList.cs" />
     <Compile Include="Util\ExtensionMethods.cs" />
-    <Compile Include="Util\ImmutableStack.cs" />
     <Compile Include="Util\Interval.cs" />
     <Compile Include="Util\LazyInit.cs" />
     <Compile Include="Util\LongSet.cs" />

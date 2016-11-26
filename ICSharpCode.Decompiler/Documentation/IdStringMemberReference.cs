@@ -19,7 +19,7 @@
 using System;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.NRefactory.Documentation
+namespace ICSharpCode.Decompiler.Documentation
 {
 	[Serializable]
 	class IdStringMemberReference : IMemberReference

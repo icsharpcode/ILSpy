@@ -26,7 +26,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.Semantics;
 
-namespace ICSharpCode.NRefactory.CSharp.Analysis
+namespace ICSharpCode.Decompiler.CSharp.Analysis
 {
 	/// <summary>
 	/// Represents a node in the control flow graph of a C# method.

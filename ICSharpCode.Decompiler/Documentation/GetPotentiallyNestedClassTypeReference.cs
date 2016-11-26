@@ -21,7 +21,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
-namespace ICSharpCode.NRefactory.Documentation
+namespace ICSharpCode.Decompiler.Documentation
 {
 	/// <summary>
 	/// A type reference of the form 'Some.Namespace.TopLevelType.NestedType`n'.

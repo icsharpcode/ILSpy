@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
@@ -31,7 +30,7 @@ using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {
-	#if DEBUG
+#if DEBUG
 	/// <summary>
 	/// Represents the ILAst "language" used for debugging purposes.
 	/// </summary>

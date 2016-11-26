@@ -49,9 +49,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			switch (backend) {
 				case AssemblyLoaderBackend.Auto:
 				case AssemblyLoaderBackend.Cecil:
-					return (AssemblyLoader)Assembly.Load ("ICSharpCode.NRefactory.Cecil").CreateInstance ("ICSharpCode.NRefactory.TypeSystem.CecilLoader");
+					return (AssemblyLoader)Assembly.Load ("ICSharpCode.Decompiler.Cecil").CreateInstance ("ICSharpCode.Decompiler.TypeSystem.CecilLoader");
 				case AssemblyLoaderBackend.IKVM:
-					return (AssemblyLoader)Assembly.Load ("ICSharpCode.NRefactory.IKVM").CreateInstance ("ICSharpCode.NRefactory.TypeSystem.IkvmLoader");
+					return (AssemblyLoader)Assembly.Load ("ICSharpCode.Decompiler.IKVM").CreateInstance ("ICSharpCode.Decompiler.TypeSystem.IkvmLoader");
 				default:
 					throw new ArgumentOutOfRangeException ();
 			}
@@ -67,7 +67,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public CancellationToken CancellationToken { get; set; }
 
-		[CLSCompliant(false)]
 		protected InterningProvider interningProvider = new SimpleInterningProvider();
 
 		/// <summary>

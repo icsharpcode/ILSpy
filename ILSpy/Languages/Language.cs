@@ -17,11 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Resources;
 
 using ICSharpCode.Decompiler;
 using Mono.Cecil;

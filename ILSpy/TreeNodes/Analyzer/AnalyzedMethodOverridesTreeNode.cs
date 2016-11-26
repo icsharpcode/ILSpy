@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
 

@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.NRefactory.CSharp;
+﻿using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers

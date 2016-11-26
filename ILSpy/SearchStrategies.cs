@@ -4,9 +4,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy
 {

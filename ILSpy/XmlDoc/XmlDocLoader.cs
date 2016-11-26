@@ -20,7 +20,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.CompilerServices;
-using ICSharpCode.NRefactory.Documentation;
+using ICSharpCode.Decompiler.Documentation;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.XmlDoc

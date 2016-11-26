@@ -19,7 +19,6 @@
 using System;
 using System.ComponentModel.Composition;
 using System.Linq;
-using System.Windows;
 using System.Windows.Controls;
 
 using ICSharpCode.AvalonEdit;
