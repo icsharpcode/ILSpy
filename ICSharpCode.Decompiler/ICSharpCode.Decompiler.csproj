@@ -526,7 +526,6 @@
     <Compile Include="Util\CSharpPrimitiveCast.cs" />
     <Compile Include="Util\EmptyList.cs" />
     <Compile Include="Util\ExtensionMethods.cs" />
-    <Compile Include="Util\FastSerializer.cs" />
     <Compile Include="Util\ImmutableStack.cs" />
     <Compile Include="Util\Interval.cs" />
     <Compile Include="Util\LazyInit.cs" />

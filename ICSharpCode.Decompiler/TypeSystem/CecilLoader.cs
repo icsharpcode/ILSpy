@@ -275,7 +275,7 @@ namespace ICSharpCode.NRefactory.TypeSystem
 		#endregion
 		
 		#region IUnresolvedAssembly implementation
-		[Serializable, FastSerializerVersion(cecilLoaderVersion)]
+		[Serializable]
 		sealed class CecilUnresolvedAssembly : DefaultUnresolvedAssembly, IDocumentationProvider
 		{
 			readonly IDocumentationProvider documentationProvider;
