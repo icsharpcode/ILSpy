@@ -128,6 +128,7 @@
     <Compile Include="PrettyTestRunner.cs" />
     <Compile Include="RoundtripAssembly.cs" />
     <Compile Include="TestCases\Correctness\CompoundAssignment.cs" />
+    <Compile Include="TestCases\Correctness\ConditionalAttr.cs" />
     <Compile Include="TestCases\Correctness\ControlFlow.cs" />
     <Compile Include="TestCases\Correctness\Conversions.cs" />
     <Compile Include="TestCases\Correctness\DecimalFields.cs" />

@@ -44,6 +44,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		readonly DecompilerTypeSystem typeSystem;
 		readonly DecompilerSettings settings;
+		private SyntaxTree syntaxTree;
 
 		List<IILTransform> ilTransforms = GetILTransforms();
 
@@ -229,7 +230,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public SyntaxTree DecompileModuleAndAssemblyAttributes()
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
-			SyntaxTree syntaxTree = new SyntaxTree();
+			syntaxTree = new SyntaxTree();
 			DoDecompileModuleAndAssemblyAttributes(decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompilationContext);
 			return syntaxTree;
@@ -275,7 +276,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public SyntaxTree DecompileWholeModuleAsSingleFile()
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
-			SyntaxTree syntaxTree = new SyntaxTree();
+			syntaxTree = new SyntaxTree();
 			DoDecompileModuleAndAssemblyAttributes(decompilationContext, syntaxTree);
 			DoDecompileTypes(typeSystem.ModuleDefinition.Types, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompilationContext);
@@ -293,7 +294,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (types == null)
 				throw new ArgumentNullException(nameof(types));
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
-			SyntaxTree syntaxTree = new SyntaxTree();
+			syntaxTree = new SyntaxTree();
 			DoDecompileTypes(types, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompilationContext);
 			return syntaxTree;
@@ -307,7 +308,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (definitions == null)
 				throw new ArgumentNullException(nameof(definitions));
 			ITypeDefinition parentTypeDef = null;
-			var syntaxTree = new SyntaxTree();
+			syntaxTree = new SyntaxTree();
 			foreach (var def in definitions) {
 				if (def == null)
 					throw new ArgumentException("definitions contains null element");
@@ -594,9 +595,21 @@ namespace ICSharpCode.Decompiler.CSharp
 				transform.Run(function, context);
 				function.CheckInvariant(ILPhase.Normal);
 			}
-			
+
+			AddDefinesForConditionalAttributes(function);
 			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method);
 			entityDecl.AddChild(statementBuilder.ConvertAsBlock(function.Body), Roles.Body);
+		}
+
+		void AddDefinesForConditionalAttributes(ILFunction function)
+		{
+			foreach (var call in function.Descendants.OfType<CallInstruction>()) {
+				var attr = call.Method.GetAttribute(new TopLevelTypeName("System.Diagnostics", nameof(ConditionalAttribute)));
+				var symbolName = attr?.PositionalArguments.FirstOrDefault()?.ConstantValue as string;
+				if (symbolName == null)
+					continue;
+				syntaxTree.InsertChildAfter(null, new PreProcessorDirective(PreProcessorDirectiveType.Define, symbolName), Roles.PreProcessorDirective);
+			}
 		}
 
 		EntityDeclaration DoDecompile(FieldDefinition fieldDefinition, IField field, ITypeResolveContext decompilationContext)

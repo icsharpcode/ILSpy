@@ -43,6 +43,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			requiredImports.ImportedNamespaces.Add("System"); // always import System, even when not necessary
 			
 			var usingScope = new UsingScope();
+
+			var insertionPoint = compilationUnit.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
 			
 			// Now add using declarations for those namespaces:
 			foreach (string ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n)) {
@@ -58,7 +60,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (reference != null)
 						usingScope.Usings.Add(reference);
 				}
-				compilationUnit.InsertChildAfter(null, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
+				compilationUnit.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
 			}
 			
 			if (!FullyQualifyAmbiguousTypeNames)
