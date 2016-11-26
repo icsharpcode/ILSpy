@@ -18,10 +18,8 @@
 
 using System;
 using System.Linq;
-using System.Reflection;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.PatternMatching;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms

@@ -24,8 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using ICSharpCode.NRefactory.CSharp;
-using Attribute = ICSharpCode.NRefactory.CSharp.Attribute;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -628,7 +626,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			VisitChildren(errorNode);
 		}
 
-		public virtual void VisitPatternPlaceholder(AstNode placeholder, NRefactory.PatternMatching.Pattern pattern)
+		public virtual void VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern)
 		{
 			VisitChildren (placeholder);
 		}
@@ -1235,7 +1233,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(errorNode);
 		}
 
-		public virtual T VisitPatternPlaceholder(AstNode placeholder, NRefactory.PatternMatching.Pattern pattern)
+		public virtual T VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern)
 		{
 			return VisitChildren (placeholder);
 		}
@@ -1842,7 +1840,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return VisitChildren(errorNode, data);
 		}
 
-		public virtual S VisitPatternPlaceholder(AstNode placeholder, NRefactory.PatternMatching.Pattern pattern, T data)
+		public virtual S VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern, T data)
 		{
 			return VisitChildren (placeholder, data);
 		}

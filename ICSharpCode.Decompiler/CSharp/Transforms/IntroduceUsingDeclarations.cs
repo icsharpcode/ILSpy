@@ -24,8 +24,6 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.NRefactory.CSharp;
-using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -174,7 +172,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return;
 				}
 				// HACK : ignore type names in attributes (TypeSystemAstBuilder doesn't handle them correctly)
-				if (simpleType.Parent is NRefactory.CSharp.Attribute) {
+				if (simpleType.Parent is Syntax.Attribute) {
 					base.VisitSimpleType(simpleType);
 					return;
 				}

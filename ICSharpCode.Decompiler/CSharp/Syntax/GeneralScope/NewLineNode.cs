@@ -1,8 +1,8 @@
 using System;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
-using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.NRefactory.Editor;
 
-namespace ICSharpCode.NRefactory.CSharp
+namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 
 	/// <summary>
@@ -85,7 +85,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			return visitor.VisitNewLine (this, data);
 		}
 		
-		protected internal override bool DoMatch(AstNode other, ICSharpCode.NRefactory.PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			return other is NewLineNode;
 		}

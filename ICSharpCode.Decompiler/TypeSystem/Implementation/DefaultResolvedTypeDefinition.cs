@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.Documentation;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -620,24 +619,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public IAssembly ParentAssembly {
 			get { return parentContext.CurrentAssembly; }
-		}
-		
-		public virtual DocumentationComment Documentation {
-			get {
-				foreach (var part in parts) {
-					var unresolvedProvider = part.UnresolvedFile as IUnresolvedDocumentationProvider;
-					if (unresolvedProvider != null) {
-						var doc = unresolvedProvider.GetDocumentation(part, this);
-						if (doc != null)
-							return doc;
-					}
-				}
-				IDocumentationProvider provider = AbstractResolvedEntity.FindDocumentation(parentContext);
-				if (provider != null)
-					return provider.GetDocumentation(this);
-				else
-					return null;
-			}
 		}
 		
 		public ICompilation Compilation {

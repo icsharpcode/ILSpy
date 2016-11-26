@@ -25,7 +25,6 @@
 // THE SOFTWARE.
 
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
-using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -65,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 			
-			protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -123,7 +122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitCSharpTokenNode (this, data);
 		}
 		
-		protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			CSharpTokenNode o = other as CSharpTokenNode;
 			return o != null && !o.IsNull && !(o is CSharpModifierToken);

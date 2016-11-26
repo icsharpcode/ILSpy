@@ -30,7 +30,6 @@ using System.Diagnostics;
 using System.Threading;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {

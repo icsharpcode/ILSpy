@@ -21,7 +21,6 @@ using System.Globalization;
 using System.IO;
 using System.Text;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {

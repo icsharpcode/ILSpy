@@ -23,7 +23,6 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.Documentation;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -228,10 +227,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public bool IsExplicitInterfaceImplementation {
 			get { return baseMember.IsExplicitInterfaceImplementation; }
-		}
-		
-		public DocumentationComment Documentation {
-			get { return baseMember.Documentation; }
 		}
 		
 		public Accessibility Accessibility {

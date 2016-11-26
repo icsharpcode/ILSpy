@@ -28,7 +28,6 @@ using System.Collections.Generic;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -60,7 +59,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 			
-			protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -140,7 +139,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitSimpleType (this, data);
 		}
 		
-		protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			SimpleType o = other as SimpleType;
 			return o != null && MatchString(this.Identifier, o.Identifier) && this.TypeArguments.DoMatch(o.TypeArguments, match);

@@ -38,7 +38,7 @@ namespace ICSharpCode.NRefactory.Documentation
 	/// If the .xml file is changed, the index will automatically be recreated.
 	/// </remarks>
 	[Serializable]
-	public class XmlDocumentationProvider : IDocumentationProvider, IDeserializationCallback
+	public class XmlDocumentationProvider : IDeserializationCallback
 	{
 		#region Cache
 		sealed class XmlDocumentationCache
@@ -374,19 +374,6 @@ namespace ICSharpCode.NRefactory.Documentation
 				return null;				
 			}
 			return GetDocumentation(key, allowReload: false); // prevent infinite reload loops
-		}
-		#endregion
-		
-		#region GetDocumentation for entity
-		/// <inheritdoc/>
-		public DocumentationComment GetDocumentation(IEntity entity)
-		{
-			string xmlDoc = GetDocumentation(IdStringProvider.GetIdString(entity));
-			if (xmlDoc != null) {
-				return new DocumentationComment(new StringTextSource(xmlDoc), new SimpleTypeResolveContext(entity));
-			} else {
-				return null;
-			}
 		}
 		#endregion
 		

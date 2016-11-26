@@ -28,7 +28,6 @@ using System.Collections.Generic;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -111,7 +110,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitMemberType (this, data);
 		}
 		
-		protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			MemberType o = other as MemberType;
 			return o != null && this.IsDoubleColon == o.IsDoubleColon

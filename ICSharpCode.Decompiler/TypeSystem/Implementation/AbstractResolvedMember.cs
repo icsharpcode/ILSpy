@@ -19,7 +19,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.Documentation;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
@@ -90,18 +89,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				result = result.Where(item => !otherMembers.Any(m => m.IsExplicitInterfaceImplementation && m.ImplementedInterfaceMembers.Contains(item))).ToArray();
 
 				return result;
-			}
-		}
-		
-		public override DocumentationComment Documentation {
-			get {
-				IUnresolvedDocumentationProvider docProvider = unresolved.UnresolvedFile as IUnresolvedDocumentationProvider;
-				if (docProvider != null) {
-					var doc = docProvider.GetDocumentation(unresolved, this);
-					if (doc != null)
-						return doc;
-				}
-				return base.Documentation;
 			}
 		}
 		

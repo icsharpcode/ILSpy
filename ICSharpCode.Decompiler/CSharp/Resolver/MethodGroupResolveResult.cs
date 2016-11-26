@@ -22,9 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
 
 namespace ICSharpCode.Decompiler.CSharp.Resolver
 {

@@ -25,9 +25,8 @@
 // THE SOFTWARE.
 
 using System.Collections.Generic;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 
-namespace ICSharpCode.NRefactory.CSharp
+namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// { Statements }

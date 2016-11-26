@@ -18,8 +18,6 @@
 
 using System.Diagnostics;
 using ICSharpCode.Decompiler.IL;
-using ICSharpCode.NRefactory.CSharp;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -92,14 +90,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			var value = exprBuilder.Translate(inst.Value);
 			var stmt = new SwitchStatement() { Expression = value };	
 			foreach (var section in inst.Sections) {
-				var astSection = new ICSharpCode.NRefactory.CSharp.SwitchSection();
+				var astSection = new Syntax.SwitchSection();
 				astSection.CaseLabels.AddRange(section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type)));
 				ConvertSwitchSectionBody(astSection, section.Body);
 				stmt.SwitchSections.Add(astSection);
 			}
 			
 			if (inst.DefaultBody.OpCode != OpCode.Nop) {
-				var astSection = new ICSharpCode.NRefactory.CSharp.SwitchSection();
+				var astSection = new Syntax.SwitchSection();
 				astSection.CaseLabels.Add(new CaseLabel());
 				ConvertSwitchSectionBody(astSection, inst.DefaultBody);
 				stmt.SwitchSections.Add(astSection);
@@ -109,7 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return stmt;
 		}
 
-		private void ConvertSwitchSectionBody(NRefactory.CSharp.SwitchSection astSection, ILInstruction bodyInst)
+		private void ConvertSwitchSectionBody(Syntax.SwitchSection astSection, ILInstruction bodyInst)
 		{
 			var body = Convert(bodyInst);
 			astSection.Statements.Add(body);

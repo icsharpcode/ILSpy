@@ -29,7 +29,6 @@ using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
-using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -100,7 +99,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitPrimitiveType (this, data);
 		}
 		
-		protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			PrimitiveType o = other as PrimitiveType;
 			return o != null && MatchString(this.Keyword, o.Keyword);

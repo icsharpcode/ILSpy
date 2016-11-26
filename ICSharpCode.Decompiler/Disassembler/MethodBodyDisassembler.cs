@@ -18,10 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-
-using ICSharpCode.Decompiler;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 

@@ -18,14 +18,13 @@
 
 using System;
 using System.Linq;
-using ICSharpCode.NRefactory.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Matches identifier expressions that have the same identifier as the referenced variable/type definition/method definition.
 	/// </summary>
-	public class IdentifierExpressionBackreference : Pattern
+	public class IdentifierExpressionBackreference : PatternMatching.Pattern
 	{
 		readonly string referencedGroupName;
 		
@@ -40,9 +39,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			this.referencedGroupName = referencedGroupName;
 		}
 		
-		public override bool DoMatch(INode other, Match match)
+		public override bool DoMatch(PatternMatching.INode other, PatternMatching.Match match)
 		{
-			NRefactory.CSharp.IdentifierExpression ident = other as NRefactory.CSharp.IdentifierExpression;
+			IdentifierExpression ident = other as IdentifierExpression;
 			if (ident == null || ident.TypeArguments.Any())
 				return false;
 			AstNode referenced = (AstNode)match.Get(referencedGroupName).Last();

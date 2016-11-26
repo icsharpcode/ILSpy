@@ -22,10 +22,9 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.PatternMatching;
-using Attribute = ICSharpCode.NRefactory.CSharp.Attribute;
+using Attribute = ICSharpCode.Decompiler.CSharp.Syntax.Attribute;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
@@ -2276,7 +2275,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		#endregion
 
 		#region Pattern Nodes
-		public virtual void VisitPatternPlaceholder(AstNode placeholder, NRefactory.PatternMatching.Pattern pattern)
+		public virtual void VisitPatternPlaceholder(AstNode placeholder, Pattern pattern)
 		{
 			StartNode(placeholder);
 			VisitNodeInPattern(pattern);

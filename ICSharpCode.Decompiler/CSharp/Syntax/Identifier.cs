@@ -54,7 +54,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 			
-			protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -164,7 +164,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitIdentifier (this, data);
 		}
 		
-		protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			Identifier o = other as Identifier;
 			return o != null && !o.IsNull && MatchString(this.Name, o.Name);

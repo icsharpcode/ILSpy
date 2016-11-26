@@ -17,9 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 
-namespace ICSharpCode.NRefactory.PatternMatching
+namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 {
 	/// <summary>
 	/// AST node that supports pattern matching.

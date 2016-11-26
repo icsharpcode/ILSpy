@@ -23,7 +23,6 @@ using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
 
 namespace ICSharpCode.Decompiler.CSharp.TypeSystem
 {

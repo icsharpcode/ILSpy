@@ -27,7 +27,6 @@
 using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
-using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -54,7 +53,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return GetModifierName (Modifier);
 		}
 		
-		protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			CSharpModifierToken o = other as CSharpModifierToken;
 			return o != null && this.modifier == o.modifier;

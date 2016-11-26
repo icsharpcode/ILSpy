@@ -18,9 +18,8 @@
 
 using System;
 using System.Diagnostics;
-using System.Linq;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.NRefactory.CSharp;
 namespace ICSharpCode.Decompiler.IL
 {
 	public enum ComparisonKind : byte

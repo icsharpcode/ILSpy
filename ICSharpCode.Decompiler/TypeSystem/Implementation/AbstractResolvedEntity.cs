@@ -71,25 +71,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 		
 		public IList<IAttribute> Attributes { get; protected set; }
-		
-		public virtual DocumentationComment Documentation {
-			get {
-				IDocumentationProvider provider = FindDocumentation(parentContext);
-				if (provider != null)
-					return provider.GetDocumentation(this);
-				else
-					return null;
-			}
-		}
-		
-		internal static IDocumentationProvider FindDocumentation(ITypeResolveContext context)
-		{
-			IAssembly asm = context.CurrentAssembly;
-			if (asm != null)
-				return asm.UnresolvedAssembly as IDocumentationProvider;
-			else
-				return null;
-		}
 
 		public abstract ISymbolReference ToReference();
 		

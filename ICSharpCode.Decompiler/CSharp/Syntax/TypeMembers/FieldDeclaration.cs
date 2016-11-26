@@ -26,10 +26,9 @@
 
 using System;
 using System.ComponentModel;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.NRefactory.CSharp
+namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class FieldDeclaration : EntityDeclaration
 	{

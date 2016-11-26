@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {

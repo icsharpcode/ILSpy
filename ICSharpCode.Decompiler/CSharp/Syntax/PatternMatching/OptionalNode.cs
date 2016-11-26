@@ -17,11 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 
-namespace ICSharpCode.NRefactory.PatternMatching
+namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 {
 	public class OptionalNode : Pattern
 	{

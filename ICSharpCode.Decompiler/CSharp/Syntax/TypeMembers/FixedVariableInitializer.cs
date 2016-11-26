@@ -24,10 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 
-namespace ICSharpCode.NRefactory.CSharp
+namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Name [ CountExpression ]
@@ -96,7 +94,7 @@ namespace ICSharpCode.NRefactory.CSharp
 			return visitor.VisitFixedVariableInitializer (this, data);
 		}
 		
-		protected internal override bool DoMatch (AstNode other, ICSharpCode.NRefactory.PatternMatching.Match match)
+		protected internal override bool DoMatch (AstNode other, PatternMatching.Match match)
 		{
 			var o = other as FixedVariableInitializer;
 			return o != null && MatchString (this.Name, o.Name) && this.CountExpression.DoMatch (o.CountExpression, match);

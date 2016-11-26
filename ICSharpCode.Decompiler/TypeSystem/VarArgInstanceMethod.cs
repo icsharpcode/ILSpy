@@ -270,10 +270,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return baseMethod.Attributes; }
 		}
 
-		public ICSharpCode.NRefactory.Documentation.DocumentationComment Documentation {
-			get { return baseMethod.Documentation; }
-		}
-
 		public bool IsStatic {
 			get { return baseMethod.IsStatic; }
 		}

@@ -24,10 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using System.Collections.Generic;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 
-namespace ICSharpCode.NRefactory.CSharp
+namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public enum UndocumentedExpressionType
 	{
@@ -55,14 +53,14 @@ namespace ICSharpCode.NRefactory.CSharp
 		public CSharpTokenNode UndocumentedToken {
 			get {
 				switch (UndocumentedExpressionType) {
-				case ICSharpCode.NRefactory.CSharp.UndocumentedExpressionType.ArgListAccess:
-				case ICSharpCode.NRefactory.CSharp.UndocumentedExpressionType.ArgList:
+				case UndocumentedExpressionType.ArgListAccess:
+				case UndocumentedExpressionType.ArgList:
 					return GetChildByRole (ArglistKeywordRole);
-				case ICSharpCode.NRefactory.CSharp.UndocumentedExpressionType.RefValue:
+				case UndocumentedExpressionType.RefValue:
 					return GetChildByRole (RefvalueKeywordRole);
-				case ICSharpCode.NRefactory.CSharp.UndocumentedExpressionType.RefType:
+				case UndocumentedExpressionType.RefType:
 					return GetChildByRole (ReftypeKeywordRole);
-				case ICSharpCode.NRefactory.CSharp.UndocumentedExpressionType.MakeRef:
+				case UndocumentedExpressionType.MakeRef:
 					return GetChildByRole (MakerefKeywordRole);
 				}
 				return CSharpTokenNode.Null;

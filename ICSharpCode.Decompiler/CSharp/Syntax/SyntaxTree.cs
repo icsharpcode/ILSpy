@@ -27,8 +27,6 @@
 using System.Collections.Generic;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
-using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -122,7 +120,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		}
 
 		
-		protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			SyntaxTree o = other as SyntaxTree;
 			return o != null && this.Members.DoMatch(o.Members, match);

@@ -25,7 +25,6 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
 using ICSharpCode.NRefactory.Documentation;
 using Mono.Cecil;
 
@@ -103,7 +102,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 		
 		ModuleDefinition currentModule;
-		CecilUnresolvedAssembly currentAssembly;
+		DefaultUnresolvedAssembly currentAssembly;
 		
 		/// <summary>
 		/// Initializes a new instance of the <see cref="CecilLoader"/> class.
@@ -180,7 +179,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			assemblyAttributes = interningProvider.InternList(assemblyAttributes);
 			moduleAttributes = interningProvider.InternList(moduleAttributes);
 			
-			this.currentAssembly = new CecilUnresolvedAssembly(assemblyDefinition != null ? assemblyDefinition.Name.FullName : moduleDefinition.Name, this.DocumentationProvider);
+			this.currentAssembly = new DefaultUnresolvedAssembly(assemblyDefinition != null ? assemblyDefinition.Name.FullName : moduleDefinition.Name);
 			currentAssembly.Location = moduleDefinition.FullyQualifiedName;
 			ExtensionMethods.AddRange(currentAssembly.AssemblyAttributes, assemblyAttributes);
 			ExtensionMethods.AddRange(currentAssembly.ModuleAttributes, assemblyAttributes);
@@ -270,28 +269,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var td = CreateTopLevelTypeDefinition(typeDefinition);
 			InitTypeDefinition(typeDefinition, td);
 			return td;
-		}
-		#endregion
-		
-		#region IUnresolvedAssembly implementation
-		[Serializable]
-		sealed class CecilUnresolvedAssembly : DefaultUnresolvedAssembly, IDocumentationProvider
-		{
-			readonly IDocumentationProvider documentationProvider;
-			
-			public CecilUnresolvedAssembly(string fullAssemblyName, IDocumentationProvider documentationProvider)
-				: base(fullAssemblyName)
-			{
-				this.documentationProvider = documentationProvider;
-			}
-			
-			DocumentationComment IDocumentationProvider.GetDocumentation(IEntity entity)
-			{
-				if (documentationProvider != null)
-					return documentationProvider.GetDocumentation(entity);
-				else
-					return null;
-			}
 		}
 		#endregion
 		

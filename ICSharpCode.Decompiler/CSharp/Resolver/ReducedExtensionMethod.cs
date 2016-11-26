@@ -329,12 +329,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		public ICSharpCode.NRefactory.Documentation.DocumentationComment Documentation {
-			get {
-				return baseMethod.Documentation;
-			}
-		}
-
 		public bool IsStatic {
 			get {
 				return false;

@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
 
 namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 {

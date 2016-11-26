@@ -19,7 +19,7 @@
 using System;
 using System.Linq;
 
-namespace ICSharpCode.NRefactory.PatternMatching
+namespace ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching
 {
 	/// <summary>
 	/// Matches the last entry in the specified named group.

@@ -30,9 +30,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -73,7 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 			
-			protected internal override bool DoMatch (AstNode other, NRefactory.PatternMatching.Match match)
+			protected internal override bool DoMatch (AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -81,16 +80,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#endregion
 		
 		#region PatternPlaceholder
-		public static implicit operator AstNode (NRefactory.PatternMatching.Pattern pattern)
+		public static implicit operator AstNode (PatternMatching.Pattern pattern)
 		{
 			return pattern != null ? new PatternPlaceholder (pattern) : null;
 		}
 		
 		sealed class PatternPlaceholder : AstNode, INode
 		{
-			readonly NRefactory.PatternMatching.Pattern child;
+			readonly PatternMatching.Pattern child;
 			
-			public PatternPlaceholder (NRefactory.PatternMatching.Pattern child)
+			public PatternPlaceholder (PatternMatching.Pattern child)
 			{
 				this.child = child;
 			}
@@ -114,12 +113,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitPatternPlaceholder (this, child, data);
 			}
 			
-			protected internal override bool DoMatch (AstNode other, NRefactory.PatternMatching.Match match)
+			protected internal override bool DoMatch (AstNode other, PatternMatching.Match match)
 			{
 				return child.DoMatch (other, match);
 			}
 			
-			bool NRefactory.PatternMatching.INode.DoMatchCollection (Role role, NRefactory.PatternMatching.INode pos, NRefactory.PatternMatching.Match match, NRefactory.PatternMatching.BacktrackingInfo backtrackingInfo)
+			bool PatternMatching.INode.DoMatchCollection (Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection (role, pos, match, backtrackingInfo);
 			}
@@ -650,29 +649,29 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#region Pattern Matching
 		protected static bool MatchString (string pattern, string text)
 		{
-			return NRefactory.PatternMatching.Pattern.MatchString(pattern, text);
+			return PatternMatching.Pattern.MatchString(pattern, text);
 		}
 		
-		protected internal abstract bool DoMatch (AstNode other, NRefactory.PatternMatching.Match match);
+		protected internal abstract bool DoMatch (AstNode other, PatternMatching.Match match);
 		
-		bool NRefactory.PatternMatching.INode.DoMatch (NRefactory.PatternMatching.INode other, NRefactory.PatternMatching.Match match)
+		bool PatternMatching.INode.DoMatch (PatternMatching.INode other, PatternMatching.Match match)
 		{
 			AstNode o = other as AstNode;
 			// try matching if other is null, or if other is an AstNode
 			return (other == null || o != null) && DoMatch (o, match);
 		}
 		
-		bool NRefactory.PatternMatching.INode.DoMatchCollection (Role role, NRefactory.PatternMatching.INode pos, NRefactory.PatternMatching.Match match, NRefactory.PatternMatching.BacktrackingInfo backtrackingInfo)
+		bool PatternMatching.INode.DoMatchCollection (Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
 		{
 			AstNode o = pos as AstNode;
 			return (pos == null || o != null) && DoMatch (o, match);
 		}
 		
-		NRefactory.PatternMatching.INode NRefactory.PatternMatching.INode.NextSibling {
+		PatternMatching.INode PatternMatching.INode.NextSibling {
 			get { return nextSibling; }
 		}
 		
-		NRefactory.PatternMatching.INode NRefactory.PatternMatching.INode.FirstChild {
+		PatternMatching.INode PatternMatching.INode.FirstChild {
 			get { return firstChild; }
 		}
 

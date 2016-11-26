@@ -26,9 +26,6 @@ using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
-using ICSharpCode.NRefactory.CSharp;
-using Attribute = ICSharpCode.NRefactory.CSharp.Attribute;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {

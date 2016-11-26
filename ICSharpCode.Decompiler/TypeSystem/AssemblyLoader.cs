@@ -67,11 +67,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets/Sets the cancellation token used by the assembly loader.
 		/// </summary>
 		public CancellationToken CancellationToken { get; set; }
-		
-		/// <summary>
-		/// Gets/Sets the documentation provider that is used to retrieve the XML documentation for all members.
-		/// </summary>
-		public IDocumentationProvider DocumentationProvider { get; set; }
 
 		[CLSCompliant(false)]
 		protected InterningProvider interningProvider = new SimpleInterningProvider();

@@ -19,7 +19,6 @@
 using System;
 using System.ComponentModel;
 using System.Globalization;
-using ICSharpCode.NRefactory.Editor;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {

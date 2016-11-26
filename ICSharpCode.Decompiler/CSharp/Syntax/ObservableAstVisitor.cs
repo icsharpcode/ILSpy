@@ -25,8 +25,6 @@
 // THE SOFTWARE.
 
 using System;
-using ICSharpCode.NRefactory.CSharp;
-using Attribute = ICSharpCode.NRefactory.CSharp.Attribute;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -852,7 +850,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			Visit(EnterNamedExpression, LeaveNamedExpression, namedExpression);
 		}
 		
-		void IAstVisitor.VisitPatternPlaceholder(AstNode placeholder, NRefactory.PatternMatching.Pattern pattern)
+		void IAstVisitor.VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern)
 		{
 		}
 	}

@@ -23,7 +23,6 @@ using System.Text;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using ICSharpCode.NRefactory;
 
 namespace ICSharpCode.Decompiler.CSharp.Resolver
 {
@@ -167,10 +166,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			
 			IList<IAttribute> IEntity.Attributes {
 				get { return EmptyList<IAttribute>.Instance; }
-			}
-			
-			NRefactory.Documentation.DocumentationComment IEntity.Documentation {
-				get { return null; }
 			}
 			
 			Accessibility IHasAccessibility.Accessibility {

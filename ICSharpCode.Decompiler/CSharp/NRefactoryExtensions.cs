@@ -18,8 +18,7 @@
 
 using System;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.PatternMatching;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -57,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new NamedNode(patternGroupName, node);
 		}
 		
-		public static void AddNamedArgument(this NRefactory.CSharp.Attribute attribute, string name, Expression argument)
+		public static void AddNamedArgument(this Syntax.Attribute attribute, string name, Expression argument)
 		{
 			attribute.Arguments.Add(new AssignmentExpression(new IdentifierExpression(name), argument));
 		}

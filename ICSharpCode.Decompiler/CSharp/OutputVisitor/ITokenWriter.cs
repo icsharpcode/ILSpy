@@ -19,7 +19,6 @@
 using System;
 using System.IO;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {

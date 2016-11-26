@@ -25,9 +25,9 @@
 // THE SOFTWARE.
 
 using System;
-using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.NRefactory.Editor;
 
-namespace ICSharpCode.NRefactory.CSharp
+namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Represents a literal value.

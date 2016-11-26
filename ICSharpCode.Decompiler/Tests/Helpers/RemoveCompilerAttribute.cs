@@ -10,7 +10,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 {
 	class RemoveCompilerAttribute : DepthFirstAstVisitor<object, object>, IAstTransform
 	{
-		public override object VisitAttribute(NRefactory.CSharp.Attribute attribute, object data)
+		public override object VisitAttribute(CSharp.Syntax.Attribute attribute, object data)
 		{
 			var section = (AttributeSection)attribute.Parent;
 			SimpleType type = attribute.Type as SimpleType;

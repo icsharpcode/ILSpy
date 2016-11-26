@@ -24,8 +24,6 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-using ICSharpCode.NRefactory.CSharp;
-using Attribute = ICSharpCode.NRefactory.CSharp.Attribute;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -35,18 +33,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		// some pre defined constants for common roles
 		public static readonly Role<Identifier> Identifier = new Role<Identifier> ("Identifier", Syntax.Identifier.Null);
-		public static readonly Role<BlockStatement> Body = new Role<BlockStatement> ("Body", NRefactory.CSharp.BlockStatement.Null);
+		public static readonly Role<BlockStatement> Body = new Role<BlockStatement> ("Body", BlockStatement.Null);
 		public static readonly Role<ParameterDeclaration> Parameter = new Role<ParameterDeclaration> ("Parameter");
-		public static readonly Role<Expression> Argument = new Role<Expression> ("Argument", NRefactory.CSharp.Expression.Null);
+		public static readonly Role<Expression> Argument = new Role<Expression> ("Argument", Syntax.Expression.Null);
 		public static readonly Role<AstType> Type = new Role<AstType> ("Type", AstType.Null);
-		public static readonly Role<Expression> Expression = new Role<Expression> ("Expression", NRefactory.CSharp.Expression.Null);
-		public static readonly Role<Expression> TargetExpression = new Role<Expression> ("Target", NRefactory.CSharp.Expression.Null);
-		public readonly static Role<Expression> Condition = new Role<Expression> ("Condition", NRefactory.CSharp.Expression.Null);
+		public static readonly Role<Expression> Expression = new Role<Expression> ("Expression", Syntax.Expression.Null);
+		public static readonly Role<Expression> TargetExpression = new Role<Expression> ("Target", Syntax.Expression.Null);
+		public readonly static Role<Expression> Condition = new Role<Expression> ("Condition", Syntax.Expression.Null);
 		public static readonly Role<TypeParameterDeclaration> TypeParameter = new Role<TypeParameterDeclaration> ("TypeParameter");
 		public static readonly Role<AstType> TypeArgument = new Role<AstType> ("TypeArgument", AstType.Null);
 		public readonly static Role<Constraint> Constraint = new Role<Constraint> ("Constraint");
 		public static readonly Role<VariableInitializer> Variable = new Role<VariableInitializer> ("Variable", VariableInitializer.Null);
-		public static readonly Role<Statement> EmbeddedStatement = new Role<Statement> ("EmbeddedStatement", NRefactory.CSharp.Statement.Null);
+		public static readonly Role<Statement> EmbeddedStatement = new Role<Statement> ("EmbeddedStatement", Statement.Null);
 		public readonly static Role<EntityDeclaration> TypeMemberRole = new Role<EntityDeclaration> ("TypeMember");
 		
 

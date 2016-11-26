@@ -26,9 +26,8 @@
 
 using System;
 using System.Linq.Expressions;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 
-namespace ICSharpCode.NRefactory.CSharp
+namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	/// <summary>
 	/// Operator Expression

@@ -19,9 +19,8 @@
 using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -56,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return visitor.VisitNullNode(this, data);
 			}
 			
-			protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return other == null || other.IsNull;
 			}
@@ -69,16 +68,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		#endregion
 		
 		#region PatternPlaceholder
-		public static implicit operator AstType(NRefactory.PatternMatching.Pattern pattern)
+		public static implicit operator AstType(PatternMatching.Pattern pattern)
 		{
 			return pattern != null ? new PatternPlaceholder(pattern) : null;
 		}
 		
 		sealed class PatternPlaceholder : AstType, INode
 		{
-			readonly NRefactory.PatternMatching.Pattern child;
+			readonly PatternMatching.Pattern child;
 			
-			public PatternPlaceholder(NRefactory.PatternMatching.Pattern child)
+			public PatternPlaceholder(PatternMatching.Pattern child)
 			{
 				this.child = child;
 			}
@@ -107,12 +106,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new NotSupportedException();
 			}
 			
-			protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+			protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 			{
 				return child.DoMatch(other, match);
 			}
 			
-			bool NRefactory.PatternMatching.INode.DoMatchCollection(Role role, NRefactory.PatternMatching.INode pos, NRefactory.PatternMatching.Match match, NRefactory.PatternMatching.BacktrackingInfo backtrackingInfo)
+			bool PatternMatching.INode.DoMatchCollection(Role role, PatternMatching.INode pos, PatternMatching.Match match, PatternMatching.BacktrackingInfo backtrackingInfo)
 			{
 				return child.DoMatchCollection(role, pos, match, backtrackingInfo);
 			}

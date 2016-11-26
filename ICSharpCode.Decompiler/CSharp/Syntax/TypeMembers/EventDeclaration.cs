@@ -25,12 +25,10 @@
 // THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.NRefactory.CSharp
+namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
 	public class EventDeclaration : EntityDeclaration
 	{

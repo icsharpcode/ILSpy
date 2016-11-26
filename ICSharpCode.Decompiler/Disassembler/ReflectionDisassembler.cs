@@ -18,9 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using Mono.Cecil;
 using Mono.Collections.Generic;

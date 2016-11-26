@@ -16,8 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using ICSharpCode.NRefactory.CSharp;
-using Attribute = ICSharpCode.NRefactory.CSharp.Attribute;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -150,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		void VisitNullNode(AstNode nullNode);
 		void VisitErrorNode(AstNode errorNode);
-		void VisitPatternPlaceholder(AstNode placeholder, NRefactory.PatternMatching.Pattern pattern);
+		void VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern);
 	}
 	
 	/// <summary>
@@ -282,7 +280,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		S VisitNullNode(AstNode nullNode);
 		S VisitErrorNode(AstNode errorNode);
-		S VisitPatternPlaceholder(AstNode placeholder, NRefactory.PatternMatching.Pattern pattern);
+		S VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern);
 	}
 	
 	/// <summary>
@@ -414,6 +412,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		
 		S VisitNullNode(AstNode nullNode, T data);
 		S VisitErrorNode(AstNode errorNode, T data);
-		S VisitPatternPlaceholder(AstNode placeholder, NRefactory.PatternMatching.Pattern pattern, T data);
+		S VisitPatternPlaceholder(AstNode placeholder, PatternMatching.Pattern pattern, T data);
 	}
 }

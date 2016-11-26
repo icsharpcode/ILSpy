@@ -25,7 +25,6 @@
 // THE SOFTWARE.
 
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
-using ICSharpCode.NRefactory.CSharp;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
@@ -75,7 +74,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return visitor.VisitErrorNode(this, data);
 		}
 
-		protected internal override bool DoMatch(AstNode other, NRefactory.PatternMatching.Match match)
+		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
 		{
 			var o = other as ErrorNode;
 			return o != null;

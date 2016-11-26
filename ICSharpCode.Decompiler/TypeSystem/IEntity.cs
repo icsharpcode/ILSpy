@@ -141,11 +141,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IList<IAttribute> Attributes { get; }
 		
 		/// <summary>
-		/// Gets the documentation for this entity.
-		/// </summary>
-		DocumentationComment Documentation { get; }
-		
-		/// <summary>
 		/// Gets whether this entity is static.
 		/// Returns true if either the 'static' or the 'const' modifier is set.
 		/// </summary>

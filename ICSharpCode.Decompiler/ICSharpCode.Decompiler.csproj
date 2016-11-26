@@ -273,9 +273,7 @@
     <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="CSharp\WholeProjectDecompiler.cs" />
-    <Compile Include="Documentation\DocumentationComment.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
-    <Compile Include="Documentation\IDocumentationProvider.cs" />
     <Compile Include="Documentation\IdStringMemberReference.cs" />
     <Compile Include="Documentation\IdStringProvider.cs" />
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
@@ -562,14 +560,14 @@
     <Folder Include="ILAst\" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\nrefactory\doc\Pattern Matching.html">
-      <Link>CSharp\Ast\PatternMatching\Pattern Matching.html</Link>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\nrefactory\doc\XML Documentation.html">
       <Link>Documentation\XML Documentation.html</Link>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\doc\Pattern Matching.html">
+      <Link>CSharp\Syntax\PatternMatching\Pattern Matching.html</Link>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
   <Target Name="BeforeBuild">
