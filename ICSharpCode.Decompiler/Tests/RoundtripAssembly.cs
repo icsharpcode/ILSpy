@@ -49,11 +49,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void NRefactory_CSharp()
 		{
-			try {
-				RunWithTest("NRefactory", "ICSharpCode.NRefactory.CSharp.dll", "ICSharpCode.NRefactory.Tests.dll");
-			} catch (TestRunFailedException ex) {
-				Assert.Ignore(ex.Message);
-			}
+			RunWithTest("NRefactory", "ICSharpCode.NRefactory.CSharp.dll", "ICSharpCode.NRefactory.Tests.dll");
 		}
 		
 		[Test]
