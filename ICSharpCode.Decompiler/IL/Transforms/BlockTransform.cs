@@ -14,7 +14,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	}
 
 	/// <summary>
-	/// Parameter class holding various arguments for <see cref="IBlockTransform.Run(ILFunction, BlockTransformContext)"/>.
+	/// Parameter class holding various arguments for <see cref="IBlockTransform.Run"/>.
 	/// </summary>
 	public class BlockTransformContext : ILTransformContext
 	{
@@ -22,11 +22,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// The function containing the block currently being processed.
 		/// </summary>
 		public ILFunction Function { get; set; }
-
-		/// <summary>
-		/// The container containing the block currently being processed.
-		/// </summary>
-		public BlockContainer Container { get; set; }
 
 		/// <summary>
 		/// The block to process.
@@ -39,22 +34,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// The control flow node corresponding to the block being processed.
 		/// </summary>
+		/// <remarks>
+		/// Identical to <c>ControlFlowGraph.GetNode(Block)</c>.
+		/// Note: the control flow graph is not up-to-date, but was created at the start of the
+		/// block transforms (before loop detection).
+		/// </remarks>
 		public ControlFlowNode ControlFlowNode { get; set; }
 
-		internal readonly Dictionary<Block, ControlFlowNode> cfg = new Dictionary<Block, ControlFlowNode>();
+		/// <summary>
+		/// Gets the control flow graph.
+		/// 
+		/// Note: the control flow graph is not up-to-date, but was created at the start of the
+		/// block transforms (before loop detection).
+		/// </summary>
+		public ControlFlowGraph ControlFlowGraph { get; set; }
 
 		public BlockTransformContext(ILTransformContext context) : base(context)
 		{
-		}
-
-		/// <summary>
-		/// Gets the ControlFlowNode for the block.
-		/// Precondition: the block belonged to the <c>Container</c> at the start of the block transforms
-		/// (when the control flow graph was created).
-		/// </summary>
-		public ControlFlowNode GetNode(Block block)
-		{
-			return cfg[block];
 		}
 	}
 
@@ -73,15 +69,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			blockContext.Function = function;
 			foreach (var container in function.Descendants.OfType<BlockContainer>().ToList()) {
 				context.CancellationToken.ThrowIfCancellationRequested();
-				var cfg = LoopDetection.BuildCFG(container);
-				Dominance.ComputeDominance(cfg[0], context.CancellationToken);
-
-				blockContext.Container = container;
-				blockContext.cfg.Clear();
-				for (int i = 0; i < cfg.Length; i++) {
-					blockContext.cfg.Add(container.Blocks[i], cfg[i]);
-				}
-				VisitBlock(cfg[0], blockContext);
+				blockContext.ControlFlowGraph = new ControlFlowGraph(container, context.CancellationToken);
+				VisitBlock(blockContext.ControlFlowGraph.GetNode(container.EntryPoint), blockContext);
 				// TODO: handle unreachable code?
 			}
 		}

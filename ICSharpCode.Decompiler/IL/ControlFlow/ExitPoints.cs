@@ -190,6 +190,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 	}
 
+	/*
 	/// <summary>
 	/// Like DetectExitPoints, but only uses existing exit points
 	/// (by replacing compatible instructions with Leave),
@@ -202,6 +203,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public void Run(Block block, BlockTransformContext context)
 		{
+			Debug.Assert(block.Parent == context.Container);
 			currentContainer = context.Container;
 			exitPoint = DetectExitPoints.GetExit(context.Container);
 			Visit(block);
@@ -227,4 +229,5 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 	}
+	*/
 }

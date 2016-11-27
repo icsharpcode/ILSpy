@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using Microsoft.Win32;
@@ -152,7 +153,16 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			Directory.CreateDirectory(dir);
 			foreach (string subdir in Directory.EnumerateDirectories(dir)) {
-				Directory.Delete(subdir, true);
+				for (int attempt = 0; ; attempt++) {
+					try {
+						Directory.Delete(subdir, true);
+						break;
+					} catch (IOException) {
+						if (attempt >= 10)
+							throw;
+						Thread.Sleep(100);
+					}
+				}
 			}
 			foreach (string file in Directory.EnumerateFiles(dir)) {
 				File.Delete(file);

@@ -35,6 +35,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	public class ConditionDetection : IBlockTransform
 	{
 		BlockTransformContext context;
+		BlockContainer currentContainer;
 
 		/// <summary>
 		/// Builds structured control flow for the block associated with the control flow node.
@@ -46,6 +47,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public void Run(Block block, BlockTransformContext context)
 		{
 			this.context = context;
+			this.currentContainer = (BlockContainer)block.Parent;
 
 			// We only embed blocks into this block if they aren't referenced anywhere else,
 			// so those blocks are dominated by this block.
@@ -236,14 +238,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return false;
 		}
 
+		/// <summary>
+		/// Gets whether <c>potentialBranchInstruction</c> is a branch to a block
+		/// that is dominated by <c>cfgNode</c>.
+		/// If this function returns true, we replace the branch instruction with the block itself.
+		/// </summary>
 		bool IsUsableBranchToChild(ControlFlowNode cfgNode, ILInstruction potentialBranchInstruction)
 		{
 			Branch br = potentialBranchInstruction as Branch;
 			if (br == null)
 				return false;
 			var targetBlock = br.TargetBlock;
-			return targetBlock.Parent == context.Container && cfgNode.Dominates(context.GetNode(targetBlock))
-				&& targetBlock.IncomingEdgeCount == 1 && targetBlock.FinalInstruction.OpCode == OpCode.Nop;
+			return targetBlock.Parent == currentContainer
+				&& targetBlock.IncomingEdgeCount == 1 && targetBlock.FinalInstruction.OpCode == OpCode.Nop
+				&& cfgNode.Dominates(context.ControlFlowGraph.GetNode(targetBlock));
 		}
 
 		private void HandleSwitchInstruction(ControlFlowNode cfgNode, Block block, SwitchInstruction sw, ref ILInstruction exitInst)

@@ -275,6 +275,7 @@
     <Compile Include="Documentation\IdStringMemberReference.cs" />
     <Compile Include="Documentation\IdStringProvider.cs" />
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
+    <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
     <Compile Include="IL\Patterns\AnyNode.cs" />
     <Compile Include="Util\UnicodeNewline.cs" />
     <Compile Include="FlowAnalysis\ControlFlowNode.cs" />

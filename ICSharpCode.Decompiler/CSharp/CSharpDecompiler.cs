@@ -67,7 +67,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				// is already collapsed into stloc(V, ...).
 				new RemoveDeadVariableInit(),
 				new SwitchDetection(),
-				new LoopDetection(),
+				new BlockILTransform { // per-block transforms
+					PostOrderTransforms = {
+						// Even though it's a post-order block-transform as most other transforms,
+						// let's keep LoopDetection separate for now until there's a compelling
+						// reason to combine it with the other block transforms.
+						// If we ran loop detection after some if structures are already detected,
+						// we might make our life introducing good exit points more difficult.
+						new LoopDetection()
+					}
+				},
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						//new UseExitPoints(),

@@ -116,21 +116,24 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		/// <summary>
 		/// Computes a BitSet where
-		///  <c>result[i] == true</c> iff cfg[i] is reachable and there is some node that is reachable from cfg[i] but not dominated by cfg[i].
-		/// This is similar to "does cfg[i] have a non-empty dominance frontier", except that it uses non-strict dominance
-		/// where the definition of dominance frontiers uses "strictly dominates".
+		/// <c>result[i] == true</c> iff cfg[i] is reachable and there is some node that is
+		/// reachable from cfg[i] but not dominated by cfg[i].
+		/// 
+		/// This is similar to "does cfg[i] have a non-empty dominance frontier?",
+		/// except that it uses non-strict dominance where the definition of dominance frontiers
+		/// uses "strictly dominates".
 		/// 
 		/// Precondition:
 		///  Dominance was computed for cfg and <c>cfg[i].UserIndex == i</c> for all i.
 		/// </summary>
-		public static BitSet MarkNodesWithReachableExits(IReadOnlyList<ControlFlowNode> cfg)
+		public static BitSet MarkNodesWithReachableExits(ControlFlowNode[] cfg)
 		{
 			#if DEBUG
-			for (int i = 0; i < cfg.Count; i++) {
+			for (int i = 0; i < cfg.Length; i++) {
 				Debug.Assert(cfg[i].UserIndex == i);
 			}
 			#endif
-			BitSet nonEmpty = new BitSet(cfg.Count);
+			BitSet nonEmpty = new BitSet(cfg.Length);
 			foreach (var j in cfg) {
 				// If j is a join-point (more than one incoming edge):
 				// `j.IsReachable && j.ImmediateDominator == null` is the root node, which counts as an extra incoming edge
