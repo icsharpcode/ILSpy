@@ -286,10 +286,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var child in node.DominatorTreeChildren) {
 				codeAmount += PickExitPoint(child, ref exitPoint, ref exitPointCodeAmount);
 			}
-			if (codeAmount > exitPointCodeAmount && !context.ControlFlowGraph.HasReachableExit(node)) {
-				// dominanceFrontier(node) is empty
+			if (codeAmount > exitPointCodeAmount 
+				&& !context.ControlFlowGraph.HasReachableExit(node)
+				&& ((Block)node.UserData).Parent == currentBlockContainer)
+			{
+				// HasReachableExit(node) == false
 				// -> there are no nodes n so that `node` dominates a predecessor of n but not n itself
 				// -> there is no control flow out of `node` back into the loop, so it's usable as exit point
+
+				// Additionally, we require that the block wasn't already moved into a nested loop,
+				// since there's no way to jump into the middle of that loop when we need to exit.
+				// NB: this is the only reason why we detect nested loops before outer loops:
+				// If we detected the outer loop first, the outer loop might pick an exit point
+				// that prevents us from finding a nice exit for the inner loops, causing
+				// unnecessary gotos.
 				exitPoint = node;
 				exitPointCodeAmount = codeAmount;
 			}
@@ -391,7 +401,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void ConstructLoop(List<ControlFlowNode> loop, ControlFlowNode exitPoint)
 		{
-			exitPoint = null; // TODO
 			Block oldEntryPoint = (Block)loop[0].UserData;
 			Block exitTargetBlock = (Block)exitPoint?.UserData;
 
