@@ -147,6 +147,21 @@ public class Loops
 		}
 		Console.WriteLine("End of method");
 	}
+
+	public void WhileWithGoto()
+	{
+		while (Condition("Main Loop")) {
+			if (!Condition("Condition"))
+				goto block2;
+			block1:
+			Console.WriteLine("Block1");
+			if (Condition("Condition2"))
+				continue;
+			block2:
+			Console.WriteLine("Block2");
+			goto block1;
+		}
+	}
 	
 	public void DoWhileLoop()
 	{

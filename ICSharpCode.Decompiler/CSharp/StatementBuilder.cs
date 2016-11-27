@@ -280,25 +280,29 @@ namespace ICSharpCode.Decompiler.CSharp
 			    && container.EntryPoint.Instructions[1].MatchLeave(container)) {
 				// detected while(condition)-loop or for-loop
 				conditionExpr = exprBuilder.TranslateCondition(conditionInst);
+				blockStatement = ConvertAsBlock(trueInst);
+				if (!trueInst.HasFlag(InstructionFlags.EndPointUnreachable))
+					blockStatement.Add(new BreakStatement());
 				if (container.EntryPoint.IncomingEdgeCount == 2) {
 					var incrementBlock = container.Blocks.SingleOrDefault(b => b.Instructions.Last().MatchBranch(container.EntryPoint));
 					if (incrementBlock != null) {
 						// for-loop
-						continueTarget = incrementBlock;
+/*						continueTarget = incrementBlock;
 						var forStmt = new ForStatement() {
 							Condition = conditionExpr,
-							EmbeddedStatement = ConvertBlockContainer(ConvertAsBlock(trueInst), container, container.Blocks.Skip(1).Where(b => b != incrementBlock), true)
+							EmbeddedStatement = ConvertBlockContainer(blockStatement, container, container.Blocks.Skip(1).Where(b => b != incrementBlock), true)
 						};
 						for (int i = 0; i < incrementBlock.Instructions.Count - 1; i++) {
 							forStmt.Iterators.Add(Convert(incrementBlock.Instructions[i]));
 						}
-						return forStmt;
+						return forStmt;*/
 					}
 				}
-				blockStatement = ConvertBlockContainer(ConvertAsBlock(trueInst), container, container.Blocks.Skip(1), true);
+
+				blockStatement = ConvertBlockContainer(blockStatement, container, container.Blocks.Skip(1), true);
 			} else {
 				// do-while or while(true)-loop
-				if (container.EntryPoint.IncomingEdgeCount == 2) {
+/*				if (container.EntryPoint.IncomingEdgeCount == 2) {
 					Block conditionBlock = FindDoWhileConditionBlock(container, out var condition);
 					if (conditionBlock != null) {
 						continueTarget = conditionBlock;
@@ -307,7 +311,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							Condition = exprBuilder.TranslateCondition(condition)
 						};
 					}
-				}
+				}*/
 				blockStatement = ConvertBlockContainer(container, true);
 				Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
 				Debug.Assert(blockStatement.Statements.First() is LabelStatement);
