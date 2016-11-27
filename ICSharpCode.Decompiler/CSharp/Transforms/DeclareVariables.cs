@@ -289,6 +289,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 					var vds = new VariableDeclarationStatement(type, v.Name, initializer);
 					vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(p.Key, p.Key.Type));
+					Debug.Assert(v.InsertionPoint.nextNode.Role == BlockStatement.StatementRole);
 					v.InsertionPoint.nextNode.Parent.InsertChildBefore(
 						v.InsertionPoint.nextNode,
 						vds,

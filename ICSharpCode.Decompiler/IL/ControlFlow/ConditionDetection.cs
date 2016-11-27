@@ -112,7 +112,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					&& targetBlock.Instructions[0].MatchIfInstruction(out nestedCondition, out nestedTrueInst))
 				{
 					nestedTrueInst = UnpackBlockContainingOnlyBranch(nestedTrueInst);
-					if (CompatibleExitInstruction(exitInst, nestedTrueInst)) {
+					if (DetectExitPoints.CompatibleExitInstruction(exitInst, nestedTrueInst)) {
 						// "if (...) { if (nestedCondition) goto exitPoint; ... } goto exitPoint;"
 						// -> "if (... && !nestedCondition) { ... } goto exitPoint;"
 						context.Step("Combine 'if (cond1 && !cond2)' in then-branch", ifInst);
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 
 				trueExitInst = targetBlock.Instructions.LastOrDefault();
-				if (CompatibleExitInstruction(exitInst, trueExitInst)) {
+				if (DetectExitPoints.CompatibleExitInstruction(exitInst, trueExitInst)) {
 					// "if (...) { ...; goto exitPoint } goto exitPoint;"
 					// -> "if (...) { ... } goto exitPoint;"
 					context.Step("Remove redundant 'goto exitPoint;' in then-branch", ifInst);
@@ -151,7 +151,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (IsUsableBranchToChild(cfgNode, exitInst)) {
 				var targetBlock = ((Branch)exitInst).TargetBlock;
 				var falseExitInst = targetBlock.Instructions.LastOrDefault();
-				if (CompatibleExitInstruction(trueExitInst, falseExitInst)) {
+				if (DetectExitPoints.CompatibleExitInstruction(trueExitInst, falseExitInst)) {
 					// if (...) { ...; goto exitPoint; } goto nextBlock; nextBlock: ...; goto exitPoint;
 					// -> if (...) { ... } else { ... } goto exitPoint;
 					context.Step("Inline block as else-branch", ifInst);
@@ -246,28 +246,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				&& targetBlock.IncomingEdgeCount == 1 && targetBlock.FinalInstruction.OpCode == OpCode.Nop;
 		}
 
-		internal static bool CompatibleExitInstruction(ILInstruction exit1, ILInstruction exit2)
-		{
-			if (exit1 == null || exit2 == null || exit1.OpCode != exit2.OpCode)
-				return false;
-			switch (exit1.OpCode) {
-				case OpCode.Branch:
-					Branch br1 = (Branch)exit1;
-					Branch br2 = (Branch)exit2;
-					return br1.TargetBlock == br2.TargetBlock;
-				case OpCode.Leave:
-					Leave leave1 = (Leave)exit1;
-					Leave leave2 = (Leave)exit2;
-					return leave1.TargetContainer == leave2.TargetContainer;
-				case OpCode.Return:
-					Return ret1 = (Return)exit1;
-					Return ret2 = (Return)exit2;
-					return ret1.ReturnValue == null && ret2.ReturnValue == null;
-				default:
-					return false;
-			}
-		}
-
 		private void HandleSwitchInstruction(ControlFlowNode cfgNode, Block block, SwitchInstruction sw, ref ILInstruction exitInst)
 		{
 			Debug.Assert(sw.DefaultBody is Nop);
@@ -302,7 +280,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					exitInst = sectionBlock.Instructions.Last();
 					sectionBlock.Instructions.RemoveAt(sectionBlock.Instructions.Count - 1);
 					block.Instructions.Add(exitInst);
-				} else if (sectionBlock != null && CompatibleExitInstruction(exitInst, sectionBlock.Instructions.Last())) {
+				} else if (sectionBlock != null && DetectExitPoints.CompatibleExitInstruction(exitInst, sectionBlock.Instructions.Last())) {
 					sectionBlock.Instructions.RemoveAt(sectionBlock.Instructions.Count - 1);
 				}
 			}

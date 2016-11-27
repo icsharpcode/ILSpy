@@ -153,9 +153,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			if (loop != null) {
+				var headBlock = (Block)h.UserData;
+				context.Step($"Construct loop with head {headBlock.Label}", headBlock);
 				// loop now is the union of all natural loops with loop head h.
 				// Try to extend the loop to reduce the number of exit points:
-				ExtendLoop(h, loop);
+				ExtendLoop(h, loop, out var exitPoint);
 				
 				// Sort blocks in the loop in reverse post-order to make the output look a bit nicer.
 				// (if the loop doesn't contain nested loops, this is a topological sort)
@@ -165,7 +167,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					node.Visited = false; // reset visited flag so that we can find nested loops
 					Debug.Assert(h.Dominates(node), "The loop body must be dominated by the loop head");
 				}
-				ConstructLoop(loop);
+				ConstructLoop(loop, exitPoint);
 			}
 			// Recurse into the dominator tree to find other possible loop heads
 			foreach (var child in h.DominatorTreeChildren) {
@@ -221,7 +223,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Observations:
 		///  * If a node is in-loop, so are all its ancestors in the dominator tree (up to the loop entry point)
 		///  * If there are no exits reachable from a node (i.e. all paths from that node lead to a return/throw instruction),
-		///    it is valid to put the dominator tree rooted at that node into either partition independently of
+		///    it is valid to put the group of nodes dominated by that node into either partition independently of
 		///    any other nodes except for the ancestors in the dominator tree.
 		///       (exception: the loop head itself must always be in-loop)
 		/// 
@@ -255,20 +257,24 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Precondition: Requires that a node is marked as visited iff it is contained in the loop.
 		/// </remarks>
-		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop)
+		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop, out ControlFlowNode exitPoint)
 		{
 			ComputeNodesWithReachableExits();
-			ControlFlowNode exitPoint = FindExitPoint(loopHead, loop);
+			exitPoint = FindExitPoint(loopHead, loop);
 			Debug.Assert(!loop.Contains(exitPoint), "Cannot pick an exit point that is part of the natural loop");
 			if (exitPoint != null) {
-				foreach (var node in TreeTraversal.PreOrder(loopHead, n => (n != exitPoint) ? n.DominatorTreeChildren : null)) {
-					// TODO: did FindExitPoint really not touch the visited flag?
+				// Either we are in case 1 and just picked an exit that maximizes the amount of code
+				// outside the loop, or we are in case 2 and found an exit point via post-dominance.
+				var ep = exitPoint;
+				foreach (var node in TreeTraversal.PreOrder(loopHead, n => (n != ep) ? n.DominatorTreeChildren : null)) {
 					if (node != exitPoint && !node.Visited) {
 						loop.Add(node);
 					}
 				}
 			} else {
-				// TODO: did FindExitPoint really not touch the visited flag?
+				// We are in case 2, but could not find a suitable exit point.
+				// Heuristically try to minimize the number of exit points
+				// (but we'll always end up with more than 1 exit and will require goto statements).
 				ExtendLoopHeuristic(loopHead, loop, loopHead);
 			}
 		}
@@ -314,7 +320,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			return false;
 		}
-		
+
+		/// <summary>
+		/// Finds a suitable single exit point for the specified loop.
+		/// </summary>
+		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
 		ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop)
 		{
 			if (!nodeHasReachableExit[loopHead.UserIndex]) {
@@ -365,6 +375,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// over the dominator tree and pick the node with the maximum amount of code.
 		/// </summary>
 		/// <returns>Code amount in <paramref name="node"/> and its dominated nodes.</returns>
+		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
 		int PickExitPoint(ControlFlowNode node, ref ControlFlowNode exitPoint, ref int exitPointCodeAmount)
 		{
 			int codeAmount = ((Block)node.UserData).Children.Count;
@@ -474,10 +485,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Move the blocks associated with the loop into a new block container.
 		/// </summary>
-		void ConstructLoop(List<ControlFlowNode> loop)
+		void ConstructLoop(List<ControlFlowNode> loop, ControlFlowNode exitPoint)
 		{
 			Block oldEntryPoint = (Block)loop[0].UserData;
-			
+			Block exitTargetBlock = (Block)exitPoint?.UserData;
+
 			BlockContainer loopContainer = new BlockContainer();
 			Block newEntryPoint = new Block();
 			loopContainer.Blocks.Add(newEntryPoint);
@@ -487,6 +499,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			newEntryPoint.FinalInstruction = oldEntryPoint.FinalInstruction;
 			newEntryPoint.ILRange = oldEntryPoint.ILRange;
 			oldEntryPoint.Instructions.ReplaceList(new[] { loopContainer });
+			if (exitTargetBlock != null)
+				oldEntryPoint.Instructions.Add(new Branch(exitTargetBlock));
 			oldEntryPoint.FinalInstruction = new Nop();
 			
 			// Move other blocks into the loop body: they're all dominated by the loop header,
@@ -502,8 +516,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			
 			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
 			foreach (var branch in loopContainer.Descendants.OfType<Branch>()) {
-				if (branch.TargetBlock == oldEntryPoint)
+				if (branch.TargetBlock == oldEntryPoint) {
 					branch.TargetBlock = newEntryPoint;
+				} else if (branch.TargetBlock == exitTargetBlock) {
+					branch.ReplaceWith(new Leave(loopContainer) { ILRange = branch.ILRange });
+				}
 			}
 		}
 	}

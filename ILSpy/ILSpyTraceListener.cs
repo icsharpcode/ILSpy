@@ -70,7 +70,7 @@ namespace ICSharpCode.ILSpy
 			thread.Start();
 			thread.Join();
 			if (result == 0) { // throw
-				throw new Exception(message);
+				throw new AssertionFailedException(message);
 			} else if (result == 1) { // debug
 				Debugger.Break();
 			} else if (result == 2) { // ignore
@@ -95,5 +95,10 @@ namespace ICSharpCode.ILSpy
 				inputBox.Dispose();
 			}
 		}
+	}
+
+	class AssertionFailedException : Exception
+	{
+		public AssertionFailedException(string message) : base(message) { }
 	}
 }

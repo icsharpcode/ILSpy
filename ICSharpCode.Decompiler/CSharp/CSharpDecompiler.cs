@@ -57,6 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(),
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
+				new DetectExitPoints(),
 				new BlockILTransform {
 					PostOrderTransforms = {
 						new ExpressionTransforms() // for RemoveDeadVariableInit
@@ -67,9 +68,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				new RemoveDeadVariableInit(),
 				new SwitchDetection(),
 				new LoopDetection(),
-				new IntroduceExitPoints(),
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
+						//new UseExitPoints(),
 						new ConditionDetection(),
 						// CachedDelegateInitialization must run after ConditionDetection and before/in LoopingBlockTransform.
 						new CachedDelegateInitialization(),

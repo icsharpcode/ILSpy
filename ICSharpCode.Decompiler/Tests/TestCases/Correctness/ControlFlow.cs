@@ -87,4 +87,19 @@ class ControlFlow
 			Console.WriteLine("else");
 		}
 	}
+
+	int Dim2Search(int arg)
+	{
+		var tens = new[] { 10, 20, 30 };
+		var ones = new[] { 1, 2, 3 };
+
+		for (int i = 0; i < tens.Length; i++) {
+			for (int j = 0; j < ones.Length; j++) {
+				if (tens[i] + ones[j] == arg)
+					return i;
+			}
+		}
+
+		return -1;
+	}
 }

@@ -71,7 +71,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var blockContext = new BlockTransformContext(context);
 			blockContext.Function = function;
-			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
+			foreach (var container in function.Descendants.OfType<BlockContainer>().ToList()) {
 				context.CancellationToken.ThrowIfCancellationRequested();
 				var cfg = LoopDetection.BuildCFG(container);
 				Dominance.ComputeDominance(cfg[0], context.CancellationToken);

@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private Node StepInternal(string description, ILInstruction near)
 		{
-			if (step >= StepLimit) {
+			if (step == StepLimit) {
 				if (IsDebug)
 					Debugger.Break();
 				else

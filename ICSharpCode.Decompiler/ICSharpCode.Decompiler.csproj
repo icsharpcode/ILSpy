@@ -286,7 +286,7 @@
     <Compile Include="IL\ControlFlow\ConditionDetection.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowSimplification.cs" />
     <Compile Include="IL\ControlFlow\DetectPinnedRegions.cs" />
-    <Compile Include="IL\ControlFlow\IntroduceExitPoints.cs" />
+    <Compile Include="IL\ControlFlow\ExitPoints.cs" />
     <Compile Include="IL\ControlFlow\LoopDetection.cs" />
     <Compile Include="IL\ControlFlow\SwitchAnalysis.cs" />
     <Compile Include="IL\ControlFlow\SwitchDetection.cs" />

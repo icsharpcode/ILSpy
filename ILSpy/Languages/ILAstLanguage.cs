@@ -161,14 +161,14 @@ namespace ICSharpCode.ILSpy
 				try {
 					il.RunTransforms(transforms, context);
 				} catch (StepLimitReachedException) {
-					il.WriteTo(output);
-					return;
+				} finally {
+					// update stepper even if a transform crashed unexpectedly
+					if (options.StepLimit == int.MaxValue) {
+						Stepper = context.Stepper;
+						OnStepperUpdated(new EventArgs());
+					}
 				}
 				il.WriteTo(output);
-				if (options.StepLimit == int.MaxValue) {
-					Stepper = context.Stepper;
-					OnStepperUpdated(new EventArgs());
-				}
 			}
 		}
 	}
