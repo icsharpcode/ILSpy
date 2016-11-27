@@ -83,7 +83,11 @@ namespace ICSharpCode.Decompiler.IL
 			this.CheckInvariant(ILPhase.Normal);
 			foreach (var transform in transforms) {
 				context.CancellationToken.ThrowIfCancellationRequested();
-				context.Stepper.StartGroup(transform.GetType().Name);
+				if (transform is BlockILTransform blockTransform) {
+					context.Stepper.StartGroup(blockTransform.ToString());
+				} else {
+					context.Stepper.StartGroup(transform.GetType().Name);
+				}
 				transform.Run(this, context);
 				this.CheckInvariant(ILPhase.Normal);
 				context.Stepper.EndGroup(keepIfEmpty: true);

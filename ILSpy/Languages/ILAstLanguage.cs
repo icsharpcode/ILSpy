@@ -168,6 +168,10 @@ namespace ICSharpCode.ILSpy
 						OnStepperUpdated(new EventArgs());
 					}
 				}
+				(output as ISmartTextOutput)?.AddButton(Images.ViewCode, "Show Steps", delegate {
+					DebugSteps.Show();
+				});
+				output.WriteLine();
 				il.WriteTo(output);
 			}
 		}

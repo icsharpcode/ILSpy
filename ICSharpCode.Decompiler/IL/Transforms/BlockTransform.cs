@@ -63,6 +63,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public IList<IBlockTransform> PreOrderTransforms { get; } = new List<IBlockTransform>();
 		public IList<IBlockTransform> PostOrderTransforms { get; } = new List<IBlockTransform>();
 
+		public override string ToString()
+		{
+			return $"{nameof(BlockILTransform)} ({string.Join(", ", PreOrderTransforms.Concat(PostOrderTransforms).Select(t => t.GetType().Name))})";
+		}
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			var blockContext = new BlockTransformContext(context);
