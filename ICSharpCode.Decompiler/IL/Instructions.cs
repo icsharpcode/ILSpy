@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -155,8 +156,13 @@ namespace ICSharpCode.Decompiler.IL
 		RefAnyType,
 		/// <summary>Push the address stored in a typed reference.</summary>
 		RefAnyValue,
+		/// <summary>Matches any node</summary>
+		AnyNode,
 	}
+}
 
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Instruction without any arguments</summary>
 	public abstract partial class SimpleInstruction : ILInstruction
 	{
@@ -203,7 +209,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Instruction with a single argument</summary>
 	public abstract partial class UnaryInstruction : ILInstruction
 	{
@@ -275,7 +283,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Instruction with two arguments: Left and Right</summary>
 	public abstract partial class BinaryInstruction : ILInstruction
 	{
@@ -367,7 +377,9 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(')');
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Instruction with a list of arguments.</summary>
 	public abstract partial class CallInstruction : ILInstruction
 	{
@@ -421,7 +433,20 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL.Patterns
+{
+	/// <summary>Base class for pattern matching in ILAst.</summary>
+	public abstract partial class PatternInstruction : ILInstruction
+	{
+		protected PatternInstruction(OpCode opCode) : base(opCode)
+		{
+		}
+		public override StackType ResultType { get { return StackType.Unknown; } }
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.</summary>
 	public sealed partial class InvalidInstruction : SimpleInstruction
 	{
@@ -456,7 +481,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>No operation. Takes 0 arguments and returns void.</summary>
 	public sealed partial class Nop : SimpleInstruction
 	{
@@ -482,7 +509,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>A container of IL blocks.</summary>
 	public sealed partial class ILFunction : ILVariableScope
 	{
@@ -553,7 +582,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.body.PerformMatch(o.body, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>A container of IL blocks.</summary>
 	public sealed partial class BlockContainer : ILInstruction
 	{
@@ -576,7 +607,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && Patterns.ListMatch.DoMatch(this.Blocks, o.Blocks, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>A block of IL instructions.</summary>
 	public sealed partial class Block : ILInstruction
 	{
@@ -599,7 +632,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Type == o.Type && Patterns.ListMatch.DoMatch(this.Instructions, o.Instructions, ref match) && this.FinalInstruction.PerformMatch(o.FinalInstruction, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>A region where a pinned variable is used (initial representation of future fixed statement).</summary>
 	public sealed partial class PinnedRegion : ILInstruction, IInstructionWithVariableOperand
 	{
@@ -742,7 +777,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && variable == o.variable && this.init.PerformMatch(o.init, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).</summary>
 	public sealed partial class LogicNot : UnaryInstruction
 	{
@@ -768,7 +805,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.</summary>
 	public sealed partial class BinaryNumericInstruction : BinaryInstruction
 	{
@@ -791,7 +830,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Common instruction for compound assignments.</summary>
 	public sealed partial class CompoundAssignmentInstruction : ILInstruction
 	{
@@ -881,7 +922,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Bitwise NOT</summary>
 	public sealed partial class BitNot : UnaryInstruction
 	{
@@ -907,7 +950,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Retrieves the RuntimeArgumentHandle.</summary>
 	public sealed partial class Arglist : SimpleInstruction
 	{
@@ -933,7 +978,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Unconditional branch. <c>goto target;</c></summary>
 	public sealed partial class Branch : SimpleInstruction
 	{
@@ -956,7 +1003,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.TargetBlock == o.TargetBlock;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Unconditional branch to end of block container. <c>goto container_end;</c>, often <c>break;</c></summary>
 	public sealed partial class Leave : SimpleInstruction
 	{
@@ -979,7 +1028,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.TargetContainer == o.TargetContainer;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 	public sealed partial class IfInstruction : ILInstruction
 	{
@@ -1082,7 +1133,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.condition.PerformMatch(o.condition, ref match) && this.trueInst.PerformMatch(o.trueInst, ref match) && this.falseInst.PerformMatch(o.falseInst, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Switch statement</summary>
 	public sealed partial class SwitchInstruction : ILInstruction
 	{
@@ -1105,7 +1158,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && Value.PerformMatch(o.Value, ref match) && DefaultBody.PerformMatch(o.DefaultBody, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Switch section within a switch statement</summary>
 	public sealed partial class SwitchSection : ILInstruction
 	{
@@ -1175,7 +1230,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.body.PerformMatch(o.body, ref match) && this.Labels.Intervals.SequenceEqual(o.Labels.Intervals);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Try-catch statement.</summary>
 	public sealed partial class TryCatch : TryInstruction
 	{
@@ -1198,7 +1255,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && TryBlock.PerformMatch(o.TryBlock, ref match) && Patterns.ListMatch.DoMatch(Handlers, o.Handlers, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Catch handler within a try-catch statement.</summary>
 	public sealed partial class TryCatchHandler : ILInstruction, IInstructionWithVariableOperand
 	{
@@ -1315,7 +1374,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.filter.PerformMatch(o.filter, ref match) && this.body.PerformMatch(o.body, ref match) && variable == o.variable;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Try-finally statement</summary>
 	public sealed partial class TryFinally : TryInstruction
 	{
@@ -1338,7 +1399,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && TryBlock.PerformMatch(o.TryBlock, ref match) && finallyBlock.PerformMatch(o.finallyBlock, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Try-fault statement</summary>
 	public sealed partial class TryFault : TryInstruction
 	{
@@ -1361,7 +1424,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && TryBlock.PerformMatch(o.TryBlock, ref match) && faultBlock.PerformMatch(o.faultBlock, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Breakpoint instruction</summary>
 	public sealed partial class DebugBreak : SimpleInstruction
 	{
@@ -1396,7 +1461,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Comparison. The inputs must be both integers; or both floats; or both object references. Object references can only be compared for equality or inequality. Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which evaluates to 1 (true).</summary>
 	public sealed partial class Comp : BinaryInstruction
 	{
@@ -1419,7 +1486,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && this.Kind == o.Kind && this.Sign == o.Sign;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Non-virtual method call.</summary>
 	public sealed partial class Call : CallInstruction
 	{
@@ -1440,7 +1509,9 @@ namespace ICSharpCode.Decompiler.IL
 			return visitor.VisitCall(this, context);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Virtual method call.</summary>
 	public sealed partial class CallVirt : CallInstruction
 	{
@@ -1461,7 +1532,9 @@ namespace ICSharpCode.Decompiler.IL
 			return visitor.VisitCallVirt(this, context);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Checks that the input float is not NaN or infinite.</summary>
 	public sealed partial class Ckfinite : UnaryInstruction
 	{
@@ -1496,7 +1569,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Numeric cast.</summary>
 	public sealed partial class Conv : UnaryInstruction
 	{
@@ -1519,7 +1594,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && CheckForOverflow == o.CheckForOverflow && Kind == o.Kind && InputSign == o.InputSign && TargetType == o.TargetType;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads the value of a local variable. (ldarg/ldloc)</summary>
 	public sealed partial class LdLoc : SimpleInstruction, IInstructionWithVariableOperand
 	{
@@ -1591,7 +1668,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && variable == o.variable;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads the address of a local variable. (ldarga/ldloca)</summary>
 	public sealed partial class LdLoca : SimpleInstruction, IInstructionWithVariableOperand
 	{
@@ -1654,7 +1733,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && variable == o.variable;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
 	public sealed partial class StLoc : ILInstruction, IInstructionWithVariableOperand
 	{
@@ -1777,7 +1858,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && variable == o.variable && this.value.PerformMatch(o.value, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Stores the value into an anonymous temporary variable, and returns the address of that variable.</summary>
 	public sealed partial class AddressOf : ILInstruction
 	{
@@ -1867,7 +1950,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.value.PerformMatch(o.value, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads a constant string.</summary>
 	public sealed partial class LdStr : SimpleInstruction
 	{
@@ -1901,7 +1986,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Value == o.Value;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads a constant 32-bit integer.</summary>
 	public sealed partial class LdcI4 : SimpleInstruction
 	{
@@ -1935,7 +2022,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Value == o.Value;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads a constant 64-bit integer.</summary>
 	public sealed partial class LdcI8 : SimpleInstruction
 	{
@@ -1969,7 +2058,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Value == o.Value;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads a constant floating-point number.</summary>
 	public sealed partial class LdcF : SimpleInstruction
 	{
@@ -2003,7 +2094,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Value == o.Value;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads a constant decimal.</summary>
 	public sealed partial class LdcDecimal : SimpleInstruction
 	{
@@ -2037,7 +2130,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Value == o.Value;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads the null reference.</summary>
 	public sealed partial class LdNull : SimpleInstruction
 	{
@@ -2063,7 +2158,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Load method pointer</summary>
 	public sealed partial class LdFtn : SimpleInstruction, IInstructionWithMethodOperand
 	{
@@ -2099,7 +2196,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && method.Equals(o.method);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Load method pointer</summary>
 	public sealed partial class LdVirtFtn : UnaryInstruction, IInstructionWithMethodOperand
 	{
@@ -2147,7 +2246,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && method.Equals(o.method);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads runtime representation of metadata token</summary>
 	public sealed partial class LdTypeToken : SimpleInstruction
 	{
@@ -2183,7 +2284,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && type.Equals(o.type);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads runtime representation of metadata token</summary>
 	public sealed partial class LdMemberToken : SimpleInstruction
 	{
@@ -2219,7 +2322,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && member.Equals(o.member);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Allocates space in the stack frame</summary>
 	public sealed partial class LocAlloc : UnaryInstruction
 	{
@@ -2254,7 +2359,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Returns from the current method or lambda.</summary>
 	public sealed partial class Return : ILInstruction
 	{
@@ -2277,7 +2384,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.hasArgument == o.hasArgument && (!hasArgument || this.ReturnValue.PerformMatch(o.ReturnValue, ref match));
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Load address of instance field</summary>
 	public sealed partial class LdFlda : ILInstruction, IInstructionWithFieldOperand
 	{
@@ -2374,7 +2483,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.target.PerformMatch(o.target, ref match) && field.Equals(o.field);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Load static field address</summary>
 	public sealed partial class LdsFlda : SimpleInstruction, IInstructionWithFieldOperand
 	{
@@ -2410,7 +2521,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && field.Equals(o.field);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Casts an object to a class.</summary>
 	public sealed partial class CastClass : UnaryInstruction
 	{
@@ -2458,7 +2571,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Test if object is instance of class or interface.</summary>
 	public sealed partial class IsInst : UnaryInstruction
 	{
@@ -2497,7 +2612,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Indirect load (ref/pointer dereference).</summary>
 	public sealed partial class LdObj : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
@@ -2601,7 +2718,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Indirect store (store to ref/pointer).</summary>
 	public sealed partial class StObj : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
@@ -2725,7 +2844,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Boxes a value.</summary>
 	public sealed partial class Box : UnaryInstruction
 	{
@@ -2773,7 +2894,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Compute address inside box.</summary>
 	public sealed partial class Unbox : UnaryInstruction
 	{
@@ -2821,7 +2944,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Unbox a value.</summary>
 	public sealed partial class UnboxAny : UnaryInstruction
 	{
@@ -2869,7 +2994,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Creates an object instance and calls the constructor.</summary>
 	public sealed partial class NewObj : CallInstruction
 	{
@@ -2890,7 +3017,9 @@ namespace ICSharpCode.Decompiler.IL
 			return visitor.VisitNewObj(this, context);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Creates an array instance.</summary>
 	public sealed partial class NewArr : ILInstruction
 	{
@@ -2979,7 +3108,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && type.Equals(o.type) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Returns the default value for a type.</summary>
 	public sealed partial class DefaultValue : SimpleInstruction
 	{
@@ -3015,7 +3146,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && type.Equals(o.type);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Throws an exception.</summary>
 	public sealed partial class Throw : UnaryInstruction
 	{
@@ -3050,7 +3183,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Rethrows the current exception.</summary>
 	public sealed partial class Rethrow : SimpleInstruction
 	{
@@ -3085,7 +3220,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Gets the size of a type in bytes.</summary>
 	public sealed partial class SizeOf : SimpleInstruction
 	{
@@ -3121,7 +3258,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && type.Equals(o.type);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Returns the length of an array as 'native unsigned int'.</summary>
 	public sealed partial class LdLen : ILInstruction
 	{
@@ -3199,7 +3338,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.array.PerformMatch(o.array, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Load address of array element.</summary>
 	public sealed partial class LdElema : ILInstruction
 	{
@@ -3311,7 +3452,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && type.Equals(o.type) && this.array.PerformMatch(o.array, ref match) && Patterns.ListMatch.DoMatch(this.Indices, o.Indices, ref match) && IsReadOnly == o.IsReadOnly;
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.
 	/// Also used to convert a string to a reference to the first character.</summary>
 	public sealed partial class ArrayToPointer : ILInstruction
@@ -3402,7 +3545,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.array.PerformMatch(o.array, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Push a typed reference of type class onto the stack.</summary>
 	public sealed partial class MakeRefAny : UnaryInstruction
 	{
@@ -3441,7 +3586,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Push the type token stored in a typed reference.</summary>
 	public sealed partial class RefAnyType : UnaryInstruction
 	{
@@ -3467,7 +3614,9 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
-
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Push the address stored in a typed reference.</summary>
 	public sealed partial class RefAnyValue : UnaryInstruction
 	{
@@ -3515,8 +3664,53 @@ namespace ICSharpCode.Decompiler.IL
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
 		}
 	}
+}
+namespace ICSharpCode.Decompiler.IL.Patterns
+{
+	/// <summary>Matches any node</summary>
+	public sealed partial class AnyNode : PatternInstruction
+	{
+		protected sealed override int GetChildCount()
+		{
+			return 0;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (AnyNode)ShallowClone();
+			return clone;
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			output.Write(')');
+		}
+	}
+}
 
-
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>
 	/// Base class for visitor pattern.
 	/// </summary>
@@ -4369,6 +4563,7 @@ namespace ICSharpCode.Decompiler.IL
 			"mkrefany",
 			"refanytype",
 			"refanyval",
+			"AnyNode",
 		};
 	}
 	

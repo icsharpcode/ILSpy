@@ -33,6 +33,7 @@
 		new OpCode("CallInstruction", "Instruction with a list of arguments.",
 			AbstractBaseClass, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}),
 			CustomWriteTo, MayThrow, SideEffect),
+		new OpCode("PatternInstruction", "Base class for pattern matching in ILAst.", AbstractBaseClass, ResultType("Unknown")) { Namespace = "ICSharpCode.Decompiler.IL.Patterns" }
 	};
 	
 	OpCode[] opCodes = {
@@ -209,6 +210,9 @@
 			CustomClassName("RefAnyType"), Unary, ResultType("O")),
 		new OpCode("refanyval", "Push the address stored in a typed reference.",
 			CustomClassName("RefAnyValue"), Unary, HasTypeOperand, MayThrow, ResultType("Ref")),
+
+		// patterns
+		new OpCode("AnyNode", "Matches any node", Pattern, CustomArguments(), CustomConstructor),
 	};
 #>
 using System;
@@ -229,8 +233,11 @@ namespace ICSharpCode.Decompiler.IL
 		<#=opCode.Name#>,
 <#  } #>
 	}
+}
 
 <#	foreach (OpCode opCode in baseClasses.Concat(opCodes)) { #>
+namespace <#=opCode.Namespace#>
+{
 	/// <summary><#=opCode.Description.Replace("\n", "\n\t/// ")#></summary>
 	<#=opCode.ClassModifiers#> partial class <#=opCode.Name#> : <#=string.Join(", ", new[]{opCode.BaseClass}.Concat(opCode.Interfaces))#>
 	{
@@ -278,9 +285,11 @@ namespace ICSharpCode.Decompiler.IL
 		}
 <#		} #>
 	}
-
+}
 <#	} #>
 
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>
 	/// Base class for visitor pattern.
 	/// </summary>
@@ -289,7 +298,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Called by Visit*() methods that were not overridden</summary>
 		protected abstract void Default(ILInstruction inst);
 		
-<#	foreach (OpCode opCode in opCodes) { #>
+<#	foreach (OpCode opCode in opCodes.Where(o => o.GenerateAcceptVisitor)) { #>
 		protected internal virtual void Visit<#=opCode.Name#>(<#=opCode.Name#> <#=opCode.VariableName#>)
 		{
 			Default(<#=opCode.VariableName#>);
@@ -305,7 +314,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Called by Visit*() methods that were not overridden</summary>
 		protected abstract T Default(ILInstruction inst);
 		
-<#	foreach (OpCode opCode in opCodes) { #>
+<#	foreach (OpCode opCode in opCodes.Where(o => o.GenerateAcceptVisitor)) { #>
 		protected internal virtual T Visit<#=opCode.Name#>(<#=opCode.Name#> <#=opCode.VariableName#>)
 		{
 			return Default(<#=opCode.VariableName#>);
@@ -321,7 +330,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Called by Visit*() methods that were not overridden</summary>
 		protected abstract T Default(ILInstruction inst, C context);
 		
-<#	foreach (OpCode opCode in opCodes) { #>
+<#	foreach (OpCode opCode in opCodes.Where(o => o.GenerateAcceptVisitor)) { #>
 		protected internal virtual T Visit<#=opCode.Name#>(<#=opCode.Name#> <#=opCode.VariableName#>, C context)
 		{
 			return Default(<#=opCode.VariableName#>, context);
@@ -395,6 +404,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public readonly string OriginalName;
 		public string Name;
+		public string Namespace = "ICSharpCode.Decompiler.IL";
 		public readonly string Description;
 		public string VariableName = "inst";
 
@@ -943,5 +953,13 @@ protected override void Disconnected()
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOpCodePrefix.Add("if (IsReadOnly)" + Environment.NewLine + "\toutput.Write(\"readonly.\");");
 		opCode.PerformMatchConditions.Add("IsReadOnly == o.IsReadOnly");
+	};
+
+	static Action<OpCode> Pattern = opCode => {
+		BaseClass("PatternInstruction")(opCode);
+		opCode.Namespace = "ICSharpCode.Decompiler.IL.Patterns";
+		opCode.GenerateAcceptVisitor = false;
+		opCode.GenerateMatch = false;
+		opCode.GeneratePerformMatch = false;
 	};
 #>

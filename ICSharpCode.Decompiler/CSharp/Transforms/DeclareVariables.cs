@@ -33,6 +33,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class DeclareVariables : IAstTransform
 	{
+		/// <summary>
+		/// Represents a position immediately before nextNode.
+		/// nextNode is either an ExpressionStatement in a BlockStatement, or an initializer in a for-loop.
+		/// </summary>
 		struct InsertionPoint
 		{
 			internal int level;
@@ -212,6 +216,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// guarantee that it finds only blocks.
 				// Fix that up now.
 				while (!(v.InsertionPoint.nextNode.Parent is BlockStatement)) {
+					if (v.InsertionPoint.nextNode.Parent is ForStatement f && v.InsertionPoint.nextNode == f.Initializers.FirstOrDefault())
+						break;
 					v.InsertionPoint = v.InsertionPoint.Up();
 				}
 				
@@ -254,22 +260,22 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (v.RemovedDueToCollision)
 					continue;
 				
-				var boe = (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
+				var assignment = (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
 				Expression expectedExpr = new IdentifierExpression(v.Name);
 				if (v.Type.Kind == TypeKind.ByReference) {
 					expectedExpr = new DirectionExpression(FieldDirection.Ref, expectedExpr);
 				}
-				if (boe != null && boe.Left.IsMatch(expectedExpr)) {
+				if (assignment != null && assignment.Left.IsMatch(expectedExpr)) {
 					AstType type;
 					if (v.Type.ContainsAnonymousType()) {
 						type = new SimpleType("var");
 					} else {
 						type = context.TypeSystemAstBuilder.ConvertType(v.Type);
 					}
-					var vds = new VariableDeclarationStatement(type, v.Name, boe.Right.Detach());
+					var vds = new VariableDeclarationStatement(type, v.Name, assignment.Right.Detach());
 					var init = vds.Variables.Single();
-					init.AddAnnotation(boe.Left.GetResolveResult());
-					foreach (object annotation in boe.Left.Annotations.Concat(boe.Annotations)) {
+					init.AddAnnotation(assignment.Left.GetResolveResult());
+					foreach (object annotation in assignment.Left.Annotations.Concat(assignment.Annotations)) {
 						if (!(annotation is ResolveResult)) {
 							init.AddAnnotation(annotation);
 						}
