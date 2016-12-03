@@ -343,8 +343,12 @@ namespace ICSharpCode.TreeView
 			return null;
 		}
 
+		protected override System.Windows.Automation.Peers.AutomationPeer OnCreateAutomationPeer()
+		{
+			return new SharpTreeViewAutomationPeer(this);
+		}
 		#region Track selection
-		
+
 		protected override void OnSelectionChanged(SelectionChangedEventArgs e)
 		{
 			foreach (SharpTreeNode node in e.RemovedItems) {

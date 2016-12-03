@@ -28,6 +28,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.NRefactory.CSharp;
@@ -55,17 +56,28 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		
+		class ComboBoxItem
+		{
+			public BitmapImage Image { get; set;  }
+			public string Name { get; set;  }
+
+			public override string ToString()
+			{
+				return Name ?? " ";
+			}
+		}
+
 		private SearchPane()
 		{
 			InitializeComponent();
-			searchModeComboBox.Items.Add(new { Image = Images.Library, Name = "Types and Members" });
-			searchModeComboBox.Items.Add(new { Image = Images.Class, Name = "Type" });
-			searchModeComboBox.Items.Add(new { Image = Images.Property, Name = "Member" });
-			searchModeComboBox.Items.Add(new { Image = Images.Method, Name = "Method" });
-			searchModeComboBox.Items.Add(new { Image = Images.Field, Name = "Field" });
-			searchModeComboBox.Items.Add(new { Image = Images.Property, Name = "Property" });
-			searchModeComboBox.Items.Add(new { Image = Images.Event, Name = "Event" });
-			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
+			searchModeComboBox.Items.Add(new ComboBoxItem() { Image = Images.Library, Name = "Types and Members" });
+			searchModeComboBox.Items.Add(new ComboBoxItem() { Image = Images.Class, Name = "Type" });
+			searchModeComboBox.Items.Add(new ComboBoxItem() { Image = Images.Property, Name = "Member" });
+			searchModeComboBox.Items.Add(new ComboBoxItem() { Image = Images.Method, Name = "Method" });
+			searchModeComboBox.Items.Add(new ComboBoxItem() { Image = Images.Field, Name = "Field" });
+			searchModeComboBox.Items.Add(new ComboBoxItem() { Image = Images.Property, Name = "Property" });
+			searchModeComboBox.Items.Add(new ComboBoxItem() { Image = Images.Event, Name = "Event" });
+			searchModeComboBox.Items.Add(new ComboBoxItem() { Image = Images.Literal, Name = "Constant" });
 			searchModeComboBox.SelectedIndex = (int)SearchMode.TypeAndMember;
 			ContextMenuProvider.Add(listBox);
 			
