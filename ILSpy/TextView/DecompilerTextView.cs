@@ -28,6 +28,7 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
+using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
@@ -99,6 +100,10 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.SetBinding(Control.FontSizeProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFontSize") });
 			textEditor.SetBinding(TextEditor.WordWrapProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("EnableWordWrap") });
 
+			// disable Tab editing command (useless for read-only editor); allow using tab for focus navigation instead
+			RemoveEditCommand(EditingCommands.TabForward);
+			RemoveEditCommand(EditingCommands.TabBackward);
+			
 			textMarkerService = new TextMarkerService(textEditor.TextArea.TextView);
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
@@ -116,7 +121,17 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.TextArea.TextView.BackgroundRenderers.Add(textMarkerService);
 			textEditor.TextArea.TextView.LineTransformers.Add(textMarkerService);
 		}
-		
+
+		void RemoveEditCommand(RoutedUICommand command)
+		{
+			var handler = textEditor.TextArea.DefaultInputHandler.Editing;
+			var inputBinding = handler.InputBindings.FirstOrDefault(b => b.Command == command);
+			if (inputBinding != null)
+				handler.InputBindings.Remove(inputBinding);
+			var commandBinding = handler.CommandBindings.FirstOrDefault(b => b.Command == command);
+			if (commandBinding != null)
+				handler.CommandBindings.Remove(commandBinding);
+		}
 		#endregion
 		
 		#region Line margin
