@@ -28,7 +28,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		static void Main()
 		{
+			TestBoxing();
 			CallIssue180();
+			CallExtensionMethod();
+		}
+
+		static void TestBoxing()
+		{
+			Print(1);
+			Print((ushort)1);
+		}
+
+		static void Print(object obj)
+		{
+			if (obj == null)
+				Console.WriteLine("null");
+			else
+				Console.WriteLine("{0}: {1}", obj.GetType().Name, obj);
 		}
 
 		static void CallIssue180()
