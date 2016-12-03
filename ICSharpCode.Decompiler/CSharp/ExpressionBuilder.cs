@@ -417,6 +417,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		TranslatedExpression TranslateCeq(Comp inst, out bool negateOutput)
 		{
+			Debug.Assert(inst.Kind.IsEqualityOrInequality());
 			// Translate '(e as T) == null' to '!(e is T)'.
 			// This is necessary for correctness when T is a value type.
 			if (inst.Left.OpCode == OpCode.IsInst && inst.Right.OpCode == OpCode.LdNull) {
@@ -475,9 +476,18 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else {
 					left = left.ConvertTo(targetType, this);
 				}
-				rr = new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean),
-				                               BinaryOperatorExpression.GetLinqNodeType(BinaryOperatorType.Equality, false),
-				                               left.ResolveResult, right.ResolveResult);
+				rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(),
+					left.ResolveResult, right.ResolveResult) as OperatorResolveResult;
+				if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
+					|| rr.Operands[0].Type.GetStackType() != inst.InputType)
+				{
+					// If converting one input wasn't sufficient, convert both:
+					left = left.ConvertTo(targetType, this);
+					right = right.ConvertTo(targetType, this);
+					rr = new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean),
+												   BinaryOperatorExpression.GetLinqNodeType(BinaryOperatorType.Equality, false),
+												   left.ResolveResult, right.ResolveResult);
+				}
 			}
 			negateOutput = false;
 			return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)

@@ -45,6 +45,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 
 			Console.WriteLine(IsNotNull(new OverloadedOperators()));
 			Console.WriteLine(IsNull(new OverloadedOperators()));
+			Console.WriteLine(NullIs(new OverloadedOperators()));
+			Console.WriteLine(NullIsNot(new OverloadedOperators()));
 			return 0;
 		}
 		
@@ -88,6 +90,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 		{
 			return (object)oo != null;
 		}
+
+		static bool NullIs(OverloadedOperators oo)
+		{
+			return null == (object)oo;
+		}
+
+		static bool NullIsNot(OverloadedOperators oo)
+		{
+			return null != (object)oo;
+		}
 	}
 
 #pragma warning disable CS0660 // Type defines operator == or operator != but does not override Object.Equals(object o)
@@ -100,6 +112,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases
 		}
 
 		public static bool operator !=(OverloadedOperators oo, object b)
+		{
+			throw new NotSupportedException("Not supported to call the user-defined operator");
+		}
+
+		public static bool operator ==(object oo, OverloadedOperators b)
+		{
+			throw new NotSupportedException("Not supported to call the user-defined operator");
+		}
+
+		public static bool operator !=(object oo, OverloadedOperators b)
 		{
 			throw new NotSupportedException("Not supported to call the user-defined operator");
 		}

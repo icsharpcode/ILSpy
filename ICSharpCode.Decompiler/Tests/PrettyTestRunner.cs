@@ -97,6 +97,12 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
+		[Test]
+		public void TypeInference([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
 		[Test, Ignore("Not implemented")]
 		public void YieldReturn([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{

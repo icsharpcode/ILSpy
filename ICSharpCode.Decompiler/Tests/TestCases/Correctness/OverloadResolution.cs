@@ -47,5 +47,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("#180: params object[]");
 		}
+
+		static void CallExtensionMethod()
+		{
+			new object().ExtensionMethod();
+			ExtensionMethod(null); // issue #167
+		}
+
+		public static void ExtensionMethod(this object obj)
+		{
+			Console.WriteLine("ExtensionMethod(obj)");
+		}
 	}
 }
