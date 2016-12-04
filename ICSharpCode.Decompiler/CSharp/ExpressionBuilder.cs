@@ -87,16 +87,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		public ExpressionWithResolveResult ConvertConstantValue(ResolveResult rr)
 		{
 			var expr = astBuilder.ConvertConstantValue(rr);
-			var pe = expr as PrimitiveExpression;
-			if (pe != null) {
-				if (pe.Value is sbyte)
-					expr = expr.CastTo(new PrimitiveType("sbyte"));
-				else if (pe.Value is byte)
-					expr = expr.CastTo(new PrimitiveType("byte"));
-				else if (pe.Value is short)
-					expr = expr.CastTo(new PrimitiveType("short"));
-				else if (pe.Value is ushort)
-					expr = expr.CastTo(new PrimitiveType("ushort"));
+			if (expr is NullReferenceExpression && rr.Type.Kind != TypeKind.Null) {
+				expr = expr.CastTo(ConvertType(rr.Type));
+			} else {
+				switch (rr.Type.GetDefinition()?.KnownTypeCode) {
+					case KnownTypeCode.SByte:
+					case KnownTypeCode.Byte:
+					case KnownTypeCode.Int16:
+					case KnownTypeCode.UInt16:
+						expr = expr.CastTo(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)));
+						break;
+				}
 			}
 			var exprRR = expr.Annotation<ResolveResult>();
 			if (exprRR == null) {

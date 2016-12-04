@@ -28,15 +28,47 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		static void Main()
 		{
+			CallOverloadedMethod();
 			TestBoxing();
-			CallIssue180();
-			CallExtensionMethod();
+			TestIssue180();
+			TestExtensionMethod();
 		}
 
+		#region Simple Overloaded Method
+		static void CallOverloadedMethod()
+		{
+			OverloadedMethod("(string)");
+			OverloadedMethod((object)"(object)");
+			OverloadedMethod(5);
+			OverloadedMethod((object)5);
+			OverloadedMethod(5L);
+			OverloadedMethod((object)null);
+			OverloadedMethod((string)null);
+			OverloadedMethod((int?)null);
+		}
+
+		static void OverloadedMethod(object a)
+		{
+			Console.WriteLine("OverloadedMethod(object={0}, object.GetType()={1})", a, a != null ? a.GetType().Name : "null");
+		}
+
+		static void OverloadedMethod(int? a)
+		{
+			Console.WriteLine("OverloadedMethod(int?={0})", a);
+		}
+
+		static void OverloadedMethod(string a)
+		{
+			Console.WriteLine("OverloadedMethod(string={0})", a);
+		}
+		#endregion
+
+		#region Boxing
 		static void TestBoxing()
 		{
 			Print(1);
 			Print((ushort)1);
+			Print(null);
 		}
 
 		static void Print(object obj)
@@ -46,8 +78,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			else
 				Console.WriteLine("{0}: {1}", obj.GetType().Name, obj);
 		}
+		#endregion
 
-		static void CallIssue180()
+		#region #180
+		static void TestIssue180()
 		{
 			Issue180(null);
 			Issue180(new object[1]);
@@ -63,8 +97,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("#180: params object[]");
 		}
+		#endregion
 
-		static void CallExtensionMethod()
+		#region Extension Method
+		static void TestExtensionMethod()
 		{
 			new object().ExtensionMethod();
 			ExtensionMethod(null); // issue #167
@@ -74,5 +110,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("ExtensionMethod(obj)");
 		}
+		#endregion
 	}
 }

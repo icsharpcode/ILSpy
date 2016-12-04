@@ -428,16 +428,25 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return attr;
 		}
 		#endregion
-		
+
 		#region Convert Constant Value
+		/// <summary>
+		/// Creates an Expression for the given constant value.
+		/// 
+		/// Note: the returned expression is not necessarily of the desired type.
+		/// However, the returned expression will always be implicitly convertible to <c>rr.Type</c>,
+		/// and will have the correct value when being converted in this way.
+		/// </summary>
 		public Expression ConvertConstantValue(ResolveResult rr)
 		{
 			if (rr == null)
 				throw new ArgumentNullException("rr");
-			if (rr is ConversionResolveResult) {
+			bool isBoxing = false;
+			if (rr is ConversionResolveResult crr) {
 				// unpack ConversionResolveResult if necessary
 				// (e.g. a boxing conversion or string->object reference conversion)
-				rr = ((ConversionResolveResult)rr).Input;
+				rr = crr.Input;
+				isBoxing = crr.Conversion.IsBoxingConversion;
 			}
 			
 			if (rr is TypeOfResolveResult) {
@@ -445,12 +454,10 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (AddResolveResultAnnotations)
 					expr.AddAnnotation(rr);
 				return expr;
-			} else if (rr is ArrayCreateResolveResult) {
-				ArrayCreateResolveResult acrr = (ArrayCreateResolveResult)rr;
+			} else if (rr is ArrayCreateResolveResult acrr) {
 				ArrayCreateExpression ace = new ArrayCreateExpression();
 				ace.Type = ConvertType(acrr.Type);
-				ComposedType composedType = ace.Type as ComposedType;
-				if (composedType != null) {
+				if (ace.Type is ComposedType composedType) {
 					composedType.ArraySpecifiers.MoveTo(ace.AdditionalArraySpecifiers);
 					if (!composedType.HasNullableSpecifier && composedType.PointerRank == 0)
 						ace.Type = composedType.BaseType;
@@ -469,12 +476,30 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					ace.AddAnnotation(rr);
 				return ace;
 			} else if (rr.IsCompileTimeConstant) {
-				return ConvertConstantValue(rr.Type, rr.ConstantValue);
+				var expr = ConvertConstantValue(rr.Type, rr.ConstantValue);
+				if (isBoxing && IsSmallInteger(rr.Type)) {
+					// C# does not have small integer literal types.
+					// We need to add a cast so that the integer literal gets boxed as the correct type.
+					expr = new CastExpression(ConvertType(rr.Type), expr);
+					if (AddResolveResultAnnotations)
+						expr.AddAnnotation(rr);
+				}
+				return expr;
 			} else {
 				return new ErrorExpression();
 			}
 		}
-		
+
+		/// <summary>
+		/// Creates an Expression for the given constant value.
+		/// 
+		/// Note: the returned expression is not necessarily of the specified <paramref name="type"/>:
+		/// For example, <c>ConvertConstantValue(typeof(string), null)</c> results in a <c>null</c> literal,
+		/// without a cast to <c>string</c>.
+		/// Similarly, <c>ConvertConstantValue(typeof(short), 1)</c> results in the literal <c>1</c>,
+		/// which is of type <c>int</c>.
+		/// However, the returned expression will always be implicitly convertible to <paramref name="type"/>.
+		/// </summary>
 		public Expression ConvertConstantValue(IType type, object constantValue)
 		{
 			if (type == null)
@@ -494,10 +519,32 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			} else if (type.Kind == TypeKind.Enum) {
 				return ConvertEnumValue(type, (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false));
 			} else {
-				return new PrimitiveExpression(constantValue);
+				if (IsSmallInteger(type)) { 
+					// C# does not have integer literals of small integer types,
+					// use `int` literal instead.
+					constantValue = CSharpPrimitiveCast.Cast(TypeCode.Int32, constantValue, false);
+					type = type.GetDefinition().Compilation.FindType(KnownTypeCode.Int32);
+				}
+				var expr = new PrimitiveExpression(constantValue);
+				if (AddResolveResultAnnotations)
+					expr.AddAnnotation(new ConstantResolveResult(type, constantValue));
+				return expr;
 			}
 		}
-		
+
+		bool IsSmallInteger(IType type)
+		{
+			switch (type.GetDefinition()?.KnownTypeCode) {
+				case KnownTypeCode.Byte:
+				case KnownTypeCode.SByte:
+				case KnownTypeCode.Int16:
+				case KnownTypeCode.UInt16:
+					return true;
+				default:
+					return false;
+			}
+		}
+
 		bool IsFlagsEnum(ITypeDefinition type)
 		{
 			IType flagsAttributeType = type.Compilation.FindType(typeof(System.FlagsAttribute));

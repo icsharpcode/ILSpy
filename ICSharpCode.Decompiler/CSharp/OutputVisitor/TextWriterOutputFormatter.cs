@@ -368,17 +368,36 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 					return "\\t";
 				case '\v':
 					return "\\v";
+				case ' ':
+				case '_':
+				case '`':
+				case '^':
+					// ASCII characters we allow directly in the output even though we don't use
+					// other Unicode characters of the same category.
+					return ch.ToString();
 				default:
-					if (char.IsControl(ch) || char.IsSurrogate(ch) ||
-					    // print all uncommon white spaces as numbers
-					    (char.IsWhiteSpace(ch) && ch != ' ')) {
-						return "\\u" + ((int)ch).ToString("x4");
-					} else {
-						return ch.ToString();
+					switch (char.GetUnicodeCategory(ch)) {
+						case UnicodeCategory.ModifierLetter:
+						case UnicodeCategory.NonSpacingMark:
+						case UnicodeCategory.SpacingCombiningMark:
+						case UnicodeCategory.EnclosingMark:
+						case UnicodeCategory.LineSeparator:
+						case UnicodeCategory.ParagraphSeparator:
+						case UnicodeCategory.Control:
+						case UnicodeCategory.Format:
+						case UnicodeCategory.Surrogate:
+						case UnicodeCategory.PrivateUse:
+						case UnicodeCategory.ConnectorPunctuation:
+						case UnicodeCategory.ModifierSymbol:
+						case UnicodeCategory.OtherNotAssigned:
+						case UnicodeCategory.SpaceSeparator:
+							return "\\u" + ((int)ch).ToString("x4");
+						default:
+							return ch.ToString();
 					}
 			}
 		}
-		
+
 		/// <summary>
 		/// Converts special characters to escape sequences within the given string.
 		/// </summary>

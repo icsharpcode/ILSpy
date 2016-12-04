@@ -6,7 +6,7 @@ namespace ICSharpCode.Decompiler.Tests.CustomAttributes
 	public class CustomAttributeTests : DecompilerTestBase
 	{
 		[Test]
-		[Ignore("Needs event pattern detection, which waits for improved control flow detection (loop conditions)")]
+		[Ignore("Needs event pattern detection, which waits for improved control flow detection (do-while loops)")]
 		public void CustomAttributeSamples()
 		{
 			ValidateFileRoundtrip(@"CustomAttributes/S_CustomAttributeSamples.cs");

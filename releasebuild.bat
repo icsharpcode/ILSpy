@@ -2,7 +2,7 @@
 	git submodule update --init || exit /b 1
 )
 @setlocal enabledelayedexpansion
-set MSBUILD=
+@set MSBUILD=
 @for /D %%M in ("%ProgramFiles(x86)%\Microsoft Visual Studio\2017"\*) do (
     @if exist "%%M\MSBuild\15.0\Bin\MSBuild.exe" (
         @set "MSBUILD=%%M\MSBuild\15.0\Bin\MSBuild.exe"

@@ -63,7 +63,7 @@ namespace aa
 			StringComparison.Ordinal, 
 			StringComparison.CurrentCulture
 		})]
-		public static void ArrayAsAttribute1()
+		public static void EnumArray()
 		{
 		}
 		// Boxing of each array element
@@ -71,7 +71,29 @@ namespace aa
 			StringComparison.Ordinal, 
 			StringComparison.CurrentCulture
 		})]
-		public static void ArrayAsAttribute2()
+		public static void BoxedEnumArray()
+		{
+		}
+		[My(new object[] {
+			1,
+			2u,
+			3L,
+			4uL,
+			// Ensure the decompiler doesn't leave these casts out:
+			(short)5,
+			(ushort)6,
+			(byte)7,
+			(sbyte)8,
+			'a',
+			'\0',
+			'\ufeff',
+			'\uffff',
+			1f,
+			2.0,
+			"text",
+			null
+		})]
+		public static void BoxedLiteralsArray()
 		{
 		}
 	}
