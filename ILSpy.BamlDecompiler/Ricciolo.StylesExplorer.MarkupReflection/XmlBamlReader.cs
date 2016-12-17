@@ -1397,7 +1397,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			XmlToClrNamespaceMapping mapping = FindByClrNamespaceAndAssemblyName(typeDeclaration.Namespace, typeDeclaration.Assembly);
 			string prefix = (mapping != null) ? this.LookupPrefix(mapping.XmlNamespace, false) : null;
 			string name = typeDeclaration.Name;
-			if (name.EndsWith("Extension"))
+			if (name.EndsWith("Extension", StringComparison.Ordinal))
 				name = name.Substring(0, name.Length - 9);
 			if (String.IsNullOrEmpty(prefix))
 				return name;
@@ -1418,7 +1418,6 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 			bool isDescendant = (areValidTypes && (propertyDeclaration.DeclaringType.Type.Equals(elementDeclaration.Type) || elementDeclaration.Type.IsSubclassOf(propertyDeclaration.DeclaringType.Type)));
 			bool isAttached = (descriptor != null && descriptor.IsAttached);
-			bool differentType = ((propertyDeclaration.DeclaringType != propertyDeclaration.DeclaringType || !isDescendant));
 
 			if (withPrefix) {
 				XmlToClrNamespaceMapping mapping = FindByClrNamespaceAndAssemblyName(propertyDeclaration.DeclaringType.Namespace, propertyDeclaration.DeclaringType.Assembly);
@@ -1429,7 +1428,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					sb.Append(":");
 				}
 			}
-			if ((differentType || isAttached || !checkType) && propertyDeclaration.DeclaringType.Name.Length > 0) {
+			if ((!isDescendant || isAttached || !checkType) && propertyDeclaration.DeclaringType.Name.Length > 0) {
 				sb.Append(propertyDeclaration.DeclaringType.Name);
 				sb.Append(".");
 			}
@@ -1466,7 +1465,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				return keys[keyIndex].StaticResources[(int)identifier];
 //			Debug.WriteLine(string.Format("Cannot find StaticResource: {0}", identifier));
 //			return "???" + identifier + "???";
-			throw new ArgumentException("Cannot find StaticResource: " + identifier, "identifier");
+			throw new ArgumentException("Cannot find StaticResource: " + identifier, nameof(identifier));
 		}
 
 		void ReadTextWithConverter()
