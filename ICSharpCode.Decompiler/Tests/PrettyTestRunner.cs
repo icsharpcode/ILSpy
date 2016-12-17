@@ -91,6 +91,12 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
+		[Test]
+		public void AnonymousTypes([Values(CompilerOptions.None, CompilerOptions.Optimize)] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
 		[Test, Ignore("Not implemented")]
 		public void Async([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{

@@ -1414,6 +1414,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		readonly static ArraySpecifier[] NoSpecifiers = new ArraySpecifier[0];
+
 		TranslatedExpression TranslateArrayInitializer(Block block)
 		{
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
@@ -1457,19 +1459,27 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			ArraySpecifier[] additionalSpecifiers;
-			var typeExpression = ConvertType(type);
-			if (typeExpression is ComposedType) {
-				additionalSpecifiers = ((ComposedType)typeExpression).ArraySpecifiers.SelectArray(a => (ArraySpecifier)a.Clone());
-				typeExpression = ((ComposedType)typeExpression).BaseType.Clone();
+			AstType typeExpression;
+			bool isAnonymouslyTyped = type.ContainsAnonymousType();
+			if (isAnonymouslyTyped) {
+				typeExpression = null;
+				additionalSpecifiers = new[] { new ArraySpecifier() };
 			} else {
-				additionalSpecifiers = new ArraySpecifier[0];
+				typeExpression = ConvertType(type);
+				if (typeExpression is ComposedType) {
+					additionalSpecifiers = ((ComposedType)typeExpression).ArraySpecifiers.SelectArray(a => (ArraySpecifier)a.Clone());
+					typeExpression = ((ComposedType)typeExpression).BaseType.Clone();
+				} else {
+					additionalSpecifiers = NoSpecifiers;
+				}
 			}
 			var expr = new ArrayCreateExpression {
 				Type = typeExpression,
 				Initializer = root
 			};
 			expr.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
-			expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
+			if (!isAnonymouslyTyped)
+				expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
 			return expr.WithILInstruction(block)
 				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
 		}
