@@ -279,26 +279,34 @@ namespace ICSharpCode.Decompiler.CSharp
 			    && container.EntryPoint.Instructions[0].MatchIfInstruction(out var conditionInst, out var trueInst)
 			    && container.EntryPoint.Instructions[1].MatchLeave(container)) {
 				// detected while(condition)-loop or for-loop
+				// we have to check if there's an increment block before converting the loop body using ConvertAsBlock(trueInst)
+				// and set the continueTarget to correctly convert 'br incrementBlock' instructions to continue; 
+				Block incrementBlock = null;
+				if (container.EntryPoint.IncomingEdgeCount == 2) {
+					incrementBlock = container.Blocks.SingleOrDefault(b => b.Instructions.Last().MatchBranch(container.EntryPoint) && b.Instructions.All(IsSimpleStatement));
+					if (incrementBlock != null)
+						continueTarget = incrementBlock;
+				}
 				conditionExpr = exprBuilder.TranslateCondition(conditionInst);
 				blockStatement = ConvertAsBlock(trueInst);
 				if (!trueInst.HasFlag(InstructionFlags.EndPointUnreachable))
 					blockStatement.Add(new BreakStatement());
-				if (container.EntryPoint.IncomingEdgeCount == 2) {
-					var incrementBlock = container.Blocks.SingleOrDefault(b => b.Instructions.Last().MatchBranch(container.EntryPoint));
-					if (incrementBlock != null) {
-						// for-loop
-/*						continueTarget = incrementBlock;
-						var forStmt = new ForStatement() {
-							Condition = conditionExpr,
-							EmbeddedStatement = ConvertBlockContainer(blockStatement, container, container.Blocks.Skip(1).Where(b => b != incrementBlock), true)
-						};
-						for (int i = 0; i < incrementBlock.Instructions.Count - 1; i++) {
-							forStmt.Iterators.Add(Convert(incrementBlock.Instructions[i]));
-						}
-						return forStmt;*/
+				if (incrementBlock != null) {
+					// for-loop
+					var forBody = ConvertBlockContainer(blockStatement, container, container.Blocks.Skip(1).Where(b => b != incrementBlock), true);
+					var forStmt = new ForStatement() {
+						Condition = conditionExpr,
+						EmbeddedStatement = forBody
+					};
+					for (int i = 0; i < incrementBlock.Instructions.Count - 1; i++) {
+						forStmt.Iterators.Add(Convert(incrementBlock.Instructions[i]));
 					}
+					if (incrementBlock.IncomingEdgeCount > continueCount)
+						forBody.Add(new LabelStatement { Label = incrementBlock.Label });
+					if (forBody.LastOrDefault() is ContinueStatement continueStmt)
+						continueStmt.Remove();
+					return forStmt;
 				}
-
 				blockStatement = ConvertBlockContainer(blockStatement, container, container.Blocks.Skip(1), true);
 			} else {
 				// do-while or while(true)-loop
@@ -323,6 +331,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (blockStatement.LastOrDefault() is ContinueStatement stmt)
 				stmt.Remove();
 			return new WhileStatement(conditionExpr, blockStatement);
+		}
+
+		private static bool IsSimpleStatement(ILInstruction inst)
+		{
+			switch (inst) {
+				case IfInstruction i:
+				case SwitchInstruction s:
+				case TryCatch t:
+				case TryFault fa:
+				case TryFinally fi:
+					return false;
+				default:
+					return true;
+			}
 		}
 
 		private static Block FindDoWhileConditionBlock(BlockContainer container, out ILInstruction condition)

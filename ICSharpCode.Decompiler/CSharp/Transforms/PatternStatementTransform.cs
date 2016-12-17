@@ -595,26 +595,53 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							}))
 				}
 			}};
-		
+
+		static readonly ForStatement forLoopWithoutInitializer = new ForStatement {
+			Condition = new BinaryOperatorExpression {
+				Left = new NamedNode("ident", new IdentifierExpression(Pattern.AnyString)),
+				Operator = BinaryOperatorType.Any,
+				Right = new AnyNode("endExpr")
+			},
+			Iterators = {
+				new NamedNode(
+					"increment",
+					new ExpressionStatement(
+						new AssignmentExpression {
+							Left = new Backreference("ident"),
+							Operator = AssignmentOperatorType.Any,
+							Right = new AnyNode()
+						}))
+			},
+			EmbeddedStatement = new AnyNode()
+		};
+
 		public ForStatement TransformFor(ExpressionStatement node)
 		{
 			Match m1 = variableAssignPattern.Match(node);
 			if (!m1.Success) return null;
 			AstNode next = node.NextSibling;
-			Match m2 = forPattern.Match(next);
-			if (!m2.Success) return null;
+			Match m2 = forLoopWithoutInitializer.Match(next);
+			ForStatement forStatement;
+			if (m2.Success) {
+				node.Remove();
+				forStatement = (ForStatement)next;
+				forStatement.InsertChildAfter(null, node, ForStatement.InitializerRole);
+				return forStatement;
+			}
+			Match m3 = forPattern.Match(next);
+			if (!m3.Success) return null;
 			// ensure the variable in the for pattern is the same as in the declaration
-			if (m1.Get<IdentifierExpression>("variable").Single().Identifier != m2.Get<IdentifierExpression>("ident").Single().Identifier)
+			if (m1.Get<IdentifierExpression>("variable").Single().Identifier != m3.Get<IdentifierExpression>("ident").Single().Identifier)
 				return null;
 			WhileStatement loop = (WhileStatement)next;
 			node.Remove();
 			BlockStatement newBody = new BlockStatement();
-			foreach (Statement stmt in m2.Get<Statement>("statement"))
+			foreach (Statement stmt in m3.Get<Statement>("statement"))
 				newBody.Add(stmt.Detach());
-			ForStatement forStatement = new ForStatement();
+			forStatement = new ForStatement();
 			forStatement.Initializers.Add(node);
 			forStatement.Condition = loop.Condition.Detach();
-			forStatement.Iterators.Add(m2.Get<Statement>("increment").Single().Detach());
+			forStatement.Iterators.Add(m3.Get<Statement>("increment").Single().Detach());
 			forStatement.EmbeddedStatement = newBody;
 			loop.ReplaceWith(forStatement);
 			return forStatement;
