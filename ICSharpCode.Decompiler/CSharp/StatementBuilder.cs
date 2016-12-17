@@ -310,7 +310,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				blockStatement = ConvertBlockContainer(blockStatement, container, container.Blocks.Skip(1), true);
 			} else {
 				// do-while or while(true)-loop
-/*				if (container.EntryPoint.IncomingEdgeCount == 2) {
+				if (container.EntryPoint.IncomingEdgeCount == 2) {
 					Block conditionBlock = FindDoWhileConditionBlock(container, out var condition);
 					if (conditionBlock != null) {
 						continueTarget = conditionBlock;
@@ -319,7 +319,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							Condition = exprBuilder.TranslateCondition(condition)
 						};
 					}
-				}*/
+				}
 				blockStatement = ConvertBlockContainer(container, true);
 				Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
 				Debug.Assert(blockStatement.Statements.First() is LabelStatement);
