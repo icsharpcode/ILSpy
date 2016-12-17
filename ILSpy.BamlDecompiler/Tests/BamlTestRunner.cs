@@ -64,7 +64,7 @@ namespace ILSpy.BamlDecompiler.Tests
 		{
 			RunTest("cases/dictionary1");
 		}
-		
+
 		[Test]
 		public void MarkupExtension()
 		{
@@ -110,9 +110,22 @@ namespace ILSpy.BamlDecompiler.Tests
 			Assert.IsNotNull(bamlStream);
 			XDocument document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream);
 
-			CodeAssert.AreEqual(File.ReadAllText(sourcePath), document.ToString());
+			XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
 		}
-		
+
+		void XamlIsEqual(string input1, string input2)
+		{
+			var diff = new StringWriter();
+			if (!CodeComparer.Compare(input1, input2, diff, NormalizeLine)) {
+				Assert.Fail(diff.ToString());
+			}
+		}
+
+		string NormalizeLine(string line)
+		{
+			return line.Trim();
+		}
+
 		Stream LoadBaml(Resource res, string name)
 		{
 			EmbeddedResource er = res as EmbeddedResource;

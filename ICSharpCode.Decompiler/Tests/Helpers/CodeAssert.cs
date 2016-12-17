@@ -6,27 +6,30 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
 {
-	public class CodeAssert
+	public static class CodeAssert
 	{
 		public static void FilesAreEqual(string fileName1, string fileName2)
 		{
 			AreEqual(File.ReadAllText(fileName1), File.ReadAllText(fileName2));
 		}
-		
+
 		public static void AreEqual(string input1, string input2)
 		{
 			var diff = new StringWriter();
-			if (!Compare(input1, input2, diff)) {
+			if (!CodeComparer.Compare(input1, input2, diff, CodeComparer.NormalizeLine)) {
 				Assert.Fail(diff.ToString());
 			}
 		}
+	}
 
-		static bool Compare(string input1, string input2, StringWriter diff)
+	public static class CodeComparer
+	{
+		public static bool Compare(string input1, string input2, StringWriter diff, Func<string, string> normalizeLine)
 		{
 			var differ = new AlignedDiff<string>(
 				NormalizeAndSplitCode(input1),
 				NormalizeAndSplitCode(input2),
-				new CodeLineEqualityComparer(),
+				new CodeLineEqualityComparer(normalizeLine),
 				new StringSimilarityComparer(),
 				new StringAlignmentFilter());
 
@@ -71,12 +74,18 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		class CodeLineEqualityComparer : IEqualityComparer<string>
 		{
 			private IEqualityComparer<string> baseComparer = EqualityComparer<string>.Default;
+			private Func<string, string> normalizeLine;
+
+			public CodeLineEqualityComparer(Func<string, string> normalizeLine)
+			{
+				this.normalizeLine = normalizeLine;
+			}
 
 			public bool Equals(string x, string y)
 			{
 				return baseComparer.Equals(
-					NormalizeLine(x),
-					NormalizeLine(y)
+					normalizeLine(x),
+					normalizeLine(y)
 				);
 			}
 
@@ -86,13 +95,13 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 		}
 
-		private static string NormalizeLine(string line)
+		public static string NormalizeLine(string line)
 		{
 			line = line.Trim();
-			var index = line.IndexOf("//");
+			var index = line.IndexOf("//", StringComparison.Ordinal);
 			if (index >= 0) {
 				return line.Substring(0, index);
-			} else if (line.StartsWith("#")) {
+			} else if (line.StartsWith("#", StringComparison.Ordinal)) {
 				return string.Empty;
 			} else {
 				return line;
