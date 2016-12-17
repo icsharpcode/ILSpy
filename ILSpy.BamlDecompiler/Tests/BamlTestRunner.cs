@@ -21,44 +21,43 @@ namespace ILSpy.BamlDecompiler.Tests
 		{
 			RunTest("cases/simple");
 		}
-		
+
 		[Test]
 		public void SimpleDictionary()
 		{
 			RunTest("cases/simpledictionary");
 		}
-		
+
 		[Test]
 		public void Resources()
 		{
 			RunTest("cases/resources");
 		}
-		
+
 		[Test]
-		[Ignore("Broken on AppVeyor CI (extra x:ConnectionId attribute)")]
 		public void SimpleNames()
 		{
 			RunTest("cases/simplenames");
 		}
-		
+
 		[Test]
 		public void AvalonDockBrushes()
 		{
 			RunTest("cases/avalondockbrushes");
 		}
-		
+
 		[Test]
 		public void AvalonDockCommon()
 		{
 			RunTest("cases/avalondockcommon");
 		}
-		
+
 		[Test]
 		public void AttachedEvent()
 		{
 			RunTest("cases/attachedevent");
 		}
-		
+
 		[Test]
 		public void Dictionary1()
 		{
@@ -66,23 +65,29 @@ namespace ILSpy.BamlDecompiler.Tests
 		}
 
 		[Test]
+		public void Issue775()
+		{
+			RunTest("cases/issue775");
+		}
+
+		[Test]
 		public void MarkupExtension()
 		{
 			RunTest("cases/markupextension");
 		}
-		
+
 		[Test]
 		public void SimplePropertyElement()
 		{
 			RunTest("cases/simplepropertyelement");
 		}
-		
+
 		[Test]
 		public void Issue445()
 		{
 			RunTest("cases/issue445");
 		}
-		
+
 		[Test]
 		public void NamespacePrefix()
 		{
@@ -94,13 +99,13 @@ namespace ILSpy.BamlDecompiler.Tests
 		{
 			RunTest("cases/escapesequence");
 		}
-		
+
 		#region RunTest
 		void RunTest(string name)
 		{
 			RunTest(name, typeof(BamlTestRunner).Assembly.Location, Path.Combine("..\\..\\Tests", name + ".xaml"));
 		}
-		
+
 		void RunTest(string name, string asmPath, string sourcePath)
 		{
 			var resolver = new DefaultAssemblyResolver();
@@ -135,8 +140,7 @@ namespace ILSpy.BamlDecompiler.Tests
 				ResourceReader reader;
 				try {
 					reader = new ResourceReader(s);
-				}
-				catch (ArgumentException) {
+				} catch (ArgumentException) {
 					return null;
 				}
 				foreach (DictionaryEntry entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
@@ -148,7 +152,7 @@ namespace ILSpy.BamlDecompiler.Tests
 					}
 				}
 			}
-			
+
 			return null;
 		}
 		#endregion

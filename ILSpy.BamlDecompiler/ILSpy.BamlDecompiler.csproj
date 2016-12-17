@@ -112,7 +112,7 @@
     <Compile Include="Ricciolo.StylesExplorer.MarkupReflection\XmlBamlSimpleProperty.cs" />
     <Compile Include="Ricciolo.StylesExplorer.MarkupReflection\XmlBamlText.cs" />
     <Compile Include="Ricciolo.StylesExplorer.MarkupReflection\XmlNamespace.cs" />
-    <Compile Include="Ricciolo.StylesExplorer.MarkupReflection\XmlPIMapping.cs" />
+    <Compile Include="Ricciolo.StylesExplorer.MarkupReflection\XmlToClrNamespaceMapping.cs" />
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>

@@ -1,14 +1,13 @@
 // Copyright (c) Cristian Civera (cristian@aspitalia.com)
 // This code is distributed under the MS-PL (for details please see \doc\MS-PL.txt)
 
+using System.Collections.Generic;
 using System.Xml;
 
 namespace Ricciolo.StylesExplorer.MarkupReflection
 {
 	class XmlBamlElement : XmlBamlNode
 	{
-		XmlNamespaceCollection _namespaces = new XmlNamespaceCollection();
-
 		public XmlBamlElement()
 		{
 		}
@@ -19,11 +18,9 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			this.Namespaces.AddRange(parent.Namespaces);
 		}
 
-		public XmlNamespaceCollection Namespaces {
-			get { return _namespaces; }
-		}
+		public List<XmlNamespace> Namespaces { get; } = new List<XmlNamespace>();
 		
-		public XmlBamlElement Parent { get; private set; }
+		public XmlBamlElement Parent { get; }
 		
 		public TypeDeclaration TypeDeclaration { get; set; }
 

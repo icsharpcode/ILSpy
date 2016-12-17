@@ -1,47 +1,33 @@
 // Copyright (c) Cristian Civera (cristian@aspitalia.com)
 // This code is distributed under the MS-PL (for details please see \doc\MS-PL.txt)
 
-using System.Collections.Generic;
+using System;
 
 namespace Ricciolo.StylesExplorer.MarkupReflection
 {
-	internal class XmlNamespace
+	public class XmlNamespace
 	{
-		private string _prefix;
-		private string _namespace;
-
 		public XmlNamespace(string prefix, string ns)
 		{
-			_prefix = prefix;
-			_namespace = ns;
+			Prefix = prefix;
+			Namespace = ns;
 		}
 
-		public string Prefix
-		{
-			get { return _prefix; }
-		}
+		public string Prefix { get; }
 
-		public string Namespace
-		{
-			get { return _namespace; }
-		}
+		public string Namespace { get; }
 
 		public override bool Equals(object obj)
 		{
-			if (obj is XmlNamespace)
-			{
-				XmlNamespace o = (XmlNamespace)obj;
-				return (o.Prefix.Equals(this.Prefix) && o.Namespace.Equals(this.Namespace));
-			}
-			return base.Equals(obj);
+			XmlNamespace o = obj as XmlNamespace;
+			if (o == null)
+				return false;
+			return o.Prefix.Equals(Prefix) && o.Namespace.Equals(Namespace);
 		}
 
 		public override int GetHashCode()
 		{
-			return _prefix.GetHashCode() + _namespace.GetHashCode() >> 20;
+			return Prefix.GetHashCode() + Namespace.GetHashCode() >> 20;
 		}
 	}
-
-	internal class XmlNamespaceCollection : List<XmlNamespace>
-	{}
 }

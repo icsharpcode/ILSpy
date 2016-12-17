@@ -129,6 +129,9 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Cases\Issue775.xaml">
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="Cases\MarkupExtension.xaml" />
     <Page Include="Cases\MyControl.xaml" />
     <Page Include="Cases\NamespacePrefix.xaml" />

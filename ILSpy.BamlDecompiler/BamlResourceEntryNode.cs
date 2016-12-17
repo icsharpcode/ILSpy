@@ -56,12 +56,13 @@ namespace ILSpy.BamlDecompiler
 		internal static XDocument LoadIntoDocument(IAssemblyResolver resolver, AssemblyDefinition asm, Stream stream)
 		{
 			XDocument xamlDocument;
-			using (XmlBamlReader reader = new XmlBamlReader(stream, new CecilTypeResolver(resolver, asm)))
+			using (XmlBamlReader reader = new XmlBamlReader(stream, new CecilTypeResolver(resolver, asm))) {
 				xamlDocument = XDocument.Load(reader);
-			ConvertConnectionIds(xamlDocument, asm);
-			ConvertToEmptyElements(xamlDocument.Root);
-			MoveNamespacesToRoot(xamlDocument);
-			return xamlDocument;
+				ConvertConnectionIds(xamlDocument, asm);
+				ConvertToEmptyElements(xamlDocument.Root);
+				MoveNamespacesToRoot(xamlDocument, reader.XmlnsDefinitions);
+				return xamlDocument;
+			}
 		}
 
 		static void ConvertConnectionIds(XDocument xamlDocument, AssemblyDefinition asm)
@@ -74,12 +75,35 @@ namespace ILSpy.BamlDecompiler
 			}
 		}
 
-		static void MoveNamespacesToRoot(XDocument xamlDocument)
+		class XAttributeComparer : IEqualityComparer<XAttribute>
 		{
-			var additionalXmlns = new List<XAttribute> {
+			public bool Equals(XAttribute x, XAttribute y)
+			{
+				if (ReferenceEquals(x, y))
+					return true;
+				if (x == null || y == null)
+					return false;
+				return x.ToString() == y.ToString();
+			}
+
+			public int GetHashCode(XAttribute obj)
+			{
+				return obj.ToString().GetHashCode();
+			}
+		}
+
+		static void MoveNamespacesToRoot(XDocument xamlDocument, IEnumerable<XmlNamespace> missingXmlns)
+		{
+			var additionalXmlns = new HashSet<XAttribute>(new XAttributeComparer()) {
 				new XAttribute("xmlns", XmlBamlReader.DefaultWPFNamespace),
 				new XAttribute(XName.Get("x", XNamespace.Xmlns.NamespaceName), XmlBamlReader.XWPFNamespace)
 			};
+
+			additionalXmlns.AddRange(
+				missingXmlns
+					.Where(ns => !string.IsNullOrWhiteSpace(ns.Prefix))
+					.Select(ns => new XAttribute(XName.Get(ns.Prefix, XNamespace.Xmlns.NamespaceName), ns.Namespace))
+			);
 			
 			foreach (var element in xamlDocument.Root.DescendantsAndSelf()) {
 				if (element.Name.NamespaceName != XmlBamlReader.DefaultWPFNamespace && !additionalXmlns.Any(ka => ka.Value == element.Name.NamespaceName)) {
