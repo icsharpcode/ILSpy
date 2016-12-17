@@ -23,157 +23,148 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
-public class Async
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public async void SimpleVoidMethod()
+	public class Async
 	{
-		Console.WriteLine("Before");
-		await Task.Delay(TimeSpan.FromSeconds(1.0));
-		Console.WriteLine("After");
-	}
-	
-	public async void VoidMethodWithoutAwait()
-	{
-		Console.WriteLine("No Await");
-	}
-	
-	public async void EmptyVoidMethod()
-	{
-	}
-	
-	public async void AwaitYield()
-	{
-		await Task.Yield();
-	}
-	
-	public async void AwaitDefaultYieldAwaitable()
-	{
-		await default(YieldAwaitable);
-	}
-	
-	public async Task SimpleVoidTaskMethod()
-	{
-		Console.WriteLine("Before");
-		await Task.Delay(TimeSpan.FromSeconds(1.0));
-		Console.WriteLine("After");
-	}
-	
-	public async Task TaskMethodWithoutAwait()
-	{
-		Console.WriteLine("No Await");
-	}
-	
-	public async Task<bool> SimpleBoolTaskMethod()
-	{
-		Console.WriteLine("Before");
-		await Task.Delay(TimeSpan.FromSeconds(1.0));
-		Console.WriteLine("After");
-		return true;
-	}
-	
-	public async void TwoAwaitsWithDifferentAwaiterTypes()
-	{
-		Console.WriteLine("Before");
-		if (await this.SimpleBoolTaskMethod()) 
+		public async void SimpleVoidMethod()
 		{
+			Console.WriteLine("Before");
 			await Task.Delay(TimeSpan.FromSeconds(1.0));
+			Console.WriteLine("After");
 		}
-		Console.WriteLine("After");
-	}
-	
-	public async void StreamCopyTo(Stream destination, int bufferSize)
-	{
-		byte[] array = new byte[bufferSize];
-		int count;
-		while ((count = await destination.ReadAsync(array, 0, array.Length)) != 0)
+
+		public async void VoidMethodWithoutAwait()
 		{
-			await destination.WriteAsync(array, 0, count);
+			Console.WriteLine("No Await");
 		}
-	}
-	
-	public async void StreamCopyToWithConfigureAwait(Stream destination, int bufferSize)
-	{
-		byte[] array = new byte[bufferSize];
-		int count;
-		while ((count = await destination.ReadAsync(array, 0, array.Length).ConfigureAwait(false)) != 0)
+
+		public async void EmptyVoidMethod()
 		{
-			await destination.WriteAsync(array, 0, count).ConfigureAwait(false);
 		}
-	}
-	
-	public async void AwaitInLoopCondition()
-	{
-		while (await this.SimpleBoolTaskMethod()) 
+
+		public async void AwaitYield()
 		{
-			Console.WriteLine("Body");
+			await Task.Yield();
 		}
-	}
-	
-	public async Task<int> AwaitInForEach(IEnumerable<Task<int>> elements)
-	{
-		int num = 0;
-		foreach (Task<int> current in elements)
+
+		public async void AwaitDefaultYieldAwaitable()
 		{
-			num += await current;
+			await default(YieldAwaitable);
 		}
-		return num;
-	}
-	
-	public async Task TaskMethodWithoutAwaitButWithExceptionHandling()
-	{
-		try 
+
+		public async Task SimpleVoidTaskMethod()
 		{
-			using (new StringWriter())
-			{
-				Console.WriteLine("No Await");
+			Console.WriteLine("Before");
+			await Task.Delay(TimeSpan.FromSeconds(1.0));
+			Console.WriteLine("After");
+		}
+
+		public async Task TaskMethodWithoutAwait()
+		{
+			Console.WriteLine("No Await");
+		}
+
+		public async Task<bool> SimpleBoolTaskMethod()
+		{
+			Console.WriteLine("Before");
+			await Task.Delay(TimeSpan.FromSeconds(1.0));
+			Console.WriteLine("After");
+			return true;
+		}
+
+		public async void TwoAwaitsWithDifferentAwaiterTypes()
+		{
+			Console.WriteLine("Before");
+			if (await this.SimpleBoolTaskMethod()) {
+				await Task.Delay(TimeSpan.FromSeconds(1.0));
 			}
-		} 
-		catch (Exception) 
+			Console.WriteLine("After");
+		}
+
+		public async void StreamCopyTo(Stream destination, int bufferSize)
 		{
-			Console.WriteLine("Crash");
+			byte[] array = new byte[bufferSize];
+			int count;
+			while ((count = await destination.ReadAsync(array, 0, array.Length)) != 0) {
+				await destination.WriteAsync(array, 0, count);
+			}
 		}
-	}
 
-	public async Task AwaitCatch(Task<int> task)
-	{
-		try {
-			Console.WriteLine("Before throw");
-			throw new Exception();
-		} catch {
-			Console.WriteLine(await task);
+		public async void StreamCopyToWithConfigureAwait(Stream destination, int bufferSize)
+		{
+			byte[] array = new byte[bufferSize];
+			int count;
+			while ((count = await destination.ReadAsync(array, 0, array.Length).ConfigureAwait(false)) != 0) {
+				await destination.WriteAsync(array, 0, count).ConfigureAwait(false);
+			}
 		}
-	}
 
-	public async Task AwaitFinally(Task<int> task)
-	{
-		try {
-			Console.WriteLine("Before throw");
-			throw new Exception();
-		} finally {
-			Console.WriteLine(await task);
+		public async void AwaitInLoopCondition()
+		{
+			while (await this.SimpleBoolTaskMethod()) {
+				Console.WriteLine("Body");
+			}
 		}
-	}
 
-	public async Task<int> NestedAwait(Task<Task<int>> task)
-	{
-		return await(await task);
-	}
-	
-	public async Task AwaitWithStack(Task<int> task)
-	{
-		Console.WriteLine("A", 1, await task);
-	}
-	
-	public async Task AwaitWithStack2(Task<int> task)
-	{
-		if (await this.SimpleBoolTaskMethod()) 
+		public async Task<int> AwaitInForEach(IEnumerable<Task<int>> elements)
+		{
+			int num = 0;
+			foreach (Task<int> current in elements) {
+				num += await current;
+			}
+			return num;
+		}
+
+		public async Task TaskMethodWithoutAwaitButWithExceptionHandling()
+		{
+			try {
+				using (new StringWriter()) {
+					Console.WriteLine("No Await");
+				}
+			} catch (Exception) {
+				Console.WriteLine("Crash");
+			}
+		}
+
+		public async Task AwaitCatch(Task<int> task)
+		{
+			try {
+				Console.WriteLine("Before throw");
+				throw new Exception();
+			} catch {
+				Console.WriteLine(await task);
+			}
+		}
+
+		public async Task AwaitFinally(Task<int> task)
+		{
+			try {
+				Console.WriteLine("Before throw");
+				throw new Exception();
+			} finally {
+				Console.WriteLine(await task);
+			}
+		}
+
+		public async Task<int> NestedAwait(Task<Task<int>> task)
+		{
+			return await (await task);
+		}
+
+		public async Task AwaitWithStack(Task<int> task)
 		{
 			Console.WriteLine("A", 1, await task);
-		} 
-		else 
+		}
+
+		public async Task AwaitWithStack2(Task<int> task)
 		{
-			int num = 1;
-			Console.WriteLine("A", 1, num);
+			if (await this.SimpleBoolTaskMethod()) {
+				Console.WriteLine("A", 1, await task);
+			} else {
+				int num = 1;
+				Console.WriteLine("A", 1, num);
+			}
 		}
 	}
 }

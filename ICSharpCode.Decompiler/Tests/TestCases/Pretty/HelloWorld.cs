@@ -18,7 +18,7 @@
 
 using System;
 
-namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty.HelloWorld
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class HelloWorld
 	{
