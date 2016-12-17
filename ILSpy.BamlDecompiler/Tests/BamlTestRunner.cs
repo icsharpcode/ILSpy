@@ -1,12 +1,20 @@
 ﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
 // This code is distributed under the GNU LGPL (for details please see \doc\license.txt)
 
+using System;
+using System.Collections;
+using System.IO;
+using System.Linq;
+using System.Resources;
+using System.Xml.Linq;
+using ICSharpCode.Decompiler.Tests.Helpers;
+using Mono.Cecil;
+using NUnit.Framework;
 
 namespace ILSpy.BamlDecompiler.Tests
 {
-	/*
 	[TestFixture]
-	public class TestRunner
+	public class BamlTestRunner
 	{
 		[Test]
 		public void Simple()
@@ -90,7 +98,7 @@ namespace ILSpy.BamlDecompiler.Tests
 		#region RunTest
 		void RunTest(string name)
 		{
-			RunTest(name, typeof(TestRunner).Assembly.Location, Path.Combine("..\\..\\Tests", name + ".xaml"));
+			RunTest(name, typeof(BamlTestRunner).Assembly.Location, Path.Combine("..\\..\\Tests", name + ".xaml"));
 		}
 		
 		void RunTest(string name, string asmPath, string sourcePath)
@@ -131,5 +139,5 @@ namespace ILSpy.BamlDecompiler.Tests
 			return null;
 		}
 		#endregion
-	}*/
+	}
 }
