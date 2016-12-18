@@ -126,6 +126,7 @@
     <Compile Include="Helpers\TypeSystemHelper.cs" />
     <Compile Include="PrettyTestRunner.cs" />
     <Compile Include="RoundtripAssembly.cs" />
+    <Compile Include="TestCases\Correctness\Capturing.cs" />
     <Compile Include="TestCases\Correctness\OverloadResolution.cs" />
     <Compile Include="TestCases\Pretty\AnonymousTypes.cs" />
     <Compile Include="TestCases\Pretty\Async.cs" />

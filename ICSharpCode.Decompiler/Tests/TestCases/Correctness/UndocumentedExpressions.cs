@@ -18,48 +18,51 @@
 
 using System;
 
-public class UndocumentedExpressions
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
-	static void Main(string[] args)
+	public class UndocumentedExpressions
 	{
-		MakeTypedRef("abc");
-		VarArgs(1, __arglist());
-		VarArgs(__arglist(1));
-		VarArgs(1, __arglist("abc", 2, true));
-	}
-	
-	public static void VarArgs(int normalArg, __arglist)
-	{
-		ArgIterator argIterator = new ArgIterator(__arglist);
-		Console.WriteLine("Called with {0} arguments", argIterator.GetRemainingCount());
-		int pos = 0;
-		while (argIterator.GetRemainingCount() > 0) {
-			TypedReference tr = argIterator.GetNextArg();
-			object val;
-			try {
-				val = __refvalue(tr, object);
-			} catch (Exception ex) {
-				val = ex.GetType().Name;
-			}
-			Console.WriteLine("{0} : {1} = {2}", pos++, __reftype(tr).Name, val);
+		static void Main(string[] args)
+		{
+			MakeTypedRef("abc");
+			VarArgs(1, __arglist());
+			VarArgs(__arglist(1));
+			VarArgs(1, __arglist("abc", 2, true));
 		}
-	}
 
-	public static void VarArgs(__arglist)
-	{
-		Console.WriteLine("The other varargs overload");
-	}
-	
-	public static void MakeTypedRef(object o)
-	{
-		TypedReference tr = __makeref(o);
-		UndocumentedExpressions.AcceptTypedRef(tr);
-	}
-	
-	private static void AcceptTypedRef(TypedReference tr)
-	{
-		Console.WriteLine("Value is: " + __refvalue(tr, object).ToString());
-		Console.WriteLine("Type is: " + __reftype(tr).Name);
-		__refvalue(tr, object) = 1;
+		public static void VarArgs(int normalArg, __arglist)
+		{
+			ArgIterator argIterator = new ArgIterator(__arglist);
+			Console.WriteLine("Called with {0} arguments", argIterator.GetRemainingCount());
+			int pos = 0;
+			while (argIterator.GetRemainingCount() > 0) {
+				TypedReference tr = argIterator.GetNextArg();
+				object val;
+				try {
+					val = __refvalue(tr, object);
+				} catch (Exception ex) {
+					val = ex.GetType().Name;
+				}
+				Console.WriteLine("{0} : {1} = {2}", pos++, __reftype(tr).Name, val);
+			}
+		}
+
+		public static void VarArgs(__arglist)
+		{
+			Console.WriteLine("The other varargs overload");
+		}
+
+		public static void MakeTypedRef(object o)
+		{
+			TypedReference tr = __makeref(o);
+			UndocumentedExpressions.AcceptTypedRef(tr);
+		}
+
+		private static void AcceptTypedRef(TypedReference tr)
+		{
+			Console.WriteLine("Value is: " + __refvalue(tr, object).ToString());
+			Console.WriteLine("Type is: " + __reftype(tr).Name);
+			__refvalue(tr, object) = 1;
+		}
 	}
 }

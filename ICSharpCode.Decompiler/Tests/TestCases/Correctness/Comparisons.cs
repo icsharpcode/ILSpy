@@ -20,7 +20,7 @@ using System;
 
 #pragma warning disable 652
 
-namespace ICSharpCode.Decompiler.Tests.TestCases
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
 	public class Comparisons
 	{

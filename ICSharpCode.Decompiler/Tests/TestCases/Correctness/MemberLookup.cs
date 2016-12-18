@@ -18,7 +18,7 @@
 
 using System;
 
-namespace ICSharpCode.Decompiler.Tests.TestCases
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
 	public class MemberLookup
 	{

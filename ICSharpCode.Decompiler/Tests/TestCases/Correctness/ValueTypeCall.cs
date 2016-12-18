@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ValueTypeCall
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
 	public struct MutValueType
 	{
@@ -41,7 +41,7 @@ namespace ValueTypeCall
 		}
 	}
 	
-	public class Program
+	public class ValueTypeCall
 	{
 		public static void Main()
 		{
@@ -52,7 +52,7 @@ namespace ValueTypeCall
 			Box();
 			var gvt = new GenericValueType<string>("Test");
 			gvt.Call(ref gvt);
-			new Program().InstanceFieldTests();
+			new ValueTypeCall().InstanceFieldTests();
 		}
 		
 		static void RefParameter(ref MutValueType m)

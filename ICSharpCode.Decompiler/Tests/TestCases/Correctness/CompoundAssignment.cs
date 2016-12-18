@@ -19,74 +19,79 @@
 using System;
 using System.Collections.Generic;
 
-class CompoundAssignment
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
-	static void Main()
+	class CompoundAssignment
 	{
-		PreIncrementProperty();
-	}
-	
-	static void Test(int a, int b)
-	{
-		Console.WriteLine("{0} {1}", a, b);
-	}
-	
-	static int x;
-	
-	static int X()
-	{
-		Console.Write("X ");
-		return ++x;
-	}
-	
-	int instanceField;
-	
-	public int InstanceProperty {
-		get {
-			Console.WriteLine("In get_InstanceProperty");
-			return instanceField;
+		static void Main()
+		{
+			PreIncrementProperty();
 		}
-		set {
-			Console.WriteLine("In set_InstanceProperty, value=" + value);
-			instanceField = value;
+
+		static void Test(int a, int b)
+		{
+			Console.WriteLine("{0} {1}", a, b);
 		}
-	}
-	
-	static int staticField;
-	
-	public static int StaticProperty {
-		get {
-			Console.WriteLine("In get_StaticProperty");
-			return staticField;
+
+		static int x;
+
+		static int X()
+		{
+			Console.Write("X ");
+			return ++x;
 		}
-		set {
-			Console.WriteLine("In set_StaticProperty, value=" + value);
-			staticField = value;
+
+		int instanceField;
+
+		public int InstanceProperty
+		{
+			get {
+				Console.WriteLine("In get_InstanceProperty");
+				return instanceField;
+			}
+			set {
+				Console.WriteLine("In set_InstanceProperty, value=" + value);
+				instanceField = value;
+			}
 		}
-	}
-	
-	public static Dictionary<string, int> GetDict()
-	{
-		Console.WriteLine("In GetDict()");
-		return new Dictionary<string, int>();
-	}
-	
-	static string GetString()
-	{
-		Console.WriteLine("In GetString()");
-		return "the string";
-	}
-	
-	static void PreIncrementProperty()
-	{
-		Console.WriteLine("PreIncrementProperty:");
-		Test(X(), ++new CompoundAssignment().InstanceProperty);
-		Test(X(), ++StaticProperty);
-	}
-	
-	static void PreIncrementIndexer()
-	{
-		Console.WriteLine("PreIncrementIndexer:");
-		Test(X(), ++GetDict()[GetString()]);
+
+		static int staticField;
+
+		public static int StaticProperty
+		{
+			get {
+				Console.WriteLine("In get_StaticProperty");
+				return staticField;
+			}
+			set {
+				Console.WriteLine("In set_StaticProperty, value=" + value);
+				staticField = value;
+			}
+		}
+
+		public static Dictionary<string, int> GetDict()
+		{
+			Console.WriteLine("In GetDict()");
+			return new Dictionary<string, int>();
+		}
+
+		static string GetString()
+		{
+			Console.WriteLine("In GetString()");
+			return "the string";
+		}
+
+		static void PreIncrementProperty()
+		{
+			Console.WriteLine("PreIncrementProperty:");
+			Test(X(), ++new CompoundAssignment().InstanceProperty);
+			Test(X(), ++StaticProperty);
+		}
+
+		static void PreIncrementIndexer()
+		{
+			Console.WriteLine("PreIncrementIndexer:");
+			Test(X(), ++GetDict()[GetString()]);
+		}
 	}
 }

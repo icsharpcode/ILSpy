@@ -5,7 +5,6 @@ using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
-
 	class ConditionalAttr
 	{
 		[Conditional("PRINT")]

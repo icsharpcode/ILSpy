@@ -18,88 +18,91 @@
 
 using System;
 
-class ControlFlow
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
-	public static int Main()
+	class ControlFlow
 	{
-		int result = 0;
-		EmptyIf("Empty", ref result);
-		EmptyIf("test", ref result);
-		NormalIf("none", ref result);
-		NormalIf("test", ref result);
-		NormalIf2("none", ref result);
-		NormalIf2("test", ref result);
-		NormalIf3("none", ref result);
-		NormalIf3("test", ref result);
-		Test("none", ref result);
-		Test("test", ref result);
-		Console.WriteLine(result);
-		return 0;
-	}
-
-	static void EmptyIf(string input, ref int result)
-	{
-		if (input.Contains("test")) {
+		public static int Main()
+		{
+			int result = 0;
+			EmptyIf("Empty", ref result);
+			EmptyIf("test", ref result);
+			NormalIf("none", ref result);
+			NormalIf("test", ref result);
+			NormalIf2("none", ref result);
+			NormalIf2("test", ref result);
+			NormalIf3("none", ref result);
+			NormalIf3("test", ref result);
+			Test("none", ref result);
+			Test("test", ref result);
+			Console.WriteLine(result);
+			return 0;
 		}
-		result = result + 1;
-		Console.WriteLine("EmptyIf");
-	}
 
-	static void NormalIf(string input, ref int result)
-	{
-		if (input.Contains("test")) {
-			Console.WriteLine("result");
-		} else {
-			Console.WriteLine("else");
+		static void EmptyIf(string input, ref int result)
+		{
+			if (input.Contains("test")) {
+			}
+			result = result + 1;
+			Console.WriteLine("EmptyIf");
 		}
-		result = result + 1;
-		Console.WriteLine("end");
-	}
 
-	static void NormalIf2(string input, ref int result)
-	{
-		if (input.Contains("test")) {
-			Console.WriteLine("result");
+		static void NormalIf(string input, ref int result)
+		{
+			if (input.Contains("test")) {
+				Console.WriteLine("result");
+			} else {
+				Console.WriteLine("else");
+			}
+			result = result + 1;
+			Console.WriteLine("end");
 		}
-		result = result + 1;
-		Console.WriteLine("end");
-	}
 
-	static void NormalIf3(string input, ref int result)
-	{
-		if (input.Contains("test")) {
-			Console.WriteLine("result");
-		} else {
-			Console.WriteLine("else");
+		static void NormalIf2(string input, ref int result)
+		{
+			if (input.Contains("test")) {
+				Console.WriteLine("result");
+			}
+			result = result + 1;
+			Console.WriteLine("end");
 		}
-		result = result + 1;
-	}
 
-	static void Test(string input, ref int result)
-	{
-		foreach (char c in input) {
-			Console.Write(c);
+		static void NormalIf3(string input, ref int result)
+		{
+			if (input.Contains("test")) {
+				Console.WriteLine("result");
+			} else {
+				Console.WriteLine("else");
+			}
 			result = result + 1;
 		}
-		if (input.Contains("test")) {
-			Console.WriteLine("result");
-		} else {
-			Console.WriteLine("else");
-		}
-	}
 
-	int Dim2Search(int arg)
-	{
-		var tens = new[] { 10, 20, 30 };
-		var ones = new[] { 1, 2, 3 };
-
-		for (int i = 0; i < tens.Length; i++) {
-			for (int j = 0; j < ones.Length; j++) {
-				if (tens[i] + ones[j] == arg)
-					return i;
+		static void Test(string input, ref int result)
+		{
+			foreach (char c in input) {
+				Console.Write(c);
+				result = result + 1;
+			}
+			if (input.Contains("test")) {
+				Console.WriteLine("result");
+			} else {
+				Console.WriteLine("else");
 			}
 		}
 
-		return -1;
+		int Dim2Search(int arg)
+		{
+			var tens = new[] { 10, 20, 30 };
+			var ones = new[] { 1, 2, 3 };
+
+			for (int i = 0; i < tens.Length; i++) {
+				for (int j = 0; j < ones.Length; j++) {
+					if (tens[i] + ones[j] == arg)
+						return i;
+				}
+			}
+
+			return -1;
+		}
 	}
 }

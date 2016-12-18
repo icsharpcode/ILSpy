@@ -18,7 +18,7 @@
 
 using System;
 
-namespace HelloWorld
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
 	class HelloWorld
 	{

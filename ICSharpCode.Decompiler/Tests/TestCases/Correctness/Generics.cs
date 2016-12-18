@@ -18,7 +18,7 @@
 
 using System;
 
-namespace Generics
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
 	/// <summary>
 	/// Description of Generics.

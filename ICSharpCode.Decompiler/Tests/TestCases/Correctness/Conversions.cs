@@ -21,7 +21,7 @@
 using System;
 using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler.Tests.TestCases
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
 	public class Conversions
 	{

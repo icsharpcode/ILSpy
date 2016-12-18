@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace PropertiesAndEvents
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
-	class Program
+	class PropertiesAndEvents
 	{
 		public static int Main(string[] args)
 		{
