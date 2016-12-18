@@ -45,7 +45,7 @@
 			CustomChildren(new [] {
 				new ChildInfo("body")
 			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("O")
-		) { BaseClass = "ILVariableScope" },
+		),
 		new OpCode("BlockContainer", "A container of IL blocks.",
 			VoidResult, CustomConstructor, CustomVariableName("container"),
 			MatchCondition("Patterns.ListMatch.DoMatch(this.Blocks, o.Blocks, ref match)")),
@@ -844,7 +844,7 @@ protected override void Disconnected()
 				opCode.Members.Add(@"internal override void CheckInvariant(ILPhase phase)
 {
 	base.CheckInvariant(phase);
-	Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+	Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
 }");
 			}
 		};

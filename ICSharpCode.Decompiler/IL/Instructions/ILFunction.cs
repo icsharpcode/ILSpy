@@ -25,19 +25,36 @@ using ICSharpCode.Decompiler.Disassembler;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
 	partial class ILFunction
 	{
 		public readonly MethodDefinition Method;
-		
+		public readonly ILVariableCollection Variables;
+
 		public ILFunction(MethodDefinition method, ILInstruction body) : base(OpCode.ILFunction)
 		{
 			this.Body = body;
 			this.Method = method;
+			this.Variables = new ILVariableCollection(this);
 		}
-		
+
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			for (int i = 0; i < Variables.Count; i++) {
+				Debug.Assert(Variables[i].Function == this);
+				Debug.Assert(Variables[i].IndexInFunction == i);
+			}
+			base.CheckInvariant(phase);
+		}
+
+		protected void CloneVariables()
+		{
+			throw new NotImplementedException();
+		}
+
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);

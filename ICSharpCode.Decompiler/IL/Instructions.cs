@@ -513,7 +513,7 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>A container of IL blocks.</summary>
-	public sealed partial class ILFunction : ILVariableScope
+	public sealed partial class ILFunction : ILInstruction
 	{
 		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
 		ILInstruction body;
@@ -673,7 +673,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
 		}
 		public static readonly SlotInfo InitSlot = new SlotInfo("Init", canInlineInto: true);
 		ILInstruction init;
@@ -1632,7 +1632,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
 		}
 		public override StackType ResultType { get { return variable.StackType; } }
 		protected override InstructionFlags ComputeFlags()
@@ -1707,7 +1707,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
 		}
 		public override void WriteTo(ITextOutput output)
 		{
@@ -1772,7 +1772,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Scope));
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
 		}
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value;

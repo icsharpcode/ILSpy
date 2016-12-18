@@ -70,21 +70,31 @@ namespace ICSharpCode.Decompiler.IL
 		public string Name { get; set; }
 
 		/// <summary>
-		/// Gets the scope in which this variable is declared.
+		/// Gets the function in which this variable is declared.
 		/// </summary>
 		/// <remarks>
-		/// This property is set automatically when the variable is added to the <c>VariableScope.Variables</c> collection.
+		/// This property is set automatically when the variable is added to the <c>ILFunction.Variables</c> collection.
 		/// </remarks>
-		public ILVariableScope Scope { get; internal set; }
+		public ILFunction Function { get; internal set; }
 		
 		/// <summary>
-		/// Gets the index of this variable within the <c>VariableScope.Variables</c> collection.
+		/// Gets the block container in which this variable is captured.
+		/// For captured variables declared inside the loop, the capture scope is the BlockContainer of the loop.
+		/// For captured variables declared outside of the loop, the capture scope is the BlockContainer of the parent. 
+		/// </summary>
+		/// <remarks>
+		/// This property returns null for variables that are not captured.
+		/// </remarks>
+		public BlockContainer CaptureScope { get; internal set; }
+
+		/// <summary>
+		/// Gets the index of this variable within the <c>Function.Variables</c> collection.
 		/// </summary>
 		/// <remarks>
 		/// This property is set automatically when the variable is added to the <c>VariableScope.Variables</c> collection.
 		/// It may change if an item with a lower index is removed from the collection.
 		/// </remarks>
-		public int IndexInScope { get; internal set; }
+		public int IndexInFunction { get; internal set; }
 		
 		/// <summary>
 		/// Number of ldloc instructions referencing this variable.

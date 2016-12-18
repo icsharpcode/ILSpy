@@ -101,10 +101,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			}
 		}
 		
-		readonly ILVariableScope scope;
+		readonly ILFunction scope;
 		readonly BitSet variablesWithUninitializedUsage;
 		
-		public DefiniteAssignmentVisitor(ILVariableScope scope)
+		public DefiniteAssignmentVisitor(ILFunction scope)
 		{
 			this.scope = scope;
 			this.variablesWithUninitializedUsage = new BitSet(scope.Variables.Count);
@@ -114,15 +114,15 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		public bool IsPotentiallyUsedUninitialized(ILVariable v)
 		{
-			Debug.Assert(v.Scope == scope);
-			return variablesWithUninitializedUsage[v.IndexInScope];
+			Debug.Assert(v.Function == scope);
+			return variablesWithUninitializedUsage[v.IndexInFunction];
 		}
 		
 		void HandleStore(ILVariable v)
 		{
-			if (v.Scope == scope) {
+			if (v.Function == scope) {
 				// Mark the variable as initialized:
-				state.MarkVariableInitialized(v.IndexInScope);
+				state.MarkVariableInitialized(v.IndexInFunction);
 				// Note that this gets called even if the store is in unreachable code,
 				// but that's OK because bottomState.MarkVariableInitialized() has no effect.
 				
@@ -135,8 +135,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		void EnsureInitialized(ILVariable v)
 		{
-			if (v.Scope == scope && state.IsPotentiallyUninitialized(v.IndexInScope)) {
-				variablesWithUninitializedUsage.Set(v.IndexInScope);
+			if (v.Function == scope && state.IsPotentiallyUninitialized(v.IndexInFunction)) {
+				variablesWithUninitializedUsage.Set(v.IndexInFunction);
 			}
 		}
 		

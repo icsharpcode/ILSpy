@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			readonly UnionFind<IInstructionWithVariableOperand> unionFind = new UnionFind<IInstructionWithVariableOperand>();
 			readonly HashSet<IInstructionWithVariableOperand> uninitVariableUsage = new HashSet<IInstructionWithVariableOperand>();
 			
-			public GroupStores(ILVariableScope scope) : base(scope, IsCandidateVariable)
+			public GroupStores(ILFunction scope) : base(scope, IsCandidateVariable)
 			{
 			}
 			
@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					v.Name = inst.Variable.Name;
 					v.HasInitialValue = false; // we'll set HasInitialValue when we encounter an uninit load
 					newVariables.Add(representative, v);
-					inst.Variable.Scope.Variables.Add(v);
+					inst.Variable.Function.Variables.Add(v);
 				}
 				if (uninitVariableUsage.Contains(inst)) {
 					v.HasInitialValue = true;

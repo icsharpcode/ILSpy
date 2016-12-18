@@ -23,47 +23,20 @@ using System.Diagnostics;
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>
-	/// An ILInstruction that provides a scope for local variables.
-	/// </summary>
-	public abstract class ILVariableScope : ILInstruction
-	{
-		public readonly ILVariableCollection Variables;
-		
-		protected ILVariableScope(OpCode opCode) : base(opCode)
-		{
-			this.Variables = new ILVariableCollection(this);
-		}
-		
-		internal override void CheckInvariant(ILPhase phase)
-		{
-			for (int i = 0; i < Variables.Count; i++) {
-				Debug.Assert(Variables[i].Scope == this);
-				Debug.Assert(Variables[i].IndexInScope == i);
-			}
-			base.CheckInvariant(phase);
-		}
-		
-		protected void CloneVariables()
-		{
-			throw new NotImplementedException();
-		}
-	}
-	
-	/// <summary>
-	/// The collection of variables in a <c>ILVariableScope</c>.
+	/// The collection of variables in a <c>ILFunction</c>.
 	/// </summary>
 	public class ILVariableCollection : ICollection<ILVariable>, IReadOnlyList<ILVariable>
 	{
-		readonly ILVariableScope scope;
+		readonly ILFunction scope;
 		readonly List<ILVariable> list = new List<ILVariable>();
 		
-		internal ILVariableCollection(ILVariableScope scope)
+		internal ILVariableCollection(ILFunction scope)
 		{
 			this.scope = scope;
 		}
 		
 		/// <summary>
-		/// Gets a variable given its <c>IndexInScope</c>.
+		/// Gets a variable given its <c>IndexInFunction</c>.
 		/// </summary>
 		public ILVariable this[int index] {
 			get {
@@ -73,14 +46,14 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public bool Add(ILVariable item)
 		{
-			if (item.Scope != null) {
-				if (item.Scope == scope)
+			if (item.Function != null) {
+				if (item.Function == scope)
 					return false;
 				else
 					throw new ArgumentException("Variable already belongs to another scope");
 			}
-			item.Scope = scope;
-			item.IndexInScope = list.Count;
+			item.Function = scope;
+			item.IndexInFunction = list.Count;
 			list.Add(item);
 			return true;
 		}
@@ -93,23 +66,23 @@ namespace ICSharpCode.Decompiler.IL
 		public void Clear()
 		{
 			foreach (var v in list) {
-				v.Scope = null;
+				v.Function = null;
 			}
 			list.Clear();
 		}
 		
 		public bool Contains(ILVariable item)
 		{
-			Debug.Assert(item.Scope != scope || list[item.IndexInScope] == item);
-			return item.Scope == scope;
+			Debug.Assert(item.Function != scope || list[item.IndexInFunction] == item);
+			return item.Function == scope;
 		}
 		
 		public bool Remove(ILVariable item)
 		{
-			if (item.Scope != scope)
+			if (item.Function != scope)
 				return false;
-			Debug.Assert(list[item.IndexInScope] == item);
-			RemoveAt(item.IndexInScope);
+			Debug.Assert(list[item.IndexInFunction] == item);
+			RemoveAt(item.IndexInFunction);
 			return true;
 		}
 		
@@ -117,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			// swap-remove index
 			list[index] = list[list.Count - 1];
-			list[index].IndexInScope = index;
+			list[index].IndexInFunction = index;
 			list.RemoveAt(list.Count - 1);
 		}
 		

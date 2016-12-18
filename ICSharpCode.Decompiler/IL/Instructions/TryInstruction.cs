@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			Debug.Assert(Parent is TryCatch);
 			Debug.Assert(filter.ResultType == StackType.I4);
-			Debug.Assert(this.IsDescendantOf(variable.Scope));
+			Debug.Assert(this.IsDescendantOf(variable.Function));
 		}
 		
 		public override StackType ResultType {

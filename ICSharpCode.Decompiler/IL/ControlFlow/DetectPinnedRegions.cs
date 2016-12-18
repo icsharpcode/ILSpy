@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					new PointerType(((ByReferenceType)oldVar.Type).ElementType),
 					oldVar.Index);
 				newVar.Name = oldVar.Name;
-				oldVar.Scope.Variables.Add(newVar);
+				oldVar.Function.Variables.Add(newVar);
 				ReplacePinnedVar(oldVar, newVar, pinnedRegion);
 			} else if (pinnedRegion.Variable.Type.IsKnownType(KnownTypeCode.String)) {
 				// fixing a string
@@ -381,7 +381,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (nativeVar.Kind == VariableKind.Local) {
 						newVar = new ILVariable(VariableKind.PinnedLocal, nativeVar.Type, nativeVar.Index);
 						newVar.Name = nativeVar.Name;
-						nativeVar.Scope.Variables.Add(newVar);
+						nativeVar.Function.Variables.Add(newVar);
 						ReplacePinnedVar(nativeVar, newVar, pinnedRegion);
 					} else {
 						newVar = nativeVar;
