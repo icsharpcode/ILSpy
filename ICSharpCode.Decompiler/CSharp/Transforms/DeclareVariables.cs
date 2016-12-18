@@ -39,6 +39,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </summary>
 		struct InsertionPoint
 		{
+			/// <summary>
+			/// The nesting level of `nextNode` within the AST.
+			/// Used to speed up FindCommonParent().
+			/// </summary>
 			internal int level;
 			internal AstNode nextNode;
 			

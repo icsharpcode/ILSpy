@@ -166,5 +166,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("A", 1, num);
 			}
 		}
+
+		public async Task AwaitInCatch(Task<int> task1, Task<int> task2)
+		{
+			try {
+				Console.WriteLine("Start try");
+				await task1;
+				Console.WriteLine("End try");
+			} catch (Exception) {
+				Console.WriteLine("Start catch");
+				await task2;
+				Console.WriteLine("End catch");
+			}
+			Console.WriteLine("End Method");
+		}
+
+		public async Task AwaitInFinally(Task<int> task1, Task<int> task2)
+		{
+			try {
+				Console.WriteLine("Start try");
+				await task1;
+				Console.WriteLine("End try");
+			} finally {
+				Console.WriteLine("Start finally");
+				await task2;
+				Console.WriteLine("End finally");
+			}
+			Console.WriteLine("End Method");
+		}
 	}
 }
