@@ -276,6 +276,7 @@
     <Compile Include="Documentation\IdStringProvider.cs" />
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
+    <Compile Include="IL\Instructions\ILVariableCollection.cs" />
     <Compile Include="IL\Patterns\AnyNode.cs" />
     <Compile Include="Util\UnicodeNewline.cs" />
     <Compile Include="FlowAnalysis\ControlFlowNode.cs" />
@@ -318,7 +319,6 @@
     <Compile Include="IL\Instructions\TryInstruction.cs" />
     <Compile Include="IL\Instructions\UnaryInstruction.cs" />
     <Compile Include="IL\IInlineContext.cs" />
-    <Compile Include="IL\Instructions\VariableScope.cs" />
     <Compile Include="IL\Patterns\ListMatch.cs" />
     <Compile Include="IL\Patterns\Match.cs" />
     <Compile Include="IL\SlotInfo.cs" />
