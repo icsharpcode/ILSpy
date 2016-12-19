@@ -315,8 +315,15 @@ namespace ICSharpCode.Decompiler.CSharp
 					Block conditionBlock = FindDoWhileConditionBlock(container, out var condition);
 					if (conditionBlock != null) {
 						continueTarget = conditionBlock;
+						blockStatement = ConvertBlockContainer(new BlockStatement(), container, container.Blocks.Where(b => b != conditionBlock), true);
+						if (container.EntryPoint.IncomingEdgeCount == continueCount) {
+							// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
+							blockStatement.Statements.First().Remove();
+						}
+						if (blockStatement.LastOrDefault() is ContinueStatement continueStmt)
+							continueStmt.Remove();
 						return new DoWhileStatement {
-							EmbeddedStatement = ConvertBlockContainer(new BlockStatement(), container, container.Blocks.Where(b => b != conditionBlock), true),
+							EmbeddedStatement = blockStatement,
 							Condition = exprBuilder.TranslateCondition(condition)
 						};
 					}
