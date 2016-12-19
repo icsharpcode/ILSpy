@@ -259,6 +259,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				var oldContinueCount = continueCount;
 				var oldBreakTarget = breakTarget;
 				var loop = ConvertLoop(container);
+				loop.AddAnnotation(container);
 				continueTarget = oldContinueTarget;
 				continueCount = oldContinueCount;
 				breakTarget = oldBreakTarget;

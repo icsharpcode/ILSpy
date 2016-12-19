@@ -451,6 +451,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				InExpression = m.Get<Expression>("collection").Single().Detach(),
 				EmbeddedStatement = newBody
 			}.WithAnnotation(itemVarDecl.Variables.Single().Annotation<IL.ILVariable>());
+			foreachStatement.CopyAnnotationsFrom(loop);
 			if (foreachStatement.InExpression is BaseReferenceExpression) {
 				foreachStatement.InExpression = new ThisReferenceExpression().CopyAnnotationsFrom(foreachStatement.InExpression);
 			}
@@ -547,6 +548,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}.WithAnnotation(itemVarDecl.Variables.Single().Annotation<IL.ILVariable>());
 			BlockStatement body = new BlockStatement();
 			foreachStatement.EmbeddedStatement = body;
+			foreachStatement.CopyAnnotationsFrom(loop);
 			((BlockStatement)node.Parent).Statements.InsertBefore(node, foreachStatement);
 			
 			body.Add(node.Detach());
@@ -639,6 +641,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreach (Statement stmt in m3.Get<Statement>("statement"))
 				newBody.Add(stmt.Detach());
 			forStatement = new ForStatement();
+			forStatement.CopyAnnotationsFrom(loop);
 			forStatement.Initializers.Add(node);
 			forStatement.Condition = loop.Condition.Detach();
 			forStatement.Iterators.Add(m3.Get<Statement>("increment").Single().Detach());
@@ -671,6 +674,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				BlockStatement block = (BlockStatement)whileLoop.EmbeddedStatement;
 				block.Statements.Last().Remove(); // remove if statement
 				doLoop.EmbeddedStatement = block.Detach();
+				doLoop.CopyAnnotationsFrom(whileLoop);
 				whileLoop.ReplaceWith(doLoop);
 				
 				// we may have to extract variable definitions out of the loop if they were used in the condition:

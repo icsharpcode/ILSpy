@@ -112,8 +112,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.context = null;
 			}
 		}
-		
+
 		#region FindInsertionPoints
+		List<(InsertionPoint InsertionPoint, BlockContainer Loop)> loopTracking = new List<(InsertionPoint, BlockContainer)>();
+
 		/// <summary>
 		/// Finds insertion points for all variables used within `node`
 		/// and adds them to the variableDict.
@@ -126,24 +128,42 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </remarks>
 		void FindInsertionPoints(AstNode node, int nodeLevel)
 		{
-			for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
-				FindInsertionPoints(child, nodeLevel + 1);
+			BlockContainer loop = node.Annotation<BlockContainer>();
+			if (loop != null) {
+				loopTracking.Add((new InsertionPoint { level = nodeLevel, nextNode = node }, loop));
 			}
-			var identExpr = node as IdentifierExpression;
-			if (identExpr != null) {
-				var rr = identExpr.GetResolveResult() as ILVariableResolveResult;
-				if (rr != null && VariableNeedsDeclaration(rr.Variable.Kind)) {
-					var newPoint = new InsertionPoint { level = nodeLevel, nextNode = identExpr };
-					VariableToDeclare v;
-					if (variableDict.TryGetValue(rr.Variable, out v)) {
-						v.InsertionPoint = FindCommonParent(v.InsertionPoint, newPoint);
-					} else {
-						v = new VariableToDeclare(
-							rr.Variable.Type, rr.Variable.Name, rr.Variable.HasInitialValue,
-							newPoint, sourceOrder: variableDict.Count);
-						variableDict.Add(rr.Variable, v);
+			try {
+				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
+					FindInsertionPoints(child, nodeLevel + 1);
+				}
+				var identExpr = node as IdentifierExpression;
+				if (identExpr != null) {
+					var rr = identExpr.GetResolveResult() as ILVariableResolveResult;
+					if (rr != null && VariableNeedsDeclaration(rr.Variable.Kind)) {
+						var variable = rr.Variable;
+						InsertionPoint newPoint;
+						int startIndex = loopTracking.Count - 1;
+						if (variable.CaptureScope != null && startIndex > -1 && variable.CaptureScope != loopTracking[startIndex].Loop) {
+							while (startIndex > -1 && loopTracking[startIndex].Loop != variable.CaptureScope)
+								startIndex--;
+							newPoint = loopTracking[startIndex + 1].InsertionPoint;
+						} else {
+							newPoint = new InsertionPoint { level = nodeLevel, nextNode = identExpr };
+						}
+						VariableToDeclare v;
+						if (variableDict.TryGetValue(rr.Variable, out v)) {
+							v.InsertionPoint = FindCommonParent(v.InsertionPoint, newPoint);
+						} else {
+							v = new VariableToDeclare(
+								rr.Variable.Type, rr.Variable.Name, rr.Variable.HasInitialValue,
+								newPoint, sourceOrder: variableDict.Count);
+							variableDict.Add(rr.Variable, v);
+						}
 					}
 				}
+			} finally {
+				if (loop != null)
+					loopTracking.RemoveAt(loopTracking.Count - 1);
 			}
 		}
 

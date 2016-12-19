@@ -57,19 +57,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// TODO : it is probably not a good idea to remove *all* display-classes
 						// is there a way to minimize the false-positives?
 						if (newObj != null && IsSimpleDisplayClass(newObj.Method)) {
+							targetVariable.CaptureScope = FindBlockContainer(block);
 							targetsToReplace.Add((IInstructionWithVariableOperand)block.Instructions[i]);
 						}
 					}
 				}
 			}
 			foreach (var target in targetsToReplace.OrderByDescending(t => ((ILInstruction)t).ILRange.Start)) {
-				function.AcceptVisitor(new TransformDisplayClassUsages(target, orphanedVariableInits));
+				function.AcceptVisitor(new TransformDisplayClassUsages(target, target.Variable.CaptureScope, orphanedVariableInits));
 			}
 			foreach (var store in orphanedVariableInits) {
 				ILInstruction containingBlock = store.Parent as Block;
 				if (containingBlock != null)
 					((Block)containingBlock).Instructions.Remove(store);
 			}
+		}
+
+		private BlockContainer FindBlockContainer(Block block)
+		{
+			ILInstruction current = block;
+			while (current != null) {
+				current = current.Parent;
+				if (current is BlockContainer)
+					return (BlockContainer)current;
+			}
+			throw new NotSupportedException();
 		}
 
 		bool IsSimpleDisplayClass(IMethod method)
@@ -181,6 +193,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		class TransformDisplayClassUsages : ILVisitor
 		{
 			ILFunction currentFunction;
+			BlockContainer captureScope;
 			readonly IInstructionWithVariableOperand targetLoad;
 			readonly List<ILVariable> targetAndCopies = new List<ILVariable>();
 			readonly List<ILInstruction> orphanedVariableInits;
@@ -192,9 +205,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				public ILInstruction value;
 			}
 			
-			public TransformDisplayClassUsages(IInstructionWithVariableOperand targetLoad, List<ILInstruction> orphanedVariableInits)
+			public TransformDisplayClassUsages(IInstructionWithVariableOperand targetLoad, BlockContainer captureScope, List<ILInstruction> orphanedVariableInits)
 			{
 				this.targetLoad = targetLoad;
+				this.captureScope = captureScope;
 				this.orphanedVariableInits = orphanedVariableInits;
 				this.targetAndCopies.Add(targetLoad.Variable);
 			}
@@ -242,16 +256,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				field = (IField)field.MemberDefinition;
 				DisplayClassVariable info;
-				if (initValues.TryGetValue(field, out info) && info.variable != null) {
+				ILInstruction value;
+				if (initValues.TryGetValue(field, out info)) {
 					inst.ReplaceWith(new StLoc(info.variable, inst.Value));
 				} else {
-					ILInstruction value;
-					ILVariable v;
-					if (inst.Value.MatchLdLoc(out v) && v.Kind != VariableKind.PinnedLocal) {
+					if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter) {
+						// special case for parameters: remove copies of parameter values.
 						orphanedVariableInits.Add(inst);
 						value = inst.Value;
 					} else {
 						v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+						v.CaptureScope = captureScope;
 						inst.ReplaceWith(new StLoc(v, inst.Value));
 						value = new LdLoc(v);
 					}
@@ -283,11 +298,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				DisplayClassVariable info;
 				if (!initValues.TryGetValue(field, out info)) {
 					var v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
+					v.CaptureScope = captureScope;
 					inst.ReplaceWith(new LdLoca(v));
 					var value = new LdLoc(v);
 					initValues.Add(field, new DisplayClassVariable { value = value, variable = v });
-				} else if (info.value is LdLoc) {
-					inst.ReplaceWith(new LdLoca(((LdLoc)info.value).Variable));
+				} else if (info.value is LdLoc l) {
+					inst.ReplaceWith(new LdLoca(l.Variable));
 				} else {
 					throw new NotImplementedException();
 				}

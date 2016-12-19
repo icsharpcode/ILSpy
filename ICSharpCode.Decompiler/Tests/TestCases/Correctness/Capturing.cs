@@ -11,6 +11,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void Main(string[] args)
 		{
 			TestCase1();
+			TestCase2();
+			TestCase3();
+			TestCase4("TestCase4");
 		}
 
 		static void TestCase1()
@@ -27,6 +30,50 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			// line still declared
 			line = null;
+			Console.WriteLine("----");
+			foreach (var action in actions)
+				action();
+		}
+
+		static void TestCase2()
+		{
+			Console.WriteLine("TestCase2");
+			List<Action> actions = new List<Action>();
+			int max = 5;
+			string line;
+			while (ReadLine(out line, ref max)) {
+				string capture = line;
+				actions.Add(() => Console.WriteLine(capture));
+			}
+			// line still declared
+			line = null;
+			Console.WriteLine("----");
+			foreach (var action in actions)
+				action();
+		}
+
+		static void TestCase3()
+		{
+			Console.WriteLine("TestCase3");
+			List<Action> actions = new List<Action>();
+			int max = 5;
+			string line, capture;
+			while (ReadLine(out line, ref max)) {
+				capture = line;
+				actions.Add(() => Console.WriteLine(capture));
+			}
+			// line still declared
+			line = null;
+			Console.WriteLine("----");
+			foreach (var action in actions)
+				action();
+		}
+
+		static void TestCase4(string capture)
+		{
+			Console.WriteLine("TestCase4");
+			List<Action> actions = new List<Action>();
+			actions.Add(() => Console.WriteLine(capture));
 			Console.WriteLine("----");
 			foreach (var action in actions)
 				action();

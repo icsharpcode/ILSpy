@@ -220,6 +220,9 @@ namespace ICSharpCode.Decompiler.IL
 			if (hasInitialValue && Kind != VariableKind.Parameter) {
 				output.Write(" init");
 			}
+			if (CaptureScope != null) {
+				output.Write(" captured in " + CaptureScope.EntryPoint.Label);
+			}
 		}
 		
 		internal void WriteTo(ITextOutput output)
