@@ -787,5 +787,32 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return null;
 		}
 		#endregion
+
+		public static IType GetElementTypeFromIEnumerable(this IType collectionType, ICompilation compilation, bool allowIEnumerator, out bool? isGeneric)
+		{
+			bool foundNonGenericIEnumerable = false;
+			foreach (IType baseType in collectionType.GetAllBaseTypes()) {
+				ITypeDefinition baseTypeDef = baseType.GetDefinition();
+				if (baseTypeDef != null) {
+					KnownTypeCode typeCode = baseTypeDef.KnownTypeCode;
+					if (typeCode == KnownTypeCode.IEnumerableOfT || (allowIEnumerator && typeCode == KnownTypeCode.IEnumeratorOfT)) {
+						ParameterizedType pt = baseType as ParameterizedType;
+						if (pt != null) {
+							isGeneric = true;
+							return pt.GetTypeArgument(0);
+						}
+					}
+					if (typeCode == KnownTypeCode.IEnumerable || (allowIEnumerator && typeCode == KnownTypeCode.IEnumerator))
+						foundNonGenericIEnumerable = true;
+				}
+			}
+			// System.Collections.IEnumerable found in type hierarchy -> Object is element type.
+			if (foundNonGenericIEnumerable) {
+				isGeneric = false;
+				return compilation.FindType(KnownTypeCode.Object);
+			}
+			isGeneric = null;
+			return SpecialType.UnknownType;
+		}
 	}
 }

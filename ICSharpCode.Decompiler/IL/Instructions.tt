@@ -37,10 +37,12 @@
 	};
 	
 	OpCode[] opCodes = {
-		new OpCode("invalid", "Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.",
-			CustomClassName("InvalidInstruction"), NoArguments, MayThrow, HasFlag("InstructionFlags.EndPointUnreachable")),
+		new OpCode("invalid.branch", "Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.",
+			CustomClassName("InvalidBranch"), NoArguments, MayThrow, SideEffect, HasFlag("InstructionFlags.EndPointUnreachable")),
+		new OpCode("invalid.expr", "Represents invalid IL. Semantically, this instruction is considered to produce some kind of value.",
+			CustomClassName("InvalidExpression"), NoArguments, MayThrow, SideEffect),
 		new OpCode("nop", "No operation. Takes 0 arguments and returns void.",
-			VoidResult, NoArguments),
+			VoidResult, NoArguments, CustomWriteTo),
 		new OpCode("ILFunction", "A container of IL blocks.",
 			CustomChildren(new [] {
 				new ChildInfo("body")
@@ -210,6 +212,12 @@
 			CustomClassName("RefAnyType"), Unary, ResultType("O")),
 		new OpCode("refanyval", "Push the address stored in a typed reference.",
 			CustomClassName("RefAnyValue"), Unary, HasTypeOperand, MayThrow, ResultType("Ref")),
+
+		new OpCode("yield.return", "Yield an element from an iterator.",
+			MayBranch, // yield return may end up returning if the consumer disposes the iterator without
+			SideEffect, // consumer can have arbitrary side effects while we're yielding
+			CustomArguments("value"), VoidResult),
+		// note: "yield break" is always represented using a "leave" instruction
 
 		// patterns
 		new OpCode("AnyNode", "Matches any node", Pattern, CustomArguments(), CustomConstructor),
@@ -552,7 +560,7 @@ namespace ICSharpCode.Decompiler.IL
 	static Action<OpCode> ControlFlow = HasFlag("InstructionFlags.ControlFlow");
 	
 	static Action<OpCode> MayThrowIfNotDelayed = HasFlag("(DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow)") + (opCode => {
-		opCode.Members.Add("public bool DelayExceptions;");
+		opCode.Members.Add("public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced");
 	});
 	
 	static Action<OpCode> BaseClass(string name)

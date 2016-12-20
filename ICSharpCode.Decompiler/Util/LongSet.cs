@@ -29,12 +29,21 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	public struct LongSet : IEquatable<LongSet>
 	{
+		/// <summary>
+		/// The intervals in this set of longs.
+		/// </summary>
+		/// <remarks>
+		/// Invariant: the intervals in this array are non-empty, non-overlapping, non-touching, and sorted.
+		/// 
+		/// This invariant ensures every LongSet is always in a normalized representation.
+		/// </remarks>
 		public readonly ImmutableArray<LongInterval> Intervals;
-
-		public LongSet(ImmutableArray<LongInterval> intervals)
+		
+		private LongSet(ImmutableArray<LongInterval> intervals)
 		{
 			this.Intervals = intervals;
 #if DEBUG
+			// Check invariant
 			long minValue = long.MinValue;
 			for (int i = 0; i < intervals.Length; i++) {
 				Debug.Assert(!intervals[i].IsEmpty);
@@ -57,12 +66,20 @@ namespace ICSharpCode.Decompiler.Util
 			: this(ImmutableArray.Create(LongInterval.Inclusive(value, value)))
 		{
 		}
-
+		
 		/// <summary>
 		/// Create a new LongSet that contains the values from the interval.
 		/// </summary>
 		public LongSet(LongInterval interval)
 			: this(interval.IsEmpty ? Empty.Intervals : ImmutableArray.Create(interval))
+		{
+		}
+
+		/// <summary>
+		/// Creates a new LongSet the contains the values from the specified intervals.
+		/// </summary>
+		public LongSet(IEnumerable<LongInterval> intervals)
+			: this(MergeOverlapping(intervals.Where(i => !i.IsEmpty).OrderBy(i => i.Start)).ToImmutableArray())
 		{
 		}
 
@@ -233,7 +250,34 @@ namespace ICSharpCode.Decompiler.Util
 			}
 			return new LongSet(newIntervals.ToImmutableArray());
 		}
-		
+
+		/// <summary>
+		/// Gets whether this set is a subset of other, or equal.
+		/// </summary>
+		public bool IsSubsetOf(LongSet other)
+		{
+			// TODO: optimize IsSubsetOf -- there's no need to build a temporary set
+			return this.UnionWith(other).SetEquals(other);
+		}
+
+		/// <summary>
+		/// Gets whether this set is a superset of other, or equal.
+		/// </summary>
+		public bool IsSupersetOf(LongSet other)
+		{
+			return other.IsSubsetOf(this);
+		}
+
+		public bool IsProperSubsetOf(LongSet other)
+		{
+			return IsSubsetOf(other) && !SetEquals(other);
+		}
+
+		public bool IsProperSupersetOf(LongSet other)
+		{
+			return IsSupersetOf(other) && !SetEquals(other);
+		}
+
 		public bool Contains(long val)
 		{
 			int index = upper_bound(val);

@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Debug.Assert(loop[0] == h);
 				foreach (var node in loop) {
 					node.Visited = false; // reset visited flag so that we can find outer loops
-					Debug.Assert(h.Dominates(node), "The loop body must be dominated by the loop head");
+					Debug.Assert(h.Dominates(node) || !node.IsReachable, "The loop body must be dominated by the loop head");
 				}
 				ConstructLoop(loop, exitPoint);
 			}

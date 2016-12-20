@@ -251,7 +251,7 @@ namespace ICSharpCode.Decompiler.Tests
 			{
 				if (asm == null)
 					return false;
-				return !localAssemblies.Contains(asm.MainModule.FullyQualifiedName);
+				return !localAssemblies.Contains(asm.MainModule.FileName);
 			}
 		}
 

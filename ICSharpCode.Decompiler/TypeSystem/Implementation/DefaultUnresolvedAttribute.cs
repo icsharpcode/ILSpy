@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			if (attributeType == null)
 				throw new ArgumentNullException("attributeType");
 			this.attributeType = attributeType;
-			ExtensionMethods.AddRange(this.ConstructorParameterTypes, constructorParameterTypes);
+			this.ConstructorParameterTypes.AddRange(constructorParameterTypes);
 		}
 		
 		protected override void FreezeInternal()

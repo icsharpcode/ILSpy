@@ -176,9 +176,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			moduleAttributes = interningProvider.InternList(moduleAttributes);
 			
 			this.currentAssembly = new DefaultUnresolvedAssembly(assemblyDefinition != null ? assemblyDefinition.Name.FullName : moduleDefinition.Name);
-			currentAssembly.Location = moduleDefinition.FullyQualifiedName;
-			ExtensionMethods.AddRange(currentAssembly.AssemblyAttributes, assemblyAttributes);
-			ExtensionMethods.AddRange(currentAssembly.ModuleAttributes, assemblyAttributes);
+			currentAssembly.Location = moduleDefinition.FileName;
+			currentAssembly.AssemblyAttributes.AddRange(assemblyAttributes);
+			currentAssembly.ModuleAttributes.AddRange(assemblyAttributes);
 			
 			// Register type forwarders:
 			foreach (ExportedType type in moduleDefinition.ExportedTypes) {
@@ -831,7 +831,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				return; // https://github.com/icsharpcode/SharpDevelop/issues/284
 			}
 			var blobSecDecl = new UnresolvedSecurityDeclarationBlob((int)secDecl.Action, blob);
-			ExtensionMethods.AddRange(targetCollection, blobSecDecl.UnresolvedAttributes);
+			targetCollection.AddRange(blobSecDecl.UnresolvedAttributes);
 		}
 		#endregion
 		#endregion

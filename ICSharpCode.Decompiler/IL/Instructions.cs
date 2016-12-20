@@ -30,7 +30,9 @@ namespace ICSharpCode.Decompiler.IL
 	public enum OpCode
 	{
 		/// <summary>Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.</summary>
-		InvalidInstruction,
+		InvalidBranch,
+		/// <summary>Represents invalid IL. Semantically, this instruction is considered to produce some kind of value.</summary>
+		InvalidExpression,
 		/// <summary>No operation. Takes 0 arguments and returns void.</summary>
 		Nop,
 		/// <summary>A container of IL blocks.</summary>
@@ -156,6 +158,8 @@ namespace ICSharpCode.Decompiler.IL
 		RefAnyType,
 		/// <summary>Push the address stored in a typed reference.</summary>
 		RefAnyValue,
+		/// <summary>Yield an element from an iterator.</summary>
+		YieldReturn,
 		/// <summary>Matches any node</summary>
 		AnyNode,
 	}
@@ -448,36 +452,73 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.</summary>
-	public sealed partial class InvalidInstruction : SimpleInstruction
+	public sealed partial class InvalidBranch : SimpleInstruction
 	{
-		public InvalidInstruction() : base(OpCode.InvalidInstruction)
+		public InvalidBranch() : base(OpCode.InvalidBranch)
 		{
 		}
 
 		protected override InstructionFlags ComputeFlags()
 		{
-			return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
+			return InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.EndPointUnreachable;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return InstructionFlags.MayThrow | InstructionFlags.EndPointUnreachable;
+				return InstructionFlags.MayThrow | InstructionFlags.SideEffect | InstructionFlags.EndPointUnreachable;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
-			visitor.VisitInvalidInstruction(this);
+			visitor.VisitInvalidBranch(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitInvalidInstruction(this);
+			return visitor.VisitInvalidBranch(this);
 		}
 		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
 		{
-			return visitor.VisitInvalidInstruction(this, context);
+			return visitor.VisitInvalidBranch(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
-			var o = other as InvalidInstruction;
+			var o = other as InvalidBranch;
+			return o != null;
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Represents invalid IL. Semantically, this instruction is considered to produce some kind of value.</summary>
+	public sealed partial class InvalidExpression : SimpleInstruction
+	{
+		public InvalidExpression() : base(OpCode.InvalidExpression)
+		{
+		}
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitInvalidExpression(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitInvalidExpression(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitInvalidExpression(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as InvalidExpression;
 			return o != null;
 		}
 	}
@@ -2442,7 +2483,7 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Target = this.target.Clone();
 			return clone;
 		}
-		public bool DelayExceptions;
+		public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced
 		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
 		public IField Field { get { return field; } }
@@ -3406,7 +3447,7 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Indices.AddRange(this.Indices.Select(arg => arg.Clone()));
 			return clone;
 		}
-		public bool DelayExceptions;
+		public bool DelayExceptions; // NullReferenceException/IndexOutOfBoundsException only occurs when the reference is dereferenced
 		public override StackType ResultType { get { return StackType.Ref; } }
 		/// <summary>Gets whether the 'readonly' prefix was applied to this instruction.</summary>
 		public bool IsReadOnly { get; set; }
@@ -3665,6 +3706,98 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 }
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Yield an element from an iterator.</summary>
+	public sealed partial class YieldReturn : ILInstruction
+	{
+		public YieldReturn(ILInstruction value) : base(OpCode.YieldReturn)
+		{
+			this.Value = value;
+		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.value, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (YieldReturn)ShallowClone();
+			clone.Value = this.value.Clone();
+			return clone;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.MayBranch | InstructionFlags.SideEffect | value.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayBranch | InstructionFlags.SideEffect;
+			}
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			this.value.WriteTo(output);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitYieldReturn(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitYieldReturn(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitYieldReturn(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as YieldReturn;
+			return o != null && this.value.PerformMatch(o.value, ref match);
+		}
+	}
+}
 namespace ICSharpCode.Decompiler.IL.Patterns
 {
 	/// <summary>Matches any node</summary>
@@ -3719,7 +3852,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Called by Visit*() methods that were not overridden</summary>
 		protected abstract void Default(ILInstruction inst);
 		
-		protected internal virtual void VisitInvalidInstruction(InvalidInstruction inst)
+		protected internal virtual void VisitInvalidBranch(InvalidBranch inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitInvalidExpression(InvalidExpression inst)
 		{
 			Default(inst);
 		}
@@ -3971,6 +4108,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitYieldReturn(YieldReturn inst)
+		{
+			Default(inst);
+		}
 	}
 	
 	/// <summary>
@@ -3981,7 +4122,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Called by Visit*() methods that were not overridden</summary>
 		protected abstract T Default(ILInstruction inst);
 		
-		protected internal virtual T VisitInvalidInstruction(InvalidInstruction inst)
+		protected internal virtual T VisitInvalidBranch(InvalidBranch inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitInvalidExpression(InvalidExpression inst)
 		{
 			return Default(inst);
 		}
@@ -4233,6 +4378,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitYieldReturn(YieldReturn inst)
+		{
+			return Default(inst);
+		}
 	}
 
 	/// <summary>
@@ -4243,7 +4392,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Called by Visit*() methods that were not overridden</summary>
 		protected abstract T Default(ILInstruction inst, C context);
 		
-		protected internal virtual T VisitInvalidInstruction(InvalidInstruction inst, C context)
+		protected internal virtual T VisitInvalidBranch(InvalidBranch inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitInvalidExpression(InvalidExpression inst, C context)
 		{
 			return Default(inst, context);
 		}
@@ -4495,12 +4648,17 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitYieldReturn(YieldReturn inst, C context)
+		{
+			return Default(inst, context);
+		}
 	}
 	
 	partial class InstructionOutputExtensions
 	{
 		static readonly string[] originalOpCodeNames = {
-			"invalid",
+			"invalid.branch",
+			"invalid.expr",
 			"nop",
 			"ILFunction",
 			"BlockContainer",
@@ -4563,15 +4721,24 @@ namespace ICSharpCode.Decompiler.IL
 			"mkrefany",
 			"refanytype",
 			"refanyval",
+			"yield.return",
 			"AnyNode",
 		};
 	}
 	
 	partial class ILInstruction
 	{
-		public bool MatchInvalidInstruction()
+		public bool MatchInvalidBranch()
 		{
-			var inst = this as InvalidInstruction;
+			var inst = this as InvalidBranch;
+			if (inst != null) {
+				return true;
+			}
+			return false;
+		}
+		public bool MatchInvalidExpression()
+		{
+			var inst = this as InvalidExpression;
 			if (inst != null) {
 				return true;
 			}
@@ -5021,6 +5188,16 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			argument = default(ILInstruction);
 			type = default(IType);
+			return false;
+		}
+		public bool MatchYieldReturn(out ILInstruction value)
+		{
+			var inst = this as YieldReturn;
+			if (inst != null) {
+				value = inst.Value;
+				return true;
+			}
+			value = default(ILInstruction);
 			return false;
 		}
 	}

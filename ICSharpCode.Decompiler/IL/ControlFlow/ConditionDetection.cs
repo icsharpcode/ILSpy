@@ -79,6 +79,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (IsUsableBranchToChild(cfgNode, exitInst)) {
 				// "...; goto usableblock;"
 				// -> embed target block in this block
+				context.Step("Inline target block of unconditional branch", exitInst);
 				var targetBlock = ((Branch)exitInst).TargetBlock;
 				Debug.Assert(exitInst == block.Instructions.Last());
 				block.Instructions.RemoveAt(block.Instructions.Count - 1);

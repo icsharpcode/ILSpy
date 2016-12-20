@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.IL
 			readonly int end;
 			int pos;
 			
-			public ChildrenEnumerator(ILInstruction inst)
+			internal ChildrenEnumerator(ILInstruction inst)
 			{
 				Debug.Assert(inst != null);
 				this.inst = inst;
@@ -443,10 +443,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		/// <remarks>
 		/// This property returns true if the ILInstruction is reachable from the root node
-		/// of the ILAst; it does make use of the <c>Parent</c> field so the considerations
+		/// of the ILAst; it does not make use of the <c>Parent</c> field so the considerations
 		/// about orphaned nodes and stale positions don't apply.
 		/// </remarks>
-		protected bool IsConnected {
+		protected internal bool IsConnected {
 			get { return refCount > 0; }
 		}
 		

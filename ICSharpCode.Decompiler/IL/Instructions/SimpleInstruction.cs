@@ -31,12 +31,25 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 	
-	partial class InvalidInstruction : SimpleInstruction
+	partial class Nop
+	{
+		public string Comment;
+
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			if (!string.IsNullOrEmpty(Comment)) {
+				output.Write(" // " + Comment);
+			}
+		}
+	}
+
+	partial class InvalidBranch : SimpleInstruction
 	{
 		public string Message;
 		public StackType ExpectedResultType = StackType.Unknown;
 		
-		public InvalidInstruction(string message) : this()
+		public InvalidBranch(string message) : this()
 		{
 			this.Message = message;
 		}
@@ -45,6 +58,32 @@ namespace ICSharpCode.Decompiler.IL
 			get { return ExpectedResultType; }
 		}
 		
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			if (!string.IsNullOrEmpty(Message)) {
+				output.Write('(');
+				output.Write(Message);
+				output.Write(')');
+			}
+		}
+	}
+
+	partial class InvalidExpression : SimpleInstruction
+	{
+		public string Message;
+		public StackType ExpectedResultType = StackType.Unknown;
+
+		public InvalidExpression(string message) : this()
+		{
+			this.Message = message;
+		}
+
+		public override StackType ResultType
+		{
+			get { return ExpectedResultType; }
+		}
+
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);

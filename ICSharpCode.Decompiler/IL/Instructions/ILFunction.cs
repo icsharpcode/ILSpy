@@ -34,6 +34,15 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly MethodDefinition Method;
 		public readonly ILVariableCollection Variables;
 
+		/// <summary>
+		/// Gets whether this function is a decompiled iterator (is using yield).
+		/// This flag gets set by the YieldReturnDecompiler.
+		/// 
+		/// If set, the 'return' instruction has the semantics of 'yield break;'
+		/// instead of a normal return.
+		/// </summary>
+		public bool IsIterator;
+
 		public ILFunction(MethodDefinition method, ILInstruction body) : base(OpCode.ILFunction)
 		{
 			this.Body = body;
@@ -65,6 +74,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteLine(" {");
 			output.Indent();
 			
+			if (IsIterator) {
+				output.WriteLine(".iterator");
+			}
+
 			output.MarkFoldStart(Variables.Count + " variable(s)", true);
 			foreach (var variable in Variables) {
 				variable.WriteDefinitionTo(output);

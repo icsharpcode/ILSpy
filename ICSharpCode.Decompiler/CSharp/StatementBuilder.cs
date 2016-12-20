@@ -31,12 +31,14 @@ namespace ICSharpCode.Decompiler.CSharp
 	class StatementBuilder : ILVisitor<Statement>
 	{
 		internal readonly ExpressionBuilder exprBuilder;
+		readonly ILFunction currentFunction;
 		readonly IMethod currentMethod;
 
-		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IMethod currentMethod)
+		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IMethod currentMethod, ILFunction currentFunction)
 		{
 			Debug.Assert(typeSystem != null && decompilationContext != null && currentMethod != null);
 			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext);
+			this.currentFunction = currentFunction;
 			this.currentMethod = currentMethod;
 		}
 		
@@ -146,8 +148,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (inst.TargetContainer == breakTarget)
 				return new BreakStatement();
-			if (inst.TargetContainer.SlotInfo == ILFunction.BodySlot)
-				return new ReturnStatement();
+			if (inst.TargetContainer.SlotInfo == ILFunction.BodySlot) {
+				if (currentFunction.IsIterator)
+					return new YieldBreakStatement();
+				else
+					return new ReturnStatement();
+			}
 			string label;
 			if (!endContainerLabels.TryGetValue(inst.TargetContainer, out label)) {
 				label = "end_" + inst.TargetLabel;
@@ -171,6 +177,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (inst.ReturnValue == null)
 				return new ReturnStatement();
 			return new ReturnStatement(exprBuilder.Translate(inst.ReturnValue).ConvertTo(currentMethod.ReturnType, exprBuilder));
+		}
+
+		protected internal override Statement VisitYieldReturn(YieldReturn inst)
+		{
+			var elementType = currentMethod.ReturnType.GetElementTypeFromIEnumerable(currentMethod.Compilation, true, out var isGeneric);
+			return new YieldReturnStatement {
+				Expression = exprBuilder.Translate(inst.Value).ConvertTo(elementType, exprBuilder)
+			};
 		}
 
 		TryCatchStatement MakeTryCatch(ILInstruction tryBlock)

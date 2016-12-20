@@ -111,6 +111,17 @@ namespace ICSharpCode.Decompiler.IL
 			var inst = this as Leave;
 			return inst != null && inst.TargetContainer == targetContainer;
 		}
+
+		public bool MatchReturn(out ILInstruction returnValue)
+		{
+			if (this is Return ret) {
+				returnValue = ret.ReturnValue;
+				return returnValue != null;
+			} else {
+				returnValue = null;
+				return false;
+			}
+		}
 		
 		public bool MatchIfInstruction(out ILInstruction condition, out ILInstruction trueInst, out ILInstruction falseInst)
 		{
@@ -216,28 +227,27 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public bool MatchLdsFld(IField field)
 		{
-			LdsFlda ldsflda = (this as LdObj)?.Target as LdsFlda;
-			if (ldsflda != null) {
+			if (this is LdObj ldobj && ldobj.Target is LdsFlda ldsflda) {
 				return field.Equals(ldsflda.Field);
 			}
 			return false;
 		}
 		
-		public bool MatchLdFld(out IField field)
+		public bool MatchLdFld(out ILInstruction target, out IField field)
 		{
-			LdFlda ldflda = (this as LdObj)?.Target as LdFlda;
-			if (ldflda != null) {
+			if (this is LdObj ldobj && ldobj.Target is LdFlda ldflda) {
+				target = ldflda.Target;
 				field = ldflda.Field;
 				return true;
 			}
+			target = null;
 			field = null;
 			return false;
 		}
 		
 		public bool MatchLdsFld(out IField field)
 		{
-			LdsFlda ldsflda = (this as LdObj)?.Target as LdsFlda;
-			if (ldsflda != null) {
+			if (this is LdObj ldobj && ldobj.Target is LdsFlda ldsflda) {
 				field = ldsflda.Field;
 				return true;
 			}
@@ -245,31 +255,29 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 		
-		public bool MatchStsFld(out ILInstruction value, out IField field)
-		{
-			var stobj = this as StObj;
-			LdsFlda ldsflda = stobj?.Target as LdsFlda;
-			if (ldsflda != null) {
-				value = stobj.Value;
+		public bool MatchStsFld(out IField field, out ILInstruction value)
+        {
+			if (this is StObj stobj && stobj.Target is LdsFlda ldsflda) {
 				field = ldsflda.Field;
+				value = stobj.Value;
 				return true;
 			}
+			field = null;
 			value = null;
-			field = null;
 			return false;
 		}
 		
-		public bool MatchStFld(out ILInstruction value, out IField field)
-		{
-			var stobj = this as StObj;
-			LdFlda ldflda = stobj?.Target as LdFlda;
-			if (ldflda != null) {
-				value = stobj.Value;
+		public bool MatchStFld(out ILInstruction target, out IField field, out ILInstruction value)
+        {
+			if (this is StObj stobj && stobj.Target is LdFlda ldflda) {
+				target = ldflda.Target;
 				field = ldflda.Field;
+				value = stobj.Value;
 				return true;
 			}
-			value = null;
+			target = null;
 			field = null;
+			value = null;
 			return false;
 		}
 		

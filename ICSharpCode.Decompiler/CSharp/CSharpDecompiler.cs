@@ -48,6 +48,18 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		List<IILTransform> ilTransforms = GetILTransforms();
 
+		/// <summary>
+		/// Pre-yield/await transforms.
+		/// </summary>
+		internal static List<IILTransform> EarlyILTransforms()
+		{
+			return new List<IILTransform> {
+				new ControlFlowSimplification(),
+				new SplitVariables(),
+				new ILInlining(),
+			};
+		}
+
 		public static List<IILTransform> GetILTransforms()
 		{
 			return new List<IILTransform> {
@@ -57,6 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(),
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
+				new YieldReturnDecompiler(), // must run after inlining but before loop detection
 				new DetectExitPoints(),
 				new BlockILTransform {
 					PostOrderTransforms = {
@@ -161,8 +174,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (type.DeclaringType != null) {
 					if (settings.AnonymousMethods && IsClosureType(type))
 						return true;
-//					if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
-//						return true;
+					if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
+						return true;
 //					if (settings.AsyncAwait && AsyncDecompiler.IsCompilerGeneratedStateMachine(type))
 //						return true;
 				} else if (type.IsCompilerGenerated()) {
@@ -616,7 +629,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			AddDefinesForConditionalAttributes(function);
-			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method);
+			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method, function);
 			entityDecl.AddChild(statementBuilder.ConvertAsBlock(function.Body), Roles.Body);
 		}
 

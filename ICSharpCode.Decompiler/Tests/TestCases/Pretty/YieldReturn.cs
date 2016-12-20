@@ -21,13 +21,34 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public static class YieldReturn
+	public class YieldReturn
 	{
+		int fieldOnThis;
+
 		public static IEnumerable<string> SimpleYieldReturn()
 		{
 			yield return "A";
 			yield return "B";
 			yield return "C";
+		}
+
+		public static IEnumerator<string> SimpleYieldReturnEnumerator()
+		{
+			yield return "A";
+			yield return "B";
+			yield return "C";
+		}
+
+		public IEnumerable<int> YieldReturnParameters(int p)
+		{
+			yield return p;
+			yield return fieldOnThis;
+		}
+
+		public IEnumerator<int> YieldReturnParametersEnumerator(int p)
+		{
+			yield return p;
+			yield return fieldOnThis;
 		}
 
 		public static IEnumerable<int> YieldReturnInLoop()
@@ -146,6 +167,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			yield return 'a';
 			yield return 'b';
 			yield return 'c';
+		}
+
+
+		public static IEnumerable<char> ExceptionHandling()
+		{
+			yield return 'a';
+			try {
+				Console.WriteLine("1 - try");
+			} catch (Exception) {
+				Console.WriteLine("1 - catch");
+			}
+			yield return 'b';
+			try {
+				try {
+					Console.WriteLine("2 - try");
+				} finally {
+					Console.WriteLine("2 - finally");
+				}
+				yield return 'c';
+			} finally {
+				Console.WriteLine("outer finally");
+			}
 		}
 	}
 }

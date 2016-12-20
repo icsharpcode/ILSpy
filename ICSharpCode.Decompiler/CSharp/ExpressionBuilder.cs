@@ -942,7 +942,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.Parameters.AddRange(MakeParameters(method, function));
 			ame.HasParameterList = true;
-			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method);
+			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method, function);
 			var body = builder.ConvertAsBlock(function.Body);
 			bool isLambda = false;
 			bool isMultiLineLambda = false;
@@ -1548,10 +1548,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst)
 				.WithRR(new ByReferenceResolveResult(value.ResolveResult, false));
 		}
-		
-		protected internal override TranslatedExpression VisitInvalidInstruction(InvalidInstruction inst, TranslationContext context)
+
+		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)
 		{
-			string message = "Invalid IL";
+			string message = "Error";
 			if (inst.ILRange.Start != 0) {
 				message += $" near IL_{inst.ILRange.Start:x4}";
 			}
@@ -1560,7 +1560,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return ErrorExpression(message);
 		}
-		
+
+		protected internal override TranslatedExpression VisitInvalidExpression(InvalidExpression inst, TranslationContext context)
+		{
+			string message = "Error";
+			if (inst.ILRange.Start != 0) {
+				message += $" near IL_{inst.ILRange.Start:x4}";
+			}
+			if (!string.IsNullOrEmpty(inst.Message)) {
+				message += ": " + inst.Message;
+			}
+			return ErrorExpression(message);
+		}
+
 		protected override TranslatedExpression Default(ILInstruction inst, TranslationContext context)
 		{
 			return ErrorExpression("OpCode not supported: " + inst.OpCode);

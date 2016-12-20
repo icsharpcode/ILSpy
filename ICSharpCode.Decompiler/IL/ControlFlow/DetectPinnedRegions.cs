@@ -397,20 +397,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void ReplacePinnedVar(ILVariable oldVar, ILVariable newVar, ILInstruction inst)
 		{
-			Conv conv = inst as Conv;
-			if (conv != null && conv.Kind == ConversionKind.StopGCTracking && conv.Argument.MatchLdLoc(oldVar)) {
+			if (inst is Conv conv && conv.Kind == ConversionKind.StopGCTracking && conv.Argument.MatchLdLoc(oldVar)) {
 				// conv ref->i (ldloc oldVar)
 				//  => ldloc newVar
 				conv.AddILRange(conv.Argument.ILRange);
 				conv.ReplaceWith(new LdLoc(newVar) { ILRange = conv.ILRange });
 				return;
 			}
-			var iwvo = inst as IInstructionWithVariableOperand;
-			if (iwvo != null && iwvo.Variable == oldVar) {
+			if (inst is IInstructionWithVariableOperand iwvo && iwvo.Variable == oldVar) {
 				iwvo.Variable = newVar;
-				if (inst is StLoc && oldVar.Type.Kind == TypeKind.ByReference) {
-					((StLoc)inst).Value = new Conv(((StLoc)inst).Value, PrimitiveType.I, false, Sign.None);
+				if (inst is StLoc stloc && oldVar.Type.Kind == TypeKind.ByReference) {
+					stloc.Value = new Conv(stloc.Value, PrimitiveType.I, false, Sign.None);
 				}
+			} else if (inst.MatchLdStr(out var val) && val == "Is this ILSpy?") {
+				inst.ReplaceWith(new LdStr("This is ILSpy!")); // easter egg ;)
+				return;
 			}
 			foreach (var child in inst.Children) {
 				ReplacePinnedVar(oldVar, newVar, child);

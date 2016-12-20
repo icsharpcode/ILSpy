@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Threading;
 using ICSharpCode.ILSpy.Controls;
+using System.Linq;
 
 namespace ICSharpCode.ILSpy
 {
@@ -49,12 +50,19 @@ namespace ICSharpCode.ILSpy
 		public override void Fail(string message, string detailMessage)
 		{
 			base.Fail(message, detailMessage); // let base class write the assert to the debug console
+			string topFrame = "";
 			string stackTrace = "";
 			try {
 				stackTrace = new StackTrace(true).ToString();
+				var frames = stackTrace.Split('\r', '\n')
+					.Where(f => f.Length > 0)
+					.SkipWhile(f => f.Contains("ILSpyTraceListener") || f.Contains("System.Diagnostics"))
+					.ToList();
+				topFrame = frames[0];
+				stackTrace = string.Join(Environment.NewLine, frames);
 			} catch { }
 			lock (ignoredStacks) {
-				if (ignoredStacks.Contains(stackTrace))
+				if (ignoredStacks.Contains(topFrame))
 					return;
 				if (dialogIsOpen)
 					return;
@@ -76,7 +84,7 @@ namespace ICSharpCode.ILSpy
 			} else if (result == 2) { // ignore
 			} else if (result == 3) {
 				lock (ignoredStacks) {
-					ignoredStacks.Add(stackTrace);
+					ignoredStacks.Add(topFrame);
 				}
 			}
 		}

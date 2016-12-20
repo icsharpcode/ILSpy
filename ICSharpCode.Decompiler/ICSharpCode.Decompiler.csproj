@@ -280,8 +280,11 @@
     <Compile Include="Documentation\IdStringProvider.cs" />
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
+    <Compile Include="IL\ControlFlow\StateRangeAnalysis.cs" />
+    <Compile Include="IL\ControlFlow\SymbolicExecution.cs" />
     <Compile Include="IL\Instructions\ILVariableCollection.cs" />
     <Compile Include="IL\Patterns\AnyNode.cs" />
+    <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="Util\UnicodeNewline.cs" />
     <Compile Include="FlowAnalysis\ControlFlowNode.cs" />
     <Compile Include="FlowAnalysis\DataFlowVisitor.cs" />
@@ -547,9 +550,7 @@
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="ILAst\" />
-  </ItemGroup>
+  <ItemGroup />
   <ItemGroup>
     <None Include="..\nrefactory\doc\XML Documentation.html">
       <Link>Documentation\XML Documentation.html</Link>

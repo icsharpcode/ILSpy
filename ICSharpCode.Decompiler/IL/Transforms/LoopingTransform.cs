@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
@@ -23,38 +24,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Repeats the child transforms until the ILAst no longer changes.
 	/// </summary>
-	public class LoopingTransform : IILTransform
-	{
-		readonly IILTransform[] children;
-
-		public LoopingTransform(params IILTransform[] children)
-		{
-			this.children = children;
-		}
-
-		public void Run(ILFunction function, ILTransformContext context)
-		{
-			do {
-				function.ResetDirty();
-				function.RunTransforms(children, context);
-				if (function.IsDirty)
-					context.Step("Function is dirty; running another loop iteration.", function);
-			} while (function.IsDirty);
-		}
-
-		public IReadOnlyCollection<IILTransform> Transforms
-		{
-			get { return children; }
-		}
-	}
-
-	/// <summary>
-	/// Repeats the child transforms until the ILAst no longer changes.
-	/// </summary>
 	public class LoopingBlockTransform : IBlockTransform
 	{
 		readonly IBlockTransform[] children;
-		
+		bool running;
+
 		public LoopingBlockTransform(params IBlockTransform[] children)
 		{
 			this.children = children;
@@ -62,12 +36,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		public void Run(Block block, BlockTransformContext context)
 		{
+			if (running)
+				throw new InvalidOperationException("LoopingBlockTransform already running. Transforms (and the CSharpDecompiler) are neither neither thread-safe nor re-entrant.");
+			running = true;
 			do {
 				block.ResetDirty();
 				block.RunTransforms(children, context);
 				if (block.IsDirty)
 					context.Step("Block is dirty; running another loop iteration.", block);
 			} while (block.IsDirty);
+			running = false;
 		}
 
 		public IReadOnlyCollection<IBlockTransform> Transforms {

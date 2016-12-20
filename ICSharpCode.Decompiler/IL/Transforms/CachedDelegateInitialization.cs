@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var storeInst = trueInst.Instructions[0];
 			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdsFld(out IField field) || !right.MatchLdNull())
 				return false;
-			if (!storeInst.MatchStsFld(out ILInstruction value, out IField field2) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
+			if (!storeInst.MatchStsFld(out IField field2, out ILInstruction value) || !field.Equals(field2) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 				return false;
 			if (!DelegateConstruction.IsDelegateConstruction(value as NewObj, true))
 				return false;
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// the optional field store was moved into storeInst by inline assignment:
 			if (!(value is NewObj)) {
 				IField field, field2;
-				if (value.MatchStsFld(out value2, out field)) {
+				if (value.MatchStsFld(out field, out value2)) {
 					if (!(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 						return false;
 					var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
@@ -114,11 +114,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					value = value2;
 					hasFieldStore = true;
-				} else if (value.MatchStFld(out value2, out field)) {
+				} else if (value.MatchStFld(out var target, out field, out value2)) {
+					// TODO: shouldn't we test 'target'?
 					if (!(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 						return false;
 					var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
-					if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdFld(out field2) || !field.Equals(field2))
+					if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdFld(out var target2, out field2) || !field.Equals(field2))
 						return false;
 					value = value2;
 					hasFieldStore = true;

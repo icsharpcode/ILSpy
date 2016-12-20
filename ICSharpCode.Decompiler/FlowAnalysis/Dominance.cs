@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				if (j.IsReachable && (j.Predecessors.Count >= 2 || (j.Predecessors.Count >= 1 && j.ImmediateDominator == null))) {
 					// Add j to frontier of all predecessors and their dominators up to j's immediate dominator.
 					foreach (var p in j.Predecessors) {
-						for (var runner = p; runner != j.ImmediateDominator && runner != j; runner = runner.ImmediateDominator) {
+						for (var runner = p; runner != j.ImmediateDominator && runner != j && runner != null; runner = runner.ImmediateDominator) {
 							nonEmpty.Set(runner.UserIndex);
 						}
 					}

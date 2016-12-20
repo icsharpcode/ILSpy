@@ -335,7 +335,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction DecodeInstruction()
 		{
 			if (nextInstructionIndex >= body.Instructions.Count)
-				return new InvalidInstruction("Unexpected end of body");
+				return new InvalidBranch("Unexpected end of body");
 			var cecilInst = body.Instructions[nextInstructionIndex++];
 			currentInstruction = cecilInst;
 			switch (cecilInst.OpCode.Code) {
@@ -792,7 +792,7 @@ namespace ICSharpCode.Decompiler.IL
 				case Cil.Code.Unbox_Any:
 					return Push(new UnboxAny(Pop(), ReadAndDecodeTypeReference()));
 				default:
-					return new InvalidInstruction("Unknown opcode: " + cecilInst.OpCode.ToString());
+					return new InvalidBranch("Unknown opcode: " + cecilInst.OpCode.ToString());
 			}
 		}
 
@@ -869,7 +869,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Peek()
 		{
 			if (currentStack.IsEmpty) {
-				return new InvalidInstruction("Stack underflow") { ILRange = GetCurrentInstructionInterval() };
+				return new InvalidExpression("Stack underflow") { ILRange = GetCurrentInstructionInterval() };
 			}
 			return new LdLoc(currentStack.Peek());
 		}
@@ -877,7 +877,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILInstruction Pop()
 		{
 			if (currentStack.IsEmpty) {
-				return new InvalidInstruction("Stack underflow") { ILRange = GetCurrentInstructionInterval() };
+				return new InvalidExpression("Stack underflow") { ILRange = GetCurrentInstructionInterval() };
 			}
 			ILVariable v;
 			currentStack = currentStack.Pop(out v);
@@ -892,8 +892,8 @@ namespace ICSharpCode.Decompiler.IL
 					inst = new Conv(inst, PrimitiveType.I, false, Sign.None);
 				} else if (expectedType == StackType.Ref && inst.ResultType == StackType.I) {
 					// implicitly start GC tracking
-				} else if (inst is InvalidInstruction) {
-					((InvalidInstruction)inst).ExpectedResultType = expectedType;
+				} else if (inst is InvalidExpression) {
+					((InvalidExpression)inst).ExpectedResultType = expectedType;
 				} else {
 					Warn($"Expected {expectedType}, but got {inst.ResultType}");
 				}

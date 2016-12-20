@@ -271,7 +271,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			#if DEBUG
 			DebugPoint(debugOutputState, inst);
 			#endif
-		
 		}
 		
 		/// <summary>
@@ -447,7 +446,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			MarkUnreachable();
 		}
 		
-		protected internal override void VisitInvalidInstruction(InvalidInstruction inst)
+		protected internal override void VisitInvalidBranch(InvalidBranch inst)
 		{
 			MarkUnreachable();
 		}
@@ -577,6 +576,13 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				afterSections.JoinWith(state);
 			}
 			state = afterSections;
+			DebugEndPoint(inst);
+		}
+
+		protected internal override void VisitYieldReturn(YieldReturn inst)
+		{
+			DebugStartPoint(inst);
+			inst.Value.AcceptVisitor(this);
 			DebugEndPoint(inst);
 		}
 	}

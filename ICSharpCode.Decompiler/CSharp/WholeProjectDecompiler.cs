@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						var asm = module.AssemblyResolver.Resolve(r);
 						if (!IsGacAssembly(r, asm)) {
 							if (asm != null) {
-								w.WriteElementString("HintPath", asm.MainModule.FullyQualifiedName);
+								w.WriteElementString("HintPath", asm.MainModule.FileName);
 							}
 						}
 						w.WriteEndElement();

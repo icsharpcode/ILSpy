@@ -26,12 +26,6 @@ namespace ICSharpCode.Decompiler.Util
 	/// </summary>
 	static class ExtensionMethods
 	{
-		public static void AddRange<T>(this ICollection<T> target, IEnumerable<T> input)
-		{
-			foreach (T item in input)
-				target.Add(item);
-		}
-		
 		public static Predicate<T> And<T>(this Predicate<T> filter1, Predicate<T> filter2)
 		{
 			if (filter1 == null)
