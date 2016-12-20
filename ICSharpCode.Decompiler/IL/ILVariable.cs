@@ -32,6 +32,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		PinnedLocal,
 		/// <summary>
+		/// A local variable used as using-resource variable.
+		/// </summary>
+		UsingLocal,
+		/// <summary>
+		/// A local variable used as foreach variable.
+		/// </summary>
+		ForeachLocal,
+		/// <summary>
 		/// A parameter.
 		/// </summary>
 		Parameter,
@@ -47,7 +55,19 @@ namespace ICSharpCode.Decompiler.IL
 
 	public class ILVariable
 	{
-		public readonly VariableKind Kind;
+		VariableKind kind;
+
+		public VariableKind Kind {
+			get {
+				return kind;
+			}
+			internal set {
+				if (kind == VariableKind.Parameter)
+					throw new InvalidOperationException("Kind=Parameter cannot be changed!");
+				kind = value;
+			}
+		}
+
 		public readonly StackType StackType;
 		
 		IType type;

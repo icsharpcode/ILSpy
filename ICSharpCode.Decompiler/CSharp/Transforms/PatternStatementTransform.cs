@@ -157,8 +157,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		static Expression InvokeDispose(Expression identifier)
 		{
 			return new Choice {
-				identifier.Invoke("Dispose"),
-				identifier.Clone().CastTo(new TypePattern(typeof(IDisposable))).Invoke("Dispose")
+				new InvocationExpression(new MemberReferenceExpression(identifier, "Dispose")),
+				new InvocationExpression(new MemberReferenceExpression(new CastExpression(new TypePattern(typeof(IDisposable)), identifier.Clone()), "Dispose"))
 			};
 		}
 		
@@ -216,6 +216,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public UsingStatement TransformUsings(ExpressionStatement node)
 		{
+			// Conditions:
+			// 1. CaptureScope of the resource-variable must be either null or the BlockContainer of the using block.
+			// 2. The variable must not be used outside of the block.
+			// 3. The variable is only assigned once, right before the try-block.
 			Match m1 = variableAssignPattern.Match(node);
 			if (!m1.Success) return null;
 			TryCatchStatement tryCatch = node.NextSibling as TryCatchStatement;
@@ -230,35 +234,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (variable.Type.IsReferenceType != false)
 					return null;
 			}
-			
-			// There are two variants of the using statement:
-			// "using (var a = init)" and "using (expr)".
-			// The former declares a read-only variable 'a', and the latter declares an unnamed read-only variable
-			// to store the original value of 'expr'.
-			// This means that in order to introduce a using statement, in both cases we need to detect a read-only
-			// variable that is used only within that block.
-			
-			if (HasAssignment(tryCatch, variableName))
-				return null;
-			
-			VariableDeclarationStatement varDecl = FindVariableDeclaration(node, variableName);
-			if (varDecl == null || !(varDecl.Parent is BlockStatement))
-				return null;
-			
-			// Validate that the variable is not used after the using statement:
-			if (!IsVariableValueUnused(varDecl, tryCatch))
+
+			if (variable.StoreCount > 1 || !variable.Type.GetAllBaseTypes().Any(t => t.IsKnownType(KnownTypeCode.IDisposable)))
 				return null;
 
-			if (m2.Has("f#")) {
-				string variableNameDisposable = m2.Get<IdentifierExpression>("disposable").Single().Identifier;
-				VariableDeclarationStatement varDeclDisposable = FindVariableDeclaration(node, variableNameDisposable);
-				if (varDeclDisposable == null || !(varDeclDisposable.Parent is BlockStatement))
-					return null;
+			//if (m2.Has("f#")) {
+			//	string variableNameDisposable = m2.Get<IdentifierExpression>("disposable").Single().Identifier;
+			//	VariableDeclarationStatement varDeclDisposable = FindVariableDeclaration(node, variableNameDisposable);
+			//	if (varDeclDisposable == null || !(varDeclDisposable.Parent is BlockStatement))
+			//		return null;
 
-				// Validate that the variable is not used after the using statement:
-				if (!IsVariableValueUnused(varDeclDisposable, tryCatch))
-					return null;
-			}
+			//	// Validate that the variable is not used after the using statement:
+			//	if (!IsVariableValueUnused(varDeclDisposable, tryCatch))
+			//		return null;
+			//}
 
 			node.Remove();
 
@@ -269,8 +258,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// If possible, we'll eliminate the variable completely:
 			if (usingStatement.EmbeddedStatement.Descendants.OfType<IdentifierExpression>().Any(ident => ident.Identifier == variableName)) {
 				// variable is used, so we'll create a variable declaration
+				variable.Kind = IL.VariableKind.UsingLocal;
 				usingStatement.ResourceAcquisition = new VariableDeclarationStatement {
-					Type = (AstType)varDecl.Type.Clone(),
+					Type = variable.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(variable.Type),
 					Variables = {
 						new VariableInitializer {
 							Name = variableName,
@@ -376,7 +366,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						"enumeratorVariable",
 						new VariableInitializer {
 							Name = Pattern.AnyString,
-							Initializer = new AnyNode("collection").ToExpression().Invoke("GetEnumerator")
+							Initializer = new InvocationExpression(new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator"))
 						}
 					)
 				}
@@ -386,7 +376,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					new VariableDeclarationStatement { Type = new AnyNode(), Variables = { new VariableInitializer(Pattern.AnyString) } }.WithName("variablesOutsideLoop")
 				).ToStatement(),
 				new WhileStatement {
-					Condition = new IdentifierExpressionBackreference("enumeratorVariable").ToExpression().Invoke("MoveNext"),
+					Condition = new InvocationExpression(new MemberReferenceExpression(new IdentifierExpressionBackreference("enumeratorVariable").ToExpression(), "MoveNext")),
 					EmbeddedStatement = new BlockStatement {
 						new Repeat(
 							new VariableDeclarationStatement { 
@@ -397,7 +387,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						new AssignmentExpression {
 							Left = new IdentifierExpression(Pattern.AnyString).WithName("itemVariable"),
 							Operator = AssignmentOperatorType.Assign,
-							Right = new IdentifierExpressionBackreference("enumeratorVariable").ToExpression().Member("Current")
+							Right = new MemberReferenceExpression(new IdentifierExpressionBackreference("enumeratorVariable").ToExpression(), "Current")
 						},
 						new Repeat(new AnyNode("statement")).ToStatement()
 					}
@@ -467,21 +457,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		ExpressionStatement getEnumeratorPattern = new ExpressionStatement(
 			new AssignmentExpression(
 				new NamedNode("left", new IdentifierExpression(Pattern.AnyString)),
-				new AnyNode("collection").ToExpression().Invoke("GetEnumerator")
+				new InvocationExpression(new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator"))
 			));
 		
 		TryCatchStatement nonGenericForeachPattern = new TryCatchStatement {
 			TryBlock = new BlockStatement {
 				new WhileStatement {
-					Condition = new IdentifierExpression(Pattern.AnyString).WithName("enumerator").Invoke("MoveNext"),
+					Condition = new InvocationExpression(new MemberReferenceExpression(new IdentifierExpression(Pattern.AnyString).WithName("enumerator"), "MoveNext")),
 					EmbeddedStatement = new BlockStatement {
 						new AssignmentExpression(
 							new IdentifierExpression(Pattern.AnyString).WithName("itemVar"),
 							new Choice {
-								new Backreference("enumerator").ToExpression().Member("Current"),
+								new MemberReferenceExpression(new Backreference("enumerator").ToExpression(), "Current"),
 								new CastExpression {
 									Type = new AnyNode("castType"),
-									Expression = new Backreference("enumerator").ToExpression().Member("Current")
+									Expression = new MemberReferenceExpression(new Backreference("enumerator").ToExpression(), "Current")
 								}
 							}
 						),
@@ -492,7 +482,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			FinallyBlock = new BlockStatement {
 				new AssignmentExpression(
 					new IdentifierExpression(Pattern.AnyString).WithName("disposable"),
-					new Backreference("enumerator").ToExpression().CastAs(new TypePattern(typeof(IDisposable)))
+					new AsExpression(new Backreference("enumerator").ToExpression(), new TypePattern(typeof(IDisposable)))
 				),
 				new IfElseStatement {
 					Condition = new BinaryOperatorExpression {
@@ -501,7 +491,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						Right = new NullReferenceExpression()
 					},
 					TrueStatement = new BlockStatement {
-						new Backreference("disposable").ToExpression().Invoke("Dispose")
+						new InvocationExpression(new MemberReferenceExpression(new Backreference("disposable").ToExpression(), "Dispose"))
 					}
 				}
 			}};
@@ -709,8 +699,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		static readonly AstNode lockTryCatchPattern = new TryCatchStatement {
 			TryBlock = new BlockStatement {
 				new OptionalNode(new VariableDeclarationStatement()).ToStatement(),
-				new TypePattern(typeof(System.Threading.Monitor)).ToType().Invoke(
-					"Enter", new AnyNode("enter"),
+				new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Monitor)).ToType()), "Enter"),
+					new AnyNode("enter"),
 					new DirectionExpression {
 						FieldDirection = FieldDirection.Ref,
 						Expression = new NamedNode("flag", new IdentifierExpression(Pattern.AnyString))
@@ -721,13 +711,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				new IfElseStatement {
 					Condition = new Backreference("flag"),
 					TrueStatement = new BlockStatement {
-						new TypePattern(typeof(System.Threading.Monitor)).ToType().Invoke("Exit", new AnyNode("exit"))
+						new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Monitor)).ToType()), "Exit"), new AnyNode("exit"))
 					}
 				}
 			}};
 
 		static readonly AstNode oldMonitorCallPattern = new ExpressionStatement(
-			new TypePattern(typeof(System.Threading.Monitor)).ToType().Invoke("Enter", new AnyNode("enter"))
+			new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Monitor)).ToType()), "Enter"), new AnyNode("enter"))
 		);
 
 		static readonly AstNode oldLockTryCatchPattern = new TryCatchStatement
@@ -736,7 +726,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				new Repeat(new AnyNode()).ToStatement()
 			},
 			FinallyBlock = new BlockStatement {
-				new TypePattern(typeof(System.Threading.Monitor)).ToType().Invoke("Exit", new AnyNode("exit"))
+				new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Monitor)).ToType()), "Exit"), new AnyNode("exit"))
 			}
 		};
 
@@ -814,8 +804,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					TrueStatement = new AnyNode("dictCreation")
 				},
 				new IfElseStatement {
-					Condition = new Backreference("cachedDict").ToExpression().Invoke(
-						"TryGetValue",
+					Condition = new InvocationExpression(new MemberReferenceExpression(new Backreference("cachedDict").ToExpression(), "TryGetValue"),
 						new NamedNode("switchVar", new IdentifierExpression(Pattern.AnyString)),
 						new DirectionExpression {
 							FieldDirection = FieldDirection.Out,
@@ -1053,16 +1042,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						new AssignmentExpression {
 							Left = new NamedNode("var3", new IdentifierExpression(Pattern.AnyString)),
 							Operator = AssignmentOperatorType.Assign,
-							Right = new AnyNode("delegateCombine").ToExpression().Invoke(
-								new IdentifierExpressionBackreference("var2"),
+							Right = new CastExpression(new Backreference("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"),
 								new IdentifierExpression("value")
-							).CastTo(new Backreference("type"))
+							))
 						},
 						new AssignmentExpression {
 							Left = new IdentifierExpressionBackreference("var1"),
-							Right = new TypePattern(typeof(System.Threading.Interlocked)).ToType().Invoke(
+							Right = new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked)).ToType()),
 								"CompareExchange",
-								new AstType[] { new Backreference("type") }, // type argument
+								new AstType[] { new Backreference("type") }), // type argument
 								new Expression[] { // arguments
 									new DirectionExpression { FieldDirection = FieldDirection.Ref, Expression = new Backreference("field") },
 									new IdentifierExpressionBackreference("var3"),
@@ -1134,7 +1122,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				new TryCatchStatement {
 					TryBlock = new AnyNode("body"),
 					FinallyBlock = new BlockStatement {
-						new BaseReferenceExpression().Invoke("Finalize")
+						new InvocationExpression(new MemberReferenceExpression(new BaseReferenceExpression(), "Finalize"))
 					}
 				}
 			}

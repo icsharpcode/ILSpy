@@ -177,6 +177,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case VariableKind.PinnedLocal:
 				case VariableKind.Parameter:
 				case VariableKind.Exception:
+				case VariableKind.UsingLocal:
+				case VariableKind.ForeachLocal:
 					return false;
 				default:
 					return true;
