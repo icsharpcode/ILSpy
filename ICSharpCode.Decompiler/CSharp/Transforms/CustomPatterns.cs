@@ -20,6 +20,7 @@ using System;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.Semantics;
 using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
@@ -48,8 +49,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (o == null)
 					return false;
 			}
-			TypeReference tr = o.Annotation<TypeReference>();
-			return tr != null && tr.Namespace == ns && tr.Name == name;
+			var trr = o.GetResolveResult() as TypeResolveResult;
+			return trr != null && trr.Type.Namespace == ns && trr.Type.Name == name;
 		}
 		
 		public override string ToString()
@@ -91,8 +92,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public TypeOfPattern(string groupName)
 		{
-			childNode = new TypePattern(typeof(Type)).ToType().Invoke(
-				"GetTypeFromHandle", new TypeOfExpression(new AnyNode(groupName)).Member("TypeHandle"));
+			childNode = new MemberReferenceExpression(
+				new InvocationExpression(
+					new MemberReferenceExpression(
+						new TypeReferenceExpression { Type = new TypePattern(typeof(Type)).ToType() },
+						"GetTypeFromHandle"),
+					new TypeOfExpression(new AnyNode(groupName))
+				), "TypeHandle");
 		}
 		
 		public override bool DoMatch(INode other, Match match)

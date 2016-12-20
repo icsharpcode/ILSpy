@@ -411,9 +411,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				methodDecl.Body.AddChild(new Comment(
 					"ILSpy generated this explicit interface implementation from .override directive in " + memberDecl.Name),
 				                         Roles.Comment);
-				var forwardingCall = new ThisReferenceExpression().Invoke(
-					memberDecl.Name,
-					methodDecl.TypeParameters.Select(tp => new SimpleType(tp.Name)),
+				var forwardingCall = new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), memberDecl.Name,
+					methodDecl.TypeParameters.Select(tp => new SimpleType(tp.Name))),
 					methodDecl.Parameters.Select(p => ForwardParameter(p))
 				);
 				if (m.ReturnType.IsKnownType(KnownTypeCode.Void)) {
@@ -559,7 +558,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			method.Body = new BlockStatement {
 				new IfElseStatement {
 					Condition = new BinaryOperatorExpression {
-						Left = typeSystemAstBuilder.ConvertType(typeSystem.Compilation.FindType(KnownTypeCode.IntPtr)).Member("Size"),
+						Left = new MemberReferenceExpression(new TypeReferenceExpression(typeSystemAstBuilder.ConvertType(typeSystem.Compilation.FindType(KnownTypeCode.IntPtr))), "Size"),
 						Operator = BinaryOperatorType.Equality,
 						Right = new PrimitiveExpression(4)
 					},

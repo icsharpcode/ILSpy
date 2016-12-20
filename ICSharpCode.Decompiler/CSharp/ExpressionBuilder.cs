@@ -88,14 +88,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var expr = astBuilder.ConvertConstantValue(rr);
 			if (expr is NullReferenceExpression && rr.Type.Kind != TypeKind.Null) {
-				expr = expr.CastTo(ConvertType(rr.Type));
+				expr = new CastExpression(ConvertType(rr.Type), expr);
 			} else {
 				switch (rr.Type.GetDefinition()?.KnownTypeCode) {
 					case KnownTypeCode.SByte:
 					case KnownTypeCode.Byte:
 					case KnownTypeCode.Int16:
 					case KnownTypeCode.UInt16:
-						expr = expr.CastTo(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)));
+						expr = new CastExpression(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)), expr);
 						break;
 				}
 			}
@@ -315,7 +315,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLdTypeToken(LdTypeToken inst, TranslationContext context)
 		{
-			return new TypeOfExpression(ConvertType(inst.Type)).Member("TypeHandle")
+			return new MemberReferenceExpression(new TypeOfExpression(ConvertType(inst.Type)), "TypeHandle")
 				.WithILInstruction(inst)
 				.WithRR(new TypeOfResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle")), inst.Type));
 		}
@@ -993,7 +993,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				simplifiedDelegateCreation.Arguments.Add(replacement);
 				replacement = simplifiedDelegateCreation;
 			} else if (!expectedType.ContainsAnonymousType()) {
-				replacement = replacement.CastTo(ConvertType(expectedType));
+				replacement = new CastExpression(ConvertType(expectedType), replacement);
 			}
 			return replacement
 				.WithILInstruction(function)
@@ -1137,7 +1137,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					string methodName = method.Name;
 					// HACK : convert this.Dispose() to ((IDisposable)this).Dispose(), if Dispose is an explicitly implemented interface method.
 					if (inst.Method.IsExplicitInterfaceImplementation && targetExpr is ThisReferenceExpression) {
-						targetExpr = targetExpr.CastTo(ConvertType(method.ImplementedInterfaceMembers[0].DeclaringType));
+						targetExpr = new CastExpression(ConvertType(method.ImplementedInterfaceMembers[0].DeclaringType), targetExpr);
 						methodName = method.ImplementedInterfaceMembers[0].Name;
 					}
 					var mre = new MemberReferenceExpression(targetExpr, methodName);
@@ -1269,11 +1269,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				arrayExpr = arrayExpr.ConvertTo(compilation.FindType(KnownTypeCode.Array), this);
 			}
 			if (inst.ResultType == StackType.I4) {
-				return arrayExpr.Expression.Member("Length")
+				return new MemberReferenceExpression(arrayExpr.Expression, "Length")
 					.WithILInstruction(inst)
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int32)));
 			} else {
-				return arrayExpr.Expression.Member("LongLength")
+				return new MemberReferenceExpression(arrayExpr.Expression, "LongLength")
 					.WithILInstruction(inst)
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Int64)));
 			}
@@ -1384,10 +1384,10 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitRefAnyType(RefAnyType inst, TranslationContext context)
 		{
-			return new UndocumentedExpression {
+			return new MemberReferenceExpression(new UndocumentedExpression {
 				UndocumentedExpressionType = UndocumentedExpressionType.RefType,
 				Arguments = { Translate(inst.Argument).Expression.Detach() }
-			}.Member("TypeHandle")
+			}, "TypeHandle")
 				.WithILInstruction(inst)
 				.WithRR(new TypeResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle"))));
 		}

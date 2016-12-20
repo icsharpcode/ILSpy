@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		};
 		
-		static readonly AstNode thisCallPattern = new ExpressionStatement(new ThisReferenceExpression().Invoke(".ctor", new Repeat(new AnyNode())));
+		static readonly AstNode thisCallPattern = new ExpressionStatement(new InvocationExpression(new MemberReferenceExpression(new ThisReferenceExpression(), ".ctor"), new Repeat(new AnyNode())));
 		
 		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{

@@ -290,7 +290,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(this.ILInstructions);
 			}
 			if (targetType.Kind == TypeKind.Pointer && 0.Equals(ResolveResult.ConstantValue)) {
-				return new NullReferenceExpression().CastTo(expressionBuilder.ConvertType(targetType))
+				return new CastExpression(expressionBuilder.ConvertType(targetType), new NullReferenceExpression())
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(targetType, null));
 			}

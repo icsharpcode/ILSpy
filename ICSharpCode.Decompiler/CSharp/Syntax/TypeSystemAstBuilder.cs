@@ -557,7 +557,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			TypeCode enumBaseTypeCode = ReflectionHelper.GetTypeCode(enumDefinition.EnumUnderlyingType);
 			foreach (IField field in enumDefinition.Fields) {
 				if (field.IsConst && object.Equals(CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false), val))
-					return ConvertType(type).Member(field.Name);
+					return new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
 			}
 			if (IsFlagsEnum(enumDefinition)) {
 				long enumValue = val;
@@ -585,7 +585,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						continue;	// skip None enum value
 
 					if ((fieldValue & enumValue) == fieldValue) {
-						var fieldExpression = ConvertType(type).Member(field.Name);
+						var fieldExpression = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
 						if (expr == null)
 							expr = fieldExpression;
 						else
@@ -594,7 +594,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 						enumValue &= ~fieldValue;
 					}
 					if ((fieldValue & negatedEnumValue) == fieldValue) {
-						var fieldExpression = ConvertType(type).Member(field.Name);
+						var fieldExpression = new MemberReferenceExpression(new TypeReferenceExpression(ConvertType(type)), field.Name);
 						if (negatedExpr == null)
 							negatedExpr = fieldExpression;
 						else
@@ -612,7 +612,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return new UnaryOperatorExpression(UnaryOperatorType.BitNot, negatedExpr);
 				}
 			}
-			return new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false)).CastTo(ConvertType(type));
+			return new CastExpression(ConvertType(type), new PrimitiveExpression(CSharpPrimitiveCast.Cast(enumBaseTypeCode, val, false)));
 		}
 		
 		#endregion

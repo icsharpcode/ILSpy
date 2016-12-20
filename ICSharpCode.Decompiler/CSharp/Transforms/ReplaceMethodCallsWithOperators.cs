@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								FieldReference field = oldArg.Annotation<FieldReference>();
 								if (field != null) {
 									AstType declaringType = ((TypeOfExpression)mre2.Target).Type.Detach();
-									oldArg.ReplaceWith(declaringType.Member(field.Name).CopyAnnotationsFrom(oldArg));
+									oldArg.ReplaceWith(new MemberReferenceExpression(new TypeReferenceExpression(declaringType), field.Name).CopyAnnotationsFrom(oldArg));
 									invocationExpression.ReplaceWith(mre1.Target);
 									return;
 								}
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (method.Name == "op_Explicit" && arguments.Length == 1) {
 				arguments[0].Remove(); // detach argument
 				invocationExpression.ReplaceWith(
-					arguments[0].CastTo(context.TypeSystemAstBuilder.ConvertType(method.ReturnType))
+					new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.ReturnType), arguments[0])
 						.CopyAnnotationsFrom(invocationExpression)
 				);
 				return;
@@ -314,14 +314,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 		
 		static readonly Expression getMethodOrConstructorFromHandlePattern =
-			new TypePattern(typeof(MethodBase)).ToType().Invoke(
-				"GetMethodFromHandle",
-				new NamedNode("ldtokenNode", new LdTokenPattern("method")).ToExpression().Member("MethodHandle"),
-				new OptionalNode(new TypeOfExpression(new AnyNode("declaringType")).Member("TypeHandle"))
-			).CastTo(new Choice {
-		         	new TypePattern(typeof(MethodInfo)),
-		         	new TypePattern(typeof(ConstructorInfo))
-		         });
+			new CastExpression(new Choice {
+					 new TypePattern(typeof(MethodInfo)),
+					 new TypePattern(typeof(ConstructorInfo))
+				 }, new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(MethodBase)).ToType()), "GetMethodFromHandle"),
+				new NamedNode("ldtokenNode", new MemberReferenceExpression(new LdTokenPattern("method").ToExpression(), "MethodHandle")),
+				new OptionalNode(new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")), "TypeHandle"))
+			));
 		
 		public override void VisitCastExpression(CastExpression castExpression)
 		{
@@ -331,8 +330,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (m.Success) {
 				IMethod method = m.Get<AstNode>("method").Single().GetSymbol() as IMethod;
 				if (m.Has("declaringType") && method != null) {
-					Expression newNode = m.Get<AstType>("declaringType").Single().Detach().Member(method.Name);
-					newNode = newNode.Invoke(method.Parameters.Select(p => new TypeReferenceExpression(context.TypeSystemAstBuilder.ConvertType(p.Type))));
+					Expression newNode = new MemberReferenceExpression(new TypeReferenceExpression(m.Get<AstType>("declaringType").Single().Detach()), method.Name);
+					newNode = new InvocationExpression(newNode, method.Parameters.Select(p => new TypeReferenceExpression(context.TypeSystemAstBuilder.ConvertType(p.Type))));
 					m.Get<AstNode>("method").Single().ReplaceWith(newNode);
 				}
 				castExpression.ReplaceWith(m.Get<AstNode>("ldtokenNode").Single().CopyAnnotationsFrom(castExpression));
