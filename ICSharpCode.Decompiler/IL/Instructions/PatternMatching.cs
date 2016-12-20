@@ -254,9 +254,9 @@ namespace ICSharpCode.Decompiler.IL
 			field = null;
 			return false;
 		}
-		
+
 		public bool MatchStsFld(out IField field, out ILInstruction value)
-        {
+		{
 			if (this is StObj stobj && stobj.Target is LdsFlda ldsflda) {
 				field = ldsflda.Field;
 				value = stobj.Value;
@@ -266,9 +266,9 @@ namespace ICSharpCode.Decompiler.IL
 			value = null;
 			return false;
 		}
-		
+
 		public bool MatchStFld(out ILInstruction target, out IField field, out ILInstruction value)
-        {
+		{
 			if (this is StObj stobj && stobj.Target is LdFlda ldflda) {
 				target = ldflda.Target;
 				field = ldflda.Field;
