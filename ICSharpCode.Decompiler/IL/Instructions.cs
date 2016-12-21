@@ -677,7 +677,7 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>A region where a pinned variable is used (initial representation of future fixed statement).</summary>
-	public sealed partial class PinnedRegion : ILInstruction, IInstructionWithVariableOperand
+	public sealed partial class PinnedRegion : ILInstruction, IStoreInstruction
 	{
 		public PinnedRegion(ILVariable variable, ILInstruction init, ILInstruction body) : base(OpCode.PinnedRegion)
 		{
@@ -693,21 +693,29 @@ namespace ICSharpCode.Decompiler.IL
 			set {
 				Debug.Assert(value != null);
 				if (IsConnected)
-					variable.StoreCount--;
+					variable.RemoveStoreInstruction(this);
 				variable = value;
 				if (IsConnected)
-					variable.StoreCount++;
+					variable.AddStoreInstruction(this);
 			}
 		}
+		
+		public int IndexInStoreInstructionList { get; set; } = -1;
+		
+		int IInstructionWithVariableOperand.IndexInVariableInstructionMapping {
+			get { return ((IStoreInstruction)this).IndexInStoreInstructionList; }
+			set { ((IStoreInstruction)this).IndexInStoreInstructionList = value; }
+		}
+		
 		protected override void Connected()
 		{
 			base.Connected();
-			variable.StoreCount++;
+			variable.AddStoreInstruction(this);
 		}
 		
 		protected override void Disconnected()
 		{
-			variable.StoreCount--;
+			variable.RemoveStoreInstruction(this);
 			base.Disconnected();
 		}
 		
@@ -1300,7 +1308,7 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Catch handler within a try-catch statement.</summary>
-	public sealed partial class TryCatchHandler : ILInstruction, IInstructionWithVariableOperand
+	public sealed partial class TryCatchHandler : ILInstruction, IStoreInstruction
 	{
 		public TryCatchHandler(ILInstruction filter, ILInstruction body, ILVariable variable) : base(OpCode.TryCatchHandler)
 		{
@@ -1379,21 +1387,29 @@ namespace ICSharpCode.Decompiler.IL
 			set {
 				Debug.Assert(value != null);
 				if (IsConnected)
-					variable.StoreCount--;
+					variable.RemoveStoreInstruction(this);
 				variable = value;
 				if (IsConnected)
-					variable.StoreCount++;
+					variable.AddStoreInstruction(this);
 			}
 		}
+		
+		public int IndexInStoreInstructionList { get; set; } = -1;
+		
+		int IInstructionWithVariableOperand.IndexInVariableInstructionMapping {
+			get { return ((IStoreInstruction)this).IndexInStoreInstructionList; }
+			set { ((IStoreInstruction)this).IndexInStoreInstructionList = value; }
+		}
+		
 		protected override void Connected()
 		{
 			base.Connected();
-			variable.StoreCount++;
+			variable.AddStoreInstruction(this);
 		}
 		
 		protected override void Disconnected()
 		{
-			variable.StoreCount--;
+			variable.RemoveStoreInstruction(this);
 			base.Disconnected();
 		}
 		
@@ -1639,7 +1655,7 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Loads the value of a local variable. (ldarg/ldloc)</summary>
-	public sealed partial class LdLoc : SimpleInstruction, IInstructionWithVariableOperand
+	public sealed partial class LdLoc : SimpleInstruction, ILoadInstruction
 	{
 		public LdLoc(ILVariable variable) : base(OpCode.LdLoc)
 		{
@@ -1652,21 +1668,29 @@ namespace ICSharpCode.Decompiler.IL
 			set {
 				Debug.Assert(value != null);
 				if (IsConnected)
-					variable.LoadCount--;
+					variable.RemoveLoadInstruction(this);
 				variable = value;
 				if (IsConnected)
-					variable.LoadCount++;
+					variable.AddLoadInstruction(this);
 			}
 		}
+		
+		public int IndexInLoadInstructionList { get; set; } = -1;
+		
+		int IInstructionWithVariableOperand.IndexInVariableInstructionMapping {
+			get { return ((ILoadInstruction)this).IndexInLoadInstructionList; }
+			set { ((ILoadInstruction)this).IndexInLoadInstructionList = value; }
+		}
+		
 		protected override void Connected()
 		{
 			base.Connected();
-			variable.LoadCount++;
+			variable.AddLoadInstruction(this);
 		}
 		
 		protected override void Disconnected()
 		{
-			variable.LoadCount--;
+			variable.RemoveLoadInstruction(this);
 			base.Disconnected();
 		}
 		
@@ -1713,7 +1737,7 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Loads the address of a local variable. (ldarga/ldloca)</summary>
-	public sealed partial class LdLoca : SimpleInstruction, IInstructionWithVariableOperand
+	public sealed partial class LdLoca : SimpleInstruction, IAddressInstruction
 	{
 		public LdLoca(ILVariable variable) : base(OpCode.LdLoca)
 		{
@@ -1727,21 +1751,29 @@ namespace ICSharpCode.Decompiler.IL
 			set {
 				Debug.Assert(value != null);
 				if (IsConnected)
-					variable.AddressCount--;
+					variable.RemoveAddressInstruction(this);
 				variable = value;
 				if (IsConnected)
-					variable.AddressCount++;
+					variable.AddAddressInstruction(this);
 			}
 		}
+		
+		public int IndexInAddressInstructionList { get; set; } = -1;
+		
+		int IInstructionWithVariableOperand.IndexInVariableInstructionMapping {
+			get { return ((IAddressInstruction)this).IndexInAddressInstructionList; }
+			set { ((IAddressInstruction)this).IndexInAddressInstructionList = value; }
+		}
+		
 		protected override void Connected()
 		{
 			base.Connected();
-			variable.AddressCount++;
+			variable.AddAddressInstruction(this);
 		}
 		
 		protected override void Disconnected()
 		{
-			variable.AddressCount--;
+			variable.RemoveAddressInstruction(this);
 			base.Disconnected();
 		}
 		
@@ -1778,7 +1810,7 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
-	public sealed partial class StLoc : ILInstruction, IInstructionWithVariableOperand
+	public sealed partial class StLoc : ILInstruction, IStoreInstruction
 	{
 		public StLoc(ILVariable variable, ILInstruction value) : base(OpCode.StLoc)
 		{
@@ -1792,21 +1824,29 @@ namespace ICSharpCode.Decompiler.IL
 			set {
 				Debug.Assert(value != null);
 				if (IsConnected)
-					variable.StoreCount--;
+					variable.RemoveStoreInstruction(this);
 				variable = value;
 				if (IsConnected)
-					variable.StoreCount++;
+					variable.AddStoreInstruction(this);
 			}
 		}
+		
+		public int IndexInStoreInstructionList { get; set; } = -1;
+		
+		int IInstructionWithVariableOperand.IndexInVariableInstructionMapping {
+			get { return ((IStoreInstruction)this).IndexInStoreInstructionList; }
+			set { ((IStoreInstruction)this).IndexInStoreInstructionList = value; }
+		}
+		
 		protected override void Connected()
 		{
 			base.Connected();
-			variable.StoreCount++;
+			variable.AddStoreInstruction(this);
 		}
 		
 		protected override void Disconnected()
 		{
-			variable.StoreCount--;
+			variable.RemoveStoreInstruction(this);
 			base.Disconnected();
 		}
 		

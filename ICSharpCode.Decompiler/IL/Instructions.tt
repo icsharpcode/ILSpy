@@ -824,27 +824,35 @@ namespace ICSharpCode.Decompiler.IL
 			opCode.GenerateWriteTo = true;
 			opCode.WriteOperand.Add("output.Write(' ');");
 			opCode.WriteOperand.Add("variable.WriteTo(output);");
-			opCode.Interfaces.Add("IInstructionWithVariableOperand");
+			opCode.Interfaces.Add("I" + accessType + "Instruction");
 			opCode.Members.Add(@"public ILVariable Variable {
 	get { return variable; }
 	set {
 		Debug.Assert(value != null);
 		if (IsConnected)
-			variable.AccessCount--;
+			variable.RemoveAccessInstruction(this);
 		variable = value;
 		if (IsConnected)
-			variable.AccessCount++;
+			variable.AddAccessInstruction(this);
 	}
 }
+
+public int IndexInAccessInstructionList { get; set; } = -1;
+
+int IInstructionWithVariableOperand.IndexInVariableInstructionMapping {
+	get { return ((IAccessInstruction)this).IndexInAccessInstructionList; }
+	set { ((IAccessInstruction)this).IndexInAccessInstructionList = value; }
+}
+
 protected override void Connected()
 {
 	base.Connected();
-	variable.AccessCount++;
+	variable.AddAccessInstruction(this);
 }
 
 protected override void Disconnected()
 {
-	variable.AccessCount--;
+	variable.RemoveAccessInstruction(this);
 	base.Disconnected();
 }
 ".Replace("Access", accessType));

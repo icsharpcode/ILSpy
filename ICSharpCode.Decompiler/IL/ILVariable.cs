@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL
@@ -115,14 +116,24 @@ namespace ICSharpCode.Decompiler.IL
 		/// It may change if an item with a lower index is removed from the collection.
 		/// </remarks>
 		public int IndexInFunction { get; internal set; }
-		
+
 		/// <summary>
 		/// Number of ldloc instructions referencing this variable.
 		/// </summary>
 		/// <remarks>
 		/// This variable is automatically updated when adding/removing ldloc instructions from the ILAst.
 		/// </remarks>
-		public int LoadCount { get; internal set; }
+		public int LoadCount => LoadInstructions.Count;
+
+		readonly List<ILoadInstruction> loadInstructions = new List<ILoadInstruction>();
+
+		/// <summary>
+		/// List of ldloc instructions referencing this variable.
+		/// </summary>
+		/// <remarks>
+		/// This list is automatically updated when adding/removing ldloc instructions from the ILAst.
+		/// </remarks>
+		public IReadOnlyList<ILoadInstruction> LoadInstructions => loadInstructions;
 		
 		/// <summary>
 		/// Number of store instructions referencing this variable.
@@ -138,15 +149,69 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// This variable is automatically updated when adding/removing stores instructions from the ILAst.
 		/// </remarks>
-		public int StoreCount { get; internal set; }
-		
+		public int StoreCount => (hasInitialValue ? 1 : 0) + StoreInstructions.Count;
+
+		readonly List<IStoreInstruction> storeInstructions = new List<IStoreInstruction>();
+
+		/// <summary>
+		/// List of store instructions referencing this variable.
+		/// 
+		/// Stores are:
+		/// <list type="item">
+		/// <item>stloc</item>
+		/// <item>TryCatchHandler (assigning the exception variable)</item>
+		/// <item>PinnedRegion (assigning the pointer variable)</item>
+		/// <item>initial values (<see cref="HasInitialValue"/>)</item>
+		/// </list>
+		/// </summary>
+		/// <remarks>
+		/// This list is automatically updated when adding/removing stores instructions from the ILAst.
+		/// </remarks>
+		public IReadOnlyList<IStoreInstruction> StoreInstructions => storeInstructions;
+
 		/// <summary>
 		/// Number of ldloca instructions referencing this variable.
 		/// </summary>
 		/// <remarks>
 		/// This variable is automatically updated when adding/removing ldloca instructions from the ILAst.
 		/// </remarks>
-		public int AddressCount { get; internal set; }
+		public int AddressCount => AddressInstructions.Count;
+
+		readonly List<LdLoca> addressInstructions = new List<LdLoca>();
+
+		/// <summary>
+		/// List of ldloca instructions referencing this variable.
+		/// </summary>
+		/// <remarks>
+		/// This list is automatically updated when adding/removing ldloca instructions from the ILAst.
+		/// </remarks>
+		public IReadOnlyList<LdLoca> AddressInstructions => addressInstructions;
+
+		internal void AddLoadInstruction(ILoadInstruction inst) => inst.IndexInLoadInstructionList = AddInstruction(loadInstructions, inst);
+		internal void AddStoreInstruction(IStoreInstruction inst) => inst.IndexInStoreInstructionList = AddInstruction(storeInstructions, inst);
+		internal void AddAddressInstruction(LdLoca inst) => inst.IndexInAddressInstructionList = AddInstruction(addressInstructions, inst);
+
+		internal void RemoveLoadInstruction(ILoadInstruction inst) => RemoveInstruction(loadInstructions, inst.IndexInLoadInstructionList);
+		internal void RemoveStoreInstruction(IStoreInstruction inst) => RemoveInstruction(storeInstructions, inst.IndexInStoreInstructionList);
+		internal void RemoveAddressInstruction(LdLoca inst) => RemoveInstruction(addressInstructions, inst.IndexInAddressInstructionList);
+
+		int AddInstruction<T>(List<T> list, T inst) where T : IInstructionWithVariableOperand
+		{
+			list.Add(inst);
+			return list.Count - 1;
+		}
+
+		void RemoveInstruction<T>(List<T> list, int index) where T : IInstructionWithVariableOperand
+	{
+			if (list.Count > 1) {
+				int indexToMove = list.Count - 1;
+				list[index] = list[indexToMove];
+				list[index].IndexInVariableInstructionMapping = index;
+				list.RemoveAt(indexToMove);
+			} else {
+				list.RemoveAt(0);
+			}
+		}
 
 		bool hasInitialValue;
 		
@@ -165,13 +230,7 @@ namespace ICSharpCode.Decompiler.IL
 			set {
 				if (Kind == VariableKind.Parameter && !value)
 					throw new InvalidOperationException("Cannot remove HasInitialValue from parameters");
-				if (hasInitialValue) {
-					StoreCount--;
-				}
 				hasInitialValue = value;
-				if (value) {
-					StoreCount++;
-				}
 			}
 		}
 		
@@ -254,5 +313,21 @@ namespace ICSharpCode.Decompiler.IL
 	public interface IInstructionWithVariableOperand
 	{
 		ILVariable Variable { get; set; }
+		int IndexInVariableInstructionMapping { get; set; }
+	}
+
+	public interface IStoreInstruction : IInstructionWithVariableOperand
+	{
+		int IndexInStoreInstructionList { get; set; }
+	}
+
+	public interface ILoadInstruction : IInstructionWithVariableOperand
+	{
+		int IndexInLoadInstructionList { get; set; }
+	}
+
+	public interface IAddressInstruction : IInstructionWithVariableOperand
+	{
+		int IndexInAddressInstructionList { get; set; }
 	}
 }
