@@ -53,6 +53,7 @@ namespace ICSharpCode.Decompiler.IL
 		ILVariable[] parameterVariables;
 		ILVariable[] localVariables;
 		BitArray isBranchTarget;
+		BlockContainer mainContainer;
 		List<ILInstruction> instructionBuilder;
 
 		// Dictionary that stores stacks for each IL instruction
@@ -78,6 +79,7 @@ namespace ICSharpCode.Decompiler.IL
 					v.HasInitialValue = true;
 				}
 			}
+			mainContainer = new BlockContainer();
 			this.instructionBuilder = new List<ILInstruction>();
 			this.isBranchTarget = new BitArray(body.CodeSize);
 			this.stackByOffset = new Dictionary<int, System.Collections.Immutable.ImmutableStack<ILVariable>>();
@@ -292,8 +294,8 @@ namespace ICSharpCode.Decompiler.IL
 			Init(body);
 			ReadInstructions(cancellationToken);
 			var blockBuilder = new BlockBuilder(body, typeSystem, variableByExceptionHandler);
-			var container = blockBuilder.CreateBlocks(instructionBuilder, isBranchTarget);
-			var function = new ILFunction(body.Method, container);
+			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget);
+			var function = new ILFunction(body.Method, mainContainer);
 			CollectionExtensions.AddRange(function.Variables, parameterVariables);
 			CollectionExtensions.AddRange(function.Variables, localVariables);
 			CollectionExtensions.AddRange(function.Variables, stackVariables);
@@ -920,7 +922,7 @@ namespace ICSharpCode.Decompiler.IL
 		private ILInstruction Return()
 		{
 			if (methodReturnStackType == StackType.Void)
-				return new IL.Return();
+				return new IL.Leave(mainContainer);
 			else
 				return new IL.Return(Pop(methodReturnStackType));
 		}

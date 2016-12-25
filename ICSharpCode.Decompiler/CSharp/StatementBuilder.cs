@@ -148,7 +148,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (inst.TargetContainer == breakTarget)
 				return new BreakStatement();
-			if (inst.TargetContainer.SlotInfo == ILFunction.BodySlot) {
+			if (inst.IsLeavingFunction) {
 				if (currentFunction.IsIterator)
 					return new YieldBreakStatement();
 				else
@@ -174,9 +174,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override Statement VisitReturn(Return inst)
 		{
-			if (inst.ReturnValue == null)
-				return new ReturnStatement();
-			return new ReturnStatement(exprBuilder.Translate(inst.ReturnValue).ConvertTo(currentMethod.ReturnType, exprBuilder));
+			return new ReturnStatement(exprBuilder.Translate(inst.Value).ConvertTo(currentMethod.ReturnType, exprBuilder));
 		}
 
 		protected internal override Statement VisitYieldReturn(YieldReturn inst)
@@ -298,7 +296,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				// and set the continueTarget to correctly convert 'br incrementBlock' instructions to continue; 
 				Block incrementBlock = null;
 				if (container.EntryPoint.IncomingEdgeCount == 2) {
-					incrementBlock = container.Blocks.SingleOrDefault(b => b.Instructions.Last().MatchBranch(container.EntryPoint) && b.Instructions.All(IsSimpleStatement));
+					incrementBlock = container.Blocks.SingleOrDefault(
+						b => b.Instructions.Last().MatchBranch(container.EntryPoint)
+							 && b.Instructions.SkipLast(1).All(IsSimpleStatement));
 					if (incrementBlock != null)
 						continueTarget = incrementBlock;
 				}
@@ -354,18 +354,23 @@ namespace ICSharpCode.Decompiler.CSharp
 				stmt.Remove();
 			return new WhileStatement(conditionExpr, blockStatement);
 		}
-
+		
+		/// <summary>
+		/// Gets whether the statement is 'simple' (usable as for loop iterator):
+		/// Currently we only accept calls and assignments.
+		/// </summary>
 		private static bool IsSimpleStatement(ILInstruction inst)
 		{
-			switch (inst) {
-				case IfInstruction i:
-				case SwitchInstruction s:
-				case TryCatch t:
-				case TryFault fa:
-				case TryFinally fi:
-					return false;
-				default:
+			switch (inst.OpCode) {
+				case OpCode.Call:
+				case OpCode.CallVirt:
+				case OpCode.NewObj:
+				case OpCode.StLoc:
+				case OpCode.StObj:
+				case OpCode.CompoundAssignmentInstruction:
 					return true;
+				default:
+					return false;
 			}
 		}
 
@@ -431,7 +436,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (leave.ChildIndex != block.Instructions.Count - 1 || block.FinalInstruction.OpCode != OpCode.Nop)
 				return false;
 			BlockContainer container = (BlockContainer)block.Parent;
-			return block.ChildIndex == container.Blocks.Count - 1;
+			return block.ChildIndex == container.Blocks.Count - 1
+				&& container == leave.TargetContainer;
 		}
 	}
 }

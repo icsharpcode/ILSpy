@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -78,9 +79,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		Dictionary<IMethod, LongSet> finallyMethodToStateRange;
 
 		/// <summary>
+		/// For each finally method, stores the target state when entering the finally block,
+		/// and the decompiled code of the finally method body.
+		/// </summary>
+		readonly Dictionary<IMethod, (int? outerState, BlockContainer body)> decompiledFinallyMethods = new Dictionary<IMethod, (int? outerState, BlockContainer body)>();
+
+		/*
+		/// <summary>
 		/// List of blocks that change the iterator state on block entry.
 		/// </summary>
 		readonly List<(int state, Block block)> stateChanges = new List<(int state, Block block)>();
+		*/
 
 		#region Run() method
 		public void Run(ILFunction function, ILTransformContext context)
@@ -95,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.currentField = null;
 			this.fieldToParameterMap.Clear();
 			this.finallyMethodToStateRange = null;
-			this.stateChanges.Clear();
+			this.decompiledFinallyMethods.Clear();
 			if (!MatchEnumeratorCreationPattern(function))
 				return;
 			BlockContainer newBody;
@@ -123,7 +132,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// (though some may point to now-deleted blocks)
 			newBody.SortBlocks(deleteUnreachableBlocks: true);
 
-			context.Step("Reconstruct try-finally blocks", function);
+			DecompileFinallyBlocks();
 			ReconstructTryFinallyBlocks(newBody);
 
 			context.Step("Translate fields to local accesses", function);
@@ -440,35 +449,34 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (oldInst.MatchStFld(out var target, out var field, out var value) && target.MatchLdThis()) {
 						if (field.MemberDefinition.Equals(stateField)) {
 							if (value.MatchLdcI4(out int newState)) {
-								// On state change, break up the block (if necessary):
-								if (newBlock.Instructions.Count > 0) {
-									var newBlock2 = new Block();
-									newBlock2.ILRange = new Interval(oldInst.ILRange.Start, oldInst.ILRange.Start);
-									newBody.Blocks.Add(newBlock2);
-									newBlock.Instructions.Add(new Branch(newBlock2));
-									newBlock = newBlock2;
-								}
-#if DEBUG
-								newBlock.Instructions.Add(new Nop { Comment = "iterator._state = " + newState });
-#endif
-								stateChanges.Add((newState, newBlock));
+								// On state change, break up the block:
+								// (this allows us to consider each block individually for try-finally reconstruction)
+								newBlock = SplitBlock(newBlock, oldInst);
+								// We keep the state-changing instruction around (as first instruction of the new block)
+								// for reconstructing the try-finallys. 
 							} else {
 								newBlock.Instructions.Add(new InvalidExpression("Assigned non-constant to iterator.state field") {
 									ILRange = oldInst.ILRange
 								});
+								continue; // don't copy over this instruction, but continue with the basic block
 							}
-							continue; // don't copy over this instruction, but continue with the basic block
 						} else if (field.MemberDefinition.Equals(currentField)) {
 							// create yield return
 							newBlock.Instructions.Add(new YieldReturn(value) { ILRange = oldInst.ILRange });
 							ConvertBranchAfterYieldReturn(newBlock, oldBlock, oldInst.ChildIndex);
 							break; // we're done with this basic block
 						}
+					} else if (oldInst is Call call && call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
+						&& finallyMethodToStateRange.ContainsKey((IMethod)call.Method.MemberDefinition))
+					{
+						// Break up the basic block on a call to a finally method
+						// (this allows us to consider each block individually for try-finally reconstruction)
+						newBlock = SplitBlock(newBlock, oldInst);
 					} else if (oldInst.MatchReturn(out value)) {
 						if (value.MatchLdLoc(out var v)) {
 							ssaDefs.TryGetValue(v, out value);
 						}
-						if (value.MatchLdcI4(0)) {
+						if (value != null && value.MatchLdcI4(0)) {
 							// yield break
 							newBlock.Instructions.Add(new Leave(newBody) { ILRange = oldInst.ILRange });
 						} else {
@@ -508,6 +516,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return;
 				}
 				newBlock.Instructions.Add(MakeGoTo(newState));
+			}
+
+			Block SplitBlock(Block newBlock, ILInstruction oldInst)
+			{
+				if (newBlock.Instructions.Count > 0) {
+					var newBlock2 = new Block();
+					newBlock2.ILRange = new Interval(oldInst.ILRange.Start, oldInst.ILRange.Start);
+					newBody.Blocks.Add(newBlock2);
+					newBlock.Instructions.Add(new Branch(newBlock2));
+					newBlock = newBlock2;
+				}
+				return newBlock;
 			}
 
 			ILInstruction MakeGoTo(int v)
@@ -573,13 +593,146 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 		#endregion
 
+		#region DecompileFinallyBlocks
+		void DecompileFinallyBlocks()
+		{
+			foreach (var method in finallyMethodToStateRange.Keys) {
+				var function = CreateILAst((MethodDefinition)context.TypeSystem.GetCecil(method));
+				var body = (BlockContainer)function.Body;
+				var newState = GetNewState(body.EntryPoint);
+				if (newState != null) {
+					body.EntryPoint.Instructions.RemoveAt(0);
+				}
+				function.ReleaseRef(); // make body reusable outside of function
+				decompiledFinallyMethods.Add(method, (newState, body));
+			}
+		}
+		#endregion
+
 		#region Reconstruct try-finally blocks
 
-		private void ReconstructTryFinallyBlocks(BlockContainer newBody)
+		/// <summary>
+		/// Reconstruct try-finally blocks.
+		/// * The stateChanges (iterator._state = N;) tell us when to open a try-finally block
+		/// * The calls to the finally method tell us when to leave the try block.
+		/// 
+		/// There might be multiple stateChanges for a given try-finally block, e.g.
+		/// both the original entry point, and the target when leaving a nested block.
+		/// In proper C# code, the entry point of the try-finally will dominate all other code
+		/// in the try-block, so we can use dominance to find the proper entry point.
+		/// 
+		/// Precondition: the blocks in newBody are topologically sorted.
+		/// </summary>
+		void ReconstructTryFinallyBlocks(BlockContainer newBody)
 		{
-			// TODO
+			context.Stepper.Step("Reconstuct try-finally blocks");
+			var blockState = new int[newBody.Blocks.Count];
+			blockState[0] = -1;
+			var stateToContainer = new Dictionary<int, BlockContainer>();
+			stateToContainer.Add(-1, newBody);
+			// First, analyse the newBody: for each block, determine the active state number.
+			foreach (var block in newBody.Blocks) {
+				int oldState = blockState[block.ChildIndex];
+				BlockContainer container; // new container for the block
+				if (GetNewState(block) is int newState) {
+					// OK, state change
+					// Remove the state-changing instruction
+					block.Instructions.RemoveAt(0);
+
+					if (!stateToContainer.TryGetValue(newState, out container)) {
+						// First time we see this state.
+						// This means we just found the entry point of a try block.
+						CreateTryBlock(block, newState);
+						// CreateTryBlock() wraps the contents of 'block' with a TryFinally.
+						// We thus need to put the block (which now contains the whole TryFinally)
+						// into the parent container.
+						// Assuming a state transition never enters more than one state at once,
+						// we can use stateToContainer[oldState] as parent.
+						container = stateToContainer[oldState];
+					}
+				} else {
+					// Because newBody is topologically sorted we because we just removed unreachable code,
+					// we can assume that blockState[] was already set for this block.
+					newState = oldState;
+					container = stateToContainer[oldState];
+				}
+				if (container != newBody) {
+					// Move the block into the container.
+					container.Blocks.Add(block);
+					// Keep the stale reference in newBody.Blocks for now, to avoid
+					// changing the ChildIndex of the other blocks while we use it
+					// to index the blockState array.
+				}
+#if DEBUG
+				block.Instructions.Insert(0, new Nop { Comment = "state == " + newState });
+#endif
+				// Propagate newState to successor blocks
+				foreach (var branch in block.Descendants.OfType<Branch>()) {
+					if (branch.TargetBlock.Parent == newBody) {
+						Debug.Assert(blockState[branch.TargetBlock.ChildIndex] == newState || blockState[branch.TargetBlock.ChildIndex] == 0);
+						blockState[branch.TargetBlock.ChildIndex] = newState;
+					}
+				}
+			}
+			newBody.Blocks.RemoveAll(b => b.Parent != newBody);
+
+			void CreateTryBlock(Block block, int state)
+			{
+				var finallyMethod = FindFinallyMethod(state);
+				Debug.Assert(finallyMethod != null);
+				// remove the method so that it doesn't get cause ambiguity when processing nested try-finally blocks
+				finallyMethodToStateRange.Remove(finallyMethod);
+
+				var tryBlock = new Block();
+				tryBlock.ILRange = block.ILRange;
+				tryBlock.Instructions.AddRange(block.Instructions);
+				var tryBlockContainer = new BlockContainer();
+				tryBlockContainer.Blocks.Add(tryBlock);
+				stateToContainer.Add(state, tryBlockContainer);
+
+				ILInstruction finallyBlock;
+				if (decompiledFinallyMethods.TryGetValue(finallyMethod, out var decompiledMethod)) {
+					finallyBlock = decompiledMethod.body;
+				} else {
+					finallyBlock = new InvalidBranch("Missing decompiledFinallyMethod");
+				}
+
+				block.Instructions.Clear();
+				block.Instructions.Add(new TryFinally(tryBlockContainer, finallyBlock));
+			}
+
+			IMethod FindFinallyMethod(int state)
+			{
+				IMethod foundMethod = null;
+				foreach (var (method, stateRange) in finallyMethodToStateRange) {
+					if (stateRange.Contains(state)) {
+						if (foundMethod == null)
+							foundMethod = method;
+						else
+							Debug.Fail("Ambiguous finally method for state " + state);
+					}
+				}
+				return foundMethod;
+			}
 		}
 
+		// Gets the state that is transitioned to at the start of the block
+		int? GetNewState(Block block)
+		{
+			if (block.Instructions[0].MatchStFld(out var target, out var field, out var value)
+				&& target.MatchLdThis()
+				&& field.MemberDefinition.Equals(stateField)
+				&& value.MatchLdcI4(out int newState))
+			{
+				return newState;
+			} else if (block.Instructions[0] is Call call
+				&& call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
+				&& decompiledFinallyMethods.TryGetValue((IMethod)call.Method.MemberDefinition, out var finallyMethod))
+			{
+				return finallyMethod.outerState;
+			}
+			return null;
+		}
 		#endregion
 	}
 }

@@ -100,7 +100,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// Leave instructions (like other exits out of the container)
 						// are ignored for the CFG and dominance,
 						// but is relevant for HasReachableExit().
-						nodeHasDirectExitOutOfContainer.Set(i);
+						// However, a 'leave' that exits the whole function represents a void return,
+						// and is not considered a reachable exit (just like non-void returns).
+						if (!(leave.TargetContainer.Parent is ILFunction)) {
+							nodeHasDirectExitOutOfContainer.Set(i);
+						}
 					}
 				}
 			}

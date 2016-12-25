@@ -107,10 +107,9 @@ namespace ICSharpCode.Decompiler.IL
 		Block currentBlock;
 		Stack<BlockContainer> containerStack = new Stack<BlockContainer>();
 		
-		public BlockContainer CreateBlocks(List<ILInstruction> instructions, BitArray incomingBranches)
+		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitArray incomingBranches)
 		{
 			CreateContainerStructure();
-			var mainContainer = new BlockContainer();
 			mainContainer.ILRange = new Interval(0, body.CodeSize);
 			currentContainer = mainContainer;
 
@@ -155,7 +154,6 @@ namespace ICSharpCode.Decompiler.IL
 			FinalizeCurrentBlock(body.CodeSize, fallthrough: false);
 			containerStack.Clear();
 			ConnectBranches(mainContainer);
-			return mainContainer;
 		}
 
 		private void FinalizeCurrentBlock(int currentILOffset, bool fallthrough)
@@ -170,19 +168,20 @@ namespace ICSharpCode.Decompiler.IL
 
 		void ConnectBranches(ILInstruction inst)
 		{
-			switch (inst.OpCode) {
-				case OpCode.Branch:
-					var branch = (Branch)inst;
+			switch (inst) {
+				case Branch branch:
 					Debug.Assert(branch.TargetBlock == null);
 					branch.TargetBlock = FindBranchTarget(branch.TargetILOffset);
 					break;
-				case OpCode.Leave:
-					var leave = (Leave)inst;
-					Debug.Assert(leave.TargetContainer == null);
-					leave.TargetContainer = containerStack.Peek();
+				case Leave leave:
+					// ret (in void method) = leave(mainContainer)
+					// endfinally = leave(null)
+					if (leave.TargetContainer == null) {
+						// assign the finally/filter container
+						leave.TargetContainer = containerStack.Peek();
+					}
 					break;
-				case OpCode.BlockContainer:
-					var container = (BlockContainer)inst;
+				case BlockContainer container:
 					containerStack.Push(container);
 					foreach (var block in container.Blocks) {
 						ConnectBranches(block);

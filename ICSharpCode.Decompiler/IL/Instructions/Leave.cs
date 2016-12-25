@@ -81,6 +81,17 @@ namespace ICSharpCode.Decompiler.IL
 			get { return targetContainer != null ? targetContainer.EntryPoint.Label : string.Empty; }
 		}
 		
+		/// <summary>
+		/// Gets whether the leave instruction is leaving the whole ILFunction.
+		/// (TargetContainer == main container of the function).
+		/// 
+		/// This is only valid for functions returning void (representing value-less "return;"),
+		/// and for iterators (representing "yield break;").
+		/// </summary>
+		public bool IsLeavingFunction {
+			get { return targetContainer?.Parent is ILFunction; }
+		}
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);

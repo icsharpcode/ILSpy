@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.Util
 {
@@ -14,6 +15,11 @@ namespace ICSharpCode.Decompiler.Util
 		public static HashSet<T> ToHashSet<T>(this IEnumerable<T> input)
 		{
 			return new HashSet<T>(input);
+		}
+
+		public static IEnumerable<T> SkipLast<T>(this IReadOnlyCollection<T> input, int count)
+		{
+			return input.Skip(input.Count - count);
 		}
 		
 		public static T PopOrDefault<T>(this Stack<T> stack)

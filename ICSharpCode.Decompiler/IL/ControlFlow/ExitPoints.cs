@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// Detect suitable exit points for BlockContainers.
 	/// 
 	/// An "exit point" is an instruction that causes control flow
-	/// to leave the container (a branch, leave or value-less return instruction).
+	/// to leave the container (a branch or leave instruction).
 	/// 
 	/// If an "exit point" instruction is placed immediately following a
 	/// block container, each equivalent exit point within the container
@@ -49,10 +49,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	{
 		static readonly Nop ExitNotYetDetermined = new Nop();
 		static readonly Nop NoExit = new Nop();
-		// The special ReturnExit value (indicating fall-through out of a void method)
-		// is considered a compatible exit point with all normal return instructions.
-		static readonly Return ReturnExit = new Return();
-
+		
 		/// <summary>
 		/// Gets the next instruction after <paramref name="inst"/> is executed.
 		/// Returns NoExit when the next instruction cannot be identified;
@@ -70,15 +67,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				|| slot == PinnedRegion.BodySlot)
 			{
 				return GetExit(inst.Parent);
-			} else if (slot == ILFunction.BodySlot) {
-				return ReturnExit;
 			}
 			return NoExit;
 		}
 
 		/// <summary>
 		/// Returns true iff exit1 and exit2 are both exit instructions
-		/// (branch, leave, or return) and both represent the same exit.
+		/// (branch or leave) and both represent the same exit.
 		/// </summary>
 		internal static bool CompatibleExitInstruction(ILInstruction exit1, ILInstruction exit2)
 		{
@@ -93,10 +88,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					Leave leave1 = (Leave)exit1;
 					Leave leave2 = (Leave)exit2;
 					return leave1.TargetContainer == leave2.TargetContainer;
-				case OpCode.Return:
-					Return ret1 = (Return)exit1;
-					Return ret2 = (Return)exit2;
-					return ret1.ReturnValue == null && ret2.ReturnValue == null;
 				default:
 					return false;
 			}
@@ -159,7 +150,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void HandleExit(ILInstruction inst)
 		{
-			if (currentExit == ExitNotYetDetermined && !(inst is Return)) {
+			if (currentExit == ExitNotYetDetermined && !(inst is Leave l && l.IsLeavingFunction)) {
 				currentExit = inst;
 				inst.ReplaceWith(new Leave(currentContainer) { ILRange = inst.ILRange });
 			} else if (CompatibleExitInstruction(inst, currentExit)) {
@@ -177,16 +168,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		protected internal override void VisitLeave(Leave inst)
 		{
 			HandleExit(inst);
-		}
-
-		protected internal override void VisitReturn(Return inst)
-		{
-			if (inst.ReturnValue == null) {
-				// only void returns are considered exit points
-				HandleExit(inst);
-			} else {
-				base.VisitReturn(inst);
-			}
 		}
 	}
 
@@ -212,7 +193,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void Visit(ILInstruction inst)
 		{
 			switch (inst.OpCode) {
-				case OpCode.Return:
 				case OpCode.Leave:
 				case OpCode.Branch:
 					if (DetectExitPoints.CompatibleExitInstruction(inst, exitPoint)) {

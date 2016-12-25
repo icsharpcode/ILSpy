@@ -113,7 +113,7 @@ namespace ICSharpCode.Decompiler.IL
 		LdMemberToken,
 		/// <summary>Allocates space in the stack frame</summary>
 		LocAlloc,
-		/// <summary>Returns from the current method or lambda.</summary>
+		/// <summary>Returns from the current method or lambda. Only used when returning a value; void returns are represented using a 'leave' instruction.</summary>
 		Return,
 		/// <summary>Load address of instance field</summary>
 		LdFlda,
@@ -2443,10 +2443,77 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>Returns from the current method or lambda.</summary>
+	/// <summary>Returns from the current method or lambda. Only used when returning a value; void returns are represented using a 'leave' instruction.</summary>
 	public sealed partial class Return : ILInstruction
 	{
+		public Return(ILInstruction value) : base(OpCode.Return)
+		{
+			this.Value = value;
+		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.value, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (Return)ShallowClone();
+			clone.Value = this.value.Clone();
+			return clone;
+		}
 		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return value.Flags | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
+			}
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			this.value.WriteTo(output);
+			output.Write(')');
+		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitReturn(this);
@@ -2462,7 +2529,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as Return;
-			return o != null && this.hasArgument == o.hasArgument && (!hasArgument || this.ReturnValue.PerformMatch(o.ReturnValue, ref match));
+			return o != null && this.value.PerformMatch(o.value, ref match);
 		}
 	}
 }
@@ -5016,6 +5083,16 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchReturn(out ILInstruction value)
+		{
+			var inst = this as Return;
+			if (inst != null) {
+				value = inst.Value;
+				return true;
+			}
+			value = default(ILInstruction);
 			return false;
 		}
 		public bool MatchLdFlda(out ILInstruction target, out IField field)

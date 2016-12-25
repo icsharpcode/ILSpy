@@ -430,8 +430,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		protected internal override void VisitReturn(Return inst)
 		{
-			if (inst.ReturnValue != null)
-				inst.ReturnValue.AcceptVisitor(this);
+			inst.Value.AcceptVisitor(this);
 			MarkUnreachable();
 		}
 		

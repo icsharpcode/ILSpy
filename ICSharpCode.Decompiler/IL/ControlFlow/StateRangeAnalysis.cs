@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return LongSet.Empty; // return Empty since we executed user code (the finally method)
 				default:
 					// User code - abort analysis
-					if (mode == StateRangeAnalysisMode.IteratorDispose && inst.OpCode != OpCode.Return) {
+					if (mode == StateRangeAnalysisMode.IteratorDispose && !(inst is Leave l && l.IsLeavingFunction)) {
 						throw new SymbolicAnalysisFailedException("Unexpected instruction in Iterator.Dispose()");
 					}
 					return LongSet.Empty;

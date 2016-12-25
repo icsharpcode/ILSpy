@@ -64,12 +64,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Return ret = (Return)block.Instructions[1];
 				ILVariable v;
 				ILInstruction inst;
-				if (ret.ReturnValue != null && ret.ReturnValue.MatchLdLoc(out v)
+				if (ret.Value.MatchLdLoc(out v)
 				    && v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out inst))
 				{
-					inst.AddILRange(ret.ReturnValue.ILRange);
+					inst.AddILRange(ret.Value.ILRange);
 					inst.AddILRange(block.Instructions[0].ILRange);
-					ret.ReturnValue = inst;
+					ret.Value = inst;
 					block.Instructions.RemoveAt(0);
 				}
 			}
@@ -127,8 +127,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			if (targetBlock.Instructions.Count != 1 || targetBlock.FinalInstruction.OpCode != OpCode.Nop)
 				return false;
-			var ret = targetBlock.Instructions[0] as Return;
-			return ret != null && (ret.ReturnValue == null || ret.ReturnValue.OpCode == OpCode.LdLoc);
+			var inst = targetBlock.Instructions[0];
+			return (inst is Return ret && ret.Value is LdLoc
+				|| inst is Leave leave && leave.IsLeavingFunction);
 		}
 		
 		static bool CombineBlockWithNextBlock(BlockContainer container, Block block)

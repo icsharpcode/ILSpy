@@ -111,17 +111,6 @@ namespace ICSharpCode.Decompiler.IL
 			var inst = this as Leave;
 			return inst != null && inst.TargetContainer == targetContainer;
 		}
-
-		public bool MatchReturn(out ILInstruction returnValue)
-		{
-			if (this is Return ret) {
-				returnValue = ret.ReturnValue;
-				return returnValue != null;
-			} else {
-				returnValue = null;
-				return false;
-			}
-		}
 		
 		public bool MatchIfInstruction(out ILInstruction condition, out ILInstruction trueInst, out ILInstruction falseInst)
 		{

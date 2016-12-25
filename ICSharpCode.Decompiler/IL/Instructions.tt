@@ -158,9 +158,8 @@
 			CustomClassName("LdMemberToken"), NoArguments, HasMemberOperand, ResultType("O")),
 		new OpCode("localloc", "Allocates space in the stack frame",
 			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
-		new OpCode("ret", "Returns from the current method or lambda.",
-			CustomClassName("Return"), CustomConstructor, CustomComputeFlags, MayBranch, UnconditionalBranch,
-			MatchCondition("this.hasArgument == o.hasArgument && (!hasArgument || this.ReturnValue.PerformMatch(o.ReturnValue, ref match))")),
+		new OpCode("ret", "Returns from the current method or lambda. Only used when returning a value; void returns are represented using a 'leave' instruction.",
+			CustomClassName("Return"), CustomArguments("value"), MayBranch, UnconditionalBranch),
 		
 		new OpCode("ldflda", "Load address of instance field",
 			CustomClassName("LdFlda"), CustomArguments("target"), MayThrowIfNotDelayed, HasFieldOperand, ResultType("Ref")),

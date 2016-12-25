@@ -190,5 +190,156 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("outer finally");
 			}
 		}
+
+		public static IEnumerable<int> YieldBreakInCatch()
+		{
+			yield return 0;
+			try {
+				Console.WriteLine("In Try");
+			} catch {
+				// yield return is not allowed in catch, but yield break is
+				yield break;
+			}
+			yield return 1;
+		}
+
+		public static IEnumerable<int> YieldBreakInCatchInTryFinally()
+		{
+			try {
+				yield return 0;
+				try {
+					Console.WriteLine("In Try");
+				} catch {
+					// yield return is not allowed in catch, but yield break is
+					yield break;
+				}
+			} finally {
+				Console.WriteLine("Finally");
+			}
+		}
+
+		public static IEnumerable<int> YieldBreakInTryCatchInTryFinally()
+		{
+			try {
+				yield return 0;
+				try {
+					Console.WriteLine("In Try");
+					yield break;
+				} catch {
+					Console.WriteLine("Catch");
+				}
+			} finally {
+				Console.WriteLine("Finally");
+			}
+		}
+
+		public static IEnumerable<int> YieldBreakInTryFinallyInTryFinally()
+		{
+			try {
+				yield return 0;
+				try {
+					Console.WriteLine("In Try");
+					yield break;
+				} finally {
+					Console.WriteLine("Inner Finally");
+				}
+			} finally {
+				Console.WriteLine("Finally");
+			}
+		}
+
+		public static IEnumerable<int> UnconditionalThrowInTryFinally()
+		{
+			// Here, MoveNext() doesn't call the finally methods at all
+			// (only indirectly via Dispose())
+			try {
+				yield return 0;
+				throw new NotImplementedException();
+			} finally {
+				Console.WriteLine("Finally");
+			}
+		}
+
+		public static IEnumerable<int> NestedTryFinallyStartingOnSamePosition()
+		{
+			// The first user IL instruction is already in 2 nested try blocks.
+			try {
+				try {
+					yield return 0;
+				} finally {
+					Console.WriteLine("Inner Finally");
+				}
+			} finally {
+				Console.WriteLine("Outer Finally");
+			}
+		}
+
+
+		public static IEnumerable<int> TryFinallyWithTwoExitPoints(bool b)
+		{
+			// The first user IL instruction is already in 2 nested try blocks.
+			try {
+				if (b) {
+					yield return 1;
+					goto exit1;
+				} else {
+					yield return 2;
+					goto exit2;
+				}
+			} finally {
+				Console.WriteLine("Finally");
+			}
+			exit1:
+			Console.WriteLine("Exit1");
+			yield break;
+			exit2:
+			Console.WriteLine("Exit2");
+		}
+
+		public static IEnumerable<int> TryFinallyWithTwoExitPointsInNestedTry(bool b)
+		{
+			// The first user IL instruction is already in 2 nested try blocks.
+			try {
+				yield return 1;
+				try {
+					if (b)
+						goto exit1;
+					else
+						goto exit2;
+				} catch {
+					Console.WriteLine("Catch");
+				}
+			} finally {
+				Console.WriteLine("Finally");
+			}
+			exit1:
+			Console.WriteLine("Exit1");
+			yield break;
+			exit2:
+			Console.WriteLine("Exit2");
+		}
+
+		public static IEnumerable<int> TryFinallyWithTwoExitPointsInNestedCatch(bool b)
+		{
+			// The first user IL instruction is already in 2 nested try blocks.
+			try {
+				yield return 1;
+				try {
+					Console.WriteLine("Nested Try");
+				} catch {
+					if (b)
+						goto exit1;
+					else
+						goto exit2;
+				}
+			} finally {
+				Console.WriteLine("Finally");
+			}
+			exit1:
+			Console.WriteLine("Exit1");
+			yield break;
+			exit2:
+			Console.WriteLine("Exit2");
+		}
 	}
 }
