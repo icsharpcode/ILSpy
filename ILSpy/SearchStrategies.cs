@@ -12,6 +12,7 @@ namespace ICSharpCode.ILSpy
 	{
 		protected string[] searchTerm;
 		protected Regex regex;
+		protected bool fullNameSearch;
 
 		protected AbstractSearchStrategy(params string[] terms)
 		{
@@ -19,52 +20,18 @@ namespace ICSharpCode.ILSpy
 				var search = terms[0];
 				if (search.StartsWith("/", StringComparison.Ordinal) && search.Length > 4) {
 					var regexString = search.Substring(1, search.Length - 1);
+					fullNameSearch = search.Contains("\\.");
 					if (regexString.EndsWith("/", StringComparison.Ordinal))
 						regexString = regexString.Substring(0, regexString.Length - 1);
 					regex = SafeNewRegex(regexString);
+				} else {
+					fullNameSearch = search.Contains(".");
 				}
 
 				terms[0] = search;
 			}
 
 			searchTerm = terms;
-		}
-
-		protected bool IsMatch(string text)
-		{
-			if (regex != null)
-				return regex.IsMatch(text);
-
-			for (int i = 0; i < searchTerm.Length; ++i) {
-				// How to handle overlapping matches?
-				var term = searchTerm[i];
-				if (string.IsNullOrEmpty(term)) continue;
-				switch (term[0])
-				{
-					case '+': // must contain
-						term = term.Substring(1);
-						goto default;
-					case '-': // should not contain
-						if (term.Length > 1 && text.IndexOf(term.Substring(1), StringComparison.OrdinalIgnoreCase) >= 0)
-							return false;
-						break;
-					case '=': // exact match
-						{
-							var equalCompareLength = text.IndexOf('`');
-							if (equalCompareLength == -1)
-								equalCompareLength = text.Length;
-
-							if (term.Length > 1 && String.Compare(term, 1, text, 0, Math.Max(term.Length, equalCompareLength), StringComparison.OrdinalIgnoreCase) != 0)
-								return false;
-						}
-						break;
-					default:
-						if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
-							return false;
-						break;
-				}
-			}
-			return true;
 		}
 
 		protected virtual bool IsMatch(FieldDefinition field)
@@ -89,9 +56,40 @@ namespace ICSharpCode.ILSpy
 		
 		protected virtual bool MatchName(MemberReference m)
 		{
-			if (m.DeclaringType == null)
-				return IsMatch(m.Name);
-			return IsMatch(m.Name) || IsMatch(GetLanguageSpecificFullName(m));
+			if (regex != null) {
+				return regex.IsMatch(fullNameSearch ? GetLanguageSpecificFullName(m) : m.Name);
+			}
+
+			for (int i = 0; i < searchTerm.Length; ++i) {
+				// How to handle overlapping matches?
+				var term = searchTerm[i];
+				if (string.IsNullOrEmpty(term)) continue;
+				string text = term.Contains(".") ? GetLanguageSpecificFullName(m) : m.Name;
+				switch (term[0]) {
+					case '+': // must contain
+						term = term.Substring(1);
+						goto default;
+					case '-': // should not contain
+						if (term.Length > 1 && text.IndexOf(term.Substring(1), StringComparison.OrdinalIgnoreCase) >= 0)
+							return false;
+						break;
+					case '=': // exact match
+						{
+							var equalCompareLength = text.IndexOf('`');
+							if (equalCompareLength == -1)
+								equalCompareLength = text.Length;
+
+							if (term.Length > 1 && String.Compare(term, 1, text, 0, Math.Max(term.Length, equalCompareLength), StringComparison.OrdinalIgnoreCase) != 0)
+								return false;
+						}
+						break;
+					default:
+						if (text.IndexOf(term, StringComparison.OrdinalIgnoreCase) < 0)
+							return false;
+						break;
+				}
+			}
+			return true;
 		}
 
 		string GetLanguageSpecificFullName(MemberReference m, string nestedTypeSeparator = ".", string memberSeparator = ".")
