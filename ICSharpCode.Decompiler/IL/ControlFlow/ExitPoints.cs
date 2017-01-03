@@ -49,7 +49,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	{
 		static readonly Nop ExitNotYetDetermined = new Nop();
 		static readonly Nop NoExit = new Nop();
-		
+
+		bool canIntroduceExitForReturn;
+
+		public DetectExitPoints(bool canIntroduceExitForReturn)
+		{
+			this.canIntroduceExitForReturn = canIntroduceExitForReturn;
+		}
+
 		/// <summary>
 		/// Gets the next instruction after <paramref name="inst"/> is executed.
 		/// Returns NoExit when the next instruction cannot be identified;
@@ -150,11 +157,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void HandleExit(ILInstruction inst)
 		{
-			if (currentExit == ExitNotYetDetermined && !(inst is Leave l && l.IsLeavingFunction)) {
+			if (currentExit == ExitNotYetDetermined && CanIntroduceAsExit(inst)) {
 				currentExit = inst;
 				inst.ReplaceWith(new Leave(currentContainer) { ILRange = inst.ILRange });
 			} else if (CompatibleExitInstruction(inst, currentExit)) {
 				inst.ReplaceWith(new Leave(currentContainer) { ILRange = inst.ILRange });
+			}
+		}
+
+		private bool CanIntroduceAsExit(ILInstruction inst)
+		{
+			if (inst is Leave l && l.IsLeavingFunction) {
+				return canIntroduceExitForReturn;
+			} else {
+				return true;
 			}
 		}
 

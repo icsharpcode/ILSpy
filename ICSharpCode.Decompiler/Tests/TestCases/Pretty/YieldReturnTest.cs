@@ -21,7 +21,7 @@ using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public class YieldReturn
+	public class YieldReturnTest
 	{
 		int fieldOnThis;
 
@@ -213,6 +213,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					// yield return is not allowed in catch, but yield break is
 					yield break;
 				}
+				yield return 1;
 			} finally {
 				Console.WriteLine("Finally");
 			}
@@ -228,21 +229,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				} catch {
 					Console.WriteLine("Catch");
 				}
+				yield return 1;
 			} finally {
 				Console.WriteLine("Finally");
 			}
 		}
 
-		public static IEnumerable<int> YieldBreakInTryFinallyInTryFinally()
+		public static IEnumerable<int> YieldBreakInTryFinallyInTryFinally(bool b)
 		{
 			try {
 				yield return 0;
 				try {
 					Console.WriteLine("In Try");
-					yield break;
+					if (b)
+						yield break;
 				} finally {
 					Console.WriteLine("Inner Finally");
 				}
+				yield return 1;
 			} finally {
 				Console.WriteLine("Finally");
 			}

@@ -84,12 +84,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		readonly Dictionary<IMethod, (int? outerState, BlockContainer body)> decompiledFinallyMethods = new Dictionary<IMethod, (int? outerState, BlockContainer body)>();
 
-		/*
 		/// <summary>
-		/// List of blocks that change the iterator state on block entry.
+		/// Temporary stores for 'yield break'.
 		/// </summary>
-		readonly List<(int state, Block block)> stateChanges = new List<(int state, Block block)>();
-		*/
+		readonly List<StLoc> returnStores = new List<StLoc>();
 
 		#region Run() method
 		public void Run(ILFunction function, ILTransformContext context)
@@ -105,6 +103,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.fieldToParameterMap.Clear();
 			this.finallyMethodToStateRange = null;
 			this.decompiledFinallyMethods.Clear();
+			this.returnStores.Clear();
 			if (!MatchEnumeratorCreationPattern(function))
 				return;
 			BlockContainer newBody;
@@ -137,6 +136,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			context.Step("Translate fields to local accesses", function);
 			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
+
+			if (returnStores.Count > 0) {
+				context.Step("Remove temporaries", function);
+				foreach (var store in returnStores) {
+					if (store.Variable.LoadCount == 0 && store.Variable.AddressCount == 0 && store.Parent is Block block) {
+						block.Instructions.Remove(store);
+					}
+				}
+			}
 
 			// Re-run control flow simplification over the newly constructed set of gotos,
 			// and inlining because TranslateFieldsToLocalAccess() might have opened up new inlining opportunities.
@@ -440,7 +448,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				newBody.Blocks.Add(new Block { ILRange = oldBody.Blocks[blockIndex].ILRange });
 			}
 			// convert contents of blocks
-			var ssaDefs = new Dictionary<ILVariable, ILInstruction>();
 			
 			for (int i = 0; i < oldBody.Blocks.Count; i++) {
 				var oldBlock = oldBody.Blocks[i];
@@ -472,23 +479,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// Break up the basic block on a call to a finally method
 						// (this allows us to consider each block individually for try-finally reconstruction)
 						newBlock = SplitBlock(newBlock, oldInst);
-					} else if (oldInst.MatchReturn(out value)) {
-						if (value.MatchLdLoc(out var v)) {
-							ssaDefs.TryGetValue(v, out value);
-						}
-						if (value != null && value.MatchLdcI4(0)) {
-							// yield break
-							newBlock.Instructions.Add(new Leave(newBody) { ILRange = oldInst.ILRange });
-						} else {
-							newBlock.Instructions.Add(new InvalidBranch("Unexpected return in MoveNext()"));
-						}
-						break; // we're done with this basic block
-					} else if (oldInst.MatchStLoc(out var v, out value) && v.IsSingleDefinition) {
-						ssaDefs.Add(v, value);
 					}
 					// copy over the instruction to the new block
-					UpdateBranchTargets(oldInst);
 					newBlock.Instructions.Add(oldInst);
+					UpdateBranchTargets(oldInst);
 				}
 			}
 
@@ -554,6 +548,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					case Leave leave:
 						if (leave.TargetContainer == oldBody) {
 							leave.TargetContainer = newBody;
+						}
+						break;
+					case Return ret:
+						ILInstruction value = ret.Value;
+						if (value.MatchLdLoc(out var v) && v.IsSingleDefinition
+							&& v.StoreInstructions.SingleOrDefault() is StLoc stloc)
+						{
+							returnStores.Add(stloc);
+							value = stloc.Value;
+						}
+						if (value.MatchLdcI4(0)) {
+							// yield break
+							ret.ReplaceWith(new Leave(newBody) { ILRange = ret.ILRange });
+						} else {
+							ret.ReplaceWith(new InvalidBranch("Unexpected return in MoveNext()") { ILRange = ret.ILRange });
 						}
 						break;
 				}

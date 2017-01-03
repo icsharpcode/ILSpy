@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new YieldReturnDecompiler(), // must run after inlining but before loop detection
-				new DetectExitPoints(),
+				new DetectExitPoints(canIntroduceExitForReturn: false),
 				new BlockILTransform {
 					PostOrderTransforms = {
 						new ExpressionTransforms() // for RemoveDeadVariableInit
@@ -109,6 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						)
 					}
 				},
+				//new DetectExitPoints(canIntroduceExitForReturn: true),
 				new DelegateConstruction(),
 			};
 		}

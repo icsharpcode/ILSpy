@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test, Ignore("Not implemented")]
-		public void YieldReturn([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		public void YieldReturnTest([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
 		}

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using ICSharpCode.Decompiler.TypeSystem;
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -125,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int LoadCount => LoadInstructions.Count;
 
-		readonly List<ILoadInstruction> loadInstructions = new List<ILoadInstruction>();
+		readonly List<LdLoc> loadInstructions = new List<LdLoc>();
 
 		/// <summary>
 		/// List of ldloc instructions referencing this variable.
@@ -133,10 +134,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// This list is automatically updated when adding/removing ldloc instructions from the ILAst.
 		/// </remarks>
-		public IReadOnlyList<ILoadInstruction> LoadInstructions => loadInstructions;
+		public IReadOnlyList<LdLoc> LoadInstructions => loadInstructions;
 		
 		/// <summary>
-		/// Number of store instructions referencing this variable.
+		/// Number of store instructions referencing this variable,
+		/// plus 1 if HasInitialValue.
 		/// 
 		/// Stores are:
 		/// <list type="item">
@@ -161,7 +163,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// <item>stloc</item>
 		/// <item>TryCatchHandler (assigning the exception variable)</item>
 		/// <item>PinnedRegion (assigning the pointer variable)</item>
-		/// <item>initial values (<see cref="HasInitialValue"/>)</item>
+		/// <item>initial values (<see cref="HasInitialValue"/>) -- however, there is no instruction for
+		///       the initial value, so it is not contained in the store list.</item>
 		/// </list>
 		/// </summary>
 		/// <remarks>
@@ -187,30 +190,27 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public IReadOnlyList<LdLoca> AddressInstructions => addressInstructions;
 
-		internal void AddLoadInstruction(ILoadInstruction inst) => inst.IndexInLoadInstructionList = AddInstruction(loadInstructions, inst);
+		internal void AddLoadInstruction(LdLoc inst) => inst.IndexInLoadInstructionList = AddInstruction(loadInstructions, inst);
 		internal void AddStoreInstruction(IStoreInstruction inst) => inst.IndexInStoreInstructionList = AddInstruction(storeInstructions, inst);
 		internal void AddAddressInstruction(LdLoca inst) => inst.IndexInAddressInstructionList = AddInstruction(addressInstructions, inst);
 
-		internal void RemoveLoadInstruction(ILoadInstruction inst) => RemoveInstruction(loadInstructions, inst.IndexInLoadInstructionList);
-		internal void RemoveStoreInstruction(IStoreInstruction inst) => RemoveInstruction(storeInstructions, inst.IndexInStoreInstructionList);
-		internal void RemoveAddressInstruction(LdLoca inst) => RemoveInstruction(addressInstructions, inst.IndexInAddressInstructionList);
+		internal void RemoveLoadInstruction(LdLoc inst) => RemoveInstruction(loadInstructions, inst.IndexInLoadInstructionList, inst);
+		internal void RemoveStoreInstruction(IStoreInstruction inst) => RemoveInstruction(storeInstructions, inst.IndexInStoreInstructionList, inst);
+		internal void RemoveAddressInstruction(LdLoca inst) => RemoveInstruction(addressInstructions, inst.IndexInAddressInstructionList, inst);
 
-		int AddInstruction<T>(List<T> list, T inst) where T : IInstructionWithVariableOperand
+		int AddInstruction<T>(List<T> list, T inst) where T : class, IInstructionWithVariableOperand
 		{
 			list.Add(inst);
 			return list.Count - 1;
 		}
 
-		void RemoveInstruction<T>(List<T> list, int index) where T : IInstructionWithVariableOperand
-	{
-			if (list.Count > 1) {
-				int indexToMove = list.Count - 1;
-				list[index] = list[indexToMove];
-				list[index].IndexInVariableInstructionMapping = index;
-				list.RemoveAt(indexToMove);
-			} else {
-				list.RemoveAt(0);
-			}
+		void RemoveInstruction<T>(List<T> list, int index, T inst) where T : class, IInstructionWithVariableOperand
+		{
+			Debug.Assert(list[index] == inst);
+			int indexToMove = list.Count - 1;
+			list[index] = list[indexToMove];
+			list[index].IndexInVariableInstructionMapping = index;
+			list.RemoveAt(indexToMove);
 		}
 
 		bool hasInitialValue;
@@ -321,12 +321,12 @@ namespace ICSharpCode.Decompiler.IL
 		int IndexInStoreInstructionList { get; set; }
 	}
 
-	public interface ILoadInstruction : IInstructionWithVariableOperand
+	interface ILoadInstruction : IInstructionWithVariableOperand
 	{
 		int IndexInLoadInstructionList { get; set; }
 	}
 
-	public interface IAddressInstruction : IInstructionWithVariableOperand
+	interface IAddressInstruction : IInstructionWithVariableOperand
 	{
 		int IndexInAddressInstructionList { get; set; }
 	}
