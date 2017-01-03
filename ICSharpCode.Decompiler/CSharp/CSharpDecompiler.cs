@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						)
 					}
 				},
-				//new DetectExitPoints(canIntroduceExitForReturn: true),
+				new DetectExitPoints(canIntroduceExitForReturn: true),
 				new DelegateConstruction(),
 			};
 		}

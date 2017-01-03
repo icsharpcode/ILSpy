@@ -167,6 +167,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		private bool CanIntroduceAsExit(ILInstruction inst)
 		{
+			if (currentContainer.LeaveCount > 0) {
+				// if we're re-running on a block container that already has an exit,
+				// we can't introduce any additional exits
+				return false;
+			}
 			if (inst is Leave l && l.IsLeavingFunction) {
 				return canIntroduceExitForReturn;
 			} else {
