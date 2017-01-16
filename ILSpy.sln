@@ -1,8 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 2012
-# SharpDevelop 5.1
-VisualStudioVersion = 14.0.24720.0
+# Visual Studio 15
+VisualStudioVersion = 15.0.26020.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{F45DB999-7E72-4000-B5AD-3A7B485A0896}"
 	ProjectSection(SolutionItems) = preProject
@@ -43,6 +42,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.NRefactory.VB", "NRefactory.VB\ICSharpCode.NRefactory.VB\ICSharpCode.NRefactory.VB.csproj", "{7B82B671-419F-45F4-B778-D9286F996EFA}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ICSharpCode.NRefactory.VB.Tests", "NRefactory.VB\ICSharpCode.NRefactory.VB.Tests\ICSharpCode.NRefactory.VB.Tests.csproj", "{870115DD-960A-4406-A6B9-600BCDC36A03}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DynamicProxyGenAssembly2", "DynamicProxyGenAssembly2\DynamicProxyGenAssembly2.csproj", "{24DA0EBD-1EBE-40D4-B17B-0ED84D059D47}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -170,6 +171,14 @@ Global
 		{870115DD-960A-4406-A6B9-600BCDC36A03}.Release|Any CPU.Build.0 = Release|Any CPU
 		{870115DD-960A-4406-A6B9-600BCDC36A03}.Release|x86.ActiveCfg = Release|x86
 		{870115DD-960A-4406-A6B9-600BCDC36A03}.Release|x86.Build.0 = Release|x86
+		{24DA0EBD-1EBE-40D4-B17B-0ED84D059D47}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24DA0EBD-1EBE-40D4-B17B-0ED84D059D47}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24DA0EBD-1EBE-40D4-B17B-0ED84D059D47}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{24DA0EBD-1EBE-40D4-B17B-0ED84D059D47}.Debug|x86.Build.0 = Debug|Any CPU
+		{24DA0EBD-1EBE-40D4-B17B-0ED84D059D47}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24DA0EBD-1EBE-40D4-B17B-0ED84D059D47}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24DA0EBD-1EBE-40D4-B17B-0ED84D059D47}.Release|x86.ActiveCfg = Release|Any CPU
+		{24DA0EBD-1EBE-40D4-B17B-0ED84D059D47}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
