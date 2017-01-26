@@ -7,6 +7,9 @@
     <License>license.txt</License>
     <Icon>ILSpy-Large.ico</Icon>
   </Metadata>
+  <Installation>
+    <InstallationTarget Version="[14.0,16.0)" Id="Microsoft.VisualStudio.Community" />
+  </Installation>
   <Assets>
     <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="DynamicProxyGenAssembly2" Path="|DynamicProxyGenAssembly2|" />
     <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />

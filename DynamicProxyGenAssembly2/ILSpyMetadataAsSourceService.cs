@@ -33,22 +33,29 @@ namespace DynamicProxyGenAssembly2
 			var assembly = symbol.ContainingAssembly;
 			var assemblies = document.Project.MetadataReferences.OfType<PortableExecutableReference>().Select(p => p.FilePath)
 				.ToArray();
-			var moduleDef = LoadAssembly(assemblies.First(p => Path.GetFileNameWithoutExtension(p) == assembly.Name));
+			var moduleDef = LoadAssembly(assemblies.First(p => Path.GetFileNameWithoutExtension(p) == assembly.Name), assemblies);
 			var output = new PlainTextOutput();
-			if (symbol.Kind == SymbolKind.NamedType)
+
+			
+			if (symbol is ITypeSymbol typeSymbol || (typeSymbol = symbol.ContainingType) != null)
 			{
-				var typeRef = moduleDef.GetType(symbol.ContainingNamespace.ToDisplayString(), symbol.MetadataName);
+				var typeRef = moduleDef.GetType(typeSymbol.ContainingNamespace.ToDisplayString(), typeSymbol.MetadataName);
 				new CSharpLanguage().DecompileType(typeRef.Resolve(), output, new DecompilationOptions());
 			}
-
 
 			return document.WithText(SourceText.From(output.ToString()));
 		}
 
-		private static ModuleDefinition LoadAssembly(string fileName)
+		private static ModuleDefinition LoadAssembly(string fileName, string[] allAssemblies)
 		{
 			ReaderParameters p = new ReaderParameters();
-			//p.AssemblyResolver = new MyAssemblyResolver();
+			var loader = new DefaultAssemblyResolver();
+			foreach (var item in allAssemblies.Select(Path.GetDirectoryName).Distinct())
+			{
+				loader.AddSearchDirectory(item);
+			}
+			p.AssemblyResolver = loader;
+			//p.AssemblyResolver = new MyAssemblyResolver(allAssemblies);
 
 			var module = ModuleDefinition.ReadModule(fileName, p);
 
@@ -72,28 +79,35 @@ namespace DynamicProxyGenAssembly2
 			return module;
 		}
 
-		class MyAssemblyResolver : IAssemblyResolver
-		{
-			public AssemblyDefinition Resolve(string fullName)
-			{
-				throw new NotImplementedException();
-			}
+		//class MyAssemblyResolver : IAssemblyResolver
+		//{
+		//	private string[] allAssemblies;
 
-			public AssemblyDefinition Resolve(AssemblyNameReference name)
-			{
-				throw new NotImplementedException();
-			}
+		//	public MyAssemblyResolver(string[] allAssemblies)
+		//	{
+		//		this.allAssemblies = allAssemblies;
+		//	}
 
-			public AssemblyDefinition Resolve(string fullName, ReaderParameters parameters)
-			{
-				throw new NotImplementedException();
-			}
+		//	public AssemblyDefinition Resolve(string fullName)
+		//	{
+		//		throw new NotImplementedException();
+		//	}
 
-			public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
-			{
-				throw new NotImplementedException();
-			}
-		}
+		//	public AssemblyDefinition Resolve(AssemblyNameReference name)
+		//	{
+		//		return null;
+		//	}
+
+		//	public AssemblyDefinition Resolve(string fullName, ReaderParameters parameters)
+		//	{
+		//		throw new NotImplementedException();
+		//	}
+
+		//	public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
+		//	{
+		//		throw new NotImplementedException();
+		//	}
+		//}
 
 		private static void LoadSymbols(ModuleDefinition module, string fileName)
 		{
