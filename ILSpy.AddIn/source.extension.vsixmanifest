@@ -1,36 +1,20 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Vsix Version="1.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2010">
-  <Identifier Id="a9120dbe-164a-4891-842f-fb7829273838">
-    <Name>ILSpy</Name>
-    <Author>IC#Code</Author>
-    <Version>1.5</Version>
-    <Description xml:space="preserve">Integrates the ILSpy decompiler into Visual Studio.</Description>
-    <Icon>ILSpy-Large.ico</Icon>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+  <Metadata>
+    <Identity Id="a9120dbe-164a-4891-842f-fb7829273838" Publisher="IC#Code" Version="1.6" Language="en-US" />
+    <DisplayName>ILSpy</DisplayName>
+    <Description xml:space="preserve" >Integrates the ILSpy decompiler into Visual Studio.</Description>
     <License>license.txt</License>
-    <!--TODO: <PreviewImage>~200px image</PreviewImage>-->
-    <MoreInfoUrl>http://ilspy.net</MoreInfoUrl>
-    <Locale>1033</Locale>
-    <SupportedFrameworkRuntimeEdition MinVersion="4.0" MaxVersion="6.0"/>
-    <SupportedProducts>
-      <VisualStudio Version="10.0">
-        <Edition>Pro</Edition>
-      </VisualStudio>
-      <VisualStudio Version="11.0">
-        <Edition>Pro</Edition>
-      </VisualStudio>
-      <VisualStudio Version="12.0">
-        <Edition>Pro</Edition>
-      </VisualStudio>
-      <VisualStudio Version="14.0">
-        <Edition>Pro</Edition>
-      </VisualStudio>
-      <VisualStudio Version="15.0">
-        <Edition>Pro</Edition>
-        <Edition>Community</Edition>
-      </VisualStudio>
-    </SupportedProducts>
-  </Identifier>
-  <Content>
-    <VsPackage>|%CurrentProject%;PkgdefProjectOutputGroup|</VsPackage>
-  </Content>
-</Vsix>
+    <Icon>ILSpy-Large.ico</Icon>
+  </Metadata>
+  <Installation>
+    <InstallationTarget Version="[14.0,16.0)" Id="Microsoft.VisualStudio.Community" />
+  </Installation>
+  <Assets>
+    <Asset Type="Microsoft.VisualStudio.MefComponent" d:Source="Project" d:ProjectName="DynamicProxyGenAssembly2" Path="|DynamicProxyGenAssembly2|" />
+    <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+  </Assets>
+  <Prerequisites>
+    <Prerequisite Id="Microsoft.VisualStudio.Component.Roslyn.Compiler" Version="[15.0.26004.1,16.0)" DisplayName="C# and Visual Basic Roslyn compilers" />
+  </Prerequisites>
+</PackageManifest>
