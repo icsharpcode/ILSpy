@@ -48,6 +48,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		Key,
 		Value,
 		Content,
+		Array,
 		List,
 		Dictionary,
 		Complex

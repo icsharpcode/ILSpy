@@ -52,12 +52,12 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			
 			public ReaderContext()
 			{
-				this.Previous = this;
+				Previous = this;
 			}
 			
 			public ReaderContext(ReaderContext previous)
 			{
-				this.Previous = previous;
+				Previous = previous;
 			}
 		}
 		
@@ -109,7 +109,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			_resolver = resolver;
 			reader = new BamlBinaryReader(stream);
 
-			XamlTypeDeclaration = new TypeDeclaration(this.Resolver, "", "System.Windows.Markup", 0);
+			XamlTypeDeclaration = new TypeDeclaration(Resolver, "", "System.Windows.Markup", 0);
 			KnownInfo = new KnownInfo(resolver);
 		}
 
@@ -250,13 +250,13 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				if ((_currentNode is XmlBamlProperty)) continue;
 				if ((_currentNode is XmlBamlSimpleProperty)) continue;
 
-				if (this.NodeType == XmlNodeType.EndElement)
+				if (NodeType == XmlNodeType.EndElement)
 				{
 					if (readingElements.Count == 1)
 						_rootNamespaces = ((IXmlNamespaceResolver)this).GetNamespacesInScope(XmlNamespaceScope.All);
 					readingElements.Pop();
 				}
-				else if (this.NodeType == XmlNodeType.Element)
+				else if (NodeType == XmlNodeType.Element)
 					readingElements.Push((XmlBamlElement)_currentNode);
 
 				return true;
@@ -275,16 +275,16 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				case BamlRecordType.DocumentEnd:
 					break;
 				case BamlRecordType.ElementStart:
-					this.ReadElementStart();
+					ReadElementStart();
 					break;
 				case BamlRecordType.ElementEnd:
-					this.ReadElementEnd();
+					ReadElementEnd();
 					break;
 				case BamlRecordType.AssemblyInfo:
-					this.ReadAssemblyInfo();
+					ReadAssemblyInfo();
 					break;
 				case BamlRecordType.StringInfo:
-					this.ReadStringInfo();
+					ReadStringInfo();
 					break;
 				case BamlRecordType.LineNumberAndPosition:
 					reader.ReadInt32();
@@ -294,10 +294,10 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					reader.ReadInt32();
 					break;
 				case BamlRecordType.XmlnsProperty:
-					this.ReadXmlnsProperty();
+					ReadXmlnsProperty();
 					break;
 				case BamlRecordType.ConnectionId:
-					this.ReadConnectionId();
+					ReadConnectionId();
 					break;
 				case BamlRecordType.DeferableContentStart:
 					Current.IsDeferred = true;
@@ -306,55 +306,55 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					reader.ReadInt32();
 					break;
 				case BamlRecordType.DefAttribute:
-					this.ReadDefAttribute();
+					ReadDefAttribute();
 					break;
 				case BamlRecordType.DefAttributeKeyType:
-					this.ReadDefAttributeKeyType();
+					ReadDefAttributeKeyType();
 					break;
 				case BamlRecordType.DefAttributeKeyString:
-					this.ReadDefAttributeKeyString();
+					ReadDefAttributeKeyString();
 					break;
 				case BamlRecordType.AttributeInfo:
-					this.ReadAttributeInfo();
+					ReadAttributeInfo();
 					break;
 				case BamlRecordType.PropertyListStart:
-					this.ReadPropertyListStart();
+					ReadPropertyListStart();
 					break;
 				case BamlRecordType.PropertyListEnd:
-					this.ReadPropertyListEnd();
+					ReadPropertyListEnd();
 					break;
 				case BamlRecordType.Property:
-					this.ReadProperty();
+					ReadProperty();
 					break;
 				case BamlRecordType.PropertyWithConverter:
-					this.ReadPropertyWithConverter();
+					ReadPropertyWithConverter();
 					break;
 				case BamlRecordType.PropertyWithExtension:
-					this.ReadPropertyWithExtension();
+					ReadPropertyWithExtension();
 					break;
 				case BamlRecordType.PropertyDictionaryStart:
-					this.ReadPropertyDictionaryStart();
+					ReadPropertyDictionaryStart();
 					break;
 				case BamlRecordType.PropertyCustom:
-					this.ReadPropertyCustom();
+					ReadPropertyCustom();
 					break;
 				case BamlRecordType.PropertyDictionaryEnd:
-					this.ReadPropertyDictionaryEnd();
+					ReadPropertyDictionaryEnd();
 					break;
 				case BamlRecordType.PropertyComplexStart:
-					this.ReadPropertyComplexStart();
+					ReadPropertyComplexStart();
 					break;
 				case BamlRecordType.PropertyComplexEnd:
-					this.ReadPropertyComplexEnd();
+					ReadPropertyComplexEnd();
 					break;
 				case BamlRecordType.PIMapping:
-					this.ReadPIMapping();
+					ReadPIMapping();
 					break;
 				case BamlRecordType.TypeInfo:
-					this.ReadTypeInfo();
+					ReadTypeInfo();
 					break;
 				case BamlRecordType.ContentProperty:
-					this.ReadContentProperty();
+					ReadContentProperty();
 					break;
 				case BamlRecordType.ConstructorParametersStart:
 					ReadConstructorParametersStart();
@@ -363,31 +363,31 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					ReadConstructorParametersEnd();
 					break;
 				case BamlRecordType.ConstructorParameterType:
-					this.ReadConstructorParameterType();
+					ReadConstructorParameterType();
 					break;
 				case BamlRecordType.Text:
-					this.ReadText();
+					ReadText();
 					break;
 				case BamlRecordType.TextWithConverter:
-					this.ReadTextWithConverter();
+					ReadTextWithConverter();
 					break;
 				case BamlRecordType.TextWithId:
-					this.ReadTextWithId();
+					ReadTextWithId();
 					break;
 				case BamlRecordType.PropertyWithStaticResourceId:
-					this.ReadPropertyWithStaticResourceIdentifier();
+					ReadPropertyWithStaticResourceIdentifier();
 					break;
 				case BamlRecordType.OptimizedStaticResource:
-					this.ReadOptimizedStaticResource();
+					ReadOptimizedStaticResource();
 					break;
 				case BamlRecordType.KeyElementStart:
-					this.ReadKeyElementStart();
+					ReadKeyElementStart();
 					break;
 				case BamlRecordType.KeyElementEnd:
-					this.ReadKeyElementEnd();
+					ReadKeyElementEnd();
 					break;
 				case BamlRecordType.PropertyTypeReference:
-					this.ReadPropertyTypeReference();
+					ReadPropertyTypeReference();
 					break;
 				case BamlRecordType.StaticResourceStart:
 					ReadStaticResourceStart();
@@ -399,16 +399,22 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					ReadStaticResourceId();
 					break;
 				case BamlRecordType.PresentationOptionsAttribute:
-					this.ReadPresentationOptionsAttribute();
+					ReadPresentationOptionsAttribute();
 					break;
 				case BamlRecordType.TypeSerializerInfo:
-					this.ReadTypeInfo();
+					ReadTypeInfo();
+					break;
+				case BamlRecordType.PropertyArrayStart:
+					ReadPropertyArrayStart();
+					break;
+				case BamlRecordType.PropertyArrayEnd:
+					ReadPropertyArrayEnd();
 					break;
 				default:
 					throw new NotImplementedException("UnsupportedNode: " + currentType);
 			}
 		}
-		
+
 		void ReadConnectionId()
 		{
 			int id = reader.ReadInt32();
@@ -453,7 +459,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			if (!initialized)
 			{
 				int startChars = reader.ReadInt32();
-				String type = new String(new BinaryReader(this.reader.BaseStream, Encoding.Unicode).ReadChars(startChars >> 1));
+				String type = new String(new BinaryReader(reader.BaseStream, Encoding.Unicode).ReadChars(startChars >> 1));
 				if (type != "MSBAML")
 					throw new NotSupportedException("Not a MS BAML");
 
@@ -500,7 +506,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			get {
 				if (intoAttribute) return XmlNodeType.Text;
 
-				return this.CurrentNode.NodeType;
+				return CurrentNode.NodeType;
 			}
 		}
 
@@ -513,7 +519,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 				String localName = string.Empty;
 
-				XmlBamlNode node = this.CurrentNode;
+				XmlBamlNode node = CurrentNode;
 				if (node is XmlBamlSimpleProperty) {
 					var simpleNode = (XmlBamlSimpleProperty)node;
 					localName = simpleNode.LocalName;
@@ -535,7 +541,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				else if (node is XmlBamlElement)
 					localName = ((XmlBamlElement)node).TypeDeclaration.Name;
 
-				localName = this.NameTable.Add(localName);
+				localName = NameTable.Add(localName);
 
 				return localName;
 			}
@@ -546,7 +552,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			PropertyDeclaration declaration;
 			if (identifier >= 0)
 			{
-				declaration = this.propertyTable[identifier];
+				declaration = propertyTable[identifier];
 			}
 			else
 			{
@@ -562,7 +568,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		object GetResourceName(short identifier)
 		{
 			if (identifier >= 0) {
-				PropertyDeclaration declaration = this.propertyTable[identifier];
+				PropertyDeclaration declaration = propertyTable[identifier];
 				return declaration;
 			} else {
 				identifier = (short)-identifier;
@@ -586,11 +592,27 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			}
 		}
 
+		void ReadPropertyArrayStart()
+		{
+			short identifier = reader.ReadInt16();
+
+			PropertyDeclaration pd = GetPropertyDeclaration(identifier);
+			XmlBamlElement element = elements.Peek();
+			XmlBamlPropertyElement property = new XmlBamlPropertyElement(element, PropertyType.Array, pd);
+			elements.Push(property);
+			nodes.Enqueue(property);
+		}
+
+		void ReadPropertyArrayEnd()
+		{
+			CloseElement();
+		}
+
 		void ReadPropertyDictionaryStart()
 		{
 			short identifier = reader.ReadInt16();
 
-			PropertyDeclaration pd = this.GetPropertyDeclaration(identifier);
+			PropertyDeclaration pd = GetPropertyDeclaration(identifier);
 			XmlBamlElement element = elements.Peek();
 			XmlBamlPropertyElement property = new XmlBamlPropertyElement(element, PropertyType.Dictionary, pd);
 			elements.Push(property);
@@ -610,7 +632,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			if (isValueTypeId)
 				serializerTypeId = (short)(serializerTypeId & ~0x4000);
 
-			PropertyDeclaration pd = this.GetPropertyDeclaration(identifier);
+			PropertyDeclaration pd = GetPropertyDeclaration(identifier);
 			string value;
 			switch (serializerTypeId)
 			{
@@ -625,16 +647,16 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					short typeIdentifier = reader.ReadInt16();
 					if (isValueTypeId)
 					{
-						TypeDeclaration typeDeclaration = this.GetTypeDeclaration(typeIdentifier);
+						TypeDeclaration typeDeclaration = GetTypeDeclaration(typeIdentifier);
 						string name = reader.ReadString();
 						value = FormatPropertyDeclaration(new PropertyDeclaration(name, typeDeclaration), true, false, true);
 					}
 					else
-						value = FormatPropertyDeclaration(this.GetPropertyDeclaration(typeIdentifier), true, false, true);
+						value = FormatPropertyDeclaration(GetPropertyDeclaration(typeIdentifier), true, false, true);
 					break;
 
 				case 0x2ea:
-					value = ((IFormattable)staticConvertCustomBinaryToObjectMethod.Invoke(null, new object[] { this.reader })).ToString("G", CultureInfo.InvariantCulture);
+					value = ((IFormattable)staticConvertCustomBinaryToObjectMethod.Invoke(null, new object[] { reader })).ToString("G", CultureInfo.InvariantCulture);
 					break;
 				case 0x2eb:
 				case 0x2f0:
@@ -682,7 +704,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			}
 		}
 
-		String Deserialize3DPoints()
+		string Deserialize3DPoints()
 		{
 			using (StringWriter writer = new StringWriter())
 			{
@@ -745,36 +767,36 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			bool isStaticType = (x & 0x2000) == 0x2000;
 			x = (short)(x & 0xfff);
 
-			PropertyDeclaration pd = this.GetPropertyDeclaration(identifier);
+			PropertyDeclaration pd = GetPropertyDeclaration(identifier);
 			short extensionIdentifier = (short)-(x & 0xfff);
 			string value = String.Empty;
 
 			switch (x) {
 				case 0x25a:
 					// StaticExtension
-					value = this.GetStaticExtension(this.GetResourceName(valueIdentifier));
+					value = GetStaticExtension(GetResourceName(valueIdentifier));
 					break;
 				case 0x25b: // StaticResource
 				case 0xbd: // DynamicResource
 					if (isValueType)
 					{
-						value = this.GetTypeExtension(valueIdentifier);
+						value = GetTypeExtension(valueIdentifier);
 					}
 					else if (isStaticType)
 					{
-						TypeDeclaration extensionDeclaration = this.GetTypeDeclaration(extensionIdentifier);
+						TypeDeclaration extensionDeclaration = GetTypeDeclaration(extensionIdentifier);
 						value = GetExtension(extensionDeclaration, GetStaticExtension(GetResourceName(valueIdentifier)));
 					}
 					else
 					{
-						TypeDeclaration extensionDeclaration = this.GetTypeDeclaration(extensionIdentifier);
-						value = GetExtension(extensionDeclaration, (string)this.stringTable[valueIdentifier]);
+						TypeDeclaration extensionDeclaration = GetTypeDeclaration(extensionIdentifier);
+						value = GetExtension(extensionDeclaration, (string)stringTable[valueIdentifier]);
 					}
 					break;
 
 				case 0x27a:
 					// TemplateBinding
-					PropertyDeclaration pdValue = this.GetPropertyDeclaration(valueIdentifier);
+					PropertyDeclaration pdValue = GetPropertyDeclaration(valueIdentifier);
 					value = GetTemplateBindingExtension(pdValue);
 					break;
 				default:
@@ -827,7 +849,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		
 		void EnqueueProperty(short identifier, string text)
 		{
-			PropertyDeclaration pd = this.GetPropertyDeclaration(identifier);
+			PropertyDeclaration pd = GetPropertyDeclaration(identifier);
 			XmlBamlElement element = FindXmlBamlElement();
 			// if we've already read a nested element for the current element, this property must be a nested element as well
 			if (HaveSeenNestedElement())
@@ -853,9 +875,9 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			short identifier = reader.ReadInt16();
 			reader.ReadByte();
 			string name = reader.ReadString();
-			TypeDeclaration declaringType = this.GetTypeDeclaration(identifier);
+			TypeDeclaration declaringType = GetTypeDeclaration(identifier);
 			PropertyDeclaration property = new PropertyDeclaration(name, declaringType);
-			this.propertyTable.Add(key, property);
+			propertyTable.Add(key, property);
 		}
 
 		void ReadDefAttributeKeyType()
@@ -886,7 +908,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					pd = new PropertyDeclaration("Name", XamlTypeDeclaration);
 					break;
 				default:
-					string recordName = this.stringTable[identifier];
+					string recordName = stringTable[identifier];
 					if (recordName != "Key") throw new NotSupportedException(recordName);
 					pd = new PropertyDeclaration(recordName, XamlTypeDeclaration);
 					if (keys == null)
@@ -908,7 +930,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			bool shared = reader.ReadBoolean();
 			bool sharedSet = reader.ReadBoolean();
 			
-			string text = this.stringTable[stringId];
+			string text = stringTable[stringId];
 			Debug.Print("KeyString: " + text);
 			if (text == null)
 				throw new NotSupportedException();
@@ -922,7 +944,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			string @namespace = reader.ReadString();
 			string[] textArray = new string[(uint)reader.ReadInt16()];
 			for (int i = 0; i < textArray.Length; i++) {
-				textArray[i] = this.assemblyTable[reader.ReadInt16()];
+				textArray[i] = assemblyTable[reader.ReadInt16()];
 			}
 
 			var namespaces = elements.Peek().Namespaces;
@@ -961,7 +983,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		{
 			short identifier = reader.ReadInt16();
 
-			PropertyDeclaration pd = this.GetPropertyDeclaration(identifier);
+			PropertyDeclaration pd = GetPropertyDeclaration(identifier);
 			XmlBamlElement element = FindXmlBamlElement();
 
 			XmlBamlPropertyElement property = new XmlBamlPropertyElement(element, PropertyType.Complex, pd);
@@ -988,7 +1010,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		{
 			short identifier = reader.ReadInt16();
 
-			PropertyDeclaration pd = this.GetPropertyDeclaration(identifier);
+			PropertyDeclaration pd = GetPropertyDeclaration(identifier);
 			XmlBamlElement element = FindXmlBamlElement();
 			XmlBamlPropertyElement property = new XmlBamlPropertyElement(element, PropertyType.List, pd);
 			elements.Push(property);
@@ -1130,7 +1152,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			{
 				parentElement = elements.Peek();
 				element = new XmlBamlElement(parentElement);
-				element.Position = this.reader.BaseStream.Position;
+				element.Position = reader.BaseStream.Position;
 
 				// Porto l'inizio del padre all'inizio del primo figlio
 				if (parentElement.Position == 0 && complexPropertyOpened == 0)
@@ -1251,7 +1273,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			reader.ReadBoolean();
 			reader.ReadBoolean();
 
-			TypeDeclaration declaration = this.GetTypeDeclaration(typeIdentifier);
+			TypeDeclaration declaration = GetTypeDeclaration(typeIdentifier);
 
 			XmlBamlPropertyElement property = new XmlBamlPropertyElement(elements.Peek(), PropertyType.Key, new PropertyDeclaration("Key", declaration));
 			property.Position = position;
@@ -1312,7 +1334,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			string text = reader.ReadString();
 			short valueIdentifier = reader.ReadInt16();
 
-			PropertyDeclaration pd = new PropertyDeclaration(this.stringTable[valueIdentifier].ToString());
+			PropertyDeclaration pd = new PropertyDeclaration(stringTable[valueIdentifier].ToString());
 
 			XmlBamlProperty property = new XmlBamlProperty(elements.Peek(), PropertyType.Value, pd);
 			property.Value = text;
@@ -1323,8 +1345,8 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			short identifier = reader.ReadInt16();
 			short typeIdentifier = reader.ReadInt16();
 
-			PropertyDeclaration pd = this.GetPropertyDeclaration(identifier);
-			string value = this.GetTypeExtension(typeIdentifier);
+			PropertyDeclaration pd = GetPropertyDeclaration(identifier);
+			string value = GetTypeExtension(typeIdentifier);
 
 			XmlBamlProperty property = new XmlBamlProperty(elements.Peek(), PropertyType.Value, pd);
 			property.Value = value;
@@ -1345,7 +1367,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			else if (isStaticType) {
 				resource = GetStaticExtension(GetResourceName(typeIdentifier));
 			} else {
-				resource = this.stringTable[typeIdentifier];
+				resource = stringTable[typeIdentifier];
 			}
 			
 			var lastKey = keys.LastOrDefault();
@@ -1367,11 +1389,11 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			if (resource is ResourceName)
 				name = ((ResourceName)resource).Name;
 			else if (resource is PropertyDeclaration)
-				name = this.FormatPropertyDeclaration(((PropertyDeclaration)resource), true, false, false);
+				name = FormatPropertyDeclaration(((PropertyDeclaration)resource), true, false, false);
 			else
 				throw new InvalidOperationException("Invalid resource: " + resource.GetType());
 
-			string prefix = this.LookupPrefix(XmlToClrNamespaceMapping.XamlNamespace, false);
+			string prefix = LookupPrefix(XmlToClrNamespaceMapping.XamlNamespace, false);
 			if (String.IsNullOrEmpty(prefix))
 				return String.Format("{{Static {0}}}", name);
 			else
@@ -1385,7 +1407,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		string GetTypeExtension(short typeIdentifier)
 		{
-			string prefix = this.LookupPrefix(XmlToClrNamespaceMapping.XamlNamespace, false);
+			string prefix = LookupPrefix(XmlToClrNamespaceMapping.XamlNamespace, false);
 			if (String.IsNullOrEmpty(prefix))
 				return String.Format("{{Type {0}}}", FormatTypeDeclaration(GetTypeDeclaration(typeIdentifier)));
 			else
@@ -1395,7 +1417,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		string FormatTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
 			XmlToClrNamespaceMapping mapping = FindByClrNamespaceAndAssemblyName(typeDeclaration.Namespace, typeDeclaration.Assembly);
-			string prefix = (mapping != null) ? this.LookupPrefix(mapping.XmlNamespace, false) : null;
+			string prefix = (mapping != null) ? LookupPrefix(mapping.XmlNamespace, false) : null;
 			string name = typeDeclaration.Name;
 			if (name.EndsWith("Extension", StringComparison.Ordinal))
 				name = name.Substring(0, name.Length - 9);
@@ -1414,14 +1436,14 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			IDependencyPropertyDescriptor descriptor = null;
 			bool areValidTypes = elementDeclaration.Type != null && propertyDeclaration.DeclaringType.Type != null;
 			if (areValidTypes)
-				descriptor = this.Resolver.GetDependencyPropertyDescriptor(propertyDeclaration.Name, elementDeclaration.Type, propertyDeclaration.DeclaringType.Type);
+				descriptor = Resolver.GetDependencyPropertyDescriptor(propertyDeclaration.Name, elementDeclaration.Type, propertyDeclaration.DeclaringType.Type);
 
 			bool isDescendant = (areValidTypes && (propertyDeclaration.DeclaringType.Type.Equals(elementDeclaration.Type) || elementDeclaration.Type.IsSubclassOf(propertyDeclaration.DeclaringType.Type)));
 			bool isAttached = (descriptor != null && descriptor.IsAttached);
 
 			if (withPrefix) {
 				XmlToClrNamespaceMapping mapping = FindByClrNamespaceAndAssemblyName(propertyDeclaration.DeclaringType.Namespace, propertyDeclaration.DeclaringType.Assembly);
-				string prefix = (mapping != null) ? this.LookupPrefix(mapping.XmlNamespace, false) : null;
+				string prefix = (mapping != null) ? LookupPrefix(mapping.XmlNamespace, false) : null;
 
 				if (!String.IsNullOrEmpty(prefix)) {
 					sb.Append(prefix);
@@ -1442,10 +1464,10 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			short propertyId = reader.ReadInt16();
 			short index = reader.ReadInt16();
 
-			PropertyDeclaration pd = this.GetPropertyDeclaration(propertyId);
+			PropertyDeclaration pd = GetPropertyDeclaration(propertyId);
 			object staticResource = GetStaticResource(index);
 
-			string prefix = this.LookupPrefix(XmlToClrNamespaceMapping.PresentationNamespace, false);
+			string prefix = LookupPrefix(XmlToClrNamespaceMapping.PresentationNamespace, false);
 			string value = String.Format("{{{0}{1}StaticResource {2}}}", prefix, (String.IsNullOrEmpty(prefix)) ? String.Empty : ":", staticResource);
 
 			XmlBamlProperty property = new XmlBamlProperty(elements.Peek(), PropertyType.Value, pd);
@@ -1489,34 +1511,34 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			{
 				string name = fullName.Substring(length + 1);
 				string namespaceName = fullName.Substring(0, length);
-				declaration = new TypeDeclaration(this, this.Resolver, name, namespaceName, assemblyId);
+				declaration = new TypeDeclaration(this, Resolver, name, namespaceName, assemblyId);
 			}
 			else
 			{
-				declaration = new TypeDeclaration(this, this.Resolver, fullName, string.Empty, assemblyId);
+				declaration = new TypeDeclaration(this, Resolver, fullName, string.Empty, assemblyId);
 			}
-			this.typeTable.Add(typeId, declaration);
+			typeTable.Add(typeId, declaration);
 		}
 
 		void ReadAssemblyInfo()
 		{
 			short key = reader.ReadInt16();
 			string text = reader.ReadString();
-			this.assemblyTable.Add(key, text);
+			assemblyTable.Add(key, text);
 		}
 
 		void ReadStringInfo()
 		{
 			short key = reader.ReadInt16();
 			string text = reader.ReadString();
-			this.stringTable.Add(key, text);
+			stringTable.Add(key, text);
 		}
 
 		TypeDeclaration GetTypeDeclaration(short identifier)
 		{
 			TypeDeclaration declaration;
 			if (identifier >= 0)
-				declaration = this.typeTable[identifier];
+				declaration = typeTable[identifier];
 			else
 				declaration = KnownInfo.KnownTypeTable[-identifier];
 
@@ -1537,7 +1559,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		internal string GetAssembly(short identifier)
 		{
-			return this.assemblyTable[identifier];
+			return assemblyTable[identifier];
 		}
 
 		XmlBamlNode CurrentNode {
@@ -1549,12 +1571,12 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 				if (intoAttribute) return String.Empty;
 
 				TypeDeclaration declaration;
-				XmlBamlNode node = this.CurrentNode;
+				XmlBamlNode node = CurrentNode;
 				if (node is XmlBamlSimpleProperty)
 					return ((XmlBamlSimpleProperty)node).NamespaceName;
 				else if (node is XmlBamlProperty) {
 					declaration = ((XmlBamlProperty)node).PropertyDeclaration.DeclaringType;
-					TypeDeclaration elementDeclaration = this.readingElements.Peek().TypeDeclaration;
+					TypeDeclaration elementDeclaration = readingElements.Peek().TypeDeclaration;
 
 					XmlToClrNamespaceMapping propertyMapping = FindByClrNamespaceAndAssemblyId(declaration);
 					XmlToClrNamespaceMapping elementMapping = FindByClrNamespaceAndAssemblyId(elementDeclaration);
@@ -1590,7 +1612,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		{
 			get {
 				if (!intoAttribute)
-					return ((IXmlNamespaceResolver)this).LookupPrefix(this.NamespaceURI) ?? String.Empty;
+					return ((IXmlNamespaceResolver)this).LookupPrefix(NamespaceURI) ?? String.Empty;
 				return String.Empty;
 			}
 		}
@@ -1598,7 +1620,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		public override bool HasValue
 		{
-			get { return this.Value != null; }
+			get { return Value != null; }
 		}
 
 		/// <summary>
@@ -1612,7 +1634,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		public override string Value
 		{
 			get {
-				XmlBamlNode node = this.CurrentNode;
+				XmlBamlNode node = CurrentNode;
 				if (node is XmlBamlSimpleProperty)
 					return ((XmlBamlSimpleProperty)node).Value;
 				else if (node is XmlBamlProperty)
@@ -1646,7 +1668,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 					return ReadState.Initial;
 				if (reader == null)
 					return ReadState.Closed;
-				if (this.EOF)
+				if (EOF)
 					return ReadState.EndOfFile;
 				return ReadState.Interactive;
 			}
@@ -1670,12 +1692,12 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		string IXmlNamespaceResolver.LookupNamespace(string prefix)
 		{
-			return this.LookupNamespace(prefix);
+			return LookupNamespace(prefix);
 		}
 
 		string IXmlNamespaceResolver.LookupPrefix(string namespaceName)
 		{
-			return this.LookupPrefix(namespaceName, true);
+			return LookupPrefix(namespaceName, true);
 		}
 
 		string LookupPrefix(string namespaceName, bool useReading)
