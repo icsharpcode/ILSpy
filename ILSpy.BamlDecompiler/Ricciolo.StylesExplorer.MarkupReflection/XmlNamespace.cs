@@ -27,7 +27,15 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		public override int GetHashCode()
 		{
-			return Prefix.GetHashCode() + Namespace.GetHashCode() >> 20;
+			int hashCode = 0;
+			unchecked
+			{
+				if (Namespace != null)
+					hashCode += 1000000007 * Namespace.GetHashCode();
+				if (Prefix != null)
+					hashCode += 1000000009 * Prefix.GetHashCode();
+			}
+			return hashCode;
 		}
 	}
 }
