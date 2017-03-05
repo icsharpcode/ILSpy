@@ -51,6 +51,7 @@
 	</Target>
 	
 	<Target Name="build">
+		<Exec WorkingDirectory="$(ProjectDir)" Command="$(ProjectDir)\.nuget\nuget.exe restore" />
 		<MSBuild Projects="$(ProjectDir)\BuildTools\UpdateAssemblyInfo\UpdateAssemblyInfo.csproj" Targets="Build" Properties="Configuration=Debug" />
 		<Exec WorkingDirectory="$(ProjectDir)\BuildTools\UpdateAssemblyInfo\bin\Debug" Command="UpdateAssemblyInfo.exe --REVISION --branchname $(BranchName)" Timeout="60000" Condition=" '$(BranchName)' != '' " />
 		<Exec WorkingDirectory="$(ProjectDir)\BuildTools\UpdateAssemblyInfo\bin\Debug" Command="UpdateAssemblyInfo.exe --REVISION" Timeout="60000" Condition=" '$(BranchName)' == '' " />
