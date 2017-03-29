@@ -1609,6 +1609,11 @@ namespace ICSharpCode.Decompiler.Ast
 			TypeCode code = TypeAnalysis.GetTypeCode(type);
 			if (code == TypeCode.Object || code == TypeCode.Empty)
 				code = TypeCode.Int32;
+			if(type.MetadataType == MetadataType.Char  || type.MetadataType == MetadataType.SByte  || type.MetadataType == MetadataType.Byte)
+            {
+                    return new Ast.PrimitiveExpression(CSharpPrimitiveCast.Cast(code, val, false)).CastTo(ConvertType(type));
+                    
+            }
 			return new Ast.PrimitiveExpression(CSharpPrimitiveCast.Cast(code, val, false));
 		}
 
