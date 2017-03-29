@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.Tests.FSharpPatterns
 			try
 			{
 				try { module.ReadSymbols(); } catch { }
-				AstBuilder decompiler = new AstBuilder(new DecompilerContext(module));
+				AstBuilder decompiler = new AstBuilder(new DecompilerContext(module) { Settings = new DecompilerSettings() { UseVar = VarKeywordUsage.Never } });
 				decompiler.AddAssembly(module);
 				new Helpers.RemoveCompilerAttribute().Run(decompiler.SyntaxTree);
 				StringWriter output = new StringWriter();
