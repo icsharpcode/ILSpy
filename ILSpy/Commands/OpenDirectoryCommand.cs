@@ -17,18 +17,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Windows.Input;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_File", Header = "Open from _GAC...", MenuIcon = "Images/AssemblyListGAC.png", MenuCategory = "Open", MenuOrder = 3)]
-	sealed class OpenFromGacCommand : SimpleCommand
+	[ExportMainMenuCommand(Menu = "_File", Header = "Open Directory", MenuIcon = "Images/Folder.Open.png", MenuCategory = "Open", MenuOrder = 1)]
+	sealed class OpenDirectoryCommand : SimpleCommand
 	{
 		public override void Execute(object parameter)
 		{
-			OpenFromGacDialog dlg = new OpenFromGacDialog();
-			dlg.Owner = MainWindow.Instance;
-			if (dlg.ShowDialog() == true)
-				MainWindow.Instance.OpenFiles(dlg.SelectedFileNames);
+			MainWindow.Instance.OpenDirectory();
 		}
 	}
 }
