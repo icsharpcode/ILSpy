@@ -31,6 +31,7 @@ using Cecil = Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.ILAst
 {
+	[DebuggerDisplay("{debugView,nq}")]
 	public abstract class ILNode
 	{
 		public IEnumerable<T> GetSelfAndChildrenRecursive<T>(Func<T, bool> predicate = null) where T: ILNode
@@ -61,7 +62,16 @@ namespace ICSharpCode.Decompiler.ILAst
 		{
 			StringWriter w = new StringWriter();
 			WriteTo(new PlainTextOutput(w));
-			return w.ToString().Replace("\r\n", "; ");
+			return w.ToString();
+		}
+
+		private string debugView
+		{
+			get {
+				StringWriter w = new StringWriter();
+				WriteTo(new PlainTextOutput(w));
+				return w.ToString();
+			}
 		}
 		
 		public abstract void WriteTo(ITextOutput output);
@@ -458,6 +468,16 @@ namespace ICSharpCode.Decompiler.ILAst
 			}
 			output.Write(')');
 		}
+
+        public ILExpression Clone()
+        {
+            return new ILExpression(Code, Operand, Arguments == null ? null : Arguments.Select(a => a?.Clone())?.ToArray()) {
+                ILRanges = ILRanges == null ? null :ILRanges.ToList(),
+                ExpectedType = ExpectedType,
+                InferredType = InferredType,
+                Prefixes = Prefixes == null ? null : Prefixes.ToArray()
+            };
+        }
 	}
 	
 	public class ILWhileLoop : ILNode

@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
+// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			/// ldftn or ldvirtftn?
 			/// </summary>
 			public readonly bool IsVirtual;
-			
+
 			public Annotation(bool isVirtual)
 			{
 				this.IsVirtual = isVirtual;
@@ -122,18 +122,28 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			return true;
 		}
 		
+		bool IsSingetonDisplayClass(Expression expr)
+		{
+			var mm = expr as MemberReferenceExpression;
+			if (mm != null) {
+				if (mm.Target is TypeReferenceExpression)
+					return true;
+			}
+			return false;
+		}
+		
 		bool HandleAnonymousMethod(ObjectCreateExpression objectCreateExpression, Expression target, MethodReference methodRef)
 		{
 			if (!context.Settings.AnonymousMethods)
 				return false; // anonymous method decompilation is disabled
-			if (target != null && !(target is IdentifierExpression || target is ThisReferenceExpression || target is NullReferenceExpression))
+			if (target != null && !(target is ThisReferenceExpression || target is NullReferenceExpression || IsVariableOrDisplayClassProp(target) || IsSingetonDisplayClass(target)))
 				return false; // don't copy arbitrary expressions, deal with identifiers only
-			
+
 			// Anonymous methods are defined in the same assembly
 			MethodDefinition method = methodRef.ResolveWithinSameModule();
 			if (!IsAnonymousMethod(context, method))
 				return false;
-			
+
 			// Create AnonymousMethodExpression and prepare parameters
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.CopyAnnotationsFrom(objectCreateExpression); // copy ILRanges etc.
@@ -141,14 +151,14 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			ame.AddAnnotation(method); // add reference to anonymous method
 			ame.Parameters.AddRange(AstBuilder.MakeParameters(method, isLambda: true));
 			ame.HasParameterList = true;
-			
+
 			// rename variables so that they don't conflict with the parameters:
 			foreach (ParameterDeclaration pd in ame.Parameters) {
 				EnsureVariableNameIsAvailable(objectCreateExpression, pd.Name);
 			}
-			
+
 			// Decompile the anonymous method:
-			
+
 			DecompilerContext subContext = context.Clone();
 			subContext.CurrentMethod = method;
 			subContext.CurrentMethodIsAsync = false;
@@ -156,8 +166,8 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			BlockStatement body = AstMethodBodyBuilder.CreateMethodBody(method, subContext, ame.Parameters);
 			TransformationPipeline.RunTransformationsUntil(body, v => v is DelegateConstruction, subContext);
 			body.AcceptVisitor(this, null);
-			
-			
+
+
 			bool isLambda = false;
 			if (ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None)) {
 				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
@@ -175,7 +185,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					ame.HasParameterList = false;
 				}
 			}
-			
+
 			// Replace all occurrences of 'this' in the method body with the delegate's target:
 			foreach (AstNode node in body.Descendants) {
 				if (node is ThisReferenceExpression)
@@ -202,6 +212,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				replacement = simplifiedDelegateCreation;
 			}
 			objectCreateExpression.ReplaceWith(replacement);
+			
 			return true;
 		}
 		
@@ -237,61 +248,66 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			try {
 				currentlyUsedVariableNames.AddRange(methodDeclaration.Parameters.Select(p => p.Name));
 				return base.VisitMethodDeclaration(methodDeclaration, data);
-			} finally {
+			}
+			finally {
 				currentlyUsedVariableNames.Clear();
 			}
 		}
-		
+
 		public override object VisitOperatorDeclaration(OperatorDeclaration operatorDeclaration, object data)
 		{
 			Debug.Assert(currentlyUsedVariableNames.Count == 0);
 			try {
 				currentlyUsedVariableNames.AddRange(operatorDeclaration.Parameters.Select(p => p.Name));
 				return base.VisitOperatorDeclaration(operatorDeclaration, data);
-			} finally {
+			}
+			finally {
 				currentlyUsedVariableNames.Clear();
 			}
 		}
-		
+
 		public override object VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration, object data)
 		{
 			Debug.Assert(currentlyUsedVariableNames.Count == 0);
 			try {
 				currentlyUsedVariableNames.AddRange(constructorDeclaration.Parameters.Select(p => p.Name));
 				return base.VisitConstructorDeclaration(constructorDeclaration, data);
-			} finally {
+			}
+			finally {
 				currentlyUsedVariableNames.Clear();
 			}
 		}
-		
+
 		public override object VisitIndexerDeclaration(IndexerDeclaration indexerDeclaration, object data)
 		{
 			Debug.Assert(currentlyUsedVariableNames.Count == 0);
 			try {
 				currentlyUsedVariableNames.AddRange(indexerDeclaration.Parameters.Select(p => p.Name));
 				return base.VisitIndexerDeclaration(indexerDeclaration, data);
-			} finally {
+			}
+			finally {
 				currentlyUsedVariableNames.Clear();
 			}
 		}
-		
+
 		public override object VisitAccessor(Accessor accessor, object data)
 		{
 			try {
 				currentlyUsedVariableNames.Add("value");
 				return base.VisitAccessor(accessor, data);
-			} finally {
+			}
+			finally {
 				currentlyUsedVariableNames.RemoveAt(currentlyUsedVariableNames.Count - 1);
 			}
 		}
-		
+
 		public override object VisitVariableDeclarationStatement(VariableDeclarationStatement variableDeclarationStatement, object data)
 		{
 			foreach (VariableInitializer v in variableDeclarationStatement.Variables)
 				currentlyUsedVariableNames.Add(v.Name);
 			return base.VisitVariableDeclarationStatement(variableDeclarationStatement, data);
 		}
-		
+
 		public override object VisitFixedStatement(FixedStatement fixedStatement, object data)
 		{
 			foreach (VariableInitializer v in fixedStatement.Variables)
@@ -305,16 +321,16 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
 				new ObjectCreateExpression { Type = new AnyNode("type") }
 			));
-		
+
 		public override object VisitBlockStatement(BlockStatement blockStatement, object data)
 		{
 			int numberOfVariablesOutsideBlock = currentlyUsedVariableNames.Count;
 			base.VisitBlockStatement(blockStatement, data);
-			foreach (ExpressionStatement stmt in blockStatement.Statements.OfType<ExpressionStatement>().ToArray()) {
+			foreach (ExpressionStatement stmt in blockStatement.Statements.OfType<ExpressionStatement>().ToArray().Reverse()) { 
 				Match displayClassAssignmentMatch = displayClassAssignmentPattern.Match(stmt);
 				if (!displayClassAssignmentMatch.Success)
 					continue;
-				
+
 				ILVariable variable = displayClassAssignmentMatch.Get<AstNode>("variable").Single().Annotation<ILVariable>();
 				if (variable == null)
 					continue;
@@ -323,7 +339,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					continue;
 				if (displayClassAssignmentMatch.Get<AstType>("type").Single().Annotation<TypeReference>().ResolveWithinSameModule() != type)
 					continue;
-				
+
 				// Looks like we found a display class creation. Now let's verify that the variable is used only for field accesses:
 				bool ok = true;
 				foreach (var identExpr in blockStatement.Descendants.OfType<IdentifierExpression>()) {
@@ -335,16 +351,16 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				if (!ok)
 					continue;
 				Dictionary<FieldReference, AstNode> dict = new Dictionary<FieldReference, AstNode>();
-				
+
 				// Delete the variable declaration statement:
 				VariableDeclarationStatement displayClassVarDecl = PatternStatementTransform.FindVariableDeclaration(stmt, variable.Name);
-				if (displayClassVarDecl != null)
-					displayClassVarDecl.Remove();
-				
+				var variableDeclarationBlock = displayClassVarDecl.Parent as BlockStatement ?? blockStatement;
+				displayClassVarDecl?.Remove();
+
 				// Delete the assignment statement:
 				AstNode cur = stmt.NextSibling;
 				stmt.Remove();
-				
+
 				// Delete any following statements as long as they assign parameters to the display class
 				BlockStatement rootBlock = blockStatement.Ancestors.OfType<BlockStatement>().LastOrDefault() ?? blockStatement;
 				List<ILVariable> parameterOccurrances = rootBlock.Descendants.OfType<IdentifierExpression>()
@@ -352,15 +368,15 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				AstNode next;
 				for (; cur != null; cur = next) {
 					next = cur.NextSibling;
-					
+
 					// Test for the pattern:
 					// "variableName.MemberName = right;"
 					ExpressionStatement closureFieldAssignmentPattern = new ExpressionStatement(
 						new AssignmentExpression(
-							new NamedNode("left", new MemberReferenceExpression { 
-							              	Target = new IdentifierExpression(variable.Name),
-							              	MemberName = Pattern.AnyString
-							              }),
+							new NamedNode("left", new MemberReferenceExpression {
+								Target = new IdentifierExpression(variable.Name),
+								MemberName = Pattern.AnyString
+							}),
 							new AnyNode("right")
 						)
 					);
@@ -408,7 +424,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 						break;
 					}
 				}
-				
+
 				// Now create variables for all fields of the display class (except for those that we already handled as parameters)
 				List<Tuple<AstType, ILVariable>> variablesToDeclare = new List<Tuple<AstType, ILVariable>>();
 				foreach (FieldDefinition field in type.Fields) {
@@ -421,8 +437,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 						capturedVariableName = capturedVariableName.Substring(10);
 					EnsureVariableNameIsAvailable(blockStatement, capturedVariableName);
 					currentlyUsedVariableNames.Add(capturedVariableName);
-					ILVariable ilVar = new ILVariable
-					{
+					ILVariable ilVar = new ILVariable {
 						IsGenerated = true,
 						Name = capturedVariableName,
 						Type = field.FieldType,
@@ -430,7 +445,7 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					variablesToDeclare.Add(Tuple.Create(AstBuilder.ConvertType(field.FieldType, field), ilVar));
 					dict[field] = new IdentifierExpression(capturedVariableName).WithAnnotation(ilVar);
 				}
-				
+
 				// Now figure out where the closure was accessed and use the simpler replacement expression there:
 				foreach (var identExpr in blockStatement.Descendants.OfType<IdentifierExpression>()) {
 					if (identExpr.Identifier == variable.Name) {
@@ -442,16 +457,113 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 					}
 				}
 				// Now insert the variable declarations (we can do this after the replacements only so that the scope detection works):
-				Statement insertionPoint = blockStatement.Statements.FirstOrDefault();
+				Statement insertionPoint = variableDeclarationBlock.Statements.FirstOrDefault();
 				foreach (var tuple in variablesToDeclare) {
 					var newVarDecl = new VariableDeclarationStatement(tuple.Item1, tuple.Item2.Name);
 					newVarDecl.Variables.Single().AddAnnotation(new CapturedVariableAnnotation());
 					newVarDecl.Variables.Single().AddAnnotation(tuple.Item2);
-					blockStatement.Statements.InsertBefore(insertionPoint, newVarDecl);
+					variableDeclarationBlock.Statements.InsertBefore(insertionPoint, newVarDecl);
 				}
 			}
 			currentlyUsedVariableNames.RemoveRange(numberOfVariablesOutsideBlock, currentlyUsedVariableNames.Count - numberOfVariablesOutsideBlock);
 			return null;
+		}
+
+		static bool IsVariableOrDisplayClassProp(Expression v)
+		{
+			if (v is IdentifierExpression) return true;
+			var memberRef = v as MemberReferenceExpression;
+			if (memberRef != null) {
+				var targetTypeRef = memberRef.Target as TypeReferenceExpression;
+				if (targetTypeRef != null && targetTypeRef.Type != null) {
+					return targetTypeRef.Type.Annotation<TypeReference>().ResolveWithinSameModule().IsCompilerGeneratedOrIsInCompilerGeneratedClass() == true;
+				}
+				if(memberRef.Target is IdentifierExpression || memberRef.Target is ThisReferenceExpression) {
+					return memberRef.Target.Annotation<TypeInformation>().InferredType.ResolveWithinSameModule().IsCompilerGeneratedOrIsInCompilerGeneratedClass();
+				}
+			}
+			return false;
+		}
+
+		static readonly IfElseStatement cacheIfPattern =
+			new IfElseStatement(
+				new BinaryOperatorExpression(new AnyNode("varv"), BinaryOperatorType.Equality, new NullReferenceExpression()),
+				new BlockStatement() { new ExpressionStatement(new AnyNode("body")) }
+				);
+		public override object VisitIfElseStatement(IfElseStatement ifElseStatement, object data)
+		{
+			base.VisitIfElseStatement(ifElseStatement, data);
+
+			var match = cacheIfPattern.Match(ifElseStatement);
+
+			if (match.Success) {
+				var condition = match.Get<Expression>("varv").Single();
+				var bodyAssignment = match.Get<Expression>("body").Single() as AssignmentExpression;
+				if (bodyAssignment == null) return null;
+
+				var variables = new List<Expression>();
+				while (condition is AssignmentExpression) {
+					var ass = condition as AssignmentExpression;
+					variables.Add(ass.Left);
+					condition = ass.Right;
+				}
+				variables.Add(condition);
+
+				if (!variables.All(IsVariableOrDisplayClassProp)) return null;
+
+				var bitmap = new bool[variables.Count];
+				Expression body;
+				do {
+					body = bodyAssignment.Right;
+
+					var vindex = variables.FindIndex(v => v.IsMatch(bodyAssignment.Left));
+					if (vindex < 0) return null; // variables have to be from the same set
+					bitmap[vindex] = true;
+
+					bodyAssignment = body as AssignmentExpression;
+				} while (bodyAssignment != null);
+
+				if (!bitmap.All(b => b)) return null;
+
+				if (!(body is LambdaExpression || body is AnonymousMethodExpression)) return null;
+
+				var uu = variables.SelectMany(FindSameExpressions).Where(rr => !rr.Ancestors.Contains(ifElseStatement)).ToArray();
+				if (uu.Length > 1) return null;
+
+
+				foreach (var id in variables.OfType<IdentifierExpression>()) {
+					PatternStatementTransform.FindVariableDeclaration(id, id.Identifier)?.Remove();
+				}
+				ifElseStatement.Remove();
+
+				foreach (var v in uu) {
+					v.ReplaceWith(body.Clone());
+				}
+			}
+
+			return null;
+		}
+
+		public static IEnumerable<Expression> FindSameExpressions(Expression expr)
+		{
+			var result = new List<Expression>();
+			AstNode node = expr;
+			while (node.Parent != null && !(node is EntityDeclaration)) {
+				FindSameExpressions(result, node.Parent, expr, node);
+				node = node.Parent;
+			}
+			return result;
+		}
+
+		private static void FindSameExpressions(List<Expression> result, AstNode searchIn, Expression expr, AstNode exclude = null)
+		{
+			foreach (var c in searchIn.Children) {
+				if (expr != c && exclude != c && expr.IsMatch(c)) {
+					result.Add(c as Expression);
+				} else if (exclude != c && c.HasChildren) {
+					FindSameExpressions(result, c, expr, exclude);
+				}
+			}
 		}
 
 		void EnsureVariableNameIsAvailable(AstNode currentNode, string name)
@@ -472,13 +584,13 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 			// parameters in child lambdas
 			foreach (ParameterDeclaration pd in currentNode.Descendants.OfType<ParameterDeclaration>())
 				nv.AddExistingName(pd.Name);
-			
+
 			string newName = nv.GetAlternativeName(name);
 			currentlyUsedVariableNames[pos] = newName;
-			
+
 			// find top-most block
 			AstNode topMostBlock = currentNode.Ancestors.OfType<BlockStatement>().LastOrDefault() ?? currentNode;
-			
+
 			// rename identifiers
 			foreach (IdentifierExpression ident in topMostBlock.Descendants.OfType<IdentifierExpression>()) {
 				if (ident.Identifier == name) {

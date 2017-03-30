@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.Tests
 			TestFile(@"..\..\Tests\CheckedUnchecked.cs");
 		}
 		
-		[Test, Ignore("Missing cast on null")]
+		[Test]
 		public void DelegateConstruction()
 		{
 			TestFile(@"..\..\Tests\DelegateConstruction.cs");
