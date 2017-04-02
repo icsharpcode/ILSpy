@@ -120,6 +120,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case MethodAttributes.FamORAssem:
 					return AccessOverlayIcon.ProtectedInternal;
 				case MethodAttributes.Private:
+				case MethodAttributes.ReuseSlot:
 					return AccessOverlayIcon.Private;
 				case MethodAttributes.CompilerControlled:
 					return AccessOverlayIcon.CompilerControlled;
