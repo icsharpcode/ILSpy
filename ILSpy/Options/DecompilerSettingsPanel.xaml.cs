@@ -53,6 +53,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.AnonymousMethods = (bool?)e.Attribute("anonymousMethods") ?? s.AnonymousMethods;
 			s.YieldReturn = (bool?)e.Attribute("yieldReturn") ?? s.YieldReturn;
 			s.AsyncAwait = (bool?)e.Attribute("asyncAwait") ?? s.AsyncAwait;
+			s.AutomaticProperties = (bool?) e.Attribute("automaticProperties") ?? s.AutomaticProperties;
 			s.QueryExpressions = (bool?)e.Attribute("queryExpressions") ?? s.QueryExpressions;
 			s.ExpressionTrees = (bool?)e.Attribute("expressionTrees") ?? s.ExpressionTrees;
 			s.UseDebugSymbols = (bool?)e.Attribute("useDebugSymbols") ?? s.UseDebugSymbols;
@@ -68,6 +69,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("anonymousMethods", s.AnonymousMethods);
 			section.SetAttributeValue("yieldReturn", s.YieldReturn);
 			section.SetAttributeValue("asyncAwait", s.AsyncAwait);
+			section.SetAttributeValue("automaticProperties", s.AutomaticProperties);
 			section.SetAttributeValue("queryExpressions", s.QueryExpressions);
 			section.SetAttributeValue("expressionTrees", s.ExpressionTrees);
 			section.SetAttributeValue("useDebugSymbols", s.UseDebugSymbols);
