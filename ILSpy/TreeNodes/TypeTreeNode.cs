@@ -19,6 +19,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Controls;
+using System.Windows.Documents;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
@@ -200,5 +202,22 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		MemberReference IMemberTreeNode.Member {
 			get { return type; }
 		}
-	}
+
+        TextBlock tooltip;
+
+        public override object ToolTip
+        {
+            get
+            {
+                if (tooltip == null)
+                {
+                    tooltip = new TextBlock();
+                    tooltip.Inlines.Add(new Bold(new Run("Assembly: ")));
+                    tooltip.Inlines.Add(new Run(this.TypeDefinition.Module.Assembly.FullName));
+                }
+
+                return tooltip;
+            }
+        }
+    }
 }
