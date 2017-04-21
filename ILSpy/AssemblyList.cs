@@ -141,7 +141,7 @@ namespace ICSharpCode.ILSpy
 		
 		/// <summary>
 		/// Opens an assembly from disk.
-		/// Returns the existing assembly node if it is already loaded.
+		/// Returns the newly loaded or reloaded (to capture any changes) assembly
 		/// </summary>
 		public LoadedAssembly OpenAssembly(string file, bool isAutoLoaded=false)
 		{
@@ -151,7 +151,10 @@ namespace ICSharpCode.ILSpy
 			
 			foreach (LoadedAssembly asm in this.assemblies) {
 				if (file.Equals(asm.FileName, StringComparison.OrdinalIgnoreCase))
-					return asm;
+				{
+					this.assemblies.Remove(asm);
+                    			break;
+				}
 			}
 			
 			var newAsm = new LoadedAssembly(this, file);
