@@ -37,8 +37,8 @@ namespace ICSharpCode.Decompiler.Ast.Transforms
 				new PatternStatementTransform(context),
 				new ReplaceMethodCallsWithOperators(context),
 				new IntroduceUnsafeModifier(),
-				new AddCheckedBlocks(),
 				new DeclareVariables(context), // should run after most transforms that modify statements
+				new AddCheckedBlocks(),
 				new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
 				new DecimalConstantTransform(),
 				new IntroduceUsingDeclarations(context),
