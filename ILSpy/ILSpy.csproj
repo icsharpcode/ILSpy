@@ -207,6 +207,7 @@
     <Compile Include="TreeNodes\Analyzer\Helpers.cs" />
     <Compile Include="TreeNodes\Analyzer\ScopedWhereUsedAnalyzer.cs" />
     <Compile Include="TreeNodes\BaseTypesEntryNode.cs" />
+    <Compile Include="TreeNodes\CopyFullyQualifiedTypeNameContextMenuEntry.cs" />
     <Compile Include="TreeNodes\DerivedTypesEntryNode.cs" />
     <Compile Include="TreeNodes\FilterResult.cs" />
     <Compile Include="TreeNodes\IMemberTreeNode.cs" />
@@ -412,6 +413,9 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Images\SearchMsdn.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Copy.png" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.Targets" />
 </Project>

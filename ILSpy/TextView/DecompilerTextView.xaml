@@ -8,7 +8,7 @@
 	<Grid>
 		<Border BorderThickness="1,1,0,1" BorderBrush="#FF828790">
 			<Grid>
-				<ae:TextEditor Name="textEditor" FontFamily="Consolas" FontSize="10pt" IsReadOnly="True"
+				<ae:TextEditor Name="textEditor" AutomationProperties.Name="Decompilation"  FontFamily="Consolas" FontSize="10pt" IsReadOnly="True"
 				               Background="{DynamicResource {x:Static SystemColors.InfoBrushKey}}"
 				               Foreground="{DynamicResource {x:Static SystemColors.InfoTextBrushKey}}">
 					<ae:TextEditor.Resources>
