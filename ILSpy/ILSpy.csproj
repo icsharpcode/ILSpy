@@ -169,6 +169,10 @@
       <DependentUpon>DisplaySettingsPanel.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="Options\MiscSettings.cs" />
+    <Compile Include="Options\MiscSettingsPanel.xaml.cs">
+      <DependentUpon>MiscSettingsPanel.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Options\OptionsDialog.xaml.cs">
       <DependentUpon>OptionsDialog.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -315,6 +319,10 @@
     <Page Include="OpenListDialog.xaml" />
     <Page Include="Options\DecompilerSettingsPanel.xaml" />
     <Page Include="Options\DisplaySettingsPanel.xaml" />
+    <Page Include="Options\MiscSettingsPanel.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Options\OptionsDialog.xaml" />
     <Page Include="SearchPane.xaml">
       <DependentUpon>SearchPane.cs</DependentUpon>
