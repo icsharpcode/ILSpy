@@ -170,6 +170,7 @@
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Options\MiscSettings.cs" />
+    <Compile Include="Options\MiscSettingsLoader.cs" />
     <Compile Include="Options\MiscSettingsPanel.xaml.cs">
       <DependentUpon>MiscSettingsPanel.xaml</DependentUpon>
     </Compile>

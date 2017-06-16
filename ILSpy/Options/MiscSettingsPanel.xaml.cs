@@ -1,17 +1,4 @@
-﻿using ICSharpCode.Decompiler;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
+﻿using System.Windows.Controls;
 using System.Xml.Linq;
 
 namespace ICSharpCode.ILSpy.Options
@@ -29,15 +16,7 @@ namespace ICSharpCode.ILSpy.Options
 
 		public void Load(ILSpySettings settings)
 		{
-			this.DataContext = LoadDecompilerSettings(settings);
-		}
-
-		private MiscSettings LoadDecompilerSettings(ILSpySettings settings)
-		{
-			XElement e = settings["MiscSettings"];
-			MiscSettings s = new MiscSettings();
-			s.AllowMultipleInstances = (bool?)e.Attribute("allowMultipleInstance") ?? s.AllowMultipleInstances;
-			return s;
+			this.DataContext = MiscSettingsInstance.Current.LoadMiscSettings(settings);
 		}
 
 		public void Save(XElement root)
