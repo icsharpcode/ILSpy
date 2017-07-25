@@ -1671,7 +1671,7 @@ namespace ICSharpCode.Decompiler.Ast
 			if (member.DeclaringType.BaseType != null) {
 				var baseTypeRef = member.DeclaringType.BaseType;
 				while (baseTypeRef != null) {
-					var baseType = baseTypeRef.Resolve();
+					var baseType = baseTypeRef.ResolveOrThrow();
 					if (baseType.HasProperties && AnyIsHiddenBy(baseType.Properties, member, m => !m.IsIndexer()))
 						return true;
 					if (baseType.HasEvents && AnyIsHiddenBy(baseType.Events, member))
