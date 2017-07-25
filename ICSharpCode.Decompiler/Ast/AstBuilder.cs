@@ -364,7 +364,7 @@ namespace ICSharpCode.Decompiler.Ast
 					astType.AddChild(ConvertType(typeDef.BaseType), Roles.BaseType);
 				}
 				foreach (var i in typeDef.Interfaces)
-					astType.AddChild(ConvertType(i), Roles.BaseType);
+					astType.AddChild(ConvertType(i.InterfaceType), Roles.BaseType);
 				
 				AddTypeMembers(astType, typeDef);
 
@@ -1671,7 +1671,7 @@ namespace ICSharpCode.Decompiler.Ast
 			if (member.DeclaringType.BaseType != null) {
 				var baseTypeRef = member.DeclaringType.BaseType;
 				while (baseTypeRef != null) {
-					var baseType = baseTypeRef.ResolveOrThrow();
+					var baseType = baseTypeRef.Resolve();
 					if (baseType.HasProperties && AnyIsHiddenBy(baseType.Properties, member, m => !m.IsIndexer()))
 						return true;
 					if (baseType.HasEvents && AnyIsHiddenBy(baseType.Events, member))

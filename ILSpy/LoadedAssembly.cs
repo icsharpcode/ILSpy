@@ -18,10 +18,12 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using ICSharpCode.ILSpy.Options;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy
 {
@@ -142,13 +144,12 @@ namespace ICSharpCode.ILSpy
 			if (!module.HasDebugHeader) {
 				return;
 			}
-			byte[] headerBytes;
-			var debugHeader = module.GetDebugHeader(out headerBytes);
-			if (debugHeader.Type != 2) {
+			var debugHeader = module.GetDebugHeader().Entries.FirstOrDefault();
+			if (debugHeader?.Directory.Type != ImageDebugType.CodeView) {
 				// the debug type is not IMAGE_DEBUG_TYPE_CODEVIEW
 				return;
 			}
-			if (debugHeader.MajorVersion != 0 || debugHeader.MinorVersion != 0) {
+			if (debugHeader.Directory.MajorVersion != 0 || debugHeader.Directory.MinorVersion != 0) {
 				// the PDB type is not compatible with PdbReaderProvider. It is probably a Portable PDB
 				return;
 			}
@@ -220,6 +221,10 @@ namespace ICSharpCode.ILSpy
 			{
 				var node = parent.LookupReferencedAssembly(fullName);
 				return node != null ? node.AssemblyDefinition : null;
+			}
+
+			public void Dispose()
+			{
 			}
 		}
 		

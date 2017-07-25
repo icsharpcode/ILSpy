@@ -539,7 +539,7 @@ namespace ICSharpCode.Decompiler.ILAst
 				if (!optimize || varDef.IsPinned || uses.Any(b => b.VariablesBefore[varDef.Index].UnknownDefinition || (b.Code == ILCode.Ldloca && !IsDeterministicLdloca(b)))) {				
 					newVars = new List<VariableInfo>(1) { new VariableInfo() {
 						Variable = new ILVariable() {
-							Name = string.IsNullOrEmpty(varDef.Name) ? "var_" + varDef.Index : varDef.Name,
+							Name = varDef.ToString(),
 							Type = varDef.IsPinned ? ((PinnedType)varDef.VariableType).ElementType : varDef.VariableType,
 							OriginalVariable = varDef
 						},
@@ -550,7 +550,7 @@ namespace ICSharpCode.Decompiler.ILAst
 					// Create a new variable for each definition
 					newVars = defs.Select(def => new VariableInfo() {
 						Variable = new ILVariable() {
-							Name = (string.IsNullOrEmpty(varDef.Name) ? "var_" + varDef.Index : varDef.Name) + "_" + def.Offset.ToString("X2"),
+							Name = varDef.ToString() + "_" + def.Offset.ToString("X2"),
 							Type = varDef.VariableType,
 							OriginalVariable = varDef
 					    },
