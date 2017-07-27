@@ -39,13 +39,16 @@ namespace ICSharpCode.Decompiler.Tests
 		void Run(string compiledFile, string expectedOutputFile)
 		{
 			string expectedOutput = File.ReadAllText(Path.Combine(path, expectedOutputFile));
-			var assembly = AssemblyDefinition.ReadAssembly(Path.Combine(path, compiledFile));
-			AstBuilder decompiler = new AstBuilder(new DecompilerContext(assembly.MainModule));
-			decompiler.AddAssembly(assembly);
-			new Helpers.RemoveCompilerAttribute().Run(decompiler.SyntaxTree);
-			StringWriter output = new StringWriter();
-			decompiler.GenerateCode(new PlainTextOutput(output));
-			CodeAssert.AreEqual(expectedOutput, output.ToString());
+			using (var assembly = AssemblyDefinition.ReadAssembly(Path.Combine(path, compiledFile)))
+			{
+				var decompiler = new AstBuilder(new DecompilerContext(assembly.MainModule));
+				decompiler.AddAssembly(assembly);
+
+				new Helpers.RemoveCompilerAttribute().Run(decompiler.SyntaxTree);
+				StringWriter output = new StringWriter();
+				decompiler.GenerateCode(new PlainTextOutput(output));
+				CodeAssert.AreEqual(expectedOutput, output.ToString());
+			}
 		}
 	}
 }

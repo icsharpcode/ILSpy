@@ -107,13 +107,15 @@ namespace ILSpy.BamlDecompiler.Tests
 		void RunTest(string name, string asmPath, string sourcePath)
 		{
 			var resolver = new DefaultAssemblyResolver();
-			var assembly = AssemblyDefinition.ReadAssembly(asmPath, new ReaderParameters { AssemblyResolver = resolver });
-			Resource res = assembly.MainModule.Resources.First();
-			Stream bamlStream = LoadBaml(res, name + ".baml");
-			Assert.IsNotNull(bamlStream);
-			XDocument document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream);
+			using (var assembly = AssemblyDefinition.ReadAssembly(asmPath, new ReaderParameters {AssemblyResolver = resolver}))
+			{
+				Resource res = assembly.MainModule.Resources.First();
+				Stream bamlStream = LoadBaml(res, name + ".baml");
+				Assert.IsNotNull(bamlStream);
+				XDocument document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream);
 
-			CodeAssert.AreEqual(File.ReadAllText(sourcePath), document.ToString());
+				CodeAssert.AreEqual(File.ReadAllText(sourcePath), document.ToString());
+			}
 		}
 		
 		Stream LoadBaml(Resource res, string name)

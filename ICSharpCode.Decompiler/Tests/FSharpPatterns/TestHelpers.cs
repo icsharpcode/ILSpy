@@ -79,6 +79,7 @@ namespace ICSharpCode.Decompiler.Tests.FSharpPatterns
 			}
 			finally
 			{
+				module.Dispose();
 				File.Delete(asmFilePath);
 				File.Delete(Path.ChangeExtension(asmFilePath, ".pdb"));
 			}

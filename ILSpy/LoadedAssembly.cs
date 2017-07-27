@@ -115,6 +115,7 @@ namespace ICSharpCode.ILSpy
 			// runs on background thread
 			ReaderParameters p = new ReaderParameters();
 			p.AssemblyResolver = new MyAssemblyResolver(this);
+			p.InMemory = true;
 
 			if (stream != null)
 			{

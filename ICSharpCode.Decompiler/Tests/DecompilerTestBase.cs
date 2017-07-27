@@ -77,7 +77,7 @@ namespace ICSharpCode.Decompiler.Tests
 					}
 					throw new Exception(b.ToString());
 				}
-				return AssemblyDefinition.ReadAssembly(results.PathToAssembly);
+				return AssemblyDefinition.ReadAssembly(results.PathToAssembly, new ReaderParameters { InMemory = true });
 			}
 			finally
 			{
