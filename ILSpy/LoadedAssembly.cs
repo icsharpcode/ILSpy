@@ -142,27 +142,11 @@ namespace ICSharpCode.ILSpy
 		
 		private void LoadSymbols(ModuleDefinition module)
 		{
-			if (!module.HasDebugHeader) {
-				return;
-			}
-			var debugHeader = module.GetDebugHeader().Entries.FirstOrDefault();
-			if (debugHeader?.Directory.Type != ImageDebugType.CodeView) {
-				// the debug type is not IMAGE_DEBUG_TYPE_CODEVIEW
-				return;
-			}
-			if (debugHeader.Directory.MajorVersion != 0 || debugHeader.Directory.MinorVersion != 0) {
-				// the PDB type is not compatible with PdbReaderProvider. It is probably a Portable PDB
-				return;
-			}
-
-			// search for pdb in same directory as dll
-			string pdbName = Path.Combine(Path.GetDirectoryName(fileName), Path.GetFileNameWithoutExtension(fileName) + ".pdb");
-			if (File.Exists(pdbName)) {
-				using (Stream s = File.OpenRead(pdbName)) {
-					module.ReadSymbols(new Mono.Cecil.Pdb.PdbReaderProvider().GetSymbolReader(module, s));
-				}
-				return;
-			}
+			var reader = new DefaultSymbolReaderProvider(false).GetSymbolReader(module, module.FileName);
+			if (reader != null)
+			{
+				module.ReadSymbols(reader);
+ 			} 
 			
 			// TODO: use symbol cache, get symbols from microsoft
 		}
