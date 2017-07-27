@@ -373,7 +373,8 @@ namespace ICSharpCode.Decompiler
 
 		public static string GetName(this VariableDefinition variable, MethodDebugInformation methodDebugInformation)
 		{
-			if (methodDebugInformation != null && methodDebugInformation.TryGetName(variable, out string name)) {
+			string name;
+			if (methodDebugInformation != null && methodDebugInformation.TryGetName(variable, out name)) {
 				return name;
 			}
 
