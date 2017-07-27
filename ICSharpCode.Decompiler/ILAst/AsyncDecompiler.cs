@@ -34,8 +34,8 @@ namespace ICSharpCode.Decompiler.ILAst
 		{
 			if (!(type.DeclaringType != null && type.IsCompilerGenerated()))
 				return false;
-			foreach (TypeReference i in type.Interfaces) {
-				if (i.Namespace == "System.Runtime.CompilerServices" && i.Name == "IAsyncStateMachine")
+			foreach (var i in type.Interfaces) {
+				if (i.InterfaceType.Namespace == "System.Runtime.CompilerServices" && i.InterfaceType.Name == "IAsyncStateMachine")
 					return true;
 			}
 			return false;

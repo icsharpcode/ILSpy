@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteOffsetReference(writer, exceptionHandler.HandlerEnd);
 		}
 		
-		public static void WriteTo(this Instruction instruction, ITextOutput writer)
+		public static void WriteTo(this Instruction instruction, ITextOutput writer, MethodDefinition methodDefinition = null)
 		{
 			writer.WriteDefinition(CecilExtensions.OffsetToString(instruction.Offset), instruction);
 			writer.Write(": ");
@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					else if (instruction.Operand is FieldReference)
 						writer.Write("field ");
 				}
-				WriteOperand(writer, instruction.Operand);
+				WriteOperand(writer, instruction.Operand, methodDefinition?.DebugInformation);
 			}
 		}
 		
@@ -298,7 +298,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 		
-		public static void WriteOperand(ITextOutput writer, object operand)
+		public static void WriteOperand(ITextOutput writer, object operand, MethodDebugInformation methodDebugInformation = null)
 		{
 			if (operand == null)
 				throw new ArgumentNullException("operand");
@@ -317,10 +317,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			
 			VariableReference variableRef = operand as VariableReference;
 			if (variableRef != null) {
-				if (string.IsNullOrEmpty(variableRef.Name))
-					writer.WriteReference(variableRef.Index.ToString(), variableRef);
-				else
-					writer.WriteReference(Escape(variableRef.Name), variableRef);
+				var variableDef = variableRef.Resolve();
+				var variableName = variableDef?.GetName(methodDebugInformation) ?? variableRef.ToString();
+				writer.WriteReference(Escape(variableName), variableRef);
 				return;
 			}
 			

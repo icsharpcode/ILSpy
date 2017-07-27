@@ -18,10 +18,12 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using ICSharpCode.ILSpy.Options;
 using Mono.Cecil;
+using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy
 {
@@ -113,6 +115,7 @@ namespace ICSharpCode.ILSpy
 			// runs on background thread
 			ReaderParameters p = new ReaderParameters();
 			p.AssemblyResolver = new MyAssemblyResolver(this);
+			p.InMemory = true;
 
 			if (stream != null)
 			{
@@ -139,29 +142,12 @@ namespace ICSharpCode.ILSpy
 		
 		private void LoadSymbols(ModuleDefinition module)
 		{
-			if (!module.HasDebugHeader) {
-				return;
-			}
-			byte[] headerBytes;
-			var debugHeader = module.GetDebugHeader(out headerBytes);
-			if (debugHeader.Type != 2) {
-				// the debug type is not IMAGE_DEBUG_TYPE_CODEVIEW
-				return;
-			}
-			if (debugHeader.MajorVersion != 0 || debugHeader.MinorVersion != 0) {
-				// the PDB type is not compatible with PdbReaderProvider. It is probably a Portable PDB
-				return;
+			using (var reader = new DefaultSymbolReaderProvider(false).GetSymbolReader(module, module.FileName)) {
+				if (reader != null) {
+					module.ReadSymbols(reader);
+				}
 			}
 
-			// search for pdb in same directory as dll
-			string pdbName = Path.Combine(Path.GetDirectoryName(fileName), Path.GetFileNameWithoutExtension(fileName) + ".pdb");
-			if (File.Exists(pdbName)) {
-				using (Stream s = File.OpenRead(pdbName)) {
-					module.ReadSymbols(new Mono.Cecil.Pdb.PdbReaderProvider().GetSymbolReader(module, s));
-				}
-				return;
-			}
-			
 			// TODO: use symbol cache, get symbols from microsoft
 		}
 		
@@ -220,6 +206,10 @@ namespace ICSharpCode.ILSpy
 			{
 				var node = parent.LookupReferencedAssembly(fullName);
 				return node != null ? node.AssemblyDefinition : null;
+			}
+
+			public void Dispose()
+			{
 			}
 		}
 		

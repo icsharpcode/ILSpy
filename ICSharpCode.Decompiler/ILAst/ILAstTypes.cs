@@ -447,7 +447,7 @@ namespace ICSharpCode.Decompiler.ILAst
 					output.Write("::");
 					output.WriteReference(field.Name, field);
 				} else {
-					DisassemblerHelpers.WriteOperand(output, Operand);
+					DisassemblerHelpers.WriteOperand(output, Operand, null); // TODO: debug info?
 				}
 				first = false;
 			}

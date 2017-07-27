@@ -364,7 +364,7 @@ namespace ICSharpCode.Decompiler.Ast
 					astType.AddChild(ConvertType(typeDef.BaseType), Roles.BaseType);
 				}
 				foreach (var i in typeDef.Interfaces)
-					astType.AddChild(ConvertType(i), Roles.BaseType);
+					astType.AddChild(ConvertType(i.InterfaceType), Roles.BaseType);
 				
 				AddTypeMembers(astType, typeDef);
 

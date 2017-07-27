@@ -94,7 +94,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			return IsUsedInTypeReference(type)
 				   || TypeMatches(type.BaseType)
-				   || IsUsedInTypeReferences(type.Interfaces);
+				   || IsUsedInTypeReferences(type.Interfaces.Select(c => c.InterfaceType));
 		}
 
 		private bool IsUsedInFieldReference(FieldReference field)

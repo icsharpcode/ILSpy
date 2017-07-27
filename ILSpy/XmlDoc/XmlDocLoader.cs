@@ -54,9 +54,9 @@ namespace ICSharpCode.ILSpy.XmlDoc
 			lock (cache) {
 				XmlDocumentationProvider xmlDoc;
 				if (!cache.TryGetValue(module, out xmlDoc)) {
-					string xmlDocFile = LookupLocalizedXmlDoc(module.FullyQualifiedName);
+					string xmlDocFile = LookupLocalizedXmlDoc(module.FileName);
 					if (xmlDocFile == null) {
-						xmlDocFile = FindXmlDocumentation(Path.GetFileName(module.FullyQualifiedName), module.Runtime);
+						xmlDocFile = FindXmlDocumentation(Path.GetFileName(module.FileName), module.Runtime);
 					}
 					if (xmlDocFile != null) {
 						xmlDoc = new XmlDocumentationProvider(xmlDocFile);

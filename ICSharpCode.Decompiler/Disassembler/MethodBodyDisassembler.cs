@@ -66,9 +66,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 				foreach (var v in method.Body.Variables) {
 					output.WriteDefinition("[" + v.Index + "] ", v);
 					v.VariableType.WriteTo(output);
-					if (!string.IsNullOrEmpty(v.Name)) {
+					string vName;
+					if (method.DebugInformation.TryGetName(v, out vName)) {
 						output.Write(' ');
-						output.Write(DisassemblerHelpers.Escape(v.Name));
+						output.Write(DisassemblerHelpers.Escape(vName));
 					}
 					if (v.Index + 1 < method.Body.Variables.Count)
 						output.Write(',');
@@ -82,11 +83,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (detectControlStructure && body.Instructions.Count > 0) {
 				Instruction inst = body.Instructions[0];
 				HashSet<int> branchTargets = GetBranchTargets(body.Instructions);
-				WriteStructureBody(new ILStructure(body), branchTargets, ref inst, debugSymbols, method.Body.CodeSize);
+				WriteStructureBody(method, new ILStructure(body), branchTargets, ref inst, debugSymbols, method.Body.CodeSize);
 			} else {
 				foreach (var inst in method.Body.Instructions) {
 					var startLocation = output.Location;
-					inst.WriteTo(output);
+					inst.WriteTo(output, method);
 					
 					if (debugSymbols != null) {
 						// add IL code mappings - used in debugger
@@ -173,7 +174,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Indent();
 		}
 		
-		void WriteStructureBody(ILStructure s, HashSet<int> branchTargets, ref Instruction inst, MethodDebugSymbols debugSymbols, int codeSize)
+		void WriteStructureBody(MethodDefinition method, ILStructure s, HashSet<int> branchTargets, ref Instruction inst, MethodDebugSymbols debugSymbols, int codeSize)
 		{
 			bool isFirstInstructionInStructure = true;
 			bool prevInstructionWasBranch = false;
@@ -183,14 +184,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 				if (childIndex < s.Children.Count && s.Children[childIndex].StartOffset <= offset && offset < s.Children[childIndex].EndOffset) {
 					ILStructure child = s.Children[childIndex++];
 					WriteStructureHeader(child);
-					WriteStructureBody(child, branchTargets, ref inst, debugSymbols, codeSize);
+					WriteStructureBody(method, child, branchTargets, ref inst, debugSymbols, codeSize);
 					WriteStructureFooter(child);
 				} else {
 					if (!isFirstInstructionInStructure && (prevInstructionWasBranch || branchTargets.Contains(offset))) {
 						output.WriteLine(); // put an empty line after branches, and in front of branch targets
 					}
 					var startLocation = output.Location;
-					inst.WriteTo(output);
+					inst.WriteTo(output, method);
 					
 					// add IL code mappings - used in debugger
 					if (debugSymbols != null) {

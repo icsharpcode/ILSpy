@@ -852,7 +852,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write("implements ");
 					else
 						output.Write("           ");
-					type.Interfaces[index].WriteTo(output, ILNameSyntax.TypeName);
+					type.Interfaces[index].InterfaceType.WriteTo(output, ILNameSyntax.TypeName);
 				}
 				output.WriteLine();
 				output.Unindent();
