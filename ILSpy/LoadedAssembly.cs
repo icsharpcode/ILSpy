@@ -142,12 +142,12 @@ namespace ICSharpCode.ILSpy
 		
 		private void LoadSymbols(ModuleDefinition module)
 		{
-			var reader = new DefaultSymbolReaderProvider(false).GetSymbolReader(module, module.FileName);
-			if (reader != null)
-			{
-				module.ReadSymbols(reader);
- 			} 
-			
+			using (var reader = new DefaultSymbolReaderProvider(false).GetSymbolReader(module, module.FileName)) {
+				if (reader != null) {
+					module.ReadSymbols(reader);
+				}
+			}
+
 			// TODO: use symbol cache, get symbols from microsoft
 		}
 		
