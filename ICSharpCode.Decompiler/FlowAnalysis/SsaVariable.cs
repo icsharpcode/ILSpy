@@ -42,9 +42,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			this.Parameter = p;
 		}
 		
-		public SsaVariable(VariableDefinition v)
+		public SsaVariable(VariableDefinition v, MethodDebugInformation methodDebugInformation)
 		{
-			this.Name = v.ToString();
+			this.Name = v.GetName(methodDebugInformation);
 			this.Variable = v;
 		}
 		
