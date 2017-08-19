@@ -23,6 +23,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Remove <c>HasInitialValue</c> from locals that are definitely assigned before every use
 	/// (=the initial value is a dead store).
+	/// 
+	/// In yield return generators, additionally removes dead 'V = null;' assignments.
 	/// </summary>
 	public class RemoveDeadVariableInit : IILTransform
 	{
@@ -33,6 +35,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var v in function.Variables) {
 				if (v.Kind != VariableKind.Parameter && !visitor.IsPotentiallyUsedUninitialized(v)) {
 					v.HasInitialValue = false;
+				}
+			}
+			if (function.IsIterator) {
+				foreach (var v in function.Variables) {
+					if (v.Kind != VariableKind.Parameter && v.StoreCount == 1 && v.LoadCount == 0 && v.AddressCount == 0) {
+						if (v.StoreInstructions[0] is StLoc stloc && stloc.Value.MatchLdNull() && stloc.Parent is Block block) {
+							block.Instructions.Remove(stloc);
+						}
+					}
 				}
 			}
 		}

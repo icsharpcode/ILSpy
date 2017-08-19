@@ -126,6 +126,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			PrintFinallyMethodStateRanges(newBody);
 
+			// Add state machine field meta-data to parameter ILVariables.
+			foreach (var (f, p) in fieldToParameterMap) {
+				p.StateMachineField = f;
+			}
+
 			context.Step("Delete unreachable blocks", function);
 			// Note: because this only deletes blocks outright, the 'stateChanges' entries remain valid
 			// (though some may point to now-deleted blocks)
