@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 		
-		bool yieldReturn = false;
+		bool yieldReturn = true;
 		
 		/// <summary>
 		/// Decompile enumerators.

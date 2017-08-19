@@ -143,8 +143,14 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
 
+			var preprocessorSymbols = new List<string>();
+			if (flags.HasFlag(CompilerOptions.UseDebug)) {
+				preprocessorSymbols.Add("DEBUG");
+			}
+
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
-				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), path: f));
+				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray());
+				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
 				var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
 					syntaxTrees, defaultReferences.Value,
 					new CSharpCompilationOptions(
@@ -166,10 +172,17 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 				return results;
 			} else {
+				preprocessorSymbols.Add("LEGACY_CSC");
 				var provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 				CompilerParameters options = new CompilerParameters();
 				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
-				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-") + (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "") + (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
+				options.CompilerOptions = "/unsafe /o" + (flags.HasFlag(CompilerOptions.Optimize) ? "+" : "-");
+				options.CompilerOptions += (flags.HasFlag(CompilerOptions.UseDebug) ? " /debug" : "");
+				options.CompilerOptions += (flags.HasFlag(CompilerOptions.Force32Bit) ? " /platform:anycpu32bitpreferred" : "");
+				if (preprocessorSymbols.Count > 0) {
+					options.CompilerOptions += " /d:" + string.Join(";", preprocessorSymbols);
+				}
+
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
 				if (results.Errors.Cast<CompilerError>().Any(e => !e.IsWarning)) {

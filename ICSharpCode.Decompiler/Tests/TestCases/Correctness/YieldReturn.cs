@@ -19,10 +19,60 @@
 using System;
 using System.Collections.Generic;
 
-namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
+namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
 	public class YieldReturnTest
 	{
+		static void Main()
+		{
+			Print("SimpleYieldReturn", SimpleYieldReturn().GetEnumerator());
+			Print("SimpleYieldReturnEnumerator", SimpleYieldReturnEnumerator());
+			Print("YieldReturnParameters",
+				new YieldReturnTest { fieldOnThis = 1 }.YieldReturnParameters(2).GetEnumerator());
+			Print("YieldReturnParametersEnumerator",
+				new YieldReturnTest { fieldOnThis = 1 }.YieldReturnParametersEnumerator(2));
+			Print("YieldReturnInLoop", YieldReturnInLoop().GetEnumerator());
+			Print("YieldReturnWithTryFinally", YieldReturnWithTryFinally().GetEnumerator());
+			Print("YieldReturnInLock1", YieldReturnInLock1(new object()).GetEnumerator());
+			Print("YieldReturnInLock2", YieldReturnInLock2(new object()).GetEnumerator());
+			Print("YieldReturnWithNestedTryFinally(false)", YieldReturnWithNestedTryFinally(false).GetEnumerator());
+			Print("YieldReturnWithNestedTryFinally(true)", YieldReturnWithNestedTryFinally(true).GetEnumerator());
+			Print("YieldReturnWithTwoNonNestedFinallyBlocks", YieldReturnWithTwoNonNestedFinallyBlocks(SimpleYieldReturn()).GetEnumerator());
+			// TODO: check anon methods
+			Print("GetEvenNumbers", GetEvenNumbers(3).GetEnumerator());
+			Print("YieldChars", YieldChars.GetEnumerator());
+			Print("ExceptionHandling", ExceptionHandling().GetEnumerator());
+			Print("YieldBreakInCatch", YieldBreakInCatch().GetEnumerator());
+			Print("YieldBreakInCatchInTryFinally", YieldBreakInCatchInTryFinally().GetEnumerator());
+			Print("YieldBreakInTryCatchInTryFinally", YieldBreakInTryCatchInTryFinally().GetEnumerator());
+			Print("YieldBreakInTryFinallyInTryFinally(false)", YieldBreakInTryFinallyInTryFinally(false).GetEnumerator());
+			Print("YieldBreakInTryFinallyInTryFinally(true)", YieldBreakInTryFinallyInTryFinally(true).GetEnumerator());
+			try {
+				Print("UnconditionalThrowInTryFinally()", UnconditionalThrowInTryFinally().GetEnumerator());
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			}
+			Print("NestedTryFinallyStartingOnSamePosition", NestedTryFinallyStartingOnSamePosition().GetEnumerator());
+			Print("TryFinallyWithTwoExitPoints(false)", TryFinallyWithTwoExitPoints(false).GetEnumerator());
+			Print("TryFinallyWithTwoExitPoints(true)", TryFinallyWithTwoExitPoints(true).GetEnumerator());
+#if !LEGACY_CSC
+			Print("YieldBreakInNestedTryFinally()", YieldBreakInNestedTryFinally().GetEnumerator());
+			Print("TryFinallyWithTwoExitPointsInNestedTry(false)", TryFinallyWithTwoExitPointsInNestedTry(false).GetEnumerator());
+			Print("TryFinallyWithTwoExitPointsInNestedTry(true)", TryFinallyWithTwoExitPointsInNestedTry(true).GetEnumerator());
+			Print("TryFinallyWithTwoExitPointsInNestedCatch(false)", TryFinallyWithTwoExitPointsInNestedCatch(false).GetEnumerator());
+			Print("TryFinallyWithTwoExitPointsInNestedCatch(true)", TryFinallyWithTwoExitPointsInNestedCatch(true).GetEnumerator());
+#endif
+			Print("GenericYield<int>()", GenericYield<int>().GetEnumerator());
+		}
+
+		static void Print<T>(string name, IEnumerator<T> enumerator)
+		{
+			Console.WriteLine(name + ": Test start");
+			while (enumerator.MoveNext()) {
+				Console.WriteLine(name + ": " + enumerator.Current);
+			}
+		}
+
 		int fieldOnThis;
 
 		public static IEnumerable<string> SimpleYieldReturn()
@@ -98,8 +148,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					Console.WriteLine("Within inner try - 1");
 					yield return "Within inner try";
 					Console.WriteLine("Within inner try - 2");
-					if (breakInMiddle)
+					if (breakInMiddle) {
+						Console.WriteLine("Breaking...");
 						yield break;
+					}
 					Console.WriteLine("End of inner try - 1");
 					yield return "End of inner try";
 					Console.WriteLine("End of inner try - 2");
@@ -162,11 +214,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public static IEnumerable<char> YieldChars()
+		public static IEnumerable<char> YieldChars
 		{
-			yield return 'a';
-			yield return 'b';
-			yield return 'c';
+			get {
+				yield return 'a';
+				yield return 'b';
+				yield return 'c';
+			}
 		}
 
 
@@ -202,7 +256,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			yield return 1;
 		}
-
+		
 		public static IEnumerable<int> YieldBreakInCatchInTryFinally()
 		{
 			try {
@@ -211,6 +265,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					Console.WriteLine("In Try");
 				} catch {
 					// yield return is not allowed in catch, but yield break is
+					// Note that pre-roslyn, this code triggers a compiler bug:
+					// If the finally block throws an exception, it ends up getting
+					// called a second time.
 					yield break;
 				}
 				yield return 1;
@@ -225,7 +282,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				yield return 0;
 				try {
 					Console.WriteLine("In Try");
-					yield break;
+					yield break; // same compiler bug as in YieldBreakInCatchInTryFinally
 				} catch {
 					Console.WriteLine("Catch");
 				}
@@ -242,7 +299,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				try {
 					Console.WriteLine("In Try");
 					if (b)
-						yield break;
+						yield break; // same compiler bug as in YieldBreakInCatchInTryFinally
 				} finally {
 					Console.WriteLine("Inner Finally");
 				}
@@ -281,7 +338,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static IEnumerable<int> TryFinallyWithTwoExitPoints(bool b)
 		{
-			// The first user IL instruction is already in 2 nested try blocks.
+			// Uses goto for multiple non-exceptional exits out of try-finally.
 			try {
 				if (b) {
 					yield return 1;
@@ -300,9 +357,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("Exit2");
 		}
 
+#if !LEGACY_CSC
+		public static IEnumerable<int> YieldBreakInNestedTryFinally()
+		{
+			try {
+				yield return 1;
+				try {
+					// Compiler bug: pre-Roslyn, the finally blocks will execute in the wrong order
+					yield break;
+				} finally {
+					Console.WriteLine("Inner Finally");
+				}
+			} finally {
+				Console.WriteLine("Outer Finally");
+			}
+		}
+
+		// Legacy csc has a compiler bug with this type of code:
+		// If the goto statements triggers a finally block, and the finally block throws an exception,
+		// that exception gets caught by the catch block.
 		public static IEnumerable<int> TryFinallyWithTwoExitPointsInNestedTry(bool b)
 		{
-			// The first user IL instruction is already in 2 nested try blocks.
 			try {
 				yield return 1;
 				try {
@@ -344,6 +419,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			yield break;
 			exit2:
 			Console.WriteLine("Exit2");
+		}
+#endif
+
+		public static IEnumerable<T> GenericYield<T>() where T : new()
+		{
+			T val = new T();
+			for (int i = 0; i < 3; i++) {
+				yield return val;
+			}
 		}
 	}
 }

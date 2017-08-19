@@ -631,6 +631,25 @@ namespace ICSharpCode.Decompiler.CSharp
 			AddDefinesForConditionalAttributes(function);
 			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method, function);
 			entityDecl.AddChild(statementBuilder.ConvertAsBlock(function.Body), Roles.Body);
+
+			if (function.IsIterator) {
+				RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IteratorStateMachineAttribute"));
+			}
+		}
+
+		void RemoveAttribute(EntityDeclaration entityDecl, FullTypeName attrName)
+		{
+			foreach (var section in entityDecl.Attributes) {
+				foreach (var attr in section.Attributes) {
+					var symbol = attr.Type.GetSymbol();
+					if (symbol is ITypeDefinition td && td.FullTypeName == attrName) {
+						attr.Remove();
+					}
+				}
+				if (section.Attributes.Count == 0) {
+					section.Remove();
+				}
+			}
 		}
 
 		void AddDefinesForConditionalAttributes(ILFunction function)

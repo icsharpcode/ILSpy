@@ -60,7 +60,23 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// bool: State != Constant
 		/// </summary>
-		StateInEquals
+		StateInEquals,
+		/// <summary>
+		/// bool: State &lt; Constant
+		/// </summary>
+		StateLessThan,
+		/// <summary>
+		/// bool: State &lt;= Constant
+		/// </summary>
+		StateLessEqual,
+		/// <summary>
+		/// bool: State &gt; Constant
+		/// </summary>
+		StateGreaterThan,
+		/// <summary>
+		/// bool: State &gt;= Constant
+		/// </summary>
+		StateGreaterEqual
 	}
 
 	struct SymbolicValue
@@ -143,16 +159,34 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return new SymbolicValue(SymbolicValueType.StateEquals, unchecked(right.Constant - left.Constant));
 				else if (comp.Kind == ComparisonKind.Inequality)
 					return new SymbolicValue(SymbolicValueType.StateInEquals, unchecked(right.Constant - left.Constant));
+				else if (comp.Kind == ComparisonKind.LessThan && left.Constant == 0)
+					return new SymbolicValue(SymbolicValueType.StateLessThan, right.Constant);
+				else if (comp.Kind == ComparisonKind.LessThanOrEqual && left.Constant == 0)
+					return new SymbolicValue(SymbolicValueType.StateLessEqual, right.Constant);
+				else if (comp.Kind == ComparisonKind.GreaterThan && left.Constant == 0)
+					return new SymbolicValue(SymbolicValueType.StateGreaterThan, right.Constant);
+				else if (comp.Kind == ComparisonKind.GreaterThanOrEqual && left.Constant == 0)
+					return new SymbolicValue(SymbolicValueType.StateGreaterEqual, right.Constant);
 				else
 					return Failed;
 			} else if (inst is LogicNot logicNot) {
 				SymbolicValue val = Eval(logicNot.Argument).AsBool();
-				if (val.Type == SymbolicValueType.StateEquals)
-					return new SymbolicValue(SymbolicValueType.StateInEquals, val.Constant);
-				else if (val.Type == SymbolicValueType.StateInEquals)
-					return new SymbolicValue(SymbolicValueType.StateEquals, val.Constant);
-				else
-					return Failed;
+				switch (val.Type) {
+					case SymbolicValueType.StateEquals:
+						return new SymbolicValue(SymbolicValueType.StateInEquals, val.Constant);
+					case SymbolicValueType.StateInEquals:
+						return new SymbolicValue(SymbolicValueType.StateEquals, val.Constant);
+					case SymbolicValueType.StateLessThan:
+						return new SymbolicValue(SymbolicValueType.StateGreaterEqual, val.Constant);
+					case SymbolicValueType.StateLessEqual:
+						return new SymbolicValue(SymbolicValueType.StateGreaterThan, val.Constant);
+					case SymbolicValueType.StateGreaterThan:
+						return new SymbolicValue(SymbolicValueType.StateLessEqual, val.Constant);
+					case SymbolicValueType.StateGreaterEqual:
+						return new SymbolicValue(SymbolicValueType.StateLessThan, val.Constant);
+					default:
+						return Failed;
+				}
 			} else {
 				return Failed;
 			}

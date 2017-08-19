@@ -221,6 +221,19 @@ namespace ICSharpCode.Decompiler.IL
 				context.Stepper.EndGroup();
 			}
 		}
+
+		/// <summary>
+		/// Gets the predecessor of the given instruction.
+		/// Returns null if inst.Parent is not a block.
+		/// </summary>
+		public static ILInstruction GetPredecessor(ILInstruction inst)
+		{
+			if (inst.Parent is Block block && inst.ChildIndex > 0) {
+				return block.Instructions[inst.ChildIndex - 1];
+			} else {
+				return null;
+			}
+		}
 	}
 	
 	public enum BlockType {

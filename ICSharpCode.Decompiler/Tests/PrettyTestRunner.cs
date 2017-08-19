@@ -102,13 +102,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			Run(cscOptions: cscOptions);
 		}
-
-		[Test, Ignore("Not implemented")]
-		public void YieldReturnTest([ValueSource("defaultOptions")] CompilerOptions cscOptions)
-		{
-			Run(cscOptions: cscOptions);
-		}
-
+		
 		[Test, Ignore("Not fully working yet")]
 		public void Loops([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{

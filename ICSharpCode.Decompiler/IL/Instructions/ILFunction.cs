@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 		}
 
-		protected void CloneVariables()
+		void CloneVariables()
 		{
 			throw new NotImplementedException();
 		}

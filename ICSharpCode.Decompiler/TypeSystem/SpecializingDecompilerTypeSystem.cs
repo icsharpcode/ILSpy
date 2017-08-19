@@ -47,6 +47,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			get { return context.Compilation; }
 		}
 
+		public TypeParameterSubstitution Substitution {
+			get { return substitution; }
+		}
+
 		public IType Resolve(Mono.Cecil.TypeReference typeReference)
 		{
 			return context.Resolve(typeReference).AcceptVisitor(substitution);

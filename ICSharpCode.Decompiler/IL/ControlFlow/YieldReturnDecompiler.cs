@@ -139,12 +139,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			DecompileFinallyBlocks();
 			ReconstructTryFinallyBlocks(newBody);
 
-			// Copy-propagate temporaries holding a copy of 'this'.
-			// This is necessary because the old (pre-Roslyn) C# compiler likes to store 'this' in temporary variables.
-			foreach (var stloc in function.Descendants.OfType<StLoc>().Where(s => s.Variable.IsSingleDefinition && s.Value.MatchLdThis()).ToList()) {
-				CopyPropagation.Propagate(stloc, context);
-			}
-
 			context.Step("Translate fields to local accesses", function);
 			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
 
@@ -299,7 +293,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (method == null || !method.HasBody)
 				throw new SymbolicAnalysisFailedException();
 
-			var il = new ILReader(context.TypeSystem).ReadIL(method.Body, context.CancellationToken);
+			var typeSystem = context.TypeSystem;
+			var sdtp = typeSystem as SpecializingDecompilerTypeSystem;
+			if (sdtp != null) {
+				typeSystem = new SpecializingDecompilerTypeSystem(
+					sdtp.Context,
+					new TypeParameterSubstitution(
+						(sdtp.Substitution.ClassTypeArguments ?? EmptyList<IType>.Instance)
+						.Concat(sdtp.Substitution.MethodTypeArguments ?? EmptyList<IType>.Instance).ToArray(),
+						EmptyList<IType>.Instance
+					)
+				);
+			}
+			var il = new ILReader(typeSystem).ReadIL(method.Body, context.CancellationToken);
 			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(), new ILTransformContext {
 				Settings = context.Settings,
 				CancellationToken = context.CancellationToken,
@@ -401,6 +407,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			MethodDefinition moveNextMethod = enumeratorType.Methods.FirstOrDefault(m => m.Name == "MoveNext");
 			ILFunction moveNextFunction = CreateILAst(moveNextMethod);
 
+			// Copy-propagate temporaries holding a copy of 'this'.
+			// This is necessary because the old (pre-Roslyn) C# compiler likes to store 'this' in temporary variables.
+			context.Stepper.StartGroup("AnalyzeMoveNext");
+			foreach (var stloc in moveNextFunction.Descendants.OfType<StLoc>().Where(s => s.Variable.IsSingleDefinition && s.Value.MatchLdThis()).ToList()) {
+				CopyPropagation.Propagate(stloc, context);
+			}
+			context.Stepper.EndGroup();
+
 			var body = (BlockContainer)moveNextFunction.Body;
 			if (body.Blocks.Count == 1 && body.Blocks[0].Instructions.Count == 1 && body.Blocks[0].Instructions[0] is TryFault tryFault) {
 				body = (BlockContainer)tryFault.TryBlock;
@@ -420,7 +434,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// Note: body may contain try-catch or try-finally statements that have nested block containers,
 			// but those cannot contain any yield statements.
-			// So for reconstructing the control flow, we only need at the blocks directly within body.
+			// So for reconstructing the control flow, we only consider the blocks directly within body.
 
 			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorMoveNext, stateField);
 			rangeAnalysis.AssignStateRanges(body, LongSet.Universe);
@@ -702,8 +716,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// Propagate newState to successor blocks
 				foreach (var branch in block.Descendants.OfType<Branch>()) {
 					if (branch.TargetBlock.Parent == newBody) {
-						Debug.Assert(blockState[branch.TargetBlock.ChildIndex] == newState || blockState[branch.TargetBlock.ChildIndex] == 0);
-						blockState[branch.TargetBlock.ChildIndex] = newState;
+						int stateAfterBranch = newState;
+						if (Block.GetPredecessor(branch) is Call call
+							&& call.Arguments.Count == 1 && call.Arguments[0].MatchLdThis()
+							&& call.Method.Name == "System.IDisposable.Dispose") {
+							// pre-roslyn compiles "yield break;" into "Dispose(); goto return_false;",
+							// so convert the dispose call into a state transition to the final state
+							stateAfterBranch = -1;
+							call.ReplaceWith(new Nop() { Comment = "Dispose call" });
+						}
+						Debug.Assert(blockState[branch.TargetBlock.ChildIndex] == stateAfterBranch || blockState[branch.TargetBlock.ChildIndex] == 0);
+						blockState[branch.TargetBlock.ChildIndex] = stateAfterBranch;
 					}
 				}
 			}
