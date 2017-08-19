@@ -18,6 +18,8 @@
 
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using System.Diagnostics;
+using System.Linq;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -31,6 +33,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class CopyPropagation : IBlockTransform
 	{
+		public static void Propagate(StLoc store, ILTransformContext context)
+		{
+			Debug.Assert(store.Variable.IsSingleDefinition);
+			Block block = (Block)store.Parent;
+			int i = store.ChildIndex;
+			DoPropagate(store.Variable, store.Value, block, ref i, context);
+		}
+
 		public void Run(Block block, BlockTransformContext context)
 		{
 			for (int i = 0; i < block.Instructions.Count; i++) {
@@ -38,31 +48,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction copiedExpr;
 				if (block.Instructions[i].MatchStLoc(out v, out copiedExpr)) {
 					if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr)) {
-						context.Step($"Copy propagate {v.Name}", copiedExpr);
-						// un-inline the arguments of the ldArg instruction
-						ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
-						for (int j = 0; j < uninlinedArgs.Length; j++) {
-							var arg = copiedExpr.Children[j];
-							var type = context.TypeSystem.Compilation.FindType(arg.ResultType.ToKnownTypeCode());
-							uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType, arg.ILRange.Start) {
-								Name = "C_" + arg.ILRange.Start
-							};
-							block.Instructions.Insert(i++, new StLoc(uninlinedArgs[j], arg));
-						}
-						CollectionExtensions.AddRange(v.Function.Variables, uninlinedArgs);
-						// perform copy propagation:
-						foreach (var expr in v.Function.Descendants) {
-							if (expr.MatchLdLoc(v)) {
-								var clone = copiedExpr.Clone();
-								for (int j = 0; j < uninlinedArgs.Length; j++) {
-									clone.Children[j].ReplaceWith(new LdLoc(uninlinedArgs[j]));
-								}
-								expr.ReplaceWith(clone);
-							}
-						}
-						block.Instructions.RemoveAt(i);
-						int c = ILInlining.InlineInto(block, i, aggressive: false, context: context);
-						i -= c + 1;
+						DoPropagate(v, copiedExpr, block, ref i, context);
 					}
 				}
 			}
@@ -98,6 +84,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// All instructions without special behavior that target a stack-variable can be copied.
 					return value.Flags == InstructionFlags.None && value.Children.Count == 0 && target.Kind == VariableKind.StackSlot;
 			}
+		}
+
+		static void DoPropagate(ILVariable v, ILInstruction copiedExpr, Block block, ref int i, ILTransformContext context)
+		{
+			context.Step($"Copy propagate {v.Name}", copiedExpr);
+			// un-inline the arguments of the ldArg instruction
+			ILVariable[] uninlinedArgs = new ILVariable[copiedExpr.Children.Count];
+			for (int j = 0; j < uninlinedArgs.Length; j++) {
+				var arg = copiedExpr.Children[j];
+				var type = context.TypeSystem.Compilation.FindType(arg.ResultType.ToKnownTypeCode());
+				uninlinedArgs[j] = new ILVariable(VariableKind.StackSlot, type, arg.ResultType, arg.ILRange.Start) {
+					Name = "C_" + arg.ILRange.Start
+				};
+				block.Instructions.Insert(i++, new StLoc(uninlinedArgs[j], arg));
+			}
+			CollectionExtensions.AddRange(v.Function.Variables, uninlinedArgs);
+			// perform copy propagation:
+			foreach (var expr in v.LoadInstructions.ToArray()) {
+				var clone = copiedExpr.Clone();
+				for (int j = 0; j < uninlinedArgs.Length; j++) {
+					clone.Children[j].ReplaceWith(new LdLoc(uninlinedArgs[j]));
+				}
+				expr.ReplaceWith(clone);
+			}
+			block.Instructions.RemoveAt(i);
+			int c = ILInlining.InlineInto(block, i, aggressive: false, context: context);
+			i -= c + 1;
 		}
 	}
 }

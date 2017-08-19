@@ -166,7 +166,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 				} else {
 					Debug.Assert(loadInst.OpCode == OpCode.LdLoc);
-					if (!aggressive && v.Kind != VariableKind.StackSlot && !NonAggressiveInlineInto(next, loadInst, inlinedExpression))
+					if (!aggressive && v.Kind != VariableKind.StackSlot && !NonAggressiveInlineInto(next, loadInst, inlinedExpression, v))
 						return false;
 				}
 
@@ -254,7 +254,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <param name="next">The next top-level expression</param>
 		/// <param name="loadInst">The load within 'next'</param>
 		/// <param name="inlinedExpression">The expression being inlined</param>
-		static bool NonAggressiveInlineInto(ILInstruction next, ILInstruction loadInst, ILInstruction inlinedExpression)
+		static bool NonAggressiveInlineInto(ILInstruction next, ILInstruction loadInst, ILInstruction inlinedExpression, ILVariable v)
 		{
 			Debug.Assert(loadInst.IsDescendantOf(next));
 			
@@ -266,6 +266,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				case OpCode.CompoundAssignmentInstruction:
 					return true;
+				case OpCode.LdLoc:
+					if (v.StateMachineField == null && ((LdLoc)inlinedExpression).Variable.StateMachineField != null) {
+						// Roslyn likes to put the result of fetching a state machine field into a temporary variable,
+						// so inline more aggressively in such cases.
+						return true;
+					}
+					break;
 			}
 			
 			// decide based on the target into which we are inlining

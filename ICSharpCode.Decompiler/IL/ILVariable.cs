@@ -239,6 +239,12 @@ namespace ICSharpCode.Decompiler.IL
 				return StoreCount == 1 && AddressCount == 0;
 			}
 		}
+
+		/// <summary>
+		/// The field which was converted to a local variable.
+		/// Set when the variable is from a 'yield return' or 'async' state machine.
+		/// </summary>
+		public IField StateMachineField;
 		
 		public ILVariable(VariableKind kind, IType type, int index)
 		{
@@ -301,6 +307,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			if (CaptureScope != null) {
 				output.Write(" captured in " + CaptureScope.EntryPoint.Label);
+			}
+			if (StateMachineField != null) {
+				output.Write(" from state-machine");
 			}
 		}
 		

@@ -224,6 +224,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				context.Step("stobj(ldloca(v), ...) => stloc(v, ...)", inst);
 				inst.ReplaceWith(new StLoc(v, inst.Value));
+				return;
 			}
 			
 			ILInstruction target;

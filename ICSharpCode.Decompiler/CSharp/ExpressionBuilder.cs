@@ -127,10 +127,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			return cexpr;
 		}
 		
-		public TranslatedExpression TranslateCondition(ILInstruction condition)
+		public TranslatedExpression TranslateCondition(ILInstruction condition, bool negate = false)
 		{
 			var expr = Translate(condition, compilation.FindType(KnownTypeCode.Boolean));
-			return expr.ConvertToBoolean(this);
+			return expr.ConvertToBoolean(this, negate);
 		}
 		
 		ExpressionWithResolveResult ConvertVariable(ILVariable variable)
@@ -322,7 +322,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLogicNot(LogicNot inst, TranslationContext context)
 		{
-			return LogicNot(TranslateCondition(inst.Argument)).WithILInstruction(inst);
+			return TranslateCondition(inst.Argument, negate: true).WithILInstruction(inst);
 		}
 		
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst, TranslationContext context)
@@ -362,7 +362,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst);
 		}
 		
-		ExpressionWithResolveResult LogicNot(TranslatedExpression expr)
+		internal ExpressionWithResolveResult LogicNot(TranslatedExpression expr)
 		{
 			return new UnaryOperatorExpression(UnaryOperatorType.Not, expr.Expression)
 				.WithRR(new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean), ExpressionType.Not, expr.ResolveResult));

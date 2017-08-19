@@ -96,6 +96,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!newVariables.TryGetValue(representative, out v)) {
 					v = new ILVariable(inst.Variable.Kind, inst.Variable.Type, inst.Variable.StackType, inst.Variable.Index);
 					v.Name = inst.Variable.Name;
+					v.StateMachineField = inst.Variable.StateMachineField;
 					v.HasInitialValue = false; // we'll set HasInitialValue when we encounter an uninit load
 					newVariables.Add(representative, v);
 					inst.Variable.Function.Variables.Add(v);

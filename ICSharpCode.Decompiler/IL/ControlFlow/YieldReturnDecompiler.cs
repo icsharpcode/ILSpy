@@ -134,6 +134,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			DecompileFinallyBlocks();
 			ReconstructTryFinallyBlocks(newBody);
 
+			// Copy-propagate temporaries holding a copy of 'this'.
+			// This is necessary because the old (pre-Roslyn) C# compiler likes to store 'this' in temporary variables.
+			foreach (var stloc in function.Descendants.OfType<StLoc>().Where(s => s.Variable.IsSingleDefinition && s.Value.MatchLdThis()).ToList()) {
+				CopyPropagation.Propagate(stloc, context);
+			}
+
 			context.Step("Translate fields to local accesses", function);
 			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
 
@@ -141,6 +147,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				context.Step("Remove temporaries", function);
 				foreach (var store in returnStores) {
 					if (store.Variable.LoadCount == 0 && store.Variable.AddressCount == 0 && store.Parent is Block block) {
+						Debug.Assert(SemanticHelper.IsPure(store.Value.Flags));
 						block.Instructions.Remove(store);
 					}
 				}
@@ -589,14 +596,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							name = fieldDef.Name.Substring(1, pos - 1);
 					}
 					v = function.RegisterVariable(VariableKind.Local, ldflda.Field.ReturnType, name);
+					v.StateMachineField = ldflda.Field;
 					fieldToVariableMap.Add(fieldDef, v);
 				}
-				inst.ReplaceWith(new LdLoca(v));
+				inst.ReplaceWith(new LdLoca(v) { ILRange = inst.ILRange });
 			} else if (inst.MatchLdThis()) {
-				inst.ReplaceWith(new InvalidExpression("iterator") { ExpectedResultType = inst.ResultType });
+				inst.ReplaceWith(new InvalidExpression("stateMachine") { ExpectedResultType = inst.ResultType, ILRange = inst.ILRange });
 			} else {
 				foreach (var child in inst.Children) {
 					TranslateFieldsToLocalAccess(function, child, fieldToVariableMap);
+				}
+				if (inst is LdObj ldobj && ldobj.Target is LdLoca ldloca && ldloca.Variable.StateMachineField != null) {
+					LdLoc ldloc = new LdLoc(ldloca.Variable);
+					ldloc.AddILRange(ldobj.ILRange);
+					ldloc.AddILRange(ldloca.ILRange);
+					inst.ReplaceWith(ldloc);
+				} else if (inst is StObj stobj && stobj.Target is LdLoca ldloca2 && ldloca2.Variable.StateMachineField != null) {
+					StLoc stloc = new StLoc(ldloca2.Variable, stobj.Value);
+					stloc.AddILRange(stobj.ILRange);
+					stloc.AddILRange(ldloca2.ILRange);
+					inst.ReplaceWith(stloc);
 				}
 			}
 		}

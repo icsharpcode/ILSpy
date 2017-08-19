@@ -311,21 +311,29 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// 
 		/// Expects that the input expression is an integer expression; produces an expression
 		/// that returns <c>true</c> iff the integer value is not 0.
+		/// 
+		/// If negate is true, instead produces an expression that returns <c>true</c> iff the integer value is 0.
 		/// </summary>
-		public TranslatedExpression ConvertToBoolean(ExpressionBuilder expressionBuilder)
+		public TranslatedExpression ConvertToBoolean(ExpressionBuilder expressionBuilder, bool negate = false)
 		{
 			if (Type.IsKnownType(KnownTypeCode.Boolean) || Type.Kind == TypeKind.Unknown) {
-				return this;
+				if (negate) {
+					return expressionBuilder.LogicNot(this).WithoutILInstruction();
+				} else {
+					return this;
+				}
 			}
 			Debug.Assert(Type.GetStackType().IsIntegerType());
 			IType boolType = expressionBuilder.compilation.FindType(KnownTypeCode.Boolean);
 			if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is int) {
 				bool val = (int)ResolveResult.ConstantValue != 0;
+				val ^= negate;
 				return new PrimitiveExpression(val)
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(boolType, val));
 			} else if (ResolveResult.IsCompileTimeConstant && ResolveResult.ConstantValue is byte) {
 				bool val = (byte)ResolveResult.ConstantValue != 0;
+				val ^= negate;
 				return new PrimitiveExpression(val)
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ConstantResolveResult(boolType, val));
@@ -333,7 +341,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				var nullRef = new NullReferenceExpression()
 					.WithoutILInstruction()
 					.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
-				return new BinaryOperatorExpression(Expression, BinaryOperatorType.InEquality, nullRef.Expression)
+				var op = negate ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality;
+				return new BinaryOperatorExpression(Expression, op, nullRef.Expression)
 					.WithoutILInstruction()
 					.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,
 					                                  this.ResolveResult, nullRef.ResolveResult));
@@ -341,7 +350,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				var zero = new PrimitiveExpression(0)
 					.WithoutILInstruction()
 					.WithRR(new ConstantResolveResult(expressionBuilder.compilation.FindType(KnownTypeCode.Int32), 0));
-				return new BinaryOperatorExpression(Expression, BinaryOperatorType.InEquality, zero.Expression)
+				var op = negate ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality;
+				return new BinaryOperatorExpression(Expression, op, zero.Expression)
 					.WithoutILInstruction()
 					.WithRR(new OperatorResolveResult(boolType, System.Linq.Expressions.ExpressionType.NotEqual,
 					                                  this.ResolveResult, zero.ResolveResult));
