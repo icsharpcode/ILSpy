@@ -630,9 +630,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			AddDefinesForConditionalAttributes(function);
 			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method, function);
-			entityDecl.AddChild(statementBuilder.ConvertAsBlock(function.Body), Roles.Body);
+			var body = statementBuilder.ConvertAsBlock(function.Body);
+			entityDecl.AddChild(body, Roles.Body);
 
 			if (function.IsIterator) {
+				if (!body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement)) {
+					body.Add(new YieldBreakStatement());
+				}
 				RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IteratorStateMachineAttribute"));
 			}
 		}

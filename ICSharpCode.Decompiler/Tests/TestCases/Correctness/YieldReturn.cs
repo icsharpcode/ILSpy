@@ -309,6 +309,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
+		public static IEnumerable<int> YieldBreakOnly()
+		{
+			yield break;
+		}
+		
 		public static IEnumerable<int> UnconditionalThrowInTryFinally()
 		{
 			// Here, MoveNext() doesn't call the finally methods at all
