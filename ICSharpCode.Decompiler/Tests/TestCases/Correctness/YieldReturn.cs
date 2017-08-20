@@ -63,9 +63,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Print("TryFinallyWithTwoExitPointsInNestedCatch(true)", TryFinallyWithTwoExitPointsInNestedCatch(true).GetEnumerator());
 #endif
 			Print("GenericYield<int>()", GenericYield<int>().GetEnumerator());
+			StructWithYieldReturn.Run();
 		}
 
-		static void Print<T>(string name, IEnumerator<T> enumerator)
+		internal static void Print<T>(string name, IEnumerator<T> enumerator)
 		{
 			Console.WriteLine(name + ": Test start");
 			while (enumerator.MoveNext()) {
@@ -427,12 +428,44 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		}
 #endif
 
+		public static IEnumerable<int> LocalInFinally<T>(T a) where T : IDisposable
+		{
+			yield return 1;
+			try {
+				yield return 2;
+			} finally {
+				T b = a;
+				b.Dispose();
+				b.Dispose();
+			}
+			yield return 3;
+		}
+
 		public static IEnumerable<T> GenericYield<T>() where T : new()
 		{
 			T val = new T();
 			for (int i = 0; i < 3; i++) {
 				yield return val;
 			}
+		}
+	}
+
+	struct StructWithYieldReturn
+	{
+		public static void Run()
+		{
+			var s = new StructWithYieldReturn { val = 2 };
+			var count = s.Count();
+			YieldReturnTest.Print("StructWithYieldReturn", count.GetEnumerator());
+			YieldReturnTest.Print("StructWithYieldReturn (again)", count.GetEnumerator());
+		}
+
+		int val;
+
+		public IEnumerable<int> Count()
+		{
+			yield return val++;
+			yield return val++;
 		}
 	}
 }

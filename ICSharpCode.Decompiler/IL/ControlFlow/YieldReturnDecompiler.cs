@@ -82,7 +82,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// For each finally method, stores the target state when entering the finally block,
 		/// and the decompiled code of the finally method body.
 		/// </summary>
-		readonly Dictionary<IMethod, (int? outerState, BlockContainer body)> decompiledFinallyMethods = new Dictionary<IMethod, (int? outerState, BlockContainer body)>();
+		readonly Dictionary<IMethod, (int? outerState, ILFunction function)> decompiledFinallyMethods = new Dictionary<IMethod, (int? outerState, ILFunction body)>();
 
 		/// <summary>
 		/// Temporary stores for 'yield break'.
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			newBody.SortBlocks(deleteUnreachableBlocks: true);
 
 			DecompileFinallyBlocks();
-			ReconstructTryFinallyBlocks(newBody);
+			ReconstructTryFinallyBlocks(function);
 
 			context.Step("Translate fields to local accesses", function);
 			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
@@ -188,12 +188,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			int i;
 			for (i = 1; i < body.Instructions.Count; i++) {
 				// stfld(..., ldloc(var_1), ldloc(parameter))
-				if (!body.Instructions[i].MatchStFld(out var ldloc, out var storedField, out var loadParameter))
+				// or (in structs): stfld(..., ldloc(var_1), ldobj(ldloc(this)))
+				if (!body.Instructions[i].MatchStFld(out var ldloc, out var storedField, out var value))
 					break;
-				if (ldloc.MatchLdLoc(var1)
-					&& loadParameter.MatchLdLoc(out var parameter)
-					&& parameter.Kind == VariableKind.Parameter) {
+				if (!ldloc.MatchLdLoc(var1)) {
+					return false;
+				}
+				if (value.MatchLdLoc(out var parameter) && parameter.Kind == VariableKind.Parameter) {
 					fieldToParameterMap[(IField)storedField.MemberDefinition] = parameter;
+				} else if (value is LdObj ldobj && ldobj.Target.MatchLdThis()) {
+					// copy of 'this' in struct
+					fieldToParameterMap[(IField)storedField.MemberDefinition] = ((LdLoc)ldobj.Target).Variable;
 				} else {
 					return false;
 				}
@@ -618,7 +623,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					v.StateMachineField = ldflda.Field;
 					fieldToVariableMap.Add(fieldDef, v);
 				}
-				inst.ReplaceWith(new LdLoca(v) { ILRange = inst.ILRange });
+				if (v.StackType == StackType.Ref) {
+					Debug.Assert(v.Kind == VariableKind.Parameter && v.Index < 0); // this pointer
+					inst.ReplaceWith(new LdLoc(v) { ILRange = inst.ILRange });
+				} else {
+					inst.ReplaceWith(new LdLoca(v) { ILRange = inst.ILRange });
+				}
 			} else if (inst.MatchLdThis()) {
 				inst.ReplaceWith(new InvalidExpression("stateMachine") { ExpectedResultType = inst.ResultType, ILRange = inst.ILRange });
 			} else {
@@ -651,7 +661,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					body.EntryPoint.Instructions.RemoveAt(0);
 				}
 				function.ReleaseRef(); // make body reusable outside of function
-				decompiledFinallyMethods.Add(method, (newState, body));
+				decompiledFinallyMethods.Add(method, (newState, function));
 			}
 		}
 		#endregion
@@ -670,8 +680,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Precondition: the blocks in newBody are topologically sorted.
 		/// </summary>
-		void ReconstructTryFinallyBlocks(BlockContainer newBody)
+		void ReconstructTryFinallyBlocks(ILFunction iteratorFunction)
 		{
+			BlockContainer newBody = (BlockContainer)iteratorFunction.Body;
 			context.Stepper.Step("Reconstuct try-finally blocks");
 			var blockState = new int[newBody.Blocks.Count];
 			blockState[0] = -1;
@@ -736,7 +747,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			{
 				var finallyMethod = FindFinallyMethod(state);
 				Debug.Assert(finallyMethod != null);
-				// remove the method so that it doesn't get cause ambiguity when processing nested try-finally blocks
+				// remove the method so that it doesn't cause ambiguity when processing nested try-finally blocks
 				finallyMethodToStateRange.Remove(finallyMethod);
 
 				var tryBlock = new Block();
@@ -748,7 +759,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				ILInstruction finallyBlock;
 				if (decompiledFinallyMethods.TryGetValue(finallyMethod, out var decompiledMethod)) {
-					finallyBlock = decompiledMethod.body;
+					finallyBlock = decompiledMethod.function.Body;
+					var vars = decompiledMethod.function.Variables.ToArray();
+					decompiledMethod.function.Variables.Clear();
+					iteratorFunction.Variables.AddRange(vars);
 				} else {
 					finallyBlock = new InvalidBranch("Missing decompiledFinallyMethod");
 				}
