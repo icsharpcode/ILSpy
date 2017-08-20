@@ -381,21 +381,25 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		private static Block FindDoWhileConditionBlock(BlockContainer container, out ILInstruction condition)
 		{
-			var conditionGroup = new CaptureGroup();
-			var conditionBlockPattern = new Block {
-				Instructions = {
-					new IfInstruction(new AnyNode(conditionGroup), new Branch(container.EntryPoint)),
-					new Leave(container)
-				}
-			};
+			condition = null;
 			foreach (var b in container.Blocks) {
-				var match = conditionBlockPattern.Match(b);
-				if (match.Success) {
-					condition = match.Get(conditionGroup).Single();
-					return b;
+				if (b.Instructions.Last().MatchBranch(container.EntryPoint)) {
+					// potentially the do-while-condition block
+					int i = b.Instructions.Count - 2;
+					while (i >= 0 && b.Instructions[i] is IfInstruction ifInst
+						&& ifInst.TrueInst.MatchLeave(container) && ifInst.FalseInst.MatchNop())
+					{
+						if (condition == null)
+							condition = new LogicNot(ifInst.Condition);
+						else
+							condition = IfInstruction.LogicAnd(new LogicNot(ifInst.Condition), condition);
+						i--;
+					}
+					if (i == -1) {
+						return b;
+					}
 				}
 			}
-			condition = null;
 			return null;
 		}
 

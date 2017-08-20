@@ -836,6 +836,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.I4; } }
+
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitLogicNot(this);

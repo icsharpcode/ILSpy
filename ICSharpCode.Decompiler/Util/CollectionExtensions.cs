@@ -19,7 +19,7 @@ namespace ICSharpCode.Decompiler.Util
 
 		public static IEnumerable<T> SkipLast<T>(this IReadOnlyCollection<T> input, int count)
 		{
-			return input.Skip(input.Count - count);
+			return input.Take(input.Count - count);
 		}
 		
 		public static T PopOrDefault<T>(this Stack<T> stack)
