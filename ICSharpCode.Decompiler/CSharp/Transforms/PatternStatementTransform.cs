@@ -266,7 +266,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							Name = variableName,
 							Initializer = m1.Get<Expression>("initializer").Single().Detach()
 						}.CopyAnnotationsFrom(node.Expression)
-							.WithAnnotation(variable)
+						 .WithILVariable(variable)
 					}
 				}.CopyAnnotationsFrom(node);
 			} else {
@@ -313,25 +313,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		// even if it results in two variables with the same name and overlapping scopes.
 		// (this issue could be fixed later by renaming one of the variables)
 		
-		// I'm not sure whether the other consumers of 'CanMoveVariableDeclarationIntoStatement' should be changed the same way.
-		bool CanMoveVariableDeclarationIntoStatement(VariableDeclarationStatement varDecl, Statement targetStatement, out Statement declarationPoint)
-		{
-			Debug.Assert(targetStatement.Ancestors.Contains(varDecl.Parent));
-			// Find all blocks between targetStatement and varDecl.Parent
-			List<BlockStatement> blocks = targetStatement.Ancestors.TakeWhile(block => block != varDecl.Parent).OfType<BlockStatement>().ToList();
-			blocks.Add((BlockStatement)varDecl.Parent); // also handle the varDecl.Parent block itself
-			blocks.Reverse(); // go from parent blocks to child blocks
-			var daa = CreateDAA(blocks[0]);
-			declarationPoint = null;
-			return false;
-			/*foreach (BlockStatement block in blocks) {
-				if (!DeclareVariables.FindDeclarationPoint(daa, varDecl, block, out declarationPoint)) {
-					return false;
-				}
-			}
-			return true;*/
-		}
-
 		private DefiniteAssignmentAnalysis CreateDAA(BlockStatement block)
 		{
 			var typeResolveContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly);
@@ -404,23 +385,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return null;
 			}
 			VariableInitializer enumeratorVar = m.Get<VariableInitializer>("enumeratorVariable").Single();
-			IdentifierExpression itemVar = m.Get<IdentifierExpression>("itemVariable").Single();
+			var itemVar = m.Get<IdentifierExpression>("itemVariable").Single().GetILVariable();
 			WhileStatement loop = m.Get<WhileStatement>("loop").Single();
-			
-			// Find the declaration of the item variable:
-			// Because we look only outside the loop, we won't make the mistake of moving a captured variable across the loop boundary
-			VariableDeclarationStatement itemVarDecl = FindVariableDeclaration(loop, itemVar.Identifier);
-			if (itemVarDecl == null || !(itemVarDecl.Parent is BlockStatement))
+
+			if (!VariableCanBeDeclaredInLoop(itemVar, loop)) {
 				return null;
-			
-			// Now verify that we can move the variable declaration in front of the loop:
-			Statement declarationPoint;
-			CanMoveVariableDeclarationIntoStatement(itemVarDecl, loop, out declarationPoint);
-			// We ignore the return value because we don't care whether we can move the variable into the loop
-			// (that is possible only with non-captured variables).
-			// We just care that we can move it in front of the loop:
-			if (declarationPoint != loop)
-				return null;
+			}
 
 			// Make sure that the enumerator variable is not used inside the body
 			var enumeratorId = Identifier.Create(enumeratorVar.Name);
@@ -434,13 +404,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				newBody.Add(stmt.Detach());
 			foreach (Statement stmt in m.Get<Statement>("statement"))
 				newBody.Add(stmt.Detach());
-			
+
+			itemVar.Kind = IL.VariableKind.ForeachLocal;
 			ForeachStatement foreachStatement = new ForeachStatement {
-				VariableType = (AstType)itemVarDecl.Type.Clone(),
-				VariableName = itemVar.Identifier,
+				VariableType = itemVar.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVar.Type),
+				VariableName = itemVar.Name,
 				InExpression = m.Get<Expression>("collection").Single().Detach(),
 				EmbeddedStatement = newBody
-			}.WithAnnotation(itemVarDecl.Variables.Single().Annotation<IL.ILVariable>());
+			}.WithILVariable(itemVar);
 			foreachStatement.CopyAnnotationsFrom(loop);
 			if (foreachStatement.InExpression is BaseReferenceExpression) {
 				foreachStatement.InExpression = new ThisReferenceExpression().CopyAnnotationsFrom(foreachStatement.InExpression);
@@ -450,6 +421,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				((BlockStatement)foreachStatement.Parent).Statements.InsertAfter(null, stmt.Detach());
 			}
 			return foreachStatement;
+		}
+
+		static bool VariableCanBeDeclaredInLoop(IL.ILVariable itemVar, WhileStatement loop)
+		{
+			if (itemVar == null || !(itemVar.Kind == IL.VariableKind.Local || itemVar.Kind == IL.VariableKind.StackSlot)) {
+				// only locals/temporaries can be converted into foreach loop variable
+				return false;
+			}
+
+			if (!itemVar.IsSingleDefinition) {
+				// foreach variable cannot be assigned to
+				return false;
+			}
+
+			if (itemVar.CaptureScope != null && itemVar.CaptureScope != loop.Annotation<IL.BlockContainer>()) {
+				// captured variables cannot be declared in the loop unless the loop is their capture scope
+				return false;
+			}
+			return true;
 		}
 		#endregion
 		
@@ -505,37 +495,22 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!m2.Success) return null;
 			
 			IdentifierExpression enumeratorVar = m2.Get<IdentifierExpression>("enumerator").Single();
-			IdentifierExpression itemVar = m2.Get<IdentifierExpression>("itemVar").Single();
+			var itemVar = m2.Get<IdentifierExpression>("itemVar").Single().GetILVariable();
 			WhileStatement loop = m2.Get<WhileStatement>("loop").Single();
 			
 			// verify that the getEnumeratorPattern assigns to the same variable as the nonGenericForeachPattern is reading from
 			if (!enumeratorVar.IsMatch(m1.Get("left").Single()))
 				return null;
-			
-			VariableDeclarationStatement enumeratorVarDecl = FindVariableDeclaration(loop, enumeratorVar.Identifier);
-			if (enumeratorVarDecl == null || !(enumeratorVarDecl.Parent is BlockStatement))
-				return null;
-			
-			// Find the declaration of the item variable:
-			// Because we look only outside the loop, we won't make the mistake of moving a captured variable across the loop boundary
-			VariableDeclarationStatement itemVarDecl = FindVariableDeclaration(loop, itemVar.Identifier);
-			if (itemVarDecl == null || !(itemVarDecl.Parent is BlockStatement))
-				return null;
-			
-			// Now verify that we can move the variable declaration in front of the loop:
-			Statement declarationPoint;
-			CanMoveVariableDeclarationIntoStatement(itemVarDecl, loop, out declarationPoint);
-			// We ignore the return value because we don't care whether we can move the variable into the loop
-			// (that is possible only with non-captured variables).
-			// We just care that we can move it in front of the loop:
-			if (declarationPoint != loop)
+
+			if (!VariableCanBeDeclaredInLoop(itemVar, loop))
 				return null;
 
+			itemVar.Kind = IL.VariableKind.ForeachLocal;
 			ForeachStatement foreachStatement = new ForeachStatement
 			{
-				VariableType = itemVarDecl.Type.Clone(),
-				VariableName = itemVar.Identifier,
-			}.WithAnnotation(itemVarDecl.Variables.Single().Annotation<IL.ILVariable>());
+				VariableType = itemVar.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVar.Type),
+				VariableName = itemVar.Name,
+			}.WithILVariable(itemVar);
 			BlockStatement body = new BlockStatement();
 			foreachStatement.EmbeddedStatement = body;
 			foreachStatement.CopyAnnotationsFrom(loop);
@@ -544,6 +519,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			body.Add(node.Detach());
 			body.Add((Statement)tryCatch.Detach());
 			
+			/*
 			// Now that we moved the whole try-catch into the foreach loop; verify that we can
 			// move the enumerator into the foreach loop:
 			CanMoveVariableDeclarationIntoStatement(enumeratorVarDecl, foreachStatement, out declarationPoint);
@@ -554,7 +530,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				foreachStatement.ReplaceWith(tryCatch);
 				return null;
 			}
-			
+			*/
+
 			// Now create the correct body for the foreach statement:
 			foreachStatement.InExpression = m1.Get<Expression>("collection").Single().Detach();
 			if (foreachStatement.InExpression is BaseReferenceExpression) {
@@ -566,7 +543,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return foreachStatement;
 		}
 		#endregion
-		
+
 		#region for
 		static readonly WhileStatement forPattern = new WhileStatement {
 			Condition = new BinaryOperatorExpression {

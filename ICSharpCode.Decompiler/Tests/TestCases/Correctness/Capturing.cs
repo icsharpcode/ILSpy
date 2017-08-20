@@ -14,6 +14,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TestCase2();
 			TestCase3();
 			TestCase4("TestCase4");
+			OutsideLoop();
+			InsideLoop();
 		}
 
 		static void TestCase1()
@@ -83,6 +85,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			line = v + " line";
 			return --v > 0;
+		}
+
+		static void OutsideLoop()
+		{
+			Console.WriteLine("OutsideLoop");
+			var list = new List<int> { 1, 2, 3 };
+			var functions = new List<Func<int>>();
+			using (var e = list.GetEnumerator()) {
+				int val; // declared outside loop
+						 // The decompiler cannot convert this to a foreach-loop without
+						 // changing the lambda capture semantics.
+				while (e.MoveNext()) {
+					val = e.Current;
+					functions.Add(() => val);
+				}
+			}
+			foreach (var func in functions) {
+				Console.WriteLine(func());
+			}
+		}
+
+		static void InsideLoop()
+		{
+			Console.WriteLine("InsideLoop");
+			var list = new List<int> { 1, 2, 3 };
+			var functions = new List<Func<int>>();
+			using (var e = list.GetEnumerator()) {
+				while (e.MoveNext()) {
+					int val = e.Current;
+					functions.Add(() => val);
+				}
+			}
+			foreach (var func in functions) {
+				Console.WriteLine(func());
+			}
 		}
 	}
 }

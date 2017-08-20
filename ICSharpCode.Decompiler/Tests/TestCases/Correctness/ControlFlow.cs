@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
@@ -36,6 +37,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Test("none", ref result);
 			Test("test", ref result);
 			Console.WriteLine(result);
+			ForeachWithAssignment(new int[] { 1, 5, 25 });
 			return 0;
 		}
 
@@ -103,6 +105,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 
 			return -1;
+		}
+
+		static void ForeachWithAssignment(IEnumerable<int> inputs)
+		{
+			Console.WriteLine("ForeachWithAssignment");
+			foreach (int input in inputs) {
+				int i = input;
+				if (i < 10)
+					i *= 2;
+				Console.WriteLine(i);
+			}
 		}
 	}
 }
