@@ -107,6 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							// opportunities belong in this category.
 							new ExpressionTransforms(),
 							new TransformArrayInitializers(),
+							new TransformCollectionAndObjectInitializers(),
 							new ILInlining()
 						)
 					}

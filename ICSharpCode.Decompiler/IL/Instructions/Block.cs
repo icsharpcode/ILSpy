@@ -239,6 +239,8 @@ namespace ICSharpCode.Decompiler.IL
 	public enum BlockType {
 		ControlFlow,
 		ArrayInitializer,
+		CollectionInitializer,
+		ObjectInitializer,
 		CompoundOperator
 	}
 }

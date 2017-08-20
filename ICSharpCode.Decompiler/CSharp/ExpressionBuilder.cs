@@ -1407,11 +1407,151 @@ namespace ICSharpCode.Decompiler.CSharp
 			switch (block.Type) {
 				case BlockType.ArrayInitializer:
 					return TranslateArrayInitializer(block);
+				case BlockType.CollectionInitializer:
+				case BlockType.ObjectInitializer:
+					return TranslateObjectAndCollectionInitializer(block);
 				case BlockType.CompoundOperator:
 					return TranslateCompoundOperator(block);
 				default:
 					return ErrorExpression("Unknown block type: " + block.Type);
 			}
+		}
+
+		TranslatedExpression TranslateObjectAndCollectionInitializer(Block block)
+		{
+			var stloc = block.Instructions.FirstOrDefault() as StLoc;
+			var final = block.FinalInstruction as LdLoc;
+			if (stloc == null || final == null || !(stloc.Value is NewObj newObjInst) || stloc.Variable != final.Variable)
+				throw new ArgumentException("given Block is invalid!");
+			Stack<List<Expression>> elementsStack = new Stack<List<Expression>>();
+			var elements = new List<Expression>(block.Instructions.Count);
+			elementsStack.Push(elements);
+			var initObjRR = new InitializedObjectResolveResult(newObjInst.Method.DeclaringType);
+			IMember currentMember = null;
+			foreach (var inst in block.Instructions) {
+				switch (inst) {
+					case CallVirt call:
+						if (call.Method.IsAccessor) {
+							if (elementsStack.Count > 1)
+								elementsStack.Pop();
+							if (call.Arguments[0].MatchLdLoc(stloc.Variable)) {
+								currentMember = call.Method.AccessorOwner;
+								var propertyReference = new IdentifierExpression(currentMember.Name)
+								.WithRR(new MemberResolveResult(initObjRR, currentMember));
+								var value = Translate(call.Arguments[1]).ConvertTo(currentMember.ReturnType, this);
+								elementsStack.Peek().Add(new AssignmentExpression(propertyReference, value).WithILInstruction(call));
+							} else {
+								IMember newMember;
+								switch (call.Arguments[0]) {
+									case CallVirt cv:
+										newMember = cv.Method.AccessorOwner;
+										break;
+									case LdObj lo:
+										if (lo.Target is LdFlda ldflda) {
+											newMember = ldflda.Field;
+											break;
+										}
+										throw new NotSupportedException();
+									default:
+										throw new NotSupportedException();
+								}
+								Expression propertyReference;
+								if (newMember != currentMember) {
+									currentMember = newMember;
+									if (elementsStack.Count > 1) {
+										propertyReference = new IdentifierExpression(currentMember.Name)
+											.WithRR(new MemberResolveResult(initObjRR, currentMember));
+
+										var prevItems = elementsStack.Pop();
+										elementsStack.Peek().Add(new AssignmentExpression(propertyReference, new ArrayInitializerExpression(prevItems)));
+									}
+									elementsStack.Push(new List<Expression>(call.Arguments.Count - 1));
+								}
+								IMember member = call.Method.AccessorOwner;
+								propertyReference = new IdentifierExpression(member.Name)
+									.WithRR(new MemberResolveResult(initObjRR, member));
+								var value = Translate(call.Arguments[1]).ConvertTo(member.ReturnType, this);
+								elementsStack.Peek().Add(new AssignmentExpression(propertyReference, value).WithILInstruction(call));
+							}
+						} else {
+							var target = call.Arguments[0];
+							if (block.Type == BlockType.ObjectInitializer) {
+								IMember newMember;
+								switch (target) {
+									case CallVirt cv:
+										newMember = cv.Method.AccessorOwner;
+										break;
+									case LdObj lo:
+										if (lo.Target is LdFlda ldflda) {
+											newMember = ldflda.Field;
+											break;
+										}
+										throw new NotSupportedException();
+									default:
+										throw new NotSupportedException();
+								}
+								if (newMember != currentMember) {
+									currentMember = newMember;
+									if (elementsStack.Count > 1) {
+										var propertyReference = new IdentifierExpression(currentMember.Name)
+											.WithRR(new MemberResolveResult(initObjRR, currentMember));
+
+										var prevItems = elementsStack.Pop();
+										elementsStack.Peek().Add(new AssignmentExpression(propertyReference, new ArrayInitializerExpression(prevItems)));
+									}
+									elementsStack.Push(new List<Expression>(call.Arguments.Count - 1));
+								}
+							}
+							var args = new List<Expression>(call.Arguments.Count - 1);
+							foreach (var arg in call.Arguments.Skip(1)) {
+								var expectedType = call.Method.Parameters[arg.ChildIndex - 1].Type;
+								var a = Translate(arg).ConvertTo(expectedType, this);
+								args.Add(a);
+							}
+							elementsStack.Peek().Add(args.Count == 1 ? args[0] : new ArrayInitializerExpression(args));
+						}
+						break;
+					case StObj stObj:
+						if (stObj.Value is Block b && IsInitializer(b)) {
+							if (stObj.Target is LdFlda ldflda) {
+								currentMember = ldflda.Field;
+								var propertyReference = new IdentifierExpression(currentMember.Name)
+									.WithRR(new MemberResolveResult(initObjRR, currentMember));
+								Expression value;
+								switch (block.Type) {
+									case BlockType.ArrayInitializer:
+										value = TranslateArrayInitializer(b);
+										break;
+									case BlockType.CollectionInitializer:
+									case BlockType.ObjectInitializer:
+										value = TranslateObjectAndCollectionInitializer(b);
+										break;
+									default:
+										throw new NotSupportedException();
+								}
+								elementsStack.Peek().Add(new AssignmentExpression(propertyReference, value).WithILInstruction(stObj));
+								break;
+							}
+						}
+						throw new NotSupportedException();
+				}
+			}
+			if (elementsStack.Count > 1) {
+				var propertyReference = new IdentifierExpression(currentMember.Name)
+					.WithRR(new MemberResolveResult(initObjRR, currentMember));
+
+				var prevItems = elementsStack.Pop();
+				elementsStack.Peek().Add(new AssignmentExpression(propertyReference, new ArrayInitializerExpression(prevItems)));
+			}
+			var expr = HandleCallInstruction(newObjInst);
+			var oce = (ObjectCreateExpression)expr.Expression;
+			oce.Initializer = new ArrayInitializerExpression(elements);
+			return expr.WithILInstruction(block);
+		}
+
+		bool IsInitializer(Block b)
+		{
+			return b.Type == BlockType.ArrayInitializer || b.Type == BlockType.CollectionInitializer || b.Type == BlockType.ObjectInitializer;
 		}
 
 		readonly static ArraySpecifier[] NoSpecifiers = new ArraySpecifier[0];

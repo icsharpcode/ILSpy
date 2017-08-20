@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Transforms array initialization pattern of System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray.
-	/// For collection and object initializers see <see cref="TransformInitializers"/>
+	/// For collection and object initializers see <see cref="TransformCollectionAndObjectInitializers"/>
 	/// </summary>
 	public class TransformArrayInitializers : IBlockTransform
 	{
