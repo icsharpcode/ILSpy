@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					if (Condition("test")) {
 						if (Condition("continue"))
 							continue;
-						if (!Condition("break"))
+						if (!Condition("not-break"))
 							break;
 					}
 					Console.WriteLine("End of loop body");

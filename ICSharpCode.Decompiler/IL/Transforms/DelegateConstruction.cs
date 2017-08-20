@@ -75,13 +75,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private BlockContainer FindBlockContainer(Block block)
 		{
-			ILInstruction current = block;
-			while (current != null) {
-				current = current.Parent;
-				if (current is BlockContainer)
-					return (BlockContainer)current;
-			}
-			throw new NotSupportedException();
+			return BlockContainer.FindClosestContainer(block) ?? throw new NotSupportedException();
 		}
 
 		bool IsSimpleDisplayClass(IMethod method)

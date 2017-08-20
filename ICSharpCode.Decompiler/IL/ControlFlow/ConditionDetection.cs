@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		private void HandleIfInstruction(ControlFlowNode cfgNode, Block block, IfInstruction ifInst, ref ILInstruction exitInst)
 		{
-			if (IsBranchToLaterTarget(ifInst.TrueInst, exitInst)) {
+			if (ShouldSwapIfTargets(ifInst.TrueInst, exitInst)) {
 				// "if (c) goto lateBlock; goto earlierBlock;"
 				// -> "if (!c)" goto earlierBlock; goto lateBlock;
 				// This reordering should make the if structure correspond more closely to the original C# source code
@@ -219,10 +219,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return inst;
 		}
 
-		bool IsBranchToLaterTarget(ILInstruction inst1, ILInstruction inst2)
+		bool ShouldSwapIfTargets(ILInstruction inst1, ILInstruction inst2)
 		{
 			Block block1 = null, block2 = null;
 			if (inst1.MatchBranch(out block1) && inst2.MatchBranch(out block2)) {
+				// prefer arranging stuff in IL order
 				return block1.ILRange.Start > block2.ILRange.Start;
 			}
 			BlockContainer container1, container2;
@@ -235,6 +236,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (!inst2.MatchLeave(out container2))
 					container2 = block2?.Parent as BlockContainer;
 				return container2 == null || container2.IsDescendantOf(container1);
+			}
+			if (inst1.MatchBranch(out block1) && inst2.MatchLeave(out container2)
+				&& block1.IncomingEdgeCount > 1)
+			{
+				// if (..) goto x; leave c;
+				// Unless x can be inlined, it's better to swap the order if the 'leave'
+				// has a chance to turn into a 'break;' or 'return;'
+				if (container2.Parent is ILFunction) {
+					return true; // return
+				}
+				if (container2.EntryPoint.IncomingEdgeCount > 1) {
+					// break
+					return BlockContainer.FindClosestContainer(inst2) == container2;
+				}
 			}
 			return false;
 		}

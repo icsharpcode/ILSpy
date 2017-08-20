@@ -213,5 +213,15 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(postOrder[0] == Blocks[0]);
 			Blocks.ReplaceList(postOrder);
 		}
+
+		public static BlockContainer FindClosestContainer(ILInstruction inst)
+		{
+			while (inst != null) {
+				if (inst is BlockContainer bc)
+					return bc;
+				inst = inst.Parent;
+			}
+			return null;
+		}
 	}
 }
