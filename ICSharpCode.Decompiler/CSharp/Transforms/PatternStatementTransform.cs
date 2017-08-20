@@ -430,19 +430,45 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false;
 			}
 
+			var blockContainer = loop.Annotation<IL.BlockContainer>();
+
 			if (!itemVar.IsSingleDefinition) {
-				// foreach variable cannot be assigned to
-				return false;
+				// foreach variable cannot be assigned to.
+				// As a special case, we accept taking the address for a method call,
+				// but only if the call is the only use, so that any mutation by the call
+				// cannot be observed.
+				if (!AddressUsedForSingleCall(itemVar, blockContainer)) {
+					return false;
+				}
 			}
 
-			if (itemVar.CaptureScope != null && itemVar.CaptureScope != loop.Annotation<IL.BlockContainer>()) {
+			if (itemVar.CaptureScope != null && itemVar.CaptureScope != blockContainer) {
 				// captured variables cannot be declared in the loop unless the loop is their capture scope
 				return false;
 			}
 			return true;
 		}
+
+		static bool AddressUsedForSingleCall(IL.ILVariable v, IL.BlockContainer loop)
+		{
+			if (v.StoreCount == 1 && v.AddressCount == 1 && v.LoadCount == 0 && v.Type.IsReferenceType == false) {
+				if (v.AddressInstructions[0].Parent is IL.Call call
+					&& v.AddressInstructions[0].ChildIndex == 0
+					&& !call.Method.IsStatic) {
+					// used as this pointer for a method call
+					// this is OK iff the call is not within a nested loop
+					for (var node = call.Parent; node != null; node = node.Parent) {
+						if (node == loop)
+							return true;
+						else if (node is IL.BlockContainer)
+							break;
+					}
+				}
+			}
+			return false;
+		}
 		#endregion
-		
+
 		#region foreach (non-generic)
 		ExpressionStatement getEnumeratorPattern = new ExpressionStatement(
 			new AssignmentExpression(

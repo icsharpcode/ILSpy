@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 		
-		[Test, Ignore("Not fully working yet")]
+		[Test]
 		public void Loops([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
