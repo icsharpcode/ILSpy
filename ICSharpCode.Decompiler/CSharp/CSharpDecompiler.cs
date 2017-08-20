@@ -90,6 +90,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						new LoopDetection()
 					}
 				},
+				// re-run DetectExitPoints after loop detection
+				new DetectExitPoints(canIntroduceExitForReturn: true),
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						//new UseExitPoints(),
@@ -109,7 +111,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						)
 					}
 				},
-				new DetectExitPoints(canIntroduceExitForReturn: true),
 				new DelegateConstruction(),
 			};
 		}

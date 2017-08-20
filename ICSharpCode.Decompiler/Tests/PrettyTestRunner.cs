@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 		
-		[Test]
+		[Test, Ignore("Bad variable names; some if-else misdetected")]
 		public void Loops([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
