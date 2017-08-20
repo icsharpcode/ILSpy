@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </remarks>
 	public class ExpressionTransforms : ILVisitor, IBlockTransform
 	{
-		ILTransformContext context;
+		internal ILTransformContext context;
 		
 		public void Run(Block block, BlockTransformContext context)
 		{

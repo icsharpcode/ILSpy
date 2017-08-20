@@ -127,9 +127,28 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 							targetBlock.ILRange = new Interval(offset, offset);
 						}
 						continue; // try to find more nested conditions
-					} else {
-						break;
 					}
+					if (nestedTrueInst is Block nestedTrueBlock
+						&& DetectExitPoints.CompatibleExitInstruction(exitInst, nestedTrueBlock.Instructions.Last())
+						&& targetBlock.HasFlag(InstructionFlags.EndPointUnreachable))
+					{
+						// "if (...) { if (nestedCondition) { trueInst...; goto exitPoint; } falseInst...; } goto exitPoint;"
+						// -> "if (...) { if (!nestedCondition) { falseInst...; } trueInst... } goto exitPoint;"
+						// (only if end-point of 'falseInst...' is unreachable)
+						context.Step("Invert nested condition to reduce number of gotos", ifInst);
+						var nestedIfInst = (IfInstruction)targetBlock.Instructions[0];
+						nestedIfInst.Condition = new LogicNot(nestedCondition);
+						nestedTrueBlock.Instructions.RemoveAt(nestedTrueBlock.Instructions.Count - 1); // remove nested goto exitPoint;
+						// remove falseInsts from outer block
+						var falseInsts = targetBlock.Instructions.Skip(1).ToArray();
+						targetBlock.Instructions.RemoveRange(1, targetBlock.Instructions.Count - 1);
+						// add trueInsts to outer block
+						targetBlock.Instructions.AddRange(nestedTrueBlock.Instructions);
+						// add falseInsts to inner block
+						nestedTrueBlock.Instructions.ReplaceList(falseInsts);
+						nestedIfInst.Condition.AcceptVisitor(new ExpressionTransforms { context = context });
+					}
+					break;
 				}
 
 				trueExitInst = targetBlock.Instructions.LastOrDefault();
