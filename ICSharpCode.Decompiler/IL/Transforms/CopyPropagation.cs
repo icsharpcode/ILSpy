@@ -47,7 +47,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILVariable v;
 				ILInstruction copiedExpr;
 				if (block.Instructions[i].MatchStLoc(out v, out copiedExpr)) {
-					if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr)) {
+					if (v.IsSingleDefinition && v.LoadCount == 0 && v.Kind == VariableKind.StackSlot) {
+						// dead store to stack
+						if (copiedExpr.Flags == InstructionFlags.None) {
+							// no-op -> delete
+							block.Instructions.RemoveAt(i--);
+						} else {
+							// evaluate the value for its side-effects
+							block.Instructions[i] = copiedExpr;
+						}
+					} else if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr)) {
 						DoPropagate(v, copiedExpr, block, ref i, context);
 					}
 				}

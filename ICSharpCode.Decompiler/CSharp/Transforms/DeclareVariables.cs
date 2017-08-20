@@ -108,6 +108,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			try {
 				this.context = context;
+				EnsureExpressionStatementsAreValid(rootNode);
 				FindInsertionPoints(rootNode, 0);
 				ResolveCollisions();
 				InsertVariableDeclarations();
@@ -116,6 +117,45 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				this.context = null;
 			}
 		}
+
+		#region EnsureExpressionStatementsAreValid
+		void EnsureExpressionStatementsAreValid(AstNode rootNode)
+		{
+			foreach (var stmt in rootNode.DescendantsAndSelf.OfType<ExpressionStatement>()) {
+				if (!IsValidInStatementExpression(stmt.Expression)) {
+					// assign result to dummy variable
+					var v = new ILVariable(VariableKind.StackSlot, stmt.Expression.GetResolveResult().Type, 0);
+					v.Name = "_";
+					stmt.Expression = new AssignmentExpression(
+						new IdentifierExpression(v.Name).WithRR(new ILVariableResolveResult(v, v.Type)),
+						stmt.Expression.Detach());
+				}
+			}
+		}
+
+		private static bool IsValidInStatementExpression(Expression expr)
+		{
+			switch (expr) {
+				case InvocationExpression ie:
+				case ObjectCreateExpression oce:
+				case AssignmentExpression ae:
+					return true;
+				case UnaryOperatorExpression uoe:
+					switch (uoe.Operator) {
+						case UnaryOperatorType.PostIncrement:
+						case UnaryOperatorType.PostDecrement:
+						case UnaryOperatorType.Increment:
+						case UnaryOperatorType.Decrement:
+						case UnaryOperatorType.Await:
+							return true;
+						default:
+							return false;
+					}
+				default:
+					return false;
+			}
+		}
+		#endregion
 
 		#region FindInsertionPoints
 		List<(InsertionPoint InsertionPoint, BlockContainer Loop)> loopTracking = new List<(InsertionPoint, BlockContainer)>();

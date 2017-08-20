@@ -336,7 +336,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		static bool IsSafeForInlineOver(ILInstruction expr, ILInstruction expressionBeingMoved)
 		{
 			return SemanticHelper.MayReorder(expressionBeingMoved, expr);
-
 		}
 	}
 }

@@ -1068,8 +1068,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!parameter.Type.ContainsAnonymousType())
 					arguments[i] = arguments[i].ConvertTo(parameter.Type, this);
 				
-				if (parameter.IsOut && arguments[i].Expression is DirectionExpression) {
-					((DirectionExpression)arguments[i].Expression).FieldDirection = FieldDirection.Out;
+				if (parameter.IsOut && arguments[i].Expression is DirectionExpression dirExpr) {
+					dirExpr.FieldDirection = FieldDirection.Out;
 				}
 			}
 			

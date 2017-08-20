@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.IL.Patterns;
+using System;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -60,7 +61,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override Statement VisitNop(Nop inst)
 		{
-			return new EmptyStatement();
+			var stmt = new EmptyStatement();
+			if (inst.Comment != null) {
+				stmt.AddChild(new Comment(inst.Comment), Roles.Comment);
+			}
+			return stmt;
 		}
 		
 		protected internal override Statement VisitIfInstruction(IfInstruction inst)
