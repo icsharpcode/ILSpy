@@ -259,10 +259,16 @@ namespace ICSharpCode.Decompiler.Util
 		
 		public override string ToString()
 		{
-			if (End == long.MinValue)
-				return string.Format("[{0}..long.MaxValue]", Start);
-			else
+			if (End == long.MinValue) {
+				if (Start == long.MinValue)
+					return string.Format("[long.MinValue..long.MaxValue]", End);
+				else
+					return string.Format("[{0}..long.MaxValue]", Start);
+			} else if (Start == long.MinValue) {
+				return string.Format("[long.MinValue..{0})", End);
+			} else {
 				return string.Format("[{0}..{1})", Start, End);
+			}
 		}
 		
 		#region Equals and GetHashCode implementation

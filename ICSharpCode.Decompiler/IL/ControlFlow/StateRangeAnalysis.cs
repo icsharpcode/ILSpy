@@ -134,25 +134,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return new LongSet(exitIntervals);
 				case IfInstruction ifInst:
 					val = evalContext.Eval(ifInst.Condition).AsBool();
-					LongSet trueRanges;
-					if (val.Type == SymbolicValueType.StateEquals) {
-						trueRanges = new LongSet(val.Constant);
-					} else if (val.Type == SymbolicValueType.StateInEquals) {
-						trueRanges = new LongSet(val.Constant).Invert();
-					} else if (val.Type == SymbolicValueType.StateLessThan) {
-						// note: val.Constant is of type int, so it can't be equal to long.MinValue,
-						// which would cause problems.
-						trueRanges = new LongSet(new LongInterval(long.MinValue, val.Constant));
-					} else if (val.Type == SymbolicValueType.StateLessEqual) {
-						trueRanges = new LongSet(LongInterval.Inclusive(long.MinValue, val.Constant));
-					} else if (val.Type == SymbolicValueType.StateGreaterThan) {
-						// note: val.Constant is of type int, so the addition can't overflow.
-						trueRanges = new LongSet(LongInterval.Inclusive(val.Constant + 1L, long.MaxValue));
-					} else if (val.Type == SymbolicValueType.StateGreaterEqual) {
-						trueRanges = new LongSet(LongInterval.Inclusive(val.Constant, long.MaxValue));
-					} else {
+					if (val.Type != SymbolicValueType.StateInSet) {
 						goto default;
 					}
+					LongSet trueRanges = val.ValueSet;
 					var afterTrue = AssignStateRanges(ifInst.TrueInst, stateRange.IntersectWith(trueRanges));
 					var afterFalse = AssignStateRanges(ifInst.FalseInst, stateRange.ExceptWith(trueRanges));
 					return afterTrue.UnionWith(afterFalse);

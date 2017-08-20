@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -54,35 +55,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		This,
 		/// <summary>
-		/// bool: State == Constant
+		/// bool: ValueSet.Contains(State)
 		/// </summary>
-		StateEquals,
-		/// <summary>
-		/// bool: State != Constant
-		/// </summary>
-		StateInEquals,
-		/// <summary>
-		/// bool: State &lt; Constant
-		/// </summary>
-		StateLessThan,
-		/// <summary>
-		/// bool: State &lt;= Constant
-		/// </summary>
-		StateLessEqual,
-		/// <summary>
-		/// bool: State &gt; Constant
-		/// </summary>
-		StateGreaterThan,
-		/// <summary>
-		/// bool: State &gt;= Constant
-		/// </summary>
-		StateGreaterEqual
+		StateInSet,
 	}
 
 	struct SymbolicValue
 	{
 		public readonly int Constant;
 		public readonly SymbolicValueType Type;
+		public readonly LongSet ValueSet;
 
 		public SymbolicValue(SymbolicValueType type, int constant = 0)
 		{
@@ -90,12 +72,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.Constant = constant;
 		}
 
+		public SymbolicValue(SymbolicValueType type, LongSet valueSet)
+		{
+			this.Type = type;
+			this.Constant = 0;
+			this.ValueSet = valueSet;
+		}
+
 		public SymbolicValue AsBool()
 		{
 			if (Type == SymbolicValueType.State) {
 				// convert state integer to bool:
 				// if (state + c) = if (state + c != 0) = if (state != -c)
-				return new SymbolicValue(SymbolicValueType.StateInEquals, unchecked(-Constant));
+				return new SymbolicValue(SymbolicValueType.StateInSet, new LongSet(unchecked(-Constant)).Invert());
 			}
 			return this;
 		}
@@ -154,38 +143,41 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (left.Type != SymbolicValueType.State || right.Type != SymbolicValueType.IntegerConstant)
 					return Failed;
 				// bool: (state + left.Constant == right.Constant)
-				// bool: (state == right.Constant - left.Constant)
-				if (comp.Kind == ComparisonKind.Equality)
-					return new SymbolicValue(SymbolicValueType.StateEquals, unchecked(right.Constant - left.Constant));
-				else if (comp.Kind == ComparisonKind.Inequality)
-					return new SymbolicValue(SymbolicValueType.StateInEquals, unchecked(right.Constant - left.Constant));
-				else if (comp.Kind == ComparisonKind.LessThan && left.Constant == 0)
-					return new SymbolicValue(SymbolicValueType.StateLessThan, right.Constant);
-				else if (comp.Kind == ComparisonKind.LessThanOrEqual && left.Constant == 0)
-					return new SymbolicValue(SymbolicValueType.StateLessEqual, right.Constant);
-				else if (comp.Kind == ComparisonKind.GreaterThan && left.Constant == 0)
-					return new SymbolicValue(SymbolicValueType.StateGreaterThan, right.Constant);
-				else if (comp.Kind == ComparisonKind.GreaterThanOrEqual && left.Constant == 0)
-					return new SymbolicValue(SymbolicValueType.StateGreaterEqual, right.Constant);
-				else
-					return Failed;
-			} else if (inst is LogicNot logicNot) {
-				SymbolicValue val = Eval(logicNot.Argument).AsBool();
-				switch (val.Type) {
-					case SymbolicValueType.StateEquals:
-						return new SymbolicValue(SymbolicValueType.StateInEquals, val.Constant);
-					case SymbolicValueType.StateInEquals:
-						return new SymbolicValue(SymbolicValueType.StateEquals, val.Constant);
-					case SymbolicValueType.StateLessThan:
-						return new SymbolicValue(SymbolicValueType.StateGreaterEqual, val.Constant);
-					case SymbolicValueType.StateLessEqual:
-						return new SymbolicValue(SymbolicValueType.StateGreaterThan, val.Constant);
-					case SymbolicValueType.StateGreaterThan:
-						return new SymbolicValue(SymbolicValueType.StateLessEqual, val.Constant);
-					case SymbolicValueType.StateGreaterEqual:
-						return new SymbolicValue(SymbolicValueType.StateLessThan, val.Constant);
+				LongSet trueSums; // evals to true if trueSums.Contains(state + left.Constant)
+				switch (comp.Kind) {
+					case ComparisonKind.Equality:
+						trueSums = new LongSet(right.Constant);
+						break;
+					case ComparisonKind.Inequality:
+						trueSums = new LongSet(right.Constant).Invert();
+						break;
+					case ComparisonKind.LessThan:
+						// note: right.Constant is of type int, so it can't be equal to long.MinValue,
+						// which would cause problems.
+						trueSums = new LongSet(new LongInterval(long.MinValue, right.Constant));
+						break;
+					case ComparisonKind.LessThanOrEqual:
+						trueSums = new LongSet(LongInterval.Inclusive(long.MinValue, right.Constant));
+						break;
+					case ComparisonKind.GreaterThan:
+						// note: val.Constant is of type int, so the addition can't overflow.
+						trueSums = new LongSet(LongInterval.Inclusive(right.Constant + 1L, long.MaxValue));
+						break;
+					case ComparisonKind.GreaterThanOrEqual:
+						trueSums = new LongSet(LongInterval.Inclusive(right.Constant, long.MaxValue));
+						break;
 					default:
 						return Failed;
+				}
+				LongSet trueStates = trueSums.AddOffset(unchecked(-left.Constant));
+				// evals to true if trueStates.Contains(state)
+				return new SymbolicValue(SymbolicValueType.StateInSet, trueStates);
+			} else if (inst is LogicNot logicNot) {
+				SymbolicValue val = Eval(logicNot.Argument).AsBool();
+				if (val.Type == SymbolicValueType.StateInSet) {
+					return new SymbolicValue(SymbolicValueType.StateInSet, val.ValueSet.Invert());
+				} else {
+					return Failed;
 				}
 			} else {
 				return Failed;

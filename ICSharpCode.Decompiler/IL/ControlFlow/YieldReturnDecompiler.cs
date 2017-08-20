@@ -409,16 +409,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		#region Analyze MoveNext() and generate new body
 		BlockContainer AnalyzeMoveNext()
 		{
+			context.Stepper.StartGroup("AnalyzeMoveNext");
 			MethodDefinition moveNextMethod = enumeratorType.Methods.FirstOrDefault(m => m.Name == "MoveNext");
 			ILFunction moveNextFunction = CreateILAst(moveNextMethod);
 
 			// Copy-propagate temporaries holding a copy of 'this'.
 			// This is necessary because the old (pre-Roslyn) C# compiler likes to store 'this' in temporary variables.
-			context.Stepper.StartGroup("AnalyzeMoveNext");
 			foreach (var stloc in moveNextFunction.Descendants.OfType<StLoc>().Where(s => s.Variable.IsSingleDefinition && s.Value.MatchLdThis()).ToList()) {
 				CopyPropagation.Propagate(stloc, context);
 			}
-			context.Stepper.EndGroup();
 
 			var body = (BlockContainer)moveNextFunction.Body;
 			if (body.Blocks.Count == 1 && body.Blocks[0].Instructions.Count == 1 && body.Blocks[0].Instructions[0] is TryFault tryFault) {
@@ -437,6 +436,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
+			PropagateCopiesOfFields(body);
+
 			// Note: body may contain try-catch or try-finally statements that have nested block containers,
 			// but those cannot contain any yield statements.
 			// So for reconstructing the control flow, we only consider the blocks directly within body.
@@ -448,7 +449,39 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			moveNextFunction.Variables.Clear();
 			// release references from old moveNextFunction to instructions that were moved over to newBody
 			moveNextFunction.ReleaseRef();
+			context.Stepper.EndGroup();
 			return newBody;
+		}
+
+		private void PropagateCopiesOfFields(BlockContainer body)
+		{
+			// Roslyn may optimize MoveNext() by copying fields from the iterator class into local variables
+			// at the beginning of MoveNext(). Undo this optimization.
+			context.Stepper.StartGroup("PropagateCopiesOfFields");
+			var mutableFields = body.Descendants.OfType<LdFlda>().Where(ldflda => ldflda.Parent.OpCode != OpCode.LdObj).Select(ldflda => ldflda.Field).ToHashSet();
+			for (int i = 0; i < body.EntryPoint.Instructions.Count; i++) {
+				if (body.EntryPoint.Instructions[i] is StLoc store
+					&& store.Variable.IsSingleDefinition
+					&& store.Value is LdObj ldobj
+					&& ldobj.Target is LdFlda ldflda
+					&& ldflda.Target.MatchLdThis())
+				{
+					if (!mutableFields.Contains(ldflda.Field)) {
+						// perform copy propagation: (unlike CopyPropagation.Propagate(), copy the ldobj arguments as well)
+						foreach (var expr in store.Variable.LoadInstructions.ToArray()) {
+							expr.ReplaceWith(store.Value.Clone());
+						}
+						body.EntryPoint.Instructions.RemoveAt(i--);
+					} else if (ldflda.Field.MemberDefinition == stateField.MemberDefinition) {
+						continue;
+					} else {
+						break; // unsupported: load of mutable field (other than state field)
+					}
+				} else {
+					break; // unknown instruction
+				}
+			}
+			context.Stepper.EndGroup();
 		}
 
 		/// <summary>
