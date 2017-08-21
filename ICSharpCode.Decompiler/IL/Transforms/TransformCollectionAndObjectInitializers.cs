@@ -31,6 +31,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (inst.MatchStLoc(out var v, out var initInst)) {
 				switch (initInst) {
 					case NewObj newObjInst:
+						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || DelegateConstruction.IsPotentialClosure(context, newObjInst))
+							return false;
+						break;
 					case DefaultValue defaultVal:
 						break;
 					default:

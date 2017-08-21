@@ -99,6 +99,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			
 			return opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn || (allowTransformed && opCode == OpCode.ILFunction);
 		}
+
+		internal static bool IsPotentialClosure(BlockTransformContext context, NewObj inst)
+		{
+			var decompilationContext = new SimpleTypeResolveContext(context.TypeSystem.Resolve(context.Function.Method));
+			return IsPotentialClosure(decompilationContext.CurrentTypeDefinition, inst.Method.DeclaringTypeDefinition);
+		}
 		
 		static bool IsAnonymousMethod(ITypeDefinition decompiledTypeDefinition, IMethod method)
 		{
