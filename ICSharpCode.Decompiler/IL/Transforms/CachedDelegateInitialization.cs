@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -103,13 +104,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var storeInst = trueInst.Instructions.Last();
 			if (!storeInst.MatchStLoc(v, out value))
 				return false;
+			StLoc storeBeforeIf = null;
 			// the optional field store was moved into storeInst by inline assignment:
 			if (!(value is NewObj)) {
 				IField field, field2;
 				if (value.MatchStsFld(out field, out value2)) {
 					if (!(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 						return false;
-					var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
+					storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
 					if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdsFld(out field2) || !field.Equals(field2))
 						return false;
 					value = value2;
@@ -118,7 +120,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// TODO: shouldn't we test 'target'?
 					if (!(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
 						return false;
-					var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
+					storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
 					if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdFld(out var target2, out field2) || !field.Equals(field2))
 						return false;
 					value = value2;
@@ -128,6 +130,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			if (!DelegateConstruction.IsDelegateConstruction(value as NewObj, true))
+				return false;
+			if (HasUsagesBefore(storeInst, storeBeforeIf, v))
 				return false;
 			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
 			if (nextInstruction == null)
@@ -139,6 +143,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			local = v;
 			usages[0].ReplaceWith(value);
 			return true;
+		}
+
+		bool HasUsagesBefore(ILInstruction storeInstruction, ILInstruction storeBeforeIf, ILVariable v)
+		{
+			if (storeBeforeIf != null)
+				return v.StoreInstructions[0] != storeBeforeIf;
+			return v.StoreInstructions[0] != storeInstruction;
 		}
 	}
 }
