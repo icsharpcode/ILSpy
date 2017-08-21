@@ -1422,9 +1422,24 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
 			var final = block.FinalInstruction as LdLoc;
-			if (stloc == null || final == null || !(stloc.Value is NewObj newObjInst) || stloc.Variable != final.Variable)
+			if (stloc == null || final == null || stloc.Variable != final.Variable)
 				throw new ArgumentException("given Block is invalid!");
-			var initObjRR = new InitializedObjectResolveResult(newObjInst.Method.DeclaringType);
+			InitializedObjectResolveResult initObjRR;
+			TranslatedExpression expr;
+			switch (stloc.Value) {
+				case NewObj newObjInst:
+					initObjRR = new InitializedObjectResolveResult(newObjInst.Method.DeclaringType);
+					expr = HandleCallInstruction(newObjInst);
+					break;
+				case DefaultValue defaultVal:
+					initObjRR = new InitializedObjectResolveResult(defaultVal.Type);
+					expr = new ObjectCreateExpression(ConvertType(defaultVal.Type))
+						.WithILInstruction(defaultVal)
+						.WithRR(new TypeResolveResult(defaultVal.Type));
+					break;
+				default:
+					throw new ArgumentException("given Block is invalid!");
+			}
 			var elementsStack = new Stack<List<Expression>>();
 			var elements = new List<Expression>(block.Instructions.Count);
 			elementsStack.Push(elements);
@@ -1467,7 +1482,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				var values = elementsStack.Pop();
 				elementsStack.Peek().Add(MakeInitializerAssignment(pathElement.Member, values));
 			}
-			var expr = HandleCallInstruction(newObjInst);
 			var oce = (ObjectCreateExpression)expr.Expression;
 			oce.Initializer = new ArrayInitializerExpression(elements);
 			return expr.WithILInstruction(block);

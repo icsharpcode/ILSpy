@@ -28,7 +28,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			ILInstruction inst = body.Instructions[pos];
 			// Match stloc(v, newobj)
-			if (inst.MatchStLoc(out var v, out var initInst) && v.Kind == VariableKind.StackSlot && initInst is NewObj newObj) {
+			if (inst.MatchStLoc(out var v, out var initInst)) {
+				switch (initInst) {
+					case NewObj newObjInst:
+					case DefaultValue defaultVal:
+						break;
+					default:
+						return false;
+				}
 				context.Step("CollectionOrObjectInitializer", inst);
 				int initializerItemsCount = 0;
 				var blockType = BlockType.CollectionInitializer;
@@ -47,17 +54,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				initBlock.Instructions.Add(new StLoc(finalSlot, initInst.Clone()));
 				for (int i = 1; i <= initializerItemsCount; i++) {
 					switch (body.Instructions[i + pos]) {
-						case CallVirt callVirt:
-							var newCallVirt = (CallVirt)callVirt.Clone();
-							var newTarget = newCallVirt.Arguments[0];
-							foreach (var load in newTarget.Descendants.OfType<LdLoc>())
-								load.Variable = finalSlot;
-							initBlock.Instructions.Add(newCallVirt);
+						case CallInstruction call:
+							if (!(call is CallVirt || call is Call)) continue;
+							var newCall = (CallInstruction)call.Clone();
+							var newTarget = newCall.Arguments[0];
+							foreach (var load in newTarget.Descendants.OfType<IInstructionWithVariableOperand>())
+								if (load is LdLoc || load is LdLoca)
+									load.Variable = finalSlot;
+							initBlock.Instructions.Add(newCall);
 							break;
 						case StObj stObj:
 							var newStObj = (StObj)stObj.Clone();
-							foreach (var load in newStObj.Target.Descendants.OfType<LdLoc>())
-								load.Variable = finalSlot;
+							foreach (var load in newStObj.Target.Descendants.OfType<IInstructionWithVariableOperand>())
+								if (load is LdLoc || load is LdLoca)
+									load.Variable = finalSlot;
 							initBlock.Instructions.Add(newStObj);
 							break;
 					}
@@ -87,28 +97,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 		}
-
-		bool IsMatchingTarget(ILInstruction target, ILVariable targetVariable)
-		{
-			if (target.MatchLdLoc(targetVariable))
-				return true;
-			if (target is LdObj lo && lo.Target is LdFlda ldfa && ldfa.Target.MatchLdLoc(targetVariable))
-				return true;
-			if (target is CallVirt cv && cv.Method.IsAccessor && cv.Arguments.Count == 1 && cv.Arguments[0].MatchLdLoc(targetVariable))
-				return true;
-			return false;
-		}
-
-		bool IsMatchingMethod(CallVirt cv, ref BlockType type)
-		{
-			if (cv.Method.IsAccessor && cv.Method.AccessorOwner is IProperty p && p.Setter == cv.Method) {
-				type = BlockType.ObjectInitializer;
-				return true;
-			} else if (cv.Method.Name.Equals("Add", StringComparison.Ordinal)) {
-				return true;
-			}
-			return false;
-		}
 	}
 
 	public enum AccessPathKind
@@ -137,14 +125,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILVariable target = null;
 			AccessPathKind kind = AccessPathKind.Invalid;
 			List<ILInstruction> values = null;
+			IMethod method;
 			while (instruction != null) {
 				switch (instruction) {
-					case CallVirt cv:
-						var method = cv.Method;
+					case CallInstruction call:
+						if (!(call is CallVirt || call is Call)) goto default;
+						method = call.Method;
 						if (method.IsStatic) goto default;
-						instruction = cv.Arguments[0];
+						instruction = call.Arguments[0];
 						if (values == null) {
-							values = new List<ILInstruction>(cv.Arguments.Skip(1));
+							values = new List<ILInstruction>(call.Arguments.Skip(1));
 							if (values.Count == 0)
 								goto default;
 							if (method.IsAccessor) {
@@ -167,11 +157,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						goto default;
 					case StObj stobj:
-						if (stobj.Value is Block b && (b.Type == BlockType.ObjectInitializer || b.Type == BlockType.CollectionInitializer) && stobj.Target is LdFlda ldflda2) {
+						if (stobj.Target is LdFlda ldflda2) {
 							path.Insert(0, new AccessPathElement(ldflda2.Field));
 							instruction = ldflda2.Target;
 							if (values == null) {
-								values = new List<ILInstruction>(new[] { b });
+								values = new List<ILInstruction>(new[] { stobj.Value });
 								kind = AccessPathKind.Setter;
 							}
 							break;
@@ -179,6 +169,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						goto default;
 					case LdLoc ldloc:
 						target = ldloc.Variable;
+						instruction = null;
+						break;
+					case LdLoca ldloca:
+						target = ldloca.Variable;
 						instruction = null;
 						break;
 					default:
