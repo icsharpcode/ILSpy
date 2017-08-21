@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.CSharp.Analysis;
 using Mono.Cecil;
+using ICSharpCode.Decompiler.Semantics;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -77,6 +78,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return result;
 			if (context.Settings.LockStatement) {
 				result = TransformLock(expressionStatement);
+				if (result != null)
+					return result;
+			}
+			if (context.Settings.AutomaticProperties) {
+				result = ReplaceBackingFieldUsage(expressionStatement);
 				if (result != null)
 					return result;
 			}
@@ -1029,6 +1035,27 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (section.Attributes.Count == 0)
 					section.Remove();
 			}
+		}
+
+		ExpressionStatement ReplaceBackingFieldUsage(ExpressionStatement expressionStatement)
+		{
+			foreach (var identifier in expressionStatement.Descendants.OfType<Identifier>()) {
+				if (identifier.Name.StartsWith("<") && identifier.Name.EndsWith(">k__BackingField")) {
+					var parent = identifier.Parent;
+					var mrr = parent.Annotation<MemberResolveResult>();
+					var field = mrr?.Member as IField;
+					if (field != null && field.IsCompilerGenerated()) {
+						var propertyName = identifier.Name.Substring(1, identifier.Name.Length - 1 - ">k__BackingField".Length);
+						var property = field.DeclaringTypeDefinition.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+						if (property != null) {
+							identifier.ReplaceWith(Identifier.Create(propertyName));
+							parent.RemoveAnnotations<MemberResolveResult>();
+							parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, property));
+						}
+					}
+				}
+			}
+			return null;
 		}
 		#endregion
 		
