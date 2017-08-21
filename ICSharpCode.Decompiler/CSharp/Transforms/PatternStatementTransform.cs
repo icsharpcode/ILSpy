@@ -591,42 +591,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}};
 
-		static readonly ForStatement forLoopWithoutInitializer = new ForStatement {
-			Condition = new BinaryOperatorExpression {
-				Left = new NamedNode("ident", new IdentifierExpression(Pattern.AnyString)),
-				Operator = BinaryOperatorType.Any,
-				Right = new AnyNode("endExpr")
-			},
-			Iterators = {
-				new NamedNode(
-					"increment",
-					new ExpressionStatement(
-						new AssignmentExpression {
-							Left = new Backreference("ident"),
-							Operator = AssignmentOperatorType.Any,
-							Right = new AnyNode()
-						}))
-			},
-			EmbeddedStatement = new AnyNode()
-		};
-
 		public ForStatement TransformFor(ExpressionStatement node)
 		{
 			Match m1 = variableAssignPattern.Match(node);
 			if (!m1.Success) return null;
+			var variableName = m1.Get<IdentifierExpression>("variable").Single().Identifier;
 			AstNode next = node.NextSibling;
-			Match m2 = forLoopWithoutInitializer.Match(next);
-			ForStatement forStatement;
-			if (m2.Success) {
-				node.Remove();
-				forStatement = (ForStatement)next;
-				forStatement.InsertChildAfter(null, node, ForStatement.InitializerRole);
-				return forStatement;
+			if (next is ForStatement forStatement) {
+				if ((forStatement.Iterators.FirstOrDefault() is ExpressionStatement stmt
+					&& stmt.Expression is AssignmentExpression assign
+					&& variableName == assign.Left.ToString())
+				|| (forStatement.Condition is BinaryOperatorExpression cond
+					&& variableName == cond.Left.ToString()))
+				{
+					node.Remove();
+					forStatement.InsertChildAfter(null, node, ForStatement.InitializerRole);
+					return forStatement;
+				}
 			}
 			Match m3 = forPattern.Match(next);
 			if (!m3.Success) return null;
 			// ensure the variable in the for pattern is the same as in the declaration
-			if (m1.Get<IdentifierExpression>("variable").Single().Identifier != m3.Get<IdentifierExpression>("ident").Single().Identifier)
+			if (variableName != m3.Get<IdentifierExpression>("ident").Single().Identifier)
 				return null;
 			WhileStatement loop = (WhileStatement)next;
 			node.Remove();
