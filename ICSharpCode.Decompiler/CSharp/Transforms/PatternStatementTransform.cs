@@ -967,27 +967,51 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						Left = new Backreference("fieldReference"),
 						Right = new IdentifierExpression("value")
 					}
-				}}};
-		
+				}}
+		};
+
+		static readonly PropertyDeclaration automaticReadonlyPropertyPattern = new PropertyDeclaration {
+			Attributes = { new Repeat(new AnyNode()) },
+			Modifiers = Modifiers.Any,
+			ReturnType = new AnyNode(),
+			PrivateImplementationType = new OptionalNode(new AnyNode()),
+			Name = Pattern.AnyString,
+			Getter = new Accessor {
+				Attributes = { new Repeat(new AnyNode()) },
+				Modifiers = Modifiers.Any,
+				Body = new BlockStatement {
+					new ReturnStatement {
+						Expression = new AnyNode("fieldReference")
+					}
+				}
+			}
+		};
+
 		PropertyDeclaration TransformAutomaticProperties(PropertyDeclaration property)
 		{
 			PropertyDefinition cecilProperty = context.TypeSystem.GetCecil(property.GetSymbol() as IProperty) as PropertyDefinition;
-			if (cecilProperty == null || cecilProperty.GetMethod == null || cecilProperty.SetMethod == null)
+			if (cecilProperty == null || cecilProperty.GetMethod == null)
 				return null;
-			if (!(cecilProperty.GetMethod.IsCompilerGenerated() && cecilProperty.SetMethod.IsCompilerGenerated()))
+			if (!cecilProperty.GetMethod.IsCompilerGenerated() && (cecilProperty.SetMethod?.IsCompilerGenerated() == false))
 				return null;
+			IField fieldInfo = null;
 			Match m = automaticPropertyPattern.Match(property);
 			if (m.Success) {
-				var fieldInfo = m.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
-				if (fieldInfo == null)
-					return null;
-				FieldDefinition field = context.TypeSystem.GetCecil(fieldInfo) as FieldDefinition;
-				if (field.IsCompilerGenerated() && field.DeclaringType == cecilProperty.DeclaringType) {
-					RemoveCompilerGeneratedAttribute(property.Getter.Attributes);
-					RemoveCompilerGeneratedAttribute(property.Setter.Attributes);
-					property.Getter.Body = null;
-					property.Setter.Body = null;
+				fieldInfo = m.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
+			} else {
+				Match m2 = automaticReadonlyPropertyPattern.Match(property);
+				if (m2.Success) {
+					fieldInfo = m2.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
 				}
+			}
+			if (fieldInfo == null)
+				return null;
+			FieldDefinition field = context.TypeSystem.GetCecil(fieldInfo) as FieldDefinition;
+			if (field.IsCompilerGenerated() && field.DeclaringType == cecilProperty.DeclaringType) {
+				RemoveCompilerGeneratedAttribute(property.Getter.Attributes);
+				RemoveCompilerGeneratedAttribute(property.Setter.Attributes);
+				property.Getter.Body = null;
+				property.Setter.Body = null;
 			}
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
 			return null;
