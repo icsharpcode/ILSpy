@@ -56,11 +56,11 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ICSharpCode_Decompiler()
 		{
-			try {
+			//try {
 				RunWithTest("ICSharpCode.Decompiler", "ICSharpCode.Decompiler.dll", "ICSharpCode.Decompiler.Tests.dll");
-			} catch (CompilationFailedException) {
-				Assert.Ignore("Ignored because yield return is not yet implemented!");
-			}
+			//} catch (CompilationFailedException) {
+			//	Assert.Ignore("Ignored because yield return is not yet implemented!");
+			//}
 		}
 
 		[Test]

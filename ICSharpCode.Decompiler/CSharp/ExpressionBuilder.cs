@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -1423,125 +1424,48 @@ namespace ICSharpCode.Decompiler.CSharp
 			var final = block.FinalInstruction as LdLoc;
 			if (stloc == null || final == null || !(stloc.Value is NewObj newObjInst) || stloc.Variable != final.Variable)
 				throw new ArgumentException("given Block is invalid!");
-			Stack<List<Expression>> elementsStack = new Stack<List<Expression>>();
+			var initObjRR = new InitializedObjectResolveResult(newObjInst.Method.DeclaringType);
+			var elementsStack = new Stack<List<Expression>>();
 			var elements = new List<Expression>(block.Instructions.Count);
 			elementsStack.Push(elements);
-			var initObjRR = new InitializedObjectResolveResult(newObjInst.Method.DeclaringType);
-			IMember currentMember = null;
-			foreach (var inst in block.Instructions) {
-				switch (inst) {
-					case CallVirt call:
-						if (call.Method.IsAccessor) {
-							if (elementsStack.Count > 1)
-								elementsStack.Pop();
-							if (call.Arguments[0].MatchLdLoc(stloc.Variable)) {
-								currentMember = call.Method.AccessorOwner;
-								var propertyReference = new IdentifierExpression(currentMember.Name)
-								.WithRR(new MemberResolveResult(initObjRR, currentMember));
-								var value = Translate(call.Arguments[1]).ConvertTo(currentMember.ReturnType, this);
-								elementsStack.Peek().Add(new AssignmentExpression(propertyReference, value).WithILInstruction(call));
-							} else {
-								IMember newMember;
-								switch (call.Arguments[0]) {
-									case CallVirt cv:
-										newMember = cv.Method.AccessorOwner;
-										break;
-									case LdObj lo:
-										if (lo.Target is LdFlda ldflda) {
-											newMember = ldflda.Field;
-											break;
-										}
-										throw new NotSupportedException();
-									default:
-										throw new NotSupportedException();
-								}
-								Expression propertyReference;
-								if (newMember != currentMember) {
-									currentMember = newMember;
-									if (elementsStack.Count > 1) {
-										propertyReference = new IdentifierExpression(currentMember.Name)
-											.WithRR(new MemberResolveResult(initObjRR, currentMember));
-
-										var prevItems = elementsStack.Pop();
-										elementsStack.Peek().Add(new AssignmentExpression(propertyReference, new ArrayInitializerExpression(prevItems)));
-									}
-									elementsStack.Push(new List<Expression>(call.Arguments.Count - 1));
-								}
-								IMember member = call.Method.AccessorOwner;
-								propertyReference = new IdentifierExpression(member.Name)
-									.WithRR(new MemberResolveResult(initObjRR, member));
-								var value = Translate(call.Arguments[1]).ConvertTo(member.ReturnType, this);
-								elementsStack.Peek().Add(new AssignmentExpression(propertyReference, value).WithILInstruction(call));
-							}
-						} else {
-							var target = call.Arguments[0];
-							if (block.Type == BlockType.ObjectInitializer) {
-								IMember newMember;
-								switch (target) {
-									case CallVirt cv:
-										newMember = cv.Method.AccessorOwner;
-										break;
-									case LdObj lo:
-										if (lo.Target is LdFlda ldflda) {
-											newMember = ldflda.Field;
-											break;
-										}
-										throw new NotSupportedException();
-									default:
-										throw new NotSupportedException();
-								}
-								if (newMember != currentMember) {
-									currentMember = newMember;
-									if (elementsStack.Count > 1) {
-										var propertyReference = new IdentifierExpression(currentMember.Name)
-											.WithRR(new MemberResolveResult(initObjRR, currentMember));
-
-										var prevItems = elementsStack.Pop();
-										elementsStack.Peek().Add(new AssignmentExpression(propertyReference, new ArrayInitializerExpression(prevItems)));
-									}
-									elementsStack.Push(new List<Expression>(call.Arguments.Count - 1));
-								}
-							}
-							var args = new List<Expression>(call.Arguments.Count - 1);
-							foreach (var arg in call.Arguments.Skip(1)) {
-								var expectedType = call.Method.Parameters[arg.ChildIndex - 1].Type;
-								var a = Translate(arg).ConvertTo(expectedType, this);
-								args.Add(a);
-							}
-							elementsStack.Peek().Add(args.Count == 1 ? args[0] : new ArrayInitializerExpression(args));
-						}
+			List<AccessPathElement> currentPath = null;
+			foreach (var inst in block.Instructions.Skip(1)) {
+				var info = AccessPathElement.GetAccessPath(inst);
+				if (info.Kind == AccessPathKind.Invalid) continue;
+				if (currentPath == null) {
+					currentPath = info.Path;
+				} else {
+					int firstDifferenceIndex = Math.Min(currentPath.Count, info.Path.Count);
+					int index = 0;
+					while (index < firstDifferenceIndex && info.Path[index] == currentPath[index])
+						index++;
+					firstDifferenceIndex = index;
+					while (elementsStack.Count - 1 > firstDifferenceIndex) {
+						var pathElement = currentPath[elementsStack.Count - 2];
+						var values = elementsStack.Pop();
+						elementsStack.Peek().Add(MakeInitializerAssignment(pathElement.Member, values));
+					}
+					currentPath = info.Path;
+				}
+				while (elementsStack.Count < currentPath.Count)
+					elementsStack.Push(new List<Expression>());
+				var lastElement = currentPath.Last();
+				var memberRR = new MemberResolveResult(initObjRR, lastElement.Member);
+				switch (info.Kind) {
+					case AccessPathKind.Adder:
+						elementsStack.Peek().Add(MakeInitializerElements(info.Values, ((IMethod)lastElement.Member).Parameters));
 						break;
-					case StObj stObj:
-						if (stObj.Value is Block b && IsInitializer(b)) {
-							if (stObj.Target is LdFlda ldflda) {
-								currentMember = ldflda.Field;
-								var propertyReference = new IdentifierExpression(currentMember.Name)
-									.WithRR(new MemberResolveResult(initObjRR, currentMember));
-								Expression value;
-								switch (block.Type) {
-									case BlockType.ArrayInitializer:
-										value = TranslateArrayInitializer(b);
-										break;
-									case BlockType.CollectionInitializer:
-									case BlockType.ObjectInitializer:
-										value = TranslateObjectAndCollectionInitializer(b);
-										break;
-									default:
-										throw new NotSupportedException();
-								}
-								elementsStack.Peek().Add(new AssignmentExpression(propertyReference, value).WithILInstruction(stObj));
-								break;
-							}
-						}
-						throw new NotSupportedException();
+					case AccessPathKind.Setter:
+						var target = new IdentifierExpression(lastElement.Member.Name)
+							.WithILInstruction(inst).WithRR(memberRR);
+						elementsStack.Peek().Add(Assignment(target, Translate(info.Values.Single())));
+						break;
 				}
 			}
-			if (elementsStack.Count > 1) {
-				var propertyReference = new IdentifierExpression(currentMember.Name)
-					.WithRR(new MemberResolveResult(initObjRR, currentMember));
-
-				var prevItems = elementsStack.Pop();
-				elementsStack.Peek().Add(new AssignmentExpression(propertyReference, new ArrayInitializerExpression(prevItems)));
+			while (elementsStack.Count > 1) {
+				var pathElement = currentPath[elementsStack.Count - 2];
+				var values = elementsStack.Pop();
+				elementsStack.Peek().Add(MakeInitializerAssignment(pathElement.Member, values));
 			}
 			var expr = HandleCallInstruction(newObjInst);
 			var oce = (ObjectCreateExpression)expr.Expression;
@@ -1549,9 +1473,25 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr.WithILInstruction(block);
 		}
 
-		bool IsInitializer(Block b)
+		Expression MakeInitializerAssignment(IMember member, List<Expression> values)
 		{
-			return b.Type == BlockType.ArrayInitializer || b.Type == BlockType.CollectionInitializer || b.Type == BlockType.ObjectInitializer;
+			var target = new IdentifierExpression(member.Name);
+			Expression value;
+			if (values.Count == 1 && !(values[0] is AssignmentExpression))
+				value = values[0];
+			else
+				value = new ArrayInitializerExpression(values);
+			return new AssignmentExpression(target, value);
+		}
+
+		Expression MakeInitializerElements(List<ILInstruction> values, IList<IParameter> parameters)
+		{
+			if (values.Count == 1)
+				return Translate(values[0]).ConvertTo(parameters[0].Type, this);
+			var expressions = new Expression[values.Count];
+			for (int i = 0; i < values.Count; i++)
+				expressions[i] = Translate(values[i]).ConvertTo(parameters[i].Type, this);
+			return new ArrayInitializerExpression(expressions);
 		}
 
 		readonly static ArraySpecifier[] NoSpecifiers = new ArraySpecifier[0];

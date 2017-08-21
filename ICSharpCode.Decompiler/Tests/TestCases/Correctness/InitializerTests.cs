@@ -515,6 +515,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			});
 		}
 
+		public static void ObjectInitializerWithInitializationOfDeeplyNestedObjects()
+		{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
+				a = InitializerTests.MyEnum.b,
+				MoreData =
+			  {
+				  a = InitializerTests.MyEnum.a,
+				  MoreData = { MoreData = { MoreData = { MoreData = { MoreData = { MoreData = { a = MyEnum.b } } } } } }
+			  }
+			});
+		}
+
 		public static void StructInitializer_DefaultConstructor()
 		{
 			InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData

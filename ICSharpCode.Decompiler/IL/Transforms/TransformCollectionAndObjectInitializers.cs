@@ -24,13 +24,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		enum InitializerType
-		{
-			None,
-			Collection,
-			Object
-		}
-
 		bool DoTransform(Block body, int pos)
 		{
 			ILInstruction inst = body.Instructions[pos];
@@ -38,40 +31,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (inst.MatchStLoc(out var v, out var initInst) && v.Kind == VariableKind.StackSlot && initInst is NewObj newObj) {
 				context.Step("CollectionOrObjectInitializer", inst);
 				int initializerItemsCount = 0;
-				var initializerType = InitializerType.None;
+				var blockType = BlockType.CollectionInitializer;
 				// Detect initializer type by scanning the following statements
 				// each must be a callvirt with ldloc v as first argument
 				// if the method is a setter we're dealing with an object initializer
 				// if the method is named Add and has at least 2 arguments we're dealing with a collection/dictionary initializer
 				while (pos + initializerItemsCount + 1 < body.Instructions.Count
-					&& (MatchesCallVirt(body.Instructions[pos + initializerItemsCount + 1], v, ref initializerType) || MatchesStObj(body.Instructions[pos + initializerItemsCount + 1], v, ref initializerType)))
-				{
+					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, ref blockType))
 					initializerItemsCount++;
-				}
 				if (initializerItemsCount == 0)
 					return false;
-				Block initBlock;
-				switch (initializerType) {
-					case InitializerType.Collection:
-						initBlock = new Block(BlockType.CollectionInitializer);
-						break;
-					case InitializerType.Object:
-						initBlock = new Block(BlockType.ObjectInitializer);
-						break;
-					default: return false;
-				}
+				Block initBlock = new Block(blockType);
 				var finalSlot = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
 				initBlock.FinalInstruction = new LdLoc(finalSlot);
 				initBlock.Instructions.Add(new StLoc(finalSlot, initInst.Clone()));
 				for (int i = 1; i <= initializerItemsCount; i++) {
 					switch (body.Instructions[i + pos]) {
 						case CallVirt callVirt:
-							var newCallVirt = new CallVirt(callVirt.Method);
-							var newTarget = callVirt.Arguments[0].Clone();
+							var newCallVirt = (CallVirt)callVirt.Clone();
+							var newTarget = newCallVirt.Arguments[0];
 							foreach (var load in newTarget.Descendants.OfType<LdLoc>())
 								load.Variable = finalSlot;
-							newCallVirt.Arguments.Add(newTarget);
-							newCallVirt.Arguments.AddRange(callVirt.Arguments.Skip(1).Select(a => a.Clone()));
 							initBlock.Instructions.Add(newCallVirt);
 							break;
 						case StObj stObj:
@@ -91,22 +71,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchesStObj(ILInstruction current, ILVariable v, ref InitializerType initializerType)
+		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, ref BlockType blockType)
 		{
-			if (current is StObj so
-				&& so.Target is LdFlda ldfa
-				&& ldfa.Target.MatchLdLoc(v))
-				return true;
-			return false;
-		}
-
-		bool MatchesCallVirt(ILInstruction current, ILVariable v, ref InitializerType initializerType)
-		{
-			return current is CallVirt cv
-				&& cv.Arguments.Count >= 2
-				&& !cv.Arguments.Skip(1).Any(a => a.Descendants.OfType<LdLoc>().Any(b => b.MatchLdLoc(v)))
-				&& IsMatchingTarget(cv.Arguments[0], v)
-				&& IsMatchingMethod(cv, ref initializerType);
+			(var kind, var path, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos]);
+			switch (kind) {
+				case AccessPathKind.Adder:
+					return target == targetVariable;
+				case AccessPathKind.Setter:
+					if (values.Count == 1 && target == targetVariable) {
+						blockType = BlockType.ObjectInitializer;
+						return true;
+					}
+					return false;
+				default:
+					return false;
+			}
 		}
 
 		bool IsMatchingTarget(ILInstruction target, ILVariable targetVariable)
@@ -120,17 +99,131 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		bool IsMatchingMethod(CallVirt cv, ref InitializerType type)
+		bool IsMatchingMethod(CallVirt cv, ref BlockType type)
 		{
 			if (cv.Method.IsAccessor && cv.Method.AccessorOwner is IProperty p && p.Setter == cv.Method) {
-				type = InitializerType.Object;
+				type = BlockType.ObjectInitializer;
 				return true;
 			} else if (cv.Method.Name.Equals("Add", StringComparison.Ordinal)) {
-				if (type == InitializerType.None)
-					type = InitializerType.Collection;
 				return true;
 			}
 			return false;
+		}
+	}
+
+	public enum AccessPathKind
+	{
+		Invalid,
+		Setter,
+		Adder
+	}
+
+	public struct AccessPathElement : IEquatable<AccessPathElement>
+	{
+		public AccessPathElement(IMember member, ILVariable index = null)
+		{
+			this.Member = member;
+			this.Index = index;
+		}
+
+		public IMember Member;
+		public ILVariable Index;
+
+		public override string ToString() => $"[{Member}, {Index}]";
+
+		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction> Values, ILVariable Target) GetAccessPath(ILInstruction instruction)
+		{
+			List<AccessPathElement> path = new List<AccessPathElement>();
+			ILVariable target = null;
+			AccessPathKind kind = AccessPathKind.Invalid;
+			List<ILInstruction> values = null;
+			while (instruction != null) {
+				switch (instruction) {
+					case CallVirt cv:
+						var method = cv.Method;
+						if (method.IsStatic) goto default;
+						instruction = cv.Arguments[0];
+						if (values == null) {
+							values = new List<ILInstruction>(cv.Arguments.Skip(1));
+							if (values.Count == 0)
+								goto default;
+							if (method.IsAccessor) {
+								kind = AccessPathKind.Setter;
+							} else {
+								kind = AccessPathKind.Adder;
+							}
+						}
+						if (method.IsAccessor) {
+							path.Insert(0, new AccessPathElement(method.AccessorOwner));
+						} else {
+							path.Insert(0, new AccessPathElement(method));
+						}
+						break;
+					case LdObj ldobj:
+						if (ldobj.Target is LdFlda ldflda) {
+							path.Insert(0, new AccessPathElement(ldflda.Field));
+							instruction = ldflda.Target;
+							break;
+						}
+						goto default;
+					case StObj stobj:
+						if (stobj.Value is Block b && (b.Type == BlockType.ObjectInitializer || b.Type == BlockType.CollectionInitializer) && stobj.Target is LdFlda ldflda2) {
+							path.Insert(0, new AccessPathElement(ldflda2.Field));
+							instruction = ldflda2.Target;
+							if (values == null) {
+								values = new List<ILInstruction>(new[] { b });
+								kind = AccessPathKind.Setter;
+							}
+							break;
+						}
+						goto default;
+					case LdLoc ldloc:
+						target = ldloc.Variable;
+						instruction = null;
+						break;
+					default:
+						kind = AccessPathKind.Invalid;
+						instruction = null;
+						break;
+				}
+			}
+			if (kind != AccessPathKind.Invalid && values.OfType<LdLoc>().Any(ld => ld.Variable == target))
+				kind = AccessPathKind.Invalid;
+			return (kind, path, values, target);
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is AccessPathElement)
+				return Equals((AccessPathElement)obj);
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			int hashCode = 0;
+			unchecked {
+				if (Member != null)
+					hashCode += 1000000007 * Member.GetHashCode();
+				if (Index != null)
+					hashCode += 1000000009 * Index.GetHashCode();
+			}
+			return hashCode;
+		}
+
+		public bool Equals(AccessPathElement other)
+		{
+			return other.Member.Equals(this.Member) && other.Index == this.Index;
+		}
+
+		public static bool operator ==(AccessPathElement lhs, AccessPathElement rhs)
+		{
+			return lhs.Equals(rhs);
+		}
+
+		public static bool operator !=(AccessPathElement lhs, AccessPathElement rhs)
+		{
+			return !(lhs == rhs);
 		}
 	}
 }
