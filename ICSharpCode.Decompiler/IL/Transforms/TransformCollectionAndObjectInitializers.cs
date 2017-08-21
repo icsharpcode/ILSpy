@@ -33,6 +33,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case NewObj newObjInst:
 						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || DelegateConstruction.IsPotentialClosure(context, newObjInst))
 							return false;
+						if (newObjInst.Method.DeclaringType.Kind != TypeKind.Struct && v.Kind != VariableKind.StackSlot)
+							return false;
 						break;
 					case DefaultValue defaultVal:
 						break;
@@ -117,8 +119,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.Index = index;
 		}
 
-		public IMember Member;
-		public ILVariable Index;
+		public readonly IMember Member;
+		public readonly ILVariable Index;
 
 		public override string ToString() => $"[{Member}, {Index}]";
 
@@ -134,7 +136,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case CallInstruction call:
 						if (!(call is CallVirt || call is Call)) goto default;
 						method = call.Method;
-						if (method.IsStatic) goto default;
+						if (!IsMethodApplicable(method)) goto default;
 						instruction = call.Arguments[0];
 						if (values == null) {
 							values = new List<ILInstruction>(call.Arguments.Skip(1));
@@ -184,9 +186,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 				}
 			}
-			if (kind != AccessPathKind.Invalid && values.OfType<LdLoc>().Any(ld => ld.Variable == target))
+			if (kind != AccessPathKind.Invalid && values.SelectMany(v => v.Descendants).OfType<LdLoc>().Any(ld => ld.Variable == target))
 				kind = AccessPathKind.Invalid;
 			return (kind, path, values, target);
+		}
+
+		static bool IsMethodApplicable(IMethod method)
+		{
+			if (method.IsStatic)
+				return false;
+			if (method.IsAccessor)
+				return true;
+			return "Add".Equals(method.Name, StringComparison.Ordinal);
 		}
 
 		public override bool Equals(object obj)
