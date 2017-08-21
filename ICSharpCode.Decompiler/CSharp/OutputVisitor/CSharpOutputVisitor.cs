@@ -2079,6 +2079,13 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				}
 			}
 			CloseBrace(policy.PropertyBraceStyle);
+			if (!propertyDeclaration.Initializer.IsNull) {
+				Space(policy.SpaceAroundAssignment);
+				WriteToken(Roles.Assign);
+				Space(policy.SpaceAroundAssignment);
+				propertyDeclaration.Initializer.AcceptVisitor(this);
+				Semicolon();
+			}
 			NewLine();
 			EndNode(propertyDeclaration);
 		}

@@ -65,7 +65,16 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public CSharpTokenNode RBraceToken {
 			get { return GetChildByRole (Roles.RBrace); }
 		}
-		
+
+		public CSharpTokenNode AssignToken {
+			get { return GetChildByRole(Roles.Assign); }
+		}
+
+		public Expression Initializer {
+			get { return GetChildByRole(Roles.Expression); }
+			set { SetChildByRole(Roles.Expression, value); }
+		}
+
 		public override void AcceptVisitor (IAstVisitor visitor)
 		{
 			visitor.VisitPropertyDeclaration (this);
@@ -87,7 +96,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			return o != null && MatchString(this.Name, o.Name)
 				&& this.MatchAttributesAndModifiers(o, match) && this.ReturnType.DoMatch(o.ReturnType, match)
 				&& this.PrivateImplementationType.DoMatch(o.PrivateImplementationType, match)
-				&& this.Getter.DoMatch(o.Getter, match) && this.Setter.DoMatch(o.Setter, match);
+				&& this.Getter.DoMatch(o.Getter, match) && this.Setter.DoMatch(o.Setter, match)
+				&& this.Initializer.DoMatch(o.Initializer, match);
 		}
 	}
 }
