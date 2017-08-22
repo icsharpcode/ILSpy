@@ -38,16 +38,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						continue;
 					}
 					if (CachedDelegateInitializationWithLocal(inst, out bool hasFieldStore, out ILVariable v)) {
-						block.Instructions.RemoveAt(i);
 						if (hasFieldStore) {
 							block.Instructions.RemoveAt(i - 1);
 						}
-						//if (v.IsSingleDefinition && v.LoadCount == 0) {
-						//	var store = v.Scope.Descendants.OfType<StLoc>().SingleOrDefault(stloc => stloc.Variable == v);
-						//	if (store != null) {
-						//		orphanedVariableInits.Add(store);
-						//	}
-						//}
 						continue;
 					}
 				}
@@ -90,9 +83,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//     stloc v(DelegateConstruction)
 			//     [stsfld CachedAnonMethodDelegate(v)]
 			// }
-			// ... one usage of v ...
 			// =>
-			// ... one usage of DelegateConstruction ...
+			// stloc v(DelegateConstruction)
 			Block trueInst = inst.TrueInst as Block;
 			hasFieldStore = false;
 			local = null;
@@ -131,25 +123,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (!DelegateConstruction.IsDelegateConstruction(value as NewObj, true))
 				return false;
-			if (HasUsagesBefore(storeInst, storeBeforeIf, v))
-				return false;
-			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
-			if (nextInstruction == null)
-				return false;
-			var usages = nextInstruction.Descendants.OfType<LdLoc>().Where(i => i.Variable == v).ToArray();
-			if (usages.Length != 1)
-				return false;
 			context.Step("CachedDelegateInitializationWithLocal", inst);
 			local = v;
-			usages[0].ReplaceWith(value);
+			inst.ReplaceWith(new StLoc(local, value));
 			return true;
-		}
-
-		bool HasUsagesBefore(ILInstruction storeInstruction, ILInstruction storeBeforeIf, ILVariable v)
-		{
-			if (storeBeforeIf != null)
-				return v.StoreInstructions[0] != storeBeforeIf;
-			return v.StoreInstructions[0] != storeInstruction;
 		}
 	}
 }
