@@ -1073,6 +1073,7 @@ namespace ICSharpCode.Decompiler.IL
 					goto default;
 				default:
 					var call = CallInstruction.Create(opCode, method);
+					call.ILStackWasEmpty = currentStack.IsEmpty;
 					call.Arguments.AddRange(arguments);
 					if (call.ResultType != StackType.Void)
 						return Push(call);

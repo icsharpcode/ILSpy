@@ -52,6 +52,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IType ConstrainedTo;
 
+		/// <summary>
+		/// Gets whether the IL stack was empty at the point of this call.
+		/// (not counting the arguments/return value of the call itself)
+		/// </summary>
+		public bool ILStackWasEmpty;
+
 		protected CallInstruction(OpCode opCode, IMethod method) : base(opCode)
 		{
 			Debug.Assert(method != null);
