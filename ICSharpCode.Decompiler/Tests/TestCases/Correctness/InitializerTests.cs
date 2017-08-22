@@ -54,6 +54,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				get;
 				set;
 			}
+			public InitializerTests.MyEnum b
+			{
+				get;
+				set;
+			}
 			public List<InitializerTests.MyEnum2> PropertyList
 			{
 				get;
@@ -525,6 +530,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				  MoreData = { MoreData = { MoreData = { MoreData = { MoreData = { MoreData = { a = MyEnum.b } } } } } }
 			  }
 			});
+		}
+
+		public static void CollectionInitializerInsideObjectInitializers()
+		{
+			InitializerTests.Data castPattern = new InitializerTests.Data {
+				MoreData = new InitializerTests.Data {
+					a = InitializerTests.MyEnum.a,
+					b = InitializerTests.MyEnum.b,
+					PropertyList = { InitializerTests.MyEnum2.c }
+				}
+			};
 		}
 
 		public static void NotAStructInitializer_DefaultConstructor()

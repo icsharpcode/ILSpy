@@ -1456,9 +1456,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						index++;
 					firstDifferenceIndex = index;
 					while (elementsStack.Count - 1 > firstDifferenceIndex) {
+						var methodElement = currentPath[elementsStack.Count - 1];
 						var pathElement = currentPath[elementsStack.Count - 2];
 						var values = elementsStack.Pop();
-						elementsStack.Peek().Add(MakeInitializerAssignment(pathElement.Member, values));
+						elementsStack.Peek().Add(MakeInitializerAssignment(methodElement.Member, pathElement.Member, values));
 					}
 					currentPath = info.Path;
 				}
@@ -1478,20 +1479,21 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 			while (elementsStack.Count > 1) {
+				var methodElement = currentPath[elementsStack.Count - 1];
 				var pathElement = currentPath[elementsStack.Count - 2];
 				var values = elementsStack.Pop();
-				elementsStack.Peek().Add(MakeInitializerAssignment(pathElement.Member, values));
+				elementsStack.Peek().Add(MakeInitializerAssignment(methodElement.Member, pathElement.Member, values));
 			}
 			var oce = (ObjectCreateExpression)expr.Expression;
 			oce.Initializer = new ArrayInitializerExpression(elements);
 			return expr.WithILInstruction(block);
 		}
 
-		Expression MakeInitializerAssignment(IMember member, List<Expression> values)
+		Expression MakeInitializerAssignment(IMember method, IMember member, List<Expression> values)
 		{
 			var target = new IdentifierExpression(member.Name);
 			Expression value;
-			if (values.Count == 1 && !(values[0] is AssignmentExpression))
+			if (values.Count == 1 && !(values[0] is AssignmentExpression) && !(method.SymbolKind == SymbolKind.Method && method.Name == "Add"))
 				value = values[0];
 			else
 				value = new ArrayInitializerExpression(values);
