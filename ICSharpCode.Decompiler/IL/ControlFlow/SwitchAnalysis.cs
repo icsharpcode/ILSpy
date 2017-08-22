@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using System;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -140,15 +141,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			long offset;
 			if (MatchSwitchVar(inst.Value)) {
 				offset = 0;
-			} else if (inst.Value.OpCode == OpCode.BinaryNumericInstruction) {
-				var bop = (BinaryNumericInstruction)inst.Value;
+			} else if (inst.Value is BinaryNumericInstruction bop) {
 				if (bop.CheckForOverflow)
 					return false;
-				long val;
-				if (MatchSwitchVar(bop.Left) && MatchLdcI(bop.Right, out val)) {
+				if (MatchSwitchVar(bop.Left) && bop.Right.MatchLdcI(out long val)) {
 					switch (bop.Operator) {
 						case BinaryNumericOperator.Add:
-							offset = -val;
+							offset = unchecked(-val);
 							break;
 						case BinaryNumericOperator.Sub:
 							offset = val;
@@ -203,60 +202,23 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return inst.MatchLdLoc(out switchVar);
 		}
 
-		bool MatchLdcI(ILInstruction inst, out long val)
-		{
-			if (inst.MatchLdcI8(out val))
-				return true;
-			int intVal;
-			if (inst.MatchLdcI4(out intVal)) {
-				val = intVal;
-				return true;
-			}
-			return false;
-		}
-
 		/// <summary>
 		/// Analyzes the boolean condition, returning the set of values of the interesting
 		/// variable for which the condition evaluates to true.
 		/// </summary>
 		private bool AnalyzeCondition(ILInstruction condition, out LongSet trueValues)
 		{
-			ILInstruction arg;
-			Comp comp = condition as Comp;
-			long val;
-			if (comp != null && MatchSwitchVar(comp.Left) && MatchLdcI(comp.Right, out val)) {
+			if (condition is Comp comp && MatchSwitchVar(comp.Left) && comp.Right.MatchLdcI(out long val)) {
 				// if (comp(V OP val))
-				switch (comp.Kind) {
-					case ComparisonKind.Equality:
-						trueValues = new LongSet(val);
-						return true;
-					case ComparisonKind.Inequality:
-						trueValues = new LongSet(val).Invert();
-						return true;
-					case ComparisonKind.LessThan:
-						trueValues = MakeGreaterThanOrEqualSet(val, comp.Sign).Invert();
-						return true;
-					case ComparisonKind.LessThanOrEqual:
-						trueValues = MakeLessThanOrEqualSet(val, comp.Sign);
-						return true;
-					case ComparisonKind.GreaterThan:
-						trueValues = MakeLessThanOrEqualSet(val, comp.Sign).Invert();
-						return true;
-					case ComparisonKind.GreaterThanOrEqual:
-						trueValues = MakeGreaterThanOrEqualSet(val, comp.Sign);
-						return true;
-					default:
-						trueValues = LongSet.Empty;
-						return false;
-				}
+				trueValues = MakeSetWhereComparisonIsTrue(comp.Kind, val, comp.Sign);
+				return true;
 			} else if (MatchSwitchVar(condition)) {
 				// if (ldloc V) --> branch for all values except 0
 				trueValues = new LongSet(0).Invert();
 				return true;
-			} else if (condition.MatchLogicNot(out arg)) {
+			} else if (condition.MatchLogicNot(out ILInstruction arg)) {
 				// if (logic.not(X)) --> branch for all values where if (X) does not branch
-				LongSet falseValues;
-				bool res = AnalyzeCondition(arg, out falseValues);
+				bool res = AnalyzeCondition(arg, out LongSet falseValues);
 				trueValues = falseValues.Invert();
 				return res;
 			} else {
@@ -265,7 +227,30 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		private LongSet MakeGreaterThanOrEqualSet(long val, Sign sign)
+		/// <summary>
+		/// Create the LongSet that contains a value x iff x compared with value is true.
+		/// </summary>
+		internal static LongSet MakeSetWhereComparisonIsTrue(ComparisonKind kind, long val, Sign sign)
+		{
+			switch (kind) {
+				case ComparisonKind.Equality:
+					return new LongSet(val);
+				case ComparisonKind.Inequality:
+					return new LongSet(val).Invert();
+				case ComparisonKind.LessThan:
+					return MakeGreaterThanOrEqualSet(val, sign).Invert();
+				case ComparisonKind.LessThanOrEqual:
+					return MakeLessThanOrEqualSet(val, sign);
+				case ComparisonKind.GreaterThan:
+					return MakeLessThanOrEqualSet(val, sign).Invert();
+				case ComparisonKind.GreaterThanOrEqual:
+					return MakeGreaterThanOrEqualSet(val, sign);
+				default:
+					throw new ArgumentException("Invalid ComparisonKind");
+			}
+		}
+
+		private static LongSet MakeGreaterThanOrEqualSet(long val, Sign sign)
 		{
 			if (sign == Sign.Signed) {
 				return new LongSet(LongInterval.Inclusive(val, long.MaxValue));
@@ -282,7 +267,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		private LongSet MakeLessThanOrEqualSet(long val, Sign sign)
+		private static LongSet MakeLessThanOrEqualSet(long val, Sign sign)
 		{
 			if (sign == Sign.Signed) {
 				return new LongSet(LongInterval.Inclusive(long.MinValue, val));

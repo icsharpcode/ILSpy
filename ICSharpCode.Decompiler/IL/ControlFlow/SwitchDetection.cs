@@ -96,8 +96,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Any switch instructions will only have branch instructions in the sections.
 
 			// Combine sections with identical branch target:
-			Block defaultTarget;
-			block.Instructions.Last().MatchBranch(out defaultTarget);
+			block.Instructions.Last().MatchBranch(out Block defaultTarget);
 			var dict = new Dictionary<Block, SwitchSection>(); // branch target -> switch section
 			sw.Sections.RemoveAll(
 				section => {
@@ -117,6 +116,29 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 					return false;
 				});
+			AdjustLabels(sw);
+		}
+
+		static void AdjustLabels(SwitchInstruction sw)
+		{
+			if (sw.Value is BinaryNumericInstruction bop && !bop.CheckForOverflow && bop.Right.MatchLdcI(out long val)) {
+				// Move offset into labels:
+				long offset;
+				switch (bop.Operator) {
+					case BinaryNumericOperator.Add:
+						offset = unchecked(-val);
+						break;
+					case BinaryNumericOperator.Sub:
+						offset = val;
+						break;
+					default: // unknown bop.Operator
+						return;
+				}
+				sw.Value = bop.Left;
+				foreach (var section in sw.Sections) {
+					section.Labels = section.Labels.AddOffset(offset);
+				}
+			}
 		}
 
 		const ulong MaxValuesPerSection = 50;

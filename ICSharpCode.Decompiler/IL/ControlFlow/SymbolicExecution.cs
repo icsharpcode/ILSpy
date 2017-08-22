@@ -143,34 +143,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (left.Type != SymbolicValueType.State || right.Type != SymbolicValueType.IntegerConstant)
 					return Failed;
 				// bool: (state + left.Constant == right.Constant)
-				LongSet trueSums; // evals to true if trueSums.Contains(state + left.Constant)
-				switch (comp.Kind) {
-					case ComparisonKind.Equality:
-						trueSums = new LongSet(right.Constant);
-						break;
-					case ComparisonKind.Inequality:
-						trueSums = new LongSet(right.Constant).Invert();
-						break;
-					case ComparisonKind.LessThan:
-						// note: right.Constant is of type int, so it can't be equal to long.MinValue,
-						// which would cause problems.
-						trueSums = new LongSet(new LongInterval(long.MinValue, right.Constant));
-						break;
-					case ComparisonKind.LessThanOrEqual:
-						trueSums = new LongSet(LongInterval.Inclusive(long.MinValue, right.Constant));
-						break;
-					case ComparisonKind.GreaterThan:
-						// note: val.Constant is of type int, so the addition can't overflow.
-						trueSums = new LongSet(LongInterval.Inclusive(right.Constant + 1L, long.MaxValue));
-						break;
-					case ComparisonKind.GreaterThanOrEqual:
-						trueSums = new LongSet(LongInterval.Inclusive(right.Constant, long.MaxValue));
-						break;
-					default:
-						return Failed;
-				}
+				LongSet trueSums = SwitchAnalysis.MakeSetWhereComparisonIsTrue(comp.Kind, right.Constant, comp.Sign);
+				// symbolic value is true iff trueSums.Contains(state + left.Constant)
 				LongSet trueStates = trueSums.AddOffset(unchecked(-left.Constant));
-				// evals to true if trueStates.Contains(state)
+				// symbolic value is true iff trueStates.Contains(state)
 				return new SymbolicValue(SymbolicValueType.StateInSet, trueStates);
 			} else if (inst is LogicNot logicNot) {
 				SymbolicValue val = Eval(logicNot.Argument).AsBool();
