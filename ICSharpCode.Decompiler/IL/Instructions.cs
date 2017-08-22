@@ -59,6 +59,8 @@ namespace ICSharpCode.Decompiler.IL
 		Leave,
 		/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 		IfInstruction,
+		/// <summary>Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c></summary>
+		NullCoalescingInstruction,
 		/// <summary>Switch statement</summary>
 		SwitchInstruction,
 		/// <summary>Switch section within a switch statement</summary>
@@ -836,7 +838,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 		public override StackType ResultType { get { return StackType.I4; } }
-
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitLogicNot(this);
@@ -1181,6 +1182,94 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as IfInstruction;
 			return o != null && this.condition.PerformMatch(o.condition, ref match) && this.trueInst.PerformMatch(o.trueInst, ref match) && this.falseInst.PerformMatch(o.falseInst, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c></summary>
+	public sealed partial class NullCoalescingInstruction : ILInstruction
+	{
+		public static readonly SlotInfo ValueInstSlot = new SlotInfo("ValueInst");
+		ILInstruction valueInst;
+		public ILInstruction ValueInst {
+			get { return this.valueInst; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.valueInst, value, 0);
+			}
+		}
+		public static readonly SlotInfo FallbackInstSlot = new SlotInfo("FallbackInst");
+		ILInstruction fallbackInst;
+		public ILInstruction FallbackInst {
+			get { return this.fallbackInst; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.fallbackInst, value, 1);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.valueInst;
+				case 1:
+					return this.fallbackInst;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.ValueInst = value;
+					break;
+				case 1:
+					this.FallbackInst = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ValueInstSlot;
+				case 1:
+					return FallbackInstSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (NullCoalescingInstruction)ShallowClone();
+			clone.ValueInst = this.valueInst.Clone();
+			clone.FallbackInst = this.fallbackInst.Clone();
+			return clone;
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitNullCoalescingInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitNullCoalescingInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitNullCoalescingInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as NullCoalescingInstruction;
+			return o != null && this.valueInst.PerformMatch(o.valueInst, ref match) && this.fallbackInst.PerformMatch(o.fallbackInst, ref match);
 		}
 	}
 }
@@ -4020,6 +4109,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitNullCoalescingInstruction(NullCoalescingInstruction inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitSwitchInstruction(SwitchInstruction inst)
 		{
 			Default(inst);
@@ -4287,6 +4380,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitIfInstruction(IfInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitNullCoalescingInstruction(NullCoalescingInstruction inst)
 		{
 			return Default(inst);
 		}
@@ -4560,6 +4657,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitNullCoalescingInstruction(NullCoalescingInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitSwitchInstruction(SwitchInstruction inst, C context)
 		{
 			return Default(inst, context);
@@ -4780,6 +4881,7 @@ namespace ICSharpCode.Decompiler.IL
 			"br",
 			"leave",
 			"if",
+			"if.notnull",
 			"switch",
 			"switch.section",
 			"try.catch",

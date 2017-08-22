@@ -87,6 +87,12 @@
 				new ChildInfo("trueInst"),
 				new ChildInfo("falseInst"),
 			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
+		new OpCode("if.notnull", "Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c>",
+			CustomClassName("NullCoalescingInstruction"),
+			CustomChildren(new []{
+				new ChildInfo("valueInst"),
+				new ChildInfo("fallbackInst"),
+			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
 		new OpCode("switch", "Switch statement",
 			CustomClassName("SwitchInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo, ResultType("Void"),
 			MatchCondition("Value.PerformMatch(o.Value, ref match) && DefaultBody.PerformMatch(o.DefaultBody, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match)")),

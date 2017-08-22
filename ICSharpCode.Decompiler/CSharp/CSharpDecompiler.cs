@@ -106,6 +106,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							// Pretty much all transforms that open up new expression inlining
 							// opportunities belong in this category.
 							new ExpressionTransforms(),
+							new NullCoalescingTransform(),
 							new TransformArrayInitializers(),
 							new TransformCollectionAndObjectInitializers(),
 							new ILInlining()

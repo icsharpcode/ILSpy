@@ -1592,7 +1592,28 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(block)
 				.WithRR(resolver.WithCheckForOverflow(inst.CheckForOverflow).ResolveUnaryOperator(op, target.ResolveResult));
 		}
-		
+
+		protected internal override TranslatedExpression VisitNullCoalescingInstruction(NullCoalescingInstruction inst, TranslationContext context)
+		{
+			var value = Translate(inst.ValueInst);
+			var fallback = Translate(inst.FallbackInst);
+			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.NullCoalescing, value.ResolveResult, fallback.ResolveResult);
+			if (rr.IsError) {
+				IType targetType;
+				if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) && !value.Type.Equals(fallback.Type)) {
+					targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+				} else {
+					targetType = value.Type.Equals(SpecialType.NullType) ? fallback.Type : value.Type;
+				}
+				value = value.ConvertTo(targetType, this);
+				fallback = fallback.ConvertTo(targetType, this);
+				rr = new ResolveResult(targetType);
+			}
+			return new BinaryOperatorExpression(value, BinaryOperatorType.NullCoalescing, fallback)
+				.WithILInstruction(inst)
+				.WithRR(rr);
+		}
+
 		protected internal override TranslatedExpression VisitIfInstruction(IfInstruction inst, TranslationContext context)
 		{
 			var condition = TranslateCondition(inst.Condition);

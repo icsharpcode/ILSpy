@@ -283,8 +283,10 @@
     <Compile Include="IL\ControlFlow\StateRangeAnalysis.cs" />
     <Compile Include="IL\ControlFlow\SymbolicExecution.cs" />
     <Compile Include="IL\Instructions\ILVariableCollection.cs" />
+    <Compile Include="IL\Instructions\NullCoalescingInstruction.cs" />
     <Compile Include="IL\Patterns\AnyNode.cs" />
     <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
+    <Compile Include="IL\Transforms\NullCoalescingTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Util\UnicodeNewline.cs" />
     <Compile Include="FlowAnalysis\ControlFlowNode.cs" />
