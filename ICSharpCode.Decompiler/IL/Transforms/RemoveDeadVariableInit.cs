@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			var visitor = new DefiniteAssignmentVisitor(function);
+			var visitor = new DefiniteAssignmentVisitor(function, context.CancellationToken);
 			function.Body.AcceptVisitor(visitor);
 			foreach (var v in function.Variables) {
 				if (v.Kind != VariableKind.Parameter && !visitor.IsPotentiallyUsedUninitialized(v)) {

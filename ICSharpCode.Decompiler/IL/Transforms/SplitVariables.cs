@@ -20,6 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.Util;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -30,7 +31,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			var groupStores = new GroupStores(function);
+			var groupStores = new GroupStores(function, context.CancellationToken);
 			function.Body.AcceptVisitor(groupStores);
 			var newVariables = new Dictionary<ILInstruction, ILVariable>();
 			// Replace analyzed variables with their split versions:
@@ -67,7 +68,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			readonly UnionFind<IInstructionWithVariableOperand> unionFind = new UnionFind<IInstructionWithVariableOperand>();
 			readonly HashSet<IInstructionWithVariableOperand> uninitVariableUsage = new HashSet<IInstructionWithVariableOperand>();
 			
-			public GroupStores(ILFunction scope) : base(scope, IsCandidateVariable)
+			public GroupStores(ILFunction scope, CancellationToken cancellationToken) : base(scope, IsCandidateVariable, cancellationToken)
 			{
 			}
 			

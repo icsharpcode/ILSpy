@@ -39,6 +39,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			foreach (var block in function.Descendants.OfType<Block>()) {
+				context.CancellationToken.ThrowIfCancellationRequested();
+
 				// Remove 'nop' instructions
 				block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.Nop);
 				

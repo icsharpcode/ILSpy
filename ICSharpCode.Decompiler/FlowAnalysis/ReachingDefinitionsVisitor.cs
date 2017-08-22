@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Util;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {
@@ -188,8 +189,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// </summary>
 		const int FirstStoreIndex = 1;
 		#endregion
-		
+
 		#region Documentation + member fields
+		protected readonly CancellationToken cancellationToken;
+
 		/// <summary>
 		/// The function being analyzed.
 		/// </summary>
@@ -234,9 +237,10 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// The analysis will track all variables in the scope for which the predicate returns true
 		/// ("analyzed variables").
 		/// </summary>
-		public ReachingDefinitionsVisitor(ILFunction scope, Predicate<ILVariable> pred)
-			: this(scope, GetActiveVariableBitSet(scope, pred))
+		public ReachingDefinitionsVisitor(ILFunction scope, Predicate<ILVariable> pred, CancellationToken cancellationToken)
+			: this(scope, GetActiveVariableBitSet(scope, pred), cancellationToken)
 		{
+			this.cancellationToken = cancellationToken;
 		}
 
 		static BitSet GetActiveVariableBitSet(ILFunction scope, Predicate<ILVariable> pred)
@@ -255,7 +259,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// 
 		/// The analysis will track all variables in the scope for which <c>analyzedVariables[v.IndexInScope]</c> is true.
 		/// </summary>
-		public ReachingDefinitionsVisitor(ILFunction scope, BitSet analyzedVariables)
+		public ReachingDefinitionsVisitor(ILFunction scope, BitSet analyzedVariables, CancellationToken cancellationToken)
 		{
 			if (scope == null)
 				throw new ArgumentNullException(nameof(scope));
@@ -266,11 +270,12 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			base.flagsRequiringManualImpl |= InstructionFlags.MayWriteLocals;
 			
 			// Fill `allStores` and `storeIndexMap` and `firstStoreIndexForVariable`.
-			var storesByVar = FindAllStoresByVariable(scope, analyzedVariables);
+			var storesByVar = FindAllStoresByVariable(scope, analyzedVariables, cancellationToken);
 			allStores = new ILInstruction[FirstStoreIndex + storesByVar.Sum(l => l != null ? l.Count : 0)];
 			firstStoreIndexForVariable = new int[scope.Variables.Count + 1];
 			int si = FirstStoreIndex;
 			for (int vi = 0; vi < storesByVar.Length; vi++) {
+				cancellationToken.ThrowIfCancellationRequested();
 				firstStoreIndexForVariable[vi] = si;
 				var stores = storesByVar[vi];
 				if (stores != null) {
@@ -300,7 +305,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// Fill <c>allStores</c> and <c>storeIndexMap</c>.
 		/// </summary>
-		static List<ILInstruction>[] FindAllStoresByVariable(ILFunction scope, BitSet activeVariables)
+		static List<ILInstruction>[] FindAllStoresByVariable(ILFunction scope, BitSet activeVariables, CancellationToken cancellationToken)
 		{
 			// For each variable, find the list of ILInstructions storing to that variable
 			List<ILInstruction>[] storesByVar = new List<ILInstruction>[scope.Variables.Count];
@@ -310,6 +315,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			}
 			foreach (var inst in scope.Descendants) {
 				if (inst.HasDirectFlag(InstructionFlags.MayWriteLocals)) {
+					cancellationToken.ThrowIfCancellationRequested();
 					ILVariable v = ((IInstructionWithVariableOperand)inst).Variable;
 					if (v.Function == scope && activeVariables[v.IndexInFunction]) {
 						storesByVar[v.IndexInFunction].Add(inst);
@@ -339,6 +345,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		#region Analysis
 		void HandleStore(ILInstruction inst, ILVariable v)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			if (v.Function == scope && analyzedVariables[v.IndexInFunction] && state.IsReachable) {
 				// Clear the set of stores for this variable:
 				state.KillStores(firstStoreIndexForVariable[v.IndexInFunction], firstStoreIndexForVariable[v.IndexInFunction + 1]);

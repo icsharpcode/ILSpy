@@ -19,6 +19,7 @@
 using System;
 using System.Diagnostics;
 using ICSharpCode.Decompiler.IL.Transforms;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -100,6 +101,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
+		CancellationToken cancellationToken;
 		BlockContainer currentContainer;
 
 		/// <summary>
@@ -112,6 +114,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
+			cancellationToken = context.CancellationToken;
 			currentExit = NoExit;
 			function.AcceptVisitor(this);
 		}
@@ -149,6 +152,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		protected internal override void VisitBlock(Block block)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			// Don't use foreach loop, because the children might add to the block
 			for (int i = 0; i < block.Instructions.Count; i++) {
 				block.Instructions[i].AcceptVisitor(this);

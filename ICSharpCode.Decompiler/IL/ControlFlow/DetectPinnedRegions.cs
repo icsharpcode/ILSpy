@@ -56,6 +56,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
+				context.CancellationToken.ThrowIfCancellationRequested();
 				SplitBlocksAtWritesToPinnedLocals(container);
 				DetectNullSafeArrayToPointer(container);
 				foreach (var block in container.Blocks)
@@ -64,6 +65,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			// Sometimes there's leftover writes to the original pinned locals
 			foreach (var block in function.Descendants.OfType<Block>()) {
+				context.CancellationToken.ThrowIfCancellationRequested();
 				for (int i = 0; i < block.Instructions.Count; i++) {
 					var stloc = block.Instructions[i] as StLoc;
 					if (stloc != null && stloc.Variable.Kind == VariableKind.PinnedLocal && stloc.Variable.LoadCount == 0 && stloc.Variable.AddressCount == 0) {

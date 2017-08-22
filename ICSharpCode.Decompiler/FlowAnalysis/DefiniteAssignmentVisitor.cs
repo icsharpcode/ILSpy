@@ -19,6 +19,7 @@
 using System.Diagnostics;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Util;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {
@@ -100,12 +101,15 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				return bits[variableIndex];
 			}
 		}
-		
+
+		readonly CancellationToken cancellationToken;
 		readonly ILFunction scope;
 		readonly BitSet variablesWithUninitializedUsage;
 		
-		public DefiniteAssignmentVisitor(ILFunction scope)
+		public DefiniteAssignmentVisitor(ILFunction scope, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
+			this.cancellationToken = cancellationToken;
 			this.scope = scope;
 			this.variablesWithUninitializedUsage = new BitSet(scope.Variables.Count);
 			base.flagsRequiringManualImpl |= InstructionFlags.MayReadLocals | InstructionFlags.MayWriteLocals;
@@ -120,6 +124,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		void HandleStore(ILVariable v)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			if (v.Function == scope) {
 				// Mark the variable as initialized:
 				state.MarkVariableInitialized(v.IndexInFunction);

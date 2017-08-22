@@ -39,6 +39,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var targetsToReplace = new List<IInstructionWithVariableOperand>();
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+					context.CancellationToken.ThrowIfCancellationRequested();
 					foreach (var call in block.Instructions[i].Descendants.OfType<NewObj>()) {
 						ILInstruction target;
 						ILFunction f = TransformDelegateConstruction(call, out target);
@@ -67,9 +68,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				function.AcceptVisitor(new TransformDisplayClassUsages(target, target.Variable.CaptureScope, orphanedVariableInits));
 			}
 			foreach (var store in orphanedVariableInits) {
-				ILInstruction containingBlock = store.Parent as Block;
-				if (containingBlock != null)
-					((Block)containingBlock).Instructions.Remove(store);
+				if (store.Parent is Block containingBlock)
+					containingBlock.Instructions.Remove(store);
 			}
 		}
 

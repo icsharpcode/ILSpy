@@ -23,6 +23,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
@@ -49,6 +50,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </remarks>
 	class StateRangeAnalysis
 	{
+		public CancellationToken CancellationToken;
 		readonly StateRangeAnalysisMode mode;
 		readonly IField stateField;
 		readonly SymbolicEvaluationContext evalContext;
@@ -80,6 +82,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </returns>
 		public LongSet AssignStateRanges(ILInstruction inst, LongSet stateRange)
 		{
+			CancellationToken.ThrowIfCancellationRequested();
 			switch (inst) {
 				case BlockContainer blockContainer:
 					AddStateRange(blockContainer.EntryPoint, stateRange);

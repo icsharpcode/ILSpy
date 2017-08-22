@@ -443,6 +443,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// So for reconstructing the control flow, we only consider the blocks directly within body.
 
 			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorMoveNext, stateField);
+			rangeAnalysis.CancellationToken = context.CancellationToken;
 			rangeAnalysis.AssignStateRanges(body, LongSet.Universe);
 
 			var newBody = ConvertBody(body, rangeAnalysis.GetBlockStateSetMapping(body));
@@ -517,6 +518,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var oldBlock = oldBody.Blocks[i];
 				var newBlock = newBody.Blocks[i];
 				foreach (var oldInst in oldBlock.Instructions) {
+					context.CancellationToken.ThrowIfCancellationRequested();
 					if (oldInst.MatchStFld(out var target, out var field, out var value) && target.MatchLdThis()) {
 						if (field.MemberDefinition.Equals(stateField)) {
 							if (value.MatchLdcI4(out int newState)) {
@@ -723,6 +725,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			stateToContainer.Add(-1, newBody);
 			// First, analyse the newBody: for each block, determine the active state number.
 			foreach (var block in newBody.Blocks) {
+				context.CancellationToken.ThrowIfCancellationRequested();
 				int oldState = blockState[block.ChildIndex];
 				BlockContainer container; // new container for the block
 				if (GetNewState(block) is int newState) {

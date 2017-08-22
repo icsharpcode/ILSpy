@@ -41,6 +41,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
 				bool blockContainerNeedsCleanup = false;
 				foreach (var block in container.Blocks) {
+					context.CancellationToken.ThrowIfCancellationRequested();
 					ProcessBlock(block, ref blockContainerNeedsCleanup);
 				}
 				if (blockContainerNeedsCleanup) {
