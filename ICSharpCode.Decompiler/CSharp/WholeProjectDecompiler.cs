@@ -244,6 +244,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var decompiler = new CSharpDecompiler(ts, settings);
 			decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
 			return decompiler;
 		}
 		

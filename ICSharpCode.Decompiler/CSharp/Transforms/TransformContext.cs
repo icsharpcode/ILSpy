@@ -47,7 +47,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public ITypeDefinition DecompiledTypeDefinition {
 			get { return decompilationContext.CurrentTypeDefinition; }
 		}
-		
+
+		/// <summary>
+		/// Returns the assembly that is being decompiled.
+		/// </summary>
+		public IAssembly DecompiledAssembly {
+			get { return decompilationContext.CurrentAssembly; }
+		}
+
 		internal TransformContext(DecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, TypeSystemAstBuilder typeSystemAstBuilder, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
 			this.TypeSystem = typeSystem;
