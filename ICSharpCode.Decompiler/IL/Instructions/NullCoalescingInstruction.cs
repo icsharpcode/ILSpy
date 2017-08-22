@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
-			output.Write(" (");
+			output.Write("(");
 			valueInst.WriteTo(output);
 			output.Write(", ");
 			fallbackInst.WriteTo(output);

@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///		stloc s(fallbackInst)
 		/// }
 		/// =>
-		/// stloc s(if.notnull(valueInst, fallbackInst)
+		/// stloc s(if.notnull(valueInst, fallbackInst))
 		/// </summary>
 		bool TransformNullCoalescing(Block block, int i)
 		{
@@ -57,7 +57,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!ifInstruction.FalseInst.MatchNop() || !(ifInstruction.TrueInst is Block b) || b.Instructions.Count != 1 || !(b.Instructions[0] is StLoc fallbackStore) || fallbackStore.Variable != stloc.Variable)
 				return false;
 			context.Step("TransformNullCoalescing", stloc);
-			stloc.Value.ReplaceWith(new NullCoalescingInstruction(stloc.Value.Clone(), fallbackStore.Value.Clone()));
+			stloc.Value = new NullCoalescingInstruction(stloc.Value, fallbackStore.Value);
 			return true;
 		}
 	}
