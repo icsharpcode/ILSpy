@@ -52,6 +52,12 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize
 		};
 
+		static readonly CompilerOptions[] roslynOnlyOptions =
+		{
+			CompilerOptions.UseRoslyn,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+		};
+
 		static readonly CompilerOptions[] defaultOptions =
 		{
 			CompilerOptions.None,
@@ -105,6 +111,12 @@ namespace ICSharpCode.Decompiler.Tests
 		
 		[Test, Ignore("Bad variable names; some if-else misdetected")]
 		public void Loops([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void AutoProperties([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
 		}

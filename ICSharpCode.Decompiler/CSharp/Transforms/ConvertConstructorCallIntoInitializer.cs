@@ -118,22 +118,22 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (ctorMethodDef != null && ctorMethodDef.DeclaringType.IsReferenceType == false)
 					return;
 				
-				// Recognize field initializers:
-				// Translate first statement in all ctors (if all ctors have the same statement) into a field initializer.
+				// Recognize field or property initializers:
+				// Translate first statement in all ctors (if all ctors have the same statement) into an initializer.
 				bool allSame;
 				do {
 					Match m = fieldInitializerPattern.Match(instanceCtorsNotChainingWithThis[0].Body.FirstOrDefault());
 					if (!m.Success)
 						break;
 					
-					IField field = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IField)?.MemberDefinition as IField;
-					if (field == null)
+					IMember fieldOrProperty = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
+					if (!(fieldOrProperty is IField) && !(fieldOrProperty is IProperty))
 						break;
-					AstNode fieldOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == field);
-					if (fieldOrEventDecl == null)
+					AstNode fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty);
+					if (fieldOrPropertyOrEventDecl == null)
 						break;
 					Expression initializer = m.Get<Expression>("initializer").Single();
-					// 'this'/'base' cannot be used in field initializers
+					// 'this'/'base' cannot be used in initializers
 					if (initializer.DescendantsAndSelf.Any(n => n is ThisReferenceExpression || n is BaseReferenceExpression))
 						break;
 					
@@ -145,7 +145,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (allSame) {
 						foreach (var ctor in instanceCtorsNotChainingWithThis)
 							ctor.Body.First().Remove();
-						fieldOrEventDecl.GetChildrenByRole(Roles.Variable).Single().Initializer = initializer.Detach();
+						if (fieldOrPropertyOrEventDecl is PropertyDeclaration pd) {
+							pd.Initializer = initializer.Detach();
+						} else {
+							fieldOrPropertyOrEventDecl.GetChildrenByRole(Roles.Variable).Single().Initializer = initializer.Detach();
+						}
 					}
 				} while (allSame);
 			}
@@ -178,13 +182,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						AssignmentExpression assignment = es.Expression as AssignmentExpression;
 						if (assignment == null || assignment.Operator != AssignmentOperatorType.Assign)
 							break;
-						IField field = (assignment.Left.GetSymbol() as IField)?.MemberDefinition as IField;
-						if (field == null || !field.IsStatic)
+						IMember fieldOrProperty = (assignment.Left.GetSymbol() as IMember)?.MemberDefinition;
+						if (!(fieldOrProperty is IField || fieldOrProperty is IProperty) || !fieldOrProperty.IsStatic)
 							break;
-						FieldDeclaration fieldDecl = members.OfType<FieldDeclaration>().FirstOrDefault(f => f.GetSymbol() == field);
-						if (fieldDecl == null)
+						AstNode fieldOrPropertyDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty);
+						if (fieldOrPropertyDecl == null)
 							break;
-						fieldDecl.Variables.Single().Initializer = assignment.Right.Detach();
+						if (fieldOrPropertyDecl is FieldDeclaration fd)
+							fd.Variables.Single().Initializer = assignment.Right.Detach();
+						else if (fieldOrPropertyDecl is PropertyDeclaration pd)
+							pd.Initializer = assignment.Right.Detach();
+						else
+							break;
 						es.Remove();
 					}
 					if (staticCtor.Body.Statements.Count == 0)
