@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						break;
 				}
 			}
-			if (kind != AccessPathKind.Invalid && values.SelectMany(v => v.Descendants).OfType<LdLoc>().Any(ld => ld.Variable == target))
+			if (kind != AccessPathKind.Invalid && values.SelectMany(v => v.Descendants).OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
 				kind = AccessPathKind.Invalid;
 			return (kind, path, values, target);
 		}
