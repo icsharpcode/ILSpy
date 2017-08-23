@@ -37,24 +37,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						block.Instructions.RemoveAt(i);
 						continue;
 					}
-					if (CachedDelegateInitializationWithLocal(inst, out bool hasFieldStore, out ILVariable v)) {
-						if (hasFieldStore) {
-							block.Instructions.RemoveAt(i - 1);
-						}
+					if (CachedDelegateInitializationWithLocal(inst)) {
+						ILInlining.InlineIfPossible(block, ref i, context);
+						continue;
+					}
+					if (CachedDelegateInitializationRoslynWithLocal(inst)) {
+						block.Instructions.RemoveAt(i);
 						continue;
 					}
 				}
 			}
 		}
 
+		/// <summary>
+		/// if (comp(ldsfld CachedAnonMethodDelegate == ldnull)) {
+		///     stsfld CachedAnonMethodDelegate(DelegateConstruction)
+		/// }
+		/// ... one usage of CachedAnonMethodDelegate ...
+		/// =>
+		/// ... one usage of DelegateConstruction ...
+		/// </summary>
 		bool CachedDelegateInitializationWithField(IfInstruction inst)
 		{
-			// if (comp(ldsfld CachedAnonMethodDelegate == ldnull) {
-			//     stsfld CachedAnonMethodDelegate(DelegateConstruction)
-			// }
-			// ... one usage of CachedAnonMethodDelegate ...
-			// =>
-			// ... one usage of DelegateConstruction ...
+
 			Block trueInst = inst.TrueInst as Block;
 			if (trueInst == null || trueInst.Instructions.Count != 1 || !inst.FalseInst.MatchNop())
 				return false;
@@ -76,56 +81,69 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool CachedDelegateInitializationWithLocal(IfInstruction inst, out bool hasFieldStore, out ILVariable local)
+		/// <summary>
+		/// if (comp(ldloc v == ldnull)) {
+		///     stloc v(DelegateConstruction)
+		/// }
+		/// =>
+		/// stloc v(DelegateConstruction)
+		/// </summary>
+		bool CachedDelegateInitializationWithLocal(IfInstruction inst)
 		{
-			// [stloc v(ldsfld CachedAnonMethodDelegate)]
-			// if (comp(ldloc v == ldnull) {
-			//     stloc v(DelegateConstruction)
-			//     [stsfld CachedAnonMethodDelegate(v)]
-			// }
-			// =>
-			// stloc v(DelegateConstruction)
 			Block trueInst = inst.TrueInst as Block;
-			hasFieldStore = false;
-			local = null;
-			if (trueInst == null || (trueInst.Instructions.Count < 1) || !inst.FalseInst.MatchNop())
+			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
 				return false;
 			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable v) || !right.MatchLdNull())
 				return false;
-			ILInstruction value, value2;
 			var storeInst = trueInst.Instructions.Last();
-			if (!storeInst.MatchStLoc(v, out value))
+			if (!storeInst.MatchStLoc(v, out ILInstruction value))
 				return false;
-			StLoc storeBeforeIf = null;
-			// the optional field store was moved into storeInst by inline assignment:
-			if (!(value is NewObj)) {
-				IField field, field2;
-				if (value.MatchStsFld(out field, out value2)) {
-					if (!(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
-						return false;
-					storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
-					if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdsFld(out field2) || !field.Equals(field2))
-						return false;
-					value = value2;
-					hasFieldStore = true;
-				} else if (value.MatchStFld(out var target, out field, out value2)) {
-					// TODO: shouldn't we test 'target'?
-					if (!(value2 is NewObj) || !field.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
-						return false;
-					storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
-					if (storeBeforeIf == null || storeBeforeIf.Variable != v || !storeBeforeIf.Value.MatchLdFld(out var target2, out field2) || !field.Equals(field2))
-						return false;
-					value = value2;
-					hasFieldStore = true;
-				} else {
-					return false;
-				}
-			}
 			if (!DelegateConstruction.IsDelegateConstruction(value as NewObj, true))
 				return false;
+			// do not transform if there are other stores/loads of this variable
+			if (v.StoreCount != 2 || v.LoadCount != 2 || v.AddressCount != 0)
+				return false;
+			// do not transform if there is no usage directly aftewards
+			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
+			if (nextInstruction == null)
+				return false;
+			var usages = nextInstruction.Descendants.Where(i => i.MatchLdLoc(v)).ToArray();
+			if (usages.Length != 1)
+				return false;
 			context.Step("CachedDelegateInitializationWithLocal", inst);
-			local = v;
-			inst.ReplaceWith(new StLoc(local, value));
+			inst.ReplaceWith(new StLoc(v, value));
+			return true;
+		}
+
+		/// <summary>
+		/// stloc s(ldobj(ldsflda(CachedAnonMethodDelegate))
+		/// if (comp(ldloc s == null)) {
+		///		stloc s(stobj(ldsflda(CachedAnonMethodDelegate), DelegateConstruction))
+		///	}
+		///	=>
+		///	stloc s(DelegateConstruction)
+		/// </summary>
+		bool CachedDelegateInitializationRoslynWithLocal(IfInstruction inst)
+		{
+			Block trueInst = inst.TrueInst as Block;
+			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
+				return false;
+			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())
+				return false;
+			var storeInst = trueInst.Instructions.Last() as StLoc;
+			var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
+			if (storeBeforeIf == null || storeInst == null || storeBeforeIf.Variable != s || storeInst.Variable != s)
+				return false;
+			if (!(storeInst.Value is StObj stobj) || !(storeBeforeIf.Value is LdObj ldobj))
+				return false;
+			if (!(stobj.Value is NewObj))
+				return false;
+			if (!stobj.Target.MatchLdsFlda(out var field1) || !ldobj.Target.MatchLdsFlda(out var field2) || !field1.Equals(field2))
+				return false;
+			if (!DelegateConstruction.IsDelegateConstruction((NewObj)stobj.Value, true))
+				return false;
+			context.Step("CachedDelegateInitializationRoslynWithLocal", inst);
+			storeBeforeIf.Value = stobj.Value;
 			return true;
 		}
 	}

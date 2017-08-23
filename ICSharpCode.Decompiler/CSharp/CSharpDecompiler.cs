@@ -96,7 +96,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					PostOrderTransforms = {
 						//new UseExitPoints(),
 						new ConditionDetection(),
-						// CachedDelegateInitialization must run after ConditionDetection and before/in LoopingBlockTransform.
+						// CachedDelegateInitialization must run after ConditionDetection and before/in LoopingBlockTransform
+						// and must run before NullCoalescingTransform
 						new CachedDelegateInitialization(),
 						new ILInlining(),
 						new TransformAssignment(),
