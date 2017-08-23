@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (function.IsIterator) {
 				foreach (var v in function.Variables) {
 					if (v.Kind != VariableKind.Parameter && v.StoreCount == 1 && v.LoadCount == 0 && v.AddressCount == 0) {
-						if (v.StoreInstructions[0] is StLoc stloc && stloc.Value.MatchLdNull() && stloc.Parent is Block block) {
+						if (v.StoreInstructions[0] is StLoc stloc && (stloc.Value.MatchLdNull() || stloc.Value is DefaultValue) && stloc.Parent is Block block) {
 							block.Instructions.Remove(stloc);
 						}
 					}
