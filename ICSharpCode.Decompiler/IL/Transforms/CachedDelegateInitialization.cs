@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						ILInlining.InlineIfPossible(block, ref i, context);
 						continue;
 					}
-					if (CachedDelegateInitializationRoslynWithLocal(inst)) {
+					if (CachedDelegateInitializationRoslynInStaticWithLocal(inst) || CachedDelegateInitializationRoslynWithLocal(inst)) {
 						block.Instructions.RemoveAt(i);
 						continue;
 					}
@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///	=>
 		///	stloc s(DelegateConstruction)
 		/// </summary>
-		bool CachedDelegateInitializationRoslynWithLocal(IfInstruction inst)
+		bool CachedDelegateInitializationRoslynInStaticWithLocal(IfInstruction inst)
 		{
 			Block trueInst = inst.TrueInst as Block;
 			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
@@ -139,6 +139,38 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(stobj.Value is NewObj))
 				return false;
 			if (!stobj.Target.MatchLdsFlda(out var field1) || !ldobj.Target.MatchLdsFlda(out var field2) || !field1.Equals(field2))
+				return false;
+			if (!DelegateConstruction.IsDelegateConstruction((NewObj)stobj.Value, true))
+				return false;
+			context.Step("CachedDelegateInitializationRoslynInStaticWithLocal", inst);
+			storeBeforeIf.Value = stobj.Value;
+			return true;
+		}
+
+		/// <summary>
+		/// stloc s(ldobj(ldflda(CachedAnonMethodDelegate))
+		/// if (comp(ldloc s == null)) {
+		///		stloc s(stobj(ldflda(CachedAnonMethodDelegate), DelegateConstruction))
+		///	}
+		///	=>
+		///	stloc s(DelegateConstruction)
+		/// </summary>
+		bool CachedDelegateInitializationRoslynWithLocal(IfInstruction inst)
+		{
+			Block trueInst = inst.TrueInst as Block;
+			if (trueInst == null || (trueInst.Instructions.Count != 1) || !inst.FalseInst.MatchNop())
+				return false;
+			if (!inst.Condition.MatchCompEquals(out ILInstruction left, out ILInstruction right) || !left.MatchLdLoc(out ILVariable s) || !right.MatchLdNull())
+				return false;
+			var storeInst = trueInst.Instructions.Last() as StLoc;
+			var storeBeforeIf = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex - 1) as StLoc;
+			if (storeBeforeIf == null || storeInst == null || storeBeforeIf.Variable != s || storeInst.Variable != s)
+				return false;
+			if (!(storeInst.Value is StObj stobj) || !(storeBeforeIf.Value is LdObj ldobj))
+				return false;
+			if (!(stobj.Value is NewObj))
+				return false;
+			if (!stobj.Target.MatchLdFlda(out var _, out var field1) || !ldobj.Target.MatchLdFlda(out var __, out var field2) || !field1.Equals(field2))
 				return false;
 			if (!DelegateConstruction.IsDelegateConstruction((NewObj)stobj.Value, true))
 				return false;
