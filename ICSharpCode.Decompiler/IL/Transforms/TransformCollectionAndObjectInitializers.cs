@@ -47,6 +47,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				Block initializerBlock = null;
 				switch (initInst) {
 					case NewObj newObjInst:
+						// Do not try to transform display class usages or delegate construction.
+						// DelegateConstruction transform cannot deal with this.
+						if (DelegateConstruction.IsSimpleDisplayClass(newObjInst.Method.DeclaringType))
+							return false;
 						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || DelegateConstruction.IsPotentialClosure(context, newObjInst))
 							return false;
 						break;
