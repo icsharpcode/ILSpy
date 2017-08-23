@@ -129,6 +129,7 @@ namespace ICSharpCode.Decompiler.Tests
 					Stopwatch w = Stopwatch.StartNew();
 					DefaultAssemblyResolver resolver = new DefaultAssemblyResolver();
 					resolver.AddSearchDirectory(inputDir);
+					resolver.RemoveSearchDirectory(".");
 					var module = ModuleDefinition.ReadModule(file, new ReaderParameters {
 						AssemblyResolver = resolver,
 						InMemory  = true
