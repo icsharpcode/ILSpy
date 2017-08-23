@@ -1445,7 +1445,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			elementsStack.Push(elements);
 			List<AccessPathElement> currentPath = null;
 			foreach (var inst in block.Instructions.Skip(1)) {
-				var info = AccessPathElement.GetAccessPath(inst);
+				var info = AccessPathElement.GetAccessPath(inst, initObjRR.Type);
 				if (info.Kind == AccessPathKind.Invalid) continue;
 				if (currentPath == null) {
 					currentPath = info.Path;

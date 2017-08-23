@@ -45,20 +45,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Match stloc(v, newobj)
 			if (inst.MatchStLoc(out var v, out var initInst) && (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot)) {
 				Block initializerBlock = null;
+				IType instType;
 				switch (initInst) {
 					case NewObj newObjInst:
+						if (newObjInst.ILStackWasEmpty && !context.Function.Method.IsConstructor)
+							return false;
 						// Do not try to transform display class usages or delegate construction.
 						// DelegateConstruction transform cannot deal with this.
 						if (DelegateConstruction.IsSimpleDisplayClass(newObjInst.Method.DeclaringType))
 							return false;
 						if (DelegateConstruction.IsDelegateConstruction(newObjInst) || DelegateConstruction.IsPotentialClosure(context, newObjInst))
 							return false;
+						instType = newObjInst.Method.DeclaringType;
 						break;
 					case DefaultValue defaultVal:
+						instType = defaultVal.Type;
 						break;
 					case Block existingInitializer:
 						if (existingInitializer.Type == BlockType.CollectionInitializer || existingInitializer.Type == BlockType.ObjectInitializer) {
 							initializerBlock = existingInitializer;
+							var value = ((StLoc)initializerBlock.Instructions[0]).Value;
+							if (value is NewObj no)
+								instType = no.Method.DeclaringType;
+							else
+								instType = ((DefaultValue)value).Type;
 							break;
 						}
 						return false;
@@ -73,7 +83,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// if the method is a setter we're dealing with an object initializer
 				// if the method is named Add and has at least 2 arguments we're dealing with a collection/dictionary initializer
 				while (pos + initializerItemsCount + 1 < body.Instructions.Count
-					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, ref blockType))
+					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockType))
 					initializerItemsCount++;
 				if (initializerItemsCount == 0)
 					return false;
@@ -114,9 +124,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, ref BlockType blockType)
+		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, IType rootType, ref BlockType blockType)
 		{
-			(var kind, var path, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos]);
+			(var kind, var path, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType);
 			switch (kind) {
 				case AccessPathKind.Adder:
 					return target == targetVariable;
@@ -152,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public override string ToString() => $"[{Member}, {Index}]";
 
-		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction> Values, ILVariable Target) GetAccessPath(ILInstruction instruction)
+		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction> Values, ILVariable Target) GetAccessPath(ILInstruction instruction, IType rootType)
 		{
 			List<AccessPathElement> path = new List<AccessPathElement>();
 			ILVariable target = null;
@@ -164,7 +174,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case CallInstruction call:
 						if (!(call is CallVirt || call is Call)) goto default;
 						method = call.Method;
-						if (!IsMethodApplicable(method, call.Arguments)) goto default;
+						if (!IsMethodApplicable(method, call.Arguments, rootType)) goto default;
 						instruction = call.Arguments[0];
 						if (values == null) {
 							values = new List<ILInstruction>(call.Arguments.Skip(1));
@@ -219,7 +229,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (kind, path, values, target);
 		}
 
-		static bool IsMethodApplicable(IMethod method, IList<ILInstruction> arguments)
+		static bool IsMethodApplicable(IMethod method, IList<ILInstruction> arguments, IType rootType)
 		{
 			if (!method.IsExtensionMethod && method.IsStatic)
 				return false;
@@ -227,7 +237,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			if (!"Add".Equals(method.Name, StringComparison.Ordinal) || arguments.Count == 0)
 				return false;
-			var targetType = GetReturnTypeFromInstruction(arguments[0]);
+			var targetType = GetReturnTypeFromInstruction(arguments[0]) ?? rootType;
 			if (targetType == null)
 				return false;
 			return targetType.GetAllBaseTypes().Any(i => i.IsKnownType(KnownTypeCode.IEnumerable) || i.IsKnownType(KnownTypeCode.IEnumerableOfT));
@@ -235,7 +245,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static IType GetReturnTypeFromInstruction(ILInstruction instruction)
 		{
-			// this switch must match the one in GetAccessPath
 			switch (instruction) {
 				case CallInstruction call:
 					if (!(call is CallVirt || call is Call)) goto default;
@@ -248,10 +257,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (stobj.Target is LdFlda ldflda2)
 						return ldflda2.Field.ReturnType;
 					goto default;
-				case LdLoc ldloc:
-					return ldloc.Variable.Type;
-				case LdLoca ldloca:
-					return ldloca.Variable.Type;
 				default:
 					return null;
 			}
