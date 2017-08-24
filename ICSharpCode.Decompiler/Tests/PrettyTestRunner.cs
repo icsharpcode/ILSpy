@@ -116,6 +116,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void PropertiesAndEvents([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void AutoProperties([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);

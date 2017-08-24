@@ -86,6 +86,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (result != null)
 					return result;
 			}
+			if (context.Settings.AutomaticEvents) {
+				result = ReplaceEventFieldAnnotation(expressionStatement);
+				if (result != null)
+					return result;
+			}
 			return base.VisitExpressionStatement(expressionStatement);
 		}
 		
@@ -1057,15 +1062,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			return null;
 		}
+
+		ExpressionStatement ReplaceEventFieldAnnotation(ExpressionStatement expressionStatement)
+		{
+			foreach (var identifier in expressionStatement.Descendants.OfType<Identifier>()) {
+				var parent = identifier.Parent;
+				var mrr = parent.Annotation<MemberResolveResult>();
+				var field = mrr?.Member as IField;
+				if (field == null) continue;
+				var @event = field.DeclaringType.GetEvents(ev => ev.Name == field.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
+				if (@event != null) {
+					parent.RemoveAnnotations<MemberResolveResult>();
+					parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, @event));
+				}
+			}
+			return null;
+		}
 		#endregion
-		
+
 		#region Automatic Events
 		static readonly Accessor automaticEventPatternV4 = new Accessor {
 			Attributes = { new Repeat(new AnyNode()) },
 			Body = new BlockStatement {
-				new VariableDeclarationStatement { Type = new AnyNode("type"), Variables = { new AnyNode() } },
-				new VariableDeclarationStatement { Type = new Backreference("type"), Variables = { new AnyNode() } },
-				new VariableDeclarationStatement { Type = new Backreference("type"), Variables = { new AnyNode() } },
 				new AssignmentExpression {
 					Left = new NamedNode("var1", new IdentifierExpression(Pattern.AnyString)),
 					Operator = AssignmentOperatorType.Assign,
@@ -1076,14 +1094,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							MemberName = Pattern.AnyString
 						})
 				},
-				new DoWhileStatement {
+				new WhileStatement {
+					Condition = new PrimitiveExpression(true),
 					EmbeddedStatement = new BlockStatement {
 						new AssignmentExpression(new NamedNode("var2", new IdentifierExpression(Pattern.AnyString)), new IdentifierExpressionBackreference("var1")),
 						new AssignmentExpression {
 							Left = new NamedNode("var3", new IdentifierExpression(Pattern.AnyString)),
 							Operator = AssignmentOperatorType.Assign,
-							Right = new CastExpression(new Backreference("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"),
-								new IdentifierExpression("value")
+							Right = new CastExpression(new AnyNode("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new CastExpression(new TypePattern(typeof(System.Delegate)), new IdentifierExpressionBackreference("var2")),
+								new CastExpression(new TypePattern(typeof(System.Delegate)), new IdentifierExpression("value"))
 							))
 						},
 						new AssignmentExpression {
@@ -1096,13 +1115,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 									new IdentifierExpressionBackreference("var3"),
 									new IdentifierExpressionBackreference("var2")
 								}
-							)}
-					},
-					Condition = new BinaryOperatorExpression {
-						Left = new IdentifierExpressionBackreference("var1"),
-						Operator = BinaryOperatorType.InEquality,
-						Right = new IdentifierExpressionBackreference("var2")
-					}}
+							)},
+						new IfElseStatement {
+							Condition = new BinaryOperatorExpression {
+								Left = new CastExpression(new TypePattern(typeof(object)), new IdentifierExpressionBackreference("var1")),
+								Operator = BinaryOperatorType.Equality,
+								Right = new IdentifierExpressionBackreference("var2")
+							},
+							TrueStatement = new BreakStatement()
+						}
+					}
+				}
 			}};
 		
 		bool CheckAutomaticEventV4Match(Match m, CustomEventDeclaration ev, bool isAddAccessor)
@@ -1113,11 +1136,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return false; // field name must match event name
 			if (!ev.ReturnType.IsMatch(m.Get("type").Single()))
 				return false; // variable types must match event type
-			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent.Annotation<MethodReference>();
+			var combineMethod = m.Get<AstNode>("delegateCombine").Single().Parent.GetSymbol() as IMethod;
 			if (combineMethod == null || combineMethod.Name != (isAddAccessor ? "Combine" : "Remove"))
 				return false;
 			return combineMethod.DeclaringType.FullName == "System.Delegate";
 		}
+
+		static readonly string[] attributeTypesToRemoveFromAutoEvents = new[] {
+			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
+			"System.Diagnostics.DebuggerBrowsableAttribute"
+		};
 		
 		EventDeclaration TransformAutomaticEvents(CustomEventDeclaration ev)
 		{
@@ -1127,6 +1155,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Match m2 = automaticEventPatternV4.Match(ev.RemoveAccessor);
 			if (!CheckAutomaticEventV4Match(m2, ev, false))
 				return null;
+			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes);
 			EventDeclaration ed = new EventDeclaration();
 			ev.Attributes.MoveTo(ed.Attributes);
 			foreach (var attr in ev.AddAccessor.Attributes) {
@@ -1138,12 +1167,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ed.Variables.Add(new VariableInitializer(ev.Name));
 			ed.CopyAnnotationsFrom(ev);
 			
-			EventDefinition eventDef = ev.Annotation<EventDefinition>();
+			IEvent eventDef = ev.GetSymbol() as IEvent;
 			if (eventDef != null) {
-				FieldDefinition field = eventDef.DeclaringType.Fields.FirstOrDefault(f => f.Name == ev.Name);
+				IField field = eventDef.DeclaringType.GetFields(f => f.Name == ev.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
 				if (field != null) {
 					ed.AddAnnotation(field);
-					// TODO AstBuilder.ConvertAttributes(ed, field, "field");
+					var attributes = field.Attributes
+							.Where(a => !attributeTypesToRemoveFromAutoEvents.Any(t => t == a.AttributeType.FullName))
+							.Select(context.TypeSystemAstBuilder.ConvertAttribute).ToArray();
+					if (attributes.Length > 0) {
+						var section = new AttributeSection {
+							AttributeTarget = "field"
+						};
+						section.Attributes.AddRange(attributes);
+						ed.Attributes.Add(section);
+					}
 				}
 			}
 			

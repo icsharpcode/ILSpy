@@ -126,10 +126,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (!m.Success)
 						break;
 					
-					IMember fieldOrProperty = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
-					if (!(fieldOrProperty is IField) && !(fieldOrProperty is IProperty))
+					IMember fieldOrPropertyOrEvent = (m.Get<AstNode>("fieldAccess").Single().GetSymbol() as IMember)?.MemberDefinition;
+					if (!(fieldOrPropertyOrEvent is IField) && !(fieldOrPropertyOrEvent is IProperty) && !(fieldOrPropertyOrEvent is IEvent))
 						break;
-					AstNode fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrProperty);
+					AstNode fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent);
 					if (fieldOrPropertyOrEventDecl == null)
 						break;
 					Expression initializer = m.Get<Expression>("initializer").Single();

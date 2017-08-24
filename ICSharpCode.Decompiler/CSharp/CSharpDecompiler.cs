@@ -202,8 +202,8 @@ namespace ICSharpCode.Decompiler.CSharp
 //						return true;
 				}
 				// event-fields are not [CompilerGenerated]
-//				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
-//					return true;
+				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
+					return true;
 				// HACK : only hide fields starting with '__StaticArrayInit'
 				if (field.DeclaringType.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal)) {
 					if (field.Name.StartsWith("__StaticArrayInit", StringComparison.Ordinal))
