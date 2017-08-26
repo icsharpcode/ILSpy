@@ -37,6 +37,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// Represents a position immediately before nextNode.
 		/// nextNode is either an ExpressionStatement in a BlockStatement, or an initializer in a for-loop.
 		/// </summary>
+		[DebuggerDisplay("level = {level}, nextNode = {nextNode}")]
 		struct InsertionPoint
 		{
 			/// <summary>
@@ -66,6 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
+		[DebuggerDisplay("VariableToDeclare(Name={Name})")]
 		class VariableToDeclare
 		{
 			public readonly IType Type;
@@ -87,9 +89,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public int SourceOrder;
 			
 			public InsertionPoint InsertionPoint;
-			
-			public bool RemovedDueToCollision;
-			
+
+			public VariableToDeclare ReplacementDueToCollision;
+			public bool RemovedDueToCollision => ReplacementDueToCollision != null;
+
 			public VariableToDeclare(IType type, string name, bool defaultInitialization, InsertionPoint insertionPoint, int sourceOrder)
 			{
 				this.Type = type;
@@ -102,20 +105,46 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		readonly Dictionary<ILVariable, VariableToDeclare> variableDict = new Dictionary<ILVariable, VariableToDeclare>();
 		
-		TransformContext context;
-		
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			try {
-				this.context = context;
+				variableDict.Clear();
 				EnsureExpressionStatementsAreValid(rootNode);
 				FindInsertionPoints(rootNode, 0);
 				ResolveCollisions();
-				InsertVariableDeclarations();
+				InsertVariableDeclarations(context);
 			} finally {
 				variableDict.Clear();
-				this.context = null;
 			}
+		}
+
+		/// <summary>
+		/// Analyze the input AST (containing undeclared variables)
+		/// for where those variables would be declared by this transform.
+		/// Analysis does not modify the AST.
+		/// </summary>
+		public void Analyze(AstNode rootNode)
+		{
+			variableDict.Clear();
+			FindInsertionPoints(rootNode, 0);
+			ResolveCollisions();
+		}
+
+		/// <summary>
+		/// Get the position where the declaration for the variable will be inserted.
+		/// </summary>
+		public AstNode GetDeclarationPoint(ILVariable variable)
+		{
+			VariableToDeclare v = variableDict[variable];
+			while (v.ReplacementDueToCollision != null) {
+				v = v.ReplacementDueToCollision;
+			}
+			return v.InsertionPoint.nextNode;
+		}
+
+		public void ClearAnalysisResults()
+		{
+			variableDict.Clear();
 		}
 
 		#region EnsureExpressionStatementsAreValid
@@ -297,7 +326,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					Debug.Assert(point1.level == point2.level);
 					if (point1.nextNode.Parent == point2.nextNode.Parent) {
 						// We found a collision!
-						prev.RemovedDueToCollision = true;
+						prev.ReplacementDueToCollision = v;
 						// Continue checking other entries in multiDict against the new position of `v`.
 						if (prev.SourceOrder < v.SourceOrder) {
 							// If we switch v's insertion point to prev's insertion point,
@@ -318,7 +347,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		void InsertVariableDeclarations()
+		void InsertVariableDeclarations(TransformContext context)
 		{
 			var replacements = new List<KeyValuePair<AstNode, AstNode>>();
 			foreach (var p in variableDict) {

@@ -197,5 +197,42 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine("End of method");
 		}
+
+		public void DoubleForEachWithSameVariable(IEnumerable<string> enumerable)
+		{
+			foreach (string current in enumerable) {
+				current.ToLower();
+			}
+			foreach (string current in enumerable) {
+				current.ToLower();
+			}
+		}
+
+		static void ForeachExceptForNameCollision(IEnumerable<int> inputs)
+		{
+			Console.WriteLine("ForeachWithNameCollision");
+			int input;
+			using (var enumerator = inputs.GetEnumerator()) {
+				while (enumerator.MoveNext()) {
+					input = enumerator.Current;
+					Console.WriteLine(input);
+				}
+			}
+			input = 1;
+			Console.WriteLine(input);
+		}
+
+		static void ForeachExceptForContinuedUse(IEnumerable<int> inputs)
+		{
+			Console.WriteLine("ForeachExceptForContinuedUse");
+			int input = 0;
+			using (var enumerator = inputs.GetEnumerator()) {
+				while (enumerator.MoveNext()) {
+					input = enumerator.Current;
+					Console.WriteLine(input);
+				}
+			}
+			Console.WriteLine("Last: " + input);
+		}
 	}
 }

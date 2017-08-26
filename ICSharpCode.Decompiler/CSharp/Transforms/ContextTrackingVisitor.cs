@@ -36,6 +36,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			currentMethod = context.DecompiledMember as IMethod;
 		}
 		
+		protected void Uninitialize()
+		{
+			currentTypeDefinition = null;
+			currentMethod = null;
+		}
+
 		public override TResult VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
 			ITypeDefinition oldType = currentTypeDefinition;

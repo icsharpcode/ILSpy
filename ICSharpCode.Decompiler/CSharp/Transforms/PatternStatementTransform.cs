@@ -35,13 +35,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public sealed class PatternStatementTransform : ContextTrackingVisitor<AstNode>, IAstTransform
 	{
+		readonly DeclareVariables declareVariables = new DeclareVariables();
 		TransformContext context;
 		
 		public void Run(AstNode rootNode, TransformContext context)
 		{
-			this.context = context;
-			base.Initialize(context);
-			rootNode.AcceptVisitor(this);
+			if (this.context != null)
+				throw new InvalidOperationException("Reentrancy in PatternStatementTransform.Run?");
+			try {
+				this.context = context;
+				base.Initialize(context);
+				declareVariables.Analyze(rootNode);
+				rootNode.AcceptVisitor(this);
+			} finally {
+				this.context = null;
+				base.Uninitialize();
+				declareVariables.ClearAnalysisResults();
+			}
 		}
 
 		#region Visitor Overrides
@@ -434,7 +444,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return foreachStatement;
 		}
 
-		static bool VariableCanBeDeclaredInLoop(IL.ILVariable itemVar, WhileStatement loop)
+		bool VariableCanBeDeclaredInLoop(IL.ILVariable itemVar, WhileStatement loop)
 		{
 			if (itemVar == null || !(itemVar.Kind == IL.VariableKind.Local || itemVar.Kind == IL.VariableKind.StackSlot)) {
 				// only locals/temporaries can be converted into foreach loop variable
@@ -457,7 +467,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// captured variables cannot be declared in the loop unless the loop is their capture scope
 				return false;
 			}
-			return true;
+			
+			AstNode declPoint = declareVariables.GetDeclarationPoint(itemVar);
+			return declPoint.Ancestors.Contains(loop);
 		}
 
 		static bool AddressUsedForSingleCall(IL.ILVariable v, IL.BlockContainer loop)
