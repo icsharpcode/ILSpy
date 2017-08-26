@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void VisitBlock(ControlFlowNode cfgNode, BlockTransformContext context)
 		{
 			Block block = (Block)cfgNode.UserData;
-			context.Stepper.StartGroup(block.Label, block);
+			context.StepStartGroup(block.Label, block);
 
 			context.ControlFlowNode = cfgNode;
 			context.Block = block;
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.ControlFlowNode = cfgNode;
 			context.Block = block;
 			block.RunTransforms(PostOrderTransforms, context);
-			context.Stepper.EndGroup();
+			context.StepEndGroup();
 		}
 	}
 }

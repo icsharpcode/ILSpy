@@ -215,10 +215,10 @@ namespace ICSharpCode.Decompiler.IL
 			this.CheckInvariant(ILPhase.Normal);
 			foreach (var transform in transforms) {
 				context.CancellationToken.ThrowIfCancellationRequested();
-				context.Stepper.StartGroup(transform.GetType().Name);
+				context.StepStartGroup(transform.GetType().Name);
 				transform.Run(this, context);
 				this.CheckInvariant(ILPhase.Normal);
-				context.Stepper.EndGroup();
+				context.StepEndGroup();
 			}
 		}
 

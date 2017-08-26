@@ -112,7 +112,12 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 					if (c != Conversion.None) return c;
 				}
 			} else {
-				c = ImplicitConversion(resolveResult.Type, toType, allowUserDefined);
+				if (allowUserDefined) {
+					// if allowUserDefined is true, we might as well use the cache
+					c = ImplicitConversion(resolveResult.Type, toType);
+				} else {
+					c = ImplicitConversion(resolveResult.Type, toType, allowUserDefined);
+				}
 				if (c != Conversion.None) return c;
 			}
 			if (resolveResult.Type.Kind == TypeKind.Dynamic)

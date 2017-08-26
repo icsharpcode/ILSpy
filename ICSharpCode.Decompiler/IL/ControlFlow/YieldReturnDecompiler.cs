@@ -409,7 +409,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		#region Analyze MoveNext() and generate new body
 		BlockContainer AnalyzeMoveNext()
 		{
-			context.Stepper.StartGroup("AnalyzeMoveNext");
+			context.StepStartGroup("AnalyzeMoveNext");
 			MethodDefinition moveNextMethod = enumeratorType.Methods.FirstOrDefault(m => m.Name == "MoveNext");
 			ILFunction moveNextFunction = CreateILAst(moveNextMethod);
 
@@ -450,7 +450,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			moveNextFunction.Variables.Clear();
 			// release references from old moveNextFunction to instructions that were moved over to newBody
 			moveNextFunction.ReleaseRef();
-			context.Stepper.EndGroup();
+			context.StepEndGroup();
 			return newBody;
 		}
 
@@ -458,7 +458,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			// Roslyn may optimize MoveNext() by copying fields from the iterator class into local variables
 			// at the beginning of MoveNext(). Undo this optimization.
-			context.Stepper.StartGroup("PropagateCopiesOfFields");
+			context.StepStartGroup("PropagateCopiesOfFields");
 			var mutableFields = body.Descendants.OfType<LdFlda>().Where(ldflda => ldflda.Parent.OpCode != OpCode.LdObj).Select(ldflda => ldflda.Field).ToHashSet();
 			for (int i = 0; i < body.EntryPoint.Instructions.Count; i++) {
 				if (body.EntryPoint.Instructions[i] is StLoc store
@@ -482,7 +482,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					break; // unknown instruction
 				}
 			}
-			context.Stepper.EndGroup();
+			context.StepEndGroup();
 		}
 
 		/// <summary>
@@ -718,7 +718,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void ReconstructTryFinallyBlocks(ILFunction iteratorFunction)
 		{
 			BlockContainer newBody = (BlockContainer)iteratorFunction.Body;
-			context.Stepper.Step("Reconstuct try-finally blocks");
+			context.Step("Reconstuct try-finally blocks", newBody);
 			var blockState = new int[newBody.Blocks.Count];
 			blockState[0] = -1;
 			var stateToContainer = new Dictionary<int, BlockContainer>();

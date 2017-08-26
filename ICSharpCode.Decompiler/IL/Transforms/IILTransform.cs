@@ -62,5 +62,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			Stepper.Step(description, near);
 		}
+		
+		[Conditional("STEP")]
+		internal void StepStartGroup(string description, ILInstruction near = null)
+		{
+			Stepper.StartGroup(description, near);
+		}
+
+		[Conditional("STEP")]
+		internal void StepEndGroup(bool keepIfEmpty = false)
+		{
+			Stepper.EndGroup(keepIfEmpty);
+		}
 	}
 }

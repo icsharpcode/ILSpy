@@ -114,13 +114,13 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var transform in transforms) {
 				context.CancellationToken.ThrowIfCancellationRequested();
 				if (transform is BlockILTransform blockTransform) {
-					context.Stepper.StartGroup(blockTransform.ToString());
+					context.StepStartGroup(blockTransform.ToString());
 				} else {
-					context.Stepper.StartGroup(transform.GetType().Name);
+					context.StepStartGroup(transform.GetType().Name);
 				}
 				transform.Run(this, context);
 				this.CheckInvariant(ILPhase.Normal);
-				context.Stepper.EndGroup(keepIfEmpty: true);
+				context.StepEndGroup(keepIfEmpty: true);
 			}
 		}
 
