@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using Mono.Cecil;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -73,22 +74,22 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </remarks>
 		protected string targetDirectory;
 		
-		public void DecompileProject(ModuleDefinition moduleDefinition, string targetDirectory)
+		public void DecompileProject(ModuleDefinition moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Assembly.Name.Name) + ".csproj");
 			using (var writer = new StreamWriter(projectFileName)) {
-				DecompileProject(moduleDefinition, targetDirectory, writer);
+				DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
 			}
 		}
 		
-		public void DecompileProject(ModuleDefinition moduleDefinition, string targetDirectory, TextWriter projectFileWriter)
+		public void DecompileProject(ModuleDefinition moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (string.IsNullOrEmpty(targetDirectory)) {
 				throw new InvalidOperationException("Must set TargetDirectory");
 			}
 			this.targetDirectory = targetDirectory;
 			directories.Clear();
-			var files = WriteCodeFilesInProject(moduleDefinition).ToList();
+			var files = WriteCodeFilesInProject(moduleDefinition, cancellationToken).ToList();
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
 			WriteProjectFile(projectFileWriter, files, moduleDefinition);
 		}
@@ -248,9 +249,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			return decompiler;
 		}
 		
-		IEnumerable<Tuple<string, string>> WriteAssemblyInfo(DecompilerTypeSystem ts)
+		IEnumerable<Tuple<string, string>> WriteAssemblyInfo(DecompilerTypeSystem ts, CancellationToken cancellationToken)
 		{
 			var decompiler = CreateDecompiler(ts);
+			decompiler.CancellationToken = cancellationToken;
 			decompiler.AstTransforms.Add(new RemoveCompilerGeneratedAssemblyAttributes());
 			SyntaxTree syntaxTree = decompiler.DecompileModuleAndAssemblyAttributes();
 
@@ -264,7 +266,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new Tuple<string, string>[] { Tuple.Create("Compile", assemblyInfo) };
 		}
 
-		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(ModuleDefinition module)
+		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(ModuleDefinition module, CancellationToken cancellationToken)
 		{
 			var files = module.Types.Where(IncludeTypeWhenDecompilingProject).GroupBy(
 				delegate(TypeDefinition type) {
@@ -281,15 +283,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			DecompilerTypeSystem ts = new DecompilerTypeSystem(module);
 			Parallel.ForEach(
 				files,
-				new ParallelOptions { MaxDegreeOfParallelism = this.MaxDegreeOfParallelism },
+				new ParallelOptions {
+					MaxDegreeOfParallelism = this.MaxDegreeOfParallelism,
+					CancellationToken = cancellationToken
+				},
 				delegate(IGrouping<string, TypeDefinition> file) {
 					using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, file.Key))) {
 						CSharpDecompiler decompiler = CreateDecompiler(ts);
+						decompiler.CancellationToken = cancellationToken;
 						var syntaxTree = decompiler.DecompileTypes(file.ToArray());
 						syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
 					}
 				});
-			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(ts));
+			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
 		}
 		#endregion
 		

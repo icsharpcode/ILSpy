@@ -340,8 +340,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		void IAstTransform.Run(AstNode node, TransformContext context)
 		{
-			this.context = context;
-			node.AcceptVisitor(this);
+			try {
+				this.context = context;
+				node.AcceptVisitor(this);
+			} finally {
+				this.context = null;
+			}
 		}
 	}
 }

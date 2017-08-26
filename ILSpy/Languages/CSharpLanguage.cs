@@ -87,6 +87,7 @@ namespace ICSharpCode.ILSpy
 		CSharpDecompiler CreateDecompiler(ModuleDefinition module, DecompilationOptions options)
 		{
 			CSharpDecompiler decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
+			decompiler.CancellationToken = options.CancellationToken;
 			while (decompiler.AstTransforms.Count > transformCount)
 				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
 			return decompiler;
@@ -283,7 +284,7 @@ namespace ICSharpCode.ILSpy
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
 				decompiler.ProjectGuid = App.CommandLineArguments.FixedGuid;
-				decompiler.DecompileProject(assembly.ModuleDefinition, options.SaveAsProjectDirectory, new TextOutputWriter(output));
+				decompiler.DecompileProject(assembly.ModuleDefinition, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			} else {
 				base.DecompileAssembly(assembly, output, options);
 				output.WriteLine();
@@ -311,6 +312,7 @@ namespace ICSharpCode.ILSpy
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
 				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
 					CSharpDecompiler decompiler = new CSharpDecompiler(assembly.ModuleDefinition, options.DecompilerSettings);
+					decompiler.CancellationToken = options.CancellationToken;
 					if (options.FullDecompilation) {
 						SyntaxTree st = decompiler.DecompileWholeModuleAsSingleFile();
 						output.WriteLine(st.ToString());

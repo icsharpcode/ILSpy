@@ -32,6 +32,7 @@ using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 using ExpressionType = System.Linq.Expressions.ExpressionType;
 using PrimitiveType = ICSharpCode.Decompiler.CSharp.Syntax.PrimitiveType;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -65,12 +66,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
 		readonly TypeSystemAstBuilder astBuilder;
+		readonly CancellationToken cancellationToken;
 		
-		public ExpressionBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext)
+		public ExpressionBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, CancellationToken cancellationToken)
 		{
 			Debug.Assert(decompilationContext != null);
 			this.typeSystem = typeSystem;
 			this.decompilationContext = decompilationContext;
+			this.cancellationToken = cancellationToken;
 			this.compilation = decompilationContext.Compilation;
 			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainAssembly, null, decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
 			this.astBuilder = new TypeSystemAstBuilder(resolver);
@@ -111,6 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		public TranslatedExpression Translate(ILInstruction inst, IType typeHint = null)
 		{
 			Debug.Assert(inst != null);
+			cancellationToken.ThrowIfCancellationRequested();
 			TranslationContext context = new TranslationContext {
 				TypeHint = typeHint ?? SpecialType.UnknownType
 			};
@@ -943,7 +947,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.Parameters.AddRange(MakeParameters(method, function));
 			ame.HasParameterList = true;
-			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method, function);
+			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method, function, cancellationToken);
 			var body = builder.ConvertAsBlock(function.Body);
 			bool isLambda = false;
 			bool isMultiLineLambda = false;

@@ -26,6 +26,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.Decompiler.IL.Patterns;
 using System;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -34,17 +35,20 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ExpressionBuilder exprBuilder;
 		readonly ILFunction currentFunction;
 		readonly IMethod currentMethod;
+		readonly CancellationToken cancellationToken;
 
-		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IMethod currentMethod, ILFunction currentFunction)
+		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IMethod currentMethod, ILFunction currentFunction, CancellationToken cancellationToken)
 		{
 			Debug.Assert(typeSystem != null && decompilationContext != null && currentMethod != null);
-			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext);
+			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext, cancellationToken);
 			this.currentFunction = currentFunction;
 			this.currentMethod = currentMethod;
+			this.cancellationToken = cancellationToken;
 		}
 		
 		public Statement Convert(ILInstruction inst)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			return inst.AcceptVisitor(this);
 		}
 
