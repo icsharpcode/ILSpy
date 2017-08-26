@@ -273,11 +273,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			node.Remove();
 
 			UsingStatement usingStatement = new UsingStatement();
-			usingStatement.EmbeddedStatement = tryCatch.TryBlock.Detach();
+			var tryBlock = tryCatch.TryBlock.Detach();
 			tryCatch.ReplaceWith(usingStatement);
 			
 			// If possible, we'll eliminate the variable completely:
-			if (usingStatement.EmbeddedStatement.Descendants.OfType<IdentifierExpression>().Any(ident => ident.Identifier == variableName)) {
+			if (tryBlock.Descendants.OfType<IdentifierExpression>().Any(ident => ident.Identifier == variableName)) {
 				// variable is used, so we'll create a variable declaration
 				variable.Kind = IL.VariableKind.UsingLocal;
 				usingStatement.ResourceAcquisition = new VariableDeclarationStatement {
@@ -294,6 +294,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// the variable is never used; eliminate it:
 				usingStatement.ResourceAcquisition = m1.Get<Expression>("initializer").Single().Detach();
 			}
+			usingStatement.EmbeddedStatement = tryBlock;
 			return usingStatement;
 		}
 		
