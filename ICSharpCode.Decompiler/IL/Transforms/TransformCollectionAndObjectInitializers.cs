@@ -48,8 +48,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				IType instType;
 				switch (initInst) {
 					case NewObj newObjInst:
-						if (newObjInst.ILStackWasEmpty && !context.Function.Method.IsConstructor)
+						if (newObjInst.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor) {
+							// on statement level (no other expressions on IL stack),
+							// prefer to keep local variables (but not stack slots),
+							// unless we are in a constructor (where inlining object initializers might be critical
+							// for the base ctor call)
 							return false;
+						}
 						// Do not try to transform display class usages or delegate construction.
 						// DelegateConstruction transform cannot deal with this.
 						if (DelegateConstruction.IsSimpleDisplayClass(newObjInst.Method.DeclaringType))
