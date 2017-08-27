@@ -37,6 +37,8 @@ namespace ICSharpCode.Decompiler.IL
 		readonly ICompilation compilation;
 		readonly IDecompilerTypeSystem typeSystem;
 
+		public bool UseDebugSymbols { get; set; }
+
 		public ILReader(IDecompilerTypeSystem typeSystem)
 		{
 			if (typeSystem == null)
@@ -46,6 +48,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		Cil.MethodBody body;
+		Cil.MethodDebugInformation debugInfo;
 		StackType methodReturnStackType;
 		Cil.Instruction currentInstruction;
 		int nextInstructionIndex;
@@ -67,6 +70,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (body == null)
 				throw new ArgumentNullException(nameof(body));
 			this.body = body;
+			this.debugInfo = body.Method.DebugInformation;
 			this.currentInstruction = null;
 			this.nextInstructionIndex = 0;
 			this.currentStack = System.Collections.Immutable.ImmutableStack<ILVariable>.Empty;
@@ -124,7 +128,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			VariableKind kind = v.IsPinned ? VariableKind.PinnedLocal : VariableKind.Local;
 			ILVariable ilVar = new ILVariable(kind, typeSystem.Resolve(v.VariableType), v.Index);
-			ilVar.Name = "V_" + v.Index;
+			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName(v, out string name))
+				ilVar.Name = "V_" + v.Index;
+			else
+				ilVar.Name = !string.IsNullOrWhiteSpace(name) ? name : "V_" + v.Index;
 			return ilVar;
 		}
 
