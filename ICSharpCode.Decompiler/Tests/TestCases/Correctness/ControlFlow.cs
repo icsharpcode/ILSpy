@@ -38,6 +38,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Test("test", ref result);
 			Console.WriteLine(result);
 			ForeachWithAssignment(new int[] { 1, 5, 25 });
+			BreakUnlessContinue(true);
+			BreakUnlessContinue(false);
 			return 0;
 		}
 
@@ -116,6 +118,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					i *= 2;
 				Console.WriteLine(i);
 			}
+		}
+
+		static void BreakUnlessContinue(bool b)
+		{
+			Console.WriteLine("BreakUnlessContinue({0})", b);
+			for (int i = 0; i < 5; i++) {
+				if ((i % 3) == 0)
+					continue;
+				Console.WriteLine(i);
+				if (b) {
+					Console.WriteLine("continuing");
+					continue;
+				}
+				Console.WriteLine("breaking out of loop");
+				break;
+			}
+			Console.WriteLine("BreakUnlessContinue (end)");
 		}
 	}
 }
