@@ -45,57 +45,57 @@ namespace ICSharpCode.Decompiler.CSharp
 	/// </summary>
 	sealed class CapturedVariableAnnotation {}
 	
-	static class AnnotationExtensions
+	public static class AnnotationExtensions
 	{
-		public static ExpressionWithILInstruction WithILInstruction(this Expression expression, ILInstruction instruction)
+		internal static ExpressionWithILInstruction WithILInstruction(this Expression expression, ILInstruction instruction)
 		{
 			expression.AddAnnotation(instruction);
 			return new ExpressionWithILInstruction(expression);
 		}
-		
-		public static ExpressionWithILInstruction WithILInstruction(this Expression expression, IEnumerable<ILInstruction> instructions)
+
+		internal static ExpressionWithILInstruction WithILInstruction(this Expression expression, IEnumerable<ILInstruction> instructions)
 		{
 			foreach (var inst in instructions)
 				expression.AddAnnotation(inst);
 			return new ExpressionWithILInstruction(expression);
 		}
-		
-		public static ExpressionWithILInstruction WithoutILInstruction(this Expression expression)
+
+		internal static ExpressionWithILInstruction WithoutILInstruction(this Expression expression)
 		{
 			return new ExpressionWithILInstruction(expression);
 		}
-		
-		public static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression, ILInstruction instruction)
+
+		internal static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression, ILInstruction instruction)
 		{
 			expression.Expression.AddAnnotation(instruction);
 			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
 		}
-		
-		public static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression, IEnumerable<ILInstruction> instructions)
+
+		internal static TranslatedExpression WithILInstruction(this ExpressionWithResolveResult expression, IEnumerable<ILInstruction> instructions)
 		{
 			foreach (var inst in instructions)
 				expression.Expression.AddAnnotation(inst);
 			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
 		}
-		
-		public static TranslatedExpression WithILInstruction(this TranslatedExpression expression, ILInstruction instruction)
+
+		internal static TranslatedExpression WithILInstruction(this TranslatedExpression expression, ILInstruction instruction)
 		{
 			expression.Expression.AddAnnotation(instruction);
 			return expression;
 		}
-		
-		public static TranslatedExpression WithoutILInstruction(this ExpressionWithResolveResult expression)
+
+		internal static TranslatedExpression WithoutILInstruction(this ExpressionWithResolveResult expression)
 		{
 			return new TranslatedExpression(expression.Expression, expression.ResolveResult);
 		}
-		
-		public static ExpressionWithResolveResult WithRR(this Expression expression, ResolveResult resolveResult)
+
+		internal static ExpressionWithResolveResult WithRR(this Expression expression, ResolveResult resolveResult)
 		{
 			expression.AddAnnotation(resolveResult);
 			return new ExpressionWithResolveResult(expression, resolveResult);
 		}
-		
-		public static TranslatedExpression WithRR(this ExpressionWithILInstruction expression, ResolveResult resolveResult)
+
+		internal static TranslatedExpression WithRR(this ExpressionWithILInstruction expression, ResolveResult resolveResult)
 		{
 			expression.Expression.AddAnnotation(resolveResult);
 			return new TranslatedExpression(expression, resolveResult);
