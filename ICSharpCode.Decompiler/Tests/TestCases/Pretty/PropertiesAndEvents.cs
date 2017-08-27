@@ -4,6 +4,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class PropertiesAndEvents
 	{
+		public int Value {
+			get;
+			private set;
+		}
+
 		public event EventHandler AutomaticEvent;
 
 		[field: NonSerialized]
