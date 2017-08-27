@@ -177,6 +177,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void AddSection(LongSet values, ILInstruction inst)
 		{
+			if (values.IsEmpty) {
+				return;
+			}
 			Block targetBlock;
 			if (inst.MatchBranch(out targetBlock)) {
 				int index;

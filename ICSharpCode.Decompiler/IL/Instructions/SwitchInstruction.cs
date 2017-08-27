@@ -147,6 +147,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			LongSet sets = LongSet.Empty;
 			foreach (var section in Sections) {
+				Debug.Assert(!section.Labels.IsEmpty);
 				Debug.Assert(!section.Labels.Overlaps(sets));
 				sets = sets.UnionWith(section.Labels);
 			}
