@@ -128,10 +128,15 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			VariableKind kind = v.IsPinned ? VariableKind.PinnedLocal : VariableKind.Local;
 			ILVariable ilVar = new ILVariable(kind, typeSystem.Resolve(v.VariableType), v.Index);
-			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName(v, out string name))
+			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName(v, out string name)) {
 				ilVar.Name = "V_" + v.Index;
-			else
-				ilVar.Name = !string.IsNullOrWhiteSpace(name) ? name : "V_" + v.Index;
+				ilVar.HasGeneratedName = true;
+			} else if (string.IsNullOrWhiteSpace(name)) {
+				ilVar.Name = "V_" + v.Index;
+				ilVar.HasGeneratedName = true;
+			} else {
+				ilVar.Name = name;
+			}
 			return ilVar;
 		}
 

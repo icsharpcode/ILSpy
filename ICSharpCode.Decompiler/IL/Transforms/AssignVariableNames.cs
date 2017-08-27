@@ -59,6 +59,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			currentFieldNames = function.Method.DeclaringType.Fields.Select(f => f.Name).ToArray();
 			reservedVariableNames = new Dictionary<string, int>();
+			foreach (var p in function.Descendants.OfType<ILFunction>().Select(f => f.Method).SelectMany(m => m.Parameters))
+				AddExistingName(p.Name);
 			foreach (ILFunction f in function.Descendants.OfType<ILFunction>().Reverse()) {
 				PerformAssignment(f);
 			}
@@ -66,27 +68,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void PerformAssignment(ILFunction function)
 		{
-			foreach (var p in function.Method.Parameters)
-				AddExistingName(p.Name);
 			foreach (var v in function.Variables) {
 				switch (v.Kind) {
-					case VariableKind.Parameter:
+					case VariableKind.Parameter: // ignore
+						break;
 					case VariableKind.StackSlot: // keep generated names
 						AddExistingName(v.Name);
 						break;
 					default:
-						string varName = v.Name;
-						if (context.Settings.UseDebugSymbols) {
-							if (string.IsNullOrEmpty(varName) || varName.StartsWith("V_", StringComparison.Ordinal) || !IsValidName(varName)) {
-								// don't use the name from the debug symbols if it looks like a generated name
-								v.Name = null;
-							} else {
-								// use the name from the debug symbols
-								// (but ensure we don't use the same name for two variables)
-								v.Name = GetAlternativeName(varName);
-							}
-						} else {
+						if (v.HasGeneratedName || !IsValidName(v.Name)) {
+							// don't use the name from the debug symbols if it looks like a generated name
 							v.Name = null;
+						} else {
+							// use the name from the debug symbols
+							// (but ensure we don't use the same name for two variables)
+							v.Name = GetAlternativeName(v.Name);
 						}
 						break;
 				}

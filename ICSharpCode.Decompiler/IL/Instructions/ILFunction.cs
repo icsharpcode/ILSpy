@@ -127,6 +127,7 @@ namespace ICSharpCode.Decompiler.IL
 		public ILVariable RegisterVariable(VariableKind kind, IType type, string name = null)
 		{
 			int index = Variables.Where(v => v.Kind == kind).MaxOrDefault(v => v.Index, -1) + 1;
+			var variable = new ILVariable(kind, type, index);
 			if (string.IsNullOrWhiteSpace(name)) {
 				switch (kind) {
 					case VariableKind.Local:
@@ -145,8 +146,8 @@ namespace ICSharpCode.Decompiler.IL
 						throw new NotSupportedException();
 				}
 				name += index;
+				variable.HasGeneratedName = true;
 			}
-			var variable = new ILVariable(kind, type, index);
 			variable.Name = name;
 			Variables.Add(variable);
 			return variable;

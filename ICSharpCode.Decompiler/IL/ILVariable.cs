@@ -91,6 +91,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public string Name { get; set; }
 
+		public bool HasGeneratedName { get; set; }
+
 		/// <summary>
 		/// Gets the function in which this variable is declared.
 		/// </summary>
