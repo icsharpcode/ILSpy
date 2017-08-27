@@ -339,4 +339,23 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		int IndexInAddressInstructionList { get; set; }
 	}
+
+	public class ILVariableEqualityComparer : IEqualityComparer<ILVariable>
+	{
+		public static readonly ILVariableEqualityComparer Instance = new ILVariableEqualityComparer();
+
+		public bool Equals(ILVariable x, ILVariable y)
+		{
+			if (x == y)
+				return true;
+			if (x == null || y == null)
+				return false;
+			return x.Function == y.Function && x.Kind == y.Kind && x.Index == y.Index;
+		}
+
+		public int GetHashCode(ILVariable obj)
+		{
+			return (obj.Function, obj.Kind, obj.Index).GetHashCode();
+		}
+	}
 }
