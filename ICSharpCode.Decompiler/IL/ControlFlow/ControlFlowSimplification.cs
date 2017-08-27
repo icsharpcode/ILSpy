@@ -44,16 +44,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// Remove 'nop' instructions
 				block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.Nop);
 				
-				InlineReturnBlock(block);
+				InlineVariableInReturnBlock(block, context);
 				// 1st pass SimplifySwitchInstruction before SimplifyBranchChains()
 				// starts duplicating return instructions.
 				SwitchDetection.SimplifySwitchInstruction(block);
 			}
-			SimplifyBranchChains(function);
+			SimplifyBranchChains(function, context);
 			CleanUpEmptyBlocks(function);
 		}
 		
-		void InlineReturnBlock(Block block)
+		void InlineVariableInReturnBlock(Block block, ILTransformContext context)
 		{
 			// In debug mode, the C#-compiler generates 'return blocks' that
 			// unnecessarily store the return value to a local and then load it again:
@@ -69,6 +69,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (ret.Value.MatchLdLoc(out v)
 				    && v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out inst))
 				{
+					context.Step("Inline variable in return block", block);
 					inst.AddILRange(ret.Value.ILRange);
 					inst.AddILRange(block.Instructions[0].ILRange);
 					ret.Value = inst;
@@ -77,7 +78,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 		
-		void SimplifyBranchChains(ILFunction function)
+		void SimplifyBranchChains(ILFunction function, ILTransformContext context)
 		{
 			HashSet<Block> visitedBlocks = new HashSet<Block>();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
@@ -89,6 +90,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// prevent infinite loop when branch chain is cyclic
 						break;
 					}
+					context.Step("Simplify branch to branch", branch);
 					var nextBranch = (Branch)targetBlock.Instructions[0];
 					branch.TargetBlock = nextBranch.TargetBlock;
 					branch.AddILRange(nextBranch.ILRange);
@@ -96,10 +98,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						targetBlock.Instructions.Clear(); // mark the block for deletion
 					targetBlock = branch.TargetBlock;
 				}
-				if (IsReturnBlock(targetBlock)) {
+				if (ShouldSimplifyBranchToReturnBlock(branch)) {
 					// Replace branches to 'return blocks' with the return instruction
+					context.Step("Replace branch to return with return", branch);
 					branch.ReplaceWith(targetBlock.Instructions[0].Clone());
 				} else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0].OpCode == OpCode.Leave) {
+					context.Step("Replace branch to leave with leave", branch);
 					// Replace branches to 'leave' instruction with the leave instruction
 					Leave leave = (Leave)targetBlock.Instructions[0];
 					branch.ReplaceWith(new Leave(leave.TargetContainer) { ILRange = branch.ILRange });
@@ -125,10 +129,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		static bool IsReturnBlock(Block targetBlock)
+		static bool ShouldSimplifyBranchToReturnBlock(Branch branch)
 		{
+			var targetBlock = branch.TargetBlock;
 			if (targetBlock.Instructions.Count != 1 || targetBlock.FinalInstruction.OpCode != OpCode.Nop)
 				return false;
+			if (targetBlock.Parent == branch.Parent.Parent) {
+				// branch.Parent.Parent = container containing the branch
+				// only simplify when jumping out of a try-finally
+				return false;
+			}
 			var inst = targetBlock.Instructions[0];
 			return (inst is Return ret && ret.Value is LdLoc
 				|| inst is Leave leave && leave.IsLeavingFunction);
