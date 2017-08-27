@@ -313,6 +313,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				case LoopKind.For:
 					conditionExpr = exprBuilder.TranslateCondition(loop.Conditions[0]);
 					blockStatement = ConvertAsBlock(loop.Body);
+					if (!loop.Body.HasFlag(InstructionFlags.EndPointUnreachable))
+						blockStatement.Add(new BreakStatement());
 					var forBody = ConvertBlockContainer(blockStatement, container, loop.AdditionalBlocks, true);
 					var forStmt = new ForStatement() {
 						Condition = conditionExpr,
