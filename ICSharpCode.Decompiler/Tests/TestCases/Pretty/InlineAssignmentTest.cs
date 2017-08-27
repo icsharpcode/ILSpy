@@ -28,12 +28,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		
 		public void SimpleInlineWithLocals()
 		{
-			int V_0;
-			Console.WriteLine(V_0 = 5);
-			Console.WriteLine(V_0);
-			InlineAssignmentTest V_1;
-			Console.WriteLine((object)(V_1 = new InlineAssignmentTest()));
-			Console.WriteLine((object)V_1);
+			int value;
+			Console.WriteLine(value = 5);
+			Console.WriteLine(value);
+			InlineAssignmentTest value2;
+			Console.WriteLine((object)(value2 = new InlineAssignmentTest()));
+			Console.WriteLine((object)value2);
 		}
 		
 		public void SimpleInlineWithFields()
@@ -61,9 +61,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		
 		public void AccessArray(int[] a)
 		{
-			int V_0;
-			Console.WriteLine(V_0 = a[0]);
-			Console.WriteLine(a[V_0] = V_0);
+			int num;
+			Console.WriteLine(num = a[0]);
+			Console.WriteLine(a[num] = num);
 		}
 		
 		public int Return(ref int a)

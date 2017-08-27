@@ -24,24 +24,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		private void SimpleTypes()
 		{
-			var V_0 = new {
+			var value = new {
 			};
-			var V_1 = new {
+			var anon = new {
 				X = 5
 			};
-			var V_2 = new {
+			var anon2 = new {
 				X = 5,
 				Y = 10
 			};
 
-			Console.WriteLine((object)V_0);
-			Console.WriteLine(V_1.X);
-			Console.WriteLine(V_2.Y + V_2.X);
+			Console.WriteLine((object)value);
+			Console.WriteLine(anon.X);
+			Console.WriteLine(anon2.Y + anon2.X);
 		}
 
 		private void SimpleArray()
 		{
-			var V_0 = new[] {
+			var array = new[] {
 				new {
 					X = 5,
 					Y = 2,
@@ -54,13 +54,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			};
 
-			Console.WriteLine(V_0[0].X);
-			Console.WriteLine(V_0[1].X);
+			Console.WriteLine(array[0].X);
+			Console.WriteLine(array[1].X);
 		}
 
 		private void JaggedArray()
 		{
-			var V_0 = new[] {
+			var array = new[] {
 				new {
 					X = 5,
 					Y = 2,
@@ -72,14 +72,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					Z = -6
 				}
 			};
-			var V_1 = new[] {
-				V_0,
-				V_0
+			var array2 = new[] {
+				array,
+				array
 			};
 
-			Console.WriteLine(V_0[0].X);
-			Console.WriteLine(V_0[1].X);
-			Console.WriteLine(V_1.Length);
+			Console.WriteLine(array[0].X);
+			Console.WriteLine(array[1].X);
+			Console.WriteLine(array2.Length);
 		}
 	}
 }
