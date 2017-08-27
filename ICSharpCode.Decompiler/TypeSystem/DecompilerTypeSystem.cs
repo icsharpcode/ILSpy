@@ -160,7 +160,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			var declaringType = Resolve(fieldReference.DeclaringType);
 			var f = new DefaultUnresolvedField();
 			f.Name = fieldReference.Name;
-			f.ReturnType = typeReferenceCecilLoader.ReadTypeReference(fieldReference.FieldType);
+			lock (typeReferenceCecilLoader) {
+				f.ReturnType = typeReferenceCecilLoader.ReadTypeReference(fieldReference.FieldType);
+			}
 			return new ResolvedFakeField(f, context.WithCurrentTypeDefinition(declaringType.GetDefinition()), declaringType);
 		}
 
@@ -281,18 +283,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		IMethod CreateFakeMethod(MethodReference methodReference)
 		{
-			var declaringTypeReference = typeReferenceCecilLoader.ReadTypeReference(methodReference.DeclaringType);
 			var m = new DefaultUnresolvedMethod();
-			if (methodReference.Name == ".ctor" || methodReference.Name == ".cctor")
-				m.SymbolKind = SymbolKind.Constructor;
-			m.Name = methodReference.Name;
-			m.ReturnType = typeReferenceCecilLoader.ReadTypeReference(methodReference.ReturnType);
-			m.IsStatic = !methodReference.HasThis;
-			for (int i = 0; i < methodReference.GenericParameters.Count; i++) {
-				m.TypeParameters.Add(new DefaultUnresolvedTypeParameter(SymbolKind.Method, i, methodReference.GenericParameters[i].Name));
-			}
-			foreach (var p in methodReference.Parameters) {
-				m.Parameters.Add(new DefaultUnresolvedParameter(typeReferenceCecilLoader.ReadTypeReference(p.ParameterType), p.Name));
+			ITypeReference declaringTypeReference;
+			lock (typeReferenceCecilLoader) {
+				declaringTypeReference = typeReferenceCecilLoader.ReadTypeReference(methodReference.DeclaringType);
+				if (methodReference.Name == ".ctor" || methodReference.Name == ".cctor")
+					m.SymbolKind = SymbolKind.Constructor;
+				m.Name = methodReference.Name;
+				m.ReturnType = typeReferenceCecilLoader.ReadTypeReference(methodReference.ReturnType);
+				m.IsStatic = !methodReference.HasThis;
+				for (int i = 0; i < methodReference.GenericParameters.Count; i++) {
+					m.TypeParameters.Add(new DefaultUnresolvedTypeParameter(SymbolKind.Method, i, methodReference.GenericParameters[i].Name));
+				}
+				foreach (var p in methodReference.Parameters) {
+					m.Parameters.Add(new DefaultUnresolvedParameter(typeReferenceCecilLoader.ReadTypeReference(p.ParameterType), p.Name));
+				}
 			}
 			var type = declaringTypeReference.Resolve(context);
 			return new ResolvedFakeMethod(m, context.WithCurrentTypeDefinition(type.GetDefinition()), type);
