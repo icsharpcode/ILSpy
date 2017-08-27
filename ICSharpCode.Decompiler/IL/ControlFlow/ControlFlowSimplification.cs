@@ -134,8 +134,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var targetBlock = branch.TargetBlock;
 			if (targetBlock.Instructions.Count != 1 || targetBlock.FinalInstruction.OpCode != OpCode.Nop)
 				return false;
-			if (targetBlock.Parent == branch.Parent.Parent) {
-				// branch.Parent.Parent = container containing the branch
+			if (targetBlock.Parent == branch.Ancestors.OfType<BlockContainer>().FirstOrDefault()) {
 				// only simplify when jumping out of a try-finally
 				return false;
 			}

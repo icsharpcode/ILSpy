@@ -416,6 +416,17 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		/// <summary>
+		/// Gets the ancestors of this node (including the node itself as first element).
+		/// </summary>
+		public IEnumerable<ILInstruction> Ancestors {
+			get {
+				for (ILInstruction node = this; node != null; node = node.Parent) {
+					yield return node;
+				}
+			}
+		}
+
+		/// <summary>
 		/// Number of parents that refer to this instruction and are connected to the root.
 		/// Usually is 0 for unconnected nodes and 1 for connected nodes, but may temporarily increase to 2
 		/// when the ILAst is re-arranged (e.g. within SetChildInstruction),
