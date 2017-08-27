@@ -110,7 +110,10 @@ namespace ICSharpCode.Decompiler
 		{
 			AstNode node = nodeStack.Peek();
 			var symbol = node.GetSymbol();
-			if (symbol == null && node.Role == Roles.TargetExpression && (node.Parent is InvocationExpression || node.Parent is ObjectCreateExpression)) {
+			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
+				symbol = node.Parent.GetSymbol();
+			}
+			if (symbol != null && node.Parent is ObjectCreateExpression) {
 				symbol = node.Parent.GetSymbol();
 			}
 			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member) {
@@ -190,6 +193,15 @@ namespace ICSharpCode.Decompiler
 		
 		public override void WriteKeyword(Role role, string keyword)
 		{
+			if (keyword == "this" || keyword == "base") {
+				if (nodeStack.Peek() is ConstructorInitializer initializer && initializer.GetSymbol() is IMember member) {
+					var cecil = typeSystem.GetCecil(member);
+					if (cecil != null) {
+						output.WriteReference(keyword, cecil);
+						return;
+					}
+				}
+			}
 			output.Write(keyword);
 		}
 		
