@@ -225,7 +225,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var inst = block.Instructions[i] as StLoc;
 			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
-			if (inst == null || nextInst == null)
+			if (inst == null || nextInst == null || !inst.Value.MatchLdLoc(out var l) || !ILVariableEqualityComparer.Instance.Equals(l, nextInst.Variable))
 				return false;
 			var binary = nextInst.Value as BinaryNumericInstruction;
 			if (inst.Variable.Kind != VariableKind.StackSlot || nextInst.Variable.Kind == VariableKind.StackSlot || binary == null)
@@ -234,7 +234,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step($"TransformPostIncDecOperator", inst);
 			var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, inst.Variable.Type);
-			var assignment = new Block(BlockType.CompoundOperator);
+			var assignment = new Block(BlockType.PostfixOperator);
 			assignment.Instructions.Add(new StLoc(tempStore, new LdLoc(nextInst.Variable)));
 			assignment.Instructions.Add(new StLoc(nextInst.Variable, new BinaryNumericInstruction(binary.Operator, new LdLoc(tempStore), new LdcI4(1), binary.CheckForOverflow, binary.Sign)));
 			assignment.FinalInstruction = new LdLoc(tempStore);

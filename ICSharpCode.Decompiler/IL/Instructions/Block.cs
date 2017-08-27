@@ -241,6 +241,6 @@ namespace ICSharpCode.Decompiler.IL
 		ArrayInitializer,
 		CollectionInitializer,
 		ObjectInitializer,
-		CompoundOperator
+		PostfixOperator
 	}
 }
