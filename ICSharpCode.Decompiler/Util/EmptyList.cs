@@ -23,10 +23,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.Util
 {
 	[Serializable]
-	public sealed class EmptyList<T> : IList<T>, IEnumerator<T>
-		#if NET_4_5
-		, IReadOnlyList<T>
-		#endif
+	public sealed class EmptyList<T> : IList<T>, IEnumerator<T>, IReadOnlyList<T>
 	{
 		public static readonly EmptyList<T> Instance = new EmptyList<T>();
 		

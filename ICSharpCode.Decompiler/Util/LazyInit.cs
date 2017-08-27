@@ -24,13 +24,7 @@ namespace ICSharpCode.Decompiler.Util
 	{
 		public static T VolatileRead<T>(ref T location) where T : class
 		{
-			#if NET_4_5
 			return Volatile.Read(ref location);
-			#else
-			T result = location;
-			Thread.MemoryBarrier();
-			return result;
-			#endif
 		}
 		
 		/// <summary>

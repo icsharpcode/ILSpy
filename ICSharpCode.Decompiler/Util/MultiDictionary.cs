@@ -75,14 +75,9 @@ namespace ICSharpCode.Decompiler.Util
 			dict.Clear();
 		}
 		
-		#if NET_4_5
 		public IReadOnlyList<TValue> this[TKey key] {
-		#else
-		public IList<TValue> this[TKey key] {
-		#endif
 			get {
-				List<TValue> list;
-				if (dict.TryGetValue(key, out list))
+				if (dict.TryGetValue(key, out var list))
 					return list;
 				else
 					return EmptyList<TValue>.Instance;

@@ -127,6 +127,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if !LEGACY_CSC
 		public async Task AwaitCatch(Task<int> task)
 		{
 			try {
@@ -146,6 +147,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine(await task);
 			}
 		}
+#endif
 
 		public async Task<int> NestedAwait(Task<Task<int>> task)
 		{
@@ -167,6 +169,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+#if !LEGACY_CSC
 		public async Task AwaitInCatch(Task<int> task1, Task<int> task2)
 		{
 			try {
@@ -194,5 +197,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine("End Method");
 		}
+#endif
 	}
 }

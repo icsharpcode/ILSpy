@@ -76,6 +76,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				get;
 				set;
 			}
+
+			public InitializerTests.Data this[int i]
+			{
+				get {
+					return null;
+				}
+				set { }
+			}
 		}
 
 		private struct StructData
@@ -514,11 +522,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data
 			{
 				MoreData =
-			  {
-				  a = InitializerTests.MyEnum.a
-			  }
+				{
+					a = InitializerTests.MyEnum.a,
+					MoreData = {
+						a = InitializerTests.MyEnum.b
+					}
+				}
 			});
 		}
+
+#if false
+		static int GetInt()
+		{
+			return 1;
+		}
+
+		public static void MixedObjectAndDictInitializer()
+		{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
+				MoreData =
+				{
+					a = InitializerTests.MyEnum.a,
+					[GetInt()] = {
+						a = InitializerTests.MyEnum.b,
+						FieldList = { MyEnum2.c },
+						[2] = null
+					},
+				}
+			});
+		}
+#endif
 
 		public static void ObjectInitializerWithInitializationOfDeeplyNestedObjects()
 		{
@@ -582,14 +615,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			InitializerTests.X(InitializerTests.Y(), new InitializerTests.StructData
 			{
 				MoreData =
-			{
-				a = InitializerTests.MyEnum.a,
-				FieldList =
 				{
-					InitializerTests.MyEnum2.c,
-					InitializerTests.MyEnum2.d
+					a = InitializerTests.MyEnum.a,
+					FieldList =
+					{
+						InitializerTests.MyEnum2.c,
+						InitializerTests.MyEnum2.d
+					}
 				}
-			}
 			});
 		}
 
