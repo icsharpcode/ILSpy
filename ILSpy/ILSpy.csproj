@@ -173,7 +173,6 @@
     <Compile Include="Languages\IResourceFileHandler.cs" />
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
-    <Compile Include="Languages\TextTokenWriter.cs" />
     <Compile Include="LoadedAssembly.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="NavigationHistory.cs" />

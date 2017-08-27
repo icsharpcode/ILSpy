@@ -137,6 +137,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public CancellationToken CancellationToken { get; set; }
 
+		public IDecompilerTypeSystem TypeSystem => typeSystem;
+
 		/// <summary>
 		/// IL transforms.
 		/// </summary>

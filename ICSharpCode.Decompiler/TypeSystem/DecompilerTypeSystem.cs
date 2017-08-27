@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		readonly CecilLoader typeReferenceCecilLoader = new CecilLoader();
 
 		/// <summary>
-		/// Dictionary for NRefactory->Cecil lookup. Only contains entities from the main module.
+		/// Dictionary for NRefactory->Cecil lookup.
 		/// May only be accessed within lock(entityDict)
 		/// </summary>
 		Dictionary<IUnresolvedEntity, MemberReference> entityDict = new Dictionary<IUnresolvedEntity, MemberReference>();
@@ -41,15 +41,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (moduleDefinition == null)
 				throw new ArgumentNullException(nameof(moduleDefinition));
 			this.moduleDefinition = moduleDefinition;
-			CecilLoader mainAssemblyCecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
-			CecilLoader referencedAssemblyCecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, ShortenInterfaceImplNames = false };
+			CecilLoader cecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
-			IUnresolvedAssembly mainAssembly = mainAssemblyCecilLoader.LoadModule(moduleDefinition);
+			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
 			var referencedAssemblies = new List<IUnresolvedAssembly>();
 			foreach (var asmRef in moduleDefinition.AssemblyReferences) {
 				var asm = moduleDefinition.AssemblyResolver.Resolve(asmRef);
 				if (asm != null)
-					referencedAssemblies.Add(referencedAssemblyCecilLoader.LoadAssembly(asm));
+					referencedAssemblies.Add(cecilLoader.LoadAssembly(asm));
 			}
 			compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
 			context = new SimpleTypeResolveContext(compilation.MainAssembly);

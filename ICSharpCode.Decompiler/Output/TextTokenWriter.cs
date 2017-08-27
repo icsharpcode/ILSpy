@@ -24,14 +24,16 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
 
-namespace ICSharpCode.ILSpy
+namespace ICSharpCode.Decompiler
 {
 	public class TextTokenWriter : TokenWriter
 	{
 		readonly ITextOutput output;
 		readonly DecompilerSettings settings;
+		readonly IDecompilerTypeSystem typeSystem;
 		readonly Stack<AstNode> nodeStack = new Stack<AstNode>();
 		int braceLevelWithinType = -1;
 		bool inDocumentationComment = false;
@@ -42,14 +44,17 @@ namespace ICSharpCode.ILSpy
 		
 		public bool FoldBraces = false;
 		
-		public TextTokenWriter(ITextOutput output, DecompilerSettings settings)
+		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
 		{
 			if (output == null)
 				throw new ArgumentNullException(nameof(output));
 			if (settings == null)
 				throw new ArgumentNullException(nameof(settings));
+			if (typeSystem == null)
+				throw new ArgumentNullException(nameof(typeSystem));
 			this.output = output;
 			this.settings = settings;
+			this.typeSystem = typeSystem;
 		}
 		
 		public override void WriteIdentifier(Identifier identifier)
@@ -64,11 +69,21 @@ namespace ICSharpCode.ILSpy
 				return;
 			}
 			
-			object memberRef = GetCurrentMemberReference();
+			var member = GetCurrentMemberReference();
 
-			if (memberRef != null) {
-				output.WriteReference(identifier.Name, memberRef);
-				return;
+			if (member != null) {
+				MemberReference cecil;
+				if (member is IType type) {
+					cecil = typeSystem.GetCecil(type.GetDefinition());
+				} else if (member is IMember) {
+					cecil = typeSystem.GetCecil((IMember)member);
+				} else {
+					cecil = null;
+				}
+				if (cecil != null) {
+					output.WriteReference(identifier.Name, cecil);
+					return;
+				}
 			}
 
 			definition = GetCurrentLocalDefinition();
@@ -77,7 +92,7 @@ namespace ICSharpCode.ILSpy
 				return;
 			}
 
-			memberRef = GetCurrentLocalReference();
+			var memberRef = GetCurrentLocalReference();
 			if (memberRef != null) {
 				output.WriteReference(identifier.Name, memberRef, true);
 				return;
@@ -91,32 +106,32 @@ namespace ICSharpCode.ILSpy
 			output.Write(identifier.Name);
 		}
 
-		MemberReference GetCurrentMemberReference()
+		ISymbol GetCurrentMemberReference()
 		{
 			AstNode node = nodeStack.Peek();
-			MemberReference memberRef = node.Annotation<MemberReference>();
-			if (memberRef == null && node.Role == Roles.TargetExpression && (node.Parent is InvocationExpression || node.Parent is ObjectCreateExpression)) {
-				memberRef = node.Parent.Annotation<MemberReference>();
+			var symbol = node.GetSymbol();
+			if (symbol == null && node.Role == Roles.TargetExpression && (node.Parent is InvocationExpression || node.Parent is ObjectCreateExpression)) {
+				symbol = node.Parent.GetSymbol();
 			}
-			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && memberRef != null) {
-				var declaringType = memberRef.DeclaringType.Resolve();
-				if (declaringType != null && declaringType.IsDelegate())
+			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member) {
+				var declaringType = member.DeclaringType;
+				if (declaringType != null && declaringType.Kind == TypeKind.Delegate)
 					return null;
 			}
-			return FilterMemberReference(memberRef);
+			return FilterMember(symbol);
 		}
 
-		MemberReference FilterMemberReference(MemberReference memberRef)
+		ISymbol FilterMember(ISymbol symbol)
 		{
-			if (memberRef == null)
+			if (symbol == null)
 				return null;
 
-			if (settings.AutomaticEvents && memberRef is FieldDefinition) {
-				var field = (FieldDefinition)memberRef;
-				return field.DeclaringType.Events.FirstOrDefault(ev => ev.Name == field.Name) ?? memberRef;
-			}
+			//if (settings.AutomaticEvents && member is FieldDefinition) {
+			//	var field = (FieldDefinition)member;
+			//	return field.DeclaringType.Events.FirstOrDefault(ev => ev.Name == field.Name) ?? member;
+			//}
 
-			return memberRef;
+			return symbol;
 		}
 
 		object GetCurrentLocalReference()
@@ -129,9 +144,9 @@ namespace ICSharpCode.ILSpy
 			var gotoStatement = node as GotoStatement;
 			if (gotoStatement != null)
 			{
-				var method = nodeStack.Select(nd => nd.Annotation<MethodReference>()).FirstOrDefault(mr => mr != null);
+				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
 				if (method != null)
-					return method.ToString() + gotoStatement.Label;
+					return method + gotoStatement.Label;
 			}
 
 			return null;
@@ -151,9 +166,9 @@ namespace ICSharpCode.ILSpy
 
 			var label = node as LabelStatement;
 			if (label != null) {
-				var method = nodeStack.Select(nd => nd.Annotation<MethodReference>()).FirstOrDefault(mr => mr != null);
+				var method = nodeStack.Select(nd => nd.GetSymbol() as IMethod).FirstOrDefault(mr => mr != null);
 				if (method != null)
-					return method.ToString() + label.Label;
+					return method + label.Label;
 			}
 
 			return null;
@@ -168,7 +183,7 @@ namespace ICSharpCode.ILSpy
 			if (node is Identifier)
 				node = node.Parent;
 			if (IsDefinition(node))
-				return node.Annotation<MemberReference>();
+				return node.GetSymbol();
 			
 			return null;
 		}
@@ -181,10 +196,10 @@ namespace ICSharpCode.ILSpy
 		public override void WriteToken(Role role, string token)
 		{
 			// Attach member reference to token only if there's no identifier in the current node.
-			MemberReference memberRef = GetCurrentMemberReference();
+			var member = GetCurrentMemberReference();
 			var node = nodeStack.Peek();
-			if (memberRef != null && node.GetChildByRole(Roles.Identifier).IsNull)
-				output.WriteReference(token, memberRef);
+			if (member != null && node.GetChildByRole(Roles.Identifier).IsNull)
+				output.WriteReference(token, member);
 			else
 				output.Write(token);
 		}
@@ -310,8 +325,8 @@ namespace ICSharpCode.ILSpy
 			nodeStack.Push(node);
 //			startLocations.Push(output.Location);
 			
-			if (node is EntityDeclaration && node.Annotation<MemberReference>() != null && node.GetChildByRole(Roles.Identifier).IsNull)
-				output.WriteDefinition("", node.Annotation<MemberReference>(), false);
+//			if (node is EntityDeclaration && node.GetSymbol() != null && node.GetChildByRole(Roles.Identifier).IsNull)
+//				output.WriteDefinition("", node.GetSymbol(), false);
 
 //			if (node.Annotation<MethodDebugSymbols>() != null) {
 //				symbolsStack.Push(node.Annotation<MethodDebugSymbols>());
