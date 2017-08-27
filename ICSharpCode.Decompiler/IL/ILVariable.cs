@@ -350,11 +350,15 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			if (x == null || y == null)
 				return false;
+			if (x.Kind == VariableKind.StackSlot || y.Kind == VariableKind.StackSlot)
+				return false;
 			return x.Function == y.Function && x.Kind == y.Kind && x.Index == y.Index;
 		}
 
 		public int GetHashCode(ILVariable obj)
 		{
+			if (obj.Kind == VariableKind.StackSlot)
+				return obj.GetHashCode();
 			return (obj.Function, obj.Kind, obj.Index).GetHashCode();
 		}
 	}
