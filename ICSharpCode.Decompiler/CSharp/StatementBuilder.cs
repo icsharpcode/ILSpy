@@ -24,6 +24,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using System;
 using System.Threading;
 
 namespace ICSharpCode.Decompiler.CSharp
@@ -307,10 +308,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						continueStmt.Remove();
 					return new DoWhileStatement {
 						EmbeddedStatement = blockStatement,
-						Condition = exprBuilder.TranslateCondition(loop.Condition)
+						Condition = exprBuilder.TranslateCondition(CombineConditions(loop.Conditions))
 					};
 				case LoopKind.For:
-					conditionExpr = exprBuilder.TranslateCondition(loop.Condition);
+					conditionExpr = exprBuilder.TranslateCondition(loop.Conditions[0]);
 					blockStatement = ConvertAsBlock(loop.Body);
 					var forBody = ConvertBlockContainer(blockStatement, container, loop.AdditionalBlocks, true);
 					var forStmt = new ForStatement() {
@@ -334,7 +335,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						if (!loop.Body.HasFlag(InstructionFlags.EndPointUnreachable))
 							blockStatement.Add(new BreakStatement());
 					}
-					if (loop.Condition == null) {
+					if (loop.Conditions == null) {
 						conditionExpr = new PrimitiveExpression(true);
 						Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
 						Debug.Assert(blockStatement.Statements.First() is LabelStatement);
@@ -343,13 +344,25 @@ namespace ICSharpCode.Decompiler.CSharp
 							blockStatement.Statements.First().Remove();
 						}
 					} else {
-						conditionExpr = exprBuilder.TranslateCondition(loop.Condition);
+						conditionExpr = exprBuilder.TranslateCondition(loop.Conditions[0]);
 						blockStatement = ConvertBlockContainer(blockStatement, container, loop.AdditionalBlocks, true);
 					}
 					if (blockStatement.LastOrDefault() is ContinueStatement stmt)
 						stmt.Remove();
 					return new WhileStatement(conditionExpr, blockStatement);
 			}
+		}
+
+		private ILInstruction CombineConditions(ILInstruction[] conditions)
+		{
+			ILInstruction condition = null;
+			foreach (var c in conditions) {
+				if (condition == null)
+					condition = new LogicNot(c);
+				else
+					condition = IfInstruction.LogicAnd(new LogicNot(c), condition);
+			}
+			return condition;
 		}
 
 		BlockStatement ConvertBlockContainer(BlockContainer container, bool isLoop)

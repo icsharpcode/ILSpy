@@ -56,8 +56,9 @@ namespace ILSpy.BamlDecompiler
 			
 			// decompile method and optimize the switch
 			var typeSystem = new DecompilerTypeSystem(method.Module);
-			ILFunction function = ILFunction.Read(typeSystem, method);
-			
+			var ilReader = new ILReader(typeSystem);
+			var function = ilReader.ReadIL(method.Body);
+
 			var context = new ILTransformContext { Settings = new DecompilerSettings(), TypeSystem = typeSystem };
 			function.RunTransforms(CSharpDecompiler.GetILTransforms(), context);
 			

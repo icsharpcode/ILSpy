@@ -288,6 +288,7 @@
     <Compile Include="IL\Patterns\AnyNode.cs" />
     <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="IL\DetectedLoop.cs" />
+    <Compile Include="IL\Transforms\AssignVariableNames.cs" />
     <Compile Include="IL\Transforms\NullCoalescingTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Util\UnicodeNewline.cs" />

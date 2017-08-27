@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public BlockContainer Container { get; }
 		public LoopKind Kind { get; private set; }
-		public ILInstruction Condition { get; private set; }
+		public ILInstruction[] Conditions { get; private set; }
 		public Block IncrementBlock { get; private set; }
 		public Block ContinueJumpTarget { get; private set; } // jumps to this block are "continue;" jumps
 		public ILInstruction Body { get; private set; }       // null in case of DoWhile
@@ -64,19 +64,15 @@ namespace ICSharpCode.Decompiler.IL
 			return new DetectedLoop(container).DetectLoopInternal();
 		}
 
-		private static Block FindDoWhileConditionBlock(BlockContainer container, out ILInstruction condition)
+		private static Block FindDoWhileConditionBlock(BlockContainer container, List<ILInstruction> conditions)
 		{
-			condition = null;
 			foreach (var b in container.Blocks) {
 				if (b.Instructions.Last().MatchBranch(container.EntryPoint)) {
 					// potentially the do-while-condition block
 					int i = b.Instructions.Count - 2;
 					while (i >= 0 && b.Instructions[i] is IfInstruction ifInst
 						&& ifInst.TrueInst.MatchLeave(container) && ifInst.FalseInst.MatchNop()) {
-						if (condition == null)
-							condition = new LogicNot(ifInst.Condition);
-						else
-							condition = IfInstruction.LogicAnd(new LogicNot(ifInst.Condition), condition);
+						conditions.Add(ifInst.Condition);
 						i--;
 					}
 					if (i == -1) {
@@ -105,7 +101,7 @@ namespace ICSharpCode.Decompiler.IL
 					if (IncrementBlock != null)
 						ContinueJumpTarget = IncrementBlock;
 				}
-				Condition = conditionInst;
+				Conditions = new[] { conditionInst };
 				Body = trueInst;
 				if (IncrementBlock != null) {
 					// for-loop
@@ -117,12 +113,13 @@ namespace ICSharpCode.Decompiler.IL
 			} else {
 				// do-while or while(true)-loop
 				if (Container.EntryPoint.IncomingEdgeCount == 2) {
-					Block conditionBlock = FindDoWhileConditionBlock(Container, out var conditionInst2);
+					var conditions = new List<ILInstruction>();
+					Block conditionBlock = FindDoWhileConditionBlock(Container, conditions);
 					if (conditionBlock != null) {
 						Kind = LoopKind.DoWhile;
 						ContinueJumpTarget = conditionBlock;
 						Body = null;
-						Condition = conditionInst2;
+						Conditions = conditions.ToArray();
 						AdditionalBlocks = Container.Blocks.Where(b => b != conditionBlock).ToArray();
 					}
 				}

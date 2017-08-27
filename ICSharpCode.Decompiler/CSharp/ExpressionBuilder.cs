@@ -1415,8 +1415,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				case BlockType.CollectionInitializer:
 				case BlockType.ObjectInitializer:
 					return TranslateObjectAndCollectionInitializer(block);
-				case BlockType.CompoundOperator:
-					return TranslateCompoundOperator(block);
+				case BlockType.PostfixOperator:
+					return TranslatePostfixOperator(block);
 				default:
 					return ErrorExpression("Unknown block type: " + block.Type);
 			}
@@ -1584,7 +1584,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));
 		}
 		
-		TranslatedExpression TranslateCompoundOperator(Block block)
+		TranslatedExpression TranslatePostfixOperator(Block block)
 		{
 			var targetInst = (block.Instructions.ElementAtOrDefault(0) as StLoc)?.Value;
 			var inst = (block.Instructions.ElementAtOrDefault(1) as StLoc)?.Value as BinaryNumericInstruction;

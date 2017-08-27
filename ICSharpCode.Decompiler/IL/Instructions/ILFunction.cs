@@ -151,18 +151,5 @@ namespace ICSharpCode.Decompiler.IL
 			Variables.Add(variable);
 			return variable;
 		}
-		
-		public static ILFunction Read(IDecompilerTypeSystem context, IMethod method, CancellationToken cancellationToken = default(CancellationToken))
-		{
-			return Read(context, (MethodDefinition)context.GetCecil(method), cancellationToken);
-		}
-
-		public static ILFunction Read(IDecompilerTypeSystem context, MethodDefinition methodDefinition, CancellationToken cancellationToken = default(CancellationToken))
-		{
-			var ilReader = new ILReader(context);
-			var function = ilReader.ReadIL(methodDefinition.Body, cancellationToken);
-			function.CheckInvariant(ILPhase.Normal);
-			return function;
-		}
 	}
 }

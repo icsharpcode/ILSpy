@@ -115,6 +115,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 				},
 				new DelegateConstruction(),
+				new AssignVariableNames()
 			};
 		}
 
@@ -127,11 +128,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
 			new DecimalConstantTransform(),
 			new IntroduceUsingDeclarations(),
-			new FixNameCollisions(),
 			//new IntroduceExtensionMethods(context), // must run after IntroduceUsingDeclarations
 			//new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
 			//new CombineQueryExpressions(context),
 			//new FlattenSwitchBlocks(),
+			new FixNameCollisions(),
 		};
 
 		public CancellationToken CancellationToken { get; set; }
@@ -612,8 +613,11 @@ namespace ICSharpCode.Decompiler.CSharp
 		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext)
 		{
 			var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(decompilationContext);
-			ILFunction function = ILFunction.Read(specializingTypeSystem, methodDefinition, CancellationToken);
-			
+			var ilReader = new ILReader(specializingTypeSystem);
+			ilReader.UseDebugSymbols = settings.UseDebugSymbols;
+			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
+			function.CheckInvariant(ILPhase.Normal);
+
 			if (entityDecl != null) {
 				int i = 0;
 				var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
