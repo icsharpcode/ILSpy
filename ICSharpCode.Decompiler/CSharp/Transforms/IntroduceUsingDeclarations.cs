@@ -34,15 +34,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	{
 		public bool FullyQualifyAmbiguousTypeNames = true;
 		
-		public void Run(AstNode compilationUnit, TransformContext context)
+		public void Run(AstNode rootNode, TransformContext context)
 		{
 			// First determine all the namespaces that need to be imported:
 			var requiredImports = new FindRequiredImports(context);
-			compilationUnit.AcceptVisitor(requiredImports);
+			rootNode.AcceptVisitor(requiredImports);
 			
 			var usingScope = new UsingScope();
 
-			var insertionPoint = compilationUnit.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
+			var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
 			
 			// Now add using declarations for those namespaces:
 			foreach (string ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n)) {
@@ -58,14 +58,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (reference != null)
 						usingScope.Usings.Add(reference);
 				}
-				compilationUnit.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
+				rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
 			}
 			
 			if (!FullyQualifyAmbiguousTypeNames)
 				return;
 
 			// verify that the SimpleTypes refer to the correct type (no ambiguities)
-			compilationUnit.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(context, usingScope));
+			rootNode.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(context, usingScope));
+			rootNode.AddAnnotation(usingScope);
 		}
 		
 		sealed class FindRequiredImports : DepthFirstAstVisitor

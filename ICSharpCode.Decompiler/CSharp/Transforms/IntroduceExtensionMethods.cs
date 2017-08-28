@@ -18,49 +18,119 @@
 
 using System;
 using System.Linq;
-using ICSharpCode.NRefactory.CSharp;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.TypeSystem;
+using ICSharpCode.Decompiler.Semantics;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// Converts extension method calls into infix syntax.
 	/// </summary>
-	public class IntroduceExtensionMethods : IAstTransform
+	public class IntroduceExtensionMethods : DepthFirstAstVisitor, IAstTransform
 	{
-		readonly DecompilerContext context;
-		
-		public IntroduceExtensionMethods(DecompilerContext context)
+		TransformContext context;
+		UsingScope rootUsingScope;
+		UsingScope usingScope;
+		IMember currentMember;
+		CSharpTypeResolveContext resolveContext;
+		CSharpResolver resolver;
+
+		public void Run(AstNode rootNode, TransformContext context)
 		{
 			this.context = context;
+			this.usingScope = this.rootUsingScope = rootNode.Annotation<UsingScope>();
+			rootNode.AcceptVisitor(this);
 		}
-		
-		public void Run(AstNode compilationUnit)
+
+		void SetContext()
 		{
-			foreach (InvocationExpression invocation in compilationUnit.Descendants.OfType<InvocationExpression>()) {
-				MemberReferenceExpression mre = invocation.Target as MemberReferenceExpression;
-				MethodReference methodReference = invocation.Annotation<MethodReference>();
-				if (mre != null && mre.Target is TypeReferenceExpression && methodReference != null && invocation.Arguments.Any()) {
-					MethodDefinition d = methodReference.Resolve();
-					if (d != null) {
-						foreach (var ca in d.CustomAttributes) {
-							if (ca.AttributeType.Name == "ExtensionAttribute" && ca.AttributeType.Namespace == "System.Runtime.CompilerServices") {
-								var firstArgument = invocation.Arguments.First();
-								if (firstArgument is NullReferenceExpression)
-									firstArgument = firstArgument.ReplaceWith(expr => expr.CastTo(AstBuilder.ConvertType(d.Parameters.First().ParameterType)));
-								else
-									mre.Target = firstArgument.Detach();
-								if (invocation.Arguments.Any()) {
-									// HACK: removing type arguments should be done indepently from whether a method is an extension method,
-									// just by testing whether the arguments can be inferred
-									mre.TypeArguments.Clear();
-								}
-								break;
-							}
-						}
-					}
-				}
-			}
+			this.usingScope = rootUsingScope;
+			foreach (var name in currentMember.Namespace.Split('.'))
+				usingScope = new UsingScope(usingScope, name);
+			resolveContext = new CSharpTypeResolveContext(currentMember.ParentAssembly, usingScope.Resolve(context.TypeSystem.Compilation), currentMember.DeclaringTypeDefinition, currentMember);
+			resolver = new CSharpResolver(resolveContext);
+		}
+
+		public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
+		{
+			currentMember = methodDeclaration.GetSymbol() as IMember;
+			SetContext();
+			base.VisitMethodDeclaration(methodDeclaration);
+			currentMember = null;
+		}
+
+		public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
+		{
+			currentMember = constructorDeclaration.GetSymbol() as IMember;
+			SetContext();
+			base.VisitConstructorDeclaration(constructorDeclaration);
+			currentMember = null;
+		}
+
+		public override void VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
+		{
+			currentMember = destructorDeclaration.GetSymbol() as IMember;
+			SetContext();
+			base.VisitDestructorDeclaration(destructorDeclaration);
+			currentMember = null;
+		}
+
+		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
+		{
+			currentMember = propertyDeclaration.GetSymbol() as IMember;
+			SetContext();
+			base.VisitPropertyDeclaration(propertyDeclaration);
+			currentMember = null;
+		}
+
+		public override void VisitFieldDeclaration(FieldDeclaration fieldDeclaration)
+		{
+			currentMember = fieldDeclaration.GetSymbol() as IMember;
+			SetContext();
+			base.VisitFieldDeclaration(fieldDeclaration);
+			currentMember = null;
+		}
+
+		public override void VisitEventDeclaration(EventDeclaration eventDeclaration)
+		{
+			currentMember = eventDeclaration.GetSymbol() as IMember;
+			SetContext();
+			base.VisitEventDeclaration(eventDeclaration);
+			currentMember = null;
+		}
+
+		public override void VisitCustomEventDeclaration(CustomEventDeclaration eventDeclaration)
+		{
+			currentMember = eventDeclaration.GetSymbol() as IMember;
+			SetContext();
+			base.VisitCustomEventDeclaration(eventDeclaration);
+			currentMember = null;
+		}
+
+		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
+		{
+			base.VisitInvocationExpression(invocationExpression);
+			var mre = invocationExpression.Target as MemberReferenceExpression;
+			var method = invocationExpression.GetSymbol() as IMethod;
+			if (method == null || !method.IsExtensionMethod || mre == null || !(mre.Target is TypeReferenceExpression) || !invocationExpression.Arguments.Any())
+				return;
+			var firstArgument = invocationExpression.Arguments.First();
+			var target = firstArgument.GetResolveResult();
+			var args = method.Parameters.Skip(1).Select(p => new TypeResolveResult(p.Type)).ToArray();
+			var rr = resolver.ResolveMemberAccess(target, method.Name, method.TypeArguments) as MethodGroupResolveResult;
+			if (rr == null)
+				return;
+			var or = rr.PerformOverloadResolution(resolveContext.Compilation, args, allowExtensionMethods: true);
+			if (or == null || or.IsAmbiguous)
+				return;
+			if (firstArgument is NullReferenceExpression)
+				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()));
+			else
+				mre.Target = firstArgument.Detach();
 		}
 	}
 }

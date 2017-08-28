@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
 			new DecimalConstantTransform(),
 			new IntroduceUsingDeclarations(),
-			//new IntroduceExtensionMethods(context), // must run after IntroduceUsingDeclarations
+			new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
 			//new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
 			//new CombineQueryExpressions(context),
 			//new FlattenSwitchBlocks(),
