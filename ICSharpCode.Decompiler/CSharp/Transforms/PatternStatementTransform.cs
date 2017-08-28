@@ -1225,6 +1225,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (m.Success) {
 				DestructorDeclaration dd = new DestructorDeclaration();
 				methodDef.Attributes.MoveTo(dd.Attributes);
+				dd.CopyAnnotationsFrom(methodDef);
 				dd.Modifiers = methodDef.Modifiers & ~(Modifiers.Protected | Modifiers.Override);
 				dd.Body = m.Get<BlockStatement>("body").Single().Detach();
 				dd.Name = currentTypeDefinition?.Name;
