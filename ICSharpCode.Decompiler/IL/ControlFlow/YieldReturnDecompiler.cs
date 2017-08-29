@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				);
 			}
 			var il = new ILReader(typeSystem).ReadIL(method.Body, context.CancellationToken);
-			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(), new ILTransformContext {
+			il.RunTransforms(CSharpDecompiler.EarlyILTransforms(true), new ILTransformContext {
 				Settings = context.Settings,
 				CancellationToken = context.CancellationToken,
 				TypeSystem = context.TypeSystem

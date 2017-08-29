@@ -36,6 +36,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </remarks>
 	public class ControlFlowSimplification : IILTransform
 	{
+		internal bool aggressivelyDuplicateReturnBlocks;
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			foreach (var block in function.Descendants.OfType<Block>()) {
@@ -129,12 +131,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		static bool ShouldSimplifyBranchToReturnBlock(Branch branch)
+		bool ShouldSimplifyBranchToReturnBlock(Branch branch)
 		{
 			var targetBlock = branch.TargetBlock;
 			if (targetBlock.Instructions.Count != 1 || targetBlock.FinalInstruction.OpCode != OpCode.Nop)
 				return false;
-			if (targetBlock.Parent == branch.Ancestors.OfType<BlockContainer>().FirstOrDefault()) {
+			if (targetBlock.Parent == branch.Ancestors.OfType<BlockContainer>().FirstOrDefault()
+				&& !aggressivelyDuplicateReturnBlocks) {
 				// only simplify when jumping out of a try-finally
 				return false;
 			}

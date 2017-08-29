@@ -51,10 +51,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Pre-yield/await transforms.
 		/// </summary>
-		internal static List<IILTransform> EarlyILTransforms()
+		internal static List<IILTransform> EarlyILTransforms(bool aggressivelyDuplicateReturnBlocks = false)
 		{
 			return new List<IILTransform> {
-				new ControlFlowSimplification(),
+				new ControlFlowSimplification {
+					aggressivelyDuplicateReturnBlocks = aggressivelyDuplicateReturnBlocks
+				},
 				new SplitVariables(),
 				new ILInlining(),
 			};
