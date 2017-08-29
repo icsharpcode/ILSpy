@@ -124,6 +124,7 @@
     <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
     <Compile Include="Helpers\Tester.cs" />
     <Compile Include="Helpers\TypeSystemHelper.cs" />
+    <Compile Include="TestCases\Pretty\LiftedOperators.cs" />
     <Compile Include="PrettyTestRunner.cs" />
     <Compile Include="RoundtripAssembly.cs" />
     <Compile Include="TestCases\Correctness\Capturing.cs" />

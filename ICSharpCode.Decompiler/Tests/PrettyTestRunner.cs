@@ -108,7 +108,13 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			Run(cscOptions: cscOptions);
 		}
-		
+
+		[Test, Ignore("Not implemented")]
+		public void LiftedOperators([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
 		[Test, Ignore("Bad variable names; some if-else misdetected")]
 		public void Loops([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
