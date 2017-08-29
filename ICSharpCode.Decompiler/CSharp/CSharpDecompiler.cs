@@ -79,6 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// RemoveDeadVariableInit must run after ExpressionTransforms so that stobj(ldloca V, ...)
 				// is already collapsed into stloc(V, ...).
 				new RemoveDeadVariableInit(),
+				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
 				new SwitchDetection(),
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {

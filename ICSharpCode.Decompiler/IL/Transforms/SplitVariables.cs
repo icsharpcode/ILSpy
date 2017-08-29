@@ -48,7 +48,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (v.Kind) {
 				case VariableKind.Local:
 				case VariableKind.Exception:
-					return v.AddressCount == 0;
+					foreach (var ldloca in v.AddressInstructions) {
+						if (!AddressUsedOnlyForReading(ldloca)) {
+							return false;
+						}
+					}
+					return true;
 				default:
 					// parameters: avoid splitting parameters
 					// stack slots: are already split by construction
@@ -56,7 +61,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			}
 		}
-		
+
+		static bool AddressUsedOnlyForReading(ILInstruction addressLoadingInstruction)
+		{
+			switch (addressLoadingInstruction.Parent) {
+				case LdObj ldobj:
+					return true;
+				case LdFlda ldflda:
+					return AddressUsedOnlyForReading(ldflda);
+				case Call call:
+					if (call.Method.DeclaringTypeDefinition.KnownTypeCode == TypeSystem.KnownTypeCode.NullableOfT) {
+						switch (call.Method.Name) {
+							case "get_HasValue":
+							case "get_Value":
+							case "GetValueOrDefault":
+								return true;
+						}
+					}
+					return false;
+				default:
+					return false;
+			}
+		}
+
 		/// <summary>
 		/// Use the union-find structure to merge
 		/// </summary>
@@ -71,10 +98,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			public GroupStores(ILFunction scope, CancellationToken cancellationToken) : base(scope, IsCandidateVariable, cancellationToken)
 			{
 			}
-			
+
 			protected internal override void VisitLdLoc(LdLoc inst)
 			{
 				base.VisitLdLoc(inst);
+				HandleLoad(inst);
+			}
+
+			protected internal override void VisitLdLoca(LdLoca inst)
+			{
+				base.VisitLdLoca(inst);
+				HandleLoad(inst);
+			}
+
+			void HandleLoad(IInstructionWithVariableOperand inst)
+			{
 				if (IsAnalyzedVariable(inst.Variable)) {
 					if (IsPotentiallyUninitialized(state, inst.Variable)) {
 						uninitVariableUsage.Add(inst);
