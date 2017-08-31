@@ -12,6 +12,13 @@
     <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <NuspecFile>ICSharpCode.Decompiler.nuspec</NuspecFile>
+    <NuspecProperties>Configuration=$(Configuration)</NuspecProperties>
+  </PropertyGroup>
+
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
     <DebugType>full</DebugType>
     <DebugSymbols>true</DebugSymbols>
@@ -502,6 +509,7 @@
     <Compile Include="Util\ReferenceComparer.cs" />
     <Compile Include="Util\TreeTraversal.cs" />
     <Compile Include="Util\UnionFind.cs" />
+    <None Include="ICSharpCode.Decompiler.nuspec" />
     <None Include="ICSharpCode.Decompiler.ruleset" />
     <None Include="ICSharpCode.Decompiler.snk" />
     <None Include="IL\ILOpCodes.tt">
