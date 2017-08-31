@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+	<AssemblyName>ICSharpCode.Decompiler</AssemblyName>
+	<RootNamespace>ICSharpCode.Decompiler</RootNamespace>
+	<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<SignAssembly>true</SignAssembly>
+    <AssemblyOriginatorKeyFile>ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Ast\**" />
+    <EmbeddedResource Remove="Ast\**" />
+    <None Remove="Ast\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="CodeMappings.cs" />
+    <Compile Remove="CSharp\Transforms\CombineQueryExpressions.cs" />
+    <Compile Remove="CSharp\Transforms\ExpressionTreeConverter.cs" />
+    <Compile Remove="CSharp\Transforms\FlattenSwitchBlocks.cs" />
+    <Compile Remove="CSharp\Transforms\IntroduceQueryExpressions.cs" />
+    <Compile Remove="DecompilerException.cs" />
+    <Compile Remove="Properties\AssemblyInfo.template.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\cecil\Mono.Cecil.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Properties\" />
+  </ItemGroup>
+
+</Project>
