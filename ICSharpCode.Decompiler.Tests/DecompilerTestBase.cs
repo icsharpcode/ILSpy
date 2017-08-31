@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests
 	{
 		protected static void ValidateFileRoundtrip(string samplesFileName)
 		{
-			var fullPath = Path.Combine(@"../../../ICSharpCode.Decompiler.Tests", samplesFileName);
+			var fullPath = Path.Combine(@"../../../../ICSharpCode.Decompiler.Tests", samplesFileName);
 			AssertRoundtripCode(fullPath);
 		}
 

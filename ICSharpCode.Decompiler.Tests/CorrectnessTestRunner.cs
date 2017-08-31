@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Tests
 	[TestFixture]
 	public class CorrectnessTestRunner
 	{
-		const string TestCasePath = @"../../../ICSharpCode.Decompiler.Tests/TestCases/Correctness";
+		const string TestCasePath = @"../../../../ICSharpCode.Decompiler.Tests/TestCases/Correctness";
 
 		[Test]
 		public void AllFilesHaveTests()

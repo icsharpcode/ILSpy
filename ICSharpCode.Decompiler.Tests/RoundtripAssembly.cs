@@ -32,7 +32,7 @@ namespace ICSharpCode.Decompiler.Tests
 {
 	public class RoundtripAssembly
 	{
-		static readonly string testDir = Path.GetFullPath("../../../ILSpy-tests");
+		static readonly string testDir = Path.GetFullPath("../../../../ILSpy-tests");
 		static readonly string nunit = Path.Combine(testDir, "nunit", "nunit3-console.exe");
 		
 		[Test]
