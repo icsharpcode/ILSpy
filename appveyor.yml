@@ -11,7 +11,7 @@ build:
   parallel: false
   verbosity: minimal
 build_script:
-- "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\devenv.exe" "ILSpy.sln" /build Debug
+- 'C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\Common7\IDE\devenv.exe' "ILSpy.sln" /build Debug
 test:
   assemblies:
     - 'ICSharpCode.Decompiler\bin\Debug\ICSharpCode.Decompiler.Tests.dll'
