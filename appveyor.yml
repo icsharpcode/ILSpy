@@ -8,9 +8,10 @@ install:
 before_build:
 - nuget restore ILSpy.sln
 build:
-  project: ILSpy.sln
   parallel: false
   verbosity: minimal
+build_script:
+- devenv.exe "ILSpy.sln" /build Debug
 test:
   assemblies:
     - 'ICSharpCode.Decompiler\bin\Debug\ICSharpCode.Decompiler.Tests.dll'
