@@ -546,12 +546,16 @@
       <LastGenOutput>Instructions.cs</LastGenOutput>
     </None>
     <None Include="packages.config" />
-    <None Include="Properties\AssemblyInfo.template.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\cecil\Mono.Cecil.csproj">
       <Project>{D68133BD-1E63-496E-9EDE-4FBDBF77B486}</Project>
       <Name>Mono.Cecil</Name>
+    </ProjectReference>
+    <ProjectReference Include="ICSharpCode.Decompiler.netstd.csproj">
+      <Project>{fd56f486-a0c3-4469-b6d3-d2bae23ce2a0}</Project>
+      <Name>ICSharpCode.Decompiler.netstd</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

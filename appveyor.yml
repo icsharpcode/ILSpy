@@ -9,7 +9,7 @@ before_build:
 - nuget restore ILSpy.sln
 build:
   project: ILSpy.sln
-  parallel: true
+  parallel: false
   verbosity: minimal
 test:
   assemblies:
