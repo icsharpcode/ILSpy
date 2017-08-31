@@ -7,7 +7,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>ICSharpCode.ILSpy</RootNamespace>
     <AssemblyName>ILSpy</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <TargetFrameworkProfile>
     </TargetFrameworkProfile>
