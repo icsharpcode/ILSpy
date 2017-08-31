@@ -1,7 +1,6 @@
 bin/
 obj/
 
-/ILSpy-tests
 /ICSharpCode.Decompiler/Properties/AssemblyInfo.cs
 /ILSpy/Properties/AssemblyInfo.cs
 /ILSpy/app.config

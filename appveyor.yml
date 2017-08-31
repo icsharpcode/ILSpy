@@ -4,7 +4,6 @@ platform: Any CPU
 image: Visual Studio 2017
 install:
 - git submodule update --init --recursive
-- git clone https://github.com/icsharpcode/ILSpy-tests
 before_build:
 - nuget restore ILSpy.sln
 build:
