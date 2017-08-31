@@ -103,7 +103,7 @@ namespace ILSpy.BamlDecompiler.Tests
 		#region RunTest
 		void RunTest(string name)
 		{
-			RunTest(name, typeof(BamlTestRunner).Assembly.Location, Path.Combine("..\\..\\Tests", name + ".xaml"));
+			RunTest(name, typeof(BamlTestRunner).Assembly.Location, Path.Combine("..\\..\\..\\ILSpy.BamlDecompiler.Tests", name + ".xaml"));
 		}
 
 		void RunTest(string name, string asmPath, string sourcePath)
