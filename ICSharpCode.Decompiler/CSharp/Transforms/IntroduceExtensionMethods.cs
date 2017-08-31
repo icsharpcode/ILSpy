@@ -58,6 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
 		{
 			currentMember = methodDeclaration.GetSymbol() as IMember;
+			if (currentMember == null) return;
 			SetContext();
 			base.VisitMethodDeclaration(methodDeclaration);
 			currentMember = null;
@@ -66,6 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
 		{
 			currentMember = constructorDeclaration.GetSymbol() as IMember;
+			if (currentMember == null) return;
 			SetContext();
 			base.VisitConstructorDeclaration(constructorDeclaration);
 			currentMember = null;
@@ -74,6 +76,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
 		{
 			currentMember = destructorDeclaration.GetSymbol() as IMember;
+			if (currentMember == null) return;
 			SetContext();
 			base.VisitDestructorDeclaration(destructorDeclaration);
 			currentMember = null;
@@ -82,6 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
 		{
 			currentMember = propertyDeclaration.GetSymbol() as IMember;
+			if (currentMember == null) return;
 			SetContext();
 			base.VisitPropertyDeclaration(propertyDeclaration);
 			currentMember = null;
@@ -90,6 +94,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitFieldDeclaration(FieldDeclaration fieldDeclaration)
 		{
 			currentMember = fieldDeclaration.GetSymbol() as IMember;
+			if (currentMember == null) return;
 			SetContext();
 			base.VisitFieldDeclaration(fieldDeclaration);
 			currentMember = null;
@@ -98,6 +103,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitEventDeclaration(EventDeclaration eventDeclaration)
 		{
 			currentMember = eventDeclaration.GetSymbol() as IMember;
+			if (currentMember == null) return;
 			SetContext();
 			base.VisitEventDeclaration(eventDeclaration);
 			currentMember = null;
@@ -106,6 +112,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public override void VisitCustomEventDeclaration(CustomEventDeclaration eventDeclaration)
 		{
 			currentMember = eventDeclaration.GetSymbol() as IMember;
+			if (currentMember == null) return;
 			SetContext();
 			base.VisitCustomEventDeclaration(eventDeclaration);
 			currentMember = null;
