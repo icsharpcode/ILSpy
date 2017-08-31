@@ -9,6 +9,5 @@ obj/
 _ReSharper*/
 *.ReSharper
 *.patch
-/packages
 .vs/
 /ICSharpCode.Decompiler/Tests/TestCases/*.exe
