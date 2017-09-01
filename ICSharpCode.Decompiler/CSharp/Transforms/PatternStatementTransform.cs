@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.CSharp.Analysis;
+using ICSharpCode.Decompiler.Semantics;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.Semantics;
 
@@ -70,7 +71,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			return node;
 		}
-		
+
+		public override AstNode VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
+		{
+			if (context.Settings.AutomaticProperties)
+			{
+				AstNode result = TrasnformConstructorDeclarationForReadOnlyProperties(constructorDeclaration);
+				if (result != null)
+					return result;
+			}
+
+			return base.VisitConstructorDeclaration(constructorDeclaration);
+		}
+
 		public override AstNode VisitExpressionStatement(ExpressionStatement expressionStatement)
 		{
 			AstNode result;
@@ -136,6 +149,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (context.Settings.AutomaticProperties) {
 				AstNode result = TransformAutomaticProperties(propertyDeclaration);
+				if (result != null)
+					return result;
+
+				result = TransformAutomaticReadOnlyProperties(propertyDeclaration);
 				if (result != null)
 					return result;
 			}
@@ -1040,7 +1057,116 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
 			return null;
 		}
-		
+
+		static readonly PropertyDeclaration automaticReadOnlyPropertyPattern = new PropertyDeclaration
+		{
+			Attributes = { new Repeat(new AnyNode()) },
+			Modifiers = Modifiers.Any,
+			ReturnType = new AnyNode(),
+			PrivateImplementationType = new OptionalNode(new AnyNode()),
+			Name = Pattern.AnyString,
+			Getter = new Accessor
+			{
+				Attributes = { new Repeat(new AnyNode()) },
+				Modifiers = Modifiers.Any,
+				Body = new BlockStatement {
+					new ReturnStatement {
+						Expression = new MemberReferenceExpression(new ThisReferenceExpression(), Pattern.AnyString)
+							.WithName("fieldReference")
+					}
+				}
+			},
+			Setter = Accessor.Null
+		};
+
+		PropertyDeclaration TransformAutomaticReadOnlyProperties(PropertyDeclaration propertyNode)
+		{
+			var property = propertyNode.GetSymbol() as IProperty;
+			if (property == null || property.Getter == null || property.Setter != null)
+				return null;
+
+			if (!property.Getter.IsCompilerGenerated())
+				return null;
+
+			Match m = automaticReadOnlyPropertyPattern.Match(propertyNode);
+			if (m.Success)
+			{
+				var field = m.Get<AstNode>("fieldReference").Single().GetSymbol() as IField;
+				if (field == null)
+					return null;
+
+				if (field.IsCompilerGenerated() && field.DeclaringType.Equals(property.DeclaringType))
+				{
+					RemoveCompilerGeneratedAttribute(propertyNode.Getter.Attributes);
+					propertyNode.Getter.Body = null;
+				}
+			}
+			// Since the property instance is not changed, we can continue in the visitor as usual, so return null
+			return null;
+		}
+
+		static readonly ExpressionStatement automaticReadOnlyPropertyInitializationPattern = new ExpressionStatement
+		{
+			Expression = new AssignmentExpression
+			{
+				Left = new MemberReferenceExpression
+					{
+						MemberName = Pattern.AnyString,
+						Target = new ThisReferenceExpression()
+					}
+					.WithName("memberRef"),
+
+				Right = new AnyNodeOrNull(),
+				Operator = AssignmentOperatorType.Assign
+			}
+		};
+
+		ConstructorDeclaration TrasnformConstructorDeclarationForReadOnlyProperties(ConstructorDeclaration constructor)
+		{
+			var declaringType = (constructor.GetSymbol() as IMember)?.DeclaringType;
+			if (declaringType == null)
+				return null;
+
+			foreach (var expressionStatement in constructor.Body.Children.OfType<ExpressionStatement>())
+			{
+				var match = automaticReadOnlyPropertyInitializationPattern.Match(expressionStatement);
+				if (!match.Success)
+					continue;
+
+				var memberReference = match.Get<MemberReferenceExpression>("memberRef").Single();
+
+				var field = declaringType.GetFields(f => f.Name.Equals(memberReference.MemberName, StringComparison.Ordinal)).FirstOrDefault();
+				if (field == null || !field.IsCompilerGenerated() || !field.IsReadOnly)
+					continue;
+
+				string mangledName = field.Name;
+
+				//The compiler generated name has the following format: <FIELDNAME>k__BackingField
+				//We should extract the FIELDNAME, because it corresponds to the property name.
+
+				const string manglePrefix = "<";
+				const string mangleSuffix = ">k__BackingField";
+
+				if (!mangledName.StartsWith(manglePrefix, StringComparison.Ordinal) || !mangledName.EndsWith(mangleSuffix, StringComparison.Ordinal))
+					continue;
+
+				string propertyName = mangledName.Substring(manglePrefix.Length, mangledName.Length - manglePrefix.Length - mangleSuffix.Length);
+				var property = declaringType.GetProperties(p => p.Name.Equals(propertyName, StringComparison.Ordinal)).FirstOrDefault();
+
+				if (property == null)
+					continue;
+
+				//Create a new reference expression to reference property instead of field.
+				var propertyReference = new MemberReferenceExpression(new ThisReferenceExpression(), propertyName);
+				propertyReference.AddAnnotation(new MemberResolveResult(new ThisResolveResult(declaringType), property));
+
+				memberReference.ReplaceWith(propertyReference);
+			}
+
+			// Since the constructor instance is not changed, we can continue in the visitor as usual, so return null
+			return null;
+		}
+
 		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections)
 		{
 			foreach (AttributeSection section in attributeSections) {
