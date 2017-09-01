@@ -1,10 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Microsoft.NET.Sdk">
+<Project>
+  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
   <PropertyGroup>
     <TargetFrameworks>net461;netstandard2.0</TargetFrameworks>
 
-    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <Description>IL decompiler engine</Description>
+    <Company>ic#code</Company>
+    <Product>ILSpy</Product>
+    <Copyright>Copyright 2011-2016 AlphaSierraPapa for the SharpDevelop Team</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <GenerateAssemblyVersionAttribute>False</GenerateAssemblyVersionAttribute>
+    <GenerateAssemblyFileVersionAttribute>False</GenerateAssemblyFileVersionAttribute>
+    <GenerateAssemblyInformationalVersionAttribute>False</GenerateAssemblyInformationalVersionAttribute>
 
     <EnableDefaultItems>false</EnableDefaultItems>
 
@@ -534,6 +542,8 @@
       <Link>CSharp\Syntax\PatternMatching\Pattern Matching.html</Link>
     </Content>
   </ItemGroup>
+
+  <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />
 
   <Target Name="BeforeBuild">
     <PropertyGroup>
