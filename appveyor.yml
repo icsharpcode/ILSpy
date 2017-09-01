@@ -6,10 +6,8 @@ install:
 - git submodule update --init --recursive
 before_build:
 - nuget restore ILSpy.sln
-build:
-  project: ILSpy.sln
-  parallel: false
-  verbosity: minimal
+build_script:
+- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 test:
   assemblies:
     - 'ICSharpCode.Decompiler\bin\Debug\net461\ICSharpCode.Decompiler.Tests.dll'
