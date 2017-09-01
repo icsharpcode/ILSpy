@@ -43,6 +43,18 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool IsIterator;
 
+		/// <summary>
+		/// Gets whether this function is async.
+		/// This flag gets set by the AsyncAwaitDecompiler.
+		/// </summary>
+		public bool IsAsync { get => AsyncReturnType != null; }
+
+		/// <summary>
+		/// Return element type -- if the async method returns Task{T}, this field stores T.
+		/// If the async method returns Task or void, this field stores void.
+		/// </summary>
+		public IType AsyncReturnType;
+
 		public ILFunction(MethodDefinition method, ILInstruction body) : base(OpCode.ILFunction)
 		{
 			this.Body = body;
@@ -73,7 +85,10 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			output.WriteLine(" {");
 			output.Indent();
-			
+
+			if (IsAsync) {
+				output.WriteLine(".async");
+			}
 			if (IsIterator) {
 				output.WriteLine(".iterator");
 			}

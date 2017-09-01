@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return new GotoStatement(label);
 		}
-		
+
 		protected internal override Statement VisitThrow(Throw inst)
 		{
 			return new ThrowStatement(exprBuilder.Translate(inst.Argument));
@@ -182,7 +182,8 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override Statement VisitReturn(Return inst)
 		{
-			return new ReturnStatement(exprBuilder.Translate(inst.Value).ConvertTo(currentMethod.ReturnType, exprBuilder));
+			IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentMethod.ReturnType;
+			return new ReturnStatement(exprBuilder.Translate(inst.Value).ConvertTo(targetType, exprBuilder));
 		}
 
 		protected internal override Statement VisitYieldReturn(YieldReturn inst)

@@ -52,7 +52,36 @@ namespace ICSharpCode.Decompiler.IL
 			var inst = this as LdLoca;
 			return inst != null && inst.Variable == variable;
 		}
-		
+
+		/// <summary>
+		/// Matches either ldloc (if the variable is a reference type), or ldloca (otherwise).
+		/// </summary>
+		public bool MatchLdLocRef(ILVariable variable)
+		{
+			if (variable.Type.IsReferenceType == true)
+				return MatchLdLoc(variable);
+			else
+				return MatchLdLoca(variable);
+		}
+
+		/// <summary>
+		/// Matches either ldloc (if the variable is a reference type), or ldloca (otherwise).
+		/// </summary>
+		public bool MatchLdLocRef(out ILVariable variable)
+		{
+			switch (this) {
+				case LdLoc ldloc:
+					variable = ldloc.Variable;
+					return variable.Type.IsReferenceType == true;
+				case LdLoca ldloca:
+					variable = ldloca.Variable;
+					return variable.Type.IsReferenceType != true;
+				default:
+					variable = null;
+					return false;
+			}
+		}
+
 		public bool MatchLdThis()
 		{
 			var inst = this as LdLoc;

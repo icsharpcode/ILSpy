@@ -168,6 +168,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case InvocationExpression ie:
 				case ObjectCreateExpression oce:
 				case AssignmentExpression ae:
+				case ErrorExpression ee:
 					return true;
 				case UnaryOperatorExpression uoe:
 					switch (uoe.Operator) {

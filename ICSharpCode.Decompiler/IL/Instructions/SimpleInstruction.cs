@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.IL
 	partial class InvalidBranch : SimpleInstruction
 	{
 		public string Message;
-		public StackType ExpectedResultType = StackType.Unknown;
+		public StackType ExpectedResultType = StackType.Void;
 		
 		public InvalidBranch(string message) : this()
 		{
@@ -62,9 +62,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			if (!string.IsNullOrEmpty(Message)) {
-				output.Write('(');
+				output.Write("(\"");
 				output.Write(Message);
-				output.Write(')');
+				output.Write("\")");
 			}
 		}
 	}
@@ -88,9 +88,9 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			if (!string.IsNullOrEmpty(Message)) {
-				output.Write('(');
+				output.Write("(\"");
 				output.Write(Message);
-				output.Write(')');
+				output.Write("\")");
 			}
 		}
 	}

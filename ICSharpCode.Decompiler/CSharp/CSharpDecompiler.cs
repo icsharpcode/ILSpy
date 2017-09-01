@@ -72,6 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new YieldReturnDecompiler(), // must run after inlining but before loop detection
+				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
 				new DetectExitPoints(canIntroduceExitForReturn: false),
 				new BlockILTransform {
 					PostOrderTransforms = {
@@ -651,6 +652,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					body.Add(new YieldBreakStatement());
 				}
 				RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IteratorStateMachineAttribute"));
+			}
+			if (function.IsAsync) {
+				entityDecl.Modifiers |= Modifiers.Async;
+				RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "AsyncStateMachineAttribute"));
 			}
 		}
 

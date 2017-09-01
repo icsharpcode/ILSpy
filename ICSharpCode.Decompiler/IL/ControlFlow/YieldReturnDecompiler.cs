@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Matches the body of a method as a single basic block.
 		/// </summary>
-		static Block SingleBlock(ILInstruction body)
+		internal static Block SingleBlock(ILInstruction body)
 		{
 			var block = body as Block;
 			if (body is BlockContainer blockContainer && blockContainer.Blocks.Count == 1) {
@@ -275,7 +275,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void AnalyzeCtor()
 		{
-			Block body = SingleBlock(CreateILAst(enumeratorCtor).Body);
+			Block body = SingleBlock(CreateILAst(enumeratorCtor, context).Body);
 			if (body == null)
 				throw new SymbolicAnalysisFailedException("Missing enumeratorCtor.Body");
 			foreach (var inst in body.Instructions) {
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Creates ILAst for the specified method, optimized up to before the 'YieldReturn' step.
 		/// </summary>
-		ILFunction CreateILAst(MethodDefinition method)
+		internal static ILFunction CreateILAst(MethodDefinition method, ILTransformContext context)
 		{
 			if (method == null || !method.HasBody)
 				throw new SymbolicAnalysisFailedException();
@@ -329,7 +329,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			MethodDefinition getCurrentMethod = enumeratorType.Methods.FirstOrDefault(
 				m => m.Name.StartsWith("System.Collections.Generic.IEnumerator", StringComparison.Ordinal)
 				&& m.Name.EndsWith(".get_Current", StringComparison.Ordinal));
-			Block body = SingleBlock(CreateILAst(getCurrentMethod).Body);
+			Block body = SingleBlock(CreateILAst(getCurrentMethod, context).Body);
 			if (body == null)
 				throw new SymbolicAnalysisFailedException();
 			if (body.Instructions.Count == 1) {
@@ -365,7 +365,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				&& m.Name.EndsWith(".GetEnumerator", StringComparison.Ordinal));
 			if (getEnumeratorMethod == null)
 				return; // no mappings (maybe it's just an IEnumerator implementation?)
-			var function = CreateILAst(getEnumeratorMethod);
+			var function = CreateILAst(getEnumeratorMethod, context);
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				foreach (var inst in block.Instructions) {
 					// storeTarget.storeField = this.loadField;
@@ -388,7 +388,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void ConstructExceptionTable()
 		{
 			disposeMethod = enumeratorType.Methods.FirstOrDefault(m => m.Name == "System.IDisposable.Dispose");
-			var function = CreateILAst(disposeMethod);
+			var function = CreateILAst(disposeMethod, context);
 
 			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorDispose, stateField);
 			rangeAnalysis.AssignStateRanges(function.Body, LongSet.Universe);
@@ -411,7 +411,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			context.StepStartGroup("AnalyzeMoveNext");
 			MethodDefinition moveNextMethod = enumeratorType.Methods.FirstOrDefault(m => m.Name == "MoveNext");
-			ILFunction moveNextFunction = CreateILAst(moveNextMethod);
+			ILFunction moveNextFunction = CreateILAst(moveNextMethod, context);
 
 			// Copy-propagate temporaries holding a copy of 'this'.
 			// This is necessary because the old (pre-Roslyn) C# compiler likes to store 'this' in temporary variables.
@@ -689,7 +689,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void DecompileFinallyBlocks()
 		{
 			foreach (var method in finallyMethodToStateRange.Keys) {
-				var function = CreateILAst((MethodDefinition)context.TypeSystem.GetCecil(method));
+				var function = CreateILAst((MethodDefinition)context.TypeSystem.GetCecil(method), context);
 				var body = (BlockContainer)function.Body;
 				var newState = GetNewState(body.EntryPoint);
 				if (newState != null) {
