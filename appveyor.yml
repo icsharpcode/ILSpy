@@ -7,7 +7,7 @@ install:
 before_build:
 - nuget restore ILSpy.sln
 build_script:
-- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false /t:BeforeBuild,Build "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 test:
   assemblies:
     - 'ICSharpCode.Decompiler\bin\Debug\net461\ICSharpCode.Decompiler.Tests.dll'
