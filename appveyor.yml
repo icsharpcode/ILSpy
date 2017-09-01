@@ -10,7 +10,7 @@ build_script:
 - msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false /t:BeforeBuild,Build "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 test:
   assemblies:
-    - 'ICSharpCode.Decompiler\bin\Debug\net461\ICSharpCode.Decompiler.Tests.dll'
-    - 'ILSpy.BamlDecompiler\bin\Debug\net461\ILSpy.BamlDecompiler.Tests.dll'
+    - 'ICSharpCode.Decompiler.Tests\bin\Debug\net461\ICSharpCode.Decompiler.Tests.exe'
+    - 'ILSpy.BamlDecompiler.Tests\bin\Debug\net461\ILSpy.BamlDecompiler.Tests.dll'
 after_test:
 - python BuildTools\tidy.py
