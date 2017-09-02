@@ -515,7 +515,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			VisitChildren (thisReferenceExpression);
 		}
-		
+
+		public virtual void VisitThrowExpression (ThrowExpression throwExpression)
+		{
+			VisitChildren (throwExpression);
+		}
+
 		public virtual void VisitTypeOfExpression (TypeOfExpression typeOfExpression)
 		{
 			VisitChildren (typeOfExpression);
@@ -1127,7 +1132,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (thisReferenceExpression);
 		}
-		
+
+		public virtual T VisitThrowExpression (ThrowExpression throwExpression)
+		{
+			return VisitChildren (throwExpression);
+		}
+
 		public virtual T VisitTypeOfExpression (TypeOfExpression typeOfExpression)
 		{
 			return VisitChildren (typeOfExpression);
@@ -1739,7 +1749,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (thisReferenceExpression, data);
 		}
-		
+
+		public virtual S VisitThrowExpression (ThrowExpression throwExpression, T data)
+		{
+			return VisitChildren (throwExpression, data);
+		}
+
 		public virtual S VisitTypeOfExpression (TypeOfExpression typeOfExpression, T data)
 		{
 			return VisitChildren (typeOfExpression, data);

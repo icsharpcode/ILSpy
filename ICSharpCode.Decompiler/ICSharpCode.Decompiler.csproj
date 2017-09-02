@@ -100,6 +100,7 @@
     <Compile Include="CSharp\Syntax\Expressions\SizeOfExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\StackAllocExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\ThisReferenceExpression.cs" />
+    <Compile Include="CSharp\Syntax\Expressions\ThrowExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\TypeOfExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\TypeReferenceExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\UnaryOperatorExpression.cs" />

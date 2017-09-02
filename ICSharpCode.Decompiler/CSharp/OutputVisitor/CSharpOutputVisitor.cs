@@ -970,6 +970,15 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteKeyword("this", thisReferenceExpression.Role);
 			EndNode(thisReferenceExpression);
 		}
+
+		public virtual void VisitThrowExpression(ThrowExpression throwExpression)
+		{
+			StartNode(throwExpression);
+			WriteKeyword(ThrowExpression.ThrowKeywordRole);
+			Space();
+			throwExpression.Expression.AcceptVisitor(this);
+			EndNode(throwExpression);
+		}
 		
 		public virtual void VisitTypeOfExpression(TypeOfExpression typeOfExpression)
 		{

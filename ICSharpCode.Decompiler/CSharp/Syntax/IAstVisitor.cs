@@ -25,7 +25,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public interface IAstVisitor
 	{
 		void VisitAnonymousMethodExpression(AnonymousMethodExpression anonymousMethodExpression);
-		void VisitUndocumentedExpression(UndocumentedExpression undocumentedExpression);
+		void VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression);
 		void VisitArrayCreateExpression(ArrayCreateExpression arrayCreateExpression);
 		void VisitArrayInitializerExpression(ArrayInitializerExpression arrayInitializerExpression);
 		void VisitAsExpression(AsExpression asExpression);
@@ -48,17 +48,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		void VisitNullReferenceExpression(NullReferenceExpression nullReferenceExpression);
 		void VisitObjectCreateExpression(ObjectCreateExpression objectCreateExpression);
 		void VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression);
-		void VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression);
 		void VisitParenthesizedExpression(ParenthesizedExpression parenthesizedExpression);
 		void VisitPointerReferenceExpression(PointerReferenceExpression pointerReferenceExpression);
 		void VisitPrimitiveExpression(PrimitiveExpression primitiveExpression);
 		void VisitSizeOfExpression(SizeOfExpression sizeOfExpression);
 		void VisitStackAllocExpression(StackAllocExpression stackAllocExpression);
 		void VisitThisReferenceExpression(ThisReferenceExpression thisReferenceExpression);
+		void VisitThrowExpression(ThrowExpression throwExpression);
 		void VisitTypeOfExpression(TypeOfExpression typeOfExpression);
 		void VisitTypeReferenceExpression(TypeReferenceExpression typeReferenceExpression);
 		void VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression);
 		void VisitUncheckedExpression(UncheckedExpression uncheckedExpression);
+		void VisitUndocumentedExpression(UndocumentedExpression undocumentedExpression);
 
 		void VisitQueryExpression(QueryExpression queryExpression);
 		void VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause);
@@ -158,7 +159,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public interface IAstVisitor<out S>
 	{
 		S VisitAnonymousMethodExpression(AnonymousMethodExpression anonymousMethodExpression);
-		S VisitUndocumentedExpression(UndocumentedExpression undocumentedExpression);
+		S VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression);
 		S VisitArrayCreateExpression(ArrayCreateExpression arrayCreateExpression);
 		S VisitArrayInitializerExpression(ArrayInitializerExpression arrayInitializerExpression);
 		S VisitAsExpression(AsExpression asExpression);
@@ -181,17 +182,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitNullReferenceExpression(NullReferenceExpression nullReferenceExpression);
 		S VisitObjectCreateExpression(ObjectCreateExpression objectCreateExpression);
 		S VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression);
-		S VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression);
 		S VisitParenthesizedExpression(ParenthesizedExpression parenthesizedExpression);
 		S VisitPointerReferenceExpression(PointerReferenceExpression pointerReferenceExpression);
 		S VisitPrimitiveExpression(PrimitiveExpression primitiveExpression);
 		S VisitSizeOfExpression(SizeOfExpression sizeOfExpression);
 		S VisitStackAllocExpression(StackAllocExpression stackAllocExpression);
 		S VisitThisReferenceExpression(ThisReferenceExpression thisReferenceExpression);
+		S VisitThrowExpression(ThrowExpression throwExpression);
 		S VisitTypeOfExpression(TypeOfExpression typeOfExpression);
 		S VisitTypeReferenceExpression(TypeReferenceExpression typeReferenceExpression);
 		S VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression);
 		S VisitUncheckedExpression(UncheckedExpression uncheckedExpression);
+		S VisitUndocumentedExpression(UndocumentedExpression undocumentedExpression);
 
 		S VisitQueryExpression(QueryExpression queryExpression);
 		S VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause);
@@ -291,7 +293,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 	public interface IAstVisitor<in T, out S>
 	{
 		S VisitAnonymousMethodExpression(AnonymousMethodExpression anonymousMethodExpression, T data);
-		S VisitUndocumentedExpression(UndocumentedExpression undocumentedExpression, T data);
+		S VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression, T data);
 		S VisitArrayCreateExpression(ArrayCreateExpression arrayCreateExpression, T data);
 		S VisitArrayInitializerExpression(ArrayInitializerExpression arrayInitializerExpression, T data);
 		S VisitAsExpression(AsExpression asExpression, T data);
@@ -314,17 +316,18 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitNullReferenceExpression(NullReferenceExpression nullReferenceExpression, T data);
 		S VisitObjectCreateExpression(ObjectCreateExpression objectCreateExpression, T data);
 		S VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression, T data);
-		S VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression, T data);
 		S VisitParenthesizedExpression(ParenthesizedExpression parenthesizedExpression, T data);
 		S VisitPointerReferenceExpression(PointerReferenceExpression pointerReferenceExpression, T data);
 		S VisitPrimitiveExpression(PrimitiveExpression primitiveExpression, T data);
 		S VisitSizeOfExpression(SizeOfExpression sizeOfExpression, T data);
 		S VisitStackAllocExpression(StackAllocExpression stackAllocExpression, T data);
 		S VisitThisReferenceExpression(ThisReferenceExpression thisReferenceExpression, T data);
+		S VisitThrowExpression(ThrowExpression throwExpression, T data);
 		S VisitTypeOfExpression(TypeOfExpression typeOfExpression, T data);
 		S VisitTypeReferenceExpression(TypeReferenceExpression typeReferenceExpression, T data);
 		S VisitUnaryOperatorExpression(UnaryOperatorExpression unaryOperatorExpression, T data);
 		S VisitUncheckedExpression(UncheckedExpression uncheckedExpression, T data);
+		S VisitUndocumentedExpression(UndocumentedExpression undocumentedExpression, T data);
 
 		S VisitQueryExpression(QueryExpression queryExpression, T data);
 		S VisitQueryContinuationClause(QueryContinuationClause queryContinuationClause, T data);
