@@ -19,9 +19,15 @@
       <dependency id="ICSharpCode.NRefactory" version="5.5.1" />
     </dependencies>
   </metadata>
-	<files>
-		<file src="..\ICSharpCode.Decompiler\bin\NuGet-Release\ICSharpCode.Decompiler.dll" target="lib\Net40" />
-		<file src="..\ICSharpCode.Decompiler\bin\NuGet-Release\ICSharpCode.Decompiler.pdb" target="lib\Net40" />
-		<file src="..\ICSharpCode.Decompiler\**\*.cs" target="src\ICSharpCode.Decompiler" />
-	</files>
+  <files>
+    <file src="bin\$Configuration$\net461\ICSharpCode.Decompiler.dll" target="lib\net461" />
+    <file src="bin\$Configuration$\net461\ICSharpCode.Decompiler.pdb" target="lib\net461" />
+
+    <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.dll" target="lib\netstandard2.0" />
+    <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.pdb" target="lib\netstandard2.0" />
+
+    <file src="**\*.cs" exclude="obj\**\*.cs" target="src\ICSharpCode.Decompiler" />
+    <file src="obj\$Configuration$\net461\**\*.cs" target="src\ICSharpCode.Decompiler\obj\$Configuration$\net461" />
+    <file src="obj\$Configuration$\netstandard2.0\**\*.cs" target="src\ICSharpCode.Decompiler\obj\$Configuration$\netstandard2.0" />
+  </files>
 </package>

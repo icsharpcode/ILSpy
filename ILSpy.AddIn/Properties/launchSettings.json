@@ -1,0 +1,8 @@
+﻿{
+	"profiles": {
+		"Visual Studio Extension": {
+			"executablePath": "$(DevEnvDir)devenv.exe",
+			"commandLineArgs": "/rootsuffix $(VSSDKTargetPlatformRegRootSuffix) /log"
+		}
+	}
+}

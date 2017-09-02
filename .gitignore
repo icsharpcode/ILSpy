@@ -1,16 +1,12 @@
 bin/
 obj/
 
-/ILSpy-tests
 /ICSharpCode.Decompiler/Properties/AssemblyInfo.cs
 /ILSpy/Properties/AssemblyInfo.cs
 /ILSpy/app.config
-*.suo
 *.user
 /Resharper-ILSpy-Style.xml
 _ReSharper*/
 *.ReSharper
 *.patch
-/packages
-*.ide/
-/ICSharpCode.Decompiler/Tests/TestCases/*.exe
+.vs/

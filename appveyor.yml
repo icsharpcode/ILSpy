@@ -4,16 +4,13 @@ platform: Any CPU
 image: Visual Studio 2017
 install:
 - git submodule update --init --recursive
-- git clone https://github.com/icsharpcode/ILSpy-tests
 before_build:
 - nuget restore ILSpy.sln
-build:
-  project: ILSpy.sln
-  parallel: false
-  verbosity: minimal
+build_script:
+- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 test:
   assemblies:
-    - 'ICSharpCode.Decompiler\bin\Debug\ICSharpCode.Decompiler.Tests.dll'
-    - 'ILSpy.BamlDecompiler\bin\Debug\ILSpy.BamlDecompiler.Tests.dll'
+    - 'ICSharpCode.Decompiler.Tests\bin\Debug\net461\ICSharpCode.Decompiler.Tests.exe'
+    - 'ILSpy.BamlDecompiler.Tests\bin\Debug\net461\ILSpy.BamlDecompiler.Tests.dll'
 after_test:
 - python BuildTools\tidy.py

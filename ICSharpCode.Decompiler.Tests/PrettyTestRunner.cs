@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Tests
 {
 	public class PrettyTestRunner
 	{
-		const string TestCasePath = @"../../../ICSharpCode.Decompiler.Tests/TestCases/Pretty";
+		const string TestCasePath = @"../../../../ICSharpCode.Decompiler.Tests/TestCases/Pretty";
 
 		[Test]
 		public void AllFilesHaveTests()
