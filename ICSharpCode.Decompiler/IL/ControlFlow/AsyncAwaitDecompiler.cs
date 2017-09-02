@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		IType taskType; // return type of the async method
 		IType underlyingReturnType; // return type of the method (only the "T" for Task{T})
 		AsyncMethodType methodType;
-		ITypeDefinition stateMachineStruct;
+		ITypeDefinition stateMachineType;
 		ITypeDefinition builderType;
 		IField builderField;
 		IField stateField;
@@ -84,8 +84,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (body.Count < 5)
 				return false;
 			/* Example:
-			    V_0 is an instance of the compiler-generated struct,
-				V_1 is an instance of the builder struct
+			    V_0 is an instance of the compiler-generated struct/class,
+				V_1 is an instance of the builder struct/class
 				Block IL_0000 (incoming: 1)  {
 					stobj System.Runtime.CompilerServices.AsyncVoidMethodBuilder(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<AwaitYield>d__3.<>t__builder](ldloca V_0), call Create())
 					stobj System.Int32(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<AwaitYield>d__3.<>1__state](ldloca V_0), ldc.i4 -1)
@@ -127,8 +127,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!startCall.Arguments[1].MatchLdLoca(out ILVariable stateMachineVar))
 				return false;
-			stateMachineStruct = stateMachineVar.Type.GetDefinition();
-			if (stateMachineStruct?.Kind != TypeKind.Struct)
+			stateMachineType = stateMachineVar.Type.GetDefinition();
+			if (stateMachineType == null)
 				return false;
 
 			// Check third-to-last instruction (copy of builder)
@@ -162,7 +162,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				if (builderField2.MemberDefinition != builderField)
 					return false;
-				if (!target.MatchLdLoca(stateMachineVar))
+				if (!target.MatchLdLocRef(stateMachineVar))
 					return false;
 			}
 
@@ -186,9 +186,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (createCall.Method.Name != "Create" || createCall.Arguments.Count != 0)
 				return false;
 
-			for (int i = 0; i < body.Count - 5; i++) {
+			int pos = 0;
+			if (stateMachineType.Kind == TypeKind.Class) {
+				// If state machine is a class, the first instruction creates an instance:
+				// stloc stateMachine(newobj StateMachine.ctor())
+				if (!body[pos].MatchStLoc(stateMachineVar, out var init))
+					return false;
+				if (!(init is NewObj newobj && newobj.Arguments.Count == 0 && newobj.Method.DeclaringTypeDefinition == stateMachineType))
+					return false;
+				pos++;
+			}
+			for (; pos < body.Count - 5; pos++) {
 				// stfld StateMachine.field(ldloca stateMachine, ldvar(param))
-				if (!MatchStFld(body[i], stateMachineVar, out var field, out var fieldInit))
+				if (!MatchStFld(body[pos], stateMachineVar, out var field, out var fieldInit))
 					return false;
 				if (!fieldInit.MatchLdLoc(out var v))
 					return false;
@@ -223,7 +233,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (!stfld.MatchStFld(out var target, out field, out value))
 				return false;
 			field = field.MemberDefinition as IField;
-			return field != null && target.MatchLdLoca(stateMachineVar);
+			return field != null && target.MatchLdLocRef(stateMachineVar);
 		}
 		#endregion
 
@@ -233,7 +243,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		void AnalyzeMoveNext()
 		{
-			var moveNextMethod = context.TypeSystem.GetCecil(stateMachineStruct)?.Methods.FirstOrDefault(f => f.Name == "MoveNext");
+			var moveNextMethod = context.TypeSystem.GetCecil(stateMachineType)?.Methods.FirstOrDefault(f => f.Name == "MoveNext");
 			if (moveNextMethod == null)
 				throw new SymbolicAnalysisFailedException();
 			moveNextFunction = YieldReturnDecompiler.CreateILAst(moveNextMethod, context);
@@ -275,6 +285,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (!args[1].MatchLdLoc(out resultVar))
 					throw new SymbolicAnalysisFailedException();
 			} else {
+				resultVar = null;
 				if (args.Count != 1)
 					throw new SymbolicAnalysisFailedException();
 			}

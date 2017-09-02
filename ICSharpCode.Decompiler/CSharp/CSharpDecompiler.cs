@@ -656,6 +656,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (function.IsAsync) {
 				entityDecl.Modifiers |= Modifiers.Async;
 				RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "AsyncStateMachineAttribute"));
+				RemoveAttribute(entityDecl, new TopLevelTypeName("System.Diagnostics", "DebuggerStepThroughAttribute"));
 			}
 		}
 
