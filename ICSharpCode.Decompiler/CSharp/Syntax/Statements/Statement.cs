@@ -123,10 +123,5 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		public override NodeType NodeType {
 			get { return NodeType.Statement; }
 		}
-
-		public static implicit operator Statement (Expression type)
-		{
-			return new ExpressionStatement(type);
-		}
 	}
 }
