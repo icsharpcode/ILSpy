@@ -54,8 +54,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="CSharp\Analysis\ControlFlow.cs" />
-    <Compile Include="CSharp\Analysis\DefiniteAssignmentAnalysis.cs" />
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
@@ -128,7 +126,6 @@
     <Compile Include="CSharp\Syntax\MemberType.cs" />
     <Compile Include="CSharp\Syntax\Modifiers.cs" />
     <Compile Include="CSharp\Syntax\NodeType.cs" />
-    <Compile Include="CSharp\Syntax\ObservableAstVisitor.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\AnyNode.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\AnyNodeOrNull.cs" />
     <Compile Include="CSharp\Syntax\PatternMatching\Backreference.cs" />
@@ -204,22 +201,17 @@
     <Compile Include="CSharp\Resolver\AliasTypeResolveResult.cs" />
     <Compile Include="CSharp\Resolver\AwaitResolveResult.cs" />
     <Compile Include="CSharp\Resolver\CastResolveResult.cs" />
-    <Compile Include="CSharp\Resolver\CompositeResolveVisitorNavigator.cs" />
     <Compile Include="CSharp\Resolver\CSharpConversions.cs" />
     <Compile Include="CSharp\Resolver\CSharpInvocationResolveResult.cs" />
     <Compile Include="CSharp\Resolver\CSharpOperators.cs" />
     <Compile Include="CSharp\Resolver\CSharpResolver.cs" />
-    <Compile Include="CSharp\Resolver\DetectSkippableNodesNavigator.cs" />
     <Compile Include="CSharp\Resolver\DynamicInvocationResolveResult.cs" />
     <Compile Include="CSharp\Resolver\DynamicMemberResolveResult.cs" />
-    <Compile Include="CSharp\Resolver\FindReferencedEntities.cs" />
-    <Compile Include="CSharp\Resolver\IResolveVisitorNavigator.cs" />
     <Compile Include="CSharp\Resolver\LambdaResolveResult.cs" />
     <Compile Include="CSharp\Resolver\Log.cs" />
     <Compile Include="CSharp\Resolver\MemberLookup.cs" />
     <Compile Include="CSharp\Resolver\MethodGroupResolveResult.cs" />
     <Compile Include="CSharp\Resolver\NameLookupMode.cs" />
-    <Compile Include="CSharp\Resolver\NodeListResolveVisitorNavigator.cs" />
     <Compile Include="CSharp\Resolver\OverloadResolution.cs" />
     <Compile Include="CSharp\Resolver\OverloadResolutionErrors.cs" />
     <Compile Include="CSharp\Resolver\ReducedExtensionMethod.cs" />

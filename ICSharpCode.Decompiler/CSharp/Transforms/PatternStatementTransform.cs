@@ -24,7 +24,6 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.CSharp.Analysis;
 using Mono.Cecil;
 using ICSharpCode.Decompiler.Semantics;
 
@@ -313,34 +312,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 		
-		/// <summary>
-		/// Gets whether the old variable value (assigned inside 'targetStatement' or earlier)
-		/// is read anywhere in the remaining scope of the variable declaration.
-		/// </summary>
-		bool IsVariableValueUnused(VariableDeclarationStatement varDecl, Statement targetStatement)
-		{
-			Debug.Assert(targetStatement.Ancestors.Contains(varDecl.Parent));
-			BlockStatement block = (BlockStatement)varDecl.Parent;
-			DefiniteAssignmentAnalysis daa = CreateDAA(block);
-			daa.SetAnalyzedRange(targetStatement, block, startInclusive: false);
-			daa.Analyze(varDecl.Variables.Single().Name);
-			return daa.UnassignedVariableUses.Count == 0;
-		}
-		
-		// I used this in the first implementation of the using-statement transform, but now no longer
-		// because there were problems when multiple using statements were using the same variable
-		// - no single using statement could be transformed without making the C# code invalid,
-		// but transforming both would work.
-		// We now use 'IsVariableValueUnused' which will perform the transform
-		// even if it results in two variables with the same name and overlapping scopes.
-		// (this issue could be fixed later by renaming one of the variables)
-		
-		private DefiniteAssignmentAnalysis CreateDAA(BlockStatement block)
-		{
-			var typeResolveContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly);
-			return new DefiniteAssignmentAnalysis(block, (node, ct) => node.GetResolveResult(), typeResolveContext, context.CancellationToken);
-		}
-
 		/// <summary>
 		/// Gets whether there is an assignment to 'variableName' anywhere within the given node.
 		/// </summary>
