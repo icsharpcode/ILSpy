@@ -84,6 +84,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				}
 				set { }
 			}
+
+			public InitializerTests.Data this[int i, string j] {
+				get {
+					return null;
+				}
+				set { }
+			}
 		}
 
 		private struct StructData
@@ -531,10 +538,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			});
 		}
 
-#if false
 		static int GetInt()
 		{
 			return 1;
+		}
+
+		static string GetString()
+		{
+			return "Test";
+		}
+
+#if !LEGACY_CSC
+		public static void SimpleDictInitializer()
+		{
+			InitializerTests.X(InitializerTests.Y(), new InitializerTests.Data {
+				MoreData =
+				{
+					a = InitializerTests.MyEnum.a,
+					[2] = (Data)null
+				}
+			});
 		}
 
 		public static void MixedObjectAndDictInitializer()
@@ -546,8 +569,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					[GetInt()] = {
 						a = InitializerTests.MyEnum.b,
 						FieldList = { MyEnum2.c },
-						[2] = null
-					},
+						[GetInt(), GetString()] = new Data(),
+						[2] = (Data)null
+					}
 				}
 			});
 		}

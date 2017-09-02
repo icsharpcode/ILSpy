@@ -1448,7 +1448,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			var elements = new List<Expression>(block.Instructions.Count);
 			elementsStack.Push(elements);
 			List<AccessPathElement> currentPath = null;
+			var indexVariables = new Dictionary<ILVariable, ILInstruction>();
 			foreach (var inst in block.Instructions.Skip(1)) {
+				if (inst is StLoc indexStore) {
+					indexVariables.Add(indexStore.Variable, indexStore.Value);
+					continue;
+				}
 				var info = AccessPathElement.GetAccessPath(inst, initObjRR.Type);
 				if (info.Kind == AccessPathKind.Invalid) continue;
 				if (currentPath == null) {
@@ -1463,7 +1468,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						var methodElement = currentPath[elementsStack.Count - 1];
 						var pathElement = currentPath[elementsStack.Count - 2];
 						var values = elementsStack.Pop();
-						elementsStack.Peek().Add(MakeInitializerAssignment(methodElement.Member, pathElement.Member, values));
+						elementsStack.Peek().Add(MakeInitializerAssignment(methodElement.Member, pathElement, values, indexVariables));
 					}
 					currentPath = info.Path;
 				}
@@ -1476,9 +1481,15 @@ namespace ICSharpCode.Decompiler.CSharp
 						elementsStack.Peek().Add(MakeInitializerElements(info.Values, ((IMethod)lastElement.Member).Parameters));
 						break;
 					case AccessPathKind.Setter:
-						var target = new IdentifierExpression(lastElement.Member.Name)
-							.WithILInstruction(inst).WithRR(memberRR);
-						elementsStack.Peek().Add(Assignment(target, Translate(info.Values.Single())));
+						if (lastElement.Indices?.Length > 0) {
+							var indexer = new IndexerExpression(null, lastElement.Indices.SelectArray(i => Translate(i is LdLoc ld ? indexVariables[ld.Variable] : i).Expression))
+								.WithILInstruction(inst).WithRR(memberRR);
+							elementsStack.Peek().Add(Assignment(indexer, Translate(info.Values.Single())));
+						} else {
+							var target = new IdentifierExpression(lastElement.Member.Name)
+								.WithILInstruction(inst).WithRR(memberRR);
+							elementsStack.Peek().Add(Assignment(target, Translate(info.Values.Single())));
+						}
 						break;
 				}
 			}
@@ -1486,16 +1497,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				var methodElement = currentPath[elementsStack.Count - 1];
 				var pathElement = currentPath[elementsStack.Count - 2];
 				var values = elementsStack.Pop();
-				elementsStack.Peek().Add(MakeInitializerAssignment(methodElement.Member, pathElement.Member, values));
+				elementsStack.Peek().Add(MakeInitializerAssignment(methodElement.Member, pathElement, values, indexVariables));
 			}
 			var oce = (ObjectCreateExpression)expr.Expression;
 			oce.Initializer = new ArrayInitializerExpression(elements);
 			return expr.WithILInstruction(block);
 		}
 
-		Expression MakeInitializerAssignment(IMember method, IMember member, List<Expression> values)
+		Expression MakeInitializerAssignment(IMember method, AccessPathElement member, List<Expression> values, Dictionary<ILVariable, ILInstruction> indexVariables)
 		{
-			var target = new IdentifierExpression(member.Name);
+			var target = member.Indices?.Length > 0 ? (Expression)new IndexerExpression(null, member.Indices.SelectArray(i => Translate(i is LdLoc ld ? indexVariables[ld.Variable] : i).Expression)) : new IdentifierExpression(member.Member.Name);
 			Expression value;
 			if (values.Count == 1 && !(values[0] is AssignmentExpression) && !(method.SymbolKind == SymbolKind.Method && method.Name == "Add"))
 				value = values[0];

@@ -83,14 +83,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step("CollectionOrObjectInitializer", inst);
 				int initializerItemsCount = 0;
 				var blockType = initializerBlock?.Type ?? BlockType.CollectionInitializer;
+				var possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
 				// Detect initializer type by scanning the following statements
 				// each must be a callvirt with ldloc v as first argument
 				// if the method is a setter we're dealing with an object initializer
 				// if the method is named Add and has at least 2 arguments we're dealing with a collection/dictionary initializer
 				while (pos + initializerItemsCount + 1 < body.Instructions.Count
-					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockType))
+					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockType, possibleIndexVariables)) {
 					initializerItemsCount++;
-				if (initializerItemsCount == 0)
+				}
+				var index = possibleIndexVariables.Where(info => info.Value.Index > -1).Min(info => (int?)info.Value.Index);
+				if (index != null) {
+					initializerItemsCount = index.Value - pos - 1;
+				}
+				if (initializerItemsCount <= 0)
 					return false;
 				ILVariable finalSlot;
 				if (initializerBlock == null) {
@@ -108,16 +114,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							var newCall = (CallInstruction)call.Clone();
 							var newTarget = newCall.Arguments[0];
 							foreach (var load in newTarget.Descendants.OfType<IInstructionWithVariableOperand>())
-								if (load is LdLoc || load is LdLoca)
+								if ((load is LdLoc || load is LdLoca) && load.Variable == v)
 									load.Variable = finalSlot;
 							initializerBlock.Instructions.Add(newCall);
 							break;
 						case StObj stObj:
 							var newStObj = (StObj)stObj.Clone();
 							foreach (var load in newStObj.Target.Descendants.OfType<IInstructionWithVariableOperand>())
-								if (load is LdLoc || load is LdLoca)
+								if ((load is LdLoc || load is LdLoca) && load.Variable == v)
 									load.Variable = finalSlot;
 							initializerBlock.Instructions.Add(newStObj);
+							break;
+						case StLoc stLoc:
+							var newStLoc = (StLoc)stLoc.Clone();
+							initializerBlock.Instructions.Add(newStLoc);
 							break;
 					}
 				}
@@ -129,9 +139,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, IType rootType, ref BlockType blockType)
+		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, IType rootType, ref BlockType blockType, Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables)
 		{
-			(var kind, var path, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType);
+			if (instructions[pos] is StLoc stloc && stloc.Variable.Kind == VariableKind.Local && stloc.Variable.IsSingleDefinition) {
+				if (stloc.Value.Descendants.OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
+					return false;
+				possibleIndexVariables.Add(stloc.Variable, (stloc.ChildIndex, stloc.Value));
+				return true;
+			}
+			(var kind, var path, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType, possibleIndexVariables);
 			switch (kind) {
 				case AccessPathKind.Adder:
 					return target == targetVariable;
@@ -156,24 +172,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 	public struct AccessPathElement : IEquatable<AccessPathElement>
 	{
-		public AccessPathElement(IMember member, ILVariable index = null)
+		public AccessPathElement(IMember member, ILInstruction[] indices = null)
 		{
 			this.Member = member;
-			this.Index = index;
+			this.Indices = indices;
 		}
 
 		public readonly IMember Member;
-		public readonly ILVariable Index;
+		public readonly ILInstruction[] Indices;
 
-		public override string ToString() => $"[{Member}, {Index}]";
+		public override string ToString() => $"[{Member}, {Indices}]";
 
-		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction> Values, ILVariable Target) GetAccessPath(ILInstruction instruction, IType rootType)
+		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction> Values, ILVariable Target) GetAccessPath(ILInstruction instruction, IType rootType, Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables = null)
 		{
 			List<AccessPathElement> path = new List<AccessPathElement>();
 			ILVariable target = null;
 			AccessPathKind kind = AccessPathKind.Invalid;
 			List<ILInstruction> values = null;
 			IMethod method;
+			var inst = instruction;
 			while (instruction != null) {
 				switch (instruction) {
 					case CallInstruction call:
@@ -181,20 +198,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						method = call.Method;
 						if (!IsMethodApplicable(method, call.Arguments, rootType)) goto default;
 						instruction = call.Arguments[0];
-						if (values == null) {
-							values = new List<ILInstruction>(call.Arguments.Skip(1));
-							if (values.Count == 0)
-								goto default;
-							if (method.IsAccessor) {
-								kind = AccessPathKind.Setter;
-							} else {
-								kind = AccessPathKind.Adder;
-							}
-						}
 						if (method.IsAccessor) {
-							path.Insert(0, new AccessPathElement(method.AccessorOwner));
+							var property = (IProperty)method.AccessorOwner;
+							var isGetter = property.Getter == method;
+							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
+							if (possibleIndexVariables != null) {
+								foreach (var index in indices.OfType<IInstructionWithVariableOperand>()) {
+									if (possibleIndexVariables.TryGetValue(index.Variable, out var info))
+										possibleIndexVariables[index.Variable] = (-1, info.Value);
+								}
+							}
+							path.Insert(0, new AccessPathElement(method.AccessorOwner, indices));
 						} else {
 							path.Insert(0, new AccessPathElement(method));
+						}
+						if (values == null) {
+							if (method.IsAccessor) {
+								kind = AccessPathKind.Setter;
+								values = new List<ILInstruction> { call.Arguments.Last() };
+							} else {
+								kind = AccessPathKind.Adder;
+								values = new List<ILInstruction>(call.Arguments.Skip(1));
+								if (values.Count == 0)
+									goto default;
+							}
 						}
 						break;
 					case LdObj ldobj:
@@ -280,15 +307,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			unchecked {
 				if (Member != null)
 					hashCode += 1000000007 * Member.GetHashCode();
-				if (Index != null)
-					hashCode += 1000000009 * Index.GetHashCode();
 			}
 			return hashCode;
 		}
 
 		public bool Equals(AccessPathElement other)
 		{
-			return other.Member.Equals(this.Member) && other.Index == this.Index;
+			return other.Member.Equals(this.Member) && (other.Indices == this.Indices || other.Indices.SequenceEqual(this.Indices, ILInstructionMatchComparer.Instance));
 		}
 
 		public static bool operator ==(AccessPathElement lhs, AccessPathElement rhs)
@@ -299,6 +324,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public static bool operator !=(AccessPathElement lhs, AccessPathElement rhs)
 		{
 			return !(lhs == rhs);
+		}
+	}
+
+	class ILInstructionMatchComparer : IEqualityComparer<ILInstruction>
+	{
+		public static readonly ILInstructionMatchComparer Instance = new ILInstructionMatchComparer();
+
+		public bool Equals(ILInstruction x, ILInstruction y)
+		{
+			if (x == y)
+				return true;
+			if (x == null || y == null)
+				return false;
+			return x.Match(y).Success;
+		}
+
+		public int GetHashCode(ILInstruction obj)
+		{
+			return obj.GetHashCode();
 		}
 	}
 }
