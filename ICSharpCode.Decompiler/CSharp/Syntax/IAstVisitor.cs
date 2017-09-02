@@ -47,6 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		void VisitNamedExpression(NamedExpression namedExpression);
 		void VisitNullReferenceExpression(NullReferenceExpression nullReferenceExpression);
 		void VisitObjectCreateExpression(ObjectCreateExpression objectCreateExpression);
+		void VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression);
 		void VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression);
 		void VisitParenthesizedExpression(ParenthesizedExpression parenthesizedExpression);
 		void VisitPointerReferenceExpression(PointerReferenceExpression pointerReferenceExpression);
@@ -179,6 +180,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitNamedExpression(NamedExpression namedExpression);
 		S VisitNullReferenceExpression(NullReferenceExpression nullReferenceExpression);
 		S VisitObjectCreateExpression(ObjectCreateExpression objectCreateExpression);
+		S VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression);
 		S VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression);
 		S VisitParenthesizedExpression(ParenthesizedExpression parenthesizedExpression);
 		S VisitPointerReferenceExpression(PointerReferenceExpression pointerReferenceExpression);
@@ -311,6 +313,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		S VisitNamedExpression(NamedExpression namedExpression, T data);
 		S VisitNullReferenceExpression(NullReferenceExpression nullReferenceExpression, T data);
 		S VisitObjectCreateExpression(ObjectCreateExpression objectCreateExpression, T data);
+		S VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression, T data);
 		S VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression, T data);
 		S VisitParenthesizedExpression(ParenthesizedExpression parenthesizedExpression, T data);
 		S VisitPointerReferenceExpression(PointerReferenceExpression pointerReferenceExpression, T data);

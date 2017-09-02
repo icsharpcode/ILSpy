@@ -470,7 +470,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			VisitChildren (objectCreateExpression);
 		}
-		
+
+		public virtual void VisitOutVarDeclarationExpression (OutVarDeclarationExpression outVarDeclarationExpression)
+		{
+			VisitChildren (outVarDeclarationExpression);
+		}
+
 		public virtual void VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression)
 		{
 			VisitChildren (anonymousTypeCreateExpression);
@@ -1077,7 +1082,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (objectCreateExpression);
 		}
-		
+
+		public virtual T VisitOutVarDeclarationExpression (OutVarDeclarationExpression outVarDeclarationExpression)
+		{
+			return VisitChildren(outVarDeclarationExpression);
+		}
+
 		public virtual T VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression)
 		{
 			return VisitChildren (anonymousTypeCreateExpression);
@@ -1684,7 +1694,12 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (objectCreateExpression, data);
 		}
-		
+
+		public virtual S VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression, T data)
+		{
+			return VisitChildren (outVarDeclarationExpression, data);
+		}
+
 		public virtual S VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression, T data)
 		{
 			return VisitChildren (anonymousTypeCreateExpression, data);

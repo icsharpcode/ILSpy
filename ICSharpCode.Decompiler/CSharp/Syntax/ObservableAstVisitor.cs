@@ -639,7 +639,14 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			Visit(EnterObjectCreateExpression, LeaveObjectCreateExpression, objectCreateExpression);
 		}
-		
+
+		public event Action<OutVarDeclarationExpression> EnterOutVarDeclarationExpression, LeaveOutVarDeclarationExpression;
+
+		void IAstVisitor.VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression)
+		{
+			Visit(EnterOutVarDeclarationExpression, LeaveOutVarDeclarationExpression, outVarDeclarationExpression);
+		}
+
 		public event Action<AnonymousTypeCreateExpression> EnterAnonymousTypeCreateExpression, LeaveAnonymousTypeCreateExpression;
 		
 		void IAstVisitor.VisitAnonymousTypeCreateExpression(AnonymousTypeCreateExpression anonymousTypeCreateExpression)

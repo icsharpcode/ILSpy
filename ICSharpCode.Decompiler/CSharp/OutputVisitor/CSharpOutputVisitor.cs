@@ -765,6 +765,19 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			
 			EndNode(directionExpression);
 		}
+
+		public virtual void VisitOutVarDeclarationExpression(OutVarDeclarationExpression outVarDeclarationExpression)
+		{
+			StartNode(outVarDeclarationExpression);
+
+			WriteKeyword(OutVarDeclarationExpression.OutKeywordRole);
+			Space();
+			outVarDeclarationExpression.Type.AcceptVisitor(this);
+			Space();
+			outVarDeclarationExpression.Expression.AcceptVisitor(this);
+
+			EndNode(outVarDeclarationExpression);
+		}
 		
 		public virtual void VisitIdentifierExpression(IdentifierExpression identifierExpression)
 		{

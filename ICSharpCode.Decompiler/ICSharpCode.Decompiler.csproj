@@ -94,6 +94,7 @@
     <Compile Include="CSharp\Syntax\Expressions\NamedExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\NullReferenceExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\ObjectCreateExpression.cs" />
+    <Compile Include="CSharp\Syntax\Expressions\OutVarDeclarationExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\ParenthesizedExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\PointerReferenceExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\PrimitiveExpression.cs" />
