@@ -32,7 +32,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TestBoxing();
 			TestIssue180();
 			TestExtensionMethod();
+			TestParamsMethod();
 		}
+
+		#region params with nulls
+		static void TestParamsMethod()
+		{
+			TestCall(1, null, (TypeAccessException)null);
+			TestCall(2, null, (AccessViolationException)null);
+			TestCall(3, null);
+			TestCall(3, null, null, null);
+		}
+
+		static void TestCall(int v, Type p1, TypeAccessException p2)
+		{
+			Console.WriteLine("TestCall without params");
+		}
+
+		static void TestCall(int v, params AccessViolationException[] p2)
+		{
+			Console.WriteLine("TestCall with params: " + (p2 == null ? "null" : p2.Length.ToString()));
+		}
+		#endregion
 
 		#region Simple Overloaded Method
 		static void CallOverloadedMethod()

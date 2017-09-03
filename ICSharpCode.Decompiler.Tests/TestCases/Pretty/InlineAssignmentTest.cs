@@ -32,22 +32,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(value = 5);
 			Console.WriteLine(value);
 			InlineAssignmentTest value2;
-			Console.WriteLine((object)(value2 = new InlineAssignmentTest()));
-			Console.WriteLine((object)value2);
+			Console.WriteLine(value2 = new InlineAssignmentTest());
+			Console.WriteLine(value2);
 		}
 		
 		public void SimpleInlineWithFields()
 		{
 			Console.WriteLine(this.field1 = 5);
-			Console.WriteLine((object)(InlineAssignmentTest.field2 = new InlineAssignmentTest()));
+			Console.WriteLine(InlineAssignmentTest.field2 = new InlineAssignmentTest());
 		}
 		
 		public void SimpleInlineWithFields2()
 		{
 			Console.WriteLine(this.field1 = 5);
 			Console.WriteLine(this.field1);
-			Console.WriteLine((object)(InlineAssignmentTest.field2 = new InlineAssignmentTest()));
-			Console.WriteLine((object)InlineAssignmentTest.field2);
+			Console.WriteLine(InlineAssignmentTest.field2 = new InlineAssignmentTest());
+			Console.WriteLine(InlineAssignmentTest.field2);
 		}
 		
 //		public void ReadLoop1(TextReader r)

@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Y = 10
 			};
 
-			Console.WriteLine((object)value);
+			Console.WriteLine(value);
 			Console.WriteLine(anon.X);
 			Console.WriteLine(anon2.Y + anon2.X);
 		}

@@ -28,6 +28,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			VarArgs(1, __arglist());
 			VarArgs(__arglist(1));
 			VarArgs(1, __arglist("abc", 2, true));
+			VarArgs(1, __arglist((object)"abc", 2, true));
+			VarArgs(1, __arglist((short)1));
+			VarArgs(1, __arglist(ConsoleColor.Red));
 		}
 
 		public static void VarArgs(int normalArg, __arglist)
