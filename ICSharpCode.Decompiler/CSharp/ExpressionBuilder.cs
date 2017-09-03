@@ -1144,14 +1144,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					// If anything goes wrong, apply explicit casts to all arguments.
 					if (result == null) {
 						for (int i = 0; i < arguments.Length; i++) {
-							arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
+							if (!method.Parameters[i].Type.ContainsAnonymousType())
+								arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
 						}
 					} else {
 						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
 						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
 						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt)) {
 							for (int i = 0; i < arguments.Length; i++) {
-								arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
+								if (!method.Parameters[i].Type.ContainsAnonymousType())
+									arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
 							}
 						}
 					}
@@ -1193,7 +1195,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						methodName = method.ImplementedInterfaceMembers[0].Name;
 					}
 					var mre = new MemberReferenceExpression(targetExpr, methodName);
-					if (requireTypeArguments)
+					if (requireTypeArguments && !method.TypeArguments.Any(a => a.ContainsAnonymousType()))
 						mre.TypeArguments.AddRange(method.TypeArguments.Select(ConvertType));
 					var argumentExpressions = arguments.Select(arg => arg.Expression);
 					expr = new InvocationExpression(mre, argumentExpressions);
