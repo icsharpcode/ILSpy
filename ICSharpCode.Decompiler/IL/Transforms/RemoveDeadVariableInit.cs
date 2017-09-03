@@ -37,8 +37,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					v.HasInitialValue = false;
 				}
 			}
-			if (function.IsIterator) {
-				// In yield return, the C# compiler tends to store null/default(T) to variables
+			if (function.IsIterator || function.IsAsync) {
+				// In yield return + async, the C# compiler tends to store null/default(T) to variables
 				// when the variable goes out of scope. Remove such useless stores.
 				foreach (var v in function.Variables) {
 					if (v.Kind == VariableKind.Local && v.StoreCount == 1 && v.LoadCount == 0 && v.AddressCount == 0) {

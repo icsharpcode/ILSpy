@@ -261,6 +261,7 @@
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
     <Compile Include="IL\ControlFlow\StateRangeAnalysis.cs" />
     <Compile Include="IL\ControlFlow\SymbolicExecution.cs" />
+    <Compile Include="IL\Instructions\Await.cs" />
     <Compile Include="IL\Instructions\ILVariableCollection.cs" />
     <Compile Include="IL\Instructions\NullCoalescingInstruction.cs" />
     <Compile Include="IL\Patterns\AnyNode.cs" />

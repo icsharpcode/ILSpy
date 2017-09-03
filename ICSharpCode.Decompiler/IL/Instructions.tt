@@ -225,7 +225,7 @@
 		// note: "yield break" is always represented using a "leave" instruction
 		new OpCode("await", "C# await operator.",
 			SideEffect, // other code can run with arbitrary side effects while we're waiting
-			CustomArguments("value"), ResultType("Void")),
+			CustomArguments("value"), ResultType("GetResultMethod?.ReturnType.GetStackType() ?? StackType.Unknown")),
 
 		// patterns
 		new OpCode("AnyNode", "Matches any node", Pattern, CustomArguments(), CustomConstructor),
@@ -869,6 +869,7 @@ protected override void Disconnected()
 {
 	base.CheckInvariant(phase);
 	Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
+	Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
 }");
 			}
 		};
