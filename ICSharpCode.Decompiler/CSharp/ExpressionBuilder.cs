@@ -459,9 +459,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					return right;
 				}
 				if (inst.Left.MatchLdcI4(1)) {
-					// '0 == b' => '!b'
-					// '0 != b' => 'b'
-					negateOutput = inst.Kind == ComparisonKind.Equality;
+					// '1 == b' => 'b'
+					// '1 != b' => '!b'
+					negateOutput = inst.Kind == ComparisonKind.Inequality;
 					return right;
 				}
 			}
