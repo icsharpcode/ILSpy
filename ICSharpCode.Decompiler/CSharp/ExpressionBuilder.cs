@@ -1079,11 +1079,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(inst.Arguments.Count == firstParamIndex + inst.Method.Parameters.Count);
 			for (int i = 0; i < arguments.Length; i++) {
 				var parameter = method.Parameters[i];
-				arguments[i] = Translate(inst.Arguments[firstParamIndex + i]);
-				// HACK : do not add casts to anonymous types, in order to avoid compile errors.
-				// Ideally we should be able to remove casts to any type, if not explicitly required.
-				if (!parameter.Type.ContainsAnonymousType())
-					arguments[i] = arguments[i].ConvertTo(parameter.Type, this);
+				arguments[i] = Translate(inst.Arguments[firstParamIndex + i])
+					.ConvertTo(parameter.Type, this, allowImplicitConversion: true);
 				
 				if (parameter.IsOut && arguments[i].Expression is DirectionExpression dirExpr) {
 					dirExpr.FieldDirection = FieldDirection.Out;
@@ -1094,7 +1091,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				int regularParameterCount = ((VarArgInstanceMethod)method).RegularParameterCount;
 				var argListArg = new UndocumentedExpression();
 				argListArg.UndocumentedExpressionType = UndocumentedExpressionType.ArgList;
-				argListArg.Arguments.AddRange(arguments.Skip(regularParameterCount).Select(arg => arg.Expression));
+				int paramIndex = regularParameterCount;
+				argListArg.Arguments.AddRange(arguments.Skip(regularParameterCount).Select(arg => arg.ConvertTo(method.Parameters[paramIndex++].Type, this).Expression));
 				var argListRR = new ResolveResult(SpecialType.ArgList);
 				arguments = arguments.Take(regularParameterCount)
 					.Concat(new[] { argListArg.WithoutILInstruction().WithRR(argListRR) }).ToArray();
@@ -1139,17 +1137,54 @@ namespace ICSharpCode.Decompiler.CSharp
 					expr = HandleAccessorCall(inst, target, method, arguments.ToList());
 				} else {
 					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
-					var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
-					var result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, true) as MethodGroupResolveResult;
-					
+					var result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+
+					// 1.
+					// Try overload resolution and check if the correct call is selected with the given casts.
+					// If anything goes wrong, apply explicit casts to all arguments.
+					if (result == null) {
+						for (int i = 0; i < arguments.Length; i++) {
+							arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
+						}
+					} else {
+						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
+						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
+						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt)) {
+							for (int i = 0; i < arguments.Length; i++) {
+								arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
+							}
+						}
+					}
+
+					result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+
+					// 2.
+					// Try overload resolution again and if anything goes wrong,
+					// fix the call by explicitly casting to method.DeclaringType.
 					if (result == null) {
 						target = target.ConvertTo(method.DeclaringType, this);
 					} else {
+						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
 						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
 						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt))
 							target = target.ConvertTo(method.DeclaringType, this);
 					}
-					
+
+					bool requireTypeArguments = false;
+					result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+
+					// 3.
+					// Try overload resolution again and if anything goes wrong,
+					// fix the call by explicitly stating the type arguments.
+					if (result == null) {
+						requireTypeArguments = true;
+					} else {
+						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
+						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
+						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt))
+							requireTypeArguments = true;
+					}
+
 					Expression targetExpr = target.Expression;
 					string methodName = method.Name;
 					// HACK : convert this.Dispose() to ((IDisposable)this).Dispose(), if Dispose is an explicitly implemented interface method.
@@ -1158,15 +1193,15 @@ namespace ICSharpCode.Decompiler.CSharp
 						methodName = method.ImplementedInterfaceMembers[0].Name;
 					}
 					var mre = new MemberReferenceExpression(targetExpr, methodName);
-					if (!method.TypeArguments.Any(t => t.ContainsAnonymousType()))
-						mre.TypeArguments.AddRange(method.TypeArguments.Select(a => ConvertType(a)));
+					if (requireTypeArguments)
+						mre.TypeArguments.AddRange(method.TypeArguments.Select(ConvertType));
 					var argumentExpressions = arguments.Select(arg => arg.Expression);
 					expr = new InvocationExpression(mre, argumentExpressions);
 				}
 				return expr.WithILInstruction(inst).WithRR(rr);
 			}
 		}
-		
+
 		static bool CanInferAnonymousTypePropertyNamesFromArguments(IList<Expression> args, IList<IParameter> parameters)
 		{
 			for (int i = 0; i < args.Count; i++) {
