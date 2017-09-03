@@ -73,13 +73,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		
 		private int[,] Array()
 		{
-			return (int[,])null;
+			return null;
 		}
 		
 		private unsafe int* GetPointer()
 		{
-//			return null;
-			return (int*)0u;
+			return null;
 		}
 		
 		public int GetIndex()

@@ -264,7 +264,7 @@ namespace NamedInitializerPropertyType
 		{
 			get
 			{
-				return (Type)null;
+				return null;
 			}
 			set
 			{

@@ -183,7 +183,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override Statement VisitReturn(Return inst)
 		{
 			IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentMethod.ReturnType;
-			return new ReturnStatement(exprBuilder.Translate(inst.Value).ConvertTo(targetType, exprBuilder));
+			return new ReturnStatement(exprBuilder.Translate(inst.Value).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
 		}
 
 		protected internal override Statement VisitYieldReturn(YieldReturn inst)
