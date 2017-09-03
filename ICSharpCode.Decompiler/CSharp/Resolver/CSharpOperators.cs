@@ -151,11 +151,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				get { return SymbolKind.Operator; }
 			}
 			
-			[Obsolete("Use the SymbolKind property instead.")]
-			EntityType IEntity.EntityType {
-				get { return EntityType.Operator; }
-			}
-			
 			DomRegion IEntity.Region {
 				get { return DomRegion.Empty; }
 			}
@@ -222,11 +217,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			
 			IAssembly IEntity.ParentAssembly {
 				get { return compilation.MainAssembly; }
-			}
-			
-			IMemberReference IMember.ToMemberReference()
-			{
-				throw new NotSupportedException();
 			}
 			
 			ISymbolReference ISymbol.ToReference()

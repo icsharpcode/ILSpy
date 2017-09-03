@@ -56,17 +56,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		static readonly NormalizeTypeVisitor normalizationVisitor = new NormalizeTypeVisitor();
 		
-		/// <summary>
-		/// Replaces all occurrences of method type parameters in the given type
-		/// by normalized type parameters. This allows comparing parameter types from different
-		/// generic methods.
-		/// </summary>
-		[Obsolete("Use DummyTypeParameter.NormalizeMethodTypeParameters instead if you only need to normalize type parameters. Also, consider if you need to normalize object vs. dynamic as well.")]
-		public IType NormalizeMethodTypeParameters(IType type)
-		{
-			return DummyTypeParameter.NormalizeMethodTypeParameters(type);
-		}
-		
 		public bool Equals(IList<IParameter> x, IList<IParameter> y)
 		{
 			if (x == y)

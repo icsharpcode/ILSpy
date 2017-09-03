@@ -384,7 +384,6 @@
     <Compile Include="TypeSystem\DecompilerTypeSystem.cs" />
     <Compile Include="TypeSystem\DefaultSolutionSnapshot.cs" />
     <Compile Include="TypeSystem\DomRegion.cs" />
-    <Compile Include="TypeSystem\EntityType.cs" />
     <Compile Include="TypeSystem\Error.cs" />
     <Compile Include="TypeSystem\FullTypeName.cs" />
     <Compile Include="TypeSystem\IAmbience.cs" />
@@ -432,7 +431,6 @@
     <Compile Include="TypeSystem\Implementation\DefaultVariable.cs" />
     <Compile Include="TypeSystem\Implementation\DummyTypeParameter.cs" />
     <Compile Include="TypeSystem\Implementation\ExplicitInterfaceImplementationMemberReference.cs" />
-    <Compile Include="TypeSystem\Implementation\FullNameAndTypeParameterCount.cs" />
     <Compile Include="TypeSystem\Implementation\GetClassTypeReference.cs" />
     <Compile Include="TypeSystem\Implementation\GetMembersHelper.cs" />
     <Compile Include="TypeSystem\Implementation\KnownTypeCache.cs" />
@@ -536,6 +534,10 @@
     <Content Include="..\doc\Pattern Matching.html">
       <Link>CSharp\Syntax\PatternMatching\Pattern Matching.html</Link>
     </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.targets" />

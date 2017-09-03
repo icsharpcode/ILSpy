@@ -352,17 +352,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		}
 		#endregion
 		
-		#region Clone
-		/// <summary>
-		/// Creates a copy of this CSharp resolver.
-		/// </summary>
-		[Obsolete("CSharpResolver is immutable, cloning is no longer necessary")]
-		public CSharpResolver Clone()
-		{
-			return this;
-		}
-		#endregion
-		
 		#region ResolveUnaryOperator
 		#region ResolveUnaryOperator method
 		public ResolveResult ResolveUnaryOperator(UnaryOperatorType op, ResolveResult expression)
@@ -1718,12 +1707,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 			return result;
-		}
-		
-		[Obsolete("Use ResolveMemberAccess() with NameLookupMode.Type instead")]
-		public ResolveResult ResolveMemberType(ResolveResult target, string identifier, IList<IType> typeArguments)
-		{
-			return ResolveMemberAccess(target, identifier, typeArguments, NameLookupMode.Type);
 		}
 		
 		ResolveResult ResolveMemberAccessOnNamespace(NamespaceResolveResult nrr, string identifier, IList<IType> typeArguments, bool parameterizeResultType)

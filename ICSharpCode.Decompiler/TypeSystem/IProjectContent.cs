@@ -137,18 +137,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		IProjectContent RemoveFiles(params string[] fileNames);
 		
 		/// <summary>
-		/// Removes types and attributes from oldFile from the project, and adds those from newFile.
-		/// </summary>
-		[Obsolete("Use RemoveFiles()/AddOrUpdateFiles() instead")]
-		IProjectContent UpdateProjectContent(IUnresolvedFile oldFile, IUnresolvedFile newFile);
-		
-		/// <summary>
-		/// Removes types and attributes from oldFiles from the project, and adds those from newFiles.
-		/// </summary>
-		[Obsolete("Use RemoveFiles()/AddOrUpdateFiles() instead")]
-		IProjectContent UpdateProjectContent(IEnumerable<IUnresolvedFile> oldFiles, IEnumerable<IUnresolvedFile> newFiles);
-		
-		/// <summary>
 		/// Sets the compiler settings object.
 		/// The concrete type of the settings object depends on the programming language used to implement this project.
 		/// Using the incorrect type of settings object results in an <see cref="ArgumentException"/>.

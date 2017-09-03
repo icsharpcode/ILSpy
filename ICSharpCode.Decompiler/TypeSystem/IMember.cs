@@ -166,16 +166,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// If this member is specialized using open generic types, the resulting member reference will need to be looked up in an appropriate generic context.
 		/// Otherwise, the main resolve context of a compilation is sufficient.
 		/// </remarks>
-		[Obsolete("Use the ToReference method instead.")]
-		IMemberReference ToMemberReference();
-		
-				/// <summary>
-		/// Creates a member reference that can be used to rediscover this member in another compilation.
-		/// </summary>
-		/// <remarks>
-		/// If this member is specialized using open generic types, the resulting member reference will need to be looked up in an appropriate generic context.
-		/// Otherwise, the main resolve context of a compilation is sufficient.
-		/// </remarks>
 		new IMemberReference ToReference();
 
 		/// <summary>

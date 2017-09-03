@@ -158,7 +158,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			// the generic method itself is parameterized, not if the generic method is only
 			// specialized with class type arguments.
 			
-			// This is necessary due to this part of the ToMemberReference() contract:
+			// This is necessary due to this part of the ToReference() contract:
 			//   If this member is specialized using open generic types, the resulting member reference will need to be looked up in an appropriate generic context.
 			//   Otherwise, the main resolve context of a compilation is sufficient.
 			// ->
@@ -173,11 +173,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			} else {
 				return base.ToReference();
 			}
-		}
-		
-		public override IMemberReference ToMemberReference()
-		{
-			return ToReference();
 		}
 		
 		public override bool Equals(object obj)

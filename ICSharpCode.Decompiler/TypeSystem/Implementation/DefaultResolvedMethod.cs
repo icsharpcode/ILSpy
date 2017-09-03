@@ -246,11 +246,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public override IMemberReference ToMemberReference()
-		{
-			return (IMemberReference)ToReference();
-		}
-		
 		public override IMember Specialize(TypeParameterSubstitution substitution)
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution))

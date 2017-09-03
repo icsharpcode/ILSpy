@@ -31,12 +31,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public ConversionFlags ConversionFlags { get; set; }
 		
 		#region ConvertSymbol
-		[Obsolete("Use ConvertSymbol() instead")]
-		public string ConvertEntity(IEntity entity)
-		{
-			return ConvertSymbol(entity);
-		}
-		
 		public string ConvertSymbol(ISymbol symbol)
 		{
 			if (symbol == null)
@@ -45,12 +39,6 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			StringWriter writer = new StringWriter();
 			ConvertSymbol(symbol, new TextWriterTokenWriter(writer), FormattingOptionsFactory.CreateMono ());
 			return writer.ToString();
-		}
-		
-		[Obsolete("Use ConvertSymbol() instead")]
-		public void ConvertEntity(IEntity entity, TokenWriter writer, CSharpFormattingOptions formattingPolicy)
-		{
-			ConvertSymbol(entity, writer, formattingPolicy);
 		}
 		
 		public void ConvertSymbol(ISymbol symbol, TokenWriter writer, CSharpFormattingOptions formattingPolicy)

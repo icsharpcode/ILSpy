@@ -138,32 +138,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		[Obsolete]
-		public bool IsPartialMethodDeclaration {
-			get { return IsPartial && !HasBody; }
-			set {
-				if (value) {
-					IsPartial = true;
-					HasBody = false;
-				} else if (!value && IsPartial && !HasBody) {
-					IsPartial = false;
-				}
-			}
-		}
-		
-		[Obsolete]
-		public bool IsPartialMethodImplementation {
-			get { return IsPartial && HasBody; }
-			set {
-				if (value) {
-					IsPartial = true;
-					HasBody = true;
-				} else if (!value && IsPartial && HasBody) {
-					IsPartial = false;
-				}
-			}
-		}
-		
 		public IList<IUnresolvedParameter> Parameters {
 			get {
 				if (parameters == null)
