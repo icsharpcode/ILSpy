@@ -314,9 +314,33 @@ namespace ICSharpCode.Decompiler
 		
 		public override void WritePrimitiveType(string type)
 		{
-			output.Write(type);
-			if (type == "new") {
-				output.Write("()");
+			switch (type) {
+				case "new":
+					output.Write(type);
+					output.Write("()");
+					break;
+				case "bool":
+				case "byte":
+				case "sbyte":
+				case "short":
+				case "ushort":
+				case "int":
+				case "uint":
+				case "long":
+				case "ulong":
+				case "float":
+				case "double":
+				case "decimal":
+				case "char":
+				case "string":
+				case "object":
+					var typeSymbol = (nodeStack.Peek().GetSymbol() as IType)?.GetDefinition();
+					if (typeSymbol == null) goto default;
+					output.WriteReference(type, typeSystem.GetCecil(typeSymbol));
+					break;
+				default:
+					output.Write(type);
+					break;
 			}
 		}
 		
