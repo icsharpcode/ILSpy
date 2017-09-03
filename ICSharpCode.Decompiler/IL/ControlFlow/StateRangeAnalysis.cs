@@ -58,6 +58,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		readonly Dictionary<Block, LongSet> ranges = new Dictionary<Block, LongSet>();
 		readonly internal Dictionary<IMethod, LongSet> finallyMethodToStateRange; // used only for IteratorDispose
 
+		internal ILVariable doFinallyBodies;
+
 		public StateRangeAnalysis(StateRangeAnalysisMode mode, IField stateField, ILVariable cachedStateVar = null)
 		{
 			this.mode = mode;
@@ -148,6 +150,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					AddStateRange(br.TargetBlock, stateRange);
 					return LongSet.Empty;
 				case Nop nop:
+					return stateRange;
+				case StLoc stloc when stloc.Variable == doFinallyBodies:
+					// pre-roslyn async/await uses a generated 'bool doFinallyBodies';
+					// do not treat this as user code.
 					return stateRange;
 				case StLoc stloc when stloc.Variable.IsSingleDefinition:
 					val = evalContext.Eval(stloc.Value);

@@ -56,6 +56,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		int finalState;       // final state after the setResultAndExitBlock
 		ILVariable resultVar; // the variable that gets returned by the setResultAndExitBlock
 
+		ILVariable doFinallyBodies;
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			if (!context.Settings.AsyncAwait)
@@ -267,7 +269,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				++pos;
 			}
 			mainTryCatch = blockContainer.EntryPoint.Instructions[pos] as TryCatch;
-			// TryCatch will be validated in ValidateCatchBlock()
+			// CatchHandler will be validated in ValidateCatchBlock()
+
+			if (((BlockContainer)mainTryCatch.TryBlock).EntryPoint.Instructions[0] is StLoc initDoFinallyBodies
+				&& initDoFinallyBodies.Variable.Kind == VariableKind.Local
+				&& initDoFinallyBodies.Variable.Type.IsKnownType(KnownTypeCode.Boolean)
+				&& initDoFinallyBodies.Value.MatchLdcI4(1))
+			{
+				doFinallyBodies = initDoFinallyBodies.Variable;
+			}
 
 			setResultAndExitBlock = blockContainer.Blocks[1];
 			// stobj System.Int32(ldflda [Field ICSharpCode.Decompiler.Tests.TestCases.Pretty.Async+<SimpleBoolTaskMethod>d__7.<>1__state](ldloc this), ldc.i4 -2)
@@ -413,6 +423,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// Use a separate state range analysis per container.
 				var sra = new StateRangeAnalysis(StateRangeAnalysisMode.AsyncMoveNext, stateField, cachedStateVar);
 				sra.CancellationToken = context.CancellationToken;
+				sra.doFinallyBodies = doFinallyBodies;
 				sra.AssignStateRanges(container, LongSet.Universe);
 
 				foreach (var block in container.Blocks) {
@@ -429,6 +440,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						}
 					}
 				}
+				// Skip the state dispatcher and directly jump to the initial state
 				var entryPoint = sra.FindBlock(container, initialState);
 				if (entryPoint != null) {
 					container.Blocks.Insert(0, new Block {
@@ -448,6 +460,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			state = 0;
 			context.CancellationToken.ThrowIfCancellationRequested();
 			int pos = block.Instructions.Count - 2;
+			if (doFinallyBodies != null && block.Instructions[pos] is StLoc storeDoFinallyBodies) {
+				if (!(storeDoFinallyBodies.Variable.Kind == VariableKind.Local
+					  && storeDoFinallyBodies.Variable.Type.IsKnownType(KnownTypeCode.Boolean)
+					  && storeDoFinallyBodies.Variable.Index == doFinallyBodies.Index)) {
+					return false;
+				}
+				if (!storeDoFinallyBodies.Value.MatchLdcI4(0))
+					return false;
+				pos--;
+			}
+
 			// call AwaitUnsafeOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
 			if (!MatchCall(block.Instructions[pos], "AwaitUnsafeOnCompleted", out var callArgs))
 				return false;
