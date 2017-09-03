@@ -612,6 +612,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			// C# 4.0 spec: §7.5.3.2 Better function member
 			bool c1IsBetter = false;
 			bool c2IsBetter = false;
+			bool parameterTypesEqual = true;
 			for (int i = 0; i < arguments.Length; i++) {
 				int p1 = c1.ArgumentToParameterMap[i];
 				int p2 = c2.ArgumentToParameterMap[i];
@@ -620,6 +621,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				} else if (p1 < 0 && p2 >= 0) {
 					c2IsBetter = true;
 				} else if (p1 >= 0 && p2 >= 0) {
+					if (!conversions.IdentityConversion(c1.ParameterTypes[p1], c2.ParameterTypes[p2]))
+						parameterTypesEqual = false;
 					switch (conversions.BetterConversion(arguments[i], c1.ParameterTypes[p1], c2.ParameterTypes[p2])) {
 						case 1:
 							c1IsBetter = true;
@@ -639,7 +642,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			if (c1.ErrorCount < c2.ErrorCount) return 1;
 			if (c1.ErrorCount > c2.ErrorCount) return 2;
 			
-			if (!c1IsBetter && !c2IsBetter) {
+			if (!c1IsBetter && !c2IsBetter && parameterTypesEqual) {
 				// we need the tie-breaking rules
 				
 				// non-generic methods are better
