@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			
 			switch (method.FullName) {
-				case "System.Type System.Type::GetTypeFromHandle(System.RuntimeTypeHandle)":
+				case "System.Type.GetTypeFromHandle":
 					if (arguments.Length == 1) {
 						if (typeHandleOnTypeOfPattern.IsMatch(arguments[0])) {
 							invocationExpression.ReplaceWith(((MemberReferenceExpression)arguments[0]).Target);
@@ -75,17 +75,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 					}
 					break;
-				case "System.Reflection.FieldInfo System.Reflection.FieldInfo::GetFieldFromHandle(System.RuntimeFieldHandle)":
+				case "System.Reflection.FieldInfo.GetFieldFromHandle":
 					if (arguments.Length == 1) {
 						MemberReferenceExpression mre = arguments[0] as MemberReferenceExpression;
 						if (mre != null && mre.MemberName == "FieldHandle" && mre.Target.Annotation<LdTokenAnnotation>() != null) {
 							invocationExpression.ReplaceWith(mre.Target);
 							return;
 						}
-					}
-					break;
-				case "System.Reflection.FieldInfo System.Reflection.FieldInfo::GetFieldFromHandle(System.RuntimeFieldHandle,System.RuntimeTypeHandle)":
-					if (arguments.Length == 2) {
+					} else if (arguments.Length == 2) {
 						MemberReferenceExpression mre1 = arguments[0] as MemberReferenceExpression;
 						MemberReferenceExpression mre2 = arguments[1] as MemberReferenceExpression;
 						if (mre1 != null && mre1.MemberName == "FieldHandle" && mre1.Target.Annotation<LdTokenAnnotation>() != null) {
