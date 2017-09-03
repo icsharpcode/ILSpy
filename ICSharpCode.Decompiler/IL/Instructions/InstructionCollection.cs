@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -86,15 +87,18 @@ namespace ICSharpCode.Decompiler.IL
 				#endif
 			}
 			
+			[DebuggerStepThrough]
 			public bool MoveNext()
 			{
 				return ++pos < list.Count;
 			}
 
 			public T Current {
+				[DebuggerStepThrough]
 				get { return list[pos]; }
 			}
 
+			[DebuggerStepThrough]
 			public void Dispose()
 			{
 				#if DEBUG

@@ -187,5 +187,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					yield return (block, stateSet);
 			}
 		}
+
+		public Block FindBlock(BlockContainer container, int newState)
+		{
+			Block targetBlock = null;
+			foreach (var (block, stateSet) in GetBlockStateSetMapping(container)) {
+				if (stateSet.Contains(newState))
+					targetBlock = block;
+			}
+			return targetBlock;
+		}
 	}
 }

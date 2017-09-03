@@ -68,6 +68,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				AnalyzeMoveNext();
 				ValidateCatchBlock();
 				InlineBodyOfMoveNext(function);
+				AnalyzeStateMachine(function);
+				FinalizeInlineMoveNext(function);
 			} catch (SymbolicAnalysisFailedException) {
 				return;
 			}
@@ -382,17 +384,139 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						branch.ReplaceWith(new Leave((BlockContainer)function.Body) { ILRange = branch.ILRange });
 				}
 			}
+			function.Variables.AddRange(function.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
+			function.Variables.RemoveDead();
+		}
+
+		void FinalizeInlineMoveNext(ILFunction function)
+		{
+			context.Step("FinalizeInlineMoveNext()", function);
 			foreach (var leave in function.Descendants.OfType<Leave>()) {
 				if (leave.TargetContainer == moveNextFunction.Body) {
 					leave.ReplaceWith(new InvalidBranch {
-						Message = " leave MoveNext - await not detected correctly ",
+						Message = "leave MoveNext - await not detected correctly",
 						ILRange = leave.ILRange
 					});
 				}
 			}
-			function.Variables.AddRange(function.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
-			function.Variables.RemoveDead();
 		}
 		#endregion
+
+		/// <summary>
+		/// Analyze the the state machine; and replace 'leave IL_0000' with await+jump to block that gets
+		/// entered on the next MoveNext() call.
+		/// </summary>
+		void AnalyzeStateMachine(ILFunction function)
+		{
+			context.Step("AnalyzeStateMachine()", function);
+			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
+				// Use a separate state range analysis per container.
+				var sra = new StateRangeAnalysis(StateRangeAnalysisMode.AsyncMoveNext, stateField, cachedStateVar);
+				sra.CancellationToken = context.CancellationToken;
+				sra.AssignStateRanges(container, LongSet.Universe);
+
+				foreach (var block in container.Blocks) {
+					if (block.Instructions.Last().MatchLeave((BlockContainer)moveNextFunction.Body)) {
+						// This is likely an 'await' block
+						if (AnalyzeAwaitBlock(block, out var awaiter, out var awaiterField, out var state)) {
+							block.Instructions.Add(new Await(new LdLoca(awaiter)));
+							Block targetBlock = sra.FindBlock(container, state);
+							if (targetBlock != null) {
+								block.Instructions.Add(new Branch(targetBlock));
+							} else {
+								block.Instructions.Add(new InvalidBranch("Could not find block for state " + state));
+							}
+						}
+					}
+				}
+				var entryPoint = sra.FindBlock(container, initialState);
+				if (entryPoint != null) {
+					container.Blocks.Insert(0, new Block {
+						Instructions = {
+							new Branch(entryPoint)
+						}
+					});
+				}
+				container.SortBlocks(deleteUnreachableBlocks: true);
+			}
+		}
+
+		bool AnalyzeAwaitBlock(Block block, out ILVariable awaiter, out IField awaiterField, out int state)
+		{
+			awaiter = null;
+			awaiterField = null;
+			state = 0;
+			context.CancellationToken.ThrowIfCancellationRequested();
+			int pos = block.Instructions.Count - 2;
+			// call AwaitUnsafeOnCompleted(ldflda <>t__builder(ldloc this), ldloca awaiter, ldloc this)
+			if (!MatchCall(block.Instructions[pos], "AwaitUnsafeOnCompleted", out var callArgs))
+				return false;
+			if (callArgs.Count != 3)
+				return false;
+			if (!IsBuilderFieldOnThis(callArgs[0]))
+				return false;
+			if (!callArgs[1].MatchLdLoca(out awaiter))
+				return false;
+			if (callArgs[2].MatchLdThis()) {
+				// OK (if state machine is a struct)
+				pos--;
+			} else if (callArgs[2].MatchLdLoca(out var tempVar)) {
+				// Roslyn, non-optimized uses a class for the state machine.
+				// stloc tempVar(ldloc this)
+				// call AwaitUnsafeOnCompleted(ldflda <>t__builder](ldloc this), ldloca awaiter, ldloca tempVar)
+				if (!(pos > 0 && block.Instructions[pos - 1].MatchStLoc(tempVar, out var tempVal)))
+					return false;
+				if (!tempVal.MatchLdThis())
+					return false;
+				pos -= 2;
+			} else {
+				return false;
+			}
+			// stfld StateMachine.<>awaiter(ldloc this, ldloc awaiter)
+			if (!block.Instructions[pos].MatchStFld(out var target, out awaiterField, out var value))
+				return false;
+			if (!target.MatchLdThis())
+				return false;
+			if (!value.MatchLdLoc(awaiter))
+				return false;
+			pos--;
+			// stloc S_10(ldloc this)
+			// stloc S_11(ldc.i4 0)
+			// stloc cachedStateVar(ldloc S_11)
+			// stfld <>1__state(ldloc S_10, ldloc S_11)
+			if (!block.Instructions[pos].MatchStFld(out target, out var field, out value))
+				return false;
+			if (!StackSlotValue(target).MatchLdThis())
+				return false;
+			if (field.MemberDefinition != stateField)
+				return false;
+			if (!StackSlotValue(value).MatchLdcI4(out state))
+				return false;
+			if (pos > 0 && block.Instructions[pos - 1] is StLoc stloc
+				&& stloc.Variable.Kind == VariableKind.Local && stloc.Variable.Index == cachedStateVar.Index
+				&& StackSlotValue(stloc.Value).MatchLdcI4(state)) {
+				// also delete the assignment to cachedStateVar
+				pos--;
+			}
+			block.Instructions.RemoveRange(pos, block.Instructions.Count - pos);
+			// delete preceding dead stores:
+			while (pos > 0 && block.Instructions[pos - 1] is StLoc stloc2
+				&& stloc2.Variable.IsSingleDefinition && stloc2.Variable.LoadCount == 0
+				&& stloc2.Variable.Kind == VariableKind.StackSlot) {
+				pos--;
+			}
+			block.Instructions.RemoveRange(pos, block.Instructions.Count - pos);
+			return true;
+		}
+
+		static ILInstruction StackSlotValue(ILInstruction inst)
+		{
+			if (inst.MatchLdLoc(out var v) && v.Kind == VariableKind.StackSlot && v.IsSingleDefinition) {
+				if (v.StoreInstructions[0] is StLoc stloc) {
+					return stloc.Value;
+				}
+			}
+			return inst;
+		}
 	}
 }

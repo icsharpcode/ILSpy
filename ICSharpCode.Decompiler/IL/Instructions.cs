@@ -162,6 +162,8 @@ namespace ICSharpCode.Decompiler.IL
 		RefAnyValue,
 		/// <summary>Yield an element from an iterator.</summary>
 		YieldReturn,
+		/// <summary>C# await operator.</summary>
+		Await,
 		/// <summary>Matches any node</summary>
 		AnyNode,
 	}
@@ -3995,6 +3997,98 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 }
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>C# await operator.</summary>
+	public sealed partial class Await : ILInstruction
+	{
+		public Await(ILInstruction value) : base(OpCode.Await)
+		{
+			this.Value = value;
+		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.value, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (Await)ShallowClone();
+			clone.Value = this.value.Clone();
+			return clone;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.SideEffect | value.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.SideEffect;
+			}
+		}
+		public override void WriteTo(ITextOutput output)
+		{
+			output.Write(OpCode);
+			output.Write('(');
+			this.value.WriteTo(output);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitAwait(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitAwait(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitAwait(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Await;
+			return o != null && this.value.PerformMatch(o.value, ref match);
+		}
+	}
+}
 namespace ICSharpCode.Decompiler.IL.Patterns
 {
 	/// <summary>Matches any node</summary>
@@ -4313,6 +4407,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitAwait(Await inst)
+		{
+			Default(inst);
+		}
 	}
 	
 	/// <summary>
@@ -4584,6 +4682,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitYieldReturn(YieldReturn inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitAwait(Await inst)
 		{
 			return Default(inst);
 		}
@@ -4861,6 +4963,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitAwait(Await inst, C context)
+		{
+			return Default(inst, context);
+		}
 	}
 	
 	partial class InstructionOutputExtensions
@@ -4932,6 +5038,7 @@ namespace ICSharpCode.Decompiler.IL
 			"refanytype",
 			"refanyval",
 			"yield.return",
+			"await",
 			"AnyNode",
 		};
 	}
@@ -5413,6 +5520,16 @@ namespace ICSharpCode.Decompiler.IL
 		public bool MatchYieldReturn(out ILInstruction value)
 		{
 			var inst = this as YieldReturn;
+			if (inst != null) {
+				value = inst.Value;
+				return true;
+			}
+			value = default(ILInstruction);
+			return false;
+		}
+		public bool MatchAwait(out ILInstruction value)
+		{
+			var inst = this as Await;
 			if (inst != null) {
 				value = inst.Value;
 				return true;

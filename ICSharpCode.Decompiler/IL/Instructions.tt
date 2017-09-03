@@ -219,10 +219,13 @@
 			CustomClassName("RefAnyValue"), Unary, HasTypeOperand, MayThrow, ResultType("Ref")),
 
 		new OpCode("yield.return", "Yield an element from an iterator.",
-			MayBranch, // yield return may end up returning if the consumer disposes the iterator without
+			MayBranch, // yield return may end up returning if the consumer disposes the iterator
 			SideEffect, // consumer can have arbitrary side effects while we're yielding
 			CustomArguments("value"), VoidResult),
 		// note: "yield break" is always represented using a "leave" instruction
+		new OpCode("await", "C# await operator.",
+			SideEffect, // other code can run with arbitrary side effects while we're waiting
+			CustomArguments("value"), ResultType("Void")),
 
 		// patterns
 		new OpCode("AnyNode", "Matches any node", Pattern, CustomArguments(), CustomConstructor),
