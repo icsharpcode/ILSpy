@@ -1085,9 +1085,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						new AssignmentExpression {
 							Left = new NamedNode("var3", new IdentifierExpression(Pattern.AnyString)),
 							Operator = AssignmentOperatorType.Assign,
-							Right = new CastExpression(new AnyNode("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new CastExpression(new TypePattern(typeof(System.Delegate)), new IdentifierExpressionBackreference("var2")),
-								new CastExpression(new TypePattern(typeof(System.Delegate)), new IdentifierExpression("value"))
-							))
+							Right = new CastExpression(new AnyNode("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"), new IdentifierExpression("value")))
 						},
 						new AssignmentExpression {
 							Left = new IdentifierExpressionBackreference("var1"),
