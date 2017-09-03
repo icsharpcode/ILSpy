@@ -465,6 +465,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					return right;
 				}
 			}
+
+			// Special case comparisons with char literals
+			if (left.Type.IsKnownType(KnownTypeCode.Char) && MightBeCharLiteral(right.ResolveResult)) {
+				right = right.ConvertTo(left.Type, this);
+			} else if (right.Type.IsKnownType(KnownTypeCode.Char) && MightBeCharLiteral(left.ResolveResult)) {
+				left = left.ConvertTo(right.Type, this);
+			}
 			
 			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
 				as OperatorResolveResult;
@@ -499,6 +506,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(rr);
+		}
+
+		bool MightBeCharLiteral(ResolveResult rr)
+		{
+			return rr.IsCompileTimeConstant && rr.ConstantValue is int val
+				&& val >= char.MinValue && val <= char.MaxValue;
 		}
 		
 		/// <summary>

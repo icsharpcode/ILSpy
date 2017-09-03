@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module CompoundAssignmentTest.dll
-// MVID: {4291E75E-F92B-4A69-AD59-40A9D8C6DF95}
+// MVID: {0CCA0C51-2F8D-424C-BDE8-57699BE33BC6}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00F40000
+// Image base: 0x00900000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -215,6 +215,17 @@
     IL_0000:  ldarg.1
     IL_0001:  ret
   } // end of method CompoundAssignmentTest::GetValue
+
+  .method public hidebysig instance bool 
+          IsUpperCaseA(char a) cil managed
+  {
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldc.i4.s   65
+    IL_0003:  ceq
+    IL_0005:  ret
+  } // end of method CompoundAssignmentTest::IsUpperCaseA
 
   .method public hidebysig instance void 
           Int32_Local_Add(int32 i) cil managed

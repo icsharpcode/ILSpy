@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly a1plok3m
+.assembly mjdn04ya
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module a1plok3m.dll
-// MVID: {7BD8D57D-A1D7-460B-8B05-A3F6005A275C}
+.module mjdn04ya.dll
+// MVID: {D8AF2CB3-EE41-4B93-96CE-1FD07E5E4237}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01350000
+// Image base: 0x01640000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -211,6 +211,17 @@
     IL_0000:  ldarg.1
     IL_0001:  ret
   } // end of method CompoundAssignmentTest::GetValue
+
+  .method public hidebysig instance bool 
+          IsUpperCaseA(char a) cil managed
+  {
+    // Code size       6 (0x6)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldc.i4.s   65
+    IL_0003:  ceq
+    IL_0005:  ret
+  } // end of method CompoundAssignmentTest::IsUpperCaseA
 
   .method public hidebysig instance void 
           Int32_Local_Add(int32 i) cil managed
@@ -723,4 +734,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../Tests/TestCases/Pretty\CompoundAssignmentTest.opt.res
+// WARNING: Created Win32 resource file ../../../../ICSharpCode.Decompiler.Tests/TestCases/Pretty\CompoundAssignmentTest.opt.res

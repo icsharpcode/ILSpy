@@ -95,6 +95,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return value;
 		}
+
+		public bool IsUpperCaseA(char a)
+		{
+			return a == 'A';
+		}
 		
 		public void Int32_Local_Add(int i)
 		{
