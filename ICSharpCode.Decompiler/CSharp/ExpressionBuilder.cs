@@ -25,7 +25,6 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Transforms;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
-using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
@@ -1460,15 +1459,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			var elementsStack = new Stack<List<Expression>>();
 			var elements = new List<Expression>(block.Instructions.Count);
 			elementsStack.Push(elements);
-			List<AccessPathElement> currentPath = null;
+			List<IL.Transforms.AccessPathElement> currentPath = null;
 			var indexVariables = new Dictionary<ILVariable, ILInstruction>();
 			foreach (var inst in block.Instructions.Skip(1)) {
 				if (inst is StLoc indexStore) {
 					indexVariables.Add(indexStore.Variable, indexStore.Value);
 					continue;
 				}
-				var info = AccessPathElement.GetAccessPath(inst, initObjRR.Type);
-				if (info.Kind == AccessPathKind.Invalid) continue;
+				var info = IL.Transforms.AccessPathElement.GetAccessPath(inst, initObjRR.Type);
+				if (info.Kind == IL.Transforms.AccessPathKind.Invalid) continue;
 				if (currentPath == null) {
 					currentPath = info.Path;
 				} else {
@@ -1490,10 +1489,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				var lastElement = currentPath.Last();
 				var memberRR = new MemberResolveResult(initObjRR, lastElement.Member);
 				switch (info.Kind) {
-					case AccessPathKind.Adder:
+					case IL.Transforms.AccessPathKind.Adder:
 						elementsStack.Peek().Add(MakeInitializerElements(info.Values, ((IMethod)lastElement.Member).Parameters));
 						break;
-					case AccessPathKind.Setter:
+					case IL.Transforms.AccessPathKind.Setter:
 						if (lastElement.Indices?.Length > 0) {
 							var indexer = new IndexerExpression(null, lastElement.Indices.SelectArray(i => Translate(i is LdLoc ld ? indexVariables[ld.Variable] : i).Expression))
 								.WithILInstruction(inst).WithRR(memberRR);
@@ -1517,7 +1516,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr.WithILInstruction(block);
 		}
 
-		Expression MakeInitializerAssignment(IMember method, AccessPathElement member, List<Expression> values, Dictionary<ILVariable, ILInstruction> indexVariables)
+		Expression MakeInitializerAssignment(IMember method, IL.Transforms.AccessPathElement member, List<Expression> values, Dictionary<ILVariable, ILInstruction> indexVariables)
 		{
 			var target = member.Indices?.Length > 0 ? (Expression)new IndexerExpression(null, member.Indices.SelectArray(i => Translate(i is LdLoc ld ? indexVariables[ld.Variable] : i).Expression)) : new IdentifierExpression(member.Member.Name);
 			Expression value;
