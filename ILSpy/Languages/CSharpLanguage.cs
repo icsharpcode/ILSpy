@@ -314,13 +314,13 @@ namespace ICSharpCode.ILSpy
 				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
 					CSharpDecompiler decompiler = new CSharpDecompiler(assembly.ModuleDefinition, options.DecompilerSettings);
 					decompiler.CancellationToken = options.CancellationToken;
+					SyntaxTree st;
 					if (options.FullDecompilation) {
-						SyntaxTree st = decompiler.DecompileWholeModuleAsSingleFile();
-						output.WriteLine(st.ToString());
+						st = decompiler.DecompileWholeModuleAsSingleFile();
 					} else {
-						SyntaxTree st = decompiler.DecompileModuleAndAssemblyAttributes();
-						output.WriteLine(st.ToString());
+						st = decompiler.DecompileModuleAndAssemblyAttributes();
 					}
+					WriteCode(output, options.DecompilerSettings, st, decompiler.TypeSystem);
 				}
 			}
 		}
