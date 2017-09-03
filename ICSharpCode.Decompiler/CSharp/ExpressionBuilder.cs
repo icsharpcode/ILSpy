@@ -533,7 +533,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		ExpressionWithResolveResult Assignment(TranslatedExpression left, TranslatedExpression right)
 		{
-			right = right.ConvertTo(left.Type, this);
+			right = right.ConvertTo(left.Type, this, allowImplicitConversion: true);
 			return new AssignmentExpression(left.Expression, right.Expression)
 				.WithRR(new OperatorResolveResult(left.Type, ExpressionType.Assign, left.ResolveResult, right.ResolveResult));
 		}
