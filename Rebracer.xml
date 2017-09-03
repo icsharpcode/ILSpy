@@ -22,84 +22,8 @@
     </ToolsOptionsCategory>
     <ToolsOptionsCategory name="TextEditor">
       <ToolsOptionsSubCategory name="CSharp-Specific">
-        <PropertyValue name="AddImport_SuggestForTypesInNuGetPackages">0</PropertyValue>
-        <PropertyValue name="AddImport_SuggestForTypesInReferenceAssemblies">0</PropertyValue>
-        <PropertyValue name="AutoComment">1</PropertyValue>
-        <PropertyValue name="AutoInsertAsteriskForNewLinesOfBlockComments">1</PropertyValue>
-        <PropertyValue name="BringUpOnIdentifier">1</PropertyValue>
-        <PropertyValue name="CSharpClosedFileDiagnostics">-1</PropertyValue>
-        <PropertyValue name="ClosedFileDiagnostics">-1</PropertyValue>
-        <PropertyValue name="CodeDefinitionWindow_DocumentationComment_IndentBase">1</PropertyValue>
-        <PropertyValue name="CodeDefinitionWindow_DocumentationComment_IndentOffset">2</PropertyValue>
-        <PropertyValue name="CodeDefinitionWindow_DocumentationComment_WrapLength">80</PropertyValue>
-        <PropertyValue name="DisplayLineSeparators">0</PropertyValue>
-        <PropertyValue name="EnableHighlightRelatedKeywords">1</PropertyValue>
-        <PropertyValue name="EnterKeyBehavior">0</PropertyValue>
-        <PropertyValue name="ExtractMethod_AllowMovingDeclaration">0</PropertyValue>
-        <PropertyValue name="ExtractMethod_DoNotPutOutOrRefOnStruct">1</PropertyValue>
-        <PropertyValue name="Formatting_TriggerOnBlockCompletion">1</PropertyValue>
-        <PropertyValue name="Formatting_TriggerOnPaste">1</PropertyValue>
-        <PropertyValue name="Formatting_TriggerOnStatementCompletion">1</PropertyValue>
-        <PropertyValue name="HighlightMatchingPortionsOfCompletionListItems">1</PropertyValue>
         <PropertyValue name="ImplementInterface_InsertRegionTags">0</PropertyValue>
-        <PropertyValue name="Indent_BlockContents">1</PropertyValue>
-        <PropertyValue name="Indent_Braces">0</PropertyValue>
-        <PropertyValue name="Indent_CaseContents">1</PropertyValue>
-        <PropertyValue name="Indent_CaseLabels">1</PropertyValue>
-        <PropertyValue name="Indent_FlushLabelsLeft">0</PropertyValue>
-        <PropertyValue name="Indent_UnindentLabels">2</PropertyValue>
-        <PropertyValue name="InsertNewlineOnEnterWithWholeWord">0</PropertyValue>
-        <PropertyValue name="NewLines_AnonymousTypeInitializer_EachMember">0</PropertyValue>
-        <PropertyValue name="NewLines_Braces_Accessor">0</PropertyValue>
-        <PropertyValue name="NewLines_Braces_AnonymousMethod">0</PropertyValue>
-        <PropertyValue name="NewLines_Braces_AnonymousTypeInitializer">0</PropertyValue>
-        <PropertyValue name="NewLines_Braces_ArrayInitializer">0</PropertyValue>
-        <PropertyValue name="NewLines_Braces_CollectionInitializer">0</PropertyValue>
-        <PropertyValue name="NewLines_Braces_ControlFlow">0</PropertyValue>
-        <PropertyValue name="NewLines_Braces_LambdaExpressionBody">0</PropertyValue>
-        <PropertyValue name="NewLines_Braces_Method">1</PropertyValue>
-        <PropertyValue name="NewLines_Braces_ObjectInitializer">0</PropertyValue>
-        <PropertyValue name="NewLines_Braces_Property">0</PropertyValue>
-        <PropertyValue name="NewLines_Braces_Type">1</PropertyValue>
-        <PropertyValue name="NewLines_Keywords_Catch">0</PropertyValue>
-        <PropertyValue name="NewLines_Keywords_Else">0</PropertyValue>
-        <PropertyValue name="NewLines_Keywords_Finally">0</PropertyValue>
-        <PropertyValue name="NewLines_ObjectInitializer_EachMember">0</PropertyValue>
-        <PropertyValue name="NewLines_QueryExpression_EachClause">0</PropertyValue>
-        <PropertyValue name="RemoveUnusedUsings">1</PropertyValue>
-        <PropertyValue name="RenameTrackingPreview">1</PropertyValue>
-        <PropertyValue name="ShowCompletionItemFilters">1</PropertyValue>
-        <PropertyValue name="ShowKeywords">1</PropertyValue>
-        <PropertyValue name="ShowSnippets">1</PropertyValue>
-        <PropertyValue name="SnippetsBehavior">0</PropertyValue>
-        <PropertyValue name="SortUsings">1</PropertyValue>
-        <PropertyValue name="SortUsings_PlaceSystemFirst">1</PropertyValue>
-        <PropertyValue name="Space_AfterBasesColon">1</PropertyValue>
-        <PropertyValue name="Space_AfterCast">0</PropertyValue>
-        <PropertyValue name="Space_AfterComma">1</PropertyValue>
-        <PropertyValue name="Space_AfterDot">0</PropertyValue>
-        <PropertyValue name="Space_AfterLambdaArrow">1</PropertyValue>
-        <PropertyValue name="Space_AfterMethodCallName">0</PropertyValue>
-        <PropertyValue name="Space_AfterMethodDeclarationName">0</PropertyValue>
-        <PropertyValue name="Space_AfterSemicolonsInForStatement">1</PropertyValue>
-        <PropertyValue name="Space_AroundBinaryOperator">1</PropertyValue>
-        <PropertyValue name="Space_BeforeBasesColon">1</PropertyValue>
-        <PropertyValue name="Space_BeforeComma">0</PropertyValue>
-        <PropertyValue name="Space_BeforeDot">0</PropertyValue>
-        <PropertyValue name="Space_BeforeLambdaArrow">1</PropertyValue>
-        <PropertyValue name="Space_BeforeOpenSquare">0</PropertyValue>
-        <PropertyValue name="Space_BeforeSemicolonsInForStatement">0</PropertyValue>
-        <PropertyValue name="Space_BetweenEmptyMethodCallParentheses">0</PropertyValue>
-        <PropertyValue name="Space_BetweenEmptyMethodDeclarationParentheses">0</PropertyValue>
-        <PropertyValue name="Space_BetweenEmptySquares">0</PropertyValue>
-        <PropertyValue name="Space_InControlFlowConstruct">1</PropertyValue>
         <PropertyValue name="Space_Normalize">0</PropertyValue>
-        <PropertyValue name="Space_WithinCastParentheses">0</PropertyValue>
-        <PropertyValue name="Space_WithinExpressionParentheses">0</PropertyValue>
-        <PropertyValue name="Space_WithinMethodCallParentheses">0</PropertyValue>
-        <PropertyValue name="Space_WithinMethodDeclarationParentheses">0</PropertyValue>
-        <PropertyValue name="Space_WithinOtherParentheses">0</PropertyValue>
-        <PropertyValue name="Space_WithinSquares">0</PropertyValue>
         <PropertyValue name="Style_NamingPreferences">&lt;NamingPreferencesInfo SerializationVersion="4"&gt;
   &lt;SymbolSpecifications&gt;
     &lt;SymbolSpecification ID="5c545a62-b14d-460a-88d8-e936c0a39316" Name="Class"&gt;
@@ -330,42 +254,6 @@
     &lt;SerializableNamingRule SymbolSpecificationID="5f3ddba1-279f-486c-801e-5c097c36dd85" NamingStyleID="87e7c501-9948-4b53-b1eb-a6cbe918feee" EnforcementLevel="Info" /&gt;
   &lt;/NamingRules&gt;
 &lt;/NamingPreferencesInfo&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferBraces">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferCoalesceExpression">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Info" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferCollectionInitializer">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Info" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferConditionalDelegateCall">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Info" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferExplicitTupleNames">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Info" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferExpressionBodiedAccessors">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferExpressionBodiedConstructors">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="false" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferExpressionBodiedIndexers">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferExpressionBodiedMethods">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="false" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferExpressionBodiedOperators">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="false" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferExpressionBodiedProperties">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferInlinedVariableDeclaration">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Info" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferIntrinsicPredefinedTypeKeywordInDeclaration">1</PropertyValue>
-        <PropertyValue name="Style_PreferIntrinsicPredefinedTypeKeywordInDeclaration_CodeStyle">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferIntrinsicPredefinedTypeKeywordInMemberAccess">1</PropertyValue>
-        <PropertyValue name="Style_PreferIntrinsicPredefinedTypeKeywordInMemberAccess_CodeStyle">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferNullPropagation">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Info" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferObjectInitializer">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Info" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferPatternMatchingOverAsWithNullCheck">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Info" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferPatternMatchingOverIsWithCastCheck">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Info" /&gt;</PropertyValue>
-        <PropertyValue name="Style_PreferThrowExpression">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="true" DiagnosticSeverity="Info" /&gt;</PropertyValue>
-        <PropertyValue name="Style_QualifyEventAccess">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="false" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_QualifyFieldAccess">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="false" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_QualifyMemberAccessWithThisOrMe">0</PropertyValue>
-        <PropertyValue name="Style_QualifyMethodAccess">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="false" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_QualifyPropertyAccess">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="false" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_UseImplicitTypeForIntrinsicTypes">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="false" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_UseImplicitTypeWhereApparent">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="false" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_UseImplicitTypeWherePossible">&lt;CodeStyleOption SerializationVersion="1" Type="Boolean" Value="false" DiagnosticSeverity="Hidden" /&gt;</PropertyValue>
-        <PropertyValue name="Style_UseVarWhenDeclaringLocals">0</PropertyValue>
-        <PropertyValue name="WarnOnBuildErrors">0</PropertyValue>
-        <PropertyValue name="WarnWhenMembersCauseCompilerGeneratedReferences">1</PropertyValue>
-        <PropertyValue name="Wrapping_IgnoreSpacesAroundBinaryOperators">0</PropertyValue>
-        <PropertyValue name="Wrapping_IgnoreSpacesAroundVariableDeclaration">0</PropertyValue>
-        <PropertyValue name="Wrapping_KeepStatementsOnSingleLine">1</PropertyValue>
-        <PropertyValue name="Wrapping_PreserveSingleLine">1</PropertyValue>
       </ToolsOptionsSubCategory>
     </ToolsOptionsCategory>
   </ToolsOptions>
