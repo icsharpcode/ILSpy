@@ -80,6 +80,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			InlineBodyOfMoveNext(function);
+
+			// Copy-propagate temporaries holding a copy of 'this'.
+			foreach (var stloc in function.Descendants.OfType<StLoc>().Where(s => s.Variable.IsSingleDefinition && s.Value.MatchLdThis()).ToList()) {
+				CopyPropagation.Propagate(stloc, context);
+			}
+
 			AnalyzeStateMachine(function);
 			DetectAwaitPattern(function);
 
@@ -696,15 +702,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				pos++;
 			}
 
-			// stloc S_27(ldloc this)
 			// stloc S_28(ldc.i4 -1)
 			// stloc cachedStateVar(ldloc S_28)
-			// stfld <>1__state(ldloc S_27, ldloc S_28)
-			ILVariable thisVar = null;
-			if (block.Instructions[pos] is StLoc stlocThis && stlocThis.Value.MatchLdThis() && stlocThis.Variable.Kind == VariableKind.StackSlot) {
-				thisVar = stlocThis.Variable;
-				pos++;
-			}
+			// stfld <>1__state(ldloc this, ldloc S_28)
 			ILVariable m1Var = null;
 			if (block.Instructions[pos] is StLoc stlocM1 && stlocM1.Value.MatchLdcI4(initialState) && stlocM1.Variable.Kind == VariableKind.StackSlot) {
 				m1Var = stlocM1.Variable;
@@ -717,7 +717,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			if (block.Instructions[pos].MatchStFld(out target, out field, out value)) {
-				if (!(target.MatchLdThis() || target.MatchLdLoc(thisVar)))
+				if (!target.MatchLdThis())
 					return false;
 				if (field.MemberDefinition != stateField)
 					return false;
