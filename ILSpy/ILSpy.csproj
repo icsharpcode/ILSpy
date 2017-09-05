@@ -282,19 +282,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Include="Controls\ResourceObjectTable.xaml">
-      <SubType>Designer</SubType>
-    </Page>
+    <Page Include="Controls\ResourceObjectTable.xaml" />
     <Page Include="Controls\ResourceStringTable.xaml" />
     <Page Include="Controls\SearchBoxStyle.xaml" />
-    <Page Include="CreateListDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="DebugSteps.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+    <Page Include="CreateListDialog.xaml" />
+    <Page Include="DebugSteps.xaml" />
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
@@ -363,8 +355,22 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="@(Page)" />
     <None Include="@(Resource)" />
   </ItemGroup>
+
+  <!--
+     Work around to fix Intellisense file generation for XAML projects
+     https://github.com/dotnet/project-system/issues/2488
+  -->
+  <Target Name="WorkaroundForXAMLIntellisenseBuildIssue" AfterTargets="_CheckCompileDesignTimePrerequisite">
+    <PropertyGroup>
+      <BuildingProject>false</BuildingProject>
+    </PropertyGroup>
+  </Target>
 
 </Project>
