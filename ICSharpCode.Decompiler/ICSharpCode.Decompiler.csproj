@@ -45,6 +45,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="System.Collections.Immutable" Version="1.3.0" />
     <PackageReference Include="System.Diagnostics.Tracing" Version="4.3.0" />
     <PackageReference Include="System.ValueTuple" Version="4.3.0" />
@@ -259,6 +260,7 @@
     <Compile Include="Documentation\IdStringProvider.cs" />
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="DecompilerEventSource.cs" />
+    <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
     <Compile Include="IL\ControlFlow\StateRangeAnalysis.cs" />

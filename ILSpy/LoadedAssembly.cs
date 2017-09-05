@@ -20,6 +20,7 @@ using System;
 using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Threading;
+using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Options;
 using Mono.Cecil;
 
@@ -34,7 +35,8 @@ namespace ICSharpCode.ILSpy
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
 		readonly string shortName;
-		
+		readonly Lazy<string> targetFrameworkId;
+
 		public LoadedAssembly(AssemblyList assemblyList, string fileName, Stream stream = null)
 		{
 			if (assemblyList == null)
@@ -46,8 +48,11 @@ namespace ICSharpCode.ILSpy
 			
 			this.assemblyTask = Task.Factory.StartNew<ModuleDefinition>(LoadAssembly, stream); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
+			this.targetFrameworkId = new Lazy<string>(AssemblyDefinition.DetectTargetFrameworkId, false);
 		}
-		
+
+		public string TargetFrameworkId => targetFrameworkId.Value;
+
 		/// <summary>
 		/// Gets the Cecil ModuleDefinition.
 		/// Can be null when there was a load error.
@@ -234,23 +239,47 @@ namespace ICSharpCode.ILSpy
 		{
 			return assemblyList.assemblyLookupCache.GetOrAdd(fullName, LookupReferencedAssemblyInternal);
 		}
+
+		DotNetCorePathFinder dotNetCorePathFinder;
 		
 		LoadedAssembly LookupReferencedAssemblyInternal(string fullName)
 		{
+			DecompilerEventSource.Log.Info($"Looking for {fullName}...");
+
 			foreach (LoadedAssembly asm in assemblyList.GetAssemblies()) {
-				if (asm.AssemblyDefinition != null && fullName.Equals(asm.AssemblyDefinition.FullName, StringComparison.OrdinalIgnoreCase))
+				if (asm.AssemblyDefinition != null && fullName.Equals(asm.AssemblyDefinition.FullName, StringComparison.OrdinalIgnoreCase)) {
+					DecompilerEventSource.Log.Info($"Found in list of loaded assemblies.");
 					return asm;
+				}
 			}
 			if (assemblyLoadDisableCount > 0)
 				return null;
 			
 			if (!App.Current.Dispatcher.CheckAccess()) {
+				DecompilerEventSource.Log.Info($"Retry on UI thread...");
 				// Call this method on the GUI thread.
 				return (LoadedAssembly)App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Func<string, LoadedAssembly>(LookupReferencedAssembly), fullName);
 			}
-			
+
+			DecompilerEventSource.Log.Info($"Detected target framework: {TargetFrameworkId}.");
+
+			var targetFramework = TargetFrameworkId.Split(new[] { ",Version=v" }, StringSplitOptions.None);
 			var name = AssemblyNameReference.Parse(fullName);
-			string file = GacInterop.FindAssemblyInNetGac(name);
+			string file = null;
+			switch (targetFramework[0]) {
+				case ".NETCoreApp":
+				case ".NETStandard":
+					if (targetFramework.Length != 2) break;
+					if (dotNetCorePathFinder == null) {
+						var version = targetFramework[1].Length == 3 ? targetFramework[1] + ".0" : targetFramework[1];
+						dotNetCorePathFinder = new DotNetCorePathFinder(fileName, TargetFrameworkId, version);
+					}
+					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
+					break;
+				default:
+					file = GacInterop.FindAssemblyInNetGac(name);
+					break;
+			}
 			if (file == null) {
 				string dir = Path.GetDirectoryName(this.fileName);
 				if (File.Exists(Path.Combine(dir, name.Name + ".dll")))
@@ -259,8 +288,8 @@ namespace ICSharpCode.ILSpy
 					file = Path.Combine(dir, name.Name + ".exe");
 			}
 			if (file != null) {
-				var loaded = assemblyList.OpenAssembly(file, true);
-				return loaded;
+				DecompilerEventSource.Log.Info($"Success - Loading {file}...");
+				return assemblyList.OpenAssembly(file, true);
 			} else {
 				return null;
 			}
