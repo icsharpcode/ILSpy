@@ -261,6 +261,7 @@
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="DecompilerEventSource.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
+    <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
     <Compile Include="IL\ControlFlow\StateRangeAnalysis.cs" />
