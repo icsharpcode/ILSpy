@@ -36,4 +36,13 @@ namespace ICSharpCode.ILSpy
 			return string.Compare(x.ShortName, y.ShortName, StringComparison.CurrentCulture);
 		}
 	}
+
+	[ExportMainMenuCommand(Menu = "_View", Header = "_Output", MenuIcon = "Images/ViewCode.png", MenuCategory = "View")]
+	sealed class ShowLog : SimpleCommand
+	{
+		public override void Execute(object parameter)
+		{
+			LogWindow.Instance.Show();
+		}
+	}
 }

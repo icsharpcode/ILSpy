@@ -126,6 +126,7 @@
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
     <Compile Include="LoadedAssembly.cs" />
+    <Compile Include="LogWindow.xaml.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="NavigationHistory.cs" />
     <Compile Include="NavigationState.cs" />
@@ -302,6 +303,9 @@
     <Page Include="Options\OptionsDialog.xaml" />
     <Page Include="SearchPane.xaml">
       <DependentUpon>SearchPane.cs</DependentUpon>
+    </Page>
+    <Page Include="LogWindow.xaml">
+      <DependentUpon>LogWindow.xaml.cs</DependentUpon>
     </Page>
     <Page Include="TextView\DecompilerTextView.xaml">
       <DependentUpon>DecompilerTextView.cs</DependentUpon>

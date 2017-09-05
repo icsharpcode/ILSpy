@@ -498,6 +498,7 @@ namespace ICSharpCode.ILSpy.TextView
 				if (i > 0)
 					textOutput.WriteLine();
 				
+				DecompilerEventSource.Log.Info($"Decompilation started...");
 				context.Options.CancellationToken.ThrowIfCancellationRequested();
 				nodes[i].Decompile(context.Language, textOutput, context.Options);
 			}
