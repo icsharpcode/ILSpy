@@ -211,7 +211,6 @@ namespace ICSharpCode.Decompiler
 				return null;
 		}
 
-		//[Obsolete("throwing exceptions is considered a bug")]
 		public static TypeDefinition ResolveOrThrow(this TypeReference typeReference)
 		{
 			var resolved = typeReference.Resolve();

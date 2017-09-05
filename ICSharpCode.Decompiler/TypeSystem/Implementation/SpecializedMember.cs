@@ -58,21 +58,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			this.substitution = TypeParameterSubstitution.Compose(newSubstitution, this.substitution);
 		}
 		
-		[Obsolete("Use IMember.Specialize() instead")]
-		public static IMember Create(IMember memberDefinition, TypeParameterSubstitution substitution)
-		{
-			if (memberDefinition == null) {
-				return null;
-			} else {
-				return memberDefinition.Specialize(substitution);
-			}
-		}
-		
-		public virtual IMemberReference ToMemberReference()
-		{
-			return ToReference();
-		}
-		
 		public virtual IMemberReference ToReference()
 		{
 			return new SpecializingMemberReference(
@@ -183,11 +168,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		
 		public SymbolKind SymbolKind {
 			get { return baseMember.SymbolKind; }
-		}
-		
-		[Obsolete("Use the SymbolKind property instead.")]
-		public EntityType EntityType {
-			get { return baseMember.EntityType; }
 		}
 		
 		public DomRegion Region {

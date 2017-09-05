@@ -110,19 +110,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 		
 		/// <summary>
-		/// Initializes a new instance of the <see cref="CecilLoader"/> class.
-		/// </summary>
-		/// <param name='createCecilReferences'>
-		/// If true references to the cecil objects are hold. In this case the cecil loader can do a type system -> cecil mapping.
-		/// </param>
-		[Obsolete("The built-in entity<->cecil mapping is obsolete. Use the OnEntityLoaded callback instead!")]
-		public CecilLoader(bool createCecilReferences) : this()
-		{
-			if (createCecilReferences)
-				typeSystemTranslationTable = new Dictionary<object, object> ();
-		}
-		
-		/// <summary>
 		/// Creates a nested CecilLoader for lazy-loading.
 		/// </summary>
 		private CecilLoader(CecilLoader loader)

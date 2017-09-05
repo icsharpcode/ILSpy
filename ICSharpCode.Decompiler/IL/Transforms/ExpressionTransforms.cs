@@ -216,26 +216,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		protected internal override void VisitStObj(StObj inst)
 		{
 			base.VisitStObj(inst);
-			ILVariable v;
-			if (inst.Target.MatchLdLoca(out v)
-			    && TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type)
-			    && inst.UnalignedPrefix == 0
-			    && !inst.IsVolatile)
-			{
-				context.Step("stobj(ldloca(v), ...) => stloc(v, ...)", inst);
-				inst.ReplaceWith(new StLoc(v, inst.Value));
+			if (StObjToStLoc(inst, context)) {
 				return;
 			}
-			
-			ILInstruction target;
-			IType t;
-			BinaryNumericInstruction binary = inst.Value as BinaryNumericInstruction;
-			if (binary != null && binary.Left.MatchLdObj(out target, out t) && inst.Target.Match(target).Success) {
+
+			if (inst.Value is BinaryNumericInstruction binary
+				&& binary.Left.MatchLdObj(out ILInstruction target, out IType t)
+				&& inst.Target.Match(target).Success) 
+			{
 				context.Step("compound assignment", inst);
 				// stobj(target, binary.op(ldobj(target), ...))
 				// => compound.op(target, ...)
 				inst.ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, binary.Left, binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
 			}
+		}
+
+		internal static bool StObjToStLoc(StObj inst, ILTransformContext context)
+		{
+			if (inst.Target.MatchLdLoca(out ILVariable v)
+				&& TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type)
+				&& inst.UnalignedPrefix == 0
+				&& !inst.IsVolatile) {
+				context.Step("stobj(ldloca(v), ...) => stloc(v, ...)", inst);
+				inst.ReplaceWith(new StLoc(v, inst.Value));
+				return true;
+			}
+			return false;
 		}
 		
 		protected internal override void VisitIfInstruction(IfInstruction inst)

@@ -1,4 +1,5 @@
-﻿using ICSharpCode.Decompiler.IL.Transforms;
+﻿using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using System;
@@ -15,18 +16,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	class AsyncAwaitDecompiler : IILTransform
 	{
-		/*
-		public static bool IsCompilerGeneratedStateMachine(TypeDefinition type)
+		public static bool IsCompilerGeneratedStateMachine(Mono.Cecil.TypeDefinition type)
 		{
 			if (!(type.DeclaringType != null && type.IsCompilerGenerated()))
 				return false;
-			foreach (TypeReference i in type.Interfaces) {
-				if (i.Namespace == "System.Runtime.CompilerServices" && i.Name == "IAsyncStateMachine")
+			foreach (var i in type.Interfaces) {
+				var iface = i.InterfaceType;
+				if (iface.Namespace == "System.Runtime.CompilerServices" && iface.Name == "IAsyncStateMachine")
 					return true;
 			}
 			return false;
 		}
-		*/
 
 		enum AsyncMethodType
 		{
@@ -55,8 +55,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		Block setResultAndExitBlock; // block that is jumped to for return statements
 		int finalState;       // final state after the setResultAndExitBlock
 		ILVariable resultVar; // the variable that gets returned by the setResultAndExitBlock
-
 		ILVariable doFinallyBodies;
+
+		// These fields are set by AnalyzeStateMachine():
+
+		// For each block containing an 'await', stores the awaiter variable, and the field storing the awaiter
+		// across the yield point.
+		Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)> awaitBlocks = new Dictionary<Block, (ILVariable awaiterVar, IField awaiterField)>();
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -64,17 +69,34 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return; // abort if async/await decompilation is disabled
 			this.context = context;
 			fieldToParameterMap.Clear();
+			awaitBlocks.Clear();
 			if (!MatchTaskCreationPattern(function))
 				return;
 			try {
 				AnalyzeMoveNext();
 				ValidateCatchBlock();
-				InlineBodyOfMoveNext(function);
-				AnalyzeStateMachine(function);
-				FinalizeInlineMoveNext(function);
 			} catch (SymbolicAnalysisFailedException) {
 				return;
 			}
+
+			InlineBodyOfMoveNext(function);
+
+			// Copy-propagate temporaries holding a copy of 'this'.
+			foreach (var stloc in function.Descendants.OfType<StLoc>().Where(s => s.Variable.IsSingleDefinition && s.Value.MatchLdThis()).ToList()) {
+				CopyPropagation.Propagate(stloc, context);
+			}
+
+			AnalyzeStateMachine(function);
+			DetectAwaitPattern(function);
+
+			context.Step("Translate fields to local accesses", function);
+			YieldReturnDecompiler.TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
+
+			FinalizeInlineMoveNext(function);
+
+			// Re-run control flow simplification over the newly constructed set of gotos,
+			// and inlining because TranslateFieldsToLocalAccess() might have opened up new inlining opportunities.
+			function.RunTransforms(CSharpDecompiler.EarlyILTransforms(), context);
 		}
 
 		#region MatchTaskCreationPattern
@@ -396,6 +418,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			function.Variables.AddRange(function.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
 			function.Variables.RemoveDead();
+			function.Variables.AddRange(fieldToParameterMap.Values);
 		}
 
 		void FinalizeInlineMoveNext(ILFunction function)
@@ -412,6 +435,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 		#endregion
 
+		#region AnalyzeStateMachine
+
 		/// <summary>
 		/// Analyze the the state machine; and replace 'leave IL_0000' with await+jump to block that gets
 		/// entered on the next MoveNext() call.
@@ -427,16 +452,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				sra.AssignStateRanges(container, LongSet.Universe);
 
 				foreach (var block in container.Blocks) {
+					context.CancellationToken.ThrowIfCancellationRequested();
 					if (block.Instructions.Last().MatchLeave((BlockContainer)moveNextFunction.Body)) {
 						// This is likely an 'await' block
-						if (AnalyzeAwaitBlock(block, out var awaiter, out var awaiterField, out var state)) {
-							block.Instructions.Add(new Await(new LdLoca(awaiter)));
+						if (AnalyzeAwaitBlock(block, out var awaiterVar, out var awaiterField, out var state)) {
+							block.Instructions.Add(new Await(new LdLoca(awaiterVar)));
 							Block targetBlock = sra.FindBlock(container, state);
 							if (targetBlock != null) {
 								block.Instructions.Add(new Branch(targetBlock));
 							} else {
 								block.Instructions.Add(new InvalidBranch("Could not find block for state " + state));
 							}
+							awaitBlocks.Add(block, (awaiterVar, awaiterField));
 						}
 					}
 				}
@@ -458,7 +485,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			awaiter = null;
 			awaiterField = null;
 			state = 0;
-			context.CancellationToken.ThrowIfCancellationRequested();
 			int pos = block.Instructions.Count - 2;
 			if (doFinallyBodies != null && block.Instructions[pos] is StLoc storeDoFinallyBodies) {
 				if (!(storeDoFinallyBodies.Variable.Kind == VariableKind.Local
@@ -525,7 +551,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// delete preceding dead stores:
 			while (pos > 0 && block.Instructions[pos - 1] is StLoc stloc2
 				&& stloc2.Variable.IsSingleDefinition && stloc2.Variable.LoadCount == 0
-				&& stloc2.Variable.Kind == VariableKind.StackSlot) {
+				&& stloc2.Variable.Kind == VariableKind.StackSlot
+				&& SemanticHelper.IsPure(stloc2.Value.Flags))
+			{
 				pos--;
 			}
 			block.Instructions.RemoveRange(pos, block.Instructions.Count - pos);
@@ -541,5 +569,167 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			return inst;
 		}
+		#endregion
+
+		#region DetectAwaitPattern
+		void DetectAwaitPattern(ILFunction function)
+		{
+			context.StepStartGroup("DetectAwaitPattern", function);
+			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
+				foreach (var block in container.Blocks) {
+					context.CancellationToken.ThrowIfCancellationRequested();
+					DetectAwaitPattern(block);
+				}
+				container.SortBlocks(deleteUnreachableBlocks: true);
+			}
+			context.StepEndGroup(keepIfEmpty: true);
+		}
+
+		void DetectAwaitPattern(Block block)
+		{
+			// block:
+			//   stloc awaiterVar(callvirt GetAwaiter(...))
+			//   if (call get_IsCompleted(ldloca awaiterVar)) br completedBlock
+			//   br awaitBlock
+			// awaitBlock:
+			//   ..
+			//   br resumeBlock
+			// resumeBlock:
+			//   ..
+			//   br completedBlock
+			if (block.Instructions.Count < 3)
+				return;
+			// stloc awaiterVar(callvirt GetAwaiter(...))
+			if (!(block.Instructions[block.Instructions.Count - 3] is StLoc stLocAwaiter))
+				return;
+			ILVariable awaiterVar = stLocAwaiter.Variable;
+			if (!(stLocAwaiter.Value is CallInstruction getAwaiterCall))
+				return;
+			if (!(getAwaiterCall.Method.Name == "GetAwaiter" && (!getAwaiterCall.Method.IsStatic || getAwaiterCall.Method.IsExtensionMethod)))
+				return;
+			if (getAwaiterCall.Arguments.Count != 1)
+				return;
+			// if (call get_IsCompleted(ldloca awaiterVar)) br completedBlock
+			if (!block.Instructions[block.Instructions.Count - 2].MatchIfInstruction(out var condition, out var trueInst))
+				return;
+			if (!MatchCall(condition, "get_IsCompleted", out var isCompletedArgs) || isCompletedArgs.Count != 1)
+				return;
+			if (!isCompletedArgs[0].MatchLdLocRef(awaiterVar))
+				return;
+			if (!trueInst.MatchBranch(out var completedBlock))
+				return;
+			// br awaitBlock
+			if (!block.Instructions.Last().MatchBranch(out var awaitBlock))
+				return;
+			// Check awaitBlock and resumeBlock:
+			if (!awaitBlocks.TryGetValue(awaitBlock, out var awaitBlockData))
+				return;
+			if (awaitBlockData.awaiterVar != awaiterVar)
+				return;
+			if (!CheckAwaitBlock(awaitBlock, out var resumeBlock))
+				return;
+			if (!CheckResumeBlock(resumeBlock, awaiterVar, awaitBlockData.awaiterField, completedBlock))
+				return;
+			// Check completedBlock:
+			ILInstruction getResultCall;
+			if (completedBlock.Instructions[0] is StLoc resultStore) {
+				getResultCall = resultStore.Value;
+			} else {
+				getResultCall = completedBlock.Instructions[0];
+				resultStore = null;
+			}
+			if (!MatchCall(getResultCall, "GetResult", out var getResultArgs) || getResultArgs.Count != 1)
+				return;
+			if (!getResultArgs[0].MatchLdLocRef(awaiterVar))
+				return;
+			// All checks successful, let's transform.
+			context.Step("Transform await pattern", block);
+			block.Instructions.RemoveAt(block.Instructions.Count - 3); // remove getAwaiter call
+			block.Instructions.RemoveAt(block.Instructions.Count - 2); // remove if (isCompleted)
+			((Branch)block.Instructions.Last()).TargetBlock = completedBlock; // instead, directly jump to completed block
+			Await awaitInst = new Await(getAwaiterCall.Arguments.Single());
+			awaitInst.GetResultMethod = ((CallInstruction)getResultCall).Method;
+			awaitInst.GetAwaiterMethod = getAwaiterCall.Method;
+			if (resultStore != null) {
+				resultStore.Value = awaitInst;
+			} else {
+				completedBlock.Instructions[0] = awaitInst;
+			}
+
+			// Remove useless reset of awaiterVar.
+			if (completedBlock.Instructions[1] is StObj stobj) {
+				if (stobj.Target.MatchLdLoca(awaiterVar) && stobj.Value.OpCode == OpCode.DefaultValue) {
+					completedBlock.Instructions.RemoveAt(1);
+				}
+			}
+		}
+
+		bool CheckAwaitBlock(Block block, out Block resumeBlock)
+		{
+			// awaitBlock:
+			//   await(ldloca V_2)
+			//   br resumeBlock
+			resumeBlock = null;
+			if (block.Instructions.Count != 2)
+				return false;
+			if (block.Instructions[0].OpCode != OpCode.Await)
+				return false;
+			if (!block.Instructions[1].MatchBranch(out resumeBlock))
+				return false;
+			return true;
+		}
+
+		bool CheckResumeBlock(Block block, ILVariable awaiterVar, IField awaiterField, Block completedBlock)
+		{
+			int pos = 0;
+			// stloc awaiterVar(ldfld awaiterField(ldloc this))
+			if (!block.Instructions[pos].MatchStLoc(awaiterVar, out var value))
+				return false;
+			if (!value.MatchLdFld(out var target, out var field))
+				return false;
+			if (!target.MatchLdThis())
+				return false;
+			if (field.MemberDefinition != awaiterField)
+				return false;
+			pos++;
+
+			// stfld awaiterField(ldloc this, default.value)
+			if (block.Instructions[pos].MatchStFld(out target, out field, out value)
+				&& target.MatchLdThis()
+				&& field.MemberDefinition == awaiterField
+				&& value.OpCode == OpCode.DefaultValue)
+			{
+				pos++;
+			}
+
+			// stloc S_28(ldc.i4 -1)
+			// stloc cachedStateVar(ldloc S_28)
+			// stfld <>1__state(ldloc this, ldloc S_28)
+			ILVariable m1Var = null;
+			if (block.Instructions[pos] is StLoc stlocM1 && stlocM1.Value.MatchLdcI4(initialState) && stlocM1.Variable.Kind == VariableKind.StackSlot) {
+				m1Var = stlocM1.Variable;
+				pos++;
+			}
+			if (block.Instructions[pos] is StLoc stlocCachedState) {
+				if (stlocCachedState.Variable.Kind == VariableKind.Local && stlocCachedState.Variable.Index == cachedStateVar.Index) { 
+					if (stlocCachedState.Value.MatchLdLoc(m1Var) || stlocCachedState.Value.MatchLdcI4(initialState))
+						pos++;
+				}
+			}
+			if (block.Instructions[pos].MatchStFld(out target, out field, out value)) {
+				if (!target.MatchLdThis())
+					return false;
+				if (field.MemberDefinition != stateField)
+					return false;
+				if (!(value.MatchLdcI4(initialState) || value.MatchLdLoc(m1Var)))
+					return false;
+				pos++;
+			} else {
+				return false;
+			}
+			
+			return block.Instructions[pos].MatchBranch(completedBlock);
+		}
+		#endregion
 	}
 }

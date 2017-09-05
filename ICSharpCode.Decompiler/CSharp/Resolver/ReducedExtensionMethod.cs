@@ -93,11 +93,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				}
 			}
 		}
-
-		public IMemberReference ToMemberReference()
-		{
-			return new ReducedExtensionMethodMemberReference (baseMethod);
-		}
 		
 		public IMemberReference ToReference()
 		{
@@ -286,13 +281,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 
-		[Obsolete("Use the SymbolKind property instead.")]
-		public EntityType EntityType {
-			get {
-				return baseMethod.EntityType;
-			}
-		}
-		
 		public DomRegion Region {
 			get {
 				return baseMethod.Region;

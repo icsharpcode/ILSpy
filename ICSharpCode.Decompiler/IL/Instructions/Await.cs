@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2010-2013 AlphaSierraPapa for the SharpDevelop Team
+﻿// Copyright (c) 2017 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -16,12 +16,13 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.Decompiler.TypeSystem.Implementation
+namespace ICSharpCode.Decompiler.IL
 {
-	[Obsolete("This struct was renamed to 'TopLevelTypeName'.", true)]
-	public struct FullNameAndTypeParameterCount
+	partial class Await
 	{
+		public IMethod GetAwaiterMethod;
+		public IMethod GetResultMethod;
 	}
 }

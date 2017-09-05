@@ -27,42 +27,6 @@ using System;
 
 namespace ICSharpCode.Decompiler.CSharp.Syntax
 {
-	[Obsolete("This class is obsolete. Remove all referencing code.")]
-	public class EmptyExpression : AstNode
-	{
-		#region implemented abstract members of AstNode
-
-		public override void AcceptVisitor(IAstVisitor visitor)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override T AcceptVisitor<T>(IAstVisitor<T> visitor)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override S AcceptVisitor<T, S>(IAstVisitor<T, S> visitor, T data)
-		{
-			throw new NotImplementedException();
-		}
-
-		protected internal override bool DoMatch(AstNode other, PatternMatching.Match match)
-		{
-			throw new NotImplementedException();
-		}
-
-		public override NodeType NodeType {
-			get {
-				throw new NotImplementedException();
-			}
-		}
-
-		#endregion
-
-
-	}
-
 	public class ErrorExpression : Expression
 	{
 		TextLocation location;

@@ -160,6 +160,11 @@
     <Compile Include="Commands\RefreshCommand.cs" />
     <Compile Include="Commands\SaveCommand.cs" />
     <Compile Include="SearchPane.cs">
+      <DependentUpon>SearchPane.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="LogWindow.xaml.cs">
+      <DependentUpon>LogWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Commands\SimpleCommand.cs" />
@@ -246,7 +251,9 @@
     </Compile>
     <Compile Include="SessionSettings.cs" />
     <Compile Include="TextView\CaretHighlightAdorner.cs" />
-    <Compile Include="TextView\DecompilerTextView.cs" />
+    <Compile Include="TextView\DecompilerTextView.cs">
+      <DependentUpon>DecompilerTextView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="TextView\OutputLengthExceededException.cs" />
     <Compile Include="TextView\ReferenceElementGenerator.cs" />
     <Compile Include="TextView\AvalonEditTextOutput.cs" />
@@ -280,36 +287,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Page Include="Controls\ResourceObjectTable.xaml">
-      <SubType>Designer</SubType>
-    </Page>
+    <Page Include="Controls\ResourceObjectTable.xaml" />
     <Page Include="Controls\ResourceStringTable.xaml" />
-    <Page Include="Controls\SearchBoxStyle.xaml">
-      <DependentUpon>SearchBox.cs</DependentUpon>
-    </Page>
-    <Page Include="CreateListDialog.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-    <Page Include="DebugSteps.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+    <Page Include="Controls\SearchBoxStyle.xaml" />
+    <Page Include="CreateListDialog.xaml" />
+    <Page Include="DebugSteps.xaml" />
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
     <Page Include="Options\DecompilerSettingsPanel.xaml" />
     <Page Include="Options\DisplaySettingsPanel.xaml" />
     <Page Include="Options\OptionsDialog.xaml" />
-    <Page Include="SearchPane.xaml">
-      <DependentUpon>SearchPane.cs</DependentUpon>
-    </Page>
-    <Page Include="LogWindow.xaml">
-      <DependentUpon>LogWindow.xaml.cs</DependentUpon>
-    </Page>
-    <Page Include="TextView\DecompilerTextView.xaml">
-      <DependentUpon>DecompilerTextView.cs</DependentUpon>
-    </Page>
+    <Page Include="SearchPane.xaml" />
+    <Page Include="TextView\DecompilerTextView.xaml" />
+    <Page Include="LogWindow.xaml" />
     <Page Include="themes\generic.xaml" />
   </ItemGroup>
 
@@ -368,5 +359,24 @@
   <ItemGroup>
     <Resource Include="Images\Sort.png" />
   </ItemGroup>
+
+  <ItemGroup>
+    <Page Update="@(Page)" SubType="Designer" Generator="MSBuild:Compile" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="@(Page)" />
+    <None Include="@(Resource)" />
+  </ItemGroup>
+
+  <!--
+     Work around to fix Intellisense file generation for XAML projects
+     https://github.com/dotnet/project-system/issues/2488
+  -->
+  <Target Name="WorkaroundForXAMLIntellisenseBuildIssue" AfterTargets="_CheckCompileDesignTimePrerequisite">
+    <PropertyGroup>
+      <BuildingProject>false</BuildingProject>
+    </PropertyGroup>
+  </Target>
 
 </Project>

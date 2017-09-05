@@ -129,11 +129,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 			}
 		}
 		
-		public virtual IMemberReference ToMemberReference()
-		{
-			return (IMemberReference)ToReference();
-		}
-		
 		internal IMethod GetAccessor(ref IMethod accessorField, IUnresolvedMethod unresolvedAccessor)
 		{
 			if (unresolvedAccessor == null)

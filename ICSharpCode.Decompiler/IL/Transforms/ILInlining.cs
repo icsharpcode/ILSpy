@@ -261,10 +261,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// decide based on the source expression being inlined
 			switch (inlinedExpression.OpCode) {
 				case OpCode.DefaultValue:
-					return true;
 				case OpCode.StObj:
-					return true;
 				case OpCode.CompoundAssignmentInstruction:
+				case OpCode.Await:
 					return true;
 				case OpCode.LdLoc:
 					if (v.StateMachineField == null && ((LdLoc)inlinedExpression).Variable.StateMachineField != null) {

@@ -165,13 +165,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region IMember implementation
-
-		[Obsolete("Use the ToReference method instead.")]
-		public IMemberReference ToMemberReference()
-		{
-			return ToReference();
-		}
-
+		
 		public IMemberReference ToReference()
 		{
 			throw new NotImplementedException();
@@ -238,14 +232,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#endregion
 
 		#region IEntity implementation
-
-		[Obsolete]
-		public EntityType EntityType {
-			get {
-				throw new NotImplementedException();
-			}
-		}
-
+		
 		public DomRegion Region {
 			get { return baseMethod.Region; }
 		}

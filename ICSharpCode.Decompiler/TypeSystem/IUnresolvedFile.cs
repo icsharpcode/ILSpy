@@ -22,9 +22,6 @@ using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.TypeSystem
 {
-	[Obsolete("IParsedFile was renamed to IUnresolvedFile", true)]
-	public interface IParsedFile {}
-	
 	/// <summary>
 	/// Represents a single file that was parsed.
 	/// </summary>

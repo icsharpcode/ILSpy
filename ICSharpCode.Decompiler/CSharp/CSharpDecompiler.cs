@@ -188,8 +188,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 					if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
 						return true;
-//					if (settings.AsyncAwait && AsyncDecompiler.IsCompilerGeneratedStateMachine(type))
-//						return true;
+					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(type))
+						return true;
 				} else if (type.IsCompilerGenerated()) {
 //					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 //						return true;

@@ -88,6 +88,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		void RemoveAt(int index)
 		{
+			list[index].Function = null;
 			// swap-remove index
 			list[index] = list[list.Count - 1];
 			list[index].IndexInFunction = index;

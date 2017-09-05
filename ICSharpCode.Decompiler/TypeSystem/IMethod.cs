@@ -44,12 +44,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets whether the method is a C#-style async method.
 		/// </summary>
 		bool IsAsync { get; }
-
-		[Obsolete("Use IsPartial && !HasBody instead")]
-		bool IsPartialMethodDeclaration { get; }
-		
-		[Obsolete("Use IsPartial && HasBody instead")]
-		bool IsPartialMethodImplementation { get; }
 		
 		/// <summary>
 		/// Gets whether the method has a body.

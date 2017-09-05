@@ -74,22 +74,6 @@ namespace ICSharpCode.Decompiler.Semantics
 		/// </summary>
 		public static readonly Conversion TryCast = new BuiltinConversion(false, 9);
 		
-		[Obsolete("Use UserDefinedConversion() instead")]
-		public static Conversion UserDefinedImplicitConversion(IMethod operatorMethod, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted)
-		{
-			if (operatorMethod == null)
-				throw new ArgumentNullException("operatorMethod");
-			return new UserDefinedConv(true, operatorMethod, conversionBeforeUserDefinedOperator, conversionAfterUserDefinedOperator, isLifted, false);
-		}
-		
-		[Obsolete("Use UserDefinedConversion() instead")]
-		public static Conversion UserDefinedExplicitConversion(IMethod operatorMethod, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted)
-		{
-			if (operatorMethod == null)
-				throw new ArgumentNullException("operatorMethod");
-			return new UserDefinedConv(false, operatorMethod, conversionBeforeUserDefinedOperator, conversionAfterUserDefinedOperator, isLifted, false);
-		}
-		
 		public static Conversion UserDefinedConversion(IMethod operatorMethod, bool isImplicit, Conversion conversionBeforeUserDefinedOperator, Conversion conversionAfterUserDefinedOperator, bool isLifted = false, bool isAmbiguous = false)
 		{
 			if (operatorMethod == null)

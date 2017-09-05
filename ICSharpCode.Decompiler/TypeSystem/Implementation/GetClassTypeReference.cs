@@ -80,13 +80,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		/// </summary>
 		public FullTypeName FullTypeName { get { return fullTypeName; } }
 		
-		[Obsolete("Use the FullTypeName property instead. GetClassTypeReference now supports nested types, where the Namespace/Name/TPC tripel isn't sufficient for identifying the type.")]
-		public string Namespace { get { return fullTypeName.TopLevelTypeName.Namespace; } }
-		[Obsolete("Use the FullTypeName property instead. GetClassTypeReference now supports nested types, where the Namespace/Name/TPC tripel isn't sufficient for identifying the type.")]
-		public string Name { get { return fullTypeName.Name; } }
-		[Obsolete("Use the FullTypeName property instead. GetClassTypeReference now supports nested types, where the Namespace/Name/TPC tripel isn't sufficient for identifying the type.")]
-		public int TypeParameterCount { get { return fullTypeName.TypeParameterCount; } }
-
 		IType ResolveInAllAssemblies(ITypeResolveContext context)
 		{
 			var compilation = context.Compilation;

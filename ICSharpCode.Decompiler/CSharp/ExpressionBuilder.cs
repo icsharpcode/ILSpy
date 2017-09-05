@@ -1730,6 +1730,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ByReferenceResolveResult(value.ResolveResult, false));
 		}
 
+		protected internal override TranslatedExpression VisitAwait(Await inst, TranslationContext context)
+		{
+			var value = Translate(inst.Value);
+			return new UnaryOperatorExpression(UnaryOperatorType.Await, value.Expression)
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(inst?.GetResultMethod.ReturnType ?? SpecialType.UnknownType));
+		}
+
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)
 		{
 			string message = "Error";
