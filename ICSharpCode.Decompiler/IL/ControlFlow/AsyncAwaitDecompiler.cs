@@ -81,11 +81,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			InlineBodyOfMoveNext(function);
-
-			// Copy-propagate temporaries holding a copy of 'this'.
-			foreach (var stloc in function.Descendants.OfType<StLoc>().Where(s => s.Variable.IsSingleDefinition && s.Value.MatchLdThis()).ToList()) {
-				CopyPropagation.Propagate(stloc, context);
-			}
+			CleanUpBodyOfMoveNext(function);
 
 			AnalyzeStateMachine(function);
 			DetectAwaitPattern(function);
@@ -99,6 +95,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Re-run control flow simplification over the newly constructed set of gotos,
 			// and inlining because TranslateFieldsToLocalAccess() might have opened up new inlining opportunities.
 			function.RunTransforms(CSharpDecompiler.EarlyILTransforms(), context);
+		}
+
+		private void CleanUpBodyOfMoveNext(ILFunction function)
+		{
+			context.StepStartGroup("CleanUpBodyOfMoveNext", function);
+			// Simplify stobj(ldloca) -> stloc
+			foreach (var stobj in function.Descendants.OfType<StObj>()) {
+				ExpressionTransforms.StObjToStLoc(stobj, context);
+			}
+
+			// Copy-propagate temporaries holding a copy of 'this'.
+			foreach (var stloc in function.Descendants.OfType<StLoc>().Where(s => s.Variable.IsSingleDefinition && s.Value.MatchLdThis()).ToList()) {
+				CopyPropagation.Propagate(stloc, context);
+			}
+			new RemoveDeadVariableInit().Run(function, context);
+			// Run inlining, but don't remove dead variables (they might get revived by TranslateFieldsToLocalAccess)
+			foreach (var block in function.Descendants.OfType<Block>()) {
+				ILInlining.InlineAllInBlock(block, context);
+			}
+			context.StepEndGroup();
 		}
 
 		#region MatchTaskCreationPattern
@@ -717,7 +733,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				pos++;
 			}
 			if (block.Instructions[pos] is StLoc stlocCachedState) {
-				if (stlocCachedState.Variable.Kind == VariableKind.Local && stlocCachedState.Variable.Index == cachedStateVar.Index) { 
+				if (stlocCachedState.Variable.Kind == VariableKind.Local && stlocCachedState.Variable.Index == cachedStateVar?.Index) { 
 					if (stlocCachedState.Value.MatchLdLoc(m1Var) || stlocCachedState.Value.MatchLdcI4(initialState))
 						pos++;
 				}

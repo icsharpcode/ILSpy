@@ -1760,7 +1760,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return new UnaryOperatorExpression(UnaryOperatorType.Await, value.Expression)
 				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(inst?.GetResultMethod.ReturnType ?? SpecialType.UnknownType));
+				.WithRR(new ResolveResult(inst.GetResultMethod?.ReturnType ?? SpecialType.UnknownType));
 		}
 
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)

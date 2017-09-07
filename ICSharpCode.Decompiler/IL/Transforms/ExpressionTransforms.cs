@@ -237,7 +237,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				&& TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type)
 				&& inst.UnalignedPrefix == 0
 				&& !inst.IsVolatile) {
-				context.Step("stobj(ldloca(v), ...) => stloc(v, ...)", inst);
+				context.Step($"stobj(ldloca {v.Name}, ...) => stloc {v.Name}(...)", inst);
 				inst.ReplaceWith(new StLoc(v, inst.Value));
 				return true;
 			}
