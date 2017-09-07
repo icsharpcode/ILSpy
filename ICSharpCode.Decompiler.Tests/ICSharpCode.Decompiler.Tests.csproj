@@ -86,6 +86,7 @@
     <Compile Include="TestCases\Pretty\HelloWorld.cs" />
     <Compile Include="TestCases\Pretty\InlineAssignmentTest.cs" />
     <Compile Include="TestCases\Pretty\PropertiesAndEvents.cs" />
+    <Compile Include="TestCases\Pretty\QueryExpressions.cs" />
     <Compile Include="TestCases\Pretty\ShortCircuit.cs" />
     <Compile Include="TestTraceListener.cs" />
     <Compile Include="Util\IntervalTests.cs" />

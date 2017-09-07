@@ -218,7 +218,9 @@
     <Compile Include="CSharp\Resolver\ReducedExtensionMethod.cs" />
     <Compile Include="CSharp\Resolver\RenameCallbackArguments.cs" />
     <Compile Include="CSharp\Resolver\TypeInference.cs" />
+    <Compile Include="CSharp\Transforms\CombineQueryExpressions.cs" />
     <Compile Include="CSharp\Transforms\IntroduceExtensionMethods.cs" />
+    <Compile Include="CSharp\Transforms\IntroduceQueryExpressions.cs" />
     <Compile Include="CSharp\Transforms\RemoveCLSCompliantAttribute.cs" />
     <Compile Include="CSharp\TranslationContext.cs" />
     <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />

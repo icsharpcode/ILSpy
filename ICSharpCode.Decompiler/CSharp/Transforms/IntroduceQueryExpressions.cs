@@ -19,7 +19,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
-using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -29,21 +29,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class IntroduceQueryExpressions : IAstTransform
 	{
-		readonly DecompilerContext context;
-		
-		public IntroduceQueryExpressions(DecompilerContext context)
-		{
-			this.context = context;
-		}
-		
-		public void Run(AstNode compilationUnit)
+		public void Run(AstNode rootNode, TransformContext context)
 		{
 			if (!context.Settings.QueryExpressions)
 				return;
-			DecompileQueries(compilationUnit);
+			DecompileQueries(rootNode);
 			// After all queries were decompiled, detect degenerate queries (queries not property terminated with 'select' or 'group')
 			// and fix them, either by adding a degenerate select, or by combining them with another query.
-			foreach (QueryExpression query in compilationUnit.Descendants.OfType<QueryExpression>()) {
+			foreach (QueryExpression query in rootNode.Descendants.OfType<QueryExpression>()) {
 				QueryFromClause fromClause = (QueryFromClause)query.Clauses.First();
 				if (IsDegenerateQuery(query)) {
 					// introduce select for degenerate query
@@ -278,7 +271,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// <summary>Matches simple lambdas of the form "a => b"</summary>
 		bool MatchSimpleLambda(Expression expr, out string parameterName, out Expression body)
 		{
-			LambdaExpression lambda = expr as LambdaExpression;
+			// HACK : remove workaround after all unnecessary casts are eliminated.
+			LambdaExpression lambda;
+			if (expr is CastExpression cast)
+				lambda = cast.Expression as LambdaExpression;
+			else
+				lambda = expr as LambdaExpression;
 			if (lambda != null && lambda.Parameters.Count == 1 && lambda.Body is Expression) {
 				ParameterDeclaration p = lambda.Parameters.Single();
 				if (p.ParameterModifier == ParameterModifier.None) {

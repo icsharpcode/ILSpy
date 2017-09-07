@@ -18,8 +18,8 @@
 
 using System;
 using System.Linq;
-using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.PatternMatching;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
@@ -28,18 +28,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class CombineQueryExpressions : IAstTransform
 	{
-		readonly DecompilerContext context;
-		
-		public CombineQueryExpressions(DecompilerContext context)
-		{
-			this.context = context;
-		}
-		
-		public void Run(AstNode compilationUnit)
+		public void Run(AstNode rootNode, TransformContext context)
 		{
 			if (!context.Settings.QueryExpressions)
 				return;
-			CombineQueries(compilationUnit);
+			CombineQueries(rootNode);
 		}
 		
 		static readonly InvocationExpression castPattern = new InvocationExpression {

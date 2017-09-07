@@ -1138,10 +1138,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else {
 					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 					var result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+					bool requireTypeArguments = false;
+					IType[] typeArguments = Array.Empty<IType>();
 
 					// 1.
 					// Try overload resolution and check if the correct call is selected with the given casts.
-					// If anything goes wrong, apply explicit casts to all arguments.
 					if (result == null) {
 						for (int i = 0; i < arguments.Length; i++) {
 							if (!method.Parameters[i].Type.ContainsAnonymousType())
@@ -1150,15 +1151,25 @@ namespace ICSharpCode.Decompiler.CSharp
 					} else {
 						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
 						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt)) {
-							for (int i = 0; i < arguments.Length; i++) {
-								if (!method.Parameters[i].Type.ContainsAnonymousType())
-									arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
-							}
+						switch (or.BestCandidateErrors) {
+							case OverloadResolutionErrors.TypeInferenceFailed:
+							case OverloadResolutionErrors.WrongNumberOfTypeArguments:
+								requireTypeArguments = true;
+								typeArguments = method.TypeArguments.ToArray();
+								break;
+							default:
+								if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt)) {
+									for (int i = 0; i < arguments.Length; i++) {
+										if (!method.Parameters[i].Type.ContainsAnonymousType())
+											arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
+									}
+								}
+								break;
 						}
+
 					}
 
-					result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+					result = lookup.Lookup(target.ResolveResult, method.Name, typeArguments, true) as MethodGroupResolveResult;
 
 					// 2.
 					// Try overload resolution again and if anything goes wrong,
@@ -1166,14 +1177,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (result == null) {
 						target = target.ConvertTo(method.DeclaringType, this);
 					} else {
-						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
+						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray(), typeArguments: typeArguments);
 						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt))
+						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt))
 							target = target.ConvertTo(method.DeclaringType, this);
 					}
-
-					bool requireTypeArguments = false;
-					result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+					result = lookup.Lookup(target.ResolveResult, method.Name, typeArguments, true) as MethodGroupResolveResult;
 
 					// 3.
 					// Try overload resolution again and if anything goes wrong,
@@ -1181,9 +1190,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (result == null) {
 						requireTypeArguments = true;
 					} else {
-						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
+						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray(), typeArguments: typeArguments);
 						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt))
+						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt))
 							requireTypeArguments = true;
 					}
 

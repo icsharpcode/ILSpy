@@ -133,8 +133,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			new DecimalConstantTransform(),
 			new IntroduceUsingDeclarations(),
 			new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
-			//new IntroduceQueryExpressions(context), // must run after IntroduceExtensionMethods
-			//new CombineQueryExpressions(context),
+			new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods
+			new CombineQueryExpressions(),
 			//new FlattenSwitchBlocks(),
 			new FixNameCollisions(),
 			new AddXmlDocumentationTransform(),
