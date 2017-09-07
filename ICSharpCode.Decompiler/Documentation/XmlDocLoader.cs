@@ -62,6 +62,7 @@ namespace ICSharpCode.Decompiler.Documentation
 						xmlDoc = new XmlDocumentationProvider(xmlDocFile);
 						cache.Add(module, xmlDoc);
 					} else {
+						cache.Add(module, null); // add missing documentation files as well
 						xmlDoc = null;
 					}
 				}

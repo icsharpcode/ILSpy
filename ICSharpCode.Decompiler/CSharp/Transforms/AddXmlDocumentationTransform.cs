@@ -34,6 +34,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!context.Settings.ShowXmlDocumentation)
 				return;
+			var xmldoc = XmlDocLoader.LoadDocumentation(context.TypeSystem.ModuleDefinition);
+			if (xmldoc == null)
+				return;
 			foreach (var entity in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>()) {
 				var symbol = entity.GetSymbol();
 				Mono.Cecil.MemberReference mr;
@@ -47,14 +50,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					default:
 						continue;
 				}
-				if (mr != null && mr.Module != null) {
-					var xmldoc = XmlDocLoader.LoadDocumentation(mr.Module);
-					if (xmldoc != null) {
-						string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
-						if (doc != null) {
-							InsertXmlDocumentation(entity, new StringReader(doc));
-						}
-					}
+				string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
+				if (doc != null) {
+					InsertXmlDocumentation(entity, new StringReader(doc));
 				}
 			}
 		}
