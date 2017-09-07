@@ -137,6 +137,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			//new CombineQueryExpressions(context),
 			//new FlattenSwitchBlocks(),
 			new FixNameCollisions(),
+			new AddXmlDocumentationTransform(),
 		};
 
 		public CancellationToken CancellationToken { get; set; }

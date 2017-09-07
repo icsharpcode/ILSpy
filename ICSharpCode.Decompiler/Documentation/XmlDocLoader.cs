@@ -23,7 +23,7 @@ using System.Runtime.CompilerServices;
 using ICSharpCode.Decompiler.Documentation;
 using Mono.Cecil;
 
-namespace ICSharpCode.ILSpy.XmlDoc
+namespace ICSharpCode.Decompiler.Documentation
 {
 	/// <summary>
 	/// Helps finding and loading .xml documentation.

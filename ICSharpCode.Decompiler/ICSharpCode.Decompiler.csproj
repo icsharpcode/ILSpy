@@ -253,9 +253,12 @@
     <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="CSharp\WholeProjectDecompiler.cs" />
+    <Compile Include="Documentation\AddXmlDocumentationTransform.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
     <Compile Include="Documentation\IdStringMemberReference.cs" />
     <Compile Include="Documentation\IdStringProvider.cs" />
+    <Compile Include="Documentation\XmlDocKeyProvider.cs" />
+    <Compile Include="Documentation\XmlDocLoader.cs" />
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />

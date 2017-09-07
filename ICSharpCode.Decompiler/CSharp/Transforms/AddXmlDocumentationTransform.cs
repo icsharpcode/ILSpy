@@ -18,34 +18,44 @@
 
 using System;
 using System.IO;
+using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.TypeSystem;
 
-namespace ICSharpCode.ILSpy.XmlDoc
+namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	/// <summary>
 	/// Adds XML documentation for member definitions.
 	/// </summary>
-	static class AddXmlDocTransform
+	public class AddXmlDocumentationTransform : IAstTransform
 	{
-		public static void Run(AstNode node)
+		public void Run(AstNode rootNode, TransformContext context)
 		{
-			if (node is EntityDeclaration) {
-				MemberReference mr = node.Annotation<MemberReference>();
+			if (!context.Settings.ShowXmlDocumentation)
+				return;
+			foreach (var entity in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>()) {
+				var symbol = entity.GetSymbol();
+				Mono.Cecil.MemberReference mr;
+				switch (symbol) {
+					case IMember member:
+						mr = context.TypeSystem.GetCecil(member);
+						break;
+					case IType type:
+						mr = context.TypeSystem.GetCecil(type.GetDefinition());
+						break;
+					default:
+						continue;
+				}
 				if (mr != null && mr.Module != null) {
 					var xmldoc = XmlDocLoader.LoadDocumentation(mr.Module);
 					if (xmldoc != null) {
 						string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
 						if (doc != null) {
-							InsertXmlDocumentation(node, new StringReader(doc));
+							InsertXmlDocumentation(entity, new StringReader(doc));
 						}
 					}
 				}
-				if (!(node is TypeDeclaration))
-					return; // don't recurse into attributed nodes, except for type definitions
 			}
-			foreach (AstNode child in node.Children)
-				Run(child);
 		}
 		
 		static void InsertXmlDocumentation(AstNode node, StringReader r)

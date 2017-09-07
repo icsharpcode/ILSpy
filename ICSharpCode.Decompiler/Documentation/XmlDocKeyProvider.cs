@@ -27,7 +27,7 @@ using ArrayType = Mono.Cecil.ArrayType;
 using ByReferenceType = Mono.Cecil.ByReferenceType;
 using PointerType = Mono.Cecil.PointerType;
 
-namespace ICSharpCode.ILSpy.XmlDoc
+namespace ICSharpCode.Decompiler.Documentation
 {
 	/// <summary>
 	/// Provides XML documentation tags.
