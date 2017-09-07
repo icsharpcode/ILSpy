@@ -1732,7 +1732,23 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitAwait(Await inst, TranslationContext context)
 		{
-			var value = Translate(inst.Value);
+			IType expectedType = null;
+			if (inst.GetAwaiterMethod != null) {
+				if (inst.GetAwaiterMethod.IsStatic) {
+					expectedType = inst.GetAwaiterMethod.Parameters.FirstOrDefault()?.Type;
+				} else {
+					expectedType = inst.GetAwaiterMethod.DeclaringType;
+				}
+			}
+
+			var value = Translate(inst.Value, typeHint: expectedType);
+			if (value.Expression is DirectionExpression) {
+				// we can deference the managed reference by stripping away the 'ref'
+				value = value.UnwrapChild(((DirectionExpression)value.Expression).Expression);
+			}
+			if (expectedType != null) {
+				value = value.ConvertTo(expectedType, this, allowImplicitConversion: true);
+			}
 			return new UnaryOperatorExpression(UnaryOperatorType.Await, value.Expression)
 				.WithILInstruction(inst)
 				.WithRR(new ResolveResult(inst?.GetResultMethod.ReturnType ?? SpecialType.UnknownType));

@@ -35,7 +35,9 @@ using ICSharpCode.Decompiler.TypeSystem;
 namespace ICSharpCode.ILSpy
 {
 	/// <summary>
-	/// Decompiler logic for C#.
+	/// C# decompiler integration into ILSpy.
+	/// Note: if you're interested in using the decompiler without the ILSpy UI,
+	/// please directly use the CSharpDecompiler class.
 	/// </summary>
 	[Export(typeof(Language))]
 	public class CSharpLanguage : Language

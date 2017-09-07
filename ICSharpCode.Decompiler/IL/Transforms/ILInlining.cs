@@ -240,8 +240,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case OpCode.CallVirt:
 						return !((CallVirt)parent).Method.IsStatic;
 					case OpCode.LdFlda:
-					// TODO : Reimplement Await
-					//case OpCode.Await:
+					case OpCode.Await:
 						return true;
 				}
 			}

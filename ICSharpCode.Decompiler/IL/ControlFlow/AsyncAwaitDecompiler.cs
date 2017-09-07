@@ -58,6 +58,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		ILVariable doFinallyBodies;
 
 		// These fields are set by AnalyzeStateMachine():
+		int smallestAwaiterVarIndex;
 
 		// For each block containing an 'await', stores the awaiter variable, and the field storing the awaiter
 		// across the yield point.
@@ -90,6 +91,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			DetectAwaitPattern(function);
 
 			context.Step("Translate fields to local accesses", function);
+			MarkGeneratedVariables(function);
 			YieldReturnDecompiler.TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
 
 			FinalizeInlineMoveNext(function);
@@ -444,6 +446,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void AnalyzeStateMachine(ILFunction function)
 		{
 			context.Step("AnalyzeStateMachine()", function);
+			smallestAwaiterVarIndex = int.MaxValue;
 			foreach (var container in function.Descendants.OfType<BlockContainer>()) {
 				// Use a separate state range analysis per container.
 				var sra = new StateRangeAnalysis(StateRangeAnalysisMode.AsyncMoveNext, stateField, cachedStateVar);
@@ -464,6 +467,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 								block.Instructions.Add(new InvalidBranch("Could not find block for state " + state));
 							}
 							awaitBlocks.Add(block, (awaiterVar, awaiterField));
+							if (awaiterVar.Index < smallestAwaiterVarIndex) {
+								smallestAwaiterVarIndex = awaiterVar.Index;
+							}
 						}
 					}
 				}
@@ -731,5 +737,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return block.Instructions[pos].MatchBranch(completedBlock);
 		}
 		#endregion
+
+		void MarkGeneratedVariables(ILFunction function)
+		{
+			// Variables after the awaiters are usually compiler-generated;
+			// so mark them as stack slots.
+			foreach (var v in function.Variables) {
+				if (v.Kind == VariableKind.Local && v.Index >= smallestAwaiterVarIndex) {
+					v.Kind = VariableKind.StackSlot;
+				}
+			}
+		}
 	}
 }
