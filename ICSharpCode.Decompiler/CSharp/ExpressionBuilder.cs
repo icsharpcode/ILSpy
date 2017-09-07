@@ -1136,64 +1136,54 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || method.Parameters.Count == allowedParamCount)) {
 					expr = HandleAccessorCall(inst, target, method, arguments.ToList());
 				} else {
-					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
-					var result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
 					bool requireTypeArguments = false;
+					bool targetCasted = false;
+					bool argumentsCasted = false;
 					IType[] typeArguments = Array.Empty<IType>();
 
-					// 1.
-					// Try overload resolution and check if the correct call is selected with the given casts.
-					if (result == null) {
-						for (int i = 0; i < arguments.Length; i++) {
-							if (!method.Parameters[i].Type.ContainsAnonymousType())
-								arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
-						}
-					} else {
-						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
+					OverloadResolutionErrors IsUnambiguousCall()
+					{
+						var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+						var result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+						if (result == null)
+							return OverloadResolutionErrors.AmbiguousMatch;
+						var or = new OverloadResolution(resolver.Compilation, arguments.SelectArray(a => a.ResolveResult), typeArguments: typeArguments);
 						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-						switch (or.BestCandidateErrors) {
+						if (or.BestCandidateErrors != OverloadResolutionErrors.None)
+							return or.BestCandidateErrors;
+						if (!IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt))
+							return OverloadResolutionErrors.AmbiguousMatch;
+						return OverloadResolutionErrors.None;
+					}
+
+					OverloadResolutionErrors errors;
+					while ((errors = IsUnambiguousCall()) != OverloadResolutionErrors.None) {
+						switch (errors) {
 							case OverloadResolutionErrors.TypeInferenceFailed:
 							case OverloadResolutionErrors.WrongNumberOfTypeArguments:
+								if (requireTypeArguments) goto default;
 								requireTypeArguments = true;
 								typeArguments = method.TypeArguments.ToArray();
-								break;
+								continue;
 							default:
-								if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt)) {
+								if (!argumentsCasted) {
+									argumentsCasted = true;
 									for (int i = 0; i < arguments.Length; i++) {
 										if (!method.Parameters[i].Type.ContainsAnonymousType())
 											arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
 									}
+								} else if (!targetCasted) {
+									targetCasted = true;
+									target = target.ConvertTo(method.DeclaringType, this);
+								} else if (!requireTypeArguments) {
+									requireTypeArguments = true;
+									typeArguments = method.TypeArguments.ToArray();
+								} else {
+									break;
 								}
-								break;
+								continue;
 						}
-
-					}
-
-					result = lookup.Lookup(target.ResolveResult, method.Name, typeArguments, true) as MethodGroupResolveResult;
-
-					// 2.
-					// Try overload resolution again and if anything goes wrong,
-					// fix the call by explicitly casting to method.DeclaringType.
-					if (result == null) {
-						target = target.ConvertTo(method.DeclaringType, this);
-					} else {
-						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray(), typeArguments: typeArguments);
-						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt))
-							target = target.ConvertTo(method.DeclaringType, this);
-					}
-					result = lookup.Lookup(target.ResolveResult, method.Name, typeArguments, true) as MethodGroupResolveResult;
-
-					// 3.
-					// Try overload resolution again and if anything goes wrong,
-					// fix the call by explicitly stating the type arguments.
-					if (result == null) {
-						requireTypeArguments = true;
-					} else {
-						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray(), typeArguments: typeArguments);
-						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt))
-							requireTypeArguments = true;
+						break;
 					}
 
 					Expression targetExpr = target.Expression;

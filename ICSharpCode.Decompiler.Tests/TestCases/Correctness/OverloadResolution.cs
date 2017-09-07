@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TestIssue180();
 			TestExtensionMethod();
 			TestParamsMethod();
+			Generics();
 		}
 
 		#region params with nulls
@@ -130,6 +131,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public static void ExtensionMethod(this object obj)
 		{
 			Console.WriteLine("ExtensionMethod(obj)");
+		}
+		#endregion
+
+		#region Generics
+		static void Generics()
+		{
+			GenericsTest<int>(null);
+			GenericsTest<long>((object)null);
+		}
+
+		static void GenericsTest<T>(string x) where T : struct
+		{
+			Console.WriteLine("GenericsTest<" + typeof(T).Name + ">(string: " + x + ");");
+		}
+
+		static void GenericsTest<T>(object x) where T : struct
+		{
+			Console.WriteLine("GenericsTest<" + typeof(T).Name + ">(object: " + x + ");");
 		}
 		#endregion
 	}
