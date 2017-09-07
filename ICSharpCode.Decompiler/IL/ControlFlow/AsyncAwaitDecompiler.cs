@@ -648,9 +648,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 			if (awaitBlockData.awaiterVar != awaiterVar)
 				return;
-			if (!CheckAwaitBlock(awaitBlock, out var resumeBlock))
+			if (!CheckAwaitBlock(awaitBlock, out var resumeBlock, out var stackField))
 				return;
-			if (!CheckResumeBlock(resumeBlock, awaiterVar, awaitBlockData.awaiterField, completedBlock))
+			if (!CheckResumeBlock(resumeBlock, awaiterVar, awaitBlockData.awaiterField, completedBlock, stackField))
 				return;
 			// Check completedBlock:
 			ILInstruction getResultCall;
@@ -685,25 +685,38 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 		}
-
-		bool CheckAwaitBlock(Block block, out Block resumeBlock)
+		
+		bool CheckAwaitBlock(Block block, out Block resumeBlock, out IField stackField)
 		{
 			// awaitBlock:
+			//   (pre-roslyn: save stack)
 			//   await(ldloca V_2)
 			//   br resumeBlock
 			resumeBlock = null;
-			if (block.Instructions.Count != 2)
+			stackField = null;
+			if (block.Instructions.Count < 2)
 				return false;
-			if (block.Instructions[0].OpCode != OpCode.Await)
+			int pos = 0;
+			if (block.Instructions[pos] is StLoc stloc && stloc.Variable.IsSingleDefinition) {
+				if (!block.Instructions[pos + 1].MatchStFld(out var target, out stackField, out var value))
+					return false;
+				if (!target.MatchLdThis())
+					return false;
+				pos += 2;
+			}
+			// await(ldloca awaiterVar)
+			if (block.Instructions[pos].OpCode != OpCode.Await)
 				return false;
-			if (!block.Instructions[1].MatchBranch(out resumeBlock))
-				return false;
-			return true;
+			// br resumeBlock
+			return block.Instructions[pos + 1].MatchBranch(out resumeBlock);
 		}
 
-		bool CheckResumeBlock(Block block, ILVariable awaiterVar, IField awaiterField, Block completedBlock)
+		bool CheckResumeBlock(Block block, ILVariable awaiterVar, IField awaiterField, Block completedBlock, IField stackField)
 		{
 			int pos = 0;
+			if (!RestoreStack(block, ref pos, stackField))
+				return false;
+
 			// stloc awaiterVar(ldfld awaiterField(ldloc this))
 			if (!block.Instructions[pos].MatchStLoc(awaiterVar, out var value))
 				return false;
@@ -751,6 +764,38 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			
 			return block.Instructions[pos].MatchBranch(completedBlock);
+		}
+
+		private bool RestoreStack(Block block, ref int pos, IField stackField)
+		{
+			if (stackField == null) {
+				return true; // nothing to restore
+			}
+			// stloc temp(unbox.any T(ldfld <>t__stack(ldloc this)))
+			if (!(block.Instructions[pos] is StLoc stloc))
+				return false;
+			if (!stloc.Variable.IsSingleDefinition)
+				return false;
+			if (!(stloc.Value is UnboxAny unbox))
+				return false;
+			if (!unbox.Argument.MatchLdFld(out var target, out var field))
+				return false;
+			if (!target.MatchLdThis())
+				return false;
+			if (!field.Equals(stackField))
+				return false;
+			pos++;
+			// restoring stack slots
+			while (block.Instructions[pos].MatchStLoc(out var v) && v.Kind == VariableKind.StackSlot) {
+				pos++;
+			}
+			// stfld <>t__stack(ldloc this, ldnull)
+			if (block.Instructions[pos].MatchStFld(out target, out field, out var value)) {
+				if (target.MatchLdThis() && field.Equals(stackField) && value.MatchLdNull()) {
+					pos++;
+				}
+			}
+			return true;
 		}
 		#endregion
 
