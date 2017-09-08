@@ -39,6 +39,7 @@ namespace ICSharpCode.Decompiler
 		readonly string basePath;
 		readonly string targetFrameworkId;
 		readonly string version;
+		readonly string dotnetBasePath = FindDotNetExeDirectory();
 
 		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkId, string version)
 		{
@@ -101,14 +102,34 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		static string FallbackToDotNetSharedDirectory(AssemblyNameReference name, string version)
+		string FallbackToDotNetSharedDirectory(AssemblyNameReference name, string version)
 		{
-			var basePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "dotnet\\shared\\Microsoft.NETCore.App", version);
+			if (dotnetBasePath == null) return null;
+			var basePath = Path.Combine(dotnetBasePath, "shared\\Microsoft.NETCore.App", version);
 			DecompilerEventSource.Log.Info($"Fallback: use {basePath}");
 			if (File.Exists(Path.Combine(basePath, name.Name + ".dll"))) {
 				return Path.Combine(basePath, name.Name + ".dll");
 			} else if (File.Exists(Path.Combine(basePath, name.Name + ".exe"))) {
 				return Path.Combine(basePath, name.Name + ".exe");
+			}
+			return null;
+		}
+
+		static string FindDotNetExeDirectory()
+		{
+			char separator;
+			string dotnetExeName;
+			if (Environment.OSVersion.Platform == PlatformID.Unix) {
+				separator = ':';
+				dotnetExeName = "dotnet";
+			} else {
+				separator = ';';
+				dotnetExeName = "dotnet.exe";
+			}
+			foreach (var item in Environment.GetEnvironmentVariable("PATH").Split(separator)) {
+				var path = Environment.ExpandEnvironmentVariables(item);
+				if (File.Exists(Path.Combine(path, dotnetExeName)))
+					return path;
 			}
 			return null;
 		}

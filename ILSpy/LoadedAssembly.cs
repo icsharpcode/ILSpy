@@ -291,6 +291,7 @@ namespace ICSharpCode.ILSpy
 				DecompilerEventSource.Log.Info($"Success - Loading {file}...");
 				return assemblyList.OpenAssembly(file, true);
 			} else {
+				DecompilerEventSource.Log.Info($"Warning - Failed to resolve {name.FullName}...");
 				return null;
 			}
 		}
