@@ -47,6 +47,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		IField stateField;
 		int initialState;
 		Dictionary<IField, ILVariable> fieldToParameterMap = new Dictionary<IField, ILVariable>();
+		Dictionary<ILVariable, ILVariable> cachedFieldToParameterMap = new Dictionary<ILVariable, ILVariable>();
 
 		// These fields are set by AnalyzeMoveNext():
 		ILFunction moveNextFunction;
@@ -70,6 +71,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return; // abort if async/await decompilation is disabled
 			this.context = context;
 			fieldToParameterMap.Clear();
+			cachedFieldToParameterMap.Clear();
 			awaitBlocks.Clear();
 			if (!MatchTaskCreationPattern(function))
 				return;
@@ -90,6 +92,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.Step("Translate fields to local accesses", function);
 			MarkGeneratedVariables(function);
 			YieldReturnDecompiler.TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
+			TranslateCachedFieldsToLocals();
 
 			FinalizeInlineMoveNext(function);
 
@@ -309,7 +312,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					throw new SymbolicAnalysisFailedException();
 				++pos;
 			}
+			while (blockContainer.EntryPoint.Instructions[pos] is StLoc stloc) {
+				// stloc V_1(ldfld <>4__this(ldloc this))
+				if (!stloc.Variable.IsSingleDefinition)
+					throw new SymbolicAnalysisFailedException();
+				if (!stloc.Value.MatchLdFld(out var target, out var field))
+					throw new SymbolicAnalysisFailedException();
+				if (!target.MatchLdThis())
+					throw new SymbolicAnalysisFailedException();
+				if (!fieldToParameterMap.TryGetValue((IField)field.MemberDefinition, out var param))
+					throw new SymbolicAnalysisFailedException();
+				cachedFieldToParameterMap[stloc.Variable] = param;
+				pos++;
+			}
 			mainTryCatch = blockContainer.EntryPoint.Instructions[pos] as TryCatch;
+			if (mainTryCatch == null)
+				throw new SymbolicAnalysisFailedException();
 			// CatchHandler will be validated in ValidateCatchBlock()
 
 			if (((BlockContainer)mainTryCatch.TryBlock).EntryPoint.Instructions[0] is StLoc initDoFinallyBodies
@@ -860,6 +878,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				entryPoint = targetBlock;
 			}
 			return entryPoint;
+		}
+
+		void TranslateCachedFieldsToLocals()
+		{
+			foreach (var (cachedVar, param) in cachedFieldToParameterMap) {
+				Debug.Assert(cachedVar.StoreCount <= 1);
+				foreach (var inst in cachedVar.LoadInstructions.ToArray()) {
+					inst.Variable = param;
+				}
+				foreach (var inst in cachedVar.AddressInstructions.ToArray()) {
+					inst.Variable = param;
+				}
+			}
 		}
 	}
 }
