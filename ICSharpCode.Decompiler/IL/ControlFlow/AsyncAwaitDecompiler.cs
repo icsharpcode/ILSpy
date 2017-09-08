@@ -85,6 +85,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			AnalyzeStateMachine(function);
 			DetectAwaitPattern(function);
+			CleanDoFinallyBodies(function);
 
 			context.Step("Translate fields to local accesses", function);
 			MarkGeneratedVariables(function);
@@ -808,6 +809,57 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					v.Kind = VariableKind.StackSlot;
 				}
 			}
+		}
+
+		/// <summary>
+		/// Eliminates usage of doFinallyBodies
+		/// </summary>
+		private void CleanDoFinallyBodies(ILFunction function)
+		{
+			if (doFinallyBodies == null) {
+				return; // roslyn-compiled code doesn't use doFinallyBodies
+			}
+			context.StepStartGroup("CleanDoFinallyBodies", function);
+			Block entryPoint = GetBodyEntryPoint(function.Body as BlockContainer);
+			if (entryPoint != null && entryPoint.Instructions[0].MatchStLoc(doFinallyBodies, out var value) && value.MatchLdcI4(1)) {
+				// Remove initial doFinallyBodies assignment, if it wasn't already removed when
+				// we rearranged the control flow.
+				entryPoint.Instructions.RemoveAt(0);
+			}
+			if (doFinallyBodies.StoreInstructions.Count != 0 || doFinallyBodies.AddressCount != 0) {
+				// misdetected another variable as doFinallyBodies?
+				// reintroduce the initial store of ldc.i4(1)
+				context.Step("Re-introduce misdetected doFinallyBodies", function);
+				((BlockContainer)function.Body).EntryPoint.Instructions.Insert(0,
+					new StLoc(doFinallyBodies, new LdcI4(1)));
+				return;
+			}
+			foreach (var tryFinally in function.Descendants.OfType<TryFinally>()) {
+				entryPoint = GetBodyEntryPoint(tryFinally.FinallyBlock as BlockContainer);
+				if (entryPoint?.Instructions[0] is IfInstruction ifInst) {
+					if (ifInst.Condition is LogicNot logicNot && logicNot.Argument.MatchLdLoc(doFinallyBodies)) {
+						context.Step("Remove if(doFinallyBodies) from try-finally", tryFinally);
+						// condition will always be false now that we're using 'await' instructions
+						entryPoint.Instructions.RemoveAt(0);
+					}
+				}
+			}
+			// if there's any remaining loads (there shouldn't be), replace them with the constant 1
+			foreach (LdLoc load in doFinallyBodies.LoadInstructions) {
+				load.ReplaceWith(new LdcI4(1) { ILRange = load.ILRange });
+			}
+			context.StepEndGroup(keepIfEmpty: true);
+		}
+
+		Block GetBodyEntryPoint(BlockContainer body)
+		{
+			if (body == null)
+				return null;
+			Block entryPoint = body.EntryPoint;
+			while (entryPoint.Instructions[0].MatchBranch(out var targetBlock) && targetBlock.IncomingEdgeCount == 1) {
+				entryPoint = targetBlock;
+			}
+			return entryPoint;
 		}
 	}
 }
