@@ -45,13 +45,46 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
 			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
 			var referencedAssemblies = new List<IUnresolvedAssembly>();
-			foreach (var asmRef in moduleDefinition.AssemblyReferences) {
+			var assemblyReferenceQueue = new Queue<AssemblyNameReference>(moduleDefinition.AssemblyReferences);
+			var processedAssemblyReferences = new HashSet<AssemblyNameReference>(AssemblyNameReferenceComparer.Instance);
+			while (assemblyReferenceQueue.Count > 0) {
+				var asmRef = assemblyReferenceQueue.Dequeue();
+				if (!processedAssemblyReferences.Add(asmRef))
+					continue;
 				var asm = moduleDefinition.AssemblyResolver.Resolve(asmRef);
-				if (asm != null)
+				if (asm != null) {
 					referencedAssemblies.Add(cecilLoader.LoadAssembly(asm));
+					foreach (var forwarder in asm.MainModule.ExportedTypes) {
+						if (!forwarder.IsForwarder || !(forwarder.Scope is AssemblyNameReference forwarderRef)) continue;
+						assemblyReferenceQueue.Enqueue(forwarderRef);
+					}
+				}
 			}
 			compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
+			if (compilation.FindType(KnownTypeCode.Void).Kind == TypeKind.Unknown || compilation.FindType(KnownTypeCode.Void).Kind == TypeKind.Unknown) {
+				referencedAssemblies.Add(MinimalCorlib.Instance);
+				compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
+			}
 			context = new SimpleTypeResolveContext(compilation.MainAssembly);
+		}
+
+		class AssemblyNameReferenceComparer : IEqualityComparer<AssemblyNameReference>
+		{
+			public static readonly AssemblyNameReferenceComparer Instance = new AssemblyNameReferenceComparer();
+
+			public bool Equals(AssemblyNameReference x, AssemblyNameReference y)
+			{
+				if (x == y)
+					return true;
+				if (x == null || y == null)
+					return false;
+				return x.FullName.Equals(y.FullName);
+			}
+
+			public int GetHashCode(AssemblyNameReference obj)
+			{
+				return obj.FullName.GetHashCode();
+			}
 		}
 
 		public ICompilation Compilation {
