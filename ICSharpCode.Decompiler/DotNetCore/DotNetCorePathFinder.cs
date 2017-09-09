@@ -112,19 +112,12 @@ namespace ICSharpCode.Decompiler
 
 		static string FindDotNetExeDirectory()
 		{
-			char separator;
-			string dotnetExeName;
-			if (Environment.OSVersion.Platform == PlatformID.Unix) {
-				separator = ':';
-				dotnetExeName = "dotnet";
-			} else {
-				separator = ';';
-				dotnetExeName = "dotnet.exe";
-			}
-			foreach (var item in Environment.GetEnvironmentVariable("PATH").Split(separator)) {
-				var path = Environment.ExpandEnvironmentVariables(item);
-				if (File.Exists(Path.Combine(path, dotnetExeName)))
-					return path;
+			string dotnetExeName = (Environment.OSVersion.Platform == PlatformID.Unix) ? "dotnet" : "dotnet.exe";
+			foreach (var item in Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator)) {
+				try {
+					if (File.Exists(Path.Combine(item, dotnetExeName)))
+						return item;
+				} catch (ArgumentException) { }
 			}
 			return null;
 		}
