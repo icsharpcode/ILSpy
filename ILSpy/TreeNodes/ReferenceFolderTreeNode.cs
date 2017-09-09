@@ -61,7 +61,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
+			language.WriteCommentLine(output, $"Detected Target-Framework-Id: {parentAssembly.LoadedAssembly.TargetFrameworkId}");
 			App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Action(EnsureLazyChildren));
+			output.WriteLine();
+			language.WriteCommentLine(output, "Referenced assemblies (in metadata order):");
 			// Show metadata order of references
 			foreach (var r in module.AssemblyReferences)
 				new AssemblyReferenceTreeNode(r, parentAssembly).Decompile(language, output, options);

@@ -260,6 +260,7 @@
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
+    <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
     <Compile Include="IL\ControlFlow\StateRangeAnalysis.cs" />
@@ -274,6 +275,7 @@
     <Compile Include="IL\Transforms\NullCoalescingTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
+    <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\UnicodeNewline.cs" />
     <Compile Include="FlowAnalysis\ControlFlowNode.cs" />
     <Compile Include="FlowAnalysis\DataFlowVisitor.cs" />

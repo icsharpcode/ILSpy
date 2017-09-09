@@ -29,5 +29,16 @@ namespace ICSharpCode.Decompiler
 
 			return string.Empty;
 		}
+
+		public static void AddMessage(this Dictionary<string, UnresolvedAssemblyNameReference> container, string fullName, MessageKind kind, string message)
+		{
+			if (container == null)
+				throw new ArgumentNullException(nameof(container));
+			if (!container.TryGetValue(fullName, out var referenceInfo)) {
+				referenceInfo = new UnresolvedAssemblyNameReference(fullName);
+				container.Add(fullName, referenceInfo);
+			}
+			referenceInfo.Messages.Add((kind, message));
+		}
 	}
 }

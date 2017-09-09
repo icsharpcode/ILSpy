@@ -17,7 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
@@ -36,6 +38,7 @@ namespace ICSharpCode.ILSpy
 		readonly string fileName;
 		readonly string shortName;
 		readonly Lazy<string> targetFrameworkId;
+		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences = new Dictionary<string, UnresolvedAssemblyNameReference>();
 
 		public LoadedAssembly(AssemblyList assemblyList, string fileName, Stream stream = null)
 		{
@@ -51,7 +54,12 @@ namespace ICSharpCode.ILSpy
 			this.targetFrameworkId = new Lazy<string>(AssemblyDefinition.DetectTargetFrameworkId, false);
 		}
 
+		/// <summary>
+		/// Returns a target framework identifier in the form '&lt;framework&gt;Version=v&lt;version&gt;'.
+		/// </summary>
 		public string TargetFrameworkId => targetFrameworkId.Value;
+
+		public Dictionary<string, UnresolvedAssemblyNameReference> LoadedAssemblyReferencesInfo => loadedAssemblyReferences;
 
 		/// <summary>
 		/// Gets the Cecil ModuleDefinition.
@@ -77,18 +85,12 @@ namespace ICSharpCode.ILSpy
 				return module != null ? module.Assembly : null;
 			}
 		}
-		
-		public AssemblyList AssemblyList {
-			get { return assemblyList; }
-		}
-		
-		public string FileName {
-			get { return fileName; }
-		}
-		
-		public string ShortName {
-			get { return shortName; }
-		}
+
+		public AssemblyList AssemblyList => assemblyList;
+
+		public string FileName => fileName;
+
+		public string ShortName => shortName;
 
 		public string Text {
 			get {
@@ -99,14 +101,10 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 		}
-		
-		public bool IsLoaded {
-			get { return assemblyTask.IsCompleted; }
-		}
-		
-		public bool HasLoadError {
-			get { return assemblyTask.IsFaulted; }
-		}
+
+		public bool IsLoaded => assemblyTask.IsCompleted;
+
+		public bool HasLoadError => assemblyTask.IsFaulted;
 
 		public bool IsAutoLoaded { get; set; }
 
@@ -266,7 +264,7 @@ namespace ICSharpCode.ILSpy
 					if (targetFramework.Length != 2) break;
 					if (dotNetCorePathFinder == null) {
 						var version = targetFramework[1].Length == 3 ? targetFramework[1] + ".0" : targetFramework[1];
-						dotNetCorePathFinder = new DotNetCorePathFinder(fileName, TargetFrameworkId, version);
+						dotNetCorePathFinder = new DotNetCorePathFinder(fileName, TargetFrameworkId, version, this.loadedAssemblyReferences);
 					}
 					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
 					break;
@@ -282,8 +280,10 @@ namespace ICSharpCode.ILSpy
 					file = Path.Combine(dir, name.Name + ".exe");
 			}
 			if (file != null) {
+				loadedAssemblyReferences.AddMessage(fullName, MessageKind.Info, "Success - Loading from: " + file);
 				return assemblyList.OpenAssembly(file, true);
 			} else {
+				loadedAssemblyReferences.AddMessage(fullName, MessageKind.Error, "Could not find reference: " + fullName);
 				return null;
 			}
 		}
