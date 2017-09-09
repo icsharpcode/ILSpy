@@ -58,3 +58,4 @@ SubTypes.png					new (Fugue: arrow-turn-270.png)
 SuperTypes.png					new (Fugue: arrow-turn-090-left.png)
 ViewCode.png					BitmapResources-data\Icons.16x16.FormsDesigner.ViewCode.png
 VirtualMethod.png				new (SharpDevelop-Team)
+Warning.png					new (Fugue: exclamation.png (32x32))

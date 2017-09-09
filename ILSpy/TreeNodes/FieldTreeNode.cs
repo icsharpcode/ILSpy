@@ -120,6 +120,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
+			UIHelper.AddReferenceWarningMessage(this, output, language);
 			language.DecompileField(field, output, options);
 		}
 		

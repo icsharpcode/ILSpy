@@ -17,7 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 using System.Text;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
@@ -130,6 +132,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
+			UIHelper.AddReferenceWarningMessage(this, output, language);
 			language.DecompileMethod(method, output, options);
 		}
 

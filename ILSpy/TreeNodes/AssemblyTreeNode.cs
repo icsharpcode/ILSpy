@@ -260,6 +260,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					throw;
 				}
 			}
+			UIHelper.AddReferenceWarningMessage(this, output, language);
 			language.DecompileAssembly(assembly, output, options);
 		}
 
