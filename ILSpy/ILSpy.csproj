@@ -205,7 +205,6 @@
     <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyOverridesTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyTreeNode.cs" />
     <Compile Include="TreeNodes\SearchMsdnContextMenuEntry.cs" />
-    <Compile Include="TreeNodes\UIHelper.cs" />
     <EmbeddedResource Include="..\README.txt">
       <Link>README.txt</Link>
     </EmbeddedResource>

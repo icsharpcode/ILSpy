@@ -31,6 +31,9 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
+using System.Windows;
+using System.Windows.Controls;
+using ICSharpCode.ILSpy.TreeNodes;
 
 namespace ICSharpCode.ILSpy
 {
@@ -45,10 +48,6 @@ namespace ICSharpCode.ILSpy
 		string name = "C#";
 		bool showAllMembers = false;
 		int transformCount = int.MaxValue;
-
-		public CSharpLanguage()
-		{
-		}
 
 		#if DEBUG
 		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
@@ -106,6 +105,7 @@ namespace ICSharpCode.ILSpy
 		
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
+			AddReferenceWarningMessage(method.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(method), decompiler.TypeSystem);
@@ -161,6 +161,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
+			AddReferenceWarningMessage(property.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(property.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(property.Module, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property), decompiler.TypeSystem);
@@ -168,6 +169,7 @@ namespace ICSharpCode.ILSpy
 		/*
 		public override void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
+			AddReferenceWarningMessage(output);
 			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
 			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: field.DeclaringType, isSingleMember: true);
 			if (field.IsLiteral) {
@@ -216,6 +218,7 @@ namespace ICSharpCode.ILSpy
 		 */
 		public override void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
+			AddReferenceWarningMessage(ev.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(ev.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(ev.Module, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(ev), decompiler.TypeSystem);
@@ -223,6 +226,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileType(TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
+			AddReferenceWarningMessage(type.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(type.Module, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type), decompiler.TypeSystem);
@@ -282,6 +286,40 @@ namespace ICSharpCode.ILSpy
 			return null;
 		}
 
+		void AddReferenceWarningMessage(AssemblyDefinition assembly, ITextOutput output)
+		{
+			var loadedAssembly = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().FirstOrDefault(la => la.AssemblyDefinition == assembly);
+			if (loadedAssembly == null || !loadedAssembly.LoadedAssemblyReferencesInfo.Any(i => i.Value.HasErrors))
+				return;
+			const string line1 = "Warning: Some assembly references could not be loaded. This might lead to incorrect decompilation of some parts,";
+			const string line2 = "for ex. property getter/setter access. To get optimal decompilation results, please manually add the references to the list of loaded assemblies.";
+			if (output is ISmartTextOutput fancyOutput) {
+				fancyOutput.AddUIElement(() => new StackPanel {
+					Margin = new Thickness(5),
+					Orientation = Orientation.Horizontal,
+					Children = {
+						new Image {
+							Width = 32,
+							Height = 32,
+							Source = Images.LoadImage(this, "Images/Warning.png")
+						},
+						new TextBlock {
+							Margin = new Thickness(5, 0, 0, 0),
+							Text = line1 + Environment.NewLine + line2
+						}
+					}
+				});
+				fancyOutput.WriteLine();
+				fancyOutput.AddButton(Images.ViewCode, "Show assembly load log", delegate {
+					MainWindow.Instance.SelectNode(MainWindow.Instance.FindTreeNode(assembly).Children.OfType<ReferenceFolderTreeNode>().First());
+				});
+				fancyOutput.WriteLine();
+			} else {
+				WriteCommentLine(output, line1);
+				WriteCommentLine(output, line2);
+			}
+		}
+
 		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
@@ -290,6 +328,7 @@ namespace ICSharpCode.ILSpy
 				decompiler.DecompileProject(assembly.ModuleDefinition, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			} else {
 				base.DecompileAssembly(assembly, output, options);
+				AddReferenceWarningMessage(assembly.AssemblyDefinition, output);
 				output.WriteLine();
 				ModuleDefinition mainModule = assembly.ModuleDefinition;
 				if (mainModule.Types.Count > 0) {
