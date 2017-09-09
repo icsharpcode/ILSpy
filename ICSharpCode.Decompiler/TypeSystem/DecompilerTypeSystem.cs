@@ -44,6 +44,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			CecilLoader cecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
 			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
+			// Load referenced assemblies and type-forwarder references.
+			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<IUnresolvedAssembly>();
 			var assemblyReferenceQueue = new Queue<AssemblyNameReference>(moduleDefinition.AssemblyReferences);
 			var processedAssemblyReferences = new HashSet<AssemblyNameReference>(KeyComparer.Create((AssemblyNameReference reference) => reference.FullName));
@@ -61,6 +63,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 			compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
+			// Primitive types are necessary to avoid assertions in ILReader.
+			// Fallback to MinimalCorlib to provide the primitive types.
 			if (compilation.FindType(KnownTypeCode.Void).Kind == TypeKind.Unknown || compilation.FindType(KnownTypeCode.Void).Kind == TypeKind.Unknown) {
 				referencedAssemblies.Add(MinimalCorlib.Instance);
 				compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
