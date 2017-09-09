@@ -40,11 +40,17 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunWithTest("Mono.Cecil-net45", "Mono.Cecil.dll", "Mono.Cecil.Tests.dll");
 		}
-		
+
 		[Test]
 		public void NewtonsoftJson_net45()
 		{
 			RunWithTest("Newtonsoft.Json-net45", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
+		}
+
+		[Test, Ignore("Do not run on build server")]
+		public void NewtonsoftJson_pcl_debug()
+		{
+			RunWithTest("Newtonsoft.Json-pcl-debug", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
 		}
 
 		[Test]
