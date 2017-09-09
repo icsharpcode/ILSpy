@@ -19,6 +19,7 @@
 using System;
 using System.IO;
 using System.Linq;
+using System.Xml;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -34,26 +35,33 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (!context.Settings.ShowXmlDocumentation)
 				return;
-			var xmldoc = XmlDocLoader.LoadDocumentation(context.TypeSystem.ModuleDefinition);
-			if (xmldoc == null)
-				return;
-			foreach (var entity in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>()) {
-				var symbol = entity.GetSymbol();
-				Mono.Cecil.MemberReference mr;
-				switch (symbol) {
-					case IMember member:
-						mr = context.TypeSystem.GetCecil(member);
-						break;
-					case IType type:
-						mr = context.TypeSystem.GetCecil(type.GetDefinition());
-						break;
-					default:
-						continue;
+			try {
+				var xmldoc = XmlDocLoader.LoadDocumentation(context.TypeSystem.ModuleDefinition);
+				if (xmldoc == null)
+					return;
+				foreach (var entity in rootNode.DescendantsAndSelf.OfType<EntityDeclaration>()) {
+					var symbol = entity.GetSymbol();
+					Mono.Cecil.MemberReference mr;
+					switch (symbol) {
+						case IMember member:
+							mr = context.TypeSystem.GetCecil(member);
+							break;
+						case IType type:
+							mr = context.TypeSystem.GetCecil(type.GetDefinition());
+							break;
+						default:
+							continue;
+					}
+					string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
+					if (doc != null) {
+						InsertXmlDocumentation(entity, new StringReader(doc));
+					}
 				}
-				string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
-				if (doc != null) {
-					InsertXmlDocumentation(entity, new StringReader(doc));
-				}
+			} catch (XmlException ex) {
+				string[] msg = (" Exception while reading XmlDoc: " + ex.ToString()).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+				var insertionPoint = rootNode.FirstChild;
+				for (int i = 0; i < msg.Length; i++)
+					rootNode.InsertChildBefore(insertionPoint, new Comment(msg[i], CommentType.Documentation), Roles.Comment);
 			}
 		}
 		
