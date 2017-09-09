@@ -40,8 +40,6 @@ namespace ICSharpCode.Decompiler
 		bool firstUsingDeclaration;
 		bool lastUsingDeclaration;
 		
-		TextLocation? lastEndOfLine;
-		
 		public bool FoldBraces = false;
 		
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)

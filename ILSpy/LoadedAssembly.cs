@@ -244,11 +244,8 @@ namespace ICSharpCode.ILSpy
 		
 		LoadedAssembly LookupReferencedAssemblyInternal(string fullName)
 		{
-			DecompilerEventSource.Log.Info($"Looking for {fullName}...");
-
 			foreach (LoadedAssembly asm in assemblyList.GetAssemblies()) {
 				if (asm.AssemblyDefinition != null && fullName.Equals(asm.AssemblyDefinition.FullName, StringComparison.OrdinalIgnoreCase)) {
-					DecompilerEventSource.Log.Info($"Found in list of loaded assemblies.");
 					return asm;
 				}
 			}
@@ -256,12 +253,9 @@ namespace ICSharpCode.ILSpy
 				return null;
 			
 			if (!App.Current.Dispatcher.CheckAccess()) {
-				DecompilerEventSource.Log.Info($"Retry on UI thread...");
 				// Call this method on the GUI thread.
 				return (LoadedAssembly)App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Func<string, LoadedAssembly>(LookupReferencedAssembly), fullName);
 			}
-
-			DecompilerEventSource.Log.Info($"Detected target framework: {TargetFrameworkId}.");
 
 			var targetFramework = TargetFrameworkId.Split(new[] { ",Version=v" }, StringSplitOptions.None);
 			var name = AssemblyNameReference.Parse(fullName);
@@ -288,10 +282,8 @@ namespace ICSharpCode.ILSpy
 					file = Path.Combine(dir, name.Name + ".exe");
 			}
 			if (file != null) {
-				DecompilerEventSource.Log.Info($"Success - Loading {file}...");
 				return assemblyList.OpenAssembly(file, true);
 			} else {
-				DecompilerEventSource.Log.Info($"Warning - Failed to resolve {name.FullName}...");
 				return null;
 			}
 		}

@@ -48,11 +48,8 @@ namespace ICSharpCode.Decompiler
 			this.targetFrameworkId = targetFrameworkId;
 			this.version = version;
 
-			DecompilerEventSource.Log.Info($"Looking for {assemblyName}.deps.json in {basePath}");
-
 			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
 			if (!File.Exists(depsJsonFileName)) {
-				DecompilerEventSource.Log.Info($"{assemblyName}.deps.json not found.");
 				return;
 			}
 
@@ -72,11 +69,7 @@ namespace ICSharpCode.Decompiler
 
 		public string TryResolveDotNetCore(AssemblyNameReference name)
 		{
-			DecompilerEventSource.Log.Info($"TryResolveDotNetCore: {assemblyName}, version: {version}, reference: {name}");
-
 			foreach (var basePath in packageBasePaths) {
-				DecompilerEventSource.Log.Info($"TryResolveDotNetCore: scanning {basePath}...");
-
 				if (File.Exists(Path.Combine(basePath, name.Name + ".dll"))) {
 					return Path.Combine(basePath, name.Name + ".dll");
 				} else if (File.Exists(Path.Combine(basePath, name.Name + ".exe"))) {
@@ -106,7 +99,6 @@ namespace ICSharpCode.Decompiler
 		{
 			if (dotnetBasePath == null) return null;
 			var basePath = Path.Combine(dotnetBasePath, "shared\\Microsoft.NETCore.App", version);
-			DecompilerEventSource.Log.Info($"Fallback: use {basePath}");
 			if (File.Exists(Path.Combine(basePath, name.Name + ".dll"))) {
 				return Path.Combine(basePath, name.Name + ".dll");
 			} else if (File.Exists(Path.Combine(basePath, name.Name + ".exe"))) {
