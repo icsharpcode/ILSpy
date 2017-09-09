@@ -50,7 +50,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		ILTransformContext context;
 		string[] currentFieldNames;
-		Dictionary<ILVariable, string> mapping;
 		Dictionary<string, int> reservedVariableNames;
 		const char maxLoopVariableName = 'n';
 

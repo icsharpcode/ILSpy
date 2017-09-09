@@ -275,7 +275,7 @@
     <Compile Include="TreeNodes\ResourceNodes\ResourceTreeNode.cs" />
     <Compile Include="TreeNodes\ThreadingSupport.cs" />
     <Compile Include="TreeNodes\TypeTreeNode.cs" />
-    <EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
+	<EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
   </ItemGroup>
 
   <ItemGroup>
@@ -339,6 +339,7 @@
     <Resource Include="Images\OverlayStatic.png" />
     <Resource Include="Images\VirtualMethod.png" />
     <Resource Include="Images\PInvokeMethod.png" />
+	<Resource Include="Images\Warning.png" />
   </ItemGroup>
 
   <ItemGroup>

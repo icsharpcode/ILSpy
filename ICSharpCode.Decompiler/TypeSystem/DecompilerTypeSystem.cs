@@ -44,9 +44,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			CecilLoader cecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
 			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
+			// Load referenced assemblies and type-forwarder references.
+			// This is necessary to make .NET Core/PCL binaries work better.
 			var referencedAssemblies = new List<IUnresolvedAssembly>();
 			var assemblyReferenceQueue = new Queue<AssemblyNameReference>(moduleDefinition.AssemblyReferences);
-			var processedAssemblyReferences = new HashSet<AssemblyNameReference>(AssemblyNameReferenceComparer.Instance);
+			var processedAssemblyReferences = new HashSet<AssemblyNameReference>(KeyComparer.Create((AssemblyNameReference reference) => reference.FullName));
 			while (assemblyReferenceQueue.Count > 0) {
 				var asmRef = assemblyReferenceQueue.Dequeue();
 				if (!processedAssemblyReferences.Add(asmRef))
@@ -61,30 +63,13 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			}
 			compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
+			// Primitive types are necessary to avoid assertions in ILReader.
+			// Fallback to MinimalCorlib to provide the primitive types.
 			if (compilation.FindType(KnownTypeCode.Void).Kind == TypeKind.Unknown || compilation.FindType(KnownTypeCode.Void).Kind == TypeKind.Unknown) {
 				referencedAssemblies.Add(MinimalCorlib.Instance);
 				compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
 			}
 			context = new SimpleTypeResolveContext(compilation.MainAssembly);
-		}
-
-		class AssemblyNameReferenceComparer : IEqualityComparer<AssemblyNameReference>
-		{
-			public static readonly AssemblyNameReferenceComparer Instance = new AssemblyNameReferenceComparer();
-
-			public bool Equals(AssemblyNameReference x, AssemblyNameReference y)
-			{
-				if (x == y)
-					return true;
-				if (x == null || y == null)
-					return false;
-				return x.FullName.Equals(y.FullName);
-			}
-
-			public int GetHashCode(AssemblyNameReference obj)
-			{
-				return obj.FullName.GetHashCode();
-			}
 		}
 
 		public ICompilation Compilation {

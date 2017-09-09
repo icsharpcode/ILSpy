@@ -18,7 +18,6 @@
 
 using System;
 using System.Collections.Generic;
-
 using ICSharpCode.Decompiler;
 using Mono.Cecil;
 

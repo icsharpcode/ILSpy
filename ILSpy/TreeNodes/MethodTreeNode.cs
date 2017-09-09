@@ -17,7 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 using System.Text;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
