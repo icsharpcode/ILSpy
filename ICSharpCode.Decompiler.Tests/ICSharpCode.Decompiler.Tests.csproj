@@ -54,7 +54,9 @@
     <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
     <Compile Include="Helpers\Tester.cs" />
     <Compile Include="Helpers\TypeSystemHelper.cs" />
+    <Compile Include="ILPrettyTestRunner.cs" />
     <Compile Include="Stub.cs" />
+    <Compile Include="TestCases\ILPretty\Issue379.cs" />
     <Compile Include="TestCases\Pretty\LiftedOperators.cs" />
     <Compile Include="PrettyTestRunner.cs" />
     <Compile Include="RoundtripAssembly.cs" />
@@ -86,6 +88,7 @@
     <Compile Include="TestCases\Pretty\HelloWorld.cs" />
     <Compile Include="TestCases\Pretty\InlineAssignmentTest.cs" />
     <Compile Include="TestCases\Pretty\PropertiesAndEvents.cs" />
+    <Compile Include="TestCases\Pretty\QueryExpressions.cs" />
     <Compile Include="TestCases\Pretty\ShortCircuit.cs" />
     <Compile Include="TestTraceListener.cs" />
     <Compile Include="Util\IntervalTests.cs" />
@@ -108,6 +111,7 @@
     <None Include="TestCases\Pretty\InlineAssignmentTest.il">
       <DependentUpon>InlineAssignmentTest.cs</DependentUpon>
     </None>
+    <None Include="TestCases\ILPretty\Issue379.il" />
     <None Include="TestCases\Pretty\Readme.txt" />
   </ItemGroup>
 

@@ -24,7 +24,7 @@ using System.Text.RegularExpressions;
 using System.Windows.Controls;
 using System.Xml;
 
-namespace ICSharpCode.ILSpy.XmlDoc
+namespace ICSharpCode.ILSpy.TextView
 {
 	/// <summary>
 	/// Renders XML documentation into a WPF <see cref="TextBlock"/>.

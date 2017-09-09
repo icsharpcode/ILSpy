@@ -361,7 +361,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (v.Type.Kind == TypeKind.ByReference) {
 					expectedExpr = new DirectionExpression(FieldDirection.Ref, expectedExpr);
 				}
-				if (assignment != null && assignment.Left.IsMatch(expectedExpr)) {
+				if (assignment != null && assignment.Operator == AssignmentOperatorType.Assign && assignment.Left.IsMatch(expectedExpr)) {
 					AstType type;
 					if (v.Type.ContainsAnonymousType()) {
 						type = new SimpleType("var");

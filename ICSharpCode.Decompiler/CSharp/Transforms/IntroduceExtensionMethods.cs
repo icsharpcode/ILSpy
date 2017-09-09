@@ -128,7 +128,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var firstArgument = invocationExpression.Arguments.First();
 			var target = firstArgument.GetResolveResult();
 			var args = invocationExpression.Arguments.Skip(1).Select(a => a.GetResolveResult()).ToArray();
-			var rr = resolver.ResolveMemberAccess(target, method.Name, EmptyList<IType>.Instance, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
+			var rr = resolver.ResolveMemberAccess(target, method.Name, method.TypeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
 			if (rr == null)
 				return;
 			var or = rr.PerformOverloadResolution(resolveContext.Compilation, args, allowExtensionMethods: true);

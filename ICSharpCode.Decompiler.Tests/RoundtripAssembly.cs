@@ -42,9 +42,9 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 		
 		[Test]
-		public void NewtonsoftJson_net40()
+		public void NewtonsoftJson_net45()
 		{
-			RunWithTest("Newtonsoft.Json-net40", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
+			RunWithTest("Newtonsoft.Json-net45", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
 		}
 
 		[Test]

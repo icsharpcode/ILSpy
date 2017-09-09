@@ -1136,55 +1136,54 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || method.Parameters.Count == allowedParamCount)) {
 					expr = HandleAccessorCall(inst, target, method, arguments.ToList());
 				} else {
-					var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
-					var result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
-
-					// 1.
-					// Try overload resolution and check if the correct call is selected with the given casts.
-					// If anything goes wrong, apply explicit casts to all arguments.
-					if (result == null) {
-						for (int i = 0; i < arguments.Length; i++) {
-							if (!method.Parameters[i].Type.ContainsAnonymousType())
-								arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
-						}
-					} else {
-						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
-						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt)) {
-							for (int i = 0; i < arguments.Length; i++) {
-								if (!method.Parameters[i].Type.ContainsAnonymousType())
-									arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
-							}
-						}
-					}
-
-					result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
-
-					// 2.
-					// Try overload resolution again and if anything goes wrong,
-					// fix the call by explicitly casting to method.DeclaringType.
-					if (result == null) {
-						target = target.ConvertTo(method.DeclaringType, this);
-					} else {
-						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
-						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt))
-							target = target.ConvertTo(method.DeclaringType, this);
-					}
-
 					bool requireTypeArguments = false;
-					result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+					bool targetCasted = false;
+					bool argumentsCasted = false;
+					IType[] typeArguments = Array.Empty<IType>();
 
-					// 3.
-					// Try overload resolution again and if anything goes wrong,
-					// fix the call by explicitly stating the type arguments.
-					if (result == null) {
-						requireTypeArguments = true;
-					} else {
-						var or = new OverloadResolution(resolver.Compilation, arguments.Select(a => a.ResolveResult).ToArray());
+					OverloadResolutionErrors IsUnambiguousCall()
+					{
+						var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+						var result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+						if (result == null)
+							return OverloadResolutionErrors.AmbiguousMatch;
+						var or = new OverloadResolution(resolver.Compilation, arguments.SelectArray(a => a.ResolveResult), typeArguments: typeArguments);
 						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-						if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, inst.OpCode == OpCode.CallVirt))
-							requireTypeArguments = true;
+						if (or.BestCandidateErrors != OverloadResolutionErrors.None)
+							return or.BestCandidateErrors;
+						if (!IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt))
+							return OverloadResolutionErrors.AmbiguousMatch;
+						return OverloadResolutionErrors.None;
+					}
+
+					OverloadResolutionErrors errors;
+					while ((errors = IsUnambiguousCall()) != OverloadResolutionErrors.None) {
+						switch (errors) {
+							case OverloadResolutionErrors.TypeInferenceFailed:
+							case OverloadResolutionErrors.WrongNumberOfTypeArguments:
+								if (requireTypeArguments) goto default;
+								requireTypeArguments = true;
+								typeArguments = method.TypeArguments.ToArray();
+								continue;
+							default:
+								if (!argumentsCasted) {
+									argumentsCasted = true;
+									for (int i = 0; i < arguments.Length; i++) {
+										if (!method.Parameters[i].Type.ContainsAnonymousType())
+											arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
+									}
+								} else if (!targetCasted) {
+									targetCasted = true;
+									target = target.ConvertTo(method.DeclaringType, this);
+								} else if (!requireTypeArguments) {
+									requireTypeArguments = true;
+									typeArguments = method.TypeArguments.ToArray();
+								} else {
+									break;
+								}
+								continue;
+						}
+						break;
 					}
 
 					Expression targetExpr = target.Expression;
@@ -1732,10 +1731,26 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitAwait(Await inst, TranslationContext context)
 		{
-			var value = Translate(inst.Value);
+			IType expectedType = null;
+			if (inst.GetAwaiterMethod != null) {
+				if (inst.GetAwaiterMethod.IsStatic) {
+					expectedType = inst.GetAwaiterMethod.Parameters.FirstOrDefault()?.Type;
+				} else {
+					expectedType = inst.GetAwaiterMethod.DeclaringType;
+				}
+			}
+
+			var value = Translate(inst.Value, typeHint: expectedType);
+			if (value.Expression is DirectionExpression) {
+				// we can deference the managed reference by stripping away the 'ref'
+				value = value.UnwrapChild(((DirectionExpression)value.Expression).Expression);
+			}
+			if (expectedType != null) {
+				value = value.ConvertTo(expectedType, this, allowImplicitConversion: true);
+			}
 			return new UnaryOperatorExpression(UnaryOperatorType.Await, value.Expression)
 				.WithILInstruction(inst)
-				.WithRR(new ResolveResult(inst?.GetResultMethod.ReturnType ?? SpecialType.UnknownType));
+				.WithRR(new ResolveResult(inst.GetResultMethod?.ReturnType ?? SpecialType.UnknownType));
 		}
 
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)

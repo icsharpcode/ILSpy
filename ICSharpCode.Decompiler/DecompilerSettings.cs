@@ -72,7 +72,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 		
-		bool asyncAwait = false;
+		bool asyncAwait = true;
 		
 		/// <summary>
 		/// Decompile async methods.

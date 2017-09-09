@@ -219,7 +219,9 @@
     <Compile Include="CSharp\Resolver\ReducedExtensionMethod.cs" />
     <Compile Include="CSharp\Resolver\RenameCallbackArguments.cs" />
     <Compile Include="CSharp\Resolver\TypeInference.cs" />
+    <Compile Include="CSharp\Transforms\CombineQueryExpressions.cs" />
     <Compile Include="CSharp\Transforms\IntroduceExtensionMethods.cs" />
+    <Compile Include="CSharp\Transforms\IntroduceQueryExpressions.cs" />
     <Compile Include="CSharp\Transforms\RemoveCLSCompliantAttribute.cs" />
     <Compile Include="CSharp\TranslationContext.cs" />
     <Compile Include="CSharp\TypeSystem\AliasNamespaceReference.cs" />
@@ -254,9 +256,12 @@
     <Compile Include="CSharp\Transforms\IntroduceUnsafeModifier.cs" />
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="CSharp\WholeProjectDecompiler.cs" />
+    <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
     <Compile Include="Documentation\IdStringMemberReference.cs" />
     <Compile Include="Documentation\IdStringProvider.cs" />
+    <Compile Include="Documentation\XmlDocKeyProvider.cs" />
+    <Compile Include="Documentation\XmlDocLoader.cs" />
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />

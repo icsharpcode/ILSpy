@@ -28,24 +28,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class ILInlining : IILTransform, IBlockTransform
 	{
-		ILTransformContext context;
-
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			this.context = context;
 			foreach (var block in function.Descendants.OfType<Block>()) {
-				InlineAllInBlock(block);
+				InlineAllInBlock(block, context);
 			}
 			function.Variables.RemoveDead();
 		}
 
 		public void Run(Block block, BlockTransformContext context)
 		{
-			this.context = context;
-			InlineAllInBlock(block);
+			InlineAllInBlock(block, context);
 		}
 
-		public bool InlineAllInBlock(Block block)
+		public static bool InlineAllInBlock(Block block, ILTransformContext context)
 		{
 			bool modified = false;
 			int i = 0;
@@ -240,8 +236,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case OpCode.CallVirt:
 						return !((CallVirt)parent).Method.IsStatic;
 					case OpCode.LdFlda:
-					// TODO : Reimplement Await
-					//case OpCode.Await:
+					case OpCode.Await:
 						return true;
 				}
 			}

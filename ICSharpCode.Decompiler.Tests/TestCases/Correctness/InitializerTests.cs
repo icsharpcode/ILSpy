@@ -18,6 +18,9 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
@@ -660,6 +663,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					Property = 2
 				}
 			});
+		}
+
+		public static void Bug270_NestedInitialisers()
+		{
+			NumberFormatInfo[] numberFormats = null;
+
+			Thread t = new Thread(Bug270_NestedInitialisers) {
+				Priority = ThreadPriority.BelowNormal,
+				CurrentCulture = new CultureInfo(0) {
+					DateTimeFormat = new DateTimeFormatInfo {
+						ShortDatePattern = "ddmmyy"
+					},
+					NumberFormat = (from format in numberFormats where format.CurrencySymbol == "$" select format).First()
+				}
+			};
+
 		}
 
 		public int[,] MultidimensionalInit()

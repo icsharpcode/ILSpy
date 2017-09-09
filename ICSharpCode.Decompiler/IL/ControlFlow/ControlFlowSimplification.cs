@@ -82,6 +82,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		
 		void SimplifyBranchChains(ILFunction function, ILTransformContext context)
 		{
+			List<(BlockContainer, Block)> blocksToAdd = new List<(BlockContainer, Block)>();
 			HashSet<Block> visitedBlocks = new HashSet<Block>();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
 				// Resolve chained branches to the final target:
@@ -100,10 +101,24 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						targetBlock.Instructions.Clear(); // mark the block for deletion
 					targetBlock = branch.TargetBlock;
 				}
-				if (ShouldSimplifyBranchToReturnBlock(branch)) {
-					// Replace branches to 'return blocks' with the return instruction
-					context.Step("Replace branch to return with return", branch);
-					branch.ReplaceWith(targetBlock.Instructions[0].Clone());
+				if (IsBranchToReturnBlock(branch)) {
+					if (aggressivelyDuplicateReturnBlocks) {
+						// Replace branches to 'return blocks' with the return instruction
+						context.Step("Replace branch to return with return", branch);
+						branch.ReplaceWith(targetBlock.Instructions[0].Clone());
+					} else if (branch.TargetContainer != branch.Ancestors.OfType<BlockContainer>().First()) {
+						// We don't want to always inline the return directly, because this
+						// might force us to place the return within a loop, when it's better
+						// placed outside.
+						// But we do want to move the return block into the correct try-finally scope,
+						// so that loop detection at least has the option to put it inside
+						// the loop body.
+						context.Step("Copy return block into try block", branch);
+						Block blockCopy = (Block)branch.TargetBlock.Clone();
+						BlockContainer localContainer = branch.Ancestors.OfType<BlockContainer>().First();
+						blocksToAdd.Add((localContainer, blockCopy));
+						branch.TargetBlock = blockCopy;
+					}
 				} else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0].OpCode == OpCode.Leave) {
 					context.Step("Replace branch to leave with leave", branch);
 					// Replace branches to 'leave' instruction with the leave instruction
@@ -112,6 +127,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 				if (targetBlock.IncomingEdgeCount == 0)
 					targetBlock.Instructions.Clear(); // mark the block for deletion
+			}
+			foreach (var (container, block) in blocksToAdd) {
+				container.Blocks.Add(block);
 			}
 		}
 		
@@ -131,19 +149,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 
-		bool ShouldSimplifyBranchToReturnBlock(Branch branch)
+		bool IsBranchToReturnBlock(Branch branch)
 		{
 			var targetBlock = branch.TargetBlock;
 			if (targetBlock.Instructions.Count != 1 || targetBlock.FinalInstruction.OpCode != OpCode.Nop)
 				return false;
-			if (targetBlock.Parent == branch.Ancestors.OfType<BlockContainer>().FirstOrDefault()
-				&& !aggressivelyDuplicateReturnBlocks) {
-				// only simplify when jumping out of a try-finally
-				return false;
-			}
-			var inst = targetBlock.Instructions[0];
-			return (inst is Return ret && ret.Value is LdLoc
-				|| inst is Leave leave && leave.IsLeavingFunction);
+			return targetBlock.Instructions[0] is Return ret && ret.Value is LdLoc;
 		}
 		
 		static bool CombineBlockWithNextBlock(BlockContainer container, Block block)
