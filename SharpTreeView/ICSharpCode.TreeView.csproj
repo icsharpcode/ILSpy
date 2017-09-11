@@ -59,6 +59,7 @@
     <Compile Include="SharpTreeNodeView.cs" />
     <Compile Include="SharpTreeView.cs" />
     <Compile Include="SharpTreeViewItem.cs" />
+    <Compile Include="SharpTreeViewTextSearch.cs" />
     <Compile Include="TreeFlattener.cs" />
     <Compile Include="TreeTraversal.cs" />
   </ItemGroup>

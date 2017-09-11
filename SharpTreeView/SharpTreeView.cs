@@ -289,11 +289,33 @@ namespace ICSharpCode.TreeView
 						e.Handled = true;
 					}
 					break;
+				case Key.Back:
+					if (IsTextSearchEnabled) {
+						var instance = SharpTreeViewTextSearch.GetInstance(this);
+						if (instance != null) {
+							instance.RevertLastCharacter();
+							e.Handled = true;
+						}
+					}
+					break;
 			}
 			if (!e.Handled)
 				base.OnKeyDown(e);
 		}
-		
+
+		protected override void OnTextInput(TextCompositionEventArgs e)
+		{
+			if (!string.IsNullOrEmpty(e.Text) && IsTextSearchEnabled && (e.OriginalSource == this || ItemsControl.ItemsControlFromItemContainer(e.OriginalSource as DependencyObject) == this)) {
+				var instance = SharpTreeViewTextSearch.GetInstance(this);
+				if (instance != null) {
+					instance.Search(e.Text);
+					e.Handled = true;
+				}
+			}
+			if (!e.Handled)
+				base.OnTextInput(e);
+		}
+
 		void ExpandRecursively(SharpTreeNode node)
 		{
 			if (node.CanExpandRecursively) {
