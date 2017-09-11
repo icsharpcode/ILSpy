@@ -331,5 +331,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			return SemanticHelper.MayReorder(expressionBeingMoved, expr);
 		}
+
+		/// <summary>
+		/// Finds the first call instruction within the instructions that were inlined into inst.
+		/// </summary>
+		internal static CallInstruction FindFirstInlinedCall(ILInstruction inst)
+		{
+			foreach (var child in inst.Children) {
+				if (!child.SlotInfo.CanInlineInto)
+					break;
+				var call = FindFirstInlinedCall(child);
+				if (call != null) {
+					return call;
+				}
+			}
+			return inst as CallInstruction;
+		}
 	}
 }

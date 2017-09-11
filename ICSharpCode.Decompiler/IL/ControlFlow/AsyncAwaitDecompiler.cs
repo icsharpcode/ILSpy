@@ -671,14 +671,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return;
 			if (!CheckResumeBlock(resumeBlock, awaiterVar, awaitBlockData.awaiterField, completedBlock, stackField))
 				return;
-			// Check completedBlock:
-			ILInstruction getResultCall;
-			if (completedBlock.Instructions[0] is StLoc resultStore) {
-				getResultCall = resultStore.Value;
-			} else {
-				getResultCall = completedBlock.Instructions[0];
-				resultStore = null;
-			}
+			// Check completedBlock. The first instruction involves the GetResult call, but it might have
+			// been inlined into another instruction.
+			var getResultCall = ILInlining.FindFirstInlinedCall(completedBlock.Instructions[0]);
+			if (getResultCall == null)
+				return;
 			if (!MatchCall(getResultCall, "GetResult", out var getResultArgs) || getResultArgs.Count != 1)
 				return;
 			if (!getResultArgs[0].MatchLdLocRef(awaiterVar))
@@ -691,14 +688,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Await awaitInst = new Await(getAwaiterCall.Arguments.Single());
 			awaitInst.GetResultMethod = ((CallInstruction)getResultCall).Method;
 			awaitInst.GetAwaiterMethod = getAwaiterCall.Method;
-			if (resultStore != null) {
-				resultStore.Value = awaitInst;
-			} else {
-				completedBlock.Instructions[0] = awaitInst;
-			}
+			getResultCall.ReplaceWith(awaitInst);
 
 			// Remove useless reset of awaiterVar.
-			if (completedBlock.Instructions[1] is StObj stobj) {
+			if (completedBlock.Instructions.ElementAtOrDefault(1) is StObj stobj) {
 				if (stobj.Target.MatchLdLoca(awaiterVar) && stobj.Value.OpCode == OpCode.DefaultValue) {
 					completedBlock.Instructions.RemoveAt(1);
 				}
