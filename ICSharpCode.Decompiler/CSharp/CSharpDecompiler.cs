@@ -125,12 +125,13 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		List<IAstTransform> astTransforms = new List<IAstTransform> {
 			new PatternStatementTransform(),
-			new ReplaceMethodCallsWithOperators(),
+			new ReplaceMethodCallsWithOperators(), // must run before DeclareVariables.EnsureExpressionStatementsAreValid
 			new IntroduceUnsafeModifier(),
 			new AddCheckedBlocks(),
 			new DeclareVariables(), // should run after most transforms that modify statements
 			new ConvertConstructorCallIntoInitializer(), // must run after DeclareVariables
 			new DecimalConstantTransform(),
+			new PrettifyAssignments(), // must run after DeclareVariables
 			new IntroduceUsingDeclarations(),
 			new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
 			new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods

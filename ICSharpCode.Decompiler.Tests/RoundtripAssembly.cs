@@ -47,10 +47,14 @@ namespace ICSharpCode.Decompiler.Tests
 			RunWithTest("Newtonsoft.Json-net45", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
 		}
 
-		[Test, Ignore("Do not run on build server")]
+		[Test]
 		public void NewtonsoftJson_pcl_debug()
 		{
-			RunWithTest("Newtonsoft.Json-pcl-debug", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
+			try {
+				RunWithTest("Newtonsoft.Json-pcl-debug", "Newtonsoft.Json.dll", "Newtonsoft.Json.Tests.dll");
+			} catch (CompilationFailedException) {
+				Assert.Ignore("Cannot yet re-compile PCL projects.");
+			}
 		}
 
 		[Test]

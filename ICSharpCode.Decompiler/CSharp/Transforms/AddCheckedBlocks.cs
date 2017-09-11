@@ -165,28 +165,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		class ConvertCompoundAssignment : InsertedNode
-		{
-			readonly Expression expression;
-			readonly bool isChecked;
-			
-			public ConvertCompoundAssignment(Expression expression, bool isChecked)
-			{
-				this.expression = expression;
-				this.isChecked = isChecked;
-			}
-			
-			public override void Insert()
-			{
-				AssignmentExpression assign = expression.Annotation<ReplaceMethodCallsWithOperators.RestoreOriginalAssignOperatorAnnotation>().Restore(expression);
-				expression.ReplaceWith(assign);
-				if (isChecked)
-					assign.Right = new CheckedExpression { Expression = assign.Right.Detach() };
-				else
-					assign.Right = new UncheckedExpression { Expression = assign.Right.Detach() };
-			}
-		}
-		
 		class InsertedBlock : InsertedNode
 		{
 			readonly Statement firstStatement; // inclusive
@@ -344,18 +322,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// Embed this node in an checked/unchecked expression:
 				if (expr.Parent is ExpressionStatement) {
 					// We cannot use checked/unchecked for top-level-expressions.
-					// However, we could try converting a compound assignment (checked(a+=b);) or unary operator (checked(a++);)
-					// back to its old form.
-					if (expr.Annotation<ReplaceMethodCallsWithOperators.RestoreOriginalAssignOperatorAnnotation>() != null) {
-						// We use '<' so that expressions are introduced on the deepest level possible (goal 3)
-						if (result.CostInCheckedContext + new Cost(1, 1) < result.CostInUncheckedContext) {
-							result.CostInUncheckedContext = result.CostInCheckedContext + new Cost(1, 1);
-							result.NodesToInsertInUncheckedContext = result.NodesToInsertInCheckedContext + new ConvertCompoundAssignment(expr, true);
-						} else if (result.CostInUncheckedContext + new Cost(1, 1) < result.CostInCheckedContext) {
-							result.CostInCheckedContext = result.CostInUncheckedContext + new Cost(1, 1);
-							result.NodesToInsertInCheckedContext = result.NodesToInsertInUncheckedContext + new ConvertCompoundAssignment(expr, false);
-						}
-					}
 				} else if (expr.Role.IsValid(Expression.Null)) {
 					// We use '<' so that expressions are introduced on the deepest level possible (goal 3)
 					if (result.CostInCheckedContext + new Cost(0, 1) < result.CostInUncheckedContext) {
