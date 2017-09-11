@@ -34,6 +34,7 @@ namespace ICSharpCode.Decompiler.IL
 		public Block ContinueJumpTarget { get; private set; } // jumps to this block are "continue;" jumps
 		public ILInstruction Body { get; private set; }       // null in case of DoWhile
 		public Block[] AdditionalBlocks { get; private set; } // blocks to be merged into the loop body
+		public ILVariable IncrementTarget { get; private set; } // null, except in case of For
 
 		private DetectedLoop(BlockContainer container)
 		{
@@ -106,7 +107,20 @@ namespace ICSharpCode.Decompiler.IL
 				if (IncrementBlock != null) {
 					// for-loop
 					Kind = LoopKind.For;
+					if (IncrementBlock.Instructions[0] is StLoc increment)
+						IncrementTarget = increment.Variable;
 					AdditionalBlocks = Container.Blocks.Skip(1).Where(b => b != IncrementBlock).ToArray();
+				} else if (trueInst is Block block) {
+					var variable = GetVariableFromCondition(conditionInst);
+					var last = block.Instructions.LastOrDefault();
+					var secondToLast = block.Instructions.SecondToLastOrDefault();
+					if (variable != null && last != null && secondToLast != null && last.MatchBranch(Container.EntryPoint) && MatchIncrement(secondToLast, variable)) {
+						Kind = LoopKind.For;
+						IncrementTarget = variable;
+						AdditionalBlocks = Container.Blocks.Skip(1).ToArray();
+					} else {
+						AdditionalBlocks = Container.Blocks.Skip(1).ToArray();
+					}
 				} else {
 					AdditionalBlocks = Container.Blocks.Skip(1).ToArray();
 				}
@@ -125,6 +139,24 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			return this;
+		}
+
+		static ILVariable GetVariableFromCondition(ILInstruction conditionInst)
+		{
+			var ldLocs = conditionInst.Children.OfType<LdLoc>().ToArray();
+			if (ldLocs.Length == 1)
+				return ldLocs[0].Variable;
+			else
+				return null;
+		}
+
+		static bool MatchIncrement(ILInstruction inst, ILVariable variable)
+		{
+			if (!inst.MatchStLoc(variable, out var value))
+				return false;
+			if (!value.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
+				return false;
+			return left.MatchLdLoc(variable) && right.MatchLdcI(out var val) && val == 1;
 		}
 	}
 }

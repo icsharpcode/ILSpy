@@ -147,22 +147,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				foreach (BlockContainer possibleLoop in methodBody.Descendants.OfType<BlockContainer>().Reverse()) {
 					if (possibleLoop.EntryPoint.IncomingEdgeCount == 1) continue;
 					var loop = DetectedLoop.DetectLoop(possibleLoop);
-					if (loop.Kind != LoopKind.For) continue;
-					var condition = loop.Conditions?[0];
-					while (condition is LogicNot not)
-						condition = not.Argument;
-					if (condition is Comp comp) {
-						switch (comp.Kind) {
-							case ComparisonKind.GreaterThan:
-							case ComparisonKind.GreaterThanOrEqual:
-							case ComparisonKind.LessThan:
-							case ComparisonKind.LessThanOrEqual:
-								if (comp.Left.MatchLdLoc(variable)) {
-									isLoopCounter = true;
-								}
-								break;
-						}
-					}
+					if (loop.Kind != LoopKind.For || loop.IncrementTarget == null) continue;
+					if (loop.IncrementTarget == variable)
+						isLoopCounter = true;
 				}
 				if (isLoopCounter) {
 					// For loop variables, use i,j,k,l,m,n

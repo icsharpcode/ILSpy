@@ -316,18 +316,30 @@ namespace ICSharpCode.Decompiler.CSharp
 					blockStatement = ConvertAsBlock(loop.Body);
 					if (!loop.Body.HasFlag(InstructionFlags.EndPointUnreachable))
 						blockStatement.Add(new BreakStatement());
+					Statement iterator = null;
+					if (loop.IncrementBlock == null) {
+						// increment check is done by DetectLoop
+						var statement = blockStatement.Last();
+						while (statement is ContinueStatement)
+							statement = (Statement)statement.PrevSibling;
+						iterator = statement.Detach();
+					}
 					var forBody = ConvertBlockContainer(blockStatement, container, loop.AdditionalBlocks, true);
 					var forStmt = new ForStatement() {
 						Condition = conditionExpr,
 						EmbeddedStatement = forBody
 					};
-					for (int i = 0; i < loop.IncrementBlock.Instructions.Count - 1; i++) {
-						forStmt.Iterators.Add(Convert(loop.IncrementBlock.Instructions[i]));
-					}
-					if (loop.IncrementBlock.IncomingEdgeCount > continueCount)
-						forBody.Add(new LabelStatement { Label = loop.IncrementBlock.Label });
 					if (forBody.LastOrDefault() is ContinueStatement continueStmt2)
 						continueStmt2.Remove();
+					if (loop.IncrementBlock != null) {
+						for (int i = 0; i < loop.IncrementBlock.Instructions.Count - 1; i++) {
+							forStmt.Iterators.Add(Convert(loop.IncrementBlock.Instructions[i]));
+						}
+						if (loop.IncrementBlock.IncomingEdgeCount > continueCount)
+							forBody.Add(new LabelStatement { Label = loop.IncrementBlock.Label });
+					} else if (iterator != null) {
+						forStmt.Iterators.Add(iterator.Detach());
+					}
 					return forStmt;
 				default:
 				case LoopKind.While:
