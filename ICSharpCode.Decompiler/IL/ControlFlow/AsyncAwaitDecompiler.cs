@@ -686,7 +686,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			block.Instructions.RemoveAt(block.Instructions.Count - 2); // remove if (isCompleted)
 			((Branch)block.Instructions.Last()).TargetBlock = completedBlock; // instead, directly jump to completed block
 			Await awaitInst = new Await(getAwaiterCall.Arguments.Single());
-			awaitInst.GetResultMethod = ((CallInstruction)getResultCall).Method;
+			awaitInst.GetResultMethod = getResultCall.Method;
 			awaitInst.GetAwaiterMethod = getAwaiterCall.Method;
 			getResultCall.ReplaceWith(awaitInst);
 

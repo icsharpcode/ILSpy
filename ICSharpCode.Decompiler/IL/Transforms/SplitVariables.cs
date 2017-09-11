@@ -54,9 +54,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 					}
 					return true;
+				case VariableKind.StackSlot:
+					// stack slots: are already split by construction,
+					// except for the locals-turned-stackslots in async functions
+					if (v.Function.IsAsync)
+						goto case VariableKind.Local;
+					else
+						return false;
 				default:
 					// parameters: avoid splitting parameters
-					// stack slots: are already split by construction
 					// pinned locals: must not split (doing so would extend the life of the pin to the end of the method)
 					return false;
 			}
@@ -69,6 +75,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				case LdFlda ldflda:
 					return AddressUsedOnlyForReading(ldflda);
+				case Await await:
+					// Not strictly true as GetAwaiter() could have side-effects,
+					// but we need to split awaiter variables to make async/await pretty.
+					return true;
 				case Call call:
 					if (call.Method.DeclaringTypeDefinition.KnownTypeCode == TypeSystem.KnownTypeCode.NullableOfT) {
 						switch (call.Method.Name) {
