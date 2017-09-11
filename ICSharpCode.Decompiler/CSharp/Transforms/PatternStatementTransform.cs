@@ -365,7 +365,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						},
 						new Repeat(new AnyNode("statement")).ToStatement()
 					}
-				}.WithName("loop")
+				}.WithName("loop"),
+				new OptionalNode(new ReturnStatement(new AnyNode()).WithName("optionalReturn")).ToStatement()
 			}};
 		
 		public ForeachStatement TransformForeach(UsingStatement node)
@@ -413,6 +414,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreach (Statement stmt in m.Get<Statement>("variablesOutsideLoop")) {
 				((BlockStatement)foreachStatement.Parent).Statements.InsertAfter(null, stmt.Detach());
 			}
+			var optionalReturnAfterLoop = m.Get<ReturnStatement>("optionalReturn").SingleOrDefault();
+			if (optionalReturnAfterLoop != null)
+				((BlockStatement)foreachStatement.Parent).Statements.InsertAfter(foreachStatement, optionalReturnAfterLoop.Detach());
 			return foreachStatement;
 		}
 
