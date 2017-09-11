@@ -1,5 +1,6 @@
 @if not exist "cecil\Mono.Cecil.csproj" (
 	git submodule update --init || exit /b 1
+	git submodule update --remote ILSpy-tests || exit /b 1
 )
 @setlocal enabledelayedexpansion
 @set MSBUILD=

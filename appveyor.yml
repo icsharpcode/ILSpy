@@ -4,6 +4,8 @@ platform: Any CPU
 image: Visual Studio 2017
 install:
 - git submodule update --init --recursive
+# force update ILSpy-tests to the latest ref
+- git submodule update --remote ILSpy-tests
 before_build:
 - nuget restore ILSpy.sln
 build_script:
