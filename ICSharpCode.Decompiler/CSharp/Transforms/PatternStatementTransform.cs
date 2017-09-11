@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						new Repeat(new AnyNode("statement")).ToStatement()
 					}
 				}.WithName("loop"),
-				new OptionalNode(new ReturnStatement(new AnyNode()).WithName("optionalReturn")).ToStatement()
+				new OptionalNode(new ReturnStatement(new IdentifierExpression(Pattern.AnyString)).WithName("optionalReturn")).ToStatement()
 			}};
 		
 		public ForeachStatement TransformForeach(UsingStatement node)
