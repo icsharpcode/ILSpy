@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private static MethodDefinition GetTypeConstructor(TypeDefinition type)
 		{
-			return type.Methods.FirstOrDefault(method => method.Name == ".ctor");
+			return type.Methods.FirstOrDefault(method => !method.IsStatic && method.IsConstructor);
 		}
 
 		private static MethodDefinition FindMethodUsageInType(TypeDefinition type, MethodDefinition analyzedMethod)
