@@ -34,6 +34,7 @@ using ICSharpCode.Decompiler.TypeSystem;
 using System.Windows;
 using System.Windows.Controls;
 using ICSharpCode.ILSpy.TreeNodes;
+using ICSharpCode.Decompiler.CSharp.Transforms;
 
 namespace ICSharpCode.ILSpy
 {
@@ -108,36 +109,31 @@ namespace ICSharpCode.ILSpy
 			AddReferenceWarningMessage(method.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(method.DeclaringType, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
-			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(method), decompiler.TypeSystem);
-			/*
-			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: method.DeclaringType, isSingleMember: true);
-			if (method.IsConstructor && !method.IsStatic && !method.DeclaringType.IsValueType) {
-				// also fields and other ctors so that the field initializers can be shown as such
-				AddFieldsAndCtors(codeDomBuilder, method.DeclaringType, method.IsStatic);
-				RunTransformsAndGenerateCode(codeDomBuilder, output, options, new SelectCtorTransform(method));
+			if (method.IsConstructor && !method.DeclaringType.IsValueType) {
+				List<IMemberDefinition> members = CollectFieldsAndCtors(method.DeclaringType, method.IsStatic);
+				decompiler.AstTransforms.Add(new SelectCtorTransform(decompiler.TypeSystem.Resolve(method)));
+				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
 			} else {
-				codeDomBuilder.AddMethod(method);
-				RunTransformsAndGenerateCode(codeDomBuilder, output, options);
-			}*/
+				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(method), decompiler.TypeSystem);
+			}
 		}
 		
-		/*
 		class SelectCtorTransform : IAstTransform
 		{
-			readonly MethodDefinition ctorDef;
+			readonly IMethod ctor;
 			
-			public SelectCtorTransform(MethodDefinition ctorDef)
+			public SelectCtorTransform(IMethod ctor)
 			{
-				this.ctorDef = ctorDef;
+				this.ctor = ctor;
 			}
-			
-			public void Run(AstNode compilationUnit)
+
+			public void Run(AstNode rootNode, TransformContext context)
 			{
 				ConstructorDeclaration ctorDecl = null;
-				foreach (var node in compilationUnit.Children) {
+				foreach (var node in rootNode.Children) {
 					ConstructorDeclaration ctor = node as ConstructorDeclaration;
 					if (ctor != null) {
-						if (ctor.Annotation<MethodDefinition>() == ctorDef) {
+						if (ctor.GetSymbol() == this.ctor) {
 							ctorDecl = ctor;
 						} else {
 							// remove other ctors
@@ -149,15 +145,14 @@ namespace ICSharpCode.ILSpy
 					if (fd != null && fd.Variables.All(v => v.Initializer.IsNull))
 						fd.Remove();
 				}
-				if (ctorDecl.Initializer.ConstructorInitializerType == ConstructorInitializerType.This) {
+				if (ctorDecl?.Initializer.ConstructorInitializerType == ConstructorInitializerType.This) {
 					// remove all fields
-					foreach (var node in compilationUnit.Children)
+					foreach (var node in rootNode.Children)
 						if (node is FieldDeclaration)
 							node.Remove();
 				}
 			}
 		}
-		 */
 
 		public override void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
@@ -166,56 +161,59 @@ namespace ICSharpCode.ILSpy
 			CSharpDecompiler decompiler = CreateDecompiler(property.Module, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(property), decompiler.TypeSystem);
 		}
-		/*
+
 		public override void DecompileField(FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
-			AddReferenceWarningMessage(output);
+			AddReferenceWarningMessage(field.Module.Assembly, output);
 			WriteCommentLine(output, TypeToString(field.DeclaringType, includeNamespace: true));
-			AstBuilder codeDomBuilder = CreateAstBuilder(options, currentType: field.DeclaringType, isSingleMember: true);
+			CSharpDecompiler decompiler = CreateDecompiler(field.Module, options);
 			if (field.IsLiteral) {
-				codeDomBuilder.AddField(field);
+				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(field), decompiler.TypeSystem);
 			} else {
-				// also decompile ctors so that the field initializer can be shown
-				AddFieldsAndCtors(codeDomBuilder, field.DeclaringType, field.IsStatic);
+				List<IMemberDefinition> members = CollectFieldsAndCtors(field.DeclaringType, field.IsStatic);
+				decompiler.AstTransforms.Add(new SelectFieldTransform(decompiler.TypeSystem.Resolve(field)));
+				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(members), decompiler.TypeSystem);
 			}
-			RunTransformsAndGenerateCode(codeDomBuilder, output, options, new SelectFieldTransform(field));
 		}
-		
+
+		private static List<IMemberDefinition> CollectFieldsAndCtors(TypeDefinition type, bool isStatic)
+		{
+			var members = new List<IMemberDefinition>();
+			foreach (var field in type.Fields) {
+				if (field.IsStatic == isStatic)
+					members.Add(field);
+			}
+			foreach (var ctor in type.Methods) {
+				if (ctor.IsConstructor && ctor.IsStatic == isStatic)
+					members.Add(ctor);
+			}
+
+			return members;
+		}
+
 		/// <summary>
 		/// Removes all top-level members except for the specified fields.
 		/// </summary>
 		sealed class SelectFieldTransform : IAstTransform
 		{
-			readonly FieldDefinition field;
+			readonly IField field;
 			
-			public SelectFieldTransform(FieldDefinition field)
+			public SelectFieldTransform(IField field)
 			{
 				this.field = field;
 			}
-			
-			public void Run(AstNode compilationUnit)
+
+			public void Run(AstNode rootNode, TransformContext context)
 			{
-				foreach (var child in compilationUnit.Children) {
+				foreach (var child in rootNode.Children) {
 					if (child is EntityDeclaration) {
-						if (child.Annotation<FieldDefinition>() != field)
+						if (child.GetSymbol() != field)
 							child.Remove();
 					}
 				}
 			}
 		}
-		
-		void AddFieldsAndCtors(AstBuilder codeDomBuilder, TypeDefinition declaringType, bool isStatic)
-		{
-			foreach (var field in declaringType.Fields) {
-				if (field.IsStatic == isStatic)
-					codeDomBuilder.AddField(field);
-			}
-			foreach (var ctor in declaringType.Methods) {
-				if (ctor.IsConstructor && ctor.IsStatic == isStatic)
-					codeDomBuilder.AddMethod(ctor);
-			}
-		}
-		 */
+
 		public override void DecompileEvent(EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
 			AddReferenceWarningMessage(ev.Module.Assembly, output);
@@ -231,26 +229,6 @@ namespace ICSharpCode.ILSpy
 			CSharpDecompiler decompiler = CreateDecompiler(type.Module, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type), decompiler.TypeSystem);
 		}
-
-		/*
-		void RunTransformsAndGenerateCode(AstBuilder astBuilder, ITextOutput output, DecompilationOptions options, IAstTransform additionalTransform = null)
-		{
-			astBuilder.RunTransformations(transformAbortCondition);
-			if (additionalTransform != null) {
-				additionalTransform.Run(astBuilder.SyntaxTree);
-			}
-			if (options.DecompilerSettings.ShowXmlDocumentation) {
-				try {
-					AddXmlDocTransform.Run(astBuilder.SyntaxTree);
-				} catch (XmlException ex) {
-					string[] msg = (" Exception while reading XmlDoc: " + ex.ToString()).Split(new[]{'\r', '\n'}, StringSplitOptions.RemoveEmptyEntries);
-					var insertionPoint = astBuilder.SyntaxTree.FirstChild;
-					for (int i = 0; i < msg.Length; i++)
-						astBuilder.SyntaxTree.InsertChildBefore(insertionPoint, new Comment(msg[i], CommentType.Documentation), Roles.Comment);
-				}
-			}
-			astBuilder.GenerateCode(output);
-		}*/
 
 		public static string GetPlatformDisplayName(ModuleDefinition module)
 		{

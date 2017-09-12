@@ -345,11 +345,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			RunTransforms(syntaxTree, decompilationContext);
 			return syntaxTree;
 		}
-		
+
 		/// <summary>
 		/// Decompile the specified types and/or members.
 		/// </summary>
 		public SyntaxTree Decompile(params IMemberDefinition[] definitions)
+		{
+			return Decompile((IList<IMemberDefinition>)definitions);
+		}
+
+		/// <summary>
+		/// Decompile the specified types and/or members.
+		/// </summary>
+		public SyntaxTree Decompile(IList<IMemberDefinition> definitions)
 		{
 			if (definitions == null)
 				throw new ArgumentNullException(nameof(definitions));

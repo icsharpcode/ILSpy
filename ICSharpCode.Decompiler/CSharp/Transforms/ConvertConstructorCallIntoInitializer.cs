@@ -41,6 +41,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			visitor.HandleStaticFieldInitializers(node.Children);
 			
 			node.AcceptVisitor(visitor);
+
+			visitor.RemoveSingleEmptyConstructor(node.Children, context.DecompiledTypeDefinition);
 		}
 	}
 	
@@ -103,7 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitTypeDeclaration(typeDeclaration);
 			
 			// Remove single empty constructor:
-			RemoveSingleEmptyConstructor(typeDeclaration);
+			RemoveSingleEmptyConstructor(typeDeclaration.Members, (ITypeDefinition)typeDeclaration.GetSymbol());
 			
 			// Handle initializers on static fields:
 			HandleStaticFieldInitializers(typeDeclaration.Members);
@@ -155,12 +157,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		void RemoveSingleEmptyConstructor(TypeDeclaration typeDeclaration)
+		internal void RemoveSingleEmptyConstructor(IEnumerable<AstNode> members, ITypeDefinition contextTypeDefinition)
 		{
-			var instanceCtors = typeDeclaration.Members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
+			if (contextTypeDefinition == null) return;
+			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
 			if (instanceCtors.Length == 1) {
 				ConstructorDeclaration emptyCtor = new ConstructorDeclaration();
-				emptyCtor.Modifiers = ((typeDeclaration.Modifiers & Modifiers.Abstract) == Modifiers.Abstract ? Modifiers.Protected : Modifiers.Public);
+				emptyCtor.Modifiers = contextTypeDefinition.IsAbstract ? Modifiers.Protected : Modifiers.Public;
 				emptyCtor.Body = new BlockStatement();
 				if (emptyCtor.IsMatch(instanceCtors[0]))
 					instanceCtors[0].Remove();
