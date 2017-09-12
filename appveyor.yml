@@ -1,6 +1,3 @@
-configuration:
-- Debug
-- Release
 platform: Any CPU
 image: Visual Studio 2017
 install:
@@ -30,7 +27,8 @@ install:
 before_build:
 - nuget restore ILSpy.sln
 build_script:
-- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false;Configuration=Debug "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false;Configuration=Release "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 after_build:
 - 7z a ILSpy_%APPVEYOR_REPO_BRANCH%_%ILSPY_VERSION_NUMBER%_Binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Release\net461\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Release\net461\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Release\net461\*.config
 test:
