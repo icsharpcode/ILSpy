@@ -1,4 +1,6 @@
-configuration: Debug
+configuration:
+- Debug
+- Release
 platform: Any CPU
 image: Visual Studio 2017
 install:
@@ -30,7 +32,7 @@ before_build:
 build_script:
 - msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 after_build:
-- 7z a ILSpy_%APPVEYOR_REPO_BRANCH%_%ILSPY_VERSION_NUMBER%_Binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Debug\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Debug\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Debug\*.config
+- 7z a ILSpy_%APPVEYOR_REPO_BRANCH%_%ILSPY_VERSION_NUMBER%_Binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Release\net461\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Release\net461\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Release\net461\*.config
 test:
   assemblies:
     - 'ICSharpCode.Decompiler.Tests\bin\Debug\net461\ICSharpCode.Decompiler.Tests.exe'
@@ -39,4 +41,4 @@ after_test:
 - python BuildTools\tidy.py
 artifacts:
   - path: ILSpy_%APPVEYOR_REPO_BRANCH%_%ILSPY_VERSION_NUMBER%_Binaries.zip
-    name: ILSpy binaries test
+    name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries
