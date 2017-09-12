@@ -1,11 +1,29 @@
-version: 1.0.{build}
 configuration: Debug
 platform: Any CPU
 image: Visual Studio 2017
 install:
 - git submodule update --init --recursive
-# force update ILSpy-tests to the latest ref
-- git submodule update --remote ILSpy-tests
+- ps: |
+    function gitVersion(){
+      $majorVersion = 3;
+      $minorVersion = 0;
+      $revision = 0;
+      $baseCommitHash = "d779383cb85003d6dabeb976f0845631e07bf463";
+      if ($env:APPVEYOR_REPO_BRANCH -ne 'master') {
+        $branch = "-$env:APPVEYOR_REPO_BRANCH";
+      } else {
+        $branch = "";
+      }
+
+      $build = git rev-list --count "$baseCommitHash..HEAD";
+
+      $newVersion="$majorVersion.$minorVersion.$revision.$build$branch";
+      
+      write-host "Update appveyor build version to:$newVersion"
+      $env:appveyor_build_version="$newVersion"
+      appveyor UpdateBuild -Version "$newVersion"
+    }
+    gitVersion
 before_build:
 - nuget restore ILSpy.sln
 build_script:
