@@ -32,8 +32,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	/// </summary>
 	public class IntroduceUsingDeclarations : IAstTransform
 	{
-		public bool FullyQualifyAmbiguousTypeNames = true;
-		
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			// First determine all the namespaces that need to be imported:
@@ -42,26 +40,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			var usingScope = new UsingScope();
 
-			var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
-			
-			// Now add using declarations for those namespaces:
-			foreach (string ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n)) {
-				// we go backwards (OrderByDescending) through the list of namespaces because we insert them backwards
-				// (always inserting at the start of the list)
-				string[] parts = ns.Split('.');
-				AstType nsType = new SimpleType(parts[0]);
-				for (int i = 1; i < parts.Length; i++) {
-					nsType = new MemberType { Target = nsType, MemberName = parts[i] };
+			if (context.Settings.UsingDeclarations) {
+				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
+
+				// Now add using declarations for those namespaces:
+				foreach (string ns in requiredImports.ImportedNamespaces.OrderByDescending(n => n)) {
+					// we go backwards (OrderByDescending) through the list of namespaces because we insert them backwards
+					// (always inserting at the start of the list)
+					string[] parts = ns.Split('.');
+					AstType nsType = new SimpleType(parts[0]);
+					for (int i = 1; i < parts.Length; i++) {
+						nsType = new MemberType { Target = nsType, MemberName = parts[i] };
+					}
+					if (context.Settings.FullyQualifyAmbiguousTypeNames) {
+						var reference = nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) as TypeOrNamespaceReference;
+						if (reference != null)
+							usingScope.Usings.Add(reference);
+					}
+					rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
 				}
-				if (FullyQualifyAmbiguousTypeNames) {
-					var reference = nsType.ToTypeReference(NameLookupMode.TypeInUsingDeclaration) as TypeOrNamespaceReference;
-					if (reference != null)
-						usingScope.Usings.Add(reference);
-				}
-				rootNode.InsertChildAfter(insertionPoint, new UsingDeclaration { Import = nsType }, SyntaxTree.MemberRole);
 			}
-			
-			if (!FullyQualifyAmbiguousTypeNames)
+
+			if (!context.Settings.FullyQualifyAmbiguousTypeNames)
 				return;
 
 			// verify that the SimpleTypes refer to the correct type (no ambiguities)
