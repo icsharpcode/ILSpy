@@ -50,7 +50,7 @@ namespace ICSharpCode.ILSpy
 		bool showAllMembers = false;
 		int transformCount = int.MaxValue;
 
-		#if DEBUG
+#if DEBUG
 		internal static IEnumerable<CSharpLanguage> GetDebugLanguages()
 		{
 			var decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
@@ -70,20 +70,17 @@ namespace ICSharpCode.ILSpy
 				showAllMembers = true
 			};
 		}
-		#endif
+#endif
 
-		public override string Name
-		{
+		public override string Name {
 			get { return name; }
 		}
 
-		public override string FileExtension
-		{
+		public override string FileExtension {
 			get { return ".cs"; }
 		}
 
-		public override string ProjectFileExtension
-		{
+		public override string ProjectFileExtension {
 			get { return ".csproj"; }
 		}
 
@@ -95,7 +92,7 @@ namespace ICSharpCode.ILSpy
 				decompiler.AstTransforms.RemoveAt(decompiler.AstTransforms.Count - 1);
 			return decompiler;
 		}
-		
+
 		void WriteCode(ITextOutput output, DecompilerSettings settings, SyntaxTree syntaxTree, IDecompilerTypeSystem typeSystem)
 		{
 			syntaxTree.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
@@ -103,7 +100,7 @@ namespace ICSharpCode.ILSpy
 			var formattingPolicy = settings.CSharpFormattingOptions;
 			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(outputFormatter, formattingPolicy));
 		}
-		
+
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			AddReferenceWarningMessage(method.Module.Assembly, output);
@@ -117,11 +114,11 @@ namespace ICSharpCode.ILSpy
 				WriteCode(output, options.DecompilerSettings, decompiler.Decompile(method), decompiler.TypeSystem);
 			}
 		}
-		
+
 		class SelectCtorTransform : IAstTransform
 		{
 			readonly IMethod ctor;
-			
+
 			public SelectCtorTransform(IMethod ctor)
 			{
 				this.ctor = ctor;
@@ -197,7 +194,7 @@ namespace ICSharpCode.ILSpy
 		sealed class SelectFieldTransform : IAstTransform
 		{
 			readonly IField field;
-			
+
 			public SelectFieldTransform(IField field)
 			{
 				this.field = field;
@@ -328,7 +325,7 @@ namespace ICSharpCode.ILSpy
 					output.WriteLine("// Runtime: " + runtimeName);
 				}
 				output.WriteLine();
-				
+
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
 				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
 					CSharpDecompiler decompiler = new CSharpDecompiler(assembly.ModuleDefinition, options.DecompilerSettings);
@@ -343,25 +340,25 @@ namespace ICSharpCode.ILSpy
 				}
 			}
 		}
-		
+
 		class ILSpyWholeProjectDecompiler : WholeProjectDecompiler
 		{
 			readonly LoadedAssembly assembly;
 			readonly DecompilationOptions options;
-			
+
 			public ILSpyWholeProjectDecompiler(LoadedAssembly assembly, DecompilationOptions options)
 			{
 				this.assembly = assembly;
 				this.options = options;
 				base.Settings = options.DecompilerSettings;
 			}
-			
+
 			protected override IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 			{
 				if (fileName.EndsWith(".resource", StringComparison.OrdinalIgnoreCase)) {
 					using (ResourceReader reader = new ResourceReader(entryStream))
-						using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
-							using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
+					using (FileStream fs = new FileStream(Path.Combine(targetDirectory, fileName), FileMode.Create, FileAccess.Write))
+					using (ResXResourceWriter writer = new ResXResourceWriter(fs)) {
 						foreach (DictionaryEntry entry in reader) {
 							writer.AddResource((string)entry.Key, entry.Value);
 						}
@@ -395,6 +392,7 @@ namespace ICSharpCode.ILSpy
 					Settings = settings
 				});
 		}
+		*/
 
 		public override string TypeToString(TypeReference type, bool includeNamespace, ICustomAttributeProvider typeAttributes = null)
 		{
@@ -407,7 +405,7 @@ namespace ICSharpCode.ILSpy
 
 		string TypeToString(ConvertTypeOptions options, TypeReference type, ICustomAttributeProvider typeAttributes = null)
 		{
-			AstType astType = AstBuilder.ConvertType(type, typeAttributes, options);
+			AstType astType = CSharpDecompiler.ConvertType(type, typeAttributes, options);
 
 			StringWriter w = new StringWriter();
 			if (type.IsByReference) {
@@ -424,9 +422,9 @@ namespace ICSharpCode.ILSpy
 			astType.AcceptVisitor(new CSharpOutputVisitor(w, TypeToStringFormattingOptions));
 			return w.ToString();
 		}
+
 		static readonly CSharpFormattingOptions TypeToStringFormattingOptions = FormattingOptionsFactory.CreateEmpty();
-		*/
-		
+
 		public override string FormatPropertyName(PropertyDefinition property, bool? isIndexer)
 		{
 			if (property == null)
@@ -466,15 +464,14 @@ namespace ICSharpCode.ILSpy
 			return (method.IsConstructor) ? method.DeclaringType.Name : method.Name;
 		}
 
-		/*
 		public override string FormatTypeName(TypeDefinition type)
 		{
 			if (type == null)
 				throw new ArgumentNullException("type");
-			
+
 			return TypeToString(ConvertTypeOptions.DoNotUsePrimitiveTypeNames | ConvertTypeOptions.IncludeTypeParameterDefinitions, type);
 		}
-		*/
+
 		public override bool ShowMember(MemberReference member)
 		{
 			return showAllMembers || !CSharpDecompiler.MemberIsHidden(member, new DecompilationOptions().DecompilerSettings);
