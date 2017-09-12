@@ -17,20 +17,26 @@ install:
 
       $build = git rev-list --count "$baseCommitHash..HEAD";
 
-      $newVersion="$majorVersion.$minorVersion.$revision.$build$branch";
+      $newVersion="$majorVersion.$minorVersion.$revision.$build";
       
       write-host "Update appveyor build version to:$newVersion"
-      $env:appveyor_build_version="$newVersion"
-      appveyor UpdateBuild -Version "$newVersion"
+      $env:ilspy_version_number=$newVersion
+      $env:appveyor_build_version="$newVersion$branch"
+      appveyor UpdateBuild -Version "$newVersion$branch"
     }
     gitVersion
 before_build:
 - nuget restore ILSpy.sln
 build_script:
 - msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+after_build:
+- 7z a ILSpy_%APPVEYOR_REPO_BRANCH%_%ILSPY_VERSION_NUMBER%_Binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Debug\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Debug\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Debug\*.config
 test:
   assemblies:
     - 'ICSharpCode.Decompiler.Tests\bin\Debug\net461\ICSharpCode.Decompiler.Tests.exe'
     - 'ILSpy.BamlDecompiler.Tests\bin\Debug\net461\ILSpy.BamlDecompiler.Tests.dll'
 after_test:
 - python BuildTools\tidy.py
+artifacts:
+  - path: ILSpy_%APPVEYOR_REPO_BRANCH%_%ILSPY_VERSION_NUMBER%_Binaries.zip
+    name: ILSpy binaries test
