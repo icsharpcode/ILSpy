@@ -205,9 +205,6 @@
     <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyOverridesTreeNode.cs" />
     <Compile Include="TreeNodes\Analyzer\AnalyzedPropertyTreeNode.cs" />
     <Compile Include="TreeNodes\SearchMsdnContextMenuEntry.cs" />
-    <EmbeddedResource Include="..\README.txt">
-      <Link>README.txt</Link>
-    </EmbeddedResource>
     <EmbeddedResource Include="..\doc\LGPL.txt">
       <Link>LGPL.txt</Link>
     </EmbeddedResource>
@@ -275,6 +272,7 @@
     <Compile Include="TreeNodes\ResourceNodes\ResourceTreeNode.cs" />
     <Compile Include="TreeNodes\ThreadingSupport.cs" />
     <Compile Include="TreeNodes\TypeTreeNode.cs" />
+    <EmbeddedResource Include="README.txt" />
 	<EmbeddedResource Include="TextView\ILAsm-Mode.xshd" />
   </ItemGroup>
 
