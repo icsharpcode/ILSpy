@@ -19,5 +19,5 @@ test:
 after_test:
 - python BuildTools\tidy.py
 artifacts:
-  - path: ILSpy_%APPVEYOR_REPO_BRANCH%_%ILSPY_VERSION_NUMBER%_Binaries.zip
+  - path: ILSpy_binaries.zip
     name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries
