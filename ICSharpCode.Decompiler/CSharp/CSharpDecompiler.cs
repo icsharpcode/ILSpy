@@ -277,6 +277,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
 			syntaxTree = new SyntaxTree();
+			definedSymbols = new HashSet<string>();
 			DoDecompileModuleAndAssemblyAttributes(decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompilationContext);
 			return syntaxTree;
@@ -323,6 +324,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
 			syntaxTree = new SyntaxTree();
+			definedSymbols = new HashSet<string>();
 			DoDecompileModuleAndAssemblyAttributes(decompilationContext, syntaxTree);
 			DoDecompileTypes(typeSystem.ModuleDefinition.Types, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompilationContext);
@@ -341,6 +343,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				throw new ArgumentNullException(nameof(types));
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
 			syntaxTree = new SyntaxTree();
+			definedSymbols = new HashSet<string>();
 			DoDecompileTypes(types, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompilationContext);
 			return syntaxTree;
@@ -363,6 +366,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				throw new ArgumentNullException(nameof(definitions));
 			ITypeDefinition parentTypeDef = null;
 			syntaxTree = new SyntaxTree();
+			definedSymbols = new HashSet<string>();
 			foreach (var def in definitions) {
 				if (def == null)
 					throw new ArgumentException("definitions contains null element");
@@ -685,7 +689,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		readonly HashSet<string> definedSymbols = new HashSet<string>();
+		HashSet<string> definedSymbols;
 
 		void AddDefinesForConditionalAttributes(ILFunction function)
 		{
