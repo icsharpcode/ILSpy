@@ -68,8 +68,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					b.Append(", ");
 				b.Append("...");
 			}
-			b.Append(") : ");
-			b.Append(language.TypeToString(method.ReturnType, false, method.MethodReturnType));
+			if (method.IsConstructor) {
+				b.Append(')');
+			} else {
+				b.Append(") : ");
+				b.Append(language.TypeToString(method.ReturnType, false, method.MethodReturnType));
+			}
 			b.Append(method.MetadataToken.ToSuffixString());
 			return HighlightSearchMatch(language.FormatMethodName(method), b.ToString());
 		}
