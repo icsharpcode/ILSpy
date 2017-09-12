@@ -47,26 +47,6 @@ Detailed [release history](https://github.com/icsharpcode/ILSpy/wiki/Release-His
 * Extensible via [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins) (MEF)
 * Assembly Lists  
 
-
-## ILSpy - Further Down the Road
-
- * Bookmarks
- * Debugger [Eusebiu's blog](http://community.sharpdevelop.net/blogs/marcueusebiu/default.aspx)
- * Support C# 4.0 "dynamic"
- * Add casts where required to make C# overload resolution call the correct method
- * Support for fixed fields ("`struct A { public unsafe fixed int Field[10]; }`")
- * Decompiling ILSpy with itself and recompiling the result should result in a working ILSpy copy
- * Assembly editing capabilities (similar to [Reflexil](http://reflexil.net/))  
-
-
-## Blog Posts on ILSpy Development
-
-* [Daniel Grunwald's blog](http://community.sharpdevelop.net/blogs/danielgrunwald/archive/tags/ILSpy/default.aspx)
-* [David Srbecky's blog](http://community.sharpdevelop.net/blogs/dsrbecky/archive/tags/ILSpy/default.aspx)
-* [Siegfried Pammer's blog](http://community.sharpdevelop.net/blogs/siegfried_pammer/archive/tags/ILSpy/default.aspx)
-* [Eusebiu Marcu's blog](http://community.sharpdevelop.net/blogs/marcueusebiu/archive/tags/ILSpy/default.aspx)  
-
-
 ## Screencasts, Demo & How To Videos
 
 * [Overview of features in ILSpy Build 296](http://www.youtube.com/watch?v=CDi5yT1ekuU) Resolution: 720p  
