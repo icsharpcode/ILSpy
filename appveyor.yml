@@ -1,40 +1,21 @@
 platform: Any CPU
+configuration:
+- Debug
+- Release
 image: Visual Studio 2017
 install:
 - git submodule update --init --recursive
-- ps: |
-    function gitVersion(){
-      $majorVersion = 3;
-      $minorVersion = 0;
-      $revision = 0;
-      $baseCommitHash = "d779383cb85003d6dabeb976f0845631e07bf463";
-      if ($env:APPVEYOR_REPO_BRANCH -ne 'master') {
-        $branch = "-$env:APPVEYOR_REPO_BRANCH";
-      } else {
-        $branch = "";
-      }
-
-      $build = git rev-list --count "$baseCommitHash..HEAD";
-
-      $newVersion="$majorVersion.$minorVersion.$revision.$build";
-      
-      write-host "Update appveyor build version to:$newVersion"
-      $env:ilspy_version_number=$newVersion
-      $env:appveyor_build_version="$newVersion$branch"
-      appveyor UpdateBuild -Version "$newVersion$branch"
-    }
-    gitVersion
+- ps: .\BuildTools\appveyor-install.ps1
 before_build:
 - nuget restore ILSpy.sln
 build_script:
-- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false;Configuration=Debug "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
-- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false;Configuration=Release "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+- msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 after_build:
-- 7z a ILSpy_%APPVEYOR_REPO_BRANCH%_%ILSPY_VERSION_NUMBER%_Binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Release\net461\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Release\net461\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\Release\net461\*.config
+- 7z a ILSpy_%APPVEYOR_REPO_BRANCH%_%ILSPY_VERSION_NUMBER%_Binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net461\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net461\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net461\*.config
 test:
   assemblies:
-    - 'ICSharpCode.Decompiler.Tests\bin\Debug\net461\ICSharpCode.Decompiler.Tests.exe'
-    - 'ILSpy.BamlDecompiler.Tests\bin\Debug\net461\ILSpy.BamlDecompiler.Tests.dll'
+    - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net461\ICSharpCode.Decompiler.Tests.exe'
+    - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net461\ILSpy.BamlDecompiler.Tests.dll'
 after_test:
 - python BuildTools\tidy.py
 artifacts:
