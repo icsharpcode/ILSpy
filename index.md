@@ -14,10 +14,9 @@ ILSpy requires the [.NET Framework 4.0](http://www.microsoft.com/downloads/en/de
 
 Important links:
 
-* [Discussion forum](http://community.sharpdevelop.net/forums/69.aspx)
 * [Issue Tracker](https://github.com/icsharpcode/ILSpy/issues)
 * [ILSpy plugin list](https://github.com/icsharpcode/ILSpy/wiki/Plugins)
-* [Build server](http://build.sharpdevelop.net/BuildArtefacts/#ILSpyMaster)
+* [Build server](https://ci.appveyor.com/project/icsharpcode/ilspy)
 
 
 ## Release History
@@ -25,22 +24,7 @@ Important links:
 Want to know when major new features are added? When a new stable version is released?
 [Follow us on Twitter!](http://twitter.com/ilspy)
 
-* 6/5/2016 [Version 2.4](https://github.com/icsharpcode/ILSpy/issues?q=milestone%3A2.4+is%3Aclosed)
-* 4/9/2016 [Version 2.3.2](https://github.com/icsharpcode/ILSpy/releases/tag/v2.3.2)
-* 7/13/2015 [Version 2.3.1](https://github.com/icsharpcode/ILSpy/releases/tag/2.3.1)
-* 3/9/2015 [Version 2.3](https://github.com/icsharpcode/ILSpy/releases/tag/2.3)
-* 6/29/2014 [Version 2.2](http://community.sharpdevelop.net/blogs/danielgrunwald/archive/2014/06/29/ilspy-2-2-release.aspx)
-* 6/3/2012 [Version 2.1](http://community.sharpdevelop.net/blogs/christophwille/archive/2012/06/03/ilspy-2-1-async-await-decompilation-support.aspx)
-* 4/15/2012 [Version 2.0](http://community.sharpdevelop.net/blogs/christophwille/archive/2012/04/15/ilspy-2-0-final.aspx)
-* 2/16/2012 [2.0 Beta](http://community.sharpdevelop.net/blogs/danielgrunwald/archive/2012/02/16/ilspy-2-0-beta-1.aspx)
-* 7/16/2011 [Version 1.0](http://community.sharpdevelop.net/blogs/christophwille/archive/2011/07/16/ilspy-1-0-has-landed.aspx)
-* 5/29/2011 [Beta](http://community.sharpdevelop.net/blogs/christophwille/archive/2011/05/29/ilspy-1-0-beta.aspx)
-* 5/4/2011 [M3](http://community.sharpdevelop.net/blogs/christophwille/archive/2011/05/04/ilspy-1-0-m3-object-initializer-search-ui-xml-documentation.aspx)
-* 4/13/2011 [M2](http://community.sharpdevelop.net/blogs/christophwille/archive/2011/04/13/ilspy-1-0-milestone-2-quot-m2-quot.aspx)
-* 2/24/2011 [M1 (Milestone 1) Release](http://community.sharpdevelop.net/blogs/christophwille/archive/2011/02/24/ilspy-1-0-m1-milestone-1.aspx)
-* 2/16/2011 [First Preview](http://community.sharpdevelop.net/blogs/christophwille/archive/2011/02/16/new-from-sharpdevelop-ilspy.aspx)
-* 2/4/2011 Development Starts (github repository created)
-
+Detailed [release history](https://github.com/icsharpcode/ILSpy/wiki/Release-History) is tracked in our wiki.
 
 ## ILSpy Features
 
