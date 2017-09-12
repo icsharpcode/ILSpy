@@ -1,18 +1,23 @@
-version: 1.0.{build}
-configuration: Debug
 platform: Any CPU
+configuration:
+- Debug
+- Release
 image: Visual Studio 2017
 install:
 - git submodule update --init --recursive
-# force update ILSpy-tests to the latest ref
-- git submodule update --remote ILSpy-tests
+- ps: .\BuildTools\appveyor-install.ps1
 before_build:
 - nuget restore ILSpy.sln
 build_script:
 - msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
+after_build:
+- 7z a ILSpy_%APPVEYOR_REPO_BRANCH%_%ILSPY_VERSION_NUMBER%_Binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net461\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net461\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net461\*.config
 test:
   assemblies:
-    - 'ICSharpCode.Decompiler.Tests\bin\Debug\net461\ICSharpCode.Decompiler.Tests.exe'
-    - 'ILSpy.BamlDecompiler.Tests\bin\Debug\net461\ILSpy.BamlDecompiler.Tests.dll'
+    - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net461\ICSharpCode.Decompiler.Tests.exe'
+    - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net461\ILSpy.BamlDecompiler.Tests.dll'
 after_test:
 - python BuildTools\tidy.py
+artifacts:
+  - path: ILSpy_binaries.zip
+    name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries
