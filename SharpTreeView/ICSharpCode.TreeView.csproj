@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
@@ -31,6 +31,8 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.Xaml" />
+    <Reference Include="UIAutomationProvider" />
+    <Reference Include="UIAutomationTypes" />
     <Reference Include="WindowsBase" />
   </ItemGroup>
 
@@ -58,8 +60,10 @@
     <Compile Include="SharpTreeNodeCollection.cs" />
     <Compile Include="SharpTreeNodeView.cs" />
     <Compile Include="SharpTreeView.cs" />
+    <Compile Include="SharpTreeViewAutomationPeer.cs" />
     <Compile Include="SharpTreeViewItem.cs" />
     <Compile Include="SharpTreeViewTextSearch.cs" />
+    <Compile Include="SharpTreeViewItemAutomationPeer.cs" />
     <Compile Include="TreeFlattener.cs" />
     <Compile Include="TreeTraversal.cs" />
   </ItemGroup>

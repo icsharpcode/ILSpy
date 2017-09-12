@@ -133,7 +133,14 @@ namespace ICSharpCode.ILSpy
 				throw new ArgumentNullException(nameof(property));
 			return property.Name;
 		}
-		
+
+		public virtual string FormatMethodName(MethodDefinition method)
+		{
+			if (method == null)
+				throw new ArgumentNullException("method");
+			return method.Name;
+		}
+
 		public virtual string FormatTypeName(TypeDefinition type)
 		{
 			if (type == null)

@@ -377,7 +377,7 @@ namespace ICSharpCode.ILSpy
 				return base.WriteResourceToFile(fileName, resourceName, entryStream);
 			}
 		}
-		
+
 		/*
 		AstBuilder CreateAstBuilder(DecompilationOptions options, ModuleDefinition currentModule = null, TypeDefinition currentType = null, bool isSingleMember = false)
 		{
@@ -421,10 +421,12 @@ namespace ICSharpCode.ILSpy
 					((ComposedType)astType).PointerRank--;
 			}
 
-			astType.AcceptVisitor(new CSharpOutputVisitor(w, FormattingOptionsFactory.CreateAllman()));
+			astType.AcceptVisitor(new CSharpOutputVisitor(w, TypeToStringFormattingOptions));
 			return w.ToString();
 		}
-		 */
+		static readonly CSharpFormattingOptions TypeToStringFormattingOptions = FormattingOptionsFactory.CreateEmpty();
+		*/
+		
 		public override string FormatPropertyName(PropertyDefinition property, bool? isIndexer)
 		{
 			if (property == null)
@@ -455,6 +457,15 @@ namespace ICSharpCode.ILSpy
 			} else
 				return property.Name;
 		}
+
+		public override string FormatMethodName(MethodDefinition method)
+		{
+			if (method == null)
+				throw new ArgumentNullException("method");
+
+			return (method.IsConstructor) ? method.DeclaringType.Name : method.Name;
+		}
+
 		/*
 		public override string FormatTypeName(TypeDefinition type)
 		{

@@ -27,6 +27,8 @@ using System.Resources;
 
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Controls;
+using ICSharpCode.ILSpy.TextView;
+using Microsoft.Win32;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
@@ -110,6 +112,37 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			} else {
 				otherEntries.Add(new SerializedObjectRepresentation(keyString, entryType, entry.Value.ToString()));
 			}
+		}
+		
+		public override bool Save(DecompilerTextView textView)
+		{
+			EmbeddedResource er = this.Resource as EmbeddedResource;
+			if (er != null) {
+				SaveFileDialog dlg = new SaveFileDialog();
+				dlg.FileName = DecompilerTextView.CleanUpName(er.Name);
+				dlg.Filter = "Resources file (*.resources)|*.resources|Resource XML file|*.resx";
+				if (dlg.ShowDialog() == true) {
+					Stream s = er.GetResourceStream();
+					s.Position = 0;
+					switch (dlg.FilterIndex) {
+						case 1:
+							using (var fs = dlg.OpenFile()) {
+								s.CopyTo(fs);
+							}
+							break;
+						case 2:
+							var reader = new ResourceReader(s);
+							using (var writer = new ResXResourceWriter(dlg.OpenFile())) {
+								foreach (DictionaryEntry entry in reader) {
+									writer.AddResource(entry.Key.ToString(), entry.Value);
+								}
+							}
+							break;
+					}
+				}
+				return true;
+			}
+			return false;
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

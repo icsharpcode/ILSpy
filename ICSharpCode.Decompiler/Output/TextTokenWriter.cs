@@ -191,7 +191,8 @@ namespace ICSharpCode.Decompiler
 		
 		public override void WriteKeyword(Role role, string keyword)
 		{
-			if (keyword == "this" || keyword == "base") {
+			//To make reference for 'this' and 'base' keywords in the ClassName():this() expression
+			if (role == ConstructorInitializer.ThisKeywordRole || role == ConstructorInitializer.BaseKeywordRole) {
 				if (nodeStack.Peek() is ConstructorInitializer initializer && initializer.GetSymbol() is IMember member) {
 					var cecil = typeSystem.GetCecil(member);
 					if (cecil != null) {
