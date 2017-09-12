@@ -685,12 +685,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		readonly HashSet<string> definedSymbols = new HashSet<string>();
+
 		void AddDefinesForConditionalAttributes(ILFunction function)
 		{
 			foreach (var call in function.Descendants.OfType<CallInstruction>()) {
 				var attr = call.Method.GetAttribute(new TopLevelTypeName("System.Diagnostics", nameof(ConditionalAttribute)));
 				var symbolName = attr?.PositionalArguments.FirstOrDefault()?.ConstantValue as string;
-				if (symbolName == null)
+				if (symbolName == null || !definedSymbols.Add(symbolName))
 					continue;
 				syntaxTree.InsertChildAfter(null, new PreProcessorDirective(PreProcessorDirectiveType.Define, symbolName), Roles.PreProcessorDirective);
 			}
