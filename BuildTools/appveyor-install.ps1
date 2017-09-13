@@ -9,7 +9,7 @@ if ($env:APPVEYOR_REPO_BRANCH -ne 'master') {
 	$branch = "";
 }
 
-$build = git rev-list --count "$baseCommitHash..HEAD";
+$build = [Int32]::Parse((git rev-list --count "$baseCommitHash..HEAD")) + 1;
 
 $newVersion="$majorVersion.$minorVersion.$revision.$build";
 $env:ilspy_version_number=$newVersion;

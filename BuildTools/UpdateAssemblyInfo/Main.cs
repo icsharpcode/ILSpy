@@ -197,7 +197,12 @@ namespace UpdateAssemblyInfo
 				if (Directory.Exists(".git")) {
 					try {
 						ReadRevisionNumberFromGit();
-						ReadBranchNameFromGit();
+						string appVeyorBranch = Environment.GetEnvironmentVariable("APPVEYOR_REPO_BRANCH");
+						// AppVeyor uses a repository with detached head.
+						if (string.IsNullOrWhiteSpace(appVeyorBranch))
+							ReadBranchNameFromGit();
+						else
+							gitBranchName = appVeyorBranch;
 					} catch (Exception ex) {
 						Console.WriteLine(ex.ToString());
 					}
