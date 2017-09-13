@@ -15,6 +15,8 @@ $versionName = $versionParts.VersionName;
 
 if ($versionName -ne "null") {
     $versionName = "-$versionName";
+} else {
+    $versionName = "";
 }
 if ($env:APPVEYOR_REPO_BRANCH -ne 'master') {
 	$branch = "-$env:APPVEYOR_REPO_BRANCH";
@@ -24,6 +26,6 @@ if ($env:APPVEYOR_REPO_BRANCH -ne 'master') {
 
 $revision = [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + 1;
 
-$newVersion="$majorVersion.$minorVersion.$build.$revision";
+$newVersion="$major.$minor.$build.$revision";
 $env:appveyor_build_version="$newVersion$branch$versionName";
 appveyor UpdateBuild -Version "$newVersion$branch$versionName";
