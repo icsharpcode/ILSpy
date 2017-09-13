@@ -487,31 +487,30 @@ namespace ICSharpCode.ILSpy
 
 		public override string GetTooltip(MemberReference member)
 		{
-			MethodDefinition md = member as MethodDefinition;
-			PropertyDefinition pd = member as PropertyDefinition;
-			EventDefinition ed = member as EventDefinition;
-			FieldDefinition fd = member as FieldDefinition;
-			if (md != null || pd != null || ed != null || fd != null) {
-				/*AstBuilder b = new AstBuilder(new DecompilerContext(member.Module) { Settings = new DecompilerSettings { UsingDeclarations = false } });
-				b.DecompileMethodBodies = false;
-				if (md != null)
-					b.AddMethod(md);
-				else if (pd != null)
-					b.AddProperty(pd);
-				else if (ed != null)
-					b.AddEvent(ed);
-				else
-					b.AddField(fd);
-				b.RunTransformations();
-				foreach (var attribute in b.SyntaxTree.Descendants.OfType<AttributeSection>())
-					attribute.Remove();
-
-				StringWriter w = new StringWriter();
-				b.GenerateCode(new PlainTextOutput(w));
-				return Regex.Replace(w.ToString(), @"\s+", " ").TrimEnd();*/
+			var decompilerTypeSystem = new DecompilerTypeSystem(member.Module);
+			ISymbol symbol;
+			switch (member) {
+				case MethodReference mr:
+					symbol = decompilerTypeSystem.Resolve(mr);
+					if (symbol == null) return base.GetTooltip(member);
+					break;
+				case PropertyReference pr:
+					symbol = decompilerTypeSystem.Resolve(pr);
+					if (symbol == null) return base.GetTooltip(member);
+					break;
+				case EventReference er:
+					symbol = decompilerTypeSystem.Resolve(er);
+					if (symbol == null) return base.GetTooltip(member);
+					break;
+				case FieldReference fr:
+					symbol = decompilerTypeSystem.Resolve(fr);
+					if (symbol == null) return base.GetTooltip(member);
+					break;
+				default:
+					return base.GetTooltip(member);
 			}
-
-			return base.GetTooltip(member);
+			var flags = ConversionFlags.All & ~ConversionFlags.ShowBody;
+			return new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(symbol);
 		}
 	}
 }
