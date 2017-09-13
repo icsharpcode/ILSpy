@@ -556,11 +556,9 @@
 
   <Target Name="BeforeBuild">
     <PropertyGroup>
-      <UpdateAssemblyInfo>UpdateAssemblyInfo.exe</UpdateAssemblyInfo>
+      <UpdateAssemblyInfo>powershell.exe -NoProfile -ExecutionPolicy Bypass -File $(SolutionDir)\BuildTools\update-assemblyinfo.ps1</UpdateAssemblyInfo>
       <UpdateAssemblyInfo Condition="$(OS)=='Unix'">mono $(UpdateAssemblyInfo)</UpdateAssemblyInfo>
     </PropertyGroup>
-    <MSBuild Projects="$(MSBuildProjectDirectory)\..\BuildTools\UpdateAssemblyInfo\UpdateAssemblyInfo.csproj" Targets="Build" Properties="Configuration=Debug" />
-    <Exec WorkingDirectory="$(MSBuildProjectDirectory)\..\BuildTools\UpdateAssemblyInfo\bin\Debug" Command="$(UpdateAssemblyInfo) --branchname $(BranchName)" Timeout="60000" Condition=" '$(BranchName)' != '' " />
-    <Exec WorkingDirectory="$(MSBuildProjectDirectory)\..\BuildTools\UpdateAssemblyInfo\bin\Debug" Command="$(UpdateAssemblyInfo)" Timeout="60000" Condition=" '$(BranchName)' == '' " />
+    <Exec WorkingDirectory="$(SolutionDir)" Command="$(UpdateAssemblyInfo)" Timeout="60000" />
   </Target>
 </Project>
