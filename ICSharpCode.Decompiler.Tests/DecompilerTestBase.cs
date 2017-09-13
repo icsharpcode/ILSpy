@@ -32,9 +32,11 @@ namespace ICSharpCode.Decompiler.Tests
 {
 	public abstract class DecompilerTestBase
 	{
+		public const string TestCasePath = "../../../TestCases";
+
 		protected static void ValidateFileRoundtrip(string samplesFileName)
 		{
-			var fullPath = Path.Combine(@"../../../../ICSharpCode.Decompiler.Tests", samplesFileName);
+			var fullPath = Path.Combine(TestCasePath, "..", samplesFileName);
 			AssertRoundtripCode(fullPath);
 		}
 

@@ -10,9 +10,9 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
 {
-    public class ILPrettyTestRunner
-    {
-		const string TestCasePath = @"../../../../ICSharpCode.Decompiler.Tests/TestCases/ILPretty";
+	public class ILPrettyTestRunner
+	{
+		const string TestCasePath = DecompilerTestBase.TestCasePath + "/ILPretty";
 
 		[Test]
 		public void AllFilesHaveTests()
