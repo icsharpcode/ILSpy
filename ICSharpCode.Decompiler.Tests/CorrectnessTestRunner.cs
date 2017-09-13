@@ -25,7 +25,7 @@ using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests
 {
-    [TestFixture]
+	[TestFixture]
 	public class CorrectnessTestRunner
 	{
 		const string TestCasePath = DecompilerTestBase.TestCasePath + "/Correctness";

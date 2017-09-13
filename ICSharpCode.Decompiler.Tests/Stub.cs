@@ -21,10 +21,10 @@ using System;
 namespace ICSharpCode.Decompiler.Tests
 {
 	class Stub
-    {
+	{
 		static void Main(string[] args)
 		{
 			throw new InvalidOperationException("Entry point exists only to support output type 'Exe'");
 		}
-    }
+	}
 }
