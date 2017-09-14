@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			ForeachWithAssignment(new int[] { 1, 5, 25 });
 			BreakUnlessContinue(true);
 			BreakUnlessContinue(false);
+			TestConditionals();
 			return 0;
 		}
 
@@ -135,6 +136,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				break;
 			}
 			Console.WriteLine("BreakUnlessContinue (end)");
+		}
+
+		static void TestConditionals()
+		{
+			Console.WriteLine(CastAfterConditional(0));
+			Console.WriteLine(CastAfterConditional(128));
+		}
+
+		static byte CastAfterConditional(int value)
+		{
+			byte answer = (byte)(value == 128 ? 255 : 0);
+			return answer;
 		}
 	}
 }
