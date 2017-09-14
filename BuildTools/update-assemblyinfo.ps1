@@ -102,7 +102,7 @@ try {
         $out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
 
         if (((Get-Content $file.Input) -Join [System.Environment]::NewLine) -ne $out) {
-            $out | Out-File $file.Output;
+            $out | Out-File -Encoding utf8 $file.Output;
         }
     }
 } finally {
