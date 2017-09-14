@@ -20,8 +20,8 @@ using System;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
-    class TrickyTypes
-    {
+	class TrickyTypes
+	{
 		static void Main()
 		{
 			InterestingConstants();
