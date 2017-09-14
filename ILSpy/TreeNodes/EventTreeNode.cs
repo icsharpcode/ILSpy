@@ -33,7 +33,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public EventTreeNode(EventDefinition ev)
 		{
 			if (ev == null)
-				throw new ArgumentNullException("ev");
+				throw new ArgumentNullException(nameof(ev));
 			this.ev = ev;
 			
 			if (ev.AddMethod != null)

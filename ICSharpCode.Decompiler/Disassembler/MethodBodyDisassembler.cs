@@ -18,12 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
-
-using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.FlowAnalysis;
-using ICSharpCode.Decompiler.ILAst;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 
@@ -37,17 +32,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 		readonly ITextOutput output;
 		readonly bool detectControlStructure;
 		readonly CancellationToken cancellationToken;
-		
+
 		public MethodBodyDisassembler(ITextOutput output, bool detectControlStructure, CancellationToken cancellationToken)
 		{
 			if (output == null)
-				throw new ArgumentNullException("output");
+				throw new ArgumentNullException(nameof(output));
 			this.output = output;
 			this.detectControlStructure = detectControlStructure;
 			this.cancellationToken = cancellationToken;
 		}
-		
-		public void Disassemble(MethodBody body, MethodDebugSymbols debugSymbols)
+
+		public void Disassemble(MethodBody body/*, MemberMapping methodMapping*/)
 		{
 			// start writing IL code
 			MethodDefinition method = body.Method;
@@ -55,39 +50,21 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine("// Code size {0} (0x{0:x})", body.CodeSize);
 			output.WriteLine(".maxstack {0}", body.MaxStackSize);
 			if (method.DeclaringType.Module.Assembly != null && method.DeclaringType.Module.Assembly.EntryPoint == method)
-				output.WriteLine (".entrypoint");
-			
-			if (method.Body.HasVariables) {
-				output.Write(".locals ");
-				if (method.Body.InitLocals)
-					output.Write("init ");
-				output.WriteLine("(");
-				output.Indent();
-				foreach (var v in method.Body.Variables) {
-					output.WriteDefinition("[" + v.Index + "] ", v);
-					v.VariableType.WriteTo(output);
-					if (!string.IsNullOrEmpty(v.Name)) {
-						output.Write(' ');
-						output.Write(DisassemblerHelpers.Escape(v.Name));
-					}
-					if (v.Index + 1 < method.Body.Variables.Count)
-						output.Write(',');
-					output.WriteLine();
-				}
-				output.Unindent();
-				output.WriteLine(")");
-			}
+				output.WriteLine(".entrypoint");
+
+			DisassembleLocalsBlock(body);
 			output.WriteLine();
-			
+
 			if (detectControlStructure && body.Instructions.Count > 0) {
 				Instruction inst = body.Instructions[0];
 				HashSet<int> branchTargets = GetBranchTargets(body.Instructions);
-				WriteStructureBody(new ILStructure(body), branchTargets, ref inst, debugSymbols, method.Body.CodeSize);
+				WriteStructureBody(new ILStructure(body), branchTargets, ref inst, method.Body.CodeSize);
 			} else {
 				foreach (var inst in method.Body.Instructions) {
-					var startLocation = output.Location;
+					//var startLocation = output.Location;
 					inst.WriteTo(output);
-					
+
+					/*
 					if (debugSymbols != null) {
 						// add IL code mappings - used in debugger
 						debugSymbols.SequencePoints.Add(
@@ -96,20 +73,45 @@ namespace ICSharpCode.Decompiler.Disassembler
 								EndLocation = output.Location,
 								ILRanges = new ILRange[] { new ILRange(inst.Offset, inst.Next == null ? method.Body.CodeSize : inst.Next.Offset) }
 							});
-					}
-					
+					}*/
+
 					output.WriteLine();
 				}
-				if (method.Body.HasExceptionHandlers) {
+				WriteExceptionHandlers(body);
+			}
+		}
+
+		private void DisassembleLocalsBlock(MethodBody body)
+		{
+			if (body.HasVariables) {
+				output.Write(".locals ");
+				if (body.InitLocals)
+					output.Write("init ");
+				output.WriteLine("(");
+				output.Indent();
+				foreach (var v in body.Variables) {
+					output.WriteDefinition("[" + v.Index + "] ", v);
+					v.VariableType.WriteTo(output);
+					if (v.Index + 1 < body.Variables.Count)
+						output.Write(',');
 					output.WriteLine();
-					foreach (var eh in method.Body.ExceptionHandlers) {
-						eh.WriteTo(output);
-						output.WriteLine();
-					}
+				}
+				output.Unindent();
+				output.WriteLine(")");
+			}
+		}
+
+		internal void WriteExceptionHandlers(MethodBody body)
+		{
+			if (body.HasExceptionHandlers) {
+				output.WriteLine();
+				foreach (var eh in body.ExceptionHandlers) {
+					eh.WriteTo(output);
+					output.WriteLine();
 				}
 			}
 		}
-		
+
 		HashSet<int> GetBranchTargets(IEnumerable<Instruction> instructions)
 		{
 			HashSet<int> branchTargets = new HashSet<int>();
@@ -124,7 +126,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			return branchTargets;
 		}
-		
+
 		void WriteStructureHeader(ILStructure s)
 		{
 			switch (s.Type) {
@@ -172,8 +174,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			output.Indent();
 		}
-		
-		void WriteStructureBody(ILStructure s, HashSet<int> branchTargets, ref Instruction inst, MethodDebugSymbols debugSymbols, int codeSize)
+
+		void WriteStructureBody(ILStructure s, HashSet<int> branchTargets, ref Instruction inst, int codeSize)
 		{
 			bool isFirstInstructionInStructure = true;
 			bool prevInstructionWasBranch = false;
@@ -183,16 +185,16 @@ namespace ICSharpCode.Decompiler.Disassembler
 				if (childIndex < s.Children.Count && s.Children[childIndex].StartOffset <= offset && offset < s.Children[childIndex].EndOffset) {
 					ILStructure child = s.Children[childIndex++];
 					WriteStructureHeader(child);
-					WriteStructureBody(child, branchTargets, ref inst, debugSymbols, codeSize);
+					WriteStructureBody(child, branchTargets, ref inst, codeSize);
 					WriteStructureFooter(child);
 				} else {
 					if (!isFirstInstructionInStructure && (prevInstructionWasBranch || branchTargets.Contains(offset))) {
-						output.WriteLine(); // put an empty line after branches, and in front of branch targets
+						output.WriteLine();	// put an empty line after branches, and in front of branch targets
 					}
-					var startLocation = output.Location;
+					//var startLocation = output.Location;
 					inst.WriteTo(output);
-					
-					// add IL code mappings - used in debugger
+
+					/*// add IL code mappings - used in debugger
 					if (debugSymbols != null) {
 						debugSymbols.SequencePoints.Add(
 							new SequencePoint() {
@@ -200,21 +202,21 @@ namespace ICSharpCode.Decompiler.Disassembler
 								EndLocation = output.Location,
 								ILRanges = new ILRange[] { new ILRange(inst.Offset, inst.Next == null ? codeSize : inst.Next.Offset) }
 							});
-					}
-					
+					}*/
+
 					output.WriteLine();
-					
+
 					prevInstructionWasBranch = inst.OpCode.FlowControl == FlowControl.Branch
 						|| inst.OpCode.FlowControl == FlowControl.Cond_Branch
 						|| inst.OpCode.FlowControl == FlowControl.Return
 						|| inst.OpCode.FlowControl == FlowControl.Throw;
-					
+
 					inst = inst.Next;
 				}
 				isFirstInstructionInStructure = false;
 			}
 		}
-		
+
 		void WriteStructureFooter(ILStructure s)
 		{
 			output.Unindent();

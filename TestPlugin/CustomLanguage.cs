@@ -1,14 +1,10 @@
 ﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
 // This code is distributed under MIT X11 license (for details please see \doc\license.txt)
 
-using System;
 using System.ComponentModel.Composition;
-using System.Linq;
 using System.Windows.Controls;
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.ILSpy;
-using ICSharpCode.NRefactory.CSharp;
 using Mono.Cecil;
 
 namespace TestPlugin
@@ -47,13 +43,14 @@ namespace TestPlugin
 				}
 				
 				// ICSharpCode.Decompiler.Ast.AstBuilder can be used to decompile to C#
+				/*
 				AstBuilder b = new AstBuilder(new DecompilerContext(method.Module) {
 				                              	Settings = options.DecompilerSettings,
 				                              	CurrentType = method.DeclaringType
 				                              });
 				b.AddMethod(method);
 				b.RunTransformations();
-				output.WriteLine("Decompiled AST has {0} nodes", b.SyntaxTree.DescendantsAndSelf.Count());
+				output.WriteLine("Decompiled AST has {0} nodes", b.SyntaxTree.DescendantsAndSelf.Count());*/
 			}
 		}
 	}

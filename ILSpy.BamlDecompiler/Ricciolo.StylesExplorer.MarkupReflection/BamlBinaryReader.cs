@@ -3,7 +3,6 @@
 
 using System;
 using System.IO;
-using System.Text;
 
 namespace Ricciolo.StylesExplorer.MarkupReflection
 {

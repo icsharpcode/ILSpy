@@ -18,7 +18,8 @@
 
 using System;
 using System.ComponentModel;
-using ICSharpCode.NRefactory.CSharp;
+using System.Runtime.CompilerServices;
+using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 
 namespace ICSharpCode.Decompiler
 {
@@ -37,11 +38,26 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (anonymousMethods != value) {
 					anonymousMethods = value;
-					OnPropertyChanged("AnonymousMethods");
+					OnPropertyChanged();
 				}
 			}
 		}
-		
+
+		bool anonymousTypes = true;
+
+		/// <summary>
+		/// Decompile anonymous types.
+		/// </summary>
+		public bool AnonymousTypes {
+			get { return anonymousTypes; }
+			set {
+				if (anonymousTypes != value) {
+					anonymousTypes = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool expressionTrees = true;
 		
 		/// <summary>
@@ -52,7 +68,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (expressionTrees != value) {
 					expressionTrees = value;
-					OnPropertyChanged("ExpressionTrees");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -67,7 +83,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (yieldReturn != value) {
 					yieldReturn = value;
-					OnPropertyChanged("YieldReturn");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -82,7 +98,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (asyncAwait != value) {
 					asyncAwait = value;
-					OnPropertyChanged("AsyncAwait");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -97,7 +113,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (automaticProperties != value) {
 					automaticProperties = value;
-					OnPropertyChanged("AutomaticProperties");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -112,7 +128,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (automaticEvents != value) {
 					automaticEvents = value;
-					OnPropertyChanged("AutomaticEvents");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -127,7 +143,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (usingStatement != value) {
 					usingStatement = value;
-					OnPropertyChanged("UsingStatement");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -142,7 +158,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (forEachStatement != value) {
 					forEachStatement = value;
-					OnPropertyChanged("ForEachStatement");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -157,7 +173,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (lockStatement != value) {
 					lockStatement = value;
-					OnPropertyChanged("LockStatement");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -169,7 +185,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (switchStatementOnString != value) {
 					switchStatementOnString = value;
-					OnPropertyChanged("SwitchStatementOnString");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -181,7 +197,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (usingDeclarations != value) {
 					usingDeclarations = value;
-					OnPropertyChanged("UsingDeclarations");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -193,7 +209,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (queryExpressions != value) {
 					queryExpressions = value;
-					OnPropertyChanged("QueryExpressions");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -205,7 +221,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (fullyQualifyAmbiguousTypeNames != value) {
 					fullyQualifyAmbiguousTypeNames = value;
-					OnPropertyChanged("FullyQualifyAmbiguousTypeNames");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -220,7 +236,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (useDebugSymbols != value) {
 					useDebugSymbols = value;
-					OnPropertyChanged("UseDebugSymbols");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -235,7 +251,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (objectCollectionInitializers != value) {
 					objectCollectionInitializers = value;
-					OnPropertyChanged("ObjectCollectionInitializers");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -250,7 +266,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (showXmlDocumentation != value) {
 					showXmlDocumentation = value;
-					OnPropertyChanged("ShowXmlDocumentation");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -262,7 +278,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (foldBraces != value) {
 					foldBraces = value;
-					OnPropertyChanged("FoldBraces");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -278,7 +294,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (introduceIncrementAndDecrement != value) {
 					introduceIncrementAndDecrement = value;
-					OnPropertyChanged("IntroduceIncrementAndDecrement");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -293,7 +309,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (makeAssignmentExpressions != value) {
 					makeAssignmentExpressions = value;
-					OnPropertyChanged("MakeAssignmentExpressions");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -308,7 +324,7 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (alwaysGenerateExceptionVariableForCatchBlocks != value) {
 					alwaysGenerateExceptionVariableForCatchBlocks = value;
-					OnPropertyChanged("AlwaysGenerateExceptionVariableForCatchBlocks");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -330,14 +346,14 @@ namespace ICSharpCode.Decompiler
 					throw new ArgumentNullException();
 				if (csharpFormattingOptions != value) {
 					csharpFormattingOptions = value;
-					OnPropertyChanged("CSharpFormattingOptions");
+					OnPropertyChanged();
 				}
 			}
 		}
 		
 		public event PropertyChangedEventHandler PropertyChanged;
 		
-		protected virtual void OnPropertyChanged(string propertyName)
+		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			if (PropertyChanged != null) {
 				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));

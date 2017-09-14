@@ -20,11 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using ICSharpCode.Decompiler.Ast;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
-using ICSharpCode.NRefactory.Utils;
 using System.Collections.Concurrent;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -46,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedAttributeAppliedToTreeNode(TypeDefinition analyzedType)
 		{
 			if (analyzedType == null)
-				throw new ArgumentNullException("analyzedType");
+				throw new ArgumentNullException(nameof(analyzedType));
 
 			this.analyzedType = analyzedType;
 			attributeName = this.analyzedType.FullName;

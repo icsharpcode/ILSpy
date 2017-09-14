@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
-using ICSharpCode.Decompiler.Ast;
 using ICSharpCode.NRefactory.TypeSystem;
 using ICSharpCode.NRefactory.VB.Visitors;
 using Mono.Cecil;

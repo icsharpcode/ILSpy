@@ -18,11 +18,7 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
 using System.Threading;
-using ICSharpCode.NRefactory;
 using Mono.Cecil;
 using Mono.Collections.Generic;
 
@@ -35,25 +31,25 @@ namespace ICSharpCode.Decompiler.Disassembler
 	{
 		readonly ITextOutput output;
 		CancellationToken cancellationToken;
-		bool isInType; // whether we are currently disassembling a whole type (-> defaultCollapsed for foldings)
+		bool isInType;   // whether we are currently disassembling a whole type (-> defaultCollapsed for foldings)
 		MethodBodyDisassembler methodBodyDisassembler;
 		MemberReference currentMember;
-		
+
 		public ReflectionDisassembler(ITextOutput output, bool detectControlStructure, CancellationToken cancellationToken)
 		{
 			if (output == null)
-				throw new ArgumentNullException("output");
+				throw new ArgumentNullException(nameof(output));
 			this.output = output;
 			this.cancellationToken = cancellationToken;
 			this.methodBodyDisassembler = new MethodBodyDisassembler(output, detectControlStructure, cancellationToken);
 		}
-		
+
 		#region Disassemble Method
 		EnumNameCollection<MethodAttributes> methodAttributeFlags = new EnumNameCollection<MethodAttributes>() {
 			{ MethodAttributes.Final, "final" },
 			{ MethodAttributes.HideBySig, "hidebysig" },
 			{ MethodAttributes.SpecialName, "specialname" },
-			{ MethodAttributes.PInvokeImpl, null }, // handled separately
+			{ MethodAttributes.PInvokeImpl, null },	// handled separately
 			{ MethodAttributes.UnmanagedExport, "export" },
 			{ MethodAttributes.RTSpecialName, "rtspecialname" },
 			{ MethodAttributes.RequireSecObject, "reqsecobj" },
@@ -62,9 +58,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodAttributes.Abstract, "abstract" },
 			{ MethodAttributes.Virtual, "virtual" },
 			{ MethodAttributes.Static, "static" },
-			{ MethodAttributes.HasSecurity, null }, // ?? also invisible in ILDasm
+			{ MethodAttributes.HasSecurity, null },	// ?? also invisible in ILDasm
 		};
-		
+
 		EnumNameCollection<MethodAttributes> methodVisibility = new EnumNameCollection<MethodAttributes>() {
 			{ MethodAttributes.Private, "private" },
 			{ MethodAttributes.FamANDAssem, "famandassem" },
@@ -73,7 +69,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodAttributes.FamORAssem, "famorassem" },
 			{ MethodAttributes.Public, "public" },
 		};
-		
+
 		EnumNameCollection<MethodCallingConvention> callingConvention = new EnumNameCollection<MethodCallingConvention>() {
 			{ MethodCallingConvention.C, "unmanaged cdecl" },
 			{ MethodCallingConvention.StdCall, "unmanaged stdcall" },
@@ -82,14 +78,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodCallingConvention.VarArg, "vararg" },
 			{ MethodCallingConvention.Generic, null },
 		};
-		
+
 		EnumNameCollection<MethodImplAttributes> methodCodeType = new EnumNameCollection<MethodImplAttributes>() {
 			{ MethodImplAttributes.IL, "cil" },
 			{ MethodImplAttributes.Native, "native" },
 			{ MethodImplAttributes.OPTIL, "optil" },
 			{ MethodImplAttributes.Runtime, "runtime" },
 		};
-		
+
 		EnumNameCollection<MethodImplAttributes> methodImpl = new EnumNameCollection<MethodImplAttributes>() {
 			{ MethodImplAttributes.Synchronized, "synchronized" },
 			{ MethodImplAttributes.NoInlining, "noinlining" },
@@ -98,52 +94,56 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ MethodImplAttributes.InternalCall, "internalcall" },
 			{ MethodImplAttributes.ForwardRef, "forwardref" },
 		};
-		
+
 		public void DisassembleMethod(MethodDefinition method)
+		{
+			DisassembleMethodHeader(method);
+			DisassembleMethodBlock(method);
+		}
+
+		public void DisassembleMethodHeader(MethodDefinition method)
 		{
 			// set current member
 			currentMember = method;
-			
+
 			// write method header
 			output.WriteDefinition(".method ", method);
-			DisassembleMethodInternal(method);
+			DisassembleMethodHeaderInternal(method);
 		}
-		
-		void DisassembleMethodInternal(MethodDefinition method)
+
+		void DisassembleMethodHeaderInternal(MethodDefinition method)
 		{
 			//    .method public hidebysig  specialname
 			//               instance default class [mscorlib]System.IO.TextWriter get_BaseWriter ()  cil managed
 			//
-			
-			TextLocation startLocation = output.Location;
-			
+
 			//emit flags
 			WriteEnum(method.Attributes & MethodAttributes.MemberAccessMask, methodVisibility);
 			WriteFlags(method.Attributes & ~MethodAttributes.MemberAccessMask, methodAttributeFlags);
-			if(method.IsCompilerControlled) output.Write("privatescope ");
-			
+			if (method.IsCompilerControlled) output.Write("privatescope ");
+
 			if ((method.Attributes & MethodAttributes.PInvokeImpl) == MethodAttributes.PInvokeImpl) {
 				output.Write("pinvokeimpl");
 				if (method.HasPInvokeInfo && method.PInvokeInfo != null) {
 					PInvokeInfo info = method.PInvokeInfo;
-					output.Write("(\"" + NRefactory.CSharp.TextWriterTokenWriter.ConvertString(info.Module.Name) + "\"");
-					
+					output.Write("(\"" + DisassemblerHelpers.EscapeString(info.Module.Name) + "\"");
+
 					if (!string.IsNullOrEmpty(info.EntryPoint) && info.EntryPoint != method.Name)
-						output.Write(" as \"" + NRefactory.CSharp.TextWriterTokenWriter.ConvertString(info.EntryPoint) + "\"");
-					
+						output.Write(" as \"" + DisassemblerHelpers.EscapeString(info.EntryPoint) + "\"");
+
 					if (info.IsNoMangle)
 						output.Write(" nomangle");
-					
+
 					if (info.IsCharSetAnsi)
 						output.Write(" ansi");
 					else if (info.IsCharSetAuto)
 						output.Write(" autochar");
 					else if (info.IsCharSetUnicode)
 						output.Write(" unicode");
-					
+
 					if (info.SupportsLastError)
 						output.Write(" lasterr");
-					
+
 					if (info.IsCallConvCdecl)
 						output.Write(" cdecl");
 					else if (info.IsCallConvFastcall)
@@ -154,12 +154,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write(" thiscall");
 					else if (info.IsCallConvWinapi)
 						output.Write(" winapi");
-					
+
 					output.Write(')');
 				}
 				output.Write(' ');
 			}
-			
+
 			output.WriteLine();
 			output.Indent();
 			if (method.ExplicitThis) {
@@ -167,25 +167,25 @@ namespace ICSharpCode.Decompiler.Disassembler
 			} else if (method.HasThis) {
 				output.Write("instance ");
 			}
-			
+
 			//call convention
 			WriteEnum(method.CallingConvention & (MethodCallingConvention)0x1f, callingConvention);
-			
+
 			//return type
 			method.ReturnType.WriteTo(output);
 			output.Write(' ');
 			if (method.MethodReturnType.HasMarshalInfo) {
 				WriteMarshalInfo(method.MethodReturnType.MarshalInfo);
 			}
-			
+
 			if (method.IsCompilerControlled) {
 				output.Write(DisassemblerHelpers.Escape(method.Name + "$PST" + method.MetadataToken.ToInt32().ToString("X8")));
 			} else {
 				output.Write(DisassemblerHelpers.Escape(method.Name));
 			}
-			
+
 			WriteTypeParameters(output, method);
-			
+
 			//( params )
 			output.Write(" (");
 			if (method.HasParameters) {
@@ -202,8 +202,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			else
 				output.Write("unmanaged ");
 			WriteFlags(method.ImplAttributes & ~(MethodImplAttributes.CodeTypeMask | MethodImplAttributes.ManagedMask), methodImpl);
-			
+
 			output.Unindent();
+		}
+
+		void DisassembleMethodBlock(MethodDefinition method)
+		{
 			OpenBlock(defaultCollapsed: isInType);
 			WriteAttributes(method.CustomAttributes);
 			if (method.HasOverrides) {
@@ -218,19 +222,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 				WriteParameterAttributes(p.Index + 1, p, p);
 			}
 			WriteSecurityDeclarations(method);
-			
+
 			if (method.HasBody) {
-				// create IL code mappings - used in debugger
-				MethodDebugSymbols debugSymbols = new MethodDebugSymbols(method);
-				debugSymbols.StartLocation = startLocation;
-				methodBodyDisassembler.Disassemble(method.Body, debugSymbols);
-				debugSymbols.EndLocation = output.Location;
-				output.AddDebugSymbols(debugSymbols);
+				methodBodyDisassembler.Disassemble(method.Body);
 			}
-			
+
 			CloseBlock("end of method " + DisassemblerHelpers.Escape(method.DeclaringType.Name) + "::" + DisassemblerHelpers.Escape(method.Name));
 		}
-		
+
 		#region Write Security Declarations
 		void WriteSecurityDeclarations(ISecurityDeclarationProvider secDeclProvider)
 		{
@@ -302,24 +301,24 @@ namespace ICSharpCode.Decompiler.Disassembler
 					if (sa.HasFields || sa.HasProperties) {
 						output.WriteLine();
 						output.Indent();
-						
+
 						foreach (CustomAttributeNamedArgument na in sa.Fields) {
 							output.Write("field ");
 							WriteSecurityDeclarationArgument(na);
 							output.WriteLine();
 						}
-						
+
 						foreach (CustomAttributeNamedArgument na in sa.Properties) {
 							output.Write("property ");
 							WriteSecurityDeclarationArgument(na);
 							output.WriteLine();
 						}
-						
+
 						output.Unindent();
 					}
 					output.Write('}');
-					
-					if (i + 1< secdecl.SecurityAttributes.Count)
+
+					if (i + 1 < secdecl.SecurityAttributes.Count)
 						output.Write(',');
 					output.WriteLine();
 				}
@@ -327,7 +326,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine("}");
 			}
 		}
-		
+
 		void WriteSecurityDeclarationArgument(CustomAttributeNamedArgument na)
 		{
 			TypeReference type = na.Argument.Type;
@@ -347,12 +346,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.Write(" = ");
 			if (na.Argument.Value is string) {
 				// secdecls use special syntax for strings
-				output.Write("string('{0}')", NRefactory.CSharp.TextWriterTokenWriter.ConvertString((string)na.Argument.Value).Replace("'", "\'"));
+				output.Write("string('{0}')", DisassemblerHelpers.EscapeString((string)na.Argument.Value).Replace("'", "\'"));
 			} else {
 				WriteConstant(na.Argument.Value);
 			}
 		}
-		
+
 		string GetAssemblyQualifiedName(TypeReference type)
 		{
 			AssemblyNameReference anr = type.Scope as AssemblyNameReference;
@@ -369,7 +368,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 		#endregion
-		
+
 		#region WriteMarshalInfo
 		void WriteMarshalInfo(MarshalInfo marshalInfo)
 		{
@@ -377,7 +376,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteNativeType(marshalInfo.NativeType, marshalInfo);
 			output.Write(") ");
 		}
-		
+
 		void WriteNativeType(NativeType nativeType, MarshalInfo marshalInfo = null)
 		{
 			switch (nativeType) {
@@ -426,7 +425,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write("unsigned int");
 					break;
 				case NativeType.Func:
-					goto default; // ??
+					goto default;  // ??
 				case NativeType.Array:
 					ArrayMarshalInfo ami = (ArrayMarshalInfo)marshalInfo;
 					if (ami == null)
@@ -575,10 +574,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 					if (cmi == null)
 						goto default;
 					output.Write("custom(\"{0}\", \"{1}\"",
-					             NRefactory.CSharp.TextWriterTokenWriter.ConvertString(cmi.ManagedType.FullName),
-					             NRefactory.CSharp.TextWriterTokenWriter.ConvertString(cmi.Cookie));
+								 DisassemblerHelpers.EscapeString(cmi.ManagedType.FullName),
+								 DisassemblerHelpers.EscapeString(cmi.Cookie));
 					if (cmi.Guid != Guid.Empty || !string.IsNullOrEmpty(cmi.UnmanagedType)) {
-						output.Write(", \"{0}\", \"{1}\"", cmi.Guid.ToString(), NRefactory.CSharp.TextWriterTokenWriter.ConvertString(cmi.UnmanagedType));
+						output.Write(", \"{0}\", \"{1}\"", cmi.Guid.ToString(), DisassemblerHelpers.EscapeString(cmi.UnmanagedType));
 					}
 					output.Write(')');
 					break;
@@ -591,7 +590,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 		#endregion
-		
+
 		void WriteParameters(Collection<ParameterDefinition> parameters)
 		{
 			for (int i = 0; i < parameters.Count; i++) {
@@ -613,7 +612,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine();
 			}
 		}
-		
+
 		void WriteParameterAttributes(int index, IConstantProvider cp, ICustomAttributeProvider cap)
 		{
 			if (!cp.HasConstant && !cap.HasCustomAttributes)
@@ -626,7 +625,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine();
 			WriteAttributes(cap.CustomAttributes);
 		}
-		
+
 		void WriteConstant(object constant)
 		{
 			if (constant == null) {
@@ -652,7 +651,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 		#endregion
-		
+
 		#region Disassemble Field
 		EnumNameCollection<FieldAttributes> fieldVisibility = new EnumNameCollection<FieldAttributes>() {
 			{ FieldAttributes.Private, "private" },
@@ -662,7 +661,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ FieldAttributes.FamORAssem, "famorassem" },
 			{ FieldAttributes.Public, "public" },
 		};
-		
+
 		EnumNameCollection<FieldAttributes> fieldAttributes = new EnumNameCollection<FieldAttributes>() {
 			{ FieldAttributes.Static, "static" },
 			{ FieldAttributes.Literal, "literal" },
@@ -671,7 +670,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ FieldAttributes.RTSpecialName, "rtspecialname" },
 			{ FieldAttributes.NotSerialized, "notserialized" },
 		};
-		
+
 		public void DisassembleField(FieldDefinition field)
 		{
 			output.WriteDefinition(".field ", field);
@@ -702,19 +701,19 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 		}
 		#endregion
-		
+
 		#region Disassemble Property
 		EnumNameCollection<PropertyAttributes> propertyAttributes = new EnumNameCollection<PropertyAttributes>() {
 			{ PropertyAttributes.SpecialName, "specialname" },
 			{ PropertyAttributes.RTSpecialName, "rtspecialname" },
 			{ PropertyAttributes.HasDefault, "hasdefault" },
 		};
-		
+
 		public void DisassembleProperty(PropertyDefinition property)
 		{
 			// set current member
 			currentMember = property;
-			
+
 			output.WriteDefinition(".property ", property);
 			WriteFlags(property.Attributes, propertyAttributes);
 			if (property.HasThis)
@@ -722,7 +721,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			property.PropertyType.WriteTo(output);
 			output.Write(' ');
 			output.Write(DisassemblerHelpers.Escape(property.Name));
-			
+
 			output.Write("(");
 			if (property.HasParameters) {
 				output.WriteLine();
@@ -731,41 +730,41 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.Unindent();
 			}
 			output.Write(")");
-			
+
 			OpenBlock(false);
 			WriteAttributes(property.CustomAttributes);
 			WriteNestedMethod(".get", property.GetMethod);
 			WriteNestedMethod(".set", property.SetMethod);
-			
+
 			foreach (var method in property.OtherMethods) {
 				WriteNestedMethod(".other", method);
 			}
 			CloseBlock();
 		}
-		
+
 		void WriteNestedMethod(string keyword, MethodDefinition method)
 		{
 			if (method == null)
 				return;
-			
+
 			output.Write(keyword);
 			output.Write(' ');
 			method.WriteTo(output);
 			output.WriteLine();
 		}
 		#endregion
-		
+
 		#region Disassemble Event
 		EnumNameCollection<EventAttributes> eventAttributes = new EnumNameCollection<EventAttributes>() {
 			{ EventAttributes.SpecialName, "specialname" },
 			{ EventAttributes.RTSpecialName, "rtspecialname" },
 		};
-		
+
 		public void DisassembleEvent(EventDefinition ev)
 		{
 			// set current member
 			currentMember = ev;
-			
+
 			output.WriteDefinition(".event ", ev);
 			WriteFlags(ev.Attributes, eventAttributes);
 			ev.EventType.WriteTo(output, ILNameSyntax.TypeName);
@@ -782,7 +781,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			CloseBlock();
 		}
 		#endregion
-		
+
 		#region Disassemble Type
 		EnumNameCollection<TypeAttributes> typeVisibility = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.Public, "public" },
@@ -794,19 +793,19 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ TypeAttributes.NestedFamANDAssem, "nested famandassem" },
 			{ TypeAttributes.NestedFamORAssem, "nested famorassem" },
 		};
-		
+
 		EnumNameCollection<TypeAttributes> typeLayout = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.AutoLayout, "auto" },
 			{ TypeAttributes.SequentialLayout, "sequential" },
 			{ TypeAttributes.ExplicitLayout, "explicit" },
 		};
-		
+
 		EnumNameCollection<TypeAttributes> typeStringFormat = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.AutoClass, "auto" },
 			{ TypeAttributes.AnsiClass, "ansi" },
 			{ TypeAttributes.UnicodeClass, "unicode" },
 		};
-		
+
 		EnumNameCollection<TypeAttributes> typeAttributes = new EnumNameCollection<TypeAttributes>() {
 			{ TypeAttributes.Abstract, "abstract" },
 			{ TypeAttributes.Sealed, "sealed" },
@@ -817,12 +816,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			{ TypeAttributes.BeforeFieldInit, "beforefieldinit" },
 			{ TypeAttributes.HasSecurity, null },
 		};
-		
+
 		public void DisassembleType(TypeDefinition type)
 		{
 			// start writing IL
 			output.WriteDefinition(".class ", type);
-			
+
 			if ((type.Attributes & TypeAttributes.ClassSemanticMask) == TypeAttributes.Interface)
 				output.Write("interface ");
 			WriteEnum(type.Attributes & TypeAttributes.VisibilityMask, typeVisibility);
@@ -830,12 +829,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 			WriteEnum(type.Attributes & TypeAttributes.StringFormatMask, typeStringFormat);
 			const TypeAttributes masks = TypeAttributes.ClassSemanticMask | TypeAttributes.VisibilityMask | TypeAttributes.LayoutMask | TypeAttributes.StringFormatMask;
 			WriteFlags(type.Attributes & ~masks, typeAttributes);
-			
+
 			output.Write(DisassemblerHelpers.Escape(type.DeclaringType != null ? type.Name : type.FullName));
 			WriteTypeParameters(output, type);
 			output.MarkFoldStart(defaultCollapsed: isInType);
 			output.WriteLine();
-			
+
 			if (type.BaseType != null) {
 				output.Indent();
 				output.Write("extends ");
@@ -852,12 +851,14 @@ namespace ICSharpCode.Decompiler.Disassembler
 						output.Write("implements ");
 					else
 						output.Write("           ");
-					type.Interfaces[index].WriteTo(output, ILNameSyntax.TypeName);
+					var iface = type.Interfaces[index];
+					WriteAttributes(iface.CustomAttributes);
+					iface.InterfaceType.WriteTo(output, ILNameSyntax.TypeName);
 				}
 				output.WriteLine();
 				output.Unindent();
 			}
-			
+
 			output.WriteLine("{");
 			output.Indent();
 			bool oldIsInType = isInType;
@@ -914,7 +915,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			CloseBlock("end of class " + (type.DeclaringType != null ? type.Name : type.FullName));
 			isInType = oldIsInType;
 		}
-		
+
 		void WriteTypeParameters(ITextOutput output, IGenericParameterProvider p)
 		{
 			if (p.HasGenericParameters) {
@@ -966,7 +967,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.WriteLine();
 			}
 		}
-		
+
 		void WriteBlob(byte[] blob)
 		{
 			output.Write("(");
@@ -980,12 +981,12 @@ namespace ICSharpCode.Decompiler.Disassembler
 				}
 				output.Write(blob[i].ToString("x2"));
 			}
-			
+
 			output.WriteLine();
 			output.Unindent();
 			output.Write(")");
 		}
-		
+
 		void OpenBlock(bool defaultCollapsed)
 		{
 			output.MarkFoldStart(defaultCollapsed: defaultCollapsed);
@@ -993,7 +994,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.WriteLine("{");
 			output.Indent();
 		}
-		
+
 		void CloseBlock(string comment = null)
 		{
 			output.Unindent();
@@ -1003,7 +1004,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			output.MarkFoldEnd();
 			output.WriteLine();
 		}
-		
+
 		void WriteFlags<T>(T flags, EnumNameCollection<T> flagNames) where T : struct
 		{
 			long val = Convert.ToInt64(flags);
@@ -1018,7 +1019,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if ((val & ~tested) != 0)
 				output.Write("flag({0:x4}) ", val & ~tested);
 		}
-		
+
 		void WriteEnum<T>(T enumValue, EnumNameCollection<T> enumNames) where T : struct
 		{
 			long val = Convert.ToInt64(enumValue);
@@ -1035,30 +1036,30 @@ namespace ICSharpCode.Decompiler.Disassembler
 				output.Write("flag({0:x4})", val);
 				output.Write(' ');
 			}
-			
+
 		}
-		
+
 		sealed class EnumNameCollection<T> : IEnumerable<KeyValuePair<long, string>> where T : struct
 		{
 			List<KeyValuePair<long, string>> names = new List<KeyValuePair<long, string>>();
-			
+
 			public void Add(T flag, string name)
 			{
 				this.names.Add(new KeyValuePair<long, string>(Convert.ToInt64(flag), name));
 			}
-			
+
 			public IEnumerator<KeyValuePair<long, string>> GetEnumerator()
 			{
 				return names.GetEnumerator();
 			}
-			
+
 			System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
 			{
 				return names.GetEnumerator();
 			}
 		}
 		#endregion
-		
+
 		public void DisassembleNamespace(string nameSpace, IEnumerable<TypeDefinition> types)
 		{
 			if (!string.IsNullOrEmpty(nameSpace)) {
@@ -1077,7 +1078,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				isInType = oldIsInType;
 			}
 		}
-		
+
 		public void WriteAssemblyHeader(AssemblyDefinition asm)
 		{
 			output.Write(".assembly ");
@@ -1104,7 +1105,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			CloseBlock();
 		}
-		
+
 		public void WriteAssemblyReferences(ModuleDefinition module)
 		{
 			foreach (var mref in module.ModuleReferences) {
@@ -1127,7 +1128,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				CloseBlock();
 			}
 		}
-		
+
 		public void WriteModuleHeader(ModuleDefinition module)
 		{
 			if (module.HasExportedTypes) {
@@ -1144,15 +1145,15 @@ namespace ICSharpCode.Decompiler.Disassembler
 					CloseBlock();
 				}
 			}
-			
+
 			output.WriteLine(".module {0}", module.Name);
 			output.WriteLine("// MVID: {0}", module.Mvid.ToString("B").ToUpperInvariant());
 			// TODO: imagebase, file alignment, stackreserve, subsystem
 			output.WriteLine(".corflags 0x{0:x} // {1}", module.Attributes, module.Attributes.ToString());
-			
+
 			WriteAttributes(module.CustomAttributes);
 		}
-		
+
 		public void WriteModuleContents(ModuleDefinition module)
 		{
 			foreach (TypeDefinition td in module.Types) {

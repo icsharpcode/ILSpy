@@ -43,11 +43,11 @@ using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using ICSharpCode.AvalonEdit.Rendering;
 using ICSharpCode.AvalonEdit.Search;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.ILSpy.AvalonEdit;
 using ICSharpCode.ILSpy.Options;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.XmlDoc;
-using ICSharpCode.NRefactory.Documentation;
 using Microsoft.Win32;
 using Mono.Cecil;
 
@@ -114,7 +114,6 @@ namespace ICSharpCode.ILSpy.TextView
 			SearchPanel.Install(textEditor.TextArea)
 				.RegisterCommands(Application.Current.MainWindow.CommandBindings);
 			
-			// Bookmarks context menu
 			ShowLineMargin();
 			
 			// add marker service & margin
@@ -169,6 +168,8 @@ namespace ICSharpCode.ILSpy.TextView
 			if (position == null)
 				return;
 			int offset = textEditor.Document.GetOffset(position.Value.Location);
+			if (referenceElementGenerator.References == null)
+				return;
 			ReferenceSegment seg = referenceElementGenerator.References.FindSegmentsContaining(offset).FirstOrDefault();
 			if (seg == null)
 				return;
@@ -488,35 +489,16 @@ namespace ICSharpCode.ILSpy.TextView
 			
 			Thread thread = new Thread(new ThreadStart(
 				delegate {
-					#if DEBUG
-					if (System.Diagnostics.Debugger.IsAttached) {
-						try {
-							AvalonEditTextOutput textOutput = new AvalonEditTextOutput();
-							textOutput.LengthLimit = outputLengthLimit;
-							DecompileNodes(context, textOutput);
-							textOutput.PrepareDocument();
-							tcs.SetResult(textOutput);
-						} catch (OutputLengthExceededException ex) {
-							tcs.SetException(ex);
-						} catch (AggregateException ex) {
-							tcs.SetException(ex.InnerExceptions);
-						} catch (OperationCanceledException) {
-							tcs.SetCanceled();
-						}
-					} else
-						#endif
-					{
-						try {
-							AvalonEditTextOutput textOutput = new AvalonEditTextOutput();
-							textOutput.LengthLimit = outputLengthLimit;
-							DecompileNodes(context, textOutput);
-							textOutput.PrepareDocument();
-							tcs.SetResult(textOutput);
-						} catch (OperationCanceledException) {
-							tcs.SetCanceled();
-						} catch (Exception ex) {
-							tcs.SetException(ex);
-						}
+					try {
+						AvalonEditTextOutput textOutput = new AvalonEditTextOutput();
+						textOutput.LengthLimit = outputLengthLimit;
+						DecompileNodes(context, textOutput);
+						textOutput.PrepareDocument();
+						tcs.SetResult(textOutput);
+					} catch (OperationCanceledException) {
+						tcs.SetCanceled();
+					} catch (Exception ex) {
+						tcs.SetException(ex);
 					}
 				}));
 			thread.Start();
@@ -716,21 +698,14 @@ namespace ICSharpCode.ILSpy.TextView
 		/// </summary>
 		internal static string CleanUpName(string text)
 		{
-			int pos = text.IndexOf(':');
-			if (pos > 0)
-				text = text.Substring(0, pos);
-			pos = text.IndexOf('`');
-			if (pos > 0)
-				text = text.Substring(0, pos);
-			text = text.Trim();
-			foreach (char c in Path.GetInvalidFileNameChars())
-				text = text.Replace(c, '-');
-			return text;
+			return WholeProjectDecompiler.CleanUpFileName(text);
 		}
 		#endregion
 
 		internal ReferenceSegment GetReferenceSegmentAtMousePosition()
 		{
+			if (referenceElementGenerator.References == null)
+				return null;
 			TextViewPosition? position = GetPositionFromMousePosition();
 			if (position == null)
 				return null;

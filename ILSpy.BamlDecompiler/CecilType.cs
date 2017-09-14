@@ -2,8 +2,6 @@
 // This code is distributed under the MS-PL (for details please see \doc\MS-PL.txt)
 
 using System;
-using System.Linq;
-using ICSharpCode.ILSpy;
 using Mono.Cecil;
 using Ricciolo.StylesExplorer.MarkupReflection;
 
@@ -45,7 +43,7 @@ namespace ILSpy.BamlDecompiler
 				if (t == ct.type)
 					return true;
 				foreach (var @interface in t.Interfaces) {
-					var resolved = @interface.Resolve();
+					var resolved = @interface.InterfaceType.Resolve();
 					if (resolved == ct.type)
 						return true;
 				}

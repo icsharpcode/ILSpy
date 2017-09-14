@@ -33,9 +33,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public AssemblyReferenceTreeNode(AssemblyNameReference r, AssemblyTreeNode parentAssembly)
 		{
 			if (parentAssembly == null)
-				throw new ArgumentNullException("parentAssembly");
+				throw new ArgumentNullException(nameof(parentAssembly));
 			if (r == null)
-				throw new ArgumentNullException("r");
+				throw new ArgumentNullException(nameof(r));
 			this.r = r;
 			this.parentAssembly = parentAssembly;
 			this.LazyLoading = true;
@@ -88,10 +88,22 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
+			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetValue(r.FullName, out var info);
 			if (r.IsWindowsRuntime) {
-				language.WriteCommentLine(output, r.Name + " [WinRT]");
+				language.WriteCommentLine(output, r.Name + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
 			} else {
-				language.WriteCommentLine(output, r.FullName);
+				language.WriteCommentLine(output, r.FullName + (!loaded ? " (unresolved)" : ""));
+			}
+			if (loaded) {
+				output.Indent();
+				language.WriteCommentLine(output, "Assembly reference loading information:");
+				if (info.HasErrors)
+					language.WriteCommentLine(output, "There were some problems during assembly reference load, see below for more information!");
+				foreach (var item in info.Messages) {
+					language.WriteCommentLine(output, $"{item.Item1}: {item.Item2}");
+				}
+				output.Unindent();
+				output.WriteLine();
 			}
 		}
 	}

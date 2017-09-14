@@ -19,8 +19,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using ArrayType = Mono.Cecil.ArrayType;
 
 namespace ICSharpCode.Decompiler
 {
@@ -140,27 +142,6 @@ namespace ICSharpCode.Decompiler
 				   type.MetadataType == MetadataType.IntPtr;
 		}
 
-		/// <summary>
-		/// checks if the given value is a numeric zero-value.
-		/// NOTE that this only works for types: [sbyte, short, int, long, IntPtr, byte, ushort, uint, ulong, float, double and decimal]
-		/// </summary>
-		public static bool IsZero(this object value)
-		{
-			return value.Equals((sbyte)0) ||
-				   value.Equals((short)0) ||
-				   value.Equals(0) ||
-				   value.Equals(0L) ||
-				   value.Equals(IntPtr.Zero) ||
-				   value.Equals((byte)0) ||
-				   value.Equals((ushort)0) ||
-				   value.Equals(0u) ||
-				   value.Equals(0UL) ||
-				   value.Equals(0.0f) ||
-				   value.Equals(0.0) ||
-				   value.Equals((decimal)0);
-					
-		}
-
 		#endregion
 		
 		/// <summary>
@@ -169,11 +150,16 @@ namespace ICSharpCode.Decompiler
 		public static int GetEndOffset(this Instruction inst)
 		{
 			if (inst == null)
-				throw new ArgumentNullException("inst");
+				throw new ArgumentNullException(nameof(inst));
 			return inst.Offset + inst.GetSize();
 		}
 		
 		public static string OffsetToString(int offset)
+		{
+			return string.Format("IL_{0:x4}", offset);
+		}
+		
+		public static string OffsetToString(long offset)
 		{
 			return string.Format("IL_{0:x4}", offset);
 		}
@@ -225,7 +211,6 @@ namespace ICSharpCode.Decompiler
 				return null;
 		}
 
-		[Obsolete("throwing exceptions is considered a bug")]
 		public static TypeDefinition ResolveOrThrow(this TypeReference typeReference)
 		{
 			var resolved = typeReference.Resolve();
@@ -257,7 +242,7 @@ namespace ICSharpCode.Decompiler
 		public static TypeReference GetEnumUnderlyingType(this TypeDefinition type)
 		{
 			if (!type.IsEnum)
-				throw new ArgumentException("Type must be an enum", "type");
+				throw new ArgumentException("Type must be an enum", nameof(type));
 
 			var fields = type.Fields;
 
@@ -358,6 +343,29 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 			return false;
+		}
+
+		public static bool IsUnconditionalBranch(this OpCode opcode)
+		{
+			if (opcode.OpCodeType == OpCodeType.Prefix)
+				return false;
+			switch (opcode.FlowControl) {
+				case FlowControl.Branch:
+				case FlowControl.Throw:
+				case FlowControl.Return:
+					return true;
+				case FlowControl.Next:
+				case FlowControl.Call:
+				case FlowControl.Cond_Branch:
+					return false;
+				default:
+					throw new NotSupportedException(opcode.FlowControl.ToString());
+			}
+		}
+
+		public static FullTypeName GetFullTypeName(this TypeDefinition typeDef)
+		{
+			return new FullTypeName(typeDef.FullName);
 		}
 
 		public static bool IsDelegate(this TypeDefinition type)

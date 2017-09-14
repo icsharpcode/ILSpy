@@ -17,23 +17,18 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
+
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.Utils;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy
 {
@@ -173,10 +168,10 @@ namespace ICSharpCode.ILSpy
 			} else if (e.Key == Key.M && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
 				searchModeComboBox.SelectedIndex = (int)SearchMode.Member;
 				e.Handled = true;
-			} else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
+			} /*else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
 				searchModeComboBox.SelectedIndex = (int)SearchMode.Literal;
 				e.Handled = true;
-			}
+			}*/
 		}
 		
 		void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -247,8 +242,14 @@ namespace ICSharpCode.ILSpy
 				}
 				dispatcher.BeginInvoke(
 					DispatcherPriority.Normal,
-					new Action(delegate { this.Results.Insert(this.Results.Count - 1, result); }));
+					new Action(delegate { InsertResult(this.Results, result); }));
 				cts.Token.ThrowIfCancellationRequested();
+			}
+
+			void InsertResult(ObservableCollection<SearchResult> results, SearchResult result)
+			{
+				int index = results.BinarySearch(result, 0, results.Count - 1, SearchResult.Comparer);
+				results.Insert(index < 0 ? ~index : index, result);
 			}
 
 			AbstractSearchStrategy GetSearchStrategy(SearchMode mode, string[] terms)
@@ -275,8 +276,8 @@ namespace ICSharpCode.ILSpy
 					if (terms[0].StartsWith("e:", StringComparison.Ordinal))
 						return new MemberSearchStrategy(terms[0].Substring(2), MemberSearchKind.Event);
 
-					if (terms[0].StartsWith("c:", StringComparison.Ordinal))
-						return new LiteralSearchStrategy(terms[0].Substring(2));
+					//if (terms[0].StartsWith("c:", StringComparison.Ordinal))
+					//	return new LiteralSearchStrategy(terms[0].Substring(2));
 				}
 
 				switch (mode)
@@ -287,8 +288,8 @@ namespace ICSharpCode.ILSpy
 						return new TypeSearchStrategy(terms);
 					case SearchMode.Member:
 						return new MemberSearchStrategy(terms);
-					case SearchMode.Literal:
-						return new LiteralSearchStrategy(terms);
+					//case SearchMode.Literal:
+					//	return new LiteralSearchStrategy(terms);
 					case SearchMode.Method:
 						return new MemberSearchStrategy(terms, MemberSearchKind.Method);
 					case SearchMode.Field:
@@ -310,17 +311,27 @@ namespace ICSharpCode.ILSpy
 			add { }
 			remove { }
 		}
-			
+		
+		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
+		
 		public MemberReference Member { get; set; }
-			
+		
 		public string Location { get; set; }
 		public string Name { get; set; }
 		public ImageSource Image { get; set; }
 		public ImageSource LocationImage { get; set; }
-			
+		
 		public override string ToString()
 		{
 			return Name;
+		}
+		
+		class SearchResultComparer : System.Collections.Generic.IComparer<SearchResult>
+		{
+			public int Compare(SearchResult x, SearchResult y)
+			{
+				return StringComparer.Ordinal.Compare(x?.Name ?? "", y?.Name ?? "");
+			}
 		}
 	}
 
@@ -346,6 +357,6 @@ namespace ICSharpCode.ILSpy
 		Field,
 		Property,
 		Event,
-		Literal
+		//Literal
 	}
 }

@@ -21,28 +21,39 @@ using System.Collections.Generic;
 using System.Linq;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Disassembler;
-using ICSharpCode.Decompiler.ILAst;
+using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.TypeSystem;
 using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {
-	#if DEBUG
+#if DEBUG
 	/// <summary>
 	/// Represents the ILAst "language" used for debugging purposes.
 	/// </summary>
-	sealed class ILAstLanguage : Language
+	abstract class ILAstLanguage : Language
 	{
-		string name;
-		bool inlineVariables = true;
-		ILAstOptimizationStep? abortBeforeStep;
+		public event EventHandler StepperUpdated;
+
+		protected virtual void OnStepperUpdated(EventArgs e = null)
+		{
+			StepperUpdated?.Invoke(this, e ?? new EventArgs());
+		}
+
+		public Stepper Stepper { get; set; } = new Stepper();
+
+		readonly string name;
 		
-		public override string Name {
-			get {
-				return name;
-			}
+		protected ILAstLanguage(string name)
+		{
+			this.name = name;
 		}
 		
+		public override string Name { get { return name; } }
+		/*
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			if (!method.HasBody) {
@@ -82,17 +93,13 @@ namespace ICSharpCode.ILSpy
 				node.WriteTo(output);
 				output.WriteLine();
 			}
-		}
-		
+	}*/
+
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
 		{
-			yield return new ILAstLanguage { name = "ILAst (unoptimized)", inlineVariables = false };
-			string nextName = "ILAst (variable splitting)";
-			foreach (ILAstOptimizationStep step in Enum.GetValues(typeof(ILAstOptimizationStep))) {
-				yield return new ILAstLanguage { name = nextName, abortBeforeStep = step };
-				nextName = "ILAst (after " + step + ")";
-				
-			}
+			yield return new TypedIL();
+			CSharpDecompiler decompiler = new CSharpDecompiler(ModuleDefinition.CreateModule("Dummy", ModuleKind.Dll), new DecompilerSettings());
+			yield return new BlockIL(decompiler.ILTransforms.ToList());
 		}
 		
 		public override string FileExtension {
@@ -100,12 +107,74 @@ namespace ICSharpCode.ILSpy
 				return ".il";
 			}
 		}
-		
-		public override string TypeToString(TypeReference t, bool includeNamespace, ICustomAttributeProvider attributeProvider = null)
+
+		public override string TypeToString(TypeReference type, bool includeNamespace, ICustomAttributeProvider typeAttributes = null)
 		{
 			PlainTextOutput output = new PlainTextOutput();
-			t.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
+			type.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
 			return output.ToString();
+		}
+
+		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		{
+			base.DecompileMethod(method, output, options);
+			new ReflectionDisassembler(output, false, options.CancellationToken).DisassembleMethodHeader(method);
+			output.WriteLine();
+			output.WriteLine();
+		}
+
+		class TypedIL : ILAstLanguage
+		{
+			public TypedIL() : base("Typed IL") {}
+			
+			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+			{
+				base.DecompileMethod(method, output, options);
+				if (!method.HasBody)
+					return;
+				var typeSystem = new DecompilerTypeSystem(method.Module);
+				ILReader reader = new ILReader(typeSystem);
+				reader.WriteTypedIL(method.Body, output, options.CancellationToken);
+			}
+		}
+
+		class BlockIL : ILAstLanguage
+		{
+			readonly IReadOnlyList<IILTransform> transforms;
+			
+			public BlockIL(IReadOnlyList<IILTransform> transforms) : base("ILAst")
+			{
+				this.transforms = transforms;
+			}
+			
+			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
+			{
+				base.DecompileMethod(method, output, options);
+				if (!method.HasBody)
+					return;
+				var typeSystem = new DecompilerTypeSystem(method.Module);
+				ILReader reader = new ILReader(typeSystem);
+				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
+				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
+				ILTransformContext context = new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem };
+				context.Stepper.StepLimit = options.StepLimit;
+				context.Stepper.IsDebug = options.IsDebug;
+				try {
+					il.RunTransforms(transforms, context);
+				} catch (StepLimitReachedException) {
+				} finally {
+					// update stepper even if a transform crashed unexpectedly
+					if (options.StepLimit == int.MaxValue) {
+						Stepper = context.Stepper;
+						OnStepperUpdated(new EventArgs());
+					}
+				}
+				(output as ISmartTextOutput)?.AddButton(Images.ViewCode, "Show Steps", delegate {
+					DebugSteps.Show();
+				});
+				output.WriteLine();
+				il.WriteTo(output);
+			}
 		}
 	}
 	#endif

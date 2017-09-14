@@ -21,7 +21,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -32,7 +31,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedTypeUsedByTreeNode(TypeDefinition analyzedType)
 		{
 			if (analyzedType == null)
-				throw new ArgumentNullException("analyzedType");
+				throw new ArgumentNullException(nameof(analyzedType));
 
 			this.analyzedType = analyzedType;
 		}
@@ -94,7 +93,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			return IsUsedInTypeReference(type)
 				   || TypeMatches(type.BaseType)
-				   || IsUsedInTypeReferences(type.Interfaces);
+				   || IsUsedInTypeReferences(type.Interfaces.Select(i => i.InterfaceType));
 		}
 
 		private bool IsUsedInFieldReference(FieldReference field)

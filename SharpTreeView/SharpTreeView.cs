@@ -6,14 +6,11 @@ using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
-using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
-using System.Windows.Media;
 using System.Windows.Threading;
 
 namespace ICSharpCode.TreeView
@@ -292,11 +289,33 @@ namespace ICSharpCode.TreeView
 						e.Handled = true;
 					}
 					break;
+				case Key.Back:
+					if (IsTextSearchEnabled) {
+						var instance = SharpTreeViewTextSearch.GetInstance(this);
+						if (instance != null) {
+							instance.RevertLastCharacter();
+							e.Handled = true;
+						}
+					}
+					break;
 			}
 			if (!e.Handled)
 				base.OnKeyDown(e);
 		}
-		
+
+		protected override void OnTextInput(TextCompositionEventArgs e)
+		{
+			if (!string.IsNullOrEmpty(e.Text) && IsTextSearchEnabled && (e.OriginalSource == this || ItemsControl.ItemsControlFromItemContainer(e.OriginalSource as DependencyObject) == this)) {
+				var instance = SharpTreeViewTextSearch.GetInstance(this);
+				if (instance != null) {
+					instance.Search(e.Text);
+					e.Handled = true;
+				}
+			}
+			if (!e.Handled)
+				base.OnTextInput(e);
+		}
+
 		void ExpandRecursively(SharpTreeNode node)
 		{
 			if (node.CanExpandRecursively) {

@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.ILSpy.Options;
@@ -60,6 +59,12 @@ namespace ICSharpCode.ILSpy
 		/// This state is used to restore test view's state when decompilation is started by Go Back/Forward action.
 		/// </remarks>
 		public TextView.DecompilerTextViewState TextViewState { get; set; }
+
+		/// <summary>
+		/// Used internally for debugging.
+		/// </summary>
+		internal int StepLimit = int.MaxValue;
+		internal bool IsDebug = false;
 
 		public DecompilationOptions()
 		{

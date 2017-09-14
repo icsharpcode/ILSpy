@@ -34,9 +34,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public TypeTreeNode(TypeDefinition type, AssemblyTreeNode parentAssemblyNode)
 		{
 			if (parentAssemblyNode == null)
-				throw new ArgumentNullException("parentAssemblyNode");
+				throw new ArgumentNullException(nameof(parentAssemblyNode));
 			if (type == null)
-				throw new ArgumentNullException("type");
+				throw new ArgumentNullException(nameof(type));
 			this.type = type;
 			this.parentAssemblyNode = parentAssemblyNode;
 			this.LazyLoading = true;

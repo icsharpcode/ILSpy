@@ -1,0 +1,25 @@
+﻿<UserControl x:Class="ICSharpCode.ILSpy.DebugSteps"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:ICSharpCode.ILSpy"
+             mc:Ignorable="d" 
+             d:DesignHeight="300" d:DesignWidth="300">
+	<Grid>
+		<TreeView Name="tree" MouseDoubleClick="ShowStateAfter_Click" KeyDown="tree_KeyDown">
+			<TreeView.ItemTemplate>
+				<HierarchicalDataTemplate ItemsSource="{Binding Children}">
+					<TextBlock Text="{Binding Description}" />
+				</HierarchicalDataTemplate>
+			</TreeView.ItemTemplate>
+			<TreeView.ContextMenu>
+				<ContextMenu>
+					<MenuItem Header="Show state before this step" Click="ShowStateBefore_Click" InputGestureText="Shift+Enter" />
+					<MenuItem Header="Show state after this step" Click="ShowStateAfter_Click" InputGestureText="Enter" />
+					<MenuItem Header="Debug this step" Click="DebugStep_Click" />
+				</ContextMenu>
+			</TreeView.ContextMenu>
+		</TreeView>
+	</Grid>
+</UserControl>

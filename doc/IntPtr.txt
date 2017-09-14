@@ -1,0 +1,94 @@
+C# casts to/from IntPtr and UIntPtr don't behave like one would expect from the normal C# primitive types.
+For example, they don't fully respect the checked/unchecked context.
+
+First, let's consider what methods we have available for converting between (U)IntPtr and normal C# types.
+
+Primitives for constructing IntPtr/UIntPtr:
+ * new IntPtr(int)    equivalent to: conv i4->i <sign extend>
+ * new IntPtr(long)   equivalent to: conv.ovf i8->i
+ * new IntPtr(void*)  equivalent to: nop
+ * new UIntPtr(uint)  equivalent to: conv u4->u <zero extend>
+ * new UIntPtr(ulong) equivalent to: conv.ovf u8->u
+ * new UIntPtr(void*) equivalent to: nop
+
+Primitives for getting the value back out:
+ * IntPtr.ToInt32()    equivalent to: conv.ovf i->i4
+ * IntPtr.ToInt64()    equivalent to: conv i->i8 <sign extend>
+ * IntPtr.ToPointer()  equivalent to: nop
+ * UIntPtr.ToUInt32()  equivalent to: conv.ovf u->u4
+ * UIntPtr.ToUInt64()  equivalent to: conv u->u8 <zero extend>
+ * UIntPtr.ToPointer() equivalent to: nop
+
+The (U)IntPtr.op_Explicit implementations are equivalent to the corresponding primitives.
+(void*) is a useful type because all (U)IntPtr<->void* conversions are no-ops.
+C# pointer types act like a normal C# unsigned integer type (of 'native int' size), so we can
+use `void*` whenever the target type is unsigned or the sign does not matter (overflow checking disabled).
+
+Next, we'll consider what the C# compiler does when casting between integer types and IntPtr.
+I tried all these conversions in both checked and unchecked mode, and the C# compiler was
+always generating the same code in both modes!
+
+OK = cast behavior is as if IntPtr was a built-in type and the context does not matter:
+	* sign/zero extension depending on source type
+	* never throws OverflowException and never is supposed to
+CC = cast behavior is as if IntPtr was a built-in type and we are in a checked context:
+	* sign/zero extension depending on source type
+	* performs correct overflowing checking as in a direct cast to native (u)int
+from -> to = C# cast
+generated opcode sequence = what csc.exe produces for that cast
+
+     from ->    to  : generated opcode sequence            overall effect equivalent to
+OK short  ->  IntPtr: call op_Explicit(int32)              conv i2->i <sign extend>
+OK ushort ->  IntPtr: call op_Explicit(int32)              conv u2->u <zero extend>
+                      Sign extension in op_Explicit does not matter because sign bit is always 0 at that point.
+OK int    ->  IntPtr: call op_Explicit(int32)              conv i4->i <sign extend>
+CC uint   ->  IntPtr: conv.u8 + call op_Explicit(int64)    conv.ovf u4->i <zero extend>
+CC long   ->  IntPtr: call op_Explicit(int64)              conv.ovf i8->i
+   ulong  ->  IntPtr: call op_Explicit(int64)              conv.ovf i8->i
+   short  -> UIntPtr: conv.i8 + call op_Explicit(uint64)   32-bit: conv.ovf i2->u <sign extend>;  64-bit: conv i2->i <sign extend>
+                                                              OverflowException for negative input values only on 32-bit!
+OK ushort -> UIntPtr: call op_Explicit(uint32)             conv u2->u <zero extend>
+   int    -> UIntPtr: conv.i8 + call op_Explicit(uint64)   32-bit: conv.ovf i4->u <sign extend>;  64-bit: conv i4->i <sign extend>
+                                                              OverflowException for negative input values only on 32-bit!
+OK uint   -> UIntPtr: call op_Explicit(uint32)             conv u4->u <zero extend>
+   long   -> UIntPtr: call op_Explicit(uint64)             conv.ovf u8->u
+CC ulong  -> UIntPtr: call op_Explicit(uint64)             conv.ovf u8->u
+
+If an unchecked conversion is desired and the desired entry is not marked 'OK',
+we work around the problem by casting sourceType->void*->(U)IntPtr.
+
+If a checked conversion is desired and the desired entry is not marked 'OK' or 'CC', we have to find a replacement.
+  signed type -> UIntPtr: (UIntPtr)(void*)value
+  ulong -> IntPtr:        (IntPtr)(long)value
+
+Continuing the conversion table for the other direction, (UIntPtr) to primitive types:
+     from ->    to  : generated opcode sequence            overall effect equivalent to
+   IntPtr -> short:  call int32 op_Explicit + conv.i2      conv.ovf i->i4; conv i4->i2
+   IntPtr -> ushort: call int32 op_Explicit + conv.u2      conv.ovf i->i4; conv i4->u2
+CC IntPtr -> int:    call int32 op_Explicit                conv.ovf i->i4
+   IntPtr -> uint:   call int32 op_Explicit                conv.ovf i->i4
+OK IntPtr -> long:   call int64 op_Explicit                conv i->i8 <sign extend>
+   IntPtr -> ulong:  call int64 op_Explicit                conv i->i8 <sign extend>
+   UIntPtr -> short:  call uint32 op_Explicit + conv.i2    conv.ovf u->u4; conv u4->i2
+   UIntPtr -> ushort: call uint32 op_Explicit + conv.u2    conv.ovf u->u4; conv u4->u2
+   UIntPtr -> int:    call uint32 op_Explicit              conv.ovf u->u4
+CC UIntPtr -> uint:   call uint32 op_Explicit              conv.ovf u->u4
+   UIntPtr -> long:   call uint64 op_Explicit              conv u->u8 <zero extend>
+OK UIntPtr -> ulong:  call uint64 op_Explicit              conv u->u8 <zero extend>
+
+If an unchecked conversion is desired and the desired entry is not marked 'OK',
+we work around the problem by casting (U)IntPtr->(u)long->targetType.
+(`void*` would also work instead of `ulong`/`long`, but let's avoid unsafe code where possible)
+
+If a checked conversion is desired and the desired entry is not marked 'OK' or 'CC',
+we also have to work around the problem, and this again works by casting via (u)long: (U)IntPtr->(u)long->targetType
+(note that `void*` is not always a valid alternative in this case)
+
+Finally, conversions between IntPtr and (U)IntPtr, or IntPtr and `void*` need special consideration:
+  * C# does not allow directly casting IntPtr <-> UIntPtr
+  * Casting via `void*` works but is always unchecked.
+  * These should work for checked conversions:
+     IntPtr -> UIntPtr: cast IntPtr->long->ulong->UIntPtr
+     IntPtr -> void*:   cast IntPtr->long->void*
+     UIntPtr -> IntPtr: cast UIntPtr->ulong->long->IntPtr
+     void*  -> IntPtr:  cast void*->long->IntPtr

@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel.Composition.Hosting;
@@ -26,7 +25,11 @@ namespace ICSharpCode.ILSpy
 {
 	public static class Languages
 	{
-		private static ReadOnlyCollection<Language> allLanguages;
+		// Start with a dummy list with an IL entry so that crashes
+		// in Initialize() (e.g. due to invalid plugins) don't lead to
+		// confusing follow-up errors in GetLanguage().
+		private static ReadOnlyCollection<Language> allLanguages = new ReadOnlyCollection<Language>(
+			new Language[] { new ILLanguage() });
 
 		/// <summary>
 		/// A list of all languages.
@@ -40,7 +43,6 @@ namespace ICSharpCode.ILSpy
 		{
 			List<Language> languages = new List<Language>();
 			languages.AddRange(composition.GetExportedValues<Language>());
-			languages.Add(new ILLanguage(true));
 			#if DEBUG
 			languages.AddRange(ILAstLanguage.GetDebugLanguages());
 			languages.AddRange(CSharpLanguage.GetDebugLanguages());

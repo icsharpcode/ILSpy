@@ -29,7 +29,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedEventTreeNode(EventDefinition analyzedEvent, string prefix = "")
 		{
 			if (analyzedEvent == null)
-				throw new ArgumentNullException("analyzedEvent");
+				throw new ArgumentNullException(nameof(analyzedEvent));
 			this.analyzedEvent = analyzedEvent;
 			this.prefix = prefix;
 			this.LazyLoading = true;

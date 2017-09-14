@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedFieldTreeNode(FieldDefinition analyzedField)
 		{
 			if (analyzedField == null)
-				throw new ArgumentNullException("analyzedField");
+				throw new ArgumentNullException(nameof(analyzedField));
 			this.analyzedField = analyzedField;
 			this.LazyLoading = true;
 		}

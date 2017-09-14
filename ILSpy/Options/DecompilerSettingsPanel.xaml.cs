@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Windows.Controls;
 using System.Xml.Linq;
 using ICSharpCode.Decompiler;
@@ -52,8 +51,10 @@ namespace ICSharpCode.ILSpy.Options
 			XElement e = settings["DecompilerSettings"];
 			DecompilerSettings s = new DecompilerSettings();
 			s.AnonymousMethods = (bool?)e.Attribute("anonymousMethods") ?? s.AnonymousMethods;
+			s.AnonymousTypes = (bool?)e.Attribute("anonymousTypes") ?? s.AnonymousTypes;
 			s.YieldReturn = (bool?)e.Attribute("yieldReturn") ?? s.YieldReturn;
 			s.AsyncAwait = (bool?)e.Attribute("asyncAwait") ?? s.AsyncAwait;
+			s.AutomaticProperties = (bool?) e.Attribute("automaticProperties") ?? s.AutomaticProperties;
 			s.QueryExpressions = (bool?)e.Attribute("queryExpressions") ?? s.QueryExpressions;
 			s.ExpressionTrees = (bool?)e.Attribute("expressionTrees") ?? s.ExpressionTrees;
 			s.UseDebugSymbols = (bool?)e.Attribute("useDebugSymbols") ?? s.UseDebugSymbols;
@@ -67,8 +68,10 @@ namespace ICSharpCode.ILSpy.Options
 			DecompilerSettings s = (DecompilerSettings)this.DataContext;
 			XElement section = new XElement("DecompilerSettings");
 			section.SetAttributeValue("anonymousMethods", s.AnonymousMethods);
+			section.SetAttributeValue("anonymousTypes", s.AnonymousTypes);
 			section.SetAttributeValue("yieldReturn", s.YieldReturn);
 			section.SetAttributeValue("asyncAwait", s.AsyncAwait);
+			section.SetAttributeValue("automaticProperties", s.AutomaticProperties);
 			section.SetAttributeValue("queryExpressions", s.QueryExpressions);
 			section.SetAttributeValue("expressionTrees", s.ExpressionTrees);
 			section.SetAttributeValue("useDebugSymbols", s.UseDebugSymbols);

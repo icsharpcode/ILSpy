@@ -1,14 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.NRefactory.CSharp;
-using ICSharpCode.NRefactory.Utils;
 using Mono.Cecil;
-using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy
 {
@@ -16,13 +12,21 @@ namespace ICSharpCode.ILSpy
 	{
 		protected string[] searchTerm;
 		protected Regex regex;
+		protected bool fullNameSearch;
 
 		protected AbstractSearchStrategy(params string[] terms)
 		{
 			if (terms.Length == 1 && terms[0].Length > 2) {
 				var search = terms[0];
-				if (search.StartsWith("/", StringComparison.Ordinal) && search.EndsWith("/", StringComparison.Ordinal) && search.Length > 4)
-					regex = SafeNewRegex(search.Substring(1, search.Length - 2));
+				if (search.StartsWith("/", StringComparison.Ordinal) && search.Length > 4) {
+					var regexString = search.Substring(1, search.Length - 1);
+					fullNameSearch = search.Contains("\\.");
+					if (regexString.EndsWith("/", StringComparison.Ordinal))
+						regexString = regexString.Substring(0, regexString.Length - 1);
+					regex = SafeNewRegex(regexString);
+				} else {
+					fullNameSearch = search.Contains(".");
+				}
 
 				terms[0] = search;
 			}
@@ -30,17 +34,38 @@ namespace ICSharpCode.ILSpy
 			searchTerm = terms;
 		}
 
-		protected bool IsMatch(string text)
+		protected virtual bool IsMatch(FieldDefinition field)
 		{
-			if (regex != null)
-				return regex.IsMatch(text);
+			return false;
+		}
+
+		protected virtual bool IsMatch(PropertyDefinition property)
+		{
+			return false;
+		}
+
+		protected virtual bool IsMatch(EventDefinition ev)
+		{
+			return false;
+		}
+
+		protected virtual bool IsMatch(MethodDefinition m)
+		{
+			return false;
+		}
+		
+		protected virtual bool MatchName(MemberReference m)
+		{
+			if (regex != null) {
+				return regex.IsMatch(fullNameSearch ? GetLanguageSpecificFullName(m) : m.Name);
+			}
 
 			for (int i = 0; i < searchTerm.Length; ++i) {
 				// How to handle overlapping matches?
 				var term = searchTerm[i];
 				if (string.IsNullOrEmpty(term)) continue;
-				switch (term[0])
-				{
+				string text = term.Contains(".") ? GetLanguageSpecificFullName(m) : m.Name;
+				switch (term[0]) {
 					case '+': // must contain
 						term = term.Substring(1);
 						goto default;
@@ -67,24 +92,18 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 
-		protected virtual bool IsMatch(FieldDefinition field)
+		string GetLanguageSpecificFullName(MemberReference m, string nestedTypeSeparator = ".", string memberSeparator = ".")
 		{
-			return false;
+			if (m.DeclaringType != null)
+				return GetLanguageSpecificFullName(m.DeclaringType, nestedTypeSeparator) + memberSeparator + m.Name;
+			return m.Name;
 		}
 
-		protected virtual bool IsMatch(PropertyDefinition property)
+		string GetLanguageSpecificFullName(TypeReference t, string nestedTypeSeparator = ".")
 		{
-			return false;
-		}
-
-		protected virtual bool IsMatch(EventDefinition ev)
-		{
-			return false;
-		}
-
-		protected virtual bool IsMatch(MethodDefinition m)
-		{
-			return false;
+			if (t.DeclaringType != null)
+				return GetLanguageSpecificFullName(t.DeclaringType, nestedTypeSeparator) + nestedTypeSeparator + t.Name;
+			return t.Namespace + "." + t.Name;
 		}
 
 		void Add<T>(IEnumerable<T> items, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, bool> matcher, Func<T, ImageSource> image) where T : MemberReference
@@ -130,7 +149,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 	}
-
+	/*
 	class LiteralSearchStrategy : AbstractSearchStrategy
 	{
 		readonly TypeCode searchTermLiteralType;
@@ -301,7 +320,7 @@ namespace ICSharpCode.ILSpy
 			}
 			return false;
 		}
-	}
+	}*/
 
 	enum MemberSearchKind
 	{
@@ -329,22 +348,22 @@ namespace ICSharpCode.ILSpy
 
 		protected override bool IsMatch(FieldDefinition field)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Field) && IsMatch(field.Name);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Field) && MatchName(field);
 		}
 
 		protected override bool IsMatch(PropertyDefinition property)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Property) && IsMatch(property.Name);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Property) && MatchName(property);
 		}
 
 		protected override bool IsMatch(EventDefinition ev)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Event) && IsMatch(ev.Name);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Event) && MatchName(ev);
 		}
 
 		protected override bool IsMatch(MethodDefinition m)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Method) && IsMatch(m.Name);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Method) && MatchName(m);
 		}
 	}
 
@@ -357,7 +376,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			if (IsMatch(type.Name) || IsMatch(type.FullName)) {
+			if (MatchName(type)) {
 				addResult(new SearchResult {
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),
@@ -382,7 +401,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			if (IsMatch(type.Name) || IsMatch(type.FullName))
+			if (MatchName(type))
 			{
 				addResult(new SearchResult
 				{
@@ -404,22 +423,22 @@ namespace ICSharpCode.ILSpy
 
 		protected override bool IsMatch(FieldDefinition field)
 		{
-			return IsMatch(field.Name);
+			return MatchName(field);
 		}
 
 		protected override bool IsMatch(PropertyDefinition property)
 		{
-			return IsMatch(property.Name);
+			return MatchName(property);
 		}
 
 		protected override bool IsMatch(EventDefinition ev)
 		{
-			return IsMatch(ev.Name);
+			return MatchName(ev);
 		}
 
 		protected override bool IsMatch(MethodDefinition m)
 		{
-			return IsMatch(m.Name);
+			return MatchName(m);
 		}
 	}
 }

@@ -34,6 +34,28 @@ namespace ICSharpCode.ILSpy
 				if (!list.Contains(item))
 					list.Add(item);
 		}
+		
+		public static int BinarySearch<T>(this IList<T> list, T item, int start, int count, IComparer<T> comparer)
+		{
+			if (list == null)
+				throw new ArgumentNullException(nameof(list));
+			if (start < 0 || start >= list.Count)
+				throw new ArgumentOutOfRangeException(nameof(start), start, "Value must be between 0 and " + (list.Count - 1));
+			if (count < 0 || count > list.Count - start)
+				throw new ArgumentOutOfRangeException(nameof(count), count, "Value must be between 0 and " + (list.Count - start));
+			int end = start + count - 1;
+			while (start <= end) {
+				int pivot = (start + end) / 2;
+				int result = comparer.Compare(item, list[pivot]);
+				if (result == 0)
+					return pivot;
+				if (result < 0)
+					end = pivot - 1;
+				else
+					start = pivot + 1;
+			}
+			return ~start;
+		}
 
 		public static bool IsCustomAttribute(this TypeDefinition type)
 		{
@@ -54,6 +76,17 @@ namespace ICSharpCode.ILSpy
 				return string.Empty;
 			
 			return " @" + token.ToInt32().ToString("x8");
+		}
+
+		/// <summary>
+		/// Takes at most <paramref name="length" /> first characters from string, and appends '...' if string is longer.
+		/// String can be null.
+		/// </summary>
+		public static string TakeStartEllipsis(this string s, int length)
+		{
+			if (string.IsNullOrEmpty(s) || length >= s.Length)
+				return s;
+			return s.Substring(0, length) + "...";
 		}
 	}
 }

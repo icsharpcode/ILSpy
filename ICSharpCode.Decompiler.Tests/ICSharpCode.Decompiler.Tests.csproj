@@ -1,0 +1,122 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net461</TargetFramework>
+
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
+
+    <NoWarn>$(NoWarn),67,169,1058,728,1720,649</NoWarn>
+
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+
+    <EnableDefaultItems>false</EnableDefaultItems>
+
+    <OutputType>Exe</OutputType>
+    <StartupObject>ICSharpCode.Decompiler.Tests.Stub</StartupObject>
+    <AutoGenerateBindingRedirects>True</AutoGenerateBindingRedirects>
+
+    <SignAssembly>True</SignAssembly>
+    <AssemblyOriginatorKeyFile>..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>pdbonly</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DiffLib" Version="1.0.0.55" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="1.3.2" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.3.0" />
+    <PackageReference Include="NUnit" Version="2.6.3" />
+    <PackageReference Include="NUnitTestAdapter" Version="2.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\cecil\Mono.Cecil.csproj" AdditionalProperties="NuGetRestoreTargets=;ResolveNuGetPackages=false" />
+    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="TestCases\Correctness\BitNot.il" />
+    <None Include="TestCases\Correctness\Readme.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Helpers\CodeAssert.cs" />
+    <Compile Include="Helpers\SdkUtility.cs" />
+    <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
+    <Compile Include="Helpers\Tester.cs" />
+    <Compile Include="Helpers\TypeSystemHelper.cs" />
+    <Compile Include="ILPrettyTestRunner.cs" />
+    <Compile Include="Stub.cs" />
+    <Compile Include="TestCases\ILPretty\Issue379.cs" />
+    <Compile Include="TestCases\Pretty\LiftedOperators.cs" />
+    <Compile Include="PrettyTestRunner.cs" />
+    <Compile Include="RoundtripAssembly.cs" />
+    <Compile Include="TestCases\Correctness\Capturing.cs" />
+    <Compile Include="TestCases\Correctness\OverloadResolution.cs" />
+    <Compile Include="TestCases\Pretty\AnonymousTypes.cs" />
+    <Compile Include="TestCases\Pretty\Async.cs" />
+    <Compile Include="TestCases\Correctness\CompoundAssignment.cs" />
+    <Compile Include="TestCases\Correctness\ConditionalAttr.cs" />
+    <Compile Include="TestCases\Correctness\ControlFlow.cs" />
+    <Compile Include="TestCases\Correctness\Conversions.cs" />
+    <Compile Include="TestCases\Correctness\DecimalFields.cs" />
+    <Compile Include="TestCases\Correctness\Comparisons.cs" />
+    <Compile Include="TestCases\Correctness\Generics.cs" />
+    <Compile Include="TestCases\Correctness\HelloWorld.cs" />
+    <Compile Include="TestCases\Correctness\InitializerTests.cs" />
+    <Compile Include="TestCases\Correctness\MemberLookup.cs" />
+    <Compile Include="TestCases\Correctness\PropertiesAndEvents.cs" />
+    <Compile Include="TestCases\Correctness\Switch.cs" />
+    <Compile Include="TestCases\Correctness\UndocumentedExpressions.cs" />
+    <Compile Include="TestCases\Correctness\UnsafeCode.cs" />
+    <Compile Include="TestCases\Correctness\ValueTypeCall.cs" />
+    <Compile Include="CorrectnessTestRunner.cs" />
+    <Compile Include="TestCases\Pretty\AutoProperties.cs" />
+    <Compile Include="TestCases\Pretty\Loops.cs" />
+    <Compile Include="TestCases\Correctness\YieldReturn.cs" />
+    <Compile Include="TestCases\Pretty\CompoundAssignmentTest.cs" />
+    <Compile Include="TestCases\Pretty\ExceptionHandling.cs" />
+    <Compile Include="TestCases\Pretty\HelloWorld.cs" />
+    <Compile Include="TestCases\Pretty\InlineAssignmentTest.cs" />
+    <Compile Include="TestCases\Pretty\PropertiesAndEvents.cs" />
+    <Compile Include="TestCases\Pretty\QueryExpressions.cs" />
+    <Compile Include="TestCases\Pretty\ShortCircuit.cs" />
+    <Compile Include="TestTraceListener.cs" />
+    <Compile Include="Util\IntervalTests.cs" />
+    <Compile Include="Util\LongSetTests.cs" />
+    <Compile Include="CustomAttributes\CustomAttributeTests.cs" />
+    <Compile Include="CustomAttributes\S_AssemblyCustomAttribute.cs" />
+    <Compile Include="CustomAttributes\S_CustomAttributeSamples.cs" />
+    <Compile Include="CustomAttributes\S_CustomAttributes.cs" />
+    <Compile Include="DecompilerTestBase.cs" />
+    <Compile Include="CodeSampleFileParser.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="TestCases\Pretty\CompoundAssignmentTest.il">
+      <DependentUpon>CompoundAssignmentTest.cs</DependentUpon>
+    </None>
+    <None Include="TestCases\Pretty\HelloWorld.il">
+      <DependentUpon>HelloWorld.cs</DependentUpon>
+    </None>
+    <None Include="TestCases\Pretty\InlineAssignmentTest.il">
+      <DependentUpon>InlineAssignmentTest.cs</DependentUpon>
+    </None>
+    <None Include="TestCases\ILPretty\Issue379.il" />
+    <None Include="TestCases\Pretty\Readme.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Service Include="{82a7f48d-3b50-4b1e-b82e-3ada8210c358}" />
+  </ItemGroup>
+
+</Project>

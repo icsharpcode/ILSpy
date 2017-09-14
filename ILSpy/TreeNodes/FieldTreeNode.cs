@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public FieldTreeNode(FieldDefinition field)
 		{
 			if (field == null)
-				throw new ArgumentNullException("field");
+				throw new ArgumentNullException(nameof(field));
 			this.field = field;
 		}
 

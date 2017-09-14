@@ -28,7 +28,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedAssemblyTreeNode(ModuleDefinition analyzedAssembly)
 		{
 			if (analyzedAssembly == null)
-				throw new ArgumentNullException("analyzedAssembly");
+				throw new ArgumentNullException(nameof(analyzedAssembly));
 			this.analyzedAssembly = analyzedAssembly;
 			//this.LazyLoading = true;
 		}

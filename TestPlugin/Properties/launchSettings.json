@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "TestPlugin": {
+      "commandName": "Executable",
+      "executablePath": "$(OutDir)ILSpy.exe",
+      "commandLineArgs": "/separate"
+    }
+  }
+}

@@ -31,7 +31,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public AnalyzedPropertyTreeNode(PropertyDefinition analyzedProperty, string prefix = "")
 		{
 			if (analyzedProperty == null)
-				throw new ArgumentNullException("analyzedProperty");
+				throw new ArgumentNullException(nameof(analyzedProperty));
 			this.isIndexer = analyzedProperty.IsIndexer();
 			this.analyzedProperty = analyzedProperty;
 			this.prefix = prefix;

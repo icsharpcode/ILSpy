@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
@@ -62,11 +63,11 @@ namespace ICSharpCode.ILSpy.AddIn
 							memberName = "op_Explicit";
 						}
 						else {
-							// NRefactory has a handy mapping we can make use of, just need to extract the operator sybol first.
+							// NRefactory has a handy mapping we can make use of, just need to extract the operator symbol first.
 							string[] memberNameWords = member.Name.Split(' ');
 							if (memberNameWords.Length >= 2) {
 								string operatorSymbol = memberNameWords[1];
-								string operatorName = ICSharpCode.NRefactory.MonoCSharp.Operator.GetMetadataName(operatorSymbol);
+								string operatorName = OperatorDeclaration.GetName(OperatorDeclaration.GetOperatorType(operatorSymbol));
 								if (operatorName != null) {
 									memberName = memberName.Replace(member.Name, operatorName);
 								}

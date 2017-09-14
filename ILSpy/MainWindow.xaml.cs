@@ -32,9 +32,9 @@ using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
-using ICSharpCode.ILSpy.XmlDoc;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
 using Mono.Cecil;
@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy
 			InitToolbar();
 			ContextMenuProvider.Add(treeView, decompilerTextView);
 			
-			this.Loaded += new RoutedEventHandler(MainWindow_Loaded);
+			this.Loaded += MainWindow_Loaded;
 		}
 		
 		void SetWindowBounds(Rect bounds)
@@ -500,12 +500,7 @@ namespace ICSharpCode.ILSpy
 				typeof(System.Windows.Markup.MarkupExtension).Assembly,
 				typeof(System.Windows.Rect).Assembly,
 				typeof(System.Windows.UIElement).Assembly,
-				typeof(System.Windows.FrameworkElement).Assembly,
-				typeof(ICSharpCode.TreeView.SharpTreeView).Assembly,
-				typeof(Mono.Cecil.AssemblyDefinition).Assembly,
-				typeof(ICSharpCode.AvalonEdit.TextEditor).Assembly,
-				typeof(ICSharpCode.Decompiler.Ast.AstBuilder).Assembly,
-				typeof(MainWindow).Assembly
+				typeof(System.Windows.FrameworkElement).Assembly
 			};
 			foreach (System.Reflection.Assembly asm in initialAssemblies)
 				assemblyList.OpenAssembly(asm.Location);
@@ -572,6 +567,9 @@ namespace ICSharpCode.ILSpy
 					break;
 				bestMatch = node;
 				node.EnsureLazyChildren();
+				var ilSpyTreeNode = node as ILSpyTreeNode;
+				if (ilSpyTreeNode != null)
+					ilSpyTreeNode.EnsureChildrenFiltered();
 				node = node.Children.FirstOrDefault(c => c.ToString() == element);
 			}
 			if (returnBestMatch)
@@ -658,8 +656,11 @@ namespace ICSharpCode.ILSpy
 				string link = "http://msdn.microsoft.com/library/system.reflection.emit.opcodes." + ((Mono.Cecil.Cil.OpCode)reference).Code.ToString().ToLowerInvariant() + ".aspx";
 				try {
 					Process.Start(link);
-				} catch {
-					
+#pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
+				} catch (Exception) {
+#pragma warning restore RECS0022 // A catch clause that catches System.Exception and has an empty body
+					// Process.Start can throw several errors (not all of them documented),
+					// just ignore all of them.
 				}
 			}
 			return decompilationTask;
@@ -682,7 +683,7 @@ namespace ICSharpCode.ILSpy
 		public void OpenFiles(string[] fileNames, bool focusNode = true)
 		{
 			if (fileNames == null)
-				throw new ArgumentNullException("fileNames");
+				throw new ArgumentNullException(nameof(fileNames));
 			
 			if (focusNode)
 				treeView.UnselectAll();
@@ -744,7 +745,7 @@ namespace ICSharpCode.ILSpy
 				if (node != null && node.View(decompilerTextView))
 					return;
 			}
-			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions() { TextViewState = state });
+			decompilationTask = decompilerTextView.DecompileAsync(this.CurrentLanguage, this.SelectedNodes, new DecompilationOptions { TextViewState = state });
 		}
 		
 		void SaveCommandExecuted(object sender, ExecutedRoutedEventArgs e)
@@ -755,7 +756,7 @@ namespace ICSharpCode.ILSpy
 			}
 			this.TextView.SaveToDisk(this.CurrentLanguage,
 				this.SelectedNodes,
-				new DecompilationOptions() { FullDecompilation = true });
+				new DecompilationOptions { FullDecompilation = true });
 		}
 		
 		public void RefreshDecompiledView()
@@ -781,7 +782,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 		#endregion
-		
+
 		#region Back/Forward navigation
 		void BackCommandCanExecute(object sender, CanExecuteRoutedEventArgs e)
 		{

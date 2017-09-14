@@ -16,7 +16,6 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Linq;
@@ -157,7 +156,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			EnsureChildrenFiltered();
 		}
 
-		void EnsureChildrenFiltered()
+		internal void EnsureChildrenFiltered()
 		{
 			EnsureLazyChildren();
 			if (childrenNeedFiltering) {

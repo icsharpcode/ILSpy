@@ -17,7 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 using System.Text;
+using System.Windows.Controls;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
@@ -40,7 +42,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		public MethodTreeNode(MethodDefinition method)
 		{
 			if (method == null)
-				throw new ArgumentNullException("method");
+				throw new ArgumentNullException(nameof(method));
 			this.method = method;
 		}
 
@@ -66,8 +68,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					b.Append(", ");
 				b.Append("...");
 			}
-			b.Append(") : ");
-			b.Append(language.TypeToString(method.ReturnType, false, method.MethodReturnType));
+			if (method.IsConstructor) {
+				b.Append(')');
+			} else {
+				b.Append(") : ");
+				b.Append(language.TypeToString(method.ReturnType, false, method.MethodReturnType));
+			}
 			b.Append(method.MetadataToken.ToSuffixString());
 			return HighlightSearchMatch(language.FormatMethodName(method), b.ToString());
 		}
