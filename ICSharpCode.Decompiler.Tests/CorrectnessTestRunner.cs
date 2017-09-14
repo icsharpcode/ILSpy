@@ -157,6 +157,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void TrickyTypes([ValueSource("defaultOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
 		public void Capturing([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);

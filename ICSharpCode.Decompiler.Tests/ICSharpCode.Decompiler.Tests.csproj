@@ -56,6 +56,7 @@
     <Compile Include="Helpers\TypeSystemHelper.cs" />
     <Compile Include="ILPrettyTestRunner.cs" />
     <Compile Include="Stub.cs" />
+    <Compile Include="TestCases\Correctness\TrickyTypes.cs" />
     <Compile Include="TestCases\ILPretty\Issue379.cs" />
     <Compile Include="TestCases\Pretty\LiftedOperators.cs" />
     <Compile Include="PrettyTestRunner.cs" />
