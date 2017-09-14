@@ -91,7 +91,7 @@ try {
 
 		$out = $in.Replace('$INSERTVERSION$', $fullVersionNumber);
 		$out = $out.Replace('$INSERTMAJORVERSION$', $major);
-		$out = $out.Replace('$INSERTREVISION$', $minor);
+		$out = $out.Replace('$INSERTREVISION$', $revision);
 		$out = $out.Replace('$INSERTCOMMITHASH$', $gitCommitHash);
 		$out = $out.Replace('$INSERTSHORTCOMMITHASH$', $gitCommitHash.Substring(0, 8));
 		$out = $out.Replace('$INSERTDATE$', [System.DateTime]::Now.ToString("MM/dd/yyyy"));
