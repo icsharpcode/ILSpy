@@ -34,14 +34,16 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ExpressionBuilder exprBuilder;
 		readonly ILFunction currentFunction;
 		readonly IMethod currentMethod;
+		readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 
-		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IMethod currentMethod, ILFunction currentFunction, CancellationToken cancellationToken)
+		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IMethod currentMethod, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
 			Debug.Assert(typeSystem != null && decompilationContext != null && currentMethod != null);
-			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext, cancellationToken);
+			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext, settings, cancellationToken);
 			this.currentFunction = currentFunction;
 			this.currentMethod = currentMethod;
+			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 		}
 		

@@ -657,7 +657,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			AddDefinesForConditionalAttributes(function);
-			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method, function, CancellationToken);
+			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method, function, settings, CancellationToken);
 			var body = statementBuilder.ConvertAsBlock(function.Body);
 			entityDecl.AddChild(body, Roles.Body);
 

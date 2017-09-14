@@ -65,13 +65,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
 		readonly TypeSystemAstBuilder astBuilder;
+		readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 		
-		public ExpressionBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, CancellationToken cancellationToken)
+		public ExpressionBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
 			Debug.Assert(decompilationContext != null);
 			this.typeSystem = typeSystem;
 			this.decompilationContext = decompilationContext;
+			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 			this.compilation = decompilationContext.Compilation;
 			this.resolver = new CSharpResolver(new CSharpTypeResolveContext(compilation.MainAssembly, null, decompilationContext.CurrentTypeDefinition, decompilationContext.CurrentMember));
@@ -959,7 +961,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.Parameters.AddRange(MakeParameters(method, function));
 			ame.HasParameterList = true;
-			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method, function, cancellationToken);
+			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method, function, settings, cancellationToken);
 			var body = builder.ConvertAsBlock(function.Body);
 			bool isLambda = false;
 			bool isMultiLineLambda = false;
