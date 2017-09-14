@@ -12,7 +12,7 @@
     @echo Could not find VS2017 MSBuild
     @exit /b 1
 )
-"%MSBUILD%" /m ILSpy.sln /p:Configuration=Release "/p:Platform=Any CPU"
+"%MSBUILD%" ILSpy.sln /p:Configuration=Release "/p:Platform=Any CPU"
 @IF %ERRORLEVEL% NEQ 0 (
     @pause
     @exit /b 1
