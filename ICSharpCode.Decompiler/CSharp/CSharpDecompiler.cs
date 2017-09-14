@@ -195,7 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else if (type.IsCompilerGenerated()) {
 //					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 //						return true;
-					if (type.IsAnonymousType())
+					if (settings.AnonymousTypes && type.IsAnonymousType())
 						return true;
 				}
 			}

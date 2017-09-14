@@ -363,7 +363,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				if (assignment != null && assignment.Operator == AssignmentOperatorType.Assign && assignment.Left.IsMatch(expectedExpr)) {
 					AstType type;
-					if (v.Type.ContainsAnonymousType()) {
+					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType()) {
 						type = new SimpleType("var");
 					} else {
 						type = context.TypeSystemAstBuilder.ConvertType(v.Type);

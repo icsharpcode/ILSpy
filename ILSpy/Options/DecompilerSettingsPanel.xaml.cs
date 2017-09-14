@@ -51,6 +51,7 @@ namespace ICSharpCode.ILSpy.Options
 			XElement e = settings["DecompilerSettings"];
 			DecompilerSettings s = new DecompilerSettings();
 			s.AnonymousMethods = (bool?)e.Attribute("anonymousMethods") ?? s.AnonymousMethods;
+			s.AnonymousTypes = (bool?)e.Attribute("anonymousTypes") ?? s.AnonymousTypes;
 			s.YieldReturn = (bool?)e.Attribute("yieldReturn") ?? s.YieldReturn;
 			s.AsyncAwait = (bool?)e.Attribute("asyncAwait") ?? s.AsyncAwait;
 			s.AutomaticProperties = (bool?) e.Attribute("automaticProperties") ?? s.AutomaticProperties;
@@ -67,6 +68,7 @@ namespace ICSharpCode.ILSpy.Options
 			DecompilerSettings s = (DecompilerSettings)this.DataContext;
 			XElement section = new XElement("DecompilerSettings");
 			section.SetAttributeValue("anonymousMethods", s.AnonymousMethods);
+			section.SetAttributeValue("anonymousTypes", s.AnonymousTypes);
 			section.SetAttributeValue("yieldReturn", s.YieldReturn);
 			section.SetAttributeValue("asyncAwait", s.AsyncAwait);
 			section.SetAttributeValue("automaticProperties", s.AutomaticProperties);

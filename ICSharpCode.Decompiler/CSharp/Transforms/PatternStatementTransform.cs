@@ -280,7 +280,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// variable is used, so we'll create a variable declaration
 				variable.Kind = IL.VariableKind.UsingLocal;
 				usingStatement.ResourceAcquisition = new VariableDeclarationStatement {
-					Type = variable.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(variable.Type),
+					Type = context.Settings.AnonymousTypes && variable.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(variable.Type),
 					Variables = {
 						new VariableInitializer {
 							Name = variableName,
@@ -401,7 +401,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			itemVar.Kind = IL.VariableKind.ForeachLocal;
 			ForeachStatement foreachStatement = new ForeachStatement {
-				VariableType = itemVar.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVar.Type),
+				VariableType = context.Settings.AnonymousTypes && itemVar.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVar.Type),
 				VariableName = itemVar.Name,
 				InExpression = m.Get<Expression>("collection").Single().Detach(),
 				EmbeddedStatement = newBody
@@ -533,7 +533,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			itemVar.Kind = IL.VariableKind.ForeachLocal;
 			ForeachStatement foreachStatement = new ForeachStatement
 			{
-				VariableType = itemVar.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVar.Type),
+				VariableType = context.Settings.AnonymousTypes && itemVar.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVar.Type),
 				VariableName = itemVar.Name,
 			}.WithILVariable(itemVar);
 			BlockStatement body = new BlockStatement();

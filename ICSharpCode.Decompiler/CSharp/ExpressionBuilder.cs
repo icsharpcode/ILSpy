@@ -1011,7 +1011,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				simplifiedDelegateCreation.Arguments.Clear();
 				simplifiedDelegateCreation.Arguments.Add(replacement);
 				replacement = simplifiedDelegateCreation;
-			} else if (!expectedType.ContainsAnonymousType()) {
+			} else if (!settings.AnonymousTypes || !expectedType.ContainsAnonymousType()) {
 				replacement = new CastExpression(ConvertType(expectedType), replacement);
 			}
 			return replacement
@@ -1025,7 +1025,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			int i = 0;
 			foreach (var parameter in method.Parameters) {
 				var pd = astBuilder.ConvertParameter(parameter);
-				if (parameter.Type.ContainsAnonymousType())
+				if (settings.AnonymousTypes && parameter.Type.ContainsAnonymousType())
 					pd.Type = null;
 				ILVariable v;
 				if (variables.TryGetValue(i, out v))
@@ -1111,7 +1111,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			
 			if (inst.OpCode == OpCode.NewObj) {
 				var argumentExpressions = arguments.SelectArray(arg => arg.Expression);
-				if (method.DeclaringType.IsAnonymousType()) {
+				if (settings.AnonymousTypes && method.DeclaringType.IsAnonymousType()) {
 					AnonymousTypeCreateExpression atce = new AnonymousTypeCreateExpression();
 					var parameters = inst.Method.Parameters;
 					if (CanInferAnonymousTypePropertyNamesFromArguments(argumentExpressions, parameters)) {
@@ -1171,7 +1171,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								if (!argumentsCasted) {
 									argumentsCasted = true;
 									for (int i = 0; i < arguments.Length; i++) {
-										if (!method.Parameters[i].Type.ContainsAnonymousType())
+										if (!settings.AnonymousTypes || !method.Parameters[i].Type.ContainsAnonymousType())
 											arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
 									}
 								} else if (!targetCasted) {
@@ -1196,7 +1196,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						methodName = method.ImplementedInterfaceMembers[0].Name;
 					}
 					var mre = new MemberReferenceExpression(targetExpr, methodName);
-					if (requireTypeArguments && !method.TypeArguments.Any(a => a.ContainsAnonymousType()))
+					if (requireTypeArguments && (!settings.AnonymousTypes || !method.TypeArguments.Any(a => a.ContainsAnonymousType())))
 						mre.TypeArguments.AddRange(method.TypeArguments.Select(ConvertType));
 					var argumentExpressions = arguments.Select(arg => arg.Expression);
 					expr = new InvocationExpression(mre, argumentExpressions);
@@ -1621,8 +1621,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			ArraySpecifier[] additionalSpecifiers;
 			AstType typeExpression;
-			bool isAnonymouslyTyped = type.ContainsAnonymousType();
-			if (isAnonymouslyTyped) {
+			if (settings.AnonymousTypes && type.ContainsAnonymousType()) {
 				typeExpression = null;
 				additionalSpecifiers = new[] { new ArraySpecifier() };
 			} else {
@@ -1639,7 +1638,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				Initializer = root
 			};
 			expr.AdditionalArraySpecifiers.AddRange(additionalSpecifiers);
-			if (!isAnonymouslyTyped)
+			if (!(bool)type.ContainsAnonymousType())
 				expr.Arguments.AddRange(newArr.Indices.Select(i => Translate(i).Expression));
 			return expr.WithILInstruction(block)
 				.WithRR(new ArrayCreateResolveResult(new ArrayType(compilation, type, dimensions), newArr.Indices.Select(i => Translate(i).ResolveResult).ToArray(), elementResolveResults));

@@ -41,7 +41,22 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
+		bool anonymousTypes = true;
+
+		/// <summary>
+		/// Decompile anonymous types.
+		/// </summary>
+		public bool AnonymousTypes {
+			get { return anonymousTypes; }
+			set {
+				if (anonymousTypes != value) {
+					anonymousTypes = value;
+					OnPropertyChanged("AnonymousTypes");
+				}
+			}
+		}
+
 		bool expressionTrees = true;
 		
 		/// <summary>
