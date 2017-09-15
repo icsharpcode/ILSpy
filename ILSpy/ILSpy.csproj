@@ -200,6 +200,7 @@
     <Compile Include="TreeNodes\DerivedTypesEntryNode.cs" />
     <Compile Include="TreeNodes\FilterResult.cs" />
     <Compile Include="TreeNodes\IMemberTreeNode.cs" />
+    <Compile Include="TreeNodes\NaturalStringComparer.cs" />
     <Compile Include="TreeNodes\ResourceNodes\CursorResourceEntryNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\IconResourceEntryNode.cs" />
     <Compile Include="TreeNodes\ResourceNodes\ImageListResourceEntryNode.cs" />

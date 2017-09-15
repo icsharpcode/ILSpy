@@ -96,21 +96,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				this.Children.Add(new BaseTypesTreeNode(type));
 			if (!type.IsSealed)
 				this.Children.Add(new DerivedTypesTreeNode(parentAssemblyNode.AssemblyList, type));
-			foreach (TypeDefinition nestedType in type.NestedTypes.OrderBy(m => m.Name)) {
+			foreach (TypeDefinition nestedType in type.NestedTypes.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new TypeTreeNode(nestedType, parentAssemblyNode));
 			}
-			foreach (FieldDefinition field in type.Fields.OrderBy(m => m.Name)) {
+			foreach (FieldDefinition field in type.Fields.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new FieldTreeNode(field));
 			}
 			
-			foreach (PropertyDefinition property in type.Properties.OrderBy(m => m.Name)) {
+			foreach (PropertyDefinition property in type.Properties.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new PropertyTreeNode(property));
 			}
-			foreach (EventDefinition ev in type.Events.OrderBy(m => m.Name)) {
+			foreach (EventDefinition ev in type.Events.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new EventTreeNode(ev));
 			}
 			HashSet<MethodDefinition> accessorMethods = type.GetAccessorMethods();
-			foreach (MethodDefinition method in type.Methods.OrderBy(m => m.Name)) {
+			foreach (MethodDefinition method in type.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				if (!accessorMethods.Contains(method)) {
 					this.Children.Add(new MethodTreeNode(method));
 				}
