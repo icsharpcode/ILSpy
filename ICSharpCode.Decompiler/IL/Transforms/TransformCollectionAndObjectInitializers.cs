@@ -101,7 +101,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILVariable finalSlot;
 				if (initializerBlock == null) {
 					initializerBlock = new Block(blockType);
-					finalSlot = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
+					finalSlot = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 					initializerBlock.FinalInstruction = new LdLoc(finalSlot);
 					initializerBlock.Instructions.Add(new StLoc(finalSlot, initInst.Clone()));
 				} else {

@@ -75,7 +75,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				switch (v.Kind) {
 					case VariableKind.Parameter: // ignore
 						break;
-					case VariableKind.StackSlot: // keep generated names
+					case VariableKind.InitializerTarget: // keep generated names
 						AddExistingName(v.Name);
 						break;
 					default:

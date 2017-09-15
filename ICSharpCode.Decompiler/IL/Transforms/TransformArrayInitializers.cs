@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				int initArrayPos;
 				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, arrayLength, out values, out initArrayPos)) {
 					context.Step("ForwardScanInitializeArrayRuntimeHelper", inst);
-					var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
+					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
 					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
 					body.Instructions.RemoveAt(initArrayPos);
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (HandleSimpleArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
 						context.Step("HandleSimpleArrayInitializer", inst);
 						var block = new Block(BlockType.ArrayInitializer);
-						var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
+						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 						block.Instructions.AddRange(values.SelectWithIndex(
 							(i, value) => {
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (HandleJaggedArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
 						context.Step("HandleJaggedArrayInitializer", inst);
 						var block = new Block(BlockType.ArrayInitializer);
-						var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
+						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType)));
 						block.FinalInstruction = new LdLoc(tempStore);

@@ -157,6 +157,9 @@ namespace ICSharpCode.Decompiler.IL
 					case VariableKind.StackSlot:
 						name = "S_";
 						break;
+					case VariableKind.InitializerTarget:
+						name = "I_";
+						break;
 					default:
 						throw new NotSupportedException();
 				}

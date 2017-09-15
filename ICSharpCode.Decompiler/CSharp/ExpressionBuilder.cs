@@ -1476,7 +1476,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
 			var final = block.FinalInstruction as LdLoc;
-			if (stloc == null || final == null || stloc.Variable != final.Variable)
+			if (stloc == null || final == null || stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
 				throw new ArgumentException("given Block is invalid!");
 			InitializedObjectResolveResult initObjRR;
 			TranslatedExpression expr;
@@ -1582,7 +1582,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var stloc = block.Instructions.FirstOrDefault() as StLoc;
 			var final = block.FinalInstruction as LdLoc;
 			IType type;
-			if (stloc == null || final == null || !stloc.Value.MatchNewArr(out type) || stloc.Variable != final.Variable)
+			if (stloc == null || final == null || !stloc.Value.MatchNewArr(out type) || stloc.Variable != final.Variable || stloc.Variable.Kind != VariableKind.InitializerTarget)
 				throw new ArgumentException("given Block is invalid!");
 			var newArr = (NewArr)stloc.Value;
 			

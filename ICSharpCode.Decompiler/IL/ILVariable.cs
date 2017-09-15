@@ -42,6 +42,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		ForeachLocal,
 		/// <summary>
+		/// A local variable used inside an array, collection or
+		/// object initializer block to denote the object being initialized.
+		/// </summary>
+		InitializerTarget,
+		/// <summary>
 		/// A parameter.
 		/// </summary>
 		Parameter,
