@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
-		[Test, Ignore("Not implemented")]
+		[Test]
 		public void Async([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);

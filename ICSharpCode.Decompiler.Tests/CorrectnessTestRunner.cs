@@ -174,6 +174,12 @@ namespace ICSharpCode.Decompiler.Tests
 			RunCS(options: options);
 		}
 
+		[Test, Ignore("Run() method cannot be fully decompiled.")]
+		public void Async([ValueSource("defaultOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
 		void RunCS([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug)
 		{
 			string testFileName = testName + ".cs";

@@ -18,8 +18,6 @@
 
 #pragma warning disable 1998
 using System;
-using System.Collections.Generic;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -82,121 +80,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("After");
 		}
 
-		public async void StreamCopyTo(Stream destination, int bufferSize)
-		{
-			byte[] array = new byte[bufferSize];
-			int count;
-			while ((count = await destination.ReadAsync(array, 0, array.Length)) != 0) {
-				await destination.WriteAsync(array, 0, count);
-			}
-		}
-
-		public async void StreamCopyToWithConfigureAwait(Stream destination, int bufferSize)
-		{
-			byte[] array = new byte[bufferSize];
-			int count;
-			while ((count = await destination.ReadAsync(array, 0, array.Length).ConfigureAwait(false)) != 0) {
-				await destination.WriteAsync(array, 0, count).ConfigureAwait(false);
-			}
-		}
-
 		public async void AwaitInLoopCondition()
 		{
 			while (await this.SimpleBoolTaskMethod()) {
 				Console.WriteLine("Body");
 			}
 		}
-
-		public async Task<int> AwaitInForEach(IEnumerable<Task<int>> elements)
-		{
-			int num = 0;
-			foreach (Task<int> current in elements) {
-				num += await current;
-			}
-			return num;
-		}
-
-		public async Task TaskMethodWithoutAwaitButWithExceptionHandling()
-		{
-			try {
-				using (new StringWriter()) {
-					Console.WriteLine("No Await");
-				}
-			} catch (Exception) {
-				Console.WriteLine("Crash");
-			}
-		}
-
-#if !LEGACY_CSC
-		public async Task AwaitCatch(Task<int> task)
-		{
-			try {
-				Console.WriteLine("Before throw");
-				throw new Exception();
-			} catch {
-				Console.WriteLine(await task);
-			}
-		}
-
-		public async Task AwaitFinally(Task<int> task)
-		{
-			try {
-				Console.WriteLine("Before throw");
-				throw new Exception();
-			} finally {
-				Console.WriteLine(await task);
-			}
-		}
-#endif
-
-		public async Task<int> NestedAwait(Task<Task<int>> task)
-		{
-			return await (await task);
-		}
-
-		public async Task AwaitWithStack(Task<int> task)
-		{
-			Console.WriteLine("A", 1, await task);
-		}
-
-		public async Task AwaitWithStack2(Task<int> task)
-		{
-			if (await this.SimpleBoolTaskMethod()) {
-				Console.WriteLine("A", 1, await task);
-			} else {
-				int num = 1;
-				Console.WriteLine("A", 1, num);
-			}
-		}
-
-#if !LEGACY_CSC
-		public async Task AwaitInCatch(Task<int> task1, Task<int> task2)
-		{
-			try {
-				Console.WriteLine("Start try");
-				await task1;
-				Console.WriteLine("End try");
-			} catch (Exception) {
-				Console.WriteLine("Start catch");
-				await task2;
-				Console.WriteLine("End catch");
-			}
-			Console.WriteLine("End Method");
-		}
-
-		public async Task AwaitInFinally(Task<int> task1, Task<int> task2)
-		{
-			try {
-				Console.WriteLine("Start try");
-				await task1;
-				Console.WriteLine("End try");
-			} finally {
-				Console.WriteLine("Start finally");
-				await task2;
-				Console.WriteLine("End finally");
-			}
-			Console.WriteLine("End Method");
-		}
-#endif
 	}
 }

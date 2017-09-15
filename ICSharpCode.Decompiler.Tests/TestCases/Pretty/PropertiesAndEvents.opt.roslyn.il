@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module PropertiesAndEvents.dll
-// MVID: {D731F1E1-A512-4199-834A-9BCA95572A0B}
+// MVID: {10E5705F-7F26-4317-B44C-F957A4E21EAC}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02610000
+// Image base: 0x015B0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -77,12 +77,35 @@
 
   } // end of class '<>c'
 
+  .field private int32 '<Value>k__BackingField'
+  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private class [mscorlib]System.EventHandler AutomaticEvent
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field private notserialized class [mscorlib]System.EventHandler AutomaticEventWithInitializer
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field private int32 '<Value>k__BackingField'
-  .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .method public hidebysig specialname instance int32 
+          get_Value() cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::'<Value>k__BackingField'
+    IL_0006:  ret
+  } // end of method PropertiesAndEvents::get_Value
+
+  .method private hidebysig specialname instance void 
+          set_Value(int32 'value') cil managed
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldarg.1
+    IL_0002:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::'<Value>k__BackingField'
+    IL_0007:  ret
+  } // end of method PropertiesAndEvents::set_Value
+
   .method public hidebysig specialname instance void 
           add_AutomaticEvent(class [mscorlib]System.EventHandler 'value') cil managed
   {
@@ -244,29 +267,6 @@
     IL_0002:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::remove_AutomaticEvent(class [mscorlib]System.EventHandler)
     IL_0007:  ret
   } // end of method PropertiesAndEvents::remove_CustomEvent
-
-  .method public hidebysig specialname instance int32 
-          get_Value() cil managed
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       7 (0x7)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::'<Value>k__BackingField'
-    IL_0006:  ret
-  } // end of method PropertiesAndEvents::get_Value
-
-  .method private hidebysig specialname instance void 
-          set_Value(int32 'value') cil managed
-  {
-    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       8 (0x8)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  ldarg.1
-    IL_0002:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.PropertiesAndEvents::'<Value>k__BackingField'
-    IL_0007:  ret
-  } // end of method PropertiesAndEvents::set_Value
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
