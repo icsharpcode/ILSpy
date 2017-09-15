@@ -171,8 +171,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		public TranslatedExpression ConvertTo(IType targetType, ExpressionBuilder expressionBuilder, bool checkForOverflow = false, bool allowImplicitConversion = false)
 		{
 			var type = this.Type;
-			if (type.Equals(targetType))
+			if (type.Equals(targetType)) {
+				// Remove boxing conversion if possible
+				if (allowImplicitConversion && type.IsKnownType(KnownTypeCode.Object)) {
+					if (Expression is CastExpression cast && ResolveResult is ConversionResolveResult conversion && conversion.Conversion.IsBoxingConversion) {
+						return this.UnwrapChild(cast.Expression);
+					}
+				}
 				return this;
+			}
 			var compilation = expressionBuilder.compilation;
 			if (type.IsKnownType(KnownTypeCode.Boolean) && targetType.GetStackType().IsIntegerType()) {
 				// convert from boolean to integer (or enum)
