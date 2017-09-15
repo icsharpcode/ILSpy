@@ -1612,7 +1612,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					container.Peek().Elements.Add(aie);
 					container.Push(aie);
 				}
-				var val = Translate(value).ConvertTo(type, this);
+				var val = Translate(value).ConvertTo(type, this, allowImplicitConversion: true);
 				container.Peek().Elements.Add(val);
 				elementResolveResults.Add(val.ResolveResult);
 				while (container.Count > 0 && container.Peek().Elements.Count == dimensionSizes[container.Count - 1]) {
