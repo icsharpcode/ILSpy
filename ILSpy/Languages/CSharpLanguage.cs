@@ -118,6 +118,7 @@ namespace ICSharpCode.ILSpy
 		class SelectCtorTransform : IAstTransform
 		{
 			readonly IMethod ctor;
+			readonly HashSet<ISymbol> removedSymbols = new HashSet<ISymbol>();
 
 			public SelectCtorTransform(IMethod ctor)
 			{
@@ -128,25 +129,39 @@ namespace ICSharpCode.ILSpy
 			{
 				ConstructorDeclaration ctorDecl = null;
 				foreach (var node in rootNode.Children) {
-					ConstructorDeclaration ctor = node as ConstructorDeclaration;
-					if (ctor != null) {
-						if (ctor.GetSymbol() == this.ctor) {
-							ctorDecl = ctor;
-						} else {
-							// remove other ctors
-							ctor.Remove();
-						}
+					switch (node) {
+						case ConstructorDeclaration ctor:
+							if (ctor.GetSymbol() == this.ctor) {
+								ctorDecl = ctor;
+							} else {
+								// remove other ctors
+								ctor.Remove();
+								removedSymbols.Add(ctor.GetSymbol());
+							}
+							break;
+						case FieldDeclaration fd:
+							// Remove any fields without initializers
+							if (fd.Variables.All(v => v.Initializer.IsNull)) {
+								fd.Remove();
+								removedSymbols.Add(fd.GetSymbol());
+							}
+							break;
 					}
-					// Remove any fields without initializers
-					FieldDeclaration fd = node as FieldDeclaration;
-					if (fd != null && fd.Variables.All(v => v.Initializer.IsNull))
-						fd.Remove();
 				}
 				if (ctorDecl?.Initializer.ConstructorInitializerType == ConstructorInitializerType.This) {
 					// remove all fields
-					foreach (var node in rootNode.Children)
-						if (node is FieldDeclaration)
-							node.Remove();
+					foreach (var node in rootNode.Children) {
+						switch (node) {
+							case FieldDeclaration fd:
+								fd.Remove();
+								removedSymbols.Add(fd.GetSymbol());
+								break;
+						}
+					}
+				}
+				foreach (var node in rootNode.Children) {
+					if (node is Comment && removedSymbols.Contains(node.GetSymbol()))
+						node.Remove();
 				}
 			}
 		}
@@ -202,10 +217,16 @@ namespace ICSharpCode.ILSpy
 
 			public void Run(AstNode rootNode, TransformContext context)
 			{
-				foreach (var child in rootNode.Children) {
-					if (child is EntityDeclaration) {
-						if (child.GetSymbol() != field)
-							child.Remove();
+				foreach (var node in rootNode.Children) {
+					switch (node) {
+						case EntityDeclaration ed:
+							if (node.GetSymbol() != field)
+								node.Remove();
+							break;
+						case Comment c:
+							if (c.GetSymbol() != field)
+								node.Remove();
+							break;
 					}
 				}
 			}

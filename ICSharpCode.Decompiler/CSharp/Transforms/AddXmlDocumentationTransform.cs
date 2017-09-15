@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 			} catch (XmlException ex) {
-				string[] msg = (" Exception while reading XmlDoc: " + ex.ToString()).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+				string[] msg = (" Exception while reading XmlDoc: " + ex).Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 				var insertionPoint = rootNode.FirstChild;
 				for (int i = 0; i < msg.Length; i++)
 					rootNode.InsertChildBefore(insertionPoint, new Comment(msg[i], CommentType.Documentation), Roles.Comment);
@@ -83,12 +83,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					skippedWhitespaceLines++;
 				} else {
 					while (skippedWhitespaceLines > 0) {
-						node.Parent.InsertChildBefore(node, new Comment(string.Empty, CommentType.Documentation), Roles.Comment);
+						Comment emptyLine = new Comment(string.Empty, CommentType.Documentation);
+						emptyLine.AddAnnotation(node.GetResolveResult());
+						node.Parent.InsertChildBefore(node, emptyLine, Roles.Comment);
 						skippedWhitespaceLines--;
 					}
 					if (line.StartsWith(indentation, StringComparison.Ordinal))
 						line = line.Substring(indentation.Length);
-					node.Parent.InsertChildBefore(node, new Comment(" " + line, CommentType.Documentation), Roles.Comment);
+					Comment comment = new Comment(" " + line, CommentType.Documentation);
+					comment.AddAnnotation(node.GetResolveResult());
+					node.Parent.InsertChildBefore(node, comment, Roles.Comment);
 				}
 				line = r.ReadLine();
 			}
