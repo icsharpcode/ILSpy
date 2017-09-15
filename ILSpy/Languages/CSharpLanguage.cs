@@ -458,7 +458,7 @@ namespace ICSharpCode.ILSpy
 				var buffer = new System.Text.StringBuilder();
 				var accessor = property.GetMethod ?? property.SetMethod;
 				if (accessor.HasOverrides) {
-					var declaringType = accessor.Overrides.First().DeclaringType;
+					var declaringType = accessor.Overrides[0].DeclaringType;
 					buffer.Append(TypeToString(declaringType, includeNamespace: true));
 					buffer.Append(@".");
 				}

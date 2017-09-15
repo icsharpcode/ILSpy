@@ -221,11 +221,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		
-		void IAstTransform.Run(AstNode node, TransformContext context)
+		void IAstTransform.Run(AstNode rootNode, TransformContext context)
 		{
 			try {
 				this.context = context;
-				node.AcceptVisitor(this);
+				rootNode.AcceptVisitor(this);
 			} finally {
 				this.context = null;
 			}
