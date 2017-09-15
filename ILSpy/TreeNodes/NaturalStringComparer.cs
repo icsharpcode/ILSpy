@@ -29,9 +29,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static readonly NaturalStringComparer Instance = new NaturalStringComparer();
 
-		public int Compare(string a, string b)
+		public int Compare(string x, string y)
 		{
-			return StrCmpLogicalW(a, b);
+			return StrCmpLogicalW(x, y);
 		}
 	}
 }
