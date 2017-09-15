@@ -106,7 +106,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 			address = address.ToLower();
 			if (!string.IsNullOrEmpty(address))
-				Process.Start(address);
+				MainWindow.OpenLink(address);
 		}
 	}
 }

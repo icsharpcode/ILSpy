@@ -418,7 +418,7 @@ namespace ICSharpCode.ILSpy
 		void downloadOrCheckUpdateButtonClick(object sender, RoutedEventArgs e)
 		{
 			if (updateAvailableDownloadUrl != null) {
-				Process.Start(updateAvailableDownloadUrl);
+				MainWindow.OpenLink(updateAvailableDownloadUrl);
 			} else {
 				updatePanel.Visibility = Visibility.Collapsed;
 				AboutPage.CheckForUpdatesAsync(spySettings ?? ILSpySettings.Load())
@@ -654,16 +654,21 @@ namespace ICSharpCode.ILSpy
 				SelectNode(treeNode);
 			} else if (reference is Mono.Cecil.Cil.OpCode) {
 				string link = "http://msdn.microsoft.com/library/system.reflection.emit.opcodes." + ((Mono.Cecil.Cil.OpCode)reference).Code.ToString().ToLowerInvariant() + ".aspx";
-				try {
-					Process.Start(link);
-#pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
-				} catch (Exception) {
-#pragma warning restore RECS0022 // A catch clause that catches System.Exception and has an empty body
-					// Process.Start can throw several errors (not all of them documented),
-					// just ignore all of them.
-				}
+				OpenLink(link);
 			}
 			return decompilationTask;
+		}
+
+		public static void OpenLink(string link)
+		{
+			try {
+				Process.Start(link);
+#pragma warning disable RECS0022 // A catch clause that catches System.Exception and has an empty body
+			} catch (Exception) {
+#pragma warning restore RECS0022 // A catch clause that catches System.Exception and has an empty body
+				// Process.Start can throw several errors (not all of them documented),
+				// just ignore all of them.
+			}
 		}
 		#endregion
 		

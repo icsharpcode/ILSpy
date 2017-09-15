@@ -167,7 +167,7 @@ namespace ICSharpCode.ILSpy
 					button.Content = "Download";
 					button.Cursor = Cursors.Arrow;
 					button.Click += delegate {
-						Process.Start(availableVersion.DownloadUrl);
+						MainWindow.OpenLink(availableVersion.DownloadUrl);
 					};
 					stackPanel.Children.Add(button);
 				}
