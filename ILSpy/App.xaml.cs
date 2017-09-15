@@ -58,9 +58,8 @@ namespace ICSharpCode.ILSpy
 		public App()
 		{
 			var cmdArgs = Environment.GetCommandLineArgs().Skip(1);
-			var allowMultipleInstance = MiscSettingsInstance.Current.LoadMiscSettings().AllowMultipleInstances;
 			App.CommandLineArguments = new CommandLineArguments(cmdArgs);
-			if ((App.CommandLineArguments.SingleInstance ?? true) && (!allowMultipleInstance)) {
+			if ((App.CommandLineArguments.SingleInstance ?? true) && !MiscSettingsPanel.CurrentMiscSettings.AllowMultipleInstances) {
 				cmdArgs = cmdArgs.Select(FullyQualifyPath);
 				string message = string.Join(Environment.NewLine, cmdArgs);
 				if (SendToPreviousInstance("ILSpy:\r\n" + message, !App.CommandLineArguments.NoActivate)) {

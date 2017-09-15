@@ -1,26 +1,40 @@
-﻿using System.ComponentModel;
+﻿// Copyright (c) 2017 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
+
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 
 namespace ICSharpCode.ILSpy.Options
 {
 	public class MiscSettings : INotifyPropertyChanged
 	{
-		bool allowMultipleInstances = false;
+		bool allowMultipleInstances;
 
 		/// <summary>
-		/// Decompile anonymous methods/lambdas.
+		/// Allow multiple instances.
 		/// </summary>
 		public bool AllowMultipleInstances
 		{
-			get
-			{
-				return allowMultipleInstances;
-			}
-			set
-			{
-				if (allowMultipleInstances != value)
-				{
+			get { return allowMultipleInstances; }
+			set {
+				if (allowMultipleInstances != value) {
 					allowMultipleInstances = value;
-					OnPropertyChanged("AllowMultipleInstance");
+					OnPropertyChanged();
 				}
 			}
 		}
@@ -34,7 +48,7 @@ namespace ICSharpCode.ILSpy.Options
 			PropertyChanged?.Invoke(this, e);
 		}
 
-		protected void OnPropertyChanged(string propertyName)
+		protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			OnPropertyChanged(new PropertyChangedEventArgs(propertyName));
 		}
