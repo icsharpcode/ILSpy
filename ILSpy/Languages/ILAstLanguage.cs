@@ -156,7 +156,11 @@ namespace ICSharpCode.ILSpy
 				ILReader reader = new ILReader(typeSystem);
 				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
-				ILTransformContext context = new ILTransformContext { Settings = options.DecompilerSettings, TypeSystem = typeSystem };
+				ILTransformContext context = new ILTransformContext {
+					Settings = options.DecompilerSettings,
+					TypeSystem = typeSystem,
+					CancellationToken = options.CancellationToken
+				};
 				context.Stepper.StepLimit = options.StepLimit;
 				context.Stepper.IsDebug = options.IsDebug;
 				try {

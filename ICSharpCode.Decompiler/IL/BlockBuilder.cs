@@ -21,6 +21,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -107,13 +108,14 @@ namespace ICSharpCode.Decompiler.IL
 		Block currentBlock;
 		Stack<BlockContainer> containerStack = new Stack<BlockContainer>();
 		
-		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitArray incomingBranches)
+		public void CreateBlocks(BlockContainer mainContainer, List<ILInstruction> instructions, BitArray incomingBranches, CancellationToken cancellationToken)
 		{
 			CreateContainerStructure();
 			mainContainer.ILRange = new Interval(0, body.CodeSize);
 			currentContainer = mainContainer;
 
 			foreach (var inst in instructions) {
+				cancellationToken.ThrowIfCancellationRequested();
 				int start = inst.ILRange.Start;
 				if (currentBlock == null || incomingBranches[start]) {
 					// Finish up the previous block
@@ -153,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			FinalizeCurrentBlock(body.CodeSize, fallthrough: false);
 			containerStack.Clear();
-			ConnectBranches(mainContainer);
+			ConnectBranches(mainContainer, cancellationToken);
 		}
 
 		private void FinalizeCurrentBlock(int currentILOffset, bool fallthrough)
@@ -166,10 +168,11 @@ namespace ICSharpCode.Decompiler.IL
 			currentBlock = null;
 		}
 
-		void ConnectBranches(ILInstruction inst)
+		void ConnectBranches(ILInstruction inst, CancellationToken cancellationToken)
 		{
 			switch (inst) {
 				case Branch branch:
+					cancellationToken.ThrowIfCancellationRequested();
 					Debug.Assert(branch.TargetBlock == null);
 					branch.TargetBlock = FindBranchTarget(branch.TargetILOffset);
 					break;
@@ -184,7 +187,8 @@ namespace ICSharpCode.Decompiler.IL
 				case BlockContainer container:
 					containerStack.Push(container);
 					foreach (var block in container.Blocks) {
-						ConnectBranches(block);
+						cancellationToken.ThrowIfCancellationRequested();
+						ConnectBranches(block, cancellationToken);
 						if (block.Instructions.Count == 0 || !block.Instructions.Last().HasFlag(InstructionFlags.EndPointUnreachable)) {
 							block.Instructions.Add(new InvalidBranch("Unexpected end of block"));
 						}
@@ -193,7 +197,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				default:
 					foreach (var child in inst.Children)
-						ConnectBranches(child);
+						ConnectBranches(child, cancellationToken);
 					break;
 			}
 		}

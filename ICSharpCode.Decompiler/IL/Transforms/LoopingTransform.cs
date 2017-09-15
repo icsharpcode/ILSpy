@@ -40,11 +40,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				throw new InvalidOperationException("LoopingBlockTransform already running. Transforms (and the CSharpDecompiler) are neither neither thread-safe nor re-entrant.");
 			running = true;
 			try {
+				int count = 1;
 				do {
 					block.ResetDirty();
 					block.RunTransforms(children, context);
 					if (block.IsDirty)
-						context.Step("Block is dirty; running another loop iteration.", block);
+						context.Step($"Block is dirty; running loop iteration #{++count}.", block);
 				} while (block.IsDirty);
 			} finally {
 				running = false;

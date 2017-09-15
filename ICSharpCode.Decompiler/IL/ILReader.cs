@@ -306,7 +306,7 @@ namespace ICSharpCode.Decompiler.IL
 			Init(body);
 			ReadInstructions(cancellationToken);
 			var blockBuilder = new BlockBuilder(body, typeSystem, variableByExceptionHandler);
-			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget);
+			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget, cancellationToken);
 			var function = new ILFunction(body.Method, mainContainer);
 			CollectionExtensions.AddRange(function.Variables, parameterVariables);
 			CollectionExtensions.AddRange(function.Variables, localVariables);
