@@ -51,6 +51,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		ILTransformContext context;
 		string[] currentFieldNames;
 		Dictionary<string, int> reservedVariableNames;
+		HashSet<ILVariable> loopCounters;
 		const char maxLoopVariableName = 'n';
 
 		public void Run(ILFunction function, ILTransformContext context)
@@ -58,6 +59,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.context = context;
 			currentFieldNames = function.Method.DeclaringType.Fields.Select(f => f.Name).ToArray();
 			reservedVariableNames = new Dictionary<string, int>();
+			loopCounters = CollectLoopCounters(function);
 			foreach (var p in function.Descendants.OfType<ILFunction>().Select(f => f.Method).SelectMany(m => m.Parameters))
 				AddExistingName(p.Name);
 			foreach (ILFunction f in function.Descendants.OfType<ILFunction>().Reverse()) {
@@ -67,6 +69,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void PerformAssignment(ILFunction function)
 		{
+			// remove unused variables before assigning names
+			function.Variables.RemoveDead();
 			foreach (var v in function.Variables) {
 				switch (v.Kind) {
 					case VariableKind.Parameter: // ignore
@@ -138,20 +142,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		HashSet<ILVariable> CollectLoopCounters(ILFunction function)
+		{
+			var loopCounters = new HashSet<ILVariable>();
+			
+			foreach (BlockContainer possibleLoop in function.Descendants.OfType<BlockContainer>()) {
+				if (possibleLoop.EntryPoint.IncomingEdgeCount == 1) continue;
+				var loop = DetectedLoop.DetectLoop(possibleLoop);
+				if (loop.Kind != LoopKind.For || loop.IncrementTarget == null) continue;
+				loopCounters.Add(loop.IncrementTarget);
+			}
+
+			return loopCounters;
+		}
+
 		string GenerateNameForVariable(ILVariable variable, ILInstruction methodBody)
 		{
 			string proposedName = null;
 			if (variable.Type.IsKnownType(KnownTypeCode.Int32)) {
 				// test whether the variable might be a loop counter
-				bool isLoopCounter = false;
-				foreach (BlockContainer possibleLoop in methodBody.Descendants.OfType<BlockContainer>().Reverse()) {
-					if (possibleLoop.EntryPoint.IncomingEdgeCount == 1) continue;
-					var loop = DetectedLoop.DetectLoop(possibleLoop);
-					if (loop.Kind != LoopKind.For || loop.IncrementTarget == null) continue;
-					if (loop.IncrementTarget == variable)
-						isLoopCounter = true;
-				}
-				if (isLoopCounter) {
+				if (loopCounters.Contains(variable)) {
 					// For loop variables, use i,j,k,l,m,n
 					for (char c = 'i'; c <= maxLoopVariableName; c++) {
 						if (!reservedVariableNames.ContainsKey(c.ToString())) {
