@@ -127,6 +127,13 @@ namespace ICSharpCode.ILSpy
 				return member.ToString();
 		}
 
+		public virtual string FormatFieldName(FieldDefinition field)
+		{
+			if (field == null)
+				throw new ArgumentNullException(nameof(field));
+			return field.Name;
+		}
+
 		public virtual string FormatPropertyName(PropertyDefinition property, bool? isIndexer = null)
 		{
 			if (property == null)
@@ -137,8 +144,15 @@ namespace ICSharpCode.ILSpy
 		public virtual string FormatMethodName(MethodDefinition method)
 		{
 			if (method == null)
-				throw new ArgumentNullException("method");
+				throw new ArgumentNullException(nameof(method));
 			return method.Name;
+		}
+
+		public virtual string FormatEventName(EventDefinition @event)
+		{
+			if (@event == null)
+				throw new ArgumentNullException(nameof(@event));
+			return @event.Name;
 		}
 
 		public virtual string FormatTypeName(TypeDefinition type)

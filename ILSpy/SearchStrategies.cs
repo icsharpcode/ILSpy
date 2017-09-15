@@ -34,37 +34,37 @@ namespace ICSharpCode.ILSpy
 			searchTerm = terms;
 		}
 
-		protected virtual bool IsMatch(FieldDefinition field)
+		protected virtual bool IsMatch(FieldDefinition field, Language language)
 		{
 			return false;
 		}
 
-		protected virtual bool IsMatch(PropertyDefinition property)
+		protected virtual bool IsMatch(PropertyDefinition property, Language language)
 		{
 			return false;
 		}
 
-		protected virtual bool IsMatch(EventDefinition ev)
+		protected virtual bool IsMatch(EventDefinition ev, Language language)
 		{
 			return false;
 		}
 
-		protected virtual bool IsMatch(MethodDefinition m)
+		protected virtual bool IsMatch(MethodDefinition m, Language language)
 		{
 			return false;
 		}
 		
-		protected virtual bool MatchName(MemberReference m)
+		protected virtual bool MatchName(IMemberDefinition m, Language language)
 		{
 			if (regex != null) {
-				return regex.IsMatch(fullNameSearch ? GetLanguageSpecificFullName(m) : m.Name);
+				return regex.IsMatch(GetLanguageSpecificName(language, m, fullNameSearch));
 			}
 
 			for (int i = 0; i < searchTerm.Length; ++i) {
 				// How to handle overlapping matches?
 				var term = searchTerm[i];
 				if (string.IsNullOrEmpty(term)) continue;
-				string text = term.Contains(".") ? GetLanguageSpecificFullName(m) : m.Name;
+				string text = GetLanguageSpecificName(language, m, term.Contains("."));
 				switch (term[0]) {
 					case '+': // must contain
 						term = term.Substring(1);
@@ -92,29 +92,33 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 
-		string GetLanguageSpecificFullName(MemberReference m, string nestedTypeSeparator = ".", string memberSeparator = ".")
+		string GetLanguageSpecificName(Language language, IMemberDefinition member, bool fullName = false)
 		{
-			if (m.DeclaringType != null)
-				return GetLanguageSpecificFullName(m.DeclaringType, nestedTypeSeparator) + memberSeparator + m.Name;
-			return m.Name;
+			switch (member) {
+				case TypeDefinition t:
+					return language.TypeToString(t, fullName);
+				case FieldDefinition f:
+					return fullName ? language.TypeToString(f.DeclaringType, fullName) + "." + language.FormatFieldName(f) : language.FormatFieldName(f);
+				case PropertyDefinition p:
+					return fullName ? language.TypeToString(p.DeclaringType, fullName) + "." + language.FormatPropertyName(p) : language.FormatPropertyName(p);
+				case MethodDefinition m:
+					return fullName ? language.TypeToString(m.DeclaringType, fullName) + "." + language.FormatMethodName(m) : language.FormatMethodName(m);
+				case EventDefinition e:
+					return fullName ? language.TypeToString(e.DeclaringType, fullName) + "." + language.FormatEventName(e) : language.FormatEventName(e);
+				default:
+					throw new NotSupportedException(member?.GetType() + " not supported!");
+			}
 		}
 
-		string GetLanguageSpecificFullName(TypeReference t, string nestedTypeSeparator = ".")
-		{
-			if (t.DeclaringType != null)
-				return GetLanguageSpecificFullName(t.DeclaringType, nestedTypeSeparator) + nestedTypeSeparator + t.Name;
-			return t.Namespace + "." + t.Name;
-		}
-
-		void Add<T>(IEnumerable<T> items, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, bool> matcher, Func<T, ImageSource> image) where T : MemberReference
+		void Add<T>(IEnumerable<T> items, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : MemberReference
 		{
 			foreach (var item in items) {
-				if (matcher(item)) {
+				if (matcher(item, language)) {
 					addResult(new SearchResult
 					{
 						Member = item,
 						Image = image(item),
-						Name = item.Name,
+						Name = GetLanguageSpecificName(language, (IMemberDefinition)item),
 						LocationImage = TypeTreeNode.GetIcon(type),
 						Location = language.TypeToString(type, includeNamespace: true)
 					});
@@ -346,24 +350,24 @@ namespace ICSharpCode.ILSpy
 			this.searchKind = searchKind;
 		}
 
-		protected override bool IsMatch(FieldDefinition field)
+		protected override bool IsMatch(FieldDefinition field, Language language)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Field) && MatchName(field);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Field) && MatchName(field, language);
 		}
 
-		protected override bool IsMatch(PropertyDefinition property)
+		protected override bool IsMatch(PropertyDefinition property, Language language)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Property) && MatchName(property);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Property) && MatchName(property, language);
 		}
 
-		protected override bool IsMatch(EventDefinition ev)
+		protected override bool IsMatch(EventDefinition ev, Language language)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Event) && MatchName(ev);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Event) && MatchName(ev, language);
 		}
 
-		protected override bool IsMatch(MethodDefinition m)
+		protected override bool IsMatch(MethodDefinition m, Language language)
 		{
-			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Method) && MatchName(m);
+			return (searchKind == MemberSearchKind.All || searchKind == MemberSearchKind.Method) && MatchName(m, language);
 		}
 	}
 
@@ -376,7 +380,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			if (MatchName(type)) {
+			if (MatchName(type, language)) {
 				addResult(new SearchResult {
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),
@@ -401,7 +405,7 @@ namespace ICSharpCode.ILSpy
 
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			if (MatchName(type))
+			if (MatchName(type, language))
 			{
 				addResult(new SearchResult
 				{
@@ -421,24 +425,24 @@ namespace ICSharpCode.ILSpy
 			base.Search(type, language, addResult);
 		}
 
-		protected override bool IsMatch(FieldDefinition field)
+		protected override bool IsMatch(FieldDefinition field, Language language)
 		{
-			return MatchName(field);
+			return MatchName(field, language);
 		}
 
-		protected override bool IsMatch(PropertyDefinition property)
+		protected override bool IsMatch(PropertyDefinition property, Language language)
 		{
-			return MatchName(property);
+			return MatchName(property, language);
 		}
 
-		protected override bool IsMatch(EventDefinition ev)
+		protected override bool IsMatch(EventDefinition ev, Language language)
 		{
-			return MatchName(ev);
+			return MatchName(ev, language);
 		}
 
-		protected override bool IsMatch(MethodDefinition m)
+		protected override bool IsMatch(MethodDefinition m, Language language)
 		{
-			return MatchName(m);
+			return MatchName(m, language);
 		}
 	}
 }

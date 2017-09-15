@@ -482,7 +482,7 @@ namespace ICSharpCode.ILSpy
 			if (method == null)
 				throw new ArgumentNullException("method");
 
-			return (method.IsConstructor) ? method.DeclaringType.Name : method.Name;
+			return (method.IsConstructor) ? FormatTypeName(method.DeclaringType) : method.Name;
 		}
 
 		public override string FormatTypeName(TypeDefinition type)
