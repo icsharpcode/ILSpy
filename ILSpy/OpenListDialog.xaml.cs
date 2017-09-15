@@ -172,13 +172,21 @@ namespace ICSharpCode.ILSpy
 			{
 				manager.CreateList(new AssemblyList(dlg.NewListName));
 			}
-
 		}
 
 		private void RemoveButton_Click(object sender, RoutedEventArgs e)
 		{
 			if (listView.SelectedItem != null)
 				manager.DeleteList(listView.SelectedItem.ToString());
+		}
+
+		private void ResetButton_Click(object sender, RoutedEventArgs e)
+		{
+			if (MessageBox.Show(this, "Are you sure that you want to remove all assembly lists and recreate the default assembly lists?",
+				"ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.None) != MessageBoxResult.Yes)
+				return;
+			manager.ClearAll();
+			CreateDefaultAssemblyLists();
 		}
 
 		private void listView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)

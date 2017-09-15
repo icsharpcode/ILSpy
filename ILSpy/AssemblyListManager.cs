@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Xml.Linq;
@@ -122,6 +123,19 @@ namespace ICSharpCode.ILSpy
 				return true;
 			}
 			return false;
+		}
+
+		public void ClearAll()
+		{
+			AssemblyLists.Clear();
+			ILSpySettings.Update(
+				delegate (XElement root) {
+					XElement doc = root.Element("AssemblyLists");
+					if (doc == null) {
+						return;
+					}
+					doc.Remove();
+				});
 		}
 	}
 }
