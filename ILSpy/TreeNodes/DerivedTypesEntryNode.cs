@@ -100,9 +100,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, language.TypeToString(type, true));
 		}
 
-		MemberReference IMemberTreeNode.Member
-		{
-			get { return type; }
-		}
+		MemberReference IMemberTreeNode.Member => type;
 	}
 }

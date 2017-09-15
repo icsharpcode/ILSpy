@@ -28,13 +28,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		readonly EventDefinition ev;
 		
 		public EventTreeNode(EventDefinition ev)
 		{
 			if (ev == null)
 				throw new ArgumentNullException(nameof(ev));
-			this.ev = ev;
+			this.EventDefinition = ev;
 			
 			if (ev.AddMethod != null)
 				this.Children.Add(new MethodTreeNode(ev.AddMethod));
@@ -47,26 +46,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					this.Children.Add(new MethodTreeNode(m));
 			}
 		}
-		
-		public EventDefinition EventDefinition
-		{
-			get { return ev; }
-		}
-		
-		public override object Text
-		{
-			get { return GetText(ev, this.Language) + ev.MetadataToken.ToSuffixString(); }
-		}
+
+		public EventDefinition EventDefinition { get; }
+
+		public override object Text => GetText(EventDefinition, this.Language) + EventDefinition.MetadataToken.ToSuffixString();
 
 		public static object GetText(EventDefinition eventDef, Language language)
 		{
 			return HighlightSearchMatch(eventDef.Name, " : " + language.TypeToString(eventDef.EventType, false, eventDef));
 		}
-		
-		public override object Icon
-		{
-			get { return GetIcon(ev); }
-		}
+
+		public override object Icon => GetIcon(EventDefinition);
 
 		public static ImageSource GetIcon(EventDefinition eventDef)
 		{
@@ -100,7 +90,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override FilterResult Filter(FilterSettings settings)
 		{
-			if (settings.SearchTermMatches(ev.Name) && settings.Language.ShowMember(ev))
+			if (settings.SearchTermMatches(EventDefinition.Name) && settings.Language.ShowMember(EventDefinition))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -108,20 +98,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.DecompileEvent(ev, output, options);
+			language.DecompileEvent(EventDefinition, output, options);
 		}
 		
 		
 		public override bool IsPublicAPI {
 			get {
-				MethodDefinition accessor = ev.AddMethod ?? ev.RemoveMethod;
+				MethodDefinition accessor = EventDefinition.AddMethod ?? EventDefinition.RemoveMethod;
 				return accessor != null && (accessor.IsPublic || accessor.IsFamilyOrAssembly || accessor.IsFamily);
 			}
 		}
-		
-		MemberReference IMemberTreeNode.Member
-		{
-			get { return ev; }
-		}
+
+		MemberReference IMemberTreeNode.Member => EventDefinition;
 	}
 }

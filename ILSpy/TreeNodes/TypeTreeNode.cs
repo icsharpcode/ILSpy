@@ -28,8 +28,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 {
 	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		readonly TypeDefinition type;
-		readonly AssemblyTreeNode parentAssemblyNode;
 		
 		public TypeTreeNode(TypeDefinition type, AssemblyTreeNode parentAssemblyNode)
 		{
@@ -37,34 +35,24 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				throw new ArgumentNullException(nameof(parentAssemblyNode));
 			if (type == null)
 				throw new ArgumentNullException(nameof(type));
-			this.type = type;
-			this.parentAssemblyNode = parentAssemblyNode;
+			this.TypeDefinition = type;
+			this.ParentAssemblyNode = parentAssemblyNode;
 			this.LazyLoading = true;
 		}
-		
-		public TypeDefinition TypeDefinition {
-			get { return type; }
-		}
-		
-		public AssemblyTreeNode ParentAssemblyNode {
-			get { return parentAssemblyNode; }
-		}
-		
-		public string Name {
-			get { return type.Name; }
-		}
-		
-		public string Namespace {
-			get { return type.Namespace; }
-		}
-		
-		public override object Text {
-			get { return HighlightSearchMatch(this.Language.FormatTypeName(type), type.MetadataToken.ToSuffixString()); }
-		}
-		
+
+		public TypeDefinition TypeDefinition { get; }
+
+		public AssemblyTreeNode ParentAssemblyNode { get; }
+
+		public string Name => TypeDefinition.Name;
+
+		public string Namespace => TypeDefinition.Namespace;
+
+		public override object Text => HighlightSearchMatch(this.Language.FormatTypeName(TypeDefinition), TypeDefinition.MetadataToken.ToSuffixString());
+
 		public override bool IsPublicAPI {
 			get {
-				switch (type.Attributes & TypeAttributes.VisibilityMask) {
+				switch (TypeDefinition.Attributes & TypeAttributes.VisibilityMask) {
 					case TypeAttributes.Public:
 					case TypeAttributes.NestedPublic:
 					case TypeAttributes.NestedFamily:
@@ -80,8 +68,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(type.Name)) {
-				if (settings.Language.ShowMember(type))
+			if (settings.SearchTermMatches(TypeDefinition.Name)) {
+				if (settings.Language.ShowMember(TypeDefinition))
 					return FilterResult.Match;
 				else
 					return FilterResult.Hidden;
@@ -92,45 +80,39 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		protected override void LoadChildren()
 		{
-			if (type.BaseType != null || type.HasInterfaces)
-				this.Children.Add(new BaseTypesTreeNode(type));
-			if (!type.IsSealed)
-				this.Children.Add(new DerivedTypesTreeNode(parentAssemblyNode.AssemblyList, type));
-			foreach (TypeDefinition nestedType in type.NestedTypes.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
-				this.Children.Add(new TypeTreeNode(nestedType, parentAssemblyNode));
+			if (TypeDefinition.BaseType != null || TypeDefinition.HasInterfaces)
+				this.Children.Add(new BaseTypesTreeNode(TypeDefinition));
+			if (!TypeDefinition.IsSealed)
+				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
+			foreach (TypeDefinition nestedType in TypeDefinition.NestedTypes.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));
 			}
-			foreach (FieldDefinition field in type.Fields.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (FieldDefinition field in TypeDefinition.Fields.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new FieldTreeNode(field));
 			}
 			
-			foreach (PropertyDefinition property in type.Properties.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (PropertyDefinition property in TypeDefinition.Properties.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new PropertyTreeNode(property));
 			}
-			foreach (EventDefinition ev in type.Events.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			foreach (EventDefinition ev in TypeDefinition.Events.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new EventTreeNode(ev));
 			}
-			HashSet<MethodDefinition> accessorMethods = type.GetAccessorMethods();
-			foreach (MethodDefinition method in type.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
+			HashSet<MethodDefinition> accessorMethods = TypeDefinition.GetAccessorMethods();
+			foreach (MethodDefinition method in TypeDefinition.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				if (!accessorMethods.Contains(method)) {
 					this.Children.Add(new MethodTreeNode(method));
 				}
 			}
 		}
-		
-		public override bool CanExpandRecursively {
-			get { return true; }
-		}
-		
+
+		public override bool CanExpandRecursively => true;
+
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.DecompileType(type, output, options);
+			language.DecompileType(TypeDefinition, output, options);
 		}
 
-		#region Icon
-		public override object Icon
-		{
-			get { return GetIcon(type); }
-		}
+		public override object Icon => GetIcon(TypeDefinition);
 
 		public static ImageSource GetIcon(TypeDefinition type)
 		{
@@ -195,10 +177,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return type.IsSealed && type.IsAbstract;
 		}
 
-		#endregion
-		
-		MemberReference IMemberTreeNode.Member {
-			get { return type; }
-		}
+		MemberReference IMemberTreeNode.Member => TypeDefinition;
 	}
 }

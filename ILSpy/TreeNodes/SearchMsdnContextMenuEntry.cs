@@ -92,9 +92,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (namespaceNode != null)
 				address = string.Format(msdnAddress, namespaceNode.Name);
 
-			var memberNode = node as IMemberTreeNode;
-			if (memberNode != null)
-			{
+			if (node is IMemberTreeNode memberNode) {
 				var member = memberNode.Member;
 				var memberName = string.Empty;
 

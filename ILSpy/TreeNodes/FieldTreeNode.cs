@@ -28,34 +28,26 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class FieldTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		readonly FieldDefinition field;
-
-		public FieldDefinition FieldDefinition
-		{
-			get { return field; }
-		}
+		public FieldDefinition FieldDefinition { get; }
 
 		public FieldTreeNode(FieldDefinition field)
 		{
 			if (field == null)
 				throw new ArgumentNullException(nameof(field));
-			this.field = field;
+			this.FieldDefinition = field;
 		}
 
 		public override object Text
 		{
 			get {
 				return HighlightSearchMatch(
-					field.Name,
-					" : " + this.Language.TypeToString(field.FieldType, false, field) + field.MetadataToken.ToSuffixString()
+					FieldDefinition.Name,
+					" : " + this.Language.TypeToString(FieldDefinition.FieldType, false, FieldDefinition) + FieldDefinition.MetadataToken.ToSuffixString()
 				);
 			}
 		}
 
-		public override object Icon
-		{
-			get { return GetIcon(field); }
-		}
+		public override object Icon => GetIcon(FieldDefinition);
 
 		public static ImageSource GetIcon(FieldDefinition field)
 		{
@@ -112,7 +104,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override FilterResult Filter(FilterSettings settings)
 		{
-			if (settings.SearchTermMatches(field.Name) && settings.Language.ShowMember(field))
+			if (settings.SearchTermMatches(FieldDefinition.Name) && settings.Language.ShowMember(FieldDefinition))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;
@@ -120,18 +112,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			language.DecompileField(field, output, options);
+			language.DecompileField(FieldDefinition, output, options);
 		}
 		
 		public override bool IsPublicAPI {
 			get {
-				return field.IsPublic || field.IsFamily || field.IsFamilyOrAssembly;
+				return FieldDefinition.IsPublic || FieldDefinition.IsFamily || FieldDefinition.IsFamilyOrAssembly;
 			}
 		}
 
-		MemberReference IMemberTreeNode.Member
-		{
-			get { return field; }
-		}
+		MemberReference IMemberTreeNode.Member => FieldDefinition;
 	}
 }
