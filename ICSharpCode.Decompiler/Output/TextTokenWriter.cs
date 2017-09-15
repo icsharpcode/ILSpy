@@ -206,40 +206,37 @@ namespace ICSharpCode.Decompiler
 		
 		public override void WriteToken(Role role, string token)
 		{
-			// Attach member reference to token only if there's no identifier in the current node.
-			var member = GetCurrentMemberReference();
-			var node = nodeStack.Peek();
-			if (member != null && node.GetChildByRole(Roles.Identifier).IsNull)
-				output.WriteReference(token, member);
-			else
-				output.Write(token);
+			switch (token) {
+				case "{":
+					if (braceLevelWithinType >= 0 || nodeStack.Peek() is TypeDeclaration)
+						braceLevelWithinType++;
+					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces) {
+						output.MarkFoldStart(defaultCollapsed: braceLevelWithinType == 1);
+					}
+					output.Write("{");
+					break;
+				case "}":
+					output.Write('}');
+					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces)
+						output.MarkFoldEnd();
+					if (braceLevelWithinType >= 0)
+						braceLevelWithinType--;
+					break;
+				default:
+					// Attach member reference to token only if there's no identifier in the current node.
+					var member = GetCurrentMemberReference();
+					var node = nodeStack.Peek();
+					if (member != null && node.GetChildByRole(Roles.Identifier).IsNull)
+						output.WriteReference(token, member);
+					else
+						output.Write(token);
+					break;
+			}
 		}
 		
 		public override void Space()
 		{
 			output.Write(' ');
-		}
-		
-		public void OpenBrace(BraceStyle style)
-		{
-			if (braceLevelWithinType >= 0 || nodeStack.Peek() is TypeDeclaration)
-				braceLevelWithinType++;
-			if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces) {
-				output.MarkFoldStart(defaultCollapsed: braceLevelWithinType == 1);
-			}
-			output.WriteLine();
-			output.WriteLine("{");
-			output.Indent();
-		}
-		
-		public void CloseBrace(BraceStyle style)
-		{
-			output.Unindent();
-			output.Write('}');
-			if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces)
-				output.MarkFoldEnd();
-			if (braceLevelWithinType >= 0)
-				braceLevelWithinType--;
 		}
 		
 		public override void Indent()

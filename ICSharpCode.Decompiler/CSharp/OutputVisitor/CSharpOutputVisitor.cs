@@ -1373,8 +1373,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			foreach (var node in blockStatement.Statements) {
 				node.AcceptVisitor(this);
 			}
-			EndNode(blockStatement);
 			CloseBrace(style);
+			EndNode(blockStatement);
 		}
 		
 		public virtual void VisitBreakStatement(BreakStatement breakStatement)
