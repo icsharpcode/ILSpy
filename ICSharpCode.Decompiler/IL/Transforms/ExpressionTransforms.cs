@@ -249,7 +249,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// Bring LogicAnd/LogicOr into their canonical forms:
 			// if (cond) ldc.i4 0 else RHS --> if (!cond) RHS else ldc.i4 0
 			// if (cond) RHS else ldc.i4 1 --> if (!cond) ldc.i4 1 else RHS
-			if (inst.TrueInst.MatchLdcI4(0) || inst.FalseInst.MatchLdcI4(1)) {
+			// Be careful: when both LHS and RHS are the constant 1, we must not
+			// swap the arguments as it would lead to an infinite transform loop.
+			if (inst.TrueInst.MatchLdcI4(0) && !inst.FalseInst.MatchLdcI4(0)
+				|| inst.FalseInst.MatchLdcI4(1) && !inst.TrueInst.MatchLdcI4(1))
+			{
 				context.Step("canonicalize logic and/or", inst);
 				var t = inst.TrueInst;
 				inst.TrueInst = inst.FalseInst;
