@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// but we need to split awaiter variables to make async/await pretty.
 					return true;
 				case Call call:
-					if (call.Method.DeclaringTypeDefinition.KnownTypeCode == TypeSystem.KnownTypeCode.NullableOfT) {
+					if (call.Method.DeclaringTypeDefinition?.KnownTypeCode == TypeSystem.KnownTypeCode.NullableOfT) {
 						switch (call.Method.Name) {
 							case "get_HasValue":
 							case "get_Value":
