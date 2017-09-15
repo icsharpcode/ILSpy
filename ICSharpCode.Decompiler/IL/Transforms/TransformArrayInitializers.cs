@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInstruction[] values;
 				int initArrayPos;
 				if (ForwardScanInitializeArrayRuntimeHelper(body, pos + 1, v, elementType, arrayLength, out values, out initArrayPos)) {
-					context.Step($"ForwardScanInitializeArrayRuntimeHelper", inst);
+					context.Step("ForwardScanInitializeArrayRuntimeHelper", inst);
 					var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
 					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
 					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
@@ -67,7 +67,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ILVariable finalStore;
 					int instructionsToRemove;
 					if (HandleSimpleArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
-						context.Step($"HandleSimpleArrayInitializer", inst);
+						context.Step("HandleSimpleArrayInitializer", inst);
 						var block = new Block(BlockType.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return true;
 					}
 					if (HandleJaggedArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
-						context.Step($"HandleJaggedArrayInitializer", inst);
+						context.Step("HandleJaggedArrayInitializer", inst);
 						var block = new Block(BlockType.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, v.Type);
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
@@ -154,7 +154,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					throw new ArgumentException("void is not a valid element type!");
 				case KnownTypeCode.IntPtr:
 				case KnownTypeCode.UIntPtr:
-					return new LdNull();
 				default:
 					return new LdNull();
 			}
@@ -185,10 +184,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (index >= length)
 					break;
 				if (!block.Instructions[i].MatchStObj(out target, out value, out type) || value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
-					return false;
+					break;
 				var ldelem = target as LdElema;
 				if (ldelem == null || !ldelem.Array.MatchLdLoc(store) || ldelem.Indices.Count != 1 || !ldelem.Indices[0].MatchLdcI4(out index))
-					return false;
+					break;
 				values[index] = value;
 				index++;
 				elementCount++;
@@ -202,7 +201,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				finalStore = store;
 			}
-			return true;
+			return elementCount > 0;
 		}
 
 		bool HandleJaggedArrayInitializer(Block block, int pos, ILVariable store, int length, out ILVariable finalStore, out ILInstruction[] values, out int instructionsToRemove)
