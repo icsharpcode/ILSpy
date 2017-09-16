@@ -41,6 +41,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			BreakUnlessContinue(true);
 			BreakUnlessContinue(false);
 			TestConditionals();
+			ThisIsNotAUsingBlock();
 			return 0;
 		}
 
@@ -148,6 +149,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			byte answer = (byte)(value == 128 ? 255 : 0);
 			return answer;
+		}
+
+		static void ThisIsNotAUsingBlock()
+		{
+			object obj = new System.IO.StringWriter();
+			IDisposable disposable;
+			try {
+				(obj as System.IO.TextWriter).WriteLine("ThisIsNotAUsingBlock");
+			} finally {
+				disposable = (obj as IDisposable);
+				if (disposable != null) {
+					disposable.Dispose();
+				}
+			}
+			Console.WriteLine(disposable);
 		}
 	}
 }
