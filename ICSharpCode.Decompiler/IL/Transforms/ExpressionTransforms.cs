@@ -319,7 +319,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 			}
 		}
-	}
 
 		protected internal override void VisitTryCatchHandler(TryCatchHandler inst)
 		{
