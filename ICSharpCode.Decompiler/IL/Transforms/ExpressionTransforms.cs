@@ -277,5 +277,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.ReplaceWith(new StLoc(v, new IfInstruction(new LogicNot(inst.Condition), value2, value1)));
 			}
 		}
+
+		protected internal override void VisitBinaryNumericInstruction(BinaryNumericInstruction inst)
+		{
+			base.VisitBinaryNumericInstruction(inst);
+			switch (inst.Operator) {
+				case BinaryNumericOperator.ShiftLeft:
+				case BinaryNumericOperator.ShiftRight:
+					if (inst.Right.MatchBinaryNumericInstruction(BinaryNumericOperator.BitAnd, out var lhs, out var rhs)
+						&& rhs.MatchLdcI4(inst.ResultType == StackType.I8 ? 63 : 31))
+					{
+						// a << (b & 31) => a << b
+						context.Step("Combine bit.and into shift", inst);
+						inst.Right = lhs;
+					}
+					break;
+			}
+		}
 	}
 }

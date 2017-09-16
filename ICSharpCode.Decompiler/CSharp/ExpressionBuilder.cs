@@ -648,29 +648,40 @@ namespace ICSharpCode.Decompiler.CSharp
 					return true;
 			}
 		}
-		
+
 		TranslatedExpression HandleShift(BinaryNumericInstruction inst, BinaryOperatorType op)
 		{
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
-			
-			IType targetType;
-			if (inst.ResultType == StackType.I4)
-				targetType = compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
-			else
-				targetType = compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64);
-			left = left.ConvertTo(targetType, this);
-			
+
+			Sign sign = inst.Sign;
+			if (left.Type.IsSmallIntegerType() && sign != Sign.Unsigned
+				&& left.Type.Kind != TypeKind.Enum && inst.ResultType == StackType.I4) {
+				// With small integer types, C# will promote to int and perform signed shifts.
+				// We thus don't need any casts in this case.
+			} else {
+				// Insert cast to target type.
+				if (sign == Sign.None) {
+					// if we don't need a specific sign, prefer keeping that of the input:
+					sign = left.Type.GetSign();
+				}
+				IType targetType;
+				if (inst.ResultType == StackType.I4)
+					targetType = compilation.FindType(sign == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
+				else
+					targetType = compilation.FindType(sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64);
+				left = left.ConvertTo(targetType, this);
+			}
 			// Shift operators in C# always expect type 'int' on the right-hand-side
 			right = right.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
-			
+		
 			TranslatedExpression result = new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(resolver.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult));
 			if (inst.ResultType == StackType.I) {
 				// C# doesn't have shift operators for IntPtr, so we first shifted a long/ulong,
 				// and now have to case back down to IntPtr/UIntPtr:
-				result = result.ConvertTo(compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr), this);
+				result = result.ConvertTo(compilation.FindType(sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr), this);
 			}
 			return result;
 		}
