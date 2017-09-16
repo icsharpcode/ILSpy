@@ -447,8 +447,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			moveNextFunction.ReleaseRef();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
 				if (branch.TargetBlock == setResultAndExitBlock) {
-					branch.ReplaceWith(new Leave((BlockContainer)function.Body) {
-						Value = resultVar == null ? (ILInstruction)new Nop() : new LdLoc(resultVar),
+					branch.ReplaceWith(new Leave((BlockContainer)function.Body, resultVar == null ? null : new LdLoc(resultVar)) {
 						ILRange = branch.ILRange
 					});
 				}

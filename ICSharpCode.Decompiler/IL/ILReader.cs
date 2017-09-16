@@ -526,7 +526,7 @@ namespace ICSharpCode.Decompiler.IL
 				case Cil.Code.Dup:
 					return Push(Peek());
 				case Cil.Code.Endfilter:
-					return new Leave(null) { Value = Pop() };
+					return new Leave(null, Pop());
 				case Cil.Code.Endfinally:
 					return new Leave(null);
 				case Cil.Code.Initblk:
@@ -943,7 +943,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (methodReturnStackType == StackType.Void)
 				return new IL.Leave(mainContainer);
 			else
-				return new IL.Leave(mainContainer) { Value = Pop(methodReturnStackType) };
+				return new IL.Leave(mainContainer, Pop(methodReturnStackType));
 		}
 
 		private ILInstruction DecodeLdstr()
