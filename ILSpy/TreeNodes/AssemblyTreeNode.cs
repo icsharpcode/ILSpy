@@ -293,6 +293,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return true;
 		}
+
+		public override string ToString()
+		{
+			// ToString is used by FindNodeByPath/GetPathForNode
+			// Fixes #821 - Reload All Assemblies Should Point to the Correct Assembly
+			return assembly.FileName;
+		}
 	}
 
 	[ExportContextMenuEntry(Header = "_Remove", Icon = "images/Delete.png")]
