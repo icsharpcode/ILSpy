@@ -120,7 +120,18 @@ namespace ICSharpCode.Decompiler.IL
 			array = null;
 			return false;
 		}
-		
+
+		public bool MatchReturn(out ILInstruction value)
+		{
+			var inst = this as Leave;
+			if (inst != null && inst.IsLeavingFunction) {
+				value = inst.Value;
+				return true;
+			}
+			value = default(ILInstruction);
+			return false;
+		}
+
 		public bool MatchBranch(out Block targetBlock)
 		{
 			var inst = this as Branch;
@@ -137,11 +148,24 @@ namespace ICSharpCode.Decompiler.IL
 			var inst = this as Branch;
 			return inst != null && inst.TargetBlock == targetBlock;
 		}
+
+		public bool MatchLeave(out BlockContainer targetContainer, out ILInstruction value)
+		{
+			var inst = this as Leave;
+			if (inst != null) {
+				targetContainer = inst.TargetContainer;
+				value = inst.Value;
+				return true;
+			}
+			targetContainer = null;
+			value = null;
+			return false;
+		}
 		
 		public bool MatchLeave(out BlockContainer targetContainer)
 		{
 			var inst = this as Leave;
-			if (inst != null) {
+			if (inst != null && inst.Value.MatchNop()) {
 				targetContainer = inst.TargetContainer;
 				return true;
 			}
@@ -152,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL
 		public bool MatchLeave(BlockContainer targetContainer)
 		{
 			var inst = this as Leave;
-			return inst != null && inst.TargetContainer == targetContainer;
+			return inst != null && inst.TargetContainer == targetContainer && inst.Value.MatchNop();
 		}
 		
 		public bool MatchIfInstruction(out ILInstruction condition, out ILInstruction trueInst, out ILInstruction falseInst)

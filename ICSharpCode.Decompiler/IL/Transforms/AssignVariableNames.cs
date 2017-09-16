@@ -259,7 +259,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (p != null && !string.IsNullOrEmpty(p.Name))
 						return CleanUpVariableName(p.Name);
 					break;
-				case Return ret:
+				case Leave ret:
 					return "result";
 			}
 			return null;

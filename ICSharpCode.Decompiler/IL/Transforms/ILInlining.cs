@@ -272,7 +272,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// decide based on the target into which we are inlining
 			var parent = loadInst.Parent;
 			switch (next.OpCode) {
-				case OpCode.Return:
+				case OpCode.Leave:
 					return parent == next;
 				case OpCode.IfInstruction:
 					while (parent.OpCode == OpCode.LogicNot) {

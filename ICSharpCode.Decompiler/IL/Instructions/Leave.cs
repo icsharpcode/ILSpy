@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// Phase-2 execution removes PopCount elements from the evaluation stack
 	/// and jumps to the target block.
 	/// </remarks>
-	partial class Leave : SimpleInstruction
+	partial class Leave : ILInstruction
 	{
 		BlockContainer targetContainer;
 		
@@ -39,11 +39,12 @@ namespace ICSharpCode.Decompiler.IL
 			// Note: ILReader will create Leave instructions with targetContainer==null to represent 'endfinally',
 			// the targetContainer will then be filled in by BlockBuilder
 			this.targetContainer = targetContainer;
+			this.Value = new Nop();
 		}
 		
 		protected override InstructionFlags ComputeFlags()
 		{
-			return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
+			return value.Flags | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
 		}
 		
 		public override InstructionFlags DirectFlags {
@@ -78,7 +79,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		public string TargetLabel {
-			get { return targetContainer != null ? targetContainer.EntryPoint.Label : string.Empty; }
+			get { return targetContainer?.EntryPoint != null ? targetContainer.EntryPoint.Label : string.Empty; }
 		}
 		
 		/// <summary>
@@ -104,6 +105,9 @@ namespace ICSharpCode.Decompiler.IL
 			if (targetContainer != null) {
 				output.Write(' ');
 				output.WriteReference(TargetLabel, targetContainer, isLocal: true);
+				output.Write(" (");
+				value.WriteTo(output);
+				output.Write(')');
 			}
 		}
 	}

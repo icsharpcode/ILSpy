@@ -161,7 +161,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (inst.IsLeavingFunction) {
 				if (currentFunction.IsIterator)
 					return new YieldBreakStatement();
-				else
+				else if (!inst.Value.MatchNop()) {
+					IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentMethod.ReturnType;
+					return new ReturnStatement(exprBuilder.Translate(inst.Value).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
+				} else
 					return new ReturnStatement();
 			}
 			string label;
@@ -180,12 +183,6 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override Statement VisitRethrow(Rethrow inst)
 		{
 			return new ThrowStatement();
-		}
-		
-		protected internal override Statement VisitReturn(Return inst)
-		{
-			IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentMethod.ReturnType;
-			return new ReturnStatement(exprBuilder.Translate(inst.Value).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
 		}
 
 		protected internal override Statement VisitYieldReturn(YieldReturn inst)
@@ -420,6 +417,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		static bool IsFinalLeave(Leave leave)
 		{
+			if (!leave.Value.MatchNop())
+				return false;
 			Block block = (Block)leave.Parent;
 			if (leave.ChildIndex != block.Instructions.Count - 1 || block.FinalInstruction.OpCode != OpCode.Nop)
 				return false;

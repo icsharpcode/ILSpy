@@ -95,7 +95,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				case OpCode.Leave:
 					Leave leave1 = (Leave)exit1;
 					Leave leave2 = (Leave)exit2;
-					return leave1.TargetContainer == leave2.TargetContainer;
+					return leave1.TargetContainer == leave2.TargetContainer && leave1.Value.MatchNop() && leave2.Value.MatchNop();
 				default:
 					return false;
 			}
@@ -192,6 +192,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		protected internal override void VisitLeave(Leave inst)
 		{
+			base.VisitLeave(inst);
+			if (!inst.Value.MatchNop())
+				return;
 			HandleExit(inst);
 		}
 	}

@@ -447,10 +447,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			moveNextFunction.ReleaseRef();
 			foreach (var branch in function.Descendants.OfType<Branch>()) {
 				if (branch.TargetBlock == setResultAndExitBlock) {
-					if (resultVar != null)
-						branch.ReplaceWith(new Return(new LdLoc(resultVar)) { ILRange = branch.ILRange });
-					else
-						branch.ReplaceWith(new Leave((BlockContainer)function.Body) { ILRange = branch.ILRange });
+					branch.ReplaceWith(new Leave((BlockContainer)function.Body) {
+						Value = resultVar == null ? (ILInstruction)new Nop() : new LdLoc(resultVar),
+						ILRange = branch.ILRange
+					});
 				}
 			}
 			function.Variables.AddRange(function.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());

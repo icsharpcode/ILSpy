@@ -55,7 +55,7 @@ namespace ICSharpCode.Decompiler.IL
 		Arglist,
 		/// <summary>Unconditional branch. <c>goto target;</c></summary>
 		Branch,
-		/// <summary>Unconditional branch to end of block container. <c>goto container_end;</c>, often <c>break;</c></summary>
+		/// <summary>Unconditional branch to end of block container. Return is represented using IsLeavingFunction and an (optional) return value. The block container evaluates to the value produced by the argument of the leave instruction.</summary>
 		Leave,
 		/// <summary>If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c></summary>
 		IfInstruction,
@@ -115,8 +115,6 @@ namespace ICSharpCode.Decompiler.IL
 		LdMemberToken,
 		/// <summary>Allocates space in the stack frame</summary>
 		LocAlloc,
-		/// <summary>Returns from the current method or lambda. Only used when returning a value; void returns are represented using a 'leave' instruction.</summary>
-		Return,
 		/// <summary>Load address of instance field</summary>
 		LdFlda,
 		/// <summary>Load static field address</summary>
@@ -1060,9 +1058,56 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>Unconditional branch to end of block container. <c>goto container_end;</c>, often <c>break;</c></summary>
-	public sealed partial class Leave : SimpleInstruction
+	/// <summary>Unconditional branch to end of block container. Return is represented using IsLeavingFunction and an (optional) return value. The block container evaluates to the value produced by the argument of the leave instruction.</summary>
+	public sealed partial class Leave : ILInstruction
 	{
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.value, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.value;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Value = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ValueSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (Leave)ShallowClone();
+			clone.Value = this.value.Clone();
+			return clone;
+		}
 		public override StackType ResultType { get { return StackType.Void; } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -1079,7 +1124,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as Leave;
-			return o != null && this.TargetContainer == o.TargetContainer;
+			return o != null && this.value.PerformMatch(o.value, ref match) && this.TargetContainer == o.TargetContainer;
 		}
 	}
 }
@@ -2534,98 +2579,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as LocAlloc;
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
-		}
-	}
-}
-namespace ICSharpCode.Decompiler.IL
-{
-	/// <summary>Returns from the current method or lambda. Only used when returning a value; void returns are represented using a 'leave' instruction.</summary>
-	public sealed partial class Return : ILInstruction
-	{
-		public Return(ILInstruction value) : base(OpCode.Return)
-		{
-			this.Value = value;
-		}
-		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
-		ILInstruction value;
-		public ILInstruction Value {
-			get { return this.value; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.value, value, 0);
-			}
-		}
-		protected sealed override int GetChildCount()
-		{
-			return 1;
-		}
-		protected sealed override ILInstruction GetChild(int index)
-		{
-			switch (index) {
-				case 0:
-					return this.value;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		protected sealed override void SetChild(int index, ILInstruction value)
-		{
-			switch (index) {
-				case 0:
-					this.Value = value;
-					break;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		protected sealed override SlotInfo GetChildSlot(int index)
-		{
-			switch (index) {
-				case 0:
-					return ValueSlot;
-				default:
-					throw new IndexOutOfRangeException();
-			}
-		}
-		public sealed override ILInstruction Clone()
-		{
-			var clone = (Return)ShallowClone();
-			clone.Value = this.value.Clone();
-			return clone;
-		}
-		public override StackType ResultType { get { return StackType.Void; } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return value.Flags | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
-		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
-			}
-		}
-		public override void WriteTo(ITextOutput output)
-		{
-			output.Write(OpCode);
-			output.Write('(');
-			this.value.WriteTo(output);
-			output.Write(')');
-		}
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitReturn(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitReturn(this);
-		}
-		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
-		{
-			return visitor.VisitReturn(this, context);
-		}
-		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
-		{
-			var o = other as Return;
-			return o != null && this.value.PerformMatch(o.value, ref match);
 		}
 	}
 }
@@ -4319,10 +4272,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitReturn(Return inst)
-		{
-			Default(inst);
-		}
 		protected internal virtual void VisitLdFlda(LdFlda inst)
 		{
 			Default(inst);
@@ -4594,10 +4543,6 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitLocAlloc(LocAlloc inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitReturn(Return inst)
 		{
 			return Default(inst);
 		}
@@ -4875,10 +4820,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
-		protected internal virtual T VisitReturn(Return inst, C context)
-		{
-			return Default(inst, context);
-		}
 		protected internal virtual T VisitLdFlda(LdFlda inst, C context)
 		{
 			return Default(inst, context);
@@ -5019,7 +4960,6 @@ namespace ICSharpCode.Decompiler.IL
 			"ldtypetoken",
 			"ldmembertoken",
 			"localloc",
-			"ret",
 			"ldflda",
 			"ldsflda",
 			"castclass",
@@ -5297,16 +5237,6 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			argument = default(ILInstruction);
-			return false;
-		}
-		public bool MatchReturn(out ILInstruction value)
-		{
-			var inst = this as Return;
-			if (inst != null) {
-				value = inst.Value;
-				return true;
-			}
-			value = default(ILInstruction);
 			return false;
 		}
 		public bool MatchLdFlda(out ILInstruction target, out IField field)

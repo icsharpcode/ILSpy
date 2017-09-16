@@ -416,6 +416,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		
 		protected internal override void VisitLeave(Leave inst)
 		{
+			inst.Value.AcceptVisitor(this);
 			State targetState;
 			if (stateOnLeave.TryGetValue(inst.TargetContainer, out targetState)) {
 				targetState.JoinWith(state);
@@ -425,12 +426,6 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			// Note: We don't have to put the block container onto the work queue,
 			// because it's an ancestor of the Leave instruction, and hence
 			// we are currently somewhere within the VisitBlockContainer() call.
-			MarkUnreachable();
-		}
-		
-		protected internal override void VisitReturn(Return inst)
-		{
-			inst.Value.AcceptVisitor(this);
 			MarkUnreachable();
 		}
 		

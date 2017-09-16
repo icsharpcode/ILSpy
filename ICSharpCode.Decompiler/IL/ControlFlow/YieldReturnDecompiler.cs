@@ -747,23 +747,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						}
 						break;
 					case Leave leave:
-						if (leave.TargetContainer == oldBody) {
-							leave.TargetContainer = newBody;
-						}
-						break;
-					case Return ret:
-						ILInstruction value = ret.Value;
-						if (value.MatchLdLoc(out var v) && v.IsSingleDefinition
-							&& v.StoreInstructions.SingleOrDefault() is StLoc stloc)
-						{
-							returnStores.Add(stloc);
-							value = stloc.Value;
-						}
-						if (value.MatchLdcI4(0)) {
-							// yield break
-							ret.ReplaceWith(new Leave(newBody) { ILRange = ret.ILRange });
+						if (leave.MatchReturn(out var value)) {
+							if (value.MatchLdLoc(out var v) && v.IsSingleDefinition
+								&& v.StoreInstructions.SingleOrDefault() is StLoc stloc) {
+								returnStores.Add(stloc);
+								value = stloc.Value;
+							}
+							if (value.MatchLdcI4(0)) {
+								// yield break
+								leave.ReplaceWith(new Leave(newBody) { ILRange = leave.ILRange });
+							} else {
+								leave.ReplaceWith(new InvalidBranch("Unexpected return in MoveNext()") { ILRange = leave.ILRange });
+							}
 						} else {
-							ret.ReplaceWith(new InvalidBranch("Unexpected return in MoveNext()") { ILRange = ret.ILRange });
+							if (leave.TargetContainer == oldBody) {
+								leave.TargetContainer = newBody;
+							}
 						}
 						break;
 				}

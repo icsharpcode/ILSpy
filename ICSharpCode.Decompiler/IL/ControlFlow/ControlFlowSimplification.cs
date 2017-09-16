@@ -64,13 +64,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// (where 'v' has no other uses)
 			// Simplify these to a simple `ret(<inst>)` so that they match the release build version.
 			// 
-			if (block.Instructions.Count == 2 && block.Instructions[1].OpCode == OpCode.Return) {
-				Return ret = (Return)block.Instructions[1];
-				ILVariable v;
-				ILInstruction inst;
-				if (ret.Value.MatchLdLoc(out v)
-				    && v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out inst))
-				{
+			if (block.Instructions.Count == 2 && block.Instructions[1].MatchReturn(out ILInstruction value)) {
+				var ret = (Leave)block.Instructions[1];
+				if (value.MatchLdLoc(out ILVariable v)
+					&& v.IsSingleDefinition && v.LoadCount == 1 && block.Instructions[0].MatchStLoc(v, out ILInstruction inst)) {
 					context.Step("Inline variable in return block", block);
 					inst.AddILRange(ret.Value.ILRange);
 					inst.AddILRange(block.Instructions[0].ILRange);
@@ -119,11 +116,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						blocksToAdd.Add((localContainer, blockCopy));
 						branch.TargetBlock = blockCopy;
 					}
-				} else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0].OpCode == OpCode.Leave) {
+				} else if (targetBlock.Instructions.Count == 1 && targetBlock.Instructions[0] is Leave leave && leave.Value.MatchNop()) {
 					context.Step("Replace branch to leave with leave", branch);
 					// Replace branches to 'leave' instruction with the leave instruction
-					Leave leave = (Leave)targetBlock.Instructions[0];
-					branch.ReplaceWith(new Leave(leave.TargetContainer) { ILRange = branch.ILRange });
+					branch.ReplaceWith(leave.Clone());
 				}
 				if (targetBlock.IncomingEdgeCount == 0)
 					targetBlock.Instructions.Clear(); // mark the block for deletion
@@ -154,7 +150,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var targetBlock = branch.TargetBlock;
 			if (targetBlock.Instructions.Count != 1 || targetBlock.FinalInstruction.OpCode != OpCode.Nop)
 				return false;
-			return targetBlock.Instructions[0] is Return ret && ret.Value is LdLoc;
+			return targetBlock.Instructions[0].MatchReturn(out var value) && value is LdLoc;
 		}
 		
 		static bool CombineBlockWithNextBlock(BlockContainer container, Block block)

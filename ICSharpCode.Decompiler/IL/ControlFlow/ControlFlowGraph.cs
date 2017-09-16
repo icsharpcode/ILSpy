@@ -100,9 +100,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// Leave instructions (like other exits out of the container)
 						// are ignored for the CFG and dominance,
 						// but is relevant for HasReachableExit().
-						// However, a 'leave' that exits the whole function represents a void return,
-						// and is not considered a reachable exit (just like non-void returns).
-						if (!(leave.TargetContainer.Parent is ILFunction)) {
+						// However, a 'leave' that exits the whole function represents a return,
+						// and is not considered a reachable exit.
+						if (!leave.IsLeavingFunction) {
 							nodeHasDirectExitOutOfContainer.Set(i);
 						}
 					}
@@ -129,20 +129,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			return leaving;
-		}
-
-		bool LeavesCurrentBlockContainer(Block block)
-		{
-			foreach (var node in block.Descendants) {
-				if (node is Branch branch && !branch.TargetBlock.IsDescendantOf(container)) {
-					// control flow that isn't internal to the block container
-					return true;
-				}
-				if (node is Leave leave && !leave.TargetContainer.IsDescendantOf(block)) {
-					return true;
-				}
-			}
-			return false;
 		}
 
 		/// <summary>
