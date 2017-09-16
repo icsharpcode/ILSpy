@@ -22,6 +22,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class TypeAnalysisTests
 	{
+		private byte[] byteArray;
+
 		public byte SubtractFrom256(byte b)
 		{
 			return (byte)(256 - b);
@@ -150,6 +152,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public byte[] CreateArrayWithUShort(ushort length)
 		{
 			return new byte[length];
+		}
+
+		public byte UseArrayWithInt(int i)
+		{
+			return this.byteArray[i];
+		}
+
+		public byte UseArrayWithUInt(uint i)
+		{
+			return this.byteArray[i];
+		}
+
+		public byte UseArrayWithLong(long i)
+		{
+			return this.byteArray[i];
+		}
+
+		public byte UseArrayWithULong(ulong i)
+		{
+			return this.byteArray[i];
+		}
+
+		public byte UseArrayWithShort(short i)
+		{
+			return this.byteArray[i];
+		}
+
+		public byte UseArrayWithUShort(ushort i)
+		{
+			return this.byteArray[i];
 		}
 
 		public StringComparison EnumDiffNumber(StringComparison data)

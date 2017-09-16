@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly atizfkop
+.assembly '3ks4sbnu'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module atizfkop.dll
-// MVID: {6E63D5B6-44D4-4BB0-A1F2-26CF3701BD7D}
+.module '3ks4sbnu.dll'
+// MVID: {8D285D1A-ACBF-41C0-93DE-10526C17A0D8}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02B60000
+// Image base: 0x008C0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -36,6 +36,7 @@
 .class public auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests
        extends [mscorlib]System.Object
 {
+  .field private uint8[] byteArray
   .method public hidebysig instance uint8 
           SubtractFrom256(uint8 b) cil managed
   {
@@ -513,6 +514,117 @@
     IL_000a:  ldloc.0
     IL_000b:  ret
   } // end of method TypeAnalysisTests::CreateArrayWithUShort
+
+  .method public hidebysig instance uint8 
+          UseArrayWithInt(int32 i) cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  2
+    .locals init (uint8 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      uint8[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests::byteArray
+    IL_0007:  ldarg.1
+    IL_0008:  ldelem.u1
+    IL_0009:  stloc.0
+    IL_000a:  br.s       IL_000c
+
+    IL_000c:  ldloc.0
+    IL_000d:  ret
+  } // end of method TypeAnalysisTests::UseArrayWithInt
+
+  .method public hidebysig instance uint8 
+          UseArrayWithUInt(uint32 i) cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  2
+    .locals init (uint8 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      uint8[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests::byteArray
+    IL_0007:  ldarg.1
+    IL_0008:  conv.u
+    IL_0009:  ldelem.u1
+    IL_000a:  stloc.0
+    IL_000b:  br.s       IL_000d
+
+    IL_000d:  ldloc.0
+    IL_000e:  ret
+  } // end of method TypeAnalysisTests::UseArrayWithUInt
+
+  .method public hidebysig instance uint8 
+          UseArrayWithLong(int64 i) cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  2
+    .locals init (uint8 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      uint8[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests::byteArray
+    IL_0007:  ldarg.1
+    IL_0008:  conv.ovf.i
+    IL_0009:  ldelem.u1
+    IL_000a:  stloc.0
+    IL_000b:  br.s       IL_000d
+
+    IL_000d:  ldloc.0
+    IL_000e:  ret
+  } // end of method TypeAnalysisTests::UseArrayWithLong
+
+  .method public hidebysig instance uint8 
+          UseArrayWithULong(uint64 i) cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  2
+    .locals init (uint8 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      uint8[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests::byteArray
+    IL_0007:  ldarg.1
+    IL_0008:  conv.ovf.i.un
+    IL_0009:  ldelem.u1
+    IL_000a:  stloc.0
+    IL_000b:  br.s       IL_000d
+
+    IL_000d:  ldloc.0
+    IL_000e:  ret
+  } // end of method TypeAnalysisTests::UseArrayWithULong
+
+  .method public hidebysig instance uint8 
+          UseArrayWithShort(int16 i) cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  2
+    .locals init (uint8 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      uint8[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests::byteArray
+    IL_0007:  ldarg.1
+    IL_0008:  ldelem.u1
+    IL_0009:  stloc.0
+    IL_000a:  br.s       IL_000c
+
+    IL_000c:  ldloc.0
+    IL_000d:  ret
+  } // end of method TypeAnalysisTests::UseArrayWithShort
+
+  .method public hidebysig instance uint8 
+          UseArrayWithUShort(uint16 i) cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  2
+    .locals init (uint8 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      uint8[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests::byteArray
+    IL_0007:  ldarg.1
+    IL_0008:  ldelem.u1
+    IL_0009:  stloc.0
+    IL_000a:  br.s       IL_000c
+
+    IL_000c:  ldloc.0
+    IL_000d:  ret
+  } // end of method TypeAnalysisTests::UseArrayWithUShort
 
   .method public hidebysig instance valuetype [mscorlib]System.StringComparison 
           EnumDiffNumber(valuetype [mscorlib]System.StringComparison data) cil managed

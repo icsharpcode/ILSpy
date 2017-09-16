@@ -655,8 +655,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var right = Translate(inst.Right);
 
 			Sign sign = inst.Sign;
-			if (left.Type.IsSmallIntegerType() && sign != Sign.Unsigned
-				&& left.Type.Kind != TypeKind.Enum && inst.ResultType == StackType.I4) {
+			if (left.Type.IsCSharpSmallIntegerType() && sign != Sign.Unsigned && inst.ResultType == StackType.I4) {
 				// With small integer types, C# will promote to int and perform signed shifts.
 				// We thus don't need any casts in this case.
 			} else {

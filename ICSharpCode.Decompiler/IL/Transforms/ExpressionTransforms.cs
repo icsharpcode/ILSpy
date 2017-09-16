@@ -108,15 +108,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		protected internal override void VisitLdElema(LdElema inst)
+		{
+			base.VisitLdElema(inst);
+			CleanUpArrayIndices(inst.Indices);
+		}
+
 		protected internal override void VisitNewArr(NewArr inst)
 		{
 			base.VisitNewArr(inst);
-			foreach (ILInstruction index in inst.Indices) {
+			CleanUpArrayIndices(inst.Indices);
+		}
+
+		void CleanUpArrayIndices(InstructionCollection<ILInstruction> indices)
+		{
+			foreach (ILInstruction index in indices) {
 				if (index is Conv conv && conv.ResultType == StackType.I
 					&& (conv.Kind == ConversionKind.Truncate && conv.CheckForOverflow
 						|| conv.Kind == ConversionKind.ZeroExtend || conv.Kind == ConversionKind.SignExtend)
 				) {
-					context.Step("newarr(conv(X)) => newarr(X)", inst);
+					context.Step("Remove conv.i from array index", index);
 					index.ReplaceWith(conv.Argument);
 				}
 			}

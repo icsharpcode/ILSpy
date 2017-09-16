@@ -477,7 +477,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				return ace;
 			} else if (rr.IsCompileTimeConstant) {
 				var expr = ConvertConstantValue(rr.Type, rr.ConstantValue);
-				if (isBoxing && IsSmallInteger(rr.Type)) {
+				if (isBoxing && rr.Type.IsCSharpSmallIntegerType()) {
 					// C# does not have small integer literal types.
 					// We need to add a cast so that the integer literal gets boxed as the correct type.
 					expr = new CastExpression(ConvertType(rr.Type), expr);
@@ -519,7 +519,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			} else if (type.Kind == TypeKind.Enum) {
 				return ConvertEnumValue(type, (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, constantValue, false));
 			} else {
-				if (IsSmallInteger(type)) { 
+				if (type.IsCSharpSmallIntegerType()) { 
 					// C# does not have integer literals of small integer types,
 					// use `int` literal instead.
 					constantValue = CSharpPrimitiveCast.Cast(TypeCode.Int32, constantValue, false);
@@ -529,19 +529,6 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				if (AddResolveResultAnnotations)
 					expr.AddAnnotation(new ConstantResolveResult(type, constantValue));
 				return expr;
-			}
-		}
-
-		bool IsSmallInteger(IType type)
-		{
-			switch (type.GetDefinition()?.KnownTypeCode) {
-				case KnownTypeCode.Byte:
-				case KnownTypeCode.SByte:
-				case KnownTypeCode.Int16:
-				case KnownTypeCode.UInt16:
-					return true;
-				default:
-					return false;
 			}
 		}
 
