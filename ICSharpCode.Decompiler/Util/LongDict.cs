@@ -35,8 +35,8 @@ namespace ICSharpCode.Decompiler.Util
 	/// <summary>
 	/// An immutable mapping from keys of type long to values of type T.
 	/// </summary>
-    struct LongDict<T> : IEnumerable<KeyValuePair<LongInterval, T>>
-    {
+	struct LongDict<T> : IEnumerable<KeyValuePair<LongInterval, T>>
+	{
 		readonly LongInterval[] keys;
 		readonly T[] values;
 
