@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.IL
 			// Fill isBranchTarget and branchStackDict based on exception handlers
 			foreach (var eh in body.ExceptionHandlers) {
 				ImmutableStack<ILVariable> ehStack = null;
-				if (eh.HandlerType == Cil.ExceptionHandlerType.Catch || eh.HandlerType == Cil.ExceptionHandlerType.Filter) {
+				if (eh.HandlerType == Cil.ExceptionHandlerType.Catch) {
 					var v = new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), eh.HandlerStart.Offset) {
 						Name = "E_" + eh.HandlerStart.Offset
 					};
