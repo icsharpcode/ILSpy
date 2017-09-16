@@ -666,6 +666,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					body.Add(new YieldBreakStatement());
 				}
 				RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IteratorStateMachineAttribute"));
+				if (function.StateMachineCompiledWithMono) {
+					RemoveAttribute(entityDecl, new TopLevelTypeName("System.Diagnostics", "DebuggerHiddenAttribute"));
+				}
 			}
 			if (function.IsAsync) {
 				entityDecl.Modifiers |= Modifiers.Async;

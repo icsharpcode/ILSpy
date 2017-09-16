@@ -43,6 +43,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool IsIterator;
 
+		public bool StateMachineCompiledWithMono;
+
 		/// <summary>
 		/// Gets whether this function is async.
 		/// This flag gets set by the AsyncAwaitDecompiler.

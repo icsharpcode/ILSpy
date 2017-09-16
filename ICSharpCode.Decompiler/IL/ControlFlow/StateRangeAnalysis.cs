@@ -59,6 +59,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		readonly internal Dictionary<IMethod, LongSet> finallyMethodToStateRange; // used only for IteratorDispose
 
 		internal ILVariable doFinallyBodies;
+		internal ILVariable skipFinallyBodies;
 
 		public StateRangeAnalysis(StateRangeAnalysisMode mode, IField stateField, ILVariable cachedStateVar = null)
 		{
@@ -72,7 +73,23 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (cachedStateVar != null)
 				evalContext.AddStateVariable(cachedStateVar);
 		}
-		
+
+		/// <summary>
+		/// Creates a new StateRangeAnalysis with the same settings, including any cached state vars
+		/// discovered by this analysis.
+		/// However, the new analysis has a fresh set of result ranges.
+		/// </summary>
+		internal StateRangeAnalysis CreateNestedAnalysis()
+		{
+			var sra = new StateRangeAnalysis(mode, stateField);
+			sra.doFinallyBodies = this.doFinallyBodies;
+			sra.skipFinallyBodies = this.skipFinallyBodies;
+			foreach (var v in this.evalContext.StateVariables) {
+				sra.evalContext.AddStateVariable(v);
+			}
+			return sra;
+		}
+
 		/// <summary>
 		/// Assign state ranges for all blocks within 'inst'.
 		/// </summary>
@@ -110,7 +127,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						Debug.Assert(stateRange.IsEmpty || !instInBlock.HasFlag(InstructionFlags.EndPointUnreachable));
 					}
 					return stateRange;
-				case TryFinally tryFinally:
+				case TryFinally tryFinally when mode == StateRangeAnalysisMode.IteratorDispose:
 					var afterTry = AssignStateRanges(tryFinally.TryBlock, stateRange);
 					// really finally should start with 'stateRange.UnionWith(afterTry)', but that's
 					// equal to 'stateRange'.
@@ -151,11 +168,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return LongSet.Empty;
 				case Nop nop:
 					return stateRange;
-				case StLoc stloc when stloc.Variable == doFinallyBodies:
+				case StLoc stloc when stloc.Variable == doFinallyBodies || stloc.Variable == skipFinallyBodies:
 					// pre-roslyn async/await uses a generated 'bool doFinallyBodies';
 					// do not treat this as user code.
+					// Mono also does this for yield-return.
 					return stateRange;
-				case StLoc stloc when stloc.Variable.IsSingleDefinition:
+				case StLoc stloc:
 					val = evalContext.Eval(stloc.Value);
 					if (val.Type == SymbolicValueType.State && val.Constant == 0) {
 						evalContext.AddStateVariable(stloc.Variable);
@@ -169,6 +187,18 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// the C# compiler puts the call to a finally method outside the try-finally block.
 					finallyMethodToStateRange.Add((IMethod)call.Method.MemberDefinition, stateRange);
 					return LongSet.Empty; // return Empty since we executed user code (the finally method)
+				case StObj stobj when mode == StateRangeAnalysisMode.IteratorMoveNext:
+					{
+						if (stobj.MatchStFld(out var target, out var field, out var value)
+							&& target.MatchLdThis() && field.MemberDefinition == stateField && value.MatchLdcI4(-1))
+						{
+							// Mono resets the state field during MoveNext();
+							// don't consider this user code.
+							return stateRange;
+						} else {
+							goto default;
+						}
+					}
 				default:
 					// User code - abort analysis
 					if (mode == StateRangeAnalysisMode.IteratorDispose && !(inst is Leave l && l.IsLeavingFunction)) {
@@ -186,22 +216,31 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ranges.Add(block, stateRange);
 		}
 
-		public IEnumerable<(Block, LongSet)> GetBlockStateSetMapping(BlockContainer container)
+		/// <summary>
+		/// Gets a mapping from states to blocks.
+		/// 
+		/// Within the given container (which should be the container that was analyzed),
+		/// the mapping prefers the last block.
+		/// Blocks outside of the given container are preferred over blocks within the container.
+		/// </summary>
+		public LongDict<Block> GetBlockStateSetMapping(BlockContainer container)
 		{
-			foreach (var block in container.Blocks) {
-				if (ranges.TryGetValue(block, out var stateSet))
-					yield return (block, stateSet);
-			}
-		}
+			return LongDict.Create(GetMapping());
 
-		public Block FindBlock(BlockContainer container, int newState)
-		{
-			Block targetBlock = null;
-			foreach (var (block, stateSet) in GetBlockStateSetMapping(container)) {
-				if (stateSet.Contains(newState))
-					targetBlock = block;
+			IEnumerable<(LongSet, Block)> GetMapping()
+			{
+				// First, consider container exits:
+				foreach (var (block, states) in ranges) {
+					if (block.Parent != container)
+						yield return (states, block);
+				}
+				// Then blocks within the container:
+				foreach (var block in container.Blocks.Reverse()) {
+					if (ranges.TryGetValue(block, out var states)) {
+						yield return (states, block);
+					}
+				}
 			}
-			return targetBlock;
 		}
 	}
 }

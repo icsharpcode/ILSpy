@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler.IL
 		StackType methodReturnStackType;
 		Cil.Instruction currentInstruction;
 		int nextInstructionIndex;
-	    System.Collections.Immutable.ImmutableStack<ILVariable> currentStack;
+		ImmutableStack<ILVariable> currentStack;
 		ILVariable[] parameterVariables;
 		ILVariable[] localVariables;
 		BitArray isBranchTarget;
@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 		List<ILInstruction> instructionBuilder;
 
 		// Dictionary that stores stacks for each IL instruction
-		Dictionary<int, System.Collections.Immutable.ImmutableStack<ILVariable>> stackByOffset;
+		Dictionary<int, ImmutableStack<ILVariable>> stackByOffset;
 		Dictionary<Cil.ExceptionHandler, ILVariable> variableByExceptionHandler;
 		UnionFind<ILVariable> unionFind;
 		IEnumerable<ILVariable> stackVariables;
@@ -86,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL
 			mainContainer = new BlockContainer();
 			this.instructionBuilder = new List<ILInstruction>();
 			this.isBranchTarget = new BitArray(body.CodeSize);
-			this.stackByOffset = new Dictionary<int, System.Collections.Immutable.ImmutableStack<ILVariable>>();
+			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
 			this.variableByExceptionHandler = new Dictionary<Cil.ExceptionHandler, ILVariable>();
 		}
 
@@ -185,7 +185,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Fail(string.Format("IL_{0:x4}: {1}", currentInstruction.Offset, message));
 		}
 
-		void MergeStacks(System.Collections.Immutable.ImmutableStack<ILVariable> a, System.Collections.Immutable.ImmutableStack<ILVariable> b)
+		void MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
 		{
 			var enum1 = a.GetEnumerator();
 			var enum2 = b.GetEnumerator();
@@ -204,9 +204,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		void StoreStackForOffset(int offset, System.Collections.Immutable.ImmutableStack<ILVariable> stack)
+		void StoreStackForOffset(int offset, ImmutableStack<ILVariable> stack)
 		{
-		    System.Collections.Immutable.ImmutableStack<ILVariable> existing;
+			ImmutableStack<ILVariable> existing;
 			if (stackByOffset.TryGetValue(offset, out existing)) {
 				MergeStacks(existing, stack);
 			} else {
@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			// Fill isBranchTarget and branchStackDict based on exception handlers
 			foreach (var eh in body.ExceptionHandlers) {
-			    System.Collections.Immutable.ImmutableStack<ILVariable> ehStack = null;
+				ImmutableStack<ILVariable> ehStack = null;
 				if (eh.HandlerType == Cil.ExceptionHandlerType.Catch || eh.HandlerType == Cil.ExceptionHandlerType.Filter) {
 					var v = new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), eh.HandlerStart.Offset) {
 						Name = "E_" + eh.HandlerStart.Offset
@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.IL
 					variableByExceptionHandler.Add(eh, v);
 					ehStack = ImmutableStack.Create(v);
 				} else {
-					ehStack = System.Collections.Immutable.ImmutableStack<ILVariable>.Empty;
+					ehStack = ImmutableStack<ILVariable>.Empty;
 				}
 				if (eh.FilterStart != null) {
 					isBranchTarget[eh.FilterStart.Offset] = true;
@@ -252,7 +252,7 @@ namespace ICSharpCode.Decompiler.IL
 				instructionBuilder.Add(decodedInstruction);
 				if (decodedInstruction.HasDirectFlag(InstructionFlags.EndPointUnreachable)) {
 					if (!stackByOffset.TryGetValue(end, out currentStack)) {
-						currentStack = System.Collections.Immutable.ImmutableStack<ILVariable>.Empty;
+						currentStack = ImmutableStack<ILVariable>.Empty;
 					}
 				}
 				Debug.Assert(currentInstruction.Next == null || currentInstruction.Next.Offset == end);

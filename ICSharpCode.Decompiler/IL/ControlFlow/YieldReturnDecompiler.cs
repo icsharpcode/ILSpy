@@ -57,12 +57,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <remarks>Set in MatchEnumeratorCreationPattern()</remarks>
 		MethodDefinition enumeratorCtor;
 
+		/// <remarks>Set in MatchEnumeratorCreationPattern()</remarks>
+		bool isCompiledWithMono;
+
 		/// <summary>The dispose method of the compiler-generated enumerator class.</summary>
 		/// <remarks>Set in ConstructExceptionTable()</remarks>
 		MethodDefinition disposeMethod;
 
 		/// <summary>The field in the compiler-generated class holding the current state of the state machine</summary>
-		/// <remarks>Set in AnalyzeCtor()</remarks>
+		/// <remarks>Set in AnalyzeCtor() for MS, MatchEnumeratorCreationPattern() or AnalyzeMoveNext() for Mono</remarks>
 		IField stateField;
 
 		/// <summary>The backing field of the 'Current' property in the compiler-generated class</summary>
@@ -83,11 +86,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// and the decompiled code of the finally method body.
 		/// </summary>
 		readonly Dictionary<IMethod, (int? outerState, ILFunction function)> decompiledFinallyMethods = new Dictionary<IMethod, (int? outerState, ILFunction body)>();
-
+		
 		/// <summary>
 		/// Temporary stores for 'yield break'.
 		/// </summary>
 		readonly List<StLoc> returnStores = new List<StLoc>();
+
+		/// <summary>
+		/// Local bool variable in MoveNext() that signifies whether to skip finally bodies.
+		/// </summary>
+		ILVariable skipFinallyBodies;
 
 		#region Run() method
 		public void Run(ILFunction function, ILTransformContext context)
@@ -104,6 +112,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.finallyMethodToStateRange = null;
 			this.decompiledFinallyMethods.Clear();
 			this.returnStores.Clear();
+			this.skipFinallyBodies = null;
 			if (!MatchEnumeratorCreationPattern(function))
 				return;
 			BlockContainer newBody;
@@ -119,6 +128,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			context.Step("Replacing body with MoveNext() body", function);
 			function.IsIterator = true;
+			function.StateMachineCompiledWithMono = true;
 			function.Body = newBody;
 			// register any locals used in newBody
 			function.Variables.AddRange(newBody.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
@@ -136,11 +146,23 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// (though some may point to now-deleted blocks)
 			newBody.SortBlocks(deleteUnreachableBlocks: true);
 
-			DecompileFinallyBlocks();
-			ReconstructTryFinallyBlocks(function);
+			if (isCompiledWithMono) {
+				// mono has try-finally inline (like async on MS); we also need to sort nested blocks:
+				foreach (var nestedContainer in newBody.Blocks.SelectMany(c => c.Descendants).OfType<BlockContainer>()) {
+					nestedContainer.SortBlocks(deleteUnreachableBlocks: true);
+				}
+			} else {
+				DecompileFinallyBlocks();
+				ReconstructTryFinallyBlocks(function);
+			}
 
 			context.Step("Translate fields to local accesses", function);
 			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
+
+			// On mono, we still need to remove traces of the state variable:
+			if (isCompiledWithMono && fieldToParameterMap.TryGetValue(stateField, out var stateVar)) {
+				returnStores.AddRange(stateVar.StoreInstructions.OfType<StLoc>());
+			}
 
 			if (returnStores.Count > 0) {
 				context.Step("Remove temporaries", function);
@@ -170,26 +192,40 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (body.Instructions.Count == 1) {
 				// No parameters passed to enumerator (not even 'this'):
 				// ret(newobj(...))
-				if (body.Instructions[0].MatchReturn(out newObj))
-					return MatchEnumeratorCreationNewObj(newObj);
-				else
+				if (!body.Instructions[0].MatchReturn(out newObj))
 					return false;
+				if (MatchEnumeratorCreationNewObj(newObj)) {
+					return true;
+				} else if (MatchMonoEnumeratorCreationNewObj(newObj)) {
+					isCompiledWithMono = true;
+					return true;
+				} else {
+					return false;
+				}
 			}
 
 			// If there's parameters passed to the helper class, the class instance is first
 			// stored in a variable, then the parameters are copied over, then the instance is returned.
 
-			// stloc(var_1, newobj(..))
-			if (!body.Instructions[0].MatchStLoc(out var var1, out newObj))
-				return false;
-			if (!MatchEnumeratorCreationNewObj(newObj))
-				return false;
+			int pos = 0;
 
-			int i;
-			for (i = 1; i < body.Instructions.Count; i++) {
+			// stloc(var_1, newobj(..))
+			if (!body.Instructions[pos].MatchStLoc(out var var1, out newObj))
+				return false;
+			if (MatchEnumeratorCreationNewObj(newObj)) {
+				pos++; // OK
+				isCompiledWithMono = false;
+			} else if (MatchMonoEnumeratorCreationNewObj(newObj)) {
+				pos++;
+				isCompiledWithMono = true;
+			} else {
+				return false;
+			}
+			
+			for (; pos < body.Instructions.Count; pos++) {
 				// stfld(..., ldloc(var_1), ldloc(parameter))
 				// or (in structs): stfld(..., ldloc(var_1), ldobj(ldloc(this)))
-				if (!body.Instructions[i].MatchStFld(out var ldloc, out var storedField, out var value))
+				if (!body.Instructions[pos].MatchStFld(out var ldloc, out var storedField, out var value))
 					break;
 				if (!ldloc.MatchLdLoc(var1)) {
 					return false;
@@ -205,18 +241,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			// In debug builds, the compiler may copy the var1 into another variable (var2) before returning it.
-			if (i < body.Instructions.Count
-				&& body.Instructions[i].MatchStLoc(out var var2, out var ldlocForStloc2)
+			if (body.Instructions[pos].MatchStLoc(out var var2, out var ldlocForStloc2)
 				&& ldlocForStloc2.MatchLdLoc(var1)) {
 				// stloc(var_2, ldloc(var_1))
-				i++;
-			} else {
-				// in release builds, var1 is returned directly
-				var2 = var1;
+				pos++;
 			}
-			if (i < body.Instructions.Count
-				&& body.Instructions[i].MatchReturn(out var retVal)
-				&& retVal.MatchLdLoc(var2)) {
+			if (isCompiledWithMono) {
+				// Mono initializes the state field separately:
+				// (but not if it's left at the default value 0)
+				if (body.Instructions[pos].MatchStFld(out var target, out var field, out var value)
+					&& target.MatchLdLoc(var2 ?? var1)
+					&& (value.MatchLdcI4(-2) || value.MatchLdcI4(0)))
+				{
+					stateField = (IField)field.MemberDefinition;
+					isCompiledWithMono = true;
+					pos++;
+				}
+			}
+			if (body.Instructions[pos].MatchReturn(out var retVal)
+				&& retVal.MatchLdLoc(var2 ?? var1)) {
 				// ret(ldloc(var_2))
 				return true;
 			} else {
@@ -256,6 +299,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				&& IsCompilerGeneratorEnumerator(enumeratorType);
 		}
 
+		bool MatchMonoEnumeratorCreationNewObj(ILInstruction inst)
+		{
+			// mcs generates iterators that take no parameters in the ctor
+			if (!(inst is NewObj newObj))
+				return false;
+			if (newObj.Arguments.Count != 0)
+				return false;
+			enumeratorCtor = context.TypeSystem.GetCecil(newObj.Method) as MethodDefinition;
+			enumeratorType = enumeratorCtor?.DeclaringType;
+			return enumeratorType?.DeclaringType == currentType
+				&& IsCompilerGeneratorEnumerator(enumeratorType);
+		}
+
 		public static bool IsCompilerGeneratorEnumerator(TypeDefinition type)
 		{
 			if (!(type?.DeclaringType != null && type.IsCompilerGenerated()))
@@ -286,7 +342,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					stateField = (IField)field.MemberDefinition;
 				}
 			}
-			if (stateField == null)
+			if (stateField == null && !isCompiledWithMono)
 				throw new SymbolicAnalysisFailedException("Could not find stateField");
 		}
 
@@ -387,6 +443,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void ConstructExceptionTable()
 		{
+			if (isCompiledWithMono) {
+				// On mono, we don't need to analyse Dispose() to reconstruct the try-finally structure.
+				disposeMethod = null;
+				finallyMethodToStateRange = null;
+				return;
+			}
+
 			disposeMethod = enumeratorType.Methods.FirstOrDefault(m => m.Name == "System.IDisposable.Dispose");
 			var function = CreateILAst(disposeMethod, context);
 
@@ -398,6 +461,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		[Conditional("DEBUG")]
 		void PrintFinallyMethodStateRanges(BlockContainer bc)
 		{
+			if (finallyMethodToStateRange == null)
+				return;
 			foreach (var (method, stateRange) in finallyMethodToStateRange) {
 				bc.Blocks[0].Instructions.Insert(0, new Nop {
 					Comment = method.Name + " in " + stateRange
@@ -436,6 +501,43 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 
+			if (stateField == null) {
+				// With mono-compiled state machines, it's possible that we haven't discovered the state field
+				// yet because the compiler let it be implicitly initialized to 0.
+				// In this case, we must discover it from the first instruction in MoveNext():
+				if (body.EntryPoint.Instructions[0] is StLoc stloc
+					&& stloc.Value.MatchLdFld(out var target, out var field)
+					&& target.MatchLdThis() && field.Type.IsKnownType(KnownTypeCode.Int32)) {
+					stateField = (IField)field.MemberDefinition;
+				} else {
+					throw new SymbolicAnalysisFailedException("Could not find state field.");
+				}
+			}
+
+			skipFinallyBodies = null;
+			if (isCompiledWithMono) {
+				// Mono uses skipFinallyBodies; find out which variable that is:
+				foreach (var tryFinally in body.Descendants.OfType<TryFinally>()) {
+					if ((tryFinally.FinallyBlock as BlockContainer)?.EntryPoint.Instructions[0] is IfInstruction ifInst) {
+						if (ifInst.Condition.MatchLogicNot(out var arg) && arg.MatchLdLoc(out var v) && v.Type.IsKnownType(KnownTypeCode.Boolean)) {
+							bool isInitializedInEntryBlock = false;
+							for (int i = 0; i < 3; i++) {
+								if (body.EntryPoint.Instructions.ElementAtOrDefault(i) is StLoc stloc
+									&& stloc.Variable == v && stloc.Value.MatchLdcI4(0))
+								{
+									isInitializedInEntryBlock = true;
+									break;
+								}
+							}
+							if (isInitializedInEntryBlock) {
+								skipFinallyBodies = v;
+								break;
+							}
+						}
+					}
+				}
+			}
+
 			PropagateCopiesOfFields(body);
 
 			// Note: body may contain try-catch or try-finally statements that have nested block containers,
@@ -443,10 +545,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// So for reconstructing the control flow, we only consider the blocks directly within body.
 
 			var rangeAnalysis = new StateRangeAnalysis(StateRangeAnalysisMode.IteratorMoveNext, stateField);
+			rangeAnalysis.skipFinallyBodies = skipFinallyBodies;
 			rangeAnalysis.CancellationToken = context.CancellationToken;
 			rangeAnalysis.AssignStateRanges(body, LongSet.Universe);
 
-			var newBody = ConvertBody(body, rangeAnalysis.GetBlockStateSetMapping(body));
+			var newBody = ConvertBody(body, rangeAnalysis);
 			moveNextFunction.Variables.Clear();
 			// release references from old moveNextFunction to instructions that were moved over to newBody
 			moveNextFunction.ReleaseRef();
@@ -505,8 +608,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		///      (on enter) this.state = N;
 		///      (on exit)  this._finallyX();
 		/// </summary>
-		private BlockContainer ConvertBody(BlockContainer oldBody, IEnumerable<(Block, LongSet)> blockStateSets)
+		private BlockContainer ConvertBody(BlockContainer oldBody, StateRangeAnalysis rangeAnalysis)
 		{
+			var blockStateMap = rangeAnalysis.GetBlockStateSetMapping(oldBody);
 			BlockContainer newBody = new BlockContainer();
 			// create all new blocks so that they can be referenced by gotos
 			for (int blockIndex = 0; blockIndex < oldBody.Blocks.Count; blockIndex++) {
@@ -545,6 +649,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// Break up the basic block on a call to a finally method
 						// (this allows us to consider each block individually for try-finally reconstruction)
 						newBlock = SplitBlock(newBlock, oldInst);
+					} else if (oldInst is TryFinally tryFinally && isCompiledWithMono) {
+						// with mono, we have to recurse into try-finally blocks
+						var oldTryBlock = (BlockContainer)tryFinally.TryBlock;
+						var sra = rangeAnalysis.CreateNestedAnalysis();
+						sra.AssignStateRanges(oldTryBlock, LongSet.Universe);
+						tryFinally.TryBlock = ConvertBody(oldTryBlock, sra);
 					}
 					// copy over the instruction to the new block
 					newBlock.Instructions.Add(oldInst);
@@ -570,8 +680,22 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					newBlock.Instructions.Add(new InvalidBranch("Unable to find new state assignment for yield return"));
 					return;
 				}
-				if (!(oldBlock.Instructions[i + 2].MatchReturn(out var retVal)
-					&& retVal.MatchLdcI4(1))) {
+				int pos = i + 2;
+				if (oldBlock.Instructions[pos].MatchStLoc(skipFinallyBodies, out value)) {
+					if (!value.MatchLdcI4(1)) {
+						newBlock.Instructions.Add(new InvalidExpression {
+							ExpectedResultType = StackType.Void,
+							Message = "Unexpected assignment to skipFinallyBodies"
+						});
+					}
+					pos++;
+				}
+				if (oldBlock.Instructions[pos].MatchReturn(out var retVal) && retVal.MatchLdcI4(1)) {
+					// OK, found return directly after state assignment
+				} else if (oldBlock.Instructions[pos].MatchBranch(out var targetBlock) 
+					&& targetBlock.Instructions[0].MatchReturn(out retVal) && retVal.MatchLdcI4(1)) {
+					// OK, jump to common return block (e.g. on Mono)
+				} else {
 					newBlock.Instructions.Add(new InvalidBranch("Unable to find 'return true' for yield return"));
 					return;
 				}
@@ -592,15 +716,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			ILInstruction MakeGoTo(int v)
 			{
-				Block targetBlock = null;
-				foreach (var (block, stateSet) in blockStateSets) {
-					if (stateSet.Contains(v))
-						targetBlock = block;
-				}
-				if (targetBlock != null)
-					return new Branch(newBody.Blocks[targetBlock.ChildIndex]);
-				else
+				Block targetBlock = blockStateMap.GetOrDefault(v);
+				if (targetBlock != null) {
+					if (targetBlock.Parent == oldBody)
+						return new Branch(newBody.Blocks[targetBlock.ChildIndex]);
+					else
+						return new Branch(targetBlock);
+				} else {
 					return new InvalidBranch("Could not find block for state " + v);
+				}
 			}
 
 			void UpdateBranchTargets(ILInstruction inst)

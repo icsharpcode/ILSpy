@@ -488,6 +488,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				sra.CancellationToken = context.CancellationToken;
 				sra.doFinallyBodies = doFinallyBodies;
 				sra.AssignStateRanges(container, LongSet.Universe);
+				var stateToBlockMap = sra.GetBlockStateSetMapping(container);
 
 				foreach (var block in container.Blocks) {
 					context.CancellationToken.ThrowIfCancellationRequested();
@@ -495,7 +496,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// This is likely an 'await' block
 						if (AnalyzeAwaitBlock(block, out var awaiterVar, out var awaiterField, out var state)) {
 							block.Instructions.Add(new Await(new LdLoca(awaiterVar)));
-							Block targetBlock = sra.FindBlock(container, state);
+							Block targetBlock = stateToBlockMap.GetOrDefault(state);
 							if (targetBlock != null) {
 								block.Instructions.Add(new Branch(targetBlock));
 							} else {
@@ -509,7 +510,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					}
 				}
 				// Skip the state dispatcher and directly jump to the initial state
-				var entryPoint = sra.FindBlock(container, initialState);
+				var entryPoint = stateToBlockMap.GetOrDefault(initialState);
 				if (entryPoint != null) {
 					container.Blocks.Insert(0, new Block {
 						Instructions = {
