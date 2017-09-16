@@ -631,7 +631,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>A container of IL blocks.</summary>
 	public sealed partial class BlockContainer : ILInstruction
 	{
-		public override StackType ResultType { get { return StackType.Void; } }
+		public override StackType ResultType { get { return this.ExpectedResultType; } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitBlockContainer(this);

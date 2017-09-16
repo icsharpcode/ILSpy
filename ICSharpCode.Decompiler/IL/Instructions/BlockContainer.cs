@@ -38,6 +38,8 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public static readonly SlotInfo BlockSlot = new SlotInfo("Block", isCollection: true);
 		public readonly InstructionCollection<Block> Blocks;
+
+		public StackType ExpectedResultType { get; }
 		
 		/// <summary>
 		/// Gets the number of 'leave' instructions that target this BlockContainer.
@@ -60,9 +62,10 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public BlockContainer() : base(OpCode.BlockContainer)
+		public BlockContainer(StackType expectedResultType = StackType.Void) : base(OpCode.BlockContainer)
 		{
 			this.Blocks = new InstructionCollection<Block>(this, 0);
+			this.ExpectedResultType = expectedResultType;
 		}
 
 		public override ILInstruction Clone()

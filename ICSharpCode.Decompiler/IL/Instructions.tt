@@ -49,7 +49,7 @@
 			}), CustomConstructor, CustomWriteTo, CustomComputeFlags, CustomVariableName("function"), ResultType("O")
 		),
 		new OpCode("BlockContainer", "A container of IL blocks.",
-			VoidResult, CustomConstructor, CustomVariableName("container"),
+			ResultType("this.ExpectedResultType"), CustomConstructor, CustomVariableName("container"),
 			MatchCondition("Patterns.ListMatch.DoMatch(this.Blocks, o.Blocks, ref match)")),
 		new OpCode("Block", "A block of IL instructions.",
 			CustomConstructor, CustomVariableName("block"),
