@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module TypeAnalysisTests.dll
-// MVID: {7D715AC2-86C7-44AA-B6EB-859E68836342}
+// MVID: {389E1347-98C0-49C1-B484-EDF5FFA1CD16}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x014B0000
+// Image base: 0x027F0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -624,6 +624,25 @@
     IL_000c:  ldloc.0
     IL_000d:  ret
   } // end of method TypeAnalysisTests::UseArrayWithUShort
+
+  .method public hidebysig instance uint8 
+          UseArrayWithCastToUShort(int32 i) cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  2
+    .locals init (uint8 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      uint8[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests::byteArray
+    IL_0007:  ldarg.1
+    IL_0008:  conv.u2
+    IL_0009:  ldelem.u1
+    IL_000a:  stloc.0
+    IL_000b:  br.s       IL_000d
+
+    IL_000d:  ldloc.0
+    IL_000e:  ret
+  } // end of method TypeAnalysisTests::UseArrayWithCastToUShort
 
   .method public hidebysig instance valuetype [mscorlib]System.StringComparison 
           EnumDiffNumber(valuetype [mscorlib]System.StringComparison data) cil managed

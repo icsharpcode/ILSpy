@@ -154,6 +154,13 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
+		[Test]
+		public void PInvoke([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			// This tests needs our own disassembler; ildasm has a bug with marshalinfo.
+			Run(cscOptions: cscOptions, asmOptions: AssemblerOptions.UseOwnDisassembler);
+		}
+
 		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName);
@@ -173,7 +180,7 @@ namespace ICSharpCode.Decompiler.Tests
 				CompilerResults output = null;
 				try {
 					output = Tester.CompileCSharp(csFile, cscOptions | CompilerOptions.Library);
-					Tester.Disassemble(output.PathToAssembly, ilFile);
+					Tester.Disassemble(output.PathToAssembly, ilFile, asmOptions);
 				} finally {
 					if (output != null)
 						output.TempFiles.Delete();

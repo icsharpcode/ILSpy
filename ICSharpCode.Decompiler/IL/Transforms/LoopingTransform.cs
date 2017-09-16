@@ -22,7 +22,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
-	/// Repeats the child transforms until the ILAst no longer changes.
+	/// Repeats the child transforms until the ILAst no longer changes (fixpoint iteration).
 	/// </summary>
 	public class LoopingBlockTransform : IBlockTransform
 	{

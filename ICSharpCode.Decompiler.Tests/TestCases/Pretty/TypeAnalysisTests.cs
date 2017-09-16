@@ -184,6 +184,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return this.byteArray[i];
 		}
 
+		public byte UseArrayWithCastToUShort(int i)
+		{
+			// Unchecked cast = truncate to 16 bits
+			return this.byteArray[(ushort)i];
+		}
+
 		public StringComparison EnumDiffNumber(StringComparison data)
 		{
 			return data - 1;

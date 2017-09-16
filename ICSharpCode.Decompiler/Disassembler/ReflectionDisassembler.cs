@@ -433,11 +433,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 					if (ami.ElementType != NativeType.Max)
 						WriteNativeType(ami.ElementType);
 					output.Write('[');
-					if (ami.SizeParameterMultiplier == 0) {
+					if (ami.Size >= 0) {
 						output.Write(ami.Size.ToString());
-					} else {
-						if (ami.Size >= 0)
-							output.Write(ami.Size.ToString());
+					}
+					if (ami.SizeParameterMultiplier != 0 && ami.SizeParameterIndex >= 0) {
 						output.Write(" + ");
 						output.Write(ami.SizeParameterIndex.ToString());
 					}

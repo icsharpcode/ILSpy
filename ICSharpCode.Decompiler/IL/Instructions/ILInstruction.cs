@@ -96,6 +96,16 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public abstract StackType ResultType { get; }
 		
+		/// <summary>
+		/// Gets the underlying result type of the value produced by this instruction.
+		/// 
+		/// If this is a lifted operation, the ResultType will be `StackType.O` (because Nullable{T} is a struct),
+		/// and UnderlyingResultType will be result type of the corresponding non-lifted operation.
+		/// 
+		/// If this is not a lifted operation, the underlying result type is equal to the result type.
+		/// </summary>
+		public virtual StackType UnderlyingResultType { get => ResultType; }
+		
 		internal static StackType CommonResultType(StackType a, StackType b)
 		{
 			if (a == StackType.I || b == StackType.I)

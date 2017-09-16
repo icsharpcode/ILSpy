@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						new TransformAssignment(),
 						new CopyPropagation(),
 						new LoopingBlockTransform(
-							// per-block transforms that depend on each other, and thus need to loop.
+							// per-block transforms that depend on each other, and thus need to loop (fixpoint iteration).
 							// Pretty much all transforms that open up new expression inlining
 							// opportunities belong in this category.
 							new ExpressionTransforms(),

@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly ucb5gp0y
+.assembly '5lntuoy2'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module ucb5gp0y.dll
-// MVID: {CDCB369D-F3A9-41EF-A248-EFB62F8B25F3}
+.module '5lntuoy2.dll'
+// MVID: {85A70DA1-7D32-4ED1-89B1-4720D974D969}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00BA0000
+// Image base: 0x05730000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -436,6 +436,19 @@
     IL_0007:  ldelem.u1
     IL_0008:  ret
   } // end of method TypeAnalysisTests::UseArrayWithUShort
+
+  .method public hidebysig instance uint8 
+          UseArrayWithCastToUShort(int32 i) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  ldfld      uint8[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.TypeAnalysisTests::byteArray
+    IL_0006:  ldarg.1
+    IL_0007:  conv.u2
+    IL_0008:  ldelem.u1
+    IL_0009:  ret
+  } // end of method TypeAnalysisTests::UseArrayWithCastToUShort
 
   .method public hidebysig instance valuetype [mscorlib]System.StringComparison 
           EnumDiffNumber(valuetype [mscorlib]System.StringComparison data) cil managed

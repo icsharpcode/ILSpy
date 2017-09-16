@@ -24,10 +24,12 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Transforms;
+using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.TypeSystem;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -55,6 +57,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		UseDebug = 0x1,
 		Force32Bit = 0x2,
 		Library = 0x4,
+		UseOwnDisassembler = 0x8,
 	}
 
 	public static class Tester
@@ -101,8 +104,25 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return outputFile;
 		}
 		
-		public static string Disassemble(string sourceFileName, string outputFile)
+		public static string Disassemble(string sourceFileName, string outputFile, AssemblerOptions asmOptions)
 		{
+			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler)) {
+				using (ModuleDefinition module = ModuleDefinition.ReadModule(sourceFileName))
+				using (var writer = new StreamWriter(outputFile)) {
+					module.Name = Path.GetFileNameWithoutExtension(outputFile);
+					var output = new PlainTextOutput(writer);
+					ReflectionDisassembler rd = new ReflectionDisassembler(output, false, CancellationToken.None);
+					rd.WriteAssemblyReferences(module);
+					if (module.Assembly != null)
+						rd.WriteAssemblyHeader(module.Assembly);
+					output.WriteLine();
+					rd.WriteModuleHeader(module);
+					output.WriteLine();
+					rd.WriteModuleContents(module);
+				}
+				return outputFile;
+			}
+
 			string ildasmPath = SdkUtility.GetSdkPath("ildasm.exe");
 			
 			ProcessStartInfo info = new ProcessStartInfo(ildasmPath);
