@@ -107,7 +107,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array) { ILRange = inst.ILRange });
 			}
 		}
-		
+
+		protected internal override void VisitNewArr(NewArr inst)
+		{
+			base.VisitNewArr(inst);
+			foreach (ILInstruction index in inst.Indices) {
+				if (index is Conv conv && conv.ResultType == StackType.I
+					&& (conv.Kind == ConversionKind.Truncate && conv.CheckForOverflow
+						|| conv.Kind == ConversionKind.ZeroExtend || conv.Kind == ConversionKind.SignExtend)
+				) {
+					context.Step("newarr(conv(X)) => newarr(X)", inst);
+					index.ReplaceWith(conv.Argument);
+				}
+			}
+		}
+
 		protected internal override void VisitLogicNot(LogicNot inst)
 		{
 			ILInstruction arg, lhs, rhs;

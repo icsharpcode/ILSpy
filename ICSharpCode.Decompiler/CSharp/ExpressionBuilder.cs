@@ -1376,8 +1376,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		TranslatedExpression TranslateArrayIndex(ILInstruction i)
 		{
-			var stackType = i.ResultType == StackType.I4 ? KnownTypeCode.Int32 : KnownTypeCode.Int64;
-			return Translate(i).ConvertTo(compilation.FindType(stackType), this);
+			var input = Translate(i);
+			KnownTypeCode targetType;
+			if (i.ResultType == StackType.I4) {
+				if (input.Type.IsSmallIntegerType() && input.Type.Kind != TypeKind.Enum) {
+					return input; // we don't need a cast, just let small integers be promoted to int
+				}
+				targetType = input.Type.GetSign() == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32;
+			} else {
+				targetType = input.Type.GetSign() == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64;
+			}
+			return input.ConvertTo(compilation.FindType(targetType), this);
 		}
 		
 		protected internal override TranslatedExpression VisitUnboxAny(UnboxAny inst, TranslationContext context)
