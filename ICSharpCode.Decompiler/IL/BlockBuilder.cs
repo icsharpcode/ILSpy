@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL
 
 				ILInstruction filter;
 				if (eh.HandlerType == Mono.Cecil.Cil.ExceptionHandlerType.Filter) {
-					var filterBlock = new BlockContainer();
+					var filterBlock = new BlockContainer(StackType.I4);
 					filterBlock.ILRange = new Interval(eh.FilterStart.Offset, eh.HandlerStart.Offset);
 					filterBlock.Blocks.Add(new Block());
 					handlerContainers.Add(filterBlock.ILRange.Start, filterBlock);

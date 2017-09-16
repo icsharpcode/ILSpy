@@ -278,6 +278,7 @@
     <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="IL\DetectedLoop.cs" />
     <Compile Include="IL\Transforms\AssignVariableNames.cs" />
+    <Compile Include="IL\Transforms\DetectCatchWhenConditionBlocks.cs" />
     <Compile Include="IL\Transforms\NullCoalescingTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />

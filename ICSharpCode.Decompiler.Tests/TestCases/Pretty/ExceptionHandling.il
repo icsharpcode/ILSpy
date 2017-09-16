@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly gqt5jzz5
+.assembly ejk2wcey
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module gqt5jzz5.dll
-// MVID: {1567B13E-0DA5-4C78-90CC-FF153FC2F5EA}
+.module ejk2wcey.dll
+// MVID: {FBD2FAE4-D125-4C61-B03A-EB51D0392AD4}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x017B0000
+// Image base: 0x02F20000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -111,4 +111,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../Tests/TestCases/Pretty\ExceptionHandling.res
+// WARNING: Created Win32 resource file ../../../TestCases/Pretty\ExceptionHandling.res

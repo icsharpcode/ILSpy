@@ -46,7 +46,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool modified = false;
 			int i = 0;
 			while (i < block.Instructions.Count) {
-				if (InlineOneIfPossible(block, i, aggressive: false, context: context)) {
+				if (InlineOneIfPossible(block, i, aggressive: IsCatchWhenBlock(block), context: context)) {
 					modified = true;
 					i = Math.Max(0, i - 1);
 					// Go back one step
@@ -56,7 +56,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return modified;
 		}
-		
+
+		static bool IsCatchWhenBlock(Block block)
+		{
+			return block.Parent is BlockContainer container && container.Parent is TryCatchHandler handler
+				&& handler.Filter == container && block == container.EntryPoint;
+		}
+
 		/// <summary>
 		/// Inlines instructions before pos into block.Instructions[pos].
 		/// </summary>

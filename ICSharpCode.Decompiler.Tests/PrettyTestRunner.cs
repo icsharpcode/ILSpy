@@ -92,7 +92,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void ExceptionHandling([Values(CompilerOptions.None, CompilerOptions.Optimize)] CompilerOptions cscOptions)
+		public void ExceptionHandling([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
 		}

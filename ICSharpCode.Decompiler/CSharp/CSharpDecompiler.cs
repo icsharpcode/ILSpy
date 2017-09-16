@@ -73,6 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
 				new YieldReturnDecompiler(), // must run after inlining but before loop detection
 				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
+				new DetectCatchWhenConditionBlocks(), // must run after inlining but before loop detection
 				new DetectExitPoints(canIntroduceExitForReturn: false),
 				new BlockILTransform {
 					PostOrderTransforms = {

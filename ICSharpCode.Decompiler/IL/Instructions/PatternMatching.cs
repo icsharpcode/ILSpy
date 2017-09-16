@@ -161,7 +161,18 @@ namespace ICSharpCode.Decompiler.IL
 			value = null;
 			return false;
 		}
-		
+
+		public bool MatchLeave(BlockContainer targetContainer, out ILInstruction value)
+		{
+			var inst = this as Leave;
+			if (inst != null && targetContainer == inst.TargetContainer) {
+				value = inst.Value;
+				return true;
+			}
+			value = null;
+			return false;
+		}
+
 		public bool MatchLeave(out BlockContainer targetContainer)
 		{
 			var inst = this as Leave;
@@ -280,7 +291,31 @@ namespace ICSharpCode.Decompiler.IL
 			right = null;
 			return false;
 		}
-		
+
+		/// <summary>
+		/// Matches comp(left != right) or logic.not(comp(left == right)).
+		/// </summary>
+		public bool MatchCompNotEquals(out ILInstruction left, out ILInstruction right)
+		{
+			ComparisonKind op;
+			Comp comp;
+			if (this is LogicNot logicNot) {
+				op = ComparisonKind.Equality;
+				comp = logicNot.Argument as Comp;
+			} else {
+				op = ComparisonKind.Inequality;
+				comp = this as Comp;
+			}
+			if (comp != null && comp.Kind == op) {
+				left = comp.Left;
+				right = comp.Right;
+				return true;
+			}
+			left = null;
+			right = null;
+			return false;
+		}
+
 		public bool MatchLdsFld(IField field)
 		{
 			if (this is LdObj ldobj && ldobj.Target is LdsFlda ldsflda) {

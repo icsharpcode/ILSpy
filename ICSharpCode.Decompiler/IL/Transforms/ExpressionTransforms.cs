@@ -320,4 +320,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 	}
+
+		protected internal override void VisitTryCatchHandler(TryCatchHandler inst)
+		{
+			base.VisitTryCatchHandler(inst);
+			if (inst.Filter is BlockContainer filterContainer && filterContainer.Blocks.Count == 1) {
+				TransformCatchWhen(inst, filterContainer.EntryPoint);
+			}
+			if (inst.Body is BlockContainer catchContainer)
+				TransformCatchVariable(inst, catchContainer.EntryPoint);
+		}
+
+		/// <summary>
+		/// Transform local exception variable.
+		/// </summary>
+		void TransformCatchVariable(TryCatchHandler handler, Block entryPoint)
+		{
+			if (!entryPoint.Instructions[0].MatchStLoc(out var exceptionVar, out var exceptionSlotLoad))
+				return;
+			if (!exceptionVar.IsSingleDefinition || exceptionVar.Kind != VariableKind.Local)
+				return;
+			if (!exceptionSlotLoad.MatchLdLoc(handler.Variable) || !handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
+				return;
+			handler.Variable = exceptionVar;
+			exceptionVar.Kind = VariableKind.Exception;
+			entryPoint.Instructions.RemoveAt(0);
+		}
+
+		/// <summary>
+		/// Inline condition from catch-when condition BlockContainer, if possible.
+		/// </summary>
+		void TransformCatchWhen(TryCatchHandler handler, Block entryPoint)
+		{
+			TransformCatchVariable(handler, entryPoint);
+			if (entryPoint.Instructions.Count == 1 && entryPoint.Instructions[0].MatchLeave(out _, out var condition)) {
+				handler.Filter = condition;
+			}
+		}
+	}
 }
