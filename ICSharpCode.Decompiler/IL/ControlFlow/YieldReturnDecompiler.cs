@@ -17,7 +17,6 @@
 // DEALINGS IN THE SOFTWARE.
 
 using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -26,8 +25,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -97,6 +94,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		ILVariable skipFinallyBodies;
 
+		/// <summary>
+		/// Set of variables might hold copies of the generated state field.
+		/// </summary>
+		HashSet<ILVariable> cachedStateVars;
+
 		#region Run() method
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -113,6 +115,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			this.decompiledFinallyMethods.Clear();
 			this.returnStores.Clear();
 			this.skipFinallyBodies = null;
+			this.cachedStateVars = null;
 			if (!MatchEnumeratorCreationPattern(function))
 				return;
 			BlockContainer newBody;
@@ -159,9 +162,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.Step("Translate fields to local accesses", function);
 			TranslateFieldsToLocalAccess(function, function, fieldToParameterMap);
 
-			// On mono, we still need to remove traces of the state variable:
-			if (isCompiledWithMono && fieldToParameterMap.TryGetValue(stateField, out var stateVar)) {
-				returnStores.AddRange(stateVar.StoreInstructions.OfType<StLoc>());
+			CleanSkipFinallyBodies(function);
+
+			// On mono, we still need to remove traces of the state variable(s):
+			if (isCompiledWithMono) {
+				if (fieldToParameterMap.TryGetValue(stateField, out var stateVar)) {
+					returnStores.AddRange(stateVar.StoreInstructions.OfType<StLoc>());
+				}
+				foreach (var cachedStateVar in cachedStateVars) {
+					returnStores.AddRange(cachedStateVar.StoreInstructions.OfType<StLoc>());
+				}
 			}
 
 			if (returnStores.Count > 0) {
@@ -548,6 +558,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			rangeAnalysis.skipFinallyBodies = skipFinallyBodies;
 			rangeAnalysis.CancellationToken = context.CancellationToken;
 			rangeAnalysis.AssignStateRanges(body, LongSet.Universe);
+			cachedStateVars = rangeAnalysis.CachedStateVars.ToHashSet();
 
 			var newBody = ConvertBody(body, rangeAnalysis);
 			moveNextFunction.Variables.Clear();
@@ -964,5 +975,36 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return null;
 		}
 		#endregion
+
+
+		/// <summary>
+		/// Eliminates usage of doFinallyBodies
+		/// </summary>
+		private void CleanSkipFinallyBodies(ILFunction function)
+		{
+			if (skipFinallyBodies == null) {
+				return; // only mono-compiled code uses skipFinallyBodies
+			}
+			context.StepStartGroup("CleanSkipFinallyBodies", function);
+			Block entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(function.Body as BlockContainer);
+			if (skipFinallyBodies.StoreInstructions.Count != 0 || skipFinallyBodies.AddressCount != 0) {
+				// misdetected another variable as doFinallyBodies?
+				// Fortunately removing the initial store of 0 is harmless, as we
+				// default-initialize the variable on uninit uses
+				return;
+			}
+			foreach (var tryFinally in function.Descendants.OfType<TryFinally>()) {
+				entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(tryFinally.FinallyBlock as BlockContainer);
+				if (entryPoint?.Instructions[0] is IfInstruction ifInst) {
+					if (ifInst.Condition is LogicNot logicNot && logicNot.Argument.MatchLdLoc(skipFinallyBodies)) {
+						context.Step("Remove if (skipFinallyBodies) from try-finally", tryFinally);
+						// condition will always be true now that we're using 'yield' instructions
+						entryPoint.Instructions[0] = ifInst.TrueInst;
+						entryPoint.Instructions.RemoveRange(1, entryPoint.Instructions.Count - 1);
+					}
+				}
+			}
+			context.StepEndGroup(keepIfEmpty: true);
+		}
 	}
 }

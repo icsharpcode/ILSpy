@@ -863,7 +863,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.StepEndGroup(keepIfEmpty: true);
 		}
 
-		Block GetBodyEntryPoint(BlockContainer body)
+		internal static Block GetBodyEntryPoint(BlockContainer body)
 		{
 			if (body == null)
 				return null;
