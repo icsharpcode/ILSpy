@@ -59,6 +59,7 @@
     <Compile Include="TestCases\Correctness\TrickyTypes.cs" />
     <Compile Include="TestCases\ILPretty\Issue379.cs" />
     <Compile Include="TestCases\Pretty\Async.cs" />
+    <Compile Include="TestCases\Pretty\CheckedUnchecked.cs" />
     <Compile Include="TestCases\Pretty\LiftedOperators.cs" />
     <Compile Include="PrettyTestRunner.cs" />
     <Compile Include="RoundtripAssembly.cs" />

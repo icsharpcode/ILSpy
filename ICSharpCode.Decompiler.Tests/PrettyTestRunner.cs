@@ -145,6 +145,15 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
+		[Test]
+		public void CheckedUnchecked([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			if (cscOptions.HasFlag(CompilerOptions.UseRoslyn) && cscOptions.HasFlag(CompilerOptions.Optimize)) {
+				Assert.Ignore("Roslyn opt replaces locals with stack slots, resulting in S_* variable names.");
+			}
+			Run(cscOptions: cscOptions);
+		}
+
 		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName);
