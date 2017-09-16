@@ -298,6 +298,9 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.StackSlot:
 					output.Write("stack ");
 					break;
+				case VariableKind.InitializerTarget:
+					output.Write("initializer ");
+					break;
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
