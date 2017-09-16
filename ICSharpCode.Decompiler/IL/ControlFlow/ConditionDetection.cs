@@ -332,10 +332,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		private bool IsBranchOrLeave(ILInstruction inst)
 		{
-			switch (inst.OpCode) {
-				case OpCode.Branch:
-				case OpCode.Leave:
+			switch (inst) {
+				case Branch branch:
 					return true;
+				case Leave leave:
+					// only void returns are supported as 'exit points'
+					return !leave.Value.MatchNop();
 				default:
 					return false;
 			}
