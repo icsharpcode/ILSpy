@@ -80,7 +80,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					default:
 						return false;
 				}
-				context.Step("CollectionOrObjectInitializer", inst);
 				int initializerItemsCount = 0;
 				var blockType = initializerBlock?.Type ?? BlockType.CollectionInitializer;
 				var possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
@@ -98,6 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (initializerItemsCount <= 0)
 					return false;
+				context.Step("CollectionOrObjectInitializer", inst);
 				ILVariable finalSlot;
 				if (initializerBlock == null) {
 					initializerBlock = new Block(blockType);
