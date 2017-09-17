@@ -276,7 +276,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			
 			var parent = loadInst.Parent;
-			if (parent is ILiftableInstruction liftable && liftable.IsLifted && NullableType.IsNullable(v.Type)) {
+			if (parent is ILiftableInstruction liftable && liftable.IsLifted) {
 				return true; // inline into lifted operators
 			}
 			// decide based on the target into which we are inlining

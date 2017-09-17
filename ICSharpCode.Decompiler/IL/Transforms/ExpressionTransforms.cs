@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			base.VisitIfInstruction(inst);
 
 			inst = HandleConditionalOperator(inst);
-			NullableLiftingTransform.Run(inst, context);
+			new NullableLiftingTransform(context).Run(inst);
 		}
 
 		IfInstruction HandleConditionalOperator(IfInstruction inst)

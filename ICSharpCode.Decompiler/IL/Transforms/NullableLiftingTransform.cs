@@ -16,88 +16,192 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-	class NullableLiftingTransform
+	/// <summary>
+	/// Nullable lifting gets run in two places:
+	///  * the usual form looks at an if-else, and runs within the ExpressionTransforms
+	///  * the NullableLiftingBlockTransform handles the cases where Roslyn generates
+	///    two 'ret' statements for the null/non-null cases of a lifted operator.
+	/// </summary>
+	struct NullableLiftingTransform
 	{
-		public static void Run(IfInstruction inst, ILTransformContext context)
+		readonly ILTransformContext context;
+		List<ILVariable> nullableVars;
+
+		public NullableLiftingTransform(ILTransformContext context)
 		{
-			// if (call Nullable<inputUType>.get_HasValue(ldloca v))
-			//          newobj Nullable<utype>.ctor(...)
-			// else
-			//          default.value System.Nullable<utype>[[System.Int32]]
-			if (MatchHasValueCall(inst.Condition, out var v)
-				&& MatchNullableCtor(inst.TrueInst, out var utype, out var arg)
-				&& MatchNull(inst.FalseInst, utype))
-			{
-				ILInstruction lifted;
-				if (MatchGetValueOrDefault(arg, v)) {
-					// v != null ? call GetValueOrDefault(ldloca v) : null
-					// => conv.nop.lifted(ldloc v)
-					// This case is handled separately from LiftUnary() because
-					// that doesn't introduce nop-conversions.
-					context.Step("if => conv.nop.lifted", inst);
-					var inputUType = NullableType.GetUnderlyingType(v.Type);
-					lifted = new Conv(new LdLoc(v), inputUType.GetStackType(), inputUType.GetSign(), utype.ToPrimitiveType(), false) {
-						IsLifted = true,
-						ILRange = inst.ILRange
-					};
-				} else {
-					lifted = LiftUnary(arg, v, context);
-				}
-				if (lifted != null) {
-					Debug.Assert(IsLifted(lifted));
-					inst.ReplaceWith(lifted);
-				}
-			}
+			this.context = context;
+			this.nullableVars = null;
 		}
 
+		#region Run
 		/// <summary>
-		/// Lifting for unary expressions.
-		/// Recurses into the instruction and checks that everything can be lifted,
-		/// and that the chain ends with `call GetValueOrDefault(ldloca inputVar)`.
+		/// Main entry point into the normal code path of this transform.
+		/// Called by expression transform.
 		/// </summary>
-		static ILInstruction LiftUnary(ILInstruction inst, ILVariable inputVar, ILTransformContext context)
+		public bool Run(IfInstruction ifInst)
 		{
-			if (MatchGetValueOrDefault(inst, inputVar)) {
-				// We found the end: the whole chain can be lifted.
-				context.Step("NullableLiftingTransform.LiftUnary", inst);
+			if (!context.Settings.LiftNullables)
+				return false;
+			// Detect pattern:
+			// if (condition)
+			//      newobj Nullable<utype>..ctor(exprToLift)
+			// else
+			//      default.value System.Nullable<utype>
+			if (!AnalyzeTopLevelCondition(ifInst.Condition, out bool negativeCondition))
+				return false;
+			ILInstruction trueInst = negativeCondition ? ifInst.FalseInst : ifInst.TrueInst;
+			ILInstruction falseInst = negativeCondition ? ifInst.TrueInst : ifInst.FalseInst;
+			var lifted = Lift(ifInst, trueInst, falseInst);
+			if (lifted != null) {
+				ifInst.ReplaceWith(lifted);
+				return true;
+			}
+			return false;
+		}
+
+		public bool RunBlock(Block block)
+		{
+			if (!context.Settings.LiftNullables)
+				return false;
+			//  if (!condition) Block {
+			//    leave IL_0000 (default.value System.Nullable`1[[System.Int64]])
+			//  }
+			//  leave IL_0000 (newobj .ctor(exprToLift))
+			IfInstruction ifInst;
+			if (block.Instructions.Last() is Leave elseLeave) {
+				ifInst = block.Instructions.SecondToLastOrDefault() as IfInstruction;
+				if (ifInst == null || !ifInst.FalseInst.MatchNop())
+					return false;
+			} else {
+				return false;
+			}
+			if (!(Block.Unwrap(ifInst.TrueInst) is Leave thenLeave))
+				return false;
+			if (elseLeave.TargetContainer != thenLeave.TargetContainer)
+				return false;
+			if (!AnalyzeTopLevelCondition(ifInst.Condition, out bool negativeCondition))
+				return false;
+			ILInstruction trueInst = negativeCondition ? elseLeave.Value : thenLeave.Value;
+			ILInstruction falseInst = negativeCondition ? thenLeave.Value : elseLeave.Value;
+			var lifted = Lift(ifInst, trueInst, falseInst);
+			if (lifted != null) {
+				thenLeave.Value = lifted;
+				ifInst.ReplaceWith(thenLeave);
+				block.Instructions.Remove(elseLeave);
+				return true;
+			}
+			return false;
+		}
+		#endregion
+
+		#region AnalyzeCondition
+		bool AnalyzeTopLevelCondition(ILInstruction condition, out bool negativeCondition)
+		{
+			negativeCondition = false;
+			while (condition.MatchLogicNot(out var arg)) {
+				condition = arg;
+				negativeCondition = !negativeCondition;
+			}
+			return AnalyzeCondition(condition);
+		}
+
+		bool AnalyzeCondition(ILInstruction condition)
+		{
+			if (MatchHasValueCall(condition, out var v)) {
+				if (nullableVars == null)
+					nullableVars = new List<ILVariable>();
+				nullableVars.Add(v);
+				return true;
+			} else if (condition is BinaryNumericInstruction bitand) {
+				if (!(bitand.Operator == BinaryNumericOperator.BitAnd && bitand.ResultType == StackType.I4))
+					return false;
+				return AnalyzeCondition(bitand.Left) && AnalyzeCondition(bitand.Right);
+			}
+			return false;
+		}
+		#endregion
+
+		#region DoLift
+		ILInstruction Lift(IfInstruction ifInst, ILInstruction trueInst, ILInstruction falseInst)
+		{
+			if (!MatchNullableCtor(trueInst, out var utype, out var exprToLift))
+				return null;
+			if (!MatchNull(falseInst, utype))
+				return null;
+			ILInstruction lifted;
+			if (nullableVars.Count == 1 && MatchGetValueOrDefault(exprToLift, nullableVars[0])) {
+				// v != null ? call GetValueOrDefault(ldloca v) : null
+				// => conv.nop.lifted(ldloc v)
+				// This case is handled separately from DoLift() because
+				// that doesn't introduce nop-conversions.
+				context.Step("if => conv.nop.lifted", ifInst);
+				var inputUType = NullableType.GetUnderlyingType(nullableVars[0].Type);
+				lifted = new Conv(
+					new LdLoc(nullableVars[0]),
+					inputUType.GetStackType(), inputUType.GetSign(), utype.ToPrimitiveType(),
+					checkForOverflow: false,
+					isLifted: true
+				) {
+					ILRange = ifInst.ILRange
+				};
+			} else {
+				context.Step("NullableLiftingTransform.DoLift", ifInst);
+				lifted = DoLift(exprToLift);
+			}
+			if (lifted != null) {
+				Debug.Assert(lifted is ILiftableInstruction liftable && liftable.IsLifted
+					&& liftable.UnderlyingResultType == exprToLift.ResultType);
+			}
+			return lifted;
+		}
+
+		// Lifts the specified instruction.
+		// Creates a new lifted instruction without modifying the input instruction.
+		// If lifting fails, returns null.
+		ILInstruction DoLift(ILInstruction inst)
+		{
+			if (MatchGetValueOrDefault(inst, out ILVariable inputVar) && nullableVars.Contains(inputVar)) {
+				// n.GetValueOrDefault() lifted => n.
 				return new LdLoc(inputVar) { ILRange = inst.ILRange };
 			} else if (inst is Conv conv) {
-				var arg = LiftUnary(conv.Argument, inputVar, context);
+				var arg = DoLift(conv.Argument);
 				if (arg != null) {
-					conv.Argument = arg;
-					conv.IsLifted = true;
-					return conv;
+					return new Conv(arg, conv.InputType, conv.InputSign, conv.TargetType, conv.CheckForOverflow, isLifted: true) {
+						ILRange = conv.ILRange
+					};
 				}
 			} else if (inst is BinaryNumericInstruction binary) {
-				if (SemanticHelper.IsPure(binary.Right.Flags)) {
-					var arg = LiftUnary(binary.Left, inputVar, context);
-					if (arg != null) {
-						binary.Left = arg;
-						binary.IsLifted = true;
-						return binary;
-					}
+				var left = DoLift(binary.Left);
+				var right = DoLift(binary.Right);
+				if (left != null && right == null && SemanticHelper.IsPure(binary.Right.Flags)) {
+					// Embed non-nullable pure expression in lifted expression.
+					right = binary.Right.Clone();
 				}
-				if (SemanticHelper.IsPure(binary.Left.Flags)) {
-					var arg = LiftUnary(binary.Right, inputVar, context);
-					if (arg != null) {
-						binary.Right = arg;
-						binary.IsLifted = true;
-						return binary;
-					}
+				if (left == null && right != null && SemanticHelper.IsPure(binary.Left.Flags)) {
+					// Embed non-nullable pure expression in lifted expression.
+					left = binary.Left.Clone();
+				}
+				if (left != null && right != null) {
+					return new BinaryNumericInstruction(
+						binary.Operator, left, right,
+						binary.LeftInputType, binary.RightInputType,
+						binary.CheckForOverflow, binary.Sign,
+						isLifted: true
+					) {
+						ILRange = binary.ILRange
+					};
 				}
 			}
 			return null;
 		}
-
-		static bool IsLifted(ILInstruction inst)
-		{
-			return inst is ILiftableInstruction liftable && liftable.IsLifted;
-		}
+		#endregion
 
 		#region Match...Call
 		/// <summary>
@@ -185,5 +289,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return MatchNull(inst, out var utype) && utype.Equals(underlyingType);
 		}
 		#endregion
+	}
+
+	class NullableLiftingBlockTransform : IBlockTransform
+	{
+		public void Run(Block block, BlockTransformContext context)
+		{
+			new NullableLiftingTransform(context).RunBlock(block);
+		}
 	}
 }

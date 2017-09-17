@@ -49,16 +49,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool TransformNullCoalescing(Block block, int i)
 		{
-			if (i == 0) return false;
-			if (!(block.Instructions[i] is IfInstruction ifInstruction) || !(block.Instructions[i - 1] is StLoc stloc) || stloc.Variable.Kind != VariableKind.StackSlot)
+			if (i == 0)
 				return false;
-			if (!ifInstruction.Condition.MatchCompEquals(out var left, out var right) || !left.MatchLdLoc(stloc.Variable) || !right.MatchLdNull())
+			if (!(block.Instructions[i - 1] is StLoc stloc))
 				return false;
-			if (!ifInstruction.FalseInst.MatchNop() || !(ifInstruction.TrueInst is Block b) || b.Instructions.Count != 1 || !(b.Instructions[0] is StLoc fallbackStore) || fallbackStore.Variable != stloc.Variable)
+			if (stloc.Variable.Kind != VariableKind.StackSlot)
 				return false;
-			context.Step("TransformNullCoalescing", stloc);
-			stloc.Value = new NullCoalescingInstruction(stloc.Value, fallbackStore.Value);
-			return true;
+			if (!block.Instructions[i].MatchIfInstruction(out var condition, out var trueInst))
+				return false;
+			trueInst = Block.Unwrap(trueInst);
+			if (condition.MatchCompEquals(out var left, out var right) && left.MatchLdLoc(stloc.Variable) && right.MatchLdNull()
+				&& trueInst.MatchStLoc(stloc.Variable, out var fallbackValue)
+			) {
+				context.Step("TransformNullCoalescing", stloc);
+				stloc.Value = new NullCoalescingInstruction(stloc.Value, fallbackValue);
+				return true; // returning true removes the if instruction
+			}
+			return false;
 		}
 	}
 }

@@ -103,7 +103,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// If the value is null, the conversion evaluates to default(TargetType?).
 		/// (this result type is underspecified, since there may be multiple C# types for the TargetType)
 		/// </remarks>
-		public bool IsLifted { get; set; }
+		public bool IsLifted { get; }
 
 		/// <summary>
 		/// Gets the stack type of the input type.
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 		}
 
-		public Conv(ILInstruction argument, StackType inputType, Sign inputSign, PrimitiveType targetType, bool checkForOverflow)
+		public Conv(ILInstruction argument, StackType inputType, Sign inputSign, PrimitiveType targetType, bool checkForOverflow, bool isLifted = false)
 			: base(OpCode.Conv, argument)
 		{
 			bool needsSign = checkForOverflow || targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8;
@@ -149,6 +149,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.TargetType = targetType;
 			this.CheckForOverflow = checkForOverflow;
 			this.Kind = GetConversionKind(targetType, this.InputType, this.InputSign);
+			this.IsLifted = isLifted;
 		}
 
 		internal override void CheckInvariant(ILPhase phase)

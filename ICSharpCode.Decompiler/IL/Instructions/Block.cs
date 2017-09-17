@@ -234,6 +234,19 @@ namespace ICSharpCode.Decompiler.IL
 				return null;
 			}
 		}
+
+		/// <summary>
+		/// If inst is a block consisting of a single instruction, returns that instruction.
+		/// Otherwise, returns the input instruction.
+		/// </summary>
+		public static ILInstruction Unwrap(ILInstruction inst)
+		{
+			if (inst is Block block) {
+				if (block.Instructions.Count == 1 && block.finalInstruction.MatchNop())
+					return block.Instructions[0];
+			}
+			return inst;
+		}
 	}
 	
 	public enum BlockType {

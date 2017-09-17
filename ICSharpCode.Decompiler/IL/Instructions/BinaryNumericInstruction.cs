@@ -72,18 +72,24 @@ namespace ICSharpCode.Decompiler.IL
 		/// If either input is null, the instruction evaluates to default(UnderlyingResultType?).
 		/// (this result type is underspecified, since there may be multiple C# types for the stack type)
 		/// </remarks>
-		public bool IsLifted { get; set; }
+		public bool IsLifted { get; }
 
 		readonly StackType resultType;
 
 		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
+			: this(op, left, right, left.ResultType, right.ResultType, checkForOverflow, sign)
+		{
+		}
+
+		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right, StackType leftInputType, StackType rightInputType, bool checkForOverflow, Sign sign, bool isLifted = false)
 			: base(OpCode.BinaryNumericInstruction, left, right)
 		{
 			this.CheckForOverflow = checkForOverflow;
 			this.Sign = sign;
 			this.Operator = op;
-			this.LeftInputType = left.ResultType;
-			this.RightInputType = right.ResultType;
+			this.LeftInputType = leftInputType;
+			this.RightInputType = rightInputType;
+			this.IsLifted = isLifted;
 			this.resultType = ComputeResultType(op, LeftInputType, RightInputType);
 			Debug.Assert(resultType != StackType.Unknown);
 		}

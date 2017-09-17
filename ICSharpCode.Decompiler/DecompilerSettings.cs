@@ -102,7 +102,22 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
+		bool liftNullables = true;
+
+		/// <summary>
+		/// Use lifted operators for nullables.
+		/// </summary>
+		public bool LiftNullables {
+			get { return liftNullables; }
+			set {
+				if (liftNullables != value) {
+					liftNullables = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool automaticProperties = true;
 		
 		/// <summary>

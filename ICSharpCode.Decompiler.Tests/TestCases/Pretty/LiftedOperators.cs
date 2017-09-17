@@ -814,6 +814,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return nf + nd + f;
 		}
+
+		static long? InArithmetic3(int? a, long? b, int? c, long d)
+		{
+			return a + b + c + d;
+		}
+
+		long? InReturnAfterArithmetic(int? a)
+		{
+			return a * a;
+		}
 	}
 
 	class LiftedExplicitConversions
@@ -841,6 +851,74 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Print((uint?)i8);
 				Print((uint?)f);
 			}
+		}
+	}
+
+	class NullCoalescing
+	{
+		static void Print<T>(T x)
+		{
+			Console.WriteLine(x);
+		}
+
+		static void Objects(object a, object b)
+		{
+			Print(a ?? b);
+		}
+
+		static void Nullables(int? a, int? b)
+		{
+			Print(a ?? b);
+		}
+
+		static void NullableWithNonNullableFallback(int? a, int b)
+		{
+			Print(a ?? b);
+		}
+
+		static void Chain(int? a, int? b, int? c, int d)
+		{
+			Print(a ?? b ?? c ?? d);
+		}
+
+		static void ChainWithImplicitConversions(int? a, short? b, long? c, byte d)
+		{
+			Print(a ?? b ?? c ?? d);
+		}
+
+		static void ChainWithComputation(int? a, short? b, long? c, byte d)
+		{
+			Print(a + 1 ?? b + 2 ?? c + 3 ?? d + 4);
+		}
+
+		static object ReturnObjects(object a, object b)
+		{
+			return a ?? b;
+		}
+
+		static int? ReturnNullables(int? a, int? b)
+		{
+			return a ?? b;
+		}
+
+		static int ReturnNullableWithNonNullableFallback(int? a, int b)
+		{
+			return a ?? b;
+		}
+
+		static int? ReturnChain(int? a, int? b, int? c, int d)
+		{
+			return a ?? b ?? c ?? d;
+		}
+
+		static long? ReturnChainWithImplicitConversions(int? a, short? b, long? c, byte d)
+		{
+			return a ?? b ?? c ?? d;
+		}
+
+		static long? ReturnChainWithComputation(int? a, short? b, long? c, byte d)
+		{
+			return a + 1 ?? b + 2 ?? c + 3 ?? d + 4;
 		}
 	}
 }

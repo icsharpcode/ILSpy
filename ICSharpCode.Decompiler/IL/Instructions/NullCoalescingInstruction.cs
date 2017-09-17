@@ -16,20 +16,23 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Threading;
-using ICSharpCode.Decompiler.IL.Transforms;
-using Mono.Cecil;
-using ICSharpCode.Decompiler.Disassembler;
-using System.Linq;
-using ICSharpCode.Decompiler.TypeSystem;
-using ICSharpCode.Decompiler.Util;
 using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c></summary>
+	/// <remarks>
+	/// This instruction can used in 3 different cases:
+	/// Case 1: both ValueInst and FallbackInst are of reference type.
+	///    Semantics: equivalent to "valueInst != null ? valueInst : fallbackInst",
+	///               except that valueInst is evaluated only once.
+	/// Case 2: both ValueInst and FallbackInst are of type Nullable{T}.
+	///    Semantics: equivalent to "valueInst.HasValue ? valueInst : fallbackInst",
+	///               except that valueInst is evaluated only once.
+	/// Case 3: ValueInst is Nullable{T}, but FallbackInst is non-nullable value type.
+	///    Semantics: equivalent to "valueInst.HasValue ? valueInst.Value : fallbackInst",
+	///               except that valueInst is evaluated only once.
+	/// </remarks>
 	partial class NullCoalescingInstruction
 	{
 		public NullCoalescingInstruction(ILInstruction valueInst, ILInstruction fallbackInst) : base(OpCode.NullCoalescingInstruction)
@@ -38,9 +41,15 @@ namespace ICSharpCode.Decompiler.IL
 			this.FallbackInst = fallbackInst;
 		}
 
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(valueInst.ResultType == StackType.O || valueInst.ResultType == fallbackInst.ResultType);
+		}
+
 		public override StackType ResultType {
 			get {
-				return CommonResultType(valueInst.ResultType, fallbackInst.ResultType);
+				return fallbackInst.ResultType;
 			}
 		}
 
@@ -52,7 +61,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		protected override InstructionFlags ComputeFlags()
 		{
-			return InstructionFlags.ControlFlow | SemanticHelper.CombineBranches(valueInst.Flags, fallbackInst.Flags);
+			// valueInst is always executed; fallbackInst only sometimes
+			return InstructionFlags.ControlFlow | valueInst.Flags
+				| SemanticHelper.CombineBranches(InstructionFlags.None, fallbackInst.Flags);
 		}
 
 		public override void WriteTo(ITextOutput output)
@@ -63,7 +74,6 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(", ");
 			fallbackInst.WriteTo(output);
 			output.Write(")");
-
 		}
 	}
 }

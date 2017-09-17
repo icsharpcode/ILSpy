@@ -107,6 +107,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						new CachedDelegateInitialization(),
 						new ILInlining(),
 						new TransformAssignment(),
+						new NullableLiftingBlockTransform(),
 						new CopyPropagation(),
 						new LoopingBlockTransform(
 							// per-block transforms that depend on each other, and thus need to loop (fixpoint iteration).
