@@ -41,16 +41,18 @@ namespace TestPlugin
 					smartOutput.AddButton(null, "Click me!", (sender, e) => (sender as Button).Content = "I was clicked!");
 					smartOutput.WriteLine();
 				}
-				
-				// ICSharpCode.Decompiler.Ast.AstBuilder can be used to decompile to C#
+
+				// ICSharpCode.Decompiler.CSharp.CSharpDecompiler can be used to decompile to C#.
 				/*
-				AstBuilder b = new AstBuilder(new DecompilerContext(method.Module) {
-				                              	Settings = options.DecompilerSettings,
-				                              	CurrentType = method.DeclaringType
-				                              });
-				b.AddMethod(method);
-				b.RunTransformations();
-				output.WriteLine("Decompiled AST has {0} nodes", b.SyntaxTree.DescendantsAndSelf.Count());*/
+					ModuleDefinition module = LoadModule(assemblyFileName);
+					var typeSystem = new DecompilerTypeSystem(module);
+					CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, new DecompilerSettings());
+
+					decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
+					SyntaxTree syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();
+					var visitor = new CSharpOutputVisitor(output, FormattingOptionsFactory.CreateSharpDevelop());
+					syntaxTree.AcceptVisitor(visitor);
+				*/
 			}
 		}
 	}
