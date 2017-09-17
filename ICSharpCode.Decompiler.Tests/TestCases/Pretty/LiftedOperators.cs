@@ -762,4 +762,80 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			throw null;
 		}
 	}
+
+	class LiftedImplicitConversions
+	{
+		public int? ExtendI4(byte? b)
+		{
+			return b;
+		}
+
+		public int? ExtendToI4(sbyte? b)
+		{
+			return b;
+		}
+
+		public long? ExtendI8(byte? b)
+		{
+			return b;
+		}
+
+		public long? ExtendToI8(sbyte? b)
+		{
+			return b;
+		}
+
+		public long? ExtendI8(int? b)
+		{
+			return b;
+		}
+
+		public long? ExtendToI8(uint? b)
+		{
+			return b;
+		}
+
+		public double? ToFloat(int? b)
+		{
+			return b;
+		}
+
+		public long? InArithmetic(uint? b)
+		{
+			return long.MinValue + b;
+		}
+
+		static double? InArithmetic2(float? nf, double? nd, float f)
+		{
+			return nf + nd + f;
+		}
+	}
+
+	class LiftedExplicitConversions
+	{
+		static void Print<T>(T? x) where T : struct
+		{
+			Console.WriteLine(x);
+		}
+
+		static void UncheckedCasts(int? i4, long? i8, float? f)
+		{
+			Print((byte?)i4);
+			Print((short?)i4);
+			Print((uint?)i4);
+			Print((uint?)i8);
+			Print((uint?)f);
+		}
+
+		static void CheckedCasts(int? i4, long? i8, float? f)
+		{
+			checked {
+				Print((byte?)i4);
+				Print((short?)i4);
+				Print((uint?)i4);
+				Print((uint?)i8);
+				Print((uint?)f);
+			}
+		}
+	}
 }

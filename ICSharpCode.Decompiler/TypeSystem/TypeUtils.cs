@@ -260,7 +260,51 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return Sign.None;
 			}
 		}
-		
+
+		/// <summary>
+		/// Maps the KnownTypeCode values to the corresponding PrimitiveTypes.
+		/// </summary>
+		public static PrimitiveType ToPrimitiveType(this KnownTypeCode knownTypeCode)
+		{
+			switch (knownTypeCode) {
+				case KnownTypeCode.SByte:
+					return PrimitiveType.I1;
+				case KnownTypeCode.Int16:
+					return PrimitiveType.I2;
+				case KnownTypeCode.Int32:
+					return PrimitiveType.I4;
+				case KnownTypeCode.Int64:
+					return PrimitiveType.I8;
+				case KnownTypeCode.Single:
+					return PrimitiveType.R4;
+				case KnownTypeCode.Double:
+					return PrimitiveType.R8;
+				case KnownTypeCode.Byte:
+					return PrimitiveType.U1;
+				case KnownTypeCode.UInt16:
+					return PrimitiveType.U2;
+				case KnownTypeCode.UInt32:
+					return PrimitiveType.U4;
+				case KnownTypeCode.UInt64:
+					return PrimitiveType.U8;
+				case KnownTypeCode.IntPtr:
+					return PrimitiveType.I;
+				case KnownTypeCode.UIntPtr:
+					return PrimitiveType.U;
+				default:
+					return PrimitiveType.None;
+			}
+		}
+
+		/// <summary>
+		/// Maps the KnownTypeCode values to the corresponding PrimitiveTypes.
+		/// </summary>
+		public static PrimitiveType ToPrimitiveType(this IType type)
+		{
+			var def = type.GetEnumUnderlyingType().GetDefinition();
+			return def != null ? def.KnownTypeCode.ToPrimitiveType() : PrimitiveType.None;
+		}
+
 		/// <summary>
 		/// Maps the PrimitiveType values to the corresponding KnownTypeCodes.
 		/// </summary>

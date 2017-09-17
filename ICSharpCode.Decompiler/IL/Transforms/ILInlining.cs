@@ -275,8 +275,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 			}
 			
-			// decide based on the target into which we are inlining
 			var parent = loadInst.Parent;
+			if (parent is ILiftableInstruction liftable && liftable.IsLifted && NullableType.IsNullable(v.Type)) {
+				return true; // inline into lifted operators
+			}
+			// decide based on the target into which we are inlining
 			switch (next.OpCode) {
 				case OpCode.Leave:
 					return parent == next;

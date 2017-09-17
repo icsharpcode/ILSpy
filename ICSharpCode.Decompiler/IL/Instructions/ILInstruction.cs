@@ -96,6 +96,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public abstract StackType ResultType { get; }
 		
+		/* Not sure if it's a good idea to offer this on all instructions --
+		 *   e.g. ldloc for a local of type `int?` would return StackType.O (because it's not a lifted operation),
+		 *   even though the underlying type is int = StackType.I4.
 		/// <summary>
 		/// Gets the underlying result type of the value produced by this instruction.
 		/// 
@@ -105,7 +108,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// If this is not a lifted operation, the underlying result type is equal to the result type.
 		/// </summary>
 		public virtual StackType UnderlyingResultType { get => ResultType; }
-		
+		*/
+
 		internal static StackType CommonResultType(StackType a, StackType b)
 		{
 			if (a == StackType.I || b == StackType.I)
@@ -699,5 +703,11 @@ namespace ICSharpCode.Decompiler.IL
 	public interface IInstructionWithMethodOperand
 	{
 		IMethod Method { get; }
+	}
+
+	public interface ILiftableInstruction
+	{
+		bool IsLifted { get; }
+		StackType UnderlyingResultType { get; }
 	}
 }

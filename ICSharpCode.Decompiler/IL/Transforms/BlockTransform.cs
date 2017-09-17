@@ -10,6 +10,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public interface IBlockTransform
 	{
+		/// <summary>
+		/// Runs the transform on the specified block.
+		/// 
+		/// Note: the transform may only modify the specified block and its descendants,
+		/// as well as any sibling blocks that are dominated by the specified block.
+		/// </summary>
 		void Run(Block block, BlockTransformContext context);
 	}
 

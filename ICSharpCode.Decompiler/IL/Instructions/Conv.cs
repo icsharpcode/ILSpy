@@ -78,23 +78,42 @@ namespace ICSharpCode.Decompiler.IL
 		StopGCTracking
 	}
 	
-	partial class Conv : UnaryInstruction
+	partial class Conv : UnaryInstruction, ILiftableInstruction
 	{
 		/// <summary>
 		/// Gets the conversion kind.
 		/// </summary>
 		public readonly ConversionKind Kind;
-		
-		/// <summary>
-		/// The target type of the conversion.
-		/// </summary>
-		public readonly PrimitiveType TargetType;
-		
+
 		/// <summary>
 		/// Gets whether the conversion performs overflow-checking.
 		/// </summary>
 		public readonly bool CheckForOverflow;
-		
+
+		/// <summary>
+		/// Gets whether this conversion is a lifted nullable conversion.
+		/// </summary>
+		/// <remarks>
+		/// A lifted conversion expects its argument to be a value of type Nullable{T}, where
+		/// T.GetStackType() == conv.InputType.
+		/// If the value is non-null:
+		///  * it is sign/zero-extended to InputType (based on T's sign)
+		///  * the underlying conversion is performed
+		///  * the result is wrapped in a Nullable{TargetType}.
+		/// If the value is null, the conversion evaluates to null of type Nullable{TargetType}.
+		/// (this result type is underspecified, since there may be multiple C# types for the TargetType)
+		/// </remarks>
+		public bool IsLifted { get; set; }
+
+		/// <summary>
+		/// Gets the stack type of the input type.
+		/// </summary>
+		/// <remarks>
+		/// For non-lifted conversions, this is equal to <c>Argument.ResultType</c>.
+		/// For lifted conversions, corresponds to the underlying type of the argument.
+		/// </remarks>
+		public readonly StackType InputType;
+
 		/// <summary>
 		/// Gets the sign of the input type.
 		/// 
@@ -106,15 +125,38 @@ namespace ICSharpCode.Decompiler.IL
 		/// that is purely determined by the <c>TargetType</c>.
 		/// </remarks>
 		public readonly Sign InputSign;
+
+		/// <summary>
+		/// The target type of the conversion.
+		/// </summary>
+		/// <remarks>
+		/// For lifted conversions, corresponds to the underlying target type.
+		/// </remarks>
+		public readonly PrimitiveType TargetType;
 		
-		public Conv(ILInstruction argument, PrimitiveType targetType, bool checkForOverflow, Sign inputSign) : base(OpCode.Conv, argument)
+		public Conv(ILInstruction argument, PrimitiveType targetType, bool checkForOverflow, Sign inputSign)
+			: this(argument, argument.ResultType, inputSign, targetType, checkForOverflow)
 		{
+		}
+
+		public Conv(ILInstruction argument, StackType inputType, Sign inputSign, PrimitiveType targetType, bool checkForOverflow)
+			: base(OpCode.Conv, argument)
+		{
+			bool needsSign = checkForOverflow || targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8;
+			Debug.Assert(!(needsSign && inputSign == Sign.None));
+			this.InputType = inputType;
+			this.InputSign = needsSign ? inputSign : Sign.None;
 			this.TargetType = targetType;
 			this.CheckForOverflow = checkForOverflow;
-			this.InputSign = inputSign;
-			Debug.Assert((inputSign != Sign.None) == (checkForOverflow || targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8));
-			this.Kind = GetConversionKind(targetType, argument.ResultType, inputSign);
-			Debug.Assert(this.Kind != ConversionKind.Invalid);
+			this.Kind = GetConversionKind(targetType, this.InputType, this.InputSign);
+		}
+
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(Kind != ConversionKind.Invalid);
+			Debug.Assert(Argument.ResultType == (IsLifted ? StackType.O : InputType));
+			Debug.Assert(!(IsLifted && Kind == ConversionKind.StopGCTracking));
 		}
 
 		/// <summary>
@@ -207,20 +249,29 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		public override StackType ResultType {
-			get { return TargetType.GetStackType(); }
+			get => IsLifted ? StackType.O : TargetType.GetStackType();
 		}
-		
+
+		public StackType UnderlyingResultType {
+			get => TargetType.GetStackType();
+		}
+
 		public override void WriteTo(ITextOutput output)
 		{
 			output.Write(OpCode);
-			if (CheckForOverflow)
+			if (CheckForOverflow) {
 				output.Write(".ovf");
-			if (InputSign == Sign.Unsigned)
+			}
+			if (InputSign == Sign.Unsigned) {
 				output.Write(".unsigned");
-			else if (InputSign == Sign.Signed)
+			} else if (InputSign == Sign.Signed) {
 				output.Write(".signed");
+			}
+			if (IsLifted) {
+				output.Write(".lifted");
+			}
 			output.Write(' ');
-			output.Write(Argument.ResultType);
+			output.Write(InputType);
 			output.Write("->");
 			output.Write(TargetType);
 			output.Write(' ');
@@ -250,7 +301,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override ILInstruction UnwrapConv(ConversionKind kind)
 		{
-			if (this.Kind == kind)
+			if (this.Kind == kind && !IsLifted)
 				return Argument.UnwrapConv(kind);
 			else
 				return this;

@@ -410,6 +410,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// If this instruction is a conversion of the specified kind, return its argument.
 		/// Otherwise, return the instruction itself.
 		/// </summary>
+		/// <remarks>
+		/// Does not unwrap lifted conversions.
+		/// </remarks>
 		public virtual ILInstruction UnwrapConv(ConversionKind kind)
 		{
 			return this;

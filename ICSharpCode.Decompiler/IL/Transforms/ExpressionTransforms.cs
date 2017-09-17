@@ -288,19 +288,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			base.VisitIfInstruction(inst);
 
+			inst = HandleConditionalOperator(inst);
+			NullableLiftingTransform.Run(inst, context);
+		}
+
+		IfInstruction HandleConditionalOperator(IfInstruction inst)
+		{
 			// if (cond) stloc (A, V1) else stloc (A, V2) --> stloc (A, if (cond) V1 else V2)
 			Block trueInst = inst.TrueInst as Block;
 			if (trueInst == null || trueInst.Instructions.Count != 1)
-				return;
+				return inst;
 			Block falseInst = inst.FalseInst as Block;
 			if (falseInst == null || falseInst.Instructions.Count != 1)
-				return;
+				return inst;
 			ILVariable v;
 			ILInstruction value1, value2;
 			if (trueInst.Instructions[0].MatchStLoc(out v, out value1) && falseInst.Instructions[0].MatchStLoc(v, out value2)) {
 				context.Step("conditional operator", inst);
-				inst.ReplaceWith(new StLoc(v, new IfInstruction(new LogicNot(inst.Condition), value2, value1)));
+				var newIf = new IfInstruction(new LogicNot(inst.Condition), value2, value1);
+				newIf.ILRange = inst.ILRange;
+				inst.ReplaceWith(new StLoc(v, newIf));
+				return newIf;
 			}
+			return inst;
 		}
 
 		protected internal override void VisitBinaryNumericInstruction(BinaryNumericInstruction inst)
