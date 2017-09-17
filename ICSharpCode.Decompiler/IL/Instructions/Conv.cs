@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL
 		///  * it is sign/zero-extended to InputType (based on T's sign)
 		///  * the underlying conversion is performed
 		///  * the result is wrapped in a Nullable{TargetType}.
-		/// If the value is null, the conversion evaluates to null of type Nullable{TargetType}.
+		/// If the value is null, the conversion evaluates to default(TargetType?).
 		/// (this result type is underspecified, since there may be multiple C# types for the TargetType)
 		/// </remarks>
 		public bool IsLifted { get; set; }

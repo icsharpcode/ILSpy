@@ -802,7 +802,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public long? InArithmetic(uint? b)
 		{
-			return long.MinValue + b;
+			return 100L + b;
+		}
+
+		public long? AfterArithmetic(uint? b)
+		{
+			return 100 + b;
 		}
 
 		static double? InArithmetic2(float? nf, double? nd, float f)

@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.IL
 		ShiftRight
 	}
 	
-	public partial class BinaryNumericInstruction : BinaryInstruction
+	public partial class BinaryNumericInstruction : BinaryInstruction, ILiftableInstruction
 	{
 		/// <summary>
 		/// Gets whether the instruction checks for overflow.
@@ -50,12 +50,30 @@ namespace ICSharpCode.Decompiler.IL
 		/// For instructions that produce the same result for either sign, returns Sign.None.
 		/// </summary>
 		public readonly Sign Sign;
-		
+
+		public readonly StackType LeftInputType;
+		public readonly StackType RightInputType;
+
 		/// <summary>
 		/// The operator used by this binary operator instruction.
 		/// </summary>
 		public readonly BinaryNumericOperator Operator;
-		
+
+		/// <summary>
+		/// Gets whether this conversion is a lifted nullable operation.
+		/// </summary>
+		/// <remarks>
+		/// A lifted binary operation allows its arguments to be a value of type Nullable{T}, where
+		/// T.GetStackType() == [Left|Right]InputType.
+		/// If both input values is non-null:
+		///  * they are sign/zero-extended to the corresponding InputType (based on T's sign)
+		///  * the underlying numeric operator is applied
+		///  * the result is wrapped in a Nullable{UnderlyingResultType}.
+		/// If either input is null, the instruction evaluates to default(UnderlyingResultType?).
+		/// (this result type is underspecified, since there may be multiple C# types for the stack type)
+		/// </remarks>
+		public bool IsLifted { get; set; }
+
 		readonly StackType resultType;
 
 		public BinaryNumericInstruction(BinaryNumericOperator op, ILInstruction left, ILInstruction right, bool checkForOverflow, Sign sign)
@@ -64,7 +82,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.CheckForOverflow = checkForOverflow;
 			this.Sign = sign;
 			this.Operator = op;
-			this.resultType = ComputeResultType(op, left.ResultType, right.ResultType);
+			this.LeftInputType = left.ResultType;
+			this.RightInputType = right.ResultType;
+			this.resultType = ComputeResultType(op, LeftInputType, RightInputType);
 			Debug.Assert(resultType != StackType.Unknown);
 		}
 		
@@ -91,9 +111,18 @@ namespace ICSharpCode.Decompiler.IL
 			return StackType.Unknown;
 		}
 		
+		public StackType UnderlyingResultType { get => resultType; }
+
 		public sealed override StackType ResultType {
-			get {
-				return resultType;
+			get => IsLifted ? StackType.O : resultType;
+		}
+
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			if (!IsLifted) {
+				Debug.Assert(LeftInputType == Left.ResultType);
+				Debug.Assert(RightInputType == Right.ResultType);
 			}
 		}
 
@@ -145,12 +174,17 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write("." + GetOperatorName(Operator));
-			if (CheckForOverflow)
+			if (CheckForOverflow) {
 				output.Write(".ovf");
-			if (Sign == Sign.Unsigned)
+			}
+			if (Sign == Sign.Unsigned) {
 				output.Write(".unsigned");
-			else if (Sign == Sign.Signed)
+			} else if (Sign == Sign.Signed) {
 				output.Write(".signed");
+			}
+			if (IsLifted) {
+				output.Write(".lifted");
+			}
 			output.Write('(');
 			Left.WriteTo(output);
 			output.Write(", ");

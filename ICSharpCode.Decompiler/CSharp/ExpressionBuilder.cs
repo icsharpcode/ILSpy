@@ -216,8 +216,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var dimensions = inst.Indices.Count;
 			var args = inst.Indices.Select(arg => TranslateArrayIndex(arg)).ToArray();
 			var expr = new ArrayCreateExpression { Type = ConvertType(inst.Type) };
-			var ct = expr.Type as ComposedType;
-			if (ct != null) {
+			if (expr.Type is ComposedType ct) {
 				// change "new (int[,])[10] to new int[10][,]"
 				ct.ArraySpecifiers.MoveTo(expr.AdditionalArraySpecifiers);
 			}
@@ -599,18 +598,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
-			left = PrepareArithmeticArgument(left, inst.Left.ResultType, inst.Sign);
-			right = PrepareArithmeticArgument(right, inst.Right.ResultType, inst.Sign);
+			left = PrepareArithmeticArgument(left, inst.LeftInputType, inst.Sign, inst.IsLifted);
+			right = PrepareArithmeticArgument(right, inst.RightInputType, inst.Sign, inst.IsLifted);
 			
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
-			if (rr.IsError || rr.Type.GetStackType() != inst.ResultType
+			if (rr.IsError || NullableType.GetUnderlyingType(rr.Type).GetStackType() != inst.UnderlyingResultType
 			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
 			{
 				// Left and right operands are incompatible, so convert them to a common type
-				StackType targetStackType = inst.ResultType == StackType.I ? StackType.I8 : inst.ResultType;
+				StackType targetStackType = inst.UnderlyingResultType == StackType.I ? StackType.I8 : inst.UnderlyingResultType;
 				IType targetType = compilation.FindType(targetStackType.ToKnownTypeCode(inst.Sign));
-				left = left.ConvertTo(targetType, this);
-				right = right.ConvertTo(targetType, this);
+				left = left.ConvertTo(NullableType.IsNullable(left.Type) ? NullableType.Create(compilation, targetType) : targetType, this);
+				right = right.ConvertTo(NullableType.IsNullable(right.Type) ? NullableType.Create(compilation, targetType) : targetType, this);
 				rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 			}
 			var resultExpr = new BinaryOperatorExpression(left.Expression, op, right.Expression)
@@ -624,18 +623,28 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Handle oversized arguments needing truncation; and avoid IntPtr/pointers in arguments.
 		/// </summary>
-		TranslatedExpression PrepareArithmeticArgument(TranslatedExpression arg, StackType argStackType, Sign sign)
+		TranslatedExpression PrepareArithmeticArgument(TranslatedExpression arg, StackType argStackType, Sign sign, bool isLifted)
 		{
-			if (argStackType.IsIntegerType() && argStackType.GetSize() < arg.Type.GetSize()) {
+			if (isLifted && !NullableType.IsNullable(arg.Type)) {
+				isLifted = false; // don't cast to nullable if this input wasn't already nullable
+			}
+			IType argUType = isLifted ? NullableType.GetUnderlyingType(arg.Type) : arg.Type;
+			if (argStackType.IsIntegerType() && argStackType.GetSize() < argUType.GetSize()) {
 				// If the argument is oversized (needs truncation to match stack size of its ILInstruction),
 				// perform the truncation now.
-				arg = arg.ConvertTo(compilation.FindType(argStackType.ToKnownTypeCode(sign)), this);
+				IType targetType = compilation.FindType(argStackType.ToKnownTypeCode(sign));
+				if (isLifted)
+					targetType = NullableType.Create(compilation, targetType);
+				arg = arg.ConvertTo(targetType, this);
 			}
-			if (arg.Type.GetStackType() == StackType.I) {
+			if (argUType.GetStackType() == StackType.I) {
 				// None of the operators we might want to apply are supported by IntPtr/UIntPtr.
 				// Also, pointer arithmetic has different semantics (works in number of elements, not bytes).
 				// So any inputs of size StackType.I must be converted to long/ulong.
-				arg = arg.ConvertTo(compilation.FindType(StackType.I8.ToKnownTypeCode(sign)), this);
+				IType targetType = compilation.FindType(StackType.I8.ToKnownTypeCode(sign));
+				if (isLifted)
+					targetType = NullableType.Create(compilation, targetType);
+				arg = arg.ConvertTo(targetType, this);
 			}
 			return arg;
 		}
@@ -646,7 +655,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		static bool IsCompatibleWithSign(IType type, Sign sign)
 		{
-			return sign == Sign.None || type.GetSign() == sign;
+			return sign == Sign.None || NullableType.GetUnderlyingType(type).GetSign() == sign;
 		}
 		
 		static bool BinaryOperatorMightCheckForOverflow(BinaryOperatorType op)
@@ -669,32 +678,45 @@ namespace ICSharpCode.Decompiler.CSharp
 			var right = Translate(inst.Right);
 
 			Sign sign = inst.Sign;
-			if (left.Type.IsCSharpSmallIntegerType() && sign != Sign.Unsigned && inst.ResultType == StackType.I4) {
+			var leftUType = NullableType.GetUnderlyingType(left.Type);
+			if (leftUType.IsCSharpSmallIntegerType() && sign != Sign.Unsigned && inst.UnderlyingResultType == StackType.I4) {
 				// With small integer types, C# will promote to int and perform signed shifts.
 				// We thus don't need any casts in this case.
 			} else {
 				// Insert cast to target type.
 				if (sign == Sign.None) {
 					// if we don't need a specific sign, prefer keeping that of the input:
-					sign = left.Type.GetSign();
+					sign = leftUType.GetSign();
 				}
 				IType targetType;
-				if (inst.ResultType == StackType.I4)
+				if (inst.UnderlyingResultType == StackType.I4) {
 					targetType = compilation.FindType(sign == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
-				else
+				} else {
 					targetType = compilation.FindType(sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64);
+				}
+				if (NullableType.IsNullable(left.Type)) {
+					targetType = NullableType.Create(compilation, targetType);
+				}
 				left = left.ConvertTo(targetType, this);
 			}
+
 			// Shift operators in C# always expect type 'int' on the right-hand-side
-			right = right.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
-		
+			if (NullableType.IsNullable(right.Type)) {
+				right = right.ConvertTo(NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Int32)), this);
+			} else {
+				right = right.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
+			}
+
 			TranslatedExpression result = new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(resolver.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult));
-			if (inst.ResultType == StackType.I) {
+			if (inst.UnderlyingResultType == StackType.I) {
 				// C# doesn't have shift operators for IntPtr, so we first shifted a long/ulong,
 				// and now have to case back down to IntPtr/UIntPtr:
-				result = result.ConvertTo(compilation.FindType(sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr), this);
+				IType targetType = compilation.FindType(sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr);
+				if (inst.IsLifted)
+					targetType = NullableType.Create(compilation, targetType);
+				result = result.ConvertTo(targetType, this);
 			}
 			return result;
 		}
@@ -731,7 +753,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
-			value = PrepareArithmeticArgument(value, inst.Value.ResultType, inst.Sign);
+			value = PrepareArithmeticArgument(value, inst.Value.ResultType, inst.Sign, isLifted: false);
 			
 			TranslatedExpression resultExpr;
 			if (inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToOldValue) {
