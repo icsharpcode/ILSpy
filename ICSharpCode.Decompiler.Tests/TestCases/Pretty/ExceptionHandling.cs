@@ -17,6 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 
+using System;
+
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public abstract class ExceptionHandling
@@ -35,5 +37,49 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return false;
 		}
 
+		public bool SimpleTryCatchException()
+		{
+			try {
+				Console.WriteLine("Try");
+				return this.B(new Random().Next());
+			} catch (Exception) {
+				Console.WriteLine("CatchException");
+			}
+			return false;
+		}
+
+		public bool SimpleTryCatchExceptionWithName()
+		{
+			try {
+				Console.WriteLine("Try");
+				return this.B(new Random().Next());
+			} catch (Exception ex) {
+				Console.WriteLine("CatchException ex: " + ex.ToString());
+			}
+			return false;
+		}
+
+#if !LEGACY_CSC
+		public bool SimpleTryCatchExceptionWithNameAndCondition()
+		{
+			try {
+				Console.WriteLine("Try");
+				return this.B(new Random().Next());
+			} catch (Exception ex) when (ex.Message.Contains("test")) {
+				Console.WriteLine("CatchException ex: " + ex.ToString());
+			}
+			return false;
+		}
+#endif
+
+		public bool SimpleTryFinally()
+		{
+			try {
+				Console.WriteLine("Try");
+			} finally {
+				Console.WriteLine("Finally");
+			}
+			return false;
+		}
 	}
 }
