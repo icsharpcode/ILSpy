@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using DiffLib;
 using NUnit.Framework;
 
@@ -8,15 +9,15 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 {
 	public static class CodeAssert
 	{
-		public static void FilesAreEqual(string fileName1, string fileName2)
+		public static void FilesAreEqual(string fileName1, string fileName2, string[] definedSymbols = null)
 		{
-			AreEqual(File.ReadAllText(fileName1), File.ReadAllText(fileName2));
+			AreEqual(File.ReadAllText(fileName1), File.ReadAllText(fileName2), definedSymbols);
 		}
 
-		public static void AreEqual(string input1, string input2)
+		public static void AreEqual(string input1, string input2, string[] definedSymbols = null)
 		{
 			var diff = new StringWriter();
-			if (!CodeComparer.Compare(input1, input2, diff, CodeComparer.NormalizeLine)) {
+			if (!CodeComparer.Compare(input1, input2, diff, CodeComparer.NormalizeLine, definedSymbols)) {
 				Assert.Fail(diff.ToString());
 			}
 		}
@@ -24,11 +25,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 	public static class CodeComparer
 	{
-		public static bool Compare(string input1, string input2, StringWriter diff, Func<string, string> normalizeLine)
+		public static bool Compare(string input1, string input2, StringWriter diff, Func<string, string> normalizeLine, string[] definedSymbols = null)
 		{
 			var differ = new AlignedDiff<string>(
-				NormalizeAndSplitCode(input1),
-				NormalizeAndSplitCode(input2),
+				NormalizeAndSplitCode(input1, definedSymbols ?? new string[0]),
+				NormalizeAndSplitCode(input2, definedSymbols ?? new string[0]),
 				new CodeLineEqualityComparer(normalizeLine),
 				new StringSimilarityComparer(),
 				new StringAlignmentFilter());
@@ -114,9 +115,24 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return NormalizeLine(line) == string.Empty;
 		}
 
-		private static IEnumerable<string> NormalizeAndSplitCode(string input)
+		private static IEnumerable<string> NormalizeAndSplitCode(string input, string[] definedSymbols)
 		{
-			return input.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
+			bool include = true;
+			foreach (string line in input.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries)) {
+				var temp = line.Trim();
+				if (temp.StartsWith("#if !", StringComparison.Ordinal)) {
+					string symbol = temp.Substring(5);
+					if (definedSymbols.Contains(symbol))
+						include = false;
+				} else if (temp.StartsWith("#if ", StringComparison.Ordinal)) {
+					string symbol = temp.Substring(4);
+					if (!definedSymbols.Contains(symbol))
+						include = false;
+				} else if (temp.StartsWith("#endif", StringComparison.Ordinal)) {
+					include = true;
+				}
+				if (include) yield return line;
+			}
 		}
 	}
 }
