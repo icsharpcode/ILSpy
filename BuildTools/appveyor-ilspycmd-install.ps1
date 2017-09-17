@@ -1,6 +1,6 @@
 $ErrorActionPreference = "Stop"
 
-$baseCommit = "d779383cb85003d6dabeb976f0845631e07bf463";
+$baseCommit = "e17b4bfedf4dc747b105396224cd726bdca500ad";
 $baseCommitRev = 1;
 
 $globalAssemblyInfoTemplateFile = "ILSpy/Properties/AssemblyInfo.template.cs";
