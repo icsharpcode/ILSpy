@@ -63,36 +63,31 @@ namespace ICSharpCode.Decompiler
 			
 			var definition = GetCurrentDefinition();
 			if (definition != null) {
-				output.WriteDefinition(identifier.Name, definition, false);
-				return;
+				MemberReference cecil = SymbolToCecil(definition);
+				if (cecil != null) {
+					output.WriteDefinition(identifier.Name, definition, false);
+					return;
+				}
 			}
 			
 			var member = GetCurrentMemberReference();
-
 			if (member != null) {
-				MemberReference cecil;
-				if (member is IType type) {
-					cecil = typeSystem.GetCecil(type.GetDefinition());
-				} else if (member is IMember) {
-					cecil = typeSystem.GetCecil((IMember)member);
-				} else {
-					cecil = null;
-				}
+				MemberReference cecil = SymbolToCecil(member);
 				if (cecil != null) {
 					output.WriteReference(identifier.Name, cecil);
 					return;
 				}
 			}
 
-			definition = GetCurrentLocalDefinition();
-			if (definition != null) {
-				output.WriteDefinition(identifier.Name, definition);
+			var localDefinition = GetCurrentLocalDefinition();
+			if (localDefinition != null) {
+				output.WriteDefinition(identifier.Name, localDefinition);
 				return;
 			}
 
-			var memberRef = GetCurrentLocalReference();
-			if (memberRef != null) {
-				output.WriteReference(identifier.Name, memberRef, true);
+			var localRef = GetCurrentLocalReference();
+			if (localRef != null) {
+				output.WriteReference(identifier.Name, localRef, true);
 				return;
 			}
 
@@ -102,6 +97,17 @@ namespace ICSharpCode.Decompiler
 			}
 
 			output.Write(identifier.Name);
+		}
+
+		MemberReference SymbolToCecil(ISymbol symbol)
+		{
+			if (symbol is IType type) {
+				return typeSystem.GetCecil(type.GetDefinition());
+			} else if (symbol is IMember member) {
+				return typeSystem.GetCecil(member);
+			} else {
+				return null;
+			}
 		}
 
 		ISymbol GetCurrentMemberReference()
@@ -175,7 +181,7 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 		
-		object GetCurrentDefinition()
+		ISymbol GetCurrentDefinition()
 		{
 			if (nodeStack == null || nodeStack.Count == 0)
 				return null;
