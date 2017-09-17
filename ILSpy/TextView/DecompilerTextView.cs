@@ -63,6 +63,7 @@ namespace ICSharpCode.ILSpy.TextView
 		readonly ReferenceElementGenerator referenceElementGenerator;
 		readonly UIElementGenerator uiElementGenerator;
 		List<VisualLineElementGenerator> activeCustomElementGenerators = new List<VisualLineElementGenerator>();
+		RichTextColorizer activeRichTextColorizer;
 		FoldingManager foldingManager;
 		ILSpyTreeNode[] decompiledNodes;
 		
@@ -85,7 +86,17 @@ namespace ICSharpCode.ILSpy.TextView
 						}
 					}
 				});
-			
+
+			HighlightingManager.Instance.RegisterHighlighting(
+				"C#", new string[] { ".cs" },
+				delegate {
+					using (Stream s = typeof(DecompilerTextView).Assembly.GetManifestResourceStream(typeof(DecompilerTextView), "CSharp-Mode.xshd")) {
+						using (XmlTextReader reader = new XmlTextReader(s)) {
+							return HighlightingLoader.Load(reader, HighlightingManager.Instance);
+						}
+					}
+				});
+
 			InitializeComponent();
 			
 			this.referenceElementGenerator = new ReferenceElementGenerator(this.JumpToReference, this.IsLink);
@@ -361,6 +372,12 @@ namespace ICSharpCode.ILSpy.TextView
 			references = textOutput.References;
 			definitionLookup = textOutput.DefinitionLookup;
 			textEditor.SyntaxHighlighting = highlighting;
+			if (activeRichTextColorizer != null)
+				textEditor.TextArea.TextView.LineTransformers.Remove(activeRichTextColorizer);
+			if (textOutput.HighlightingModel != null) {
+				activeRichTextColorizer = new RichTextColorizer(textOutput.HighlightingModel);
+				textEditor.TextArea.TextView.LineTransformers.Insert(highlighting == null ? 0 : 1, activeRichTextColorizer);
+			}
 			
 			// Change the set of active element generators:
 			foreach (var elementGenerator in activeCustomElementGenerators) {

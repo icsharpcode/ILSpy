@@ -232,6 +232,7 @@
     <Resource Include="Images\ILSpy.ico" />
     <Resource Include="Images\FindAssembly.png" />
     <None Include="app.config" />
+    <EmbeddedResource Include="TextView\CSharp-Mode.xshd" />
     <Resource Include="Images\Breakpoint.png" />
     <Resource Include="Images\CurrentLine.png" />
     <Resource Include="Images\DisabledBreakpoint.png" />

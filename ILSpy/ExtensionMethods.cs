@@ -34,7 +34,14 @@ namespace ICSharpCode.ILSpy
 				if (!list.Contains(item))
 					list.Add(item);
 		}
-		
+
+		public static T PeekOrDefault<T>(this Stack<T> stack)
+		{
+			if (stack.Count == 0)
+				return default(T);
+			return stack.Peek();
+		}
+
 		public static int BinarySearch<T>(this IList<T> list, T item, int start, int count, IComparer<T> comparer)
 		{
 			if (list == null)

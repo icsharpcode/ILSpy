@@ -19,7 +19,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -189,7 +188,7 @@ namespace ICSharpCode.Decompiler
 			var node = nodeStack.Peek();
 			if (node is Identifier)
 				node = node.Parent;
-			if (IsDefinition(node))
+			if (IsDefinition(ref node))
 				return node.GetSymbol();
 			
 			return null;
@@ -403,11 +402,17 @@ namespace ICSharpCode.Decompiler
 //			}
 		}
 		
-		private static bool IsDefinition(AstNode node)
+		static bool IsDefinition(ref AstNode node)
 		{
-			return node is EntityDeclaration
-				|| (node is VariableInitializer && node.Parent is FieldDeclaration)
-				|| node is FixedVariableInitializer;
+			if (node is EntityDeclaration)
+				return true;
+			if (node is VariableInitializer && node.Parent is FieldDeclaration) {
+				node = node.Parent;
+				return true;
+			}
+			if (node is FixedVariableInitializer)
+				return true;
+			return false;
 		}
 	}
 }

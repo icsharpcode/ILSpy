@@ -25,6 +25,7 @@ using System.Windows;
 
 using ICSharpCode.AvalonEdit.Document;
 using ICSharpCode.AvalonEdit.Folding;
+using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Rendering;
 using TextLocation = ICSharpCode.Decompiler.CSharp.Syntax.TextLocation;
 
@@ -91,6 +92,8 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		/// <summary>Embedded UIElements, see <see cref="UIElementGenerator"/>.</summary>
 		internal readonly List<KeyValuePair<int, Lazy<UIElement>>> UIElements = new List<KeyValuePair<int, Lazy<UIElement>>>();
+
+		public RichTextModel HighlightingModel { get; } = new RichTextModel();
 		
 		public AvalonEditTextOutput()
 		{
@@ -246,6 +249,29 @@ namespace ICSharpCode.ILSpy.TextView
 					throw new InvalidOperationException("Only one UIElement is allowed for each position in the document");
 				this.UIElements.Add(new KeyValuePair<int, Lazy<UIElement>>(this.TextLength, new Lazy<UIElement>(element)));
 			}
+		}
+
+		readonly Stack<HighlightingColor> colorStack = new Stack<HighlightingColor>();
+		HighlightingColor currentColor = new HighlightingColor();
+		int currentColorBegin = -1;
+
+		public void BeginSpan(HighlightingColor highlightingColor)
+		{
+			WriteIndent();
+			if (currentColorBegin > -1)
+				HighlightingModel.SetHighlighting(currentColorBegin, b.Length - currentColorBegin, currentColor);
+			colorStack.Push(currentColor);
+			currentColor = currentColor.Clone();
+			currentColorBegin = b.Length;
+			currentColor.MergeWith(highlightingColor);
+			currentColor.Freeze();
+		}
+
+		public void EndSpan()
+		{
+			HighlightingModel.SetHighlighting(currentColorBegin, b.Length - currentColorBegin, currentColor);
+			currentColor = colorStack.Pop();
+			currentColorBegin = b.Length;
 		}
 	}
 }
