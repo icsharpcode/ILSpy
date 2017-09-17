@@ -8,8 +8,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
-    class NullableLiftingTransform
-    {
+	class NullableLiftingTransform
+	{
 		public static void Run(IfInstruction inst, ILTransformContext context)
 		{
 			// if (call Nullable<inputUType>.get_HasValue(ldloca v))
