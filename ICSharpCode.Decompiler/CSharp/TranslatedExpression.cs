@@ -181,6 +181,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				return this;
 			}
 			var compilation = expressionBuilder.compilation;
+			bool isLifted = type.IsKnownType(KnownTypeCode.NullableOfT) && targetType.IsKnownType(KnownTypeCode.NullableOfT);
+			IType utype = isLifted ? NullableType.GetUnderlyingType(type) : type;
+			IType targetUType = isLifted ? NullableType.GetUnderlyingType(targetType) : targetType;
 			if (type.IsKnownType(KnownTypeCode.Boolean) && targetType.GetStackType().IsIntegerType()) {
 				// convert from boolean to integer (or enum)
 				return new ConditionalExpression(
@@ -311,7 +314,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				return this;
 			}
 			var castExpr = new CastExpression(expressionBuilder.ConvertType(targetType), Expression);
-			castExpr.AddAnnotation(checkForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			bool avoidCheckAnnotation = utype.IsKnownType(KnownTypeCode.Single) && targetUType.IsKnownType(KnownTypeCode.Double);
+			if (!avoidCheckAnnotation) {
+				castExpr.AddAnnotation(checkForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+			}
 			return castExpr.WithoutILInstruction().WithRR(rr);
 		}
 		
