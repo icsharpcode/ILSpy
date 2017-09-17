@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo BlockSlot = new SlotInfo("Block", isCollection: true);
 		public readonly InstructionCollection<Block> Blocks;
 
-		public StackType ExpectedResultType { get; }
+		public StackType ExpectedResultType { get; set; }
 		
 		/// <summary>
 		/// Gets the number of 'leave' instructions that target this BlockContainer.

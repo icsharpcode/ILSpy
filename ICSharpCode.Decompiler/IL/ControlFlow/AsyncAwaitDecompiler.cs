@@ -95,6 +95,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			TranslateCachedFieldsToLocals();
 
 			FinalizeInlineMoveNext(function);
+			((BlockContainer)function.Body).ExpectedResultType = underlyingReturnType.GetStackType();
 
 			// Re-run control flow simplification over the newly constructed set of gotos,
 			// and inlining because TranslateFieldsToLocalAccess() might have opened up new inlining opportunities.

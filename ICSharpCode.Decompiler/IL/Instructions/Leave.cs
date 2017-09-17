@@ -97,6 +97,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			base.CheckInvariant(phase);
 			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(targetContainer));
+			Debug.Assert(phase <= ILPhase.InILReader || value.ResultType == targetContainer.ResultType);
 		}
 		
 		public override void WriteTo(ITextOutput output)
