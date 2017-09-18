@@ -221,13 +221,15 @@ namespace ICSharpCode.Decompiler.IL
 				ImmutableStack<ILVariable> ehStack = null;
 				if (eh.HandlerType == Cil.ExceptionHandlerType.Catch) {
 					var v = new ILVariable(VariableKind.Exception, typeSystem.Resolve(eh.CatchType), eh.HandlerStart.Offset) {
-						Name = "E_" + eh.HandlerStart.Offset
+						Name = "E_" + eh.HandlerStart.Offset,
+						HasGeneratedName = true
 					};
 					variableByExceptionHandler.Add(eh, v);
 					ehStack = ImmutableStack.Create(v);
 				} else if (eh.HandlerType == Cil.ExceptionHandlerType.Filter) {
 					var v = new ILVariable(VariableKind.Exception, typeSystem.Compilation.FindType(KnownTypeCode.Object), eh.HandlerStart.Offset) {
-						Name = "E_" + eh.HandlerStart.Offset
+						Name = "E_" + eh.HandlerStart.Offset,
+						HasGeneratedName = true
 					};
 					variableByExceptionHandler.Add(eh, v);
 					ehStack = ImmutableStack.Create(v);

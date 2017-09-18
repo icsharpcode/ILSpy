@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module ExceptionHandling.dll
-// MVID: {132EAF1E-6B6D-4E21-B000-D06E1A4188E3}
+// MVID: {9E5D4825-3895-41C9-96B8-84EF4BB28F59}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03070000
+// Image base: 0x02A40000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -279,6 +279,192 @@
     IL_0022:  ldloc.0
     IL_0023:  ret
   } // end of method ExceptionHandling::SimpleTryFinally
+
+  .method public hidebysig instance void 
+          MethodEndingWithEndFinally() cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  1
+    IL_0000:  nop
+    .try
+    {
+      IL_0001:  nop
+      IL_0002:  ldnull
+      IL_0003:  throw
+
+    }  // end .try
+    finally
+    {
+      IL_0004:  nop
+      IL_0005:  call       void [mscorlib]System.Console::WriteLine()
+      IL_000a:  nop
+      IL_000b:  nop
+      IL_000c:  endfinally
+    }  // end handler
+  } // end of method ExceptionHandling::MethodEndingWithEndFinally
+
+  .method public hidebysig instance void 
+          MethodEndingWithRethrow() cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  1
+    IL_0000:  nop
+    .try
+    {
+      IL_0001:  nop
+      IL_0002:  ldnull
+      IL_0003:  throw
+
+    }  // end .try
+    catch [mscorlib]System.Object 
+    {
+      IL_0004:  pop
+      IL_0005:  nop
+      IL_0006:  rethrow
+    }  // end handler
+  } // end of method ExceptionHandling::MethodEndingWithRethrow
+
+  .method public hidebysig instance void 
+          TryCatchFinally() cil managed
+  {
+    // Code size       50 (0x32)
+    .maxstack  1
+    .locals init (class [mscorlib]System.Exception V_0)
+    IL_0000:  nop
+    .try
+    {
+      .try
+      {
+        IL_0001:  nop
+        IL_0002:  ldstr      "Try"
+        IL_0007:  call       void [mscorlib]System.Console::WriteLine(string)
+        IL_000c:  nop
+        IL_000d:  nop
+        IL_000e:  leave.s    IL_0021
+
+      }  // end .try
+      catch [mscorlib]System.Exception 
+      {
+        IL_0010:  stloc.0
+        IL_0011:  nop
+        IL_0012:  ldloc.0
+        IL_0013:  callvirt   instance string [mscorlib]System.Exception::get_Message()
+        IL_0018:  call       void [mscorlib]System.Console::WriteLine(string)
+        IL_001d:  nop
+        IL_001e:  nop
+        IL_001f:  leave.s    IL_0021
+
+      }  // end handler
+      IL_0021:  leave.s    IL_0031
+
+    }  // end .try
+    finally
+    {
+      IL_0023:  nop
+      IL_0024:  ldstr      "Finally"
+      IL_0029:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_002e:  nop
+      IL_002f:  nop
+      IL_0030:  endfinally
+    }  // end handler
+    IL_0031:  ret
+  } // end of method ExceptionHandling::TryCatchFinally
+
+  .method public hidebysig instance void 
+          TryCatchMultipleHandlers() cil managed
+  {
+    // Code size       67 (0x43)
+    .maxstack  1
+    .locals init (class [mscorlib]System.InvalidOperationException V_0,
+             class [mscorlib]System.Exception V_1)
+    IL_0000:  nop
+    .try
+    {
+      IL_0001:  nop
+      IL_0002:  ldstr      "Try"
+      IL_0007:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_000c:  nop
+      IL_000d:  nop
+      IL_000e:  leave.s    IL_0042
+
+    }  // end .try
+    catch [mscorlib]System.InvalidOperationException 
+    {
+      IL_0010:  stloc.0
+      IL_0011:  nop
+      IL_0012:  ldloc.0
+      IL_0013:  callvirt   instance string [mscorlib]System.Exception::get_Message()
+      IL_0018:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_001d:  nop
+      IL_001e:  nop
+      IL_001f:  leave.s    IL_0042
+
+    }  // end handler
+    catch [mscorlib]System.Exception 
+    {
+      IL_0021:  stloc.1
+      IL_0022:  nop
+      IL_0023:  ldloc.1
+      IL_0024:  callvirt   instance string [mscorlib]System.Exception::get_Message()
+      IL_0029:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_002e:  nop
+      IL_002f:  nop
+      IL_0030:  leave.s    IL_0042
+
+    }  // end handler
+    catch [mscorlib]System.Object 
+    {
+      IL_0032:  pop
+      IL_0033:  nop
+      IL_0034:  ldstr      "other"
+      IL_0039:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_003e:  nop
+      IL_003f:  nop
+      IL_0040:  leave.s    IL_0042
+
+    }  // end handler
+    IL_0042:  ret
+  } // end of method ExceptionHandling::TryCatchMultipleHandlers
+
+  .method public hidebysig instance void 
+          NoUsingStatementBecauseTheVariableIsAssignedTo() cil managed
+  {
+    // Code size       34 (0x22)
+    .maxstack  2
+    .locals init (class [mscorlib]System.Threading.CancellationTokenSource V_0,
+             bool V_1)
+    IL_0000:  nop
+    IL_0001:  ldnull
+    IL_0002:  stloc.0
+    .try
+    {
+      IL_0003:  nop
+      IL_0004:  newobj     instance void [mscorlib]System.Threading.CancellationTokenSource::.ctor()
+      IL_0009:  stloc.0
+      IL_000a:  nop
+      IL_000b:  leave.s    IL_0021
+
+    }  // end .try
+    finally
+    {
+      IL_000d:  nop
+      IL_000e:  ldloc.0
+      IL_000f:  ldnull
+      IL_0010:  cgt.un
+      IL_0012:  stloc.1
+      IL_0013:  ldloc.1
+      IL_0014:  brfalse.s  IL_001f
+
+      IL_0016:  nop
+      IL_0017:  ldloc.0
+      IL_0018:  callvirt   instance void [mscorlib]System.Threading.CancellationTokenSource::Dispose()
+      IL_001d:  nop
+      IL_001e:  nop
+      IL_001f:  nop
+      IL_0020:  endfinally
+    }  // end handler
+    IL_0021:  ret
+  } // end of method ExceptionHandling::NoUsingStatementBecauseTheVariableIsAssignedTo
 
   .method family hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

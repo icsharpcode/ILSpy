@@ -16,8 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-
 using System;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -80,6 +80,74 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("Finally");
 			}
 			return false;
+		}
+
+		public void MethodEndingWithEndFinally()
+		{
+			try {
+				throw null;
+			} finally {
+				Console.WriteLine();
+			}
+		}
+
+		public void MethodEndingWithRethrow()
+		{
+			try {
+				throw null;
+			} catch {
+				throw;
+			}
+		}
+
+		public void TryCatchFinally()
+		{
+			try {
+				Console.WriteLine("Try");
+			} catch (Exception ex) {
+				Console.WriteLine(ex.Message);
+			} finally {
+				Console.WriteLine("Finally");
+			}
+		}
+
+		public void TryCatchMultipleHandlers()
+		{
+			try {
+				Console.WriteLine("Try");
+			} catch (InvalidOperationException ex) {
+				Console.WriteLine(ex.Message);
+			} catch (Exception ex2) {
+				Console.WriteLine(ex2.Message);
+			} catch {
+				Console.WriteLine("other");
+			}
+		}
+
+		//public void TwoCatchBlocksWithSameVariable()
+		//{
+		//	try {
+		//		Console.WriteLine("Try1");
+		//	} catch (Exception ex) {
+		//		Console.WriteLine(ex.Message);
+		//	}
+		//	try {
+		//		Console.WriteLine("Try2");
+		//	} catch (Exception ex) {
+		//		Console.WriteLine(ex.Message);
+		//	}
+		//}
+
+		public void NoUsingStatementBecauseTheVariableIsAssignedTo()
+		{
+			CancellationTokenSource cancellationTokenSource = null;
+			try {
+				cancellationTokenSource = new CancellationTokenSource();
+			} finally {
+				if (cancellationTokenSource != null) {
+					cancellationTokenSource.Dispose();
+				}
+			}
 		}
 	}
 }
