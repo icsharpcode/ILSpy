@@ -19,6 +19,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!TransformLockRoslyn(block, i))
 					if (!TransformLockV4(block, i))
 						TransformLockV2(block, i);
+				// This happens in some cases:
+				// Use correct index after transformation.
+				if (i >= block.Instructions.Count)
+					i = block.Instructions.Count - 1;
 			}
 		}
 
