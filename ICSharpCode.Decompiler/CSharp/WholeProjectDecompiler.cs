@@ -93,6 +93,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			files.AddRange(WriteResourceFilesInProject(moduleDefinition));
 			WriteProjectFile(projectFileWriter, files, moduleDefinition);
 		}
+
+		enum LanguageTargets
+		{
+			None,
+			Portable
+		}
 		
 		#region WriteProjectFile
 		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module)
@@ -134,10 +140,20 @@ namespace ICSharpCode.Decompiler.CSharp
 
 				w.WriteElementString("AssemblyName", module.Assembly.Name.Name);
 				bool useTargetFrameworkAttribute = false;
+				LanguageTargets languageTargets = LanguageTargets.None;
 				var targetFrameworkAttribute = module.Assembly.CustomAttributes.FirstOrDefault(a => a.AttributeType.FullName == "System.Runtime.Versioning.TargetFrameworkAttribute");
 				if (targetFrameworkAttribute != null && targetFrameworkAttribute.ConstructorArguments.Any()) {
 					string frameworkName = (string)targetFrameworkAttribute.ConstructorArguments[0].Value;
 					string[] frameworkParts = frameworkName.Split(',');
+					string frameworkIdentifier = frameworkParts.FirstOrDefault(a => !a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase) && !a.StartsWith("Profile=", StringComparison.OrdinalIgnoreCase));
+					if (frameworkIdentifier != null) {
+						w.WriteElementString("TargetFrameworkIdentifier", frameworkIdentifier);
+						switch (frameworkIdentifier) {
+							case ".NETPortable":
+								languageTargets = LanguageTargets.Portable;
+								break;
+						}
+					}
 					string frameworkVersion = frameworkParts.FirstOrDefault(a => a.StartsWith("Version=", StringComparison.OrdinalIgnoreCase));
 					if (frameworkVersion != null) {
 						w.WriteElementString("TargetFrameworkVersion", frameworkVersion.Substring("Version=".Length));
@@ -216,10 +232,18 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					w.WriteEndElement();
 				}
-
-				w.WriteStartElement("Import");
-				w.WriteAttributeString("Project", "$(MSBuildToolsPath)\\Microsoft.CSharp.targets");
-				w.WriteEndElement();
+				switch (languageTargets) {
+					case LanguageTargets.Portable:
+						w.WriteStartElement("Import");
+						w.WriteAttributeString("Project", "$(MSBuildExtensionsPath32)\\Microsoft\\Portable\\$(TargetFrameworkVersion)\\Microsoft.Portable.CSharp.targets");
+						w.WriteEndElement();
+						break;
+					default:
+						w.WriteStartElement("Import");
+						w.WriteAttributeString("Project", "$(MSBuildToolsPath)\\Microsoft.CSharp.targets");
+						w.WriteEndElement();
+						break;
+				}
 
 				w.WriteEndDocument();
 			}
