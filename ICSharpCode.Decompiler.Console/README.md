@@ -21,3 +21,20 @@ Options:
 ```
 
 ![dotnet-build-dance](Running.gif)
+
+
+## X-Plat Notes
+
+[SCD Article](https://www.hanselman.com/blog/SelfcontainedNETCoreApplications.aspx)
+[RuntimeIdentifiers csproj documentation](https://docs.microsoft.com/en-us/dotnet/core/tools/csproj#additions)
+[RID catalog](https://docs.microsoft.com/en-us/dotnet/core/rid-catalog)
+
+```
+dotnet build -r win10-x64
+dotnet build -r osx-x64
+
+dotnet publish -c release -r win10-x64
+dotnet publish -c release -r osx-x64
+
+PS \ilspy-console-netcoreapp\src\ilspycmd\bin\Release\netcoreapp2.0\win10-x64\publish> ./ilspycmd.exe ilspycmd.dll
+```
