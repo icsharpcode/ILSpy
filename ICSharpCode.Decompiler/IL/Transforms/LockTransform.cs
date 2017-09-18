@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///			leave exitBlock (nop)
 		///		}
 		/// }
+		/// =>
 		/// .lock (lockObj) BlockContainer {
 		/// 	Block lockBlock (incoming: 1) {
 		///			call WriteLine()
