@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -153,7 +154,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				};
 			} else {
 				context.Step("NullableLiftingTransform.DoLift", ifInst);
-				lifted = DoLift(exprToLift);
+				BitSet bits;
+				(lifted, bits) = DoLift(exprToLift);
+				if (lifted != null && !bits.All(0, nullableVars.Count)) {
+					// don't lift if a nullableVar doesn't contribute to the result
+					lifted = null;
+				}
 			}
 			if (lifted != null) {
 				Debug.Assert(lifted is ILiftableInstruction liftable && liftable.IsLifted
@@ -164,22 +170,39 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		// Lifts the specified instruction.
 		// Creates a new lifted instruction without modifying the input instruction.
-		// If lifting fails, returns null.
-		ILInstruction DoLift(ILInstruction inst)
+		//   Returns (new lifted instruction, bitset of nullableVars that will cause the expression to evaluate to null).
+		// If lifting fails, returns (null, null).
+		(ILInstruction, BitSet) DoLift(ILInstruction inst)
 		{
-			if (MatchGetValueOrDefault(inst, out ILVariable inputVar) && nullableVars.Contains(inputVar)) {
+			if (MatchGetValueOrDefault(inst, out ILVariable inputVar)) {
 				// n.GetValueOrDefault() lifted => n.
-				return new LdLoc(inputVar) { ILRange = inst.ILRange };
+				BitSet foundIndices = new BitSet(nullableVars.Count);
+				for (int i = 0; i < nullableVars.Count; i++) {
+					if (nullableVars[i] == inputVar) {
+						foundIndices[i] = true;
+					}
+				}
+				if (foundIndices.Any())
+					return (new LdLoc(inputVar) { ILRange = inst.ILRange }, foundIndices);
+				else
+					return (null, null);
 			} else if (inst is Conv conv) {
-				var arg = DoLift(conv.Argument);
+				var (arg, bits) = DoLift(conv.Argument);
 				if (arg != null) {
-					return new Conv(arg, conv.InputType, conv.InputSign, conv.TargetType, conv.CheckForOverflow, isLifted: true) {
+					if (conv.HasFlag(InstructionFlags.MayThrow) && !bits.All(0, nullableVars.Count)) {
+						// Cannot execute potentially-throwing instruction unless all
+						// the nullableVars are arguments to the instruction
+						// (thus causing it not to throw when any of them is null).
+						return (null, null);
+					}
+					var newInst = new Conv(arg, conv.InputType, conv.InputSign, conv.TargetType, conv.CheckForOverflow, isLifted: true) {
 						ILRange = conv.ILRange
 					};
+					return (newInst, bits);
 				}
 			} else if (inst is BinaryNumericInstruction binary) {
-				var left = DoLift(binary.Left);
-				var right = DoLift(binary.Right);
+				var (left, leftBits) = DoLift(binary.Left);
+				var (right, rightBits) = DoLift(binary.Right);
 				if (left != null && right == null && SemanticHelper.IsPure(binary.Right.Flags)) {
 					// Embed non-nullable pure expression in lifted expression.
 					right = binary.Right.Clone();
@@ -189,7 +212,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					left = binary.Left.Clone();
 				}
 				if (left != null && right != null) {
-					return new BinaryNumericInstruction(
+					var bits = leftBits ?? rightBits;
+					if (rightBits != null)
+						bits.UnionWith(rightBits);
+					if (binary.HasFlag(InstructionFlags.MayThrow) && !bits.All(0, nullableVars.Count)) {
+						// Cannot execute potentially-throwing instruction unless all
+						// the nullableVars are arguments to the instruction
+						// (thus causing it not to throw when any of them is null).
+						return (null, null);
+					}
+					var newInst = new BinaryNumericInstruction(
 						binary.Operator, left, right,
 						binary.LeftInputType, binary.RightInputType,
 						binary.CheckForOverflow, binary.Sign,
@@ -197,9 +229,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					) {
 						ILRange = binary.ILRange
 					};
+					return (newInst, bits);
 				}
 			}
-			return null;
+			return (null, null);
 		}
 		#endregion
 

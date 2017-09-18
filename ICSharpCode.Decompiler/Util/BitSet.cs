@@ -80,7 +80,33 @@ namespace ICSharpCode.Decompiler.Util
 			}
 			return false;
 		}
-		
+
+		/// <summary>
+		/// Gets whether all bits in the specified range are set.
+		/// </summary>
+		public bool All(int startIndex, int endIndex)
+		{
+			Debug.Assert(startIndex <= endIndex);
+			if (startIndex >= endIndex) {
+				return true;
+			}
+			int startWordIndex = WordIndex(startIndex);
+			int endWordIndex = WordIndex(endIndex - 1);
+			ulong startMask = Mask << startIndex;
+			ulong endMask = Mask >> -endIndex; // same as (Mask >> (64 - (endIndex % 64)))
+			if (startWordIndex == endWordIndex) {
+				return (words[startWordIndex] & (startMask & endMask)) == (startMask & endMask);
+			} else {
+				if ((words[startWordIndex] & startMask) != startMask)
+					return false;
+				for (int i = startWordIndex + 1; i < endWordIndex; i++) {
+					if (words[i] != ulong.MaxValue)
+						return false;
+				}
+				return (words[endWordIndex] & endMask) == endMask;
+			}
+		}
+
 		/// <summary>
 		/// Gets whether both bitsets have the same content.
 		/// </summary>
@@ -174,7 +200,7 @@ namespace ICSharpCode.Decompiler.Util
 			} else {
 				words[startWordIndex] |= startMask;
 				for (int i = startWordIndex + 1; i < endWordIndex; i++) {
-					words[i] = 0;
+					words[i] = ulong.MaxValue;
 				}
 				words[endWordIndex] |= endMask;
 			}

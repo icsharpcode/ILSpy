@@ -56,6 +56,7 @@
     <Compile Include="Helpers\TypeSystemHelper.cs" />
     <Compile Include="ILPrettyTestRunner.cs" />
     <Compile Include="Stub.cs" />
+    <Compile Include="TestCases\Correctness\NullableTests.cs" />
     <Compile Include="TestCases\Correctness\TrickyTypes.cs" />
     <Compile Include="TestCases\ILPretty\Issue379.cs" />
     <Compile Include="TestCases\Pretty\Async.cs" />
@@ -97,6 +98,7 @@
     <Compile Include="TestCases\Pretty\ShortCircuit.cs" />
     <Compile Include="TestCases\Pretty\TypeAnalysisTests.cs" />
     <Compile Include="TestTraceListener.cs" />
+    <Compile Include="Util\BitSetTests.cs" />
     <Compile Include="Util\IntervalTests.cs" />
     <Compile Include="Util\LongSetTests.cs" />
     <Compile Include="CustomAttributes\CustomAttributeTests.cs" />

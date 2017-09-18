@@ -96,6 +96,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void NullableTests([ValueSource("defaultOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
 		public void Generics([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);
