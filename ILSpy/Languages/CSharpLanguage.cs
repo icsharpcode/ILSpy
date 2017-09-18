@@ -759,7 +759,7 @@ namespace ICSharpCode.ILSpy
 						color = gotoKeywordsColor;
 						break;
 				}
-				if (Roles.AttributeTargetRole == role)
+				if (nodeStack.PeekOrDefault() is AttributeSection)
 					color = attributeKeywordsColor;
 				if (color != null) {
 					textOutput.BeginSpan(color);
