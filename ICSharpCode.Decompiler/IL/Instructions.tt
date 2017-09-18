@@ -116,6 +116,11 @@
 			BaseClass("TryInstruction"), CustomConstructor, CustomWriteTo, CustomComputeFlags,
 			MatchCondition("TryBlock.PerformMatch(o.TryBlock, ref match)"),
 			MatchCondition("faultBlock.PerformMatch(o.faultBlock, ref match)")),
+		new OpCode("lock", "Lock statement", CustomClassName("LockInstruction"),
+			CustomChildren(new [] {
+				new ArgumentInfo("onExpression"),
+				new ChildInfo("body")
+			}), CustomWriteTo, CustomComputeFlags),
 		new OpCode("debug.break", "Breakpoint instruction",
 			NoArguments, VoidResult, SideEffect),
 		new OpCode("comp", "Comparison. The inputs must be both integers; or both floats; or both object references. "

@@ -273,12 +273,14 @@
     <Compile Include="IL\ControlFlow\SymbolicExecution.cs" />
     <Compile Include="IL\Instructions\Await.cs" />
     <Compile Include="IL\Instructions\ILVariableCollection.cs" />
+    <Compile Include="IL\Instructions\LockInstruction.cs" />
     <Compile Include="IL\Instructions\NullCoalescingInstruction.cs" />
     <Compile Include="IL\Patterns\AnyNode.cs" />
     <Compile Include="IL\ControlFlow\YieldReturnDecompiler.cs" />
     <Compile Include="IL\DetectedLoop.cs" />
     <Compile Include="IL\Transforms\AssignVariableNames.cs" />
     <Compile Include="IL\Transforms\DetectCatchWhenConditionBlocks.cs" />
+    <Compile Include="IL\Transforms\LockTransform.cs" />
     <Compile Include="IL\Transforms\NullableLiftingTransform.cs" />
     <Compile Include="IL\Transforms\NullCoalescingTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />

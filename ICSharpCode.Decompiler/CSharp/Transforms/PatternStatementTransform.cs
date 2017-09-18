@@ -85,11 +85,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			result = TransformFor(expressionStatement);
 			if (result != null)
 				return result;
-			if (context.Settings.LockStatement) {
-				result = TransformLock(expressionStatement);
-				if (result != null)
-					return result;
-			}
 			if (context.Settings.AutomaticProperties) {
 				result = ReplaceBackingFieldUsage(expressionStatement);
 				if (result != null)
@@ -672,104 +667,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 				return doLoop;
-			}
-			return null;
-		}
-		#endregion
-		
-		#region lock
-		static readonly AstNode lockFlagInitPattern = new ExpressionStatement(
-			new AssignmentExpression(
-				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
-				new PrimitiveExpression(false)
-			));
-		
-		static readonly AstNode lockTryCatchPattern = new TryCatchStatement {
-			TryBlock = new BlockStatement {
-				new OptionalNode(new VariableDeclarationStatement()).ToStatement(),
-				new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Monitor)).ToType()), "Enter"),
-					new AnyNode("enter"),
-					new DirectionExpression {
-						FieldDirection = FieldDirection.Ref,
-						Expression = new NamedNode("flag", new IdentifierExpression(Pattern.AnyString))
-					}),
-				new Repeat(new AnyNode()).ToStatement()
-			},
-			FinallyBlock = new BlockStatement {
-				new IfElseStatement {
-					Condition = new Backreference("flag"),
-					TrueStatement = new BlockStatement {
-						new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Monitor)).ToType()), "Exit"), new AnyNode("exit"))
-					}
-				}
-			}};
-
-		static readonly AstNode oldMonitorCallPattern = new ExpressionStatement(
-			new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Monitor)).ToType()), "Enter"), new AnyNode("enter"))
-		);
-
-		static readonly AstNode oldLockTryCatchPattern = new TryCatchStatement
-		{
-			TryBlock = new BlockStatement {
-				new Repeat(new AnyNode()).ToStatement()
-			},
-			FinallyBlock = new BlockStatement {
-				new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Monitor)).ToType()), "Exit"), new AnyNode("exit"))
-			}
-		};
-
-		bool AnalyzeLockV2(ExpressionStatement node, out Expression enter, out Expression exit)
-		{
-			enter = null;
-			exit = null;
-			Match m1 = oldMonitorCallPattern.Match(node);
-			if (!m1.Success) return false;
-			Match m2 = oldLockTryCatchPattern.Match(node.NextSibling);
-			if (!m2.Success) return false;
-			enter = m1.Get<Expression>("enter").Single();
-			exit = m2.Get<Expression>("exit").Single();
-			return true;
-		}
-
-		bool AnalyzeLockV4(ExpressionStatement node, out Expression enter, out Expression exit)
-		{
-			enter = null;
-			exit = null;
-			Match m1 = lockFlagInitPattern.Match(node);
-			if (!m1.Success) return false;
-			Match m2 = lockTryCatchPattern.Match(node.NextSibling);
-			if (!m2.Success) return false;
-			enter = m2.Get<Expression>("enter").Single();
-			exit = m2.Get<Expression>("exit").Single();
-			return m1.Get<IdentifierExpression>("variable").Single().Identifier == m2.Get<IdentifierExpression>("flag").Single().Identifier;
-		}
-		
-		public LockStatement TransformLock(ExpressionStatement node)
-		{
-			Expression enter, exit;
-			bool isV2 = AnalyzeLockV2(node, out enter, out exit);
-			if (isV2 || AnalyzeLockV4(node, out enter, out exit)) {
-				AstNode tryCatch = node.NextSibling;
-				if (!exit.IsMatch(enter)) {
-					// If exit and enter are not the same, then enter must be "exit = ..."
-					AssignmentExpression assign = enter as AssignmentExpression;
-					if (assign == null)
-						return null;
-					if (!exit.IsMatch(assign.Left))
-						return null;
-					enter = assign.Right;
-					// TODO: verify that 'obj' variable can be removed
-				}
-				// TODO: verify that 'flag' variable can be removed
-				// transform the code into a lock statement:
-				LockStatement l = new LockStatement();
-				l.Expression = enter.Detach();
-				l.EmbeddedStatement = ((TryCatchStatement)tryCatch).TryBlock.Detach();
-				if (!isV2) // Remove 'Enter()' call
-					((BlockStatement)l.EmbeddedStatement).Statements.First().Remove(); 
-				tryCatch.ReplaceWith(l);
-				node.Remove(); // remove flag variable
-				return l;
 			}
 			return null;
 		}

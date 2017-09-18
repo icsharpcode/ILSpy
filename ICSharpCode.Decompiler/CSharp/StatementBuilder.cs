@@ -245,7 +245,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			tryCatch.CatchClauses.Add(new CatchClause { Body = faultBlock });
 			return tryCatch;
 		}
-		
+
+		protected internal override Statement VisitLockInstruction(LockInstruction inst)
+		{
+			return new LockStatement {
+				Expression = exprBuilder.Translate(inst.OnExpression),
+				EmbeddedStatement = ConvertAsBlock(inst.Body)
+			};
+		}
+
 		protected internal override Statement VisitPinnedRegion(PinnedRegion inst)
 		{
 			var fixedStmt = new FixedStatement();

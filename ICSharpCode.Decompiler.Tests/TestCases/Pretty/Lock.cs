@@ -18,21 +18,22 @@
 
 using System;
 
-public class Lock
+namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	public void LockThis()
+	public class Lock
 	{
-		lock (this)
+		public void LockThis()
 		{
-			Console.WriteLine();
+			lock (this) {
+				Console.WriteLine();
+			}
 		}
-	}
 
-	public void LockOnType()
-	{
-		lock (typeof(Lock))
+		public void LockOnType()
 		{
-			Console.WriteLine();
+			lock (typeof(Lock)) {
+				Console.WriteLine();
+			}
 		}
 	}
 }

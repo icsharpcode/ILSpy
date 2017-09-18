@@ -84,6 +84,7 @@
     <Compile Include="TestCases\Correctness\ValueTypeCall.cs" />
     <Compile Include="CorrectnessTestRunner.cs" />
     <Compile Include="TestCases\Pretty\AutoProperties.cs" />
+    <Compile Include="TestCases\Pretty\Lock.cs" />
     <Compile Include="TestCases\Pretty\Loops.cs" />
     <Compile Include="TestCases\Correctness\YieldReturn.cs" />
     <Compile Include="TestCases\Pretty\CompoundAssignmentTest.cs" />

@@ -73,6 +73,8 @@ namespace ICSharpCode.Decompiler.IL
 		TryFinally,
 		/// <summary>Try-fault statement</summary>
 		TryFault,
+		/// <summary>Lock statement</summary>
+		LockInstruction,
 		/// <summary>Breakpoint instruction</summary>
 		DebugBreak,
 		/// <summary>Comparison. The inputs must be both integers; or both floats; or both object references. Object references can only be compared for equality or inequality. Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which evaluates to 1 (true).</summary>
@@ -1617,6 +1619,99 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as TryFault;
 			return o != null && TryBlock.PerformMatch(o.TryBlock, ref match) && faultBlock.PerformMatch(o.faultBlock, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Lock statement</summary>
+	public sealed partial class LockInstruction : ILInstruction
+	{
+		public LockInstruction(ILInstruction onExpression, ILInstruction body) : base(OpCode.LockInstruction)
+		{
+			this.OnExpression = onExpression;
+			this.Body = body;
+		}
+		public static readonly SlotInfo OnExpressionSlot = new SlotInfo("OnExpression", canInlineInto: true);
+		ILInstruction onExpression;
+		public ILInstruction OnExpression {
+			get { return this.onExpression; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.onExpression, value, 0);
+			}
+		}
+		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
+		ILInstruction body;
+		public ILInstruction Body {
+			get { return this.body; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.body, value, 1);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.onExpression;
+				case 1:
+					return this.body;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.OnExpression = value;
+					break;
+				case 1:
+					this.Body = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return OnExpressionSlot;
+				case 1:
+					return BodySlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (LockInstruction)ShallowClone();
+			clone.OnExpression = this.onExpression.Clone();
+			clone.Body = this.body.Clone();
+			return clone;
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLockInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLockInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLockInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LockInstruction;
+			return o != null && this.onExpression.PerformMatch(o.onExpression, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
 	}
 }
@@ -4188,6 +4283,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitLockInstruction(LockInstruction inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitDebugBreak(DebugBreak inst)
 		{
 			Default(inst);
@@ -4459,6 +4558,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitTryFault(TryFault inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLockInstruction(LockInstruction inst)
 		{
 			return Default(inst);
 		}
@@ -4736,6 +4839,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitLockInstruction(LockInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitDebugBreak(DebugBreak inst, C context)
 		{
 			return Default(inst, context);
@@ -4939,6 +5046,7 @@ namespace ICSharpCode.Decompiler.IL
 			"try.catch.handler",
 			"try.finally",
 			"try.fault",
+			"lock",
 			"debug.break",
 			"comp",
 			"call",
@@ -5067,6 +5175,18 @@ namespace ICSharpCode.Decompiler.IL
 			filter = default(ILInstruction);
 			body = default(ILInstruction);
 			variable = default(ILVariable);
+			return false;
+		}
+		public bool MatchLockInstruction(out ILInstruction onExpression, out ILInstruction body)
+		{
+			var inst = this as LockInstruction;
+			if (inst != null) {
+				onExpression = inst.OnExpression;
+				body = inst.Body;
+				return true;
+			}
+			onExpression = default(ILInstruction);
+			body = default(ILInstruction);
 			return false;
 		}
 		public bool MatchDebugBreak()
