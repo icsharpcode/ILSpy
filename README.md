@@ -7,6 +7,9 @@ Download: [latest release](https://github.com/icsharpcode/ILSpy/releases) | [lat
 Note: Only the CI builds support .NET Standard/Core assemblies. However, those builds are not yet at feature parity with the 
 released bits, see [C# language support status](https://github.com/icsharpcode/ILSpy/issues/829) for details.
 
+Looking for (Linux/Max/Windows) command line client (or a sample for the [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) Nuget)?
+Check out ICSharpCode.Decompiler.Console!
+
 License
 -------
 
