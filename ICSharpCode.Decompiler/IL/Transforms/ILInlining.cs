@@ -279,6 +279,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (parent is ILiftableInstruction liftable && liftable.IsLifted) {
 				return true; // inline into lifted operators
 			}
+			if (parent is NullCoalescingInstruction && NullableType.IsNullable(v.Type)) {
+				return true; // inline nullables into ?? operator
+			}
 			// decide based on the target into which we are inlining
 			switch (next.OpCode) {
 				case OpCode.Leave:

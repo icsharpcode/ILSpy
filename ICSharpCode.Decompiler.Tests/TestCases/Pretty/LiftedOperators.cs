@@ -854,7 +854,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 	}
 
-	class NullCoalescing
+	class NullCoalescingTests
 	{
 		static void Print<T>(T x)
 		{
@@ -876,6 +876,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Print(a ?? b);
 		}
 
+		static void NullableWithImplicitConversion(short? a, int? b)
+		{
+			Print(a ?? b);
+		}
+
+		static void NullableWithImplicitConversionAndNonNullableFallback(short? a, int b)
+		{
+			Print(a ?? b);
+		}
+
 		static void Chain(int? a, int? b, int? c, int d)
 		{
 			Print(a ?? b ?? c ?? d);
@@ -888,7 +898,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		static void ChainWithComputation(int? a, short? b, long? c, byte d)
 		{
-			Print(a + 1 ?? b + 2 ?? c + 3 ?? d + 4);
+			Print((a + 1) ?? (b + 2) ?? (c + 3) ?? (d + 4));
 		}
 
 		static object ReturnObjects(object a, object b)
@@ -906,19 +916,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return a ?? b;
 		}
 
-		static int? ReturnChain(int? a, int? b, int? c, int d)
+		static int ReturnChain(int? a, int? b, int? c, int d)
 		{
 			return a ?? b ?? c ?? d;
 		}
 
-		static long? ReturnChainWithImplicitConversions(int? a, short? b, long? c, byte d)
+		static long ReturnChainWithImplicitConversions(int? a, short? b, long? c, byte d)
 		{
 			return a ?? b ?? c ?? d;
 		}
 
-		static long? ReturnChainWithComputation(int? a, short? b, long? c, byte d)
+		static long ReturnChainWithComputation(int? a, short? b, long? c, byte d)
 		{
-			return a + 1 ?? b + 2 ?? c + 3 ?? d + 4;
+			return (a + 1) ?? (b + 2) ?? (c + 3) ?? (d + 4);
 		}
 	}
 }

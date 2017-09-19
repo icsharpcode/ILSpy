@@ -90,7 +90,7 @@
 		new OpCode("if.notnull", "Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c>",
 			CustomClassName("NullCoalescingInstruction"),
 			CustomChildren(new []{
-				new ChildInfo("valueInst"),
+				new ChildInfo("valueInst") { CanInlineInto = true },
 				new ChildInfo("fallbackInst"),
 			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
 		new OpCode("switch", "Switch statement",

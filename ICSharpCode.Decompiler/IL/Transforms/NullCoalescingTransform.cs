@@ -24,6 +24,12 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
+	/// <summary>
+	/// Transform for constructing the NullCoalescingInstruction (if.notnull(a,b), or in C#: ??)
+	/// Note that this transform only handles the case where a,b are reference types.
+	/// 
+	/// The ?? operator for nullables is handled by NullableLiftingTransform.
+	/// </summary>
 	class NullCoalescingTransform : IBlockTransform
 	{
 		BlockTransformContext context;
@@ -32,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			this.context = context;
 			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-				if (TransformNullCoalescing(block, i)) {
+				if (TransformRefTypes(block, i)) {
 					block.Instructions.RemoveAt(i);
 					continue;
 				}
@@ -40,6 +46,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
+		/// Handles NullCoalescingInstruction case 1: reference types.
+		/// 
 		/// stloc s(valueInst)
 		/// if (comp(ldloc s == ldnull)) {
 		///		stloc s(fallbackInst)
@@ -47,7 +55,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// stloc s(if.notnull(valueInst, fallbackInst))
 		/// </summary>
-		bool TransformNullCoalescing(Block block, int i)
+		bool TransformRefTypes(Block block, int i)
 		{
 			if (i == 0)
 				return false;
@@ -61,8 +69,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (condition.MatchCompEquals(out var left, out var right) && left.MatchLdLoc(stloc.Variable) && right.MatchLdNull()
 				&& trueInst.MatchStLoc(stloc.Variable, out var fallbackValue)
 			) {
-				context.Step("TransformNullCoalescing", stloc);
-				stloc.Value = new NullCoalescingInstruction(stloc.Value, fallbackValue);
+				context.Step("NullCoalescingTransform (reference types)", stloc);
+				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
 				return true; // returning true removes the if instruction
 			}
 			return false;

@@ -26,9 +26,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Nullable lifting gets run in two places:
-	///  * the usual form looks at an if-else, and runs within the ExpressionTransforms
+	///  * the usual form looks at an if-else, and runs within the ExpressionTransforms.
 	///  * the NullableLiftingBlockTransform handles the cases where Roslyn generates
 	///    two 'ret' statements for the null/non-null cases of a lifted operator.
+	/// 
+	/// The transform handles the following languages constructs:
+	///  * lifted conversions
+	///  * lifted unary and binary operators
+	///  * the ?? operator with type Nullable{T} on the left-hand-side
 	/// </summary>
 	struct NullableLiftingTransform
 	{
@@ -59,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			ILInstruction trueInst = negativeCondition ? ifInst.FalseInst : ifInst.TrueInst;
 			ILInstruction falseInst = negativeCondition ? ifInst.TrueInst : ifInst.FalseInst;
-			var lifted = Lift(ifInst, trueInst, falseInst);
+			var lifted = Lift(trueInst, falseInst, ifInst.ILRange);
 			if (lifted != null) {
 				ifInst.ReplaceWith(lifted);
 				return true;
@@ -91,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			ILInstruction trueInst = negativeCondition ? elseLeave.Value : thenLeave.Value;
 			ILInstruction falseInst = negativeCondition ? thenLeave.Value : elseLeave.Value;
-			var lifted = Lift(ifInst, trueInst, falseInst);
+			var lifted = Lift(trueInst, falseInst, ifInst.ILRange);
 			if (lifted != null) {
 				thenLeave.Value = lifted;
 				ifInst.ReplaceWith(thenLeave);
@@ -130,40 +135,72 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		#endregion
 
 		#region DoLift
-		ILInstruction Lift(IfInstruction ifInst, ILInstruction trueInst, ILInstruction falseInst)
+		ILInstruction Lift(ILInstruction trueInst, ILInstruction falseInst, Interval ilrange)
 		{
-			if (!MatchNullableCtor(trueInst, out var utype, out var exprToLift))
-				return null;
-			if (!MatchNull(falseInst, utype))
-				return null;
-			ILInstruction lifted;
-			if (nullableVars.Count == 1 && MatchGetValueOrDefault(exprToLift, nullableVars[0])) {
-				// v != null ? call GetValueOrDefault(ldloca v) : null
-				// => conv.nop.lifted(ldloc v)
-				// This case is handled separately from DoLift() because
-				// that doesn't introduce nop-conversions.
-				context.Step("if => conv.nop.lifted", ifInst);
-				var inputUType = NullableType.GetUnderlyingType(nullableVars[0].Type);
-				lifted = new Conv(
-					new LdLoc(nullableVars[0]),
-					inputUType.GetStackType(), inputUType.GetSign(), utype.ToPrimitiveType(),
-					checkForOverflow: false,
-					isLifted: true
-				) {
-					ILRange = ifInst.ILRange
-				};
-			} else {
-				context.Step("NullableLiftingTransform.DoLift", ifInst);
-				BitSet bits;
-				(lifted, bits) = DoLift(exprToLift);
-				if (lifted != null && !bits.All(0, nullableVars.Count)) {
-					// don't lift if a nullableVar doesn't contribute to the result
-					lifted = null;
+			bool isNullCoalescingWithNonNullableFallback = false;
+			if (!MatchNullableCtor(trueInst, out var utype, out var exprToLift)) {
+				isNullCoalescingWithNonNullableFallback = true;
+				utype = context.TypeSystem.Compilation.FindType(trueInst.ResultType.ToKnownTypeCode());
+				exprToLift = trueInst;
+				if (nullableVars.Count == 1 && exprToLift.MatchLdLoc(nullableVars[0])) {
+					// v.HasValue ? ldloc v : fallback
+					// => v ?? fallback
+					context.Step("v.HasValue ? v : fallback => v ?? fallback", trueInst);
+					return new NullCoalescingInstruction(NullCoalescingKind.Nullable, trueInst, falseInst) {
+						UnderlyingResultType = NullableType.GetUnderlyingType(nullableVars[0].Type).GetStackType(),
+						ILRange = ilrange
+					};
 				}
 			}
-			if (lifted != null) {
+			ILInstruction lifted;
+			if (nullableVars.Count == 1 && MatchGetValueOrDefault(exprToLift, nullableVars[0])) {
+				// v.HasValue ? call GetValueOrDefault(ldloca v) : fallback
+				// => conv.nop.lifted(ldloc v) ?? fallback
+				// This case is handled separately from DoLift() because
+				// that doesn't introduce nop-conversions.
+				context.Step("v.HasValue ? v.GetValueOrDefault() : fallback => v ?? fallback", trueInst);
+				var inputUType = NullableType.GetUnderlyingType(nullableVars[0].Type);
+				lifted = new LdLoc(nullableVars[0]);
+				if (!inputUType.Equals(utype) && utype.ToPrimitiveType() != PrimitiveType.None) {
+					// While the ILAst allows implicit conversions between short and int
+					// (because both map to I4); it does not allow implicit conversions
+					// between short? and int? (structs of different types).
+					// So use 'conv.nop.lifted' to allow the conversion.
+					lifted = new Conv(
+						lifted,
+						inputUType.GetStackType(), inputUType.GetSign(), utype.ToPrimitiveType(),
+						checkForOverflow: false,
+						isLifted: true
+					) {
+						ILRange = ilrange
+					};
+				}
+			} else {
+				context.Step("NullableLiftingTransform.DoLift", trueInst);
+				BitSet bits;
+				(lifted, bits) = DoLift(exprToLift);
+				if (lifted == null) {
+					return null;
+				}
+				if (!bits.All(0, nullableVars.Count)) {
+					// don't lift if a nullableVar doesn't contribute to the result
+					return null;
+				}
 				Debug.Assert(lifted is ILiftableInstruction liftable && liftable.IsLifted
 					&& liftable.UnderlyingResultType == exprToLift.ResultType);
+			}
+			if (isNullCoalescingWithNonNullableFallback) {
+				lifted = new NullCoalescingInstruction(NullCoalescingKind.NullableWithValueFallback, lifted, falseInst) {
+					UnderlyingResultType = exprToLift.ResultType,
+					ILRange = ilrange
+				};
+			} else if (!MatchNull(falseInst, utype)) {
+				// Normal lifting, but the falseInst isn't `default(utype?)`
+				// => use the `??` operator to provide the fallback value.
+				lifted = new NullCoalescingInstruction(NullCoalescingKind.Nullable, lifted, falseInst) {
+					UnderlyingResultType = exprToLift.ResultType,
+					ILRange = ilrange
+				};
 			}
 			return lifted;
 		}

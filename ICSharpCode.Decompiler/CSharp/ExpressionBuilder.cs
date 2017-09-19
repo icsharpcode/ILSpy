@@ -1729,12 +1729,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (rr.IsError) {
 				IType targetType;
 				if (!value.Type.Equals(SpecialType.NullType) && !fallback.Type.Equals(SpecialType.NullType) && !value.Type.Equals(fallback.Type)) {
-					targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+					targetType = compilation.FindType(inst.UnderlyingResultType.ToKnownTypeCode());
 				} else {
 					targetType = value.Type.Equals(SpecialType.NullType) ? fallback.Type : value.Type;
 				}
-				value = value.ConvertTo(targetType, this);
-				fallback = fallback.ConvertTo(targetType, this);
+				if (inst.Kind != NullCoalescingKind.Ref) {
+					value = value.ConvertTo(NullableType.Create(compilation, targetType), this);
+				} else {
+					value = value.ConvertTo(targetType, this);
+				}
+				if (inst.Kind == NullCoalescingKind.Nullable) {
+					value = value.ConvertTo(NullableType.Create(compilation, targetType), this);
+				} else {
+					fallback = fallback.ConvertTo(targetType, this);
+				}
 				rr = new ResolveResult(targetType);
 			}
 			return new BinaryOperatorExpression(value, BinaryOperatorType.NullCoalescing, fallback)

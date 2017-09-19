@@ -149,6 +149,7 @@ namespace ICSharpCode.Decompiler.IL
 			this.TargetType = targetType;
 			this.CheckForOverflow = checkForOverflow;
 			this.Kind = GetConversionKind(targetType, this.InputType, this.InputSign);
+			Debug.Assert(Kind != ConversionKind.Invalid);
 			this.IsLifted = isLifted;
 		}
 

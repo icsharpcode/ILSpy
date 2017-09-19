@@ -1240,7 +1240,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c></summary>
 	public sealed partial class NullCoalescingInstruction : ILInstruction
 	{
-		public static readonly SlotInfo ValueInstSlot = new SlotInfo("ValueInst");
+		public static readonly SlotInfo ValueInstSlot = new SlotInfo("ValueInst", canInlineInto: true);
 		ILInstruction valueInst;
 		public ILInstruction ValueInst {
 			get { return this.valueInst; }

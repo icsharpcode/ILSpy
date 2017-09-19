@@ -20,23 +20,44 @@ using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>Null coalescing operator expression. <c>if.notnull(valueInst, fallbackInst)</c></summary>
-	/// <remarks>
-	/// This instruction can used in 3 different cases:
-	/// Case 1: both ValueInst and FallbackInst are of reference type.
-	///    Semantics: equivalent to "valueInst != null ? valueInst : fallbackInst",
-	///               except that valueInst is evaluated only once.
-	/// Case 2: both ValueInst and FallbackInst are of type Nullable{T}.
-	///    Semantics: equivalent to "valueInst.HasValue ? valueInst : fallbackInst",
-	///               except that valueInst is evaluated only once.
-	/// Case 3: ValueInst is Nullable{T}, but FallbackInst is non-nullable value type.
-	///    Semantics: equivalent to "valueInst.HasValue ? valueInst.Value : fallbackInst",
-	///               except that valueInst is evaluated only once.
-	/// </remarks>
+	/// <summary>
+	/// Kind of null-coalescing operator.
+	/// ILAst: <c>if.notnull(valueInst, fallbackInst)</c>
+	/// C#: <c>value ?? fallback</c>
+	/// </summary>
+	public enum NullCoalescingKind
+	{
+		/// <summary>
+		/// Both ValueInst and FallbackInst are of reference type.
+		/// 
+		/// Semantics: equivalent to "valueInst != null ? valueInst : fallbackInst",
+		///            except that valueInst is evaluated only once.
+		/// </summary>
+		Ref,
+		/// <summary>
+		/// Both ValueInst and FallbackInst are of type Nullable{T}.
+		/// 
+		/// Semantics: equivalent to "valueInst.HasValue ? valueInst : fallbackInst",
+		///            except that valueInst is evaluated only once.
+		/// </summary>
+		Nullable,
+		/// <summary>
+		/// ValueInst is Nullable{T}, but FallbackInst is non-nullable value type.
+		/// 
+		/// Semantics: equivalent to "valueInst.HasValue ? valueInst.Value : fallbackInst",
+		///            except that valueInst is evaluated only once.
+		/// </summary>
+		NullableWithValueFallback
+	}
+
 	partial class NullCoalescingInstruction
 	{
-		public NullCoalescingInstruction(ILInstruction valueInst, ILInstruction fallbackInst) : base(OpCode.NullCoalescingInstruction)
+		public readonly NullCoalescingKind Kind;
+		public StackType UnderlyingResultType = StackType.O;
+
+		public NullCoalescingInstruction(NullCoalescingKind kind, ILInstruction valueInst, ILInstruction fallbackInst) : base(OpCode.NullCoalescingInstruction)
 		{
+			this.Kind = kind;
 			this.ValueInst = valueInst;
 			this.FallbackInst = fallbackInst;
 		}
@@ -44,7 +65,9 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(valueInst.ResultType == StackType.O || valueInst.ResultType == fallbackInst.ResultType);
+			Debug.Assert(valueInst.ResultType == StackType.O); // lhs is reference type or nullable type
+			Debug.Assert(fallbackInst.ResultType == StackType.O || Kind == NullCoalescingKind.NullableWithValueFallback);
+			Debug.Assert(ResultType == UnderlyingResultType || Kind == NullCoalescingKind.Nullable);
 		}
 
 		public override StackType ResultType {

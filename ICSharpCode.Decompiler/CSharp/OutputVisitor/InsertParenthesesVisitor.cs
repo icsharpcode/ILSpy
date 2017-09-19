@@ -244,7 +244,11 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (binaryOperatorExpression.Operator == BinaryOperatorType.NullCoalescing) {
 				if (InsertParenthesesForReadability) {
 					ParenthesizeIfRequired(binaryOperatorExpression.Left, Primary);
-					ParenthesizeIfRequired(binaryOperatorExpression.Right, Primary);
+					if (GetBinaryOperatorType(binaryOperatorExpression.Right) == BinaryOperatorType.NullCoalescing) {
+						ParenthesizeIfRequired(binaryOperatorExpression.Right, precedence);
+					} else {
+						ParenthesizeIfRequired(binaryOperatorExpression.Right, Primary);
+					}
 				} else {
 					// ?? is right-associative
 					ParenthesizeIfRequired(binaryOperatorExpression.Left, precedence + 1);
