@@ -135,6 +135,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		#endregion
 
 		#region DoLift
+		/// <summary>
+		/// Performs nullable lifting.
+		/// 
+		/// Produces a lifted instruction with semantics equivalent to:
+		///   (v1 != null && ... && vn != null) ? trueInst : falseInst,
+		/// where the v1,...,vn are the <c>this.nullableVars</c>.
+		/// If lifting fails, returns <c>null</c>.
+		/// </summary>
 		ILInstruction Lift(ILInstruction trueInst, ILInstruction falseInst, Interval ilrange)
 		{
 			bool isNullCoalescingWithNonNullableFallback = false;
@@ -205,10 +213,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return lifted;
 		}
 
-		// Lifts the specified instruction.
-		// Creates a new lifted instruction without modifying the input instruction.
-		//   Returns (new lifted instruction, bitset of nullableVars that will cause the expression to evaluate to null).
-		// If lifting fails, returns (null, null).
+		/// <summary>
+		/// Recursive function that lifts the specified instruction.
+		/// The input instruction is expected to a subexpression of the trueInst
+		/// (so that all nullableVars are guaranteed non-null within this expression).
+		/// 
+		/// Creates a new lifted instruction without modifying the input instruction.
+		/// On success, returns (new lifted instruction, bitset).
+		/// If lifting fails, returns (null, null).
+		/// 
+		/// The returned bitset specifies which nullableVars were considered "relevant" for this instruction.
+		/// bitSet[i] == true means nullableVars[i] was relevant.
+		/// 
+		/// The new lifted instruction will have equivalent semantics to the input instruction
+		/// if all relevant variables are non-null [except that the result will be wrapped in a Nullable{T} struct].
+		/// If any relevant variable is null, the new instruction is guaranteed to evaluate to <c>null</c>
+		/// without having any other effect.
+		/// </summary>
 		(ILInstruction, BitSet) DoLift(ILInstruction inst)
 		{
 			if (MatchGetValueOrDefault(inst, out ILVariable inputVar)) {
