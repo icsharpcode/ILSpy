@@ -480,12 +480,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			// Special case comparisons with char literals
-			if (left.Type.IsKnownType(KnownTypeCode.Char) && MightBeCharLiteral(right.ResolveResult)) {
-				right = right.ConvertTo(left.Type, this);
-			} else if (right.Type.IsKnownType(KnownTypeCode.Char) && MightBeCharLiteral(left.ResolveResult)) {
-				left = left.ConvertTo(right.Type, this);
-			}
+			// Special case comparisons with enum and char literals
+			left = AdjustConstantExpressionToType(left, right.Type);
+			right = AdjustConstantExpressionToType(right, left.Type);
 			
 			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
 				as OperatorResolveResult;
@@ -520,12 +517,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(rr);
-		}
-
-		bool MightBeCharLiteral(ResolveResult rr)
-		{
-			return rr.IsCompileTimeConstant && rr.ConstantValue is int val
-				&& val >= char.MinValue && val <= char.MaxValue;
 		}
 		
 		/// <summary>
@@ -1721,10 +1712,33 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(resolver.WithCheckForOverflow(inst.CheckForOverflow).ResolveUnaryOperator(op, target.ResolveResult));
 		}
 
+		/// <summary>
+		/// If expr is a constant integer expression, and its value fits into type,
+		/// convert the expression into the target type.
+		/// Otherwise, returns the expression unmodified.
+		/// </summary>
+		TranslatedExpression AdjustConstantExpressionToType(TranslatedExpression expr, IType type)
+		{
+			if (!expr.ResolveResult.IsCompileTimeConstant) {
+				return expr;
+			}
+			if (type.IsKnownType(KnownTypeCode.Boolean)
+				&& (object.Equals(expr.ResolveResult.ConstantValue, 0) || object.Equals(expr.ResolveResult.ConstantValue, 1))) {
+				return expr.ConvertToBoolean(this);
+			} else if (type.Kind == TypeKind.Enum || type.IsKnownType(KnownTypeCode.Char)) {
+				var castRR = resolver.WithCheckForOverflow(true).ResolveCast(type, expr.ResolveResult);
+				if (castRR.IsCompileTimeConstant && !castRR.IsError) {
+					return ConvertConstantValue(castRR).WithILInstruction(expr.ILInstructions);
+				}
+			}
+			return expr;
+		}
+
 		protected internal override TranslatedExpression VisitNullCoalescingInstruction(NullCoalescingInstruction inst, TranslationContext context)
 		{
 			var value = Translate(inst.ValueInst);
 			var fallback = Translate(inst.FallbackInst);
+			fallback = AdjustConstantExpressionToType(fallback, NullableType.GetUnderlyingType(value.Type));
 			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.NullCoalescing, value.ResolveResult, fallback.ResolveResult);
 			if (rr.IsError) {
 				IType targetType;
@@ -1775,6 +1789,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					.WithILInstruction(inst)
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
 			}
+
+			trueBranch = AdjustConstantExpressionToType(trueBranch, falseBranch.Type);
+			falseBranch = AdjustConstantExpressionToType(falseBranch, trueBranch.Type);
 
 			var rr = resolver.ResolveConditional(condition.ResolveResult, trueBranch.ResolveResult, falseBranch.ResolveResult);
 			if (rr.IsError) {
