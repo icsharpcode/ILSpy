@@ -42,8 +42,25 @@ namespace aa
 		[My(ULongEnum.MaxUInt64)]
 		public enum ULongEnum : ulong
 		{
+			[My(null)]
 			MaxUInt64 = 18446744073709551615uL
 		}
+		[AttributeUsage(AttributeTargets.Class)]
+		public class TypesAttribute : Attribute
+		{
+			public TypesAttribute(Type type)
+			{
+			}
+		}
+		[Types(typeof(int))]
+		private class Class1
+		{
+		}
+		[Types(null)]
+		private class Class2
+		{
+		}
+
 		[My(EnumWithFlag.Item1 | EnumWithFlag.Item2)]
 		private static int field;
 		[My(EnumWithFlag.All)]

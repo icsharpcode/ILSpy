@@ -237,7 +237,12 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				else
 					return new ConversionResolveResult(elementType, elem, Conversion.BoxingConversion);
 			} else if (typeCode == KnownTypeCode.Type) {
-				return new TypeOfResolveResult(underlyingType, ReadType());
+				var type = ReadType();
+				if (type != null) {
+					return new TypeOfResolveResult(underlyingType, type);
+				} else {
+					return new ConstantResolveResult(underlyingType, null);
+				}
 			} else {
 				return new ConstantResolveResult(elementType, ReadElemValue(typeCode));
 			}
@@ -360,7 +365,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				case 0x51: // boxed value type
 					return compilation.FindType(KnownTypeCode.Object);
 				case 0x55: // enum
-					return ReadType();
+					var type = ReadType();
+					if (type == null) {
+						throw new NotSupportedException("Enum type should not be null.");
+					}
+					return type;
 				default:
 					throw new NotSupportedException(string.Format("Custom attribute type 0x{0:x} is not supported.", b));
 			}
@@ -369,6 +378,9 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		IType ReadType()
 		{
 			string typeName = ReadSerString();
+			if (typeName == null) {
+				return null;
+			}
 			ITypeReference typeReference = ReflectionHelper.ParseReflectionName(typeName);
 			IType typeInCurrentAssembly = typeReference.Resolve(new SimpleTypeResolveContext(currentResolvedAssembly));
 			if (typeInCurrentAssembly.Kind != TypeKind.Unknown)
