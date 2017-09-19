@@ -1015,5 +1015,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		};
 		}
+
+		class Issue855
+		{
+			class Data
+			{
+				public object Obj;
+			}
+
+			class Items
+			{
+				public void SetItem(int i, object item) { }
+			}
+
+			object Item(string s, Data d)
+			{
+				return new object();
+			}
+
+			void Test()
+			{
+				Items items = null;
+
+				int num = 0;
+
+				for (int i = 0; i < 2; i++) {
+					if (num < 10)
+						items.SetItem(num, Item(string.Empty, new Data { Obj = null }));
+				}
+			}
+		}
 	}
 }

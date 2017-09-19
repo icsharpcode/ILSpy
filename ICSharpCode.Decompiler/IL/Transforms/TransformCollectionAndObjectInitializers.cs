@@ -36,6 +36,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			for (int i = block.Instructions.Count - 1; i >= 0; i--)
 			{
 				DoTransform(block, i);
+				// This happens in some cases:
+				// Use correct index after transformation.
+				if (i >= block.Instructions.Count)
+					i = block.Instructions.Count;
 			}
 		}
 

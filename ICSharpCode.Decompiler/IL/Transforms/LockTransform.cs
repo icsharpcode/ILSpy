@@ -22,7 +22,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// This happens in some cases:
 				// Use correct index after transformation.
 				if (i >= block.Instructions.Count)
-					i = block.Instructions.Count - 1;
+					i = block.Instructions.Count;
 			}
 		}
 
