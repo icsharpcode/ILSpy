@@ -60,6 +60,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(body.FinallyBlock is BlockContainer finallyContainer) || !MatchExitBlock(finallyContainer.EntryPoint, null, objectStore.Variable))
 				return false;
+			if (objectStore.Variable.LoadCount > 1)
+				return false;
 			context.Step("LockTransformV2", block);
 			block.Instructions.RemoveAt(i - 1);
 			block.Instructions.RemoveAt(i - 2);
@@ -101,6 +103,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(body.TryBlock is BlockContainer tryContainer) || !MatchLockEntryPoint(tryContainer.EntryPoint, flagStore.Variable, out StLoc objectStore))
 				return false;
 			if (!(body.FinallyBlock is BlockContainer finallyContainer) || !MatchExitBlock(finallyContainer.EntryPoint, flagStore.Variable, objectStore.Variable))
+				return false;
+			if (objectStore.Variable.LoadCount > 1)
 				return false;
 			context.Step("LockTransformV4", block);
 			block.Instructions.RemoveAt(i - 1);
@@ -144,6 +148,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(body.TryBlock is BlockContainer tryContainer) || !MatchLockEntryPoint(tryContainer.EntryPoint, flagStore.Variable, objectStore.Variable))
 				return false;
 			if (!(body.FinallyBlock is BlockContainer finallyContainer) || !MatchExitBlock(finallyContainer.EntryPoint, flagStore.Variable, objectStore.Variable))
+				return false;
+			if (objectStore.Variable.LoadCount > 2)
 				return false;
 			context.Step("LockTransformRoslyn", block);
 			block.Instructions.RemoveAt(i - 1);
