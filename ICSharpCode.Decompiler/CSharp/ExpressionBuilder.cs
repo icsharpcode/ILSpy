@@ -1149,11 +1149,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var argumentResolveResults = arguments.Select(arg => arg.ResolveResult).ToList();
 
-			ResolveResult rr;
-			if (inst.Method.IsAccessor)
-				rr = new MemberResolveResult(target.ResolveResult, method.AccessorOwner);
-			else
-				rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults);
+			ResolveResult rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults);
 			
 			if (inst.OpCode == OpCode.NewObj) {
 				var argumentExpressions = arguments.SelectArray(arg => arg.Expression);
@@ -1179,10 +1175,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(inst).WithRR(rr);
 				}
 			} else {
-				Expression expr;
 				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || method.Parameters.Count == allowedParamCount)) {
-					expr = HandleAccessorCall(inst, target, method, arguments.ToList());
+					return HandleAccessorCall(inst, target, method, arguments.ToList());
 				} else {
 					bool requireTypeArguments = false;
 					bool targetCasted = false;
@@ -1245,9 +1240,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (requireTypeArguments && (!settings.AnonymousTypes || !method.TypeArguments.Any(a => a.ContainsAnonymousType())))
 						mre.TypeArguments.AddRange(method.TypeArguments.Select(ConvertType));
 					var argumentExpressions = arguments.Select(arg => arg.Expression);
-					expr = new InvocationExpression(mre, argumentExpressions);
+					return new InvocationExpression(mre, argumentExpressions).WithILInstruction(inst).WithRR(rr);
 				}
-				return expr.WithILInstruction(inst).WithRR(rr);
 			}
 		}
 
@@ -1269,22 +1263,25 @@ namespace ICSharpCode.Decompiler.CSharp
 			return true;
 		}
 
-		Expression HandleAccessorCall(ILInstruction inst, TranslatedExpression target, IMethod method, IList<TranslatedExpression> arguments)
+		TranslatedExpression HandleAccessorCall(ILInstruction inst, TranslatedExpression target, IMethod method, IList<TranslatedExpression> arguments)
 		{
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 			var result = lookup.Lookup(target.ResolveResult, method.AccessorOwner.Name, EmptyList<IType>.Instance, isInvocation:false);
 			
 			if (result.IsError || (result is MemberResolveResult && !IsAppropriateCallTarget(method.AccessorOwner, ((MemberResolveResult)result).Member, inst.OpCode == OpCode.CallVirt)))
 				target = target.ConvertTo(method.AccessorOwner.DeclaringType, this);
+			var rr = new MemberResolveResult(target.ResolveResult, method.AccessorOwner);
 
 			if (method.ReturnType.IsKnownType(KnownTypeCode.Void)) {
 				var value = arguments.Last();
 				arguments.Remove(value);
-				Expression expr;
+				TranslatedExpression expr;
 				if (arguments.Count == 0)
-					expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
+					expr = new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name)
+						.WithoutILInstruction().WithRR(rr);
 				else
-					expr = new IndexerExpression(target.Expression, arguments.Select(a => a.Expression));
+					expr = new IndexerExpression(target.Expression, arguments.Select(a => a.Expression))
+						.WithoutILInstruction().WithRR(rr);
 				var op = AssignmentOperatorType.Assign;
 				var parentEvent = method.AccessorOwner as IEvent;
 				if (parentEvent != null) {
@@ -1295,12 +1292,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						op = AssignmentOperatorType.Subtract;
 					}
 				}
-				return new AssignmentExpression(expr, op, value.Expression);
+				return new AssignmentExpression(expr, op, value.Expression).WithILInstruction(inst).WithRR(new TypeResolveResult(method.AccessorOwner.ReturnType));
 			} else {
 				if (arguments.Count == 0)
-					return new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name);
+					return new MemberReferenceExpression(target.Expression, method.AccessorOwner.Name).WithILInstruction(inst).WithRR(rr);
 				else
-					return new IndexerExpression(target.Expression, arguments.Select(a => a.Expression));
+					return new IndexerExpression(target.Expression, arguments.Select(a => a.Expression)).WithILInstruction(inst).WithRR(rr);
 			}
 		}
 
