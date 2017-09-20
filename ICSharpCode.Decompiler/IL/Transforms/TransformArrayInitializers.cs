@@ -64,9 +64,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return true;
 				}
 				if (arrayLength.Length == 1) {
-					ILVariable finalStore;
 					int instructionsToRemove;
-					if (HandleSimpleArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
+					if (HandleSimpleArrayInitializer(body, pos + 1, v, arrayLength[0], out values, out instructionsToRemove)) {
 						context.Step("HandleSimpleArrayInitializer", inst);
 						var block = new Block(BlockType.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
@@ -79,13 +78,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 						));
 						block.FinalInstruction = new LdLoc(tempStore);
-						body.Instructions[pos].ReplaceWith(new StLoc(finalStore ?? v, block));
+						body.Instructions[pos].ReplaceWith(new StLoc(v, block));
 						RemoveInstructions(body, pos + 1, instructionsToRemove);
-						//body.Instructions.RemoveRange(pos + 1, values.Length + 1);
 						ILInlining.InlineIfPossible(body, ref pos, context);
 						return true;
 					}
-					if (HandleJaggedArrayInitializer(body, pos + 1, v, arrayLength[0], out finalStore, out values, out instructionsToRemove)) {
+					if (HandleJaggedArrayInitializer(body, pos + 1, v, arrayLength[0], out ILVariable finalStore, out values, out instructionsToRemove)) {
 						context.Step("HandleJaggedArrayInitializer", inst);
 						var block = new Block(BlockType.ArrayInitializer);
 						var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
@@ -170,11 +168,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Handle simple case where RuntimeHelpers.InitializeArray is not used.
 		/// </summary>
-		bool HandleSimpleArrayInitializer(Block block, int pos, ILVariable store, int length, out ILVariable finalStore, out ILInstruction[] values, out int instructionsToRemove)
+		bool HandleSimpleArrayInitializer(Block block, int pos, ILVariable store, int length, out ILInstruction[] values, out int instructionsToRemove)
 		{
 			instructionsToRemove = 0;
 			values = null;
-			finalStore = null;
 			values = new ILInstruction[length];
 			int index = 0;
 			int elementCount = 0;
@@ -193,14 +190,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				elementCount++;
 				instructionsToRemove++;
 			}
-			ILInstruction array;
 			if (pos + elementCount >= block.Instructions.Count)
 				return false;
-			if (block.Instructions[pos + elementCount].MatchStLoc(out finalStore, out array) && array.MatchLdLoc(store)) {
-				instructionsToRemove++;
-			} else {
-				finalStore = store;
-			}
 			return elementCount > 0;
 		}
 
