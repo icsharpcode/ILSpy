@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
 using System.Reflection;
 using ICSharpCode.Decompiler.CSharp.Syntax;
@@ -54,8 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var arguments = invocationExpression.Arguments.ToArray();
 			
 			// Reduce "String.Concat(a, b)" to "a + b"
-			if (method.Name == "Concat" && method.DeclaringType.FullName == "System.String" && arguments.Length >= 2
-			    && arguments.All(a => a.GetResolveResult().Type.IsKnownType(KnownTypeCode.String))) {
+			if (method.Name == "Concat" && method.DeclaringType.FullName == "System.String" && CheckArgumentsForStringConcat(arguments)) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
 				Expression expr = arguments[0];
 				for (int i = 1; i < arguments.Length; i++) {
@@ -135,7 +135,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			
 			return;
 		}
-		
+
+		bool CheckArgumentsForStringConcat(Expression[] arguments)
+		{
+			if (arguments.Length < 2)
+				return false;
+
+			return arguments[0].GetResolveResult().Type.IsKnownType(KnownTypeCode.String) ||
+				arguments[1].GetResolveResult().Type.IsKnownType(KnownTypeCode.String);
+		}
+
 		static BinaryOperatorType? GetBinaryOperatorTypeFromMetadataName(string name)
 		{
 			switch (name) {
