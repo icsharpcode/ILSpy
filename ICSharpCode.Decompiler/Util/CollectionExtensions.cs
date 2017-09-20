@@ -67,6 +67,20 @@ namespace ICSharpCode.Decompiler.Util
 			return result;
 		}
 
+		/// <summary>
+		/// Equivalent to <code>collection.Select(func).ToList()</code>, but more efficient as it makes
+		/// use of the input collection's known size.
+		/// </summary>
+		public static List<U> SelectList<T, U>(this ICollection<T> collection, Func<T, U> func)
+		{
+			List<U> result = new List<U>(collection.Count);
+			int index = 0;
+			foreach (var element in collection) {
+				result.Add(func(element));
+			}
+			return result;
+		}
+
 		public static IEnumerable<U> SelectWithIndex<T, U>(this IEnumerable<T> source, Func<int, T, U> func)
 		{
 			int index = 0;
