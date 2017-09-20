@@ -34,7 +34,42 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TestExtensionMethod();
 			TestParamsMethod();
 			Generics();
+			ConstructorTest();
 		}
+
+		#region ConstructorTest
+		static void ConstructorTest()
+		{
+			new CtorTestObj(1);
+			new CtorTestObj((short)2);
+			new CtorTestObj(3, null);
+			new CtorTestObj(4, null, null);
+		}
+
+		class CtorTestObj
+		{
+			public CtorTestObj(int i)
+			{
+				Console.WriteLine("CtorTestObj(int = " + i + ")");
+			}
+
+			public CtorTestObj(short s)
+			{
+				Console.WriteLine("CtorTestObj(short = " + s + ")");
+			}
+
+			public CtorTestObj(int i, object item1, object item2)
+				: this(i, new object[] { item1, item2 })
+			{
+				Console.WriteLine("CtorTestObj(int = " + i + ", item1 = " + item1 + ", item2 = " + item2);
+			}
+
+			public CtorTestObj(int i, params object[] items)
+			{
+				Console.WriteLine("CtorTestObj(int = " + i + ", items = " + (items == null ? "null" : items.Length.ToString()) + ")");
+			}
+		}
+		#endregion
 
 		#region params with nulls
 		static void TestParamsMethod()

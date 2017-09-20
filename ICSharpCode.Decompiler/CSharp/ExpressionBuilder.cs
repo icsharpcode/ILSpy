@@ -1190,8 +1190,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			ResolveResult rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults, isExpandedForm: isExpandedForm);
 			
 			if (inst.OpCode == OpCode.NewObj) {
-				var argumentExpressions = arguments.SelectArray(arg => arg.Expression);
 				if (settings.AnonymousTypes && method.DeclaringType.IsAnonymousType()) {
+					var argumentExpressions = arguments.SelectArray(arg => arg.Expression);
 					AnonymousTypeCreateExpression atce = new AnonymousTypeCreateExpression();
 					if (CanInferAnonymousTypePropertyNamesFromArguments(argumentExpressions, expectedParameters)) {
 						atce.Initializers.AddRange(argumentExpressions);
@@ -1208,7 +1208,13 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(inst)
 						.WithRR(rr);
 				} else {
-					return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), argumentExpressions)
+					if (IsUnambiguousCall(inst, target, method, Array.Empty<IType>(), arguments) != OverloadResolutionErrors.None) {
+						for (int i = 0; i < arguments.Count; i++) {
+							if (!settings.AnonymousTypes || !expectedParameters[i].Type.ContainsAnonymousType())
+								arguments[i] = arguments[i].ConvertTo(expectedParameters[i].Type, this);
+						}
+					}
+					return new ObjectCreateExpression(ConvertType(inst.Method.DeclaringType), arguments.SelectArray(arg => arg.Expression))
 						.WithILInstruction(inst).WithRR(rr);
 				}
 			} else {
