@@ -648,6 +648,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(x() + a);
 			(new TS?[0])[0] += x();
 		}
+
+		public static bool RetEq(int? a, int? b)
+		{
+			return a == b;
+		}
+
+		public static bool RetLt(int? a, int? b)
+		{
+			return a < b;
+		}
+
+		public static bool RetNotLt(int? a, int? b)
+		{
+			return !(a < b);
+		}
 	}
 
 	// dummy structure for testing custom operators

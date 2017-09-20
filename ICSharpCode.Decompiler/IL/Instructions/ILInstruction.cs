@@ -707,7 +707,19 @@ namespace ICSharpCode.Decompiler.IL
 
 	public interface ILiftableInstruction
 	{
+		/// <summary>
+		/// Gets whether the instruction was lifted; that is, whether is accepts
+		/// potentially nullable arguments.
+		/// </summary>
 		bool IsLifted { get; }
+
+		/// <summary>
+		/// If the instruction is lifted and returns a nullable result,
+		/// gets the underlying result type.
+		/// 
+		/// Note that not all lifted instructions return a nullable result:
+		/// C# comparisons always return a bool!
+		/// </summary>
 		StackType UnderlyingResultType { get; }
 	}
 }

@@ -423,6 +423,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitComp(Comp inst, TranslationContext context)
 		{
+			if (inst.LiftingKind == ComparisonLiftingKind.ThreeValuedLogic) {
+				return ErrorExpression("Nullable comparisons with three-valued-logic not supported in C#");
+			}
 			if (inst.Kind.IsEqualityOrInequality()) {
 				bool negateOutput;
 				var result = TranslateCeq(inst, out negateOutput);
@@ -541,8 +544,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 			}
 			if (inputType != KnownTypeCode.None) {
-				left = left.ConvertTo(compilation.FindType(inputType), this);
-				right = right.ConvertTo(compilation.FindType(inputType), this);
+				IType targetType = compilation.FindType(inputType);
+				if (inst.IsLifted) {
+					targetType = NullableType.Create(compilation, targetType);
+				}
+				left = left.ConvertTo(targetType, this);
+				right = right.ConvertTo(targetType, this);
 			}
 			var op = inst.Kind.ToBinaryOperatorType();
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)

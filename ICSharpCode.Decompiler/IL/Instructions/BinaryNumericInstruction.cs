@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <remarks>
 		/// A lifted binary operation allows its arguments to be a value of type Nullable{T}, where
 		/// T.GetStackType() == [Left|Right]InputType.
-		/// If both input values is non-null:
+		/// If both input values are non-null:
 		///  * they are sign/zero-extended to the corresponding InputType (based on T's sign)
 		///  * the underlying numeric operator is applied
 		///  * the result is wrapped in a Nullable{UnderlyingResultType}.

@@ -55,16 +55,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!context.Settings.LiftNullables)
 				return false;
-			// Detect pattern:
-			// if (condition)
-			//      newobj Nullable<utype>..ctor(exprToLift)
-			// else
-			//      default.value System.Nullable<utype>
-			if (!AnalyzeTopLevelCondition(ifInst.Condition, out bool negativeCondition))
-				return false;
-			ILInstruction trueInst = negativeCondition ? ifInst.FalseInst : ifInst.TrueInst;
-			ILInstruction falseInst = negativeCondition ? ifInst.TrueInst : ifInst.FalseInst;
-			var lifted = Lift(trueInst, falseInst, ifInst.ILRange);
+			var lifted = Lift(ifInst, ifInst.TrueInst, ifInst.FalseInst);
 			if (lifted != null) {
 				ifInst.ReplaceWith(lifted);
 				return true;
@@ -76,6 +67,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!context.Settings.LiftNullables)
 				return false;
+			/// e.g.:
 			//  if (!condition) Block {
 			//    leave IL_0000 (default.value System.Nullable`1[[System.Int64]])
 			//  }
@@ -92,11 +84,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (elseLeave.TargetContainer != thenLeave.TargetContainer)
 				return false;
-			if (!AnalyzeTopLevelCondition(ifInst.Condition, out bool negativeCondition))
-				return false;
-			ILInstruction trueInst = negativeCondition ? elseLeave.Value : thenLeave.Value;
-			ILInstruction falseInst = negativeCondition ? thenLeave.Value : elseLeave.Value;
-			var lifted = Lift(trueInst, falseInst, ifInst.ILRange);
+			var lifted = Lift(ifInst, thenLeave.Value, elseLeave.Value);
 			if (lifted != null) {
 				thenLeave.Value = lifted;
 				ifInst.ReplaceWith(thenLeave);
@@ -108,16 +96,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		#endregion
 
 		#region AnalyzeCondition
-		bool AnalyzeTopLevelCondition(ILInstruction condition, out bool negativeCondition)
-		{
-			negativeCondition = false;
-			while (condition.MatchLogicNot(out var arg)) {
-				condition = arg;
-				negativeCondition = !negativeCondition;
-			}
-			return AnalyzeCondition(condition);
-		}
-
 		bool AnalyzeCondition(ILInstruction condition)
 		{
 			if (MatchHasValueCall(condition, out var v)) {
@@ -134,7 +112,79 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 		#endregion
 
-		#region DoLift
+		#region Lift / DoLift
+		ILInstruction Lift(IfInstruction ifInst, ILInstruction trueInst, ILInstruction falseInst)
+		{
+			ILInstruction condition = ifInst.Condition;
+			while (condition.MatchLogicNot(out var arg)) {
+				condition = arg;
+				Swap(ref trueInst, ref falseInst);
+			}
+			if (AnalyzeCondition(condition)) {
+				// (v1 != null && ... && vn != null) ? trueInst : falseInst
+				// => normal lifting
+				return LiftNormal(trueInst, falseInst, ilrange: ifInst.ILRange);
+			}
+			if (condition is Comp comp && !comp.IsLifted && !comp.Kind.IsEqualityOrInequality()) {
+				// This might be a C#-style lifted comparison
+				// (C# checks the underlying value before checking the HasValue bits)
+				if (falseInst.MatchLdcI4(0) && AnalyzeCondition(trueInst)) {
+					// comp(lhs, rhs) ? (v1 != null && ... && vn != null) : false
+					// => comp.lifted[C#](lhs, rhs)
+					return LiftCSharpComparison(comp, comp.Kind);
+				} else if (trueInst.MatchLdcI4(0) && AnalyzeCondition(falseInst)) {
+					// comp(lhs, rhs) ? false : (v1 != null && ... && vn != null)
+					return LiftCSharpComparison(comp, comp.Kind.Negate());
+				}
+			}
+			return null;
+
+		}
+
+		static void Swap<T>(ref T a, ref T b)
+		{
+			T tmp = a;
+			a = b;
+			b = tmp;
+		}
+
+		/// <summary>
+		/// Lift a C# comparison.
+		/// 
+		/// The output instructions should evaluate to <c>false</c> when any of the <c>nullableVars</c> is <c>null</c>.
+		/// Otherwise, the output instruction should evaluate to the same value as the input instruction.
+		/// The output instruction should have the same side-effects (incl. exceptions being thrown) as the input instruction.
+		/// This means unlike LiftNormal(), we cannot rely on the input instruction not being evaluated if
+		/// a variable is <c>null</c>.
+		/// </summary>
+		Comp LiftCSharpComparison(Comp comp, ComparisonKind newComparisonKind)
+		{
+			var (left, leftBits) = DoLift(comp.Left);
+			var (right, rightBits) = DoLift(comp.Right);
+			if (left != null && right == null && SemanticHelper.IsPure(comp.Right.Flags)) {
+				// Embed non-nullable pure expression in lifted expression.
+				right = comp.Right.Clone();
+			}
+			if (left == null && right != null && SemanticHelper.IsPure(comp.Left.Flags)) {
+				// Embed non-nullable pure expression in lifted expression.
+				left = comp.Left.Clone();
+			}
+			// due to the restrictions on side effects, we only allow instructions that are pure after lifting.
+			// (we can't check this before lifting due to the calls to GetValueOrDefault())
+			if (left != null && right != null && SemanticHelper.IsPure(left.Flags) && SemanticHelper.IsPure(right.Flags)) {
+				var bits = leftBits ?? rightBits;
+				if (rightBits != null)
+					bits.UnionWith(rightBits);
+				if (!bits.All(0, nullableVars.Count)) {
+					// don't lift if a nullableVar doesn't contribute to the result
+					return null;
+				}
+				context.Step("NullableLiftingTransform: C# comparison", comp);
+				return new Comp(newComparisonKind, ComparisonLiftingKind.CSharp, comp.InputType, comp.Sign, left, right);
+			}
+			return null;
+		}
+
 		/// <summary>
 		/// Performs nullable lifting.
 		/// 
@@ -143,7 +193,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// where the v1,...,vn are the <c>this.nullableVars</c>.
 		/// If lifting fails, returns <c>null</c>.
 		/// </summary>
-		ILInstruction Lift(ILInstruction trueInst, ILInstruction falseInst, Interval ilrange)
+		ILInstruction LiftNormal(ILInstruction trueInst, ILInstruction falseInst, Interval ilrange)
 		{
 			bool isNullCoalescingWithNonNullableFallback = false;
 			if (!MatchNullableCtor(trueInst, out var utype, out var exprToLift)) {

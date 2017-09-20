@@ -881,7 +881,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as BinaryNumericInstruction;
-			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator;
+			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && IsLifted == o.IsLifted;
 		}
 	}
 }
@@ -1757,7 +1757,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Comparison. The inputs must be both integers; or both floats; or both object references. Object references can only be compared for equality or inequality. Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which evaluates to 1 (true).</summary>
 	public sealed partial class Comp : BinaryInstruction
 	{
-		public override StackType ResultType { get { return StackType.I4; } }
+
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitComp(this);
@@ -1773,7 +1773,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as Comp;
-			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && this.Kind == o.Kind && this.Sign == o.Sign;
+			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match) && this.Kind == o.Kind && this.Sign == o.Sign && this.LiftingKind == o.LiftingKind;
 		}
 	}
 }
@@ -1881,7 +1881,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as Conv;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && CheckForOverflow == o.CheckForOverflow && Kind == o.Kind && InputSign == o.InputSign && TargetType == o.TargetType;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && CheckForOverflow == o.CheckForOverflow && Kind == o.Kind && InputSign == o.InputSign && TargetType == o.TargetType && IsLifted == o.IsLifted;
 		}
 	}
 }

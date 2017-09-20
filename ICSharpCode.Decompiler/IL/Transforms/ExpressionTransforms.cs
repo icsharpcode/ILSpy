@@ -55,6 +55,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		protected internal override void VisitComp(Comp inst)
 		{
 			base.VisitComp(inst);
+			if (inst.IsLifted) {
+				return;
+			}
 			if (inst.Right.MatchLdNull()) {
 				if (inst.Kind == ComparisonKind.GreaterThan) {
 					context.Step("comp(left > ldnull)  => comp(left != ldnull)", inst);
@@ -84,6 +87,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// => comp(ldlen.i4 array > ldc.i4 0)
 					// This is a special case where the C# compiler doesn't generate conv.i4 after ldlen.
 					context.Step("comp(ldlen.i4 array > ldc.i4 0)", inst);
+					inst.InputType = StackType.I4;
 					inst.Left.ReplaceWith(new LdLen(StackType.I4, array) { ILRange = inst.Left.ILRange });
 					inst.Right = rightWithoutConv;
 				}
@@ -143,9 +147,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				arg.AddILRange(inst.Argument.ILRange);
 				inst.ReplaceWith(arg);
 				arg.AcceptVisitor(this);
-			} else if (inst.Argument is Comp) {
-				Comp comp = (Comp)inst.Argument;
-				if (comp.InputType != StackType.F || comp.Kind.IsEqualityOrInequality()) {
+			} else if (inst.Argument is Comp comp) {
+				if ((comp.InputType != StackType.F && !comp.IsLifted) || comp.Kind.IsEqualityOrInequality()) {
 					context.Step("push negation into comparison", inst);
 					comp.Kind = comp.Kind.Negate();
 					comp.AddILRange(inst.ILRange);

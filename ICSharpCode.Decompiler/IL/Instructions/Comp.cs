@@ -85,7 +85,35 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 	
-	partial class Comp
+	public enum ComparisonLiftingKind
+	{
+		/// <summary>
+		/// Not a lifted comparison.
+		/// </summary>
+		None,
+		/// <summary>
+		/// C#-style lifted comparison:
+		/// * operands that have a ResultType != this.InputType are expected to return a value of
+		///   type Nullable{T}, where T.GetStackType() == this.InputType.
+		/// * if both operands are <c>null</c>, equality comparisons evaluate to 1, all other comparisons to 0.
+		/// * if one operand is <c>null</c>, inequality comparisons evaluate to 1, all other comparisons to 0.
+		/// * if neither operand is <c>null</c>, the underlying comparison is performed.
+		/// 
+		/// Note that even though C#-style lifted comparisons set IsLifted=true,
+		/// the ResultType remains I4 as with normal comparisons.
+		/// </summary>
+		CSharp,
+		/// <summary>
+		/// SQL-style lifted comparison: works like a lifted binary numeric instruction,
+		/// that is, if any input operand is <c>null</c>, the comparison evaluates to <c>null</c>.
+		/// </summary>
+		/// <remarks>
+		/// This lifting kind is currently not used.
+		/// </remarks>
+		ThreeValuedLogic
+	}
+
+	partial class Comp : ILiftableInstruction
 	{
 		ComparisonKind kind;
 
@@ -97,12 +125,13 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
+		public readonly ComparisonLiftingKind LiftingKind;
+
 		/// <summary>
 		/// Gets the stack type of the comparison inputs.
+		/// For lifted comparisons, this is the underlying input type.
 		/// </summary>
-		public StackType InputType {
-			get { return Left.ResultType; }
-		}
+		public StackType InputType;
 		
 		/// <summary>
 		/// If this is an integer comparison, specifies the sign used to interpret the integers.
@@ -112,8 +141,34 @@ namespace ICSharpCode.Decompiler.IL
 		public Comp(ComparisonKind kind, Sign sign, ILInstruction left, ILInstruction right) : base(OpCode.Comp, left, right)
 		{
 			this.kind = kind;
+			this.LiftingKind = ComparisonLiftingKind.None;
+			this.InputType = left.ResultType;
 			this.Sign = sign;
 			Debug.Assert(left.ResultType == right.ResultType);
+		}
+
+		public Comp(ComparisonKind kind, ComparisonLiftingKind lifting, StackType inputType, Sign sign, ILInstruction left, ILInstruction right) : base(OpCode.Comp, left, right)
+		{
+			this.kind = kind;
+			this.LiftingKind = lifting;
+			this.InputType = inputType;
+			this.Sign = sign;
+		}
+
+		public override StackType ResultType => LiftingKind == ComparisonLiftingKind.ThreeValuedLogic ? StackType.O : StackType.I4;
+		public bool IsLifted => LiftingKind != ComparisonLiftingKind.None;
+		public StackType UnderlyingResultType => StackType.I4;
+
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			if (LiftingKind == ComparisonLiftingKind.None) {
+				Debug.Assert(Left.ResultType == InputType);
+				Debug.Assert(Right.ResultType == InputType);
+			} else {
+				Debug.Assert(Left.ResultType == InputType || Left.ResultType == StackType.O);
+				Debug.Assert(Right.ResultType == InputType || Right.ResultType == StackType.O);
+			}
 		}
 
 		public override void WriteTo(ITextOutput output)
@@ -125,6 +180,14 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				case Sign.Unsigned:
 					output.Write(".unsigned");
+					break;
+			}
+			switch (LiftingKind) {
+				case ComparisonLiftingKind.CSharp:
+					output.Write(".lifted[C#]");
+					break;
+				case ComparisonLiftingKind.ThreeValuedLogic:
+					output.Write(".lifted[3VL]");
 					break;
 			}
 			output.Write('(');

@@ -67,7 +67,7 @@
 			ResultType("I4"), Unary),
 		new OpCode("binary", "Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.",
 			CustomClassName("BinaryNumericInstruction"), Binary, CustomWriteTo, CustomConstructor, CustomComputeFlags,
-			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator")),
+			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && IsLifted == o.IsLifted")),
 		new OpCode("compound", "Common instruction for compound assignments.",
 			CustomClassName("CompoundAssignmentInstruction"), CustomConstructor, CustomComputeFlags,
 			MayThrow, CustomArguments("target", "value"), HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo,
@@ -127,8 +127,8 @@
 			+ "Object references can only be compared for equality or inequality. "
 			+ "Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which "
 			+ "evaluates to 1 (true).",
-			Binary, CustomConstructor, CustomWriteTo, ResultType("I4"),
-			MatchCondition("this.Kind == o.Kind && this.Sign == o.Sign")),
+			Binary, CustomConstructor, CustomWriteTo,
+			MatchCondition("this.Kind == o.Kind && this.Sign == o.Sign && this.LiftingKind == o.LiftingKind")),
 		new OpCode("call", "Non-virtual method call.", Call),
 		new OpCode("callvirt", "Virtual method call.", 
 			CustomClassName("CallVirt"), Call),
@@ -136,7 +136,7 @@
 			Unary, MayThrow, VoidResult),
 		new OpCode("conv", "Numeric cast.",
 			Unary, CustomConstructor,
-			MatchCondition("CheckForOverflow == o.CheckForOverflow && Kind == o.Kind && InputSign == o.InputSign && TargetType == o.TargetType")),
+			MatchCondition("CheckForOverflow == o.CheckForOverflow && Kind == o.Kind && InputSign == o.InputSign && TargetType == o.TargetType && IsLifted == o.IsLifted")),
 		new OpCode("ldloc", "Loads the value of a local variable. (ldarg/ldloc)",
 			CustomClassName("LdLoc"), NoArguments, HasVariableOperand("Load"), ResultType("variable.StackType")),
 		new OpCode("ldloca", "Loads the address of a local variable. (ldarga/ldloca)",
