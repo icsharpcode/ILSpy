@@ -1083,7 +1083,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		TranslatedExpression TranslateTarget(IMember member, ILInstruction target, bool nonVirtualInvocation)
 		{
-			if (!member.IsStatic) {
+			// If references are missing member.IsStatic might not be set correctly.
+			// Additionally check target for null, in order to avoid a crash.
+			if (!member.IsStatic && target != null) {
 				if (nonVirtualInvocation && target.MatchLdThis() && member.DeclaringTypeDefinition != resolver.CurrentTypeDefinition) {
 					return new BaseReferenceExpression()
 						.WithILInstruction(target)
