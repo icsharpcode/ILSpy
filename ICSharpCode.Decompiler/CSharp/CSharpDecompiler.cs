@@ -718,6 +718,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue),
 				};
 				enumDec.Attributes.AddRange(field.Attributes.Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
+				enumDec.AddAnnotation(new Semantics.MemberResolveResult(null, field));
 				return enumDec;
 			}
 			var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
