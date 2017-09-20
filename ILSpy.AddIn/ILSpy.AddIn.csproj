@@ -85,6 +85,13 @@
   </ItemGroup>
 
   <ItemGroup>
+	  <Content Include="Packages/*">
+      <IncludeInVSIX>true</IncludeInVSIX>
+      <VSIXSubPath>\</VSIXSubPath>
+	  </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
     </None>
@@ -132,6 +139,10 @@
 
     <!-- https://github.com/Microsoft/extendvs/issues/57 -->
     <ProjectReference Update="@(ProjectReference)" Name="%(Filename)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Packages\" />
   </ItemGroup>
 
 </Project>

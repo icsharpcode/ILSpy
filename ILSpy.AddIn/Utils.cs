@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
-	class Utils
+	static class Utils
 	{
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Design", "CA1060:MovePInvokesToNativeMethodsClass")]
 		[DllImport("shell32.dll", SetLastError = true, CharSet = CharSet.Unicode)]

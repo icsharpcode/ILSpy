@@ -10,3 +10,4 @@ _ReSharper*/
 *.ReSharper
 *.patch
 .vs/
+/ILSpy.AddIn/Packages/*

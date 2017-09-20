@@ -382,4 +382,16 @@
     </PropertyGroup>
   </Target>
 
+  <!--
+  Workaround: nuget packages do not get added to the vsix automatically.
+  Copy them to a local folder and then include them as Content-items in the AddIn.
+  (related to https://github.com/icsharpcode/ILSpy/issues/511)
+  -->
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+	  <Exec Command="mkdir $(SolutionDir)ILSpy.AddIn\packages\" IgnoreExitCode="true" />
+	  <Exec Command="copy $(TargetDir)\System.ValueTuple.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
+	  <Exec Command="copy $(TargetDir)\System.Collections.Immutable.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
+	  <Exec Command="copy $(TargetDir)\ICSharpCode.AvalonEdit.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
+	  <Exec Command="copy $(TargetDir)\Newtonsoft.Json.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
+  </Target>
 </Project>
