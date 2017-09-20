@@ -1131,6 +1131,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			var arguments = new List<TranslatedExpression>(method.Parameters.Count);
 			Debug.Assert(inst.Arguments.Count == firstParamIndex + method.Parameters.Count);
 			var expectedParameters = method.Parameters.ToList();
+			bool isExpandedForm = false;
 			for (int i = 0; i < method.Parameters.Count; i++) {
 				var parameter = expectedParameters[i];
 				var arg = Translate(inst.Arguments[firstParamIndex + i]);
@@ -1156,6 +1157,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							}
 						}
 						if (IsUnambiguousCall(inst, target, method, Array.Empty<IType>(), expandedArguments) == OverloadResolutionErrors.None) {
+							isExpandedForm = true;
 							expectedParameters = expandedParameters;
 							arguments = expandedArguments.SelectList(a => new TranslatedExpression(a.Expression.Detach()));
 							continue;
@@ -1185,7 +1187,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var argumentResolveResults = arguments.Select(arg => arg.ResolveResult).ToList();
 
-			ResolveResult rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults);
+			ResolveResult rr = new CSharpInvocationResolveResult(target.ResolveResult, method, argumentResolveResults, isExpandedForm: isExpandedForm);
 			
 			if (inst.OpCode == OpCode.NewObj) {
 				var argumentExpressions = arguments.SelectArray(arg => arg.Expression);
