@@ -74,7 +74,6 @@ namespace ICSharpCode.Decompiler.Util
 		public static List<U> SelectList<T, U>(this ICollection<T> collection, Func<T, U> func)
 		{
 			List<U> result = new List<U>(collection.Count);
-			int index = 0;
 			foreach (var element in collection) {
 				result.Add(func(element));
 			}

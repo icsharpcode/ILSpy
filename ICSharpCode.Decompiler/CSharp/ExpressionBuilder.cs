@@ -1134,7 +1134,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			for (int i = 0; i < method.Parameters.Count; i++) {
 				var parameter = expectedParameters[i];
 				var arg = Translate(inst.Arguments[firstParamIndex + i]);
-				if (parameter.IsParams) {
+				if (parameter.IsParams && i + 1 == method.Parameters.Count) {
 					// Parameter is marked params
 					// If the argument is an array creation, inline all elements into the call and add missing default values.
 					// Otherwise handle it normally.
@@ -1142,22 +1142,22 @@ namespace ICSharpCode.Decompiler.CSharp
 						acrr.SizeArguments.Count == 1 &&
 						acrr.SizeArguments[0].IsCompileTimeConstant &&
 						acrr.SizeArguments[0].ConstantValue is int length) {
-						var expectedParametersCopy = expectedParameters.Take(expectedParameters.Count - 1).ToList();
-						var argumentsCopy = new List<TranslatedExpression>(arguments);
+						var expandedParameters = expectedParameters.Take(expectedParameters.Count - 1).ToList();
+						var expandedArguments = new List<TranslatedExpression>(arguments);
 						if (length > 0) {
 							var arrayElements = ((ArrayCreateExpression)arg.Expression).Initializer.Elements.ToArray();
 							var elementType = ((ArrayType)acrr.Type).ElementType;
 							for (int j = 0; j < length; j++) {
-								expectedParametersCopy.Add(new DefaultParameter(elementType, parameter.Name + j));
+								expandedParameters.Add(new DefaultParameter(elementType, parameter.Name + j));
 								if (j < arrayElements.Length)
-									argumentsCopy.Add(new TranslatedExpression(arrayElements[j]));
+									expandedArguments.Add(new TranslatedExpression(arrayElements[j]));
 								else
-									argumentsCopy.Add(GetDefaultValueExpression(elementType).WithoutILInstruction());
+									expandedArguments.Add(GetDefaultValueExpression(elementType).WithoutILInstruction());
 							}
 						}
-						if (IsUnambiguousCall(inst, target, method, Array.Empty<IType>(), argumentsCopy) == OverloadResolutionErrors.None) {
-							expectedParameters = expectedParametersCopy;
-							arguments = argumentsCopy.SelectList(a => new TranslatedExpression(a.Expression.Detach()));
+						if (IsUnambiguousCall(inst, target, method, Array.Empty<IType>(), expandedArguments) == OverloadResolutionErrors.None) {
+							expectedParameters = expandedParameters;
+							arguments = expandedArguments.SelectList(a => new TranslatedExpression(a.Expression.Detach()));
 							continue;
 						}
 					}
