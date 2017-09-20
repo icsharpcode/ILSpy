@@ -313,16 +313,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLdNull(LdNull inst, TranslationContext context)
 		{
-			return new NullReferenceExpression()
-				.WithILInstruction(inst)
-				.WithRR(new ConstantResolveResult(SpecialType.NullType, null));
+			return GetDefaultValueExpression(SpecialType.NullType).WithILInstruction(inst);
 		}
 		
 		protected internal override TranslatedExpression VisitDefaultValue(DefaultValue inst, TranslationContext context)
 		{
-			return new DefaultValueExpression(ConvertType(inst.Type))
-				.WithILInstruction(inst)
-				.WithRR(new ConstantResolveResult(inst.Type, null));
+			return GetDefaultValueExpression(inst.Type).WithILInstruction(inst);
+		}
+
+		ExpressionWithResolveResult GetDefaultValueExpression(IType type)
+		{
+			var expr = type.IsReferenceType == true ? (Expression)new NullReferenceExpression() : new DefaultValueExpression(ConvertType(type));
+			var constantType = type.IsReferenceType == true ? SpecialType.NullType : type;
+			return expr.WithRR(new ConstantResolveResult(constantType, null));
 		}
 		
 		protected internal override TranslatedExpression VisitSizeOf(SizeOf inst, TranslationContext context)
@@ -1125,13 +1128,43 @@ namespace ICSharpCode.Decompiler.CSharp
 			int firstParamIndex = (method.IsStatic || inst.OpCode == OpCode.NewObj) ? 0 : 1;
 			
 			// Translate arguments to the expected parameter types
-			TranslatedExpression[] arguments = new TranslatedExpression[inst.Method.Parameters.Count];
-			Debug.Assert(inst.Arguments.Count == firstParamIndex + inst.Method.Parameters.Count);
-			for (int i = 0; i < arguments.Length; i++) {
-				var parameter = method.Parameters[i];
-				arguments[i] = Translate(inst.Arguments[firstParamIndex + i])
-					.ConvertTo(parameter.Type, this, allowImplicitConversion: true);
-				
+			var arguments = new List<TranslatedExpression>(method.Parameters.Count);
+			Debug.Assert(inst.Arguments.Count == firstParamIndex + method.Parameters.Count);
+			var expectedParameters = method.Parameters.ToList();
+			for (int i = 0; i < method.Parameters.Count; i++) {
+				var parameter = expectedParameters[i];
+				var arg = Translate(inst.Arguments[firstParamIndex + i]);
+				if (parameter.IsParams && i + 1 == method.Parameters.Count) {
+					// Parameter is marked params
+					// If the argument is an array creation, inline all elements into the call and add missing default values.
+					// Otherwise handle it normally.
+					if (arg.ResolveResult is ArrayCreateResolveResult acrr &&
+						acrr.SizeArguments.Count == 1 &&
+						acrr.SizeArguments[0].IsCompileTimeConstant &&
+						acrr.SizeArguments[0].ConstantValue is int length) {
+						var expandedParameters = expectedParameters.Take(expectedParameters.Count - 1).ToList();
+						var expandedArguments = new List<TranslatedExpression>(arguments);
+						if (length > 0) {
+							var arrayElements = ((ArrayCreateExpression)arg.Expression).Initializer.Elements.ToArray();
+							var elementType = ((ArrayType)acrr.Type).ElementType;
+							for (int j = 0; j < length; j++) {
+								expandedParameters.Add(new DefaultParameter(elementType, parameter.Name + j));
+								if (j < arrayElements.Length)
+									expandedArguments.Add(new TranslatedExpression(arrayElements[j]));
+								else
+									expandedArguments.Add(GetDefaultValueExpression(elementType).WithoutILInstruction());
+							}
+						}
+						if (IsUnambiguousCall(inst, target, method, Array.Empty<IType>(), expandedArguments) == OverloadResolutionErrors.None) {
+							expectedParameters = expandedParameters;
+							arguments = expandedArguments.SelectList(a => new TranslatedExpression(a.Expression.Detach()));
+							continue;
+						}
+					}
+				}
+
+				arguments.Add(arg.ConvertTo(parameter.Type, this, allowImplicitConversion: true));
+
 				if (parameter.IsOut && arguments[i].Expression is DirectionExpression dirExpr) {
 					dirExpr.FieldDirection = FieldDirection.Out;
 				}
@@ -1142,11 +1175,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				var argListArg = new UndocumentedExpression();
 				argListArg.UndocumentedExpressionType = UndocumentedExpressionType.ArgList;
 				int paramIndex = regularParameterCount;
-				argListArg.Arguments.AddRange(arguments.Skip(regularParameterCount).Select(arg => arg.ConvertTo(method.Parameters[paramIndex++].Type, this).Expression));
+				argListArg.Arguments.AddRange(arguments.Skip(regularParameterCount).Select(arg => arg.ConvertTo(expectedParameters[paramIndex++].Type, this).Expression));
 				var argListRR = new ResolveResult(SpecialType.ArgList);
 				arguments = arguments.Take(regularParameterCount)
-					.Concat(new[] { argListArg.WithoutILInstruction().WithRR(argListRR) }).ToArray();
+					.Concat(new[] { argListArg.WithoutILInstruction().WithRR(argListRR) }).ToList();
 				method = (IMethod)method.MemberDefinition;
+				expectedParameters = method.Parameters.ToList();
 			}
 
 			var argumentResolveResults = arguments.Select(arg => arg.ResolveResult).ToList();
@@ -1157,14 +1191,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				var argumentExpressions = arguments.SelectArray(arg => arg.Expression);
 				if (settings.AnonymousTypes && method.DeclaringType.IsAnonymousType()) {
 					AnonymousTypeCreateExpression atce = new AnonymousTypeCreateExpression();
-					var parameters = inst.Method.Parameters;
-					if (CanInferAnonymousTypePropertyNamesFromArguments(argumentExpressions, parameters)) {
+					if (CanInferAnonymousTypePropertyNamesFromArguments(argumentExpressions, expectedParameters)) {
 						atce.Initializers.AddRange(argumentExpressions);
 					} else {
 						for (int i = 0; i < argumentExpressions.Length; i++) {
 							atce.Initializers.Add(
 								new NamedExpression {
-									Name = parameters[i].Name,
+									Name = expectedParameters[i].Name,
 									Expression = argumentExpressions[i]
 								});
 						}
@@ -1178,7 +1211,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			} else {
 				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
-				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || method.Parameters.Count == allowedParamCount)) {
+				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expectedParameters.Count == allowedParamCount)) {
 					return HandleAccessorCall(inst, target, method, arguments.ToList());
 				} else {
 					bool requireTypeArguments = false;
@@ -1186,23 +1219,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					bool argumentsCasted = false;
 					IType[] typeArguments = Array.Empty<IType>();
 
-					OverloadResolutionErrors IsUnambiguousCall()
-					{
-						var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
-						var result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
-						if (result == null)
-							return OverloadResolutionErrors.AmbiguousMatch;
-						var or = new OverloadResolution(resolver.Compilation, arguments.SelectArray(a => a.ResolveResult), typeArguments: typeArguments);
-						or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-						if (or.BestCandidateErrors != OverloadResolutionErrors.None)
-							return or.BestCandidateErrors;
-						if (!IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt))
-							return OverloadResolutionErrors.AmbiguousMatch;
-						return OverloadResolutionErrors.None;
-					}
-
 					OverloadResolutionErrors errors;
-					while ((errors = IsUnambiguousCall()) != OverloadResolutionErrors.None) {
+					while ((errors = IsUnambiguousCall(inst, target, method, typeArguments, arguments)) != OverloadResolutionErrors.None) {
 						switch (errors) {
 							case OverloadResolutionErrors.TypeInferenceFailed:
 							case OverloadResolutionErrors.WrongNumberOfTypeArguments:
@@ -1213,9 +1231,9 @@ namespace ICSharpCode.Decompiler.CSharp
 							default:
 								if (!argumentsCasted) {
 									argumentsCasted = true;
-									for (int i = 0; i < arguments.Length; i++) {
-										if (!settings.AnonymousTypes || !method.Parameters[i].Type.ContainsAnonymousType())
-											arguments[i] = arguments[i].ConvertTo(method.Parameters[i].Type, this);
+									for (int i = 0; i < arguments.Count; i++) {
+										if (!settings.AnonymousTypes || !expectedParameters[i].Type.ContainsAnonymousType())
+											arguments[i] = arguments[i].ConvertTo(expectedParameters[i].Type, this);
 									}
 								} else if (!targetCasted) {
 									targetCasted = true;
@@ -1245,6 +1263,29 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new InvocationExpression(mre, argumentExpressions).WithILInstruction(inst).WithRR(rr);
 				}
 			}
+		}
+
+		OverloadResolutionErrors IsUnambiguousCall(ILInstruction inst, TranslatedExpression target, IMethod method, IType[] typeArguments, IList<TranslatedExpression> arguments)
+		{
+			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
+			var or = new OverloadResolution(resolver.Compilation, arguments.SelectArray(a => a.ResolveResult), typeArguments: typeArguments);
+			if (inst is NewObj newObj) {
+				foreach (IMethod ctor in newObj.Method.DeclaringType.GetConstructors()) {
+					if (lookup.IsAccessible(ctor, allowProtectedAccess: resolver.CurrentTypeDefinition == newObj.Method.DeclaringTypeDefinition)) {
+						or.AddCandidate(ctor);
+					}
+				}
+			} else {
+				var result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+				if (result == null)
+					return OverloadResolutionErrors.AmbiguousMatch;
+				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
+			}
+			if (or.BestCandidateErrors != OverloadResolutionErrors.None)
+				return or.BestCandidateErrors;
+			if (!IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt))
+				return OverloadResolutionErrors.AmbiguousMatch;
+			return OverloadResolutionErrors.None;
 		}
 
 		static bool CanInferAnonymousTypePropertyNamesFromArguments(IList<Expression> args, IList<IParameter> parameters)
