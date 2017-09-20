@@ -17,8 +17,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
-namespace aa
+namespace CustomAttributes
 {
 	public static class CustomAttributes
 	{
@@ -45,21 +46,47 @@ namespace aa
 			[My(null)]
 			MaxUInt64 = 18446744073709551615uL
 		}
-		[AttributeUsage(AttributeTargets.Class)]
+		[AttributeUsage(AttributeTargets.Field)]
 		public class TypesAttribute : Attribute
 		{
 			public TypesAttribute(Type type)
 			{
 			}
 		}
+		private class SomeType<T>
+		{
+		}
+		private class SomeType<K, V>
+		{
+		}
+		private struct DataType
+		{
+			private int i;
+		}
 		[Types(typeof(int))]
-		private class Class1
-		{
-		}
+		private static int typeattr_int;
 		[Types(null)]
-		private class Class2
-		{
-		}
+		private static int typeattr_null;
+		[Types(typeof(List<int>))]
+		private static int typeattr_list_of_int;
+		[Types(typeof(List<>))]
+		private static int typeattr_list_unbound;
+		[Types(typeof(SomeType<DataType>))]
+		private static int typeattr_sometype_of_datatype;
+		[Types(typeof(SomeType<DataType, DataType>))]
+		private static int typeattr_sometype_of_datatype2;
+		[Types(typeof(SomeType<DataType, int>))]
+		private static int typeattr_sometype_of_datatype_and_int;
+		[Types(typeof(SomeType<DataType[], int>))]
+		private static int typeattr_sometype_of_datatype_array_and_int;
+		[Types(typeof(SomeType<SomeType<DataType>, int>))]
+		private static int typeattr_sometype_of_nested_sometype;
+		[Types(typeof(SomeType<int, DataType>))]
+		private static int typeattr_sometype_of_int_and_datatype;
+		[Types(typeof(int[]))]
+		private static int typeattr_array_of_int;
+		[Types(typeof(int[,,,][,]))]
+		private static int typeattr_multidim_array_of_int;
 
 		[My(EnumWithFlag.Item1 | EnumWithFlag.Item2)]
 		private static int field;

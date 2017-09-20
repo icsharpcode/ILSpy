@@ -234,7 +234,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 		
-		static ITypeReference ParseReflectionName(string reflectionTypeName, ref int pos)
+		/// <summary>
+		/// Parses the reflection name starting at pos.
+		/// If local is true, only parses local type names, not assembly qualified type names.
+		/// </summary>
+		static ITypeReference ParseReflectionName(string reflectionTypeName, ref int pos, bool local=false)
 		{
 			if (pos == reflectionTypeName.Length)
 				throw new ReflectionNameParseException(pos, "Unexpected end");
@@ -256,9 +260,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				}
 			} else {
 				// not a type parameter reference: read the actual type name
-				int tpc;
-				string typeName = ReadTypeName(reflectionTypeName, ref pos, out tpc);
-				string assemblyName = SkipAheadAndReadAssemblyName(reflectionTypeName, pos);
+				string typeName = ReadTypeName(reflectionTypeName, ref pos, out int tpc);
+				string assemblyName = local ? null : SkipAheadAndReadAssemblyName(reflectionTypeName, pos);
 				reference = CreateGetClassTypeReference(assemblyName, typeName, tpc);
 			}
 			// read type suffixes
@@ -279,29 +282,30 @@ namespace ICSharpCode.Decompiler.TypeSystem
 						// this might be an array or a generic type
 						if (pos == reflectionTypeName.Length)
 							throw new ReflectionNameParseException(pos, "Unexpected end");
-						if (reflectionTypeName[pos] == '[') {
+						if (reflectionTypeName[pos] != ']' && reflectionTypeName[pos] != ',') {
 							// it's a generic type
 							List<ITypeReference> typeArguments = new List<ITypeReference>();
-							pos++;
-							typeArguments.Add(ParseReflectionName(reflectionTypeName, ref pos));
-							if (pos < reflectionTypeName.Length && reflectionTypeName[pos] == ']')
-								pos++;
-							else
-								throw new ReflectionNameParseException(pos, "Expected end of type argument");
-							
-							while (pos < reflectionTypeName.Length && reflectionTypeName[pos] == ',') {
-								pos++;
-								if (pos < reflectionTypeName.Length && reflectionTypeName[pos] == '[')
+							bool first = true;
+							while (first || pos < reflectionTypeName.Length && reflectionTypeName[pos] == ',') {
+								if (first) {
+									first = false;
+								} else {
+									pos++; // skip ','
+								}
+								if (pos < reflectionTypeName.Length && reflectionTypeName[pos] == '[') {
+									// non-local type names are enclosed in another set of []
 									pos++;
-								else
-									throw new ReflectionNameParseException(pos, "Expected another type argument");
-								
-								typeArguments.Add(ParseReflectionName(reflectionTypeName, ref pos));
-								
-								if (pos < reflectionTypeName.Length && reflectionTypeName[pos] == ']')
-									pos++;
-								else
-									throw new ReflectionNameParseException(pos, "Expected end of type argument");
+
+									typeArguments.Add(ParseReflectionName(reflectionTypeName, ref pos));
+
+									if (pos < reflectionTypeName.Length && reflectionTypeName[pos] == ']')
+										pos++;
+									else
+										throw new ReflectionNameParseException(pos, "Expected end of type argument");
+								} else {
+									// local type names occur directly in the outer []
+									typeArguments.Add(ParseReflectionName(reflectionTypeName, ref pos, local: true));
+								}
 							}
 							
 							if (pos < reflectionTypeName.Length && reflectionTypeName[pos] == ']') {
@@ -325,14 +329,14 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							}
 						}
 						break;
-					case ',':
+					case ',' when !local:
 						// assembly qualified name, ignore everything up to the end/next ']'
 						while (pos < reflectionTypeName.Length && reflectionTypeName[pos] != ']')
 							pos++;
 						break;
 					default:
 						pos--; // reset pos to the character we couldn't read
-						if (reflectionTypeName[pos] == ']')
+						if (reflectionTypeName[pos] == ']' || reflectionTypeName[pos] == ',')
 							return reference; // return from a nested generic
 						else
 							throw new ReflectionNameParseException(pos, "Unexpected character: '" + reflectionTypeName[pos] + "'");
