@@ -313,21 +313,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLdNull(LdNull inst, TranslationContext context)
 		{
-			return GetDefaultValueExpression(SpecialType.NullType, inst);
+			return GetDefaultValueExpression(SpecialType.NullType).WithILInstruction(inst);
 		}
 		
 		protected internal override TranslatedExpression VisitDefaultValue(DefaultValue inst, TranslationContext context)
 		{
-			return GetDefaultValueExpression(inst.Type, inst);
+			return GetDefaultValueExpression(inst.Type).WithILInstruction(inst);
 		}
 
-		TranslatedExpression GetDefaultValueExpression(IType type, ILInstruction inst = null)
+		ExpressionWithResolveResult GetDefaultValueExpression(IType type)
 		{
 			var expr = type.IsReferenceType == true ? (Expression)new NullReferenceExpression() : new DefaultValueExpression(ConvertType(type));
 			var constantType = type.IsReferenceType == true ? SpecialType.NullType : type;
-			if (inst == null)
-				return expr.WithoutILInstruction().WithRR(new ConstantResolveResult(constantType, null));
-			return expr.WithILInstruction(inst).WithRR(new ConstantResolveResult(constantType, null));
+			return expr.WithRR(new ConstantResolveResult(constantType, null));
 		}
 		
 		protected internal override TranslatedExpression VisitSizeOf(SizeOf inst, TranslationContext context)
@@ -1154,7 +1152,7 @@ namespace ICSharpCode.Decompiler.CSharp
 								if (j < arrayElements.Length)
 									argumentsCopy.Add(new TranslatedExpression(arrayElements[j]));
 								else
-									argumentsCopy.Add(GetDefaultValueExpression(elementType));
+									argumentsCopy.Add(GetDefaultValueExpression(elementType).WithoutILInstruction());
 							}
 						}
 						if (IsUnambiguousCall(inst, target, method, Array.Empty<IType>(), argumentsCopy) == OverloadResolutionErrors.None) {
