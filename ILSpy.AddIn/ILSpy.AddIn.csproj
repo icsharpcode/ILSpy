@@ -3,6 +3,10 @@
   <Import Sdk="Microsoft.NET.Sdk" Project="Sdk.props" />
 
   <PropertyGroup>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <TargetFramework>net461</TargetFramework>
     <RootNamespace>ICSharpCode.ILSpy.AddIn</RootNamespace>
 
