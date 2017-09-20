@@ -1267,15 +1267,20 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		OverloadResolutionErrors IsUnambiguousCall(ILInstruction inst, TranslatedExpression target, IMethod method, IType[] typeArguments, IList<TranslatedExpression> arguments)
 		{
-			// TODO : MemberLookup does not support ctors. (target is null in that case! -> NullArgumentException is thrown)
-			if (inst.OpCode == OpCode.NewObj)
-				return OverloadResolutionErrors.None;
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
-			var result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
-			if (result == null)
-				return OverloadResolutionErrors.AmbiguousMatch;
 			var or = new OverloadResolution(resolver.Compilation, arguments.SelectArray(a => a.ResolveResult), typeArguments: typeArguments);
-			or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
+			if (inst is NewObj newObj) {
+				foreach (IMethod ctor in newObj.Method.DeclaringType.GetConstructors()) {
+					if (lookup.IsAccessible(ctor, allowProtectedAccess: resolver.CurrentTypeDefinition == newObj.Method.DeclaringTypeDefinition)) {
+						or.AddCandidate(ctor);
+					}
+				}
+			} else {
+				var result = lookup.Lookup(target.ResolveResult, method.Name, EmptyList<IType>.Instance, true) as MethodGroupResolveResult;
+				if (result == null)
+					return OverloadResolutionErrors.AmbiguousMatch;
+				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
+			}
 			if (or.BestCandidateErrors != OverloadResolutionErrors.None)
 				return or.BestCandidateErrors;
 			if (!IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), inst.OpCode == OpCode.CallVirt))
