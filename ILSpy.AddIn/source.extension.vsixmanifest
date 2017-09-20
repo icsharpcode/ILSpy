@@ -1,36 +1,23 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Vsix Version="1.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2010">
-  <Identifier Id="a9120dbe-164a-4891-842f-fb7829273838">
-    <Name>ILSpy</Name>
-    <Author>IC#Code</Author>
-    <Version>1.5</Version>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+  <Metadata>
+    <Identity Id="ILSpy.AddIn.a9120dbe-164a-4891-842f-fb7829273838" Version="1.5" Language="en-US" Publisher="ic#code" />
+    <DisplayName>ILSpy</DisplayName>
     <Description xml:space="preserve">Integrates the ILSpy decompiler into Visual Studio.</Description>
-    <Icon>ILSpy-Large.ico</Icon>
+    <MoreInfo>http://www.ilspy.net</MoreInfo>
     <License>license.txt</License>
-    <!--TODO: <PreviewImage>~200px image</PreviewImage>-->
-    <MoreInfoUrl>http://ilspy.net</MoreInfoUrl>
-    <Locale>1033</Locale>
-    <SupportedFrameworkRuntimeEdition MinVersion="4.0" MaxVersion="6.0"/>
-    <SupportedProducts>
-      <VisualStudio Version="10.0">
-        <Edition>Pro</Edition>
-      </VisualStudio>
-      <VisualStudio Version="11.0">
-        <Edition>Pro</Edition>
-      </VisualStudio>
-      <VisualStudio Version="12.0">
-        <Edition>Pro</Edition>
-      </VisualStudio>
-      <VisualStudio Version="14.0">
-        <Edition>Pro</Edition>
-      </VisualStudio>
-      <VisualStudio Version="15.0">
-        <Edition>Pro</Edition>
-        <Edition>Community</Edition>
-      </VisualStudio>
-    </SupportedProducts>
-  </Identifier>
-  <Content>
-    <VsPackage>|%CurrentProject%;PkgdefProjectOutputGroup|</VsPackage>
-  </Content>
-</Vsix>
+    <Icon>ILSpy-Large.ico</Icon>
+  </Metadata>
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio.Ultimate" Version="[14.0,15.0]" />
+    <InstallationTarget Id="Microsoft.VisualStudio.Premium" Version="[14.0,15.0]" />
+    <InstallationTarget Id="Microsoft.VisualStudio.Pro" Version="[14.0,15.0]" />
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[14.0,15.0]" />
+  </Installation>
+  <Dependencies>
+    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
+  </Dependencies>
+  <Prerequisites>
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,16.0)" DisplayName="Visual Studio core editor" />
+  </Prerequisites>
+</PackageManifest>
