@@ -402,7 +402,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public bool IsEnabled(TextViewContext context)
 		{
-			return true;
+			if (context.SelectedTreeNodes == null)
+				return false;
+			return context.SelectedTreeNodes.Where(n => n is AssemblyTreeNode).Any(n => !((AssemblyTreeNode)n).LoadedAssembly.FileName.StartsWith("nupkg://"));
 		}
 
 		public void Execute(TextViewContext context)
@@ -411,7 +413,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return;
 			foreach (var node in context.SelectedTreeNodes) {
 				var loadedAssm = ((AssemblyTreeNode)node).LoadedAssembly;
-				if (!loadedAssm.HasLoadError) {
+				if (!loadedAssm.HasLoadError && !loadedAssm.FileName.StartsWith("nupkg://")) {
 					loadedAssm.IsAutoLoaded = false;
 					node.RaisePropertyChanged("Foreground");
 				}

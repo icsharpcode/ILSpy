@@ -163,6 +163,26 @@ namespace ICSharpCode.ILSpy
 		}
 
 		/// <summary>
+		/// Opens an assembly from a stream.
+		/// </summary>
+		public LoadedAssembly OpenAssembly(string file, Stream stream, bool isAutoLoaded = false)
+		{
+			App.Current.Dispatcher.VerifyAccess();
+
+			foreach (LoadedAssembly asm in this.assemblies) {
+				if (file.Equals(asm.FileName, StringComparison.OrdinalIgnoreCase))
+					return asm;
+			}
+
+			var newAsm = new LoadedAssembly(this, file, stream);
+			newAsm.IsAutoLoaded = isAutoLoaded;
+			lock (assemblies) {
+				this.assemblies.Add(newAsm);
+			}
+			return newAsm;
+		}
+
+		/// <summary>
 		/// Replace the assembly object model from a crafted stream, without disk I/O
 		/// Returns null if it is not already loaded.
 		/// </summary>

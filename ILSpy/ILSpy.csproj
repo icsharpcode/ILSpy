@@ -43,6 +43,7 @@
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
     <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.IO.Compression" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="WindowsBase" />
@@ -126,11 +127,16 @@
     <Compile Include="Languages\Language.cs" />
     <Compile Include="Languages\Languages.cs" />
     <Compile Include="LoadedAssembly.cs" />
+    <Compile Include="LoadedNugetPackage.cs" />
     <Compile Include="NativeMethods.cs" />
     <Compile Include="NavigationHistory.cs" />
     <Compile Include="NavigationState.cs" />
     <Compile Include="Commands\OpenCommand.cs" />
     <Compile Include="Commands\OpenFromGacCommand.cs" />
+    <Compile Include="NugetPackageBrowserDialog.xaml.cs">
+      <SubType>Code</SubType>
+      <DependentUpon>NugetPackageBrowserDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="OpenFromGacDialog.xaml.cs">
       <DependentUpon>OpenFromGacDialog.xaml</DependentUpon>
       <SubType>Code</SubType>
@@ -292,12 +298,10 @@
     <Page Include="MainWindow.xaml" />
     <Page Include="OpenFromGacDialog.xaml" />
     <Page Include="OpenListDialog.xaml" />
+	<Page Include="NugetPackageBrowserDialog.xaml" />
     <Page Include="Options\DecompilerSettingsPanel.xaml" />
     <Page Include="Options\DisplaySettingsPanel.xaml" />
-    <Page Include="Options\MiscSettingsPanel.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
+    <Page Include="Options\MiscSettingsPanel.xaml" />
     <Page Include="Options\OptionsDialog.xaml" />
     <Page Include="SearchPane.xaml" />
     <Page Include="TextView\DecompilerTextView.xaml" />

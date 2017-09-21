@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window
+	x:Class="ICSharpCode.ILSpy.NugetPackageBrowserDialog" xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls"
+	xmlns:treeview="http://icsharpcode.net/sharpdevelop/treeview"
+	Title="Nuget Package Browser"
+	Style="{DynamicResource DialogWindow}"
+	WindowStartupLocation="CenterOwner"
+	ResizeMode="CanResizeWithGrip"
+	MinWidth="200"
+	MinHeight="150"
+	Height="350"
+	Width="750">
+	<Grid
+		Margin="12,8">
+		<Grid.RowDefinitions>
+			<RowDefinition
+				Height="Auto" />
+			<RowDefinition
+				Height="1*" />
+			<RowDefinition
+				Height="Auto" />
+		</Grid.RowDefinitions>
+		<TextBlock Text="Select assemblies to open:" Margin="5" />
+		<ListBox ItemsSource="{Binding Package.Entries}" Grid.Row="1">
+			<ListBox.ItemTemplate>
+				<DataTemplate>
+					<CheckBox Content="{Binding Name}" IsChecked="{Binding IsSelected}" />
+				</DataTemplate>
+			</ListBox.ItemTemplate>
+		</ListBox>
+		<StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
+			<Button IsDefault="True" Margin="2,0" IsEnabled="{Binding HasSelection}" Name="okButton" Click="OKButton_Click">Open</Button>
+			<Button IsCancel="True" Margin="2,0">Cancel</Button>
+		</StackPanel>
+	</Grid>
+</Window>

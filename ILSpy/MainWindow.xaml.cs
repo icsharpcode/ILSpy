@@ -677,7 +677,7 @@ namespace ICSharpCode.ILSpy
 		{
 			e.Handled = true;
 			OpenFileDialog dlg = new OpenFileDialog();
-			dlg.Filter = ".NET assemblies|*.dll;*.exe;*.winmd|All files|*.*";
+			dlg.Filter = ".NET assemblies|*.dll;*.exe;*.winmd|Nuget Packages (*.nupkg)|*.nupkg|All files|*.*";
 			dlg.Multiselect = true;
 			dlg.RestoreDirectory = true;
 			if (dlg.ShowDialog() == true) {
@@ -695,14 +695,35 @@ namespace ICSharpCode.ILSpy
 			
 			SharpTreeNode lastNode = null;
 			foreach (string file in fileNames) {
-				var asm = assemblyList.OpenAssembly(file);
-				if (asm != null) {
-					var node = assemblyListTreeNode.FindAssemblyNode(asm);
-					if (node != null && focusNode) {
-						treeView.SelectedItems.Add(node);
-						lastNode = node;
-					}
+				switch (Path.GetExtension(file)) {
+					case ".nupkg":
+						LoadedNugetPackage package = new LoadedNugetPackage(file);
+						var selectionDialog = new NugetPackageBrowserDialog(package);
+						if (selectionDialog.ShowDialog() != true)
+							break;
+						foreach (var entry in selectionDialog.SelectedItems) {
+							var nugetAsm = assemblyList.OpenAssembly("nupkg://" + file + ";" + entry.Name, entry.Stream, true);
+							if (nugetAsm != null) {
+								var node = assemblyListTreeNode.FindAssemblyNode(nugetAsm);
+								if (node != null && focusNode) {
+									treeView.SelectedItems.Add(node);
+									lastNode = node;
+								}
+							}
+						}
+						break;
+					default:
+						var asm = assemblyList.OpenAssembly(file);
+						if (asm != null) {
+							var node = assemblyListTreeNode.FindAssemblyNode(asm);
+							if (node != null && focusNode) {
+								treeView.SelectedItems.Add(node);
+								lastNode = node;
+							}
+						}
+						break;
 				}
+
 				if (lastNode != null && focusNode)
 					treeView.FocusNode(lastNode);
 			}
