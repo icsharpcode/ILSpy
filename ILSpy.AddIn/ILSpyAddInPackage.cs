@@ -8,6 +8,7 @@ using Microsoft.VisualStudio.Shell.Interop;
 using Microsoft.VisualStudio.Shell;
 using System.IO;
 using Mono.Cecil;
+using System.Collections.Generic;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
@@ -99,6 +100,10 @@ namespace ICSharpCode.ILSpy.AddIn
 
 			foreach (EnvDTE.UIHierarchyItem item in items) {
 				var reference = GetReference(item.Object);
+				if (reference.Project != null) {
+					OpenProjectInILSpy(reference.Project);
+					continue;
+				}
 				string path = null;
 				if (!string.IsNullOrEmpty(reference.PublicKeyToken)) {
 					var token = Utils.HexStringToBytes(reference.PublicKeyToken);
@@ -116,6 +121,17 @@ namespace ICSharpCode.ILSpy.AddIn
 			public string PublicKeyToken { get; set; }
 			public string Path { get; set; }
 			public Version Version { get; set; }
+			public EnvDTE.Project Project { get; set; }
+
+			internal static ReferenceInfo FromFullName(string fullName)
+			{
+				string[] parts = fullName.Split(new[] { ", " }, StringSplitOptions.RemoveEmptyEntries);
+				return new ReferenceInfo {
+					Name = parts[0],
+					Version = new Version(parts[1].Substring("Version=".Length)),
+					PublicKeyToken = parts[3].Substring("PublicKeyToken=".Length)
+				};
+			}
 		}
 
 		private ReferenceInfo GetReference(object o)
@@ -133,6 +149,43 @@ namespace ICSharpCode.ILSpy.AddIn
 				obj = obj.Object;
 			}
 
+			if (referenceType == "Microsoft.VisualStudio.ProjectSystem.VS.Implementation.Package.Automation.OAReferenceItem") {
+				var projectItem = (EnvDTE.ProjectItem)o;
+				foreach (dynamic p in projectItem.Properties) {
+					try {
+						switch (p.Name) {
+							case "FusionName":
+								if (!string.IsNullOrWhiteSpace(p.Value))
+									return ReferenceInfo.FromFullName(p.Value);
+								break;
+							case "Project":
+								var fileName = p.Object.Name;
+								EnvDTE.Projects projects = ((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).Solution.Projects;
+								foreach (EnvDTE.Project proj in projects) {
+									if (Path.GetFileName(proj.FileName) == fileName) {
+										return new ReferenceInfo {
+											Project = proj,
+											Name = fileName
+										};
+									}
+								}
+								break;
+							case "Path":
+								var values = GetProperties(projectItem.Properties, "Type", "Name", "Version", "Path");
+								if (values[0] == "Package" && values[1] != null && values[2] != null && values[3] != null) {
+									return new ReferenceInfo {
+										Name = values[1],
+										Path = $"{values[3]}\\{values[1]}.{values[2]}.nupkg"
+									};
+								}
+								break;
+						}
+					} catch {
+						continue;
+					}
+				}
+			}
+
 			// C# and VB
 			return new ReferenceInfo {
 				Name = obj.Identity,
@@ -140,6 +193,24 @@ namespace ICSharpCode.ILSpy.AddIn
 				Path = obj.Path,
 				Version = new Version(obj.Version)
 			};
+		}
+
+		string[] GetProperties(EnvDTE.Properties properties, params string[] names)
+		{
+			string[] values = new string[names.Length];
+			foreach (dynamic p in properties) {
+				try {
+					for (int i = 0; i < names.Length; i++) {
+						if (names[i] == p.Name) {
+							values[i] = p.Value;
+							break;
+						}
+					}
+				} catch {
+					continue;
+				}
+			}
+			return values;
 		}
 
 		private void OpenProjectOutputInILSpyCallback(object sender, EventArgs e)

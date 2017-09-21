@@ -247,9 +247,7 @@ namespace ICSharpCode.ILSpy
 		
 		bool HandleCommandLineArguments(CommandLineArguments args)
 		{
-			foreach (string file in args.AssembliesToLoad) {
-				commandLineLoadedAssemblies.Add(assemblyList.OpenAssembly(file));
-			}
+			LoadAssemblies(args.AssembliesToLoad, commandLineLoadedAssemblies, false);
 			if (args.Language != null)
 				sessionSettings.FilterSettings.Language = Languages.GetLanguage(args.Language);
 			return true;
@@ -692,7 +690,12 @@ namespace ICSharpCode.ILSpy
 			
 			if (focusNode)
 				treeView.UnselectAll();
-			
+
+			LoadAssemblies(fileNames, focusNode: focusNode);
+		}
+
+		void LoadAssemblies(IEnumerable<string> fileNames, List<LoadedAssembly> loadedAssemblies = null, bool focusNode = true)
+		{
 			SharpTreeNode lastNode = null;
 			foreach (string file in fileNames) {
 				switch (Path.GetExtension(file)) {
@@ -704,10 +707,14 @@ namespace ICSharpCode.ILSpy
 						foreach (var entry in selectionDialog.SelectedItems) {
 							var nugetAsm = assemblyList.OpenAssembly("nupkg://" + file + ";" + entry.Name, entry.Stream, true);
 							if (nugetAsm != null) {
-								var node = assemblyListTreeNode.FindAssemblyNode(nugetAsm);
-								if (node != null && focusNode) {
-									treeView.SelectedItems.Add(node);
-									lastNode = node;
+								if (loadedAssemblies != null)
+									loadedAssemblies.Add(nugetAsm);
+								else {
+									var node = assemblyListTreeNode.FindAssemblyNode(nugetAsm);
+									if (node != null && focusNode) {
+										treeView.SelectedItems.Add(node);
+										lastNode = node;
+									}
 								}
 							}
 						}
@@ -715,10 +722,14 @@ namespace ICSharpCode.ILSpy
 					default:
 						var asm = assemblyList.OpenAssembly(file);
 						if (asm != null) {
-							var node = assemblyListTreeNode.FindAssemblyNode(asm);
-							if (node != null && focusNode) {
-								treeView.SelectedItems.Add(node);
-								lastNode = node;
+							if (loadedAssemblies != null)
+								loadedAssemblies.Add(asm);
+							else {
+								var node = assemblyListTreeNode.FindAssemblyNode(asm);
+								if (node != null && focusNode) {
+									treeView.SelectedItems.Add(node);
+									lastNode = node;
+								}
 							}
 						}
 						break;
