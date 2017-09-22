@@ -9,6 +9,7 @@ using Microsoft.VisualStudio.Shell;
 using System.IO;
 using Mono.Cecil;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ICSharpCode.ILSpy.AddIn
 {
@@ -66,7 +67,8 @@ namespace ICSharpCode.ILSpy.AddIn
 			if (null != mcs) {
 				// Create the command for the References context menu.
 				CommandID menuCommandID = new CommandID(GuidList.guidILSpyAddInCmdSet, (int)PkgCmdIDList.cmdidOpenReferenceInILSpy);
-				MenuCommand menuItem = new MenuCommand(OpenReferenceInILSpyCallback, menuCommandID);
+				OleMenuCommand menuItem = new OleMenuCommand(OpenReferenceInILSpyCallback, menuCommandID);
+				menuItem.BeforeQueryStatus += OpenReferenceInILSpyCallback_BeforeQueryStatus;
 				mcs.AddCommand(menuItem);
 
 				// Create the command for the Project context menu, to open the output assembly.
@@ -88,11 +90,23 @@ namespace ICSharpCode.ILSpy.AddIn
 		}
 		#endregion
 
-		/// <summary>
-		/// This function is the callback used to execute a command when the a menu item is clicked.
-		/// See the Initialize method to see how the menu item is associated to this function using
-		/// the OleMenuCommandService service and the MenuCommand class.
-		/// </summary>
+		string[] SupportedItems = new[] {
+			"Microsoft.VisualStudio.ProjectSystem.VS.Implementation.Package.Automation.OAProjectItem",
+			"Microsoft.VisualStudio.ProjectSystem.VS.Implementation.Package.Automation.OAReferenceItem"
+		};
+
+		private void OpenReferenceInILSpyCallback_BeforeQueryStatus(object sender, EventArgs e)
+		{
+			OleMenuCommand command = (OleMenuCommand)sender;
+			var explorer = ((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ToolWindows.SolutionExplorer;
+			var items = (object[])explorer.SelectedItems;
+			if (!items.OfType<EnvDTE.UIHierarchyItem>().Any()) {
+				command.Visible = false;
+			} else {
+				command.Visible = items.OfType<EnvDTE.UIHierarchyItem>().All(i => SupportedItems.Contains(i.Object.GetType().FullName) && HasProperties(((dynamic)i.Object).Properties, "Type", "Version", "ResolvedPath"));
+			}
+		}
+
 		private void OpenReferenceInILSpyCallback(object sender, EventArgs e)
 		{
 			var explorer = ((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).ToolWindows.SolutionExplorer;
@@ -100,6 +114,10 @@ namespace ICSharpCode.ILSpy.AddIn
 
 			foreach (EnvDTE.UIHierarchyItem item in items) {
 				var reference = GetReference(item.Object);
+				if (reference == null) {
+					ShowMessage("No reference information was found in the selection!");
+					continue;
+				}
 				if (reference.Project != null) {
 					OpenProjectInILSpy(reference.Project);
 					continue;
@@ -136,70 +154,57 @@ namespace ICSharpCode.ILSpy.AddIn
 
 		private ReferenceInfo GetReference(object o)
 		{
-			dynamic obj = o;
+			var projectItem = (EnvDTE.ProjectItem)o;
 			string referenceType = o.GetType().FullName;
+			string[] values;
 
-			// C++
-			if (referenceType.StartsWith("Microsoft.VisualStudio.PlatformUI", StringComparison.Ordinal)) {
-				return new ReferenceInfo { Path = obj.Name };
-			}
-
-			// F#
-			if (referenceType.StartsWith("Microsoft.VisualStudio.FSharp", StringComparison.Ordinal)) {
-				obj = obj.Object;
-			}
-
-			if (referenceType == "Microsoft.VisualStudio.ProjectSystem.VS.Implementation.Package.Automation.OAReferenceItem") {
-				var projectItem = (EnvDTE.ProjectItem)o;
-				foreach (dynamic p in projectItem.Properties) {
-					try {
-						switch (p.Name) {
-							case "FusionName":
-								if (!string.IsNullOrWhiteSpace(p.Value))
-									return ReferenceInfo.FromFullName(p.Value);
-								break;
-							case "Project":
-								var fileName = p.Object.Name;
-								EnvDTE.Projects projects = ((EnvDTE80.DTE2)GetGlobalService(typeof(EnvDTE.DTE))).Solution.Projects;
-								foreach (EnvDTE.Project proj in projects) {
-									if (Path.GetFileName(proj.FileName) == fileName) {
-										return new ReferenceInfo {
-											Project = proj,
-											Name = fileName
-										};
-									}
-								}
-								break;
-							case "Path":
-								var values = GetProperties(projectItem.Properties, "Type", "Name", "Version", "Path");
-								if (values[0] == "Package" && values[1] != null && values[2] != null && values[3] != null) {
-									return new ReferenceInfo {
-										Name = values[1],
-										Path = $"{values[3]}\\{values[1]}.{values[2]}.nupkg"
-									};
-								}
-								break;
+			switch (referenceType) {
+				case "Microsoft.VisualStudio.ProjectSystem.VS.Implementation.Package.Automation.OAReferenceItem":
+				case "Microsoft.VisualStudio.ProjectSystem.VS.Implementation.Package.Automation.OAProjectItem":
+					values = GetProperties(projectItem.Properties, "Type", "FusionName", "ResolvedPath");
+					if (values[0] == "Package") {
+						values = GetProperties(projectItem.Properties, "Name", "Version", "Path");
+						if (values[0] != null && values[1] != null && values[2] != null) {
+							return new ReferenceInfo {
+								Name = values[0],
+								Path = $"{values[2]}\\{values[0]}.{values[1]}.nupkg"
+							};
 						}
-					} catch {
-						continue;
+					} else if (values[2] != null) {
+						return new ReferenceInfo { Path = values[2] };
+					} else if (!string.IsNullOrWhiteSpace(values[1])) {
+						return ReferenceInfo.FromFullName(values[1]);
 					}
-				}
-			}
+					return null;
+				default:
+					dynamic obj = o;
 
-			// C# and VB
-			return new ReferenceInfo {
-				Name = obj.Identity,
-				PublicKeyToken = obj.PublicKeyToken,
-				Path = obj.Path,
-				Version = new Version(obj.Version)
-			};
+					// C++
+					if (referenceType.StartsWith("Microsoft.VisualStudio.PlatformUI", StringComparison.Ordinal)) {
+						return new ReferenceInfo { Path = projectItem.Name };
+					}
+
+					// F#
+					if (referenceType.StartsWith("Microsoft.VisualStudio.FSharp", StringComparison.Ordinal)) {
+						o = projectItem.Object;
+					}
+
+					// C# and VB
+					return new ReferenceInfo {
+						Name = obj.Identity,
+						PublicKeyToken = obj.PublicKeyToken,
+						Path = obj.Path,
+						Version = new Version(obj.Version)
+					};
+			}
 		}
 
-		string[] GetProperties(EnvDTE.Properties properties, params string[] names)
+		private string[] GetProperties(EnvDTE.Properties properties, params string[] names)
 		{
 			string[] values = new string[names.Length];
 			foreach (dynamic p in properties) {
 				try {
+					//ShowMessage("Name: " + p.Name + ", Value: " + p.Value);
 					for (int i = 0; i < names.Length; i++) {
 						if (names[i] == p.Name) {
 							values[i] = p.Value;
@@ -211,6 +216,39 @@ namespace ICSharpCode.ILSpy.AddIn
 				}
 			}
 			return values;
+		}
+
+		private object GetPropertyObject(EnvDTE.Properties properties, string name)
+		{
+			foreach (dynamic p in properties) {
+				try {
+					if (name == p.Name) {
+						return p.Object;
+					}
+				} catch {
+					continue;
+				}
+			}
+			return null;
+		}
+
+		private bool HasProperties(EnvDTE.Properties properties, params string[] names)
+		{
+			return properties.Count > 0 && names.Any(n => HasProperty(properties, n));
+		}
+
+		private bool HasProperty(EnvDTE.Properties properties, string name)
+		{
+			foreach (dynamic p in properties) {
+				try {
+					if (name == p.Name) {
+						return true;
+					}
+				} catch {
+					continue;
+				}
+			}
+			return false;
 		}
 
 		private void OpenProjectOutputInILSpyCallback(object sender, EventArgs e)
