@@ -267,6 +267,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public ILVariable(VariableKind kind, IType type, StackType stackType, int index)
 		{
+			if (type == null)
+				throw new ArgumentNullException(nameof(type));
 			this.Kind = kind;
 			this.type = type;
 			this.StackType = stackType;
