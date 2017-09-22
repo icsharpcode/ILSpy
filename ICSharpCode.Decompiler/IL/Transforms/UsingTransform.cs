@@ -99,14 +99,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool MatchDisposeBlock(BlockContainer container, ILVariable objVar, bool usingNull)
 		{
 			var entryPoint = container.EntryPoint;
-			if (entryPoint.Instructions.Count != 2 || entryPoint.IncomingEdgeCount != 1)
+			if (entryPoint.Instructions.Count < 2 || entryPoint.Instructions.Count > 3 || entryPoint.IncomingEdgeCount != 1)
 				return false;
-			if (!entryPoint.Instructions[1].MatchLeave(container, out var returnValue) || !returnValue.MatchNop())
+			int leaveIndex = entryPoint.Instructions.Count == 2 ? 1 : 2;
+			int checkIndex = entryPoint.Instructions.Count == 2 ? 0 : 1;
+			int castIndex = entryPoint.Instructions.Count == 3 ? 0 : -1;
+			bool isReference = objVar.Type.IsReferenceType != false;
+			if (castIndex > -1) {
+				if (!entryPoint.Instructions[castIndex].MatchStLoc(out var tempVar, out var isinst))
+					return false;
+				if (!isinst.MatchIsInst(out var load, out var disposableType) || !load.MatchLdLoc(objVar) || !disposableType.IsKnownType(KnownTypeCode.IDisposable))
+					return false;
+				objVar = tempVar;
+				isReference = true;
+			}
+			if (!entryPoint.Instructions[leaveIndex].MatchLeave(container, out var returnValue) || !returnValue.MatchNop())
 				return false;
 			CallVirt callVirt;
 			// reference types have a null check.
-			if (objVar.Type.IsReferenceType != false) {
-				if (!entryPoint.Instructions[0].MatchIfInstruction(out var condition, out var disposeInst))
+			if (isReference) {
+				if (!entryPoint.Instructions[checkIndex].MatchIfInstruction(out var condition, out var disposeInst))
 					return false;
 				if (!condition.MatchCompNotEquals(out var left, out var right) || !left.MatchLdLoc(objVar) || !right.MatchLdNull())
 					return false;
@@ -116,7 +128,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				callVirt = cv;
 			} else {
-				if (!(entryPoint.Instructions[0] is CallVirt cv))
+				if (!(entryPoint.Instructions[checkIndex] is CallVirt cv))
 					return false;
 				callVirt = cv;
 			}
