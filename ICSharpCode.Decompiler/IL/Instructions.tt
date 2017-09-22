@@ -70,7 +70,7 @@
 			CustomClassName("CompoundAssignmentInstruction"), CustomConstructor, CustomComputeFlags,
 			MayThrow, CustomArguments("target", "value"), HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo,
 			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator")),
-		new OpCode("bit.not", "Bitwise NOT", Unary),
+		new OpCode("bit.not", "Bitwise NOT", Unary, CustomConstructor, MatchCondition("IsLifted == o.IsLifted && UnderlyingResultType == o.UnderlyingResultType")),
 		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
 		new OpCode("br", "Unconditional branch. <c>goto target;</c>",
 			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch, CustomComputeFlags,

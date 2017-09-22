@@ -16,15 +16,37 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	partial class BitNot
+	partial class BitNot : ILiftableInstruction
 	{
+		public BitNot(ILInstruction arg) : base(OpCode.BitNot, arg)
+		{
+			this.UnderlyingResultType = arg.ResultType;
+		}
+
+		public BitNot(ILInstruction arg, bool isLifted, StackType stackType) : base(OpCode.BitNot, arg)
+		{
+			this.IsLifted = isLifted;
+			this.UnderlyingResultType = stackType;
+		}
+
+		public bool IsLifted { get; }
+		public StackType UnderlyingResultType { get; }
+
 		public override StackType ResultType {
 			get {
 				return Argument.ResultType;
 			}
+		}
+
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(IsLifted == (ResultType == StackType.O));
+			Debug.Assert(IsLifted || ResultType == UnderlyingResultType);
 		}
 	}
 }

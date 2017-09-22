@@ -952,9 +952,6 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>Bitwise NOT</summary>
 	public sealed partial class BitNot : UnaryInstruction
 	{
-		public BitNot(ILInstruction argument) : base(OpCode.BitNot, argument)
-		{
-		}
 
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -971,7 +968,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as BitNot;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && IsLifted == o.IsLifted && UnderlyingResultType == o.UnderlyingResultType;
 		}
 	}
 }
@@ -5090,16 +5087,6 @@ namespace ICSharpCode.Decompiler.IL
 			variable = default(ILVariable);
 			init = default(ILInstruction);
 			body = default(ILInstruction);
-			return false;
-		}
-		public bool MatchBitNot(out ILInstruction argument)
-		{
-			var inst = this as BitNot;
-			if (inst != null) {
-				argument = inst.Argument;
-				return true;
-			}
-			argument = default(ILInstruction);
 			return false;
 		}
 		public bool MatchArglist()

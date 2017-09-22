@@ -345,33 +345,30 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst, TranslationContext context)
 		{
 			var argument = Translate(inst.Argument);
-			
-			if (argument.Type.GetStackType().GetSize() < inst.ResultType.GetSize()
-			    || argument.Type.Kind == TypeKind.Enum && argument.Type.IsSmallIntegerType())
+			var argUType = NullableType.GetUnderlyingType(argument.Type);
+
+			if (argUType.GetStackType().GetSize() < inst.UnderlyingResultType.GetSize()
+			    || argUType.Kind == TypeKind.Enum && argUType.IsSmallIntegerType()
+				|| argUType.GetStackType() == StackType.I
+				|| argUType.IsKnownType(KnownTypeCode.Boolean)
+				|| argUType.IsKnownType(KnownTypeCode.Char))
 			{
 				// Argument is undersized (even after implicit integral promotion to I4)
 				// -> we need to perform sign/zero-extension before the BitNot.
 				// Same if the argument is an enum based on a small integer type
 				// (those don't undergo numeric promotion in C# the way non-enum small integer types do).
-				argument = argument.ConvertTo(compilation.FindType(inst.ResultType.ToKnownTypeCode(argument.Type.GetSign())), this);
-			}
-			
-			var type = argument.Type.GetDefinition();
-			if (type != null) {
-				// Handle those types that don't support operator ~
-				// Note that it's OK to use a type that's larger than necessary.
-				switch (type.KnownTypeCode) {
-					case KnownTypeCode.Boolean:
-					case KnownTypeCode.Char:
-						argument = argument.ConvertTo(compilation.FindType(KnownTypeCode.UInt32), this);
-						break;
-					case KnownTypeCode.IntPtr:
-						argument = argument.ConvertTo(compilation.FindType(KnownTypeCode.Int64), this);
-						break;
-					case KnownTypeCode.UIntPtr:
-						argument = argument.ConvertTo(compilation.FindType(KnownTypeCode.UInt64), this);
-						break;
+				// Same if the type is one that does not support ~ (IntPtr, bool and char).
+				StackType targetStackType = inst.UnderlyingResultType;
+				if (targetStackType == StackType.I) {
+					// IntPtr doesn't support operator ~.
+					// Note that it's OK to use a type that's larger than necessary.
+					targetStackType = StackType.I8;
 				}
+				IType targetType = compilation.FindType(targetStackType.ToKnownTypeCode(argUType.GetSign()));
+				if (inst.IsLifted) {
+					targetType = NullableType.Create(compilation, targetType);
+				}
+				argument = argument.ConvertTo(targetType, this);
 			}
 			
 			return new UnaryOperatorExpression(UnaryOperatorType.BitNot, argument)

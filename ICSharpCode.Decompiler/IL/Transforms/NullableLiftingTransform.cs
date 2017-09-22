@@ -370,6 +370,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					};
 					return (newInst, bits);
 				}
+			} else if (inst is BitNot bitnot) {
+				var (arg, bits) = DoLift(bitnot.Argument);
+				if (arg != null) {
+					var newInst = new BitNot(arg, isLifted: true, stackType: bitnot.ResultType) {
+						ILRange = bitnot.ILRange
+					};
+					return (newInst, bits);
+				}
 			} else if (inst is BinaryNumericInstruction binary) {
 				var (left, leftBits) = DoLift(binary.Left);
 				var (right, rightBits) = DoLift(binary.Right);
