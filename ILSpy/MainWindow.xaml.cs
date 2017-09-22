@@ -702,6 +702,7 @@ namespace ICSharpCode.ILSpy
 					case ".nupkg":
 						LoadedNugetPackage package = new LoadedNugetPackage(file);
 						var selectionDialog = new NugetPackageBrowserDialog(package);
+						selectionDialog.Owner = this;
 						if (selectionDialog.ShowDialog() != true)
 							break;
 						foreach (var entry in selectionDialog.SelectedItems) {
