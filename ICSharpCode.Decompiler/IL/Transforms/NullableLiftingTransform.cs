@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// The transform handles the following languages constructs:
 	///  * lifted conversions
 	///  * lifted unary and binary operators
+	///  * lifted comparisons
 	///  * the ?? operator with type Nullable{T} on the left-hand-side
 	/// </summary>
 	struct NullableLiftingTransform
@@ -125,16 +126,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// => normal lifting
 				return LiftNormal(trueInst, falseInst, ilrange: ifInst.ILRange);
 			}
-			if (condition is Comp comp && !comp.IsLifted && !comp.Kind.IsEqualityOrInequality()) {
+			if (condition is Comp comp && !comp.IsLifted) {
 				// This might be a C#-style lifted comparison
 				// (C# checks the underlying value before checking the HasValue bits)
-				if (falseInst.MatchLdcI4(0) && AnalyzeCondition(trueInst)) {
-					// comp(lhs, rhs) ? (v1 != null && ... && vn != null) : false
-					// => comp.lifted[C#](lhs, rhs)
-					return LiftCSharpComparison(comp, comp.Kind);
-				} else if (trueInst.MatchLdcI4(0) && AnalyzeCondition(falseInst)) {
-					// comp(lhs, rhs) ? false : (v1 != null && ... && vn != null)
-					return LiftCSharpComparison(comp, comp.Kind.Negate());
+				if (comp.Kind.IsEqualityOrInequality()) {
+					// for equality/inequality, the HasValue bits must also compare equal/inequal
+					if (falseInst.MatchLdcI4(0)) {
+						return LiftCSharpEqualityComparison(comp, comp.Kind, trueInst);
+					} else if (trueInst.MatchLdcI4(0)) {
+						return LiftCSharpEqualityComparison(comp, comp.Kind.Negate(), falseInst);
+					}
+				} else {
+					// Not (in)equality, but one of < <= > >=.
+					// Returns false unless all HasValue bits are true.
+					if (falseInst.MatchLdcI4(0) && AnalyzeCondition(trueInst)) {
+						// comp(lhs, rhs) ? (v1 != null && ... && vn != null) : false
+						// => comp.lifted[C#](lhs, rhs)
+						return LiftCSharpComparison(comp, comp.Kind);
+					} else if (trueInst.MatchLdcI4(0) && AnalyzeCondition(falseInst)) {
+						// comp(lhs, rhs) ? false : (v1 != null && ... && vn != null)
+						return LiftCSharpComparison(comp, comp.Kind.Negate());
+					}
 				}
 			}
 			return null;
@@ -148,10 +160,50 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			b = tmp;
 		}
 
+		Comp LiftCSharpEqualityComparison(Comp valueComp, ComparisonKind newComparisonKind, ILInstruction hasValueTest)
+		{
+			Debug.Assert(newComparisonKind.IsEqualityOrInequality());
+			// The HasValue comparison must be the same operator as the Value comparison.
+			if (hasValueTest is Comp hasValueComp) {
+				// Comparing two nullables: HasValue comparison must be the same operator as the Value comparison
+				if (hasValueComp.Kind != newComparisonKind)
+					return null;
+				if (!MatchHasValueCall(hasValueComp.Left, out var leftVar))
+					return null;
+				if (!MatchHasValueCall(hasValueComp.Right, out var rightVar))
+					return null;
+				nullableVars = new List<ILVariable> { leftVar };
+				var (left, leftBits) = DoLift(valueComp.Left);
+				nullableVars[0] = rightVar;
+				var (right, rightBits) = DoLift(valueComp.Right);
+				if (left != null && right != null && leftBits[0] && rightBits[0]
+					&& SemanticHelper.IsPure(left.Flags) && SemanticHelper.IsPure(right.Flags)
+				) {
+					context.Step("NullableLiftingTransform: C# (in)equality comparison", valueComp);
+					return new Comp(newComparisonKind, ComparisonLiftingKind.CSharp, valueComp.InputType, valueComp.Sign, left, right);
+				}
+			} else if (newComparisonKind == ComparisonKind.Equality && MatchHasValueCall(hasValueTest, out var v)) {
+				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
+				nullableVars = new List<ILVariable> { v };
+				return LiftCSharpComparison(valueComp, newComparisonKind);
+			} else if (newComparisonKind == ComparisonKind.Inequality
+				&& hasValueTest.MatchLogicNot(out var arg)
+				&& MatchHasValueCall(arg, out v)
+			) {
+				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
+				nullableVars = new List<ILVariable> { v };
+				return LiftCSharpComparison(valueComp, newComparisonKind);
+			}
+			return null;
+		}
+
 		/// <summary>
 		/// Lift a C# comparison.
+		/// This method cannot be used for (in)equality comparisons where both sides are nullable
+		/// (these special cases are handled in LiftCSharpEqualityComparison instead).
 		/// 
-		/// The output instructions should evaluate to <c>false</c> when any of the <c>nullableVars</c> is <c>null</c>.
+		/// The output instructions should evaluate to <c>false</c> when any of the <c>nullableVars</c> is <c>null</c>
+		///   (except for newComparisonKind==Inequality, where this case should evaluate to <c>true</c> instead).
 		/// Otherwise, the output instruction should evaluate to the same value as the input instruction.
 		/// The output instruction should have the same side-effects (incl. exceptions being thrown) as the input instruction.
 		/// This means unlike LiftNormal(), we cannot rely on the input instruction not being evaluated if

@@ -493,13 +493,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
 				as OperatorResolveResult;
 			if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
-			    || rr.Operands[0].Type.GetStackType() != inst.InputType)
+			    || NullableType.GetUnderlyingType(rr.Operands[0].Type).GetStackType() != inst.InputType)
 			{
 				IType targetType;
 				if (inst.InputType == StackType.O) {
 					targetType = compilation.FindType(KnownTypeCode.Object);
 				} else {
-					targetType = TypeUtils.GetLargerType(left.Type, right.Type);
+					targetType = TypeUtils.GetLargerType(NullableType.GetUnderlyingType(left.Type), NullableType.GetUnderlyingType(right.Type));
+				}
+				if (inst.IsLifted) {
+					targetType = NullableType.Create(compilation, targetType);
 				}
 				if (targetType.Equals(left.Type)) {
 					right = right.ConvertTo(targetType, this);
@@ -509,7 +512,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(),
 					left.ResolveResult, right.ResolveResult) as OperatorResolveResult;
 				if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
-					|| rr.Operands[0].Type.GetStackType() != inst.InputType)
+					|| NullableType.GetUnderlyingType(rr.Operands[0].Type).GetStackType() != inst.InputType)
 				{
 					// If converting one input wasn't sufficient, convert both:
 					left = left.ConvertTo(targetType, this);
@@ -1473,6 +1476,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!expr.ResolveResult.IsCompileTimeConstant) {
 				return expr;
 			}
+			type = NullableType.GetUnderlyingType(type);
 			if (type.IsKnownType(KnownTypeCode.Boolean)
 				&& (object.Equals(expr.ResolveResult.ConstantValue, 0) || object.Equals(expr.ResolveResult.ConstantValue, 1))) {
 				return expr.ConvertToBoolean(this);
@@ -1489,7 +1493,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var value = Translate(inst.ValueInst);
 			var fallback = Translate(inst.FallbackInst);
-			fallback = AdjustConstantExpressionToType(fallback, NullableType.GetUnderlyingType(value.Type));
+			fallback = AdjustConstantExpressionToType(fallback, value.Type);
 			var rr = resolver.ResolveBinaryOperator(BinaryOperatorType.NullCoalescing, value.ResolveResult, fallback.ResolveResult);
 			if (rr.IsError) {
 				IType targetType;

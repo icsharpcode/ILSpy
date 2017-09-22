@@ -505,6 +505,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(2m + a);
 		}
 
+		public static void CompareWithImplictCast(int? a, long? b)
+		{
+			if (a < b) {
+				Console.WriteLine();
+			}
+			if (a == b) {
+				Console.WriteLine();
+			}
+			if (a < 10L) {
+				Console.WriteLine();
+			}
+			if (a == 10L) {
+				Console.WriteLine();
+			}
+		}
+
 		public static void CompareWithSignChange(int? a, int? b)
 		{
 			if ((uint?)a < (uint?)b) {
@@ -654,7 +670,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return a == b;
 		}
 
+		public static bool RetEqConv(long? a, int? b)
+		{
+			return a == b;
+		}
+
+		public static bool RetEqConst(long? a)
+		{
+			return a == 10;
+		}
+
+		public static bool RetIneqConst(long? a)
+		{
+			return a != 10;
+		}
+
 		public static bool RetLt(int? a, int? b)
+		{
+			return a < b;
+		}
+
+		public static bool RetLtConst(int? a)
+		{
+			return a < 10;
+		}
+
+		public static bool RetLtConv(long? a, int? b)
 		{
 			return a < b;
 		}
