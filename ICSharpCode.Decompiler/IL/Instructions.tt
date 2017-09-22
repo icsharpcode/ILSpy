@@ -118,7 +118,12 @@
 			CustomChildren(new [] {
 				new ArgumentInfo("onExpression"),
 				new ChildInfo("body")
-			}), CustomWriteTo, CustomComputeFlags),
+			}), CustomWriteTo, ControlFlow, SideEffect, ResultType("Void")),
+		new OpCode("using", "Using statement", CustomClassName("UsingInstruction"),
+			CustomChildren(new [] {
+				new ArgumentInfo("resourceExpression"),
+				new ChildInfo("body")
+			}), CustomWriteTo, ControlFlow, SideEffect, ResultType("Void")),
 		new OpCode("debug.break", "Breakpoint instruction",
 			NoArguments, VoidResult, SideEffect),
 		new OpCode("comp", "Comparison. The inputs must be both integers; or both floats; or both object references. "

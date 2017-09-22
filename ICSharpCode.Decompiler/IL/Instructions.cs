@@ -73,6 +73,8 @@ namespace ICSharpCode.Decompiler.IL
 		TryFault,
 		/// <summary>Lock statement</summary>
 		LockInstruction,
+		/// <summary>Using statement</summary>
+		UsingInstruction,
 		/// <summary>Breakpoint instruction</summary>
 		DebugBreak,
 		/// <summary>Comparison. The inputs must be both integers; or both floats; or both object references. Object references can only be compared for equality or inequality. Floating-point comparisons evaluate to 0 (false) when an input is NaN, except for 'NaN != NaN' which evaluates to 1 (true).</summary>
@@ -1667,6 +1669,16 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Body = this.body.Clone();
 			return clone;
 		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return onExpression.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
+			}
+		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitLockInstruction(this);
@@ -1683,6 +1695,109 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as LockInstruction;
 			return o != null && this.onExpression.PerformMatch(o.onExpression, ref match) && this.body.PerformMatch(o.body, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Using statement</summary>
+	public sealed partial class UsingInstruction : ILInstruction
+	{
+		public UsingInstruction(ILInstruction resourceExpression, ILInstruction body) : base(OpCode.UsingInstruction)
+		{
+			this.ResourceExpression = resourceExpression;
+			this.Body = body;
+		}
+		public static readonly SlotInfo ResourceExpressionSlot = new SlotInfo("ResourceExpression", canInlineInto: true);
+		ILInstruction resourceExpression;
+		public ILInstruction ResourceExpression {
+			get { return this.resourceExpression; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.resourceExpression, value, 0);
+			}
+		}
+		public static readonly SlotInfo BodySlot = new SlotInfo("Body");
+		ILInstruction body;
+		public ILInstruction Body {
+			get { return this.body; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.body, value, 1);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 2;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.resourceExpression;
+				case 1:
+					return this.body;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.ResourceExpression = value;
+					break;
+				case 1:
+					this.Body = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ResourceExpressionSlot;
+				case 1:
+					return BodySlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (UsingInstruction)ShallowClone();
+			clone.ResourceExpression = this.resourceExpression.Clone();
+			clone.Body = this.body.Clone();
+			return clone;
+		}
+		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return resourceExpression.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitUsingInstruction(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitUsingInstruction(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitUsingInstruction(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as UsingInstruction;
+			return o != null && this.resourceExpression.PerformMatch(o.resourceExpression, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
 	}
 }
@@ -4310,6 +4425,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitUsingInstruction(UsingInstruction inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitDebugBreak(DebugBreak inst)
 		{
 			Default(inst);
@@ -4589,6 +4708,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitLockInstruction(LockInstruction inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitUsingInstruction(UsingInstruction inst)
 		{
 			return Default(inst);
 		}
@@ -4874,6 +4997,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitUsingInstruction(UsingInstruction inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitDebugBreak(DebugBreak inst, C context)
 		{
 			return Default(inst, context);
@@ -5085,6 +5212,7 @@ namespace ICSharpCode.Decompiler.IL
 			"try.finally",
 			"try.fault",
 			"lock",
+			"using",
 			"debug.break",
 			"comp",
 			"call",
@@ -5206,6 +5334,18 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			onExpression = default(ILInstruction);
+			body = default(ILInstruction);
+			return false;
+		}
+		public bool MatchUsingInstruction(out ILInstruction resourceExpression, out ILInstruction body)
+		{
+			var inst = this as UsingInstruction;
+			if (inst != null) {
+				resourceExpression = inst.ResourceExpression;
+				body = inst.Body;
+				return true;
+			}
+			resourceExpression = default(ILInstruction);
 			body = default(ILInstruction);
 			return false;
 		}

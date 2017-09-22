@@ -8,21 +8,31 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class LockInstruction
 	{
-		protected override InstructionFlags ComputeFlags()
-		{
-			return Body.Flags | OnExpression.Flags | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
-		}
-
-		public override InstructionFlags DirectFlags => InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
-
-		public override StackType ResultType => StackType.Void;
-
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		public override void WriteTo(ITextOutput output)
 		{
 			output.Write("lock (");
-			OnExpression.WriteTo(output, options);
-			output.WriteLine(") ");
-			Body.WriteTo(output, options);
+			OnExpression.WriteTo(output);
+			output.WriteLine(") {");
+			output.Indent();
+			Body.WriteTo(output);
+			output.Unindent();
+			output.WriteLine();
+			output.Write("}");
+		}
+	}
+
+	partial class UsingInstruction
+	{
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			output.Write("using (");
+			ResourceExpression.WriteTo(output);
+			output.WriteLine(") {");
+			output.Indent();
+			Body.WriteTo(output);
+			output.Unindent();
+			output.WriteLine();
+			output.Write("}");
 		}
 	}
 }
