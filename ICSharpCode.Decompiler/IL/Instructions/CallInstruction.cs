@@ -77,8 +77,9 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			if (ConstrainedTo != null) {
-				output.Write("constrained.");
+				output.Write("constrained[");
 				ConstrainedTo.WriteTo(output, ILNameSyntax.ShortTypeName);
+				output.Write("].");
 			}
 			if (IsTail)
 				output.Write("tail.");
