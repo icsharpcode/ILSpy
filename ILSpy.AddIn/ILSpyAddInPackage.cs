@@ -125,7 +125,7 @@ namespace ICSharpCode.ILSpy.AddIn
 				}
 				if (path == null)
 					path = reference.Path;
-				OpenAssemblyInILSpy(path);
+				OpenAssembliesInILSpy(new[] { path });
 			}
 		}
 
@@ -333,15 +333,14 @@ namespace ICSharpCode.ILSpy.AddIn
 			EnvDTE.Configuration config = project.ConfigurationManager.ActiveConfiguration;
 			var outputFiles = config.OutputGroups.OfType<EnvDTE.OutputGroup>()
 				.Where(g => g.FileCount > 0 && g.CanonicalName == "Built")
-				.SelectMany(g => (object[])g.FileURLs).Select(f => f?.ToString()).ToArray();
-			var outputFilePath = outputFiles.FirstOrDefault(CheckExtension)?.ToString()
-				.Substring("file:///".Length);
-			OpenAssemblyInILSpy(outputFilePath, arguments);
+				.SelectMany(g => (object[])g.FileURLs).Select(f => f?.ToString())
+				.Where(CheckExtension).Select(f => f.Substring("file:///".Length)).ToArray();
+			OpenAssembliesInILSpy(outputFiles, arguments);
 		}
 
 		private bool CheckExtension(string fileName)
 		{
-			switch (Path.GetExtension(fileName)) {
+			switch (Path.GetExtension(fileName).ToLowerInvariant()) {
 				case ".exe":
 				case ".dll":
 					return true;
@@ -350,14 +349,15 @@ namespace ICSharpCode.ILSpy.AddIn
 			}
 		}
 
-		private void OpenAssemblyInILSpy(string assemblyFileName, params string[] arguments)
+		private void OpenAssembliesInILSpy(IEnumerable<string> assemblyFileNames, params string[] arguments)
 		{
-			if (!File.Exists(assemblyFileName)) {
-				ShowMessage("Could not find assembly '{0}', please ensure the project and all references were built correctly!", assemblyFileName);
-				return;
+			foreach (string assemblyFileName in assemblyFileNames) {
+				if (!File.Exists(assemblyFileName)) {
+					ShowMessage("Could not find assembly '{0}', please ensure the project and all references were built correctly!", assemblyFileName);
+				}
 			}
 
-			string commandLineArguments = Utils.ArgumentArrayToCommandLine(assemblyFileName);
+			string commandLineArguments = Utils.ArgumentArrayToCommandLine(assemblyFileNames.ToArray());
 			if (arguments != null) {
 				commandLineArguments = string.Concat(commandLineArguments, " ", Utils.ArgumentArrayToCommandLine(arguments));
 			}
