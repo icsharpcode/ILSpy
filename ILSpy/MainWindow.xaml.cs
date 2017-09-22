@@ -350,8 +350,8 @@ namespace ICSharpCode.ILSpy
 				SharpTreeNode node = null;
 				if (sessionSettings.ActiveTreeViewPath != null) {
 					node = FindNodeByPath(sessionSettings.ActiveTreeViewPath, true);
-					if (node == this.assemblyListTreeNode & sessionSettings.ActiveAutoLoadedAssembly != null) {
-						this.assemblyList.OpenAssembly(sessionSettings.ActiveAutoLoadedAssembly, true);
+					if (node == this.assemblyListTreeNode && sessionSettings.ActiveAutoLoadedAssembly != null) {
+						this.assemblyList.Open(sessionSettings.ActiveAutoLoadedAssembly, true);
 						node = FindNodeByPath(sessionSettings.ActiveTreeViewPath, true);
 					}
 				}
