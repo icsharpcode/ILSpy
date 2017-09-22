@@ -143,8 +143,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return from c in this.customers
 				   join o in this.orders on c.CustomerID equals o.CustomerID into co
 				   let n = co.Count()
-				   // should be n >= 10
-				   where !(n < 10)
+				   where n >= 10
 				   select new {
 					   Name = c.Name,
 					   OrderCount = n

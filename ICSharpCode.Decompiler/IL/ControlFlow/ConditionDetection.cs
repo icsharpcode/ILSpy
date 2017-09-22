@@ -98,7 +98,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				block.Instructions[block.Instructions.Count - 1] = ifInst.TrueInst;
 				ifInst.TrueInst = exitInst;
 				exitInst = block.Instructions.Last();
-				ifInst.Condition = new LogicNot(ifInst.Condition);
+				ifInst.Condition = Comp.LogicNot(ifInst.Condition);
 			}
 
 			ILInstruction trueExitInst;
@@ -119,7 +119,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// "if (...) { if (nestedCondition) goto exitPoint; ... } goto exitPoint;"
 						// -> "if (... && !nestedCondition) { ... } goto exitPoint;"
 						context.Step("Combine 'if (cond1 && !cond2)' in then-branch", ifInst);
-						ifInst.Condition = IfInstruction.LogicAnd(ifInst.Condition, new LogicNot(nestedCondition));
+						ifInst.Condition = IfInstruction.LogicAnd(ifInst.Condition, Comp.LogicNot(nestedCondition));
 						targetBlock.Instructions.RemoveAt(0);
 						// Update targetBlock label now that we've removed the first instruction
 						if (targetBlock.Instructions.FirstOrDefault()?.ILRange.IsEmpty == false) {
@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// (only if end-point of 'falseInst...' is unreachable)
 						context.Step("Invert nested condition to reduce number of gotos", ifInst);
 						var nestedIfInst = (IfInstruction)targetBlock.Instructions[0];
-						nestedIfInst.Condition = new LogicNot(nestedCondition);
+						nestedIfInst.Condition = Comp.LogicNot(nestedCondition);
 						nestedTrueBlock.Instructions.RemoveAt(nestedTrueBlock.Instructions.Count - 1); // remove nested goto exitPoint;
 						// remove falseInsts from outer block
 						var falseInsts = targetBlock.Instructions.Skip(1).ToArray();
@@ -197,7 +197,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var oldTrue = ifInst.TrueInst;
 				ifInst.TrueInst = ifInst.FalseInst;
 				ifInst.FalseInst = new Nop { ILRange = oldTrue.ILRange };
-				ifInst.Condition = new LogicNot(ifInst.Condition);
+				ifInst.Condition = Comp.LogicNot(ifInst.Condition);
 
 				// After swapping, it's possible that we can introduce a short-circuit operator:
 				Block trueBlock = ifInst.TrueInst as Block;
@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var oldTrue = ifInst.TrueInst;
 				ifInst.TrueInst = ifInst.FalseInst;
 				ifInst.FalseInst = oldTrue;
-				ifInst.Condition = new LogicNot(ifInst.Condition);
+				ifInst.Condition = Comp.LogicNot(ifInst.Condition);
 			}
 		}
 

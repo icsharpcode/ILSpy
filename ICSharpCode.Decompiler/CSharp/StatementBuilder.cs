@@ -381,9 +381,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			ILInstruction condition = null;
 			foreach (var c in conditions) {
 				if (condition == null)
-					condition = new LogicNot(c);
+					condition = Comp.LogicNot(c);
 				else
-					condition = IfInstruction.LogicAnd(new LogicNot(c), condition);
+					condition = IfInstruction.LogicAnd(Comp.LogicNot(c), condition);
 			}
 			return condition;
 		}

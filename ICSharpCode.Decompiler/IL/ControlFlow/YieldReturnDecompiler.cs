@@ -995,7 +995,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var tryFinally in function.Descendants.OfType<TryFinally>()) {
 				entryPoint = AsyncAwaitDecompiler.GetBodyEntryPoint(tryFinally.FinallyBlock as BlockContainer);
 				if (entryPoint?.Instructions[0] is IfInstruction ifInst) {
-					if (ifInst.Condition is LogicNot logicNot && logicNot.Argument.MatchLdLoc(skipFinallyBodies)) {
+					if (ifInst.Condition.MatchLogicNot(out var logicNotArg) && logicNotArg.MatchLdLoc(skipFinallyBodies)) {
 						context.Step("Remove if (skipFinallyBodies) from try-finally", tryFinally);
 						// condition will always be true now that we're using 'yield' instructions
 						entryPoint.Instructions[0] = ifInst.TrueInst;

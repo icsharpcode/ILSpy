@@ -287,7 +287,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case OpCode.Leave:
 					return parent == next;
 				case OpCode.IfInstruction:
-					while (parent.OpCode == OpCode.LogicNot) {
+					while (parent.MatchLogicNot(out _)) {
 						parent = parent.Parent;
 					}
 					return parent == next;

@@ -1133,7 +1133,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (left.ResultType == StackType.F && right.ResultType == StackType.F) {
 				if (un) {
 					// for floats, 'un' means 'unordered'
-					return new LogicNot(new Comp(kind.Negate(), Sign.None, left, right));
+					return Comp.LogicNot(new Comp(kind.Negate(), Sign.None, left, right));
 				} else {
 					return new Comp(kind, Sign.None, left, right);
 				}
@@ -1189,7 +1189,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 				default:
 					if (negate) {
-						condition = new LogicNot(condition);
+						condition = Comp.LogicNot(condition);
 					}
 					break;
 			}

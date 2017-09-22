@@ -43,8 +43,6 @@ namespace ICSharpCode.Decompiler.IL
 		Block,
 		/// <summary>A region where a pinned variable is used (initial representation of future fixed statement).</summary>
 		PinnedRegion,
-		/// <summary>Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).</summary>
-		LogicNot,
 		/// <summary>Common instruction for add, sub, mul, div, rem, bit.and, bit.or, bit.xor, shl and shr.</summary>
 		BinaryNumericInstruction,
 		/// <summary>Common instruction for compound assignments.</summary>
@@ -829,34 +827,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as PinnedRegion;
 			return o != null && variable == o.variable && this.init.PerformMatch(o.init, ref match) && this.body.PerformMatch(o.body, ref match);
-		}
-	}
-}
-namespace ICSharpCode.Decompiler.IL
-{
-	/// <summary>Unary operator that expects an input of type I4. Returns 1 (of type I4) if the input value is 0. Otherwise, returns 0 (of type I4).</summary>
-	public sealed partial class LogicNot : UnaryInstruction
-	{
-		public LogicNot(ILInstruction argument) : base(OpCode.LogicNot, argument)
-		{
-		}
-		public override StackType ResultType { get { return StackType.I4; } }
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitLogicNot(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitLogicNot(this);
-		}
-		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
-		{
-			return visitor.VisitLogicNot(this, context);
-		}
-		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
-		{
-			var o = other as LogicNot;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 }
@@ -4223,10 +4193,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitLogicNot(LogicNot inst)
-		{
-			Default(inst);
-		}
 		protected internal virtual void VisitBinaryNumericInstruction(BinaryNumericInstruction inst)
 		{
 			Default(inst);
@@ -4498,10 +4464,6 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(block);
 		}
 		protected internal virtual T VisitPinnedRegion(PinnedRegion inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitLogicNot(LogicNot inst)
 		{
 			return Default(inst);
 		}
@@ -4779,10 +4741,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
-		protected internal virtual T VisitLogicNot(LogicNot inst, C context)
-		{
-			return Default(inst, context);
-		}
 		protected internal virtual T VisitBinaryNumericInstruction(BinaryNumericInstruction inst, C context)
 		{
 			return Default(inst, context);
@@ -5031,7 +4989,6 @@ namespace ICSharpCode.Decompiler.IL
 			"BlockContainer",
 			"Block",
 			"PinnedRegion",
-			"logic.not",
 			"binary",
 			"compound",
 			"bit.not",
@@ -5133,16 +5090,6 @@ namespace ICSharpCode.Decompiler.IL
 			variable = default(ILVariable);
 			init = default(ILInstruction);
 			body = default(ILInstruction);
-			return false;
-		}
-		public bool MatchLogicNot(out ILInstruction argument)
-		{
-			var inst = this as LogicNot;
-			if (inst != null) {
-				argument = inst.Argument;
-				return true;
-			}
-			argument = default(ILInstruction);
 			return false;
 		}
 		public bool MatchBitNot(out ILInstruction argument)

@@ -257,6 +257,22 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 
+		/// <summary>
+		/// Matches an logical negation.
+		/// </summary>
+		public bool MatchLogicNot(out ILInstruction arg)
+		{
+			if (this is Comp comp && comp.Kind == ComparisonKind.Equality
+				&& comp.LiftingKind == ComparisonLiftingKind.None
+				&& comp.Right.MatchLdcI4(0))
+			{
+				arg = comp.Left;
+				return true;
+			}
+			arg = null;
+			return false;
+		}
+
 		public bool MatchTryCatchHandler(out ILVariable variable)
 		{
 			var inst = this as TryCatchHandler;
@@ -273,23 +289,19 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool MatchCompEquals(out ILInstruction left, out ILInstruction right)
 		{
-			ComparisonKind op;
-			Comp comp;
-			if (this is LogicNot logicNot) {
-				op = ComparisonKind.Inequality;
-				comp = logicNot.Argument as Comp;
-			} else {
-				op = ComparisonKind.Equality;
-				comp = this as Comp;
-			}
-			if (comp != null && comp.Kind == op) {
+			if (this.MatchLogicNot(out var arg) && arg is Comp nestedComp && nestedComp.Kind == ComparisonKind.Inequality && !nestedComp.IsLifted) {
+				left = nestedComp.Left;
+				right = nestedComp.Right;
+				return true;
+			} else if (this is Comp comp && comp.Kind == ComparisonKind.Equality && !comp.IsLifted) {
 				left = comp.Left;
 				right = comp.Right;
 				return true;
+			} else {
+				left = null;
+				right = null;
+				return false;
 			}
-			left = null;
-			right = null;
-			return false;
 		}
 
 		/// <summary>
@@ -297,23 +309,19 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool MatchCompNotEquals(out ILInstruction left, out ILInstruction right)
 		{
-			ComparisonKind op;
-			Comp comp;
-			if (this is LogicNot logicNot) {
-				op = ComparisonKind.Equality;
-				comp = logicNot.Argument as Comp;
-			} else {
-				op = ComparisonKind.Inequality;
-				comp = this as Comp;
-			}
-			if (comp != null && comp.Kind == op) {
+			if (this.MatchLogicNot(out var arg) && arg is Comp nestedComp && nestedComp.Kind == ComparisonKind.Equality && !nestedComp.IsLifted) {
+				left = nestedComp.Left;
+				right = nestedComp.Right;
+				return true;
+			} else if (this is Comp comp && comp.Kind == ComparisonKind.Inequality && !comp.IsLifted) {
 				left = comp.Left;
 				right = comp.Right;
 				return true;
+			} else {
+				left = null;
+				right = null;
+				return false;
 			}
-			left = null;
-			right = null;
-			return false;
 		}
 
 		public bool MatchLdsFld(IField field)

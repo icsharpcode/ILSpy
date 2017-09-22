@@ -865,7 +865,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var tryFinally in function.Descendants.OfType<TryFinally>()) {
 				entryPoint = GetBodyEntryPoint(tryFinally.FinallyBlock as BlockContainer);
 				if (entryPoint?.Instructions[0] is IfInstruction ifInst) {
-					if (ifInst.Condition is LogicNot logicNot && logicNot.Argument.MatchLdLoc(doFinallyBodies)) {
+					if (ifInst.Condition.MatchLogicNot(out var logicNotArg) && logicNotArg.MatchLdLoc(doFinallyBodies)) {
 						context.Step("Remove if(doFinallyBodies) from try-finally", tryFinally);
 						// condition will always be false now that we're using 'await' instructions
 						entryPoint.Instructions.RemoveAt(0);

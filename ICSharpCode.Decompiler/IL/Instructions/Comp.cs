@@ -20,6 +20,8 @@ using System;
 using System.Diagnostics;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
+
 namespace ICSharpCode.Decompiler.IL
 {
 	public enum ComparisonKind : byte
@@ -132,7 +134,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// For lifted comparisons, this is the underlying input type.
 		/// </summary>
 		public StackType InputType;
-		
+
 		/// <summary>
 		/// If this is an integer comparison, specifies the sign used to interpret the integers.
 		/// </summary>
@@ -197,6 +199,16 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			Right.WriteTo(output);
 			output.Write(')');
+		}
+
+		public static Comp LogicNot(ILInstruction arg)
+		{
+			return new Comp(ComparisonKind.Equality, Sign.None, arg, new LdcI4(0));
+		}
+
+		public static Comp LogicNot(ILInstruction arg, Interval ilrange)
+		{
+			return new Comp(ComparisonKind.Equality, Sign.None, arg, new LdcI4(0)) { ILRange = ilrange };
 		}
 	}
 }

@@ -52,8 +52,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// we know those were already handled previously.
 		}
 
+		static bool IsInConditionSlot(ILInstruction inst)
+		{
+			var slot = inst.SlotInfo;
+			if (slot == IfInstruction.ConditionSlot)
+				return true;
+			if (slot == IfInstruction.TrueInstSlot || slot == IfInstruction.FalseInstSlot || slot == NullCoalescingInstruction.FallbackInstSlot)
+				return IsInConditionSlot(inst.Parent);
+			if (inst.Parent.MatchLogicNot(out _))
+				return true;
+			return false;
+		}
+
 		protected internal override void VisitComp(Comp inst)
 		{
+			// "logic.not(arg)" is sugar for "comp(arg != ldc.i4 0)"
+			if (inst.MatchLogicNot(out var arg)) {
+				VisitLogicNot(inst, arg);
+				return;
+			} else if (inst.Kind == ComparisonKind.Inequality && inst.LiftingKind == ComparisonLiftingKind.None
+				&& inst.Right.MatchLdcI4(0) && (IsInConditionSlot(inst) || inst.Left is Comp)
+			) {
+				// if (comp(x != 0)) ==> if (x)
+				// comp(comp(...) != 0) => comp(...)
+				context.Step("Remove redundant comp(... != 0)", inst);
+				inst.Left.AddILRange(inst.ILRange);
+				inst.ReplaceWith(inst.Left);
+				inst.Left.AcceptVisitor(this);
+				return;
+			}
+
 			base.VisitComp(inst);
 			if (inst.IsLifted) {
 				return;
@@ -94,9 +122,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (inst.Kind == ComparisonKind.GreaterThan) {
 					context.Step("comp.unsigned(left > ldc.i4 0) => comp(left != ldc.i4 0)", inst);
 					inst.Kind = ComparisonKind.Inequality;
+					VisitComp(inst);
+					return;
 				} else if (inst.Kind == ComparisonKind.LessThanOrEqual) {
 					context.Step("comp.unsigned(left <= ldc.i4 0) => comp(left == ldc.i4 0)", inst);
 					inst.Kind = ComparisonKind.Equality;
+					VisitComp(inst);
+					return;
 				}
 			}
 		}
@@ -137,17 +169,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		protected internal override void VisitLogicNot(LogicNot inst)
+		void VisitLogicNot(Comp inst, ILInstruction arg)
 		{
-			ILInstruction arg, lhs, rhs;
-			if (inst.Argument.MatchLogicNot(out arg)) {
-				context.Step("logic.not(logic.not(arg)) => arg", inst);
-				Debug.Assert(arg.ResultType == StackType.I4);
-				arg.AddILRange(inst.ILRange);
-				arg.AddILRange(inst.Argument.ILRange);
-				inst.ReplaceWith(arg);
-				arg.AcceptVisitor(this);
-			} else if (inst.Argument is Comp comp) {
+			ILInstruction lhs, rhs;
+			if (arg is Comp comp) {
 				if ((comp.InputType != StackType.F && !comp.IsLifted) || comp.Kind.IsEqualityOrInequality()) {
 					context.Step("push negation into comparison", inst);
 					comp.Kind = comp.Kind.Negate();
@@ -155,32 +180,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.ReplaceWith(comp);
 				}
 				comp.AcceptVisitor(this);
-			} else if (inst.Argument.MatchLogicAnd(out lhs, out rhs)) {
+			} else if (arg.MatchLogicAnd(out lhs, out rhs)) {
 				// logic.not(if (lhs) rhs else ldc.i4 0)
 				// ==> if (logic.not(lhs)) ldc.i4 1 else logic.not(rhs)
 				context.Step("push negation into logic.and", inst);
-				IfInstruction ifInst = (IfInstruction)inst.Argument;
+				IfInstruction ifInst = (IfInstruction)arg;
 				var ldc0 = ifInst.FalseInst;
 				Debug.Assert(ldc0.MatchLdcI4(0));
-				ifInst.Condition = new LogicNot(lhs) { ILRange = inst.ILRange };
+				ifInst.Condition = Comp.LogicNot(lhs, inst.ILRange);
 				ifInst.TrueInst = new LdcI4(1) { ILRange = ldc0.ILRange };
-				ifInst.FalseInst = new LogicNot(rhs) { ILRange = inst.ILRange };
+				ifInst.FalseInst = Comp.LogicNot(rhs, inst.ILRange);
 				inst.ReplaceWith(ifInst);
 				ifInst.AcceptVisitor(this);
-			} else if (inst.Argument.MatchLogicOr(out lhs, out rhs)) {
+			} else if (arg.MatchLogicOr(out lhs, out rhs)) {
 				// logic.not(if (lhs) ldc.i4 1 else rhs)
 				// ==> if (logic.not(lhs)) logic.not(rhs) else ldc.i4 0)
 				context.Step("push negation into logic.or", inst);
-				IfInstruction ifInst = (IfInstruction)inst.Argument;
+				IfInstruction ifInst = (IfInstruction)arg;
 				var ldc1 = ifInst.TrueInst;
 				Debug.Assert(ldc1.MatchLdcI4(1));
-				ifInst.Condition = new LogicNot(lhs) { ILRange = inst.ILRange };
-				ifInst.TrueInst = new LogicNot(rhs) { ILRange = inst.ILRange };
+				ifInst.Condition = Comp.LogicNot(lhs, inst.ILRange);
+				ifInst.TrueInst = Comp.LogicNot(rhs, inst.ILRange);
 				ifInst.FalseInst = new LdcI4(0) { ILRange = ldc1.ILRange };
 				inst.ReplaceWith(ifInst);
 				ifInst.AcceptVisitor(this);
 			} else {
-				inst.Argument.AcceptVisitor(this);
+				arg.AcceptVisitor(this);
 			}
 		}
 		
@@ -286,7 +311,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var t = inst.TrueInst;
 				inst.TrueInst = inst.FalseInst;
 				inst.FalseInst = t;
-				inst.Condition = new LogicNot(inst.Condition);
+				inst.Condition = Comp.LogicNot(inst.Condition);
 			}
 
 			base.VisitIfInstruction(inst);
@@ -309,7 +334,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction value1, value2;
 			if (trueInst.Instructions[0].MatchStLoc(out v, out value1) && falseInst.Instructions[0].MatchStLoc(v, out value2)) {
 				context.Step("conditional operator", inst);
-				var newIf = new IfInstruction(new LogicNot(inst.Condition), value2, value1);
+				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1);
 				newIf.ILRange = inst.ILRange;
 				inst.ReplaceWith(new StLoc(v, newIf));
 				return newIf;

@@ -342,11 +342,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new TypeOfResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle")), inst.Type));
 		}
 		
-		protected internal override TranslatedExpression VisitLogicNot(LogicNot inst, TranslationContext context)
-		{
-			return TranslateCondition(inst.Argument, negate: true).WithILInstruction(inst);
-		}
-		
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst, TranslationContext context)
 		{
 			var argument = Translate(inst.Argument);

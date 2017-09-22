@@ -142,18 +142,23 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			} else if (inst is Comp comp) {
 				var left = Eval(comp.Left);
 				var right = Eval(comp.Right);
-				if (left.Type != SymbolicValueType.State || right.Type != SymbolicValueType.IntegerConstant)
-					return Failed;
-				// bool: (state + left.Constant == right.Constant)
-				LongSet trueSums = SwitchAnalysis.MakeSetWhereComparisonIsTrue(comp.Kind, right.Constant, comp.Sign);
-				// symbolic value is true iff trueSums.Contains(state + left.Constant)
-				LongSet trueStates = trueSums.AddOffset(unchecked(-left.Constant));
-				// symbolic value is true iff trueStates.Contains(state)
-				return new SymbolicValue(SymbolicValueType.StateInSet, trueStates);
-			} else if (inst is LogicNot logicNot) {
-				SymbolicValue val = Eval(logicNot.Argument).AsBool();
-				if (val.Type == SymbolicValueType.StateInSet) {
-					return new SymbolicValue(SymbolicValueType.StateInSet, val.ValueSet.Invert());
+				if (left.Type == SymbolicValueType.State && right.Type == SymbolicValueType.IntegerConstant) {
+					// bool: (state + left.Constant == right.Constant)
+					LongSet trueSums = SwitchAnalysis.MakeSetWhereComparisonIsTrue(comp.Kind, right.Constant, comp.Sign);
+					// symbolic value is true iff trueSums.Contains(state + left.Constant)
+					LongSet trueStates = trueSums.AddOffset(unchecked(-left.Constant));
+					// symbolic value is true iff trueStates.Contains(state)
+					return new SymbolicValue(SymbolicValueType.StateInSet, trueStates);
+				} else if (left.Type == SymbolicValueType.StateInSet && right.Type == SymbolicValueType.IntegerConstant) {
+					if (comp.Kind == ComparisonKind.Equality && right.Constant == 0) {
+						// comp((x in set) == 0) ==> x not in set
+						return new SymbolicValue(SymbolicValueType.StateInSet, left.ValueSet.Invert());
+					} else if (comp.Kind == ComparisonKind.Inequality && right.Constant != 0) {
+						// comp((x in set) != 0) => x in set
+						return new SymbolicValue(SymbolicValueType.StateInSet, left.ValueSet);
+					} else {
+						return Failed;
+					}
 				} else {
 					return Failed;
 				}
