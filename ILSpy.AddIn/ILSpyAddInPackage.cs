@@ -118,10 +118,6 @@ namespace ICSharpCode.ILSpy.AddIn
 					ShowMessage("No reference information was found in the selection!");
 					continue;
 				}
-				if (reference.Project != null) {
-					OpenProjectInILSpy(reference.Project);
-					continue;
-				}
 				string path = null;
 				if (!string.IsNullOrEmpty(reference.PublicKeyToken)) {
 					var token = Utils.HexStringToBytes(reference.PublicKeyToken);
@@ -139,7 +135,6 @@ namespace ICSharpCode.ILSpy.AddIn
 			public string PublicKeyToken { get; set; }
 			public string Path { get; set; }
 			public Version Version { get; set; }
-			public EnvDTE.Project Project { get; set; }
 
 			internal static ReferenceInfo FromFullName(string fullName)
 			{
@@ -204,7 +199,7 @@ namespace ICSharpCode.ILSpy.AddIn
 			string[] values = new string[names.Length];
 			foreach (dynamic p in properties) {
 				try {
-					//ShowMessage("Name: " + p.Name + ", Value: " + p.Value);
+					ShowMessage("Name: " + p.Name + ", Value: " + p.Value);
 					for (int i = 0; i < names.Length; i++) {
 						if (names[i] == p.Name) {
 							values[i] = p.Value;
@@ -336,10 +331,23 @@ namespace ICSharpCode.ILSpy.AddIn
 		private void OpenProjectInILSpy(EnvDTE.Project project, params string[] arguments)
 		{
 			EnvDTE.Configuration config = project.ConfigurationManager.ActiveConfiguration;
-			string projectPath = Path.GetDirectoryName(project.FileName);
-			string outputPath = config.Properties.Item("OutputPath").Value.ToString();
-			string assemblyFileName = project.Properties.Item("OutputFileName").Value.ToString();
-			OpenAssemblyInILSpy(Path.Combine(projectPath, outputPath, assemblyFileName), arguments);
+			var outputFiles = config.OutputGroups.OfType<EnvDTE.OutputGroup>()
+				.Where(g => g.FileCount > 0 && g.CanonicalName == "Built")
+				.SelectMany(g => (object[])g.FileURLs).Select(f => f?.ToString()).ToArray();
+			var outputFilePath = outputFiles.FirstOrDefault(CheckExtension)?.ToString()
+				.Substring("file:///".Length);
+			OpenAssemblyInILSpy(outputFilePath, arguments);
+		}
+
+		private bool CheckExtension(string fileName)
+		{
+			switch (Path.GetExtension(fileName)) {
+				case ".exe":
+				case ".dll":
+					return true;
+				default:
+					return false;
+			}
 		}
 
 		private void OpenAssemblyInILSpy(string assemblyFileName, params string[] arguments)
