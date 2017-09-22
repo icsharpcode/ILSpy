@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				// guarantee that it finds only blocks.
 				// Fix that up now.
 				while (!(v.InsertionPoint.nextNode.Parent is BlockStatement)) {
-					if (v.InsertionPoint.nextNode.Parent is ForStatement f && v.InsertionPoint.nextNode == f.Initializers.FirstOrDefault())
+					if (v.InsertionPoint.nextNode.Parent is ForStatement f && v.InsertionPoint.nextNode == f.Initializers.FirstOrDefault() && IsMatchingAssignment(v, out _))
 						break;
 					v.InsertionPoint = v.InsertionPoint.Up();
 				}
@@ -348,6 +348,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
+		bool IsMatchingAssignment(VariableToDeclare v, out AssignmentExpression assignment)
+		{
+			assignment = (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
+			Expression expectedExpr = new IdentifierExpression(v.Name);
+			if (v.Type.Kind == TypeKind.ByReference) {
+				expectedExpr = new DirectionExpression(FieldDirection.Ref, expectedExpr);
+			}
+			if (assignment != null && assignment.Operator == AssignmentOperatorType.Assign && assignment.Left.IsMatch(expectedExpr))
+				return true;
+			return false;
+		}
+
 		void InsertVariableDeclarations(TransformContext context)
 		{
 			var replacements = new List<KeyValuePair<AstNode, AstNode>>();
@@ -356,12 +368,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (v.RemovedDueToCollision)
 					continue;
 				
-				var assignment = (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
-				Expression expectedExpr = new IdentifierExpression(v.Name);
-				if (v.Type.Kind == TypeKind.ByReference) {
-					expectedExpr = new DirectionExpression(FieldDirection.Ref, expectedExpr);
-				}
-				if (assignment != null && assignment.Operator == AssignmentOperatorType.Assign && assignment.Left.IsMatch(expectedExpr)) {
+				if (IsMatchingAssignment(v, out AssignmentExpression assignment)) {
 					AstType type;
 					if (context.Settings.AnonymousTypes && v.Type.ContainsAnonymousType()) {
 						type = new SimpleType("var");

@@ -14,6 +14,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void Main()
 		{
 			SimpleUsingNullStatement();
+			ForWithMultipleVariables();
 		}
 
 		/// <summary>
@@ -26,6 +27,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				Console.WriteLine("using (null)");
 			}
 			Console.WriteLine("after using");
+		}
+
+		public static void ForWithMultipleVariables()
+		{
+			int x, y;
+			Console.WriteLine("before for");
+			for (x = y = 0; x < 10; x++) {
+				y++;
+				Console.WriteLine("x = " + x + ", y = " + y);
+			}
+			Console.WriteLine("after for");
 		}
 	}
 }
