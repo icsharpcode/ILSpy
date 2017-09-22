@@ -254,6 +254,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 		}
 
+		protected internal override Statement VisitUsingInstruction(UsingInstruction inst)
+		{
+			return new UsingStatement {
+				ResourceAcquisition = exprBuilder.Translate(inst.ResourceExpression),
+				EmbeddedStatement = ConvertAsBlock(inst.Body)
+			};
+		}
+
 		protected internal override Statement VisitPinnedRegion(PinnedRegion inst)
 		{
 			var fixedStmt = new FixedStatement();

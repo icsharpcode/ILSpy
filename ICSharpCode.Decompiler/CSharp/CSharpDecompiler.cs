@@ -102,6 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						//new UseExitPoints(),
 						new ConditionDetection(),
 						new LockTransform(),
+						new UsingTransform(),
 						// CachedDelegateInitialization must run after ConditionDetection and before/in LoopingBlockTransform
 						// and must run before NullCoalescingTransform
 						new CachedDelegateInitialization(),

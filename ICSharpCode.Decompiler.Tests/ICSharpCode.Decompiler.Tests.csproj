@@ -99,6 +99,7 @@
     <Compile Include="TestCases\Pretty\QueryExpressions.cs" />
     <Compile Include="TestCases\Pretty\ShortCircuit.cs" />
     <Compile Include="TestCases\Pretty\TypeAnalysisTests.cs" />
+    <Compile Include="TestCases\Pretty\Using.cs" />
     <Compile Include="TestTraceListener.cs" />
     <Compile Include="Util\BitSetTests.cs" />
     <Compile Include="Util\IntervalTests.cs" />

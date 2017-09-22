@@ -314,6 +314,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				while (!(v.InsertionPoint.nextNode.Parent is BlockStatement)) {
 					if (v.InsertionPoint.nextNode.Parent is ForStatement f && v.InsertionPoint.nextNode == f.Initializers.FirstOrDefault() && IsMatchingAssignment(v, out _))
 						break;
+					if (v.InsertionPoint.nextNode.Parent is UsingStatement u && v.InsertionPoint.nextNode == u.ResourceAcquisition && IsMatchingAssignment(v, out _))
+						break;
 					v.InsertionPoint = v.InsertionPoint.Up();
 				}
 				
@@ -350,7 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool IsMatchingAssignment(VariableToDeclare v, out AssignmentExpression assignment)
 		{
-			assignment = (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
+			assignment = v.InsertionPoint.nextNode as AssignmentExpression ?? (v.InsertionPoint.nextNode as ExpressionStatement)?.Expression as AssignmentExpression;
 			Expression expectedExpr = new IdentifierExpression(v.Name);
 			if (v.Type.Kind == TypeKind.ByReference) {
 				expectedExpr = new DirectionExpression(FieldDirection.Ref, expectedExpr);
