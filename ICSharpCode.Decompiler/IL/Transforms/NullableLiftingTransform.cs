@@ -131,10 +131,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// (C# checks the underlying value before checking the HasValue bits)
 				if (comp.Kind.IsEqualityOrInequality()) {
 					// for equality/inequality, the HasValue bits must also compare equal/inequal
+					if (comp.Kind == ComparisonKind.Inequality) {
+						// handle inequality by swapping one last time
+						Swap(ref trueInst, ref falseInst);
+					}
 					if (falseInst.MatchLdcI4(0)) {
-						return LiftCSharpEqualityComparison(comp, comp.Kind, trueInst);
-					} else if (trueInst.MatchLdcI4(0)) {
-						return LiftCSharpEqualityComparison(comp, comp.Kind.Negate(), falseInst);
+						// (a.GetValueOrDefault() == b.GetValueOrDefault()) ? (a.HasValue == b.HasValue) : false
+						// => a == b
+						return LiftCSharpEqualityComparison(comp, ComparisonKind.Equality, trueInst);
+					} else if (falseInst.MatchLdcI4(1)) {
+						// (a.GetValueOrDefault() == b.GetValueOrDefault()) ? (a.HasValue != b.HasValue) : true
+						// => a != b
+						return LiftCSharpEqualityComparison(comp, ComparisonKind.Inequality, trueInst);
 					}
 				} else {
 					// Not (in)equality, but one of < <= > >=.
@@ -163,10 +171,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		Comp LiftCSharpEqualityComparison(Comp valueComp, ComparisonKind newComparisonKind, ILInstruction hasValueTest)
 		{
 			Debug.Assert(newComparisonKind.IsEqualityOrInequality());
+			bool hasValueTestNegated = false;
+			while (hasValueTest.MatchLogicNot(out var arg)) {
+				hasValueTest = arg;
+				hasValueTestNegated = !hasValueTestNegated;
+			}
 			// The HasValue comparison must be the same operator as the Value comparison.
 			if (hasValueTest is Comp hasValueComp) {
 				// Comparing two nullables: HasValue comparison must be the same operator as the Value comparison
-				if (hasValueComp.Kind != newComparisonKind)
+				if ((hasValueTestNegated ? hasValueComp.Kind.Negate() : hasValueComp.Kind) != newComparisonKind)
 					return null;
 				if (!MatchHasValueCall(hasValueComp.Left, out var leftVar))
 					return null;
@@ -182,14 +195,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.Step("NullableLiftingTransform: C# (in)equality comparison", valueComp);
 					return new Comp(newComparisonKind, ComparisonLiftingKind.CSharp, valueComp.InputType, valueComp.Sign, left, right);
 				}
-			} else if (newComparisonKind == ComparisonKind.Equality && MatchHasValueCall(hasValueTest, out var v)) {
+			} else if (newComparisonKind == ComparisonKind.Equality && !hasValueTestNegated && MatchHasValueCall(hasValueTest, out var v)) {
 				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
 				nullableVars = new List<ILVariable> { v };
 				return LiftCSharpComparison(valueComp, newComparisonKind);
-			} else if (newComparisonKind == ComparisonKind.Inequality
-				&& hasValueTest.MatchLogicNot(out var arg)
-				&& MatchHasValueCall(arg, out v)
-			) {
+			} else if (newComparisonKind == ComparisonKind.Inequality && hasValueTestNegated && MatchHasValueCall(hasValueTest, out v)) {
 				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
 				nullableVars = new List<ILVariable> { v };
 				return LiftCSharpComparison(valueComp, newComparisonKind);
