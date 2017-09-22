@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy
 							var memory = new MemoryStream();
 							entry.Open().CopyTo(memory);
 							memory.Position = 0;
-							var e = new Entry(entry.FullName, memory);
+							var e = new Entry(Uri.UnescapeDataString(entry.FullName), memory);
 							e.PropertyChanged += EntryPropertyChanged;
 							Entries.Add(e);
 							break;
