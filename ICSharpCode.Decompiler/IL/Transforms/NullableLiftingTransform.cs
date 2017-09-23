@@ -157,6 +157,48 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
+			if (MatchGetValueOrDefault(condition, out ILVariable v)
+				&& NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean))
+			{
+				if (MatchHasValueCall(trueInst, v) && falseInst.MatchLdcI4(0)) {
+					// v.GetValueOrDefault() ? v.HasValue : false
+					// ==> v == true
+					context.Step("NullableLiftingTransform: v == true", ifInst);
+					return new Comp(ComparisonKind.Equality, ComparisonLiftingKind.CSharp,
+						StackType.I4, Sign.None,
+						new LdLoc(v) { ILRange = trueInst.ILRange },
+						new LdcI4(1) { ILRange = falseInst.ILRange }
+					) { ILRange = ifInst.ILRange };
+				} else if (trueInst.MatchLdcI4(0) && MatchHasValueCall(falseInst, v)) {
+					// v.GetValueOrDefault() ? false : v.HasValue
+					// ==> v == false
+					context.Step("NullableLiftingTransform: v == false", ifInst);
+					return new Comp(ComparisonKind.Equality, ComparisonLiftingKind.CSharp,
+						StackType.I4, Sign.None,
+						new LdLoc(v) { ILRange = falseInst.ILRange },
+						trueInst // LdcI4(0)
+					) { ILRange = ifInst.ILRange };
+				} else if (MatchNegatedHasValueCall(trueInst, v) && falseInst.MatchLdcI4(1)) {
+					// v.GetValueOrDefault() ? !v.HasValue : true
+					// ==> v != true
+					context.Step("NullableLiftingTransform: v != true", ifInst);
+					return new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp,
+						StackType.I4, Sign.None,
+						new LdLoc(v) { ILRange = trueInst.ILRange },
+						falseInst // LdcI4(1)
+					) { ILRange = ifInst.ILRange };
+				} else if (trueInst.MatchLdcI4(1) && MatchNegatedHasValueCall(falseInst, v)) {
+					// v.GetValueOrDefault() ? true : !v.HasValue
+					// ==> v != false
+					context.Step("NullableLiftingTransform: v != false", ifInst);
+					return new Comp(ComparisonKind.Inequality, ComparisonLiftingKind.CSharp,
+						StackType.I4, Sign.None,
+						new LdLoc(v) { ILRange = falseInst.ILRange },
+						new LdcI4(0) { ILRange = trueInst.ILRange }
+					) { ILRange = ifInst.ILRange };
+				}
+			}
+
 			return null;
 
 		}
@@ -430,6 +472,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (call.Method.DeclaringTypeDefinition?.KnownTypeCode != KnownTypeCode.NullableOfT)
 				return false;
 			return call.Arguments[0].MatchLdLoca(out v);
+		}
+
+		/// <summary>
+		/// Matches 'call get_HasValue(ldloca v)'
+		/// </summary>
+		static bool MatchHasValueCall(ILInstruction inst, ILVariable v)
+		{
+			return MatchHasValueCall(inst, out var v2) && v == v2;
+		}
+
+		/// <summary>
+		/// Matches 'logic.not(call get_HasValue(ldloca v))'
+		/// </summary>
+		static bool MatchNegatedHasValueCall(ILInstruction inst, ILVariable v)
+		{
+			return inst.MatchLogicNot(out var arg) && MatchHasValueCall(arg, v);
 		}
 
 		/// <summary>
