@@ -134,8 +134,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			a |= x();
 			a ^= x();
 
+			Console.WriteLine(x() & a);
+			Console.WriteLine(x() | a);
 			Console.WriteLine(x() ^ a);
 			(new bool?[0])[0] ^= x();
+			(new bool?[0])[0] ^= a;
 		}
 
 		public static void BoolValueConst(bool? a)

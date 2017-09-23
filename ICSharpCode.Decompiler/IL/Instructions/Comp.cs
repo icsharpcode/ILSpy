@@ -175,6 +175,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			if (options.UseLogicOperationSugar && MatchLogicNot(out var arg)) {
+				output.Write("logic.not(");
+				arg.WriteTo(output, options);
+				output.Write(')');
+				return;
+			}
 			output.Write(OpCode);
 			switch (Sign) {
 				case Sign.Signed:

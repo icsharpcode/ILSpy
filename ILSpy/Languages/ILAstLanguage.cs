@@ -141,12 +141,16 @@ namespace ICSharpCode.ILSpy
 		class BlockIL : ILAstLanguage
 		{
 			readonly IReadOnlyList<IILTransform> transforms;
-			
+			readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
+				UseFieldSugar = true,
+				UseLogicOperationSugar = true
+			};
+
 			public BlockIL(IReadOnlyList<IILTransform> transforms) : base("ILAst")
 			{
 				this.transforms = transforms;
 			}
-			
+
 			public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 			{
 				base.DecompileMethod(method, output, options);
@@ -173,11 +177,27 @@ namespace ICSharpCode.ILSpy
 						OnStepperUpdated(new EventArgs());
 					}
 				}
+				(output as ISmartTextOutput)?.AddUIElement(OptionsCheckBox(nameof(writingOptions.UseFieldSugar)));
+				output.WriteLine();
+				(output as ISmartTextOutput)?.AddUIElement(OptionsCheckBox(nameof(writingOptions.UseLogicOperationSugar)));
+				output.WriteLine();
 				(output as ISmartTextOutput)?.AddButton(Images.ViewCode, "Show Steps", delegate {
 					DebugSteps.Show();
 				});
 				output.WriteLine();
-				il.WriteTo(output);
+				il.WriteTo(output, writingOptions);
+			}
+
+			Func<System.Windows.UIElement> OptionsCheckBox(string propertyName)
+			{
+				return () => {
+					var checkBox = new System.Windows.Controls.CheckBox();
+					checkBox.Content = propertyName;
+					checkBox.Cursor = System.Windows.Input.Cursors.Arrow;
+					checkBox.SetBinding(System.Windows.Controls.CheckBox.IsCheckedProperty,
+						new System.Windows.Data.Binding(propertyName) { Source = writingOptions });
+					return checkBox;
+				};
 			}
 		}
 	}

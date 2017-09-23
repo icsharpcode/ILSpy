@@ -172,16 +172,16 @@
 			CustomClassName("LdFlda"), CustomArguments("target"), MayThrowIfNotDelayed, HasFieldOperand, ResultType("Ref")),
 		new OpCode("ldsflda", "Load static field address",
 			CustomClassName("LdsFlda"), NoArguments, ResultType("Ref"), HasFieldOperand),
-
+			
 		new OpCode("castclass", "Casts an object to a class.",
 			CustomClassName("CastClass"), Unary, HasTypeOperand, MayThrow, ResultType("type.GetStackType()")),
 		new OpCode("isinst", "Test if object is instance of class or interface.",
 			CustomClassName("IsInst"), Unary, HasTypeOperand, ResultType("O")),
 		new OpCode("ldobj", "Indirect load (ref/pointer dereference).",
-			CustomClassName("LdObj"), CustomArguments("target"), HasTypeOperand, MemoryAccess,
+			CustomClassName("LdObj"), CustomArguments("target"), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
 		new OpCode("stobj", "Indirect store (store to ref/pointer).",
-			CustomClassName("StObj"), CustomArguments("target", "value"), HasTypeOperand, MemoryAccess,
+			CustomClassName("StObj"), CustomArguments("target", "value"), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
 		
 		new OpCode("box", "Boxes a value.",
@@ -277,7 +277,11 @@ namespace <#=opCode.Namespace#>
 		}
 <#	} #>
 <#	if (opCode.GenerateWriteTo) { #>
+<#      if (opCode.CustomWriteToButKeepOriginal) { #>
+		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
+<#      } else { #>
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+<#      } #>
 		{<#=Body(opCode.WriteToBody)#>}
 <#	} #>
 <#	if (opCode.GenerateAcceptVisitor) { #>
@@ -462,6 +466,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		
 		public bool GenerateWriteTo = false;
+		public bool CustomWriteToButKeepOriginal = false;
 		public List<string> WriteOpCodePrefix = new List<string>();
 		public List<string> WriteOpCodeSuffix = new List<string>();
 		public List<string> WriteOperand = new List<string>();
@@ -511,6 +516,10 @@ namespace ICSharpCode.Decompiler.IL
 	
 	static Action<OpCode> CustomWriteTo = opCode => {
 		opCode.GenerateWriteTo = false;
+	};
+
+	static Action<OpCode> CustomWriteToButKeepOriginal = opCode => {
+		opCode.CustomWriteToButKeepOriginal = true;
 	};
 	
 	static Action<OpCode> CustomComputeFlags = opCode => {

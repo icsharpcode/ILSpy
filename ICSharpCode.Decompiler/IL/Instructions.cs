@@ -2946,7 +2946,7 @@ namespace ICSharpCode.Decompiler.IL
 				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 			}
 		}
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			if (IsVolatile)
 				output.Write("volatile.");
@@ -3070,7 +3070,7 @@ namespace ICSharpCode.Decompiler.IL
 				return InstructionFlags.SideEffect | InstructionFlags.MayThrow;
 			}
 		}
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			if (IsVolatile)
 				output.Write("volatile.");

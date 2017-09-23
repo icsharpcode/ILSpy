@@ -34,4 +34,53 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		bool IsVolatile { get; set; }
 	}
+
+	partial class LdObj
+	{
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			if (options.UseFieldSugar) {
+				if (this.MatchLdFld(out var target, out var field)) {
+					output.Write("ldfld ");
+					Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+					output.Write('(');
+					this.target.WriteTo(output, options);
+					output.Write(')');
+					return;
+				} else if (this.MatchLdsFld(out field)) {
+					output.Write("ldsfld ");
+					Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+					return;
+				}
+			}
+			OriginalWriteTo(output, options);
+		}
+	}
+
+	partial class StObj
+	{
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			if (options.UseFieldSugar) {
+				if (this.MatchStFld(out var target, out var field, out var value)) {
+					output.Write("stfld ");
+					Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+					output.Write('(');
+					this.target.WriteTo(output, options);
+					output.Write(", ");
+					this.value.WriteTo(output, options);
+					output.Write(')');
+					return;
+				} else if (this.MatchStsFld(out field, out value)) {
+					output.Write("stsfld ");
+					Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+					output.Write('(');
+					this.value.WriteTo(output, options);
+					output.Write(')');
+					return;
+				}
+			}
+			OriginalWriteTo(output, options);
+		}
+	}
 }

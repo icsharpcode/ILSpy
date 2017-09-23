@@ -324,17 +324,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public bool MatchLdsFld(IField field)
-		{
-			if (this is LdObj ldobj && ldobj.Target is LdsFlda ldsflda) {
-				return field.Equals(ldsflda.Field);
-			}
-			return false;
-		}
-		
 		public bool MatchLdFld(out ILInstruction target, out IField field)
 		{
-			if (this is LdObj ldobj && ldobj.Target is LdFlda ldflda) {
+			if (this is LdObj ldobj && ldobj.Target is LdFlda ldflda && ldobj.UnalignedPrefix == 0 && !ldobj.IsVolatile) {
 				target = ldflda.Target;
 				field = ldflda.Field;
 				return true;
@@ -346,7 +338,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public bool MatchLdsFld(out IField field)
 		{
-			if (this is LdObj ldobj && ldobj.Target is LdsFlda ldsflda) {
+			if (this is LdObj ldobj && ldobj.Target is LdsFlda ldsflda && ldobj.UnalignedPrefix == 0 && !ldobj.IsVolatile) {
 				field = ldsflda.Field;
 				return true;
 			}
@@ -354,9 +346,14 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 
+		public bool MatchLdsFld(IField field)
+		{
+			return MatchLdsFld(out var f) && f.Equals(field);
+		}
+
 		public bool MatchStsFld(out IField field, out ILInstruction value)
 		{
-			if (this is StObj stobj && stobj.Target is LdsFlda ldsflda) {
+			if (this is StObj stobj && stobj.Target is LdsFlda ldsflda && stobj.UnalignedPrefix == 0 && !stobj.IsVolatile) {
 				field = ldsflda.Field;
 				value = stobj.Value;
 				return true;
@@ -368,7 +365,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public bool MatchStFld(out ILInstruction target, out IField field, out ILInstruction value)
 		{
-			if (this is StObj stobj && stobj.Target is LdFlda ldflda) {
+			if (this is StObj stobj && stobj.Target is LdFlda ldflda && stobj.UnalignedPrefix == 0 && !stobj.IsVolatile) {
 				target = ldflda.Target;
 				field = ldflda.Field;
 				value = stobj.Value;

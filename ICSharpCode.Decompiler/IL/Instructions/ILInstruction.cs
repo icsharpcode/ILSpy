@@ -743,5 +743,14 @@ namespace ICSharpCode.Decompiler.IL
 
 	public class ILAstWritingOptions
 	{
+		/// <summary>
+		/// Sugar for logic.not/and/or.
+		/// </summary>
+		public bool UseLogicOperationSugar { get; set; }
+
+		/// <summary>
+		/// Sugar for ldfld/stfld.
+		/// </summary>
+		public bool UseFieldSugar { get; set; }
 	}
 }
