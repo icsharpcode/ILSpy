@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			output.Write(' ');

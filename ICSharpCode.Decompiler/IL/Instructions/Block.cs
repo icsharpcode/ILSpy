@@ -124,7 +124,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return Disassembler.DisassemblerHelpers.OffsetToString(this.ILRange.Start); }
 		}
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write("Block ");
 			output.WriteDefinition(Label, this);
@@ -135,12 +135,12 @@ namespace ICSharpCode.Decompiler.IL
 			output.WriteLine(" {");
 			output.Indent();
 			foreach (var inst in Instructions) {
-				inst.WriteTo(output);
+				inst.WriteTo(output, options);
 				output.WriteLine();
 			}
 			if (finalInstruction.OpCode != OpCode.Nop) {
 				output.Write("final: ");
-				finalInstruction.WriteTo(output);
+				finalInstruction.WriteTo(output, options);
 				output.WriteLine();
 			}
 			output.Unindent();

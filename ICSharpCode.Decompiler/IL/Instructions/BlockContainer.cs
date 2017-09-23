@@ -105,7 +105,7 @@ namespace ICSharpCode.Decompiler.IL
 				entryPoint.IncomingEdgeCount--;
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.WriteDefinition("BlockContainer", this);
 			output.Write(' ');
@@ -114,7 +114,7 @@ namespace ICSharpCode.Decompiler.IL
 			output.Indent();
 			foreach (var inst in Blocks) {
 				if (inst.Parent == this) {
-					inst.WriteTo(output);
+					inst.WriteTo(output, options);
 				} else {
 					output.Write("stale reference to ");
 					output.WriteReference(inst.Label, inst, isLocal: true);

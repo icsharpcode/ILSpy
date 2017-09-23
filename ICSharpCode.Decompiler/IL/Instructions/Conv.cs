@@ -258,7 +258,7 @@ namespace ICSharpCode.Decompiler.IL
 			get => TargetType.GetStackType();
 		}
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			if (CheckForOverflow) {
@@ -289,7 +289,7 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 			output.Write('(');
-			Argument.WriteTo(output);
+			Argument.WriteTo(output, options);
 			output.Write(')');
 		}
 		

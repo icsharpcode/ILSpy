@@ -65,13 +65,13 @@ namespace ICSharpCode.Decompiler.IL
 			return clone;
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(".try ");
-			TryBlock.WriteTo(output);
+			TryBlock.WriteTo(output, options);
 			foreach (var handler in Handlers) {
 				output.Write(' ');
-				handler.WriteTo(output);
+				handler.WriteTo(output, options);
 			}
 		}
 		
@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write("catch ");
 			if (variable != null) {
@@ -167,11 +167,11 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(" : ");
 				Disassembler.DisassemblerHelpers.WriteOperand(output, variable.Type);
 			}
-			output.Write(" if (");
-			filter.WriteTo(output);
+			output.Write(" when (");
+			filter.WriteTo(output, options);
 			output.Write(')');
 			output.Write(' ');
-			body.WriteTo(output);
+			body.WriteTo(output, options);
 		}
 	}
 	
@@ -199,13 +199,13 @@ namespace ICSharpCode.Decompiler.IL
 				ILRange = this.ILRange
 			};
 		}
-		
-		public override void WriteTo(ITextOutput output)
+
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(".try ");
-			TryBlock.WriteTo(output);
+			TryBlock.WriteTo(output, options);
 			output.Write(" finally ");
-			finallyBlock.WriteTo(output);
+			finallyBlock.WriteTo(output, options);
 		}
 
 		public override StackType ResultType {
@@ -295,12 +295,12 @@ namespace ICSharpCode.Decompiler.IL
 			};
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(".try ");
-			TryBlock.WriteTo(output);
+			TryBlock.WriteTo(output, options);
 			output.Write(" fault ");
-			faultBlock.WriteTo(output);
+			faultBlock.WriteTo(output, options);
 		}
 		
 		public override StackType ResultType {

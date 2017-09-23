@@ -277,7 +277,7 @@ namespace <#=opCode.Namespace#>
 		}
 <#	} #>
 <#	if (opCode.GenerateWriteTo) { #>
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{<#=Body(opCode.WriteToBody)#>}
 <#	} #>
 <#	if (opCode.GenerateAcceptVisitor) { #>
@@ -594,7 +594,7 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.PerformMatchConditions.Add("this.Argument.PerformMatch(o.Argument, ref match)");
 		opCode.BaseConstructorArguments.Add("argument");
 		opCode.WriteArguments.Add("output.Write('(');");
-		opCode.WriteArguments.Add("Argument.WriteTo(output);");
+		opCode.WriteArguments.Add("Argument.WriteTo(output, options);");
 		opCode.WriteArguments.Add("output.Write(')');");
 	};
 	
@@ -610,9 +610,9 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.PerformMatchConditions.Add("this.Left.PerformMatch(o.Left, ref match)");
 		opCode.PerformMatchConditions.Add("this.Right.PerformMatch(o.Right, ref match)");
 		opCode.WriteArguments.Add("output.Write('(');");
-		opCode.WriteArguments.Add("Left.WriteTo(output);");
+		opCode.WriteArguments.Add("Left.WriteTo(output, options);");
 		opCode.WriteArguments.Add("output.Write(\", \");");
-		opCode.WriteArguments.Add("Right.WriteTo(output);");
+		opCode.WriteArguments.Add("Right.WriteTo(output, options);");
 		opCode.WriteArguments.Add("output.Write(')');");
 	};
 	
@@ -682,7 +682,7 @@ namespace ICSharpCode.Decompiler.IL
 						opCode.WriteArguments.Add("\toutput.Write(\", \");");
 					else
 						opCode.WriteArguments.Add("\tif (!first) output.Write(\", \"); else first = false;");
-					opCode.WriteArguments.Add("\t" + arg + ".WriteTo(output);");
+					opCode.WriteArguments.Add("\t" + arg + ".WriteTo(output, options);");
 					opCode.WriteArguments.Add("}");
 					opCode.Members.Add("public static readonly SlotInfo " + children[i].SlotName + " = " + children[i].GetSlotInit() + ";");
 					opCode.Members.Add("public InstructionCollection<ILInstruction> " + argProp + " { get; private set; }");
@@ -694,7 +694,7 @@ namespace ICSharpCode.Decompiler.IL
 					opCode.PerformMatchConditions.Add("this." + arg + ".PerformMatch(o." + arg + ", ref match)");
 					if (i > 0)
 						opCode.WriteArguments.Add("output.Write(\", \");");
-					opCode.WriteArguments.Add("this." + arg + ".WriteTo(output);");
+					opCode.WriteArguments.Add("this." + arg + ".WriteTo(output, options);");
 					opCode.Members.Add("public static readonly SlotInfo " + children[i].SlotName + " = " + children[i].GetSlotInit() + ";");
 					opCode.Members.Add("ILInstruction " + arg + ";");
 					opCode.Members.Add("public ILInstruction " + argProp + " {" + Environment.NewLine

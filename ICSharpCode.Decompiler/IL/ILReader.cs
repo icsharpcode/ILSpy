@@ -300,7 +300,7 @@ namespace ICSharpCode.Decompiler.IL
 					output.Write(' ');
 				output.WriteDefinition("IL_" + inst.ILRange.Start.ToString("x4"), inst.ILRange.Start);
 				output.Write(": ");
-				inst.WriteTo(output);
+				inst.WriteTo(output, new ILAstWritingOptions());
 				output.WriteLine();
 			}
 			new Disassembler.MethodBodyDisassembler(output, false, cancellationToken).WriteExceptionHandlers(body);

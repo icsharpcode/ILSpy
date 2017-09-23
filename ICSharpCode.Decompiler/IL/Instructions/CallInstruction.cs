@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			if (ConstrainedTo != null) {
 				output.Write("constrained.");
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL
 			for (int i = 0; i < Arguments.Count; i++) {
 				if (i > 0)
 					output.Write(", ");
-				Arguments[i].WriteTo(output);
+				Arguments[i].WriteTo(output, options);
 			}
 			output.Write(')');
 		}

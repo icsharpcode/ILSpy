@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.IL
 			throw new NotImplementedException();
 		}
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			if (Method != null) {
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			output.MarkFoldEnd();
 			output.WriteLine();
-			body.WriteTo(output);
+			body.WriteTo(output, options);
 			
 			output.WriteLine();
 			output.Unindent();

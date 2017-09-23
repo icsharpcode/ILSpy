@@ -100,14 +100,14 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(phase <= ILPhase.InILReader || value.ResultType == targetContainer.ResultType);
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			if (targetContainer != null) {
 				output.Write(' ');
 				output.WriteReference(TargetLabel, targetContainer, isLocal: true);
 				output.Write(" (");
-				value.WriteTo(output);
+				value.WriteTo(output, options);
 				output.Write(')');
 			}
 		}

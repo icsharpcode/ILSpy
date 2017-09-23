@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public abstract partial class SimpleInstruction : ILInstruction
 	{
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			// the non-custom WriteTo would add useless parentheses
@@ -35,7 +35,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public string Comment;
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			if (!string.IsNullOrEmpty(Comment)) {
@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return ExpectedResultType; }
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			if (!string.IsNullOrEmpty(Message)) {
@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL
 			get { return ExpectedResultType; }
 		}
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			if (!string.IsNullOrEmpty(Message)) {

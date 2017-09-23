@@ -38,13 +38,13 @@ namespace ICSharpCode.Decompiler.IL
 			get { return resultType; }
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			output.Write('.');
 			output.Write(resultType);
 			output.Write('(');
-			this.array.WriteTo(output);
+			this.array.WriteTo(output, options);
 			output.Write(')');
 		}
 	}

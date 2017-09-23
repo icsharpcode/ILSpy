@@ -123,7 +123,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			output.Write("." + GetOperatorName(Operator));
@@ -138,9 +138,9 @@ namespace ICSharpCode.Decompiler.IL
 			else if (Sign == Sign.Signed)
 				output.Write(".signed");
 			output.Write('(');
-			Target.WriteTo(output);
+			Target.WriteTo(output, options);
 			output.Write(", ");
-			Value.WriteTo(output);
+			Value.WriteTo(output, options);
 			output.Write(')');
 		}
 	}

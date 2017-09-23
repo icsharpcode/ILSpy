@@ -79,19 +79,19 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write("switch (");
-			value.WriteTo(output);
+			value.WriteTo(output, options);
 			output.Write(") ");
 			output.MarkFoldStart("{...}");
 			output.WriteLine("{");
 			output.Indent();
 			output.Write("default: ");
-			defaultBody.WriteTo(output);
+			defaultBody.WriteTo(output, options);
 			output.WriteLine();
 			foreach (var section in this.Sections) {
-				section.WriteTo(output);
+				section.WriteTo(output, options);
 				output.WriteLine();
 			}
 			output.Unindent();
@@ -175,13 +175,13 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write("case ");
 			output.Write(Labels.ToString());
 			output.Write(": ");
 			
-			body.WriteTo(output);
+			body.WriteTo(output, options);
 		}
 	}
 }

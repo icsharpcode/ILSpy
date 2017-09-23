@@ -76,16 +76,16 @@ namespace ICSharpCode.Decompiler.IL
 			return InstructionFlags.ControlFlow | condition.Flags | SemanticHelper.CombineBranches(trueInst.Flags, falseInst.Flags);
 		}
 		
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			output.Write(" (");
-			condition.WriteTo(output);
+			condition.WriteTo(output, options);
 			output.Write(") ");
-			trueInst.WriteTo(output);
+			trueInst.WriteTo(output, options);
 			if (falseInst.OpCode != OpCode.Nop) {
 				output.Write(" else ");
-				falseInst.WriteTo(output);
+				falseInst.WriteTo(output, options);
 			}
 		}
 	}

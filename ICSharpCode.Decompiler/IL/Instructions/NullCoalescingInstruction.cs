@@ -89,13 +89,13 @@ namespace ICSharpCode.Decompiler.IL
 				| SemanticHelper.CombineBranches(InstructionFlags.None, fallbackInst.Flags);
 		}
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			output.Write("(");
-			valueInst.WriteTo(output);
+			valueInst.WriteTo(output, options);
 			output.Write(", ");
-			fallbackInst.WriteTo(output);
+			fallbackInst.WriteTo(output, options);
 			output.Write(")");
 		}
 	}

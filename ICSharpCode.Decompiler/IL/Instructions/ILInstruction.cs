@@ -212,12 +212,12 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Writes the ILAst to the text output.
 		/// </summary>
-		public abstract void WriteTo(ITextOutput output);
+		public abstract void WriteTo(ITextOutput output, ILAstWritingOptions options);
 
 		public override string ToString()
 		{
 			var output = new PlainTextOutput();
-			WriteTo(output);
+			WriteTo(output, new ILAstWritingOptions());
 			if (!ILRange.IsEmpty) {
 				output.Write(" at IL_" + ILRange.Start.ToString("x4"));
 			}
@@ -739,5 +739,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// C# comparisons always return a bool!
 		/// </summary>
 		StackType UnderlyingResultType { get; }
+	}
+
+	public class ILAstWritingOptions
+	{
 	}
 }

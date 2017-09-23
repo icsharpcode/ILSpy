@@ -17,16 +17,12 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override StackType ResultType => StackType.Void;
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.Write(".lock (");
-			OnExpression.WriteTo(output);
-			output.WriteLine(") {");
-			output.Indent();
-			Body.WriteTo(output);
-			output.Unindent();
-			output.WriteLine();
-			output.Write("}");
+			output.Write("lock (");
+			OnExpression.WriteTo(output, options);
+			output.WriteLine(") ");
+			Body.WriteTo(output, options);
 		}
 	}
 }

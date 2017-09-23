@@ -48,5 +48,16 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(IsLifted == (ResultType == StackType.O));
 			Debug.Assert(IsLifted || ResultType == UnderlyingResultType);
 		}
+
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			output.Write(OpCode);
+			if (IsLifted) {
+				output.Write(".lifted");
+			}
+			output.Write('(');
+			this.Argument.WriteTo(output, options);
+			output.Write(')');
+		}
 	}
 }

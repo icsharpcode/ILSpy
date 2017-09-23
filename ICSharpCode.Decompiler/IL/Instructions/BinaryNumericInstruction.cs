@@ -176,7 +176,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			output.Write("." + GetOperatorName(Operator));
@@ -192,9 +192,9 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(".lifted");
 			}
 			output.Write('(');
-			Left.WriteTo(output);
+			Left.WriteTo(output, options);
 			output.Write(", ");
-			Right.WriteTo(output);
+			Right.WriteTo(output, options);
 			output.Write(')');
 		}
 	}

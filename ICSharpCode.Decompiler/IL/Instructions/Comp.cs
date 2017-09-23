@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write(OpCode);
 			switch (Sign) {
@@ -193,11 +193,11 @@ namespace ICSharpCode.Decompiler.IL
 					break;
 			}
 			output.Write('(');
-			Left.WriteTo(output);
+			Left.WriteTo(output, options);
 			output.Write(' ');
 			output.Write(Kind.GetToken());
 			output.Write(' ');
-			Right.WriteTo(output);
+			Right.WriteTo(output, options);
 			output.Write(')');
 		}
 
