@@ -81,6 +81,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			MutValueType v = MutableField;
 			v.Increment();
 			Console.WriteLine("Final value in MutableField: " + MutableField.val);
+			// Read-only field copies cannot be inlined for static methods:
+			MutValueType localCopy = ReadonlyField;
+			RefParameter(ref localCopy);
 		}
 		
 		static void Box()

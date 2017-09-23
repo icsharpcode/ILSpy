@@ -209,7 +209,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// allow inlining field access only if it's a readonly field
 						IField f = (((LdObj)inlinedExpression).Target as IInstructionWithFieldOperand)?.Field;
 						if (f != null && f.IsReadOnly)
-							return true;
+							break;
 						return f != null && f.IsReadOnly;
 					case OpCode.Call:
 						var m = ((CallInstruction)inlinedExpression).Method;
