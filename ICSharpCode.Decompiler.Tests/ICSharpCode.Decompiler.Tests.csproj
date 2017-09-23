@@ -49,6 +49,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="DataFlowTest.cs" />
     <Compile Include="Helpers\CodeAssert.cs" />
     <Compile Include="Helpers\SdkUtility.cs" />
     <Compile Include="Helpers\RemoveCompilerAttribute.cs" />

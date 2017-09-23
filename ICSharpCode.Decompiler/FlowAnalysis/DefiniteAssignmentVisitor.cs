@@ -37,8 +37,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			/// <summary>
 			/// bits[i]: There is a code path from the entry point to this state's position
 			///          that does not write to function.Variables[i].
+			///          (i.e. the variable is not definitely assigned at the state's position)
 			/// 
-			/// Initial state: all bits set
+			/// Initial state: all bits set = nothing is definitely assigned
 			/// Bottom state: all bits clear
 			/// </summary>
 			readonly BitSet bits;
@@ -77,9 +78,20 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 				bits.UnionWith(incomingState.bits);
 			}
 
-			public void MeetWith(State incomingState)
+			public void TriggerFinally(State finallyState)
 			{
-				bits.IntersectWith(incomingState.bits);
+				// If there is no path to the end of the try-block that leaves a variable v
+				// uninitialized, then there is no such path to the end of the whole try-finally either.
+				// (the try-finally cannot complete successfully unless the try block does the same)
+				// ==> any bits that are false in this.state must be false in the output state.
+
+				// Or said otherwise: a variable is definitely assigned after try-finally if it is
+				// definitely assigned in either the try or the finally block.
+				// Given that the bits are the opposite of definite assignment, this gives us:
+				//    !outputBits[i] == !bits[i] || !finallyState.bits[i].
+				// and thus:
+				//    outputBits[i] == bits[i] && finallyState.bits[i].
+				bits.IntersectWith(finallyState.bits);
 			}
 
 			public void ReplaceWithBottom()

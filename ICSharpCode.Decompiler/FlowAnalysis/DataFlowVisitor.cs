@@ -110,23 +110,18 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <code>this.isReachable |= incomingState.isReachable;</code>
 		/// </example>
 		void JoinWith(Self incomingState);
-		
+
 		/// <summary>
-		/// The meet operation.
+		/// A special operation to merge the end-state of the finally-block with the end state of
+		/// a branch leaving the try-block.
 		/// 
-		/// If possible, this method sets <c>this</c> to the greatest state that is smaller than (or equal to)
-		/// both input states.
-		/// At a minimum, meeting with an unreachable state must result in an unreachable state.
+		/// If either input state is unreachable, this call must result in an unreachable state.
 		/// </summary>
-		/// <remarks>
-		/// <c>MeetWith()</c> is used when control flow passes out of a try-finally construct: the endpoint of the try-finally
-		/// is reachable only if both the endpoint of the <c>try</c> and the endpoint of the <c>finally</c> blocks are reachable.
-		/// </remarks>
 		/// <example>
-		/// The simple state "<c>bool isReachable</c>", would implement <c>MeetWith</c> as:
-		/// <code>this.isReachable &amp;= incomingState.isReachable;</code>
+		/// The simple state "<c>bool isReachable</c>", would implement <c>TriggerFinally</c> as:
+		/// <code>this.isReachable &amp;= finallyState.isReachable;</code>
 		/// </example>
-		void MeetWith(Self incomingState);
+		void TriggerFinally(Self finallyState);
 		
 		/// <summary>
 		/// Gets whether this is the bottom state.
@@ -400,35 +395,56 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugEndPoint(container);
 			workLists.Remove(container);
 		}
-		
+
+		readonly List<(IBranchOrLeaveInstruction, State)> branchesTriggeringFinally = new List<(IBranchOrLeaveInstruction, State)>();
+
 		protected internal override void VisitBranch(Branch inst)
+		{
+			if (inst.TriggersFinallyBlock) {
+				Debug.Assert(state.LessThanOrEqual(currentStateOnException));
+				branchesTriggeringFinally.Add((inst, state.Clone()));
+			} else {
+				MergeBranchStateIntoTargetBlock(inst, state);
+			}
+			MarkUnreachable();
+		}
+
+		void MergeBranchStateIntoTargetBlock(Branch inst, State branchState)
 		{
 			var targetBlock = inst.TargetBlock;
 			var targetState = GetBlockInputState(targetBlock);
-			if (!state.LessThanOrEqual(targetState)) {
-				targetState.JoinWith(state);
-				
+			if (!branchState.LessThanOrEqual(targetState)) {
+				targetState.JoinWith(branchState);
+
 				BlockContainer container = (BlockContainer)targetBlock.Parent;
 				workLists[container].Add(targetBlock.ChildIndex);
 			}
-			MarkUnreachable();
 		}
 		
 		protected internal override void VisitLeave(Leave inst)
 		{
 			inst.Value.AcceptVisitor(this);
-			State targetState;
-			if (stateOnLeave.TryGetValue(inst.TargetContainer, out targetState)) {
-				targetState.JoinWith(state);
+			if (inst.TriggersFinallyBlock) {
+				Debug.Assert(state.LessThanOrEqual(currentStateOnException));
+				branchesTriggeringFinally.Add((inst, state.Clone()));
 			} else {
-				stateOnLeave.Add(inst.TargetContainer, state.Clone());
+				MergeBranchStateIntoStateOnLeave(inst, state);
+			}
+			MarkUnreachable();
+		}
+
+		void MergeBranchStateIntoStateOnLeave(Leave inst, State branchState)
+		{
+			if (stateOnLeave.TryGetValue(inst.TargetContainer, out State targetState)) {
+				targetState.JoinWith(branchState);
+			} else {
+				stateOnLeave.Add(inst.TargetContainer, branchState.Clone());
 			}
 			// Note: We don't have to put the block container onto the work queue,
 			// because it's an ancestor of the Leave instruction, and hence
 			// we are currently somewhere within the VisitBlockContainer() call.
-			MarkUnreachable();
 		}
-		
+
 		protected internal override void VisitThrow(Throw inst)
 		{
 			inst.Argument.AcceptVisitor(this);
@@ -512,20 +528,55 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		{
 			throw new NotSupportedException();
 		}
-		
+
 		protected internal override void VisitTryFinally(TryFinally inst)
 		{
 			DebugStartPoint(inst);
+			int branchesTriggeringFinallyOldCount = branchesTriggeringFinally.Count;
 			// At first, handle 'try { .. } finally { .. }' like 'try { .. } catch {} .. if (?) rethrow; }'
 			State onException = HandleTryBlock(inst);
 			State onSuccess = state.Clone();
 			state.JoinWith(onException);
 			inst.FinallyBlock.AcceptVisitor(this);
-			PropagateStateOnException();
-			// Use MeetWith() to ensure points after the try-finally are reachable only if both the
+			//PropagateStateOnException(); // rethrow the exception after the finally block -- should be redundant
+			Debug.Assert(state.LessThanOrEqual(currentStateOnException));
+
+			ProcessBranchesLeavingTryFinally(inst, branchesTriggeringFinallyOldCount);
+
+			// Use TriggerFinally() to ensure points after the try-finally are reachable only if both the
 			// try and the finally endpoints are reachable.
-			state.MeetWith(onSuccess);
+			onSuccess.TriggerFinally(state);
+			state = onSuccess;
 			DebugEndPoint(inst);
+		}
+
+		/// <summary>
+		/// Process branches leaving the try-finally,
+		///  * Calls TriggerFinally() on each branchesTriggeringFinally
+		///  * Removes entries from branchesTriggeringFinally if they won't trigger additional finally blocks.
+		///  * After all finallies are applied, the branch state is merged into the target block.
+		/// </summary>
+		void ProcessBranchesLeavingTryFinally(TryFinally tryFinally, int branchesTriggeringFinallyOldCount)
+		{
+			int outPos = branchesTriggeringFinallyOldCount;
+			for (int i = branchesTriggeringFinallyOldCount; i < branchesTriggeringFinally.Count; ++i) {
+				var (branch, stateOnBranch) = branchesTriggeringFinally[i];
+				Debug.Assert(((ILInstruction)branch).IsDescendantOf(tryFinally));
+				Debug.Assert(tryFinally.IsDescendantOf(branch.TargetContainer));
+				stateOnBranch.TriggerFinally(state);
+				bool triggersAnotherFinally = Branch.GetExecutesFinallyBlock(tryFinally, branch.TargetContainer);
+				if (triggersAnotherFinally) {
+					branchesTriggeringFinally[outPos++] = (branch, stateOnBranch);
+				} else {
+					// Merge state into target block.
+					if (branch is Leave leave) {
+						MergeBranchStateIntoStateOnLeave((Leave)branch, stateOnBranch);
+					} else {
+						MergeBranchStateIntoTargetBlock((Branch)branch, stateOnBranch);
+					}
+				}
+			}
+			branchesTriggeringFinally.RemoveRange(outPos, branchesTriggeringFinally.Count - outPos);
 		}
 
 		protected internal override void VisitTryFault(TryFault inst)
@@ -537,8 +588,9 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			State onSuccess = state;
 			state = onException;
 			inst.FaultBlock.AcceptVisitor(this);
-			PropagateStateOnException(); // rethrow the exception after the fault block
-			
+			//PropagateStateOnException(); // rethrow the exception after the fault block
+			Debug.Assert(state.LessThanOrEqual(currentStateOnException));
+
 			// try-fault exits normally only if no exception occurred
 			state = onSuccess;
 			DebugEndPoint(inst);
@@ -578,6 +630,11 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugStartPoint(inst);
 			inst.Value.AcceptVisitor(this);
 			DebugEndPoint(inst);
+		}
+
+		protected internal override void VisitILFunction(ILFunction function)
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

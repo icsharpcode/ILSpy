@@ -91,8 +91,8 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			/// 
 			/// Reaching store bit (bit si, where <c>allStores[si] != null</c>):
 			///     There is a code path from the entry point to this state's position
-			///     that passes through through <c>allStores[i]</c> and does not pass through another
-			///     store to <c>allStores[i].Variable</c>.
+			///     that passes through through <c>allStores[si]</c> and does not pass through another
+			///     store to <c>allStores[si].Variable</c>.
 			/// 
 			/// The indices for a variable's reaching store bits are between <c>firstStoreIndexForVariable[v.IndexInScope]</c>
 			/// to <c>firstStoreIndexForVariable[v.IndexInScope + 1]</c> (both endpoints exclusive!).
@@ -128,17 +128,29 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			public void JoinWith(State incomingState)
 			{
 				// When control flow is joined together, we can simply union our bitsets.
-				// (joined node is reachable iff either input is reachable)
+				// (a store is reachable iff it is reachable through either incoming path)
 				bits.UnionWith(incomingState.bits);
 			}
 			
-			public void MeetWith(State incomingState)
+			public void TriggerFinally(State finallyState)
 			{
-				// At the end of a try-finally construct, we intersect the try-bitset
-				// with the finally-bitset
-				// (the try-finally-endpoint is reachable if both the try-block-endpoint and
-				// the finally-block-endpoint are reachable)
-				bits.IntersectWith(incomingState.bits);
+				// Some cases to consider:
+				//   try { v = 1; } finally { v = 2; }
+				//     => only the store 2 is visible after the try-finally
+				//   v = 1; try { v = 2; } finally { }
+				//     => both stores are visible after the try-finally
+				// In general, we're looking for the post-state of the finally-block
+				// assume the finally-block was entered without throwing an exception.
+				// But we don't have that information (it would require analyzing the finally block twice),
+				// so the next best thing is to approximate it by just keeping the state after the finally
+				// (i.e. doing nothing at all).
+				// However, the DataFlowVisitor requires us to return bottom if the end-state of the
+				// try-block was unreachable, so let's so at least that.
+				// (note that in principle we could just AND the reachable and uninitialized bits,
+				//  but we don't have a good solution for the normal store bits)
+				if (IsReachable) {
+					ReplaceWith(finallyState);
+				}
 			}
 			
 			public bool IsBottom {
@@ -148,7 +160,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			public void ReplaceWithBottom()
 			{
 				// We need to clear all bits, not just ReachableBit, so that
-				// the bottom state behaves as expected in joins/meets.
+				// the bottom state behaves as expected in joins.
 				bits.ClearAll();
 			}
 			

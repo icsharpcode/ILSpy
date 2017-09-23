@@ -30,7 +30,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// Phase-2 execution removes PopCount elements from the evaluation stack
 	/// and jumps to the target block.
 	/// </remarks>
-	partial class Leave : ILInstruction
+	partial class Leave : ILInstruction, IBranchOrLeaveInstruction
 	{
 		BlockContainer targetContainer;
 		
@@ -93,11 +93,20 @@ namespace ICSharpCode.Decompiler.IL
 			get { return targetContainer?.Parent is ILFunction; }
 		}
 
+		/// <summary>
+		/// Gets whether this branch executes at least one finally block before jumping to the end of the target block container.
+		/// </summary>
+		public bool TriggersFinallyBlock {
+			get {
+				return Branch.GetExecutesFinallyBlock(this, TargetContainer);
+			}
+		}
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
 			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(targetContainer));
-			Debug.Assert(phase <= ILPhase.InILReader || value.ResultType == targetContainer.ResultType);
+			Debug.Assert(phase <= ILPhase.InILReader || phase == ILPhase.InAsyncAwait || value.ResultType == targetContainer.ResultType);
 		}
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)

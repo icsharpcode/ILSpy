@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <remarks>
 	/// When jumping to the entrypoint of the current block container, the branch represents a <c>continue</c> statement.
 	/// </remarks>
-	partial class Branch : SimpleInstruction
+	partial class Branch : SimpleInstruction, IBranchOrLeaveInstruction
 	{
 		readonly int targetILOffset;
 		Block targetBlock;
@@ -95,7 +95,25 @@ namespace ICSharpCode.Decompiler.IL
 		public string TargetLabel {
 			get { return targetBlock != null ? targetBlock.Label : CecilExtensions.OffsetToString(TargetILOffset); }
 		}
-		
+
+		/// <summary>
+		/// Gets whether this branch executes at least one finally block before jumping to the target block.
+		/// </summary>
+		public bool TriggersFinallyBlock {
+			get {
+				return GetExecutesFinallyBlock(this, TargetContainer);
+			}
+		}
+
+		internal static bool GetExecutesFinallyBlock(ILInstruction inst, BlockContainer container)
+		{
+			for (; inst != container; inst = inst.Parent) {
+				if (inst.Parent is TryFinally && inst.SlotInfo == TryFinally.TryBlockSlot)
+					return true;
+			}
+			return false;
+		}
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
@@ -112,5 +130,10 @@ namespace ICSharpCode.Decompiler.IL
 			output.Write(' ');
 			output.WriteReference(TargetLabel, (object)targetBlock ?? TargetILOffset, isLocal: true);
 		}
+	}
+
+	interface IBranchOrLeaveInstruction
+	{
+		BlockContainer TargetContainer { get; }
 	}
 }

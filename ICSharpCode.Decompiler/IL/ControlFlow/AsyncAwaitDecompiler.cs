@@ -76,6 +76,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		// These fields are set by AnalyzeStateMachine():
 		int smallestAwaiterVarIndex;
+		HashSet<Leave> moveNextLeaves = new HashSet<Leave>();
 
 		// For each block containing an 'await', stores the awaiter variable, and the field storing the awaiter
 		// across the yield point.
@@ -89,6 +90,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			fieldToParameterMap.Clear();
 			cachedFieldToParameterMap.Clear();
 			awaitBlocks.Clear();
+			moveNextLeaves.Clear();
 			if (!MatchTaskCreationPattern(function))
 				return;
 			try {
@@ -99,7 +101,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 			InlineBodyOfMoveNext(function);
+			function.CheckInvariant(ILPhase.InAsyncAwait);
 			CleanUpBodyOfMoveNext(function);
+			function.CheckInvariant(ILPhase.InAsyncAwait);
 
 			AnalyzeStateMachine(function);
 			DetectAwaitPattern(function);
@@ -469,6 +473,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					});
 				}
 			}
+			foreach (var leave in function.Descendants.OfType<Leave>()) {
+				if (leave.TargetContainer == moveNextFunction.Body) {
+					leave.TargetContainer = (BlockContainer)function.Body;
+					moveNextLeaves.Add(leave);
+				}
+			}
 			function.Variables.AddRange(function.Descendants.OfType<IInstructionWithVariableOperand>().Select(inst => inst.Variable).Distinct());
 			function.Variables.RemoveDead();
 			function.Variables.AddRange(fieldToParameterMap.Values);
@@ -478,7 +488,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			context.Step("FinalizeInlineMoveNext()", function);
 			foreach (var leave in function.Descendants.OfType<Leave>()) {
-				if (leave.TargetContainer == moveNextFunction.Body) {
+				if (moveNextLeaves.Contains(leave)) {
 					leave.ReplaceWith(new InvalidBranch {
 						Message = "leave MoveNext - await not detected correctly",
 						ILRange = leave.ILRange
@@ -508,7 +518,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				foreach (var block in container.Blocks) {
 					context.CancellationToken.ThrowIfCancellationRequested();
-					if (block.Instructions.Last().MatchLeave((BlockContainer)moveNextFunction.Body)) {
+					if (block.Instructions.Last() is Leave leave && moveNextLeaves.Contains(leave)) {
 						// This is likely an 'await' block
 						if (AnalyzeAwaitBlock(block, out var awaiterVar, out var awaiterField, out var state)) {
 							block.Instructions.Add(new Await(new LdLoca(awaiterVar)));

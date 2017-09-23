@@ -37,6 +37,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// The usual invariants are established.
 		/// </summary>
 		Normal,
+		/// <summary>
+		/// Special phase within the async-await decompiler, where a few selected invariants
+		/// are temporarily suspended. (see Leave.CheckInvariant)
+		/// </summary>
+		InAsyncAwait
 	}
 	
 	/// <summary>
