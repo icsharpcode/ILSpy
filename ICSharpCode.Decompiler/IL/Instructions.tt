@@ -144,7 +144,11 @@
 			ResultType("variable.StackType")),
 		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
 			CustomClassName("AddressOf"), CustomArguments("value"), ResultType("Ref")),
-		
+		new OpCode("3vl.logic.and", "Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.",
+			CustomClassName("ThreeValuedLogicAnd"), Binary, ResultType("O")),
+		new OpCode("3vl.logic.or", "Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.",
+			CustomClassName("ThreeValuedLogicOr"), Binary, ResultType("O")),
+
 		new OpCode("ldstr", "Loads a constant string.",
 			CustomClassName("LdStr"), LoadConstant("string"), ResultType("O")),
 		new OpCode("ldc.i4", "Loads a constant 32-bit integer.",

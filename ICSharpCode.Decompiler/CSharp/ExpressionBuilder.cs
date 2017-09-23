@@ -561,7 +561,39 @@ namespace ICSharpCode.Decompiler.CSharp
 				                                  BinaryOperatorExpression.GetLinqNodeType(op, false),
 				                                  left.ResolveResult, right.ResolveResult));
 		}
-		
+
+		protected internal override TranslatedExpression VisitThreeValuedLogicAnd(ThreeValuedLogicAnd inst, TranslationContext context)
+		{
+			return HandleThreeValuedLogic(inst, BinaryOperatorType.BitwiseAnd, ExpressionType.And);
+		}
+
+		protected internal override TranslatedExpression VisitThreeValuedLogicOr(ThreeValuedLogicOr inst, TranslationContext context)
+		{
+			return HandleThreeValuedLogic(inst, BinaryOperatorType.BitwiseOr, ExpressionType.Or);
+		}
+
+		TranslatedExpression HandleThreeValuedLogic(BinaryInstruction inst, BinaryOperatorType op, ExpressionType eop)
+		{
+			var left = Translate(inst.Left);
+			var right = Translate(inst.Right);
+			IType boolType = compilation.FindType(KnownTypeCode.Boolean);
+			IType nullableBoolType = NullableType.Create(compilation, boolType);
+			if (NullableType.IsNullable(left.Type)) {
+				left = left.ConvertTo(nullableBoolType, this);
+				if (NullableType.IsNullable(right.Type)) {
+					right = right.ConvertTo(nullableBoolType, this);
+				} else {
+					right = right.ConvertTo(boolType, this);
+				}
+			} else {
+				left = left.ConvertTo(boolType, this);
+				right = right.ConvertTo(nullableBoolType, this);
+			}
+			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
+				.WithRR(new OperatorResolveResult(nullableBoolType, eop, null, true, new[] { left.ResolveResult, right.ResolveResult }))
+				.WithILInstruction(inst);
+		}
+
 		ExpressionWithResolveResult Assignment(TranslatedExpression left, TranslatedExpression right)
 		{
 			right = right.ConvertTo(left.Type, this, allowImplicitConversion: true);

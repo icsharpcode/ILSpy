@@ -93,6 +93,10 @@ namespace ICSharpCode.Decompiler.IL
 		StLoc,
 		/// <summary>Stores the value into an anonymous temporary variable, and returns the address of that variable.</summary>
 		AddressOf,
+		/// <summary>Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.</summary>
+		ThreeValuedLogicAnd,
+		/// <summary>Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.</summary>
+		ThreeValuedLogicOr,
 		/// <summary>Loads a constant string.</summary>
 		LdStr,
 		/// <summary>Loads a constant 32-bit integer.</summary>
@@ -2237,6 +2241,62 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.</summary>
+	public sealed partial class ThreeValuedLogicAnd : BinaryInstruction
+	{
+		public ThreeValuedLogicAnd(ILInstruction left, ILInstruction right) : base(OpCode.ThreeValuedLogicAnd, left, right)
+		{
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitThreeValuedLogicAnd(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitThreeValuedLogicAnd(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitThreeValuedLogicAnd(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as ThreeValuedLogicAnd;
+			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.</summary>
+	public sealed partial class ThreeValuedLogicOr : BinaryInstruction
+	{
+		public ThreeValuedLogicOr(ILInstruction left, ILInstruction right) : base(OpCode.ThreeValuedLogicOr, left, right)
+		{
+		}
+		public override StackType ResultType { get { return StackType.O; } }
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitThreeValuedLogicOr(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitThreeValuedLogicOr(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitThreeValuedLogicOr(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as ThreeValuedLogicOr;
+			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Loads a constant string.</summary>
 	public sealed partial class LdStr : SimpleInstruction
 	{
@@ -4290,6 +4350,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitThreeValuedLogicAnd(ThreeValuedLogicAnd inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitThreeValuedLogicOr(ThreeValuedLogicOr inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitLdStr(LdStr inst)
 		{
 			Default(inst);
@@ -4561,6 +4629,14 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitAddressOf(AddressOf inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitThreeValuedLogicAnd(ThreeValuedLogicAnd inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitThreeValuedLogicOr(ThreeValuedLogicOr inst)
 		{
 			return Default(inst);
 		}
@@ -4838,6 +4914,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitThreeValuedLogicAnd(ThreeValuedLogicAnd inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitThreeValuedLogicOr(ThreeValuedLogicOr inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitLdStr(LdStr inst, C context)
 		{
 			return Default(inst, context);
@@ -5011,6 +5095,8 @@ namespace ICSharpCode.Decompiler.IL
 			"ldloca",
 			"stloc",
 			"addressof",
+			"3vl.logic.and",
+			"3vl.logic.or",
 			"ldstr",
 			"ldc.i4",
 			"ldc.i8",
@@ -5181,6 +5267,30 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			value = default(ILInstruction);
+			return false;
+		}
+		public bool MatchThreeValuedLogicAnd(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as ThreeValuedLogicAnd;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchThreeValuedLogicOr(out ILInstruction left, out ILInstruction right)
+		{
+			var inst = this as ThreeValuedLogicOr;
+			if (inst != null) {
+				left = inst.Left;
+				right = inst.Right;
+				return true;
+			}
+			left = default(ILInstruction);
+			right = default(ILInstruction);
 			return false;
 		}
 		public bool MatchLdStr(out string value)

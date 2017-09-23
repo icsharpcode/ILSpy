@@ -157,7 +157,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 			}
-			if (MatchGetValueOrDefault(condition, out ILVariable v)
+			ILVariable v;
+			if (MatchGetValueOrDefault(condition, out v)
 				&& NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean))
 			{
 				if (MatchHasValueCall(trueInst, v) && falseInst.MatchLdcI4(0)) {
@@ -198,9 +199,62 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					) { ILRange = ifInst.ILRange };
 				}
 			}
-
+			if (trueInst.MatchLdLoc(out v)) {
+				if (MatchNullableCtor(falseInst, out var utype, out var arg)
+					&& utype.IsKnownType(KnownTypeCode.Boolean) && arg.MatchLdcI4(0))
+				{
+					// condition ? v : (bool?)false
+					// => condition & v
+					context.Step("NullableLiftingTransform: 3vl.logic.and(bool, bool?)", ifInst);
+					return new ThreeValuedLogicAnd(condition, trueInst) { ILRange = ifInst.ILRange };
+				}
+				if (falseInst.MatchLdLoc(out var v2)) {
+					// condition ? v : v2
+					if (MatchThreeValuedLogicConditionPattern(condition, out var nullable1, out var nullable2)) {
+						// (nullable1.GetValueOrDefault() || (!nullable2.GetValueOrDefault() && !nullable1.HasValue)) ? v : v2
+						if (v == nullable1 && v2 == nullable2) {
+							context.Step("NullableLiftingTransform: 3vl.logic.or(bool?, bool?)", ifInst);
+							return new ThreeValuedLogicOr(trueInst, falseInst) { ILRange = ifInst.ILRange };
+						} else if (v == nullable2 && v2 == nullable1) {
+							context.Step("NullableLiftingTransform: 3vl.logic.and(bool?, bool?)", ifInst);
+							return new ThreeValuedLogicAnd(falseInst, trueInst) { ILRange = ifInst.ILRange };
+						}
+					}
+				}
+			} else if (falseInst.MatchLdLoc(out v)) {
+				if (MatchNullableCtor(trueInst, out var utype, out var arg)
+					&& utype.IsKnownType(KnownTypeCode.Boolean) && arg.MatchLdcI4(1)) {
+					// condition ? (bool?)true : v
+					// => condition | v
+					context.Step("NullableLiftingTransform: 3vl.logic.or(bool, bool?)", ifInst);
+					return new ThreeValuedLogicOr(condition, falseInst) { ILRange = ifInst.ILRange };
+				}
+			}
 			return null;
+		}
 
+		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable nullable1, out ILVariable nullable2)
+		{
+			// Try to match: nullable1.GetValueOrDefault() || (!nullable2.GetValueOrDefault() && !nullable1.HasValue)
+			nullable1 = null;
+			nullable2 = null;
+			if (!condition.MatchLogicOr(out var lhs, out var rhs))
+				return false;
+			if (!MatchGetValueOrDefault(lhs, out nullable1))
+				return false;
+			if (!NullableType.GetUnderlyingType(nullable1.Type).IsKnownType(KnownTypeCode.Boolean))
+				return false;
+			if (!rhs.MatchLogicAnd(out lhs, out rhs))
+				return false;
+			if (!lhs.MatchLogicNot(out var arg))
+				return false;
+			if (!MatchGetValueOrDefault(arg, out nullable2))
+				return false;
+			if (!NullableType.GetUnderlyingType(nullable2.Type).IsKnownType(KnownTypeCode.Boolean))
+				return false;
+			if (!rhs.MatchLogicNot(out arg))
+				return false;
+			return MatchHasValueCall(arg, nullable1);
 		}
 
 		static void Swap<T>(ref T a, ref T b)
