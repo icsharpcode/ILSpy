@@ -451,6 +451,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					};
 					return (newInst, bits);
 				}
+			} else if (inst is Comp comp && !comp.IsLifted && comp.Kind == ComparisonKind.Equality
+				&& MatchGetValueOrDefault(comp.Left, out ILVariable v)
+				&& NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean)
+				&& comp.Right.MatchLdcI4(0)
+			) {
+				// C# doesn't support ComparisonLiftingKind.ThreeValuedLogic,
+				// except for operator! on bool?.
+				var (arg, bits) = DoLift(comp.Left);
+				Debug.Assert(arg != null);
+				var newInst = new Comp(comp.Kind, ComparisonLiftingKind.ThreeValuedLogic, comp.InputType, comp.Sign, arg, comp.Right.Clone()) {
+					ILRange = comp.ILRange
+				};
+				return (newInst, bits);
 			}
 			return (null, null);
 		}

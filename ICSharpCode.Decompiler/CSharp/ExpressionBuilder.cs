@@ -416,6 +416,14 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitComp(Comp inst, TranslationContext context)
 		{
 			if (inst.LiftingKind == ComparisonLiftingKind.ThreeValuedLogic) {
+				if (inst.Kind == ComparisonKind.Equality && inst.Right.MatchLdcI4(0)) {
+					// lifted logic.not
+					var targetType = NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Boolean));
+					var arg = Translate(inst.Left).ConvertTo(targetType, this);
+					return new UnaryOperatorExpression(UnaryOperatorType.Not, arg.Expression)
+						.WithRR(new OperatorResolveResult(targetType, ExpressionType.Not, arg.ResolveResult))
+						.WithILInstruction(inst);
+				}
 				return ErrorExpression("Nullable comparisons with three-valued-logic not supported in C#");
 			}
 			if (inst.Kind.IsEqualityOrInequality()) {

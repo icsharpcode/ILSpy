@@ -56,6 +56,8 @@ namespace ICSharpCode.Decompiler.IL
 			if (inst == null)
 				throw new ArgumentNullException(nameof(inst));
 			Debug.Assert(!this.IsDescendantOf(inst), "ILAst must form a tree");
+			// If a call to ReplaceWith() triggers the "ILAst must form a tree" assertion,
+			// make sure to read the remarks on the ReplaceWith() method.
 		}
 		
 		[Conditional("DEBUG")]
@@ -368,13 +370,27 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		#endregion
-		
+
 		/// <summary>
 		/// Replaces this ILInstruction with the given replacement instruction.
 		/// </summary>
 		/// <remarks>
 		/// It is temporarily possible for a node to be used in multiple places in the ILAst,
 		/// this method only replaces this node at its primary position (see remarks on <see cref="Parent"/>).
+		/// 
+		/// This means you cannot use ReplaceWith() to wrap an instruction in another node.
+		/// For example, <c>node.ReplaceWith(new BitNot(node))</c> will first call the BitNot constructor,
+		/// which sets <c>node.Parent</c> to the BitNot instance.
+		/// The ReplaceWith() call then attempts to set <c>BitNot.Argument</c> to the BitNot instance,
+		/// which creates a cyclic ILAst. Meanwhile, node's original parent remains unmodified.
+		/// 
+		/// The solution in this case is to avoid using <c>ReplaceWith</c>.
+		/// If the parent node is unknown, the following trick can be used:
+		/// <code>
+		/// node.Parent.Children[node.ChildIndex] = new BitNot(node);
+		/// </code>
+		/// Unlike the <c>ReplaceWith()</c> call, this will evaluate <c>node.Parent</c> and <c>node.ChildIndex</c>
+		/// before the <c>BitNot</c> constructor is called, thus modifying the expected position in the ILAst.
 		/// </remarks>
 		public void ReplaceWith(ILInstruction replacement)
 		{
@@ -586,6 +602,8 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Debug.Assert(GetChild(newChild.ChildIndex) == newChild);
 			Debug.Assert(!this.IsDescendantOf(newChild), "ILAst must form a tree");
+			// If a call to ReplaceWith() triggers the "ILAst must form a tree" assertion,
+			// make sure to read the remarks on the ReplaceWith() method.
 			newChild.parent = this;
 			if (refCount > 0)
 				newChild.AddRef();

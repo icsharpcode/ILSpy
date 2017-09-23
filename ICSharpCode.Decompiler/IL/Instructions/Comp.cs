@@ -110,7 +110,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// that is, if any input operand is <c>null</c>, the comparison evaluates to <c>null</c>.
 		/// </summary>
 		/// <remarks>
-		/// This lifting kind is currently not used.
+		/// This lifting kind is currently only used for operator! on bool?.
 		/// </remarks>
 		ThreeValuedLogic
 	}
