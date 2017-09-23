@@ -262,46 +262,55 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override Statement VisitUsingInstruction(UsingInstruction inst)
 		{
-			var resource = exprBuilder.Translate(inst.ResourceExpression);
-			var m = getEnumeratorPattern.Match(resource.Expression);
-			if (inst.Body is BlockContainer container && m.Success) {
-				var enumeratorVar = m.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
-				var loop = DetectedLoop.DetectLoop(container);
-				if (loop.Kind == LoopKind.While && loop.Body is Block body) {
-					var condition = exprBuilder.TranslateCondition(loop.Conditions.Single());
-					var m2 = moveNextConditionPattern.Match(condition.Expression);
-					if (m2.Success) {
-						var enumeratorVar2 = m2.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
-						if (enumeratorVar2 == enumeratorVar && BodyHasSingleGetCurrent(body, enumeratorVar, condition.ILInstructions.Single(),
-							out var singleGetter, out var needsUninlining, out var itemVariable)) {
-							var collectionExpr = m.Get<Expression>("collection").Single().Detach();
-							if (needsUninlining) {
-								itemVariable = currentFunction.RegisterVariable(
-									VariableKind.ForeachLocal, singleGetter.Method.ReturnType,
-									AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item")
-								);
-								singleGetter.ReplaceWith(new LdLoc(itemVariable));
-								body.Instructions.Insert(0, new StLoc(itemVariable, singleGetter));
-							} else {
-								itemVariable.Kind = VariableKind.ForeachLocal;
-								itemVariable.Name = AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item", itemVariable);
-							}
-							var whileLoop = (WhileStatement)ConvertAsBlock(inst.Body).Single();
-							BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
-							foreachBody.Statements.First().Detach();
-							return new ForeachStatement {
-								VariableType = exprBuilder.ConvertType(itemVariable.Type),
-								VariableName = itemVariable.Name,
-								InExpression = collectionExpr,
-								EmbeddedStatement = foreachBody
-							};
-						}
-					}
-				}
-			}
+			var transformed = TransformToForeach(inst, out var resource);
+			if (transformed != null)
+				return transformed;
 			return new UsingStatement {
 				ResourceAcquisition = resource,
 				EmbeddedStatement = ConvertAsBlock(inst.Body)
+			};
+		}
+
+		ForeachStatement TransformToForeach(UsingInstruction inst, out TranslatedExpression resource)
+		{
+			resource = exprBuilder.Translate(inst.ResourceExpression);
+			var m = getEnumeratorPattern.Match(resource.Expression);
+			if (!(inst.Body is BlockContainer container) || !m.Success)
+				return null;
+			var enumeratorVar = m.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
+			var loop = DetectedLoop.DetectLoop(container);
+			if (loop.Kind != LoopKind.While || !(loop.Body is Block body))
+				return null;
+			var condition = exprBuilder.TranslateCondition(loop.Conditions.Single());
+			var m2 = moveNextConditionPattern.Match(condition.Expression);
+			if (!m2.Success)
+				return null;
+			var enumeratorVar2 = m2.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
+			if (enumeratorVar2 != enumeratorVar || !BodyHasSingleGetCurrent(body, enumeratorVar, condition.ILInstructions.Single(),
+				out var singleGetter, out var needsUninlining, out var itemVariable))
+				return null;
+			var collectionExpr = m.Get<Expression>("collection").Single();
+			if (needsUninlining) {
+				itemVariable = currentFunction.RegisterVariable(
+					VariableKind.ForeachLocal, singleGetter.Method.ReturnType,
+					AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item")
+				);
+				singleGetter.ReplaceWith(new LdLoc(itemVariable));
+				body.Instructions.Insert(0, new StLoc(itemVariable, singleGetter));
+			} else {
+				if (!itemVariable.IsSingleDefinition)
+					return null;
+				itemVariable.Kind = VariableKind.ForeachLocal;
+				itemVariable.Name = AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item", itemVariable);
+			}
+			var whileLoop = (WhileStatement)ConvertAsBlock(inst.Body).Single();
+			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
+			foreachBody.Statements.First().Detach();
+			return new ForeachStatement {
+				VariableType = exprBuilder.ConvertType(itemVariable.Type),
+				VariableName = itemVariable.Name,
+				InExpression = collectionExpr.Detach(),
+				EmbeddedStatement = foreachBody
 			};
 		}
 
