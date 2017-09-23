@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Using.dll
-// MVID: {6F6E9DB6-A82C-4001-BDFB-56864E8E1A98}
+// MVID: {8BD4B2FD-6883-4252-8E37-486B759E3F3E}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02870000
+// Image base: 0x00CA0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -67,6 +67,37 @@
     } // end of method UsingStruct::System.IDisposable.Dispose
 
   } // end of class UsingStruct
+
+  .class auto ansi nested private beforefieldinit PrintOnDispose
+         extends [mscorlib]System.Object
+         implements [mscorlib]System.IDisposable
+  {
+    .field private string v
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor(string v) cil managed
+    {
+      // Code size       14 (0xe)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ldarg.0
+      IL_0007:  ldarg.1
+      IL_0008:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose::v
+      IL_000d:  ret
+    } // end of method PrintOnDispose::.ctor
+
+    .method public hidebysig newslot virtual final 
+            instance void  Dispose() cil managed
+    {
+      // Code size       12 (0xc)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose::v
+      IL_0006:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_000b:  ret
+    } // end of method PrintOnDispose::Dispose
+
+  } // end of class PrintOnDispose
 
   .method public hidebysig instance void 
           SimpleUsingExpressionStatement() cil managed
@@ -217,6 +248,32 @@
     }  // end handler
     IL_002d:  ret
   } // end of method Using::UsingStatementOnStructWithVariable
+
+  .method public hidebysig instance void 
+          NoUsing() cil managed
+  {
+    // Code size       32 (0x20)
+    .maxstack  1
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose V_0)
+    IL_0000:  ldstr      "Wrong"
+    IL_0005:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose::.ctor(string)
+    IL_000a:  stloc.0
+    .try
+    {
+      IL_000b:  ldstr      "Correct"
+      IL_0010:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose::.ctor(string)
+      IL_0015:  stloc.0
+      IL_0016:  leave.s    IL_001f
+
+    }  // end .try
+    finally
+    {
+      IL_0018:  ldloc.0
+      IL_0019:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose::Dispose()
+      IL_001e:  endfinally
+    }  // end handler
+    IL_001f:  ret
+  } // end of method Using::NoUsing
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

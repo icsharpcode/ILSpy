@@ -39,6 +39,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private class PrintOnDispose : IDisposable
+		{
+			private string v;
+
+			public PrintOnDispose(string v)
+			{
+				this.v = v;
+			}
+
+			public void Dispose()
+			{
+				Console.WriteLine(this.v);
+			}
+		}
+
 #if LEGACY_CSC
 		public void SimpleUsingNullStatement()
 		{
@@ -83,6 +98,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			using (UsingStruct usingStruct = new UsingStruct(2)) {
 				Console.WriteLine("using-body: " + usingStruct);
+			}
+		}
+
+		public void NoUsing()
+		{
+			PrintOnDispose printOnDispose = new PrintOnDispose("Wrong");
+			try {
+				printOnDispose = new PrintOnDispose("Correct");
+			} finally {
+				printOnDispose.Dispose();
 			}
 		}
 	}
