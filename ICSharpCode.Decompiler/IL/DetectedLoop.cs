@@ -110,6 +110,7 @@ namespace ICSharpCode.Decompiler.IL
 					if (IncrementBlock.Instructions[0] is StLoc increment)
 						IncrementTarget = increment.Variable;
 					AdditionalBlocks = Container.Blocks.Skip(1).Where(b => b != IncrementBlock).ToArray();
+					return this;
 				} else if (trueInst is Block block) {
 					var variable = GetVariableFromCondition(conditionInst);
 					var last = block.Instructions.LastOrDefault();
