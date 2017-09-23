@@ -161,6 +161,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		static bool DoInline(ILVariable v, ILInstruction inlinedExpression, ILInstruction next, bool aggressive, ILTransformContext context)
 		{
+			if (next.OpCode == OpCode.Call) { // next instruction is call
+				foreach (var child in next.Children) {
+					if (child.OpCode == OpCode.LdLoca) { // next instruction calls by ref
+						foreach (var child2 in inlinedExpression.Children) {
+							if (child2.OpCode == OpCode.LdsFlda) { // inlined expression is a static field			   
+								if (((LdsFlda)child2).Field.IsReadOnly) { // static field is readonly?
+									// You can't call a static readonly field by reference
+									return false;
+								}
+							}
+						}
+					}
+				}
+			}
+		
 			ILInstruction loadInst;
 			if (FindLoadInNext(next, v, inlinedExpression, out loadInst) == true) {
 				if (loadInst.OpCode == OpCode.LdLoca) {
