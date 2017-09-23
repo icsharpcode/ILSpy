@@ -335,19 +335,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return char.ToLower(name[0]) + name.Substring(1);
 		}
 
-		internal static string GenerateVariableName(ILFunction currentFunction, ILInstruction valueContext, string fallback, ILVariable existingVariable = null)
+		internal static string GenerateForeachVariableName(ILFunction function, ILInstruction valueContext, ILVariable existingVariable = null)
 		{
-			if (currentFunction == null)
-				throw new ArgumentNullException(nameof(currentFunction));
+			if (function == null)
+				throw new ArgumentNullException(nameof(function));
 			var reservedVariableNames = new Dictionary<string, int>();
-			foreach (var v in currentFunction.Descendants.OfType<ILFunction>().SelectMany(m => m.Variables)) {
+			foreach (var v in function.Descendants.OfType<ILFunction>().SelectMany(m => m.Variables)) {
 				if (v != existingVariable)
 					AddExistingName(reservedVariableNames, v.Name);
 			}
-			var proposedName = GetNameFromInstruction(valueContext);
+			foreach (var f in function.Method.DeclaringType.Fields.Select(f => f.Name))
+				AddExistingName(reservedVariableNames, f);
 
-			if (string.IsNullOrEmpty(proposedName)) {
-				proposedName = fallback;
+			string baseName = GetNameFromInstruction(valueContext);
+			string proposedName = "item";
+			
+			if (!string.IsNullOrEmpty(baseName)) {
+				if (!IsPlural(baseName, ref proposedName)) {
+					if (baseName.Length > 4 && baseName.EndsWith("List", StringComparison.Ordinal)) {
+						proposedName = baseName.Substring(0, baseName.Length - 4);
+					} else if (baseName.Equals("list", StringComparison.OrdinalIgnoreCase)) {
+						proposedName = "item";
+					} else if (baseName.EndsWith("children", StringComparison.OrdinalIgnoreCase)) {
+						proposedName = baseName.Remove(baseName.Length - 3);
+					}
+				}
 			}
 
 			// remove any numbers from the proposed name
@@ -362,6 +374,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				return proposedName;
 			}
+		}
+
+		private static bool IsPlural(string baseName, ref string proposedName)
+		{
+			if (baseName.EndsWith("ies", StringComparison.OrdinalIgnoreCase) && baseName.Length > 3) {
+				proposedName = baseName.Remove(baseName.Length - 3) + "y";
+				return true;
+			}
+			if (baseName.EndsWith("s", StringComparison.OrdinalIgnoreCase) && baseName.Length > 1) {
+				proposedName = baseName.Remove(baseName.Length - 1);
+				return true;
+			}
+			return false;
 		}
 	}
 }

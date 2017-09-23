@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (needsUninlining) {
 				itemVariable = currentFunction.RegisterVariable(
 					VariableKind.ForeachLocal, type,
-					AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item")
+					AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>())
 				);
 				instToReplace.ReplaceWith(new LdLoc(itemVariable));
 				body.Instructions.Insert(0, new StLoc(itemVariable, instToReplace));
@@ -320,7 +320,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return null;
 				itemVariable.Type = type;
 				itemVariable.Kind = VariableKind.ForeachLocal;
-				itemVariable.Name = AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item", itemVariable);
+				itemVariable.Name = AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), itemVariable);
 			}
 			var whileLoop = (WhileStatement)ConvertAsBlock(inst.Body).First();
 			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
