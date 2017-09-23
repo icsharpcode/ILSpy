@@ -38,6 +38,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IDecompilerTypeSystem typeSystem;
 
 		public bool UseDebugSymbols { get; set; }
+		public List<string> Warnings { get; } = new List<string>();
 
 		public ILReader(IDecompilerTypeSystem typeSystem)
 		{
@@ -182,7 +183,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		void Warn(string message)
 		{
-			Debug.Fail(string.Format("IL_{0:x4}: {1}", currentInstruction.Offset, message));
+			Warnings.Add(string.Format("IL_{0:x4}: {1}", currentInstruction.Offset, message));
 		}
 
 		void MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
@@ -324,6 +325,7 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var c in function.Descendants.OfType<BlockContainer>()) {
 				c.SortBlocks();
 			}
+			function.Warnings.AddRange(Warnings);
 			return function;
 		}
 

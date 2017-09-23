@@ -35,6 +35,11 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly ILVariableCollection Variables;
 
 		/// <summary>
+		/// List of warnings of ILReader.
+		/// </summary>
+		public List<string> Warnings { get; } = new List<string>();
+
+		/// <summary>
 		/// Gets whether this function is a decompiled iterator (is using yield).
 		/// This flag gets set by the YieldReturnDecompiler.
 		/// 
@@ -103,6 +108,12 @@ namespace ICSharpCode.Decompiler.IL
 			output.MarkFoldEnd();
 			output.WriteLine();
 			body.WriteTo(output, options);
+
+			foreach (string warning in Warnings) {
+				output.WriteLine("//" + warning);
+			}
+
+			body.WriteTo(output);
 			
 			output.WriteLine();
 			output.Unindent();

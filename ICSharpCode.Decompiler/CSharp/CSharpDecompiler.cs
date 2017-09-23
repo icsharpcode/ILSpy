@@ -663,6 +663,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			AddDefinesForConditionalAttributes(function);
 			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method, function, settings, CancellationToken);
 			var body = statementBuilder.ConvertAsBlock(function.Body);
+
+			Comment prev = null;
+			foreach (string warning in function.Warnings) {
+				body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+			}
+
 			entityDecl.AddChild(body, Roles.Body);
 
 			if (function.IsIterator) {

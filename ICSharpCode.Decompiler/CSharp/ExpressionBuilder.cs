@@ -1009,7 +1009,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			var body = builder.ConvertAsBlock(function.Body);
 			bool isLambda = false;
 			bool isMultiLineLambda = false;
-			
+
+			Comment prev = null;
+			foreach (string warning in function.Warnings) {
+				body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+			}
+
 			// if there is an anonymous type involved, we are forced to use a lambda expression.
 			if (ame.Parameters.Any(p => p.Type.IsNull)) {
 				isLambda = true;
