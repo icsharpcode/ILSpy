@@ -118,12 +118,10 @@ namespace ICSharpCode.Decompiler.IL
 						Kind = LoopKind.For;
 						IncrementTarget = variable;
 						AdditionalBlocks = Container.Blocks.Skip(1).ToArray();
-					} else {
-						AdditionalBlocks = Container.Blocks.Skip(1).ToArray();
+						return this;
 					}
-				} else {
-					AdditionalBlocks = Container.Blocks.Skip(1).ToArray();
 				}
+				AdditionalBlocks = Container.Blocks.Skip(1).ToArray();
 			} else {
 				// do-while or while(true)-loop
 				if (Container.EntryPoint.IncomingEdgeCount == 2) {

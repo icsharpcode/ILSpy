@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			reservedVariableNames = new Dictionary<string, int>();
 			loopCounters = CollectLoopCounters(function);
 			foreach (var p in function.Descendants.OfType<ILFunction>().Select(f => f.Method).SelectMany(m => m.Parameters))
-				AddExistingName(p.Name);
+				AddExistingName(reservedVariableNames, p.Name);
 			foreach (ILFunction f in function.Descendants.OfType<ILFunction>().Reverse()) {
 				PerformAssignment(f);
 			}
@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case VariableKind.Parameter: // ignore
 						break;
 					case VariableKind.InitializerTarget: // keep generated names
-						AddExistingName(v.Name);
+						AddExistingName(reservedVariableNames, v.Name);
 						break;
 					default:
 						if (v.HasGeneratedName || !IsValidName(v.Name)) {
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var v = inst.Variable;
 				if (!mapping.TryGetValue(v, out string name)) {
 					if (string.IsNullOrEmpty(v.Name))
-						v.Name = GenerateNameForVariable(v, function.Body);
+						v.Name = GenerateNameForVariable(v);
 					mapping.Add(v, v.Name);
 				} else {
 					v.Name = name;
@@ -128,8 +128,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 
-			int number;
-			string nameWithoutDigits = SplitName(oldVariableName, out number);
+			string nameWithoutDigits = SplitName(oldVariableName, out int number);
 
 			if (!reservedVariableNames.ContainsKey(nameWithoutDigits)) {
 				reservedVariableNames.Add(nameWithoutDigits, number - 1);
@@ -156,7 +155,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return loopCounters;
 		}
 
-		string GenerateNameForVariable(ILVariable variable, ILInstruction methodBody)
+		string GenerateNameForVariable(ILVariable variable)
 		{
 			string proposedName = null;
 			if (variable.Type.IsKnownType(KnownTypeCode.Int32)) {
@@ -192,8 +191,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// remove any numbers from the proposed name
-			int number;
-			proposedName = SplitName(proposedName, out number);
+			proposedName = SplitName(proposedName, out int number);
 
 			if (!reservedVariableNames.ContainsKey(proposedName)) {
 				reservedVariableNames.Add(proposedName, 0);
@@ -291,7 +289,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return name;
 		}
 
-		void AddExistingName(string name)
+		static void AddExistingName(Dictionary<string, int> reservedVariableNames, string name)
 		{
 			if (string.IsNullOrEmpty(name))
 				return;
@@ -335,6 +333,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return "obj";
 			else
 				return char.ToLower(name[0]) + name.Substring(1);
+		}
+
+		internal static string GenerateVariableName(ILFunction currentFunction, ILInstruction valueContext, string fallback, ILVariable existingVariable = null)
+		{
+			if (currentFunction == null)
+				throw new ArgumentNullException(nameof(currentFunction));
+			var reservedVariableNames = new Dictionary<string, int>();
+			foreach (var v in currentFunction.Descendants.OfType<ILFunction>().SelectMany(m => m.Variables)) {
+				if (v != existingVariable)
+					AddExistingName(reservedVariableNames, v.Name);
+			}
+			var proposedName = GetNameFromInstruction(valueContext);
+
+			if (string.IsNullOrEmpty(proposedName)) {
+				proposedName = fallback;
+			}
+
+			// remove any numbers from the proposed name
+			proposedName = SplitName(proposedName, out int number);
+
+			if (!reservedVariableNames.ContainsKey(proposedName)) {
+				reservedVariableNames.Add(proposedName, 0);
+			}
+			int count = ++reservedVariableNames[proposedName];
+			if (count > 1) {
+				return proposedName + count.ToString();
+			} else {
+				return proposedName;
+			}
 		}
 	}
 }

@@ -148,6 +148,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (string.IsNullOrWhiteSpace(name)) {
 				switch (kind) {
 					case VariableKind.Local:
+					case VariableKind.ForeachLocal:
 						name = "V_";
 						break;
 					case VariableKind.Parameter:

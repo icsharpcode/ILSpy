@@ -26,6 +26,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using System;
 using System.Threading;
+using ICSharpCode.Decompiler.IL.Transforms;
+using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -254,13 +256,74 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 		}
 
+		#region foreach construction
+		static readonly AssignmentExpression getEnumeratorPattern = new AssignmentExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), new InvocationExpression(new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator")));
+		static readonly InvocationExpression moveNextConditionPattern = new InvocationExpression(new MemberReferenceExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), "MoveNext"));
+
 		protected internal override Statement VisitUsingInstruction(UsingInstruction inst)
 		{
+			var resource = exprBuilder.Translate(inst.ResourceExpression);
+			var m = getEnumeratorPattern.Match(resource.Expression);
+			if (inst.Body is BlockContainer container && m.Success) {
+				var enumeratorVar = m.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
+				var loop = DetectedLoop.DetectLoop(container);
+				if (loop.Kind == LoopKind.While && loop.Body is Block body) {
+					var condition = exprBuilder.TranslateCondition(loop.Conditions.Single());
+					var m2 = moveNextConditionPattern.Match(condition.Expression);
+					if (m2.Success) {
+						var enumeratorVar2 = m2.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
+						if (enumeratorVar2 == enumeratorVar && BodyHasSingleGetCurrent(body, enumeratorVar, condition.ILInstructions.Single(),
+							out var singleGetter, out var needsUninlining, out var itemVariable)) {
+							var collectionExpr = m.Get<Expression>("collection").Single().Detach();
+							if (needsUninlining) {
+								itemVariable = currentFunction.RegisterVariable(
+									VariableKind.ForeachLocal, singleGetter.Method.ReturnType,
+									AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item")
+								);
+								singleGetter.ReplaceWith(new LdLoc(itemVariable));
+								body.Instructions.Insert(0, new StLoc(itemVariable, singleGetter));
+							} else {
+								itemVariable.Kind = VariableKind.ForeachLocal;
+								itemVariable.Name = AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item", itemVariable);
+							}
+							var whileLoop = (WhileStatement)ConvertAsBlock(inst.Body).Single();
+							BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
+							foreachBody.Statements.First().Detach();
+							return new ForeachStatement {
+								VariableType = exprBuilder.ConvertType(itemVariable.Type),
+								VariableName = itemVariable.Name,
+								InExpression = collectionExpr,
+								EmbeddedStatement = foreachBody
+							};
+						}
+					}
+				}
+			}
 			return new UsingStatement {
-				ResourceAcquisition = exprBuilder.Translate(inst.ResourceExpression),
+				ResourceAcquisition = resource,
 				EmbeddedStatement = ConvertAsBlock(inst.Body)
 			};
 		}
+
+		bool BodyHasSingleGetCurrent(Block body, ILVariable enumerator, ILInstruction moveNextUsage, out CallInstruction singleGetter, out bool needsUninlining, out ILVariable existingVariable)
+		{
+			singleGetter = null;
+			needsUninlining = false;
+			existingVariable = null;
+			var loads = (enumerator.LoadInstructions.OfType<ILInstruction>().Concat(enumerator.AddressInstructions.OfType<ILInstruction>())).Where(ld => !ld.IsDescendantOf(moveNextUsage)).ToArray();
+			if (loads.Length == 1 && ParentIsCurrentGetter(loads[0])) {
+				singleGetter = (CallInstruction)loads[0].Parent;
+				needsUninlining = !singleGetter.Parent.MatchStLoc(out existingVariable);
+			}
+			return singleGetter != null && singleGetter.IsDescendantOf(body.Instructions[0]) && ILInlining.CanUninline(singleGetter, body.Instructions[0]);
+		}
+
+		bool ParentIsCurrentGetter(ILInstruction inst)
+		{
+			return inst.Parent is CallVirt cv && cv.Method.IsAccessor &&
+				cv.Method.AccessorOwner is IProperty p && p.Getter.Equals(cv.Method);
+		}
+		#endregion
 
 		protected internal override Statement VisitPinnedRegion(PinnedRegion inst)
 		{
