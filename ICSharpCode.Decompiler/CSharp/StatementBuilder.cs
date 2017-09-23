@@ -293,19 +293,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (collectionExpr is BaseReferenceExpression) {
 				collectionExpr = new ThisReferenceExpression().CopyAnnotationsFrom(collectionExpr);
 			}
+			var type = singleGetter.Method.ReturnType;
+			ILInstruction instToReplace = singleGetter;
+			switch (instToReplace.Parent) {
+				case CastClass cc:
+					type = cc.Type;
+					instToReplace = cc;
+					break;
+				case UnboxAny ua:
+					type = ua.Type;
+					instToReplace = ua;
+					break;
+			}
 			if (needsUninlining) {
-				var type = singleGetter.Method.ReturnType;
-				ILInstruction instToReplace = singleGetter;
-				switch (instToReplace.Parent) {
-					case CastClass cc:
-						type = cc.Type;
-						instToReplace = cc;
-						break;
-					case UnboxAny ua:
-						type = ua.Type;
-						instToReplace = ua;
-						break;
-				}
 				itemVariable = currentFunction.RegisterVariable(
 					VariableKind.ForeachLocal, type,
 					AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item")
@@ -315,6 +315,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				if (itemVariable.StoreCount != 1)
 					return null;
+				itemVariable.Type = type;
 				itemVariable.Kind = VariableKind.ForeachLocal;
 				itemVariable.Name = AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item", itemVariable);
 			}
@@ -322,7 +323,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
 			foreachBody.Statements.First().Detach();
 			return new ForeachStatement {
-				VariableType = exprBuilder.ConvertType(itemVariable.Type),
+				VariableType = settings.AnonymousTypes && itemVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(itemVariable.Type),
 				VariableName = itemVariable.Name,
 				InExpression = collectionExpr.Detach(),
 				EmbeddedStatement = foreachBody
