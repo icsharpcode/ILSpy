@@ -36,10 +36,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					block.Instructions.RemoveAt(i);
 					continue;
 				}
-				if (InlineLdAddressUsages(block, i)) {
-					block.Instructions.RemoveAt(i);
-					continue;
-				}
 				if (TransformPostIncDecOperator(block, i)) {
 					block.Instructions.RemoveAt(i);
 					continue;
@@ -181,36 +177,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var stackVar = inst.Variable;
 			block.Instructions.RemoveAt(i);
 			nextInst.ReplaceWith(new StLoc(stackVar, new StLoc(var, value)));
-		}
-		
-		/// ldaddress ::= ldelema | ldflda | ldsflda;
-		/// <code>
-		/// stloc s(ldaddress)
-		/// usages of ldobj(ldloc s) or stobj(ldloc s, ...) in next instruction
-		/// -->
-		/// use ldaddress instead of ldloc s
-		/// </code>
-		bool InlineLdAddressUsages(Block block, int i)
-		{
-			var inst = block.Instructions[i] as StLoc;
-			if (inst == null || inst.Variable.Kind != VariableKind.StackSlot || !(inst.Value is LdElema || inst.Value is LdFlda || inst.Value is LdsFlda))
-				return false;
-			var valueToCopy = inst.Value;
-			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
-			if (nextInstruction == null)
-				return false;
-			var affectedUsages = block.Descendants
-				.OfType<IInstructionWithVariableOperand>()
-				.Where(ins => ins != inst)
-				.Where(ins => ins.Variable == inst.Variable)
-				.Cast<ILInstruction>().ToArray();
-			if (affectedUsages.Length == 0 || affectedUsages.Any(ins => !(ins.Parent is StObj || ins.Parent is LdObj)))
-				return false;
-			context.Step($"InlineLdAddressUsage", inst);
-			foreach (var usage in affectedUsages) {
-				usage.ReplaceWith(valueToCopy.Clone());
-			}
-			return true;
 		}
 		
 		/// <code>
