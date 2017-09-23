@@ -290,15 +290,30 @@ namespace ICSharpCode.Decompiler.CSharp
 				out var singleGetter, out var needsUninlining, out var itemVariable))
 				return null;
 			var collectionExpr = m.Get<Expression>("collection").Single();
+			if (collectionExpr is BaseReferenceExpression) {
+				collectionExpr = new ThisReferenceExpression().CopyAnnotationsFrom(collectionExpr);
+			}
 			if (needsUninlining) {
+				var type = singleGetter.Method.ReturnType;
+				ILInstruction instToReplace = singleGetter;
+				switch (instToReplace.Parent) {
+					case CastClass cc:
+						type = cc.Type;
+						instToReplace = cc;
+						break;
+					case UnboxAny ua:
+						type = ua.Type;
+						instToReplace = ua;
+						break;
+				}
 				itemVariable = currentFunction.RegisterVariable(
-					VariableKind.ForeachLocal, singleGetter.Method.ReturnType,
+					VariableKind.ForeachLocal, type,
 					AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item")
 				);
-				singleGetter.ReplaceWith(new LdLoc(itemVariable));
-				body.Instructions.Insert(0, new StLoc(itemVariable, singleGetter));
+				instToReplace.ReplaceWith(new LdLoc(itemVariable));
+				body.Instructions.Insert(0, new StLoc(itemVariable, instToReplace));
 			} else {
-				if (!itemVariable.IsSingleDefinition)
+				if (itemVariable.StoreCount != 1)
 					return null;
 				itemVariable.Kind = VariableKind.ForeachLocal;
 				itemVariable.Name = AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item", itemVariable);
@@ -322,14 +337,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			var loads = (enumerator.LoadInstructions.OfType<ILInstruction>().Concat(enumerator.AddressInstructions.OfType<ILInstruction>())).Where(ld => !ld.IsDescendantOf(moveNextUsage)).ToArray();
 			if (loads.Length == 1 && ParentIsCurrentGetter(loads[0])) {
 				singleGetter = (CallInstruction)loads[0].Parent;
-				needsUninlining = !singleGetter.Parent.MatchStLoc(out existingVariable);
+				ILInstruction inst = singleGetter;
+				while (inst.Parent is UnboxAny || inst.Parent is CastClass)
+					inst = inst.Parent;
+				needsUninlining = !inst.Parent.MatchStLoc(out existingVariable);
 			}
 			return singleGetter != null && singleGetter.IsDescendantOf(body.Instructions[0]) && ILInlining.CanUninline(singleGetter, body.Instructions[0]);
 		}
 
 		bool ParentIsCurrentGetter(ILInstruction inst)
 		{
-			return inst.Parent is CallVirt cv && cv.Method.IsAccessor &&
+			return inst.Parent is CallInstruction cv && cv.Method.IsAccessor &&
 				cv.Method.AccessorOwner is IProperty p && p.Getter.Equals(cv.Method);
 		}
 		#endregion
