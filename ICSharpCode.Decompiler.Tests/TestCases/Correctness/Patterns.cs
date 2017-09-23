@@ -15,6 +15,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			SimpleUsingNullStatement();
 			ForWithMultipleVariables();
+			DoubleForEachWithSameVariable(new[] { "a", "b", "c" });
+			ForeachExceptForNameCollision(new[] { 42, 43, 44, 45 });
 		}
 
 		/// <summary>
@@ -38,6 +40,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				Console.WriteLine("x = " + x + ", y = " + y);
 			}
 			Console.WriteLine("after for");
+		}
+
+		public static void DoubleForEachWithSameVariable(IEnumerable<string> enumerable)
+		{
+			Console.WriteLine("DoubleForEachWithSameVariable:");
+			foreach (string current in enumerable) {
+				Console.WriteLine(current.ToLower());
+			}
+			Console.WriteLine("after first loop");
+			foreach (string current in enumerable) {
+				Console.WriteLine(current.ToUpper());
+			}
+			Console.WriteLine("after second loop");
+		}
+
+		public static void ForeachExceptForNameCollision(IEnumerable<int> inputs)
+		{
+			Console.WriteLine("ForeachWithNameCollision:");
+			int current;
+			using (IEnumerator<int> enumerator = inputs.GetEnumerator()) {
+				while (enumerator.MoveNext()) {
+					current = enumerator.Current;
+					Console.WriteLine(current);
+				}
+			}
+			current = 1;
+			Console.WriteLine(current);
 		}
 	}
 }
