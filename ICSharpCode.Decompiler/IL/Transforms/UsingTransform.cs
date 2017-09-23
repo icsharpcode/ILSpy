@@ -92,8 +92,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			context.Step("UsingTransform", body);
 			block.Instructions.RemoveAt(i);
-			block.Instructions[i - 1] = new UsingInstruction(resourceExpression, body.TryBlock);
+			block.Instructions[i - 1] = new UsingInstruction(resourceExpression, UnwrapNestedContainerIfPossible(body.TryBlock));
 			return true;
+		}
+
+		ILInstruction UnwrapNestedContainerIfPossible(ILInstruction tryBlock)
+		{
+			if (!(tryBlock is BlockContainer container))
+				return tryBlock;
+			if (container.Blocks.Count != 1)
+				return tryBlock;
+			var nestedBlock = container.Blocks[0];
+			if (nestedBlock.Instructions.Count != 2 ||
+				!(nestedBlock.Instructions[0] is BlockContainer nestedContainer) ||
+				!nestedBlock.Instructions[1].MatchLeave(container))
+				return tryBlock;
+			return nestedContainer;
 		}
 
 		bool MatchDisposeBlock(BlockContainer container, ILVariable objVar, bool usingNull)
