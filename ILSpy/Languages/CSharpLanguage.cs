@@ -523,8 +523,6 @@ namespace ICSharpCode.ILSpy
 		{
 			ISmartTextOutput textOutput;
 
-			HighlightingColor defaultTextColor;
-
 			HighlightingColor visibilityKeywordsColor;
 			HighlightingColor namespaceKeywordsColor;
 			HighlightingColor structureKeywordsColor;
@@ -551,29 +549,13 @@ namespace ICSharpCode.ILSpy
 			HighlightingColor methodCallColor;
 			HighlightingColor methodDeclarationColor;
 
-			HighlightingColor eventDeclarationColor;
-			HighlightingColor eventAccessColor;
-
-			HighlightingColor propertyDeclarationColor;
-			HighlightingColor propertyAccessColor;
-
 			HighlightingColor fieldDeclarationColor;
 			HighlightingColor fieldAccessColor;
-
-			HighlightingColor variableDeclarationColor;
-			HighlightingColor variableAccessColor;
-
-			HighlightingColor parameterDeclarationColor;
-			HighlightingColor parameterAccessColor;
 
 			HighlightingColor valueKeywordColor;
 			HighlightingColor thisKeywordColor;
 			HighlightingColor trueKeywordColor;
 			HighlightingColor typeKeywordsColor;
-			HighlightingColor externAliasKeywordColor;
-			HighlightingColor varKeywordTypeColor;
-
-			HighlightingColor stringFormatItemColor;
 
 			public HighlightingTokenWriter(TokenWriter decoratedWriter, ISmartTextOutput textOutput) : base(decoratedWriter)
 			{
