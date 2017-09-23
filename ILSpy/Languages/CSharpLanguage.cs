@@ -661,7 +661,7 @@ namespace ICSharpCode.ILSpy
 					case "in":
 						if (nodeStack.PeekOrDefault() is ForeachStatement)
 							color = structureKeywordsColor;
-						else if (nodeStack.PeekOrDefault() is QueryExpression)
+						else if (nodeStack.PeekOrDefault() is QueryClause)
 							color = queryKeywordsColor;
 						else
 							color = parameterModifierColor;
@@ -738,7 +738,7 @@ namespace ICSharpCode.ILSpy
 					case "join":
 					case "on":
 					case "equals":
-						if (nodeStack.PeekOrDefault() is QueryExpression)
+						if (nodeStack.PeekOrDefault() is QueryClause)
 							color = queryKeywordsColor;
 						break;
 					case "explicit":
