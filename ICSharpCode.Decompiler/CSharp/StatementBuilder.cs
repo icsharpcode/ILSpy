@@ -278,7 +278,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!(inst.Body is BlockContainer container) || !m.Success)
 				return null;
 			var enumeratorVar = m.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
-			var loop = DetectedLoop.DetectLoop(UnwrapNestedContainerIfPossible(container, out var optionalReturnAfterLoop));
+			var loopContainer = UnwrapNestedContainerIfPossible(container, out var optionalReturnAfterLoop);
+			var loop = DetectedLoop.DetectLoop(loopContainer);
 			if (loop.Kind != LoopKind.While || !(loop.Body is Block body))
 				return null;
 			var condition = exprBuilder.TranslateCondition(loop.Conditions.Single());
@@ -288,6 +289,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			var enumeratorVar2 = m2.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
 			if (enumeratorVar2 != enumeratorVar || !BodyHasSingleGetCurrent(body, enumeratorVar, condition.ILInstructions.Single(),
 				out var singleGetter, out var needsUninlining, out var itemVariable))
+				return null;
+			if (itemVariable != null && !(itemVariable.CaptureScope == null || itemVariable.CaptureScope == loopContainer))
 				return null;
 			var collectionExpr = m.Get<Expression>("collection").Single();
 			if (collectionExpr is BaseReferenceExpression) {
