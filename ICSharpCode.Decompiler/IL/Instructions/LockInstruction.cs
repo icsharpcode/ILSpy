@@ -26,13 +26,13 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class LockInstruction
 	{
-		public override void WriteTo(ITextOutput output)
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write("lock (");
-			OnExpression.WriteTo(output);
+			OnExpression.WriteTo(output, options);
 			output.WriteLine(") {");
 			output.Indent();
-			Body.WriteTo(output);
+			Body.WriteTo(output, options);
 			output.Unindent();
 			output.WriteLine();
 			output.Write("}");
@@ -44,10 +44,10 @@ namespace ICSharpCode.Decompiler.IL
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write("using (");
-			ResourceExpression.WriteTo(output);
+			ResourceExpression.WriteTo(output, options);
 			output.WriteLine(") {");
 			output.Indent();
-			Body.WriteTo(output);
+			Body.WriteTo(output, options);
 			output.Unindent();
 			output.WriteLine();
 			output.Write("}");

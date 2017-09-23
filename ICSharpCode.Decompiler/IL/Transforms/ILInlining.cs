@@ -308,26 +308,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 
 		/// <summary>
-		/// Gets whether arg can be un-inlined out of stmt.
-		/// </summary>
-		internal static bool CanUninline(ILInstruction arg, ILInstruction stmt)
-		{
-			Debug.Assert(arg.IsDescendantOf(stmt));
-			for (ILInstruction inst = arg; inst != stmt; inst = inst.Parent) {
-				if (!inst.SlotInfo.CanInlineInto)
-					return false;
-				// Check whether re-ordering with predecessors is valid:
-				int childIndex = inst.ChildIndex;
-				for (int i = 0; i < childIndex; ++i) {
-					ILInstruction predecessor = inst.Parent.Children[i];
-					if (!SemanticHelper.MayReorder(arg, predecessor))
-						return false;
-				}
-			}
-			return true;
-		}
-
-		/// <summary>
 		/// Finds the position to inline to.
 		/// </summary>
 		/// <returns>true = found; false = cannot continue search; null = not found</returns>

@@ -107,13 +107,12 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			output.MarkFoldEnd();
 			output.WriteLine();
-			body.WriteTo(output, options);
 
 			foreach (string warning in Warnings) {
 				output.WriteLine("//" + warning);
 			}
 
-			body.WriteTo(output);
+			body.WriteTo(output, options);
 			
 			output.WriteLine();
 			output.Unindent();
