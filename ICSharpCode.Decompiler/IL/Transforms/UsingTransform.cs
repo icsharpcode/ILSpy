@@ -124,6 +124,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!isinst.MatchIsInst(out var load, out var disposableType) || !load.MatchLdLoc(objVar) || !disposableType.IsKnownType(KnownTypeCode.IDisposable))
 					return false;
+				if (tempVar.StoreCount != 1 || tempVar.LoadCount != 2)
+					return false;
 				objVar = tempVar;
 				isReference = true;
 			}
