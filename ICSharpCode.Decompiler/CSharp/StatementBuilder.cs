@@ -271,14 +271,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 		}
 
-		ForeachStatement TransformToForeach(UsingInstruction inst, out TranslatedExpression resource)
+		Statement TransformToForeach(UsingInstruction inst, out TranslatedExpression resource)
 		{
 			resource = exprBuilder.Translate(inst.ResourceExpression);
 			var m = getEnumeratorPattern.Match(resource.Expression);
 			if (!(inst.Body is BlockContainer container) || !m.Success)
 				return null;
 			var enumeratorVar = m.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
-			var loop = DetectedLoop.DetectLoop(container);
+			var loop = DetectedLoop.DetectLoop(UnwrapNestedContainerIfPossible(container, out var optionalReturnAfterLoop));
 			if (loop.Kind != LoopKind.While || !(loop.Body is Block body))
 				return null;
 			var condition = exprBuilder.TranslateCondition(loop.Conditions.Single());
@@ -319,15 +319,43 @@ namespace ICSharpCode.Decompiler.CSharp
 				itemVariable.Kind = VariableKind.ForeachLocal;
 				itemVariable.Name = AssignVariableNames.GenerateVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), "item", itemVariable);
 			}
-			var whileLoop = (WhileStatement)ConvertAsBlock(inst.Body).Single();
+			var whileLoop = (WhileStatement)ConvertAsBlock(inst.Body).First();
 			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
 			foreachBody.Statements.First().Detach();
-			return new ForeachStatement {
+			var foreachStmt = new ForeachStatement {
 				VariableType = settings.AnonymousTypes && itemVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(itemVariable.Type),
 				VariableName = itemVariable.Name,
 				InExpression = collectionExpr.Detach(),
 				EmbeddedStatement = foreachBody
 			};
+			if (optionalReturnAfterLoop != null) {
+				return new BlockStatement {
+					Statements = {
+						foreachStmt,
+						optionalReturnAfterLoop.AcceptVisitor(this)
+					}
+				};
+			}
+			return foreachStmt;
+		}
+
+		BlockContainer UnwrapNestedContainerIfPossible(BlockContainer container, out Leave optionalReturnInst)
+		{
+			optionalReturnInst = null;
+			if (container.Blocks.Count != 1)
+				return container;
+			var nestedBlock = container.Blocks[0];
+			if (nestedBlock.Instructions.Count != 2 ||
+				!(nestedBlock.Instructions[0] is BlockContainer nestedContainer) ||
+				!(nestedBlock.Instructions[1] is Leave leave))
+				return container;
+			if (leave.MatchLeave(container))
+				return nestedContainer;
+			if (leave.IsLeavingFunction) {
+				optionalReturnInst = leave;
+				return nestedContainer;
+			}
+			return container;
 		}
 
 		bool BodyHasSingleGetCurrent(Block body, ILVariable enumerator, ILInstruction moveNextUsage, out CallInstruction singleGetter, out bool needsUninlining, out ILVariable existingVariable)
@@ -504,7 +532,13 @@ namespace ICSharpCode.Decompiler.CSharp
 						// skip the final 'leave' instruction and just fall out of the BlockStatement
 						continue;
 					}
-					blockStatement.Add(Convert(inst));
+					var stmt = Convert(inst);
+					if (stmt is BlockStatement b) {
+						foreach (var nested in b.Statements)
+							blockStatement.Add(nested.Detach());
+					} else {
+						blockStatement.Add(stmt);
+					}
 				}
 				if (block.FinalInstruction.OpCode != OpCode.Nop) {
 					blockStatement.Add(Convert(block.FinalInstruction));
