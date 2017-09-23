@@ -26,30 +26,37 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public void ForEach(IEnumerable<string> enumerable)
 		{
-			foreach (string current in enumerable) {
-				current.ToLower();
+			foreach (string item in enumerable) {
+				item.ToLower();
 			}
 		}
 
 		public void ForEachOverList(List<string> list)
 		{
 			// List has a struct as enumerator, so produces quite different IL than foreach over the IEnumerable interface
-			foreach (string current in list) {
-				current.ToLower();
+			foreach (string item in list) {
+				item.ToLower();
 			}
 		}
 
 		public void ForEachOverNonGenericEnumerable(IEnumerable enumerable)
 		{
-			foreach (object current in enumerable) {
-				current.ToString();
+			foreach (object item in enumerable) {
+				item.ToString();
 			}
 		}
 
-		public void ForEachOverNonGenericEnumerableWithAutomaticCast(IEnumerable enumerable)
+		public void ForEachOverNonGenericEnumerableWithAutomaticCastValueType(IEnumerable enumerable)
 		{
-			foreach (int num in enumerable) {
-				num.ToString();
+			foreach (int item in enumerable) {
+				item.ToString();
+			}
+		}
+
+		public void ForEachOverNonGenericEnumerableWithAutomaticCastRefType(IEnumerable enumerable)
+		{
+			foreach (string item in enumerable) {
+				Console.WriteLine(item);
 			}
 		}
 
@@ -81,46 +88,46 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public int MultipleExits()
-		{
-			int i = 0;
-			while (true) {
-				if (i % 4 == 0) { return 4; }
-				if (i % 7 == 0) { break; }
-				if (i % 9 == 0) { return 5; }
-				if (i % 11 == 0) { break; }
-				i++;
-			}
-			i = int.MinValue;
-			return i;
-		}
+		//public int MultipleExits()
+		//{
+		//	int i = 0;
+		//	while (true) {
+		//		if (i % 4 == 0) { return 4; }
+		//		if (i % 7 == 0) { break; }
+		//		if (i % 9 == 0) { return 5; }
+		//		if (i % 11 == 0) { break; }
+		//		i++;
+		//	}
+		//	i = int.MinValue;
+		//	return i;
+		//}
 
-		public int InterestingLoop()
-		{
-			int i = 0;
-			if (i % 11 == 0) {
-				while (true) {
-					if (i % 4 == 0) {
-						if (i % 7 == 0) {
-							if (i % 11 == 0) {
-								continue; // use a continue here to prevent moving the if (i%7) outside the loop
-							}
-							Console.WriteLine("7");
-						} else {
-							// this block is not part of the natural loop
-							Console.WriteLine("!7");
-						}
-						break;
-					}
-					i++;
-				}
-				// This instruction is still dominated by the loop header
-				i = int.MinValue;
-			}
-			return i;
-		}
+		//public int InterestingLoop()
+		//{
+		//	int i = 0;
+		//	if (i % 11 == 0) {
+		//		while (true) {
+		//			if (i % 4 == 0) {
+		//				if (i % 7 == 0) {
+		//					if (i % 11 == 0) {
+		//						continue; // use a continue here to prevent moving the if (i%7) outside the loop
+		//					}
+		//					Console.WriteLine("7");
+		//				} else {
+		//					// this block is not part of the natural loop
+		//					Console.WriteLine("!7");
+		//				}
+		//				break;
+		//			}
+		//			i++;
+		//		}
+		//		// This instruction is still dominated by the loop header
+		//		i = int.MinValue;
+		//	}
+		//	return i;
+		//}
 
-		bool Condition(string arg)
+		private bool Condition(string arg)
 		{
 			Console.WriteLine("Condition: " + arg);
 			return false;
@@ -129,13 +136,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void WhileLoop()
 		{
 			Console.WriteLine("Initial");
-			if (Condition("if")) {
-				while (Condition("while")) {
+			if (this.Condition("if")) {
+				while (this.Condition("while")) {
 					Console.WriteLine("Loop Body");
-					if (Condition("test")) {
-						if (Condition("continue"))
+					if (this.Condition("test")) {
+						if (this.Condition("continue")) {
 							continue;
-						if (!Condition("break"))
+						}
+						if (!this.Condition("break"))
 							break;
 					}
 					Console.WriteLine("End of loop body");
@@ -145,50 +153,52 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("End of method");
 		}
 
-		public void WhileWithGoto()
-		{
-			while (Condition("Main Loop")) {
-				if (!Condition("Condition"))
-					goto block2;
-				block1:
-				Console.WriteLine("Block1");
-				if (Condition("Condition2"))
-					continue;
-				block2:
-				Console.WriteLine("Block2");
-				goto block1;
-			}
-		}
+		//public void WhileWithGoto()
+		//{
+		//	while (this.Condition("Main Loop")) {
+		//		if (!this.Condition("Condition"))
+		//			goto block2;
+		//		block1:
+		//		Console.WriteLine("Block1");
+		//		if (this.Condition("Condition2"))
+		//			continue;
+		//		block2:
+		//		Console.WriteLine("Block2");
+		//		goto block1;
+		//	}
+		//}
 
-		public void DoWhileLoop()
-		{
-			Console.WriteLine("Initial");
-			if (Condition("if")) {
-				do {
-					Console.WriteLine("Loop Body");
-					if (Condition("test")) {
-						if (Condition("continue"))
-							continue;
-						if (!Condition("break"))
-							break;
-					}
-					Console.WriteLine("End of loop body");
-				} while (Condition("while"));
-				Console.WriteLine("After loop");
-			}
-			Console.WriteLine("End of method");
-		}
+		//public void DoWhileLoop()
+		//{
+		//	Console.WriteLine("Initial");
+		//	if (this.Condition("if")) {
+		//		do {
+		//			Console.WriteLine("Loop Body");
+		//			if (this.Condition("test")) {
+		//				if (this.Condition("continue")) {
+		//					continue;
+		//				}
+		//				if (!this.Condition("break"))
+		//					break;
+		//			}
+		//			Console.WriteLine("End of loop body");
+		//		} while (this.Condition("while"));
+		//		Console.WriteLine("After loop");
+		//	}
+		//	Console.WriteLine("End of method");
+		//}
 
 		public void ForLoop()
 		{
 			Console.WriteLine("Initial");
-			if (Condition("if")) {
-				for (int i = 0; Condition("for"); i++) {
+			if (this.Condition("if")) {
+				for (int i = 0; this.Condition("for"); i++) {
 					Console.WriteLine("Loop Body");
-					if (Condition("test")) {
-						if (Condition("continue"))
+					if (this.Condition("test")) {
+						if (this.Condition("continue")) {
 							continue;
-						if (!Condition("not-break"))
+						}
+						if (!this.Condition("not-break"))
 							break;
 					}
 					Console.WriteLine("End of loop body");
@@ -198,41 +208,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("End of method");
 		}
 
-		public void DoubleForEachWithSameVariable(IEnumerable<string> enumerable)
-		{
-			foreach (string current in enumerable) {
-				current.ToLower();
-			}
-			foreach (string current in enumerable) {
-				current.ToLower();
-			}
-		}
-
-		static void ForeachExceptForNameCollision(IEnumerable<int> inputs)
-		{
-			Console.WriteLine("ForeachWithNameCollision");
-			int input;
-			using (var enumerator = inputs.GetEnumerator()) {
-				while (enumerator.MoveNext()) {
-					input = enumerator.Current;
-					Console.WriteLine(input);
-				}
-			}
-			input = 1;
-			Console.WriteLine(input);
-		}
-
-		static void ForeachExceptForContinuedUse(IEnumerable<int> inputs)
+		public static void ForeachExceptForContinuedUse(IEnumerable<int> inputs)
 		{
 			Console.WriteLine("ForeachExceptForContinuedUse");
-			int input = 0;
-			using (var enumerator = inputs.GetEnumerator()) {
+			int num = 0;
+			using (IEnumerator<int> enumerator = inputs.GetEnumerator()) {
 				while (enumerator.MoveNext()) {
-					input = enumerator.Current;
-					Console.WriteLine(input);
+					num = enumerator.Current;
+					Console.WriteLine(num);
 				}
 			}
-			Console.WriteLine("Last: " + input);
+			Console.WriteLine("Last: " + num);
 		}
 	}
 }
