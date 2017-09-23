@@ -151,6 +151,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var usages = next.Descendants.Where(d => d.MatchLdLoc(localVariable)).ToArray();
 			if (usages.Length != 1)
 				return false;
+			if (binary.IsLifted)
+				return false;
 			context.Step($"Compound assignment to '{owner.Name}'", setterCall);
 			block.Instructions.RemoveAt(i + 1);
 			block.Instructions.RemoveAt(i);
@@ -230,6 +232,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var binary = nextInst.Value as BinaryNumericInstruction;
 			if (inst.Variable.Kind != VariableKind.StackSlot || nextInst.Variable.Kind == VariableKind.StackSlot || binary == null)
 				return false;
+			if (binary.IsLifted)
+				return false;
 			if ((binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub) || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
 				return false;
 			context.Step($"TransformPostIncDecOperator", inst);
@@ -268,6 +272,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var binary = stobj.Value as BinaryNumericInstruction;
 			if (binary == null || !binary.Left.MatchLdLoc(nextInst.Variable) || !binary.Right.MatchLdcI4(1)
 			    || (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
+				return false;
+			if (binary.IsLifted)
 				return false;
 			context.Step($"TransformPostIncDecOperator", inst);
 			var assignment = new CompoundAssignmentInstruction(binary.Operator, new LdObj(inst.Value, targetType), binary.Right, targetType, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
@@ -319,6 +325,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary == null || !binary.Left.MatchLdLoc(fieldValue.Variable) || !binary.Right.MatchLdcI4(1)
 			    || (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
 				return false;
+			if (binary.IsLifted)
+				return false;
 			context.Step($"TransformCSharp4PostIncDecOperatorOnAddress", baseFieldAddress);
 			var assignment = new CompoundAssignmentInstruction(binary.Operator, new LdObj(baseAddress, t), binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
 			stobj.ReplaceWith(new StLoc(fieldValueCopyToLocal.Variable, assignment));
@@ -348,6 +356,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			var binary = stobj.Value as BinaryNumericInstruction;
 			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
+				return false;
+			if (binary.IsLifted)
 				return false;
 			context.Step($"TransformPostIncDecOnStaticField", inst);
 			var assignment = new CompoundAssignmentInstruction(binary.Operator, inst.Value, binary.Right, type, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);

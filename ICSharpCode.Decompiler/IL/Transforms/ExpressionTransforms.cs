@@ -274,6 +274,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			if (inst.Value is BinaryNumericInstruction binary
+				&& !binary.IsLifted
 				&& binary.Left.MatchLdObj(out ILInstruction target, out IType t)
 				&& inst.Target.Match(target).Success) 
 			{
