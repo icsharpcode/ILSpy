@@ -201,38 +201,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Inlining a value type variable is allowed only if the resulting code will maintain the semantics
 				// that the method is operating on a copy.
 				// Thus, we have to disallow inlining of other locals, fields, array elements, dereferenced pointers
-				switch (inlinedExpression.OpCode) {
-					case OpCode.LdLoc:
-					case OpCode.StLoc:
-						return false;
-					case OpCode.LdObj:
-						// allow inlining field access only if it's a readonly field
-						IField f = (((LdObj)inlinedExpression).Target as IInstructionWithFieldOperand)?.Field;
-						if (f != null && f.IsReadOnly)
-							break;
-						return f != null && f.IsReadOnly;
-					case OpCode.Call:
-						var m = ((CallInstruction)inlinedExpression).Method;
-						// ensure that it's not an multi-dimensional array getter
-						if (m.DeclaringType.Kind == TypeKind.Array)
-							return false;
-						goto case OpCode.CallVirt;
-					case OpCode.CallVirt:
-						// don't inline foreach loop variables:
-						m = ((CallInstruction)inlinedExpression).Method;
-						if (m.Name == "get_Current" && !m.IsStatic)
-							return false;
-						break;
-					case OpCode.CastClass:
-					case OpCode.UnboxAny:
-						// These are valid, but might occur as part of a foreach loop variable.
-						ILInstruction arg = inlinedExpression.Children[0];
-						if (arg.OpCode == OpCode.Call || arg.OpCode == OpCode.CallVirt) {
-							m = ((CallInstruction)arg).Method;
-							if (m.Name == "get_Current" && !m.IsStatic)
-								return false; // looks like a foreach loop variable, so don't inline it
-						}
-						break;
+				if (IsLValue(inlinedExpression)) {
+					return false;
 				}
 				
 				// inline the compiler-generated variable that are used when accessing a member on a value type:
@@ -249,6 +219,37 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 		
+		/// <summary>
+		/// Gets whether the instruction, when converted into C#, turns into an l-value that can
+		/// be used to mutate a value-type.
+		/// If this function returns false, the C# compiler would introduce a temporary copy
+		/// when calling a method on a value-type (and any mutations performed by the method will be lost)
+		/// </summary>
+		static bool IsLValue(ILInstruction inst)
+		{
+			switch (inst.OpCode) {
+				case OpCode.LdLoc:
+				case OpCode.StLoc:
+					return true;
+				case OpCode.LdObj:
+					// ldobj typically refers to a storage location,
+					// but readonly fields are an exception.
+					IField f = (((LdObj)inst).Target as IInstructionWithFieldOperand)?.Field;
+					return !(f != null && f.IsReadOnly);
+				case OpCode.StObj:
+					// stobj is the same as ldobj.
+					f = (((StObj)inst).Target as IInstructionWithFieldOperand)?.Field;
+					return !(f != null && f.IsReadOnly);
+				case OpCode.Call:
+					var m = ((CallInstruction)inst).Method;
+					// multi-dimensional array getters are lvalues,
+					// everything else is an rvalue.
+					return m.DeclaringType.Kind == TypeKind.Array;
+				default:
+					return false; // most instructions result in an rvalue
+			}
+		}
+
 		/// <summary>
 		/// Determines whether a variable should be inlined in non-aggressive mode, even though it is not a generated variable.
 		/// </summary>
