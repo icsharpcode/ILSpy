@@ -101,6 +101,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public void GenericUsing<T>(T t) where T : IDisposable
+		{
+			using (t) {
+				Console.WriteLine(t);
+			}
+		}
+
 		public void NoUsing()
 		{
 			PrintOnDispose printOnDispose = new PrintOnDispose("Wrong");

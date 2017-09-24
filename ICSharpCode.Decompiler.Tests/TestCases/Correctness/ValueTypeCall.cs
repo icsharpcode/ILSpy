@@ -2,7 +2,7 @@
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
-	public struct MutValueType
+	public struct MutValueType : IDisposable
 	{
 		public int val;
 		
@@ -10,6 +10,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("Inc() called on {0}", val);
 			val = val + 1;
+		}
+
+		public void Dispose()
+		{
+			Console.WriteLine("MutValueType disposed on {0}", val);
 		}
 	}
 	
@@ -50,6 +55,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			ValueParameter(m);
 			Field();
 			Box();
+			Using();
 			var gvt = new GenericValueType<string>("Test");
 			gvt.Call(ref gvt);
 			new ValueTypeCall().InstanceFieldTests();
@@ -102,6 +108,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(this.instanceField.val);
 			mutableInstanceFieldWithReadOnlyMember = new ValueTypeWithReadOnlyMember(45);
 			Console.WriteLine(this.mutableInstanceFieldWithReadOnlyMember.Member);
+		}
+
+		static void Using()
+		{
+			Console.WriteLine("Using:");
+			using (var x = new MutValueType()) {
+				x.Increment();
+			}
+			Console.WriteLine("Not using:");
+			var y = new MutValueType();
+			try {
+				y.Increment();
+			} finally {
+				MutValueType x = y;
+				x.Dispose();
+			}
+			Console.WriteLine("Using with double var:");
+			MutValueType z;
+			using (var x = z = new MutValueType()) {
+				z.Increment();
+			}
 		}
 	}
 }

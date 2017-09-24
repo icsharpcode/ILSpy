@@ -42,6 +42,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			BreakUnlessContinue(false);
 			TestConditionals();
 			ThisIsNotAUsingBlock();
+			NoUsing();
+			UsingObject();
 			return 0;
 		}
 
@@ -153,17 +155,58 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void ThisIsNotAUsingBlock()
 		{
-			object obj = new System.IO.StringWriter();
+			var obj = new System.IO.StringWriter();
 			IDisposable disposable;
 			try {
-				(obj as System.IO.TextWriter).WriteLine("ThisIsNotAUsingBlock");
+				obj.WriteLine("ThisIsNotAUsingBlock");
 			} finally {
-				disposable = (obj as IDisposable);
+				disposable = (object)obj as IDisposable;
 				if (disposable != null) {
 					disposable.Dispose();
 				}
 			}
 			Console.WriteLine(disposable);
+		}
+
+		private class PrintOnDispose : IDisposable
+		{
+			private string v;
+
+			public PrintOnDispose(string v)
+			{
+				this.v = v;
+			}
+
+			public void Dispose()
+			{
+				Console.WriteLine(this.v);
+			}
+		}
+
+		static void NoUsing()
+		{
+			PrintOnDispose printOnDispose = new PrintOnDispose("NoUsing(): Wrong");
+			try {
+				printOnDispose = new PrintOnDispose("NoUsing(): Correct");
+			} finally {
+				IDisposable disposable = (object)printOnDispose as IDisposable;
+				if (disposable != null) {
+					disposable.Dispose();
+				}
+			}
+		}
+		
+		static void UsingObject()
+		{
+			object obj = new object();
+			try {
+				Console.WriteLine("UsingObject: {0}", obj);
+			} finally {
+				IDisposable disposable = obj as IDisposable;
+				if (disposable != null) {
+					disposable.Dispose();
+				}
+			}
 		}
 	}
 }
