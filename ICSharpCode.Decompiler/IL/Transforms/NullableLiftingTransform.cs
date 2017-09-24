@@ -543,7 +543,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call get_HasValue(ldloca v)'
 		/// </summary>
-		static bool MatchHasValueCall(ILInstruction inst, out ILVariable v)
+		internal static bool MatchHasValueCall(ILInstruction inst, out ILVariable v)
 		{
 			v = null;
 			if (!(inst is Call call))
@@ -560,7 +560,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call get_HasValue(ldloca v)'
 		/// </summary>
-		static bool MatchHasValueCall(ILInstruction inst, ILVariable v)
+		internal static bool MatchHasValueCall(ILInstruction inst, ILVariable v)
 		{
 			return MatchHasValueCall(inst, out var v2) && v == v2;
 		}

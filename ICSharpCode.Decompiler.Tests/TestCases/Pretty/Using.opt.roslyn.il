@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Using.dll
-// MVID: {F795B575-6F0C-4E56-817C-B7689ECEE4A6}
+// MVID: {AD3F5551-3D76-468D-A005-EEF5916A56A8}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x003F0000
+// Image base: 0x015E0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -218,6 +218,43 @@
     IL_002d:  ret
   } // end of method Using::UsingStatementOnStructWithVariable
 
+  .method private hidebysig instance void 
+          UsingStatementOnNullableStruct(valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct> us) cil managed
+  {
+    // Code size       57 (0x39)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct> V_0,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct V_1)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.0
+    .try
+    {
+      IL_0002:  ldstr      "using-body: "
+      IL_0007:  ldarg.1
+      IL_0008:  box        valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct>
+      IL_000d:  call       string [mscorlib]System.String::Concat(object,
+                                                                  object)
+      IL_0012:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_0017:  leave.s    IL_0038
+
+    }  // end .try
+    finally
+    {
+      IL_0019:  ldloca.s   V_0
+      IL_001b:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct>::get_HasValue()
+      IL_0020:  brfalse.s  IL_0037
+
+      IL_0022:  ldloca.s   V_0
+      IL_0024:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct>::GetValueOrDefault()
+      IL_0029:  stloc.1
+      IL_002a:  ldloca.s   V_1
+      IL_002c:  constrained. ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct
+      IL_0032:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0037:  endfinally
+    }  // end handler
+    IL_0038:  ret
+  } // end of method Using::UsingStatementOnNullableStruct
+
   .method public hidebysig instance void 
           GenericUsing<([mscorlib]System.IDisposable) T>(!!T t) cil managed
   {
@@ -303,6 +340,40 @@
     }  // end handler
     IL_0023:  ret
   } // end of method Using::GenericClassUsing
+
+  .method public hidebysig instance void 
+          GenericNullableUsing<valuetype .ctor ([mscorlib]System.IDisposable, [mscorlib]System.ValueType) T>(valuetype [mscorlib]System.Nullable`1<!!T> t) cil managed
+  {
+    // Code size       47 (0x2f)
+    .maxstack  1
+    .locals init (valuetype [mscorlib]System.Nullable`1<!!T> V_0,
+             !!T V_1)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.0
+    .try
+    {
+      IL_0002:  ldarg.1
+      IL_0003:  box        valuetype [mscorlib]System.Nullable`1<!!T>
+      IL_0008:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_000d:  leave.s    IL_002e
+
+    }  // end .try
+    finally
+    {
+      IL_000f:  ldloca.s   V_0
+      IL_0011:  call       instance bool valuetype [mscorlib]System.Nullable`1<!!T>::get_HasValue()
+      IL_0016:  brfalse.s  IL_002d
+
+      IL_0018:  ldloca.s   V_0
+      IL_001a:  call       instance !0 valuetype [mscorlib]System.Nullable`1<!!T>::GetValueOrDefault()
+      IL_001f:  stloc.1
+      IL_0020:  ldloca.s   V_1
+      IL_0022:  constrained. !!T
+      IL_0028:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_002d:  endfinally
+    }  // end handler
+    IL_002e:  ret
+  } // end of method Using::GenericNullableUsing
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

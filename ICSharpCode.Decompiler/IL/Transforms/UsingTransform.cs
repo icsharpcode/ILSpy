@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (i < 1) return false;
 			if (!(block.Instructions[i] is TryFinally tryFinally) || !(block.Instructions[i - 1] is StLoc storeInst))
 				return false;
-			if (!storeInst.Variable.Type.GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable)))
+			if (!(storeInst.Value.MatchLdNull() || NullableType.GetUnderlyingType(storeInst.Variable.Type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable))))
 				return false;
 			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(tryFinally)))
 				return false;
@@ -112,29 +112,54 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!entryPoint.Instructions[leaveIndex].MatchLeave(container, out var returnValue) || !returnValue.MatchNop())
 				return false;
 			CallVirt callVirt;
-			// reference types have a null check.
-			if (isReference) {
+			if (objVar.Type.IsKnownType(KnownTypeCode.NullableOfT)) {
 				if (!entryPoint.Instructions[checkIndex].MatchIfInstruction(out var condition, out var disposeInst))
 					return false;
-				if (!condition.MatchCompNotEquals(out var left, out var right) || !left.MatchLdLoc(objVar) || !right.MatchLdNull())
+				if (!(NullableLiftingTransform.MatchHasValueCall(condition, out var v) && v == objVar))
 					return false;
 				if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
 					return false;
 				if (!(disposeBlock.Instructions[0] is CallVirt cv))
 					return false;
 				callVirt = cv;
-			} else {
-				if (!(entryPoint.Instructions[checkIndex] is CallVirt cv))
+				if (callVirt.Method.FullName != "System.IDisposable.Dispose")
 					return false;
-				callVirt = cv;
+				if (callVirt.Method.Parameters.Count > 0)
+					return false;
+				if (callVirt.Arguments.Count != 1)
+					return false;
+				var firstArg = cv.Arguments.FirstOrDefault();
+				if (!(firstArg.MatchUnboxAny(out var innerArg1, out var unboxType) && unboxType.IsKnownType(KnownTypeCode.IDisposable)))
+					return false;
+				if (!(innerArg1.MatchBox(out firstArg, out var boxType) && boxType.IsKnownType(KnownTypeCode.NullableOfT) &&
+					NullableType.GetUnderlyingType(boxType).Equals(NullableType.GetUnderlyingType(objVar.Type))))
+					return false;
+				return firstArg.MatchLdLoc(objVar);
+			} else {
+				if (isReference) {
+					// reference types have a null check.
+					if (!entryPoint.Instructions[checkIndex].MatchIfInstruction(out var condition, out var disposeInst))
+						return false;
+					if (!condition.MatchCompNotEquals(out var left, out var right) || !left.MatchLdLoc(objVar) || !right.MatchLdNull())
+						return false;
+					if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
+						return false;
+					if (!(disposeBlock.Instructions[0] is CallVirt cv))
+						return false;
+					callVirt = cv;
+				} else {
+					if (!(entryPoint.Instructions[checkIndex] is CallVirt cv))
+						return false;
+					callVirt = cv;
+				}
+				if (callVirt.Method.FullName != "System.IDisposable.Dispose")
+					return false;
+				if (callVirt.Method.Parameters.Count > 0)
+					return false;
+				if (callVirt.Arguments.Count != 1)
+					return false;
+				return callVirt.Arguments[0].MatchLdLocRef(objVar) || (usingNull && callVirt.Arguments[0].MatchLdNull());
 			}
-			if (callVirt.Method.FullName != "System.IDisposable.Dispose")
-				return false;
-			if (callVirt.Method.Parameters.Count > 0)
-				return false;
-			if (callVirt.Arguments.Count != 1)
-				return false;
-			return callVirt.Arguments[0].MatchLdLocRef(objVar) || (usingNull && callVirt.Arguments[0].MatchLdNull());
 		}
 	}
 }
