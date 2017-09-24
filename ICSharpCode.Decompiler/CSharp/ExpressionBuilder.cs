@@ -1003,6 +1003,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			// Create AnonymousMethodExpression and prepare parameters
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
+			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(method, function));
 			ame.HasParameterList = true;
 			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method, function, settings, cancellationToken);
