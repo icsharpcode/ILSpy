@@ -317,22 +317,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		Comp LiftCSharpComparison(Comp comp, ComparisonKind newComparisonKind)
 		{
-			var (left, leftBits) = DoLift(comp.Left);
-			var (right, rightBits) = DoLift(comp.Right);
-			if (left != null && right == null && SemanticHelper.IsPure(comp.Right.Flags)) {
-				// Embed non-nullable pure expression in lifted expression.
-				right = comp.Right.Clone();
-			}
-			if (left == null && right != null && SemanticHelper.IsPure(comp.Left.Flags)) {
-				// Embed non-nullable pure expression in lifted expression.
-				left = comp.Left.Clone();
-			}
+			var (left, right, bits) = DoLiftBinary(comp.Left, comp.Right);
 			// due to the restrictions on side effects, we only allow instructions that are pure after lifting.
 			// (we can't check this before lifting due to the calls to GetValueOrDefault())
 			if (left != null && right != null && SemanticHelper.IsPure(left.Flags) && SemanticHelper.IsPure(right.Flags)) {
-				var bits = leftBits ?? rightBits;
-				if (rightBits != null)
-					bits.UnionWith(rightBits);
 				if (!bits.All(0, nullableVars.Count)) {
 					// don't lift if a nullableVar doesn't contribute to the result
 					return null;
@@ -366,6 +354,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						UnderlyingResultType = NullableType.GetUnderlyingType(nullableVars[0].Type).GetStackType(),
 						ILRange = ilrange
 					};
+				} else if (trueInst is Call call && !call.IsLifted
+					&& CSharp.Resolver.CSharpOperators.IsComparisonOperator(call.Method)
+					&& call.Method.Name != "op_Equality" && call.Method.Name != "op_Inequality"
+					&& falseInst.MatchLdcI4(0))
+				{
+					// (v1 != null && ... && vn != null) ? call op_LessThan(lhs, rhs) : ldc.i4(0)
+					var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
+					if (liftedOperator != null) {
+						var (left, right, bits) = DoLiftBinary(call.Arguments[0], call.Arguments[1]);
+						if (left != null && right != null && bits.All(0, nullableVars.Count)) {
+							return new Call(liftedOperator) {
+								Arguments = { left, right },
+								ConstrainedTo = call.ConstrainedTo,
+								ILRange = call.ILRange,
+								ILStackWasEmpty = call.ILStackWasEmpty,
+								IsTail = call.IsTail
+							};
+						}
+					}
 				}
 			}
 			ILInstruction lifted;
@@ -475,20 +482,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return (newInst, bits);
 				}
 			} else if (inst is BinaryNumericInstruction binary) {
-				var (left, leftBits) = DoLift(binary.Left);
-				var (right, rightBits) = DoLift(binary.Right);
-				if (left != null && right == null && SemanticHelper.IsPure(binary.Right.Flags)) {
-					// Embed non-nullable pure expression in lifted expression.
-					right = binary.Right.Clone();
-				}
-				if (left == null && right != null && SemanticHelper.IsPure(binary.Left.Flags)) {
-					// Embed non-nullable pure expression in lifted expression.
-					left = binary.Left.Clone();
-				}
+				var (left, right, bits) = DoLiftBinary(binary.Left, binary.Right);
 				if (left != null && right != null) {
-					var bits = leftBits ?? rightBits;
-					if (rightBits != null)
-						bits.UnionWith(rightBits);
 					if (binary.HasFlag(InstructionFlags.MayThrow) && !bits.All(0, nullableVars.Count)) {
 						// Cannot execute potentially-throwing instruction unless all
 						// the nullableVars are arguments to the instruction
@@ -518,8 +513,60 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					ILRange = comp.ILRange
 				};
 				return (newInst, bits);
+			} else if (inst is Call call && call.Method.IsOperator) {
+				// Lifted user-defined operators, except for comparison operators (as those return bool, not bool?)
+				var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
+				if (liftedOperator == null || !NullableType.IsNullable(liftedOperator.ReturnType))
+					return (null, null);
+				ILInstruction[] newArgs;
+				BitSet newBits;
+				if (call.Arguments.Count == 1) {
+					var (arg, bits) = DoLift(call.Arguments[0]);
+					newArgs = new[] { arg };
+					newBits = bits;
+				} else if (call.Arguments.Count == 2) {
+					var (left, right, bits) = DoLiftBinary(call.Arguments[0], call.Arguments[1]);
+					newArgs = new[] { left, right };
+					newBits = bits;
+				} else {
+					return (null, null);
+				}
+				if (!newBits.All(0, nullableVars.Count)) {
+					// all nullable vars must be involved when calling a method (side effect)
+					return (null, null);
+				}
+				var newInst = new Call(liftedOperator) {
+					ConstrainedTo = call.ConstrainedTo,
+					IsTail = call.IsTail,
+					ILStackWasEmpty = call.ILStackWasEmpty,
+					ILRange = call.ILRange
+				};
+				newInst.Arguments.AddRange(newArgs);
+				return (newInst, newBits);
 			}
 			return (null, null);
+		}
+
+		(ILInstruction, ILInstruction, BitSet) DoLiftBinary(ILInstruction lhs, ILInstruction rhs)
+		{
+			var (left, leftBits) = DoLift(lhs);
+			var (right, rightBits) = DoLift(rhs);
+			if (left != null && right == null && SemanticHelper.IsPure(rhs.Flags)) {
+				// Embed non-nullable pure expression in lifted expression.
+				right = rhs.Clone();
+			}
+			if (left == null && right != null && SemanticHelper.IsPure(lhs.Flags)) {
+				// Embed non-nullable pure expression in lifted expression.
+				left = lhs.Clone();
+			}
+			if (left != null && right != null) {
+				var bits = leftBits ?? rightBits;
+				if (rightBits != null)
+					bits.UnionWith(rightBits);
+				return (left, right, bits);
+			} else {
+				return (null, null, null);
+			}
 		}
 		#endregion
 

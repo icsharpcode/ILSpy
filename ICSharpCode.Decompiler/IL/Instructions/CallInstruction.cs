@@ -103,4 +103,23 @@ namespace ICSharpCode.Decompiler.IL
 				&& Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match);
 		}
 	}
+
+	partial class Call : ILiftableInstruction
+	{
+		/// <summary>
+		/// Calls can only be lifted when calling a lifted operator.
+		/// Note that the semantics of such a lifted call depend on the type of operator:
+		/// we follow C# semantics here.
+		/// </summary>
+		public bool IsLifted => Method is CSharp.Resolver.ILiftedOperator;
+
+		public StackType UnderlyingResultType {
+			get {
+				if (Method is CSharp.Resolver.ILiftedOperator liftedOp)
+					return liftedOp.NonLiftedReturnType.GetStackType();
+				else
+					return Method.ReturnType.GetStackType();
+			}
+		}
+	}
 }

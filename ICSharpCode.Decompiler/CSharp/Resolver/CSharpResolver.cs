@@ -506,7 +506,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			} else {
 				expression = Convert(expression, m.Parameters[0].Type, builtinOperatorOR.ArgumentConversions[0]);
 				return UnaryOperatorResolveResult(resultType, op, expression,
-				                                  builtinOperatorOR.BestCandidate is OverloadResolution.ILiftedOperator);
+				                                  builtinOperatorOR.BestCandidate is ILiftedOperator);
 			}
 		}
 		
@@ -876,7 +876,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				lhs = Convert(lhs, m.Parameters[0].Type, builtinOperatorOR.ArgumentConversions[0]);
 				rhs = Convert(rhs, m.Parameters[1].Type, builtinOperatorOR.ArgumentConversions[1]);
 				return BinaryOperatorResolveResult(resultType, lhs, op, rhs,
-				                                   builtinOperatorOR.BestCandidate is OverloadResolution.ILiftedOperator);
+				                                   builtinOperatorOR.BestCandidate is ILiftedOperator);
 			}
 		}
 		
@@ -1166,96 +1166,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			int nonLiftedMethodCount = operators.Count;
 			// Construct lifted operators
 			for (int i = 0; i < nonLiftedMethodCount; i++) {
-				var liftedMethod = LiftUserDefinedOperator(operators[i]);
+				var liftedMethod = CSharpOperators.LiftUserDefinedOperator(operators[i]);
 				if (liftedMethod != null)
 					operators.Add(liftedMethod);
-			}
-		}
-		
-		LiftedUserDefinedOperator LiftUserDefinedOperator(IMethod m)
-		{
-			if (IsComparisonOperator(m)) {
-				if (!m.ReturnType.Equals(compilation.FindType(KnownTypeCode.Boolean)))
-					return null; // cannot lift this operator
-			} else {
-				if (!NullableType.IsNonNullableValueType(m.ReturnType))
-					return null; // cannot lift this operator
-			}
-			for (int i = 0; i < m.Parameters.Count; i++) {
-				if (!NullableType.IsNonNullableValueType(m.Parameters[i].Type))
-					return null; // cannot lift this operator
-			}
-			return new LiftedUserDefinedOperator(m);
-		}
-		
-		static bool IsComparisonOperator(IMethod m)
-		{
-			var type = OperatorDeclaration.GetOperatorType(m.Name);
-			return type.HasValue && type.Value.IsComparisonOperator();
-		}
-		
-		sealed class LiftedUserDefinedOperator : SpecializedMethod, OverloadResolution.ILiftedOperator
-		{
-			internal readonly IParameterizedMember nonLiftedOperator;
-			
-			public LiftedUserDefinedOperator(IMethod nonLiftedMethod)
-				: base((IMethod)nonLiftedMethod.MemberDefinition, nonLiftedMethod.Substitution)
-			{
-				this.nonLiftedOperator = nonLiftedMethod;
-				var substitution = new MakeNullableVisitor(nonLiftedMethod.Compilation, nonLiftedMethod.Substitution);
-				this.Parameters = base.CreateParameters(substitution);
-				// Comparison operators keep the 'bool' return type even when lifted.
-				if (IsComparisonOperator(nonLiftedMethod))
-					this.ReturnType = nonLiftedMethod.ReturnType;
-				else
-					this.ReturnType = nonLiftedMethod.ReturnType.AcceptVisitor(substitution);
-			}
-			
-			public IList<IParameter> NonLiftedParameters {
-				get { return nonLiftedOperator.Parameters; }
-			}
-			
-			public override bool Equals(object obj)
-			{
-				LiftedUserDefinedOperator op = obj as LiftedUserDefinedOperator;
-				return op != null && this.nonLiftedOperator.Equals(op.nonLiftedOperator);
-			}
-			
-			public override int GetHashCode()
-			{
-				return nonLiftedOperator.GetHashCode() ^ 0x7191254;
-			}
-		}
-		
-		sealed class MakeNullableVisitor : TypeVisitor
-		{
-			readonly ICompilation compilation;
-			readonly TypeParameterSubstitution typeParameterSubstitution;
-			
-			public MakeNullableVisitor(ICompilation compilation, TypeParameterSubstitution typeParameterSubstitution)
-			{
-				this.compilation = compilation;
-				this.typeParameterSubstitution = typeParameterSubstitution;
-			}
-			
-			public override IType VisitTypeDefinition(ITypeDefinition type)
-			{
-				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
-			}
-			
-			public override IType VisitTypeParameter(ITypeParameter type)
-			{
-				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
-			}
-			
-			public override IType VisitParameterizedType(ParameterizedType type)
-			{
-				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
-			}
-			
-			public override IType VisitOtherType(IType type)
-			{
-				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
 			}
 		}
 		
@@ -1265,7 +1178,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				return r.CreateResolveResult(null);
 			IMethod method = (IMethod)r.BestCandidate;
 			return new OperatorResolveResult(method.ReturnType, operatorType, method,
-			                                 isLiftedOperator: method is OverloadResolution.ILiftedOperator,
+			                                 isLiftedOperator: method is ILiftedOperator,
 			                                 operands: r.GetArgumentsWithConversions());
 		}
 		#endregion
