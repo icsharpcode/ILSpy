@@ -47,16 +47,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine(typeof(T1) + " " + typeof(T2));
 		}
-
-		public T CastToTypeParameter<T>(DerivedClass d) where T: BaseClass
-		{
-			return (T)(BaseClass)d;
-		}
-
-		public T New<T>() where T : new()
-		{
-			return new T();
-		}
 	}
 	
 	class GenericClass<T>
