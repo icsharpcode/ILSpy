@@ -42,6 +42,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			SimpleUsingNullStatement();
 			NoUsing();
 			NoUsing2();
+			ThisIsNotAUsingBlock();
+			UsingObject();
 		}
 
 		/// <summary>
@@ -68,11 +70,39 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void NoUsing2()
 		{
-			object printOnDispose = new PrintOnDispose("NoUsing(): Wrong");
+			PrintOnDispose printOnDispose = new PrintOnDispose("NoUsing(): Wrong");
 			try {
 				printOnDispose = new PrintOnDispose("NoUsing(): Correct");
 			} finally {
-				IDisposable disposable = printOnDispose as IDisposable;
+				IDisposable disposable = (object)printOnDispose as IDisposable;
+				if (disposable != null) {
+					disposable.Dispose();
+				}
+			}
+		}
+
+		public static void ThisIsNotAUsingBlock()
+		{
+			var obj = new System.IO.StringWriter();
+			IDisposable disposable;
+			try {
+				obj.WriteLine("ThisIsNotAUsingBlock");
+			} finally {
+				disposable = (object)obj as IDisposable;
+				if (disposable != null) {
+					disposable.Dispose();
+				}
+			}
+			Console.WriteLine(disposable);
+		}
+
+		public static void UsingObject()
+		{
+			object obj = new object();
+			try {
+				Console.WriteLine("UsingObject: {0}", obj);
+			} finally {
+				IDisposable disposable = obj as IDisposable;
 				if (disposable != null) {
 					disposable.Dispose();
 				}
