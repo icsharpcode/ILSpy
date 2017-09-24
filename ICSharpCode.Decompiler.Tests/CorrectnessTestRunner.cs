@@ -96,7 +96,13 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void Patterns([ValueSource("defaultOptions")] CompilerOptions options)
+		public void Using([ValueSource("defaultOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
+		public void Loops([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);
 		}
