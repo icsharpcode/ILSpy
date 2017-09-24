@@ -913,7 +913,7 @@ protected override void Disconnected()
 						+ "public IField Field { get { return field; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
-		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, field);");
+		opCode.WriteOperand.Add("field.WriteTo(output);");
 		opCode.Interfaces.Add("IInstructionWithFieldOperand");
 	};
 
@@ -927,7 +927,7 @@ protected override void Disconnected()
 						+ "public IType Type { get { return type; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
-		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, type);");
+		opCode.WriteOperand.Add("type.WriteTo(output);");
 	};
 
 	static Action<OpCode> HasMethodOperand = opCode => {
@@ -940,7 +940,7 @@ protected override void Disconnected()
 						+ "public IMethod Method { get { return method; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
-		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, method);");
+		opCode.WriteOperand.Add("method.WriteTo(output);");
 		opCode.Interfaces.Add("IInstructionWithMethodOperand");
 	};
 	
@@ -954,7 +954,7 @@ protected override void Disconnected()
 						+ "public IMember Member { get { return member; } }");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
-		opCode.WriteOperand.Add("Disassembler.DisassemblerHelpers.WriteOperand(output, member);");
+		opCode.WriteOperand.Add("member.WriteTo(output);");
 	};
 	
 	// LoadConstant trait: the instruction loads a compile-time constant. Implies NoArguments.

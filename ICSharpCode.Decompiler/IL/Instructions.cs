@@ -2635,7 +2635,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, method);
+			method.WriteTo(output);
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2682,7 +2682,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, method);
+			method.WriteTo(output);
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
@@ -2723,7 +2723,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2761,7 +2761,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, member);
+			member.WriteTo(output);
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2894,7 +2894,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+			field.WriteTo(output);
 			output.Write('(');
 			this.target.WriteTo(output, options);
 			output.Write(')');
@@ -2935,7 +2935,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, field);
+			field.WriteTo(output);
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2982,7 +2982,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
@@ -3023,7 +3023,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
@@ -3129,7 +3129,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write("unaligned(" + UnalignedPrefix + ").");
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			this.target.WriteTo(output, options);
 			output.Write(')');
@@ -3253,7 +3253,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write("unaligned(" + UnalignedPrefix + ").");
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			this.target.WriteTo(output, options);
 			output.Write(", ");
@@ -3305,7 +3305,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
@@ -3355,7 +3355,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
@@ -3405,7 +3405,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
@@ -3515,7 +3515,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			bool first = true;
 			foreach (var indices in Indices) {
@@ -3560,7 +3560,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3672,7 +3672,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -3859,7 +3859,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write("readonly.");
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			this.array.WriteTo(output, options);
 			foreach (var indices in Indices) {
@@ -3997,7 +3997,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
@@ -4075,7 +4075,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.Write(OpCode);
 			output.Write(' ');
-			Disassembler.DisassemblerHelpers.WriteOperand(output, type);
+			type.WriteTo(output);
 			output.Write('(');
 			Argument.WriteTo(output, options);
 			output.Write(')');
