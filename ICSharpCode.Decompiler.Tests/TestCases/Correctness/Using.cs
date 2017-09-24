@@ -40,9 +40,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void Main()
 		{
 			SimpleUsingNullStatement();
-			NoUsing();
-			NoUsing2();
-			ThisIsNotAUsingBlock();
+			NoUsingDueToAssignment();
+			NoUsingDueToAssignment2();
+			NoUsingDueToByRefCall();
+			NoUsingDueToContinuedDisposableUse();
+			ContinuedObjectUse();
 			UsingObject();
 		}
 
@@ -58,7 +60,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("after using");
 		}
 
-		public static void NoUsing()
+		public static void NoUsingDueToAssignment()
 		{
 			PrintOnDispose printOnDispose = new PrintOnDispose("Wrong");
 			try {
@@ -68,7 +70,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
-		public static void NoUsing2()
+		public static void NoUsingDueToAssignment2()
 		{
 			PrintOnDispose printOnDispose = new PrintOnDispose("NoUsing(): Wrong");
 			try {
@@ -81,12 +83,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
-		public static void ThisIsNotAUsingBlock()
+		static void Clear<T>(ref T t)
+		{
+			t = default(T);
+		}
+
+		public static void NoUsingDueToByRefCall()
+		{
+			PrintOnDispose printOnDispose = new PrintOnDispose("NoUsingDueToByRefCall(): Wrong");
+			try {
+				Console.WriteLine("NoUsingDueToByRefCall");
+				Clear(ref printOnDispose);
+			} finally {
+				IDisposable disposable = (object)printOnDispose as IDisposable;
+				if (disposable != null) {
+					disposable.Dispose();
+				}
+			}
+		}
+
+		public static void NoUsingDueToContinuedDisposableUse()
 		{
 			var obj = new System.IO.StringWriter();
 			IDisposable disposable;
 			try {
-				obj.WriteLine("ThisIsNotAUsingBlock");
+				obj.WriteLine("NoUsingDueToContinuedDisposableUse");
 			} finally {
 				disposable = (object)obj as IDisposable;
 				if (disposable != null) {
@@ -94,6 +115,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				}
 			}
 			Console.WriteLine(disposable);
+		}
+
+		public static void ContinuedObjectUse()
+		{
+			var obj = new System.IO.StringWriter();
+			try {
+				obj.WriteLine("ContinuedObjectUse");
+			} finally {
+				IDisposable disposable = (object)obj as IDisposable;
+				if (disposable != null) {
+					disposable.Dispose();
+				}
+			}
+			Console.WriteLine(obj);
+		}
+
+		public static void VariableAlreadyUsedBefore()
+		{
+			System.IO.StringWriter obj = new System.IO.StringWriter();
+			obj.Write("VariableAlreadyUsedBefore - 1");
+			Console.WriteLine(obj);
+			obj = new System.IO.StringWriter();
+			try {
+				obj.WriteLine("VariableAlreadyUsedBefore - 2");
+			} finally {
+				IDisposable disposable = (object)obj as IDisposable;
+				if (disposable != null) {
+					disposable.Dispose();
+				}
+			}
 		}
 
 		public static void UsingObject()

@@ -86,6 +86,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private void UsingStatementOnNullableStruct(UsingStruct? us)
+		{
+			using (us) {
+				Console.WriteLine("using-body: " + us);
+			}
+		}
+
 		public void GenericUsing<T>(T t) where T : IDisposable
 		{
 			using (t) {
@@ -101,6 +108,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		public void GenericClassUsing<T>(T t) where T : class, IDisposable
+		{
+			using (t) {
+				Console.WriteLine(t);
+			}
+		}
+
+		public void GenericNullableUsing<T>(T? t) where T : struct, IDisposable
 		{
 			using (t) {
 				Console.WriteLine(t);
