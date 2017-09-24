@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.18020
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Using.dll
-// MVID: {81DAF28D-BA8B-49CF-9CAC-D5C7BE5BE2AC}
+// MVID: {6ACE0D07-2500-4E79-B8A5-908F446B5708}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x010E0000
+// Image base: 0x01950000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -278,6 +278,62 @@
     }  // end handler
     IL_0025:  ret
   } // end of method Using::GenericUsing
+
+  .method public hidebysig instance void 
+          GenericStructUsing<valuetype .ctor ([mscorlib]System.IDisposable, [mscorlib]System.ValueType) T>(!!T t) cil managed
+  {
+    // Code size       30 (0x1e)
+    .maxstack  1
+    .locals init (!!T V_0)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.0
+    .try
+    {
+      IL_0002:  ldarg.1
+      IL_0003:  box        !!T
+      IL_0008:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_000d:  leave.s    IL_001d
+
+    }  // end .try
+    finally
+    {
+      IL_000f:  ldloca.s   V_0
+      IL_0011:  constrained. !!T
+      IL_0017:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_001c:  endfinally
+    }  // end handler
+    IL_001d:  ret
+  } // end of method Using::GenericStructUsing
+
+  .method public hidebysig instance void 
+          GenericClassUsing<class ([mscorlib]System.IDisposable) T>(!!T t) cil managed
+  {
+    // Code size       36 (0x24)
+    .maxstack  1
+    .locals init (!!T V_0)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.0
+    .try
+    {
+      IL_0002:  ldarg.1
+      IL_0003:  box        !!T
+      IL_0008:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_000d:  leave.s    IL_0023
+
+    }  // end .try
+    finally
+    {
+      IL_000f:  ldloc.0
+      IL_0010:  box        !!T
+      IL_0015:  brfalse.s  IL_0022
+
+      IL_0017:  ldloc.0
+      IL_0018:  box        !!T
+      IL_001d:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0022:  endfinally
+    }  // end handler
+    IL_0023:  ret
+  } // end of method Using::GenericClassUsing
 
   .method public hidebysig instance void 
           NoUsing() cil managed

@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.18020
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly l2hk2gwn
+.assembly vu3cz5gg
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module l2hk2gwn.dll
-// MVID: {657FEAFC-6D05-4375-B9FF-DE1D3DB20A85}
+.module vu3cz5gg.dll
+// MVID: {FD1D14F2-B901-4ADC-A6BA-6844964F643A}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02BA0000
+// Image base: 0x00F10000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -378,6 +378,79 @@
     IL_002f:  nop
     IL_0030:  ret
   } // end of method Using::GenericUsing
+
+  .method public hidebysig instance void 
+          GenericStructUsing<valuetype .ctor ([mscorlib]System.ValueType, [mscorlib]System.IDisposable) T>(!!T t) cil managed
+  {
+    // Code size       36 (0x24)
+    .maxstack  1
+    .locals init (!!T V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  stloc.0
+    .try
+    {
+      IL_0003:  nop
+      IL_0004:  ldarg.1
+      IL_0005:  box        !!T
+      IL_000a:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_000f:  nop
+      IL_0010:  nop
+      IL_0011:  leave.s    IL_0022
+
+    }  // end .try
+    finally
+    {
+      IL_0013:  ldloca.s   V_0
+      IL_0015:  constrained. !!T
+      IL_001b:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0020:  nop
+      IL_0021:  endfinally
+    }  // end handler
+    IL_0022:  nop
+    IL_0023:  ret
+  } // end of method Using::GenericStructUsing
+
+  .method public hidebysig instance void 
+          GenericClassUsing<class ([mscorlib]System.IDisposable) T>(!!T t) cil managed
+  {
+    // Code size       49 (0x31)
+    .maxstack  2
+    .locals init (!!T V_0,
+             bool V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  stloc.0
+    .try
+    {
+      IL_0003:  nop
+      IL_0004:  ldarg.1
+      IL_0005:  box        !!T
+      IL_000a:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_000f:  nop
+      IL_0010:  nop
+      IL_0011:  leave.s    IL_002f
+
+    }  // end .try
+    finally
+    {
+      IL_0013:  ldloc.0
+      IL_0014:  box        !!T
+      IL_0019:  ldnull
+      IL_001a:  ceq
+      IL_001c:  stloc.1
+      IL_001d:  ldloc.1
+      IL_001e:  brtrue.s   IL_002e
+
+      IL_0020:  ldloca.s   V_0
+      IL_0022:  constrained. !!T
+      IL_0028:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_002d:  nop
+      IL_002e:  endfinally
+    }  // end handler
+    IL_002f:  nop
+    IL_0030:  ret
+  } // end of method Using::GenericClassUsing
 
   .method public hidebysig instance void 
           NoUsing() cil managed

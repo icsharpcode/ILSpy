@@ -257,7 +257,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		#region foreach construction
-		static readonly AssignmentExpression getEnumeratorPattern = new AssignmentExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), new InvocationExpression(new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator")));
+		static readonly InvocationExpression getEnumeratorPattern = new InvocationExpression(new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator"));
 		static readonly InvocationExpression moveNextConditionPattern = new InvocationExpression(new MemberReferenceExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), "MoveNext"));
 
 		protected internal override Statement VisitUsingInstruction(UsingInstruction inst)
@@ -265,19 +265,28 @@ namespace ICSharpCode.Decompiler.CSharp
 			var transformed = TransformToForeach(inst, out var resource);
 			if (transformed != null)
 				return transformed;
+			AstNode usingInit = resource;
+			var var = inst.Variable;
+			if (var.LoadCount > 0 || var.AddressCount > 0) {
+				var.Kind = VariableKind.UsingLocal;
+				var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(var.Type);
+				var vds = new VariableDeclarationStatement(type, var.Name, resource);
+				vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(var, var.Type));
+				usingInit = vds;
+			}
 			return new UsingStatement {
-				ResourceAcquisition = resource,
+				ResourceAcquisition = usingInit,
 				EmbeddedStatement = ConvertAsBlock(inst.Body)
 			};
 		}
 
-		Statement TransformToForeach(UsingInstruction inst, out TranslatedExpression resource)
+		Statement TransformToForeach(UsingInstruction inst, out Expression resource)
 		{
 			resource = exprBuilder.Translate(inst.ResourceExpression);
-			var m = getEnumeratorPattern.Match(resource.Expression);
+			var m = getEnumeratorPattern.Match(resource);
 			if (!(inst.Body is BlockContainer container) || !m.Success)
 				return null;
-			var enumeratorVar = m.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
+			var enumeratorVar = inst.Variable;
 			var loopContainer = UnwrapNestedContainerIfPossible(container, out var optionalReturnAfterLoop);
 			var loop = DetectedLoop.DetectLoop(loopContainer);
 			if (loop.Kind != LoopKind.While || !(loop.Body is Block body))

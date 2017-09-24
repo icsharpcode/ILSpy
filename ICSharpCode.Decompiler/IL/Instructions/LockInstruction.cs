@@ -51,6 +51,9 @@ namespace ICSharpCode.Decompiler.IL
 	/// }
 	/// </code>
 	/// </summary>
+	/// <remarks>
+	/// The value of v is undefined after the end of the body block.
+	/// </remarks>
 	partial class UsingInstruction
 	{
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)

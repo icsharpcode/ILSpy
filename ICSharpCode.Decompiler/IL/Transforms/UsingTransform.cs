@@ -120,17 +120,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				callVirt = cv;
 			}
-			if (callVirt.Method.Name != "Dispose" || callVirt.Method.DeclaringType.FullName != "System.IDisposable")
+			if (callVirt.Method.FullName != "System.IDisposable.Dispose")
 				return false;
 			if (callVirt.Method.Parameters.Count > 0)
 				return false;
 			if (callVirt.Arguments.Count != 1)
 				return false;
-			if (objVar.Type.IsReferenceType != false) {
-				return callVirt.Arguments[0].MatchLdLoc(objVar) || (usingNull && callVirt.Arguments[0].MatchLdNull());
-			} else {
-				return callVirt.Arguments[0].MatchLdLoca(objVar);
-			}
+			return callVirt.Arguments[0].MatchLdLocRef(objVar) || (usingNull && callVirt.Arguments[0].MatchLdNull());
 		}
 	}
 }

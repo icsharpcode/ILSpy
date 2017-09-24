@@ -108,6 +108,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public void GenericStructUsing<T>(T t) where T : struct, IDisposable
+		{
+			using (t) {
+				Console.WriteLine(t);
+			}
+		}
+
+		public void GenericClassUsing<T>(T t) where T : class, IDisposable
+		{
+			using (t) {
+				Console.WriteLine(t);
+			}
+		}
+
 		public void NoUsing()
 		{
 			PrintOnDispose printOnDispose = new PrintOnDispose("Wrong");
