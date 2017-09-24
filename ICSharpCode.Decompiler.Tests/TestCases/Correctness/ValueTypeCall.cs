@@ -124,9 +124,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				MutValueType x = y;
 				x.Dispose();
 			}
-			Console.WriteLine("Using with double var:");
+			Console.WriteLine("Using with variable declared outside:");
 			MutValueType z;
-			using (var x = z = new MutValueType()) {
+			using (z = new MutValueType()) {
 				z.Increment();
 			}
 		}
