@@ -72,13 +72,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool TransformUsing(Block block, int i)
 		{
 			if (i < 1) return false;
-			if (!(block.Instructions[i] is TryFinally body) || !(block.Instructions[i - 1] is StLoc storeInst))
+			if (!(block.Instructions[i] is TryFinally tryFinally) || !(block.Instructions[i - 1] is StLoc storeInst))
 				return false;
-			if (!(body.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
+			if (!storeInst.Variable.Type.GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable)))
 				return false;
-			context.Step("UsingTransform", body);
+			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(tryFinally)))
+				return false;
+			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally)))
+				return false;
+			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
+				return false;
+			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
+				return false;
+			context.Step("UsingTransform", tryFinally);
 			block.Instructions.RemoveAt(i);
-			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, body.TryBlock);
+			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
 			return true;
 		}
 
