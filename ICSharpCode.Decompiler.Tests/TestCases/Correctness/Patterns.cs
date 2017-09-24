@@ -9,16 +9,36 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	/// <summary>
 	/// This file contains special cases of some patterns that cannot be tested in pretty tests.
 	/// </summary>
-	class Patterns
+	static class Patterns
 	{
+		#region Test Helpers
+		class PrintOnDispose : IDisposable
+		{
+			private string v;
+
+			public PrintOnDispose(string v)
+			{
+				this.v = v;
+			}
+
+			public void Dispose()
+			{
+				Console.WriteLine(this.v);
+			}
+		}
+		#endregion
+
 		static void Main()
 		{
 			SimpleUsingNullStatement();
+			NoUsing();
+			NoUsing2();
 			ForWithMultipleVariables();
 			DoubleForEachWithSameVariable(new[] { "a", "b", "c" });
 			ForeachExceptForNameCollision(new[] { 42, 43, 44, 45 });
 		}
 
+		#region Using
 		/// <summary>
 		/// Special case: Roslyn eliminates the try-finally altogether.
 		/// </summary>
@@ -31,6 +51,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine("after using");
 		}
 
+		public static void NoUsing()
+		{
+			PrintOnDispose printOnDispose = new PrintOnDispose("Wrong");
+			try {
+				printOnDispose = new PrintOnDispose("Correct");
+			} finally {
+				printOnDispose.Dispose();
+			}
+		}
+
+		public static void NoUsing2()
+		{
+			object printOnDispose = new PrintOnDispose("NoUsing(): Wrong");
+			try {
+				printOnDispose = new PrintOnDispose("NoUsing(): Correct");
+			} finally {
+				IDisposable disposable = printOnDispose as IDisposable;
+				if (disposable != null) {
+					disposable.Dispose();
+				}
+			}
+		}
+		#endregion
+
+		#region Loops
 		public static void ForWithMultipleVariables()
 		{
 			int x, y;
@@ -68,5 +113,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			current = 1;
 			Console.WriteLine(current);
 		}
+		#endregion
 	}
 }
