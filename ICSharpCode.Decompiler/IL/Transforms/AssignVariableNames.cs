@@ -275,6 +275,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				name = "array";
 			} else if (type is PointerType) {
 				name = "ptr";
+			} else if (type.Kind == TypeKind.TypeParameter) {
+				name = "val";
 			} else if (type.IsAnonymousType()) {
 				name = "anon";
 			} else if (type.Name.EndsWith("Exception", StringComparison.Ordinal)) {
