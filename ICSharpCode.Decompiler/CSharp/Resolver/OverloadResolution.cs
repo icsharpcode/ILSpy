@@ -684,15 +684,6 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			return 0;
 		}
 		
-		/// <summary>
-		/// Implement this interface to give overload resolution a hint that the member represents a lifted operator,
-		/// which is used in the tie-breaking rules.
-		/// </summary>
-		public interface ILiftedOperator : IParameterizedMember
-		{
-			IList<IParameter> NonLiftedParameters { get; }
-		}
-		
 		int MoreSpecificFormalParameters(Candidate c1, Candidate c2)
 		{
 			// prefer the member with more formal parmeters (in case both have different number of optional parameters)

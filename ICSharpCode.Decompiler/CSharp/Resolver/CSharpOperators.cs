@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -318,7 +319,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 		
-		sealed class LiftedUnaryOperatorMethod : UnaryOperatorMethod, OverloadResolution.ILiftedOperator
+		sealed class LiftedUnaryOperatorMethod : UnaryOperatorMethod, ILiftedOperator
 		{
 			UnaryOperatorMethod baseMethod;
 			
@@ -328,10 +329,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.ReturnType = NullableType.Create(baseMethod.Compilation, baseMethod.ReturnType);
 				this.Parameters.Add(operators.MakeNullableParameter(baseMethod.Parameters[0]));
 			}
-			
-			public IList<IParameter> NonLiftedParameters {
-				get { return baseMethod.Parameters; }
-			}
+
+			public IList<IParameter> NonLiftedParameters => baseMethod.Parameters;
+			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
 		#endregion
 		
@@ -484,7 +484,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 		
-		sealed class LiftedBinaryOperatorMethod : BinaryOperatorMethod, OverloadResolution.ILiftedOperator
+		sealed class LiftedBinaryOperatorMethod : BinaryOperatorMethod, ILiftedOperator
 		{
 			readonly BinaryOperatorMethod baseMethod;
 			
@@ -496,10 +496,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 				this.Parameters.Add(operators.MakeNullableParameter(baseMethod.Parameters[0]));
 				this.Parameters.Add(operators.MakeNullableParameter(baseMethod.Parameters[1]));
 			}
-			
-			public IList<IParameter> NonLiftedParameters {
-				get { return baseMethod.Parameters; }
-			}
+
+			public IList<IParameter> NonLiftedParameters => baseMethod.Parameters;
+			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
 		#endregion
 		
@@ -728,7 +727,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 		
-		sealed class LiftedEqualityOperatorMethod : BinaryOperatorMethod, OverloadResolution.ILiftedOperator
+		sealed class LiftedEqualityOperatorMethod : BinaryOperatorMethod, ILiftedOperator
 		{
 			readonly EqualityOperatorMethod baseMethod;
 			
@@ -750,10 +749,9 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			{
 				return baseMethod.Invoke(resolver, lhs, rhs);
 			}
-			
-			public IList<IParameter> NonLiftedParameters {
-				get { return baseMethod.Parameters; }
-			}
+
+			public IList<IParameter> NonLiftedParameters => baseMethod.Parameters;
+			public IType NonLiftedReturnType => baseMethod.ReturnType;
 		}
 		
 		// C# 4.0 spec: §7.10 Relational and type-testing operators
@@ -1041,5 +1039,103 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 			}
 		}
 		#endregion
+
+		#region User-defined operators
+		public static IMethod LiftUserDefinedOperator(IMethod m)
+		{
+			if (IsComparisonOperator(m)) {
+				if (!m.ReturnType.IsKnownType(KnownTypeCode.Boolean))
+					return null; // cannot lift this operator
+			} else {
+				if (!NullableType.IsNonNullableValueType(m.ReturnType))
+					return null; // cannot lift this operator
+			}
+			for (int i = 0; i < m.Parameters.Count; i++) {
+				if (!NullableType.IsNonNullableValueType(m.Parameters[i].Type))
+					return null; // cannot lift this operator
+			}
+			return new LiftedUserDefinedOperator(m);
+		}
+
+		internal static bool IsComparisonOperator(IMethod m)
+		{
+			return m.IsOperator && m.Parameters.Count == 2
+				&& (OperatorDeclaration.GetOperatorType(m.Name)?.IsComparisonOperator() ?? false);
+		}
+
+		sealed class LiftedUserDefinedOperator : SpecializedMethod, ILiftedOperator
+		{
+			internal readonly IParameterizedMember nonLiftedOperator;
+
+			public LiftedUserDefinedOperator(IMethod nonLiftedMethod)
+				: base((IMethod)nonLiftedMethod.MemberDefinition, nonLiftedMethod.Substitution)
+			{
+				this.nonLiftedOperator = nonLiftedMethod;
+				var substitution = new MakeNullableVisitor(nonLiftedMethod.Compilation, nonLiftedMethod.Substitution);
+				this.Parameters = base.CreateParameters(substitution);
+				// Comparison operators keep the 'bool' return type even when lifted.
+				if (IsComparisonOperator(nonLiftedMethod))
+					this.ReturnType = nonLiftedMethod.ReturnType;
+				else
+					this.ReturnType = nonLiftedMethod.ReturnType.AcceptVisitor(substitution);
+			}
+
+			public IList<IParameter> NonLiftedParameters => nonLiftedOperator.Parameters;
+			public IType NonLiftedReturnType => nonLiftedOperator.ReturnType;
+
+			public override bool Equals(object obj)
+			{
+				LiftedUserDefinedOperator op = obj as LiftedUserDefinedOperator;
+				return op != null && this.nonLiftedOperator.Equals(op.nonLiftedOperator);
+			}
+
+			public override int GetHashCode()
+			{
+				return nonLiftedOperator.GetHashCode() ^ 0x7191254;
+			}
+		}
+
+		sealed class MakeNullableVisitor : TypeVisitor
+		{
+			readonly ICompilation compilation;
+			readonly TypeParameterSubstitution typeParameterSubstitution;
+
+			public MakeNullableVisitor(ICompilation compilation, TypeParameterSubstitution typeParameterSubstitution)
+			{
+				this.compilation = compilation;
+				this.typeParameterSubstitution = typeParameterSubstitution;
+			}
+
+			public override IType VisitTypeDefinition(ITypeDefinition type)
+			{
+				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
+			}
+
+			public override IType VisitTypeParameter(ITypeParameter type)
+			{
+				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
+			}
+
+			public override IType VisitParameterizedType(ParameterizedType type)
+			{
+				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
+			}
+
+			public override IType VisitOtherType(IType type)
+			{
+				return NullableType.Create(compilation, type.AcceptVisitor(typeParameterSubstitution));
+			}
+		}
+		#endregion
+	}
+
+	/// <summary>
+	/// Implement this interface to give overload resolution a hint that the member represents a lifted operator,
+	/// which is used in the tie-breaking rules.
+	/// </summary>
+	public interface ILiftedOperator : IParameterizedMember
+	{
+		IType NonLiftedReturnType { get; }
+		IList<IParameter> NonLiftedParameters { get; }
 	}
 }
