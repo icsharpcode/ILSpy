@@ -76,23 +76,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(body.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
 				return false;
-			ILInstruction resourceExpression;
-			if (storeInst.Variable.Type.IsReferenceType != false) {
-				if (storeInst.Variable.IsSingleDefinition && storeInst.Variable.LoadCount <= 2) {
-					resourceExpression = storeInst.Value;
-				} else {
-					resourceExpression = storeInst;
-				}
-			} else {
-				if (storeInst.Variable.StoreCount == 1 && storeInst.Variable.LoadCount == 0 && storeInst.Variable.AddressCount == 1) {
-					resourceExpression = storeInst.Value;
-				} else {
-					resourceExpression = storeInst;
-				}
-			}
 			context.Step("UsingTransform", body);
 			block.Instructions.RemoveAt(i);
-			block.Instructions[i - 1] = new UsingInstruction(resourceExpression, body.TryBlock);
+			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, body.TryBlock);
 			return true;
 		}
 

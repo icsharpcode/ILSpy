@@ -39,11 +39,25 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 
+	/// <summary>
+	/// IL using instruction.
+	/// Equivalent to:
+	/// <code>
+	/// stloc v(resourceExpression)
+	/// try {
+	///    body
+	/// } finally {
+	///    v?.Dispose();
+	/// }
+	/// </code>
+	/// </summary>
 	partial class UsingInstruction
 	{
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			output.Write("using (");
+			Variable.WriteTo(output);
+			output.Write(" = ");
 			ResourceExpression.WriteTo(output, options);
 			output.WriteLine(") {");
 			output.Indent();
