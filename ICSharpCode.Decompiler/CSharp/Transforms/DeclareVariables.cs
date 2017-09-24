@@ -314,8 +314,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				while (!(v.InsertionPoint.nextNode.Parent is BlockStatement)) {
 					if (v.InsertionPoint.nextNode.Parent is ForStatement f && v.InsertionPoint.nextNode == f.Initializers.FirstOrDefault() && IsMatchingAssignment(v, out _))
 						break;
-					if (v.InsertionPoint.nextNode.Parent is UsingStatement u && v.InsertionPoint.nextNode == u.ResourceAcquisition && IsMatchingAssignment(v, out _))
-						break;
 					v.InsertionPoint = v.InsertionPoint.Up();
 				}
 				
