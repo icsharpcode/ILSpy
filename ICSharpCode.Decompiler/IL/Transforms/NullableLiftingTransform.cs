@@ -143,6 +143,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// (a.GetValueOrDefault() == b.GetValueOrDefault()) ? (a.HasValue != b.HasValue) : true
 						// => a != b
 						return LiftCSharpEqualityComparison(comp, ComparisonKind.Inequality, trueInst);
+					} else if (IsGenericNewPattern(condition, trueInst, falseInst)) {
+						// (default(T) == null) ? Activator.CreateInstance<T>() : default(T)
+						// => Activator.CreateInstance<T>()
+						return trueInst;
 					}
 				} else {
 					// Not (in)equality, but one of < <= > >=.
@@ -231,6 +235,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			return null;
+		}
+
+		private bool IsGenericNewPattern(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		{
+			// (default(T) == null) ? Activator.CreateInstance<T>() : default(T)
+			return falseInst.MatchDefaultValue(out var type) &&
+				(trueInst is Call c && c.Method.FullName == "System.Activator.CreateInstance" && c.Method.TypeArguments.Count == 1) &&
+				type.Kind == TypeKind.TypeParameter &&
+				condition.MatchCompEquals(out var left, out var right) &&
+				left.MatchDefaultValue(out var type2) &&
+				type.Equals(type2) &&
+				right.MatchLdNull();
 		}
 
 		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable nullable1, out ILVariable nullable2)

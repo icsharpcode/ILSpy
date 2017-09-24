@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly '4ebood3j'
+.assembly sxsfxc4c
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module '4ebood3j.dll'
-// MVID: {EFF51081-05A0-430F-B639-218464AEAF1E}
+.module sxsfxc4c.dll
+// MVID: {4BDFEFB1-623B-4D1C-B489-AE8EC4D00CF2}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00C40000
+// Image base: 0x02FA0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -122,11 +122,12 @@
     IL_001f:  ret
   } // end of method Generics::New
 
-  .method public hidebysig static bool  IsNull<T>(!!T t) cil managed
+  .method public hidebysig instance bool 
+          IsNull<T>(!!T t) cil managed
   {
     // Code size       10 (0xa)
     .maxstack  8
-    IL_0000:  ldarg.0
+    IL_0000:  ldarg.1
     IL_0001:  box        !!T
     IL_0006:  ldnull
     IL_0007:  ceq

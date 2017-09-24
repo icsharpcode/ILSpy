@@ -98,6 +98,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						}
 					}
 					break;
+				case "System.Activator.CreateInstance":
+					if (method.TypeArguments.Count == 1 && arguments.Length == 0 && method.TypeArguments[0].Kind == TypeKind.TypeParameter) {
+						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First())));
+					}
+					break;
 			}
 			
 			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name);

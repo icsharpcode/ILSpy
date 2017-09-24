@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Generics.dll
-// MVID: {ADEAC82A-8D93-4D9A-B37E-3FC39CBDC54B}
+// MVID: {9BC41AF0-27DC-4022-8C9C-4D7039122350}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x007E0000
+// Image base: 0x03030000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -129,13 +129,14 @@
     IL_000a:  ret
   } // end of method Generics::New
 
-  .method public hidebysig static bool  IsNull<T>(!!T t) cil managed
+  .method public hidebysig instance bool 
+          IsNull<T>(!!T t) cil managed
   {
     // Code size       15 (0xf)
     .maxstack  2
     .locals init (bool V_0)
     IL_0000:  nop
-    IL_0001:  ldarg.0
+    IL_0001:  ldarg.1
     IL_0002:  box        !!T
     IL_0007:  ldnull
     IL_0008:  ceq
