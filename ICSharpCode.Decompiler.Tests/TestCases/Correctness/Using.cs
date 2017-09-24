@@ -45,6 +45,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			NoUsingDueToByRefCall();
 			NoUsingDueToContinuedDisposableUse();
 			ContinuedObjectUse();
+			VariableAlreadyUsedBefore();
 			UsingObject();
 		}
 

@@ -94,11 +94,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		
 		static void Box()
 		{
+			Console.WriteLine("Box");
 			object o = new MutValueType { val = 300 };
 			((MutValueType)o).Increment();
 			((MutValueType)o).Increment();
+			MutValueType unboxed1 = (MutValueType)o;
+			unboxed1.Increment();
+			unboxed1.Increment();
+			((MutValueType)o).Increment();
+			MutValueType unboxed2 = (MutValueType)o;
+			unboxed2.val = 100;
+			((MutValueType)o).Dispose();
 		}
-		
+
 		MutValueType instanceField;
 		ValueTypeWithReadOnlyMember mutableInstanceFieldWithReadOnlyMember;
 		
@@ -112,10 +120,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		static void Using()
 		{
+			Using1();
+			Using2();
+			Using3();
+		}
+
+		static void Using1()
+		{
 			Console.WriteLine("Using:");
 			using (var x = new MutValueType()) {
 				x.Increment();
 			}
+		}
+
+		static void Using2()
+		{
 			Console.WriteLine("Not using:");
 			var y = new MutValueType();
 			try {
@@ -124,6 +143,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				MutValueType x = y;
 				x.Dispose();
 			}
+		}
+
+		static void Using3()
+		{
 			Console.WriteLine("Using with variable declared outside:");
 			MutValueType z;
 			using (z = new MutValueType()) {
