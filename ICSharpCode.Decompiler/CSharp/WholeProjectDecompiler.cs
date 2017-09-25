@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		#region Settings
 		DecompilerSettings settings = new DecompilerSettings();
-		
+
 		public DecompilerSettings Settings {
 			get {
 				return settings;
@@ -52,16 +52,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				settings = value;
 			}
 		}
-		
+
 		/// <summary>
 		/// The MSBuild ProjectGuid to use for the new project.
 		/// <c>null</c> to automatically generate a new GUID.
 		/// </summary>
 		public Guid? ProjectGuid { get; set; }
-		
+
 		public int MaxDegreeOfParallelism { get; set; } = Environment.ProcessorCount;
 		#endregion
-		
+
 		// per-run members
 		HashSet<string> directories = new HashSet<string>(Platform.FileNameComparer);
 
@@ -73,7 +73,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// can access it.
 		/// </remarks>
 		protected string targetDirectory;
-		
+
 		public void DecompileProject(ModuleDefinition moduleDefinition, string targetDirectory, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			string projectFileName = Path.Combine(targetDirectory, CleanUpFileName(moduleDefinition.Assembly.Name.Name) + ".csproj");
@@ -81,7 +81,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				DecompileProject(moduleDefinition, targetDirectory, writer, cancellationToken);
 			}
 		}
-		
+
 		public void DecompileProject(ModuleDefinition moduleDefinition, string targetDirectory, TextWriter projectFileWriter, CancellationToken cancellationToken = default(CancellationToken))
 		{
 			if (string.IsNullOrEmpty(targetDirectory)) {
@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			None,
 			Portable
 		}
-		
+
 		#region WriteProjectFile
 		void WriteProjectFile(TextWriter writer, IEnumerable<Tuple<string, string>> files, ModuleDefinition module)
 		{
@@ -248,7 +248,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				w.WriteEndDocument();
 			}
 		}
-		
+
 		protected virtual bool IsGacAssembly(AssemblyNameReference r, AssemblyDefinition asm)
 		{
 			return false;
@@ -272,7 +272,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			decompiler.AstTransforms.Add(new RemoveCLSCompliantAttribute());
 			return decompiler;
 		}
-		
+
 		IEnumerable<Tuple<string, string>> WriteAssemblyInfo(DecompilerTypeSystem ts, CancellationToken cancellationToken)
 		{
 			var decompiler = CreateDecompiler(ts);
@@ -293,7 +293,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		IEnumerable<Tuple<string, string>> WriteCodeFilesInProject(ModuleDefinition module, CancellationToken cancellationToken)
 		{
 			var files = module.Types.Where(IncludeTypeWhenDecompilingProject).GroupBy(
-				delegate(TypeDefinition type) {
+				delegate (TypeDefinition type) {
 					string file = CleanUpFileName(type.Name) + ".cs";
 					if (string.IsNullOrEmpty(type.Namespace)) {
 						return file;
@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						string dir = CleanUpFileName(type.Namespace);
 						if (directories.Add(dir))
 							Directory.CreateDirectory(Path.Combine(targetDirectory, dir));
-						return Path.Combine(targetDirectory, dir, file);
+						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
 			DecompilerTypeSystem ts = new DecompilerTypeSystem(module);
@@ -311,7 +311,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					MaxDegreeOfParallelism = this.MaxDegreeOfParallelism,
 					CancellationToken = cancellationToken
 				},
-				delegate(IGrouping<string, TypeDefinition> file) {
+				delegate (IGrouping<string, TypeDefinition> file) {
 					using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, file.Key))) {
 						CSharpDecompiler decompiler = CreateDecompiler(ts);
 						decompiler.CancellationToken = cancellationToken;
@@ -322,7 +322,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return files.Select(f => Tuple.Create("Compile", f.Key)).Concat(WriteAssemblyInfo(ts, cancellationToken));
 		}
 		#endregion
-		
+
 		#region WriteResourceFilesInProject
 		protected virtual IEnumerable<Tuple<string, string>> WriteResourceFilesInProject(ModuleDefinition module)
 		{
@@ -358,7 +358,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 		}
-		
+
 		protected virtual IEnumerable<Tuple<string, string>> WriteResourceToFile(string fileName, string resourceName, Stream entryStream)
 		{
 			using (FileStream fs = new FileStream(fileName, FileMode.Create, FileAccess.Write)) {
@@ -366,7 +366,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			yield return Tuple.Create("EmbeddedResource", fileName);
 		}
-		
+
 		string GetFileNameForResource(string fullName)
 		{
 			string[] splitName = fullName.Split('.');
@@ -393,7 +393,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		#endregion
-		
+
 		/// <summary>
 		/// Cleans up a node name for use as a file name.
 		/// </summary>
@@ -410,7 +410,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				text = text.Replace(c, '-');
 			return text;
 		}
-		
+
 		public static string GetPlatformName(ModuleDefinition module)
 		{
 			switch (module.Architecture) {
