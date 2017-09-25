@@ -267,16 +267,37 @@ namespace ICSharpCode.Decompiler.CSharp
 				return transformed;
 			AstNode usingInit = resource;
 			var var = inst.Variable;
-			if (var.LoadCount > 0 || var.AddressCount > 0) {
-				var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(var.Type);
-				var vds = new VariableDeclarationStatement(type, var.Name, resource);
-				vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(var, var.Type));
-				usingInit = vds;
+			if (!var.Type.GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable))) {
+				var disposeType = exprBuilder.compilation.FindType(KnownTypeCode.IDisposable);
+				var disposeVariable = currentFunction.RegisterVariable(
+					VariableKind.Local, disposeType,
+					AssignVariableNames.GenerateVariableName(currentFunction, disposeType)
+				);
+				return new BlockStatement {
+					new ExpressionStatement(new AssignmentExpression(new IdentifierExpression(var.Name), resource.Detach())),
+					new TryCatchStatement {
+						TryBlock = ConvertAsBlock(inst.Body),
+						FinallyBlock = {
+							new ExpressionStatement(new AssignmentExpression(new IdentifierExpression(disposeVariable.Name), new AsExpression(new IdentifierExpression(var.Name), exprBuilder.ConvertType(disposeType)))),
+							new IfElseStatement {
+								Condition = new BinaryOperatorExpression(new IdentifierExpression(disposeVariable.Name), BinaryOperatorType.InEquality, new NullReferenceExpression()),
+								TrueStatement = new ExpressionStatement(new InvocationExpression(new MemberReferenceExpression(new IdentifierExpression(disposeVariable.Name), "Dispose")))
+							}
+						}
+					},
+				};
+			} else {
+				if (var.LoadCount > 0 || var.AddressCount > 0) {
+					var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(var.Type);
+					var vds = new VariableDeclarationStatement(type, var.Name, resource);
+					vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(var, var.Type));
+					usingInit = vds;
+				}
+				return new UsingStatement {
+					ResourceAcquisition = usingInit,
+					EmbeddedStatement = ConvertAsBlock(inst.Body)
+				};
 			}
-			return new UsingStatement {
-				ResourceAcquisition = usingInit,
-				EmbeddedStatement = ConvertAsBlock(inst.Body)
-			};
 		}
 
 		Statement TransformToForeach(UsingInstruction inst, out Expression resource)
@@ -330,7 +351,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				itemVariable.Kind = VariableKind.ForeachLocal;
 				itemVariable.Name = AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), itemVariable);
 			}
-			var whileLoop = (WhileStatement)ConvertAsBlock(inst.Body).First();
+			var whileLoop = (WhileStatement)ConvertAsBlock(container).First();
 			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
 			foreachBody.Statements.First().Detach();
 			var foreachStmt = new ForeachStatement {

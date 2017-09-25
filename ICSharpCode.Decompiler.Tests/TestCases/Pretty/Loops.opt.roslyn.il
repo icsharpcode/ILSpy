@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Loops.dll
-// MVID: {03277CBF-8A87-4FAE-8B0F-A5BF6427386C}
+// MVID: {7BFC079C-5BB9-4A1A-A6EB-BA407AB11CEF}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01720000
+// Image base: 0x011F0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -464,6 +464,54 @@
     IL_0046:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_004b:  ret
   } // end of method Loops::ForeachExceptForContinuedUse
+
+  .method public hidebysig static void  NonGenericForeachWithReturnFallbackTest(class [mscorlib]System.Collections.IEnumerable e) cil managed
+  {
+    // Code size       88 (0x58)
+    .maxstack  2
+    .locals init (class [mscorlib]System.Collections.IEnumerator V_0,
+             object V_1,
+             class [mscorlib]System.IDisposable V_2)
+    IL_0000:  ldstr      "NonGenericForeachWithReturnFallback:"
+    IL_0005:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_000a:  ldarg.0
+    IL_000b:  callvirt   instance class [mscorlib]System.Collections.IEnumerator [mscorlib]System.Collections.IEnumerable::GetEnumerator()
+    IL_0010:  stloc.0
+    .try
+    {
+      IL_0011:  ldstr      "MoveNext"
+      IL_0016:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_001b:  ldloc.0
+      IL_001c:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
+      IL_0021:  brfalse.s  IL_003a
+
+      IL_0023:  ldloc.0
+      IL_0024:  callvirt   instance object [mscorlib]System.Collections.IEnumerator::get_Current()
+      IL_0029:  stloc.1
+      IL_002a:  ldstr      "current: "
+      IL_002f:  ldloc.1
+      IL_0030:  call       string [mscorlib]System.String::Concat(object,
+                                                                  object)
+      IL_0035:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_003a:  leave.s    IL_004d
+
+    }  // end .try
+    finally
+    {
+      IL_003c:  ldloc.0
+      IL_003d:  isinst     [mscorlib]System.IDisposable
+      IL_0042:  stloc.2
+      IL_0043:  ldloc.2
+      IL_0044:  brfalse.s  IL_004c
+
+      IL_0046:  ldloc.2
+      IL_0047:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_004c:  endfinally
+    }  // end handler
+    IL_004d:  ldstr      "After finally!"
+    IL_0052:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0057:  ret
+  } // end of method Loops::NonGenericForeachWithReturnFallbackTest
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

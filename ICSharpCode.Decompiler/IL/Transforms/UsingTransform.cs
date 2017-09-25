@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (i < 1) return false;
 			if (!(block.Instructions[i] is TryFinally tryFinally) || !(block.Instructions[i - 1] is StLoc storeInst))
 				return false;
-			if (!(storeInst.Value.MatchLdNull() || NullableType.GetUnderlyingType(storeInst.Variable.Type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable))))
+			if (!(storeInst.Value.MatchLdNull() || CheckResourceType(storeInst.Variable.Type)))
 				return false;
 			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(tryFinally)))
 				return false;
@@ -89,6 +89,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions.RemoveAt(i);
 			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
 			return true;
+		}
+
+		bool CheckResourceType(IType type)
+		{
+			// non-generic IEnumerator does not implement IDisposable.
+			// This is a workaround for non-generic foreach.
+			if (type.IsKnownType(KnownTypeCode.IEnumerator))
+				return true;
+			return NullableType.GetUnderlyingType(type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable));
 		}
 
 		bool MatchDisposeBlock(BlockContainer container, ILVariable objVar, bool usingNull)
