@@ -78,13 +78,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(tryFinally)))
 				return false;
-			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally)))
+			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally) || (la.IsDescendantOf(tryFinally.TryBlock) && !ILInlining.IsUsedAsThisPointerInCall(la))))
 				return false;
 			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
 				return false;
 			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
 				return false;
 			context.Step("UsingTransform", tryFinally);
+			storeInst.Variable.Kind = VariableKind.UsingLocal;
 			block.Instructions.RemoveAt(i);
 			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
 			return true;
@@ -129,13 +130,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (callVirt.Arguments.Count != 1)
 					return false;
 				var firstArg = cv.Arguments.FirstOrDefault();
-				if (!(firstArg.MatchUnboxAny(out var innerArg1, out var unboxType) && unboxType.IsKnownType(KnownTypeCode.IDisposable)))
-					return false;
-				if (!(innerArg1.MatchBox(out firstArg, out var boxType) && boxType.IsKnownType(KnownTypeCode.NullableOfT) &&
+				if (!(firstArg.MatchUnboxAny(out var innerArg1, out var unboxType) && unboxType.IsKnownType(KnownTypeCode.IDisposable))) {
+					if (!firstArg.MatchAddressOf(out var innerArg2))
+						return false;
+					return NullableLiftingTransform.MatchGetValueOrDefault(innerArg2, objVar);
+				} else {
+					if (!(innerArg1.MatchBox(out firstArg, out var boxType) && boxType.IsKnownType(KnownTypeCode.NullableOfT) &&
 					NullableType.GetUnderlyingType(boxType).Equals(NullableType.GetUnderlyingType(objVar.Type))))
-					return false;
-				return firstArg.MatchLdLoc(objVar);
+						return false;
+					return firstArg.MatchLdLoc(objVar);
+				}
 			} else {
+				ILInstruction target;
 				if (isReference) {
 					// reference types have a null check.
 					if (!entryPoint.Instructions[checkIndex].MatchIfInstruction(out var condition, out var disposeInst))
@@ -146,9 +152,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					if (!(disposeBlock.Instructions[0] is CallVirt cv))
 						return false;
+					target = cv.Arguments.FirstOrDefault();
+					if (target == null)
+						return false;
+					if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type))
+						target = newTarget;
 					callVirt = cv;
 				} else {
 					if (!(entryPoint.Instructions[checkIndex] is CallVirt cv))
+						return false;
+					target = cv.Arguments.FirstOrDefault();
+					if (target == null)
 						return false;
 					callVirt = cv;
 				}
@@ -158,7 +172,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (callVirt.Arguments.Count != 1)
 					return false;
-				return callVirt.Arguments[0].MatchLdLocRef(objVar) || (usingNull && callVirt.Arguments[0].MatchLdNull());
+				return target.MatchLdLocRef(objVar) || (usingNull && callVirt.Arguments[0].MatchLdNull());
 			}
 		}
 	}

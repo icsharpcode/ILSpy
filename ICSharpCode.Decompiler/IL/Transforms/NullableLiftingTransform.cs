@@ -610,7 +610,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call Nullable{T}.GetValueOrDefault(ldloca v)'
 		/// </summary>
-		static bool MatchGetValueOrDefault(ILInstruction inst, out ILVariable v)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILVariable v)
 		{
 			v = null;
 			return MatchGetValueOrDefault(inst, out ILInstruction arg)
@@ -620,7 +620,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call Nullable{T}.GetValueOrDefault(ldloca v)'
 		/// </summary>
-		static bool MatchGetValueOrDefault(ILInstruction inst, ILVariable v)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, ILVariable v)
 		{
 			return MatchGetValueOrDefault(inst, out ILVariable v2) && v == v2;
 		}
