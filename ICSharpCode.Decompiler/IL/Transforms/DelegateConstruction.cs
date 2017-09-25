@@ -162,6 +162,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		/// <summary>
 		/// Replaces loads of 'this' with the target expression.
+		/// Async delegates use: ldobj(ldloca this).
 		/// </summary>
 		class ReplaceDelegateTargetVisitor : ILVisitor
 		{
@@ -183,11 +184,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			
 			protected internal override void VisitLdLoc(LdLoc inst)
 			{
-				if (inst.MatchLdLoc(thisVariable)) {
+				if (inst.Variable == thisVariable) {
 					inst.ReplaceWith(target.Clone());
 					return;
 				}
 				base.VisitLdLoc(inst);
+			}
+
+			protected internal override void VisitLdObj(LdObj inst)
+			{
+				if (inst.Target.MatchLdLoca(thisVariable)) {
+					inst.ReplaceWith(target.Clone());
+					return;
+				}
+				base.VisitLdObj(inst);
 			}
 		}
 		
