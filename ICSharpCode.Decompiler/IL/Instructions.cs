@@ -1701,12 +1701,52 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Using statement</summary>
-	public sealed partial class UsingInstruction : ILInstruction
+	public sealed partial class UsingInstruction : ILInstruction, IStoreInstruction
 	{
-		public UsingInstruction(ILInstruction resourceExpression, ILInstruction body) : base(OpCode.UsingInstruction)
+		public UsingInstruction(ILVariable variable, ILInstruction resourceExpression, ILInstruction body) : base(OpCode.UsingInstruction)
 		{
+			Debug.Assert(variable != null);
+			this.variable = variable;
 			this.ResourceExpression = resourceExpression;
 			this.Body = body;
+		}
+		ILVariable variable;
+		public ILVariable Variable {
+			get { return variable; }
+			set {
+				Debug.Assert(value != null);
+				if (IsConnected)
+					variable.RemoveStoreInstruction(this);
+				variable = value;
+				if (IsConnected)
+					variable.AddStoreInstruction(this);
+			}
+		}
+		
+		public int IndexInStoreInstructionList { get; set; } = -1;
+		
+		int IInstructionWithVariableOperand.IndexInVariableInstructionMapping {
+			get { return ((IStoreInstruction)this).IndexInStoreInstructionList; }
+			set { ((IStoreInstruction)this).IndexInStoreInstructionList = value; }
+		}
+		
+		protected override void Connected()
+		{
+			base.Connected();
+			variable.AddStoreInstruction(this);
+		}
+		
+		protected override void Disconnected()
+		{
+			variable.RemoveStoreInstruction(this);
+			base.Disconnected();
+		}
+		
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
+			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
 		}
 		public static readonly SlotInfo ResourceExpressionSlot = new SlotInfo("ResourceExpression", canInlineInto: true);
 		ILInstruction resourceExpression;
@@ -1775,11 +1815,11 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.Void; } }
 		protected override InstructionFlags ComputeFlags()
 		{
-			return resourceExpression.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
+			return InstructionFlags.MayWriteLocals | resourceExpression.Flags | body.Flags | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
 		}
 		public override InstructionFlags DirectFlags {
 			get {
-				return InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
+				return InstructionFlags.MayWriteLocals | InstructionFlags.ControlFlow | InstructionFlags.SideEffect;
 			}
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
@@ -1797,7 +1837,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as UsingInstruction;
-			return o != null && this.resourceExpression.PerformMatch(o.resourceExpression, ref match) && this.body.PerformMatch(o.body, ref match);
+			return o != null && variable == o.variable && this.resourceExpression.PerformMatch(o.resourceExpression, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
 	}
 }
@@ -5337,14 +5377,16 @@ namespace ICSharpCode.Decompiler.IL
 			body = default(ILInstruction);
 			return false;
 		}
-		public bool MatchUsingInstruction(out ILInstruction resourceExpression, out ILInstruction body)
+		public bool MatchUsingInstruction(out ILVariable variable, out ILInstruction resourceExpression, out ILInstruction body)
 		{
 			var inst = this as UsingInstruction;
 			if (inst != null) {
+				variable = inst.Variable;
 				resourceExpression = inst.ResourceExpression;
 				body = inst.Body;
 				return true;
 			}
+			variable = default(ILVariable);
 			resourceExpression = default(ILInstruction);
 			body = default(ILInstruction);
 			return false;

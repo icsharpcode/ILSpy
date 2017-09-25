@@ -131,13 +131,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				}
 			}
+
+			if (inst.Right.MatchLdNull() && inst.Left.MatchBox(out arg, out var type) && type.Kind == TypeKind.TypeParameter) {
+				if (inst.Kind == ComparisonKind.Equality) {
+					context.Step("comp(box T(..) == ldnull) -> comp(.. == ldnull)", inst);
+					inst.Left = arg;
+				}
+				if (inst.Kind == ComparisonKind.Inequality) {
+					context.Step("comp(box T(..) != ldnull) -> comp(.. != ldnull)", inst);
+					inst.Left = arg;
+				}
+			}
 		}
 		
 		protected internal override void VisitConv(Conv inst)
 		{
 			inst.Argument.AcceptVisitor(this);
-			ILInstruction array;
-			if (inst.Argument.MatchLdLen(StackType.I, out array) && inst.TargetType.IsIntegerType() && !inst.CheckForOverflow) {
+			if (inst.Argument.MatchLdLen(StackType.I, out ILInstruction array) && inst.TargetType.IsIntegerType() && !inst.CheckForOverflow) {
 				context.Step("conv.i4(ldlen array) => ldlen.i4(array)", inst);
 				inst.AddILRange(inst.Argument.ILRange);
 				inst.ReplaceWith(new LdLen(inst.TargetType.GetStackType(), array) { ILRange = inst.ILRange });

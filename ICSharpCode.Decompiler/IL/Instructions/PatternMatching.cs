@@ -58,10 +58,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public bool MatchLdLocRef(ILVariable variable)
 		{
-			if (variable.Type.IsReferenceType == true)
-				return MatchLdLoc(variable);
-			else
-				return MatchLdLoca(variable);
+			return MatchLdLocRef(out var v) && v == variable;
 		}
 
 		/// <summary>
@@ -75,7 +72,7 @@ namespace ICSharpCode.Decompiler.IL
 					return variable.Type.IsReferenceType == true;
 				case LdLoca ldloca:
 					variable = ldloca.Variable;
-					return variable.Type.IsReferenceType != true;
+					return variable.Type.IsReferenceType != true || variable.Type.Kind == TypeKind.TypeParameter;
 				default:
 					variable = null;
 					return false;

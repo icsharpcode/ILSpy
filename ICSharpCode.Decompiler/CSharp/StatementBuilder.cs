@@ -257,7 +257,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		#region foreach construction
-		static readonly AssignmentExpression getEnumeratorPattern = new AssignmentExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), new InvocationExpression(new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator")));
+		static readonly InvocationExpression getEnumeratorPattern = new InvocationExpression(new MemberReferenceExpression(new AnyNode("collection").ToExpression(), "GetEnumerator"));
 		static readonly InvocationExpression moveNextConditionPattern = new InvocationExpression(new MemberReferenceExpression(new NamedNode("enumerator", new IdentifierExpression(Pattern.AnyString)), "MoveNext"));
 
 		protected internal override Statement VisitUsingInstruction(UsingInstruction inst)
@@ -265,19 +265,49 @@ namespace ICSharpCode.Decompiler.CSharp
 			var transformed = TransformToForeach(inst, out var resource);
 			if (transformed != null)
 				return transformed;
-			return new UsingStatement {
-				ResourceAcquisition = resource,
-				EmbeddedStatement = ConvertAsBlock(inst.Body)
-			};
+			AstNode usingInit = resource;
+			var var = inst.Variable;
+			if (!inst.ResourceExpression.MatchLdNull() && !NullableType.GetUnderlyingType(var.Type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable))) {
+				var.Kind = VariableKind.Local;
+				var disposeType = exprBuilder.compilation.FindType(KnownTypeCode.IDisposable);
+				var disposeVariable = currentFunction.RegisterVariable(
+					VariableKind.Local, disposeType,
+					AssignVariableNames.GenerateVariableName(currentFunction, disposeType)
+				);
+				return new BlockStatement {
+					new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(var).Expression, resource.Detach())),
+					new TryCatchStatement {
+						TryBlock = ConvertAsBlock(inst.Body),
+						FinallyBlock = new BlockStatement() {
+							new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, new AsExpression(exprBuilder.ConvertVariable(var).Expression, exprBuilder.ConvertType(disposeType)))),
+							new IfElseStatement {
+								Condition = new BinaryOperatorExpression(exprBuilder.ConvertVariable(disposeVariable), BinaryOperatorType.InEquality, new NullReferenceExpression()),
+								TrueStatement = new ExpressionStatement(new InvocationExpression(new MemberReferenceExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, "Dispose")))
+							}
+						}
+					},
+				};
+			} else {
+				if (var.LoadCount > 0 || var.AddressCount > 0) {
+					var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(var.Type);
+					var vds = new VariableDeclarationStatement(type, var.Name, resource);
+					vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(var, var.Type));
+					usingInit = vds;
+				}
+				return new UsingStatement {
+					ResourceAcquisition = usingInit,
+					EmbeddedStatement = ConvertAsBlock(inst.Body)
+				};
+			}
 		}
 
-		Statement TransformToForeach(UsingInstruction inst, out TranslatedExpression resource)
+		Statement TransformToForeach(UsingInstruction inst, out Expression resource)
 		{
 			resource = exprBuilder.Translate(inst.ResourceExpression);
-			var m = getEnumeratorPattern.Match(resource.Expression);
+			var m = getEnumeratorPattern.Match(resource);
 			if (!(inst.Body is BlockContainer container) || !m.Success)
 				return null;
-			var enumeratorVar = m.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
+			var enumeratorVar = inst.Variable;
 			var loopContainer = UnwrapNestedContainerIfPossible(container, out var optionalReturnAfterLoop);
 			var loop = DetectedLoop.DetectLoop(loopContainer);
 			if (loop.Kind != LoopKind.While || !(loop.Body is Block body))
@@ -322,7 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				itemVariable.Kind = VariableKind.ForeachLocal;
 				itemVariable.Name = AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), itemVariable);
 			}
-			var whileLoop = (WhileStatement)ConvertAsBlock(inst.Body).First();
+			var whileLoop = (WhileStatement)ConvertAsBlock(container).First();
 			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
 			foreachBody.Statements.First().Detach();
 			var foreachStmt = new ForeachStatement {
@@ -331,6 +361,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				InExpression = collectionExpr.Detach(),
 				EmbeddedStatement = foreachBody
 			};
+			foreachStmt.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			if (optionalReturnAfterLoop != null) {
 				return new BlockStatement {
 					Statements = {

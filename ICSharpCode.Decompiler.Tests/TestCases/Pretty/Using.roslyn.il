@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Using.dll
-// MVID: {3686D0B4-0A65-4B60-A432-7042528E2212}
+// MVID: {7437788B-6603-4074-AE80-83AE987F007D}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02E50000
+// Image base: 0x011B0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -70,41 +70,6 @@
     } // end of method UsingStruct::System.IDisposable.Dispose
 
   } // end of class UsingStruct
-
-  .class auto ansi nested private beforefieldinit PrintOnDispose
-         extends [mscorlib]System.Object
-         implements [mscorlib]System.IDisposable
-  {
-    .field private string v
-    .method public hidebysig specialname rtspecialname 
-            instance void  .ctor(string v) cil managed
-    {
-      // Code size       16 (0x10)
-      .maxstack  8
-      IL_0000:  ldarg.0
-      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
-      IL_0006:  nop
-      IL_0007:  nop
-      IL_0008:  ldarg.0
-      IL_0009:  ldarg.1
-      IL_000a:  stfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose::v
-      IL_000f:  ret
-    } // end of method PrintOnDispose::.ctor
-
-    .method public hidebysig newslot virtual final 
-            instance void  Dispose() cil managed
-    {
-      // Code size       14 (0xe)
-      .maxstack  8
-      IL_0000:  nop
-      IL_0001:  ldarg.0
-      IL_0002:  ldfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose::v
-      IL_0007:  call       void [mscorlib]System.Console::WriteLine(string)
-      IL_000c:  nop
-      IL_000d:  ret
-    } // end of method PrintOnDispose::Dispose
-
-  } // end of class PrintOnDispose
 
   .method public hidebysig instance void 
           SimpleUsingExpressionStatement() cil managed
@@ -282,37 +247,187 @@
     IL_0032:  ret
   } // end of method Using::UsingStatementOnStructWithVariable
 
-  .method public hidebysig instance void 
-          NoUsing() cil managed
+  .method private hidebysig instance void 
+          UsingStatementOnNullableStruct(valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct> us) cil managed
   {
-    // Code size       38 (0x26)
-    .maxstack  1
-    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose V_0)
+    // Code size       62 (0x3e)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct> V_0,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct V_1)
     IL_0000:  nop
-    IL_0001:  ldstr      "Wrong"
-    IL_0006:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose::.ctor(string)
-    IL_000b:  stloc.0
+    IL_0001:  ldarg.1
+    IL_0002:  stloc.0
     .try
     {
-      IL_000c:  nop
-      IL_000d:  ldstr      "Correct"
-      IL_0012:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose::.ctor(string)
-      IL_0017:  stloc.0
-      IL_0018:  nop
-      IL_0019:  leave.s    IL_0025
+      IL_0003:  nop
+      IL_0004:  ldstr      "using-body: "
+      IL_0009:  ldarg.1
+      IL_000a:  box        valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct>
+      IL_000f:  call       string [mscorlib]System.String::Concat(object,
+                                                                  object)
+      IL_0014:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_0019:  nop
+      IL_001a:  nop
+      IL_001b:  leave.s    IL_003d
 
     }  // end .try
     finally
     {
-      IL_001b:  nop
-      IL_001c:  ldloc.0
-      IL_001d:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/PrintOnDispose::Dispose()
-      IL_0022:  nop
-      IL_0023:  nop
-      IL_0024:  endfinally
+      IL_001d:  ldloca.s   V_0
+      IL_001f:  call       instance bool valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct>::get_HasValue()
+      IL_0024:  brfalse.s  IL_003c
+
+      IL_0026:  ldloca.s   V_0
+      IL_0028:  call       instance !0 valuetype [mscorlib]System.Nullable`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct>::GetValueOrDefault()
+      IL_002d:  stloc.1
+      IL_002e:  ldloca.s   V_1
+      IL_0030:  constrained. ICSharpCode.Decompiler.Tests.TestCases.Pretty.Using/UsingStruct
+      IL_0036:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_003b:  nop
+      IL_003c:  endfinally
     }  // end handler
-    IL_0025:  ret
-  } // end of method Using::NoUsing
+    IL_003d:  ret
+  } // end of method Using::UsingStatementOnNullableStruct
+
+  .method public hidebysig instance void 
+          GenericUsing<([mscorlib]System.IDisposable) T>(!!T t) cil managed
+  {
+    // Code size       43 (0x2b)
+    .maxstack  1
+    .locals init (!!T V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  stloc.0
+    .try
+    {
+      IL_0003:  nop
+      IL_0004:  ldarg.1
+      IL_0005:  box        !!T
+      IL_000a:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_000f:  nop
+      IL_0010:  nop
+      IL_0011:  leave.s    IL_002a
+
+    }  // end .try
+    finally
+    {
+      IL_0013:  ldloc.0
+      IL_0014:  box        !!T
+      IL_0019:  brfalse.s  IL_0029
+
+      IL_001b:  ldloca.s   V_0
+      IL_001d:  constrained. !!T
+      IL_0023:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0028:  nop
+      IL_0029:  endfinally
+    }  // end handler
+    IL_002a:  ret
+  } // end of method Using::GenericUsing
+
+  .method public hidebysig instance void 
+          GenericStructUsing<valuetype .ctor ([mscorlib]System.IDisposable, [mscorlib]System.ValueType) T>(!!T t) cil managed
+  {
+    // Code size       35 (0x23)
+    .maxstack  1
+    .locals init (!!T V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  stloc.0
+    .try
+    {
+      IL_0003:  nop
+      IL_0004:  ldarg.1
+      IL_0005:  box        !!T
+      IL_000a:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_000f:  nop
+      IL_0010:  nop
+      IL_0011:  leave.s    IL_0022
+
+    }  // end .try
+    finally
+    {
+      IL_0013:  ldloca.s   V_0
+      IL_0015:  constrained. !!T
+      IL_001b:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0020:  nop
+      IL_0021:  endfinally
+    }  // end handler
+    IL_0022:  ret
+  } // end of method Using::GenericStructUsing
+
+  .method public hidebysig instance void 
+          GenericClassUsing<class ([mscorlib]System.IDisposable) T>(!!T t) cil managed
+  {
+    // Code size       41 (0x29)
+    .maxstack  1
+    .locals init (!!T V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  stloc.0
+    .try
+    {
+      IL_0003:  nop
+      IL_0004:  ldarg.1
+      IL_0005:  box        !!T
+      IL_000a:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_000f:  nop
+      IL_0010:  nop
+      IL_0011:  leave.s    IL_0028
+
+    }  // end .try
+    finally
+    {
+      IL_0013:  ldloc.0
+      IL_0014:  box        !!T
+      IL_0019:  brfalse.s  IL_0027
+
+      IL_001b:  ldloc.0
+      IL_001c:  box        !!T
+      IL_0021:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0026:  nop
+      IL_0027:  endfinally
+    }  // end handler
+    IL_0028:  ret
+  } // end of method Using::GenericClassUsing
+
+  .method public hidebysig instance void 
+          GenericNullableUsing<valuetype .ctor ([mscorlib]System.IDisposable, [mscorlib]System.ValueType) T>(valuetype [mscorlib]System.Nullable`1<!!T> t) cil managed
+  {
+    // Code size       52 (0x34)
+    .maxstack  1
+    .locals init (valuetype [mscorlib]System.Nullable`1<!!T> V_0,
+             !!T V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  stloc.0
+    .try
+    {
+      IL_0003:  nop
+      IL_0004:  ldarg.1
+      IL_0005:  box        valuetype [mscorlib]System.Nullable`1<!!T>
+      IL_000a:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_000f:  nop
+      IL_0010:  nop
+      IL_0011:  leave.s    IL_0033
+
+    }  // end .try
+    finally
+    {
+      IL_0013:  ldloca.s   V_0
+      IL_0015:  call       instance bool valuetype [mscorlib]System.Nullable`1<!!T>::get_HasValue()
+      IL_001a:  brfalse.s  IL_0032
+
+      IL_001c:  ldloca.s   V_0
+      IL_001e:  call       instance !0 valuetype [mscorlib]System.Nullable`1<!!T>::GetValueOrDefault()
+      IL_0023:  stloc.1
+      IL_0024:  ldloca.s   V_1
+      IL_0026:  constrained. !!T
+      IL_002c:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0031:  nop
+      IL_0032:  endfinally
+    }  // end handler
+    IL_0033:  ret
+  } // end of method Using::GenericNullableUsing
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

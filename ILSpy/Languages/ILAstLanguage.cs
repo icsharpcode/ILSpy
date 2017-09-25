@@ -157,7 +157,8 @@ namespace ICSharpCode.ILSpy
 				if (!method.HasBody)
 					return;
 				var typeSystem = new DecompilerTypeSystem(method.Module);
-				ILReader reader = new ILReader(typeSystem);
+				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(typeSystem.Resolve(method)));
+				var reader = new ILReader(specializingTypeSystem);
 				reader.UseDebugSymbols = options.DecompilerSettings.UseDebugSymbols;
 				ILFunction il = reader.ReadIL(method.Body, options.CancellationToken);
 				ILTransformContext context = new ILTransformContext {

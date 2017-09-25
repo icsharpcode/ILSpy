@@ -119,7 +119,7 @@
 				new ArgumentInfo("onExpression"),
 				new ChildInfo("body")
 			}), CustomWriteTo, ControlFlow, SideEffect, ResultType("Void")),
-		new OpCode("using", "Using statement", CustomClassName("UsingInstruction"),
+		new OpCode("using", "Using statement", CustomClassName("UsingInstruction"), HasVariableOperand("Store"),
 			CustomChildren(new [] {
 				new ArgumentInfo("resourceExpression"),
 				new ChildInfo("body")

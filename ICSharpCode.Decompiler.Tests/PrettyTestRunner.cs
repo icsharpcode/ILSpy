@@ -132,6 +132,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Generics([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void Loops([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);

@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						AddExistingName(reservedVariableNames, v.Name);
 						break;
 					default:
-						if (v.HasGeneratedName || !IsValidName(v.Name)) {
+						if (v.HasGeneratedName || !IsValidName(v.Name) || ConflictWithLocal(v)) {
 							// don't use the name from the debug symbols if it looks like a generated name
 							v.Name = null;
 						} else {
@@ -102,6 +102,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					v.Name = name;
 				}
 			}
+		}
+
+		bool ConflictWithLocal(ILVariable v)
+		{
+			if (v.Kind == VariableKind.UsingLocal || v.Kind == VariableKind.ForeachLocal) {
+				if (reservedVariableNames.ContainsKey(v.Name))
+					return true;
+			}
+			return false;
 		}
 
 		static bool IsValidName(string varName)
@@ -263,7 +272,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		string GetNameByType(IType type)
+		static string GetNameByType(IType type)
 		{
 			var git = type as ParameterizedType;
 			if (git != null && git.FullName == "System.Nullable`1" && git.TypeArguments.Count == 1) {
@@ -275,6 +284,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				name = "array";
 			} else if (type is PointerType) {
 				name = "ptr";
+			} else if (type.Kind == TypeKind.TypeParameter) {
+				name = "val";
 			} else if (type.IsAnonymousType()) {
 				name = "anon";
 			} else if (type.Name.EndsWith("Exception", StringComparison.Ordinal)) {
@@ -358,6 +369,49 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						proposedName = "item";
 					} else if (baseName.EndsWith("children", StringComparison.OrdinalIgnoreCase)) {
 						proposedName = baseName.Remove(baseName.Length - 3);
+					}
+				}
+			}
+
+			// remove any numbers from the proposed name
+			proposedName = SplitName(proposedName, out int number);
+
+			if (!reservedVariableNames.ContainsKey(proposedName)) {
+				reservedVariableNames.Add(proposedName, 0);
+			}
+			int count = ++reservedVariableNames[proposedName];
+			if (count > 1) {
+				return proposedName + count.ToString();
+			} else {
+				return proposedName;
+			}
+		}
+
+		internal static string GenerateVariableName(ILFunction function, IType type, ILVariable existingVariable = null)
+		{
+			if (function == null)
+				throw new ArgumentNullException(nameof(function));
+			var reservedVariableNames = new Dictionary<string, int>();
+			foreach (var v in function.Descendants.OfType<ILFunction>().SelectMany(m => m.Variables)) {
+				if (v != existingVariable)
+					AddExistingName(reservedVariableNames, v.Name);
+			}
+			foreach (var f in function.Method.DeclaringType.Fields.Select(f => f.Name))
+				AddExistingName(reservedVariableNames, f);
+
+			string baseName = GetNameByType(type);
+			string proposedName = "obj";
+
+			if (!string.IsNullOrEmpty(baseName)) {
+				if (!IsPlural(baseName, ref proposedName)) {
+					if (baseName.Length > 4 && baseName.EndsWith("List", StringComparison.Ordinal)) {
+						proposedName = baseName.Substring(0, baseName.Length - 4);
+					} else if (baseName.Equals("list", StringComparison.OrdinalIgnoreCase)) {
+						proposedName = "item";
+					} else if (baseName.EndsWith("children", StringComparison.OrdinalIgnoreCase)) {
+						proposedName = baseName.Remove(baseName.Length - 3);
+					} else {
+						proposedName = baseName;
 					}
 				}
 			}

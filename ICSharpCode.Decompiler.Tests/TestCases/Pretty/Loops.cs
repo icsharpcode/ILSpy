@@ -220,5 +220,23 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine("Last: " + num);
 		}
+
+		public static void NonGenericForeachWithReturnFallbackTest(IEnumerable e)
+		{
+			Console.WriteLine("NonGenericForeachWithReturnFallback:");
+			IEnumerator enumerator = e.GetEnumerator();
+			try {
+				Console.WriteLine("MoveNext");
+				if (enumerator.MoveNext()) {
+					object current = enumerator.Current;
+					Console.WriteLine("current: " + current);
+				}
+			} finally {
+				IDisposable disposable = enumerator as IDisposable;
+				if (disposable != null)
+					disposable.Dispose();
+			}
+			Console.WriteLine("After finally!");
+		}
 	}
 }

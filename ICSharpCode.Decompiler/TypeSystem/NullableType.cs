@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (type == null)
 				throw new ArgumentNullException("type");
 			ParameterizedType pt = type as ParameterizedType;
-			if (pt != null && pt.TypeParameterCount == 1 && pt.FullName == "System.Nullable")
+			if (pt != null && pt.TypeParameterCount == 1 && pt.GetDefinition().KnownTypeCode == KnownTypeCode.NullableOfT)
 				return pt.GetTypeArgument(0);
 			else
 				return type;

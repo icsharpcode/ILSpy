@@ -2,7 +2,7 @@
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
-	public struct MutValueType
+	public struct MutValueType : IDisposable
 	{
 		public int val;
 		
@@ -10,6 +10,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("Inc() called on {0}", val);
 			val = val + 1;
+		}
+
+		public void Dispose()
+		{
+			Console.WriteLine("MutValueType disposed on {0}", val);
 		}
 	}
 	
@@ -50,6 +55,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			ValueParameter(m);
 			Field();
 			Box();
+			Using();
 			var gvt = new GenericValueType<string>("Test");
 			gvt.Call(ref gvt);
 			new ValueTypeCall().InstanceFieldTests();
@@ -88,11 +94,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		
 		static void Box()
 		{
+			Console.WriteLine("Box");
 			object o = new MutValueType { val = 300 };
 			((MutValueType)o).Increment();
 			((MutValueType)o).Increment();
+			MutValueType unboxed1 = (MutValueType)o;
+			unboxed1.Increment();
+			unboxed1.Increment();
+			((MutValueType)o).Increment();
+			MutValueType unboxed2 = (MutValueType)o;
+			unboxed2.val = 100;
+			((MutValueType)o).Dispose();
 		}
-		
+
 		MutValueType instanceField;
 		ValueTypeWithReadOnlyMember mutableInstanceFieldWithReadOnlyMember;
 		
@@ -102,6 +116,42 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(this.instanceField.val);
 			mutableInstanceFieldWithReadOnlyMember = new ValueTypeWithReadOnlyMember(45);
 			Console.WriteLine(this.mutableInstanceFieldWithReadOnlyMember.Member);
+		}
+
+		static void Using()
+		{
+			Using1();
+			Using2();
+			Using3();
+		}
+
+		static void Using1()
+		{
+			Console.WriteLine("Using:");
+			using (var x = new MutValueType()) {
+				x.Increment();
+			}
+		}
+
+		static void Using2()
+		{
+			Console.WriteLine("Not using:");
+			var y = new MutValueType();
+			try {
+				y.Increment();
+			} finally {
+				MutValueType x = y;
+				x.Dispose();
+			}
+		}
+
+		static void Using3()
+		{
+			Console.WriteLine("Using with variable declared outside:");
+			MutValueType z;
+			using (z = new MutValueType()) {
+				z.Increment();
+			}
 		}
 	}
 }

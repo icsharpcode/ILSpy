@@ -72,28 +72,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool TransformUsing(Block block, int i)
 		{
 			if (i < 1) return false;
-			if (!(block.Instructions[i] is TryFinally body) || !(block.Instructions[i - 1] is StLoc storeInst))
+			if (!(block.Instructions[i] is TryFinally tryFinally) || !(block.Instructions[i - 1] is StLoc storeInst))
 				return false;
-			if (!(body.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
+			if (!(storeInst.Value.MatchLdNull() || CheckResourceType(storeInst.Variable.Type)))
 				return false;
-			ILInstruction resourceExpression;
-			if (storeInst.Variable.Type.IsReferenceType != false) {
-				if (storeInst.Variable.IsSingleDefinition && storeInst.Variable.LoadCount <= 2) {
-					resourceExpression = storeInst.Value;
-				} else {
-					resourceExpression = storeInst;
-				}
-			} else {
-				if (storeInst.Variable.StoreCount == 1 && storeInst.Variable.LoadCount == 0 && storeInst.Variable.AddressCount == 1) {
-					resourceExpression = storeInst.Value;
-				} else {
-					resourceExpression = storeInst;
-				}
-			}
-			context.Step("UsingTransform", body);
+			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(tryFinally)))
+				return false;
+			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally) || (la.IsDescendantOf(tryFinally.TryBlock) && !ILInlining.IsUsedAsThisPointerInCall(la))))
+				return false;
+			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
+				return false;
+			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
+				return false;
+			context.Step("UsingTransform", tryFinally);
+			storeInst.Variable.Kind = VariableKind.UsingLocal;
 			block.Instructions.RemoveAt(i);
-			block.Instructions[i - 1] = new UsingInstruction(resourceExpression, body.TryBlock);
+			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
 			return true;
+		}
+
+		bool CheckResourceType(IType type)
+		{
+			// non-generic IEnumerator does not implement IDisposable.
+			// This is a workaround for non-generic foreach.
+			if (type.IsKnownType(KnownTypeCode.IEnumerator))
+				return true;
+			return NullableType.GetUnderlyingType(type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable));
 		}
 
 		bool MatchDisposeBlock(BlockContainer container, ILVariable objVar, bool usingNull)
@@ -118,32 +122,66 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!entryPoint.Instructions[leaveIndex].MatchLeave(container, out var returnValue) || !returnValue.MatchNop())
 				return false;
 			CallVirt callVirt;
-			// reference types have a null check.
-			if (isReference) {
+			if (objVar.Type.IsKnownType(KnownTypeCode.NullableOfT)) {
 				if (!entryPoint.Instructions[checkIndex].MatchIfInstruction(out var condition, out var disposeInst))
 					return false;
-				if (!condition.MatchCompNotEquals(out var left, out var right) || !left.MatchLdLoc(objVar) || !right.MatchLdNull())
+				if (!(NullableLiftingTransform.MatchHasValueCall(condition, out var v) && v == objVar))
 					return false;
 				if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
 					return false;
 				if (!(disposeBlock.Instructions[0] is CallVirt cv))
 					return false;
 				callVirt = cv;
-			} else {
-				if (!(entryPoint.Instructions[checkIndex] is CallVirt cv))
+				if (callVirt.Method.FullName != "System.IDisposable.Dispose")
 					return false;
-				callVirt = cv;
-			}
-			if (callVirt.Method.Name != "Dispose" || callVirt.Method.DeclaringType.FullName != "System.IDisposable")
-				return false;
-			if (callVirt.Method.Parameters.Count > 0)
-				return false;
-			if (callVirt.Arguments.Count != 1)
-				return false;
-			if (objVar.Type.IsReferenceType != false) {
-				return callVirt.Arguments[0].MatchLdLoc(objVar) || (usingNull && callVirt.Arguments[0].MatchLdNull());
+				if (callVirt.Method.Parameters.Count > 0)
+					return false;
+				if (callVirt.Arguments.Count != 1)
+					return false;
+				var firstArg = cv.Arguments.FirstOrDefault();
+				if (!(firstArg.MatchUnboxAny(out var innerArg1, out var unboxType) && unboxType.IsKnownType(KnownTypeCode.IDisposable))) {
+					if (!firstArg.MatchAddressOf(out var innerArg2))
+						return false;
+					return NullableLiftingTransform.MatchGetValueOrDefault(innerArg2, objVar);
+				} else {
+					if (!(innerArg1.MatchBox(out firstArg, out var boxType) && boxType.IsKnownType(KnownTypeCode.NullableOfT) &&
+					NullableType.GetUnderlyingType(boxType).Equals(NullableType.GetUnderlyingType(objVar.Type))))
+						return false;
+					return firstArg.MatchLdLoc(objVar);
+				}
 			} else {
-				return callVirt.Arguments[0].MatchLdLoca(objVar);
+				ILInstruction target;
+				if (isReference) {
+					// reference types have a null check.
+					if (!entryPoint.Instructions[checkIndex].MatchIfInstruction(out var condition, out var disposeInst))
+						return false;
+					if (!condition.MatchCompNotEquals(out var left, out var right) || !left.MatchLdLoc(objVar) || !right.MatchLdNull())
+						return false;
+					if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
+						return false;
+					if (!(disposeBlock.Instructions[0] is CallVirt cv))
+						return false;
+					target = cv.Arguments.FirstOrDefault();
+					if (target == null)
+						return false;
+					if (target.MatchBox(out var newTarget, out var type) && type.Equals(objVar.Type))
+						target = newTarget;
+					callVirt = cv;
+				} else {
+					if (!(entryPoint.Instructions[checkIndex] is CallVirt cv))
+						return false;
+					target = cv.Arguments.FirstOrDefault();
+					if (target == null)
+						return false;
+					callVirt = cv;
+				}
+				if (callVirt.Method.FullName != "System.IDisposable.Dispose")
+					return false;
+				if (callVirt.Method.Parameters.Count > 0)
+					return false;
+				if (callVirt.Arguments.Count != 1)
+					return false;
+				return target.MatchLdLocRef(objVar) || (usingNull && callVirt.Arguments[0].MatchLdNull());
 			}
 		}
 	}

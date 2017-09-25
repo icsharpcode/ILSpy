@@ -143,6 +143,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// (a.GetValueOrDefault() == b.GetValueOrDefault()) ? (a.HasValue != b.HasValue) : true
 						// => a != b
 						return LiftCSharpEqualityComparison(comp, ComparisonKind.Inequality, trueInst);
+					} else if (IsGenericNewPattern(condition, trueInst, falseInst)) {
+						// (default(T) == null) ? Activator.CreateInstance<T>() : default(T)
+						// => Activator.CreateInstance<T>()
+						return trueInst;
 					}
 				} else {
 					// Not (in)equality, but one of < <= > >=.
@@ -231,6 +235,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			return null;
+		}
+
+		private bool IsGenericNewPattern(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		{
+			// (default(T) == null) ? Activator.CreateInstance<T>() : default(T)
+			return falseInst.MatchDefaultValue(out var type) &&
+				(trueInst is Call c && c.Method.FullName == "System.Activator.CreateInstance" && c.Method.TypeArguments.Count == 1) &&
+				type.Kind == TypeKind.TypeParameter &&
+				condition.MatchCompEquals(out var left, out var right) &&
+				left.MatchDefaultValue(out var type2) &&
+				type.Equals(type2) &&
+				right.MatchLdNull();
 		}
 
 		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable nullable1, out ILVariable nullable2)
@@ -574,7 +590,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call get_HasValue(ldloca v)'
 		/// </summary>
-		static bool MatchHasValueCall(ILInstruction inst, out ILVariable v)
+		internal static bool MatchHasValueCall(ILInstruction inst, out ILVariable v)
 		{
 			v = null;
 			if (!(inst is Call call))
@@ -591,7 +607,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call get_HasValue(ldloca v)'
 		/// </summary>
-		static bool MatchHasValueCall(ILInstruction inst, ILVariable v)
+		internal static bool MatchHasValueCall(ILInstruction inst, ILVariable v)
 		{
 			return MatchHasValueCall(inst, out var v2) && v == v2;
 		}
@@ -641,7 +657,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call Nullable{T}.GetValueOrDefault(ldloca v)'
 		/// </summary>
-		static bool MatchGetValueOrDefault(ILInstruction inst, out ILVariable v)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILVariable v)
 		{
 			v = null;
 			return MatchGetValueOrDefault(inst, out ILInstruction arg)
@@ -651,7 +667,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call Nullable{T}.GetValueOrDefault(ldloca v)'
 		/// </summary>
-		static bool MatchGetValueOrDefault(ILInstruction inst, ILVariable v)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, ILVariable v)
 		{
 			return MatchGetValueOrDefault(inst, out ILVariable v2) && v == v2;
 		}

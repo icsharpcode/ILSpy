@@ -39,21 +39,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		private class PrintOnDispose : IDisposable
-		{
-			private string v;
-
-			public PrintOnDispose(string v)
-			{
-				this.v = v;
-			}
-
-			public void Dispose()
-			{
-				Console.WriteLine(this.v);
-			}
-		}
-
 #if LEGACY_CSC
 		public void SimpleUsingNullStatement()
 		{
@@ -101,13 +86,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public void NoUsing()
+		private void UsingStatementOnNullableStruct(UsingStruct? us)
 		{
-			PrintOnDispose printOnDispose = new PrintOnDispose("Wrong");
-			try {
-				printOnDispose = new PrintOnDispose("Correct");
-			} finally {
-				printOnDispose.Dispose();
+			using (us) {
+				Console.WriteLine("using-body: " + us);
+			}
+		}
+
+		public void GenericUsing<T>(T t) where T : IDisposable
+		{
+			using (t) {
+				Console.WriteLine(t);
+			}
+		}
+
+		public void GenericStructUsing<T>(T t) where T : struct, IDisposable
+		{
+			using (t) {
+				Console.WriteLine(t);
+			}
+		}
+
+		public void GenericClassUsing<T>(T t) where T : class, IDisposable
+		{
+			using (t) {
+				Console.WriteLine(t);
+			}
+		}
+
+		public void GenericNullableUsing<T>(T? t) where T : struct, IDisposable
+		{
+			using (t) {
+				Console.WriteLine(t);
 			}
 		}
 	}
