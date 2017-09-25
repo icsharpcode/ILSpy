@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		ILTransformContext context;
 		ITypeResolveContext decompilationContext;
-		
+
 		void IILTransform.Run(ILFunction function, ILTransformContext context)
 		{
 			if (!context.Settings.AnonymousMethods)
@@ -50,7 +50,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
 							targetsToReplace.Add((IInstructionWithVariableOperand)target);
 					}
-					
+
 					ILVariable targetVariable;
 					ILInstruction value;
 					if (block.Instructions[i].MatchStLoc(out targetVariable, out value)) {
@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (inst == null || inst.Arguments.Count != 2 || inst.Method.DeclaringType.Kind != TypeKind.Delegate)
 				return false;
 			var opCode = inst.Arguments[1].OpCode;
-			
+
 			return opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn || (allowTransformed && opCode == OpCode.ILFunction);
 		}
 
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var decompilationContext = new SimpleTypeResolveContext(context.TypeSystem.Resolve(context.Function.Method));
 			return IsPotentialClosure(decompilationContext.CurrentTypeDefinition, inst.Method.DeclaringTypeDefinition);
 		}
-		
+
 		static bool IsAnonymousMethod(ITypeDefinition decompiledTypeDefinition, IMethod method)
 		{
 			if (method == null || !(method.HasGeneratedName() || method.Name.Contains("$")))
@@ -118,7 +118,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			return true;
 		}
-		
+
 		static bool IsPotentialClosure(ITypeDefinition decompiledTypeDefinition, ITypeDefinition potentialDisplayClass)
 		{
 			if (potentialDisplayClass == null || !potentialDisplayClass.IsCompilerGeneratedOrIsInCompilerGeneratedClass())
@@ -130,7 +130,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return true;
 		}
-		
+
 		ILFunction TransformDelegateConstruction(NewObj value, out ILInstruction target)
 		{
 			target = null;
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
 					v.Name = contextPrefix + v.Name;
 				}
-				
+
 				function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)), context);
 				function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 				// handle nested lambdas
@@ -159,7 +159,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return null;
 		}
-		
+
 		/// <summary>
 		/// Replaces loads of 'this' with the target expression.
 		/// </summary>
@@ -167,20 +167,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			readonly ILVariable thisVariable;
 			readonly ILInstruction target;
-			
+
 			public ReplaceDelegateTargetVisitor(ILInstruction target, ILVariable thisVariable)
 			{
 				this.target = target;
 				this.thisVariable = thisVariable;
 			}
-			
+
 			protected override void Default(ILInstruction inst)
 			{
 				foreach (var child in inst.Children) {
 					child.AcceptVisitor(this);
 				}
 			}
-			
+
 			protected internal override void VisitLdLoc(LdLoc inst)
 			{
 				if (inst.MatchLdLoc(thisVariable)) {
@@ -190,7 +190,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				base.VisitLdLoc(inst);
 			}
 		}
-		
+
 		/// <summary>
 		/// 1. Stores to display class fields are replaced with stores to local variables (in some
 		///    cases existing variables are used; otherwise fresh variables are added to the
@@ -206,13 +206,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			readonly List<ILVariable> targetAndCopies = new List<ILVariable>();
 			readonly List<ILInstruction> orphanedVariableInits;
 			readonly Dictionary<IField, DisplayClassVariable> initValues = new Dictionary<IField, DisplayClassVariable>();
-			
+
 			struct DisplayClassVariable
 			{
 				public ILVariable variable;
 				public ILInstruction value;
 			}
-			
+
 			public TransformDisplayClassUsages(IInstructionWithVariableOperand targetLoad, BlockContainer captureScope, List<ILInstruction> orphanedVariableInits)
 			{
 				this.targetLoad = targetLoad;
@@ -220,14 +220,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				this.orphanedVariableInits = orphanedVariableInits;
 				this.targetAndCopies.Add(targetLoad.Variable);
 			}
-			
+
 			protected override void Default(ILInstruction inst)
 			{
 				foreach (var child in inst.Children) {
 					child.AcceptVisitor(this);
 				}
 			}
-			
+
 			protected internal override void VisitILFunction(ILFunction function)
 			{
 				var old = currentFunction;
@@ -238,7 +238,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					currentFunction = old;
 				}
 			}
-			
+
 			protected internal override void VisitStLoc(StLoc inst)
 			{
 				base.VisitStLoc(inst);
@@ -249,12 +249,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					orphanedVariableInits.Add(inst);
 				}
 			}
-			
+
 			bool MatchesTargetOrCopyLoad(ILInstruction inst)
 			{
 				return targetAndCopies.Any(v => inst.MatchLdLoc(v));
 			}
-			
+
 			protected internal override void VisitStObj(StObj inst)
 			{
 				base.VisitStObj(inst);
@@ -281,20 +281,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					initValues.Add(field, new DisplayClassVariable { value = value, variable = v });
 				}
 			}
-			
+
 			protected internal override void VisitLdObj(LdObj inst)
 			{
 				base.VisitLdObj(inst);
 				ILInstruction target;
 				IField field;
-				if (!inst.Target.MatchLdFlda(out target, out field) || !MatchesTargetOrCopyLoad(target))
+				if (!inst.Target.MatchLdFlda(out target, out field) || (!MatchesTargetOrCopyLoad(target) && !IsFunctionVar(inst)))
 					return;
 				DisplayClassVariable info;
 				if (!initValues.TryGetValue((IField)field.MemberDefinition, out info))
 					return;
 				inst.ReplaceWith(info.value.Clone());
 			}
-			
+
+			bool IsFunctionVar(ILInstruction instr)
+			{
+				foreach (var inst in instr.Children) {
+					if (currentFunction.Variables.Any(v => inst.MatchLdLoca(v))) {
+						return true;
+					}
+					if (IsFunctionVar(inst)) {
+						return true;
+					}
+				}
+				return false;
+			}
+
 			protected internal override void VisitLdFlda(LdFlda inst)
 			{
 				base.VisitLdFlda(inst);
