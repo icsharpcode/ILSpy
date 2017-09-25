@@ -500,10 +500,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections)
 		{
+			RemoveCompilerGeneratedAttribute(attributeSections, "System.Runtime.CompilerServices.CompilerGeneratedAttribute");
+		}
+
+		void RemoveCompilerGeneratedAttribute(AstNodeCollection<AttributeSection> attributeSections, params string[] attributesToRemove)
+		{
 			foreach (AttributeSection section in attributeSections) {
 				foreach (var attr in section.Attributes) {
 					var tr = attr.Type.GetSymbol() as IType;
-					if (tr != null && tr.Namespace == "System.Runtime.CompilerServices" && tr.Name == "CompilerGeneratedAttribute") {
+					if (tr != null && attributesToRemove.Contains(tr.FullName)) {
 						attr.Remove();
 					}
 				}
@@ -551,6 +556,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Automatic Events
+		static readonly Accessor automaticEventPatternV2 = new Accessor {
+			Attributes = { new Repeat(new AnyNode()) },
+			Body = new BlockStatement {
+				new AssignmentExpression {
+					Left = new NamedNode(
+						"field",
+						new MemberReferenceExpression {
+							Target = new Choice { new ThisReferenceExpression(), new TypeReferenceExpression { Type = new AnyNode() } },
+							MemberName = Pattern.AnyString
+						}),
+					Operator = AssignmentOperatorType.Assign,
+					Right = new CastExpression(
+						new AnyNode("type"),
+						new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new Backreference("field"), new IdentifierExpression("value"))
+					)
+				},
+			}
+		};
+
 		static readonly Accessor automaticEventPatternV4 = new Accessor {
 			Attributes = { new Repeat(new AnyNode()) },
 			Body = new BlockStatement {
@@ -596,7 +620,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}};
 		
-		bool CheckAutomaticEventV4Match(Match m, CustomEventDeclaration ev, bool isAddAccessor)
+		bool CheckAutomaticEventMatch(Match m, CustomEventDeclaration ev, bool isAddAccessor)
 		{
 			if (!m.Success)
 				return false;
@@ -612,18 +636,40 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		static readonly string[] attributeTypesToRemoveFromAutoEvents = new[] {
 			"System.Runtime.CompilerServices.CompilerGeneratedAttribute",
-			"System.Diagnostics.DebuggerBrowsableAttribute"
+			"System.Diagnostics.DebuggerBrowsableAttribute",
+			"System.Runtime.CompilerServices.MethodImplAttribute"
 		};
-		
+
+		bool CheckAutomaticEventV4(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)
+		{
+			addMatch = removeMatch = default(Match);
+			addMatch = automaticEventPatternV4.Match(ev.AddAccessor);
+			if (!CheckAutomaticEventMatch(addMatch, ev, true))
+				return false;
+			removeMatch = automaticEventPatternV4.Match(ev.RemoveAccessor);
+			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
+				return false;
+			return true;
+		}
+
+		bool CheckAutomaticEventV2(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)
+		{
+			addMatch = removeMatch = default(Match);
+			addMatch = automaticEventPatternV2.Match(ev.AddAccessor);
+			if (!CheckAutomaticEventMatch(addMatch, ev, true))
+				return false;
+			removeMatch = automaticEventPatternV2.Match(ev.RemoveAccessor);
+			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
+				return false;
+			return true;
+		}
+
 		EventDeclaration TransformAutomaticEvents(CustomEventDeclaration ev)
 		{
-			Match m1 = automaticEventPatternV4.Match(ev.AddAccessor);
-			if (!CheckAutomaticEventV4Match(m1, ev, true))
+			Match m1, m2;
+			if (!CheckAutomaticEventV4(ev, out m1, out m2) && !CheckAutomaticEventV2(ev, out m1, out m2))
 				return null;
-			Match m2 = automaticEventPatternV4.Match(ev.RemoveAccessor);
-			if (!CheckAutomaticEventV4Match(m2, ev, false))
-				return null;
-			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes);
+			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
 			EventDeclaration ed = new EventDeclaration();
 			ev.Attributes.MoveTo(ed.Attributes);
 			foreach (var attr in ev.AddAccessor.Attributes) {
