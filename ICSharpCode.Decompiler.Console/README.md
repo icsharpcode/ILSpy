@@ -1,5 +1,5 @@
 # ICSharpCode.Decompiler.Console
-netcoreapp 2.0 console application using ICSharpCode.Decompiler nuget
+netcoreapp 2.0 console application using ICSharpCode.Decompiler
 
 ```
 ./ilspycmd -h
