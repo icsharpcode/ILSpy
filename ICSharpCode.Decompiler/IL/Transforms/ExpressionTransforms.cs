@@ -29,16 +29,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <remarks>
 	/// Should run after inlining so that the expression patterns can be detected.
 	/// </remarks>
-	public class ExpressionTransforms : ILVisitor, IBlockTransform
+	public class ExpressionTransforms : ILVisitor, IBlockTransform, IStatementTransform
 	{
 		internal ILTransformContext context;
-		
+
 		public void Run(Block block, BlockTransformContext context)
 		{
 			this.context = context;
 			Default(block);
 		}
-		
+
+		public void Run(Block block, int pos, StatementTransformContext context)
+		{
+			this.context = context;
+			context.StepStartGroup($"ExpressionTransforms ({block.Label}:{pos})", block.Instructions[pos]);
+			block.Instructions[pos].AcceptVisitor(this);
+			context.StepEndGroup(keepIfEmpty: true);
+		}
+
 		protected override void Default(ILInstruction inst)
 		{
 			foreach (var child in inst.Children) {
@@ -310,6 +318,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		protected internal override void VisitIfInstruction(IfInstruction inst)
 		{
+			inst.TrueInst.AcceptVisitor(this);
+			inst.FalseInst.AcceptVisitor(this);
+			inst = HandleConditionalOperator(inst);
+
 			// Bring LogicAnd/LogicOr into their canonical forms:
 			// if (cond) ldc.i4 0 else RHS --> if (!cond) RHS else ldc.i4 0
 			// if (cond) RHS else ldc.i4 1 --> if (!cond) ldc.i4 1 else RHS
@@ -324,10 +336,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				inst.FalseInst = t;
 				inst.Condition = Comp.LogicNot(inst.Condition);
 			}
+			// Process condition after our potential modifications.
+			inst.Condition.AcceptVisitor(this);
 
-			base.VisitIfInstruction(inst);
-
-			inst = HandleConditionalOperator(inst);
 			if (new NullableLiftingTransform(context).Run(inst))
 				return;
 		}
@@ -348,6 +359,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1);
 				newIf.ILRange = inst.ILRange;
 				inst.ReplaceWith(new StLoc(v, newIf));
+				(context as StatementTransformContext)?.RequestRerun();  // trigger potential inlining of the newly created StLoc
 				return newIf;
 			}
 			return inst;

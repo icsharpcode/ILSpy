@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Diagnostics;
 using System.Threading;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -35,18 +36,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class ILTransformContext
 	{
-		public IDecompilerTypeSystem TypeSystem { get; set; }
-		public DecompilerSettings Settings { get; set; }
+		public ILFunction Function { get; }
+		public IDecompilerTypeSystem TypeSystem { get; }
+		public DecompilerSettings Settings { get; }
 		public CancellationToken CancellationToken { get; set; }
 		public Stepper Stepper { get; set; }
 
-		public ILTransformContext()
+		public ILTransformContext(ILFunction function, IDecompilerTypeSystem typeSystem, DecompilerSettings settings = null)
 		{
+			this.Function = function ?? throw new ArgumentNullException(nameof(function));
+			this.TypeSystem = typeSystem ?? throw new ArgumentNullException(nameof(typeSystem));
+			this.Settings = settings ?? new DecompilerSettings();
 			Stepper = new Stepper();
 		}
 
 		public ILTransformContext(ILTransformContext context)
 		{
+			this.Function = context.Function;
 			this.TypeSystem = context.TypeSystem;
 			this.Settings = context.Settings;
 			this.CancellationToken = context.CancellationToken;

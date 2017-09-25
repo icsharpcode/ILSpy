@@ -29,16 +29,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// Transforms array initialization pattern of System.Runtime.CompilerServices.RuntimeHelpers.InitializeArray.
 	/// For collection and object initializers see <see cref="TransformCollectionAndObjectInitializers"/>
 	/// </summary>
-	public class TransformArrayInitializers : IBlockTransform
+	public class TransformArrayInitializers : IStatementTransform
 	{
-		BlockTransformContext context;
+		StatementTransformContext context;
 		
-		void IBlockTransform.Run(Block block, BlockTransformContext context)
+		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			this.context = context;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-				if (!DoTransform(block, i))
-					DoTransformMultiDim(block, i);
+			try {
+				if (!DoTransform(block, pos))
+					DoTransformMultiDim(block, pos);
+			} finally {
+				this.context = null;
 			}
 		}
 
@@ -58,9 +60,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.Step("ForwardScanInitializeArrayRuntimeHelper", inst);
 					var tempStore = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 					var block = BlockFromInitializer(tempStore, elementType, arrayLength, values);
-					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
+					body.Instructions[pos] = new StLoc(v, block);
 					body.Instructions.RemoveAt(initArrayPos);
-					ILInlining.InlineIfPossible(body, ref pos, context);
+					ILInlining.InlineIfPossible(body, pos, context);
 					return true;
 				}
 				if (arrayLength.Length == 1) {
@@ -78,9 +80,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 						));
 						block.FinalInstruction = new LdLoc(tempStore);
-						body.Instructions[pos].ReplaceWith(new StLoc(v, block));
-						RemoveInstructions(body, pos + 1, instructionsToRemove);
-						ILInlining.InlineIfPossible(body, ref pos, context);
+						body.Instructions[pos] = new StLoc(v, block);
+						body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
+						ILInlining.InlineIfPossible(body, pos, context);
 						return true;
 					}
 					if (HandleJaggedArrayInitializer(body, pos + 1, v, arrayLength[0], out ILVariable finalStore, out values, out instructionsToRemove)) {
@@ -90,9 +92,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						block.Instructions.Add(new StLoc(tempStore, new NewArr(elementType, arrayLength.Select(l => new LdcI4(l)).ToArray())));
 						block.Instructions.AddRange(values.SelectWithIndex((i, value) => StElem(new LdLoc(tempStore), new[] { new LdcI4(i) }, value, elementType)));
 						block.FinalInstruction = new LdLoc(tempStore);
-						body.Instructions[pos].ReplaceWith(new StLoc(finalStore, block));
-						RemoveInstructions(body, pos + 1, instructionsToRemove);
-						ILInlining.InlineIfPossible(body, ref pos, context);
+						body.Instructions[pos] = new StLoc(finalStore, block);
+						body.Instructions.RemoveRange(pos + 1, instructionsToRemove);
+						ILInlining.InlineIfPossible(body, pos, context);
 						return true;
 					}
 				}
@@ -129,7 +131,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			ITypeDefinition typeDef = elementType.GetEnumUnderlyingType().GetDefinition();
 			if (typeDef == null)
-				return new LdNull();
+				return new DefaultValue(elementType);
 			switch (typeDef.KnownTypeCode) {
 				case KnownTypeCode.Boolean:
 				case KnownTypeCode.Char:
@@ -153,18 +155,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case KnownTypeCode.IntPtr:
 				case KnownTypeCode.UIntPtr:
 				default:
-					return new LdNull();
+					return new DefaultValue(elementType);
 			}
 		}
-
 		
-		void RemoveInstructions(Block body, int start, int count)
-		{
-			for (int i = 0; i < count; i++) {
-				body.Instructions.RemoveAt(start);
-			}
-		}
-
 		/// <summary>
 		/// Handle simple case where RuntimeHelpers.InitializeArray is not used.
 		/// </summary>
@@ -259,7 +253,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					var block = BlockFromInitializer(v, arrayType, length, values);
 					body.Instructions[pos].ReplaceWith(new StLoc(v, block));
 					body.Instructions.RemoveAt(initArrayPos);
-					ILInlining.InlineIfPossible(body, ref pos, context);
+					ILInlining.InlineIfPossible(body, pos, context);
 					return true;
 				}
 			}

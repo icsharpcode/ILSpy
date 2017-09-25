@@ -104,7 +104,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return opCode == OpCode.LdFtn || opCode == OpCode.LdVirtFtn || (allowTransformed && opCode == OpCode.ILFunction);
 		}
 
-		internal static bool IsPotentialClosure(BlockTransformContext context, NewObj inst)
+		internal static bool IsPotentialClosure(ILTransformContext context, NewObj inst)
 		{
 			var decompilationContext = new SimpleTypeResolveContext(context.TypeSystem.Resolve(context.Function.Method));
 			return IsPotentialClosure(decompilationContext.CurrentTypeDefinition, inst.Method.DeclaringTypeDefinition);
@@ -150,11 +150,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				foreach (ILVariable v in function.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
 					v.Name = contextPrefix + v.Name;
 				}
-				
-				function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)), context);
+
+				var nestedContext = new ILTransformContext(function, localTypeSystem, context.Settings) {
+					CancellationToken = context.CancellationToken
+				};
+				function.RunTransforms(CSharpDecompiler.GetILTransforms().TakeWhile(t => !(t is DelegateConstruction)), nestedContext);
 				function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 				// handle nested lambdas
-				((IILTransform)new DelegateConstruction()).Run(function, new ILTransformContext(context) { TypeSystem = localTypeSystem });
+				((IILTransform)new DelegateConstruction()).Run(function, nestedContext);
 				return function;
 			}
 			return null;

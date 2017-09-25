@@ -288,6 +288,7 @@
     <Compile Include="IL\Transforms\LockTransform.cs" />
     <Compile Include="IL\Transforms\NullableLiftingTransform.cs" />
     <Compile Include="IL\Transforms\NullCoalescingTransform.cs" />
+    <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
     <Compile Include="Util\KeyComparer.cs" />

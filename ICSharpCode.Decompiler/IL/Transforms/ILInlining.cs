@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2011-2015 Daniel Grunwald
+﻿// Copyright (c) 2011-2017 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -26,7 +26,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Performs inlining transformations.
 	/// </summary>
-	public class ILInlining : IILTransform, IBlockTransform
+	public class ILInlining : IILTransform, IBlockTransform, IStatementTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -39,6 +39,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(Block block, BlockTransformContext context)
 		{
 			InlineAllInBlock(block, context);
+		}
+
+		public void Run(Block block, int pos, StatementTransformContext context)
+		{
+			InlineOneIfPossible(block, pos, aggressive: IsCatchWhenBlock(block), context: context);
 		}
 
 		public static bool InlineAllInBlock(Block block, ILTransformContext context)
@@ -83,20 +88,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		/// <summary>
 		/// Aggressively inlines the stloc instruction at block.Body[pos] into the next instruction, if possible.
-		/// If inlining was possible; we will continue to inline (non-aggressively) into the the combined instruction.
 		/// </summary>
-		/// <remarks>
-		/// After the operation, pos will point to the new combined instruction.
-		/// </remarks>
-		public static bool InlineIfPossible(Block block, ref int pos, ILTransformContext context)
+		public static bool InlineIfPossible(Block block, int pos, ILTransformContext context)
 		{
-			if (InlineOneIfPossible(block, pos, true, context)) {
-				pos -= InlineInto(block, pos, false, context);
-				return true;
-			}
-			return false;
+			return InlineOneIfPossible(block, pos, true, context);
 		}
-		
+
 		/// <summary>
 		/// Inlines the stloc instruction at block.Instructions[pos] into the next instruction, if possible.
 		/// </summary>

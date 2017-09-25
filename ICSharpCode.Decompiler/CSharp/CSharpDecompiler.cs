@@ -110,15 +110,18 @@ namespace ICSharpCode.Decompiler.CSharp
 						new TransformAssignment(),
 						new NullableLiftingBlockTransform(),
 						new CopyPropagation(),
-						new LoopingBlockTransform(
-							// per-block transforms that depend on each other, and thus need to loop (fixpoint iteration).
+						new StatementTransform(
+							// per-block transforms that depend on each other, and thus need to
+							// run interleaved (statement by statement).
 							// Pretty much all transforms that open up new expression inlining
 							// opportunities belong in this category.
+							new ILInlining(),
+							// Inlining must be first, because it doesn't trigger re-runs.
+							// Any other transform that opens up new inlining opportunities should call RequestRerun().
 							new ExpressionTransforms(),
 							new NullCoalescingTransform(),
 							new TransformArrayInitializers(),
-							new TransformCollectionAndObjectInitializers(),
-							new ILInlining()
+							new TransformCollectionAndObjectInitializers()
 						)
 					}
 				},
@@ -646,14 +649,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				int i = 0;
 				var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
 				foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter)) {
-					ILVariable v;
-					if (parameters.TryGetValue(i, out v))
+					if (parameters.TryGetValue(i, out var v))
 						parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
 					i++;
 				}
 			}
 			
-			var context = new ILTransformContext { Settings = settings, TypeSystem = specializingTypeSystem, CancellationToken = CancellationToken };
+			var context = new ILTransformContext(function, specializingTypeSystem, settings) {
+				CancellationToken = CancellationToken
+			};
 			foreach (var transform in ilTransforms) {
 				CancellationToken.ThrowIfCancellationRequested();
 				transform.Run(function, context);

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.FlowAnalysis;
 using ICSharpCode.Decompiler.IL.ControlFlow;
@@ -24,11 +26,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class BlockTransformContext : ILTransformContext
 	{
-		/// <summary>
-		/// The function containing the block currently being processed.
-		/// </summary>
-		public ILFunction Function { get; set; }
-
 		/// <summary>
 		/// The block to process.
 		/// </summary>
@@ -69,6 +66,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public IList<IBlockTransform> PreOrderTransforms { get; } = new List<IBlockTransform>();
 		public IList<IBlockTransform> PostOrderTransforms { get; } = new List<IBlockTransform>();
 
+		bool running;
+
 		public override string ToString()
 		{
 			return $"{nameof(BlockILTransform)} ({string.Join(", ", PreOrderTransforms.Concat(PostOrderTransforms).Select(t => t.GetType().Name))})";
@@ -76,13 +75,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
-			var blockContext = new BlockTransformContext(context);
-			blockContext.Function = function;
-			foreach (var container in function.Descendants.OfType<BlockContainer>().ToList()) {
-				context.CancellationToken.ThrowIfCancellationRequested();
-				blockContext.ControlFlowGraph = new ControlFlowGraph(container, context.CancellationToken);
-				VisitBlock(blockContext.ControlFlowGraph.GetNode(container.EntryPoint), blockContext);
-				// TODO: handle unreachable code?
+			if (running)
+				throw new InvalidOperationException("Reentrancy detected. Transforms (and the CSharpDecompiler) are neither neither thread-safe nor re-entrant.");
+			try {
+				running = true;
+				var blockContext = new BlockTransformContext(context);
+				Debug.Assert(blockContext.Function == function);
+				foreach (var container in function.Descendants.OfType<BlockContainer>().ToList()) {
+					context.CancellationToken.ThrowIfCancellationRequested();
+					blockContext.ControlFlowGraph = new ControlFlowGraph(container, context.CancellationToken);
+					VisitBlock(blockContext.ControlFlowGraph.GetNode(container.EntryPoint), blockContext);
+					// TODO: handle unreachable code?
+				}
+			} finally {
+				running = false;
 			}
 		}
 

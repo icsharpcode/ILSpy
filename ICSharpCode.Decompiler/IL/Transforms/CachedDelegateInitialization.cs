@@ -38,7 +38,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						continue;
 					}
 					if (CachedDelegateInitializationWithLocal(inst)) {
-						ILInlining.InlineIfPossible(block, ref i, context);
+						ILInlining.InlineOneIfPossible(block, i, true, context);
 						continue;
 					}
 					if (CachedDelegateInitializationRoslynInStaticWithLocal(inst) || CachedDelegateInitializationRoslynWithLocal(inst)) {
