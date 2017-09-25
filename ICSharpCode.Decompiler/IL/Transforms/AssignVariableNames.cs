@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						AddExistingName(reservedVariableNames, v.Name);
 						break;
 					default:
-						if (v.HasGeneratedName || !IsValidName(v.Name)) {
+						if (v.HasGeneratedName || !IsValidName(v.Name) || ConflictWithLocal(v)) {
 							// don't use the name from the debug symbols if it looks like a generated name
 							v.Name = null;
 						} else {
@@ -102,6 +102,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					v.Name = name;
 				}
 			}
+		}
+
+		bool ConflictWithLocal(ILVariable v)
+		{
+			if (v.Kind == VariableKind.UsingLocal || v.Kind == VariableKind.ForeachLocal) {
+				if (reservedVariableNames.ContainsKey(v.Name))
+					return true;
+			}
+			return false;
 		}
 
 		static bool IsValidName(string varName)

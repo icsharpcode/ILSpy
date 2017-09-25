@@ -268,7 +268,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			AstNode usingInit = resource;
 			var var = inst.Variable;
 			if (var.LoadCount > 0 || var.AddressCount > 0) {
-				var.Kind = VariableKind.UsingLocal;
 				var type = settings.AnonymousTypes && var.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(var.Type);
 				var vds = new VariableDeclarationStatement(type, var.Name, resource);
 				vds.Variables.Single().AddAnnotation(new ILVariableResolveResult(var, var.Type));

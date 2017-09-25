@@ -303,6 +303,12 @@ namespace ICSharpCode.Decompiler.IL
 				case VariableKind.InitializerTarget:
 					output.Write("initializer ");
 					break;
+				case VariableKind.ForeachLocal:
+					output.Write("foreach ");
+					break;
+				case VariableKind.UsingLocal:
+					output.Write("using ");
+					break;
 				default:
 					throw new ArgumentOutOfRangeException();
 			}
