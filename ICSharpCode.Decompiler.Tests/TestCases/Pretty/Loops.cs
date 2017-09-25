@@ -233,9 +233,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			} finally {
 				IDisposable disposable = enumerator as IDisposable;
-				if (disposable != null) {
+				if (disposable != null)
 					disposable.Dispose();
-				}
 			}
 			Console.WriteLine("After finally!");
 		}

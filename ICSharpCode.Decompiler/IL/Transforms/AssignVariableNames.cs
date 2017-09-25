@@ -410,6 +410,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						proposedName = "item";
 					} else if (baseName.EndsWith("children", StringComparison.OrdinalIgnoreCase)) {
 						proposedName = baseName.Remove(baseName.Length - 3);
+					} else {
+						proposedName = baseName;
 					}
 				}
 			}

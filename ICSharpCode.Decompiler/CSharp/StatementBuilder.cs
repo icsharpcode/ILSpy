@@ -267,21 +267,22 @@ namespace ICSharpCode.Decompiler.CSharp
 				return transformed;
 			AstNode usingInit = resource;
 			var var = inst.Variable;
-			if (!var.Type.GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable))) {
+			if (!inst.ResourceExpression.MatchLdNull() && !NullableType.GetUnderlyingType(var.Type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable))) {
+				var.Kind = VariableKind.Local;
 				var disposeType = exprBuilder.compilation.FindType(KnownTypeCode.IDisposable);
 				var disposeVariable = currentFunction.RegisterVariable(
 					VariableKind.Local, disposeType,
 					AssignVariableNames.GenerateVariableName(currentFunction, disposeType)
 				);
 				return new BlockStatement {
-					new ExpressionStatement(new AssignmentExpression(new IdentifierExpression(var.Name), resource.Detach())),
+					new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(var).Expression, resource.Detach())),
 					new TryCatchStatement {
 						TryBlock = ConvertAsBlock(inst.Body),
-						FinallyBlock = {
-							new ExpressionStatement(new AssignmentExpression(new IdentifierExpression(disposeVariable.Name), new AsExpression(new IdentifierExpression(var.Name), exprBuilder.ConvertType(disposeType)))),
+						FinallyBlock = new BlockStatement() {
+							new ExpressionStatement(new AssignmentExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, new AsExpression(exprBuilder.ConvertVariable(var).Expression, exprBuilder.ConvertType(disposeType)))),
 							new IfElseStatement {
-								Condition = new BinaryOperatorExpression(new IdentifierExpression(disposeVariable.Name), BinaryOperatorType.InEquality, new NullReferenceExpression()),
-								TrueStatement = new ExpressionStatement(new InvocationExpression(new MemberReferenceExpression(new IdentifierExpression(disposeVariable.Name), "Dispose")))
+								Condition = new BinaryOperatorExpression(exprBuilder.ConvertVariable(disposeVariable), BinaryOperatorType.InEquality, new NullReferenceExpression()),
+								TrueStatement = new ExpressionStatement(new InvocationExpression(new MemberReferenceExpression(exprBuilder.ConvertVariable(disposeVariable).Expression, "Dispose")))
 							}
 						}
 					},

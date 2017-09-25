@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return expr.ConvertToBoolean(this, negate);
 		}
 		
-		ExpressionWithResolveResult ConvertVariable(ILVariable variable)
+		internal ExpressionWithResolveResult ConvertVariable(ILVariable variable)
 		{
 			Expression expr;
 			if (variable.Kind == VariableKind.Parameter && variable.Index < 0)
