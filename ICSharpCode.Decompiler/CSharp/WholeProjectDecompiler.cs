@@ -299,9 +299,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						return file;
 					} else {
 						string dir = CleanUpFileName(type.Namespace);
-						if (directories.Add(dir))
-							Directory.CreateDirectory(Path.Combine(targetDirectory, dir));
-						return Path.Combine(targetDirectory, dir, file);
+                        if (directories.Add(dir))
+                            Directory.CreateDirectory(Path.Combine(targetDirectory, dir));
+						return Path.Combine(dir, file);
 					}
 				}, StringComparer.OrdinalIgnoreCase).ToList();
 			DecompilerTypeSystem ts = new DecompilerTypeSystem(module);
@@ -312,7 +312,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					CancellationToken = cancellationToken
 				},
 				delegate(IGrouping<string, TypeDefinition> file) {
-					using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, file.Key))) {
+                    using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, file.Key))) {
 						CSharpDecompiler decompiler = CreateDecompiler(ts);
 						decompiler.CancellationToken = cancellationToken;
 						var syntaxTree = decompiler.DecompileTypes(file.ToArray());
