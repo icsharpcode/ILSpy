@@ -339,6 +339,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				InExpression = collectionExpr.Detach(),
 				EmbeddedStatement = foreachBody
 			};
+			foreachStmt.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			if (optionalReturnAfterLoop != null) {
 				return new BlockStatement {
 					Statements = {
