@@ -21,3 +21,26 @@ Included open-source libraries:
  * ICSharpCode.Decompiler: MIT License (developed as part of ILSpy)
  * Ricciolo.StylesExplorer: MS-PL (part of ILSpy.BamlDecompiler.Plugin)
  * Newtonsoft Json.NET: MIT License
+
+How to build
+------------
+
+Windows:
+- Check out the repository using git.
+- Execute `git submodule update --init --recursive` to get all required submodules.
+- Use ILSpy.sln to work.
+
+Unix:
+- Check out the repository using git.
+- Execute `git submodule update --init --recursive` to get all required submodules.
+- Edit `\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj`
+  Add `Sdk="Microsoft.NET.Sdk"` to the `Project` element.
+  This is required due to a tooling issue on Unix.
+  Please do not commit this when contributing a pull request!
+- Use ICSharpCode.Decompiler.Console.sln to work.
+
+How to contribute
+-----------------
+
+- Report bugs
+- If you want to contribute a pull request, please add https://gist.github.com/siegfriedpammer/75700ea61609eb22714d21885e4eb084 to your `.git/hooks` to prevent checking in code with wrong indentation. We use tabs and not spaces. The build server runs the same script, so any pull requests using wrong indentation will fail.
