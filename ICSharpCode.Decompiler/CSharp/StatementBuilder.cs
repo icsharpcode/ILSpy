@@ -510,7 +510,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						forStmt.Iterators.Add(iterator.Detach());
 					}
 					return forStmt;
-				default:
 				case LoopKind.While:
 					if (loop.Body == null) {
 						blockStatement = ConvertBlockContainer(container, true);
@@ -534,6 +533,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (blockStatement.LastOrDefault() is ContinueStatement stmt)
 						stmt.Remove();
 					return new WhileStatement(conditionExpr, blockStatement);
+				default:
+					throw new ArgumentOutOfRangeException();
 			}
 		}
 

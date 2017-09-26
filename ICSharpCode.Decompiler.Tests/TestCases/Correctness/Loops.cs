@@ -32,6 +32,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			ForWithMultipleVariables();
 			DoubleForEachWithSameVariable(new[] { "a", "b", "c" });
 			ForeachExceptForNameCollision(new[] { 42, 43, 44, 45 });
+			NonGenericForeachWithReturnFallbackTest(new object[] { "a", 42, "b", 43 });
+			NonGenericForeachWithReturn(new object[] { "a", 42, "b", 43 });
+			ForeachWithReturn(new[] { 42, 43, 44, 45 });
 		}
 
 		public static void ForWithMultipleVariables()
@@ -89,6 +92,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				}
 			}
 			Console.WriteLine("After finally!");
+		}
+
+		public static object NonGenericForeachWithReturn(IEnumerable enumerable)
+		{
+			Console.WriteLine("NonGenericForeachWithReturn:");
+			foreach (var obj in enumerable) {
+				Console.WriteLine("return: " + obj);
+				return obj;
+			}
+
+			Console.WriteLine("return: null");
+			return null;
+		}
+
+		public static int? ForeachWithReturn(IEnumerable<int> enumerable)
+		{
+			Console.WriteLine("ForeachWithReturn:");
+			foreach (var obj in enumerable) {
+				Console.WriteLine("return: " + obj);
+				return obj;
+			}
+
+			Console.WriteLine("return: null");
+			return null;
 		}
 	}
 }

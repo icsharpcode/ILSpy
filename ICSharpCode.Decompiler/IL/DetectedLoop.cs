@@ -23,7 +23,7 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public enum LoopKind { While, DoWhile, For }
+	public enum LoopKind { None, While, DoWhile, For }
 
 	public class DetectedLoop
 	{
@@ -86,6 +86,10 @@ namespace ICSharpCode.Decompiler.IL
 
 		private DetectedLoop DetectLoopInternal()
 		{
+			if (Container.EntryPoint.IncomingEdgeCount <= 1) {
+				Kind = LoopKind.None;
+				return this;
+			}
 			Kind = LoopKind.While;
 			ContinueJumpTarget = Container.EntryPoint;
 			if (Container.EntryPoint.Instructions.Count == 2
