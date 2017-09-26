@@ -223,8 +223,8 @@ namespace ICSharpCode.Decompiler.Console
 
 		static void RecursiveDecompile(string sDir, string baseInputDir, string baseOutputDir)
 		{
-			try {
-				foreach (string f in Directory.GetFiles(sDir)) {
+			foreach (string f in Directory.GetFiles(sDir)) {
+				try {
 					if (f.EndsWith(".exe") || f.EndsWith(".dll")) {
 						string newDir = GetRelativePath(baseInputDir, f);
 						newDir = newDir.Remove(newDir.Length - 4, 4);
@@ -236,14 +236,13 @@ namespace ICSharpCode.Decompiler.Console
 						System.Console.ForegroundColor = oldColor;
 						DecompileAsProject(f, newDir);
 					}
+				} catch (Exception excpt) {
+					System.Console.WriteLine(excpt);
 				}
-				foreach (string d in Directory.GetDirectories(sDir)) {
-					RecursiveDecompile(d, baseInputDir, baseOutputDir);
-				}
-			} catch (System.Exception excpt) {
-				System.Console.WriteLine(excpt.Message);
+			}
+			foreach (string d in Directory.GetDirectories(sDir)) {
+				RecursiveDecompile(d, baseInputDir, baseOutputDir);
 			}
 		}
-
 	}
 }
