@@ -120,7 +120,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 
 		}
-		
+
 		#region ExtendLoop
 		/// <summary>
 		/// Given a natural loop, add additional CFG nodes to the loop in order
@@ -174,17 +174,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		///       (exception: the loop head itself must always be in-loop)
 		/// 
 		/// There are two different cases we need to consider:
-		/// a) There are no exits reachable at all from the loop head.
+		/// 1) There are no exits reachable at all from the loop head.
 		///    ->  it is possible to create a loop with zero exit points by adding all nodes
 		///        dominated by the loop to the loop.
 		///    -> the only way to exit the loop is by "return;" or "throw;"
-		/// b) There are some exits reachable from the loop head.
+		/// 2) There are some exits reachable from the loop head.
 		/// 
 		/// In case 1, we can pick a single exit point freely by picking any node that has no reachable exits
 		/// (other than the loop head).
 		/// All nodes dominated by the exit point are out-of-loop, all other nodes are in-loop.
-		/// Maximizing the amount of code in the out-of-loop partition is thus simple: sum up the amount of code
-		/// over the dominator tree and pick the node with the maximum amount of code.
+		/// See PickExitPoint() for the heuristic that picks the exit point in this case.
 		/// 
 		/// In case 2, we need to pick our exit point so that all paths from the loop head
 		/// to the reachable exits run through that exit point.
@@ -235,9 +234,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// There are no nodes n so that loopHead dominates a predecessor of n but not n itself
 				// -> we could build a loop with zero exit points.
 				ControlFlowNode exitPoint = null;
-				int exitPointCodeAmount = -1;
+				int exitPointILOffset = -1;
 				foreach (var node in loopHead.DominatorTreeChildren) {
-					PickExitPoint(node, ref exitPoint, ref exitPointCodeAmount);
+					PickExitPoint(node, ref exitPoint, ref exitPointILOffset);
 				}
 				return exitPoint;
 			} else {
@@ -275,18 +274,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <summary>
 		/// Pick exit point by picking any node that has no reachable exits.
 		/// 
-		/// Maximizing the amount of code in the out-of-loop partition is thus simple: sum up the amount of code
-		/// over the dominator tree and pick the node with the maximum amount of code.
+		/// In the common case where the code was compiled with a compiler that emits IL code
+		/// in source order (like the C# compiler), we can find the "real" exit point
+		/// by simply picking the block with the highest IL offset.
+		/// So let's do that instead of maximizing amount of code.
 		/// </summary>
 		/// <returns>Code amount in <paramref name="node"/> and its dominated nodes.</returns>
 		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
-		int PickExitPoint(ControlFlowNode node, ref ControlFlowNode exitPoint, ref int exitPointCodeAmount)
+		void PickExitPoint(ControlFlowNode node, ref ControlFlowNode exitPoint, ref int exitPointILOffset)
 		{
-			int codeAmount = ((Block)node.UserData).Children.Count;
-			foreach (var child in node.DominatorTreeChildren) {
-				codeAmount += PickExitPoint(child, ref exitPoint, ref exitPointCodeAmount);
-			}
-			if (codeAmount > exitPointCodeAmount 
+			Block block = (Block)node.UserData;
+			if (block.ILRange.Start > exitPointILOffset
 				&& !context.ControlFlowGraph.HasReachableExit(node)
 				&& ((Block)node.UserData).Parent == currentBlockContainer)
 			{
@@ -301,9 +299,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// that prevents us from finding a nice exit for the inner loops, causing
 				// unnecessary gotos.
 				exitPoint = node;
-				exitPointCodeAmount = codeAmount;
+				exitPointILOffset = block.ILRange.Start;
+				return; // don't visit children, they are likely to have even later IL offsets and we'd end up
+				// moving almost all of the code into the loop.
 			}
-			return codeAmount;
+			foreach (var child in node.DominatorTreeChildren) {
+				PickExitPoint(child, ref exitPoint, ref exitPointILOffset);
+			}
 		}
 		
 		ControlFlowNode[] PrepareReverseCFG(ControlFlowNode loopHead)
