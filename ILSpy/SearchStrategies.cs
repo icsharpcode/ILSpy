@@ -139,6 +139,10 @@ namespace ICSharpCode.ILSpy
 			Add(type.Properties, type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
 			Add(type.Events, type, language, addResult, IsMatch, EventTreeNode.GetIcon);
 			Add(type.Methods.Where(NotSpecialMethod), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
+
+			foreach (TypeDefinition nestedType in type.NestedTypes) {
+				Search(nestedType, language, addResult);
+			}
 		}
 
 		bool NotSpecialMethod(MethodDefinition arg)
@@ -422,11 +426,6 @@ namespace ICSharpCode.ILSpy
 					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
 					Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
 				});
-			}
-
-			foreach (TypeDefinition nestedType in type.NestedTypes)
-			{
-				Search(nestedType, language, addResult);
 			}
 
 			base.Search(type, language, addResult);
