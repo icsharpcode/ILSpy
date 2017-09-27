@@ -1028,7 +1028,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (!isLambda && method.Parameters.All(p => string.IsNullOrEmpty(p.Name))) {
 				var parameterReferencingIdentifiers =
 					from ident in body.Descendants.OfType<IdentifierExpression>()
-					let v = ident.Annotation<ILVariable>()
+					let v = ident.Annotation<ILVariableResolveResult>()?.Variable
 					where v != null && v.Kind == VariableKind.Parameter
 					select ident;
 				if (!parameterReferencingIdentifiers.Any()) {
