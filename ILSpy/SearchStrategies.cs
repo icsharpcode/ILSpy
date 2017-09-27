@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TreeNodes;
 using Mono.Cecil;
+using Code = Mono.Cecil.Cil.Code;
 
 namespace ICSharpCode.ILSpy
 {
@@ -53,18 +55,23 @@ namespace ICSharpCode.ILSpy
 		{
 			return false;
 		}
-		
+
 		protected virtual bool MatchName(IMemberDefinition m, Language language)
 		{
+			return IsMatch(t => GetLanguageSpecificName(language, m, regex != null ? fullNameSearch : t.Contains(".")));
+		}
+
+		protected virtual bool IsMatch(Func<string, string> getText)
+		{
 			if (regex != null) {
-				return regex.IsMatch(GetLanguageSpecificName(language, m, fullNameSearch));
+				return regex.IsMatch(getText(""));
 			}
 
 			for (int i = 0; i < searchTerm.Length; ++i) {
 				// How to handle overlapping matches?
 				var term = searchTerm[i];
 				if (string.IsNullOrEmpty(term)) continue;
-				string text = GetLanguageSpecificName(language, m, term.Contains("."));
+				string text = getText(term);
 				switch (term[0]) {
 					case '+': // must contain
 						term = term.Substring(1);
@@ -153,7 +160,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 	}
-	/*
+
 	class LiteralSearchStrategy : AbstractSearchStrategy
 	{
 		readonly TypeCode searchTermLiteralType;
@@ -162,13 +169,13 @@ namespace ICSharpCode.ILSpy
 		public LiteralSearchStrategy(params string[] terms)
 			: base(terms)
 		{
-			if (1 == searchTerm.Length) {
-				var parser = new CSharpParser();
-				var pe = parser.ParseExpression(searchTerm[0]) as PrimitiveExpression;
+			if (searchTerm.Length == 1) {
+				var lexer = new Lexer(new LATextReader(new System.IO.StringReader(searchTerm[0])));
+				var value = lexer.NextToken();
 
-				if (pe != null && pe.Value != null) {
-					TypeCode peValueType = Type.GetTypeCode(pe.Value.GetType());
-					switch (peValueType) {
+				if (value != null && value.LiteralValue != null) {
+					TypeCode valueType = Type.GetTypeCode(value.LiteralValue.GetType());
+					switch (valueType) {
 					case TypeCode.Byte:
 					case TypeCode.SByte:
 					case TypeCode.Int16:
@@ -178,35 +185,35 @@ namespace ICSharpCode.ILSpy
 					case TypeCode.Int64:
 					case TypeCode.UInt64:
 						searchTermLiteralType = TypeCode.Int64;
-						searchTermLiteralValue = CSharpPrimitiveCast.Cast(TypeCode.Int64, pe.Value, false);
+						searchTermLiteralValue = CSharpPrimitiveCast.Cast(TypeCode.Int64, value.LiteralValue, false);
 						break;
 					case TypeCode.Single:
 					case TypeCode.Double:
 					case TypeCode.String:
-						searchTermLiteralType = peValueType;
-						searchTermLiteralValue = pe.Value;
+						searchTermLiteralType = valueType;
+						searchTermLiteralValue = value.LiteralValue;
 						break;
 					}
 				}
 			}
 		}
 
-		protected override bool IsMatch(FieldDefinition field)
+		protected override bool IsMatch(FieldDefinition field, Language language)
 		{
 			return IsLiteralMatch(field.Constant);
 		}
 
-		protected override bool IsMatch(PropertyDefinition property)
+		protected override bool IsMatch(PropertyDefinition property, Language language)
 		{
 			return MethodIsLiteralMatch(property.GetMethod) || MethodIsLiteralMatch(property.SetMethod);
 		}
 
-		protected override bool IsMatch(EventDefinition ev)
+		protected override bool IsMatch(EventDefinition ev, Language language)
 		{
 			return MethodIsLiteralMatch(ev.AddMethod) || MethodIsLiteralMatch(ev.RemoveMethod) || MethodIsLiteralMatch(ev.InvokeMethod);
 		}
 
-		protected override bool IsMatch(MethodDefinition m)
+		protected override bool IsMatch(MethodDefinition m, Language language)
 		{
 			return MethodIsLiteralMatch(m);
 		}
@@ -228,7 +235,7 @@ namespace ICSharpCode.ILSpy
 					return searchTermLiteralValue.Equals(val);
 				default:
 					// substring search with searchTerm
-					return IsMatch(val.ToString());
+					return IsMatch(t => val.ToString());
 			}
 		}
 
@@ -318,13 +325,13 @@ namespace ICSharpCode.ILSpy
 				}
 			} else {
 				foreach (var inst in body.Instructions) {
-					if (inst.OpCode.Code == Code.Ldstr && IsMatch((string)inst.Operand))
+					if (inst.OpCode.Code == Code.Ldstr && IsMatch(t => (string)inst.Operand))
 						return true;
 				}
 			}
 			return false;
 		}
-	}*/
+	}
 
 	enum MemberSearchKind
 	{

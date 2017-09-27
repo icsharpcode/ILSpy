@@ -288,8 +288,8 @@ namespace ICSharpCode.ILSpy
 						return new TypeSearchStrategy(terms);
 					case SearchMode.Member:
 						return new MemberSearchStrategy(terms);
-					//case SearchMode.Literal:
-					//	return new LiteralSearchStrategy(terms);
+					case SearchMode.Literal:
+						return new LiteralSearchStrategy(terms);
 					case SearchMode.Method:
 						return new MemberSearchStrategy(terms, MemberSearchKind.Method);
 					case SearchMode.Field:
@@ -357,6 +357,6 @@ namespace ICSharpCode.ILSpy
 		Field,
 		Property,
 		Event,
-		//Literal
+		Literal
 	}
 }
