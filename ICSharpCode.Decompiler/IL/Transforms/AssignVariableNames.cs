@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Humanizer;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -432,19 +433,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private static bool IsPlural(string baseName, ref string proposedName)
 		{
-			if (baseName.EndsWith("ies", StringComparison.OrdinalIgnoreCase) && baseName.Length > 3) {
-				proposedName = baseName.Remove(baseName.Length - 3) + "y";
-				return true;
-			}
-			if (baseName.EndsWith("es", StringComparison.OrdinalIgnoreCase) && baseName.Length > 2) {
-				proposedName = baseName.Remove(baseName.Length - 2);
-				return true;
-			}
-			if (baseName.EndsWith("s", StringComparison.OrdinalIgnoreCase) && baseName.Length > 1) {
-				proposedName = baseName.Remove(baseName.Length - 1);
-				return true;
-			}
-			return false;
+			var newName = baseName.Singularize(inputIsKnownToBePlural: false);
+			if (newName == baseName)
+				return false;
+			proposedName = newName;
+			return true;
 		}
 	}
 }

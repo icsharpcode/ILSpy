@@ -398,5 +398,6 @@
 	  <Exec Command="copy $(TargetDir)\System.Collections.Immutable.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
 	  <Exec Command="copy $(TargetDir)\ICSharpCode.AvalonEdit.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
 	  <Exec Command="copy $(TargetDir)\Newtonsoft.Json.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
+	  <Exec Command="copy $(TargetDir)\Humanizer.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
   </Target>
 </Project>
