@@ -312,6 +312,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public ILFunction ReadIL(Cil.MethodBody body, CancellationToken cancellationToken = default(CancellationToken))
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			Init(body);
 			ReadInstructions(cancellationToken);
 			var blockBuilder = new BlockBuilder(body, typeSystem, variableByExceptionHandler);

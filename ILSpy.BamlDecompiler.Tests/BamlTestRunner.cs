@@ -6,6 +6,7 @@ using System.Collections;
 using System.IO;
 using System.Linq;
 using System.Resources;
+using System.Threading;
 using System.Xml.Linq;
 using ICSharpCode.Decompiler.Tests.Helpers;
 using Mono.Cecil;
@@ -113,7 +114,7 @@ namespace ILSpy.BamlDecompiler.Tests
 			Resource res = assembly.MainModule.Resources.First();
 			Stream bamlStream = LoadBaml(res, name + ".baml");
 			Assert.IsNotNull(bamlStream);
-			XDocument document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream);
+			XDocument document = BamlResourceEntryNode.LoadIntoDocument(resolver, assembly, bamlStream, CancellationToken.None);
 
 			XamlIsEqual(File.ReadAllText(sourcePath), document.ToString());
 		}
