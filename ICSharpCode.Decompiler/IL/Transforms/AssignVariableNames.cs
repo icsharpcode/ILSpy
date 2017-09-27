@@ -436,6 +436,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				proposedName = baseName.Remove(baseName.Length - 3) + "y";
 				return true;
 			}
+			if (baseName.EndsWith("es", StringComparison.OrdinalIgnoreCase) && baseName.Length > 2) {
+				proposedName = baseName.Remove(baseName.Length - 2);
+				return true;
+			}
 			if (baseName.EndsWith("s", StringComparison.OrdinalIgnoreCase) && baseName.Length > 1) {
 				proposedName = baseName.Remove(baseName.Length - 1);
 				return true;

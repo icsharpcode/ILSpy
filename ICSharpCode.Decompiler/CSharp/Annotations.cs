@@ -126,23 +126,31 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		public static ILVariable GetILVariable(this VariableInitializer vi)
 		{
-			return vi.Annotation<ILVariable>();
+			var rr = vi.Annotation<ResolveResult>() as ILVariableResolveResult;
+			if (rr != null)
+				return rr.Variable;
+			else
+				return null;
 		}
 
 		public static ILVariable GetILVariable(this ForeachStatement loop)
 		{
-			return loop.Annotation<ILVariable>();
+			var rr = loop.Annotation<ResolveResult>() as ILVariableResolveResult;
+			if (rr != null)
+				return rr.Variable;
+			else
+				return null;
 		}
 
 		public static VariableInitializer WithILVariable(this VariableInitializer vi, ILVariable v)
 		{
-			vi.AddAnnotation(v);
+			vi.AddAnnotation(new ILVariableResolveResult(v, v.Type));
 			return vi;
 		}
 
 		public static ForeachStatement WithILVariable(this ForeachStatement loop, ILVariable v)
 		{
-			loop.AddAnnotation(v);
+			loop.AddAnnotation(new ILVariableResolveResult(v, v.Type));
 			return loop;
 		}
 	}
