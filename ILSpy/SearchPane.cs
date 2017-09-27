@@ -61,7 +61,8 @@ namespace ICSharpCode.ILSpy
 			searchModeComboBox.Items.Add(new { Image = Images.Property, Name = "Property" });
 			searchModeComboBox.Items.Add(new { Image = Images.Event, Name = "Event" });
 			searchModeComboBox.Items.Add(new { Image = Images.Literal, Name = "Constant" });
-			searchModeComboBox.SelectedIndex = (int)SearchMode.TypeAndMember;
+			searchModeComboBox.SelectedIndex = (int)MainWindow.Instance.SessionSettings.SelectedSearchMode;
+			searchModeComboBox.SelectionChanged += (sender, e) => MainWindow.Instance.SessionSettings.SelectedSearchMode = (SearchMode)searchModeComboBox.SelectedIndex;
 			ContextMenuProvider.Add(listBox);
 			
 			MainWindow.Instance.CurrentAssemblyListChanged += MainWindow_Instance_CurrentAssemblyListChanged;
@@ -168,10 +169,10 @@ namespace ICSharpCode.ILSpy
 			} else if (e.Key == Key.M && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
 				searchModeComboBox.SelectedIndex = (int)SearchMode.Member;
 				e.Handled = true;
-			} /*else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
+			} else if (e.Key == Key.S && e.KeyboardDevice.Modifiers == ModifierKeys.Control) {
 				searchModeComboBox.SelectedIndex = (int)SearchMode.Literal;
 				e.Handled = true;
-			}*/
+			}
 		}
 		
 		void SearchBox_PreviewKeyDown(object sender, KeyEventArgs e)
@@ -276,8 +277,8 @@ namespace ICSharpCode.ILSpy
 					if (terms[0].StartsWith("e:", StringComparison.Ordinal))
 						return new MemberSearchStrategy(terms[0].Substring(2), MemberSearchKind.Event);
 
-					//if (terms[0].StartsWith("c:", StringComparison.Ordinal))
-					//	return new LiteralSearchStrategy(terms[0].Substring(2));
+					if (terms[0].StartsWith("c:", StringComparison.Ordinal))
+						return new LiteralSearchStrategy(terms[0].Substring(2));
 				}
 
 				switch (mode)
