@@ -547,7 +547,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				} else {
 					return (null, null);
 				}
-				if (!newBits.All(0, nullableVars.Count)) {
+				if (newBits == null || !newBits.All(0, nullableVars.Count)) {
 					// all nullable vars must be involved when calling a method (side effect)
 					return (null, null);
 				}
