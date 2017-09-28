@@ -4,7 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-
+using System.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL;
@@ -34,7 +34,7 @@ namespace ILSpy.BamlDecompiler
 			this.assembly = assembly;
 		}
 		
-		public Dictionary<long, EventRegistration[]> DecompileEventMappings(string fullTypeName)
+		public Dictionary<long, EventRegistration[]> DecompileEventMappings(string fullTypeName, CancellationToken cancellationToken)
 		{
 			var result = new Dictionary<long, EventRegistration[]>();
 			TypeDefinition type = this.assembly.MainModule.GetType(fullTypeName);
@@ -57,9 +57,11 @@ namespace ILSpy.BamlDecompiler
 			// decompile method and optimize the switch
 			var typeSystem = new DecompilerTypeSystem(method.Module);
 			var ilReader = new ILReader(typeSystem);
-			var function = ilReader.ReadIL(method.Body);
+			var function = ilReader.ReadIL(method.Body, cancellationToken);
 
-			var context = new ILTransformContext { Settings = new DecompilerSettings(), TypeSystem = typeSystem };
+			var context = new ILTransformContext(function, typeSystem) {
+				CancellationToken = cancellationToken
+			};
 			function.RunTransforms(CSharpDecompiler.GetILTransforms(), context);
 			
 			var block = function.Body.Children.OfType<Block>().First();

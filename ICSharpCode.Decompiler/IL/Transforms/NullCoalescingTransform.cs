@@ -30,19 +30,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// 
 	/// The ?? operator for nullables is handled by NullableLiftingTransform.
 	/// </summary>
-	class NullCoalescingTransform : IBlockTransform
+	class NullCoalescingTransform : IStatementTransform
 	{
-		BlockTransformContext context;
-
-		void IBlockTransform.Run(Block block, BlockTransformContext context)
+		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			this.context = context;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-				if (TransformRefTypes(block, i)) {
-					block.Instructions.RemoveAt(i);
-					continue;
-				}
-			}
+			TransformRefTypes(block, pos, context);
 		}
 
 		/// <summary>
@@ -55,15 +47,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// =>
 		/// stloc s(if.notnull(valueInst, fallbackInst))
 		/// </summary>
-		bool TransformRefTypes(Block block, int i)
+		bool TransformRefTypes(Block block, int pos, StatementTransformContext context)
 		{
-			if (i == 0)
-				return false;
-			if (!(block.Instructions[i - 1] is StLoc stloc))
+			if (!(block.Instructions[pos] is StLoc stloc))
 				return false;
 			if (stloc.Variable.Kind != VariableKind.StackSlot)
 				return false;
-			if (!block.Instructions[i].MatchIfInstruction(out var condition, out var trueInst))
+			if (!block.Instructions[pos + 1].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
 			trueInst = Block.Unwrap(trueInst);
 			if (condition.MatchCompEquals(out var left, out var right) && left.MatchLdLoc(stloc.Variable) && right.MatchLdNull()
@@ -71,7 +61,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			) {
 				context.Step("NullCoalescingTransform (reference types)", stloc);
 				stloc.Value = new NullCoalescingInstruction(NullCoalescingKind.Ref, stloc.Value, fallbackValue);
-				return true; // returning true removes the if instruction
+				block.Instructions.RemoveAt(pos + 1); // remove if instruction
+				ILInlining.InlineOneIfPossible(block, pos, false, context);
+				return true;
 			}
 			return false;
 		}

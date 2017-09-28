@@ -26,20 +26,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Transforms collection and object initialization patterns.
 	/// </summary>
-	public class TransformCollectionAndObjectInitializers : IBlockTransform
+	public class TransformCollectionAndObjectInitializers : IStatementTransform
 	{
-		BlockTransformContext context;
+		StatementTransformContext context;
 
-		void IBlockTransform.Run(Block block, BlockTransformContext context)
+		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			this.context = context;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--)
-			{
-				DoTransform(block, i);
-				// This happens in some cases:
-				// Use correct index after transformation.
-				if (i >= block.Instructions.Count)
-					i = block.Instructions.Count;
+			try {
+				DoTransform(block, pos);
+			} finally {
+				this.context = null;
 			}
 		}
 
@@ -136,9 +133,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 				}
 				initInst.ReplaceWith(initializerBlock);
-				for (int i = 0; i < initializerItemsCount; i++)
-					body.Instructions.RemoveAt(pos + 1);
-				ILInlining.InlineIfPossible(body, ref pos, context);
+				body.Instructions.RemoveRange(pos + 1, initializerItemsCount);
+				ILInlining.InlineIfPossible(body, pos, context);
 			}
 			return true;
 		}

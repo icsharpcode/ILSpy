@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -32,7 +33,7 @@ namespace ILSpy.BamlDecompiler
 					() => {
 						AvalonEditTextOutput output = new AvalonEditTextOutput();
 						try {
-							if (LoadBaml(output))
+							if (LoadBaml(output, token))
 								highlighting = HighlightingManager.Instance.GetDefinitionByExtension(".xml");
 						} catch (Exception ex) {
 							output.Write(ex.ToString());
@@ -44,33 +45,34 @@ namespace ILSpy.BamlDecompiler
 			return true;
 		}
 		
-		bool LoadBaml(AvalonEditTextOutput output)
+		bool LoadBaml(AvalonEditTextOutput output, CancellationToken cancellationToken)
 		{
 			var asm = this.Ancestors().OfType<AssemblyTreeNode>().FirstOrDefault().LoadedAssembly;
 			Data.Position = 0;
-			XDocument xamlDocument = LoadIntoDocument(asm.GetAssemblyResolver(), asm.AssemblyDefinition, Data);
+			XDocument xamlDocument = LoadIntoDocument(asm.GetAssemblyResolver(), asm.AssemblyDefinition, Data, cancellationToken);
 			output.Write(xamlDocument.ToString());
 			return true;
 		}
 
-		internal static XDocument LoadIntoDocument(IAssemblyResolver resolver, AssemblyDefinition asm, Stream stream)
+		internal static XDocument LoadIntoDocument(IAssemblyResolver resolver, AssemblyDefinition asm, Stream stream, CancellationToken cancellationToken)
 		{
+			cancellationToken.ThrowIfCancellationRequested();
 			XDocument xamlDocument;
 			using (XmlBamlReader reader = new XmlBamlReader(stream, new CecilTypeResolver(resolver, asm))) {
 				xamlDocument = XDocument.Load(reader);
-				ConvertConnectionIds(xamlDocument, asm);
+				ConvertConnectionIds(xamlDocument, asm, cancellationToken);
 				ConvertToEmptyElements(xamlDocument.Root);
 				MoveNamespacesToRoot(xamlDocument, reader.XmlnsDefinitions);
 				return xamlDocument;
 			}
 		}
 
-		static void ConvertConnectionIds(XDocument xamlDocument, AssemblyDefinition asm)
+		static void ConvertConnectionIds(XDocument xamlDocument, AssemblyDefinition asm, CancellationToken cancellationToken)
 		{
 			var attr = xamlDocument.Root.Attribute(XName.Get("Class", XmlBamlReader.XWPFNamespace));
 			if (attr != null) {
 				string fullTypeName = attr.Value;
-				var mappings = new ConnectMethodDecompiler(asm).DecompileEventMappings(fullTypeName);
+				var mappings = new ConnectMethodDecompiler(asm).DecompileEventMappings(fullTypeName, cancellationToken);
 				RemoveConnectionIds(xamlDocument.Root, mappings);
 			}
 		}

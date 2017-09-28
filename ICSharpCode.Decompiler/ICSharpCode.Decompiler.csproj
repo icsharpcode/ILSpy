@@ -47,6 +47,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Humanizer.Core" Version="2.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
     <PackageReference Include="System.Collections.Immutable" Version="1.3.0" />
     <PackageReference Include="System.ValueTuple" Version="4.3.0" />
@@ -288,6 +289,7 @@
     <Compile Include="IL\Transforms\LockTransform.cs" />
     <Compile Include="IL\Transforms\NullableLiftingTransform.cs" />
     <Compile Include="IL\Transforms\NullCoalescingTransform.cs" />
+    <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
     <Compile Include="Util\KeyComparer.cs" />
