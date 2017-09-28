@@ -36,6 +36,29 @@ namespace ICSharpCode.ILSpy
 			searchTerm = terms;
 		}
 
+		protected float CalculateFitness(MemberReference member, string text)
+		{
+			// Probably compiler generated types without meaningful names, show them last
+			if (text.StartsWith("<"))
+			{
+				return 0;
+			}
+
+			// Ignore generic arguments, it not possible to search based on them either
+			int length = 0;
+			int generics = 0;
+			for (int i = 0; i < text.Length; i++)
+			{
+				if (text[i] == '<')
+					generics++;
+				else if (text[i] == '>')
+					generics--;
+				else if (generics == 0)
+					length++;
+			}
+			return 1.0f / length;
+		}
+
 		protected virtual bool IsMatch(FieldDefinition field, Language language)
 		{
 			return false;
@@ -124,6 +147,7 @@ namespace ICSharpCode.ILSpy
 					addResult(new SearchResult
 					{
 						Member = item,
+						Fitness = CalculateFitness(item, item.Name),
 						Image = image(item),
 						Name = GetLanguageSpecificName(language, (IMemberDefinition)item),
 						LocationImage = TypeTreeNode.GetIcon(type),
@@ -392,10 +416,12 @@ namespace ICSharpCode.ILSpy
 		public override void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
 			if (MatchName(type, language)) {
+				string name = language.TypeToString(type, includeNamespace: false);
 				addResult(new SearchResult {
 					Member = type,
+					Fitness = CalculateFitness(type, name),
 					Image = TypeTreeNode.GetIcon(type),
-					Name = language.TypeToString(type, includeNamespace: false),
+					Name = name,
 					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
 					Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
 				});
@@ -418,11 +444,13 @@ namespace ICSharpCode.ILSpy
 		{
 			if (MatchName(type, language))
 			{
+				string name = language.TypeToString(type, includeNamespace: false);
 				addResult(new SearchResult
 				{
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),
-					Name = language.TypeToString(type, includeNamespace: false),
+					Fitness = CalculateFitness(type, name),
+					Name = name,
 					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
 					Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
 				});
