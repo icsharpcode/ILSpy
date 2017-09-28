@@ -399,7 +399,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (!entryPoint.Instructions[0].MatchStLoc(out var exceptionVar, out var exceptionSlotLoad))
 				return;
-			if (!exceptionVar.IsSingleDefinition || exceptionVar.Kind != VariableKind.Local)
+			if (!exceptionVar.IsSingleDefinition || (exceptionVar.Kind != VariableKind.Local && exceptionVar.Kind != VariableKind.StackSlot))
 				return;
 			if (!exceptionSlotLoad.MatchLdLoc(handler.Variable) || !handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
 				return;
