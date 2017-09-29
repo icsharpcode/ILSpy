@@ -100,6 +100,7 @@
     <Compile Include="TestCases\Pretty\PropertiesAndEvents.cs" />
     <Compile Include="TestCases\Pretty\QueryExpressions.cs" />
     <Compile Include="TestCases\Pretty\ShortCircuit.cs" />
+    <Compile Include="TestCases\Pretty\Switch.cs" />
     <Compile Include="TestCases\Pretty\TypeAnalysisTests.cs" />
     <Compile Include="TestCases\Pretty\Using.cs" />
     <Compile Include="TestTraceListener.cs" />
