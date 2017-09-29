@@ -17,13 +17,18 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+#if !LEGACY_CSC
+using System.IO;
+#endif
 using System.Threading;
+using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public abstract class ExceptionHandling
 	{
 		public abstract bool B(int i);
+		public abstract Task<bool> T();
 		public abstract void M(int i);
 
 		public bool ConditionalReturnInThrow()
@@ -66,6 +71,28 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("Try");
 				return this.B(new Random().Next());
 			} catch (Exception ex) when (ex.Message.Contains("test")) {
+				Console.WriteLine("CatchException ex: " + ex.ToString());
+			}
+			return false;
+		}
+
+		public bool SimpleTryCatchExceptionWithNameAndConditionWithOr()
+		{
+			try {
+				Console.WriteLine("Try");
+				return this.B(new Random().Next());
+			} catch (Exception ex) when (ex is ArgumentException || ex is IOException) {
+				Console.WriteLine("CatchException ex: " + ex.ToString());
+			}
+			return false;
+		}
+
+		public async Task<bool> SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr()
+		{
+			try {
+				Console.WriteLine("Try");
+				return await this.T();
+			} catch (Exception ex) when (ex is ArgumentException || ex is IOException) {
 				Console.WriteLine("CatchException ex: " + ex.ToString());
 			}
 			return false;
