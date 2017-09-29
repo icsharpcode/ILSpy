@@ -414,11 +414,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void TransformCatchWhen(TryCatchHandler handler, Block entryPoint)
 		{
 			TransformCatchVariable(handler, entryPoint);
-			foreach (var test in entryPoint.Instructions) {
-				if (test.MatchLeave(out _, out var condition)) {
-					handler.Filter = condition;
-					break;
-				}
+			if (entryPoint.Instructions.Count == 1 && entryPoint.Instructions[0].MatchLeave(out _, out var condition)) {
+				handler.Filter = condition;
 			}
 		}
 	}
