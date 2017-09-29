@@ -403,6 +403,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return;
 			if (!exceptionSlotLoad.MatchLdLoc(handler.Variable) || !handler.Variable.IsSingleDefinition || handler.Variable.LoadCount != 1)
 				return;
+			if (handler.Variable != null) { // Hack for the strange case that the variable gets reassigned to another one.
+				exceptionVar.Type = handler.Variable.Type;
+			}
 			handler.Variable = exceptionVar;
 			exceptionVar.Kind = VariableKind.Exception;
 			entryPoint.Instructions.RemoveAt(0);
