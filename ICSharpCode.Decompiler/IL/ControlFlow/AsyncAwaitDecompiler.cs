@@ -495,16 +495,27 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					});
 				}
 			}
+			// Delete dead loads of the state cache variable:
+			foreach (var block in function.Descendants.OfType<Block>()) {
+				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
+					if (block.Instructions[i].MatchStLoc(out var v, out var value)
+						&& v.IsSingleDefinition && v.LoadCount == 0
+						&& value.MatchLdLoc(cachedStateVar))
+					{
+						block.Instructions.RemoveAt(i);
+					}
+				}
+			}
 		}
-		#endregion
+			#endregion
 
-		#region AnalyzeStateMachine
+			#region AnalyzeStateMachine
 
-		/// <summary>
-		/// Analyze the the state machine; and replace 'leave IL_0000' with await+jump to block that gets
-		/// entered on the next MoveNext() call.
-		/// </summary>
-		void AnalyzeStateMachine(ILFunction function)
+			/// <summary>
+			/// Analyze the the state machine; and replace 'leave IL_0000' with await+jump to block that gets
+			/// entered on the next MoveNext() call.
+			/// </summary>
+			void AnalyzeStateMachine(ILFunction function)
 		{
 			context.Step("AnalyzeStateMachine()", function);
 			smallestAwaiterVarIndex = int.MaxValue;
