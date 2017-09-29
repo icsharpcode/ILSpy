@@ -201,8 +201,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(type))
 						return true;
 				} else if (type.IsCompilerGenerated()) {
-//					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
-//						return true;
+					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+						return true;
 					if (settings.AnonymousTypes && type.IsAnonymousType())
 						return true;
 				}
@@ -215,8 +215,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 					if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field))
 						return true;
-//					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
-//						return true;
+					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
+						return true;
 				}
 				// event-fields are not [CompilerGenerated]
 				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
