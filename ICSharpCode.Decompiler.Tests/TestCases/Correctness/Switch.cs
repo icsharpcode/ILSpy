@@ -46,6 +46,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static string SparseIntegerSwitch(int i)
 		{
+			Console.WriteLine("SparseIntegerSwitch: " + i);
 			switch (i) {
 				case -10000000: return "-10 mln";
 				case -100: return "-hundred";
@@ -64,6 +65,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static string ShortSwitchOverString(string text)
 		{
+			Console.WriteLine("ShortSwitchOverString: " + text);
 			switch (text) {
 				case "First case":
 					return "Text";
@@ -74,6 +76,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static string SwitchOverString1(string text)
 		{
+			Console.WriteLine("SwitchOverString1: " + text);
 			switch (text) {
 				case "First case":
 					return "Text1";
@@ -97,6 +100,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static string SwitchOverString2()
 		{
+			Console.WriteLine("SwitchOverString2:");
 			switch (Environment.UserName) {
 				case "First case":
 					return "Text1";
@@ -127,6 +131,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static string SwitchOverBool(bool b)
 		{
+			Console.WriteLine("SwitchOverBool: " + b);
 			switch (b) {
 				case true:
 					return bool.TrueString;
@@ -139,6 +144,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void SwitchInLoop(int i)
 		{
+			Console.WriteLine("SwitchInLoop: " + i);
 			while (true) {
 				switch (i) {
 					case 1:
@@ -164,6 +170,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void SwitchWithGoto(int i)
 		{
+			Console.WriteLine("SwitchWithGoto: " + i);
 			switch (i) {
 				case 1:
 					Console.WriteLine("one");
