@@ -30,6 +30,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(SwitchOverString2());
 			Console.WriteLine(SwitchOverBool(true));
 			Console.WriteLine(SwitchOverBool(false));
+			SwitchInLoop(0);
+			SwitchWithGoto(1);
+			SwitchWithGoto(2);
+			SwitchWithGoto(3);
+			SwitchWithGoto(4);
 		}
 
 		static void TestCase<T>(Func<T, string> target, params T[] args)
@@ -105,6 +110,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					return "Text5";
 				case "Sixth case":
 					return "Text6";
+				case "Seventh case":
+					return "Text7";
+				case "Eighth case":
+					return "Text8";
+				case "Ninth case":
+					return "Text9";
+				case "Tenth case":
+					return "Text10";
+				case "Eleventh case":
+					return "Text11";
 				default:
 					return "Default";
 			}
@@ -141,9 +156,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					default:
 						Console.WriteLine("default");
 						Console.WriteLine("more code");
-						throw new ArgumentException();
+						return;
 				}
 				i++;
+			}
+		}
+
+		public static void SwitchWithGoto(int i)
+		{
+			switch (i) {
+				case 1:
+					Console.WriteLine("one");
+					goto default;
+				case 2:
+					Console.WriteLine("two");
+					goto case 3;
+				case 3:
+					Console.WriteLine("three");
+					break;
+				case 4:
+					Console.WriteLine("four");
+					return;
+				default:
+					Console.WriteLine("default");
+					break;
 			}
 		}
 	}

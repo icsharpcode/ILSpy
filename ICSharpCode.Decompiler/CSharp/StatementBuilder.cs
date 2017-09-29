@@ -83,11 +83,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new IfElseStatement(condition, trueStatement, falseStatement);
 		}
 
-		CaseLabel CreateTypedCaseLabel(long i, IType type)
+		CaseLabel CreateTypedCaseLabel(long i, IType type, string[] map = null)
 		{
 			object value;
 			if (type.IsKnownType(KnownTypeCode.Boolean)) {
 				value = i != 0;
+			} else if (type.IsKnownType(KnownTypeCode.String) && map != null) {
+				value = map[i];
 			} else if (type.Kind == TypeKind.Enum) {
 				var enumType = type.GetDefinition().EnumUnderlyingType;
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), i, false);
@@ -101,12 +103,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var oldBreakTarget = breakTarget;
 			breakTarget = null; // 'break' within a switch would only leave the switch
-			
-			var value = exprBuilder.Translate(inst.Value);
+
+			TranslatedExpression value;
+			var strToInt = inst.Value as StringToInt;
+			if (strToInt != null) {
+				value = exprBuilder.Translate(strToInt.Argument);
+			} else {
+				value = exprBuilder.Translate(inst.Value);
+			}
+
 			var stmt = new SwitchStatement() { Expression = value };	
 			foreach (var section in inst.Sections) {
 				var astSection = new Syntax.SwitchSection();
-				astSection.CaseLabels.AddRange(section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type)));
+				astSection.CaseLabels.AddRange(section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type, strToInt?.Map)));
 				ConvertSwitchSectionBody(astSection, section.Body);
 				stmt.SwitchSections.Add(astSection);
 			}
