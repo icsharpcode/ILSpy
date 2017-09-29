@@ -29,23 +29,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
+			if (!context.Settings.SwitchStatementOnString)
+				return;
+
 			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
 
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					SwitchInstruction newSwitch;
 					Block blockAfterSwitch = null;
-					if (!MatchCascadingIfStatements(block.Instructions, i, out newSwitch, out blockAfterSwitch) &&
-						!MatchLegacySwitchOnString(block.Instructions, i, out newSwitch, out blockAfterSwitch) &&
-						!MatchRoslynSwitchOnString(block.Instructions, i, out newSwitch))
-						continue;
+					bool removeExtraStore = false; // the Roslyn switch pattern uses an extra store for hash calculation.
+					if (!MatchCascadingIfStatements(block.Instructions, i, out newSwitch, out blockAfterSwitch))
+						if (!MatchLegacySwitchOnString(block.Instructions, i, out newSwitch, out blockAfterSwitch))
+							if (MatchRoslynSwitchOnString(block.Instructions, i, out newSwitch))
+								removeExtraStore = true;
+							else
+								continue;
 
 					if (i + 1 < block.Instructions.Count && block.Instructions[i + 1] is Branch b && blockAfterSwitch != null) {
 						block.Instructions[i + 1].ReplaceWith(new Branch(blockAfterSwitch));
 					}
 
 					block.Instructions[i].ReplaceWith(newSwitch);
-					if (newSwitch.Value.MatchLdLoc(out var switchVar) && !block.Instructions[i - 1].MatchLdLoc(switchVar)) {
+					if (removeExtraStore) {
 						block.Instructions.RemoveAt(i - 1);
 						i--;
 					}
@@ -68,37 +74,39 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			inst = null;
 			blockAfterSwitch = null;
-			if (i < 1) return false;
 			// match first block: checking switch-value for null or first value (Roslyn)
-			if (!(instructions[i].MatchIfInstruction(out var condition, out var firstBlockJump) &&
-				instructions[i - 1].MatchStLoc(out var switchValueVar, out var switchValue) && switchValueVar.Type.IsKnownType(KnownTypeCode.String)))
+			if (!(instructions[i].MatchIfInstruction(out var condition, out var firstBlockJump)))
 				return false;
 			if (!firstBlockJump.MatchBranch(out var firstBlock))
 				return false;
 			bool isLegacy;
 			Block defaultBlock;
 			List<(string, Block)> values = new List<(string, Block)>();
-			if (condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && left.MatchLdLoc(switchValueVar)) {
+			if (condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && left.MatchLdLoc(out var switchValueVar)) {
 				isLegacy = true;
 				defaultBlock = firstBlock;
-			} else if (MatchStringEqualityComparison(condition, switchValueVar, out string value)) {
+			} else if (MatchStringEqualityComparison(condition, out switchValueVar, out string value)) {
 				isLegacy = false;
 				defaultBlock = null;
 				values.Add((value, firstBlock));
 			} else return false;
+			if (!switchValueVar.IsSingleDefinition)
+				return false;
 			if (!(instructions.ElementAtOrDefault(i + 1) is Branch nextCaseJump))
 				return false;
 			Block currentCaseBlock = nextCaseJump.TargetBlock;
 			Block nextCaseBlock;
-			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out string value, out Block block)) != null) {
+			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, ref switchValueVar, out string value, out Block block)) != null) {
 				values.Add((value, block));
 				currentCaseBlock = nextCaseBlock;
 			}
-			if (!ExtractLastJumpFromBlock(currentCaseBlock, out var exitBlock))
+			BlockContainer container = null;
+			if (!ExtractLastJumpFromBlock(currentCaseBlock, out var exitBlock) && !ExtractLastLeaveFromBlock(currentCaseBlock, out container))
 				return false;
 			if (values.Count == 0)
 				return false;
-			if (!values.All(b => ExtractLastJumpFromBlock(b.Item2, out var nextExit) && nextExit == exitBlock))
+			if (!(values.All(b => ExtractLastJumpFromBlock(b.Item2, out var nextExit) && nextExit == exitBlock) ||
+				(exitBlock == null && values.All(b => ExtractLastLeaveFromBlock(b.Item2, out var exitContainer) && exitContainer == container))))
 				return false;
 			if (currentCaseBlock.IncomingEdgeCount == (isLegacy ? 2 : 1)) {
 				var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch(b.Item2) }));
@@ -120,21 +128,53 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		Block MatchCaseBlock(Block currentBlock, ILVariable switchVariable, out string value, out Block caseBlock)
+		bool ExtractLastLeaveFromBlock(Block block, out BlockContainer exitBlock)
+		{
+			exitBlock = null;
+			var lastInst = block.Instructions.LastOrDefault();
+			if (lastInst == null || !lastInst.MatchLeave(out exitBlock, out _))
+				return false;
+			return true;
+		}
+
+		Block MatchCaseBlock(Block currentBlock, ref ILVariable switchVariable, out string value, out Block caseBlock)
 		{
 			value = null;
 			caseBlock = null;
+
 			if (currentBlock.IncomingEdgeCount != 1 || currentBlock.Instructions.Count != 2)
 				return null;
 			if (!currentBlock.Instructions[0].MatchIfInstruction(out var condition, out var caseBlockBranch))
 				return null;
 			if (!caseBlockBranch.MatchBranch(out caseBlock))
 				return null;
-			if (!MatchStringEqualityComparison(condition, switchVariable, out value))
+			Block nextBlock;
+			if (condition.MatchLogicNot(out var inner)) {
+				condition = inner;
+				nextBlock = caseBlock;
+				if (!currentBlock.Instructions[1].MatchBranch(out caseBlock))
+					return null;
+			} else {
+				if (!currentBlock.Instructions[1].MatchBranch(out nextBlock))
+					return null;
+			}
+			if (!MatchStringEqualityComparison(condition, out var newSwitchVariable, out value))
 				return null;
-			if (!currentBlock.Instructions[1].MatchBranch(out var nextBlock))
+			if (!newSwitchVariable.IsSingleDefinition)
 				return null;
+			if (switchVariable != newSwitchVariable && !(IsInitializedBy(switchVariable, newSwitchVariable) || IsInitializedBy(newSwitchVariable, switchVariable)))
+				return null;
+			if (!newSwitchVariable.Type.IsKnownType(KnownTypeCode.String))
+				return null;
+			switchVariable = newSwitchVariable;
 			return nextBlock;
+		}
+
+		bool IsInitializedBy(ILVariable switchVariable, ILVariable newSwitchVariable)
+		{
+			if (!switchVariable.IsSingleDefinition)
+				return false;
+			return switchVariable.StoreInstructions.OfType<StLoc>().Single().Value.MatchLdLoc(newSwitchVariable);
 		}
 
 		bool MatchLegacySwitchOnString(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst, out Block blockAfterSwitch)
@@ -148,7 +188,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!exitBlockJump.MatchBranch(out var exitBlock))
 				return false;
-			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && left.Match(switchValue).Success))
+			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && (left.Match(switchValue).Success || left.MatchLdLoc(switchValueVar))))
 				return false;
 			var nextBlockJump = instructions.ElementAtOrDefault(i + 1) as Branch;
 			if (nextBlockJump == null || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
@@ -292,7 +332,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool MatchStringEqualityComparison(ILInstruction condition, ILVariable variable, out string stringValue)
 		{
+			return MatchStringEqualityComparison(condition, out var v, out stringValue) && v == variable;
+		}
+
+		bool MatchStringEqualityComparison(ILInstruction condition, out ILVariable variable, out string stringValue)
+		{
 			stringValue = null;
+			variable = null;
 			ILInstruction left, right;
 			if (condition is Call c && c.Method.IsOperator && c.Method.Name == "op_Equality" && c.Arguments.Count == 2) {
 				left = c.Arguments[0];
@@ -301,7 +347,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 			} else if (condition.MatchCompEquals(out left, out right) && right.MatchLdNull()) {
 			} else return false;
-			return left.MatchLdLoc(variable);
+			return left.MatchLdLoc(out variable);
 		}
 	}
 }
