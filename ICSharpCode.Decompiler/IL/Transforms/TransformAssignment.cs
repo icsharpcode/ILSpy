@@ -90,7 +90,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions.RemoveAt(i + 1);
 			} else if (nextInst is StObj) { // static fields
 				fieldStore = (StObj)nextInst;
-				if (!fieldStore.Value.MatchLdLoc(inst.Variable))
+				if (!fieldStore.Value.MatchLdLoc(inst.Variable) || (fieldStore.Target.MatchLdFlda(out var target, out _) && target.MatchLdLoc(inst.Variable)))
 					return false;
 				context.Step("Inline assignment to static field", fieldStore);
 				local = inst.Variable;

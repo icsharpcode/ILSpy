@@ -934,6 +934,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				decl.Name = ev.Name;
 				decl.AddAccessor    = ConvertAccessor(ev.AddAccessor, ev.Accessibility, true);
 				decl.RemoveAccessor = ConvertAccessor(ev.RemoveAccessor, ev.Accessibility, true);
+				decl.PrivateImplementationType = GetExplicitInterfaceType (ev);
 				return decl;
 			} else {
 				EventDeclaration decl = new EventDeclaration();

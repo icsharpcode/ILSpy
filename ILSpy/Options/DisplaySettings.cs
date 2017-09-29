@@ -107,5 +107,30 @@ namespace ICSharpCode.ILSpy.Options
 				}
 			}
 		}
+
+		bool sortResults;
+
+		public bool SortResults
+		{
+			get { return sortResults; }
+			set
+			{
+				if (sortResults != value)
+				{
+					sortResults = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		public void CopyValues(DisplaySettings s)
+		{
+			this.SelectedFont = s.selectedFont;
+			this.SelectedFontSize = s.selectedFontSize;
+			this.ShowLineNumbers = s.showLineNumbers;
+			this.ShowMetadataTokens = s.showMetadataTokens;
+			this.EnableWordWrap = s.enableWordWrap;
+			this.SortResults = s.sortResults;
+		}
 	}
 }

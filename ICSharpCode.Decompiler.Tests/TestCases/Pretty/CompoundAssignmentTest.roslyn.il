@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module CompoundAssignmentTest.dll
-// MVID: {572A9208-925A-4E92-9D86-8EC36FE271FC}
+// MVID: {E4D6BDFE-1178-4790-A328-6755C028F1BE}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00AF0000
+// Image base: 0x00D10000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -137,6 +137,23 @@
                                                                                                                      uint32)
     } // end of property MutableClass::Item
   } // end of class MutableClass
+
+  .class auto ansi nested private beforefieldinit Item
+         extends [mscorlib]System.Object
+  {
+    .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item Self
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  nop
+      IL_0007:  ret
+    } // end of method Item::.ctor
+
+  } // end of class Item
 
   .field private int32 test1
   .field private int32[] array1
@@ -855,6 +872,36 @@
     IL_0012:  ldloc.0
     IL_0013:  ret
   } // end of method CompoundAssignmentTest::PreIncrementStaticProperty
+
+  .method private hidebysig static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item 
+          GetItem(object obj) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  1
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item V_0)
+    IL_0000:  nop
+    IL_0001:  ldnull
+    IL_0002:  stloc.0
+    IL_0003:  br.s       IL_0005
+
+    IL_0005:  ldloc.0
+    IL_0006:  ret
+  } // end of method CompoundAssignmentTest::GetItem
+
+  .method private hidebysig static void  Issue882() cil managed
+  {
+    // Code size       16 (0x10)
+    .maxstack  2
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item V_0)
+    IL_0000:  nop
+    IL_0001:  ldnull
+    IL_0002:  call       class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::GetItem(object)
+    IL_0007:  stloc.0
+    IL_0008:  ldloc.0
+    IL_0009:  ldloc.0
+    IL_000a:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item::Self
+    IL_000f:  ret
+  } // end of method CompoundAssignmentTest::Issue882
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

@@ -123,10 +123,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				foreach (var transform in children) {
 					transform.Run(block, pos, ctx);
-					block.CheckInvariant(ILPhase.Normal);
 #if DEBUG
+					block.Instructions[pos].CheckInvariant(ILPhase.Normal);
 					for (int i = 0; i < pos; ++i) {
-						Debug.Assert(!block.Instructions[i].IsDirty, $"{transform.GetType().Name} modified an instruction before pos");
+						if (block.Instructions[i].IsDirty) {
+							Debug.Fail($"{transform.GetType().Name} modified an instruction before pos");
+						}
 					}
 #endif
 					if (ctx.rerunCurrentPosition) {

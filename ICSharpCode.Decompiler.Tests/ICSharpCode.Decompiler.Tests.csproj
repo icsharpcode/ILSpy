@@ -115,9 +115,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="TestCases\Pretty\CompoundAssignmentTest.il">
-      <DependentUpon>CompoundAssignmentTest.cs</DependentUpon>
-    </None>
     <None Include="TestCases\Pretty\HelloWorld.il">
       <DependentUpon>HelloWorld.cs</DependentUpon>
     </None>
