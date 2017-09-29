@@ -158,6 +158,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.
 		/// Also used to convert a string to a reference to the first character.</summary>
 		ArrayToPointer,
+		/// <summary>Maps a string value to an integer. This is used in switch(string).</summary>
+		StringToInt,
 		/// <summary>Push a typed reference of type class onto the stack.</summary>
 		MakeRefAny,
 		/// <summary>Push the type token stored in a typed reference.</summary>
@@ -4022,6 +4024,87 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>Maps a string value to an integer. This is used in switch(string).</summary>
+	public sealed partial class StringToInt : ILInstruction
+	{
+		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
+		ILInstruction argument;
+		public ILInstruction Argument {
+			get { return this.argument; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.argument, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.argument;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Argument = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ArgumentSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (StringToInt)ShallowClone();
+			clone.Argument = this.argument.Clone();
+			return clone;
+		}
+		public override StackType ResultType { get { return StackType.I4; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return argument.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitStringToInt(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitStringToInt(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitStringToInt(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as StringToInt;
+			return o != null && this.argument.PerformMatch(o.argument, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Push a typed reference of type class onto the stack.</summary>
 	public sealed partial class MakeRefAny : UnaryInstruction
 	{
@@ -4633,6 +4716,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitStringToInt(StringToInt inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitMakeRefAny(MakeRefAny inst)
 		{
 			Default(inst);
@@ -4916,6 +5003,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitArrayToPointer(ArrayToPointer inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitStringToInt(StringToInt inst)
 		{
 			return Default(inst);
 		}
@@ -5205,6 +5296,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitStringToInt(StringToInt inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitMakeRefAny(MakeRefAny inst, C context)
 		{
 			return Default(inst, context);
@@ -5294,6 +5389,7 @@ namespace ICSharpCode.Decompiler.IL
 			"ldlen",
 			"ldelema",
 			"array.to.pointer",
+			"string.to.int",
 			"mkrefany",
 			"refanytype",
 			"refanyval",

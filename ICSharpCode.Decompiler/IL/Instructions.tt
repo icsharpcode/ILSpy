@@ -220,6 +220,8 @@
 		new OpCode("array.to.pointer", "Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty." + Environment.NewLine
 			+ "Also used to convert a string to a reference to the first character.",
 			CustomArguments("array"), ResultType("Ref")),
+		new OpCode("string.to.int", "Maps a string value to an integer. This is used in switch(string).",
+			CustomArguments("argument"), CustomConstructor, CustomWriteTo, ResultType("I4")),
 
 		new OpCode("mkrefany", "Push a typed reference of type class onto the stack.",
 			CustomClassName("MakeRefAny"), Unary, HasTypeOperand, ResultType("O")),
