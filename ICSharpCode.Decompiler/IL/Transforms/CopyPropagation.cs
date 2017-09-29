@@ -83,6 +83,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							// note: the initialization by the caller is the first store -> StoreCount must be 1
 							return v.IsSingleDefinition;
 						case VariableKind.StackSlot:
+						case VariableKind.Exception:
 							// Variables are be copied only if both they and the target copy variable are generated,
 							// and if the variable has only a single assignment
 							return v.IsSingleDefinition && target.Kind == VariableKind.StackSlot;
