@@ -54,7 +54,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			}
 		}
-		
+
+		private class Item
+		{
+			public Item Self;
+		}
+
 		private int test1;
 		private int[] array1;
 		private StructContainer field1;
@@ -238,6 +243,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int PreIncrementStaticProperty()
 		{
 			return ++CompoundAssignmentTest.StaticProperty;
+		}
+
+		private static Item GetItem(object obj)
+		{
+			return null;
+		}
+
+		private static void Issue882()
+		{
+			Item item = CompoundAssignmentTest.GetItem(null);
+			item.Self = item;
 		}
 	}
 }
