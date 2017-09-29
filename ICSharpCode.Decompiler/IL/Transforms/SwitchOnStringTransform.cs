@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -34,7 +35,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					SwitchInstruction newSwitch;
 					Block blockAfterSwitch = null;
-					if (!MatchLegacySwitchOnString(block.Instructions, i, out newSwitch, out blockAfterSwitch) &&
+					if (!MatchCascadingIfStatements(block.Instructions, i, out newSwitch, out blockAfterSwitch) &&
+						!MatchLegacySwitchOnString(block.Instructions, i, out newSwitch, out blockAfterSwitch) &&
 						!MatchRoslynSwitchOnString(block.Instructions, i, out newSwitch))
 						continue;
 
@@ -43,9 +45,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					}
 
 					block.Instructions[i].ReplaceWith(newSwitch);
-					block.Instructions.RemoveAt(i - 1);
-
-					i--;
+					if (newSwitch.Value.MatchLdLoc(out var switchVar) && !block.Instructions[i - 1].MatchLdLoc(switchVar)) {
+						block.Instructions.RemoveAt(i - 1);
+						i--;
+					}
 
 					// This happens in some cases:
 					// Use correct index after transformation.
@@ -59,6 +62,79 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			foreach (var container in changedContainers)
 				container.SortBlocks(deleteUnreachableBlocks: true);
+		}
+
+		bool MatchCascadingIfStatements(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst, out Block blockAfterSwitch)
+		{
+			inst = null;
+			blockAfterSwitch = null;
+			if (i < 1) return false;
+			// match first block: checking switch-value for null or first value (Roslyn)
+			if (!(instructions[i].MatchIfInstruction(out var condition, out var firstBlockJump) &&
+				instructions[i - 1].MatchStLoc(out var switchValueVar, out var switchValue) && switchValueVar.Type.IsKnownType(KnownTypeCode.String)))
+				return false;
+			if (!firstBlockJump.MatchBranch(out var firstBlock))
+				return false;
+			bool isLegacy;
+			Block defaultBlock;
+			List<(string, Block)> values = new List<(string, Block)>();
+			if (condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && left.MatchLdLoc(switchValueVar)) {
+				isLegacy = true;
+				defaultBlock = firstBlock;
+			} else if (MatchStringEqualityComparison(condition, switchValueVar, out string value)) {
+				isLegacy = false;
+				defaultBlock = null;
+				values.Add((value, firstBlock));
+			} else return false;
+			if (!(instructions.ElementAtOrDefault(i + 1) is Branch nextCaseJump))
+				return false;
+			Block currentCaseBlock = nextCaseJump.TargetBlock;
+			Block nextCaseBlock;
+			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out string value, out Block block)) != null) {
+				values.Add((value, block));
+				currentCaseBlock = nextCaseBlock;
+			}
+			if (!ExtractLastJumpFromBlock(currentCaseBlock, out var exitBlock))
+				return false;
+			if (values.Count == 0)
+				return false;
+			if (!values.All(b => ExtractLastJumpFromBlock(b.Item2, out var nextExit) && nextExit == exitBlock))
+				return false;
+			if (currentCaseBlock.IncomingEdgeCount == (isLegacy ? 2 : 1)) {
+				var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch(b.Item2) }));
+				var stringToInt = new StringToInt(new LdLoc(switchValueVar), values.SelectArray(item => item.Item1));
+				inst = new SwitchInstruction(stringToInt);
+				inst.Sections.AddRange(sections);
+				blockAfterSwitch = currentCaseBlock;
+				return true;
+			}
+			return false;
+		}
+
+		bool ExtractLastJumpFromBlock(Block block, out Block exitBlock)
+		{
+			exitBlock = null;
+			var lastInst = block.Instructions.LastOrDefault();
+			if (lastInst == null || !lastInst.MatchBranch(out exitBlock))
+				return false;
+			return true;
+		}
+
+		Block MatchCaseBlock(Block currentBlock, ILVariable switchVariable, out string value, out Block caseBlock)
+		{
+			value = null;
+			caseBlock = null;
+			if (currentBlock.IncomingEdgeCount != 1 || currentBlock.Instructions.Count != 2)
+				return null;
+			if (!currentBlock.Instructions[0].MatchIfInstruction(out var condition, out var caseBlockBranch))
+				return null;
+			if (!caseBlockBranch.MatchBranch(out caseBlock))
+				return null;
+			if (!MatchStringEqualityComparison(condition, switchVariable, out value))
+				return null;
+			if (!currentBlock.Instructions[1].MatchBranch(out var nextBlock))
+				return null;
+			return nextBlock;
 		}
 
 		bool MatchLegacySwitchOnString(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst, out Block blockAfterSwitch)

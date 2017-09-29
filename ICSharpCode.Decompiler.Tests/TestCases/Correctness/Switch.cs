@@ -26,6 +26,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			TestCase(SparseIntegerSwitch, -100, 1, 2, 3, 4);
 			TestCase(ShortSwitchOverString, "First case", "Else");
+			TestCase(ShortSwitchOverString2, "First case", "Second case", "Third case", "Else");
+			TestCase(ShortSwitchOverStringNoExplicitDefault, "First case", "Second case", "Third case", "Else");
 			TestCase(SwitchOverString1, "First case", "Second case", "2nd case", "Third case", "Fourth case", "Fifth case", "Sixth case", null, "default", "else");
 			Console.WriteLine(SwitchOverString2());
 			Console.WriteLine(SwitchOverBool(true));
@@ -72,6 +74,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				default:
 					return "Default";
 			}
+		}
+
+		public static string ShortSwitchOverString2(string text)
+		{
+			Console.WriteLine("ShortSwitchOverString2: " + text);
+			switch (text) {
+				case "First case":
+					return "Text1";
+				case "Second case":
+					return "Text2";
+				case "Third case":
+					return "Text3";
+				default:
+					return "Default";
+			}
+		}
+
+		public static string ShortSwitchOverStringNoExplicitDefault(string text)
+		{
+			Console.WriteLine("ShortSwitchOverStringNoExplicitDefault: " + text);
+			switch (text) {
+				case "First case":
+					return "Text1";
+				case "Second case":
+					return "Text2";
+				case "Third case":
+					return "Text3";
+			}
+			return "Default";
 		}
 
 		public static string SwitchOverString1(string text)
