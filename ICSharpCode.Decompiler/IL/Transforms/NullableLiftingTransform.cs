@@ -373,12 +373,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (!MatchHasValueCall(hasValueComp.Right, out var nullable2))
 				return null;
-			if (!nestedIfInst.MatchIfInstruction(out var condition, out var trueInst, out var falseInst))
+			if (!nestedIfInst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
 				return null;
-			while (condition.MatchLogicNot(out var arg)) {
-				condition = arg;
-				Swap(ref trueInst, ref falseInst);
-			}
 			if (!MatchHasValueCall(condition, out var nullable))
 				return null;
 			if (nullable != nullable1 && nullable != nullable2)
@@ -423,6 +419,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		ILInstruction LiftNormal(ILInstruction trueInst, ILInstruction falseInst, Interval ilrange)
 		{
+			if (trueInst.MatchIfInstructionPositiveCondition(out var nestedCondition, out var nestedTrue, out var nestedFalse)) {
+				// Sometimes Roslyn generates pointless conditions like:
+				//   if (nullable.HasValue && (!nullable.HasValue || nullable.GetValueOrDefault() == b))
+				if (MatchHasValueCall(nestedCondition, out var v) && nullableVars.Contains(v)) {
+					trueInst = nestedTrue;
+				}
+			}
+
 			bool isNullCoalescingWithNonNullableFallback = false;
 			if (!MatchNullableCtor(trueInst, out var utype, out var exprToLift)) {
 				isNullCoalescingWithNonNullableFallback = true;
@@ -438,12 +442,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					};
 				} else if (trueInst is Call call && !call.IsLifted
 					&& CSharp.Resolver.CSharpOperators.IsComparisonOperator(call.Method)
-					&& call.Method.Name != "op_Equality" && call.Method.Name != "op_Inequality"
-					&& falseInst.MatchLdcI4(0))
+					&& falseInst.MatchLdcI4(call.Method.Name == "op_Inequality" ? 1 : 0))
 				{
 					// (v1 != null && ... && vn != null) ? call op_LessThan(lhs, rhs) : ldc.i4(0)
 					var liftedOperator = CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method);
+					if ((call.Method.Name == "op_Equality" || call.Method.Name == "op_Inequality") && nullableVars.Count != 1) {
+						// Equality is special (returns true if both sides are null), only handle it
+						// in the normal code path if we're dealing with only a single nullable var
+						// (comparing nullable with non-nullable).
+						liftedOperator = null;
+					}
 					if (liftedOperator != null) {
+						context.Step("Lift user-defined comparison operator", trueInst);
 						var (left, right, bits) = DoLiftBinary(call.Arguments[0], call.Arguments[1]);
 						if (left != null && right != null && bits.All(0, nullableVars.Count)) {
 							return new Call(liftedOperator) {
