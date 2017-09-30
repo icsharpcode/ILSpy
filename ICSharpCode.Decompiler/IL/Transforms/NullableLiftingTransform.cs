@@ -113,7 +113,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		}
 		#endregion
 
-		#region Lift / DoLift
+		#region Main lifting logic
+		/// <summary>
+		/// Main entry point for lifting; called by both the expression-transform
+		/// and the block transform.
+		/// </summary>
 		ILInstruction Lift(IfInstruction ifInst, ILInstruction trueInst, ILInstruction falseInst)
 		{
 			ILInstruction condition = ifInst.Condition;
@@ -126,7 +130,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// => normal lifting
 				return LiftNormal(trueInst, falseInst, ilrange: ifInst.ILRange);
 			}
-			if (condition is Comp comp && !comp.IsLifted) {
+			if (MatchCompOrDecimal(condition, out var comp)) {
 				// This might be a C#-style lifted comparison
 				// (C# checks the underlying value before checking the HasValue bits)
 				if (comp.Kind.IsEqualityOrInequality()) {
@@ -164,6 +168,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			ILVariable v;
+			// Handle equality comparisons with bool?:
 			if (MatchGetValueOrDefault(condition, out v)
 				&& NullableType.GetUnderlyingType(v.Type).IsKnownType(KnownTypeCode.Boolean))
 			{
@@ -205,6 +210,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					) { ILRange = ifInst.ILRange };
 				}
 			}
+			// Handle & and | on bool?:
 			if (trueInst.MatchLdLoc(out v)) {
 				if (MatchNullableCtor(falseInst, out var utype, out var arg)
 					&& utype.IsKnownType(KnownTypeCode.Boolean) && arg.MatchLdcI4(0))
@@ -281,8 +287,81 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			a = b;
 			b = tmp;
 		}
+		#endregion
 
-		Comp LiftCSharpEqualityComparison(Comp valueComp, ComparisonKind newComparisonKind, ILInstruction hasValueTest)
+		#region CSharpComp
+		static bool MatchCompOrDecimal(ILInstruction inst, out CompOrDecimal result)
+		{
+			result = default(CompOrDecimal);
+			result.Instruction = inst;
+			if (inst is Comp comp && !comp.IsLifted) {
+				result.Kind = comp.Kind;
+				result.Left = comp.Left;
+				result.Right = comp.Right;
+				return true;
+			} else if (inst is Call call && call.Method.IsOperator && call.Arguments.Count == 2 && !call.IsLifted) {
+				switch (call.Method.Name) {
+					case "op_Equality":
+						result.Kind = ComparisonKind.Equality;
+						break;
+					case "op_Inequality":
+						result.Kind = ComparisonKind.Inequality;
+						break;
+					case "op_LessThan":
+						result.Kind = ComparisonKind.LessThan;
+						break;
+					case "op_LessThanOrEqual":
+						result.Kind = ComparisonKind.LessThanOrEqual;
+						break;
+					case "op_GreaterThan":
+						result.Kind = ComparisonKind.GreaterThan;
+						break;
+					case "op_GreaterThanOrEqual":
+						result.Kind = ComparisonKind.GreaterThanOrEqual;
+						break;
+					default:
+						return false;
+				}
+				result.Left = call.Arguments[0];
+				result.Right = call.Arguments[1];
+				return call.Method.DeclaringType.IsKnownType(KnownTypeCode.Decimal);
+			}
+			return false;
+		}
+
+		/// <summary>
+		/// Represents either non-lifted IL `Comp` or a call to one of the (non-lifted) 6 comparison operators on `System.Decimal`.
+		/// </summary>
+		struct CompOrDecimal
+		{
+			public ILInstruction Instruction;
+			public ComparisonKind Kind;
+			public ILInstruction Left;
+			public ILInstruction Right;
+
+			internal ILInstruction MakeLifted(ComparisonKind newComparisonKind, ILInstruction left, ILInstruction right)
+			{
+				if (Instruction is Comp comp) {
+					return new Comp(newComparisonKind, ComparisonLiftingKind.CSharp, comp.InputType, comp.Sign, left, right) {
+						ILRange = Instruction.ILRange
+					};
+				} else if (Instruction is Call call && newComparisonKind == Kind) {
+					return new Call(CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method)) {
+						Arguments = { left, right },
+						ConstrainedTo = call.ConstrainedTo,
+						ILRange = call.ILRange,
+						ILStackWasEmpty = call.ILStackWasEmpty,
+						IsTail = call.IsTail
+					};
+				} else {
+					return null;
+				}
+			}
+		}
+		#endregion
+
+		#region Lift...Comparison
+		ILInstruction LiftCSharpEqualityComparison(CompOrDecimal valueComp, ComparisonKind newComparisonKind, ILInstruction hasValueTest)
 		{
 			Debug.Assert(newComparisonKind.IsEqualityOrInequality());
 			bool hasValueTestNegated = false;
@@ -306,8 +385,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (left != null && right != null && leftBits[0] && rightBits[0]
 					&& SemanticHelper.IsPure(left.Flags) && SemanticHelper.IsPure(right.Flags)
 				) {
-					context.Step("NullableLiftingTransform: C# (in)equality comparison", valueComp);
-					return new Comp(newComparisonKind, ComparisonLiftingKind.CSharp, valueComp.InputType, valueComp.Sign, left, right);
+					context.Step("NullableLiftingTransform: C# (in)equality comparison", valueComp.Instruction);
+					return valueComp.MakeLifted(newComparisonKind, left, right);
 				}
 			} else if (newComparisonKind == ComparisonKind.Equality && !hasValueTestNegated && MatchHasValueCall(hasValueTest, out var v)) {
 				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
@@ -333,7 +412,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// This means unlike LiftNormal(), we cannot rely on the input instruction not being evaluated if
 		/// a variable is <c>null</c>.
 		/// </summary>
-		Comp LiftCSharpComparison(Comp comp, ComparisonKind newComparisonKind)
+		ILInstruction LiftCSharpComparison(CompOrDecimal comp, ComparisonKind newComparisonKind)
 		{
 			var (left, right, bits) = DoLiftBinary(comp.Left, comp.Right);
 			// due to the restrictions on side effects, we only allow instructions that are pure after lifting.
@@ -343,13 +422,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// don't lift if a nullableVar doesn't contribute to the result
 					return null;
 				}
-				context.Step("NullableLiftingTransform: C# comparison", comp);
-				return new Comp(newComparisonKind, ComparisonLiftingKind.CSharp, comp.InputType, comp.Sign, left, right);
+				context.Step("NullableLiftingTransform: C# comparison", comp.Instruction);
+				return comp.MakeLifted(newComparisonKind, left, right);
 			}
 			return null;
 		}
 
-		ILInstruction LiftCSharpUserEqualityComparison(Comp hasValueComp, ComparisonKind newComparisonKind, ILInstruction nestedIfInst)
+		Call LiftCSharpUserEqualityComparison(CompOrDecimal hasValueComp, ComparisonKind newComparisonKind, ILInstruction nestedIfInst)
 		{
 			// User-defined equality operator:
 			//   if (comp(call get_HasValue(ldloca nullable1) == call get_HasValue(ldloca nullable2)))
@@ -408,7 +487,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return null;
 		}
+		#endregion
 
+		#region LiftNormal / DoLift
 		/// <summary>
 		/// Performs nullable lifting.
 		/// 
