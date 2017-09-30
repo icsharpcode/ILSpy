@@ -161,6 +161,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expectedParameters.Count == allowedParamCount)) {
 					return HandleAccessorCall(inst, target, method, arguments.ToList());
+				} else if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate) {
+					return new InvocationExpression(target, arguments.Select(arg => arg.Expression)).WithILInstruction(inst).WithRR(rr);
 				} else {
 					bool requireTypeArguments = false;
 					bool targetCasted = false;
