@@ -341,7 +341,46 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst)
 				.WithRR(new TypeOfResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeTypeHandle")), inst.Type));
 		}
-		
+
+		protected internal override TranslatedExpression VisitLdMemberToken(LdMemberToken inst, TranslationContext context)
+		{
+			if (typeof(Mono.Cecil.FieldDefinition) == typeSystem.GetCecil(inst.Member).GetType()) {
+				// typeof(xxx).GetField("yyy").FieldHandle
+				return new MemberReferenceExpression {
+					Target = new InvocationExpression {
+						Target = new MemberReferenceExpression {
+							Target = new TypeOfExpression(ConvertType(inst.Member.DeclaringType)),
+							MemberName = "GetField"
+						},
+						Arguments = {
+						 new PrimitiveExpression(inst.Member.Name)
+						}
+					},
+					MemberName = "FieldHandle"
+				}
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeFieldHandle"))));
+			} else if (typeof(Mono.Cecil.MethodDefinition) == typeSystem.GetCecil(inst.Member).GetType()) {
+				// typeof(xxx).GetMethod("yyy").MethodHandle
+				return new MemberReferenceExpression {
+					Target = new InvocationExpression {
+						Target = new MemberReferenceExpression {
+							Target = new TypeOfExpression(ConvertType(inst.Member.DeclaringType)),
+							MemberName = "GetMethod"
+						},
+						Arguments = {
+						 new PrimitiveExpression(inst.Member.Name)
+						}
+					},
+					MemberName = "MethodHandle"
+				}
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(compilation.FindType(new TopLevelTypeName("System", "RuntimeMethodHandle"))));
+			} else {
+				return Default(inst, context);
+			}
+		}
+
 		protected internal override TranslatedExpression VisitBitNot(BitNot inst, TranslationContext context)
 		{
 			var argument = Translate(inst.Argument);
