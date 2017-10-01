@@ -256,6 +256,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
+		private static void Operation(Func<bool> f)
+		{
+		}
+
 		public void ForEach(IEnumerable<string> enumerable)
 		{
 			foreach (string item in enumerable) {
@@ -377,6 +381,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			foreach (int item in items) {
 				int current = item;
 				Loops.Operation(ref current);
+			}
+		}
+
+		public static void ForeachWithCapturedVariable(List<int> items)
+		{
+			foreach (int item in items) {
+				int c = item;
+				Loops.Operation((Func<bool>)(() => c == 5));
 			}
 		}
 		#endregion
