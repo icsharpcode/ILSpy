@@ -391,6 +391,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Loops.Operation((Func<bool>)(() => c == 5));
 			}
 		}
+
+		public static T LastOrDefault<T>(IEnumerable<T> items)
+		{
+			T result = default(T);
+			foreach (T item in items) {
+				result = item;
+			}
+			return result;
+		}
 		#endregion
 		//public void ForEachOverArray(string[] array)
 		//{

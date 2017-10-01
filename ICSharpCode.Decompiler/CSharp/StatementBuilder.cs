@@ -419,9 +419,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			return foreachStmt;
 		}
 
+		/// <summary>
+		/// Unwraps a nested BlockContainer, if container contains only a single block,
+		/// and that single block contains only a BlockContainer followed by a Leave instruction.
+		/// If the leave instruction is a return that carries a value, the container is unwrapped only
+		/// if the value has no side-effects.
+		/// Otherwise returns the unmodified container.
+		/// </summary>
+		/// <param name="optionalReturnInst">If the leave is a return and has no side-effects, we can move the return out of the using-block and put it after the loop, otherwise returns null.</param>
 		BlockContainer UnwrapNestedContainerIfPossible(BlockContainer container, out Leave optionalReturnInst)
 		{
 			optionalReturnInst = null;
+			// Check block structure:
 			if (container.Blocks.Count != 1)
 				return container;
 			var nestedBlock = container.Blocks[0];
@@ -429,9 +438,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				!(nestedBlock.Instructions[0] is BlockContainer nestedContainer) ||
 				!(nestedBlock.Instructions[1] is Leave leave))
 				return container;
+			// If the leave has no value, just unwrap the BlockContainer.
 			if (leave.MatchLeave(container))
 				return nestedContainer;
-			if (leave.IsLeavingFunction) {
+			// If the leave is a return, we can move the return out of the using-block and put it after the loop
+			// (but only if the value doesn't have side-effects)
+			if (leave.IsLeavingFunction && SemanticHelper.IsPure(leave.Value.Flags)) {
 				optionalReturnInst = leave;
 				return nestedContainer;
 			}
