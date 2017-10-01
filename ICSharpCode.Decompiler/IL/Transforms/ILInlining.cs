@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (ldloca.ChildIndex != 0)
 				return false;
-			if (ldloca.Variable.Type.IsReferenceType != false)
+			if (ldloca.Variable.Type.IsReferenceType ?? false)
 				return false;
 			switch (ldloca.Parent.OpCode) {
 				case OpCode.Call:
