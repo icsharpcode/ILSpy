@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.18020
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly wswrh1ww
+.assembly kiryblux
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module wswrh1ww.dll
-// MVID: {0FA9B26D-B874-4697-B526-76EF6D2DAD90}
+.module kiryblux.dll
+// MVID: {34EC794D-1FFD-488F-9BDC-2D5D9C15854D}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x029E0000
+// Image base: 0x02A30000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -763,6 +763,51 @@
   } // end of method CompoundAssignmentTest::PreIncrementArrayElement
 
   .method public hidebysig instance int32 
+          PostIncrementArrayElement(int32[] 'array',
+                                    int32 pos) cil managed
+  {
+    // Code size       29 (0x1d)
+    .maxstack  3
+    .locals init (int32 V_0,
+             int32 V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  ldelema    [mscorlib]System.Int32
+    IL_0008:  dup
+    IL_0009:  ldobj      [mscorlib]System.Int32
+    IL_000e:  dup
+    IL_000f:  stloc.1
+    IL_0010:  ldc.i4.1
+    IL_0011:  add
+    IL_0012:  stobj      [mscorlib]System.Int32
+    IL_0017:  ldloc.1
+    IL_0018:  stloc.0
+    IL_0019:  br.s       IL_001b
+
+    IL_001b:  ldloc.0
+    IL_001c:  ret
+  } // end of method CompoundAssignmentTest::PostIncrementArrayElement
+
+  .method public hidebysig instance void 
+          IncrementArrayElement(int32[] 'array',
+                                int32 pos) cil managed
+  {
+    // Code size       22 (0x16)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  ldelema    [mscorlib]System.Int32
+    IL_0008:  dup
+    IL_0009:  ldobj      [mscorlib]System.Int32
+    IL_000e:  ldc.i4.1
+    IL_000f:  add
+    IL_0010:  stobj      [mscorlib]System.Int32
+    IL_0015:  ret
+  } // end of method CompoundAssignmentTest::IncrementArrayElement
+
+  .method public hidebysig instance int32 
           PreIncrementInstanceField() cil managed
   {
     // Code size       28 (0x1c)
@@ -787,6 +832,22 @@
     IL_001b:  ret
   } // end of method CompoundAssignmentTest::PreIncrementInstanceField
 
+  .method public hidebysig instance void 
+          IncrementInstanceField() cil managed
+  {
+    // Code size       21 (0x15)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::M()
+    IL_0007:  dup
+    IL_0008:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::Field
+    IL_000d:  ldc.i4.1
+    IL_000e:  add
+    IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::Field
+    IL_0014:  ret
+  } // end of method CompoundAssignmentTest::IncrementInstanceField
+
   .method public hidebysig instance int32 
           PreIncrementInstanceField2(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass m) cil managed
   {
@@ -810,6 +871,21 @@
     IL_0015:  ldloc.0
     IL_0016:  ret
   } // end of method CompoundAssignmentTest::PreIncrementInstanceField2
+
+  .method public hidebysig instance void 
+          IncrementInstanceField2(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass m) cil managed
+  {
+    // Code size       16 (0x10)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  dup
+    IL_0003:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::Field
+    IL_0008:  ldc.i4.1
+    IL_0009:  add
+    IL_000a:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::Field
+    IL_000f:  ret
+  } // end of method CompoundAssignmentTest::IncrementInstanceField2
 
   .method public hidebysig instance int32 
           PreIncrementInstanceProperty() cil managed
@@ -837,6 +913,23 @@
     IL_001c:  ret
   } // end of method CompoundAssignmentTest::PreIncrementInstanceProperty
 
+  .method public hidebysig instance void 
+          IncrementInstanceProperty() cil managed
+  {
+    // Code size       22 (0x16)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::M()
+    IL_0007:  dup
+    IL_0008:  callvirt   instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::get_Property()
+    IL_000d:  ldc.i4.1
+    IL_000e:  add
+    IL_000f:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::set_Property(int32)
+    IL_0014:  nop
+    IL_0015:  ret
+  } // end of method CompoundAssignmentTest::IncrementInstanceProperty
+
   .method public hidebysig instance int32 
           PreIncrementStaticField() cil managed
   {
@@ -857,6 +950,38 @@
   } // end of method CompoundAssignmentTest::PreIncrementStaticField
 
   .method public hidebysig instance int32 
+          PostIncrementStaticField() cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  3
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldsfld     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticField
+    IL_0006:  dup
+    IL_0007:  ldc.i4.1
+    IL_0008:  add
+    IL_0009:  stsfld     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticField
+    IL_000e:  stloc.0
+    IL_000f:  br.s       IL_0011
+
+    IL_0011:  ldloc.0
+    IL_0012:  ret
+  } // end of method CompoundAssignmentTest::PostIncrementStaticField
+
+  .method public hidebysig instance void 
+          IncrementStaticField() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldsfld     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticField
+    IL_0006:  ldc.i4.1
+    IL_0007:  add
+    IL_0008:  stsfld     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticField
+    IL_000d:  ret
+  } // end of method CompoundAssignmentTest::IncrementStaticField
+
+  .method public hidebysig instance int32 
           PreIncrementStaticProperty() cil managed
   {
     // Code size       20 (0x14)
@@ -875,6 +1000,20 @@
     IL_0012:  ldloc.0
     IL_0013:  ret
   } // end of method CompoundAssignmentTest::PreIncrementStaticProperty
+
+  .method public hidebysig instance void 
+          IncrementStaticProperty() cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  call       int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::get_StaticProperty()
+    IL_0006:  ldc.i4.1
+    IL_0007:  add
+    IL_0008:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::set_StaticProperty(int32)
+    IL_000d:  nop
+    IL_000e:  ret
+  } // end of method CompoundAssignmentTest::IncrementStaticProperty
 
   .method private hidebysig static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item 
           GetItem(object obj) cil managed

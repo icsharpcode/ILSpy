@@ -58,6 +58,7 @@ namespace ICSharpCode.Decompiler.IL
 		public CompoundAssignmentInstruction(BinaryNumericInstruction binary, ILInstruction target, ILInstruction value, IType type, CompoundAssignmentType compoundAssignmentType)
 			: base(OpCode.CompoundAssignmentInstruction)
 		{
+			Debug.Assert(IsBinaryCompatibleWithType(binary, type));
 			this.CheckForOverflow = binary.CheckForOverflow;
 			this.Sign = binary.Sign;
 			this.LeftInputType = binary.LeftInputType;
@@ -69,10 +70,28 @@ namespace ICSharpCode.Decompiler.IL
 			this.Target = target;
 			this.type = type;
 			this.Value = value;
+			this.ILRange = binary.ILRange;
 			Debug.Assert(compoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue || (Operator == BinaryNumericOperator.Add || Operator == BinaryNumericOperator.Sub));
 			Debug.Assert(IsValidCompoundAssignmentTarget(Target));
 		}
 		
+		/// <summary>
+		/// Gets whether the specific binary instruction is compatible with a compound operation on the specified type.
+		/// </summary>
+		internal static bool IsBinaryCompatibleWithType(BinaryNumericInstruction binary, IType type)
+		{
+			if (binary.IsLifted) {
+				if (!NullableType.IsNullable(type))
+					return false;
+				type = NullableType.GetUnderlyingType(type);
+			}
+			if (binary.Sign != Sign.None) {
+				if (type.GetSign() != binary.Sign)
+					return false;
+			}
+			return true;
+		}
+
 		internal static bool IsValidCompoundAssignmentTarget(ILInstruction inst)
 		{
 			switch (inst.OpCode) {

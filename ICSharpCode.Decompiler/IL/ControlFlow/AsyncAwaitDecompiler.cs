@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			context.StepStartGroup("CleanUpBodyOfMoveNext", function);
 			// Simplify stobj(ldloca) -> stloc
 			foreach (var stobj in function.Descendants.OfType<StObj>()) {
-				ExpressionTransforms.StObjToStLoc(stobj, context);
+				EarlyExpressionTransforms.StObjToStLoc(stobj, context);
 			}
 
 			// Copy-propagate temporaries holding a copy of 'this'.
