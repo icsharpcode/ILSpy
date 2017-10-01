@@ -42,7 +42,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// </summary>
 		public readonly List<KeyValuePair<LongSet, ILInstruction>> Sections = new List<KeyValuePair<LongSet, ILInstruction>>();
 
+		/// <summary>
+		/// Used to de-duplicate sections with a branch instruction.
+		/// Invariant: (Sections[targetBlockToSectionIndex[branch.TargetBlock]].Instruction as Branch).TargetBlock == branch.TargetBlock
+		/// </summary>
 		readonly Dictionary<Block, int> targetBlockToSectionIndex = new Dictionary<Block, int>();
+
+		/// <summary>
+		/// Used to de-duplicate sections with a value-less leave instruction.
+		/// Invariant: (Sections[targetBlockToSectionIndex[leave.TargetContainer]].Instruction as Leave).TargetContainer == leave.TargetContainer
+		/// </summary>
+		readonly Dictionary<BlockContainer, int> targetContainerToSectionIndex = new Dictionary<BlockContainer, int>();
 
 		/// <summary>
 		/// Blocks that can be deleted if the tail of the initial block is replaced with a switch instruction.
@@ -61,6 +71,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			switchVar = null;
 			rootBlock = block;
 			targetBlockToSectionIndex.Clear();
+			targetContainerToSectionIndex.Clear();
 			Sections.Clear();
 			InnerBlocks.Clear();
 			ContainsILSwitch = false;
@@ -180,16 +191,24 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (values.IsEmpty) {
 				return;
 			}
-			Block targetBlock;
-			if (inst.MatchBranch(out targetBlock)) {
-				int index;
-				if (targetBlockToSectionIndex.TryGetValue(targetBlock, out index)) {
+			if (inst.MatchBranch(out Block targetBlock)) {
+				if (targetBlockToSectionIndex.TryGetValue(targetBlock, out int index)) {
 					Sections[index] = new KeyValuePair<LongSet, ILInstruction>(
 						Sections[index].Key.UnionWith(values),
 						inst
 					);
 				} else {
 					targetBlockToSectionIndex.Add(targetBlock, Sections.Count);
+					Sections.Add(new KeyValuePair<LongSet, ILInstruction>(values, inst));
+				}
+			} else if (inst.MatchLeave(out BlockContainer targetContainer)) {
+				if (targetContainerToSectionIndex.TryGetValue(targetContainer, out int index)) {
+					Sections[index] = new KeyValuePair<LongSet, ILInstruction>(
+						Sections[index].Key.UnionWith(values),
+						inst
+					);
+				} else {
+					targetContainerToSectionIndex.Add(targetContainer, Sections.Count);
 					Sections.Add(new KeyValuePair<LongSet, ILInstruction>(values, inst));
 				}
 			} else {
