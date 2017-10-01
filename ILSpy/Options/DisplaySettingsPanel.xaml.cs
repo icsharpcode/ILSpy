@@ -125,7 +125,8 @@ namespace ICSharpCode.ILSpy.Options
 			else
 				root.Add(section);
 
-			currentDisplaySettings = null; // invalidate cached settings
+			if (currentDisplaySettings != null)
+				currentDisplaySettings.CopyValues(s);
 		}
 	}
 	
