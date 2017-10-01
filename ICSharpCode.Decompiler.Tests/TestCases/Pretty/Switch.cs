@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				case 10001: {
 					return "ten thousand and one";
 				}
-				case int.MaxValue: {
+				case 2147483647: {
 					return "int.MaxValue";
 				}
 				default: {
@@ -107,8 +107,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				case "Sixth case": {
 					return "Text6";
 				}
-				case null: {
-					return null;
+				case (string)null: {
+					return (string)null;
 				}
 				default: {
 					return "Default";
