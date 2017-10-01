@@ -27,14 +27,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
 	class Loops
 	{
+		static void Operation(ref int item)
+		{
+			item++;
+		}
+
 		static void Main()
 		{
 			ForWithMultipleVariables();
 			DoubleForEachWithSameVariable(new[] { "a", "b", "c" });
 			ForeachExceptForNameCollision(new[] { 42, 43, 44, 45 });
+			ForeachExceptForContinuedUse(new[] { 42, 43, 44, 45 });
 			NonGenericForeachWithReturnFallbackTest(new object[] { "a", 42, "b", 43 });
 			NonGenericForeachWithReturn(new object[] { "a", 42, "b", 43 });
 			ForeachWithReturn(new[] { 42, 43, 44, 45 });
+			ForeachWithRefUsage(new List<int> { 1, 2, 3, 4, 5 });
 		}
 
 		public static void ForWithMultipleVariables()
@@ -73,6 +80,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			current = 1;
 			Console.WriteLine(current);
+		}
+
+		public static void ForeachExceptForContinuedUse(IEnumerable<int> inputs)
+		{
+			Console.WriteLine("ForeachExceptForContinuedUse");
+			int num = 0;
+			using (IEnumerator<int> enumerator = inputs.GetEnumerator()) {
+				while (enumerator.MoveNext()) {
+					num = enumerator.Current;
+					Console.WriteLine(num);
+				}
+			}
+			Console.WriteLine("Last: " + num);
 		}
 
 		public static void NonGenericForeachWithReturnFallbackTest(IEnumerable e)
@@ -116,6 +136,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 			Console.WriteLine("return: null");
 			return null;
+		}
+
+		public static void ForeachWithRefUsage(List<int> items)
+		{
+			Console.WriteLine("ForeachWithRefUsage:");
+			foreach (var item in items) {
+				var itemToChange = item;
+				Console.WriteLine("item: " + item);
+				Operation(ref itemToChange);
+				Console.WriteLine("item: " + itemToChange);
+			}
 		}
 	}
 }
