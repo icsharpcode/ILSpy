@@ -328,7 +328,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (enumeratorVar2 != enumeratorVar)
 				return null;
 			// Detect which foreach-variable transformation is necessary/possible.
-			var transformation = DetectGetCurrentTransformation(body, enumeratorVar, condition.ILInstructions.Single(),
+			var transformation = DetectGetCurrentTransformation(container, body, enumeratorVar, condition.ILInstructions.Single(),
 																out var singleGetter, out var foreachVariable);
 			if (transformation == RequiredGetCurrentTransformation.NoForeach)
 				return null;
@@ -477,15 +477,16 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>
-		/// Determines whether <paramref name="enumerator"/> is only used once inside <paramref name="body"/> for accessing the Current property.
+		/// Determines whether <paramref name="enumerator"/> is only used once inside <paramref name="loopBody"/> for accessing the Current property.
 		/// </summary>
-		/// <param name="body">The foreach/using body.</param>
+		/// <param name="usingContainer">The using body container. This is only used for variable usage checks.</param>
+		/// <param name="loopBody">The loop body. The first statement of this block is analyzed.</param>
 		/// <param name="enumerator">The current enumerator.</param>
 		/// <param name="moveNextUsage">The call MoveNext(ldloc enumerator) pattern.</param>
 		/// <param name="singleGetter">Returns the call instruction invoking Current's getter.</param>
-		/// <param name="foreachVariable">Returns the the foreach variable, if a suitable was found. This variable is only assigned once and its assignment is the first statement in <paramref name="body"/>.</param>
+		/// <param name="foreachVariable">Returns the the foreach variable, if a suitable was found. This variable is only assigned once and its assignment is the first statement in <paramref name="loopBody"/>.</param>
 		/// <returns><see cref="RequiredGetCurrentTransformation"/> for details.</returns>
-		RequiredGetCurrentTransformation DetectGetCurrentTransformation(Block body, ILVariable enumerator, ILInstruction moveNextUsage, out CallInstruction singleGetter, out ILVariable foreachVariable)
+		RequiredGetCurrentTransformation DetectGetCurrentTransformation(BlockContainer usingContainer, Block loopBody, ILVariable enumerator, ILInstruction moveNextUsage, out CallInstruction singleGetter, out ILVariable foreachVariable)
 		{
 			singleGetter = null;
 			foreachVariable = null;
@@ -497,7 +498,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			singleGetter = (CallInstruction)loads[0].Parent;
 			// singleGetter is not part of the first instruction in body or cannot be uninlined
 			// => no foreach
-			if (!(singleGetter.IsDescendantOf(body.Instructions[0]) && ILInlining.CanUninline(singleGetter, body.Instructions[0])))
+			if (!(singleGetter.IsDescendantOf(loopBody.Instructions[0]) && ILInlining.CanUninline(singleGetter, loopBody.Instructions[0])))
 				return RequiredGetCurrentTransformation.NoForeach;
 			ILInstruction inst = singleGetter;
 			// in some cases, i.e. foreach variable with explicit type different from the collection-item-type,
@@ -516,14 +517,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			// One variable was found.
 			if (nestedStores.Count == 1) {
 				// Must be a plain assignment expression and variable must only be used in 'body' + only assigned once.
-				if (nestedStores[0].Parent == body && VariableIsOnlyUsedInBlock(nestedStores[0], body)) {
+				if (nestedStores[0].Parent == loopBody && VariableIsOnlyUsedInBlock(nestedStores[0], usingContainer)) {
 					foreachVariable = nestedStores[0].Variable;
 					return RequiredGetCurrentTransformation.UseExistingVariable;
 				}
 			} else {
 				// Check if any of the variables is usable as foreach variable.
 				foreach (var store in nestedStores) {
-					if (VariableIsOnlyUsedInBlock(store, body)) {
+					if (VariableIsOnlyUsedInBlock(store, usingContainer)) {
 						foreachVariable = store.Variable;
 						return RequiredGetCurrentTransformation.UninlineAndUseExistingVariable;
 					}
@@ -534,15 +535,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 
 		/// <summary>
-		/// Determines whether storeInst.Variable is only assigned once and used only inside <paramref name="body"/>.
+		/// Determines whether storeInst.Variable is only assigned once and used only inside <paramref name="usingContainer"/>.
 		/// Loads by reference (ldloca) are only allowed in the context of this pointer in call instructions.
 		/// (This only applies to value types.)
 		/// </summary>
-		bool VariableIsOnlyUsedInBlock(StLoc storeInst, Block body)
+		bool VariableIsOnlyUsedInBlock(StLoc storeInst, BlockContainer usingContainer)
 		{
-			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(body)))
+			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(usingContainer)))
 				return false;
-			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(body) || !ILInlining.IsUsedAsThisPointerInCall(la)))
+			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(usingContainer) || !ILInlining.IsUsedAsThisPointerInCall(la)))
 				return false;
 			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
 				return false;
