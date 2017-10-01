@@ -97,7 +97,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// This is a workaround for non-generic foreach.
 			if (type.IsKnownType(KnownTypeCode.IEnumerator))
 				return true;
-			return NullableType.GetUnderlyingType(type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable));
+			if (NullableType.GetUnderlyingType(type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable)))
+				return true;
+			// General GetEnumerator-pattern?
+			if (!type.GetMethods(m => m.Name == "GetEnumerator" && m.TypeParameters.Count == 0 && m.Parameters.Count == 0).Any(m => ImplementsForeachPattern(m.ReturnType)))
+				return false;
+			return true;
+		}
+
+		bool ImplementsForeachPattern(IType type)
+		{
+			if (!type.GetMethods(m => m.Name == "MoveNext" && m.TypeParameters.Count == 0 && m.Parameters.Count == 0).Any(m => m.ReturnType.IsKnownType(KnownTypeCode.Boolean)))
+				return false;
+			if (!type.GetProperties(p => p.Name == "Current" && p.CanGet && !p.IsIndexer).Any())
+				return false;
+			return true;
 		}
 
 		bool MatchDisposeBlock(BlockContainer container, ILVariable objVar, bool usingNull)
