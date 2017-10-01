@@ -303,29 +303,48 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Statement TransformToForeach(UsingInstruction inst, out Expression resource)
 		{
+			// Check if the using resource matches the GetEnumerator pattern.
 			resource = exprBuilder.Translate(inst.ResourceExpression);
 			var m = getEnumeratorPattern.Match(resource);
+			// The using body must be a BlockContainer.
 			if (!(inst.Body is BlockContainer container) || !m.Success)
 				return null;
+			// The using-variable is the enumerator.
 			var enumeratorVar = inst.Variable;
+			// If there's another BlockContainer nested in this container and it only has one child block, unwrap it.
+			// If there's an extra leave inside the block, extract it into optionalReturnAfterLoop.
 			var loopContainer = UnwrapNestedContainerIfPossible(container, out var optionalReturnAfterLoop);
+			// Detect whether we're dealing with a while loop with multiple embedded statements.
 			var loop = DetectedLoop.DetectLoop(loopContainer);
 			if (loop.Kind != LoopKind.While || !(loop.Body is Block body))
 				return null;
+			// The loop condition must be a call to enumerator.MoveNext()
 			var condition = exprBuilder.TranslateCondition(loop.Conditions.Single());
 			var m2 = moveNextConditionPattern.Match(condition.Expression);
 			if (!m2.Success)
 				return null;
+			// Check enumerator variable references.
 			var enumeratorVar2 = m2.Get<IdentifierExpression>("enumerator").Single().GetILVariable();
-			if (enumeratorVar2 != enumeratorVar || !BodyHasSingleGetCurrent(body, enumeratorVar, condition.ILInstructions.Single(),
-				out var singleGetter, out var needsUninlining, out var itemVariable))
+			if (enumeratorVar2 != enumeratorVar)
 				return null;
-			if (itemVariable != null && !(itemVariable.CaptureScope == null || itemVariable.CaptureScope == loopContainer))
+			// Detect which foreach-variable transformation is necessary/possible.
+			var transformation = DetectGetCurrentTransformation(body, enumeratorVar, condition.ILInstructions.Single(),
+																out var singleGetter, out var foreachVariable);
+			if (transformation == RequiredGetCurrentTransformation.NoForeach)
 				return null;
+			// The existing foreach variable, if found, can only be used in the loop container.
+			if (foreachVariable != null && !(foreachVariable.CaptureScope == null || foreachVariable.CaptureScope == loopContainer))
+				return null;
+			// Extract in-expression
 			var collectionExpr = m.Get<Expression>("collection").Single();
+			// Special case: foreach (var item in this) is decompiled as foreach (var item in base)
+			// but a base reference is not valid in this context.
 			if (collectionExpr is BaseReferenceExpression) {
 				collectionExpr = new ThisReferenceExpression().CopyAnnotationsFrom(collectionExpr);
 			}
+			// Handle explicit casts:
+			// This is the case if an explicit type different from the collection-item-type was used.
+			// For example: foreach (ClassA item in nonGenericEnumerable)
 			var type = singleGetter.Method.ReturnType;
 			ILInstruction instToReplace = singleGetter;
 			switch (instToReplace.Parent) {
@@ -338,30 +357,57 @@ namespace ICSharpCode.Decompiler.CSharp
 					instToReplace = ua;
 					break;
 			}
-			if (needsUninlining) {
-				itemVariable = currentFunction.RegisterVariable(
-					VariableKind.ForeachLocal, type,
-					AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>())
-				);
-				instToReplace.ReplaceWith(new LdLoc(itemVariable));
-				body.Instructions.Insert(0, new StLoc(itemVariable, instToReplace));
-			} else {
-				if (itemVariable.StoreCount != 1)
-					return null;
-				itemVariable.Type = type;
-				itemVariable.Kind = VariableKind.ForeachLocal;
-				itemVariable.Name = AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), itemVariable);
+			// Handle the required foreach-variable transformation:
+			switch (transformation) {
+				case RequiredGetCurrentTransformation.UseExistingVariable:
+					foreachVariable.Type = type;
+					foreachVariable.Kind = VariableKind.ForeachLocal;
+					foreachVariable.Name = AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), foreachVariable);
+					break;
+				case RequiredGetCurrentTransformation.UninlineAndUseExistingVariable:
+					// Unwrap stloc chain.
+					var nestedStores = new Stack<ILVariable>();
+					var currentInst = instToReplace; // instToReplace is the innermost value of the stloc chain.
+					while (currentInst.Parent is StLoc stloc) {
+						// Exclude nested stores to foreachVariable
+						// we'll insert one store at the beginning of the block.
+						if (stloc.Variable != foreachVariable && stloc.Parent is StLoc)
+							nestedStores.Push(stloc.Variable);
+						currentInst = stloc;
+					}
+					// Rebuild the nested store instructions:
+					ILInstruction reorderedStores = new LdLoc(foreachVariable);
+					while (nestedStores.Count > 0) {
+						reorderedStores = new StLoc(nestedStores.Pop(), reorderedStores);
+					}
+					currentInst.ReplaceWith(reorderedStores);
+					body.Instructions.Insert(0, new StLoc(foreachVariable, instToReplace));
+					// Adjust variable type, kind and name.
+					goto case RequiredGetCurrentTransformation.UseExistingVariable;
+				case RequiredGetCurrentTransformation.IntroduceNewVariable:
+					foreachVariable = currentFunction.RegisterVariable(
+						VariableKind.ForeachLocal, type,
+						AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>())
+					);
+					instToReplace.ReplaceWith(new LdLoc(foreachVariable));
+					body.Instructions.Insert(0, new StLoc(foreachVariable, instToReplace));
+					break;
 			}
+			// Convert the modified body to C# AST:
 			var whileLoop = (WhileStatement)ConvertAsBlock(container).First();
 			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
+			// Remove the first statement, as it is the foreachVariable = enumerator.Current; statement.
 			foreachBody.Statements.First().Detach();
+			// Construct the foreach loop.
 			var foreachStmt = new ForeachStatement {
-				VariableType = settings.AnonymousTypes && itemVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(itemVariable.Type),
-				VariableName = itemVariable.Name,
+				VariableType = settings.AnonymousTypes && foreachVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(foreachVariable.Type),
+				VariableName = foreachVariable.Name,
 				InExpression = collectionExpr.Detach(),
 				EmbeddedStatement = foreachBody
 			};
-			foreachStmt.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
+			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
+			foreachStmt.AddAnnotation(new ILVariableResolveResult(foreachVariable, foreachVariable.Type));
+			// If there was an optional return statement, return it as well.
 			if (optionalReturnAfterLoop != null) {
 				return new BlockStatement {
 					Statements = {
@@ -392,20 +438,115 @@ namespace ICSharpCode.Decompiler.CSharp
 			return container;
 		}
 
-		bool BodyHasSingleGetCurrent(Block body, ILVariable enumerator, ILInstruction moveNextUsage, out CallInstruction singleGetter, out bool needsUninlining, out ILVariable existingVariable)
+		enum RequiredGetCurrentTransformation
+		{
+			/// <summary>
+			/// Foreach transformation not possible.
+			/// </summary>
+			NoForeach,
+			/// <summary>
+			/// Uninline the stloc foreachVar(call get_Current()) and insert it as first statement in the loop body.
+			/// <code>
+			///	... (stloc foreachVar(call get_Current()) ...
+			///	=>
+			///	stloc foreachVar(call get_Current())
+			///	... (ldloc foreachVar) ...
+			/// </code>
+			/// </summary>
+			UseExistingVariable,
+			/// <summary>
+			/// Uninline (and possibly reorder) multiple stloc instructions and insert stloc foreachVar(call get_Current()) as first statement in the loop body.
+			/// <code>
+			///	... (stloc foreachVar(stloc otherVar(call get_Current())) ...
+			///	=>
+			///	stloc foreachVar(call get_Current())
+			///	... (stloc otherVar(ldloc foreachVar)) ...
+			/// </code>
+			/// </summary>
+			UninlineAndUseExistingVariable,
+			/// <summary>
+			/// No store was found, thus create a new variable and use it as foreach variable.
+			/// <code>
+			///	... (call get_Current()) ...
+			///	=>
+			///	stloc foreachVar(call get_Current())
+			///	... (ldloc foreachVar) ...
+			/// </code>
+			/// </summary>
+			IntroduceNewVariable
+		}
+
+		/// <summary>
+		/// Determines whether <paramref name="enumerator"/> is only used once inside <paramref name="body"/> for accessing the Current property.
+		/// </summary>
+		/// <param name="body">The foreach/using body.</param>
+		/// <param name="enumerator">The current enumerator.</param>
+		/// <param name="moveNextUsage">The call MoveNext(ldloc enumerator) pattern.</param>
+		/// <param name="singleGetter">Returns the call instruction invoking Current's getter.</param>
+		/// <param name="foreachVariable">Returns the the foreach variable, if a suitable was found. This variable is only assigned once and its assignment is the first statement in <paramref name="body"/>.</param>
+		/// <returns><see cref="RequiredGetCurrentTransformation"/> for details.</returns>
+		RequiredGetCurrentTransformation DetectGetCurrentTransformation(Block body, ILVariable enumerator, ILInstruction moveNextUsage, out CallInstruction singleGetter, out ILVariable foreachVariable)
 		{
 			singleGetter = null;
-			needsUninlining = false;
-			existingVariable = null;
+			foreachVariable = null;
 			var loads = (enumerator.LoadInstructions.OfType<ILInstruction>().Concat(enumerator.AddressInstructions.OfType<ILInstruction>())).Where(ld => !ld.IsDescendantOf(moveNextUsage)).ToArray();
-			if (loads.Length == 1 && ParentIsCurrentGetter(loads[0])) {
-				singleGetter = (CallInstruction)loads[0].Parent;
-				ILInstruction inst = singleGetter;
-				while (inst.Parent is UnboxAny || inst.Parent is CastClass)
-					inst = inst.Parent;
-				needsUninlining = !inst.Parent.MatchStLoc(out existingVariable);
+			// enumerator is used in multiple locations or not in conjunction with get_Current
+			// => no foreach
+			if (loads.Length != 1 || !ParentIsCurrentGetter(loads[0]))
+				return RequiredGetCurrentTransformation.NoForeach;
+			singleGetter = (CallInstruction)loads[0].Parent;
+			// singleGetter is not part of the first instruction in body or cannot be uninlined
+			// => no foreach
+			if (!(singleGetter.IsDescendantOf(body.Instructions[0]) && ILInlining.CanUninline(singleGetter, body.Instructions[0])))
+				return RequiredGetCurrentTransformation.NoForeach;
+			ILInstruction inst = singleGetter;
+			// in some cases, i.e. foreach variable with explicit type different from the collection-item-type,
+			// the result of call get_Current is casted.
+			while (inst.Parent is UnboxAny || inst.Parent is CastClass)
+				inst = inst.Parent;
+			// Gather all nested assignments to determine the foreach variable.
+			List<StLoc> nestedStores = new List<StLoc>();
+			while (inst.Parent is StLoc stloc) {
+				nestedStores.Add(stloc);
+				inst = stloc;
 			}
-			return singleGetter != null && singleGetter.IsDescendantOf(body.Instructions[0]) && ILInlining.CanUninline(singleGetter, body.Instructions[0]);
+			// No variable was found: we need a new one.
+			if (nestedStores.Count == 0)
+				return RequiredGetCurrentTransformation.IntroduceNewVariable;
+			// One variable was found.
+			if (nestedStores.Count == 1) {
+				// Must be a plain assignment expression and variable must only be used in 'body' + only assigned once.
+				if (nestedStores[0].Parent == body && VariableIsOnlyUsedInBlock(nestedStores[0], body)) {
+					foreachVariable = nestedStores[0].Variable;
+					return RequiredGetCurrentTransformation.UseExistingVariable;
+				}
+			} else {
+				// Check if any of the variables is usable as foreach variable.
+				foreach (var store in nestedStores) {
+					if (VariableIsOnlyUsedInBlock(store, body)) {
+						foreachVariable = store.Variable;
+						return RequiredGetCurrentTransformation.UninlineAndUseExistingVariable;
+					}
+				}
+			}
+			// No suitable variable found.
+			return RequiredGetCurrentTransformation.IntroduceNewVariable;
+		}
+
+		/// <summary>
+		/// Determines whether storeInst.Variable is only assigned once and used only inside <paramref name="body"/>.
+		/// Loads by reference (ldloca) are only allowed in the context of this pointer in call instructions.
+		/// (This only applies to value types.)
+		/// </summary>
+		bool VariableIsOnlyUsedInBlock(StLoc storeInst, Block body)
+		{
+			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(body)))
+				return false;
+			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(body) || !ILInlining.IsUsedAsThisPointerInCall(la)))
+				return false;
+			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
+				return false;
+			return true;
 		}
 
 		bool ParentIsCurrentGetter(ILInstruction inst)
