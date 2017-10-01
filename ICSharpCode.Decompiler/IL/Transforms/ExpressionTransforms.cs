@@ -283,7 +283,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 		
-		// This transform is required because ILInlining only works with stloc/ldloc
 		protected internal override void VisitStObj(StObj inst)
 		{
 			base.VisitStObj(inst);
@@ -292,17 +291,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			if (inst.Value is BinaryNumericInstruction binary
-				&& !binary.IsLifted
 				&& binary.Left.MatchLdObj(out ILInstruction target, out IType t)
 				&& inst.Target.Match(target).Success) 
 			{
 				context.Step("compound assignment", inst);
 				// stobj(target, binary.op(ldobj(target), ...))
 				// => compound.op(target, ...)
-				inst.ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, binary.Left, binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
+				inst.ReplaceWith(new CompoundAssignmentInstruction(
+					binary, binary.Left, binary.Right,
+					t, CompoundAssignmentType.EvaluatesToNewValue));
 			}
 		}
 
+		// This transform is required because ILInlining only works with stloc/ldloc
 		internal static bool StObjToStLoc(StObj inst, ILTransformContext context)
 		{
 			if (inst.Target.MatchLdLoca(out ILVariable v)
