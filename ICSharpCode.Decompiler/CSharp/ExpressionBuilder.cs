@@ -533,8 +533,27 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		TranslatedExpression TranslateComp(Comp inst)
 		{
+			var op = inst.Kind.ToBinaryOperatorType();
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
+			left = PrepareArithmeticArgument(left, inst.InputType, inst.Sign, inst.IsLifted);
+			right = PrepareArithmeticArgument(right, inst.InputType, inst.Sign, inst.IsLifted);
+
+			// Special case comparisons with enum and char literals
+			left = AdjustConstantExpressionToType(left, right.Type);
+			right = AdjustConstantExpressionToType(right, left.Type);
+
+			// attempt comparison without any additional casts
+			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
+				as OperatorResolveResult;
+			if (rr != null && !rr.IsError
+				&& NullableType.GetUnderlyingType(rr.Operands[0].Type).GetSign() == inst.Sign
+				&& NullableType.GetUnderlyingType(rr.Operands[1].Type).GetSign() == inst.Sign)
+			{
+				return new BinaryOperatorExpression(left.Expression, op, right.Expression)
+					.WithILInstruction(inst)
+					.WithRR(rr);
+			}
 			// Ensure the inputs have the correct sign:
 			KnownTypeCode inputType = KnownTypeCode.None;
 			switch (inst.InputType) {
@@ -554,7 +573,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				left = left.ConvertTo(targetType, this);
 				right = right.ConvertTo(targetType, this);
 			}
-			var op = inst.Kind.ToBinaryOperatorType();
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(new OperatorResolveResult(compilation.FindType(TypeCode.Boolean),
