@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public T TestHelp<T>(T t, Func<T, T> f)
 		{
-			return f.Invoke(t);
+			return f(t);
 		}
 
 		public void CheckedInArrayCreationArgument(int a, int b)

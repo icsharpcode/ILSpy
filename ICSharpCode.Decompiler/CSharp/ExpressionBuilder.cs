@@ -782,18 +782,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				right = right.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
 			}
 
-			TranslatedExpression result = new BinaryOperatorExpression(left.Expression, op, right.Expression)
+			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(resolver.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult));
-			if (inst.UnderlyingResultType == StackType.I) {
-				// C# doesn't have shift operators for IntPtr, so we first shifted a long/ulong,
-				// and now have to case back down to IntPtr/UIntPtr:
-				IType targetType = compilation.FindType(sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr);
-				if (inst.IsLifted)
-					targetType = NullableType.Create(compilation, targetType);
-				result = result.ConvertTo(targetType, this);
-			}
-			return result;
 		}
 		
 		protected internal override TranslatedExpression VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst, TranslationContext context)
@@ -828,7 +819,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
-			value = PrepareArithmeticArgument(value, inst.Value.ResultType, inst.Sign, isLifted: false);
+			value = PrepareArithmeticArgument(value, inst.RightInputType, inst.Sign, inst.IsLifted);
 			
 			TranslatedExpression resultExpr;
 			if (inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToOldValue) {
@@ -874,26 +865,17 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
-			
-			IType targetType;
-			if (inst.ResultType == StackType.I4)
-				targetType = compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UInt32 : KnownTypeCode.Int32);
-			else
-				targetType = compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64);
-			target = target.ConvertTo(targetType, this);
-			
+
 			// Shift operators in C# always expect type 'int' on the right-hand-side
-			value = value.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
-			
-			TranslatedExpression result = new AssignmentExpression(target.Expression, op, value.Expression)
+			if (NullableType.IsNullable(value.Type)) {
+				value = value.ConvertTo(NullableType.Create(compilation, compilation.FindType(KnownTypeCode.Int32)), this);
+			} else {
+				value = value.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
+			}
+
+			return new AssignmentExpression(target.Expression, op, value.Expression)
 				.WithILInstruction(inst)
 				.WithRR(resolver.ResolveAssignment(op, target.ResolveResult, value.ResolveResult));
-			if (inst.ResultType == StackType.I) {
-				// C# doesn't have shift operators for IntPtr, so we first shifted a long/ulong,
-				// and now have to case back down to IntPtr/UIntPtr:
-				result = result.ConvertTo(compilation.FindType(inst.Sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr), this);
-			}
-			return result;
 		}
 		
 		static bool AssignmentOperatorMightCheckForOverflow(AssignmentOperatorType op)

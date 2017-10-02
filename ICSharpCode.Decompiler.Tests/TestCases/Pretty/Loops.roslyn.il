@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Loops.dll
-// MVID: {2A93944A-F762-497A-85EF-B93263897E0E}
+// MVID: {C6DBFA5B-CB31-4084-8E6F-7BA877923008}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00B70000
+// Image base: 0x00A80000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1302,6 +1302,57 @@
     }  // end handler
     IL_004e:  ret
   } // end of method Loops::ForeachWithCapturedVariable
+
+  .method public hidebysig static !!T  LastOrDefault<T>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!T> items) cil managed
+  {
+    // Code size       57 (0x39)
+    .maxstack  1
+    .locals init (!!T V_0,
+             class [mscorlib]System.Collections.Generic.IEnumerator`1<!!T> V_1,
+             !!T V_2,
+             !!T V_3)
+    IL_0000:  nop
+    IL_0001:  ldloca.s   V_0
+    IL_0003:  initobj    !!T
+    IL_0009:  nop
+    IL_000a:  ldarg.0
+    IL_000b:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<!!T>::GetEnumerator()
+    IL_0010:  stloc.1
+    .try
+    {
+      IL_0011:  br.s       IL_001e
+
+      IL_0013:  ldloc.1
+      IL_0014:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<!!T>::get_Current()
+      IL_0019:  stloc.2
+      IL_001a:  nop
+      IL_001b:  ldloc.2
+      IL_001c:  stloc.0
+      IL_001d:  nop
+      IL_001e:  ldloc.1
+      IL_001f:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
+      IL_0024:  brtrue.s   IL_0013
+
+      IL_0026:  leave.s    IL_0033
+
+    }  // end .try
+    finally
+    {
+      IL_0028:  ldloc.1
+      IL_0029:  brfalse.s  IL_0032
+
+      IL_002b:  ldloc.1
+      IL_002c:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0031:  nop
+      IL_0032:  endfinally
+    }  // end handler
+    IL_0033:  ldloc.0
+    IL_0034:  stloc.3
+    IL_0035:  br.s       IL_0037
+
+    IL_0037:  ldloc.3
+    IL_0038:  ret
+  } // end of method Loops::LastOrDefault
 
   .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed

@@ -20,6 +20,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -27,9 +28,45 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
 	class Loops
 	{
+		public class CustomClassEnumeratorWithIDisposable<T> : IDisposable
+		{
+			bool next = true;
+
+			public T Current {
+				get {
+					return default(T);
+				}
+			}
+
+			public void Dispose()
+			{
+				Console.WriteLine("CustomClassEnumeratorWithIDisposable<T>.Dispose()");
+			}
+
+			public bool MoveNext()
+			{
+				if (next) {
+					next = false;
+					return true;
+				}
+				return next;
+			}
+
+			public CustomClassEnumeratorWithIDisposable<T> GetEnumerator()
+			{
+				return this;
+			}
+		}
+
 		static void Operation(ref int item)
 		{
 			item++;
+		}
+
+		static T CallWithSideEffect<T>()
+		{
+			Console.WriteLine("CallWithSideEffect");
+			return default(T);
 		}
 
 		static void Main()
@@ -42,6 +79,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			NonGenericForeachWithReturn(new object[] { "a", 42, "b", 43 });
 			ForeachWithReturn(new[] { 42, 43, 44, 45 });
 			ForeachWithRefUsage(new List<int> { 1, 2, 3, 4, 5 });
+			Console.WriteLine(FirstOrDefault(new List<int> { 1, 2, 3, 4, 5 }));
+			Console.WriteLine(NoForeachDueToMultipleCurrentAccess(new List<int> { 1, 2, 3, 4, 5 }));
+			Console.WriteLine(NoForeachCallWithSideEffect(new CustomClassEnumeratorWithIDisposable<int>()));
 		}
 
 		public static void ForWithMultipleVariables()
@@ -146,6 +186,40 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				Console.WriteLine("item: " + item);
 				Operation(ref itemToChange);
 				Console.WriteLine("item: " + itemToChange);
+			}
+		}
+
+		public static T FirstOrDefault<T>(IEnumerable<T> items)
+		{
+			T result = default(T);
+			foreach (T item in items) {
+				result = item;
+				break;
+			}
+			return result;
+		}
+
+		public static T NoForeachDueToMultipleCurrentAccess<T>(IEnumerable<T> items)
+		{
+			Console.WriteLine("NoForeachDueToMultipleCurrentAccess:");
+			T result = default(T);
+			using (IEnumerator<T> enumerator = items.GetEnumerator()) {
+				while (enumerator.MoveNext()) {
+					result = enumerator.Current;
+					Console.WriteLine("result: " + result);
+				}
+				return enumerator.Current;
+			}
+		}
+
+		public static T NoForeachCallWithSideEffect<T>(CustomClassEnumeratorWithIDisposable<T> items)
+		{
+			Console.WriteLine("NoForeachCallWithSideEffect:");
+			using (CustomClassEnumeratorWithIDisposable<T> enumerator = items.GetEnumerator()) {
+				while (enumerator.MoveNext()) {
+					T result = enumerator.Current;
+				}
+				return CallWithSideEffect<T>();
 			}
 		}
 	}

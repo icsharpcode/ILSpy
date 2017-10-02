@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Loops.dll
-// MVID: {24FAF99A-6A32-4D9C-94BB-1EEBD46F590F}
+// MVID: {8D392B4A-5D21-407A-B579-FCDFA93069CE}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x030C0000
+// Image base: 0x00DA0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1087,6 +1087,44 @@
     }  // end handler
     IL_0046:  ret
   } // end of method Loops::ForeachWithCapturedVariable
+
+  .method public hidebysig static !!T  LastOrDefault<T>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!T> items) cil managed
+  {
+    // Code size       46 (0x2e)
+    .maxstack  1
+    .locals init (!!T V_0,
+             class [mscorlib]System.Collections.Generic.IEnumerator`1<!!T> V_1)
+    IL_0000:  ldloca.s   V_0
+    IL_0002:  initobj    !!T
+    IL_0008:  ldarg.0
+    IL_0009:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<!!T>::GetEnumerator()
+    IL_000e:  stloc.1
+    .try
+    {
+      IL_000f:  br.s       IL_0018
+
+      IL_0011:  ldloc.1
+      IL_0012:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<!!T>::get_Current()
+      IL_0017:  stloc.0
+      IL_0018:  ldloc.1
+      IL_0019:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
+      IL_001e:  brtrue.s   IL_0011
+
+      IL_0020:  leave.s    IL_002c
+
+    }  // end .try
+    finally
+    {
+      IL_0022:  ldloc.1
+      IL_0023:  brfalse.s  IL_002b
+
+      IL_0025:  ldloc.1
+      IL_0026:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_002b:  endfinally
+    }  // end handler
+    IL_002c:  ldloc.0
+    IL_002d:  ret
+  } // end of method Loops::LastOrDefault
 
   .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed

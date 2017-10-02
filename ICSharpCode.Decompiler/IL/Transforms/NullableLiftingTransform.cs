@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		public bool RunBlock(Block block)
+		public bool RunStatements(Block block, int pos)
 		{
 			if (!context.Settings.LiftNullables)
 				return false;
@@ -73,18 +73,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//    leave IL_0000 (default.value System.Nullable`1[[System.Int64]])
 			//  }
 			//  leave IL_0000 (newobj .ctor(exprToLift))
-			IfInstruction ifInst;
-			if (block.Instructions.Last() is Leave elseLeave) {
-				ifInst = block.Instructions.SecondToLastOrDefault() as IfInstruction;
-				if (ifInst == null || !ifInst.FalseInst.MatchNop())
-					return false;
-			} else {
+			if (pos != block.Instructions.Count - 2)
 				return false;
-			}
+			if (!(block.Instructions[pos] is IfInstruction ifInst))
+				return false;
 			if (!(Block.Unwrap(ifInst.TrueInst) is Leave thenLeave))
+				return false;
+			if (!ifInst.FalseInst.MatchNop())
+				return false;
+
+			if (!(block.Instructions[pos + 1] is Leave elseLeave))
 				return false;
 			if (elseLeave.TargetContainer != thenLeave.TargetContainer)
 				return false;
+
 			var lifted = Lift(ifInst, thenLeave.Value, elseLeave.Value);
 			if (lifted != null) {
 				thenLeave.Value = lifted;
@@ -149,7 +151,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// => a != b
 						return LiftCSharpEqualityComparison(comp, ComparisonKind.Inequality, trueInst)
 							?? LiftCSharpUserEqualityComparison(comp, ComparisonKind.Inequality, trueInst);
-					} else if (IsGenericNewPattern(condition, trueInst, falseInst)) {
+					} else if (IsGenericNewPattern(comp.Left, comp.Right, trueInst, falseInst)) {
 						// (default(T) == null) ? Activator.CreateInstance<T>() : default(T)
 						// => Activator.CreateInstance<T>()
 						return trueInst;
@@ -245,16 +247,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
-		private bool IsGenericNewPattern(ILInstruction condition, ILInstruction trueInst, ILInstruction falseInst)
+		private bool IsGenericNewPattern(ILInstruction compLeft, ILInstruction compRight, ILInstruction trueInst, ILInstruction falseInst)
 		{
 			// (default(T) == null) ? Activator.CreateInstance<T>() : default(T)
 			return falseInst.MatchDefaultValue(out var type) &&
 				(trueInst is Call c && c.Method.FullName == "System.Activator.CreateInstance" && c.Method.TypeArguments.Count == 1) &&
 				type.Kind == TypeKind.TypeParameter &&
-				condition.MatchCompEquals(out var left, out var right) &&
-				left.MatchDefaultValue(out var type2) &&
+				compLeft.MatchDefaultValue(out var type2) &&
 				type.Equals(type2) &&
-				right.MatchLdNull();
+				compRight.MatchLdNull();
 		}
 
 		private bool MatchThreeValuedLogicConditionPattern(ILInstruction condition, out ILVariable nullable1, out ILVariable nullable2)
@@ -847,11 +848,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		#endregion
 	}
 
-	class NullableLiftingBlockTransform : IBlockTransform
+	class NullableLiftingStatementTransform : IStatementTransform
 	{
-		public void Run(Block block, BlockTransformContext context)
+		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			new NullableLiftingTransform(context).RunBlock(block);
+			new NullableLiftingTransform(context).RunStatements(block, pos);
 		}
 	}
 }
