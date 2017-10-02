@@ -93,19 +93,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			return astType;
 		}
 		
-		public ExpressionWithResolveResult ConvertConstantValue(ResolveResult rr)
+		public ExpressionWithResolveResult ConvertConstantValue(ResolveResult rr, bool allowImplicitConversion = false)
 		{
 			var expr = astBuilder.ConvertConstantValue(rr);
-			if (expr is NullReferenceExpression && rr.Type.Kind != TypeKind.Null) {
-				expr = new CastExpression(ConvertType(rr.Type), expr);
-			} else {
-				switch (rr.Type.GetDefinition()?.KnownTypeCode) {
-					case KnownTypeCode.SByte:
-					case KnownTypeCode.Byte:
-					case KnownTypeCode.Int16:
-					case KnownTypeCode.UInt16:
-						expr = new CastExpression(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)), expr);
-						break;
+			if (!allowImplicitConversion) {
+				if (expr is NullReferenceExpression && rr.Type.Kind != TypeKind.Null) {
+					expr = new CastExpression(ConvertType(rr.Type), expr);
+				} else {
+					switch (rr.Type.GetDefinition()?.KnownTypeCode) {
+						case KnownTypeCode.SByte:
+						case KnownTypeCode.Byte:
+						case KnownTypeCode.Int16:
+						case KnownTypeCode.UInt16:
+							expr = new CastExpression(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)), expr);
+							break;
+					}
 				}
 			}
 			var exprRR = expr.Annotation<ResolveResult>();

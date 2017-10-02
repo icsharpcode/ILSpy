@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, false);
 			}
-			return new CaseLabel(exprBuilder.ConvertConstantValue(new ConstantResolveResult(type, value)));
+			return new CaseLabel(exprBuilder.ConvertConstantValue(new ConstantResolveResult(type, value), allowImplicitConversion: true));
 		}
 		
 		protected internal override Statement VisitSwitchInstruction(SwitchInstruction inst)
