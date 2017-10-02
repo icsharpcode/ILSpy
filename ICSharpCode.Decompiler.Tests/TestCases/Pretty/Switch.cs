@@ -27,41 +27,119 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("SparseIntegerSwitch: " + i);
 			switch (i) {
 				case -10000000: {
-						return "-10 mln";
-					}
+					return "-10 mln";
+				}
 				case -100: {
-						return "-hundred";
-					}
+					return "-hundred";
+				}
 				case -1: {
-						return "-1";
-					}
+					return "-1";
+				}
 				case 0: {
-						return "0";
-					}
+					return "0";
+				}
 				case 1: {
-						return "1";
-					}
+					return "1";
+				}
 				case 2: {
-						return "2";
-					}
+					return "2";
+				}
 				case 4: {
-						return "4";
-					}
+					return "4";
+				}
 				case 100: {
-						return "hundred";
-					}
+					return "hundred";
+				}
 				case 10000: {
-						return "ten thousand";
-					}
+					return "ten thousand";
+				}
 				case 10001: {
-						return "ten thousand and one";
-					}
+					return "ten thousand and one";
+				}
 				case 2147483647: {
-						return "int.MaxValue";
-					}
+					return "int.MaxValue";
+				}
 				default: {
-						return "something else";
-					}
+					return "something else";
+				}
+			}
+		}
+
+		public static string SwitchOverNullableInt(int? i)
+		{
+			switch (i) {
+				case null: {
+					return "null";
+				}
+				case 0: {
+					return "zero";
+				}
+				case 5: {
+					return "five";
+				}
+				case 10: {
+					return "ten";
+				}
+				default: {
+					return "large";
+				}
+			}
+		}
+
+		public static string SwitchOverNullableIntShifted(int? i)
+		{
+			switch (i + 5) {
+				case null: {
+					return "null";
+				}
+				case 0: {
+					return "zero";
+				}
+				case 5: {
+					return "five";
+				}
+				case 10: {
+					return "ten";
+				}
+				default: {
+					return "large";
+				}
+			}
+		}
+
+		public static string SwitchOverNullableIntNoNullCase(int? i)
+		{
+			switch (i) {
+				case 0: {
+					return "zero";
+				}
+				case 5: {
+					return "five";
+				}
+				case 10: {
+					return "ten";
+				}
+				default: {
+					return "other";
+				}
+			}
+		}
+
+		public static string SwitchOverNullableIntNoNullCaseShifted(int? i)
+		{
+			switch (i + 5) {
+				case 0: {
+					return "zero";
+				}
+				case 5: {
+					return "five";
+				}
+				case 10: {
+					return "ten";
+				}
+				default: {
+					return "other";
+				}
 			}
 		}
 
@@ -70,17 +148,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("ShortSwitchOverString: " + text);
 			switch (text) {
 				case "First case": {
-						return "Text1";
-					}
+					return "Text1";
+				}
 				case "Second case": {
-						return "Text2";
-					}
+					return "Text2";
+				}
 				case "Third case": {
-						return "Text3";
-					}
+					return "Text3";
+				}
 				default: {
-						return "Default";
-					}
+					return "Default";
+				}
 			}
 		}
 
