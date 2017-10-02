@@ -819,17 +819,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				switch (op) {
 					case AssignmentOperatorType.Add:
-					case AssignmentOperatorType.Subtract:
-						value = value.ConvertTo(target.Type.GetEnumUnderlyingType(), this, inst.CheckForOverflow);
-						break;
+					case AssignmentOperatorType.Subtract: {
+							IType targetType = NullableType.GetUnderlyingType(target.Type).GetEnumUnderlyingType();
+							if (NullableType.IsNullable(value.Type)) {
+								targetType = NullableType.Create(compilation, targetType);
+							}
+							value = value.ConvertTo(targetType, this, inst.CheckForOverflow);
+							break;
+						}
 					case AssignmentOperatorType.Multiply:
 					case AssignmentOperatorType.Divide:
 					case AssignmentOperatorType.Modulus:
 					case AssignmentOperatorType.BitwiseAnd:
 					case AssignmentOperatorType.BitwiseOr:
-					case AssignmentOperatorType.ExclusiveOr:
-						value = value.ConvertTo(target.Type, this, inst.CheckForOverflow);
-						break;
+					case AssignmentOperatorType.ExclusiveOr: {
+							IType targetType = NullableType.GetUnderlyingType(target.Type);
+							if (NullableType.IsNullable(value.Type)) {
+								targetType = NullableType.Create(compilation, targetType);
+							}
+							value = value.ConvertTo(targetType, this, inst.CheckForOverflow);
+							break;
+						}
 				}
 				resultExpr = new AssignmentExpression(target.Expression, op, value.Expression)
 					.WithILInstruction(inst)
@@ -842,6 +852,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		TranslatedExpression HandleCompoundShift(CompoundAssignmentInstruction inst, AssignmentOperatorType op)
 		{
+			Debug.Assert(inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue);
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
 
