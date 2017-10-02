@@ -546,14 +546,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			// attempt comparison without any additional casts
 			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
 				as OperatorResolveResult;
-			if (rr != null && !rr.IsError
-				&& NullableType.GetUnderlyingType(rr.Operands[0].Type).GetSign() == inst.Sign
-				&& NullableType.GetUnderlyingType(rr.Operands[1].Type).GetSign() == inst.Sign)
-			{
-				return new BinaryOperatorExpression(left.Expression, op, right.Expression)
-					.WithILInstruction(inst)
-					.WithRR(rr);
+			if (rr != null && !rr.IsError) {
+				IType compUType = NullableType.GetUnderlyingType(rr.Operands[0].Type);
+				if (compUType.GetSign() == inst.Sign && compUType.GetStackType() == inst.InputType) {
+					return new BinaryOperatorExpression(left.Expression, op, right.Expression)
+						.WithILInstruction(inst)
+						.WithRR(rr);
+				}
 			}
+
 			// Ensure the inputs have the correct sign:
 			KnownTypeCode inputType = KnownTypeCode.None;
 			switch (inst.InputType) {
