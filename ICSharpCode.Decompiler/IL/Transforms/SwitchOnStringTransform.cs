@@ -315,15 +315,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!target.Instructions[0].MatchIfInstruction(out var condition, out var bodyBranch))
 					return false;
-				if (!target.Instructions[1].MatchBranch(out Block exit))
-					return false;
 				if (!bodyBranch.MatchBranch(out Block body))
 					return false;
 				if (!MatchStringEqualityComparison(condition, switchValue.Variable, out string stringValue)) {
 					if (condition.MatchLogicNot(out condition) && MatchStringEqualityComparison(condition, switchValue.Variable, out stringValue)) {
-						var swap = body;
+						if (!target.Instructions[1].MatchBranch(out Block exit))
+							return false;
 						body = exit;
-						exit = swap;
 					} else
 						return false;
 				}

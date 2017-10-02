@@ -27,41 +27,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("SparseIntegerSwitch: " + i);
 			switch (i) {
 				case -10000000: {
-					return "-10 mln";
-				}
+						return "-10 mln";
+					}
 				case -100: {
-					return "-hundred";
-				}
+						return "-hundred";
+					}
 				case -1: {
-					return "-1";
-				}
+						return "-1";
+					}
 				case 0: {
-					return "0";
-				}
-				case 1: { 
-					return "1";
-				}
+						return "0";
+					}
+				case 1: {
+						return "1";
+					}
 				case 2: {
-					return "2";
-				}
+						return "2";
+					}
 				case 4: {
-					return "4";
-				}
+						return "4";
+					}
 				case 100: {
-					return "hundred";
-				}
+						return "hundred";
+					}
 				case 10000: {
-					return "ten thousand";
-				}
+						return "ten thousand";
+					}
 				case 10001: {
-					return "ten thousand and one";
-				}
+						return "ten thousand and one";
+					}
 				case 2147483647: {
-					return "int.MaxValue";
-				}
+						return "int.MaxValue";
+					}
 				default: {
-					return "something else";
-				}
+						return "something else";
+					}
 			}
 		}
 
@@ -70,17 +70,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("ShortSwitchOverString: " + text);
 			switch (text) {
 				case "First case": {
-					return "Text1";
-				}
+						return "Text1";
+					}
 				case "Second case": {
-					return "Text2";
-				}
+						return "Text2";
+					}
 				case "Third case": {
-					return "Text3";
-				}
+						return "Text3";
+					}
 				default: {
-					return "Default";
-				}
+						return "Default";
+					}
 			}
 		}
 
@@ -107,8 +107,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				case "Sixth case": {
 					return "Text6";
 				}
-				case (string)null: {
-					return (string)null;
+				case null: {
+					return null;
 				}
 				default: {
 					return "Default";
@@ -119,7 +119,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverString2()
 		{
 			Console.WriteLine("SwitchOverString2:");
-			switch (Environment.UserName) {
+			string userName = Environment.UserName;
+			switch (userName) {
 				case "First case": {
 					return "Text1";
 				}
@@ -180,22 +181,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("SwitchInLoop: " + i);
 			while (true) {
 				switch (i) {
-					case 1:
+					case 1: {
 						Console.WriteLine("one");
 						break;
-					case 2:
+					}
+					case 2: {
 						Console.WriteLine("two");
 						break;
-					case 3:
+					}
+					case 3: {
 						Console.WriteLine("three");
 						continue;
-					case 4:
+					}
+					case 4: {
 						Console.WriteLine("four");
 						return;
-					default:
+					}
+					default: {
 						Console.WriteLine("default");
 						Console.WriteLine("more code");
 						return;
+					}
 				}
 				i++;
 			}
@@ -205,21 +211,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Console.WriteLine("SwitchWithGoto: " + i);
 			switch (i) {
-				case 1:
+				case 1: {
 					Console.WriteLine("one");
 					goto default;
-				case 2:
+				}
+				case 2: {
 					Console.WriteLine("two");
 					goto case 3;
-				case 3:
+				}
+				case 3: {
 					Console.WriteLine("three");
 					break;
-				case 4:
+				}
+				case 4: {
 					Console.WriteLine("four");
 					return;
-				default:
+				}
+				default: {
 					Console.WriteLine("default");
 					break;
+				}
 			}
 		}
 	}
