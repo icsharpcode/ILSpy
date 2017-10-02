@@ -41,6 +41,11 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 
+		public bool MatchLdcI(long val)
+		{
+			return MatchLdcI(out long v) && v == val;
+		}
+
 		public bool MatchLdLoc(ILVariable variable)
 		{
 			var inst = this as LdLoc;

@@ -655,6 +655,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			left = PrepareArithmeticArgument(left, inst.LeftInputType, inst.Sign, inst.IsLifted);
 			right = PrepareArithmeticArgument(right, inst.RightInputType, inst.Sign, inst.IsLifted);
 			
+			if (op == BinaryOperatorType.Subtract && inst.Left.MatchLdcI(0)) {
+				IType rightUType = NullableType.GetUnderlyingType(right.Type);
+				if (rightUType.IsKnownType(KnownTypeCode.Int32) || rightUType.IsKnownType(KnownTypeCode.Int64) || rightUType.IsCSharpSmallIntegerType()) {
+					// unary minus is supported on signed int and long, and on the small integer types (since they promote to int)
+					var uoe = new UnaryOperatorExpression(UnaryOperatorType.Minus, right.Expression);
+					uoe.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+					var resultType = rightUType.IsKnownType(KnownTypeCode.Int64) ? rightUType : compilation.FindType(KnownTypeCode.Int32);
+					if (inst.IsLifted)
+						resultType = NullableType.Create(compilation, resultType);
+					return uoe.WithILInstruction(inst).WithRR(new OperatorResolveResult(
+						resultType,
+						inst.CheckForOverflow ? ExpressionType.NegateChecked : ExpressionType.Negate,
+						right.ResolveResult));
+				}
+			}
+
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 			if (rr.IsError || NullableType.GetUnderlyingType(rr.Type).GetStackType() != inst.UnderlyingResultType
 			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
