@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -346,8 +347,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return new Comp(newComparisonKind, ComparisonLiftingKind.CSharp, comp.InputType, comp.Sign, left, right) {
 						ILRange = Instruction.ILRange
 					};
-				} else if (Instruction is Call call && newComparisonKind == Kind) {
-					return new Call(CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(call.Method)) {
+				} else if (Instruction is Call call) {
+					IMethod method;
+					if (newComparisonKind == Kind) {
+						method = call.Method;
+					} else if (newComparisonKind == ComparisonKind.Inequality && call.Method.Name == "op_Equality") {
+						method = call.Method.DeclaringType.GetMethods(m => m.Name == "op_Inequality")
+							.FirstOrDefault(m => ParameterListComparer.Instance.Equals(m.Parameters, call.Method.Parameters));
+						if (method == null)
+							return null;
+					} else {
+						return null;
+					}
+					return new Call(CSharp.Resolver.CSharpOperators.LiftUserDefinedOperator(method)) {
 						Arguments = { left, right },
 						ConstrainedTo = call.ConstrainedTo,
 						ILRange = call.ILRange,
@@ -636,7 +648,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else if (inst is Conv conv) {
 				var (arg, bits) = DoLift(conv.Argument);
 				if (arg != null) {
-					if (conv.HasFlag(InstructionFlags.MayThrow) && !bits.All(0, nullableVars.Count)) {
+					if (conv.HasDirectFlag(InstructionFlags.MayThrow) && !bits.All(0, nullableVars.Count)) {
 						// Cannot execute potentially-throwing instruction unless all
 						// the nullableVars are arguments to the instruction
 						// (thus causing it not to throw when any of them is null).
@@ -658,7 +670,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else if (inst is BinaryNumericInstruction binary) {
 				var (left, right, bits) = DoLiftBinary(binary.Left, binary.Right);
 				if (left != null && right != null) {
-					if (binary.HasFlag(InstructionFlags.MayThrow) && !bits.All(0, nullableVars.Count)) {
+					if (binary.HasDirectFlag(InstructionFlags.MayThrow) && !bits.All(0, nullableVars.Count)) {
 						// Cannot execute potentially-throwing instruction unless all
 						// the nullableVars are arguments to the instruction
 						// (thus causing it not to throw when any of them is null).

@@ -572,8 +572,28 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </summary>
 		TranslatedExpression TranslateComp(Comp inst)
 		{
+			var op = inst.Kind.ToBinaryOperatorType();
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
+			left = PrepareArithmeticArgument(left, inst.InputType, inst.Sign, inst.IsLifted);
+			right = PrepareArithmeticArgument(right, inst.InputType, inst.Sign, inst.IsLifted);
+
+			// Special case comparisons with enum and char literals
+			left = AdjustConstantExpressionToType(left, right.Type);
+			right = AdjustConstantExpressionToType(right, left.Type);
+
+			// attempt comparison without any additional casts
+			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
+				as OperatorResolveResult;
+			if (rr != null && !rr.IsError) {
+				IType compUType = NullableType.GetUnderlyingType(rr.Operands[0].Type);
+				if (compUType.GetSign() == inst.Sign && compUType.GetStackType() == inst.InputType) {
+					return new BinaryOperatorExpression(left.Expression, op, right.Expression)
+						.WithILInstruction(inst)
+						.WithRR(rr);
+				}
+			}
+
 			// Ensure the inputs have the correct sign:
 			KnownTypeCode inputType = KnownTypeCode.None;
 			switch (inst.InputType) {
@@ -593,7 +613,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				left = left.ConvertTo(targetType, this);
 				right = right.ConvertTo(targetType, this);
 			}
-			var op = inst.Kind.ToBinaryOperatorType();
 			return new BinaryOperatorExpression(left.Expression, op, right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(new OperatorResolveResult(compilation.FindType(TypeCode.Boolean),
@@ -676,6 +695,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			left = PrepareArithmeticArgument(left, inst.LeftInputType, inst.Sign, inst.IsLifted);
 			right = PrepareArithmeticArgument(right, inst.RightInputType, inst.Sign, inst.IsLifted);
 			
+			if (op == BinaryOperatorType.Subtract && inst.Left.MatchLdcI(0)) {
+				IType rightUType = NullableType.GetUnderlyingType(right.Type);
+				if (rightUType.IsKnownType(KnownTypeCode.Int32) || rightUType.IsKnownType(KnownTypeCode.Int64) || rightUType.IsCSharpSmallIntegerType()) {
+					// unary minus is supported on signed int and long, and on the small integer types (since they promote to int)
+					var uoe = new UnaryOperatorExpression(UnaryOperatorType.Minus, right.Expression);
+					uoe.AddAnnotation(inst.CheckForOverflow ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
+					var resultType = rightUType.IsKnownType(KnownTypeCode.Int64) ? rightUType : compilation.FindType(KnownTypeCode.Int32);
+					if (inst.IsLifted)
+						resultType = NullableType.Create(compilation, resultType);
+					return uoe.WithILInstruction(inst).WithRR(new OperatorResolveResult(
+						resultType,
+						inst.CheckForOverflow ? ExpressionType.NegateChecked : ExpressionType.Negate,
+						right.ResolveResult));
+				}
+			}
+
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 			if (rr.IsError || NullableType.GetUnderlyingType(rr.Type).GetStackType() != inst.UnderlyingResultType
 			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
@@ -840,17 +875,27 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				switch (op) {
 					case AssignmentOperatorType.Add:
-					case AssignmentOperatorType.Subtract:
-						value = value.ConvertTo(target.Type.GetEnumUnderlyingType(), this, inst.CheckForOverflow);
-						break;
+					case AssignmentOperatorType.Subtract: {
+							IType targetType = NullableType.GetUnderlyingType(target.Type).GetEnumUnderlyingType();
+							if (NullableType.IsNullable(value.Type)) {
+								targetType = NullableType.Create(compilation, targetType);
+							}
+							value = value.ConvertTo(targetType, this, inst.CheckForOverflow);
+							break;
+						}
 					case AssignmentOperatorType.Multiply:
 					case AssignmentOperatorType.Divide:
 					case AssignmentOperatorType.Modulus:
 					case AssignmentOperatorType.BitwiseAnd:
 					case AssignmentOperatorType.BitwiseOr:
-					case AssignmentOperatorType.ExclusiveOr:
-						value = value.ConvertTo(target.Type, this, inst.CheckForOverflow);
-						break;
+					case AssignmentOperatorType.ExclusiveOr: {
+							IType targetType = NullableType.GetUnderlyingType(target.Type);
+							if (NullableType.IsNullable(value.Type)) {
+								targetType = NullableType.Create(compilation, targetType);
+							}
+							value = value.ConvertTo(targetType, this, inst.CheckForOverflow);
+							break;
+						}
 				}
 				resultExpr = new AssignmentExpression(target.Expression, op, value.Expression)
 					.WithILInstruction(inst)
@@ -863,6 +908,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		TranslatedExpression HandleCompoundShift(CompoundAssignmentInstruction inst, AssignmentOperatorType op)
 		{
+			Debug.Assert(inst.CompoundAssignmentType == CompoundAssignmentType.EvaluatesToNewValue);
 			var target = Translate(inst.Target);
 			var value = Translate(inst.Value);
 
