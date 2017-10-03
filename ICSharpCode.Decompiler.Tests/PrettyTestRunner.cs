@@ -121,14 +121,10 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
-		[Test, Ignore("Not implemented")]
+		[Test]
 		public void LiftedOperators([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
-			try {
-				Run(cscOptions: cscOptions);
-			} catch (AssertionException) {
-				Assert.Ignore("Not implemented");
-			}
+			Run(cscOptions: cscOptions);
 		}
 
 		[Test]
