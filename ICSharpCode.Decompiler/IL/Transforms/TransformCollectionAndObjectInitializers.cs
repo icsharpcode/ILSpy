@@ -199,8 +199,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (!IsMethodApplicable(method, call.Arguments, rootType)) goto default;
 						instruction = call.Arguments[0];
 						if (method.IsAccessor) {
-							var property = (IProperty)method.AccessorOwner;
-							var isGetter = property.Getter == method;
+							var property = method.AccessorOwner as IProperty;
+							var isGetter = property?.Getter == method;
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
 							if (possibleIndexVariables != null) {
 								foreach (var index in indices.OfType<IInstructionWithVariableOperand>()) {
