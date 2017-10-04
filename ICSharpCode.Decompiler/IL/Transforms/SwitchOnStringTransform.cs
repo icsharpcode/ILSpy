@@ -25,6 +25,9 @@ using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
+	/// <summary>
+	/// Detects switch-on-string patterns employed by the C# compiler and transforms them to an ILAst-switch-instruction.
+	/// </summary>
 	class SwitchOnStringTransform : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
@@ -78,6 +81,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			inst = null;
 			blockAfterSwitch = null;
 			// match first block: checking switch-value for null or first value (Roslyn)
+			// if (call op_Equality(ldloc switchValueVar, ldstr value)) br firstBlock
+			// -or-
+			// if (comp(ldloc switchValueVar == ldnull)) br defaultBlock
 			if (!(instructions[i].MatchIfInstruction(out var condition, out var firstBlockJump)))
 				return false;
 			if (!firstBlockJump.MatchBranch(out var firstBlock))
@@ -85,32 +91,43 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool isLegacy;
 			Block defaultBlock;
 			List<(string, Block)> values = new List<(string, Block)>();
+			// match null check: this is used by the old C# compiler.
 			if (condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && left.MatchLdLoc(out var switchValueVar)) {
 				isLegacy = true;
 				defaultBlock = firstBlock;
+			// Roslyn: match call to operator ==(string, string)
 			} else if (MatchStringEqualityComparison(condition, out switchValueVar, out string value)) {
 				isLegacy = false;
 				defaultBlock = null;
 				values.Add((value, firstBlock));
 			} else return false;
+			// switchValueVar must be assigned only once.
 			if (!switchValueVar.IsSingleDefinition)
 				return false;
+			// if instruction must be followed by a branch to the next case
 			if (!(instructions.ElementAtOrDefault(i + 1) is Branch nextCaseJump))
 				return false;
+			// extract all cases and add them to the values list.
 			Block currentCaseBlock = nextCaseJump.TargetBlock;
 			Block nextCaseBlock;
 			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, ref switchValueVar, out string value, out Block block)) != null) {
 				values.Add((value, block));
 				currentCaseBlock = nextCaseBlock;
 			}
+			// the last instruction of the last case/default block must be either
+			// a branch to the a block after the switch statement or a leave instruction.
 			var container = BlockContainer.FindClosestContainer(firstBlock);
 			if (!ExtractLastJumpFromBlock(currentCaseBlock, out var exitBlock) && !ExtractLastLeaveFromBlock(currentCaseBlock, container))
 				return false;
+			// We didn't find any cases, exit
 			if (values.Count == 0)
 				return false;
+			// All case blocks must either leave the current block container or branch to the same block after the switch statement.
 			if (!(values.All(b => ExtractLastJumpFromBlock(b.Item2, out var nextExit) && IsExitBlock(nextExit, container)) ||
 				(exitBlock == null && values.All(b => ExtractLastLeaveFromBlock(b.Item2, container)))))
 				return false;
+			// if the block after the switch has the correct number of branches, generate the switch statement
+			// and return it and the block.
 			if (currentCaseBlock.IncomingEdgeCount == (isLegacy ? 2 : 1)) {
 				var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch(b.Item2) }));
 				var stringToInt = new StringToInt(new LdLoc(switchValueVar), values.SelectArray(item => item.Item1));
@@ -146,6 +163,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return b == container;
 		}
 
+		/// <summary>
+		/// Each case consists of two blocks:
+		/// 1. block:
+		/// if (call op_Equality(ldloc switchVariable, ldstr value)) br caseBlock
+		/// br nextBlock
+		/// This method matches the above pattern or its inverted form:
+		/// the call to ==(string, string) is wrapped in logic.not and the branch targets are reversed.
+		/// Returns the next block that follows in the block-chain.
+		/// The <paramref name="switchVariable"/> is updated if the value gets copied to a different variable.
+		/// See comments below for more info.
+		/// </summary>
 		Block MatchCaseBlock(Block currentBlock, ref ILVariable switchVariable, out string value, out Block caseBlock)
 		{
 			value = null;
@@ -167,10 +195,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!currentBlock.Instructions[1].MatchBranch(out nextBlock))
 					return null;
 			}
+			// Sometimes the switch pattern uses one variable at the beginning for null checks
+			// and another variable for the if-else-if-else-pattern.
+			// both variables must be only assigned once and be of the type: System.String.
 			if (!MatchStringEqualityComparison(condition, out var newSwitchVariable, out value))
 				return null;
 			if (!newSwitchVariable.IsSingleDefinition)
 				return null;
+			// if the used variable differs and both variables are not related, return null:
 			if (switchVariable != newSwitchVariable && !(IsInitializedBy(switchVariable, newSwitchVariable) || IsInitializedBy(newSwitchVariable, switchVariable)))
 				return null;
 			if (!newSwitchVariable.Type.IsKnownType(KnownTypeCode.String))
@@ -179,14 +211,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return nextBlock;
 		}
 
-		bool IsInitializedBy(ILVariable switchVariable, ILVariable newSwitchVariable)
+		/// <summary>
+		/// Returns true if <paramref name="left"/> is only assigned once and the initialization is done by copying <paramref name="right"/>.
+		/// </summary>
+		bool IsInitializedBy(ILVariable left, ILVariable right)
 		{
-			if (!switchVariable.IsSingleDefinition)
+			if (!left.IsSingleDefinition)
 				return false;
-			var storeInst = switchVariable.StoreInstructions.OfType<StLoc>().SingleOrDefault();
+			var storeInst = left.StoreInstructions.OfType<StLoc>().SingleOrDefault();
 			if (storeInst == null)
 				return false;
-			return storeInst.Value.MatchLdLoc(newSwitchVariable);
+			return storeInst.Value.MatchLdLoc(right);
 		}
 
 		bool MatchLegacySwitchOnString(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst, out Block blockAfterSwitch)

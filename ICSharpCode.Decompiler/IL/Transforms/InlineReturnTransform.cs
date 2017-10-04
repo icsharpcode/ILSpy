@@ -23,61 +23,73 @@ using System.Linq;
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
-	/// This transform duplicates return blocks if they return a local variable that was assigned right before thie return.
+	/// This transform duplicates return blocks if they return a local variable that was assigned right before the return.
 	/// </summary>
 	class InlineReturnTransform : IILTransform
 	{
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			var instructionsToModify = new List<(BlockContainer, Block, Branch)>();
-			var possibleReturnVars = new Queue<(ILVariable, Block)>();
-			var tempList = new List<(BlockContainer, Block, Branch)>();
 
+			// Process all leave instructions in a leave-block, that is a block consisting solely of a leave instruction.
 			foreach (var leave in function.Descendants.OfType<Leave>()) {
-				if (!(leave.Parent is Block b && b.Instructions.Count == 1))
+				if (!(leave.Parent is Block leaveBlock && leaveBlock.Instructions.Count == 1))
 					continue;
+				// Skip, if the leave instruction has no value or the value is not a load of a local variable.
 				if (!leave.Value.MatchLdLoc(out var returnVar) || returnVar.Kind != VariableKind.Local)
 					continue;
-				possibleReturnVars.Enqueue((returnVar, b));
+				// If all instructions can be modified, add item to the global list.
+				if (CanModifyInstructions(returnVar, leaveBlock, out var list));
+					instructionsToModify.AddRange(list);
 			}
 
-			while (possibleReturnVars.Count > 0) {
-				var (returnVar, leaveBlock) = possibleReturnVars.Dequeue();
-				bool transform = true;
-				foreach (StLoc store in returnVar.StoreInstructions.OfType<StLoc>()) {
-					if (!(store.Parent is Block storeBlock)) {
-						transform = false;
-						break;
-					} 
-					if (store.ChildIndex + 2 != storeBlock.Instructions.Count) {
-						transform = false;
-						break;
-					}
-					if (!(storeBlock.Instructions[store.ChildIndex + 1] is Branch br)) {
-						transform = false;
-						break;
-					}
-					if (br.TargetBlock != leaveBlock) {
-						transform = false;
-						break;
-					}
-					var targetBlockContainer = BlockContainer.FindClosestContainer(store);
-					if (targetBlockContainer == null) {
-						transform = false;
-						break;
-					}
-					tempList.Add((targetBlockContainer, leaveBlock, br));
+			foreach (var (container, b, br) in instructionsToModify) {
+				Block block = b;
+				// if there is only one branch to this return block, move it to the matching container.
+				// otherwise duplicate the return block.
+				if (block.IncomingEdgeCount == 1) {
+					block.Remove();
+				} else {
+					block = (Block)block.Clone();
 				}
-				if (transform)
-					instructionsToModify.AddRange(tempList);
-				tempList.Clear();
+				container.Blocks.Add(block);
+				// adjust the target of the branch to the newly created block.
+				br.TargetBlock = block;
+			}
+		}
+
+		/// <summary>
+		/// Determines a list of all store instructions that write to a given <paramref name="returnVar"/>.
+		/// Returns false if any of these instructions does not meet the following criteria:
+		/// - must be a stloc
+		/// - must be a direct child of a block
+		/// - must be the penultimate instruction
+		/// - must be followed by a branch instruction to <paramref name="leaveBlock"/>
+		/// - must have a BlockContainer as ancestor.
+		/// Returns true, if all instructions meet these criteria, and <paramref name="instructionsToModify"/> contains a list of 3-tuples.
+		/// Each tuple consists of the target block container, the leave block, and the branch instruction that should be modified.
+		/// </summary>
+		static bool CanModifyInstructions(ILVariable returnVar, Block leaveBlock, out List<(BlockContainer, Block, Branch)> instructionsToModify)
+		{
+			instructionsToModify = new List<(BlockContainer, Block, Branch)>();
+			foreach (var inst in returnVar.StoreInstructions) {
+				if (!(inst is StLoc store))
+					return false;
+				if (!(store.Parent is Block storeBlock))
+					return false;
+				if (store.ChildIndex + 2 != storeBlock.Instructions.Count)
+					return false;
+				if (!(storeBlock.Instructions[store.ChildIndex + 1] is Branch br))
+					return false;
+				if (br.TargetBlock != leaveBlock)
+					return false;
+				var targetBlockContainer = BlockContainer.FindClosestContainer(store);
+				if (targetBlockContainer == null)
+					return false;
+				instructionsToModify.Add((targetBlockContainer, leaveBlock, br));
 			}
 
-			foreach (var (container, block, br) in instructionsToModify) {
-				var newBlock = (Block)block.Clone();
-				container.Blocks.Add(newBlock);
-				br.TargetBlock = newBlock;
-			}
+			return true;
 		}
 	}
 }
