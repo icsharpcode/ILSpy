@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Switch.dll
-// MVID: {E38DFC98-1601-4EC8-896E-FC0EA87D4437}
+// MVID: {25FC064E-F764-4556-A3C7-F6570E457CDD}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02590000
+// Image base: 0x00B30000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -40,6 +40,55 @@
 .class public abstract auto ansi sealed beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch
        extends [mscorlib]System.Object
 {
+  .class auto ansi nested public beforefieldinit SetProperty
+         extends [mscorlib]System.Object
+  {
+    .field public initonly class [mscorlib]System.Reflection.PropertyInfo Property
+    .field private int32 '<Set>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .method public hidebysig specialname 
+            instance int32  get_Set() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::'<Set>k__BackingField'
+      IL_0006:  ret
+    } // end of method SetProperty::get_Set
+
+    .method public hidebysig specialname 
+            instance void  set_Set(int32 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::'<Set>k__BackingField'
+      IL_0007:  ret
+    } // end of method SetProperty::set_Set
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor(class [mscorlib]System.Reflection.PropertyInfo 'property') cil managed
+    {
+      // Code size       14 (0xe)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ldarg.0
+      IL_0007:  ldarg.1
+      IL_0008:  stfld      class [mscorlib]System.Reflection.PropertyInfo ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::Property
+      IL_000d:  ret
+    } // end of method SetProperty::.ctor
+
+    .property instance int32 Set()
+    {
+      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::get_Set()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    } // end of property SetProperty::Set
+  } // end of class SetProperty
+
   .method public hidebysig static string 
           SparseIntegerSwitch(int32 i) cil managed
   {
@@ -135,214 +184,6 @@
     IL_00b3:  ldstr      "something else"
     IL_00b8:  ret
   } // end of method Switch::SparseIntegerSwitch
-
-  .method public hidebysig static string 
-          SwitchOverNullableInt(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
-  {
-    // Code size       63 (0x3f)
-    .maxstack  2
-    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
-             int32 V_1)
-    IL_0000:  ldarg.0
-    IL_0001:  stloc.0
-    IL_0002:  ldloca.s   V_0
-    IL_0004:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0009:  brfalse.s  IL_0021
-
-    IL_000b:  ldloca.s   V_0
-    IL_000d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0012:  stloc.1
-    IL_0013:  ldloc.1
-    IL_0014:  brfalse.s  IL_0027
-
-    IL_0016:  ldloc.1
-    IL_0017:  ldc.i4.5
-    IL_0018:  beq.s      IL_002d
-
-    IL_001a:  ldloc.1
-    IL_001b:  ldc.i4.s   10
-    IL_001d:  beq.s      IL_0033
-
-    IL_001f:  br.s       IL_0039
-
-    IL_0021:  ldstr      "null"
-    IL_0026:  ret
-
-    IL_0027:  ldstr      "zero"
-    IL_002c:  ret
-
-    IL_002d:  ldstr      "five"
-    IL_0032:  ret
-
-    IL_0033:  ldstr      "ten"
-    IL_0038:  ret
-
-    IL_0039:  ldstr      "large"
-    IL_003e:  ret
-  } // end of method Switch::SwitchOverNullableInt
-
-  .method public hidebysig static string 
-          SwitchOverNullableIntShifted(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
-  {
-    // Code size       98 (0x62)
-    .maxstack  2
-    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
-             valuetype [mscorlib]System.Nullable`1<int32> V_1,
-             valuetype [mscorlib]System.Nullable`1<int32> V_2,
-             int32 V_3)
-    IL_0000:  ldarg.0
-    IL_0001:  stloc.1
-    IL_0002:  ldloca.s   V_1
-    IL_0004:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0009:  brtrue.s   IL_0016
-
-    IL_000b:  ldloca.s   V_2
-    IL_000d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0013:  ldloc.2
-    IL_0014:  br.s       IL_0024
-
-    IL_0016:  ldloca.s   V_1
-    IL_0018:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_001d:  ldc.i4.5
-    IL_001e:  add
-    IL_001f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0024:  stloc.0
-    IL_0025:  ldloca.s   V_0
-    IL_0027:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_002c:  brfalse.s  IL_0044
-
-    IL_002e:  ldloca.s   V_0
-    IL_0030:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0035:  stloc.3
-    IL_0036:  ldloc.3
-    IL_0037:  brfalse.s  IL_004a
-
-    IL_0039:  ldloc.3
-    IL_003a:  ldc.i4.5
-    IL_003b:  beq.s      IL_0050
-
-    IL_003d:  ldloc.3
-    IL_003e:  ldc.i4.s   10
-    IL_0040:  beq.s      IL_0056
-
-    IL_0042:  br.s       IL_005c
-
-    IL_0044:  ldstr      "null"
-    IL_0049:  ret
-
-    IL_004a:  ldstr      "zero"
-    IL_004f:  ret
-
-    IL_0050:  ldstr      "five"
-    IL_0055:  ret
-
-    IL_0056:  ldstr      "ten"
-    IL_005b:  ret
-
-    IL_005c:  ldstr      "large"
-    IL_0061:  ret
-  } // end of method Switch::SwitchOverNullableIntShifted
-
-  .method public hidebysig static string 
-          SwitchOverNullableIntNoNullCase(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
-  {
-    // Code size       57 (0x39)
-    .maxstack  2
-    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
-             int32 V_1)
-    IL_0000:  ldarg.0
-    IL_0001:  stloc.0
-    IL_0002:  ldloca.s   V_0
-    IL_0004:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0009:  brfalse.s  IL_0033
-
-    IL_000b:  ldloca.s   V_0
-    IL_000d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0012:  stloc.1
-    IL_0013:  ldloc.1
-    IL_0014:  brfalse.s  IL_0021
-
-    IL_0016:  ldloc.1
-    IL_0017:  ldc.i4.5
-    IL_0018:  beq.s      IL_0027
-
-    IL_001a:  ldloc.1
-    IL_001b:  ldc.i4.s   10
-    IL_001d:  beq.s      IL_002d
-
-    IL_001f:  br.s       IL_0033
-
-    IL_0021:  ldstr      "zero"
-    IL_0026:  ret
-
-    IL_0027:  ldstr      "five"
-    IL_002c:  ret
-
-    IL_002d:  ldstr      "ten"
-    IL_0032:  ret
-
-    IL_0033:  ldstr      "other"
-    IL_0038:  ret
-  } // end of method Switch::SwitchOverNullableIntNoNullCase
-
-  .method public hidebysig static string 
-          SwitchOverNullableIntNoNullCaseShifted(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
-  {
-    // Code size       92 (0x5c)
-    .maxstack  2
-    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
-             valuetype [mscorlib]System.Nullable`1<int32> V_1,
-             valuetype [mscorlib]System.Nullable`1<int32> V_2,
-             int32 V_3)
-    IL_0000:  ldarg.0
-    IL_0001:  stloc.1
-    IL_0002:  ldloca.s   V_1
-    IL_0004:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_0009:  brtrue.s   IL_0016
-
-    IL_000b:  ldloca.s   V_2
-    IL_000d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
-    IL_0013:  ldloc.2
-    IL_0014:  br.s       IL_0024
-
-    IL_0016:  ldloca.s   V_1
-    IL_0018:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_001d:  ldc.i4.5
-    IL_001e:  add
-    IL_001f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
-    IL_0024:  stloc.0
-    IL_0025:  ldloca.s   V_0
-    IL_0027:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
-    IL_002c:  brfalse.s  IL_0056
-
-    IL_002e:  ldloca.s   V_0
-    IL_0030:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
-    IL_0035:  stloc.3
-    IL_0036:  ldloc.3
-    IL_0037:  brfalse.s  IL_0044
-
-    IL_0039:  ldloc.3
-    IL_003a:  ldc.i4.5
-    IL_003b:  beq.s      IL_004a
-
-    IL_003d:  ldloc.3
-    IL_003e:  ldc.i4.s   10
-    IL_0040:  beq.s      IL_0050
-
-    IL_0042:  br.s       IL_0056
-
-    IL_0044:  ldstr      "zero"
-    IL_0049:  ret
-
-    IL_004a:  ldstr      "five"
-    IL_004f:  ret
-
-    IL_0050:  ldstr      "ten"
-    IL_0055:  ret
-
-    IL_0056:  ldstr      "other"
-    IL_005b:  ret
-  } // end of method Switch::SwitchOverNullableIntNoNullCaseShifted
 
   .method public hidebysig static string 
           ShortSwitchOverString(string text) cil managed
@@ -818,44 +659,134 @@
     IL_0078:  br.s       IL_0015
   } // end of method Switch::SwitchInLoop
 
-  .method public hidebysig static void  SwitchWithGoto(int32 i) cil managed
+  .method private hidebysig static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty[] 
+          GetProperties() cil managed
   {
-    // Code size       102 (0x66)
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldc.i4.0
+    IL_0001:  newarr     ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty
+    IL_0006:  ret
+  } // end of method Switch::GetProperties
+
+  .method public hidebysig static void  SwitchOnStringInForLoop() cil managed
+  {
+    // Code size       234 (0xea)
     .maxstack  2
-    IL_0000:  ldstr      "SwitchWithGoto: "
-    IL_0005:  ldarg.0
-    IL_0006:  box        [mscorlib]System.Int32
-    IL_000b:  call       string [mscorlib]System.String::Concat(object,
-                                                                object)
-    IL_0010:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0015:  ldarg.0
-    IL_0016:  ldc.i4.1
-    IL_0017:  sub
-    IL_0018:  switch     ( 
-                          IL_002f,
-                          IL_003b,
-                          IL_0045,
-                          IL_0050)
-    IL_002d:  br.s       IL_005b
+    .locals init (class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty> V_0,
+             class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty> V_1,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty[] V_2,
+             int32 V_3,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty V_4,
+             string V_5)
+    IL_0000:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::.ctor()
+    IL_0005:  stloc.0
+    IL_0006:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::.ctor()
+    IL_000b:  stloc.1
+    IL_000c:  call       class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty[] ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch::GetProperties()
+    IL_0011:  stloc.2
+    IL_0012:  ldc.i4.0
+    IL_0013:  stloc.3
+    IL_0014:  br         IL_00e0
 
-    IL_002f:  ldstr      "one"
-    IL_0034:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0039:  br.s       IL_005b
+    IL_0019:  ldloc.2
+    IL_001a:  ldloc.3
+    IL_001b:  ldelem.ref
+    IL_001c:  stloc.s    V_4
+    IL_001e:  ldloc.s    V_4
+    IL_0020:  ldfld      class [mscorlib]System.Reflection.PropertyInfo ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::Property
+    IL_0025:  callvirt   instance string [mscorlib]System.Reflection.MemberInfo::get_Name()
+    IL_002a:  stloc.s    V_5
+    IL_002c:  ldloc.s    V_5
+    IL_002e:  ldstr      "Name1"
+    IL_0033:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0038:  brtrue.s   IL_0082
 
-    IL_003b:  ldstr      "two"
-    IL_0040:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0045:  ldstr      "three"
-    IL_004a:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_004f:  ret
+    IL_003a:  ldloc.s    V_5
+    IL_003c:  ldstr      "Name2"
+    IL_0041:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0046:  brtrue.s   IL_0094
 
-    IL_0050:  ldstr      "four"
-    IL_0055:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_005a:  ret
+    IL_0048:  ldloc.s    V_5
+    IL_004a:  ldstr      "Name3"
+    IL_004f:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0054:  brtrue.s   IL_00a6
 
-    IL_005b:  ldstr      "default"
-    IL_0060:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0065:  ret
-  } // end of method Switch::SwitchWithGoto
+    IL_0056:  ldloc.s    V_5
+    IL_0058:  ldstr      "Name4"
+    IL_005d:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0062:  brtrue.s   IL_00b8
+
+    IL_0064:  ldloc.s    V_5
+    IL_0066:  ldstr      "Name5"
+    IL_006b:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0070:  brtrue.s   IL_00ca
+
+    IL_0072:  ldloc.s    V_5
+    IL_0074:  ldstr      "Name6"
+    IL_0079:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_007e:  brtrue.s   IL_00ca
+
+    IL_0080:  br.s       IL_00d4
+
+    IL_0082:  ldloc.s    V_4
+    IL_0084:  ldc.i4.1
+    IL_0085:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_008a:  ldloc.0
+    IL_008b:  ldloc.s    V_4
+    IL_008d:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_0092:  br.s       IL_00dc
+
+    IL_0094:  ldloc.s    V_4
+    IL_0096:  ldc.i4.2
+    IL_0097:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_009c:  ldloc.0
+    IL_009d:  ldloc.s    V_4
+    IL_009f:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_00a4:  br.s       IL_00dc
+
+    IL_00a6:  ldloc.s    V_4
+    IL_00a8:  ldc.i4.3
+    IL_00a9:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_00ae:  ldloc.0
+    IL_00af:  ldloc.s    V_4
+    IL_00b1:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_00b6:  br.s       IL_00dc
+
+    IL_00b8:  ldloc.s    V_4
+    IL_00ba:  ldc.i4.4
+    IL_00bb:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_00c0:  ldloc.0
+    IL_00c1:  ldloc.s    V_4
+    IL_00c3:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_00c8:  br.s       IL_00dc
+
+    IL_00ca:  ldloc.0
+    IL_00cb:  ldloc.s    V_4
+    IL_00cd:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_00d2:  br.s       IL_00dc
+
+    IL_00d4:  ldloc.1
+    IL_00d5:  ldloc.s    V_4
+    IL_00d7:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_00dc:  ldloc.3
+    IL_00dd:  ldc.i4.1
+    IL_00de:  add
+    IL_00df:  stloc.3
+    IL_00e0:  ldloc.3
+    IL_00e1:  ldloc.2
+    IL_00e2:  ldlen
+    IL_00e3:  conv.i4
+    IL_00e4:  blt        IL_0019
+
+    IL_00e9:  ret
+  } // end of method Switch::SwitchOnStringInForLoop
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch
 

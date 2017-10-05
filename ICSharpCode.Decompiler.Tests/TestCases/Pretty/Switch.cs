@@ -17,11 +17,28 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public static class Switch
 	{
+		public class SetProperty
+		{
+			public readonly PropertyInfo Property;
+
+			public int Set {
+				get;
+				set;
+			}
+
+			public SetProperty(PropertyInfo property)
+			{
+				this.Property = property;
+			}
+		}
+
 		public static string SparseIntegerSwitch(int i)
 		{
 			Console.WriteLine("SparseIntegerSwitch: " + i);
@@ -65,83 +82,83 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public static string SwitchOverNullableInt(int? i)
-		{
-			switch (i) {
-				case null: {
-					return "null";
-				}
-				case 0: {
-					return "zero";
-				}
-				case 5: {
-					return "five";
-				}
-				case 10: {
-					return "ten";
-				}
-				default: {
-					return "large";
-				}
-			}
-		}
+		//public static string SwitchOverNullableInt(int? i)
+		//{
+		//	switch (i) {
+		//		case null: {
+		//			return "null";
+		//		}
+		//		case 0: {
+		//			return "zero";
+		//		}
+		//		case 5: {
+		//			return "five";
+		//		}
+		//		case 10: {
+		//			return "ten";
+		//		}
+		//		default: {
+		//			return "large";
+		//		}
+		//	}
+		//}
 
-		public static string SwitchOverNullableIntShifted(int? i)
-		{
-			switch (i + 5) {
-				case null: {
-					return "null";
-				}
-				case 0: {
-					return "zero";
-				}
-				case 5: {
-					return "five";
-				}
-				case 10: {
-					return "ten";
-				}
-				default: {
-					return "large";
-				}
-			}
-		}
+		//public static string SwitchOverNullableIntShifted(int? i)
+		//{
+		//	switch (i + 5) {
+		//		case null: {
+		//			return "null";
+		//		}
+		//		case 0: {
+		//			return "zero";
+		//		}
+		//		case 5: {
+		//			return "five";
+		//		}
+		//		case 10: {
+		//			return "ten";
+		//		}
+		//		default: {
+		//			return "large";
+		//		}
+		//	}
+		//}
 
-		public static string SwitchOverNullableIntNoNullCase(int? i)
-		{
-			switch (i) {
-				case 0: {
-					return "zero";
-				}
-				case 5: {
-					return "five";
-				}
-				case 10: {
-					return "ten";
-				}
-				default: {
-					return "other";
-				}
-			}
-		}
+		//public static string SwitchOverNullableIntNoNullCase(int? i)
+		//{
+		//	switch (i) {
+		//		case 0: {
+		//			return "zero";
+		//		}
+		//		case 5: {
+		//			return "five";
+		//		}
+		//		case 10: {
+		//			return "ten";
+		//		}
+		//		default: {
+		//			return "other";
+		//		}
+		//	}
+		//}
 
-		public static string SwitchOverNullableIntNoNullCaseShifted(int? i)
-		{
-			switch (i + 5) {
-				case 0: {
-					return "zero";
-				}
-				case 5: {
-					return "five";
-				}
-				case 10: {
-					return "ten";
-				}
-				default: {
-					return "other";
-				}
-			}
-		}
+		//public static string SwitchOverNullableIntNoNullCaseShifted(int? i)
+		//{
+		//	switch (i + 5) {
+		//		case 0: {
+		//			return "zero";
+		//		}
+		//		case 5: {
+		//			return "five";
+		//		}
+		//		case 10: {
+		//			return "ten";
+		//		}
+		//		default: {
+		//			return "other";
+		//		}
+		//	}
+		//}
 
 		public static string ShortSwitchOverString(string text)
 		{
@@ -285,29 +302,76 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		public static void SwitchWithGoto(int i)
+		//public static void SwitchWithGoto(int i)
+		//{
+		//	Console.WriteLine("SwitchWithGoto: " + i);
+		//	switch (i) {
+		//		case 1: {
+		//			Console.WriteLine("one");
+		//			goto default;
+		//		}
+		//		case 2: {
+		//			Console.WriteLine("two");
+		//			goto case 3;
+		//		}
+		//		case 3: {
+		//			Console.WriteLine("three");
+		//			break;
+		//		}
+		//		case 4: {
+		//			Console.WriteLine("four");
+		//			return;
+		//		}
+		//		default: {
+		//			Console.WriteLine("default");
+		//			break;
+		//		}
+		//	}
+		//}
+
+		private static SetProperty[] GetProperties()
 		{
-			Console.WriteLine("SwitchWithGoto: " + i);
-			switch (i) {
-				case 1: {
-					Console.WriteLine("one");
-					goto default;
-				}
-				case 2: {
-					Console.WriteLine("two");
-					goto case 3;
-				}
-				case 3: {
-					Console.WriteLine("three");
-					break;
-				}
-				case 4: {
-					Console.WriteLine("four");
-					return;
-				}
-				default: {
-					Console.WriteLine("default");
-					break;
+			return new SetProperty[0];
+		}
+
+		public static void SwitchOnStringInForLoop()
+		{
+			List<SetProperty> list = new List<SetProperty>();
+			List<SetProperty> list2 = new List<SetProperty>();
+			SetProperty[] properties = Switch.GetProperties();
+			for (int i = 0; i < properties.Length; i++) {
+				SetProperty setProperty = properties[i];
+				string name = setProperty.Property.Name;
+				switch (name) {
+					case "Name1": {
+							setProperty.Set = 1;
+							list.Add(setProperty);
+							break;
+						}
+					case "Name2": {
+							setProperty.Set = 2;
+							list.Add(setProperty);
+							break;
+						}
+					case "Name3": {
+							setProperty.Set = 3;
+							list.Add(setProperty);
+							break;
+						}
+					case "Name4": {
+							setProperty.Set = 4;
+							list.Add(setProperty);
+							break;
+						}
+					case "Name5":
+					case "Name6": {
+							list.Add(setProperty);
+							break;
+						}
+					default: {
+							list2.Add(setProperty);
+							break;
+						}
 				}
 			}
 		}

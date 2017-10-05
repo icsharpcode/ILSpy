@@ -123,9 +123,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (values.Count == 0)
 				return false;
 			// All case blocks must either leave the current block container or branch to the same block after the switch statement.
-			if (!(values.All(b => ExtractLastJumpFromBlock(b.Item2, out var nextExit) && IsExitBlock(nextExit, container)) ||
-				(exitBlock == null && values.All(b => ExtractLastLeaveFromBlock(b.Item2, container)))))
-				return false;
+			if (exitBlock == null) {
+				if (!values.All(b => ExtractLastLeaveFromBlock(b.Item2, container)))
+					return false;
+			} else {
+				// Compare blocks by label as duplicated blocks should have the same label.
+				if (!(values.All(b => ExtractLastJumpFromBlock(b.Item2, out var nextExitBlock) && nextExitBlock.Label == exitBlock.Label)))
+					return false;
+			}
 			// if the block after the switch has the correct number of branches, generate the switch statement
 			// and return it and the block.
 			if (currentCaseBlock.IncomingEdgeCount == (isLegacy ? 2 : 1)) {
@@ -137,13 +142,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			}
 			return false;
-		}
-
-		bool IsExitBlock(Block nextExit, BlockContainer container)
-		{
-			if (nextExit.Instructions.Count != 1)
-				return false;
-			return nextExit.Instructions[0].MatchLeave(container, out _);
 		}
 
 		bool ExtractLastJumpFromBlock(Block block, out Block exitBlock)
