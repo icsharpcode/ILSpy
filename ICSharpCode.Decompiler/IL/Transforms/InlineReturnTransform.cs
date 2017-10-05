@@ -39,7 +39,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!leave.Value.MatchLdLoc(out var returnVar) || returnVar.Kind != VariableKind.Local)
 					continue;
 				// If all instructions can be modified, add item to the global list.
-				if (CanModifyInstructions(returnVar, leaveBlock, out var list));
+				if (CanModifyInstructions(returnVar, leaveBlock, out var list))
 					instructionsToModify.AddRange(list);
 			}
 
