@@ -179,5 +179,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					   CustCount = g.Count()
 				   };
 		}
+
+		public object Issue437(bool[] bools)
+		{
+			return from x in bools
+				   where x
+				   select (x);
+		}
 	}
 }

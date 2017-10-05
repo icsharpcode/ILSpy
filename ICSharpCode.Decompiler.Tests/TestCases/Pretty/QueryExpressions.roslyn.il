@@ -30,14 +30,14 @@
   .ver 0:0:0:0
 }
 .module QueryExpressions.dll
-// MVID: {DACBCB5E-2B45-4162-A8DF-E6E0CBF3C641}
+// MVID: {38FA88A1-A1FA-45E9-87D6-D5C50B7535C2}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02DB0000
+// Image base: 0x029D0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -3303,6 +3303,8 @@
     .field public static class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,bool> '<>9__16_0'
     .field public static class [mscorlib]System.Func`2<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer,string> '<>9__17_0'
     .field public static class [mscorlib]System.Func`2<class [System.Core]System.Linq.IGrouping`2<string,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/Customer>,class '<>f__AnonymousType14`2'<string,int32>> '<>9__17_1'
+    .field public static class [mscorlib]System.Func`2<bool,bool> '<>9__18_0'
+    .field public static class [mscorlib]System.Func`2<bool,bool> '<>9__18_1'
     .method private hidebysig specialname rtspecialname static 
             void  .cctor() cil managed
     {
@@ -3880,6 +3882,24 @@
                                                                                              !1)
       IL_0011:  ret
     } // end of method '<>c'::'<QueryContinuation>b__17_1'
+
+    .method assembly hidebysig instance bool 
+            '<Issue437>b__18_0'(bool x) cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  ldarg.1
+      IL_0001:  ret
+    } // end of method '<>c'::'<Issue437>b__18_0'
+
+    .method assembly hidebysig instance bool 
+            '<Issue437>b__18_1'(bool x) cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  ldarg.1
+      IL_0001:  ret
+    } // end of method '<>c'::'<Issue437>b__18_1'
 
   } // end of class '<>c'
 
@@ -4616,6 +4636,47 @@
     IL_0052:  ldloc.0
     IL_0053:  ret
   } // end of method QueryExpressions::QueryContinuation
+
+  .method public hidebysig instance object 
+          Issue437(bool[] bools) cil managed
+  {
+    // Code size       79 (0x4f)
+    .maxstack  3
+    .locals init (object V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldsfld     class [mscorlib]System.Func`2<bool,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__18_0'
+    IL_0007:  dup
+    IL_0008:  brtrue.s   IL_0021
+
+    IL_000a:  pop
+    IL_000b:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9'
+    IL_0010:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<Issue437>b__18_0'(bool)
+    IL_0016:  newobj     instance void class [mscorlib]System.Func`2<bool,bool>::.ctor(object,
+                                                                                       native int)
+    IL_001b:  dup
+    IL_001c:  stsfld     class [mscorlib]System.Func`2<bool,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__18_0'
+    IL_0021:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0> [System.Core]System.Linq.Enumerable::Where<bool>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
+                                                                                                                                        class [mscorlib]System.Func`2<!!0,bool>)
+    IL_0026:  ldsfld     class [mscorlib]System.Func`2<bool,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__18_1'
+    IL_002b:  dup
+    IL_002c:  brtrue.s   IL_0045
+
+    IL_002e:  pop
+    IL_002f:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9'
+    IL_0034:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<Issue437>b__18_1'(bool)
+    IL_003a:  newobj     instance void class [mscorlib]System.Func`2<bool,bool>::.ctor(object,
+                                                                                       native int)
+    IL_003f:  dup
+    IL_0040:  stsfld     class [mscorlib]System.Func`2<bool,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.QueryExpressions/'<>c'::'<>9__18_1'
+    IL_0045:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!1> [System.Core]System.Linq.Enumerable::Select<bool,bool>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
+                                                                                                                                              class [mscorlib]System.Func`2<!!0,!!1>)
+    IL_004a:  stloc.0
+    IL_004b:  br.s       IL_004d
+
+    IL_004d:  ldloc.0
+    IL_004e:  ret
+  } // end of method QueryExpressions::Issue437
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
