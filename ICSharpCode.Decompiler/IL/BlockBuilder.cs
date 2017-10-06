@@ -163,8 +163,15 @@ namespace ICSharpCode.Decompiler.IL
 			if (currentBlock == null)
 				return;
 			currentBlock.ILRange = new Interval(currentBlock.ILRange.Start, currentILOffset);
-			if (fallthrough)
-				currentBlock.Instructions.Add(new Branch(currentILOffset));
+			if (fallthrough) {
+				if (currentBlock.Instructions.LastOrDefault() is SwitchInstruction switchInst && switchInst.Sections.Last().Body.MatchNop()) {
+					// Instead of putting the default branch after the switch instruction
+					switchInst.Sections.Last().Body = new Branch(currentILOffset);
+					Debug.Assert(switchInst.HasFlag(InstructionFlags.EndPointUnreachable));
+				} else {
+					currentBlock.Instructions.Add(new Branch(currentILOffset));
+				}
+			}
 			currentBlock = null;
 		}
 

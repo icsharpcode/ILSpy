@@ -1232,7 +1232,10 @@ namespace ICSharpCode.Decompiler.IL
 				section.Body = new Branch(target);
 				instr.Sections.Add(section);
 			}
-			
+			var defaultSection = new SwitchSection();
+			defaultSection.Labels = new LongSet(new LongInterval(0, labels.Length)).Invert();
+			defaultSection.Body = new Nop();
+			instr.Sections.Add(defaultSection);
 			return instr;
 		}
 		

@@ -94,25 +94,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// If false, analyze the whole block.</param>
 		bool AnalyzeBlock(Block block, LongSet inputValues, bool tailOnly = false)
 		{
+			if (block.Instructions.Count == 0) {
+				// might happen if the block was already marked for deletion in SwitchDetection
+				return false;
+			}
 			if (tailOnly) {
 				Debug.Assert(block == rootBlock);
-				if (block.Instructions.Count < 2)
-					return false;
 			} else {
 				Debug.Assert(switchVar != null); // switchVar should always be determined by the top-level call
 				if (block.IncomingEdgeCount != 1 || block == rootBlock)
 					return false; // for now, let's only consider if-structures that form a tree
-				if (block.Instructions.Count != 2)
-					return false;
 				if (block.Parent != rootBlock.Parent)
 					return false; // all blocks should belong to the same container
 			}
-			var inst = block.Instructions[block.Instructions.Count - 2];
-			ILInstruction condition, trueInst;
 			LongSet trueValues;
-			if (inst.MatchIfInstruction(out condition, out trueInst)
+			if (block.Instructions.Count >= 2
+				&& block.Instructions[block.Instructions.Count - 2].MatchIfInstruction(out var condition, out var trueInst)
 				&& AnalyzeCondition(condition, out trueValues)
 			) {
+				if (!(tailOnly || block.Instructions.Count == 2))
+					return false;
 				trueValues = trueValues.IntersectWith(inputValues);
 				Block trueBlock;
 				if (trueInst.MatchBranch(out trueBlock) && AnalyzeBlock(trueBlock, trueValues)) {
@@ -122,8 +123,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// Create switch section for trueInst.
 					AddSection(trueValues, trueInst);
 				}
-			} else if (inst.OpCode == OpCode.SwitchInstruction) {
-				if (AnalyzeSwitch((SwitchInstruction)inst, inputValues, out trueValues)) {
+			} else if (block.Instructions.Last() is SwitchInstruction switchInst) {
+				if (!(tailOnly || block.Instructions.Count == 1))
+					return false;
+				if (AnalyzeSwitch(switchInst, inputValues, out trueValues)) {
 					ContainsILSwitch = true; // OK
 				} else { // switch analysis failed (e.g. switchVar mismatch)
 					return false;
@@ -147,7 +150,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		private bool AnalyzeSwitch(SwitchInstruction inst, LongSet inputValues, out LongSet anyMatchValues)
 		{
-			Debug.Assert(inst.DefaultBody is Nop);
+			Debug.Assert(!inst.IsLifted);
 			anyMatchValues = LongSet.Empty;
 			long offset;
 			if (MatchSwitchVar(inst.Value)) {

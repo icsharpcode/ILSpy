@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.Util;
@@ -32,15 +33,19 @@ namespace ICSharpCode.Decompiler.IL
 	partial class SwitchInstruction
 	{
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
-		public static readonly SlotInfo DefaultBodySlot = new SlotInfo("DefaultBody");
 		public static readonly SlotInfo SectionSlot = new SlotInfo("Section", isCollection: true);
-		
+
+		/// <summary>
+		/// If the switch instruction is lifted, the value instruction produces a value of type <c>Nullable{T}</c> for some
+		/// integral type T. The section with <c>SwitchSection.HasNullLabel</c> is called if the value is null.
+		/// </summary>
+		public bool IsLifted;
+
 		public SwitchInstruction(ILInstruction value)
 			: base(OpCode.SwitchInstruction)
 		{
 			this.Value = value;
-			this.DefaultBody = new Nop();
-			this.Sections = new InstructionCollection<SwitchSection>(this, 2);
+			this.Sections = new InstructionCollection<SwitchSection>(this, 1);
 		}
 		
 		ILInstruction value;
@@ -52,21 +57,11 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 		
-		ILInstruction defaultBody;
-
-		public ILInstruction DefaultBody {
-			get { return this.defaultBody; }
-			set {
-				ValidateChild(value);
-				SetChildInstruction(ref this.defaultBody, value, 1);
-			}
-		}
-
 		public readonly InstructionCollection<SwitchSection> Sections;
 
 		protected override InstructionFlags ComputeFlags()
 		{
-			var sectionFlags = defaultBody.Flags;
+			var sectionFlags = InstructionFlags.EndPointUnreachable; // neutral element for CombineBranches()
 			foreach (var section in Sections) {
 				sectionFlags = SemanticHelper.CombineBranches(sectionFlags, section.Flags);
 			}
@@ -81,15 +76,15 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.Write("switch (");
+			output.Write("switch");
+			if (IsLifted)
+				output.Write(".lifted");
+			output.Write(" (");
 			value.WriteTo(output, options);
 			output.Write(") ");
 			output.MarkFoldStart("{...}");
 			output.WriteLine("{");
 			output.Indent();
-			output.Write("default: ");
-			defaultBody.WriteTo(output, options);
-			output.WriteLine();
 			foreach (var section in this.Sections) {
 				section.WriteTo(output, options);
 				output.WriteLine();
@@ -101,34 +96,28 @@ namespace ICSharpCode.Decompiler.IL
 		
 		protected override int GetChildCount()
 		{
-			return 2 + Sections.Count;
+			return 1 + Sections.Count;
 		}
 		
 		protected override ILInstruction GetChild(int index)
 		{
 			if (index == 0)
 				return value;
-			else if (index == 1)
-				return defaultBody;
-			return Sections[index - 2];
+			return Sections[index - 1];
 		}
 		
 		protected override void SetChild(int index, ILInstruction value)
 		{
 			if (index == 0)
 				Value = value;
-			else if (index == 1)
-				DefaultBody = value;
 			else
-				Sections[index - 2] = (SwitchSection)value;
+				Sections[index - 1] = (SwitchSection)value;
 		}
 		
 		protected override SlotInfo GetChildSlot(int index)
 		{
 			if (index == 0)
 				return ValueSlot;
-			else if (index == 1)
-				return DefaultBodySlot;
 			return SectionSlot;
 		}
 		
@@ -137,7 +126,6 @@ namespace ICSharpCode.Decompiler.IL
 			var clone = new SwitchInstruction(value.Clone());
 			clone.ILRange = this.ILRange;
 			clone.Value = value.Clone();
-			this.DefaultBody = defaultBody.Clone();
 			clone.Sections.AddRange(this.Sections.Select(h => (SwitchSection)h.Clone()));
 			return clone;
 		}
@@ -145,12 +133,19 @@ namespace ICSharpCode.Decompiler.IL
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
+			bool expectNullSection = this.IsLifted;
 			LongSet sets = LongSet.Empty;
 			foreach (var section in Sections) {
-				Debug.Assert(!section.Labels.IsEmpty);
+				if (section.HasNullLabel) {
+					Debug.Assert(expectNullSection, "Duplicate 'case null' or 'case null' in non-lifted switch.");
+					expectNullSection = false;
+				}
+				Debug.Assert(!section.Labels.IsEmpty || section.HasNullLabel);
 				Debug.Assert(!section.Labels.Overlaps(sets));
 				sets = sets.UnionWith(section.Labels);
 			}
+			Debug.Assert(sets.SetEquals(LongSet.Universe), "switch does not handle all possible cases");
+			Debug.Assert(!expectNullSection, "Lifted switch is missing 'case null'");
 		}
 	}
 	
@@ -162,6 +157,14 @@ namespace ICSharpCode.Decompiler.IL
 			this.Labels = LongSet.Empty;
 		}
 
+		/// <summary>
+		/// If true, serves as 'case null' in a lifted switch.
+		/// </summary>
+		public bool HasNullLabel { get; set; }
+
+		/// <summary>
+		/// The set of labels that cause execution to jump to this switch section.
+		/// </summary>
 		public LongSet Labels { get; set; }
 		
 		protected override InstructionFlags ComputeFlags()
@@ -177,11 +180,53 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.Write("case ");
-			output.Write(Labels.ToString());
+			output.WriteDefinition("case", this, isLocal: true);
+			output.Write(' ');
+			if (HasNullLabel) {
+				output.Write("null");
+				if (!Labels.IsEmpty) {
+					output.Write(", ");
+					output.Write(Labels.ToString());
+				}
+			} else {
+				output.Write(Labels.ToString());
+			}
 			output.Write(": ");
 			
 			body.WriteTo(output, options);
+		}
+	}
+
+	/// <summary>
+	/// Unconditional branch to switch section. <c>goto case target;</c>/<c>goto default;</c>
+	/// </summary>
+	/// <remarks>
+	/// Like normal branches, can trigger finally blocks.
+	/// </remarks>
+	partial class GotoCase // : IBranchOrLeaveInstruction
+	{
+		public SwitchSection TargetSection { get; }
+
+		public GotoCase(SwitchSection target) : base(OpCode.GotoCase)
+		{
+			this.TargetSection = target ?? throw new ArgumentNullException(nameof(target));
+		}
+
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			var parentSwitch = this.Ancestors.OfType<SwitchInstruction>().First();
+			Debug.Assert(parentSwitch == TargetSection.Parent);
+		}
+
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			output.Write("goto.case ");
+			if (TargetSection.HasNullLabel) {
+				output.WriteReference("null", TargetSection, isLocal: true);
+			} else {
+				output.WriteReference(TargetSection.Labels.Values.First().ToString(), TargetSection, isLocal: true);
+			}
 		}
 	}
 }

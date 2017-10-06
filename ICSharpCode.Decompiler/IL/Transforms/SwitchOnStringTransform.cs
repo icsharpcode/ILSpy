@@ -283,7 +283,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			var stringToInt = new StringToInt(new LdLoc(switchValueVar), stringValues.ToArray());
 			inst = new SwitchInstruction(stringToInt);
-			inst.DefaultBody = switchInst.DefaultBody;
 			inst.Sections.AddRange(sections);
 			blockAfterSwitch = defaultBlock;
 			return true;

@@ -63,18 +63,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Last instruction is one with unreachable endpoint
 			// (guaranteed by combination of BlockContainer and Block invariants)
 			Debug.Assert(block.Instructions.Last().HasFlag(InstructionFlags.EndPointUnreachable));
+
 			ILInstruction exitInst = block.Instructions.Last();
+			if (exitInst is SwitchInstruction switchInst) {
+				HandleSwitchInstruction(cfgNode, block, switchInst);
+			}
 
 			// Previous-to-last instruction might have conditional control flow,
 			// usually an IfInstruction with a branch:
 			IfInstruction ifInst = block.Instructions.SecondToLastOrDefault() as IfInstruction;
 			if (ifInst != null && ifInst.FalseInst.OpCode == OpCode.Nop) {
 				HandleIfInstruction(cfgNode, block, ifInst, ref exitInst);
-			} else {
-				SwitchInstruction switchInst = block.Instructions.SecondToLastOrDefault() as SwitchInstruction;
-				if (switchInst != null) {
-					HandleSwitchInstruction(cfgNode, block, switchInst, ref exitInst);
-				}
 			}
 			if (IsUsableBranchToChild(cfgNode, exitInst)) {
 				// "...; goto usableblock;"
@@ -289,9 +288,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				&& cfgNode.Dominates(context.ControlFlowGraph.GetNode(targetBlock));
 		}
 
-		private void HandleSwitchInstruction(ControlFlowNode cfgNode, Block block, SwitchInstruction sw, ref ILInstruction exitInst)
+		private void HandleSwitchInstruction(ControlFlowNode cfgNode, Block block, SwitchInstruction sw)
 		{
-			Debug.Assert(sw.DefaultBody is Nop);
 			// First, move blocks into the switch section
 			foreach (var section in sw.Sections) {
 				if (IsUsableBranchToChild(cfgNode, section.Body)) {
@@ -301,32 +299,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					section.Body = targetBlock;
 				}
 			}
-			// Move the code following the switch into the default section
-			if (IsUsableBranchToChild(cfgNode, exitInst)) {
-				// switch(...){} goto targetBlock;
-				// ---> switch(..) { default: { targetBlock } }
-				var targetBlock = ((Branch)exitInst).TargetBlock;
-				targetBlock.Remove();
-				sw.DefaultBody = targetBlock;
-				if (IsBranchOrLeave(targetBlock.Instructions.Last())) {
-					exitInst = block.Instructions[block.Instructions.Count - 1] = targetBlock.Instructions.Last();
-					targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
-				} else {
-					exitInst = null;
-					block.Instructions.RemoveAt(block.Instructions.Count - 1);
-				}
-			}
-			// Remove compatible exitInsts from switch sections:
-			foreach (var section in sw.Sections) {
-				Block sectionBlock = section.Body as Block;
-				if (sectionBlock != null && exitInst == null && IsBranchOrLeave(sectionBlock.Instructions.Last())) {
-					exitInst = sectionBlock.Instructions.Last();
-					sectionBlock.Instructions.RemoveAt(sectionBlock.Instructions.Count - 1);
-					block.Instructions.Add(exitInst);
-				} else if (sectionBlock != null && DetectExitPoints.CompatibleExitInstruction(exitInst, sectionBlock.Instructions.Last())) {
-					sectionBlock.Instructions.RemoveAt(sectionBlock.Instructions.Count - 1);
-				}
-			}
+			// TODO: find a common exit point among the cases, and if possible inline that into this block.
 			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => s.Body.ILRange.Start));
 		}
 

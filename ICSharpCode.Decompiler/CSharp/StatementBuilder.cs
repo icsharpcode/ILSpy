@@ -112,21 +112,29 @@ namespace ICSharpCode.Decompiler.CSharp
 				value = exprBuilder.Translate(inst.Value);
 			}
 
-			var stmt = new SwitchStatement() { Expression = value };	
+			// Pick the section with the most labels as default section.
+			IL.SwitchSection defaultSection = inst.Sections.First();
+			foreach (var section in inst.Sections) {
+				if (section.Labels.Count() > defaultSection.Labels.Count()) {
+					defaultSection = section;
+				}
+			}
+
+			var stmt = new SwitchStatement() { Expression = value };
 			foreach (var section in inst.Sections) {
 				var astSection = new Syntax.SwitchSection();
-				astSection.CaseLabels.AddRange(section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type, strToInt?.Map)));
+				if (section == defaultSection) {
+					astSection.CaseLabels.Add(new CaseLabel());
+				} else {
+					if (section.HasNullLabel) {
+						astSection.CaseLabels.Add(new CaseLabel(new NullReferenceExpression()));
+					}
+					astSection.CaseLabels.AddRange(section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type, strToInt?.Map)));
+				}
 				ConvertSwitchSectionBody(astSection, section.Body);
 				stmt.SwitchSections.Add(astSection);
 			}
 			
-			if (inst.DefaultBody.OpCode != OpCode.Nop) {
-				var astSection = new Syntax.SwitchSection();
-				astSection.CaseLabels.Add(new CaseLabel());
-				ConvertSwitchSectionBody(astSection, inst.DefaultBody);
-				stmt.SwitchSections.Add(astSection);
-			}
-
 			breakTarget = oldBreakTarget;
 			return stmt;
 		}

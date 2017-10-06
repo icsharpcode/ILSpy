@@ -614,15 +614,25 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugStartPoint(inst);
 			inst.Value.AcceptVisitor(this);
 			State beforeSections = state.Clone();
-			inst.DefaultBody.AcceptVisitor(this);
+			inst.Sections[0].AcceptVisitor(this);
 			State afterSections = state.Clone();
-			foreach (var section in inst.Sections) {
+			for (int i = 1; i < inst.Sections.Count; ++i) {
 				state.ReplaceWith(beforeSections);
-				section.AcceptVisitor(this);
+				inst.Sections[i].AcceptVisitor(this);
 				afterSections.JoinWith(state);
 			}
 			state = afterSections;
 			DebugEndPoint(inst);
+		}
+
+		protected internal override void VisitGotoCase(GotoCase inst)
+		{
+			// Handling goto case here is tricky:
+			//  We'll need a fixed-point iteration for SwitchInstruction similar to BlockContainer,
+			//  and we'll need to handle GotoCase like Branch, including stuff like ProcessBranchesLeavingTryFinally().
+			// Hopefully we won't need a data-flow analysis in the decompiler pipeline after 'goto case' instructions
+			// are already introduced.
+			throw new NotImplementedException();
 		}
 
 		protected internal override void VisitYieldReturn(YieldReturn inst)

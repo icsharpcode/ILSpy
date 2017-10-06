@@ -39,21 +39,8 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public Branch(Block targetBlock) : base(OpCode.Branch)
 		{
-			if (targetBlock == null)
-				throw new ArgumentNullException(nameof(targetBlock));
-			this.targetBlock = targetBlock;
+			this.targetBlock = targetBlock ?? throw new ArgumentNullException(nameof(targetBlock));
 			this.targetILOffset = targetBlock.ILRange.Start;
-		}
-		
-		protected override InstructionFlags ComputeFlags()
-		{
-			return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
-		}
-		
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
-			}
 		}
 		
 		public int TargetILOffset {

@@ -60,16 +60,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 				var sw = new SwitchInstruction(new LdLoc(analysis.SwitchVariable));
 				foreach (var section in analysis.Sections) {
-					if (!section.Key.SetEquals(defaultSection.Key)) {
-						sw.Sections.Add(new SwitchSection
-						{
-							Labels = section.Key,
-							Body = section.Value
-						});
-					}
+					sw.Sections.Add(new SwitchSection {
+						Labels = section.Key,
+						Body = section.Value
+					});
 				}
-				block.Instructions[block.Instructions.Count - 2] = sw;
-				block.Instructions[block.Instructions.Count - 1] = defaultSection.Value;
+				if (block.Instructions.Last() is Branch) {
+					Debug.Assert(block.Instructions.SecondToLastOrDefault() is IfInstruction);
+					block.Instructions.RemoveAt(block.Instructions.Count - 1);
+				} else {
+					Debug.Assert(block.Instructions.Last() is SwitchInstruction);
+				}
+				block.Instructions[block.Instructions.Count - 1] = sw;
+				
 				// mark all inner blocks that were converted to the switch statement for deletion
 				foreach (var innerBlock in analysis.InnerBlocks) {
 					Debug.Assert(innerBlock.Parent == block.Parent);
@@ -87,8 +90,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		internal static void SimplifySwitchInstruction(Block block)
 		{
 			// due to our of of basic blocks at this point,
-			// switch instructions can only appear as second-to-last insturction
-			var sw = block.Instructions.SecondToLastOrDefault() as SwitchInstruction;
+			// switch instructions can only appear as last insturction
+			var sw = block.Instructions.LastOrDefault() as SwitchInstruction;
 			if (sw == null)
 				return;
 
@@ -96,19 +99,13 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Any switch instructions will only have branch instructions in the sections.
 
 			// Combine sections with identical branch target:
-			block.Instructions.Last().MatchBranch(out Block defaultTarget);
 			var dict = new Dictionary<Block, SwitchSection>(); // branch target -> switch section
 			sw.Sections.RemoveAll(
 				section => {
-					Block target;
-					if (section.Body.MatchBranch(out target)) {
-						SwitchSection primarySection;
-						if (target == defaultTarget) {
-							// This section is just an alternative for 'default'.
-							Debug.Assert(sw.DefaultBody is Nop);
-							return true; // remove this section
-						} else if (dict.TryGetValue(target, out primarySection)) {
+					if (section.Body.MatchBranch(out Block target)) {
+						if (dict.TryGetValue(target, out SwitchSection primarySection)) {
 							primarySection.Labels = primarySection.Labels.UnionWith(section.Labels);
+							primarySection.HasNullLabel |= section.HasNullLabel;
 							return true; // remove this section
 						} else {
 							dict.Add(target, section);
