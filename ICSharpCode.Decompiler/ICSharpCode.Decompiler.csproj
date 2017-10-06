@@ -271,6 +271,7 @@
     <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
     <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
+    <Compile Include="IL\Instructions\ILInstructionExtensions.cs" />
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\UsingTransform.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
