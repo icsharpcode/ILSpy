@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally) || (la.IsDescendantOf(tryFinally.TryBlock) && !ILInlining.IsUsedAsThisPointerInCall(la))))
 				return false;
-			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
+			if (storeInst.Variable.StoreInstructions.Count > 1)
 				return false;
 			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
 				return false;
@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally) || (la.IsDescendantOf(tryFinally.TryBlock) && !ILInlining.IsUsedAsThisPointerInCall(la))))
 				return false;
-			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
+			if (storeInst.Variable.StoreInstructions.Count > 1)
 				return false;
 			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
 				return false;
