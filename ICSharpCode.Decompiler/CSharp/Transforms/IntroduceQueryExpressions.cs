@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (MatchSimpleLambda(invocation.Arguments.Single(), out parameterName, out body)) {
 							QueryExpression query = new QueryExpression();
 							query.Clauses.Add(new QueryFromClause { Identifier = parameterName, Expression = mre.Target.Detach() });
-							query.Clauses.Add(new QuerySelectClause { Expression = body.Detach() });
+							query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(body.Detach(), parameterName) });
 							return query;
 						}
 						return null;
@@ -143,7 +143,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								QueryExpression query = new QueryExpression();
 								query.Clauses.Add(new QueryFromClause { Identifier = p1.Name, Expression = mre.Target.Detach() });
 								query.Clauses.Add(new QueryFromClause { Identifier = p2.Name, Expression = collectionSelector.Detach() });
-								query.Clauses.Add(new QuerySelectClause { Expression = ((Expression)lambda.Body).Detach() });
+								query.Clauses.Add(new QuerySelectClause { Expression = WrapExpressionInParenthesesIfNecessary(((Expression)lambda.Body).Detach(), parameterName) });
 								return query;
 							}
 						}
@@ -242,7 +242,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return null;
 			}
 		}
-		
+
+		/// <summary>
+		/// This fixes #437: Decompilation of query expression loses material parentheses
+		/// We wrap the expression in parentheses if:
+		/// - the Select-call is explicit (see caller(s))
+		/// - the expression is a plain identifier matching the parameter name
+		/// </summary>
+		Expression WrapExpressionInParenthesesIfNecessary(Expression expression, string parameterName)
+		{
+			if (expression is IdentifierExpression ident && parameterName.Equals(ident.Identifier, StringComparison.Ordinal))
+				return new ParenthesizedExpression(expression);
+			return expression;
+		}
+
 		/// <summary>
 		/// Ensure that all ThenBy's are correct, and that the list of ThenBy's is terminated by an 'OrderBy' invocation.
 		/// </summary>

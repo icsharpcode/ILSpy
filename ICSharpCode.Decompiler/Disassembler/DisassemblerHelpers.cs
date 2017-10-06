@@ -343,9 +343,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			ParameterReference paramRef = operand as ParameterReference;
 			if (paramRef != null) {
-				if (string.IsNullOrEmpty(paramRef.Name))
-					writer.WriteReference(paramRef.Index.ToString(), paramRef);
-				else
+				if (string.IsNullOrEmpty(paramRef.Name)) {
+					var paramDef = paramRef.Resolve();
+					writer.WriteReference((paramDef == null ? paramRef.Index : paramDef.Sequence).ToString(), paramRef);
+				} else
 					writer.WriteReference(Escape(paramRef.Name), paramRef);
 				return;
 			}

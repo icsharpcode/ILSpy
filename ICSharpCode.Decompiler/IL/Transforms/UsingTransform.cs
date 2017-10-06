@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.UsingStatement) return;
 			this.context = context;
 			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-				if (!TransformUsing(block, i))
+				if (!TransformUsing(block, i) && !TransformUsingVB(block, i))
 					continue;
 				// This happens in some cases:
 				// Use correct index after transformation.
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally) || (la.IsDescendantOf(tryFinally.TryBlock) && !ILInlining.IsUsedAsThisPointerInCall(la))))
 				return false;
-			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
+			if (storeInst.Variable.StoreInstructions.Count > 1)
 				return false;
 			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
 				return false;
@@ -88,6 +88,55 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			storeInst.Variable.Kind = VariableKind.UsingLocal;
 			block.Instructions.RemoveAt(i);
 			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
+			return true;
+		}
+
+		/// <summary>
+		/// .try BlockContainer {
+		///		Block IL_0003(incoming: 1) {
+		///			stloc obj(resourceExpression)
+		///			call WriteLine(ldstr "using (null)")
+		///			leave IL_0003(nop)
+		///		}
+		///	} finally BlockContainer {
+		///		Block IL_0012(incoming: 1) {
+		///			if (comp(ldloc obj != ldnull)) Block IL_001a  {
+		///				callvirt Dispose(ldnull)
+		///			}
+		///			leave IL_0012(nop)
+		///		}
+		/// }
+		/// leave IL_0000(nop)
+		/// =>
+		/// using (resourceExpression) {
+		///		BlockContainer {
+		///			Block IL_0003(incoming: 1) {
+		///				call WriteLine(ldstr "using (null)")
+		///				leave IL_0003(nop)
+		///			}
+		///		}
+		/// }
+		/// </summary>
+		bool TransformUsingVB(Block block, int i)
+		{
+			if (!(block.Instructions[i] is TryFinally tryFinally))
+				return false;
+			if (!(tryFinally.TryBlock is BlockContainer tryContainer && tryContainer.EntryPoint.Instructions.FirstOrDefault() is StLoc storeInst))
+				return false;
+			if (!(storeInst.Value.MatchLdNull() || CheckResourceType(storeInst.Variable.Type)))
+				return false;
+			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(tryFinally)))
+				return false;
+			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally) || (la.IsDescendantOf(tryFinally.TryBlock) && !ILInlining.IsUsedAsThisPointerInCall(la))))
+				return false;
+			if (storeInst.Variable.StoreInstructions.Count > 1)
+				return false;
+			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
+				return false;
+			context.Step("UsingTransformVB", tryFinally);
+			storeInst.Variable.Kind = VariableKind.UsingLocal;
+			tryContainer.EntryPoint.Instructions.RemoveAt(0);
+			block.Instructions[i] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
 			return true;
 		}
 
