@@ -44,12 +44,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="TestCases\ILPretty\FSharpUsing.fs" />
+    <None Include="TestCases\ILPretty\FSharpUsing_Debug.il" />
+    <None Include="TestCases\ILPretty\FSharpUsing_Release.il" />
     <None Include="TestCases\Correctness\BitNot.il" />
     <None Include="TestCases\Correctness\Readme.txt" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="DataFlowTest.cs" />
+    <None Include="TestCases\ILPretty\FSharpUsing_Debug.cs" />
+    <None Include="TestCases\ILPretty\FSharpUsing_Release.cs" />
     <Compile Include="Helpers\CodeAssert.cs" />
     <Compile Include="Helpers\SdkUtility.cs" />
     <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
