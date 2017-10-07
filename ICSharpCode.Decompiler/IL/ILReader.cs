@@ -523,7 +523,7 @@ namespace ICSharpCode.Decompiler.IL
 				case Cil.Code.Conv_Ovf_U_Un:
 					return Push(new Conv(Pop(), PrimitiveType.U, true, Sign.Unsigned));
 				case Cil.Code.Cpblk:
-					throw new NotImplementedException();
+					return new Cpblk(size: Pop(StackType.I4), sourceAddress: PopPointer(), destAddress: PopPointer());
 				case Cil.Code.Div:
 					return BinaryNumeric(BinaryNumericOperator.Div, false, Sign.Signed);
 				case Cil.Code.Div_Un:
@@ -535,7 +535,7 @@ namespace ICSharpCode.Decompiler.IL
 				case Cil.Code.Endfinally:
 					return new Leave(null);
 				case Cil.Code.Initblk:
-					throw new NotImplementedException();
+					return new Initblk(size: Pop(StackType.I4), value: Pop(StackType.I4), address: PopPointer());
 				case Cil.Code.Jmp:
 					throw new NotImplementedException();
 				case Cil.Code.Ldarg:
