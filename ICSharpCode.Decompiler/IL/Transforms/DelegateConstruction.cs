@@ -228,6 +228,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			
 			public TransformDisplayClassUsages(IInstructionWithVariableOperand targetLoad, BlockContainer captureScope, List<ILInstruction> orphanedVariableInits)
 			{
+				this.currentFunction = captureScope.Ancestors.OfType<ILFunction>().First();
 				this.targetLoad = targetLoad;
 				this.captureScope = captureScope;
 				this.orphanedVariableInits = orphanedVariableInits;
@@ -238,17 +239,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				foreach (var child in inst.Children) {
 					child.AcceptVisitor(this);
-				}
-			}
-			
-			protected internal override void VisitILFunction(ILFunction function)
-			{
-				var old = currentFunction;
-				currentFunction = function;
-				try {
-					base.VisitILFunction(function);
-				} finally {
-					currentFunction = old;
 				}
 			}
 			
