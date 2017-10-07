@@ -443,7 +443,7 @@ namespace ICSharpCode.Decompiler.IL
 				case Cil.Code.Callvirt:
 					return DecodeCall(OpCode.CallVirt);
 				case Cil.Code.Calli:
-					throw new NotImplementedException();
+					return DecodeCallIndirect();
 				case Cil.Code.Ceq:
 					return Push(Comparison(ComparisonKind.Equality));
 				case Cil.Code.Cgt:
@@ -916,9 +916,16 @@ namespace ICSharpCode.Decompiler.IL
 			ILInstruction inst = Pop();
 			if (expectedType != inst.ResultType) {
 				if (expectedType == StackType.I && inst.ResultType == StackType.I4) {
+					// IL allows implicit I4->I conversions
 					inst = new Conv(inst, PrimitiveType.I, false, Sign.None);
+				} else if (expectedType == StackType.I4 && inst.ResultType == StackType.I) {
+					// C++/CLI also sometimes implicitly converts in the other direction:
+					inst = new Conv(inst, PrimitiveType.I4, false, Sign.None);
 				} else if (expectedType == StackType.Ref && inst.ResultType == StackType.I) {
 					// implicitly start GC tracking
+				} else if (expectedType == StackType.I && inst.ResultType == StackType.Ref) {
+					// Implicitly stop GC tracking; this occurs when passing the result of 'ldloca' or 'ldsflda'
+					// to a method expecting a native pointer.
 				} else if (inst is InvalidExpression) {
 					((InvalidExpression)inst).ExpectedResultType = expectedType;
 				} else {
@@ -1105,7 +1112,31 @@ namespace ICSharpCode.Decompiler.IL
 					return call;
 			}
 		}
-		
+
+		ILInstruction DecodeCallIndirect()
+		{
+			var functionPointer = Pop(StackType.I);
+			var signature = (CallSite)currentInstruction.Operand;
+			Debug.Assert(!signature.HasThis);
+			var parameterTypes = new IType[signature.Parameters.Count];
+			var arguments = new ILInstruction[parameterTypes.Length];
+			for (int i = signature.Parameters.Count - 1; i >= 0; i--) {
+				parameterTypes[i] = typeSystem.Resolve(signature.Parameters[i].ParameterType);
+				arguments[i] = Pop(parameterTypes[i].GetStackType());
+			}
+			var call = new CallIndirect(
+				signature.CallingConvention,
+				typeSystem.Resolve(signature.ReturnType),
+				parameterTypes.ToImmutableArray(),
+				arguments,
+				functionPointer
+			);
+			if (call.ResultType != StackType.Void)
+				return Push(call);
+			else
+				return call;
+		}
+
 		static int GetPopCount(OpCode callCode, MethodReference methodReference)
 		{
 			int popCount = methodReference.Parameters.Count;

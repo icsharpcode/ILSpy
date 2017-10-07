@@ -83,6 +83,8 @@ namespace ICSharpCode.Decompiler.IL
 		Call,
 		/// <summary>Virtual method call.</summary>
 		CallVirt,
+		/// <summary>Unsafe function pointer call.</summary>
+		CallIndirect,
 		/// <summary>Checks that the input float is not NaN or infinite.</summary>
 		Ckfinite,
 		/// <summary>Numeric cast.</summary>
@@ -1950,6 +1952,31 @@ namespace ICSharpCode.Decompiler.IL
 		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
 		{
 			return visitor.VisitCallVirt(this, context);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Unsafe function pointer call.</summary>
+	public sealed partial class CallIndirect : ILInstruction
+	{
+
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCallIndirect(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitCallIndirect(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitCallIndirect(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as CallIndirect;
+			return o != null && EqualSignature(o) && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match) && this.FunctionPointer.PerformMatch(o.FunctionPointer, ref match);
 		}
 	}
 }
@@ -4769,6 +4796,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitCallIndirect(CallIndirect inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitCkfinite(Ckfinite inst)
 		{
 			Default(inst);
@@ -5060,6 +5091,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitCallVirt(CallVirt inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitCallIndirect(CallIndirect inst)
 		{
 			return Default(inst);
 		}
@@ -5357,6 +5392,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitCallIndirect(CallIndirect inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitCkfinite(Ckfinite inst, C context)
 		{
 			return Default(inst, context);
@@ -5565,6 +5604,7 @@ namespace ICSharpCode.Decompiler.IL
 			"comp",
 			"call",
 			"callvirt",
+			"calli",
 			"ckfinite",
 			"conv",
 			"ldloc",

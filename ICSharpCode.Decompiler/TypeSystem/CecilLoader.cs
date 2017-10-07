@@ -350,6 +350,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			} else if (type is GenericParameter) {
 				GenericParameter typeGP = (GenericParameter)type;
 				return TypeParameterReference.Create(typeGP.Owner is MethodReference ? SymbolKind.Method : SymbolKind.TypeDefinition, typeGP.Position);
+			} else if (type is FunctionPointerType) {
+				return KnownTypeReference.Get(KnownTypeCode.IntPtr);
 			} else if (type.IsNested) {
 				ITypeReference typeRef = CreateType(type.DeclaringType, typeAttributes, ref typeIndex);
 				int partTypeParameterCount;
