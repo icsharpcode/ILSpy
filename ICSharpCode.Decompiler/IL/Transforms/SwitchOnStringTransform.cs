@@ -93,8 +93,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				isLegacy = false;
 				values.Add((value, firstBlock));
 			} else return false;
-			// switchValueVar must be assigned only once.
-			if (!switchValueVar.IsSingleDefinition)
+			// switchValueVar must be assigned only once and must be of type string.
+			if (!switchValueVar.IsSingleDefinition || !switchValueVar.Type.IsKnownType(KnownTypeCode.String))
 				return false;
 			// if instruction must be followed by a branch to the next case
 			if (!(instructions.ElementAtOrDefault(i + 1) is Branch nextCaseJump))
