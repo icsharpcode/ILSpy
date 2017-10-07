@@ -65,11 +65,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						Body = section.Value
 					});
 				}
-				if (block.Instructions.Last() is Branch) {
-					Debug.Assert(block.Instructions.SecondToLastOrDefault() is IfInstruction);
-					block.Instructions.RemoveAt(block.Instructions.Count - 1);
+				if (block.Instructions.Last() is SwitchInstruction) {
+					// we'll replace the switch
 				} else {
-					Debug.Assert(block.Instructions.Last() is SwitchInstruction);
+					Debug.Assert(block.Instructions.SecondToLastOrDefault() is IfInstruction);
+					// Remove branch/leave after if; it's getting moved into a section.
+					block.Instructions.RemoveAt(block.Instructions.Count - 1);
 				}
 				block.Instructions[block.Instructions.Count - 1] = sw;
 				
