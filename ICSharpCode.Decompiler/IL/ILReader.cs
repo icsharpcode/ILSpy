@@ -537,7 +537,7 @@ namespace ICSharpCode.Decompiler.IL
 				case Cil.Code.Initblk:
 					return new Initblk(size: Pop(StackType.I4), value: Pop(StackType.I4), address: PopPointer());
 				case Cil.Code.Jmp:
-					throw new NotImplementedException();
+					return DecodeJmp();
 				case Cil.Code.Ldarg:
 				case Cil.Code.Ldarg_S:
 					return Push(Ldarg(((ParameterDefinition)cecilInst.Operand).Sequence));
@@ -1249,6 +1249,22 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			return Push(new BinaryNumericInstruction(@operator, left, right, checkForOverflow, sign));
+		}
+
+		ILInstruction DecodeJmp()
+		{
+			IMethod method = ReadAndDecodeMethodReference();
+			// Translate jmp into tail call:
+			Call call = new Call(method);
+			call.IsTail = true;
+			call.ILStackWasEmpty = true;
+			if (!method.IsStatic) {
+				call.Arguments.Add(Ldarg(0));
+			}
+			foreach (var p in method.Parameters) {
+				call.Arguments.Add(Ldarg(call.Arguments.Count));
+			}
+			return new Leave(mainContainer, call);
 		}
 
 		ILInstruction LdToken(IMetadataTokenProvider token)
