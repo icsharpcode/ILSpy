@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL
 						conditions.Add(ifInst.Condition);
 						i--;
 					}
-					if (i == -1) {
+					if (i == -1 && conditions.Any()) {
 						return b;
 					}
 				}

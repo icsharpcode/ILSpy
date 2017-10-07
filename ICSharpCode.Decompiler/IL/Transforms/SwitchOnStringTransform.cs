@@ -38,36 +38,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			HashSet<BlockContainer> changedContainers = new HashSet<BlockContainer>();
 
 			foreach (var block in function.Descendants.OfType<Block>()) {
+				bool changed = false;
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					SwitchInstruction newSwitch;
-					Block blockAfterSwitch = null;
-					bool removeExtraStore = false; // the Roslyn switch pattern uses an extra store for hash calculation.
-					if (!MatchCascadingIfStatements(block.Instructions, i, out newSwitch, out blockAfterSwitch))
-						if (!MatchLegacySwitchOnString(block.Instructions, i, out newSwitch, out blockAfterSwitch))
-							if (MatchRoslynSwitchOnString(block.Instructions, i, out newSwitch))
-								removeExtraStore = true;
-							else
-								continue;
-
-					if (i + 1 < block.Instructions.Count && block.Instructions[i + 1] is Branch b && blockAfterSwitch != null) {
-						block.Instructions[i + 1].ReplaceWith(new Branch(blockAfterSwitch));
+					if (SimplifyCascadingIfStatements(block.Instructions, i, out newSwitch)) {
+						block.Instructions[i + 1].ReplaceWith(newSwitch);
+						block.Instructions.RemoveAt(i);
+						changed = true;
+						continue;
 					}
-
-					block.Instructions[i].ReplaceWith(newSwitch);
-					if (removeExtraStore) {
-						block.Instructions.RemoveAt(i - 1);
+					if (MatchLegacySwitchOnString(block.Instructions, i, out newSwitch)) {
+						block.Instructions[i + 1].ReplaceWith(newSwitch);
+						block.Instructions.RemoveAt(i);
+						changed = true;
+						continue;
+					}
+					if (MatchRoslynSwitchOnString(block.Instructions, i, out newSwitch)) {
+						block.Instructions[i - 1].ReplaceWith(newSwitch);
+						block.Instructions.RemoveAt(i);
+						changed = true;
 						i--;
+						continue;
 					}
-
-					// Combine cases with the same branch target:
-					SwitchDetection.SimplifySwitchInstruction(block);
-
-					// This happens in some cases:
-					// Use correct index after transformation.
-					if (i >= block.Instructions.Count)
-						i = block.Instructions.Count;
 				}
-
+				if (!changed) continue;
+				SwitchDetection.SimplifySwitchInstruction(block);
 				if (block.Parent is BlockContainer container)
 					changedContainers.Add(container);
 			}
@@ -76,10 +71,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				container.SortBlocks(deleteUnreachableBlocks: true);
 		}
 
-		bool MatchCascadingIfStatements(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst, out Block blockAfterSwitch)
+		bool SimplifyCascadingIfStatements(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst)
 		{
 			inst = null;
-			blockAfterSwitch = null;
 			// match first block: checking switch-value for null or first value (Roslyn)
 			// if (call op_Equality(ldloc switchValueVar, ldstr value)) br firstBlock
 			// -or-
@@ -89,16 +83,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!firstBlockJump.MatchBranch(out var firstBlock))
 				return false;
 			bool isLegacy;
-			Block defaultBlock;
 			List<(string, Block)> values = new List<(string, Block)>();
 			// match null check: this is used by the old C# compiler.
 			if (condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && left.MatchLdLoc(out var switchValueVar)) {
 				isLegacy = true;
-				defaultBlock = firstBlock;
-			// Roslyn: match call to operator ==(string, string)
+				values.Add((null, firstBlock));
+				// Roslyn: match call to operator ==(string, string)
 			} else if (MatchStringEqualityComparison(condition, out switchValueVar, out string value)) {
 				isLegacy = false;
-				defaultBlock = null;
 				values.Add((value, firstBlock));
 			} else return false;
 			// switchValueVar must be assigned only once.
@@ -114,51 +106,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				values.Add((value, block));
 				currentCaseBlock = nextCaseBlock;
 			}
-			// the last instruction of the last case/default block must be either
-			// a branch to the a block after the switch statement or a leave instruction.
-			var container = BlockContainer.FindClosestContainer(firstBlock);
-			if (!ExtractLastJumpFromBlock(currentCaseBlock, out var exitBlock) && !ExtractLastLeaveFromBlock(currentCaseBlock, container))
+			// We didn't find enough cases, exit
+			if (values.Count < 3)
 				return false;
-			// We didn't find any cases, exit
-			if (values.Count == 0)
+			// The block after all cases should only be reachable from the previous block and the null-check (in legacy code).
+			if (currentCaseBlock.IncomingEdgeCount != (isLegacy ? 2 : 1))
 				return false;
-			// All case blocks must either leave the current block container or branch to the same block after the switch statement.
-			if (exitBlock == null) {
-				if (!values.All(b => ExtractLastLeaveFromBlock(b.Item2, container)))
-					return false;
-			} else {
-				// Compare blocks by label as duplicated blocks should have the same label.
-				if (!(values.All(b => ExtractLastJumpFromBlock(b.Item2, out var nextExitBlock) && nextExitBlock.Label == exitBlock.Label)))
-					return false;
-			}
-			// if the block after the switch has the correct number of branches, generate the switch statement
-			// and return it and the block.
-			if (currentCaseBlock.IncomingEdgeCount == (isLegacy ? 2 : 1)) {
-				var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch(b.Item2) }));
-				var stringToInt = new StringToInt(new LdLoc(switchValueVar), values.SelectArray(item => item.Item1));
-				inst = new SwitchInstruction(stringToInt);
-				inst.Sections.AddRange(sections);
-				blockAfterSwitch = currentCaseBlock;
-				return true;
-			}
-			return false;
-		}
-
-		bool ExtractLastJumpFromBlock(Block block, out Block exitBlock)
-		{
-			exitBlock = null;
-			var lastInst = block.Instructions.LastOrDefault();
-			if (lastInst == null || !lastInst.MatchBranch(out exitBlock))
-				return false;
+			var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch(b.Item2) }));
+			sections.Add(new SwitchSection { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = new Branch(currentCaseBlock) });
+			var stringToInt = new StringToInt(new LdLoc(switchValueVar), values.SelectArray(item => item.Item1));
+			inst = new SwitchInstruction(stringToInt);
+			inst.Sections.AddRange(sections);
 			return true;
-		}
-
-		bool ExtractLastLeaveFromBlock(Block block, BlockContainer container)
-		{
-			var lastInst = block.Instructions.LastOrDefault();
-			if (lastInst == null || !lastInst.MatchLeave(out var b, out _))
-				return false;
-			return b == container;
 		}
 
 		/// <summary>
@@ -222,16 +181,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return storeInst.Value.MatchLdLoc(right);
 		}
 
-		bool MatchLegacySwitchOnString(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst, out Block blockAfterSwitch)
+		bool MatchLegacySwitchOnString(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst)
 		{
 			inst = null;
-			blockAfterSwitch = null;
 			if (i < 1) return false;
 			// match first block: checking switch-value for null
 			if (!(instructions[i].MatchIfInstruction(out var condition, out var exitBlockJump) &&
 				instructions[i - 1].MatchStLoc(out var switchValueVar, out var switchValue) && switchValueVar.Type.IsKnownType(KnownTypeCode.String)))
 				return false;
-			if (!exitBlockJump.MatchBranch(out var exitBlock))
+			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock))
 				return false;
 			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && (left.Match(switchValue).Success || left.MatchLdLoc(switchValueVar))))
 				return false;
@@ -269,22 +227,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!tryGetValueBlock.Instructions[1].MatchBranch(out var switchBlock))
 				return false;
 			// match fifth block: switch-instruction block
-			if (switchBlock.IncomingEdgeCount != 1 || switchBlock.Instructions.Count != 2)
+			if (switchBlock.IncomingEdgeCount != 1 || switchBlock.Instructions.Count != 1)
 				return false;
 			if (!(switchBlock.Instructions[0] is SwitchInstruction switchInst && switchInst.Value.MatchLdLoc(switchIndexVar)))
 				return false;
-			if (!switchBlock.Instructions[1].MatchBranch(defaultBlock))
-				return false;
-			// switch contains case null:
 			var sections = new List<SwitchSection>(switchInst.Sections);
-			if (exitBlock != defaultBlock) {
+			// switch contains case null:
+			if (nullValueCaseBlock != defaultBlock) {
+				var label = new Util.LongSet(switchInst.Sections.Count);
+				var possibleConflicts = switchInst.Sections.Where(sec => sec.Labels.Overlaps(label)).ToArray();
+				if (possibleConflicts.Length > 1)
+					return false;
+				else if (possibleConflicts.Length == 1)
+					possibleConflicts[0].Labels = possibleConflicts[0].Labels.ExceptWith(label);
 				stringValues.Add(null);
-				sections.Add(new SwitchSection() { Labels = new Util.LongSet(stringValues.Count - 1), Body = new Branch(exitBlock) });
+				sections.Add(new SwitchSection() { Labels = label, Body = new Branch(nullValueCaseBlock) });
 			}
 			var stringToInt = new StringToInt(new LdLoc(switchValueVar), stringValues.ToArray());
 			inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
-			blockAfterSwitch = defaultBlock;
 			return true;
 		}
 
@@ -340,10 +301,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			var stringValues = new List<(int, string, Block)>();
 			int index = 0;
+			Block defaultBlock = null;
 			foreach (var section in switchInst.Sections) {
 				if (!section.Body.MatchBranch(out Block target))
 					return false;
-				if (target.IncomingEdgeCount != 1 || target.Instructions.Count != 2)
+				if (target.IncomingEdgeCount > 1) {
+					defaultBlock = target;
+					continue;
+				}
+				if (target.Instructions.Count != 2)
 					return false;
 				if (!target.Instructions[0].MatchIfInstruction(out var condition, out var bodyBranch))
 					return false;
@@ -359,10 +325,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				stringValues.Add((index++, stringValue, body));
 			}
-
+			var defaultLabel = new LongSet(new LongInterval(0, index)).Invert();
 			var value = new StringToInt(switchValue.Clone(), stringValues.Select(item => item.Item2).ToArray());
 			inst = new SwitchInstruction(value);
 			inst.Sections.AddRange(stringValues.Select(section => new SwitchSection { Labels = new Util.LongSet(section.Item1), Body = new Branch(section.Item3) }));
+			inst.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = new Branch(defaultBlock) });
 
 			return true;
 		}
