@@ -47,7 +47,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						changed = true;
 						continue;
 					}
-					if (MatchLegacySwitchOnString(block.Instructions, i, out newSwitch)) {
+					if (MatchLegacySwitchOnStringWithHashtable(block.Instructions, i, out newSwitch)) {
+						block.Instructions[i + 1].ReplaceWith(newSwitch);
+						block.Instructions.RemoveAt(i);
+						changed = true;
+						continue;
+					}
+					if (MatchLegacySwitchOnStringWithDict(block.Instructions, i, out newSwitch)) {
 						block.Instructions[i + 1].ReplaceWith(newSwitch);
 						block.Instructions.RemoveAt(i);
 						changed = true;
@@ -181,7 +187,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return storeInst.Value.MatchLdLoc(right);
 		}
 
-		bool MatchLegacySwitchOnString(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst)
+		/// <summary>
+		/// Matches the C# 2.0 switch-on-string pattern, which uses Dictionary&lt;string, int&gt;.
+		/// </summary>
+		bool MatchLegacySwitchOnStringWithDict(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst)
 		{
 			inst = null;
 			if (i < 1) return false;
@@ -205,12 +214,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!nextBlock.Instructions[1].MatchBranch(out var dictInitBlock) || dictInitBlock.IncomingEdgeCount != 1)
 				return false;
 			if (!(condition.MatchCompNotEquals(out left, out right) && right.MatchLdNull() &&
-				MatchDictionaryFieldLoad(left, out var dictField, out var dictionaryType)))
+				MatchDictionaryFieldLoad(left, IsStringToIntDictionary, out var dictField, out var dictionaryType)))
 				return false;
 			// match third block: initialization of compiler-generated Dictionary<string, int>
 			if (dictInitBlock.IncomingEdgeCount != 1 || dictInitBlock.Instructions.Count < 3)
 				return false;
-			if (!ExtractStringValuesFromDictionaryInitBlock(dictInitBlock, out var stringValues, tryGetValueBlock, dictionaryType, dictField))
+			if (!ExtractStringValuesFromInitBlock(dictInitBlock, out var stringValues, tryGetValueBlock, dictionaryType, dictField))
 				return false;
 			// match fourth block: TryGetValue on compiler-generated Dictionary<string, int>
 			if (tryGetValueBlock.IncomingEdgeCount != 2 || tryGetValueBlock.Instructions.Count != 2)
@@ -220,7 +229,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!defaultBlockJump.MatchBranch(out var defaultBlock))
 				return false;
 			if (!(condition.MatchLogicNot(out var arg) && arg is Call c && c.Method.Name == "TryGetValue" &&
-				MatchDictionaryFieldLoad(c.Arguments[0], out var dictField2, out _) && dictField2.Equals(dictField)))
+				MatchDictionaryFieldLoad(c.Arguments[0], IsStringToIntDictionary, out var dictField2, out _) && dictField2.Equals(dictField)))
 				return false;
 			if (!c.Arguments[1].MatchLdLoc(switchValueVar) || !c.Arguments[2].MatchLdLoca(out var switchIndexVar))
 				return false;
@@ -249,36 +258,41 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchDictionaryFieldLoad(ILInstruction inst, out IField dictField, out IType dictionaryType)
+		bool MatchDictionaryFieldLoad(ILInstruction inst, Func<IType, bool> typeMatcher, out IField dictField, out IType dictionaryType)
 		{
 			dictField = null;
 			dictionaryType = null;
 			return inst.MatchLdObj(out var dictionaryFieldLoad, out dictionaryType) &&
-				IsStringToIntDictionary(dictionaryType) &&
+				typeMatcher(dictionaryType) &&
 				dictionaryFieldLoad.MatchLdsFlda(out dictField) &&
-				dictField.IsCompilerGeneratedOrIsInCompilerGeneratedClass();
+				(dictField.IsCompilerGeneratedOrIsInCompilerGeneratedClass() || dictField.Name.StartsWith("$$method", StringComparison.Ordinal));
 		}
 
-		bool ExtractStringValuesFromDictionaryInitBlock(Block block, out List<string> values, Block targetBlock, IType dictionaryType, IField dictionaryField)
+		bool ExtractStringValuesFromInitBlock(Block block, out List<string> values, Block targetBlock, IType dictionaryType, IField dictionaryField)
 		{
 			values = null;
 			if (!(block.Instructions[0].MatchStLoc(out var dictVar, out var newObjDict) &&
-				newObjDict is NewObj newObj && newObj.Arguments.Count == 1 && newObj.Arguments[0].MatchLdcI4(out var valuesLength)))
-				return false;
-			if (block.Instructions.Count != valuesLength + 3)
+				newObjDict is NewObj newObj && newObj.Arguments.Count >= 1 && newObj.Arguments[0].MatchLdcI4(out var valuesLength)))
 				return false;
 			values = new List<string>(valuesLength);
-			for (int i = 0; i < valuesLength; i++) {
-				if (!(block.Instructions[i + 1] is Call c && c.Method.Name == "Add" && c.Arguments.Count == 3 &&
-					c.Arguments[0].MatchLdLoc(dictVar) && c.Arguments[1].MatchLdStr(out var value) && c.Arguments[2].MatchLdcI4(i)))
-					return false;
+			int i = 0;
+			while (i + 1 < block.Instructions.Count - 2 && MatchAddCall(block.Instructions[i + 1], dictVar, i, out var value)) {
 				values.Add(value);
+				i++;
 			}
-			if (!(block.Instructions[valuesLength + 1].MatchStObj(out var loadField, out var dictVarLoad, out var dictType) &&
+			if (!(block.Instructions[i + 1].MatchStObj(out var loadField, out var dictVarLoad, out var dictType) &&
 				dictType.Equals(dictionaryType) && loadField.MatchLdsFlda(out var dictField) && dictField.Equals(dictionaryField)) &&
 				dictVarLoad.MatchLdLoc(dictVar))
 				return false;
-			return block.Instructions[valuesLength + 2].MatchBranch(targetBlock);
+			return block.Instructions[i + 2].MatchBranch(targetBlock);
+		}
+
+		bool MatchAddCall(ILInstruction inst, ILVariable dictVar, int i, out string value)
+		{
+			value = null;
+			return inst is Call c && c.Method.Name == "Add" && c.Arguments.Count == 3 &&
+				c.Arguments[0].MatchLdLoc(dictVar) && c.Arguments[1].MatchLdStr(out value) &&
+				(c.Arguments[2].MatchLdcI4(i) || (c.Arguments[2].MatchBox(out var arg, out _) && arg.MatchLdcI4(i)));
 		}
 
 		bool IsStringToIntDictionary(IType dictionaryType)
@@ -289,6 +303,108 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			return dictionaryType.TypeArguments[0].IsKnownType(KnownTypeCode.String) &&
 				dictionaryType.TypeArguments[1].IsKnownType(KnownTypeCode.Int32);
+		}
+
+		bool IsNonGenericHashtable(IType dictionaryType)
+		{
+			if (dictionaryType.FullName != "System.Collections.Hashtable")
+				return false;
+			if (dictionaryType.TypeArguments.Count != 0)
+				return false;
+			return true;
+		}
+
+		bool MatchLegacySwitchOnStringWithHashtable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst)
+		{
+			inst = null;
+			// match first block: checking compiler-generated Hashtable for null
+			// if (comp(volatile.ldobj System.Collections.Hashtable(ldsflda $$method0x600003f-1) != ldnull)) br switchHeadBlock
+			// br tableInitBlock
+			if (!(instructions[i].MatchIfInstruction(out var condition, out var branchToSwitchHead) && i + 1 < instructions.Count))
+				return false;
+			if (!instructions[i + 1].MatchBranch(out var tableInitBlock) || tableInitBlock.IncomingEdgeCount != 1)
+				return false;
+			if (!(condition.MatchCompNotEquals(out var left, out var right) && right.MatchLdNull() &&
+				MatchDictionaryFieldLoad(left, IsNonGenericHashtable, out var dictField, out var dictionaryType)))
+				return false;
+			if (!branchToSwitchHead.MatchBranch(out var switchHead))
+				return false;
+			// match second block: initialization of compiler-generated Hashtable
+			// stloc table(newobj Hashtable..ctor(ldc.i4 capacity, ldc.f loadFactor))
+			// call Add(ldloc table, ldstr value, box System.Int32(ldc.i4 index))
+			// ... more calls to Add ...
+			// volatile.stobj System.Collections.Hashtable(ldsflda $$method0x600003f - 1, ldloc table)
+			// br switchHeadBlock
+			if (tableInitBlock.IncomingEdgeCount != 1 || tableInitBlock.Instructions.Count < 3)
+				return false;
+			if (!ExtractStringValuesFromInitBlock(tableInitBlock, out var stringValues, switchHead, dictionaryType, dictField))
+				return false;
+			// match third block: checking switch-value for null
+			// stloc tmp(ldloc switch-value)
+			// stloc switchVariable(ldloc tmp)
+			// if (comp(ldloc tmp == ldnull)) br nullCaseBlock
+			// br getItemBlock
+			if (switchHead.Instructions.Count != 4 || switchHead.IncomingEdgeCount != 2)
+				return false;
+			if (!switchHead.Instructions[0].MatchStLoc(out var tmp, out var switchValue))
+				return false;
+			if (!switchHead.Instructions[1].MatchStLoc(out var switchVariable, out var tmpLoad) || !tmpLoad.MatchLdLoc(tmp))
+				return false;
+			if (!switchHead.Instructions[2].MatchIfInstruction(out condition, out var nullCaseBlockBranch))
+				return false;
+			if (!switchHead.Instructions[3].MatchBranch(out var getItemBlock) || !nullCaseBlockBranch.MatchBranch(out var nullCaseBlock))
+				return false;
+			if (!(condition.MatchCompEquals(out left, out right) && right.MatchLdNull() && left.MatchLdLoc(tmp)))
+				return false;
+			// match fourth block: get_Item on compiler-generated Hashtable
+			// stloc tmp2(call get_Item(volatile.ldobj System.Collections.Hashtable(ldsflda $$method0x600003f - 1), ldloc switchVariable))
+			// stloc switchVariable(ldloc tmp2)
+			// if (comp(ldloc tmp2 == ldnull)) br defaultCaseBlock
+			// br switchBlock
+			if (getItemBlock.IncomingEdgeCount != 1 || getItemBlock.Instructions.Count != 4)
+				return false;
+			if (!(getItemBlock.Instructions[0].MatchStLoc(out var tmp2, out var getItem) && getItem is Call getItemCall && getItemCall.Method.Name == "get_Item"))
+				return false;
+			if (!getItemBlock.Instructions[1].MatchStLoc(out var switchVariable2, out var tmp2Load) || !tmp2Load.MatchLdLoc(tmp2))
+				return false;
+			if (!ILVariableEqualityComparer.Instance.Equals(switchVariable, switchVariable2))
+				return false;
+			if (!getItemBlock.Instructions[2].MatchIfInstruction(out condition, out var defaultBlockBranch))
+				return false;
+			if (!getItemBlock.Instructions[3].MatchBranch(out var switchBlock) || !defaultBlockBranch.MatchBranch(out var defaultBlock))
+				return false;
+			if (!(condition.MatchCompEquals(out left, out right) && right.MatchLdNull() && left.MatchLdLoc(tmp2)))
+				return false;
+			if (!(getItemCall.Arguments.Count == 2 && MatchDictionaryFieldLoad(getItemCall.Arguments[0], IsStringToIntDictionary, out var dictField2, out _) && dictField2.Equals(dictField)) &&
+				getItemCall.Arguments[1].MatchLdLoc(switchVariable2))
+				return false;
+			// match fifth block: switch-instruction block
+			// switch (ldobj System.Int32(unbox System.Int32(ldloc switchVariable))) {
+			// 	case [0..1): br caseBlock1
+			//  ... more cases ...
+			// 	case [long.MinValue..0),[13..long.MaxValue]: br defaultBlock
+			// }
+			if (switchBlock.IncomingEdgeCount != 1 || switchBlock.Instructions.Count != 1)
+				return false;
+			if (!(switchBlock.Instructions[0] is SwitchInstruction switchInst && switchInst.Value.MatchLdObj(out var target, out var ldobjType) &&
+				target.MatchUnbox(out var arg, out var unboxType) && arg.MatchLdLoc(switchVariable2) && ldobjType.IsKnownType(KnownTypeCode.Int32) && unboxType.Equals(ldobjType)))
+				return false;
+			var sections = new List<SwitchSection>(switchInst.Sections);
+			// switch contains case null: 
+			if (nullCaseBlock != defaultBlock) {
+				var label = new Util.LongSet(switchInst.Sections.Count);
+				var possibleConflicts = switchInst.Sections.Where(sec => sec.Labels.Overlaps(label)).ToArray();
+				if (possibleConflicts.Length > 1)
+					return false;
+				else if (possibleConflicts.Length == 1)
+					possibleConflicts[0].Labels = possibleConflicts[0].Labels.ExceptWith(label);
+				stringValues.Add(null);
+				sections.Add(new SwitchSection() { Labels = label, Body = new Branch(nullCaseBlock) });
+			}
+			var stringToInt = new StringToInt(switchValue, stringValues.ToArray());
+			inst = new SwitchInstruction(stringToInt);
+			inst.Sections.AddRange(sections);
+			return true;
 		}
 
 		bool MatchRoslynSwitchOnString(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst)
