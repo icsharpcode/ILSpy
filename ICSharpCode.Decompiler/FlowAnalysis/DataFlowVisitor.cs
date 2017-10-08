@@ -624,17 +624,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			state = afterSections;
 			DebugEndPoint(inst);
 		}
-
-		protected internal override void VisitGotoCase(GotoCase inst)
-		{
-			// Handling goto case here is tricky:
-			//  We'll need a fixed-point iteration for SwitchInstruction similar to BlockContainer,
-			//  and we'll need to handle GotoCase like Branch, including stuff like ProcessBranchesLeavingTryFinally().
-			// Hopefully we won't need a data-flow analysis in the decompiler pipeline after 'goto case' instructions
-			// are already introduced.
-			throw new NotImplementedException();
-		}
-
+		
 		protected internal override void VisitYieldReturn(YieldReturn inst)
 		{
 			DebugStartPoint(inst);

@@ -65,10 +65,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Debug.Assert(block.Instructions.Last().HasFlag(InstructionFlags.EndPointUnreachable));
 
 			ILInstruction exitInst = block.Instructions.Last();
-			if (exitInst is SwitchInstruction switchInst) {
-				HandleSwitchInstruction(cfgNode, block, switchInst);
-			}
-
+			
 			// Previous-to-last instruction might have conditional control flow,
 			// usually an IfInstruction with a branch:
 			IfInstruction ifInst = block.Instructions.SecondToLastOrDefault() as IfInstruction;
@@ -287,22 +284,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				&& targetBlock.IncomingEdgeCount == 1 && targetBlock.FinalInstruction.OpCode == OpCode.Nop
 				&& cfgNode.Dominates(context.ControlFlowGraph.GetNode(targetBlock));
 		}
-
-		private void HandleSwitchInstruction(ControlFlowNode cfgNode, Block block, SwitchInstruction sw)
-		{
-			// First, move blocks into the switch section
-			foreach (var section in sw.Sections) {
-				if (IsUsableBranchToChild(cfgNode, section.Body)) {
-					// case ...: goto targetBlock;
-					var targetBlock = ((Branch)section.Body).TargetBlock;
-					targetBlock.Remove();
-					section.Body = targetBlock;
-				}
-			}
-			// TODO: find a common exit point among the cases, and if possible inline that into this block.
-			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => s.Body.ILRange.Start));
-		}
-
+		
 		private bool IsBranchOrLeave(ILInstruction inst)
 		{
 			switch (inst) {

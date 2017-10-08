@@ -98,11 +98,17 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return new CaseLabel(exprBuilder.ConvertConstantValue(new ConstantResolveResult(type, value), allowImplicitConversion: true));
 		}
-		
+
 		protected internal override Statement VisitSwitchInstruction(SwitchInstruction inst)
 		{
+			return TranslateSwitch(null, inst);
+		}
+
+		SwitchStatement TranslateSwitch(BlockContainer switchContainer, SwitchInstruction inst)
+		{
+			Debug.Assert(switchContainer.EntryPoint.IncomingEdgeCount == 1);
 			var oldBreakTarget = breakTarget;
-			breakTarget = null; // 'break' within a switch would only leave the switch
+			breakTarget = switchContainer; // 'break' within a switch would only leave the switch
 
 			TranslatedExpression value;
 			var strToInt = inst.Value as StringToInt;
@@ -134,7 +140,28 @@ namespace ICSharpCode.Decompiler.CSharp
 				ConvertSwitchSectionBody(astSection, section.Body);
 				stmt.SwitchSections.Add(astSection);
 			}
-			
+			if (switchContainer != null) {
+				// Translate any remaining blocks:
+				var lastSectionStatements = stmt.SwitchSections.Last().Statements;
+				foreach (var block in switchContainer.Blocks.Skip(1)) {
+					lastSectionStatements.Add(new LabelStatement { Label = block.Label });
+					foreach (var nestedInst in block.Instructions) {
+						var nestedStmt = Convert(nestedInst);
+						if (nestedStmt is BlockStatement b) {
+							foreach (var nested in b.Statements)
+								lastSectionStatements.Add(nested.Detach());
+						} else {
+							lastSectionStatements.Add(nestedStmt);
+						}
+					}
+					Debug.Assert(block.FinalInstruction.OpCode == OpCode.Nop);
+				}
+				if (endContainerLabels.TryGetValue(switchContainer, out string label)) {
+					lastSectionStatements.Add(new LabelStatement { Label = label });
+					lastSectionStatements.Add(new BreakStatement());
+				}
+			}
+
 			breakTarget = oldBreakTarget;
 			return stmt;
 		}
@@ -471,6 +498,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				continueCount = oldContinueCount;
 				breakTarget = oldBreakTarget;
 				return loop;
+			} else if (container.EntryPoint.Instructions.Count == 1 && container.EntryPoint.Instructions[0] is SwitchInstruction switchInst) {
+				return TranslateSwitch(container, switchInst);
 			} else {
 				return ConvertBlockContainer(container, false);
 			}

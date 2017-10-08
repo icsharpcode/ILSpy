@@ -63,8 +63,6 @@ namespace ICSharpCode.Decompiler.IL
 		SwitchInstruction,
 		/// <summary>Switch section within a switch statement</summary>
 		SwitchSection,
-		/// <summary>Unconditional branch to switch section. <c>goto case target;</c></summary>
-		GotoCase,
 		/// <summary>Try-catch statement.</summary>
 		TryCatch,
 		/// <summary>Catch handler within a try-catch statement.</summary>
@@ -1403,40 +1401,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as SwitchSection;
 			return o != null && this.body.PerformMatch(o.body, ref match) && this.Labels.SetEquals(o.Labels) && this.HasNullLabel == o.HasNullLabel;
-		}
-	}
-}
-namespace ICSharpCode.Decompiler.IL
-{
-	/// <summary>Unconditional branch to switch section. <c>goto case target;</c></summary>
-	public sealed partial class GotoCase : SimpleInstruction
-	{
-		public override StackType ResultType { get { return StackType.Void; } }
-		protected override InstructionFlags ComputeFlags()
-		{
-			return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
-		}
-		public override InstructionFlags DirectFlags {
-			get {
-				return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
-			}
-		}
-		public override void AcceptVisitor(ILVisitor visitor)
-		{
-			visitor.VisitGotoCase(this);
-		}
-		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
-		{
-			return visitor.VisitGotoCase(this);
-		}
-		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
-		{
-			return visitor.VisitGotoCase(this, context);
-		}
-		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
-		{
-			var o = other as GotoCase;
-			return o != null && this.TargetSection == o.TargetSection;
 		}
 	}
 }
@@ -4573,10 +4537,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitGotoCase(GotoCase inst)
-		{
-			Default(inst);
-		}
 		protected internal virtual void VisitTryCatch(TryCatch inst)
 		{
 			Default(inst);
@@ -4864,10 +4824,6 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitSwitchSection(SwitchSection inst)
-		{
-			return Default(inst);
-		}
-		protected internal virtual T VisitGotoCase(GotoCase inst)
 		{
 			return Default(inst);
 		}
@@ -5161,10 +5117,6 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
-		protected internal virtual T VisitGotoCase(GotoCase inst, C context)
-		{
-			return Default(inst, context);
-		}
 		protected internal virtual T VisitTryCatch(TryCatch inst, C context)
 		{
 			return Default(inst, context);
@@ -5399,7 +5351,6 @@ namespace ICSharpCode.Decompiler.IL
 			"if.notnull",
 			"switch",
 			"switch.section",
-			"goto.case",
 			"try.catch",
 			"try.catch.handler",
 			"try.finally",

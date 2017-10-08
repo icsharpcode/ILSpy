@@ -196,37 +196,4 @@ namespace ICSharpCode.Decompiler.IL
 			body.WriteTo(output, options);
 		}
 	}
-
-	/// <summary>
-	/// Unconditional branch to switch section. <c>goto case target;</c>/<c>goto default;</c>
-	/// </summary>
-	/// <remarks>
-	/// Like normal branches, can trigger finally blocks.
-	/// </remarks>
-	partial class GotoCase // : IBranchOrLeaveInstruction
-	{
-		public SwitchSection TargetSection { get; }
-
-		public GotoCase(SwitchSection target) : base(OpCode.GotoCase)
-		{
-			this.TargetSection = target ?? throw new ArgumentNullException(nameof(target));
-		}
-
-		internal override void CheckInvariant(ILPhase phase)
-		{
-			base.CheckInvariant(phase);
-			var parentSwitch = this.Ancestors.OfType<SwitchInstruction>().First();
-			Debug.Assert(parentSwitch == TargetSection.Parent);
-		}
-
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
-		{
-			output.Write("goto.case ");
-			if (TargetSection.HasNullLabel) {
-				output.WriteReference("null", TargetSection, isLocal: true);
-			} else {
-				output.WriteReference(TargetSection.Labels.Values.First().ToString(), TargetSection, isLocal: true);
-			}
-		}
-	}
 }

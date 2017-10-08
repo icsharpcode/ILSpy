@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -56,6 +57,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// Because this is a post-order block transform, we can assume that
 			// any nested loops within this loop have already been constructed.
+
+			if (block.Instructions.Last() is SwitchInstruction switchInst) {
+				// Switch instructions support "break;" just like loops
+				DetectSwitchBody(block, switchInst);
+			}
 
 			ControlFlowNode h = context.ControlFlowNode; // CFG node for our potential loop head
 			Debug.Assert(h.UserData == block);
@@ -101,7 +107,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ConstructLoop(loop, exitPoint);
 			}
 		}
-		
+
 		/// <summary>
 		/// Recurse into the dominator tree and find back edges/natural loops.
 		/// </summary>
@@ -412,13 +418,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Move contents of oldEntryPoint to newEntryPoint
 			// (we can't move the block itself because it might be the target of branch instructions outside the loop)
 			newEntryPoint.Instructions.ReplaceList(oldEntryPoint.Instructions);
-			newEntryPoint.FinalInstruction = oldEntryPoint.FinalInstruction;
 			newEntryPoint.ILRange = oldEntryPoint.ILRange;
 			oldEntryPoint.Instructions.ReplaceList(new[] { loopContainer });
 			if (exitTargetBlock != null)
 				oldEntryPoint.Instructions.Add(new Branch(exitTargetBlock));
-			oldEntryPoint.FinalInstruction = new Nop();
-			
+
+			MoveBlocksIntoContainer(loop, loopContainer);
+
+			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
+			foreach (var branch in loopContainer.Descendants.OfType<Branch>()) {
+				if (branch.TargetBlock == oldEntryPoint) {
+					branch.TargetBlock = newEntryPoint;
+				} else if (branch.TargetBlock == exitTargetBlock) {
+					branch.ReplaceWith(new Leave(loopContainer) { ILRange = branch.ILRange });
+				}
+			}
+		}
+
+		private void MoveBlocksIntoContainer(List<ControlFlowNode> loop, BlockContainer loopContainer)
+		{
 			// Move other blocks into the loop body: they're all dominated by the loop header,
 			// and thus cannot be the target of branch instructions outside the loop.
 			for (int i = 1; i < loop.Count; i++) {
@@ -440,12 +458,48 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Block block = (Block)loop[i].UserData;
 				Debug.Assert(block.IsDescendantOf(loopContainer));
 			}
+		}
+
+		private void DetectSwitchBody(Block block, SwitchInstruction switchInst)
+		{
+			Debug.Assert(block.Instructions.Last() == switchInst);
+			ControlFlowNode h = context.ControlFlowNode; // CFG node for our potential loop head
+			Debug.Assert(h.UserData == block);
+			Debug.Assert(!TreeTraversal.PreOrder(h, n => n.DominatorTreeChildren).Any(n => n.Visited));
+
+			var nodesInSwitch = new List<ControlFlowNode>();
+			nodesInSwitch.Add(h);
+			h.Visited = true;
+			ExtendLoop(h, nodesInSwitch, out var exitPoint);
+
+			context.Step("Create BlockContainer for switch", switchInst);
+			// Sort blocks in the loop in reverse post-order to make the output look a bit nicer.
+			// (if the loop doesn't contain nested loops, this is a topological sort)
+			nodesInSwitch.Sort((a, b) => b.PostOrderNumber.CompareTo(a.PostOrderNumber));
+			Debug.Assert(nodesInSwitch[0] == h);
+			foreach (var node in nodesInSwitch) {
+				node.Visited = false; // reset visited flag so that we can find outer loops
+				Debug.Assert(h.Dominates(node) || !node.IsReachable, "The switch body must be dominated by the switch head");
+			}
+
+			BlockContainer switchContainer = new BlockContainer();
+			Block newEntryPoint = new Block();
+			newEntryPoint.ILRange = switchInst.ILRange;
+			switchContainer.Blocks.Add(newEntryPoint);
+			newEntryPoint.Instructions.Add(switchInst);
+			block.Instructions[block.Instructions.Count - 1] = switchContainer;
+
+			Block exitTargetBlock = (Block)exitPoint?.UserData;
+			if (exitTargetBlock != null) {
+				block.Instructions.Add(new Branch(exitTargetBlock));
+			}
+
+			MoveBlocksIntoContainer(nodesInSwitch, switchContainer);
+
 			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
-			foreach (var branch in loopContainer.Descendants.OfType<Branch>()) {
-				if (branch.TargetBlock == oldEntryPoint) {
-					branch.TargetBlock = newEntryPoint;
-				} else if (branch.TargetBlock == exitTargetBlock) {
-					branch.ReplaceWith(new Leave(loopContainer) { ILRange = branch.ILRange });
+			foreach (var branch in switchContainer.Descendants.OfType<Branch>()) {
+				if (branch.TargetBlock == exitTargetBlock) {
+					branch.ReplaceWith(new Leave(switchContainer) { ILRange = branch.ILRange });
 				}
 			}
 		}

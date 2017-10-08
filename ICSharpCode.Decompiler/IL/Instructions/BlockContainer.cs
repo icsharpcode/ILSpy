@@ -154,7 +154,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(EntryPoint == Blocks[0]);
 			Debug.Assert(!IsConnected || EntryPoint.IncomingEdgeCount >= 1);
 			Debug.Assert(Blocks.All(b => b.HasFlag(InstructionFlags.EndPointUnreachable)));
-			Debug.Assert(Blocks.All(b => b.FinalInstruction.OpCode == OpCode.Nop));
+			Debug.Assert(Blocks.All(b => b.Type == BlockType.ControlFlow)); // this also implies that the blocks don't use FinalInstruction
 		}
 		
 		protected override InstructionFlags ComputeFlags()
