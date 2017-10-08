@@ -160,6 +160,19 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				return windowsSdk80InstallRoot;
 			}
 		}
+
+		static string WindowsSdk461InstallRoot = null;
+		/// <summary>
+		/// Location of the .NET 4.6.1 SDK install root.
+		/// </summary>
+		public static string WindowsSdk461NetFxTools {
+			get {
+				if (WindowsSdk461InstallRoot == null) {
+					WindowsSdk461InstallRoot = GetPathFromRegistryX86(@"SOFTWARE\Wow6432Node\Microsoft\Microsoft SDKs\NETFXSDK\4.6.1\WinSDK-NetFx40Tools", "InstallationFolder") ?? string.Empty;
+				}
+				return WindowsSdk461InstallRoot;
+			}
+		}
 		#endregion
 		
 		/// <summary>
@@ -170,6 +183,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		/// <returns>The path of the executable, or null if the exe is not found.</returns>
 		public static string GetSdkPath(string exeName) {
 			string execPath;
+			if (!string.IsNullOrEmpty(WindowsSdk461NetFxTools)) {
+				execPath = Path.Combine(WindowsSdk461NetFxTools, exeName);
+				if (File.Exists(execPath)) { return execPath; }
+			}
 			if (!string.IsNullOrEmpty(WindowsSdk80NetFxTools)) {
 				execPath = Path.Combine(WindowsSdk80NetFxTools, exeName);
 				if (File.Exists(execPath)) { return execPath; }
