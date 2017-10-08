@@ -101,7 +101,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				loop.Sort((a, b) => b.PostOrderNumber.CompareTo(a.PostOrderNumber));
 				Debug.Assert(loop[0] == h);
 				foreach (var node in loop) {
-					node.Visited = false; // reset visited flag so that we can find outer loops
 					Debug.Assert(h.Dominates(node) || !node.IsReachable, "The loop body must be dominated by the loop head");
 				}
 				ConstructLoop(loop, exitPoint);
@@ -207,6 +206,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// used by the post-dominance analysis. In this case, we fall back to the old heuristic algorithm.
 		/// 
 		/// Precondition: Requires that a node is marked as visited iff it is contained in the loop.
+		/// Postcondition: loop is subset of nodes that are only reachable from each other,
+		///                exit-point (if non-null) is not in this set,
+		///                nodes are no longer marked as visited in the CFG
 		/// </remarks>
 		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop, out ControlFlowNode exitPoint)
 		{
@@ -215,9 +217,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (exitPoint != null) {
 				// Either we are in case 1 and just picked an exit that maximizes the amount of code
 				// outside the loop, or we are in case 2 and found an exit point via post-dominance.
-				var ep = exitPoint;
-				foreach (var node in TreeTraversal.PreOrder(loopHead, n => (n != ep) ? n.DominatorTreeChildren : null)) {
-					if (node != exitPoint && !node.Visited) {
+
+				// We'll move all blocks dominated by the loop head into the loop, except for those that
+				// are reachable from the exit point.
+				MarkReachableWithinBlocksDominatedByLoop(exitPoint, loopHead);
+				foreach (var node in TreeTraversal.PreOrder(loopHead, n => n.DominatorTreeChildren)) {
+					if (node.Visited) {
+						// node.Visited means that the node is already part of the loop,
+						// or that it is reachable from the exit point.
+						node.Visited = false;
+					} else {
 						loop.Add(node);
 					}
 				}
@@ -226,9 +235,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// Heuristically try to minimize the number of exit points
 				// (but we'll always end up with more than 1 exit and will require goto statements).
 				ExtendLoopHeuristic(loopHead, loop, loopHead);
+				// Reset Visited flag:
+				foreach (var node in loop) {
+					node.Visited = false;
+				}
 			}
 		}
-		
+
+		void MarkReachableWithinBlocksDominatedByLoop(ControlFlowNode node, ControlFlowNode loopHead)
+		{
+			if (node.Visited)
+				return; // already visited
+			if (!loopHead.Dominates(node))
+				return;
+			node.Visited = true;
+			foreach (var successor in node.Successors) {
+				MarkReachableWithinBlocksDominatedByLoop(successor, loopHead);
+			}
+		}
+
 		/// <summary>
 		/// Finds a suitable single exit point for the specified loop.
 		/// </summary>
@@ -478,7 +503,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			nodesInSwitch.Sort((a, b) => b.PostOrderNumber.CompareTo(a.PostOrderNumber));
 			Debug.Assert(nodesInSwitch[0] == h);
 			foreach (var node in nodesInSwitch) {
-				node.Visited = false; // reset visited flag so that we can find outer loops
 				Debug.Assert(h.Dominates(node) || !node.IsReachable, "The switch body must be dominated by the switch head");
 			}
 
