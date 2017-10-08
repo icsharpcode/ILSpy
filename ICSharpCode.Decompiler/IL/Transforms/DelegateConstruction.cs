@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			foreach (var target in targetsToReplace.OrderByDescending(t => ((ILInstruction)t).ILRange.Start)) {
-				function.AcceptVisitor(new TransformDisplayClassUsages(target, target.Variable.CaptureScope, orphanedVariableInits));
+				function.AcceptVisitor(new TransformDisplayClassUsages(function, target, target.Variable.CaptureScope, orphanedVariableInits));
 			}
 			foreach (var store in orphanedVariableInits) {
 				if (store.Parent is Block containingBlock)
@@ -226,9 +226,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				public ILInstruction value;
 			}
 			
-			public TransformDisplayClassUsages(IInstructionWithVariableOperand targetLoad, BlockContainer captureScope, List<ILInstruction> orphanedVariableInits)
+			public TransformDisplayClassUsages(ILFunction function, IInstructionWithVariableOperand targetLoad, BlockContainer captureScope, List<ILInstruction> orphanedVariableInits)
 			{
-				this.currentFunction = captureScope.Ancestors.OfType<ILFunction>().First();
+				this.currentFunction = function;
 				this.targetLoad = targetLoad;
 				this.captureScope = captureScope;
 				this.orphanedVariableInits = orphanedVariableInits;
