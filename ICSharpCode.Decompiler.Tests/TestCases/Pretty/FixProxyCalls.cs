@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 {
-	internal class AwaitDelegatingHandler
+	internal class A
 	{
 		protected internal virtual Task<string> Test(string test)
 		{
@@ -12,7 +12,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		}
 	}
 
-	internal class AwaitTestHandler : AwaitDelegatingHandler
+	internal class B : A
 	{
 		protected internal override async Task<string> Test(string test)
 		{
@@ -20,7 +20,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		}
 	}
 
-	internal class YieldDelegatingHandler
+	internal class C
 	{
 		protected internal virtual string Test(string test)
 		{
@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		}
 	}
 
-	internal class YieldTestHandler : YieldDelegatingHandler
+	internal class D : C
 	{
 		protected internal IEnumerable<string> Test2(string test)
 		{
@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		}
 	}
 
-	internal class LambdaDelegatingHandler
+	internal class E
 	{
 		protected internal virtual string Test(string test)
 		{
@@ -44,12 +44,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 		}
 	}
 
-	internal class LambdaHandler : LambdaDelegatingHandler
+	internal class F : E
 	{
 		protected internal override string Test(string test)
 		{
-			Func<string> func = (Func<string>)(() => base.Test(test));
-			return func();
+			Func<string, string> func = (Func<string, string>)((string a) => base.Test(a));
+			test = string.Join(test, "aa");
+			return func(test);
 		}
 	}
 }
