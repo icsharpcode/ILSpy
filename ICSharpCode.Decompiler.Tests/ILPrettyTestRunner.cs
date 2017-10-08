@@ -41,13 +41,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			Run();
 		}
-
-		[Test]
-		public void FixProxyCalls()
-		{
-			Run();
-		}
-
+		
 		void Run([CallerMemberName] string testName = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");
