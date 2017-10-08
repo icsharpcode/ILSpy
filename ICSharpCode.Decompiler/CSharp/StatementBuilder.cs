@@ -757,5 +757,33 @@ namespace ICSharpCode.Decompiler.CSharp
 			return block.ChildIndex == container.Blocks.Count - 1
 				&& container == leave.TargetContainer;
 		}
+
+		protected internal override Statement VisitInitblk(Initblk inst)
+		{
+			var stmt = new ExpressionStatement(new InvocationExpression {
+				Target = new IdentifierExpression("memset"),
+				Arguments = {
+					exprBuilder.Translate(inst.Address),
+					exprBuilder.Translate(inst.Value),
+					exprBuilder.Translate(inst.Size)
+				}
+			});
+			stmt.AddChild(new Comment(" IL initblk instruction"), Roles.Comment);
+			return stmt;
+		}
+
+		protected internal override Statement VisitCpblk(Cpblk inst)
+		{
+			var stmt = new ExpressionStatement(new InvocationExpression {
+				Target = new IdentifierExpression("memcpy"),
+				Arguments = {
+					exprBuilder.Translate(inst.DestAddress),
+					exprBuilder.Translate(inst.SourceAddress),
+					exprBuilder.Translate(inst.Size)
+				}
+			});
+			stmt.AddChild(new Comment(" IL cpblk instruction"), Roles.Comment);
+			return stmt;
+		}
 	}
 }

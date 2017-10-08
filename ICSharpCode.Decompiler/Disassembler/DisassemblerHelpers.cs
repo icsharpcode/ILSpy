@@ -289,6 +289,19 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.Write(" modreq(");
 				((RequiredModifierType)type).ModifierType.WriteTo(writer, ILNameSyntax.TypeName);
 				writer.Write(") ");
+			} else if (type is FunctionPointerType fpt) {
+				writer.Write("method ");
+				fpt.ReturnType.WriteTo(writer, syntax);
+				writer.Write(" *(");
+				bool first = true;
+				foreach (var p in fpt.Parameters) {
+					if (first)
+						first = false;
+					else
+						writer.Write(", ");
+					p.ParameterType.WriteTo(writer, syntax);
+				}
+				writer.Write(')');
 			} else if (type is SentinelType) {
 				writer.Write("..., ");
 				((SentinelType)type).ElementType.WriteTo(writer, syntax);

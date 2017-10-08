@@ -44,6 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="TestCases\Correctness\Jmp.il" />
     <None Include="TestCases\Correctness\BitNot.il" />
     <None Include="TestCases\Correctness\Readme.txt" />
   </ItemGroup>

@@ -163,6 +163,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Jmp()
+		{
+			RunIL("Jmp.il");
+		}
+
+		[Test]
 		public void UnsafeCode([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);
