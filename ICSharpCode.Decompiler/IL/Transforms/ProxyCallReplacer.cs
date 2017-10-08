@@ -57,6 +57,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							Call currentCall = new ProxyMethodVisitor().GetCalledMethod(function, context);
 							if (currentCall != null) {
 								Call newInst = (Call)currentCall.Clone();
+								
+								// check if original arguments are only correct ldloc calls
+								for (int i = 0; i < currentCall.Arguments.Count; i++) {
+									var originalArg = currentCall.Arguments.ElementAtOrDefault(i);
+									if (originalArg.OpCode != OpCode.LdLoc ||
+										originalArg.Children.Count != 0 ||
+										((LdLoc)originalArg).Variable.Kind != VariableKind.Parameter ||
+										((LdLoc)originalArg).Variable.Index != i-1) {
+										return;
+									}
+								}
 								newInst.Arguments.Clear();
 
 								ILInstruction thisArg = inst.Arguments.ElementAtOrDefault(0).Clone();
@@ -119,7 +130,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			protected internal override void VisitCall(Call inst)
 			{
-				currentCall = inst;
+				if (currentCall == null) {
+					currentCall = inst;
+				} else {
+					invalidInstructions++; // more than one call in the function
+				}
 			}
 		}
 	}
