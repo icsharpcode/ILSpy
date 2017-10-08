@@ -35,63 +35,59 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			if (inst.Method.DeclaringTypeDefinition == null) // TODO: investigate why
 				return;
-			foreach (IMethod method in inst.Method.DeclaringTypeDefinition.Methods) {
-				if (method.FullName.Equals(inst.Method.FullName)) {
-					MethodDefinition methodDef = context.TypeSystem.GetCecil(method) as MethodDefinition;
-					if (methodDef != null && methodDef.Body != null) {
-						if (method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()) {
-							// partially copied from CSharpDecompiler
-							var specializingTypeSystem = this.context.TypeSystem.GetSpecializingTypeSystem(this.context.TypeSystem.Compilation.TypeResolveContext);
-							var ilReader = new ILReader(specializingTypeSystem);
-							System.Threading.CancellationToken cancellationToken = new System.Threading.CancellationToken();
-							var function = ilReader.ReadIL(methodDef.Body, cancellationToken);
-							var context = new ILTransformContext(function, specializingTypeSystem, this.context.Settings) {
-								CancellationToken = cancellationToken
-							};
-							foreach (var transform in CSharp.CSharpDecompiler.GetILTransforms()) {
-								if (transform.GetType() != typeof(ProxyCallReplacer)) { // don't call itself on itself
-									cancellationToken.ThrowIfCancellationRequested();
-									transform.Run(function, context);
-								}
-							}
-							Call currentCall = new ProxyMethodVisitor().GetCalledMethod(function, context);
-							if (currentCall != null) {
-								Call newInst = (Call)currentCall.Clone();
-								
-								// check if original arguments are only correct ldloc calls
-								for (int i = 0; i < currentCall.Arguments.Count; i++) {
-									var originalArg = currentCall.Arguments.ElementAtOrDefault(i);
-									if (originalArg.OpCode != OpCode.LdLoc ||
-										originalArg.Children.Count != 0 ||
-										((LdLoc)originalArg).Variable.Kind != VariableKind.Parameter ||
-										((LdLoc)originalArg).Variable.Index != i-1) {
-										return;
-									}
-								}
-								newInst.Arguments.Clear();
+			MethodDefinition methodDef = context.TypeSystem.GetCecil(inst.Method) as MethodDefinition;
+			if (methodDef != null && methodDef.Body != null) {
+				if (inst.Method.IsCompilerGeneratedOrIsInCompilerGeneratedClass()) {
+					// partially copied from CSharpDecompiler
+					var specializingTypeSystem = this.context.TypeSystem.GetSpecializingTypeSystem(this.context.TypeSystem.Compilation.TypeResolveContext);
+					var ilReader = new ILReader(specializingTypeSystem);
+					System.Threading.CancellationToken cancellationToken = new System.Threading.CancellationToken();
+					var function = ilReader.ReadIL(methodDef.Body, cancellationToken);
+					var context = new ILTransformContext(function, specializingTypeSystem, this.context.Settings) {
+						CancellationToken = cancellationToken
+					};
+					foreach (var transform in CSharp.CSharpDecompiler.GetILTransforms()) {
+						if (transform.GetType() != typeof(ProxyCallReplacer)) { // don't call itself on itself
+							cancellationToken.ThrowIfCancellationRequested();
+							transform.Run(function, context);
+						}
+					}
+					Call currentCall = new ProxyMethodVisitor().GetCalledMethod(function, context);
+					if (currentCall != null) {
+						Call newInst = (Call)currentCall.Clone();
 
-								ILInstruction thisArg = inst.Arguments.ElementAtOrDefault(0).Clone();
-
-								// special handling for first argument (this) - the underlying issue may be somewhere else
-								// normally
-								// leave IL_0000(await(callvirt<> n__0(ldobj xxHandler(ldloca this), ldobj System.Net.Http.HttpRequestMessage(ldloca request), ldobj System.Threading.CancellationToken(ldloca cancellationToken))))
-								// would be decompiled to
-								// return await((DelegatingHandler)this).SendAsync(request, cancellationToken);
-								// this changes it to
-								// return await base.SendAsync(request, cancellationToken);
-								if (thisArg.OpCode == OpCode.LdObj && thisArg.Children.Count > 0 && thisArg.Children[0].OpCode == OpCode.LdLoca) {
-									thisArg = new LdLoc(((LdLoca)thisArg.Children[0]).Variable);
-								}
-
-								newInst.Arguments.Add(thisArg);
-
-								// add everything except first argument
-								for (int i = 1; i < inst.Arguments.Count; i++) {
-									newInst.Arguments.Add(inst.Arguments.ElementAtOrDefault(i).Clone());
-								}
-								inst.ReplaceWith(newInst);
+						// check if original arguments are only correct ldloc calls
+						for (int i = 0; i < currentCall.Arguments.Count; i++) {
+							var originalArg = currentCall.Arguments.ElementAtOrDefault(i);
+							if (originalArg.OpCode != OpCode.LdLoc ||
+								originalArg.Children.Count != 0 ||
+								((LdLoc)originalArg).Variable.Kind != VariableKind.Parameter ||
+								((LdLoc)originalArg).Variable.Index != i - 1) {
+								return;
 							}
 						}
+						newInst.Arguments.Clear();
+
+						ILInstruction thisArg = inst.Arguments.ElementAtOrDefault(0).Clone();
+
+						// special handling for first argument (this) - the underlying issue may be somewhere else
+						// normally
+						// leave IL_0000(await(callvirt<> n__0(ldobj xxHandler(ldloca this), ldobj System.Net.Http.HttpRequestMessage(ldloca request), ldobj System.Threading.CancellationToken(ldloca cancellationToken))))
+						// would be decompiled to
+						// return await((DelegatingHandler)this).SendAsync(request, cancellationToken);
+						// this changes it to
+						// return await base.SendAsync(request, cancellationToken);
+						if (thisArg.OpCode == OpCode.LdObj && thisArg.Children.Count > 0 && thisArg.Children[0].OpCode == OpCode.LdLoca) {
+							thisArg = new LdLoc(((LdLoca)thisArg.Children[0]).Variable);
+						}
+
+						newInst.Arguments.Add(thisArg);
+
+						// add everything except first argument
+						for (int i = 1; i < inst.Arguments.Count; i++) {
+							newInst.Arguments.Add(inst.Arguments.ElementAtOrDefault(i).Clone());
+						}
+						inst.ReplaceWith(newInst);
 					}
 				}
 			}
