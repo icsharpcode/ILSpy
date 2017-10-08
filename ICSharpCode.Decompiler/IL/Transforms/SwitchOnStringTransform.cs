@@ -417,12 +417,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 			var stringValues = new List<(int, string, Block)>();
 			int index = 0;
-			Block defaultBlock = null;
+			ILInstruction defaultBranch = null;
 			foreach (var section in switchInst.Sections) {
-				if (!section.Body.MatchBranch(out Block target))
+				if (!section.Body.MatchBranch(out Block target)) {
+					if (section.Body is Leave leave) {
+						defaultBranch = leave;
+						continue;
+					}
 					return false;
+				}
 				if (target.IncomingEdgeCount > 1) {
-					defaultBlock = target;
+					defaultBranch = new Branch(target);
 					continue;
 				}
 				if (target.Instructions.Count != 2)
@@ -445,8 +450,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var value = new StringToInt(switchValue.Clone(), stringValues.Select(item => item.Item2).ToArray());
 			inst = new SwitchInstruction(value);
 			inst.Sections.AddRange(stringValues.Select(section => new SwitchSection { Labels = new Util.LongSet(section.Item1), Body = new Branch(section.Item3) }));
-			inst.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = new Branch(defaultBlock) });
-
+			inst.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultBranch });
 			return true;
 		}
 
