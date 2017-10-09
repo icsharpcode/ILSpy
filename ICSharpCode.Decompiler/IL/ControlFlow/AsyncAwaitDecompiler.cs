@@ -814,7 +814,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (block.Instructions[pos].MatchStFld(out target, out field, out value)) {
 				if (!target.MatchLdThis())
 					return false;
-				if (!field.Equals(stateField))
+				if (!field.MemberDefinition.Equals(stateField.MemberDefinition))
 					return false;
 				if (!(value.MatchLdcI4(initialState) || value.MatchLdLoc(m1Var)))
 					return false;
