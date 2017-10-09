@@ -54,6 +54,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (call == null) {
 							return;
 						}
+						if (call.Method.IsConstructor)
+							return;
 
 						// check if original arguments are only correct ldloc calls
 						for (int i = 0; i < call.Arguments.Count; i++) {
