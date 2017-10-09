@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		protected internal override void Test(int a)
 		{
-			Action action = (Action)delegate() {
+			Action action = (Action)delegate {
 				base.Test(a);
 			};
 			if (a.Equals(1)) {
