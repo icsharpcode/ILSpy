@@ -271,7 +271,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (initValues.TryGetValue(field, out info)) {
 					inst.ReplaceWith(new StLoc(info.variable, inst.Value));
 				} else {
-					if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter) {
+					if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && currentFunction == v.Function) {
 						// special case for parameters: remove copies of parameter values.
 						orphanedVariableInits.Add(inst);
 						value = inst.Value;
