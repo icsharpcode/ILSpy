@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region FindInsertionPoints
-		List<(InsertionPoint InsertionPoint, BlockContainer Loop)> loopTracking = new List<(InsertionPoint, BlockContainer)>();
+		List<(InsertionPoint InsertionPoint, BlockContainer Scope)> scopeTracking = new List<(InsertionPoint, BlockContainer)>();
 
 		/// <summary>
 		/// Finds insertion points for all variables used within `node`
@@ -202,25 +202,27 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		/// </remarks>
 		void FindInsertionPoints(AstNode node, int nodeLevel)
 		{
-			BlockContainer loop = node.Annotation<BlockContainer>();
-			if (loop != null) {
-				loopTracking.Add((new InsertionPoint { level = nodeLevel, nextNode = node }, loop));
+			BlockContainer scope = node.Annotation<BlockContainer>();
+			if (scope != null && (scope.EntryPoint.IncomingEdgeCount > 1 || scope.Parent is ILFunction)) {
+				// track loops and function bodies as scopes, for comparison with CaptureScope.
+				scopeTracking.Add((new InsertionPoint { level = nodeLevel, nextNode = node }, scope));
+			} else {
+				scope = null; // don't remove a scope if we didn't add one
 			}
 			try {
 				for (AstNode child = node.FirstChild; child != null; child = child.NextSibling) {
 					FindInsertionPoints(child, nodeLevel + 1);
 				}
-				var identExpr = node as IdentifierExpression;
-				if (identExpr != null) {
+				if (node is IdentifierExpression identExpr) {
 					var rr = identExpr.GetResolveResult() as ILVariableResolveResult;
 					if (rr != null && VariableNeedsDeclaration(rr.Variable.Kind)) {
 						var variable = rr.Variable;
 						InsertionPoint newPoint;
-						int startIndex = loopTracking.Count - 1;
-						if (variable.CaptureScope != null && startIndex > -1 && variable.CaptureScope != loopTracking[startIndex].Loop) {
-							while (startIndex > -1 && loopTracking[startIndex].Loop != variable.CaptureScope)
+						int startIndex = scopeTracking.Count - 1;
+						if (variable.CaptureScope != null && startIndex > 0 && variable.CaptureScope != scopeTracking[startIndex].Scope) {
+							while (startIndex > 0 && scopeTracking[startIndex].Scope != variable.CaptureScope)
 								startIndex--;
-							newPoint = loopTracking[startIndex + 1].InsertionPoint;
+							newPoint = scopeTracking[startIndex + 1].InsertionPoint;
 						} else {
 							newPoint = new InsertionPoint { level = nodeLevel, nextNode = identExpr };
 						}
@@ -236,8 +238,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 			} finally {
-				if (loop != null)
-					loopTracking.RemoveAt(loopTracking.Count - 1);
+				if (scope != null)
+					scopeTracking.RemoveAt(scopeTracking.Count - 1);
 			}
 		}
 
