@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			foreach (var target in targetsToReplace.OrderByDescending(t => ((ILInstruction)t).ILRange.Start)) {
-				function.AcceptVisitor(new TransformDisplayClassUsages(target, target.Variable.CaptureScope, orphanedVariableInits));
+				function.AcceptVisitor(new TransformDisplayClassUsages(function, target, target.Variable.CaptureScope, orphanedVariableInits));
 			}
 			foreach (var store in orphanedVariableInits) {
 				if (store.Parent is Block containingBlock)
@@ -226,8 +226,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				public ILInstruction value;
 			}
 			
-			public TransformDisplayClassUsages(IInstructionWithVariableOperand targetLoad, BlockContainer captureScope, List<ILInstruction> orphanedVariableInits)
+			public TransformDisplayClassUsages(ILFunction function, IInstructionWithVariableOperand targetLoad, BlockContainer captureScope, List<ILInstruction> orphanedVariableInits)
 			{
+				this.currentFunction = function;
 				this.targetLoad = targetLoad;
 				this.captureScope = captureScope;
 				this.orphanedVariableInits = orphanedVariableInits;
@@ -238,17 +239,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			{
 				foreach (var child in inst.Children) {
 					child.AcceptVisitor(this);
-				}
-			}
-			
-			protected internal override void VisitILFunction(ILFunction function)
-			{
-				var old = currentFunction;
-				currentFunction = function;
-				try {
-					base.VisitILFunction(function);
-				} finally {
-					currentFunction = old;
 				}
 			}
 			
@@ -281,7 +271,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (initValues.TryGetValue(field, out info)) {
 					inst.ReplaceWith(new StLoc(info.variable, inst.Value));
 				} else {
-					if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter) {
+					if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && currentFunction == v.Function) {
 						// special case for parameters: remove copies of parameter values.
 						orphanedVariableInits.Add(inst);
 						value = inst.Value;
