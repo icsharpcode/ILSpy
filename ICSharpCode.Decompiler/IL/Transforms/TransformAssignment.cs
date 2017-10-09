@@ -338,6 +338,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var stobj = block.Instructions.ElementAtOrDefault(i + 1) as StObj;
 			if (inst == null || stobj == null)
 				return false;
+			if (!inst.Variable.IsSingleDefinition || inst.Variable.LoadCount != 1)
+				return false;
 			if (!inst.Value.MatchLdObj(out var loadTarget, out var loadType) || !loadTarget.MatchLdFlda(out var fieldTarget, out var field))
 				return false;
 			if (!stobj.Target.MatchLdFlda(out var fieldTarget2, out var field2))
@@ -348,7 +350,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1)
 				|| (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
 				return false;
-			context.Step($"TransformRoslynPostIncDecOperator", inst);
+			context.Step("TransformRoslynPostIncDecOperator", inst);
 			stobj.ReplaceWith(new CompoundAssignmentInstruction(binary, inst.Value, binary.Right, loadType, CompoundAssignmentType.EvaluatesToOldValue));
 			block.Instructions.RemoveAt(i);
 			return true;

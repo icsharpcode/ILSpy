@@ -319,6 +319,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					throw new NotImplementedException();
 				}
 			}
+
+			protected internal override void VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst)
+			{
+				base.VisitCompoundAssignmentInstruction(inst);
+				if (inst.Target.MatchLdLoc(out var v)) {
+					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign)));
+				}
+			}
 		}
 		#endregion
 	}
