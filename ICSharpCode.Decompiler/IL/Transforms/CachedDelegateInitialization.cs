@@ -101,9 +101,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!DelegateConstruction.IsDelegateConstruction(value as NewObj, true))
 				return false;
 			// do not transform if there are other stores/loads of this variable
-			if (v.StoreCount != 2 || v.LoadCount != 2 || v.AddressCount != 0)
+			if (v.StoreCount != 2 || v.StoreInstructions.Count != 2 || v.LoadCount != 2 || v.AddressCount != 0)
 				return false;
-			// do not transform if there is no usage directly aftewards
+			// do not transform if the first assignment is not assigning null:
+			var otherStore = v.StoreInstructions.OfType<StLoc>().SingleOrDefault(store => store != storeInst);
+			if (otherStore == null || !otherStore.Value.MatchLdNull() || !(otherStore.Parent is Block))
+				return false;
+			// do not transform if there is no usage directly afterwards
 			var nextInstruction = inst.Parent.Children.ElementAtOrDefault(inst.ChildIndex + 1);
 			if (nextInstruction == null)
 				return false;
@@ -111,6 +115,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (usages.Length != 1)
 				return false;
 			context.Step("CachedDelegateInitializationWithLocal", inst);
+			((Block)otherStore.Parent).Instructions.Remove(otherStore);
 			inst.ReplaceWith(new StLoc(v, value));
 			return true;
 		}
