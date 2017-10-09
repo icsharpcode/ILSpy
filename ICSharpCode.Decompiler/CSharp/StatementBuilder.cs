@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new IfElseStatement(condition, trueStatement, falseStatement);
 		}
 
-		CaseLabel CreateTypedCaseLabel(long i, IType type, string[] map = null)
+		ConstantResolveResult CreateTypedCaseLabel(long i, IType type, string[] map = null)
 		{
 			object value;
 			if (type.IsKnownType(KnownTypeCode.Boolean)) {
@@ -96,7 +96,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, false);
 			}
-			return new CaseLabel(exprBuilder.ConvertConstantValue(new ConstantResolveResult(type, value), allowImplicitConversion: true));
+			return new ConstantResolveResult(type, value);
 		}
 
 		protected internal override Statement VisitSwitchInstruction(SwitchInstruction inst)
@@ -109,6 +109,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(switchContainer.EntryPoint.IncomingEdgeCount == 1);
 			var oldBreakTarget = breakTarget;
 			breakTarget = switchContainer; // 'break' within a switch would only leave the switch
+			var oldCaseLabelMapping = caseLabelMapping;
+			caseLabelMapping = new Dictionary<Block, ConstantResolveResult>();
 
 			TranslatedExpression value;
 			var strToInt = inst.Value as StringToInt;
@@ -127,23 +129,53 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			var stmt = new SwitchStatement() { Expression = value };
+			Dictionary<IL.SwitchSection, Syntax.SwitchSection> translationDictionary = new Dictionary<IL.SwitchSection, Syntax.SwitchSection>();
+			// initialize C# switch sections.
 			foreach (var section in inst.Sections) {
+				// This is used in the block-label mapping.
+				ConstantResolveResult firstValueResolveResult;
 				var astSection = new Syntax.SwitchSection();
+				// Create case labels:
 				if (section == defaultSection) {
 					astSection.CaseLabels.Add(new CaseLabel());
+					firstValueResolveResult = null;
 				} else {
+					var values = section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type, strToInt?.Map)).ToArray();
 					if (section.HasNullLabel) {
 						astSection.CaseLabels.Add(new CaseLabel(new NullReferenceExpression()));
+						firstValueResolveResult = new ConstantResolveResult(SpecialType.NullType, null);
+					} else {
+						Debug.Assert(values.Length > 0);
+						firstValueResolveResult = values[0];
 					}
-					astSection.CaseLabels.AddRange(section.Labels.Values.Select(i => CreateTypedCaseLabel(i, value.Type, strToInt?.Map)));
+					astSection.CaseLabels.AddRange(values.Select(label => new CaseLabel(exprBuilder.ConvertConstantValue(label, allowImplicitConversion: true))));
 				}
-				ConvertSwitchSectionBody(astSection, section.Body);
+				switch (section.Body) {
+					case Branch br:
+						caseLabelMapping.Add(br.TargetBlock, firstValueResolveResult);
+						break;
+					default:
+						break;
+				}
+				translationDictionary.Add(section, astSection);
 				stmt.SwitchSections.Add(astSection);
+			}
+			foreach (var section in inst.Sections) {
+				var astSection = translationDictionary[section];
+				switch (section.Body) {
+					case Branch br:
+						ConvertSwitchSectionBody(astSection, br.TargetBlock);
+						break;
+					default:
+						ConvertSwitchSectionBody(astSection, section.Body);
+						break;
+				}
 			}
 			if (switchContainer != null) {
 				// Translate any remaining blocks:
 				var lastSectionStatements = stmt.SwitchSections.Last().Statements;
 				foreach (var block in switchContainer.Blocks.Skip(1)) {
+					if (caseLabelMapping.ContainsKey(block)) continue;
 					lastSectionStatements.Add(new LabelStatement { Label = block.Label });
 					foreach (var nestedInst in block.Instructions) {
 						var nestedStmt = Convert(nestedInst);
@@ -163,6 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			breakTarget = oldBreakTarget;
+			caseLabelMapping = oldCaseLabelMapping;
 			return stmt;
 		}
 
@@ -185,12 +218,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		Block continueTarget;
 		/// <summary>Number of ContinueStatements that were created for the current continueTarget</summary>
 		int continueCount;
+		/// <summary>Maps blocks to cases.</summary>
+		Dictionary<Block, ConstantResolveResult> caseLabelMapping;
 		
 		protected internal override Statement VisitBranch(Branch inst)
 		{
 			if (inst.TargetBlock == continueTarget) {
 				continueCount++;
 				return new ContinueStatement();
+			}
+			if (caseLabelMapping != null && caseLabelMapping.TryGetValue(inst.TargetBlock, out var label)) {
+				if (label == null)
+					return new GotoDefaultStatement();
+				return new GotoCaseStatement() { LabelExpression = exprBuilder.ConvertConstantValue(label, allowImplicitConversion: true) };
 			}
 			return new GotoStatement(inst.TargetLabel);
 		}
