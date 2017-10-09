@@ -774,14 +774,14 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!target.MatchLdThis())
 				return false;
-			if (field.MemberDefinition != awaiterField)
+			if (!field.MemberDefinition.Equals(awaiterField.MemberDefinition))
 				return false;
 			pos++;
 
 			// stfld awaiterField(ldloc this, default.value)
 			if (block.Instructions[pos].MatchStFld(out target, out field, out value)
 				&& target.MatchLdThis()
-				&& field.MemberDefinition == awaiterField
+				&& field.MemberDefinition.Equals(awaiterField.MemberDefinition)
 				&& value.OpCode == OpCode.DefaultValue)
 			{
 				pos++;
