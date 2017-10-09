@@ -45,10 +45,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// check if original arguments are only correct ldloc calls
 						for (int i = 0; i < call.Arguments.Count; i++) {
 							var originalArg = call.Arguments[i];
-							if (originalArg.OpCode != OpCode.LdLoc ||
-								originalArg.Children.Count != 0 ||
-								((LdLoc)originalArg).Variable.Kind != VariableKind.Parameter ||
-								((LdLoc)originalArg).Variable.Index != i - 1) {
+							if (!originalArg.MatchLdLoc(out ILVariable var) ||
+								var.Kind != VariableKind.Parameter ||
+								var.Index != i - 1) {
 								return;
 							}
 						}
@@ -66,8 +65,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						// return await((DelegatingHandler)this).SendAsync(request, cancellationToken);
 						// this changes it to
 						// return await base.SendAsync(request, cancellationToken);
-						if (thisArg.OpCode == OpCode.LdObj && thisArg.Children.Count > 0 && thisArg.Children[0].OpCode == OpCode.LdLoca) {
-							thisArg = new LdLoc(((LdLoca)thisArg.Children[0]).Variable);
+						if (thisArg.MatchLdObj(out ILInstruction loadedObject, out IType objectType) &&
+							loadedObject.MatchLdLoca(out ILVariable loadedVar)) {
+							thisArg = new LdLoc(loadedVar);
 						}
 
 						newInst.Arguments.Add(thisArg);
