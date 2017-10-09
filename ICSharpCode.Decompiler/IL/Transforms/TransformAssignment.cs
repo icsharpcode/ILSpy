@@ -47,6 +47,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					continue;
 				if (TransformRoslynCompoundAssignmentCall(block, i))
 					continue;
+				if (TransformRoslynPostIncDecOperatorOnAddress(block, i))
+					continue;
 			}
 		}
 
@@ -299,11 +301,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool TransformPostIncDecOperatorOnAddress(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
-			if (!inst.Variable.IsSingleDefinition || inst.Variable.LoadCount != 2)
-				return false;
 			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
 			var stobj = block.Instructions.ElementAtOrDefault(i + 2) as StObj;
 			if (inst == null || nextInst == null || stobj == null)
+				return false;
+			if (!inst.Variable.IsSingleDefinition || inst.Variable.LoadCount != 2)
 				return false;
 			if (!(inst.Value is LdElema || inst.Value is LdFlda || inst.Value is LdsFlda))
 				return false;
@@ -323,7 +325,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions.RemoveAt(i + 1);
 			return true;
 		}
-		
+
+		/// <code>
+		/// stloc l(ldobj(ldflda(target)))
+		/// stobj(ldflda(target), binary.op(ldloc l, ldc.i4 1))
+		/// -->
+		/// compound.op.old(ldobj(ldflda(target)), ldc.i4 1)
+		/// </code>
+		bool TransformRoslynPostIncDecOperatorOnAddress(Block block, int i)
+		{
+			var inst = block.Instructions[i] as StLoc;
+			var stobj = block.Instructions.ElementAtOrDefault(i + 1) as StObj;
+			if (inst == null || stobj == null)
+				return false;
+			if (!inst.Value.MatchLdObj(out var loadTarget, out var loadType) || !loadTarget.MatchLdFlda(out var fieldTarget, out var field))
+				return false;
+			if (!stobj.Target.MatchLdFlda(out var fieldTarget2, out var field2))
+				return false;
+			if (!fieldTarget.Match(fieldTarget2).Success || !field.Equals(field2))
+				return false;
+			var binary = stobj.Value as BinaryNumericInstruction;
+			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1)
+				|| (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
+				return false;
+			context.Step($"TransformRoslynPostIncDecOperator", inst);
+			stobj.ReplaceWith(new CompoundAssignmentInstruction(binary, inst.Value, binary.Right, loadType, CompoundAssignmentType.EvaluatesToOldValue));
+			block.Instructions.RemoveAt(i);
+			return true;
+		}
+
 		/// <code>
 		/// stloc s(ldflda)
 		/// stloc s2(ldobj(ldflda(ldloc s)))
