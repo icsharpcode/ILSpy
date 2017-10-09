@@ -789,10 +789,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// {stloc V_6(default.value System.Runtime.CompilerServices.TaskAwaiter)}
 				// {stobj System.Runtime.CompilerServices.TaskAwaiter`1[[System.Int32]](ldflda <>u__$awaiter4(ldloc this), ldloc V_6) at IL_0163}
 				if (block.Instructions[pos].MatchStLoc(out var variable, out value) && value.OpCode == OpCode.DefaultValue
-					&& block.Instructions[pos + 1].MatchStObj(out var target2, out var value2, out var type)
-					&& value2.MatchLdLoc(variable) // ldloc V_6
-					&& target2.MatchLdFlda(out var targetInst, out var loadField) // ldflda <>u__$awaiter4(ldloc this)
-					&& loadField.Equals(awaiterField)) {
+					&& block.Instructions[pos + 1].MatchStFld(out target, out field, out value)
+					&& field.Equals(awaiterField)
+					&& value.MatchLdLoc(variable)) {
 					pos += 2;
 				}
 			}
