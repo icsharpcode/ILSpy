@@ -609,7 +609,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				breakTarget = oldBreakTarget;
 				return loop;
 			} else {
-				return ConvertBlockContainer(container, false);
+				var blockStmt = ConvertBlockContainer(container, false);
+				blockStmt.AddAnnotation(container);
+				return blockStmt;
 			}
 		}
 		

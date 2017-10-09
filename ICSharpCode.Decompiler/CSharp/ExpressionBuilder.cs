@@ -1072,7 +1072,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(method, function));
-			ame.HasParameterList = true;
+			ame.HasParameterList = ame.Parameters.Count > 0;
 			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method, function, settings, cancellationToken);
 			var body = builder.ConvertAsBlock(function.Body);
 			bool isLambda = false;
