@@ -31,28 +31,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 						}
 
-
-						if (proxyFunction.Children.Count != 1)
+						if (!(proxyFunction.Body is BlockContainer blockContainer))
 							return;
-						var blockContainer = proxyFunction.Children[0];
-						if (blockContainer.OpCode != OpCode.BlockContainer)
+						if (blockContainer.Blocks.Count != 1)
 							return;
-						if (blockContainer.Children.Count != 1)
+						var block = blockContainer.Blocks[0];
+						if (block.Instructions.Count != 1)
 							return;
-						var block = blockContainer.Children[0];
-						if (block.OpCode != OpCode.Block)
+						if (!block.Instructions[0].MatchLeave(blockContainer, out ILInstruction returnValue))
 							return;
-						if (block.Children.Count > 2)
-							return;
-						if (block.Children.Count == 2 && block.Children[1].OpCode != OpCode.Nop)
-							return;
-						var leave = block.Children[0];
-						if (leave.OpCode != OpCode.Leave)
-							return;
-						if (leave.Children.Count != 1)
-							return;
-						Call call = leave.Children[0] as Call;
-						if (call == null)
+						if (!(returnValue is Call call))
 							return;
 						// check if original arguments are only correct ldloc calls
 						for (int i = 0; i < call.Arguments.Count; i++) {
