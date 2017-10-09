@@ -275,7 +275,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return false;
 		}
-		
+
+		protected internal override void VisitLdObj(LdObj inst)
+		{
+			base.VisitLdObj(inst);
+			EarlyExpressionTransforms.LdObjToLdLoc(inst, context);
+		}
+
 		protected internal override void VisitStObj(StObj inst)
 		{
 			base.VisitStObj(inst);
