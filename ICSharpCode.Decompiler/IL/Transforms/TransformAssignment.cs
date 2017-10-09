@@ -299,6 +299,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool TransformPostIncDecOperatorOnAddress(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
+			if (!inst.Variable.IsSingleDefinition || inst.Variable.LoadCount != 2)
+				return false;
 			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
 			var stobj = block.Instructions.ElementAtOrDefault(i + 2) as StObj;
 			if (inst == null || nextInst == null || stobj == null)
