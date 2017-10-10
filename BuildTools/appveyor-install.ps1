@@ -23,9 +23,14 @@ if ($env:APPVEYOR_REPO_BRANCH -ne 'master') {
 } else {
 	$branch = "";
 }
+if ($env:APPVEYOR_PULL_REQUEST_NUMBER) {
+	$suffix = "-pr$env:APPVEYOR_PULL_REQUEST_NUMBER";
+} else {
+	$suffix = "";
+}
 
 $revision = [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
 
 $newVersion="$major.$minor.$build.$revision";
-$env:appveyor_build_version="$newVersion$branch$versionName";
-appveyor UpdateBuild -Version "$newVersion$branch$versionName";
+$env:appveyor_build_version="$newVersion$branch$versionName$suffix";
+appveyor UpdateBuild -Version "$newVersion$branch$versionName$suffix";
