@@ -1,4 +1,4 @@
-﻿// Copyright (c) 2014 Daniel Grunwald
+﻿// Copyright (c) 2014-2017 Daniel Grunwald
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
@@ -29,16 +29,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <remarks>
 	/// Should run after inlining so that the expression patterns can be detected.
 	/// </remarks>
-	public class ExpressionTransforms : ILVisitor, IBlockTransform, IStatementTransform
+	public class ExpressionTransforms : ILVisitor, IStatementTransform
 	{
-		internal ILTransformContext context;
-
-		public void Run(Block block, BlockTransformContext context)
-		{
-			this.context = context;
-			Default(block);
-		}
-
+		internal StatementTransformContext context;
+		
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
 			this.context = context;
@@ -229,23 +223,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		protected internal override void VisitCall(Call inst)
 		{
-			if (inst.Method.IsConstructor && !inst.Method.IsStatic && inst.Method.DeclaringType.Kind == TypeKind.Struct) {
-				Debug.Assert(inst.Arguments.Count == inst.Method.Parameters.Count + 1);
-				context.Step("Transform call to struct constructor", inst);
-				// call(ref, ...)
-				// => stobj(ref, newobj(...))
-				var newObj = new NewObj(inst.Method);
-				newObj.ILRange = inst.ILRange;
-				newObj.Arguments.AddRange(inst.Arguments.Skip(1));
-				var expr = new StObj(inst.Arguments[0], newObj, inst.Method.DeclaringType);
-				inst.ReplaceWith(expr);
-				// Both the StObj and the NewObj may trigger further rules, so continue visiting the replacement:
-				VisitStObj(expr);
+			var expr = EarlyExpressionTransforms.HandleCall(inst, context);
+			if (expr != null) {
+				// The resulting expression may trigger further rules, so continue visiting the replacement:
+				expr.AcceptVisitor(this);
 			} else {
 				base.VisitCall(inst);
+				TransformAssignment.HandleCallCompoundAssign(inst, context);
 			}
 		}
-		
+
+		protected internal override void VisitCallVirt(CallVirt inst)
+		{
+			base.VisitCallVirt(inst);
+			TransformAssignment.HandleCallCompoundAssign(inst, context);
+		}
+
 		protected internal override void VisitNewObj(NewObj inst)
 		{
 			LdcDecimal decimalConstant;
@@ -282,40 +275,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return false;
 		}
-		
-		// This transform is required because ILInlining only works with stloc/ldloc
+
+		protected internal override void VisitLdObj(LdObj inst)
+		{
+			base.VisitLdObj(inst);
+			EarlyExpressionTransforms.LdObjToLdLoc(inst, context);
+		}
+
 		protected internal override void VisitStObj(StObj inst)
 		{
 			base.VisitStObj(inst);
-			if (StObjToStLoc(inst, context)) {
+			if (EarlyExpressionTransforms.StObjToStLoc(inst, context)) {
+				context.RequestRerun();
 				return;
 			}
 
 			if (inst.Value is BinaryNumericInstruction binary
-				&& !binary.IsLifted
 				&& binary.Left.MatchLdObj(out ILInstruction target, out IType t)
-				&& inst.Target.Match(target).Success) 
+				&& inst.Target.Match(target).Success
+				&& SemanticHelper.IsPure(target.Flags)
+				&& CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, t))
 			{
 				context.Step("compound assignment", inst);
 				// stobj(target, binary.op(ldobj(target), ...))
 				// => compound.op(target, ...)
-				inst.ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, binary.Left, binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
+				inst.ReplaceWith(new CompoundAssignmentInstruction(
+					binary, binary.Left, binary.Right,
+					t, CompoundAssignmentType.EvaluatesToNewValue));
 			}
 		}
 
-		internal static bool StObjToStLoc(StObj inst, ILTransformContext context)
-		{
-			if (inst.Target.MatchLdLoca(out ILVariable v)
-				&& TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type)
-				&& inst.UnalignedPrefix == 0
-				&& !inst.IsVolatile) {
-				context.Step($"stobj(ldloca {v.Name}, ...) => stloc {v.Name}(...)", inst);
-				inst.ReplaceWith(new StLoc(v, inst.Value));
-				return true;
-			}
-			return false;
-		}
-		
 		protected internal override void VisitIfInstruction(IfInstruction inst)
 		{
 			inst.TrueInst.AcceptVisitor(this);
@@ -359,7 +348,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var newIf = new IfInstruction(Comp.LogicNot(inst.Condition), value2, value1);
 				newIf.ILRange = inst.ILRange;
 				inst.ReplaceWith(new StLoc(v, newIf));
-				(context as StatementTransformContext)?.RequestRerun();  // trigger potential inlining of the newly created StLoc
+				context.RequestRerun();  // trigger potential inlining of the newly created StLoc
 				return newIf;
 			}
 			return inst;

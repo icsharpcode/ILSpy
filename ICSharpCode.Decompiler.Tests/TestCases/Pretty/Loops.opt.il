@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly ukcebu5a
+.assembly jiaqp12i
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module ukcebu5a.dll
-// MVID: {D6A0A420-9828-48A7-BAA6-F0BAFB50052B}
+.module jiaqp12i.dll
+// MVID: {34208704-52B8-49EB-BC77-C3A95E1CBA19}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02F50000
+// Image base: 0x02520000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -36,6 +36,519 @@
 .class public auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops
        extends [mscorlib]System.Object
 {
+  .class auto ansi nested public beforefieldinit CustomClassEnumerator
+         extends [mscorlib]System.Object
+  {
+    .method public hidebysig specialname 
+            instance object  get_Current() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumerator::get_Current
+
+    .method public hidebysig instance bool 
+            MoveNext() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumerator::MoveNext
+
+    .method public hidebysig instance void 
+            Reset() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumerator::Reset
+
+    .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator 
+            GetEnumerator() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ret
+    } // end of method CustomClassEnumerator::GetEnumerator
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method CustomClassEnumerator::.ctor
+
+    .property instance object Current()
+    {
+      .get instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator::get_Current()
+    } // end of property CustomClassEnumerator::Current
+  } // end of class CustomClassEnumerator
+
+  .class sequential ansi sealed nested public beforefieldinit CustomStructEnumerator
+         extends [mscorlib]System.ValueType
+  {
+    .pack 0
+    .size 1
+    .method public hidebysig specialname 
+            instance object  get_Current() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumerator::get_Current
+
+    .method public hidebysig instance bool 
+            MoveNext() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumerator::MoveNext
+
+    .method public hidebysig instance void 
+            Reset() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumerator::Reset
+
+    .method public hidebysig instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumerator 
+            GetEnumerator() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldobj      ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumerator
+      IL_0006:  ret
+    } // end of method CustomStructEnumerator::GetEnumerator
+
+    .property instance object Current()
+    {
+      .get instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumerator::get_Current()
+    } // end of property CustomStructEnumerator::Current
+  } // end of class CustomStructEnumerator
+
+  .class auto ansi nested public beforefieldinit CustomClassEnumerator`1<T>
+         extends [mscorlib]System.Object
+  {
+    .method public hidebysig specialname 
+            instance !T  get_Current() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumerator`1::get_Current
+
+    .method public hidebysig instance void 
+            Dispose() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumerator`1::Dispose
+
+    .method public hidebysig instance bool 
+            MoveNext() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumerator`1::MoveNext
+
+    .method public hidebysig instance void 
+            Reset() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumerator`1::Reset
+
+    .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator`1<!T> 
+            GetEnumerator() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ret
+    } // end of method CustomClassEnumerator`1::GetEnumerator
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method CustomClassEnumerator`1::.ctor
+
+    .property instance !T Current()
+    {
+      .get instance !T ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator`1::get_Current()
+    } // end of property CustomClassEnumerator`1::Current
+  } // end of class CustomClassEnumerator`1
+
+  .class sequential ansi sealed nested public beforefieldinit CustomStructEnumerator`1<T>
+         extends [mscorlib]System.ValueType
+  {
+    .pack 0
+    .size 1
+    .method public hidebysig specialname 
+            instance !T  get_Current() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumerator`1::get_Current
+
+    .method public hidebysig instance void 
+            Dispose() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumerator`1::Dispose
+
+    .method public hidebysig instance bool 
+            MoveNext() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumerator`1::MoveNext
+
+    .method public hidebysig instance void 
+            Reset() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumerator`1::Reset
+
+    .method public hidebysig instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumerator`1<!T> 
+            GetEnumerator() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldobj      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumerator`1<!T>
+      IL_0006:  ret
+    } // end of method CustomStructEnumerator`1::GetEnumerator
+
+    .property instance !T Current()
+    {
+      .get instance !T ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumerator`1::get_Current()
+    } // end of property CustomStructEnumerator`1::Current
+  } // end of class CustomStructEnumerator`1
+
+  .class auto ansi nested public beforefieldinit CustomClassEnumeratorWithIDisposable
+         extends [mscorlib]System.Object
+         implements [mscorlib]System.IDisposable
+  {
+    .method public hidebysig specialname 
+            instance object  get_Current() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumeratorWithIDisposable::get_Current
+
+    .method public hidebysig newslot virtual final 
+            instance void  Dispose() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumeratorWithIDisposable::Dispose
+
+    .method public hidebysig instance bool 
+            MoveNext() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumeratorWithIDisposable::MoveNext
+
+    .method public hidebysig instance void 
+            Reset() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumeratorWithIDisposable::Reset
+
+    .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable 
+            GetEnumerator() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ret
+    } // end of method CustomClassEnumeratorWithIDisposable::GetEnumerator
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method CustomClassEnumeratorWithIDisposable::.ctor
+
+    .property instance object Current()
+    {
+      .get instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable::get_Current()
+    } // end of property CustomClassEnumeratorWithIDisposable::Current
+  } // end of class CustomClassEnumeratorWithIDisposable
+
+  .class sequential ansi sealed nested public beforefieldinit CustomStructEnumeratorWithIDisposable
+         extends [mscorlib]System.ValueType
+         implements [mscorlib]System.IDisposable
+  {
+    .pack 0
+    .size 1
+    .method public hidebysig specialname 
+            instance object  get_Current() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumeratorWithIDisposable::get_Current
+
+    .method public hidebysig newslot virtual final 
+            instance void  Dispose() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumeratorWithIDisposable::Dispose
+
+    .method public hidebysig instance bool 
+            MoveNext() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumeratorWithIDisposable::MoveNext
+
+    .method public hidebysig instance void 
+            Reset() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumeratorWithIDisposable::Reset
+
+    .method public hidebysig instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable 
+            GetEnumerator() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldobj      ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable
+      IL_0006:  ret
+    } // end of method CustomStructEnumeratorWithIDisposable::GetEnumerator
+
+    .property instance object Current()
+    {
+      .get instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable::get_Current()
+    } // end of property CustomStructEnumeratorWithIDisposable::Current
+  } // end of class CustomStructEnumeratorWithIDisposable
+
+  .class auto ansi nested public beforefieldinit CustomClassEnumeratorWithIDisposable`1<T>
+         extends [mscorlib]System.Object
+         implements [mscorlib]System.IDisposable
+  {
+    .method public hidebysig specialname 
+            instance !T  get_Current() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumeratorWithIDisposable`1::get_Current
+
+    .method public hidebysig newslot virtual final 
+            instance void  Dispose() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumeratorWithIDisposable`1::Dispose
+
+    .method public hidebysig instance bool 
+            MoveNext() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumeratorWithIDisposable`1::MoveNext
+
+    .method public hidebysig instance void 
+            Reset() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomClassEnumeratorWithIDisposable`1::Reset
+
+    .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable`1<!T> 
+            GetEnumerator() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ret
+    } // end of method CustomClassEnumeratorWithIDisposable`1::GetEnumerator
+
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method CustomClassEnumeratorWithIDisposable`1::.ctor
+
+    .property instance !T Current()
+    {
+      .get instance !T ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable`1::get_Current()
+    } // end of property CustomClassEnumeratorWithIDisposable`1::Current
+  } // end of class CustomClassEnumeratorWithIDisposable`1
+
+  .class sequential ansi sealed nested public beforefieldinit CustomStructEnumeratorWithIDisposable`1<T>
+         extends [mscorlib]System.ValueType
+         implements [mscorlib]System.IDisposable
+  {
+    .pack 0
+    .size 1
+    .method public hidebysig specialname 
+            instance !T  get_Current() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumeratorWithIDisposable`1::get_Current
+
+    .method public hidebysig newslot virtual final 
+            instance void  Dispose() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumeratorWithIDisposable`1::Dispose
+
+    .method public hidebysig instance bool 
+            MoveNext() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumeratorWithIDisposable`1::MoveNext
+
+    .method public hidebysig instance void 
+            Reset() cil managed
+    {
+      // Code size       6 (0x6)
+      .maxstack  8
+      IL_0000:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+      IL_0005:  throw
+    } // end of method CustomStructEnumeratorWithIDisposable`1::Reset
+
+    .method public hidebysig instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1<!T> 
+            GetEnumerator() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldobj      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1<!T>
+      IL_0006:  ret
+    } // end of method CustomStructEnumeratorWithIDisposable`1::GetEnumerator
+
+    .property instance !T Current()
+    {
+      .get instance !T ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1::get_Current()
+    } // end of property CustomStructEnumeratorWithIDisposable`1::Current
+  } // end of class CustomStructEnumeratorWithIDisposable`1
+
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass1'
+         extends [mscorlib]System.Object
+  {
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field public int32 c
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method '<>c__DisplayClass1'::.ctor
+
+    .method public hidebysig instance bool 
+            '<ForeachWithCapturedVariable>b__0'() cil managed
+    {
+      // Code size       10 (0xa)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass1'::c
+      IL_0006:  ldc.i4.5
+      IL_0007:  ceq
+      IL_0009:  ret
+    } // end of method '<>c__DisplayClass1'::'<ForeachWithCapturedVariable>b__0'
+
+  } // end of class '<>c__DisplayClass1'
+
+  .method private hidebysig static void  Operation(int32& item) cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method Loops::Operation
+
+  .method private hidebysig static void  Operation(class [mscorlib]System.Func`1<bool> f) cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method Loops::Operation
+
   .method public hidebysig instance void 
           ForEach(class [mscorlib]System.Collections.Generic.IEnumerable`1<string> enumerable) cil managed
   {
@@ -243,6 +756,412 @@
   } // end of method Loops::ForEachOverNonGenericEnumerableWithAutomaticCastRefType
 
   .method public hidebysig instance void 
+          ForEachOnCustomClassEnumerator(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator e) cil managed
+  {
+    // Code size       50 (0x32)
+    .maxstack  1
+    .locals init (object V_0,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator V_1,
+             class [mscorlib]System.IDisposable V_2)
+    IL_0000:  ldarg.1
+    IL_0001:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator::GetEnumerator()
+    IL_0006:  stloc.1
+    .try
+    {
+      IL_0007:  br.s       IL_0016
+
+      IL_0009:  ldloc.1
+      IL_000a:  callvirt   instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator::get_Current()
+      IL_000f:  stloc.0
+      IL_0010:  ldloc.0
+      IL_0011:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_0016:  ldloc.1
+      IL_0017:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator::MoveNext()
+      IL_001c:  brtrue.s   IL_0009
+
+      IL_001e:  leave.s    IL_0031
+
+    }  // end .try
+    finally
+    {
+      IL_0020:  ldloc.1
+      IL_0021:  isinst     [mscorlib]System.IDisposable
+      IL_0026:  stloc.2
+      IL_0027:  ldloc.2
+      IL_0028:  brfalse.s  IL_0030
+
+      IL_002a:  ldloc.2
+      IL_002b:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0030:  endfinally
+    }  // end handler
+    IL_0031:  ret
+  } // end of method Loops::ForEachOnCustomClassEnumerator
+
+  .method public hidebysig instance void 
+          ForEachOnGenericCustomClassEnumerator<T>(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator`1<!!T> e) cil managed
+  {
+    // Code size       55 (0x37)
+    .maxstack  1
+    .locals init (!!T V_0,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator`1<!!T> V_1,
+             class [mscorlib]System.IDisposable V_2)
+    IL_0000:  ldarg.1
+    IL_0001:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator`1<!0> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator`1<!!T>::GetEnumerator()
+    IL_0006:  stloc.1
+    .try
+    {
+      IL_0007:  br.s       IL_001b
+
+      IL_0009:  ldloc.1
+      IL_000a:  callvirt   instance !0 class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator`1<!!T>::get_Current()
+      IL_000f:  stloc.0
+      IL_0010:  ldloc.0
+      IL_0011:  box        !!T
+      IL_0016:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_001b:  ldloc.1
+      IL_001c:  callvirt   instance bool class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumerator`1<!!T>::MoveNext()
+      IL_0021:  brtrue.s   IL_0009
+
+      IL_0023:  leave.s    IL_0036
+
+    }  // end .try
+    finally
+    {
+      IL_0025:  ldloc.1
+      IL_0026:  isinst     [mscorlib]System.IDisposable
+      IL_002b:  stloc.2
+      IL_002c:  ldloc.2
+      IL_002d:  brfalse.s  IL_0035
+
+      IL_002f:  ldloc.2
+      IL_0030:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0035:  endfinally
+    }  // end handler
+    IL_0036:  ret
+  } // end of method Loops::ForEachOnGenericCustomClassEnumerator
+
+  .method public hidebysig instance void 
+          ForEachOnCustomClassEnumeratorWithIDisposable(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable e) cil managed
+  {
+    // Code size       43 (0x2b)
+    .maxstack  1
+    .locals init (object V_0,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable V_1)
+    IL_0000:  ldarg.1
+    IL_0001:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable::GetEnumerator()
+    IL_0006:  stloc.1
+    .try
+    {
+      IL_0007:  br.s       IL_0016
+
+      IL_0009:  ldloc.1
+      IL_000a:  callvirt   instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable::get_Current()
+      IL_000f:  stloc.0
+      IL_0010:  ldloc.0
+      IL_0011:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_0016:  ldloc.1
+      IL_0017:  callvirt   instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable::MoveNext()
+      IL_001c:  brtrue.s   IL_0009
+
+      IL_001e:  leave.s    IL_002a
+
+    }  // end .try
+    finally
+    {
+      IL_0020:  ldloc.1
+      IL_0021:  brfalse.s  IL_0029
+
+      IL_0023:  ldloc.1
+      IL_0024:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0029:  endfinally
+    }  // end handler
+    IL_002a:  ret
+  } // end of method Loops::ForEachOnCustomClassEnumeratorWithIDisposable
+
+  .method public hidebysig instance void 
+          ForEachOnCustomStructEnumeratorWithIDisposable(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable e) cil managed
+  {
+    // Code size       50 (0x32)
+    .maxstack  1
+    .locals init (object V_0,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable V_1)
+    IL_0000:  ldarga.s   e
+    IL_0002:  call       instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable::GetEnumerator()
+    IL_0007:  stloc.1
+    .try
+    {
+      IL_0008:  br.s       IL_0018
+
+      IL_000a:  ldloca.s   V_1
+      IL_000c:  call       instance object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable::get_Current()
+      IL_0011:  stloc.0
+      IL_0012:  ldloc.0
+      IL_0013:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_0018:  ldloca.s   V_1
+      IL_001a:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable::MoveNext()
+      IL_001f:  brtrue.s   IL_000a
+
+      IL_0021:  leave.s    IL_0031
+
+    }  // end .try
+    finally
+    {
+      IL_0023:  ldloca.s   V_1
+      IL_0025:  constrained. ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable
+      IL_002b:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0030:  endfinally
+    }  // end handler
+    IL_0031:  ret
+  } // end of method Loops::ForEachOnCustomStructEnumeratorWithIDisposable
+
+  .method public hidebysig instance void 
+          ForEachOnGenericCustomClassEnumeratorWithIDisposable<T>(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable`1<!!T> e) cil managed
+  {
+    // Code size       48 (0x30)
+    .maxstack  1
+    .locals init (!!T V_0,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable`1<!!T> V_1)
+    IL_0000:  ldarg.1
+    IL_0001:  callvirt   instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable`1<!0> class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable`1<!!T>::GetEnumerator()
+    IL_0006:  stloc.1
+    .try
+    {
+      IL_0007:  br.s       IL_001b
+
+      IL_0009:  ldloc.1
+      IL_000a:  callvirt   instance !0 class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable`1<!!T>::get_Current()
+      IL_000f:  stloc.0
+      IL_0010:  ldloc.0
+      IL_0011:  box        !!T
+      IL_0016:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_001b:  ldloc.1
+      IL_001c:  callvirt   instance bool class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomClassEnumeratorWithIDisposable`1<!!T>::MoveNext()
+      IL_0021:  brtrue.s   IL_0009
+
+      IL_0023:  leave.s    IL_002f
+
+    }  // end .try
+    finally
+    {
+      IL_0025:  ldloc.1
+      IL_0026:  brfalse.s  IL_002e
+
+      IL_0028:  ldloc.1
+      IL_0029:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_002e:  endfinally
+    }  // end handler
+    IL_002f:  ret
+  } // end of method Loops::ForEachOnGenericCustomClassEnumeratorWithIDisposable
+
+  .method public hidebysig instance void 
+          ForEachOnGenericCustomStructEnumeratorWithIDisposable<T>(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1<!!T> e) cil managed
+  {
+    // Code size       55 (0x37)
+    .maxstack  1
+    .locals init (!!T V_0,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1<!!T> V_1)
+    IL_0000:  ldarga.s   e
+    IL_0002:  call       instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1<!0> valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1<!!T>::GetEnumerator()
+    IL_0007:  stloc.1
+    .try
+    {
+      IL_0008:  br.s       IL_001d
+
+      IL_000a:  ldloca.s   V_1
+      IL_000c:  call       instance !0 valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1<!!T>::get_Current()
+      IL_0011:  stloc.0
+      IL_0012:  ldloc.0
+      IL_0013:  box        !!T
+      IL_0018:  call       void [mscorlib]System.Console::WriteLine(object)
+      IL_001d:  ldloca.s   V_1
+      IL_001f:  call       instance bool valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1<!!T>::MoveNext()
+      IL_0024:  brtrue.s   IL_000a
+
+      IL_0026:  leave.s    IL_0036
+
+    }  // end .try
+    finally
+    {
+      IL_0028:  ldloca.s   V_1
+      IL_002a:  constrained. valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1<!!T>
+      IL_0030:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0035:  endfinally
+    }  // end handler
+    IL_0036:  ret
+  } // end of method Loops::ForEachOnGenericCustomStructEnumeratorWithIDisposable
+
+  .method public hidebysig static void  NonGenericForeachWithReturnFallbackTest(class [mscorlib]System.Collections.IEnumerable e) cil managed
+  {
+    // Code size       88 (0x58)
+    .maxstack  2
+    .locals init (class [mscorlib]System.Collections.IEnumerator V_0,
+             object V_1,
+             class [mscorlib]System.IDisposable V_2)
+    IL_0000:  ldstr      "NonGenericForeachWithReturnFallback:"
+    IL_0005:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_000a:  ldarg.0
+    IL_000b:  callvirt   instance class [mscorlib]System.Collections.IEnumerator [mscorlib]System.Collections.IEnumerable::GetEnumerator()
+    IL_0010:  stloc.0
+    .try
+    {
+      IL_0011:  ldstr      "MoveNext"
+      IL_0016:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_001b:  ldloc.0
+      IL_001c:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
+      IL_0021:  brfalse.s  IL_003a
+
+      IL_0023:  ldloc.0
+      IL_0024:  callvirt   instance object [mscorlib]System.Collections.IEnumerator::get_Current()
+      IL_0029:  stloc.1
+      IL_002a:  ldstr      "current: "
+      IL_002f:  ldloc.1
+      IL_0030:  call       string [mscorlib]System.String::Concat(object,
+                                                                  object)
+      IL_0035:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_003a:  leave.s    IL_004d
+
+    }  // end .try
+    finally
+    {
+      IL_003c:  ldloc.0
+      IL_003d:  isinst     [mscorlib]System.IDisposable
+      IL_0042:  stloc.2
+      IL_0043:  ldloc.2
+      IL_0044:  brfalse.s  IL_004c
+
+      IL_0046:  ldloc.2
+      IL_0047:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_004c:  endfinally
+    }  // end handler
+    IL_004d:  ldstr      "After finally!"
+    IL_0052:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0057:  ret
+  } // end of method Loops::NonGenericForeachWithReturnFallbackTest
+
+  .method public hidebysig static void  ForeachWithRefUsage(class [mscorlib]System.Collections.Generic.List`1<int32> items) cil managed
+  {
+    // Code size       52 (0x34)
+    .maxstack  1
+    .locals init (int32 V_0,
+             int32 V_1,
+             valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<int32> V_2)
+    IL_0000:  ldarg.0
+    IL_0001:  callvirt   instance valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!0> class [mscorlib]System.Collections.Generic.List`1<int32>::GetEnumerator()
+    IL_0006:  stloc.2
+    .try
+    {
+      IL_0007:  br.s       IL_001a
+
+      IL_0009:  ldloca.s   V_2
+      IL_000b:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<int32>::get_Current()
+      IL_0010:  stloc.0
+      IL_0011:  ldloc.0
+      IL_0012:  stloc.1
+      IL_0013:  ldloca.s   V_1
+      IL_0015:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Operation(int32&)
+      IL_001a:  ldloca.s   V_2
+      IL_001c:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<int32>::MoveNext()
+      IL_0021:  brtrue.s   IL_0009
+
+      IL_0023:  leave.s    IL_0033
+
+    }  // end .try
+    finally
+    {
+      IL_0025:  ldloca.s   V_2
+      IL_0027:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<int32>
+      IL_002d:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0032:  endfinally
+    }  // end handler
+    IL_0033:  ret
+  } // end of method Loops::ForeachWithRefUsage
+
+  .method public hidebysig static void  ForeachWithCapturedVariable(class [mscorlib]System.Collections.Generic.List`1<int32> items) cil managed
+  {
+    // Code size       73 (0x49)
+    .maxstack  2
+    .locals init (int32 V_0,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass1' V_1,
+             valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<int32> V_2)
+    IL_0000:  ldarg.0
+    IL_0001:  callvirt   instance valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!0> class [mscorlib]System.Collections.Generic.List`1<int32>::GetEnumerator()
+    IL_0006:  stloc.2
+    .try
+    {
+      IL_0007:  br.s       IL_002f
+
+      IL_0009:  ldloca.s   V_2
+      IL_000b:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<int32>::get_Current()
+      IL_0010:  stloc.0
+      IL_0011:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass1'::.ctor()
+      IL_0016:  stloc.1
+      IL_0017:  ldloc.1
+      IL_0018:  ldloc.0
+      IL_0019:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass1'::c
+      IL_001e:  ldloc.1
+      IL_001f:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass1'::'<ForeachWithCapturedVariable>b__0'()
+      IL_0025:  newobj     instance void class [mscorlib]System.Func`1<bool>::.ctor(object,
+                                                                                    native int)
+      IL_002a:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Operation(class [mscorlib]System.Func`1<bool>)
+      IL_002f:  ldloca.s   V_2
+      IL_0031:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<int32>::MoveNext()
+      IL_0036:  brtrue.s   IL_0009
+
+      IL_0038:  leave.s    IL_0048
+
+    }  // end .try
+    finally
+    {
+      IL_003a:  ldloca.s   V_2
+      IL_003c:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<int32>
+      IL_0042:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0047:  endfinally
+    }  // end handler
+    IL_0048:  ret
+  } // end of method Loops::ForeachWithCapturedVariable
+
+  .method public hidebysig static !!T  LastOrDefault<T>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!T> items) cil managed
+  {
+    // Code size       48 (0x30)
+    .maxstack  1
+    .locals init (!!T V_0,
+             !!T V_1,
+             class [mscorlib]System.Collections.Generic.IEnumerator`1<!!T> V_2)
+    IL_0000:  ldloca.s   V_0
+    IL_0002:  initobj    !!T
+    IL_0008:  ldarg.0
+    IL_0009:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<!!T>::GetEnumerator()
+    IL_000e:  stloc.2
+    .try
+    {
+      IL_000f:  br.s       IL_001a
+
+      IL_0011:  ldloc.2
+      IL_0012:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<!!T>::get_Current()
+      IL_0017:  stloc.1
+      IL_0018:  ldloc.1
+      IL_0019:  stloc.0
+      IL_001a:  ldloc.2
+      IL_001b:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
+      IL_0020:  brtrue.s   IL_0011
+
+      IL_0022:  leave.s    IL_002e
+
+    }  // end .try
+    finally
+    {
+      IL_0024:  ldloc.2
+      IL_0025:  brfalse.s  IL_002d
+
+      IL_0027:  ldloc.2
+      IL_0028:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_002d:  endfinally
+    }  // end handler
+    IL_002e:  ldloc.0
+    IL_002f:  ret
+  } // end of method Loops::LastOrDefault
+
+  .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed
   {
     // Code size       24 (0x18)
@@ -425,101 +1344,6 @@
     IL_0076:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_007b:  ret
   } // end of method Loops::ForLoop
-
-  .method public hidebysig static void  ForeachExceptForContinuedUse(class [mscorlib]System.Collections.Generic.IEnumerable`1<int32> inputs) cil managed
-  {
-    // Code size       76 (0x4c)
-    .maxstack  2
-    .locals init (int32 V_0,
-             class [mscorlib]System.Collections.Generic.IEnumerator`1<int32> V_1)
-    IL_0000:  ldstr      "ForeachExceptForContinuedUse"
-    IL_0005:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_000a:  ldc.i4.0
-    IL_000b:  stloc.0
-    IL_000c:  ldarg.0
-    IL_000d:  callvirt   instance class [mscorlib]System.Collections.Generic.IEnumerator`1<!0> class [mscorlib]System.Collections.Generic.IEnumerable`1<int32>::GetEnumerator()
-    IL_0012:  stloc.1
-    .try
-    {
-      IL_0013:  br.s       IL_0022
-
-      IL_0015:  ldloc.1
-      IL_0016:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<int32>::get_Current()
-      IL_001b:  stloc.0
-      IL_001c:  ldloc.0
-      IL_001d:  call       void [mscorlib]System.Console::WriteLine(int32)
-      IL_0022:  ldloc.1
-      IL_0023:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
-      IL_0028:  brtrue.s   IL_0015
-
-      IL_002a:  leave.s    IL_0036
-
-    }  // end .try
-    finally
-    {
-      IL_002c:  ldloc.1
-      IL_002d:  brfalse.s  IL_0035
-
-      IL_002f:  ldloc.1
-      IL_0030:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
-      IL_0035:  endfinally
-    }  // end handler
-    IL_0036:  ldstr      "Last: "
-    IL_003b:  ldloc.0
-    IL_003c:  box        [mscorlib]System.Int32
-    IL_0041:  call       string [mscorlib]System.String::Concat(object,
-                                                                object)
-    IL_0046:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_004b:  ret
-  } // end of method Loops::ForeachExceptForContinuedUse
-
-  .method public hidebysig static void  NonGenericForeachWithReturnFallbackTest(class [mscorlib]System.Collections.IEnumerable e) cil managed
-  {
-    // Code size       88 (0x58)
-    .maxstack  2
-    .locals init (class [mscorlib]System.Collections.IEnumerator V_0,
-             object V_1,
-             class [mscorlib]System.IDisposable V_2)
-    IL_0000:  ldstr      "NonGenericForeachWithReturnFallback:"
-    IL_0005:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_000a:  ldarg.0
-    IL_000b:  callvirt   instance class [mscorlib]System.Collections.IEnumerator [mscorlib]System.Collections.IEnumerable::GetEnumerator()
-    IL_0010:  stloc.0
-    .try
-    {
-      IL_0011:  ldstr      "MoveNext"
-      IL_0016:  call       void [mscorlib]System.Console::WriteLine(string)
-      IL_001b:  ldloc.0
-      IL_001c:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
-      IL_0021:  brfalse.s  IL_003a
-
-      IL_0023:  ldloc.0
-      IL_0024:  callvirt   instance object [mscorlib]System.Collections.IEnumerator::get_Current()
-      IL_0029:  stloc.1
-      IL_002a:  ldstr      "current: "
-      IL_002f:  ldloc.1
-      IL_0030:  call       string [mscorlib]System.String::Concat(object,
-                                                                  object)
-      IL_0035:  call       void [mscorlib]System.Console::WriteLine(string)
-      IL_003a:  leave.s    IL_004d
-
-    }  // end .try
-    finally
-    {
-      IL_003c:  ldloc.0
-      IL_003d:  isinst     [mscorlib]System.IDisposable
-      IL_0042:  stloc.2
-      IL_0043:  ldloc.2
-      IL_0044:  brfalse.s  IL_004c
-
-      IL_0046:  ldloc.2
-      IL_0047:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
-      IL_004c:  endfinally
-    }  // end handler
-    IL_004d:  ldstr      "After finally!"
-    IL_0052:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0057:  ret
-  } // end of method Loops::NonGenericForeachWithReturnFallbackTest
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

@@ -285,8 +285,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				name = "array";
 			} else if (type is PointerType) {
 				name = "ptr";
-			} else if (type.Kind == TypeKind.TypeParameter) {
+			} else if (type.Kind == TypeKind.TypeParameter || type.Kind == TypeKind.Unknown) {
 				name = "val";
+			} else if (type.Kind == TypeKind.ByReference) {
+				name = "reference";
 			} else if (type.IsAnonymousType()) {
 				name = "anon";
 			} else if (type.Name.EndsWith("Exception", StringComparison.Ordinal)) {

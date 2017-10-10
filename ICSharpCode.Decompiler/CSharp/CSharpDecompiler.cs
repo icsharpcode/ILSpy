@@ -76,12 +76,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
 				new DetectCatchWhenConditionBlocks(), // must run after inlining but before loop detection
 				new DetectExitPoints(canIntroduceExitForReturn: false),
-				new BlockILTransform {
-					PostOrderTransforms = {
-						new ExpressionTransforms() // for RemoveDeadVariableInit
-					}
-				},
-				// RemoveDeadVariableInit must run after ExpressionTransforms so that stobj(ldloca V, ...)
+				new EarlyExpressionTransforms(),
+				// RemoveDeadVariableInit must run after EarlyExpressionTransforms so that stobj(ldloca V, ...)
 				// is already collapsed into stloc(V, ...).
 				new RemoveDeadVariableInit(),
 				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
@@ -109,8 +105,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						// and must run before NullCoalescingTransform
 						new CachedDelegateInitialization(),
 						new ILInlining(),
-						new TransformAssignment(),
-						new NullableLiftingBlockTransform(),
+						new TransformAssignment(), // must run before CopyPropagation
 						new CopyPropagation(),
 						new StatementTransform(
 							// per-block transforms that depend on each other, and thus need to
@@ -122,13 +117,15 @@ namespace ICSharpCode.Decompiler.CSharp
 							// Any other transform that opens up new inlining opportunities should call RequestRerun().
 							new ExpressionTransforms(),
 							new NullCoalescingTransform(),
+							new NullableLiftingStatementTransform(),
 							new TransformArrayInitializers(),
 							new TransformCollectionAndObjectInitializers()
 						)
 					}
 				},
+				new ProxyCallReplacer(),
 				new DelegateConstruction(),
-				new AssignVariableNames()
+				new AssignVariableNames(),
 			};
 		}
 

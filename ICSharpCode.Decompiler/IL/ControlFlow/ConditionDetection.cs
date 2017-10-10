@@ -142,7 +142,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						targetBlock.Instructions.AddRange(nestedTrueBlock.Instructions);
 						// add falseInsts to inner block
 						nestedTrueBlock.Instructions.ReplaceList(falseInsts);
-						nestedIfInst.Condition.AcceptVisitor(new ExpressionTransforms { context = context });
+						nestedIfInst.Condition.AcceptVisitor(new ExpressionTransforms { context = new StatementTransformContext(context) });
 					}
 					break;
 				}

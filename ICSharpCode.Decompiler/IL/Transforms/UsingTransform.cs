@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.UsingStatement) return;
 			this.context = context;
 			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-				if (!TransformUsing(block, i))
+				if (!TransformUsing(block, i) && !TransformUsingVB(block, i))
 					continue;
 				// This happens in some cases:
 				// Use correct index after transformation.
@@ -80,7 +80,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally) || (la.IsDescendantOf(tryFinally.TryBlock) && !ILInlining.IsUsedAsThisPointerInCall(la))))
 				return false;
-			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
+			if (storeInst.Variable.StoreInstructions.Count > 1)
 				return false;
 			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
 				return false;
@@ -91,13 +91,76 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
+		/// <summary>
+		/// .try BlockContainer {
+		///		Block IL_0003(incoming: 1) {
+		///			stloc obj(resourceExpression)
+		///			call WriteLine(ldstr "using (null)")
+		///			leave IL_0003(nop)
+		///		}
+		///	} finally BlockContainer {
+		///		Block IL_0012(incoming: 1) {
+		///			if (comp(ldloc obj != ldnull)) Block IL_001a  {
+		///				callvirt Dispose(ldnull)
+		///			}
+		///			leave IL_0012(nop)
+		///		}
+		/// }
+		/// leave IL_0000(nop)
+		/// =>
+		/// using (resourceExpression) {
+		///		BlockContainer {
+		///			Block IL_0003(incoming: 1) {
+		///				call WriteLine(ldstr "using (null)")
+		///				leave IL_0003(nop)
+		///			}
+		///		}
+		/// }
+		/// </summary>
+		bool TransformUsingVB(Block block, int i)
+		{
+			if (!(block.Instructions[i] is TryFinally tryFinally))
+				return false;
+			if (!(tryFinally.TryBlock is BlockContainer tryContainer && tryContainer.EntryPoint.Instructions.FirstOrDefault() is StLoc storeInst))
+				return false;
+			if (!(storeInst.Value.MatchLdNull() || CheckResourceType(storeInst.Variable.Type)))
+				return false;
+			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(tryFinally)))
+				return false;
+			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(tryFinally) || (la.IsDescendantOf(tryFinally.TryBlock) && !ILInlining.IsUsedAsThisPointerInCall(la))))
+				return false;
+			if (storeInst.Variable.StoreInstructions.Count > 1)
+				return false;
+			if (!(tryFinally.FinallyBlock is BlockContainer container) || !MatchDisposeBlock(container, storeInst.Variable, storeInst.Value.MatchLdNull()))
+				return false;
+			context.Step("UsingTransformVB", tryFinally);
+			storeInst.Variable.Kind = VariableKind.UsingLocal;
+			tryContainer.EntryPoint.Instructions.RemoveAt(0);
+			block.Instructions[i] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
+			return true;
+		}
+
 		bool CheckResourceType(IType type)
 		{
 			// non-generic IEnumerator does not implement IDisposable.
 			// This is a workaround for non-generic foreach.
 			if (type.IsKnownType(KnownTypeCode.IEnumerator))
 				return true;
-			return NullableType.GetUnderlyingType(type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable));
+			if (NullableType.GetUnderlyingType(type).GetAllBaseTypes().Any(b => b.IsKnownType(KnownTypeCode.IDisposable)))
+				return true;
+			// General GetEnumerator-pattern?
+			if (!type.GetMethods(m => m.Name == "GetEnumerator" && m.TypeParameters.Count == 0 && m.Parameters.Count == 0).Any(m => ImplementsForeachPattern(m.ReturnType)))
+				return false;
+			return true;
+		}
+
+		bool ImplementsForeachPattern(IType type)
+		{
+			if (!type.GetMethods(m => m.Name == "MoveNext" && m.TypeParameters.Count == 0 && m.Parameters.Count == 0).Any(m => m.ReturnType.IsKnownType(KnownTypeCode.Boolean)))
+				return false;
+			if (!type.GetProperties(p => p.Name == "Current" && p.CanGet && !p.IsIndexer).Any())
+				return false;
+			return true;
 		}
 
 		bool MatchDisposeBlock(BlockContainer container, ILVariable objVar, bool usingNull)

@@ -443,7 +443,7 @@ namespace ICSharpCode.Decompiler.IL
 				case Cil.Code.Callvirt:
 					return DecodeCall(OpCode.CallVirt);
 				case Cil.Code.Calli:
-					throw new NotImplementedException();
+					return DecodeCallIndirect();
 				case Cil.Code.Ceq:
 					return Push(Comparison(ComparisonKind.Equality));
 				case Cil.Code.Cgt:
@@ -523,7 +523,7 @@ namespace ICSharpCode.Decompiler.IL
 				case Cil.Code.Conv_Ovf_U_Un:
 					return Push(new Conv(Pop(), PrimitiveType.U, true, Sign.Unsigned));
 				case Cil.Code.Cpblk:
-					throw new NotImplementedException();
+					return new Cpblk(size: Pop(StackType.I4), sourceAddress: PopPointer(), destAddress: PopPointer());
 				case Cil.Code.Div:
 					return BinaryNumeric(BinaryNumericOperator.Div, false, Sign.Signed);
 				case Cil.Code.Div_Un:
@@ -535,9 +535,9 @@ namespace ICSharpCode.Decompiler.IL
 				case Cil.Code.Endfinally:
 					return new Leave(null);
 				case Cil.Code.Initblk:
-					throw new NotImplementedException();
+					return new Initblk(size: Pop(StackType.I4), value: Pop(StackType.I4), address: PopPointer());
 				case Cil.Code.Jmp:
-					throw new NotImplementedException();
+					return DecodeJmp();
 				case Cil.Code.Ldarg:
 				case Cil.Code.Ldarg_S:
 					return Push(Ldarg(((ParameterDefinition)cecilInst.Operand).Sequence));
@@ -916,9 +916,16 @@ namespace ICSharpCode.Decompiler.IL
 			ILInstruction inst = Pop();
 			if (expectedType != inst.ResultType) {
 				if (expectedType == StackType.I && inst.ResultType == StackType.I4) {
+					// IL allows implicit I4->I conversions
 					inst = new Conv(inst, PrimitiveType.I, false, Sign.None);
+				} else if (expectedType == StackType.I4 && inst.ResultType == StackType.I) {
+					// C++/CLI also sometimes implicitly converts in the other direction:
+					inst = new Conv(inst, PrimitiveType.I4, false, Sign.None);
 				} else if (expectedType == StackType.Ref && inst.ResultType == StackType.I) {
 					// implicitly start GC tracking
+				} else if (expectedType == StackType.I && inst.ResultType == StackType.Ref) {
+					// Implicitly stop GC tracking; this occurs when passing the result of 'ldloca' or 'ldsflda'
+					// to a method expecting a native pointer.
 				} else if (inst is InvalidExpression) {
 					((InvalidExpression)inst).ExpectedResultType = expectedType;
 				} else {
@@ -1105,7 +1112,31 @@ namespace ICSharpCode.Decompiler.IL
 					return call;
 			}
 		}
-		
+
+		ILInstruction DecodeCallIndirect()
+		{
+			var functionPointer = Pop(StackType.I);
+			var signature = (CallSite)currentInstruction.Operand;
+			Debug.Assert(!signature.HasThis);
+			var parameterTypes = new IType[signature.Parameters.Count];
+			var arguments = new ILInstruction[parameterTypes.Length];
+			for (int i = signature.Parameters.Count - 1; i >= 0; i--) {
+				parameterTypes[i] = typeSystem.Resolve(signature.Parameters[i].ParameterType);
+				arguments[i] = Pop(parameterTypes[i].GetStackType());
+			}
+			var call = new CallIndirect(
+				signature.CallingConvention,
+				typeSystem.Resolve(signature.ReturnType),
+				parameterTypes.ToImmutableArray(),
+				arguments,
+				functionPointer
+			);
+			if (call.ResultType != StackType.Void)
+				return Push(call);
+			else
+				return call;
+		}
+
 		static int GetPopCount(OpCode callCode, MethodReference methodReference)
 		{
 			int popCount = methodReference.Parameters.Count;
@@ -1252,6 +1283,22 @@ namespace ICSharpCode.Decompiler.IL
 				}
 			}
 			return Push(new BinaryNumericInstruction(@operator, left, right, checkForOverflow, sign));
+		}
+
+		ILInstruction DecodeJmp()
+		{
+			IMethod method = ReadAndDecodeMethodReference();
+			// Translate jmp into tail call:
+			Call call = new Call(method);
+			call.IsTail = true;
+			call.ILStackWasEmpty = true;
+			if (!method.IsStatic) {
+				call.Arguments.Add(Ldarg(0));
+			}
+			foreach (var p in method.Parameters) {
+				call.Arguments.Add(Ldarg(call.Arguments.Count));
+			}
+			return new Leave(mainContainer, call);
 		}
 
 		ILInstruction LdToken(IMetadataTokenProvider token)

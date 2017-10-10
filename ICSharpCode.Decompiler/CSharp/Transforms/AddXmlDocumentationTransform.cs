@@ -52,6 +52,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						default:
 							continue;
 					}
+					if (mr == null)
+						continue;
 					string doc = xmldoc.GetDocumentation(XmlDocKeyProvider.GetKey(mr));
 					if (doc != null) {
 						InsertXmlDocumentation(entity, new StringReader(doc));

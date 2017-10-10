@@ -32,8 +32,8 @@
 
   <ItemGroup>
     <PackageReference Include="DiffLib" Version="1.0.0.55" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="1.3.2" />
-    <PackageReference Include="System.Collections.Immutable" Version="1.3.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="2.3.2" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
     <PackageReference Include="NUnit" Version="2.6.3" />
     <PackageReference Include="NUnitTestAdapter" Version="2.0.0" />
   </ItemGroup>
@@ -44,12 +44,15 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="TestCases\Correctness\Jmp.il" />
     <None Include="TestCases\Correctness\BitNot.il" />
     <None Include="TestCases\Correctness\Readme.txt" />
   </ItemGroup>
 
   <ItemGroup>
     <Compile Include="DataFlowTest.cs" />
+    <Compile Include="TestCases\Correctness\LINQRaytracer.cs" />
+    <Compile Include="TestCases\Pretty\DelegateConstruction.cs" />
     <Compile Include="Helpers\CodeAssert.cs" />
     <Compile Include="Helpers\SdkUtility.cs" />
     <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
@@ -62,6 +65,8 @@
     <Compile Include="TestCases\Correctness\TrickyTypes.cs" />
     <Compile Include="TestCases\Correctness\Using.cs" />
     <Compile Include="TestCases\ILPretty\Issue379.cs" />
+    <Compile Include="TestCases\Pretty\FixProxyCalls.cs" />
+    <None Include="TestCases\ILPretty\Issue646.cs" />
     <Compile Include="TestCases\Pretty\Async.cs" />
     <Compile Include="TestCases\Pretty\CheckedUnchecked.cs" />
     <Compile Include="TestCases\Pretty\Generics.cs" />
@@ -116,9 +121,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="TestCases\Pretty\CompoundAssignmentTest.il">
-      <DependentUpon>CompoundAssignmentTest.cs</DependentUpon>
-    </None>
+    <None Include="TestCases\ILPretty\Issue646.il" />
     <None Include="TestCases\Pretty\HelloWorld.il">
       <DependentUpon>HelloWorld.cs</DependentUpon>
     </None>

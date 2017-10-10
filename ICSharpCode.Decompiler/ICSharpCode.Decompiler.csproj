@@ -49,8 +49,8 @@
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.2.0" />
     <PackageReference Include="Newtonsoft.Json" Version="10.0.3" />
-    <PackageReference Include="System.Collections.Immutable" Version="1.3.0" />
-    <PackageReference Include="System.ValueTuple" Version="4.3.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="1.4.0" />
+    <PackageReference Include="System.ValueTuple" Version="4.4.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -271,6 +271,9 @@
     <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
     <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
+    <Compile Include="IL\Instructions\CallIndirect.cs" />
+    <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
+    <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />
     <Compile Include="IL\Instructions\StringToInt.cs" />
     <Compile Include="IL\Instructions\UsingInstruction.cs" />
     <Compile Include="IL\Transforms\InlineReturnTransform.cs" />

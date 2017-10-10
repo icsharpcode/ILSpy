@@ -54,7 +54,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			}
 		}
-		
+
+		private class Item
+		{
+			public Item Self;
+		}
+
 		private int test1;
 		private int[] array1;
 		private StructContainer field1;
@@ -214,30 +219,101 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return --array[pos];
 		}
-		
+
+		public int PostIncrementArrayElement(int[] array, int pos)
+		{
+			return array[pos]++;
+		}
+
+		public void IncrementArrayElement(int[] array, int pos)
+		{
+			array[pos]++;
+		}
+
 		public int PreIncrementInstanceField()
 		{
 			return ++this.M().Field;
 		}
 		
+		//public int PostIncrementInstanceField()
+		//{
+		//	return this.M().Field++;
+		//}
+
+		public void IncrementInstanceField()
+		{
+			this.M().Field++;
+		}
+
 		public int PreIncrementInstanceField2(MutableClass m)
 		{
 			return ++m.Field;
 		}
 		
+		//public int PostIncrementInstanceField2(MutableClass m)
+		//{
+		//	return m.Field++;
+		//}
+
+		public void IncrementInstanceField2(MutableClass m)
+		{
+			m.Field++;
+		}
+
 		public int PreIncrementInstanceProperty()
 		{
 			return ++this.M().Property;
 		}
-		
+
+		//public int PostIncrementInstanceProperty()
+		//{
+		//	return this.M().Property++;
+		//}
+
+		public void IncrementInstanceProperty()
+		{
+			this.M().Property++;
+		}
+
 		public int PreIncrementStaticField()
 		{
 			return ++CompoundAssignmentTest.StaticField;
 		}
-		
+
+		public int PostIncrementStaticField()
+		{
+			return CompoundAssignmentTest.StaticField++;
+		}
+
+		public void IncrementStaticField()
+		{
+			CompoundAssignmentTest.StaticField++;
+		}
+
 		public int PreIncrementStaticProperty()
 		{
 			return ++CompoundAssignmentTest.StaticProperty;
+		}
+
+		//public int PostIncrementStaticProperty()
+		//{
+		//	return CompoundAssignmentTest.StaticProperty++;
+		//}
+
+		public void IncrementStaticProperty()
+		{
+			CompoundAssignmentTest.StaticProperty++;
+		}
+		
+		private static Item GetItem(object obj)
+		{
+			return null;
+		}
+
+		private static void Issue882()
+		{
+			Item item = CompoundAssignmentTest.GetItem(null);
+			item.Self = item;
 		}
 	}
 }

@@ -104,6 +104,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void DelegateConstruction([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void AnonymousTypes([Values(CompilerOptions.None, CompilerOptions.Optimize)] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
@@ -127,14 +133,10 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
-		[Test, Ignore("Not implemented")]
+		[Test]
 		public void LiftedOperators([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
-			try {
-				Run(cscOptions: cscOptions);
-			} catch (AssertionException) {
-				Assert.Ignore("Not implemented");
-			}
+			Run(cscOptions: cscOptions);
 		}
 
 		[Test]
@@ -184,6 +186,12 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			// This tests needs our own disassembler; ildasm has a bug with marshalinfo.
 			Run(cscOptions: cscOptions, asmOptions: AssemblerOptions.UseOwnDisassembler);
+		}
+
+		[Test]
+		public void FixProxyCalls([Values(CompilerOptions.None, CompilerOptions.Optimize, CompilerOptions.UseRoslyn)] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
 		}
 
 		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None)

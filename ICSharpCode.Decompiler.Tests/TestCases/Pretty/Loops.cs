@@ -19,11 +19,247 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class Loops
 	{
+		#region foreach
+		public class CustomClassEnumerator
+		{
+			public object Current {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			public bool MoveNext()
+			{
+				throw new NotImplementedException();
+			}
+
+			public void Reset()
+			{
+				throw new NotImplementedException();
+			}
+
+			public CustomClassEnumerator GetEnumerator()
+			{
+				return this;
+			}
+		}
+
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		public struct CustomStructEnumerator
+		{
+			public object Current {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			public bool MoveNext()
+			{
+				throw new NotImplementedException();
+			}
+
+			public void Reset()
+			{
+				throw new NotImplementedException();
+			}
+
+			public CustomStructEnumerator GetEnumerator()
+			{
+				return this;
+			}
+		}
+
+		public class CustomClassEnumerator<T>
+		{
+			public T Current {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			public void Dispose()
+			{
+				throw new NotImplementedException();
+			}
+
+			public bool MoveNext()
+			{
+				throw new NotImplementedException();
+			}
+
+			public void Reset()
+			{
+				throw new NotImplementedException();
+			}
+
+			public CustomClassEnumerator<T> GetEnumerator()
+			{
+				return this;
+			}
+		}
+
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		public struct CustomStructEnumerator<T>
+		{
+			public T Current {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			public void Dispose()
+			{
+				throw new NotImplementedException();
+			}
+
+			public bool MoveNext()
+			{
+				throw new NotImplementedException();
+			}
+
+			public void Reset()
+			{
+				throw new NotImplementedException();
+			}
+
+			public CustomStructEnumerator<T> GetEnumerator()
+			{
+				return this;
+			}
+		}
+
+		public class CustomClassEnumeratorWithIDisposable : IDisposable
+		{
+			public object Current {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			public void Dispose()
+			{
+				throw new NotImplementedException();
+			}
+
+			public bool MoveNext()
+			{
+				throw new NotImplementedException();
+			}
+
+			public void Reset()
+			{
+				throw new NotImplementedException();
+			}
+
+			public CustomClassEnumeratorWithIDisposable GetEnumerator()
+			{
+				return this;
+			}
+		}
+
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		public struct CustomStructEnumeratorWithIDisposable : IDisposable
+		{
+			public object Current {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			public void Dispose()
+			{
+				throw new NotImplementedException();
+			}
+
+			public bool MoveNext()
+			{
+				throw new NotImplementedException();
+			}
+
+			public void Reset()
+			{
+				throw new NotImplementedException();
+			}
+
+			public CustomStructEnumeratorWithIDisposable GetEnumerator()
+			{
+				return this;
+			}
+		}
+
+		public class CustomClassEnumeratorWithIDisposable<T> : IDisposable
+		{
+			public T Current {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			public void Dispose()
+			{
+				throw new NotImplementedException();
+			}
+
+			public bool MoveNext()
+			{
+				throw new NotImplementedException();
+			}
+
+			public void Reset()
+			{
+				throw new NotImplementedException();
+			}
+
+			public CustomClassEnumeratorWithIDisposable<T> GetEnumerator()
+			{
+				return this;
+			}
+		}
+
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		public struct CustomStructEnumeratorWithIDisposable<T> : IDisposable
+		{
+			public T Current {
+				get {
+					throw new NotImplementedException();
+				}
+			}
+
+			public void Dispose()
+			{
+				throw new NotImplementedException();
+			}
+
+			public bool MoveNext()
+			{
+				throw new NotImplementedException();
+			}
+
+			public void Reset()
+			{
+				throw new NotImplementedException();
+			}
+
+			public CustomStructEnumeratorWithIDisposable<T> GetEnumerator()
+			{
+				return this;
+			}
+		}
+
+		private static void Operation(ref int item)
+		{
+		}
+
+		private static void Operation(Func<bool> f)
+		{
+		}
+
 		public void ForEach(IEnumerable<string> enumerable)
 		{
 			foreach (string item in enumerable) {
@@ -60,13 +296,117 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		//		public void ForEachOverArray(string[] array)
-		//		{
-		//			foreach (string text in array)
-		//			{
-		//				text.ToLower();
-		//			}
-		//		}
+		public void ForEachOnCustomClassEnumerator(CustomClassEnumerator e)
+		{
+			foreach (object item in e) {
+				Console.WriteLine(item);
+			}
+		}
+
+		// TODO : Needs additional pattern detection
+		// CustomStructEnumerator does not implement IDisposable
+		// No try-finally-Dispose is generated.
+		//public void ForEachOnCustomStructEnumerator(CustomStructEnumerator e)
+		//{
+		//	foreach (object item in e) {
+		//		Console.WriteLine(item);
+		//	}
+		//}
+
+		public void ForEachOnGenericCustomClassEnumerator<T>(CustomClassEnumerator<T> e)
+		{
+			foreach (T item in e) {
+				Console.WriteLine(item);
+			}
+		}
+
+		// TODO : Needs additional pattern detection
+		// CustomStructEnumerator does not implement IDisposable
+		// No try-finally-Dispose is generated.
+		//public void ForEachOnGenericCustomStructEnumerator<T>(CustomStructEnumerator<T> e)
+		//{
+		//	foreach (T item in e) {
+		//		Console.WriteLine(item);
+		//	}
+		//}
+
+		public void ForEachOnCustomClassEnumeratorWithIDisposable(CustomClassEnumeratorWithIDisposable e)
+		{
+			foreach (object item in e) {
+				Console.WriteLine(item);
+			}
+		}
+
+		public void ForEachOnCustomStructEnumeratorWithIDisposable(CustomStructEnumeratorWithIDisposable e)
+		{
+			foreach (object item in e) {
+				Console.WriteLine(item);
+			}
+		}
+
+		public void ForEachOnGenericCustomClassEnumeratorWithIDisposable<T>(CustomClassEnumeratorWithIDisposable<T> e)
+		{
+			foreach (T item in e) {
+				Console.WriteLine(item);
+			}
+		}
+
+		public void ForEachOnGenericCustomStructEnumeratorWithIDisposable<T>(CustomStructEnumeratorWithIDisposable<T> e)
+		{
+			foreach (T item in e) {
+				Console.WriteLine(item);
+			}
+		}
+
+		public static void NonGenericForeachWithReturnFallbackTest(IEnumerable e)
+		{
+			Console.WriteLine("NonGenericForeachWithReturnFallback:");
+			IEnumerator enumerator = e.GetEnumerator();
+			try {
+				Console.WriteLine("MoveNext");
+				if (enumerator.MoveNext()) {
+					object current = enumerator.Current;
+					Console.WriteLine("current: " + current);
+				}
+			} finally {
+				IDisposable disposable = enumerator as IDisposable;
+				if (disposable != null)
+					disposable.Dispose();
+			}
+			Console.WriteLine("After finally!");
+		}
+
+		public static void ForeachWithRefUsage(List<int> items)
+		{
+			foreach (int item in items) {
+				int current = item;
+				Loops.Operation(ref current);
+			}
+		}
+
+		public static void ForeachWithCapturedVariable(List<int> items)
+		{
+			foreach (int item in items) {
+				int c = item;
+				Loops.Operation((Func<bool>)(() => c == 5));
+			}
+		}
+
+		public static T LastOrDefault<T>(IEnumerable<T> items)
+		{
+			T result = default(T);
+			foreach (T item in items) {
+				result = item;
+			}
+			return result;
+		}
+		#endregion
+		//public void ForEachOverArray(string[] array)
+		//{
+		//	foreach (string text in array) {
+		//		text.ToLower();
+		//	}
+		//}
 
 		public void ForOverArray(string[] array)
 		{
@@ -206,37 +546,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("After loop");
 			}
 			Console.WriteLine("End of method");
-		}
-
-		public static void ForeachExceptForContinuedUse(IEnumerable<int> inputs)
-		{
-			Console.WriteLine("ForeachExceptForContinuedUse");
-			int num = 0;
-			using (IEnumerator<int> enumerator = inputs.GetEnumerator()) {
-				while (enumerator.MoveNext()) {
-					num = enumerator.Current;
-					Console.WriteLine(num);
-				}
-			}
-			Console.WriteLine("Last: " + num);
-		}
-
-		public static void NonGenericForeachWithReturnFallbackTest(IEnumerable e)
-		{
-			Console.WriteLine("NonGenericForeachWithReturnFallback:");
-			IEnumerator enumerator = e.GetEnumerator();
-			try {
-				Console.WriteLine("MoveNext");
-				if (enumerator.MoveNext()) {
-					object current = enumerator.Current;
-					Console.WriteLine("current: " + current);
-				}
-			} finally {
-				IDisposable disposable = enumerator as IDisposable;
-				if (disposable != null)
-					disposable.Dispose();
-			}
-			Console.WriteLine("After finally!");
 		}
 	}
 }

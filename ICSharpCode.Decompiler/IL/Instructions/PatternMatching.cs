@@ -41,6 +41,11 @@ namespace ICSharpCode.Decompiler.IL
 			return false;
 		}
 
+		public bool MatchLdcI(long val)
+		{
+			return MatchLdcI(out long v) && v == val;
+		}
+
 		public bool MatchLdLoc(ILVariable variable)
 		{
 			var inst = this as LdLoc;
@@ -201,7 +206,22 @@ namespace ICSharpCode.Decompiler.IL
 			falseInst = null;
 			return false;
 		}
-		
+
+		public bool MatchIfInstructionPositiveCondition(out ILInstruction condition, out ILInstruction trueInst, out ILInstruction falseInst)
+		{
+			if (MatchIfInstruction(out condition, out trueInst, out falseInst)) {
+				// Swap trueInst<>falseInst for every logic.not in the condition.
+				while (condition.MatchLogicNot(out var arg)) {
+					condition = arg;
+					ILInstruction tmp = trueInst;
+					trueInst = falseInst;
+					falseInst = tmp;
+				}
+				return true;
+			}
+			return false;
+		}
+
 		/// <summary>
 		/// Matches an if instruction where the false instruction is a nop.
 		/// </summary>

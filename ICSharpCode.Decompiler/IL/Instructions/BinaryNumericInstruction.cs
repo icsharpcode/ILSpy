@@ -60,7 +60,7 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly BinaryNumericOperator Operator;
 
 		/// <summary>
-		/// Gets whether this conversion is a lifted nullable operation.
+		/// Gets whether this is a lifted nullable operation.
 		/// </summary>
 		/// <remarks>
 		/// A lifted binary operation allows its arguments to be a value of type Nullable{T}, where

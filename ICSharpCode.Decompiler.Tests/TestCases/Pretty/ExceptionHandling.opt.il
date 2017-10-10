@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly '2nwcwyaz'
+.assembly mydv32cl
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module '2nwcwyaz.dll'
-// MVID: {575315DD-46C2-4376-B77B-EDE5CA5A5039}
+.module mydv32cl.dll
+// MVID: {6B95C83E-B82F-493E-BD92-AF0A5E82F1B4}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x010F0000
+// Image base: 0x014A0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -40,6 +40,12 @@
           instance bool  B(int32 i) cil managed
   {
   } // end of method ExceptionHandling::B
+
+  .method public hidebysig newslot abstract virtual 
+          instance class [mscorlib]System.Threading.Tasks.Task`1<bool> 
+          T() cil managed
+  {
+  } // end of method ExceptionHandling::T
 
   .method public hidebysig newslot abstract virtual 
           instance void  M(int32 i) cil managed

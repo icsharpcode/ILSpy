@@ -84,7 +84,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			for (AstNode pos = start; pos != end; pos = pos.NextSibling) {
 				if (pos.Role == Roles.Comment) {
 					var node = (Comment)pos;
+					base.StartNode(node);
 					base.WriteComment(node.CommentType, node.Content);
+					base.EndNode(node);
 				}
 				// see CSharpOutputVisitor.VisitNewLine()
 				//				if (pos.Role == Roles.NewLine) {
@@ -94,7 +96,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				//				}
 				if (pos.Role == Roles.PreProcessorDirective) {
 					var node = (PreProcessorDirective)pos;
+					base.StartNode(node);
 					base.WritePreProcessorDirective(node.Type, node.Argument);
+					base.EndNode(node);
 				}
 			}
 		}

@@ -102,6 +102,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowLineNumbers = (bool?)e.Attribute("ShowLineNumbers") ?? false;
 			s.ShowMetadataTokens = (bool?) e.Attribute("ShowMetadataTokens") ?? false;
 		    s.EnableWordWrap = (bool?)e.Attribute("EnableWordWrap") ?? false;
+			s.SortResults = (bool?)e.Attribute("SortResults") ?? false;
 			
 			return s;
 		}
@@ -116,6 +117,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("ShowLineNumbers", s.ShowLineNumbers);
 			section.SetAttributeValue("ShowMetadataTokens", s.ShowMetadataTokens);
 			section.SetAttributeValue("EnableWordWrap", s.EnableWordWrap);
+			section.SetAttributeValue("SortResults", s.SortResults);
 			
 			XElement existingElement = root.Element("DisplaySettings");
 			if (existingElement != null)
@@ -123,7 +125,8 @@ namespace ICSharpCode.ILSpy.Options
 			else
 				root.Add(section);
 
-			currentDisplaySettings = null; // invalidate cached settings
+			if (currentDisplaySettings != null)
+				currentDisplaySettings.CopyValues(s);
 		}
 	}
 	

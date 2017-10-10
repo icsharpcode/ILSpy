@@ -182,6 +182,12 @@ namespace ICSharpCode.Decompiler.IL
 					cancellationToken.ThrowIfCancellationRequested();
 					Debug.Assert(branch.TargetBlock == null);
 					branch.TargetBlock = FindBranchTarget(branch.TargetILOffset);
+					if (branch.TargetBlock == null) {
+						branch.ReplaceWith(new InvalidBranch("Could not find block for branch target "
+							+ Disassembler.DisassemblerHelpers.OffsetToString(branch.TargetILOffset)) {
+							ILRange = branch.ILRange
+						});
+					}
 					break;
 				case Leave leave:
 					// ret (in void method) = leave(mainContainer)
@@ -217,7 +223,7 @@ namespace ICSharpCode.Decompiler.IL
 						return block;
 				}
 			}
-			throw new InvalidOperationException("Could not find block for branch target");
+			return null;
 		}
 	}
 }

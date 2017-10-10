@@ -161,6 +161,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expectedParameters.Count == allowedParamCount)) {
 					return HandleAccessorCall(inst, target, method, arguments.ToList());
+				} else if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate) {
+					return new InvocationExpression(target, arguments.Select(arg => arg.Expression)).WithILInstruction(inst).WithRR(rr);
 				} else {
 					bool requireTypeArguments = false;
 					bool targetCasted = false;
@@ -320,31 +322,38 @@ namespace ICSharpCode.Decompiler.CSharp
 					method = ((LdVirtFtn)func).Method;
 					break;
 				default:
-					method = (IMethod)typeSystem.Resolve(((ILFunction)func).Method);
+					method = typeSystem.Resolve(((ILFunction)func).Method);
 					break;
 			}
-			var target = expressionBuilder.TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
+			var invokeMethod = inst.Method.DeclaringType.GetDelegateInvokeMethod();
+			TranslatedExpression target;
+			IType targetType;
+			if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
+				target = expressionBuilder.Translate(inst.Arguments[0]);
+				targetType = method.Parameters[0].Type;
+			} else {
+				target = expressionBuilder.TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
+				targetType = method.DeclaringType;
+			}
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
 			var result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, true) as MethodGroupResolveResult;
 
 			if (result == null) {
-				target = target.ConvertTo(method.DeclaringType, expressionBuilder);
+				target = target.ConvertTo(targetType, expressionBuilder);
 			} else {
 				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
 				if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, func.OpCode == OpCode.LdVirtFtn))
-					target = target.ConvertTo(method.DeclaringType, expressionBuilder);
+					target = target.ConvertTo(targetType, expressionBuilder);
 			}
 
 			var mre = new MemberReferenceExpression(target, method.Name);
 			mre.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
 			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(inst.Method.DeclaringType), mre)
-				//				.WithAnnotation(new DelegateConstruction.Annotation(func.OpCode == OpCode.LdVirtFtn, target, method.Name))
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
 					inst.Method.DeclaringType,
 					new MemberResolveResult(target.ResolveResult, method),
-					// TODO handle extension methods capturing the first argument
 					Conversion.MethodGroupConversion(method, func.OpCode == OpCode.LdVirtFtn, false)));
 
 			if (func is ILFunction) {

@@ -149,18 +149,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					astBuilder = CreateAstBuilder(currentContext);
 					base.VisitNamespaceDeclaration(namespaceDeclaration);
 				} finally {
+					astBuilder = CreateAstBuilder(previousContext);
 					context.Pop();
 				}
 			}
 			
 			public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 			{
-				var currentContext = context.Peek().WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
+				var previousContext = context.Peek();
+				var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
 				context.Push(currentContext);
 				try {
 					astBuilder = CreateAstBuilder(currentContext);
 					base.VisitTypeDeclaration(typeDeclaration);
 				} finally {
+					astBuilder = CreateAstBuilder(previousContext);
 					context.Pop();
 				}
 			}

@@ -16,13 +16,14 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
-	/// Description of TransformAssignment.
+	/// Constructs compound assignments and inline assignments.
 	/// </summary>
 	public class TransformAssignment : IBlockTransform
 	{
@@ -42,7 +43,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				if (TransformInlineAssignmentStObj(block, i))
 					continue;
-				if (TransformInlineAssignmentCall(block, i))
+				if (TransformInlineCompoundAssignmentCall(block, i))
+					continue;
+				if (TransformRoslynCompoundAssignmentCall(block, i))
+					continue;
+				if (TransformRoslynPostIncDecOperatorOnAddress(block, i))
 					continue;
 			}
 		}
@@ -82,15 +87,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 					replacement = new StObj(fieldStore.Target, inst.Value, fieldStore.Type);
 				} else { // otherwise it must be local
-					TransformInlineAssignmentLocal(block, i);
-					return false;
+					return TransformInlineAssignmentLocal(block, i);
 				}
 				context.Step("Inline assignment to instance field", fieldStore);
 				local = localStore.Variable;
 				block.Instructions.RemoveAt(i + 1);
 			} else if (nextInst is StObj) { // static fields
 				fieldStore = (StObj)nextInst;
-				if (!fieldStore.Value.MatchLdLoc(inst.Variable))
+				if (!fieldStore.Value.MatchLdLoc(inst.Variable) || (fieldStore.Target.MatchLdFlda(out var target, out _) && target.MatchLdLoc(inst.Variable)))
 					return false;
 				context.Step("Inline assignment to static field", fieldStore);
 				local = inst.Variable;
@@ -106,54 +110,127 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <code>
 		/// stloc s(binary(callvirt(getter), value))
 		/// callvirt (setter, ldloc s)
-		/// ... usage of s ...
+		/// (followed by single usage of s in next instruction)
 		/// -->
-		/// ... compound.op.new(callvirt(getter), value) ...
+		/// stloc s(compound.op.new(callvirt(getter), value))
 		/// </code>
-		/// -or-
-		/// <code>
-		/// stloc s(stloc v(binary(callvirt(getter), value)))
-		/// callvirt (setter, ldloc s)
-		/// ... usage of v ...
-		/// -->
-		/// ... compound.op.new(callvirt(getter), value) ...
-		/// </code>
-		bool TransformInlineAssignmentCall(Block block, int i)
+		bool TransformInlineCompoundAssignmentCall(Block block, int i)
 		{
-			var inst = block.Instructions[i] as StLoc;
+			var mainStLoc = block.Instructions[i] as StLoc;
 			// in some cases it can be a compiler-generated local
-			if (inst == null || (inst.Variable.Kind != VariableKind.StackSlot && inst.Variable.Kind != VariableKind.Local))
+			if (mainStLoc == null || (mainStLoc.Variable.Kind != VariableKind.StackSlot && mainStLoc.Variable.Kind != VariableKind.Local))
 				return false;
-			BinaryNumericInstruction binary;
-			ILVariable localVariable;
-			if (inst.Value is StLoc) {
-				var tmp = (StLoc)inst.Value;
-				binary = tmp.Value as BinaryNumericInstruction;
-				localVariable = tmp.Variable;
-			} else {
-				binary = inst.Value as BinaryNumericInstruction;
-				localVariable = inst.Variable;
-			}
+			BinaryNumericInstruction binary = mainStLoc.Value as BinaryNumericInstruction;
+			ILVariable localVariable = mainStLoc.Variable;
+			if (!localVariable.IsSingleDefinition)
+				return false;
+			if (localVariable.LoadCount != 2)
+				return false;
 			var getterCall = binary?.Left as CallInstruction;
 			var setterCall = block.Instructions.ElementAtOrDefault(i + 1) as CallInstruction;
+			if (!MatchingGetterAndSetterCalls(getterCall, setterCall))
+				return false;
+			if (!setterCall.Arguments.Last().MatchLdLoc(localVariable))
+				return false;
+			
+			var next = block.Instructions.ElementAtOrDefault(i + 2);
+			if (next == null)
+				return false;
+			if (next.Descendants.Where(d => d.MatchLdLoc(localVariable)).Count() != 1)
+				return false;
+			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, getterCall.Method.ReturnType))
+				return false;
+			context.Step($"Inline compound assignment to '{getterCall.Method.AccessorOwner.Name}'", setterCall);
+			block.Instructions.RemoveAt(i + 1); // remove setter call
+			binary.ReplaceWith(new CompoundAssignmentInstruction(
+				binary, getterCall, binary.Right,
+			    getterCall.Method.ReturnType, CompoundAssignmentType.EvaluatesToNewValue));
+			return true;
+		}
+
+		/// <summary>
+		/// Roslyn compound assignment that's not inline within another instruction.
+		/// </summary>
+		bool TransformRoslynCompoundAssignmentCall(Block block, int i)
+		{
+			// stloc variable(callvirt get_Property(ldloc obj))
+			// callvirt set_Property(ldloc obj, binary.op(ldloc variable, ldc.i4 1))
+			// => compound.op.new(callvirt get_Property(ldloc obj), ldc.i4 1)
+			if (!(block.Instructions[i] is StLoc stloc))
+				return false;
+			if (!(stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 1))
+				return false;
+			var getterCall = stloc.Value as CallInstruction;
+			var setterCall = block.Instructions[i + 1] as CallInstruction;
+			if (!(MatchingGetterAndSetterCalls(getterCall, setterCall)))
+				return false;
+			var binary = setterCall.Arguments.Last() as BinaryNumericInstruction;
+			if (binary == null || !binary.Left.MatchLdLoc(stloc.Variable))
+				return false;
+			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, getterCall.Method.ReturnType))
+				return false;
+			context.Step($"Compound assignment to '{getterCall.Method.AccessorOwner.Name}'", setterCall);
+			block.Instructions.RemoveAt(i + 1); // remove setter call
+			stloc.ReplaceWith(new CompoundAssignmentInstruction(
+				binary, getterCall, binary.Right,
+				getterCall.Method.ReturnType, CompoundAssignmentType.EvaluatesToNewValue));
+			return true;
+		}
+
+		static bool MatchingGetterAndSetterCalls(CallInstruction getterCall, CallInstruction setterCall)
+		{
 			if (getterCall == null || setterCall == null || !IsSameMember(getterCall.Method.AccessorOwner, setterCall.Method.AccessorOwner))
 				return false;
 			var owner = getterCall.Method.AccessorOwner as IProperty;
 			if (owner == null || !IsSameMember(getterCall.Method, owner.Getter) || !IsSameMember(setterCall.Method, owner.Setter))
 				return false;
-			var next = block.Instructions.ElementAtOrDefault(i + 2);
-			if (next == null)
+			if (setterCall.Arguments.Count != getterCall.Arguments.Count + 1)
 				return false;
-			var usages = next.Descendants.Where(d => d.MatchLdLoc(localVariable)).ToArray();
-			if (usages.Length != 1)
+			// Ensure that same arguments are passed to getterCall and setterCall:
+			for (int j = 0; j < getterCall.Arguments.Count; j++) {
+				if (!SemanticHelper.IsPure(getterCall.Arguments[j].Flags))
+					return false;
+				if (!getterCall.Arguments[j].Match(setterCall.Arguments[j]).Success)
+					return false;
+			}
+			return true;
+		}
+
+		/// <summary>
+		/// Transform compound assignments where the return value is not being used,
+		/// or where there's an inlined assignment within the setter call.
+		/// </summary>
+		/// <remarks>
+		/// Called by ExpressionTransforms.
+		/// </remarks>
+		internal static bool HandleCallCompoundAssign(CallInstruction setterCall, StatementTransformContext context)
+		{
+			// callvirt set_Property(ldloc S_1, binary.op(callvirt get_Property(ldloc S_1), value))
+			// ==> compound.op.new(callvirt(callvirt get_Property(ldloc S_1)), value)
+			var setterValue = setterCall.Arguments.LastOrDefault();
+			var storeInSetter = setterValue as StLoc;
+			if (storeInSetter != null) {
+				// callvirt set_Property(ldloc S_1, stloc v(binary.op(callvirt get_Property(ldloc S_1), value)))
+				// ==> stloc v(compound.op.new(callvirt(callvirt get_Property(ldloc S_1)), value))
+				setterValue = storeInSetter.Value;
+			}
+			if (!(setterValue is BinaryNumericInstruction binary))
 				return false;
-			if (binary.IsLifted)
+			var getterCall = binary.Left as CallInstruction;
+			if (!MatchingGetterAndSetterCalls(getterCall, setterCall))
 				return false;
-			context.Step($"Compound assignment to '{owner.Name}'", setterCall);
-			block.Instructions.RemoveAt(i + 1);
-			block.Instructions.RemoveAt(i);
-			usages[0].ReplaceWith(new CompoundAssignmentInstruction(binary.Operator, getterCall, binary.Right,
-			                                                   getterCall.Method.ReturnType, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToNewValue));
+			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, getterCall.Method.ReturnType))
+				return false;
+			context.Step($"Compound assignment to '{getterCall.Method.AccessorOwner.Name}'", setterCall);
+			ILInstruction newInst = new CompoundAssignmentInstruction(
+				binary, getterCall, binary.Right,
+				getterCall.Method.ReturnType, CompoundAssignmentType.EvaluatesToNewValue);
+			if (storeInSetter != null) {
+				storeInSetter.Value = newInst;
+				newInst = storeInSetter;
+				context.RequestRerun(); // moving stloc to top-level might trigger inlining
+			}
+			setterCall.ReplaceWith(newInst);
 			return true;
 		}
 
@@ -163,20 +240,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc s(stloc l(value))
 		/// </code>
-		void TransformInlineAssignmentLocal(Block block, int i)
+		bool TransformInlineAssignmentLocal(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
 			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
 			if (inst == null || nextInst == null)
-				return;
+				return false;
 			if (nextInst.Variable.Kind == VariableKind.StackSlot || !nextInst.Value.MatchLdLoc(inst.Variable))
-				return;
+				return false;
 			context.Step("Inline assignment to local variable", inst);
 			var value = inst.Value;
 			var var = nextInst.Variable;
 			var stackVar = inst.Variable;
 			block.Instructions.RemoveAt(i);
 			nextInst.ReplaceWith(new StLoc(stackVar, new StLoc(var, value)));
+			return true;
 		}
 		
 		/// <code>
@@ -227,6 +305,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var stobj = block.Instructions.ElementAtOrDefault(i + 2) as StObj;
 			if (inst == null || nextInst == null || stobj == null)
 				return false;
+			if (!inst.Variable.IsSingleDefinition || inst.Variable.LoadCount != 2)
+				return false;
 			if (!(inst.Value is LdElema || inst.Value is LdFlda || inst.Value is LdsFlda))
 				return false;
 			ILInstruction target;
@@ -239,15 +319,43 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary == null || !binary.Left.MatchLdLoc(nextInst.Variable) || !binary.Right.MatchLdcI4(1)
 			    || (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
 				return false;
-			if (binary.IsLifted)
-				return false;
 			context.Step($"TransformPostIncDecOperator", inst);
-			var assignment = new CompoundAssignmentInstruction(binary.Operator, new LdObj(inst.Value, targetType), binary.Right, targetType, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
+			var assignment = new CompoundAssignmentInstruction(binary, new LdObj(inst.Value, targetType), binary.Right, targetType, CompoundAssignmentType.EvaluatesToOldValue);
 			stobj.ReplaceWith(new StLoc(nextInst.Variable, assignment));
 			block.Instructions.RemoveAt(i + 1);
 			return true;
 		}
-		
+
+		/// <code>
+		/// stloc l(ldobj(ldflda(target)))
+		/// stobj(ldflda(target), binary.op(ldloc l, ldc.i4 1))
+		/// -->
+		/// compound.op.old(ldobj(ldflda(target)), ldc.i4 1)
+		/// </code>
+		bool TransformRoslynPostIncDecOperatorOnAddress(Block block, int i)
+		{
+			var inst = block.Instructions[i] as StLoc;
+			var stobj = block.Instructions.ElementAtOrDefault(i + 1) as StObj;
+			if (inst == null || stobj == null)
+				return false;
+			if (!inst.Variable.IsSingleDefinition || inst.Variable.LoadCount != 1)
+				return false;
+			if (!inst.Value.MatchLdObj(out var loadTarget, out var loadType) || !loadTarget.MatchLdFlda(out var fieldTarget, out var field))
+				return false;
+			if (!stobj.Target.MatchLdFlda(out var fieldTarget2, out var field2))
+				return false;
+			if (!fieldTarget.Match(fieldTarget2).Success || !field.Equals(field2))
+				return false;
+			var binary = stobj.Value as BinaryNumericInstruction;
+			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1)
+				|| (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
+				return false;
+			context.Step("TransformRoslynPostIncDecOperator", inst);
+			stobj.ReplaceWith(new CompoundAssignmentInstruction(binary, inst.Value, binary.Right, loadType, CompoundAssignmentType.EvaluatesToOldValue));
+			block.Instructions.RemoveAt(i);
+			return true;
+		}
+
 		/// <code>
 		/// stloc s(ldflda)
 		/// stloc s2(ldobj(ldflda(ldloc s)))
@@ -291,10 +399,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (binary == null || !binary.Left.MatchLdLoc(fieldValue.Variable) || !binary.Right.MatchLdcI4(1)
 			    || (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
 				return false;
-			if (binary.IsLifted)
-				return false;
 			context.Step($"TransformCSharp4PostIncDecOperatorOnAddress", baseFieldAddress);
-			var assignment = new CompoundAssignmentInstruction(binary.Operator, new LdObj(baseAddress, t), binary.Right, t, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
+			var assignment = new CompoundAssignmentInstruction(binary, new LdObj(baseAddress, t), binary.Right, t, CompoundAssignmentType.EvaluatesToOldValue);
 			stobj.ReplaceWith(new StLoc(fieldValueCopyToLocal.Variable, assignment));
 			block.Instructions.RemoveAt(i + 2);
 			block.Instructions.RemoveAt(i + 1);
@@ -323,10 +429,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var binary = stobj.Value as BinaryNumericInstruction;
 			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
 				return false;
-			if (binary.IsLifted)
-				return false;
 			context.Step($"TransformPostIncDecOnStaticField", inst);
-			var assignment = new CompoundAssignmentInstruction(binary.Operator, inst.Value, binary.Right, type, binary.CheckForOverflow, binary.Sign, CompoundAssignmentType.EvaluatesToOldValue);
+			var assignment = new CompoundAssignmentInstruction(binary, inst.Value, binary.Right, type, CompoundAssignmentType.EvaluatesToOldValue);
 			stobj.ReplaceWith(new StLoc(inst.Variable, assignment));
 			return true;
 		}

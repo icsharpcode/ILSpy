@@ -163,6 +163,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Jmp()
+		{
+			RunIL("Jmp.il");
+		}
+
+		[Test]
 		public void UnsafeCode([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);
@@ -194,6 +200,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test, Ignore("Run() method cannot be fully decompiled.")]
 		public void Async([ValueSource("defaultOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
+		public void LINQRaytracer([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);
 		}
