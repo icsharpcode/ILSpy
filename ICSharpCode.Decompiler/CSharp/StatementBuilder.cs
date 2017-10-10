@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				switch (section.Body) {
 					case Branch br:
 						// we can only inline the block, if all branches are in the switchContainer.
-						if (br.TargetBlock.Parent == switchContainer && switchContainer.Descendants.OfType<Branch>().Where(b => b.TargetBlock == br.TargetBlock).All(b => BlockContainer.FindClosestContainer(b) == switchContainer))
+						if (br.TargetBlock.Parent == switchContainer && switchContainer.Descendants.OfType<Branch>().Where(b => b.TargetBlock == br.TargetBlock).All(b => BlockContainer.FindClosestSwitchContainer(b) == switchContainer))
 							caseLabelMapping.Add(br.TargetBlock, firstValueResolveResult);
 						break;
 					default:
@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				switch (section.Body) {
 					case Branch br:
 						// we can only inline the block, if all branches are in the switchContainer.
-						if (br.TargetBlock.Parent == switchContainer && switchContainer.Descendants.OfType<Branch>().Where(b => b.TargetBlock == br.TargetBlock).All(b => BlockContainer.FindClosestContainer(b) == switchContainer))
+						if (br.TargetBlock.Parent == switchContainer && switchContainer.Descendants.OfType<Branch>().Where(b => b.TargetBlock == br.TargetBlock).All(b => BlockContainer.FindClosestSwitchContainer(b) == switchContainer))
 							ConvertSwitchSectionBody(astSection, br.TargetBlock);
 						else
 							ConvertSwitchSectionBody(astSection, section.Body);

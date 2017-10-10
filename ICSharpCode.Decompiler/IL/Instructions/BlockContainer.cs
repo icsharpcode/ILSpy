@@ -226,5 +226,15 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return null;
 		}
+
+		public static BlockContainer FindClosestSwitchContainer(ILInstruction inst)
+		{
+			while (inst != null) {
+				if (inst is BlockContainer bc && bc.entryPoint.Instructions.FirstOrDefault() is SwitchInstruction)
+					return bc;
+				inst = inst.Parent;
+			}
+			return null;
+		}
 	}
 }
