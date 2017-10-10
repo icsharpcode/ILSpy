@@ -66,7 +66,7 @@ namespace ILSpy.BamlDecompiler
 			function.RunTransforms(CSharpDecompiler.GetILTransforms(), context);
 			
 			var block = function.Body.Children.OfType<Block>().First();
-			var ilSwitch = block.Children.OfType<SwitchInstruction>().FirstOrDefault();
+			var ilSwitch = block.Descendants.OfType<SwitchInstruction>().FirstOrDefault();
 			
 			if (ilSwitch != null) {
 				foreach (var section in ilSwitch.Sections) {
@@ -92,13 +92,18 @@ namespace ILSpy.BamlDecompiler
 		{
 			var events = new List<EventRegistration>();
 			
-			if (inst is Block) {
-				foreach (var node in ((Block)inst).Instructions) {
-					FindEvents(node, events);
-				}
-				FindEvents(((Block)inst).FinalInstruction, events);
-			} else {
-				FindEvents(inst, events);
+			switch (inst) {
+				case Block b:
+					foreach (var node in ((Block)inst).Instructions) {
+						FindEvents(node, events);
+					}
+					FindEvents(((Block)inst).FinalInstruction, events);
+					break;
+				case Branch br:
+					return FindEvents(br.TargetBlock);
+				default:
+					FindEvents(inst, events);
+					break;
 			}
 			return events.ToArray();
 		}
