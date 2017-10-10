@@ -152,7 +152,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				switch (section.Body) {
 					case Branch br:
-						caseLabelMapping.Add(br.TargetBlock, firstValueResolveResult);
+						// we can only inline the block, if all branches are in the switchContainer.
+						if (br.TargetBlock.IsDescendantOf(switchContainer))
+							caseLabelMapping.Add(br.TargetBlock, firstValueResolveResult);
 						break;
 					default:
 						break;
@@ -164,7 +166,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				var astSection = translationDictionary[section];
 				switch (section.Body) {
 					case Branch br:
-						ConvertSwitchSectionBody(astSection, br.TargetBlock);
+						// we can only inline the block, if all branches are in the switchContainer.
+						if (br.TargetBlock.IsDescendantOf(switchContainer))
+							ConvertSwitchSectionBody(astSection, br.TargetBlock);
+						else
+							ConvertSwitchSectionBody(astSection, section.Body);
 						break;
 					default:
 						ConvertSwitchSectionBody(astSection, section.Body);
