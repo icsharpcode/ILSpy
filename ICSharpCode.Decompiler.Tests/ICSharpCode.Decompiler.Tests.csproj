@@ -51,6 +51,7 @@
 
   <ItemGroup>
     <Compile Include="DataFlowTest.cs" />
+    <Compile Include="TestCases\Correctness\LINQRaytracer.cs" />
     <Compile Include="TestCases\Pretty\DelegateConstruction.cs" />
     <Compile Include="Helpers\CodeAssert.cs" />
     <Compile Include="Helpers\SdkUtility.cs" />

@@ -135,14 +135,14 @@ namespace ICSharpCode.Decompiler.IL
 		/// Returns -1 if the instruction does not exist in the collection.
 		/// </summary>
 		/// <remarks>
-		/// Runs in O(1) is the item can be found using the Parent/ChildIndex properties.
+		/// Runs in O(1) if the item can be found using the Parent/ChildIndex properties.
 		/// Otherwise, runs in O(N).
 		/// </remarks>
 		public int IndexOf(T item)
 		{
 			// If this collection is the item's primary position, we can use ChildIndex:
 			int index = item.ChildIndex - firstChildIndex;
-			if (index >= 0 && index <= list.Count && list[index] == item)
+			if (index >= 0 && index < list.Count && list[index] == item)
 				return index;
 			// But we still need to fall back on a full search, because the ILAst might be
 			// in a state where item is in multiple locations.

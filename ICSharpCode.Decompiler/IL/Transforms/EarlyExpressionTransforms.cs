@@ -54,9 +54,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (inst.Target.MatchLdLoca(out ILVariable v)
 				&& TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type)
 				&& inst.UnalignedPrefix == 0
-				&& !inst.IsVolatile) {
+				&& !inst.IsVolatile)
+			{
 				context.Step($"stobj(ldloca {v.Name}, ...) => stloc {v.Name}(...)", inst);
-				inst.ReplaceWith(new StLoc(v, inst.Value));
+				inst.ReplaceWith(new StLoc(v, inst.Value) { ILRange = inst.ILRange });
+				return true;
+			}
+			return false;
+		}
+
+		protected internal override void VisitLdObj(LdObj inst)
+		{
+			base.VisitLdObj(inst);
+			LdObjToLdLoc(inst, context);
+		}
+
+		internal static bool LdObjToLdLoc(LdObj inst, ILTransformContext context)
+		{
+			if (inst.Target.MatchLdLoca(out ILVariable v)
+				&& TypeUtils.IsCompatibleTypeForMemoryAccess(new ByReferenceType(v.Type), inst.Type)
+				&& inst.UnalignedPrefix == 0
+				&& !inst.IsVolatile)
+			{
+				context.Step($"ldobj(ldloca {v.Name}, ...) => ldloc {v.Name}(...)", inst);
+				inst.ReplaceWith(new LdLoc(v) { ILRange = inst.ILRange });
 				return true;
 			}
 			return false;

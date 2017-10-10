@@ -41,19 +41,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					context.CancellationToken.ThrowIfCancellationRequested();
 					foreach (var call in block.Instructions[i].Descendants.OfType<NewObj>()) {
-						ILInstruction target;
-						ILFunction f = TransformDelegateConstruction(call, out target);
+						ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
 						if (f != null) {
 							call.Arguments[0].ReplaceWith(new Nop());
 							call.Arguments[1].ReplaceWith(f);
+							if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
+								targetsToReplace.Add((IInstructionWithVariableOperand)target);
 						}
-						if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
-							targetsToReplace.Add((IInstructionWithVariableOperand)target);
 					}
-					
-					ILVariable targetVariable;
-					ILInstruction value;
-					if (block.Instructions[i].MatchStLoc(out targetVariable, out value)) {
+					if (block.Instructions[i].MatchStLoc(out ILVariable targetVariable, out ILInstruction value)) {
 						var newObj = value as NewObj;
 						// TODO : it is probably not a good idea to remove *all* display-classes
 						// is there a way to minimize the false-positives?
@@ -261,14 +257,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			protected internal override void VisitStObj(StObj inst)
 			{
 				base.VisitStObj(inst);
-				ILInstruction target;
-				IField field;
-				if (!inst.Target.MatchLdFlda(out target, out field) || !MatchesTargetOrCopyLoad(target))
+				if (!inst.Target.MatchLdFlda(out ILInstruction target, out IField field) || !MatchesTargetOrCopyLoad(target))
 					return;
 				field = (IField)field.MemberDefinition;
-				DisplayClassVariable info;
 				ILInstruction value;
-				if (initValues.TryGetValue(field, out info)) {
+				if (initValues.TryGetValue(field, out DisplayClassVariable info)) {
 					inst.ReplaceWith(new StLoc(info.variable, inst.Value));
 				} else {
 					if (inst.Value.MatchLdLoc(out var v) && v.Kind == VariableKind.Parameter && currentFunction == v.Function) {
@@ -288,12 +281,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			protected internal override void VisitLdObj(LdObj inst)
 			{
 				base.VisitLdObj(inst);
-				ILInstruction target;
-				IField field;
-				if (!inst.Target.MatchLdFlda(out target, out field) || !MatchesTargetOrCopyLoad(target))
+				if (!inst.Target.MatchLdFlda(out ILInstruction target, out IField field))
 					return;
-				DisplayClassVariable info;
-				if (!initValues.TryGetValue((IField)field.MemberDefinition, out info))
+				if (!initValues.TryGetValue((IField)field.MemberDefinition, out DisplayClassVariable info))
 					return;
 				inst.ReplaceWith(info.value.Clone());
 			}
@@ -306,8 +296,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!MatchesTargetOrCopyLoad(inst.Target))
 					return;
 				var field = (IField)inst.Field.MemberDefinition;
-				DisplayClassVariable info;
-				if (!initValues.TryGetValue(field, out info)) {
+				if (!initValues.TryGetValue(field, out DisplayClassVariable info)) {
 					var v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 					v.CaptureScope = captureScope;
 					inst.ReplaceWith(new LdLoca(v));
@@ -317,6 +306,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					inst.ReplaceWith(new LdLoca(l.Variable));
 				} else {
 					throw new NotImplementedException();
+				}
+			}
+
+			protected internal override void VisitCompoundAssignmentInstruction(CompoundAssignmentInstruction inst)
+			{
+				base.VisitCompoundAssignmentInstruction(inst);
+				if (inst.Target.MatchLdLoc(out var v)) {
+					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign)));
 				}
 			}
 		}

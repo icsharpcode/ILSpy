@@ -69,30 +69,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 						Call newInst = (Call)call.Clone();
 
-						newInst.Arguments.Clear();
-
-						if (inst.Arguments.Count > 0) {
-							ILInstruction thisArg = inst.Arguments[0];
-
-							// special handling for first argument (this) - the underlying issue may be somewhere else
-							// normally
-							// leave IL_0000(await(callvirt<> n__0(ldobj xxHandler(ldloca this), ldobj System.Net.Http.HttpRequestMessage(ldloca request), ldobj System.Threading.CancellationToken(ldloca cancellationToken))))
-							// would be decompiled to
-							// return await((DelegatingHandler)this).SendAsync(request, cancellationToken);
-							// this changes it to
-							// return await base.SendAsync(request, cancellationToken);
-							if (thisArg.MatchLdObj(out ILInstruction loadedObject, out IType objectType) &&
-								loadedObject.MatchLdLoca(out ILVariable loadedVar)) {
-								thisArg = new LdLoc(loadedVar);
-							}
-
-							newInst.Arguments.Add(thisArg);
-
-							// add everything except first argument
-							for (int i = 1; i < inst.Arguments.Count; i++) {
-								newInst.Arguments.Add(inst.Arguments[i]);
-							}
-						}
+						newInst.Arguments.ReplaceList(inst.Arguments);
 						inst.ReplaceWith(newInst);
 					}
 				}
