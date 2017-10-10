@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
-		[Test, Ignore]
+		[Test]
 		public void DelegateConstruction([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
