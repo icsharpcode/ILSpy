@@ -46,9 +46,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (f != null) {
 							call.Arguments[0].ReplaceWith(new Nop());
 							call.Arguments[1].ReplaceWith(f);
+							if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
+								targetsToReplace.Add((IInstructionWithVariableOperand)target);
 						}
-						if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
-							targetsToReplace.Add((IInstructionWithVariableOperand)target);
 					}
 					
 					ILVariable targetVariable;
@@ -290,7 +290,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				base.VisitLdObj(inst);
 				ILInstruction target;
 				IField field;
-				if (!inst.Target.MatchLdFlda(out target, out field) || !MatchesTargetOrCopyLoad(target))
+				if (!inst.Target.MatchLdFlda(out target, out field))
 					return;
 				DisplayClassVariable info;
 				if (!initValues.TryGetValue((IField)field.MemberDefinition, out info))
