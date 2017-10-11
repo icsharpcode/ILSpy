@@ -88,15 +88,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!firstBlockJump.MatchBranch(out var firstBlock))
 				return false;
-			bool isLegacy;
 			List<(string, Block)> values = new List<(string, Block)>();
 			// match null check: this is used by the old C# compiler.
 			if (condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && left.MatchLdLoc(out var switchValueVar)) {
-				isLegacy = true;
 				values.Add((null, firstBlock));
 				// Roslyn: match call to operator ==(string, string)
 			} else if (MatchStringEqualityComparison(condition, out switchValueVar, out string value)) {
-				isLegacy = false;
 				values.Add((value, firstBlock));
 			} else return false;
 			// switchValueVar must be assigned only once and must be of type string.
@@ -114,9 +111,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			// We didn't find enough cases, exit
 			if (values.Count < 3)
-				return false;
-			// The block after all cases should only be reachable from the previous block and the null-check (in legacy code).
-			if (currentCaseBlock.IncomingEdgeCount != (isLegacy ? 2 : 1))
 				return false;
 			var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch(b.Item2) }));
 			sections.Add(new SwitchSection { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = new Branch(currentCaseBlock) });
