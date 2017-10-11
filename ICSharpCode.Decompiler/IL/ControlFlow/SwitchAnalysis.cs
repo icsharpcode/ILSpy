@@ -126,8 +126,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			} else if (block.Instructions.Last() is SwitchInstruction switchInst) {
 				if (!(tailOnly || block.Instructions.Count == 1))
 					return false;
-				if (AnalyzeSwitch(switchInst, inputValues, out trueValues)) {
+				if (AnalyzeSwitch(switchInst, inputValues)) {
 					ContainsILSwitch = true; // OK
+					return true;
 				} else { // switch analysis failed (e.g. switchVar mismatch)
 					return false;
 				}
@@ -148,10 +149,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			return true;
 		}
 
-		private bool AnalyzeSwitch(SwitchInstruction inst, LongSet inputValues, out LongSet anyMatchValues)
+		private bool AnalyzeSwitch(SwitchInstruction inst, LongSet inputValues)
 		{
 			Debug.Assert(!inst.IsLifted);
-			anyMatchValues = LongSet.Empty;
 			long offset;
 			if (MatchSwitchVar(inst.Value)) {
 				offset = 0;
@@ -177,8 +177,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			foreach (var section in inst.Sections) {
 				var matchValues = section.Labels.AddOffset(offset).IntersectWith(inputValues);
-				AddSection(matchValues, section.Body);
-				anyMatchValues = anyMatchValues.UnionWith(matchValues);
+				if (matchValues.Count() > 1 && section.Body.MatchBranch(out var targetBlock) && AnalyzeBlock(targetBlock, matchValues)) {
+					InnerBlocks.Add(targetBlock);
+				} else {
+					AddSection(matchValues, section.Body);
+				}
 			}
 			return true;
 		}
