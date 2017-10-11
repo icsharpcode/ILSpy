@@ -81,6 +81,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					innerBlock.Instructions.Clear();
 				}
 				blockContainerNeedsCleanup = true;
+				SortSwitchSections(sw);
 			} else {
 				// 2nd pass of SimplifySwitchInstruction (after duplicating return blocks),
 				// (1st pass was in ControlFlowSimplification)
@@ -115,6 +116,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				});
 			AdjustLabels(sw);
+			SortSwitchSections(sw);
+		}
+
+		static void SortSwitchSections(SwitchInstruction sw)
+		{
 			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => (s.Body as Branch)?.TargetILOffset).ThenBy(s => s.Labels.Values.FirstOrDefault()));
 		}
 
