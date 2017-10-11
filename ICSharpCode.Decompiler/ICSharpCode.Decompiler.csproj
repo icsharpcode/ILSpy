@@ -300,6 +300,7 @@
     <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
+    <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />
     <Compile Include="Util\UnicodeNewline.cs" />
