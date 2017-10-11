@@ -44,41 +44,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("SparseIntegerSwitch: " + i);
 			switch (i) {
 				case -10000000: {
-					return "-10 mln";
-				}
+						return "-10 mln";
+					}
 				case -100: {
-					return "-hundred";
-				}
+						return "-hundred";
+					}
 				case -1: {
-					return "-1";
-				}
+						return "-1";
+					}
 				case 0: {
-					return "0";
-				}
+						return "0";
+					}
 				case 1: {
-					return "1";
-				}
+						return "1";
+					}
 				case 2: {
-					return "2";
-				}
+						return "2";
+					}
 				case 4: {
-					return "4";
-				}
+						return "4";
+					}
 				case 100: {
-					return "hundred";
-				}
+						return "hundred";
+					}
 				case 10000: {
-					return "ten thousand";
-				}
+						return "ten thousand";
+					}
 				case 10001: {
-					return "ten thousand and one";
-				}
+						return "ten thousand and one";
+					}
 				case 2147483647: {
-					return "int.MaxValue";
-				}
+						return "int.MaxValue";
+					}
 				default: {
-					return "something else";
-				}
+						return "something else";
+					}
 			}
 		}
 
@@ -86,20 +86,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			switch (i) {
 				case null: {
-					return "null";
-				}
+						return "null";
+					}
 				case 0: {
-					return "zero";
-				}
+						return "zero";
+					}
 				case 5: {
-					return "five";
-				}
+						return "five";
+					}
 				case 10: {
-					return "ten";
-				}
+						return "ten";
+					}
 				default: {
-					return "large";
-				}
+						return "large";
+					}
 			}
 		}
 
@@ -107,20 +107,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			switch (i + 5) {
 				case null: {
-					return "null";
-				}
+						return "null";
+					}
 				case 0: {
-					return "zero";
-				}
+						return "zero";
+					}
 				case 5: {
-					return "five";
-				}
+						return "five";
+					}
 				case 10: {
-					return "ten";
-				}
+						return "ten";
+					}
 				default: {
-					return "large";
-				}
+						return "large";
+					}
 			}
 		}
 
@@ -128,17 +128,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			switch (i) {
 				case 0: {
-					return "zero";
-				}
+						return "zero";
+					}
 				case 5: {
-					return "five";
-				}
+						return "five";
+					}
 				case 10: {
-					return "ten";
-				}
+						return "ten";
+					}
 				default: {
-					return "other";
-				}
+						return "other";
+					}
 			}
 		}
 
@@ -146,17 +146,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			switch (i + 5) {
 				case 0: {
-					return "zero";
-				}
+						return "zero";
+					}
 				case 5: {
-					return "five";
-				}
+						return "five";
+					}
 				case 10: {
-					return "ten";
-				}
+						return "ten";
+					}
 				default: {
-					return "other";
-				}
+						return "other";
+					}
 			}
 		}
 
@@ -199,17 +199,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("ShortSwitchOverString: " + text);
 			switch (text) {
 				case "First case": {
-					return "Text1";
-				}
+						return "Text1";
+					}
 				case "Second case": {
-					return "Text2";
-				}
+						return "Text2";
+					}
 				case "Third case": {
-					return "Text3";
-				}
+						return "Text3";
+					}
 				default: {
-					return "Default";
-				}
+						return "Default";
+					}
 			}
 		}
 
@@ -218,30 +218,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("SwitchOverString1: " + text);
 			switch (text) {
 				case "First case": {
-					return "Text1";
-				}
+						return "Text1";
+					}
 				case "Second case":
 				case "2nd case": {
-					return "Text2";
-				}
+						return "Text2";
+					}
 				case "Third case": {
-					return "Text3";
-				}
+						return "Text3";
+					}
 				case "Fourth case": {
-					return "Text4";
-				}
+						return "Text4";
+					}
 				case "Fifth case": {
-					return "Text5";
-				}
+						return "Text5";
+					}
 				case "Sixth case": {
-					return "Text6";
-				}
+						return "Text6";
+					}
 				case null: {
-					return null;
-				}
+						return null;
+					}
 				default: {
-					return "Default";
-				}
+						return "Default";
+					}
 			}
 		}
 
@@ -251,41 +251,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			string userName = Environment.UserName;
 			switch (userName) {
 				case "First case": {
-					return "Text1";
-				}
+						return "Text1";
+					}
 				case "Second case": {
-					return "Text2";
-				}
+						return "Text2";
+					}
 				case "Third case": {
-					return "Text3";
-				}
+						return "Text3";
+					}
 				case "Fourth case": {
-					return "Text4";
-				}
+						return "Text4";
+					}
 				case "Fifth case": {
-					return "Text5";
-				}
+						return "Text5";
+					}
 				case "Sixth case": {
-					return "Text6";
-				}
+						return "Text6";
+					}
 				case "Seventh case": {
-					return "Text7";
-				}
+						return "Text7";
+					}
 				case "Eighth case": {
-					return "Text8";
-				}
+						return "Text8";
+					}
 				case "Ninth case": {
-					return "Text9";
-				}
+						return "Text9";
+					}
 				case "Tenth case": {
-					return "Text10";
-				}
+						return "Text10";
+					}
 				case "Eleventh case": {
-					return "Text11";
-				}
+						return "Text11";
+					}
 				default: {
-					return "Default";
-				}
+						return "Default";
+					}
 			}
 		}
 
@@ -294,14 +294,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("SwitchOverBool: " + b.ToString());
 			switch (b) {
 				case true: {
-					return bool.TrueString;
-				}
+						return bool.TrueString;
+					}
 				case false: {
-					return bool.FalseString;
-				}
+						return bool.FalseString;
+					}
 				default: {
-					return null;
-				}
+						return null;
+					}
 			}
 		}
 
@@ -311,26 +311,26 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			while (true) {
 				switch (i) {
 					case 1: {
-						Console.WriteLine("one");
-						break;
-					}
+							Console.WriteLine("one");
+							break;
+						}
 					case 2: {
-						Console.WriteLine("two");
-						break;
-					}
+							Console.WriteLine("two");
+							break;
+						}
 					case 3: {
-						Console.WriteLine("three");
-						continue;
-					}
+							Console.WriteLine("three");
+							continue;
+						}
 					case 4: {
-						Console.WriteLine("four");
-						return;
-					}
+							Console.WriteLine("four");
+							return;
+						}
 					default: {
-						Console.WriteLine("default");
-						Console.WriteLine("more code");
-						return;
-					}
+							Console.WriteLine("default");
+							Console.WriteLine("more code");
+							return;
+						}
 				}
 				i++;
 			}
@@ -341,26 +341,27 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine("SwitchWithGoto: " + i);
 			switch (i) {
 				case 1: {
-					Console.WriteLine("one");
-					goto default;
-				}
+						Console.WriteLine("one");
+						goto default;
+					}
 				case 2: {
-					Console.WriteLine("two");
-					goto case 3;
-				}
+						Console.WriteLine("two");
+						goto case 3;
+					}
 				case 3: {
-					Console.WriteLine("three");
-					break;
-				}
+						Console.WriteLine("three");
+						break;
+					}
 				case 4: {
-					Console.WriteLine("four");
-					return;
-				}
+						Console.WriteLine("four");
+						return;
+					}
 				default: {
-					Console.WriteLine("default");
-					break;
-				}
+						Console.WriteLine("default");
+						break;
+					}
 			}
+			Console.WriteLine("End of method");
 		}
 
 		private static SetProperty[] GetProperties()
@@ -408,6 +409,52 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						}
 				}
 			}
+		}
+
+		public static void SwitchWithComplexCondition(string[] args)
+		{
+			switch (args.Length == 0 ? "dummy" : args[0]) {
+				case "a": {
+						Console.WriteLine("a");
+						break;
+					}
+				case "b": {
+						Console.WriteLine("b");
+						break;
+					}
+				case "c": {
+						Console.WriteLine("c");
+						break;
+					}
+				case "d": {
+						Console.WriteLine("d");
+						break;
+					}
+			}
+			Console.WriteLine("end");
+		}
+
+		public static void SwitchWithArray(string[] args)
+		{
+			switch (args[0]) {
+				case "a": {
+					Console.WriteLine("a");
+					break;
+				}
+				case "b": {
+					Console.WriteLine("b");
+					break;
+				}
+				case "c": {
+					Console.WriteLine("c");
+					break;
+				}
+				case "d": {
+					Console.WriteLine("d");
+					break;
+				}
+			}
+			Console.WriteLine("end");
 		}
 	}
 }

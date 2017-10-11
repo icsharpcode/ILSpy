@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Switch.dll
-// MVID: {B5801C4A-C979-4EC9-B5B2-295587FEEF30}
+// MVID: {1E0E6114-7796-44C6-B88B-AA126D09F561}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x005D0000
+// Image base: 0x02FE0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1240,7 +1240,7 @@
 
   .method public hidebysig static void  SwitchWithGoto(int32 i) cil managed
   {
-    // Code size       122 (0x7a)
+    // Code size       133 (0x85)
     .maxstack  2
     .locals init (int32 V_0)
     IL_0000:  nop
@@ -1285,7 +1285,7 @@
     IL_005e:  ldstr      "four"
     IL_0063:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_0068:  nop
-    IL_0069:  br.s       IL_0079
+    IL_0069:  br.s       IL_0084
 
     IL_006b:  nop
     IL_006c:  ldstr      "default"
@@ -1293,7 +1293,10 @@
     IL_0076:  nop
     IL_0077:  br.s       IL_0079
 
-    IL_0079:  ret
+    IL_0079:  ldstr      "End of method"
+    IL_007e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0083:  nop
+    IL_0084:  ret
   } // end of method Switch::SwitchWithGoto
 
   .method private hidebysig static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty[] 
@@ -1458,6 +1461,137 @@
 
     IL_0108:  ret
   } // end of method Switch::SwitchOnStringInForLoop
+
+  .method public hidebysig static void  SwitchWithComplexCondition(string[] args) cil managed
+  {
+    // Code size       134 (0x86)
+    .maxstack  2
+    .locals init (string V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldlen
+    IL_0003:  brfalse.s  IL_000a
+
+    IL_0005:  ldarg.0
+    IL_0006:  ldc.i4.0
+    IL_0007:  ldelem.ref
+    IL_0008:  br.s       IL_000f
+
+    IL_000a:  ldstr      "dummy"
+    IL_000f:  stloc.0
+    IL_0010:  ldloc.0
+    IL_0011:  ldstr      "a"
+    IL_0016:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_001b:  brtrue.s   IL_0046
+
+    IL_001d:  ldloc.0
+    IL_001e:  ldstr      "b"
+    IL_0023:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0028:  brtrue.s   IL_0053
+
+    IL_002a:  ldloc.0
+    IL_002b:  ldstr      "c"
+    IL_0030:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0035:  brtrue.s   IL_0060
+
+    IL_0037:  ldloc.0
+    IL_0038:  ldstr      "d"
+    IL_003d:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0042:  brtrue.s   IL_006d
+
+    IL_0044:  br.s       IL_007a
+
+    IL_0046:  ldstr      "a"
+    IL_004b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0050:  nop
+    IL_0051:  br.s       IL_007a
+
+    IL_0053:  ldstr      "b"
+    IL_0058:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_005d:  nop
+    IL_005e:  br.s       IL_007a
+
+    IL_0060:  ldstr      "c"
+    IL_0065:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_006a:  nop
+    IL_006b:  br.s       IL_007a
+
+    IL_006d:  ldstr      "d"
+    IL_0072:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0077:  nop
+    IL_0078:  br.s       IL_007a
+
+    IL_007a:  ldstr      "end"
+    IL_007f:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0084:  nop
+    IL_0085:  ret
+  } // end of method Switch::SwitchWithComplexCondition
+
+  .method public hidebysig static void  SwitchWithArray(string[] args) cil managed
+  {
+    // Code size       123 (0x7b)
+    .maxstack  2
+    .locals init (string V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldc.i4.0
+    IL_0003:  ldelem.ref
+    IL_0004:  stloc.0
+    IL_0005:  ldloc.0
+    IL_0006:  ldstr      "a"
+    IL_000b:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0010:  brtrue.s   IL_003b
+
+    IL_0012:  ldloc.0
+    IL_0013:  ldstr      "b"
+    IL_0018:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_001d:  brtrue.s   IL_0048
+
+    IL_001f:  ldloc.0
+    IL_0020:  ldstr      "c"
+    IL_0025:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_002a:  brtrue.s   IL_0055
+
+    IL_002c:  ldloc.0
+    IL_002d:  ldstr      "d"
+    IL_0032:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0037:  brtrue.s   IL_0062
+
+    IL_0039:  br.s       IL_006f
+
+    IL_003b:  ldstr      "a"
+    IL_0040:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0045:  nop
+    IL_0046:  br.s       IL_006f
+
+    IL_0048:  ldstr      "b"
+    IL_004d:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0052:  nop
+    IL_0053:  br.s       IL_006f
+
+    IL_0055:  ldstr      "c"
+    IL_005a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_005f:  nop
+    IL_0060:  br.s       IL_006f
+
+    IL_0062:  ldstr      "d"
+    IL_0067:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_006c:  nop
+    IL_006d:  br.s       IL_006f
+
+    IL_006f:  ldstr      "end"
+    IL_0074:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0079:  nop
+    IL_007a:  ret
+  } // end of method Switch::SwitchWithArray
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch
 
