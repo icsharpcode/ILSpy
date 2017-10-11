@@ -115,6 +115,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return false;
 				});
 			AdjustLabels(sw);
+			sw.Sections.ReplaceList(sw.Sections.OrderBy(s => (s.Body as Branch)?.TargetILOffset).ThenBy(s => s.Labels.Values.FirstOrDefault()));
 		}
 
 		static void AdjustLabels(SwitchInstruction sw)
