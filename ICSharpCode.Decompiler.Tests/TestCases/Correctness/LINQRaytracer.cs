@@ -10,8 +10,8 @@ namespace RayTracer
 	{
 		static void Main()
 		{
-			const int width = 600;
-			const int height = 600;
+			const int width = 50;
+			const int height = 50;
 
 			RayTracer rayTracer = new RayTracer(width, height, (int x, int y, Color color) => {
 				Console.Write("{0},{1}:{2};", x, y, color);
