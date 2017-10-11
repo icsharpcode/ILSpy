@@ -1,6 +1,6 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
+//  Copyright (c) Microsoft Corporation. Alle Rechte vorbehalten.
 
 
 
@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Switch.dll
-// MVID: {134EA2E4-FA5A-4D44-A0FD-C4E5A18E39B1}
+// MVID: {87DEBC09-DFAD-437D-9221-109E2117A07A}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00C40000
+// Image base: 0x02960000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -228,6 +228,298 @@
     IL_00ec:  ldloc.1
     IL_00ed:  ret
   } // end of method Switch::SparseIntegerSwitch
+
+  .method public hidebysig static string 
+          SwitchOverNullableInt(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
+  {
+    // Code size       87 (0x57)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
+             valuetype [mscorlib]System.Nullable`1<int32> V_1,
+             int32 V_2,
+             string V_3)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  stloc.1
+    IL_0003:  ldloc.1
+    IL_0004:  stloc.0
+    IL_0005:  ldloca.s   V_0
+    IL_0007:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_000c:  brfalse.s  IL_0028
+
+    IL_000e:  ldloca.s   V_0
+    IL_0010:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0015:  stloc.2
+    IL_0016:  ldloc.2
+    IL_0017:  brfalse.s  IL_0031
+
+    IL_0019:  br.s       IL_001b
+
+    IL_001b:  ldloc.2
+    IL_001c:  ldc.i4.5
+    IL_001d:  beq.s      IL_003a
+
+    IL_001f:  br.s       IL_0021
+
+    IL_0021:  ldloc.2
+    IL_0022:  ldc.i4.s   10
+    IL_0024:  beq.s      IL_0043
+
+    IL_0026:  br.s       IL_004c
+
+    IL_0028:  nop
+    IL_0029:  ldstr      "null"
+    IL_002e:  stloc.3
+    IL_002f:  br.s       IL_0055
+
+    IL_0031:  nop
+    IL_0032:  ldstr      "zero"
+    IL_0037:  stloc.3
+    IL_0038:  br.s       IL_0055
+
+    IL_003a:  nop
+    IL_003b:  ldstr      "five"
+    IL_0040:  stloc.3
+    IL_0041:  br.s       IL_0055
+
+    IL_0043:  nop
+    IL_0044:  ldstr      "ten"
+    IL_0049:  stloc.3
+    IL_004a:  br.s       IL_0055
+
+    IL_004c:  nop
+    IL_004d:  ldstr      "large"
+    IL_0052:  stloc.3
+    IL_0053:  br.s       IL_0055
+
+    IL_0055:  ldloc.3
+    IL_0056:  ret
+  } // end of method Switch::SwitchOverNullableInt
+
+  .method public hidebysig static string 
+          SwitchOverNullableIntShifted(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
+  {
+    // Code size       132 (0x84)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
+             valuetype [mscorlib]System.Nullable`1<int32> V_1,
+             valuetype [mscorlib]System.Nullable`1<int32> V_2,
+             valuetype [mscorlib]System.Nullable`1<int32> V_3,
+             int32 V_4,
+             string V_5)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  stloc.2
+    IL_0003:  ldloca.s   V_2
+    IL_0005:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_000a:  brtrue.s   IL_0017
+
+    IL_000c:  ldloca.s   V_3
+    IL_000e:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0014:  ldloc.3
+    IL_0015:  br.s       IL_0025
+
+    IL_0017:  ldloca.s   V_2
+    IL_0019:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_001e:  ldc.i4.5
+    IL_001f:  add
+    IL_0020:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0025:  stloc.1
+    IL_0026:  ldloc.1
+    IL_0027:  stloc.0
+    IL_0028:  ldloca.s   V_0
+    IL_002a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_002f:  brfalse.s  IL_004f
+
+    IL_0031:  ldloca.s   V_0
+    IL_0033:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0038:  stloc.s    V_4
+    IL_003a:  ldloc.s    V_4
+    IL_003c:  brfalse.s  IL_0059
+
+    IL_003e:  br.s       IL_0040
+
+    IL_0040:  ldloc.s    V_4
+    IL_0042:  ldc.i4.5
+    IL_0043:  beq.s      IL_0063
+
+    IL_0045:  br.s       IL_0047
+
+    IL_0047:  ldloc.s    V_4
+    IL_0049:  ldc.i4.s   10
+    IL_004b:  beq.s      IL_006d
+
+    IL_004d:  br.s       IL_0077
+
+    IL_004f:  nop
+    IL_0050:  ldstr      "null"
+    IL_0055:  stloc.s    V_5
+    IL_0057:  br.s       IL_0081
+
+    IL_0059:  nop
+    IL_005a:  ldstr      "zero"
+    IL_005f:  stloc.s    V_5
+    IL_0061:  br.s       IL_0081
+
+    IL_0063:  nop
+    IL_0064:  ldstr      "five"
+    IL_0069:  stloc.s    V_5
+    IL_006b:  br.s       IL_0081
+
+    IL_006d:  nop
+    IL_006e:  ldstr      "ten"
+    IL_0073:  stloc.s    V_5
+    IL_0075:  br.s       IL_0081
+
+    IL_0077:  nop
+    IL_0078:  ldstr      "large"
+    IL_007d:  stloc.s    V_5
+    IL_007f:  br.s       IL_0081
+
+    IL_0081:  ldloc.s    V_5
+    IL_0083:  ret
+  } // end of method Switch::SwitchOverNullableIntShifted
+
+  .method public hidebysig static string 
+          SwitchOverNullableIntNoNullCase(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
+  {
+    // Code size       78 (0x4e)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
+             valuetype [mscorlib]System.Nullable`1<int32> V_1,
+             int32 V_2,
+             string V_3)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  stloc.1
+    IL_0003:  ldloc.1
+    IL_0004:  stloc.0
+    IL_0005:  ldloca.s   V_0
+    IL_0007:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_000c:  brfalse.s  IL_0043
+
+    IL_000e:  ldloca.s   V_0
+    IL_0010:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0015:  stloc.2
+    IL_0016:  ldloc.2
+    IL_0017:  brfalse.s  IL_0028
+
+    IL_0019:  br.s       IL_001b
+
+    IL_001b:  ldloc.2
+    IL_001c:  ldc.i4.5
+    IL_001d:  beq.s      IL_0031
+
+    IL_001f:  br.s       IL_0021
+
+    IL_0021:  ldloc.2
+    IL_0022:  ldc.i4.s   10
+    IL_0024:  beq.s      IL_003a
+
+    IL_0026:  br.s       IL_0043
+
+    IL_0028:  nop
+    IL_0029:  ldstr      "zero"
+    IL_002e:  stloc.3
+    IL_002f:  br.s       IL_004c
+
+    IL_0031:  nop
+    IL_0032:  ldstr      "five"
+    IL_0037:  stloc.3
+    IL_0038:  br.s       IL_004c
+
+    IL_003a:  nop
+    IL_003b:  ldstr      "ten"
+    IL_0040:  stloc.3
+    IL_0041:  br.s       IL_004c
+
+    IL_0043:  nop
+    IL_0044:  ldstr      "other"
+    IL_0049:  stloc.3
+    IL_004a:  br.s       IL_004c
+
+    IL_004c:  ldloc.3
+    IL_004d:  ret
+  } // end of method Switch::SwitchOverNullableIntNoNullCase
+
+  .method public hidebysig static string 
+          SwitchOverNullableIntNoNullCaseShifted(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
+  {
+    // Code size       122 (0x7a)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
+             valuetype [mscorlib]System.Nullable`1<int32> V_1,
+             valuetype [mscorlib]System.Nullable`1<int32> V_2,
+             valuetype [mscorlib]System.Nullable`1<int32> V_3,
+             int32 V_4,
+             string V_5)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  stloc.2
+    IL_0003:  ldloca.s   V_2
+    IL_0005:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_000a:  brtrue.s   IL_0017
+
+    IL_000c:  ldloca.s   V_3
+    IL_000e:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0014:  ldloc.3
+    IL_0015:  br.s       IL_0025
+
+    IL_0017:  ldloca.s   V_2
+    IL_0019:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_001e:  ldc.i4.5
+    IL_001f:  add
+    IL_0020:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0025:  stloc.1
+    IL_0026:  ldloc.1
+    IL_0027:  stloc.0
+    IL_0028:  ldloca.s   V_0
+    IL_002a:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_002f:  brfalse.s  IL_006d
+
+    IL_0031:  ldloca.s   V_0
+    IL_0033:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0038:  stloc.s    V_4
+    IL_003a:  ldloc.s    V_4
+    IL_003c:  brfalse.s  IL_004f
+
+    IL_003e:  br.s       IL_0040
+
+    IL_0040:  ldloc.s    V_4
+    IL_0042:  ldc.i4.5
+    IL_0043:  beq.s      IL_0059
+
+    IL_0045:  br.s       IL_0047
+
+    IL_0047:  ldloc.s    V_4
+    IL_0049:  ldc.i4.s   10
+    IL_004b:  beq.s      IL_0063
+
+    IL_004d:  br.s       IL_006d
+
+    IL_004f:  nop
+    IL_0050:  ldstr      "zero"
+    IL_0055:  stloc.s    V_5
+    IL_0057:  br.s       IL_0077
+
+    IL_0059:  nop
+    IL_005a:  ldstr      "five"
+    IL_005f:  stloc.s    V_5
+    IL_0061:  br.s       IL_0077
+
+    IL_0063:  nop
+    IL_0064:  ldstr      "ten"
+    IL_0069:  stloc.s    V_5
+    IL_006b:  br.s       IL_0077
+
+    IL_006d:  nop
+    IL_006e:  ldstr      "other"
+    IL_0073:  stloc.s    V_5
+    IL_0075:  br.s       IL_0077
+
+    IL_0077:  ldloc.s    V_5
+    IL_0079:  ret
+  } // end of method Switch::SwitchOverNullableIntNoNullCaseShifted
 
   .method public hidebysig static string 
           ShortSwitchOverString(string text) cil managed
@@ -843,6 +1135,64 @@
 
     IL_0091:  ret
   } // end of method Switch::SwitchInLoop
+
+  .method public hidebysig static void  SwitchWithGoto(int32 i) cil managed
+  {
+    // Code size       122 (0x7a)
+    .maxstack  2
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldstr      "SwitchWithGoto: "
+    IL_0006:  ldarg.0
+    IL_0007:  box        [mscorlib]System.Int32
+    IL_000c:  call       string [mscorlib]System.String::Concat(object,
+                                                                object)
+    IL_0011:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0016:  nop
+    IL_0017:  ldarg.0
+    IL_0018:  stloc.0
+    IL_0019:  ldloc.0
+    IL_001a:  ldc.i4.1
+    IL_001b:  sub
+    IL_001c:  switch     ( 
+                          IL_0033,
+                          IL_0041,
+                          IL_004f,
+                          IL_005d)
+    IL_0031:  br.s       IL_006b
+
+    IL_0033:  nop
+    IL_0034:  ldstr      "one"
+    IL_0039:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_003e:  nop
+    IL_003f:  br.s       IL_006b
+
+    IL_0041:  nop
+    IL_0042:  ldstr      "two"
+    IL_0047:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_004c:  nop
+    IL_004d:  br.s       IL_004f
+
+    IL_004f:  nop
+    IL_0050:  ldstr      "three"
+    IL_0055:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_005a:  nop
+    IL_005b:  br.s       IL_0079
+
+    IL_005d:  nop
+    IL_005e:  ldstr      "four"
+    IL_0063:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0068:  nop
+    IL_0069:  br.s       IL_0079
+
+    IL_006b:  nop
+    IL_006c:  ldstr      "default"
+    IL_0071:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0076:  nop
+    IL_0077:  br.s       IL_0079
+
+    IL_0079:  ret
+  } // end of method Switch::SwitchWithGoto
 
   .method private hidebysig static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty[] 
           GetProperties() cil managed

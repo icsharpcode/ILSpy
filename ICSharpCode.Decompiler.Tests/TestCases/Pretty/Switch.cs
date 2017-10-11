@@ -82,83 +82,83 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		//public static string SwitchOverNullableInt(int? i)
-		//{
-		//	switch (i) {
-		//		case null: {
-		//			return "null";
-		//		}
-		//		case 0: {
-		//			return "zero";
-		//		}
-		//		case 5: {
-		//			return "five";
-		//		}
-		//		case 10: {
-		//			return "ten";
-		//		}
-		//		default: {
-		//			return "large";
-		//		}
-		//	}
-		//}
+		public static string SwitchOverNullableInt(int? i)
+		{
+			switch (i) {
+				case null: {
+					return "null";
+				}
+				case 0: {
+					return "zero";
+				}
+				case 5: {
+					return "five";
+				}
+				case 10: {
+					return "ten";
+				}
+				default: {
+					return "large";
+				}
+			}
+		}
 
-		//public static string SwitchOverNullableIntShifted(int? i)
-		//{
-		//	switch (i + 5) {
-		//		case null: {
-		//			return "null";
-		//		}
-		//		case 0: {
-		//			return "zero";
-		//		}
-		//		case 5: {
-		//			return "five";
-		//		}
-		//		case 10: {
-		//			return "ten";
-		//		}
-		//		default: {
-		//			return "large";
-		//		}
-		//	}
-		//}
+		public static string SwitchOverNullableIntShifted(int? i)
+		{
+			switch (i + 5) {
+				case null: {
+					return "null";
+				}
+				case 0: {
+					return "zero";
+				}
+				case 5: {
+					return "five";
+				}
+				case 10: {
+					return "ten";
+				}
+				default: {
+					return "large";
+				}
+			}
+		}
 
-		//public static string SwitchOverNullableIntNoNullCase(int? i)
-		//{
-		//	switch (i) {
-		//		case 0: {
-		//			return "zero";
-		//		}
-		//		case 5: {
-		//			return "five";
-		//		}
-		//		case 10: {
-		//			return "ten";
-		//		}
-		//		default: {
-		//			return "other";
-		//		}
-		//	}
-		//}
+		public static string SwitchOverNullableIntNoNullCase(int? i)
+		{
+			switch (i) {
+				case 0: {
+					return "zero";
+				}
+				case 5: {
+					return "five";
+				}
+				case 10: {
+					return "ten";
+				}
+				default: {
+					return "other";
+				}
+			}
+		}
 
-		//public static string SwitchOverNullableIntNoNullCaseShifted(int? i)
-		//{
-		//	switch (i + 5) {
-		//		case 0: {
-		//			return "zero";
-		//		}
-		//		case 5: {
-		//			return "five";
-		//		}
-		//		case 10: {
-		//			return "ten";
-		//		}
-		//		default: {
-		//			return "other";
-		//		}
-		//	}
-		//}
+		public static string SwitchOverNullableIntNoNullCaseShifted(int? i)
+		{
+			switch (i + 5) {
+				case 0: {
+					return "zero";
+				}
+				case 5: {
+					return "five";
+				}
+				case 10: {
+					return "ten";
+				}
+				default: {
+					return "other";
+				}
+			}
+		}
 
 		public static string ShortSwitchOverString(string text)
 		{
@@ -302,32 +302,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		//public static void SwitchWithGoto(int i)
-		//{
-		//	Console.WriteLine("SwitchWithGoto: " + i);
-		//	switch (i) {
-		//		case 1: {
-		//			Console.WriteLine("one");
-		//			goto default;
-		//		}
-		//		case 2: {
-		//			Console.WriteLine("two");
-		//			goto case 3;
-		//		}
-		//		case 3: {
-		//			Console.WriteLine("three");
-		//			break;
-		//		}
-		//		case 4: {
-		//			Console.WriteLine("four");
-		//			return;
-		//		}
-		//		default: {
-		//			Console.WriteLine("default");
-		//			break;
-		//		}
-		//	}
-		//}
+		public static void SwitchWithGoto(int i)
+		{
+			Console.WriteLine("SwitchWithGoto: " + i);
+			switch (i) {
+				case 1: {
+					Console.WriteLine("one");
+					goto default;
+				}
+				case 2: {
+					Console.WriteLine("two");
+					goto case 3;
+				}
+				case 3: {
+					Console.WriteLine("three");
+					break;
+				}
+				case 4: {
+					Console.WriteLine("four");
+					return;
+				}
+				default: {
+					Console.WriteLine("default");
+					break;
+				}
+			}
+		}
 
 		private static SetProperty[] GetProperties()
 		{

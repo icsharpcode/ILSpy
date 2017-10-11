@@ -48,6 +48,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						changed = true;
 						continue;
 					}
+					if (MatchRoslynSwitchOnNullable(block.Instructions, i, out newSwitch)) {
+						block.Instructions[i - 1].ReplaceWith(newSwitch);
+						block.Instructions.RemoveRange(i, 2);
+						i--;
+						changed = true;
+						continue;
+					}
 				}
 				if (!changed) continue;
 				SwitchDetection.SimplifySwitchInstruction(block);
@@ -59,6 +66,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				container.SortBlocks(deleteUnreachableBlocks: true);
 		}
 
+		/// <summary>
+		/// Matches legacy C# switch on nullable.
+		/// </summary>
 		bool MatchSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction newSwitch)
 		{
 			newSwitch = null;
@@ -113,5 +123,55 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return true;
 		}
+
+		/// <summary>
+		/// Matches Roslyn C# switch on nullable.
+		/// </summary>
+		bool MatchRoslynSwitchOnNullable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction newSwitch)
+		{
+			newSwitch = null;
+			// match first block:
+			// stloc tmp(ldloc switchValueVar)
+			// if (logic.not(call get_HasValue(ldloca tmp))) br nullCaseBlock
+			// br switchBlock
+			if (i < 1) return false;
+			if (!instructions[i - 1].MatchStLoc(out var tmp, out var switchValue) ||
+				!instructions[i].MatchIfInstruction(out var condition, out var trueInst))
+				return false;
+			if (!instructions[i + 1].MatchBranch(out var switchBlock) || !trueInst.MatchBranch(out var nullCaseBlock))
+				return false;
+			if (!condition.MatchLogicNot(out var getHasValue) || !NullableLiftingTransform.MatchHasValueCall(getHasValue, out var target1) || target1 != tmp)
+				return false;
+			// match second block: switchBlock
+			// stloc switchVar(call GetValueOrDefault(ldloca tmp))
+			// switch (ldloc switchVar) {
+			// 	case [0..1): br caseBlock1
+			// ... more cases ...
+			// 	case [long.MinValue..0),[1..5),[6..10),[11..long.MaxValue]: br defaultBlock
+			// }
+			if (switchBlock.Instructions.Count != 2 || switchBlock.IncomingEdgeCount != 1)
+				return false;
+			if (!switchBlock.Instructions[0].MatchStLoc(out var switchVar, out var getValueOrDefault))
+				return false;
+			if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, out var target2) || target2 != tmp)
+				return false;
+			if (!(switchBlock.Instructions[1] is SwitchInstruction switchInst))
+				return false;
+			newSwitch = new SwitchInstruction(switchValue);
+			newSwitch.IsLifted = true;
+			SwitchSection defaultSection = null;
+			foreach (var section in switchInst.Sections) {
+				if (defaultSection == null || section.Labels.Count() >= defaultSection.Labels.Count())
+					defaultSection = section;
+				newSwitch.Sections.Add(section);
+			}
+			if (defaultSection.Body.MatchBranch(out var defaultBlock) && defaultBlock == nullCaseBlock)
+				defaultSection.HasNullLabel = true;
+			else {
+				newSwitch.Sections.Add(new SwitchSection { Body = new Branch(nullCaseBlock), HasNullLabel = true });
+			}
+			return true;
+		}
+
 	}
 }
