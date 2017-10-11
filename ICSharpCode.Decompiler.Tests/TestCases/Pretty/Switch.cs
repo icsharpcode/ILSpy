@@ -160,6 +160,40 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static void SwitchOverInt(int i)
+		{
+			switch (i) {
+				case 0: {
+						Console.WriteLine("zero");
+						break;
+					}
+				case 5: {
+						Console.WriteLine("five");
+						break;
+					}
+				case 10: {
+						Console.WriteLine("ten");
+						break;
+					}
+				case 15: {
+						Console.WriteLine("fifteen");
+						break;
+					}
+				case 20: {
+						Console.WriteLine("twenty");
+						break;
+					}
+				case 25: {
+						Console.WriteLine("twenty-five");
+						break;
+					}
+				case 30: {
+						Console.WriteLine("thirty");
+						break;
+					}
+			}
+		}
+
 		public static string ShortSwitchOverString(string text)
 		{
 			Console.WriteLine("ShortSwitchOverString: " + text);

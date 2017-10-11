@@ -175,6 +175,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						else
 							ConvertSwitchSectionBody(astSection, section.Body);
 						break;
+					case Leave leave:
+						if (astSection.CaseLabels.Count == 1 && astSection.CaseLabels.First().Expression.IsNull && leave.TargetContainer == switchContainer) {
+							stmt.SwitchSections.Remove(astSection);
+							break;
+						}
+						goto default;
 					default:
 						ConvertSwitchSectionBody(astSection, section.Body);
 						break;

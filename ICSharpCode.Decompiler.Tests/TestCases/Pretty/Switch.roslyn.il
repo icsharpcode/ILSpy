@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Switch.dll
-// MVID: {87DEBC09-DFAD-437D-9221-109E2117A07A}
+// MVID: {B5801C4A-C979-4EC9-B5B2-295587FEEF30}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02960000
+// Image base: 0x005D0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -520,6 +520,108 @@
     IL_0077:  ldloc.s    V_5
     IL_0079:  ret
   } // end of method Switch::SwitchOverNullableIntNoNullCaseShifted
+
+  .method public hidebysig static void  SwitchOverInt(int32 i) cil managed
+  {
+    // Code size       161 (0xa1)
+    .maxstack  2
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  stloc.0
+    IL_0003:  ldloc.0
+    IL_0004:  ldc.i4.s   10
+    IL_0006:  bgt.s      IL_001d
+
+    IL_0008:  ldloc.0
+    IL_0009:  brfalse.s  IL_003e
+
+    IL_000b:  br.s       IL_000d
+
+    IL_000d:  ldloc.0
+    IL_000e:  ldc.i4.5
+    IL_000f:  beq.s      IL_004c
+
+    IL_0011:  br.s       IL_0013
+
+    IL_0013:  ldloc.0
+    IL_0014:  ldc.i4.s   10
+    IL_0016:  beq.s      IL_005a
+
+    IL_0018:  br         IL_00a0
+
+    IL_001d:  ldloc.0
+    IL_001e:  ldc.i4.s   20
+    IL_0020:  bgt.s      IL_0030
+
+    IL_0022:  ldloc.0
+    IL_0023:  ldc.i4.s   15
+    IL_0025:  beq.s      IL_0068
+
+    IL_0027:  br.s       IL_0029
+
+    IL_0029:  ldloc.0
+    IL_002a:  ldc.i4.s   20
+    IL_002c:  beq.s      IL_0076
+
+    IL_002e:  br.s       IL_00a0
+
+    IL_0030:  ldloc.0
+    IL_0031:  ldc.i4.s   25
+    IL_0033:  beq.s      IL_0084
+
+    IL_0035:  br.s       IL_0037
+
+    IL_0037:  ldloc.0
+    IL_0038:  ldc.i4.s   30
+    IL_003a:  beq.s      IL_0092
+
+    IL_003c:  br.s       IL_00a0
+
+    IL_003e:  nop
+    IL_003f:  ldstr      "zero"
+    IL_0044:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0049:  nop
+    IL_004a:  br.s       IL_00a0
+
+    IL_004c:  nop
+    IL_004d:  ldstr      "five"
+    IL_0052:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0057:  nop
+    IL_0058:  br.s       IL_00a0
+
+    IL_005a:  nop
+    IL_005b:  ldstr      "ten"
+    IL_0060:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0065:  nop
+    IL_0066:  br.s       IL_00a0
+
+    IL_0068:  nop
+    IL_0069:  ldstr      "fifteen"
+    IL_006e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0073:  nop
+    IL_0074:  br.s       IL_00a0
+
+    IL_0076:  nop
+    IL_0077:  ldstr      "twenty"
+    IL_007c:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0081:  nop
+    IL_0082:  br.s       IL_00a0
+
+    IL_0084:  nop
+    IL_0085:  ldstr      "twenty-five"
+    IL_008a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_008f:  nop
+    IL_0090:  br.s       IL_00a0
+
+    IL_0092:  nop
+    IL_0093:  ldstr      "thirty"
+    IL_0098:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_009d:  nop
+    IL_009e:  br.s       IL_00a0
+
+    IL_00a0:  ret
+  } // end of method Switch::SwitchOverInt
 
   .method public hidebysig static string 
           ShortSwitchOverString(string text) cil managed
