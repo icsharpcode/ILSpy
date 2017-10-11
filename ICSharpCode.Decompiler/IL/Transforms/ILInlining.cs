@@ -292,6 +292,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						parent = parent.Parent;
 					}
 					return parent == next;
+				case OpCode.BlockContainer:
+					if (((BlockContainer)next).EntryPoint.Instructions[0] is SwitchInstruction switchInst) {
+						next = switchInst;
+						goto case OpCode.SwitchInstruction;
+					} else {
+						return false;
+					}
 				case OpCode.SwitchInstruction:
 					return parent == next || (parent.MatchBinaryNumericInstruction(BinaryNumericOperator.Sub) && parent.Parent == next);
 				default:
@@ -333,6 +340,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					default:
 						return false;
 				}
+			} else if (expr is BlockContainer container && container.EntryPoint.IncomingEdgeCount == 1) {
+				// Possibly a switch-container, allow inlining into the switch instruction:
+				return FindLoadInNext(container.EntryPoint.Instructions[0], v, expressionBeingMoved, out loadInst) ?? false;
+				// If FindLoadInNext() returns null, we still can't continue searching
+				// because we can't inline over the remainder of the blockcontainer.
 			}
 			foreach (var child in expr.Children) {
 				if (!child.SlotInfo.CanInlineInto)
