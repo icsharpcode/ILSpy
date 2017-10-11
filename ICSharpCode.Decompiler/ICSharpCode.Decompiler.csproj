@@ -277,6 +277,7 @@
     <Compile Include="IL\Instructions\StringToInt.cs" />
     <Compile Include="IL\Instructions\UsingInstruction.cs" />
     <Compile Include="IL\Transforms\InlineReturnTransform.cs" />
+    <Compile Include="IL\Transforms\SwitchOnNullableTransform.cs" />
     <Compile Include="IL\Transforms\SwitchOnStringTransform.cs" />
     <Compile Include="IL\Transforms\UsingTransform.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />

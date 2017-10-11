@@ -83,6 +83,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
 				new SwitchDetection(),
 				new SwitchOnStringTransform(),
+				new SwitchOnNullableTransform(),
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						// Even though it's a post-order block-transform as most other transforms,
