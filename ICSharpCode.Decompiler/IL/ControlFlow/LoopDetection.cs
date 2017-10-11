@@ -519,12 +519,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			nodesInSwitch.Add(h);
 			h.Visited = true;
 			ExtendLoop(h, nodesInSwitch, out var exitPoint, isSwitch: true);
-			if (IsSimpleSwitchExit(exitPoint)) {
-				// Also move the exit point into the switch if it's simple enough.
-				exitPoint.TraversePreOrder(p => p.Successors, nodesInSwitch.Add);
-				foreach (var node in nodesInSwitch) {
-					node.Visited = false;
-				}
+			if (exitPoint != null && exitPoint.Predecessors.Count == 1 && !context.ControlFlowGraph.HasReachableExit(exitPoint)) {
+				// If the exit point is reachable from just one single "break;",
+				// it's better to move the code into the switch.
+				// (unlike loops which should not be nested unless necessary,
+				//  nesting switches makes it clearer in which cases a piece of code is reachable)
+				nodesInSwitch.AddRange(TreeTraversal.PreOrder(exitPoint, p => p.DominatorTreeChildren));
 				exitPoint = null;
 			}
 
@@ -558,22 +558,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					branch.ReplaceWith(new Leave(switchContainer) { ILRange = branch.ILRange });
 				}
 			}
-		}
-
-		private bool IsSimpleSwitchExit(ControlFlowNode exitPoint)
-		{
-			int totalInstructionCount = 0;
-			while (exitPoint?.UserData is Block block && block.IncomingEdgeCount == 1) {
-				totalInstructionCount += block.Instructions.Count;
-				if (exitPoint.Successors.Count == 1 && block.Instructions.Last() is Branch) {
-					exitPoint = exitPoint.Successors[0];
-				} else if (exitPoint.Successors.Count == 0 && block.Instructions.Last() is Leave leave && leave.IsLeavingFunction) {
-					return totalInstructionCount < 10;
-				} else {
-					return false;
-				}
-			}
-			return false;
 		}
 	}
 }
