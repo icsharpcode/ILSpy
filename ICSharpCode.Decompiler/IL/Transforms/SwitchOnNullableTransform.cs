@@ -82,6 +82,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				!instructions[i - 1].MatchStLoc(out var switchVariable, out var getValueOrDefault) ||
 				!instructions[i].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
+			if (!tmp.IsSingleDefinition || tmp.LoadCount != 2)
+				return false;
+			if (!switchVariable.IsSingleDefinition || switchVariable.LoadCount != 1)
+				return false;
 			if (!instructions[i + 1].MatchBranch(out var switchBlock) || !trueInst.MatchBranch(out var nullCaseBlock))
 				return false;
 			if (!ldloca.MatchLdLoca(out var switchValueVar))
@@ -99,7 +103,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!getHasValueCall.Arguments[0].MatchLdLoc(tmp) || !getValueOrDefaultCall.Arguments[0].MatchLdLoc(tmp))
 				return false;
 			// match second block: switchBlock
-			// switch (ldloc swtichVariable) {
+			// switch (ldloc switchVariable) {
 			// 	case [0..1): br caseBlock1
 			//  ... more cases ...
 			// 	case [long.MinValue..0),[1..5),[6..10),[11..long.MaxValue]: br defaultBlock
@@ -138,6 +142,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!instructions[i - 1].MatchStLoc(out var tmp, out var switchValue) ||
 				!instructions[i].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
+			if (tmp.StoreCount != 1 || tmp.AddressCount != 2)
+				return false;
 			if (!instructions[i + 1].MatchBranch(out var switchBlock) || !trueInst.MatchBranch(out var nullCaseBlock))
 				return false;
 			if (!condition.MatchLogicNot(out var getHasValue) || !NullableLiftingTransform.MatchHasValueCall(getHasValue, out var target1) || target1 != tmp)
@@ -152,6 +158,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (switchBlock.Instructions.Count != 2 || switchBlock.IncomingEdgeCount != 1)
 				return false;
 			if (!switchBlock.Instructions[0].MatchStLoc(out var switchVar, out var getValueOrDefault))
+				return false;
+			if (!switchVar.IsSingleDefinition || switchVar.LoadCount != 1)
 				return false;
 			if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, out var target2) || target2 != tmp)
 				return false;
@@ -172,6 +180,5 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			return true;
 		}
-
 	}
 }
