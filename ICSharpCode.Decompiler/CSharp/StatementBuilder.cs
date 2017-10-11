@@ -93,6 +93,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else if (type.Kind == TypeKind.Enum) {
 				var enumType = type.GetDefinition().EnumUnderlyingType;
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), i, false);
+			} else if (type.IsKnownType(KnownTypeCode.NullableOfT)) {
+				var nullableType = NullableType.GetUnderlyingType(type);
+				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(nullableType), i, false);
 			} else {
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, false);
 			}
