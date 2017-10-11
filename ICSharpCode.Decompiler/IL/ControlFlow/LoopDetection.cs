@@ -293,19 +293,60 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						commonAncestor = Dominance.FindCommonDominator(commonAncestor, revNode);
 					}
 				}
+				// All paths from within the loop to a reachable exit run through 'commonAncestor'.
+				// However, this doesn't mean that 'commonAncestor' is valid as an exit point.
+				// We walk up the post-dominator tree until we've got a valid exit point:
 				ControlFlowNode exitPoint;
 				while (commonAncestor.UserIndex >= 0) {
 					exitPoint = cfg[commonAncestor.UserIndex];
 					Debug.Assert(exitPoint.Visited == naturalLoop.Contains(exitPoint));
-					if (exitPoint.Visited) {
-						commonAncestor = commonAncestor.ImmediateDominator;
-						continue;
-					} else {
+					// It's possible that 'commonAncestor' is itself part of the natural loop.
+					// If so, it's not a valid exit point.
+					if (!exitPoint.Visited && ValidateExitPoint(loopHead, exitPoint)) {
+						// we found an exit point
 						return exitPoint;
 					}
+					commonAncestor = commonAncestor.ImmediateDominator;
 				}
 				// least common post-dominator is the artificial exit node
 				return null;
+			}
+		}
+
+		/// <summary>
+		/// Validates an exit point.
+		/// 
+		/// An exit point is invalid iff there is a node reachable from the exit point that
+		/// is dominated by the loop head, but not by the exit point.
+		/// (i.e. this method returns false iff the exit point's dominance frontier contains
+		/// a node dominated by the loop head. but we implement this the slow way because
+		/// we don't have dominance frontiers precomputed)
+		/// </summary>
+		/// <remarks>
+		/// We need this because it's possible that there's a return block (thus reverse-unreachable node ignored by post-dominance)
+		/// that is reachable both directly from the loop, and from the exit point.
+		/// </remarks>
+		bool ValidateExitPoint(ControlFlowNode loopHead, ControlFlowNode exitPoint)
+		{
+			var cfg = context.ControlFlowGraph;
+			return IsValid(exitPoint);
+
+			bool IsValid(ControlFlowNode node)
+			{
+				if (!cfg.HasReachableExit(node)) {
+					// Optimization: if the dominance frontier is empty, we don't need
+					// to check every node.
+					return true;
+				}
+				foreach (var succ in node.Successors) {
+					if (loopHead.Dominates(succ) && !exitPoint.Dominates(succ))
+						return false;
+				}
+				foreach (var child in node.DominatorTreeChildren) {
+					if (!IsValid(child))
+						return false;
+				}
+				return true;
 			}
 		}
 
