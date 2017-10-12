@@ -42,6 +42,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// }
 					var instructions = container.EntryPoint.Instructions;
 					if (instructions.Count == 3) {
+						// stloc temp(isinst exceptionType(ldloc exceptionVar))
+						// if (comp(ldloc temp != ldnull)) br whenConditionBlock
+						// br falseBlock
 						((StLoc)instructions[0]).Value = exceptionSlot;
 						instructions[1].ReplaceWith(new Branch(whenConditionBlock));
 						instructions.RemoveAt(2);
@@ -72,6 +75,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (entryPoint == null || entryPoint.IncomingEdgeCount != 1)
 				return false;
 			if (entryPoint.Instructions.Count == 3) {
+				// stloc temp(isinst exceptionType(ldloc exceptionVar))
+				// if (comp(ldloc temp != ldnull)) br whenConditionBlock
+				// br falseBlock
 				if (!entryPoint.Instructions[0].MatchStLoc(out var temp, out var isinst) ||
 					temp.Kind != VariableKind.StackSlot || !isinst.MatchIsInst(out exceptionSlot, out exceptionType))
 					return false;
