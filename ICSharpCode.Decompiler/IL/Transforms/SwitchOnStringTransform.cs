@@ -41,9 +41,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				bool changed = false;
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					SwitchInstruction newSwitch;
-					if (SimplifyCascadingIfStatements(block.Instructions, i, out newSwitch)) {
-						block.Instructions[i + 1].ReplaceWith(newSwitch);
-						block.Instructions.RemoveAt(i);
+					if (SimplifyCascadingIfStatements(block.Instructions, i, out newSwitch, out var extraLoad, out var keepAssignmentBefore)) {
+						if (extraLoad) {
+							block.Instructions[i - 2].ReplaceWith(newSwitch);
+							block.Instructions.RemoveRange(i - 1, 3);
+							i -= 2;
+						} else {
+							if (keepAssignmentBefore) {
+								block.Instructions[i].ReplaceWith(newSwitch);
+								block.Instructions.RemoveAt(i + 1);
+							} else {
+								block.Instructions[i - 1].ReplaceWith(newSwitch);
+								block.Instructions.RemoveRange(i, 2);
+								i--;
+							}
+						}
 						changed = true;
 						continue;
 					}
@@ -77,9 +89,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				container.SortBlocks(deleteUnreachableBlocks: true);
 		}
 
-		bool SimplifyCascadingIfStatements(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst)
+		bool SimplifyCascadingIfStatements(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst, out bool extraLoad, out bool keepAssignmentBefore)
 		{
 			inst = null;
+			extraLoad = false;
+			keepAssignmentBefore = false;
+			if (i < 1) return false;
 			// match first block: checking switch-value for null or first value (Roslyn)
 			// if (call op_Equality(ldloc switchValueVar, ldstr value)) br firstBlock
 			// -or-
@@ -99,6 +114,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// switchValueVar must be assigned only once and must be of type string.
 			if (!switchValueVar.IsSingleDefinition || !switchValueVar.Type.IsKnownType(KnownTypeCode.String))
 				return false;
+			// if instruction must be preceeded by a stloc to the switchValueVar
+			if (instructions[i - 1].MatchStLoc(switchValueVar, out var switchValue)) { }
+			// in case of legacy code there are two stlocs:
+			// stloc switchValueVar(ldloc switchValue)
+			// stloc otherSwitchValueVar(ldloc switchValueVar)
+			// if (comp(ldloc switchValueVar == ldnull)) br nullCase
+			else if (i > 1 && instructions[i - 2].MatchStLoc(switchValueVar, out switchValue) &&
+				instructions[i - 1].MatchStLoc(out var otherSwitchValueVar, out var switchValueCopyInst) &&
+				switchValueCopyInst.MatchLdLoc(switchValueVar) && otherSwitchValueVar.IsSingleDefinition && switchValueVar.LoadCount == 2)
+			{
+				extraLoad = true;
+			}
+			else return false;
 			// if instruction must be followed by a branch to the next case
 			if (!(instructions.ElementAtOrDefault(i + 1) is Branch nextCaseJump))
 				return false;
@@ -112,9 +140,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// We didn't find enough cases, exit
 			if (values.Count < 3)
 				return false;
+			// if the switchValueVar is used in other places as well, do not eliminate the store.
+			if (switchValueVar.LoadCount > values.Count) {
+				keepAssignmentBefore = true;
+				switchValue = new LdLoc(switchValueVar);
+			}
 			var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch(b.Item2) }));
 			sections.Add(new SwitchSection { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = new Branch(currentCaseBlock) });
-			var stringToInt = new StringToInt(new LdLoc(switchValueVar), values.SelectArray(item => item.Item1));
+			var stringToInt = new StringToInt(switchValue, values.SelectArray(item => item.Item1));
 			inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
 			return true;
