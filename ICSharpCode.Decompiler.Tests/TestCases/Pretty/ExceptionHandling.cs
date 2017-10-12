@@ -97,6 +97,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return false;
 		}
+
+		public void CatchWhenWithConditionWithoutExceptionVar()
+		{
+			int num = 0;
+			try {
+				throw new Exception();
+			} catch (Exception) when (num == 0) {
+				Console.WriteLine("jo");
+			}
+		}
+
 #endif
 
 		public bool SimpleTryFinally()
@@ -144,7 +155,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("Try");
 			} catch (InvalidOperationException ex) {
 				Console.WriteLine(ex.Message);
-			} catch (Exception ex2) {
+			} catch (SystemException ex2) {
 				Console.WriteLine(ex2.Message);
 			} catch {
 				Console.WriteLine("other");
@@ -176,5 +187,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			}
 		}
+
+
 	}
 }
