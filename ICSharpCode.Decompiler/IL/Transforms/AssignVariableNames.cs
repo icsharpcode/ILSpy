@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			this.context = context;
-			currentFieldNames = function.Method.DeclaringType.Fields.Select(f => f.Name).ToArray();
+			currentFieldNames = function.CecilMethod.DeclaringType.Fields.Select(f => f.Name).ToArray();
 			reservedVariableNames = new Dictionary<string, int>();
 			loopCounters = CollectLoopCounters(function);
 			foreach (var p in function.Descendants.OfType<ILFunction>().Select(f => f.Method).SelectMany(m => m.Parameters))
@@ -358,7 +358,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (v != existingVariable)
 					AddExistingName(reservedVariableNames, v.Name);
 			}
-			foreach (var f in function.Method.DeclaringType.Fields.Select(f => f.Name))
+			foreach (var f in function.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
 				AddExistingName(reservedVariableNames, f);
 
 			string baseName = GetNameFromInstruction(valueContext);
@@ -399,7 +399,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (v != existingVariable)
 					AddExistingName(reservedVariableNames, v.Name);
 			}
-			foreach (var f in function.Method.DeclaringType.Fields.Select(f => f.Name))
+			foreach (var f in function.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
 				AddExistingName(reservedVariableNames, f);
 
 			string baseName = GetNameByType(type);

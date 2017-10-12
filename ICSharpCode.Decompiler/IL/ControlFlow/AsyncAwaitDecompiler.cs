@@ -169,7 +169,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (startCall.Method.Name != "Start")
 				return false;
-			taskType = context.TypeSystem.Resolve(function.Method.ReturnType);
+			taskType = function.Method.ReturnType;
 			builderType = startCall.Method.DeclaringTypeDefinition;
 			const string ns = "System.Runtime.CompilerServices";
 			if (taskType.IsKnownType(KnownTypeCode.Void)) {

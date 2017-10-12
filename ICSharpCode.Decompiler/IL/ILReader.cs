@@ -317,7 +317,8 @@ namespace ICSharpCode.Decompiler.IL
 			ReadInstructions(cancellationToken);
 			var blockBuilder = new BlockBuilder(body, typeSystem, variableByExceptionHandler);
 			blockBuilder.CreateBlocks(mainContainer, instructionBuilder, isBranchTarget, cancellationToken);
-			var function = new ILFunction(body.Method, mainContainer);
+			var method = typeSystem.Resolve(body.Method);
+			var function = new ILFunction(method, body.Method, mainContainer);
 			CollectionExtensions.AddRange(function.Variables, parameterVariables);
 			CollectionExtensions.AddRange(function.Variables, localVariables);
 			CollectionExtensions.AddRange(function.Variables, stackVariables);

@@ -310,12 +310,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.String), inst.Value));
 		}
-		
+
 		protected internal override TranslatedExpression VisitLdNull(LdNull inst, TranslationContext context)
 		{
 			return GetDefaultValueExpression(SpecialType.NullType).WithILInstruction(inst);
 		}
-		
+
 		protected internal override TranslatedExpression VisitDefaultValue(DefaultValue inst, TranslationContext context)
 		{
 			return GetDefaultValueExpression(inst.Type).WithILInstruction(inst);
@@ -1024,9 +1024,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new CallBuilder(this, typeSystem, settings).Build(inst);
 		}
 
-		internal TranslatedExpression TranslateFunction(TranslatedExpression objectCreateExpression, TranslatedExpression target, ILFunction function)
+		internal TranslatedExpression TranslateFunction(IType delegateType, ILFunction function)
 		{
-			var method = typeSystem.Resolve(function.Method)?.MemberDefinition as IMethod;
+			var method = function.Method.MemberDefinition as IMethod;
 			Debug.Assert(method != null);
 
 			// Create AnonymousMethodExpression and prepare parameters
@@ -1036,19 +1036,18 @@ namespace ICSharpCode.Decompiler.CSharp
 			ame.HasParameterList = ame.Parameters.Count > 0;
 			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method, function, settings, cancellationToken);
 			var body = builder.ConvertAsBlock(function.Body);
-			bool isLambda = false;
-			bool isMultiLineLambda = false;
 
 			Comment prev = null;
 			foreach (string warning in function.Warnings) {
 				body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
 			}
 
-			// if there is an anonymous type involved, we are forced to use a lambda expression.
+			bool isLambda = false;
 			if (ame.Parameters.Any(p => p.Type.IsNull)) {
+				// if there is an anonymous type involved, we are forced to use a lambda expression.
 				isLambda = true;
-				isMultiLineLambda = body.Statements.Count > 1;
 			} else if (ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None)) {
+				// otherwise use lambda only if an expression lambda is possible
 				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
 			}
 			// Remove the parameter list from an AnonymousMethodExpression if the original method had no names,
@@ -1064,39 +1063,81 @@ namespace ICSharpCode.Decompiler.CSharp
 					ame.HasParameterList = false;
 				}
 			}
-			
+
 			Expression replacement;
+			IType inferredReturnType;
 			if (isLambda) {
 				LambdaExpression lambda = new LambdaExpression();
+				lambda.IsAsync = ame.IsAsync;
 				lambda.CopyAnnotationsFrom(ame);
 				ame.Parameters.MoveTo(lambda.Parameters);
-				if (isMultiLineLambda) {
-					lambda.Body = body;
+				if (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement returnStmt) {
+					lambda.Body = returnStmt.Expression.Detach();
+					inferredReturnType = lambda.Body.GetResolveResult().Type;
 				} else {
-					Expression returnExpr = ((ReturnStatement)body.Statements.Single()).Expression;
-					returnExpr.Remove();
-					lambda.Body = returnExpr;
+					lambda.Body = body;
+					inferredReturnType = InferReturnType(body);
 				}
 				replacement = lambda;
 			} else {
 				ame.Body = body;
+				inferredReturnType = InferReturnType(body);
 				replacement = ame;
 			}
-			var expectedType = objectCreateExpression.ResolveResult.Type;
-			var expectedTypeDefinition = expectedType.GetDefinition();
-			if (expectedTypeDefinition != null && expectedTypeDefinition.Kind != TypeKind.Delegate) {
-				var simplifiedDelegateCreation = (ObjectCreateExpression)objectCreateExpression.Expression.Clone();
-				simplifiedDelegateCreation.Arguments.Clear();
-				simplifiedDelegateCreation.Arguments.Add(replacement);
-				replacement = simplifiedDelegateCreation;
-			} else if (!settings.AnonymousTypes || !expectedType.ContainsAnonymousType()) {
-				replacement = new CastExpression(ConvertType(expectedType), replacement);
+			if (ame.IsAsync) {
+				inferredReturnType = GetTaskType(inferredReturnType);
 			}
-			return replacement
-				.WithILInstruction(function)
-				.WithRR(objectCreateExpression.ResolveResult);
+
+			var rr = new DecompiledLambdaResolveResult(
+				function, delegateType, inferredReturnType,
+				hasParameterList: ame.HasParameterList,
+				isAnonymousMethod: !isLambda,
+				isImplicitlyTyped: ame.Parameters.Any(p => p.Type.IsNull));
+
+			TranslatedExpression translatedLambda = replacement.WithILInstruction(function).WithRR(rr);
+			return new CastExpression(ConvertType(delegateType), translatedLambda)
+				.WithoutILInstruction().WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
 		}
-		
+
+		IType InferReturnType(BlockStatement body)
+		{
+			var returnExpressions = new List<ResolveResult>();
+			CollectReturnExpressions(body);
+			var ti = new TypeInference(compilation, resolver.conversions);
+			return ti.GetBestCommonType(returnExpressions, out _);
+			// Failure to infer a return type does not make the lambda invalid,
+			// so we can ignore the 'success' value
+
+			void CollectReturnExpressions(AstNode node)
+			{
+				if (node is ReturnStatement ret) {
+					if (!ret.Expression.IsNull) {
+						returnExpressions.Add(ret.Expression.GetResolveResult());
+					}
+				} else if (node is LambdaExpression || node is AnonymousMethodExpression) {
+					// do not recurse into nested lambdas
+					return;
+				}
+				foreach (var child in node.Children) {
+					CollectReturnExpressions(child);
+				}
+			}
+		}
+
+		IType GetTaskType(IType resultType)
+		{
+			if (resultType.Kind == TypeKind.Unknown)
+				return SpecialType.UnknownType;
+			if (resultType.Kind == TypeKind.Void)
+				return compilation.FindType(KnownTypeCode.Task);
+
+			ITypeDefinition def = compilation.FindType(KnownTypeCode.TaskOfT).GetDefinition();
+			if (def != null)
+				return new ParameterizedType(def, new[] { resultType });
+			else
+				return SpecialType.UnknownType;
+		}
+
 		IEnumerable<ParameterDeclaration> MakeParameters(IMethod method, ILFunction function)
 		{
 			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);

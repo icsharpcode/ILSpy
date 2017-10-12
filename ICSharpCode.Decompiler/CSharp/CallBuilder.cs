@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							atce.Initializers.Add(
 								new NamedExpression {
 									Name = expectedParameters[i].Name,
-									Expression = argumentExpressions[i]
+									Expression = arguments[i].ConvertTo(expectedParameters[i].Type, expressionBuilder)
 								});
 						}
 					}
@@ -321,9 +321,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				case OpCode.LdVirtFtn:
 					method = ((LdVirtFtn)func).Method;
 					break;
+				case OpCode.ILFunction:
+					method = ((ILFunction)func).Method;
+					return expressionBuilder.TranslateFunction(inst.Method.DeclaringType, (ILFunction)func);
 				default:
-					method = typeSystem.Resolve(((ILFunction)func).Method);
-					break;
+					throw new ArgumentException($"Unknown instruction type: {func.OpCode}");
 			}
 			var invokeMethod = inst.Method.DeclaringType.GetDelegateInvokeMethod();
 			TranslatedExpression target;
@@ -355,12 +357,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					inst.Method.DeclaringType,
 					new MemberResolveResult(target.ResolveResult, method),
 					Conversion.MethodGroupConversion(method, func.OpCode == OpCode.LdVirtFtn, false)));
-
-			if (func is ILFunction) {
-				return expressionBuilder.TranslateFunction(oce, target, (ILFunction)func);
-			} else {
-				return oce;
-			}
+			return oce;
 		}
 	}
 }

@@ -26,14 +26,14 @@ public static class DelegateConstruction
 	{
 		public Action CaptureOfThis()
 		{
-			return (Action)delegate {
+			return delegate {
 				this.CaptureOfThis();
 			};
 		}
 		
 		public Action CaptureOfThisAndParameter(int a)
 		{
-			return (Action)delegate {
+			return delegate {
 				this.CaptureOfThisAndParameter(a);
 			};
 		}
@@ -42,7 +42,7 @@ public static class DelegateConstruction
 		{
 			foreach (int item in Enumerable.Empty<int>()) {
 				if (item > 0) {
-					return (Action)delegate {
+					return delegate {
 						this.CaptureOfThisAndParameter(item + a);
 					};
 				}
@@ -55,7 +55,7 @@ public static class DelegateConstruction
 			foreach (int item in Enumerable.Empty<int>()) {
 				int copyOfItem = item;
 				if (item > 0) {
-					return (Action)delegate {
+					return delegate {
 						this.CaptureOfThisAndParameter(item + a + copyOfItem);
 					};
 				}
@@ -66,7 +66,7 @@ public static class DelegateConstruction
 		public void LambdaInForLoop()
 		{
 			for (int i = 0; i < 100000; i++) {
-			    this.Bar((Func<int>)(() => this.Foo()));
+				this.Bar(() => this.Foo());
 			}
 		}
 		
@@ -119,7 +119,7 @@ public static class DelegateConstruction
 		List<Action<int>> list = new List<Action<int>>();
 		for (int i = 0; i < 10; i++) {
 			int counter;
-			list.Add((Action<int>)delegate(int x) {
+			list.Add(delegate(int x) {
 			         	counter = x;
 			         });
 		}
@@ -131,7 +131,7 @@ public static class DelegateConstruction
 		List<Action<int>> list = new List<Action<int>>();
 		int counter;
 		for (int i = 0; i < 10; i++) {
-			list.Add((Action<int>)delegate(int x) {
+			list.Add(delegate(int x) {
 			         	counter = x;
 			         });
 		}
@@ -140,7 +140,7 @@ public static class DelegateConstruction
 
 	public static Action StaticAnonymousMethodNoClosure()
 	{
-		return (Action)delegate {
+		return delegate {
 			Console.WriteLine();
 		};
 	}
@@ -156,7 +156,7 @@ public static class DelegateConstruction
 		for (int k = 0; k < 10; k++) {
 			int i;
 			for (i = 0; i < 10; i++) {
-				list.Add((Action<int>)delegate(int j) {
+				list.Add(delegate(int j) {
 						for (int l = 0; l < i; l += j) {
 							Console.WriteLine();
 						}
@@ -169,7 +169,7 @@ public static class DelegateConstruction
 	{
 		List<Action<int>> list = new List<Action<int>>();
 		for (int k = 0; k < 10; k++) {
-			list.Add((Action<int>)delegate(int i) {
+			list.Add(delegate(int i) {
 					Console.WriteLine(i);
 				});
 		}
@@ -177,7 +177,7 @@ public static class DelegateConstruction
 
 	public static Action<int> NameConflict3(int i)
 	{
-		return (Action<int>)delegate(int j) {
+		return delegate(int j) {
 			for (int k = 0; k < j; k++) {
 				Console.WriteLine(k);
 			}
@@ -186,11 +186,11 @@ public static class DelegateConstruction
 	
 	public static Func<int, Func<int, int>> CurriedAddition(int a)
 	{
-		return (Func<int, Func<int, int>>)((int b) => (Func<int, int>)((int c) => a + b + c));
+		return (int b) => (int c) => a + b + c;
 	}
 	
 	public static Func<int, Func<int, Func<int, int>>> CurriedAddition2(int a)
 	{
-		return (Func<int, Func<int, Func<int, int>>>)((int b) => (Func<int, Func<int, int>>)((int c) => (Func<int, int>)((int d) => a + b + c + d)));
+		return (int b) => (int c) => (int d) => a + b + c + d;
 	}
 }

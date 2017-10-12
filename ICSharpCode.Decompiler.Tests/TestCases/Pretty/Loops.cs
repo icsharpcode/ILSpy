@@ -388,7 +388,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			foreach (int item in items) {
 				int c = item;
-				Loops.Operation((Func<bool>)(() => c == 5));
+				Loops.Operation(() => c == 5);
 			}
 		}
 

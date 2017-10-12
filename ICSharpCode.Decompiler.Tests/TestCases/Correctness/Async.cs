@@ -30,15 +30,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 	{
 		public static void Main()
 		{
-			new Async().Run();
+			new Async().Run().Wait();
 		}
 
-		public async void Run()
+		public async Task Run()
 		{
 			await SimpleBoolTaskMethod();
 			StreamCopyTo(new MemoryStream(new byte[1024]), 16);
 			StreamCopyToWithConfigureAwait(new MemoryStream(new byte[1024]), 16);
-			await AwaitInForEach(Enumerable.Range(0, 100).Select(i => Task<int>.FromResult(i)));
+			await AwaitInForEach(Enumerable.Range(0, 100).Select(i => Task.FromResult(i)));
 			await TaskMethodWithoutAwaitButWithExceptionHandling();
 #if !LEGACY_CSC
 			await AwaitCatch(Task.FromResult(1));

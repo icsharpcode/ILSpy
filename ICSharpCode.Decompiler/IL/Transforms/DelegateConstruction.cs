@@ -34,7 +34,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!context.Settings.AnonymousMethods)
 				return;
 			this.context = context;
-			this.decompilationContext = new SimpleTypeResolveContext(context.TypeSystem.Resolve(function.Method));
+			this.decompilationContext = new SimpleTypeResolveContext(function.Method);
 			var orphanedVariableInits = new List<ILInstruction>();
 			var targetsToReplace = new List<IInstructionWithVariableOperand>();
 			foreach (var block in function.Descendants.OfType<Block>()) {
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		internal static bool IsPotentialClosure(ILTransformContext context, NewObj inst)
 		{
-			var decompilationContext = new SimpleTypeResolveContext(context.TypeSystem.Resolve(context.Function.Method));
+			var decompilationContext = new SimpleTypeResolveContext(context.Function.Method);
 			return IsPotentialClosure(decompilationContext.CurrentTypeDefinition, inst.Method.DeclaringTypeDefinition);
 		}
 		
