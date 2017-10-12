@@ -231,6 +231,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		private bool CheckSetter(ILInstruction inst, string propertyName, ILInstruction onObject)
 		{
+			if (!(inst is CallInstruction setterInst))
+				return false;
+			if (!setterInst.Method.Name.StartsWith("set_"))
+				return false;
 			// inst: callvirt set...(callvirt get...(callvirt get_Content(ldloc obj)), newobj)
 			// propertyName: Content
 			// onObject: ldloc obj
