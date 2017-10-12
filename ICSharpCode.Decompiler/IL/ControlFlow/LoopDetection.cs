@@ -235,7 +235,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
 		ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop, bool treatBackEdgesAsExits)
 		{
-			treatBackEdgesAsExits = false;
 			bool hasReachableExit = context.ControlFlowGraph.HasReachableExit(loopHead);
 			if (!hasReachableExit && treatBackEdgesAsExits) {
 				// If we're analyzing the switch, there's no reachable exit, but the loopHead (=switchHead) block
@@ -314,7 +313,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return true;
 				}
 				foreach (var succ in node.Successors) {
-					if (loopHead.Dominates(succ) && !exitPoint.Dominates(succ))
+					if (loopHead != succ && loopHead.Dominates(succ) && !exitPoint.Dominates(succ))
 						return false;
 				}
 				foreach (var child in node.DominatorTreeChildren) {
