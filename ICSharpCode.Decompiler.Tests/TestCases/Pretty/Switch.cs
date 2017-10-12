@@ -413,7 +413,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void SwitchWithComplexCondition(string[] args)
 		{
-			switch (args.Length == 0 ? "dummy" : args[0]) {
+			switch ((args.Length == 0) ? "dummy" : args[0]) {
 				case "a": {
 						Console.WriteLine("a");
 						break;
