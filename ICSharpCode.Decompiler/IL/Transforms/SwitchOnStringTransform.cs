@@ -80,44 +80,40 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			List<(string, Block)> values = new List<(string, Block)>();
 			ILInstruction switchValue = null;
+
+			// match call to operator ==(string, string)
+			if (!MatchStringEqualityComparison(condition, out var switchValueVar, out string firstBlockValue))
+				return false;
+			values.Add((firstBlockValue, firstBlock));
+
 			bool extraLoad = false;
-			bool keepAssignmentBefore = false;
-
-			// Roslyn: match call to operator ==(string, string)
-			if (MatchStringEqualityComparison(condition, out var switchValueVar, out string value)) {
-				values.Add((value, firstBlock));
-				if(!instructions[i - 1].MatchStLoc(switchValueVar, out switchValue)) {
-					switchValue = new LdLoc(switchValueVar);
-				}
-			} else {
-				// match null check with different variable:
-				// this is used by the old C# compiler.
-				if (MatchCompEqualsNull(condition, out var otherSwitchValueVar)) {
-					values.Add((null, firstBlock));
-				} else {
-					return false;
-				}
-
+			if (instructions[i - 1].MatchStLoc(switchValueVar, out switchValue)) {
+				// stloc switchValueVar(switchValue)
+				// if (call op_Equality(ldloc switchValueVar, ldstr value)) br firstBlock
+			} else if (instructions[i - 1] is StLoc stloc && stloc.Value.MatchLdLoc(switchValueVar)) {
 				// in case of optimized legacy code there are two stlocs:
 				// stloc otherSwitchValueVar(ldloc switchValue)
 				// stloc switchValueVar(ldloc otherSwitchValueVar)
-				// if (comp(ldloc otherSwitchValueVar == ldnull)) br nullCase
-				if (i > 1 && otherSwitchValueVar != null && instructions[i - 2].MatchStLoc(otherSwitchValueVar, out switchValue)
-					&& instructions[i - 1].MatchStLoc(out switchValueVar, out var switchValueCopyInst)
-					&& switchValueCopyInst.MatchLdLoc(otherSwitchValueVar) && otherSwitchValueVar.IsSingleDefinition && otherSwitchValueVar.LoadCount == 2) {
+				// if (call op_Equality(ldloc otherSwitchValueVar, ldstr value)) br firstBlock
+				var otherSwitchValueVar = switchValueVar;
+				switchValueVar = stloc.Variable;
+				if (i >= 2 && instructions[i - 2].MatchStLoc(otherSwitchValueVar, out switchValue)
+					&& otherSwitchValueVar.IsSingleDefinition && otherSwitchValueVar.LoadCount == 2)
+				{
 					extraLoad = true;
-				} else if (instructions[i - 1].MatchStLoc(out switchValueVar, out switchValue)) {
-					// unoptimized legacy switch
+				} else {
+					switchValue = new LdLoc(otherSwitchValueVar);
 				}
+			} else {
+				switchValue = new LdLoc(switchValueVar);
 			}
-
 			// if instruction must be followed by a branch to the next case
 			if (!(instructions.ElementAtOrDefault(i + 1) is Branch nextCaseJump))
 				return false;
 			// extract all cases and add them to the values list.
 			Block currentCaseBlock = nextCaseJump.TargetBlock;
 			Block nextCaseBlock;
-			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out value, out Block block)) != null) {
+			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out string value, out Block block)) != null) {
 				values.Add((value, block));
 				currentCaseBlock = nextCaseBlock;
 			}
@@ -125,6 +121,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (values.Count < 3)
 				return false;
 			// if the switchValueVar is used in other places as well, do not eliminate the store.
+			bool keepAssignmentBefore = false;
 			if (switchValueVar.LoadCount > values.Count) {
 				keepAssignmentBefore = true;
 				switchValue = new LdLoc(switchValueVar);
@@ -187,31 +184,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!currentBlock.Instructions[1].MatchBranch(out nextBlock))
 					return null;
 			}
-			if (!MatchStringEqualityComparison(condition, out var v, out value)) {
-				if (MatchCompEqualsNull(condition, out v)) {
-					value = null;
-				} else {
+			if (!MatchStringEqualityComparison(condition, switchVariable, out value)) {
 					return null;
 				}
-			}
-			if (v != switchVariable)
-				return null;
 			return nextBlock;
 		}
-
-		/// <summary>
-		/// Returns true if <paramref name="left"/> is only assigned once and the initialization is done by copying <paramref name="right"/>.
-		/// </summary>
-		bool IsInitializedBy(ILVariable left, ILVariable right)
-		{
-			if (!left.IsSingleDefinition)
-				return false;
-			var storeInst = left.StoreInstructions.OfType<StLoc>().SingleOrDefault();
-			if (storeInst == null)
-				return false;
-			return storeInst.Value.MatchLdLoc(right);
-		}
-
+		
 		/// <summary>
 		/// Matches the C# 2.0 switch-on-string pattern, which uses Dictionary&lt;string, int&gt;.
 		/// </summary>
@@ -475,8 +453,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!bodyBranch.MatchBranch(out Block body))
 					return false;
-				if (!MatchStringEqualityOrNullComparison(condition, switchValue.Variable, out string stringValue)) {
-					if (condition.MatchLogicNot(out condition) && MatchStringEqualityOrNullComparison(condition, switchValue.Variable, out stringValue)) {
+				if (!MatchStringEqualityComparison(condition, switchValue.Variable, out string stringValue)) {
+					if (condition.MatchLogicNot(out condition) && MatchStringEqualityComparison(condition, switchValue.Variable, out stringValue)) {
 						if (!target.Instructions[1].MatchBranch(out Block exit))
 							return false;
 						body = exit;
@@ -523,39 +501,36 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchStringEqualityOrNullComparison(ILInstruction condition, ILVariable variable, out string stringValue)
+		/// <summary>
+		/// Matches 'call string.op_Equality(ldloc(variable), ldstr(stringValue))'
+		///      or 'comp(ldloc(variable) == ldnull)'
+		/// </summary>
+		bool MatchStringEqualityComparison(ILInstruction condition, ILVariable variable, out string stringValue)
 		{
-			if (!MatchStringEqualityComparison(condition, out var v, out stringValue)) {
-				if (!MatchCompEqualsNull(condition, out v))
-					return false;
-				stringValue = null;
+			return MatchStringEqualityComparison(condition, out var v, out stringValue) && v == variable;
 			}
 				
-			return v == variable;
-		}
-
+		/// <summary>
+		/// Matches 'call string.op_Equality(ldloc(variable), ldstr(stringValue))'
+		///      or 'comp(ldloc(variable) == ldnull)'
+		/// </summary>
 		bool MatchStringEqualityComparison(ILInstruction condition, out ILVariable variable, out string stringValue)
 		{
 			stringValue = null;
 			variable = null;
 			ILInstruction left, right;
-			if (condition is Call c && c.Method.IsOperator && c.Method.Name == "op_Equality" && c.Arguments.Count == 2) {
+			if (condition is Call c && c.Method.IsOperator && c.Method.Name == "op_Equality"
+				&& c.Method.DeclaringType.IsKnownType(KnownTypeCode.String) && c.Arguments.Count == 2)
+			{
 				left = c.Arguments[0];
 				right = c.Arguments[1];
-				if (!right.MatchLdStr(out stringValue))
-					return false;
+				return left.MatchLdLoc(out variable) && right.MatchLdStr(out stringValue);
+			} else if (condition.MatchCompEqualsNull(out var arg)) {
+				stringValue = null;
+				return arg.MatchLdLoc(out variable);
 			} else {
 				return false;
 			}
-			return left.MatchLdLoc(out variable);
 		}
-
-		bool MatchCompEqualsNull(ILInstruction condition, out ILVariable variable)
-		{
-			variable = null;
-			if (!condition.MatchCompEquals(out var left, out var right))
-				return false;
-			return right.MatchLdNull() && left.MatchLdLoc(out variable);
 		}
 	}
-}

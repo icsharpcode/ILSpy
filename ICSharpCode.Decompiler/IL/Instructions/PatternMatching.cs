@@ -322,6 +322,27 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
+		/// Matches 'comp(arg == ldnull)'
+		/// </summary>
+		public bool MatchCompEqualsNull(out ILInstruction arg)
+		{
+			if (!MatchCompEquals(out var left, out var right)) {
+				arg = null;
+				return false;
+			}
+			if (right.MatchLdNull()) {
+				arg = left;
+				return true;
+			} else if (left.MatchLdNull()) {
+				arg = right;
+				return true;
+			} else {
+				arg = null;
+				return false;
+			}
+		}
+
+		/// <summary>
 		/// Matches comp(left != right) or logic.not(comp(left == right)).
 		/// </summary>
 		public bool MatchCompNotEquals(out ILInstruction left, out ILInstruction right)
