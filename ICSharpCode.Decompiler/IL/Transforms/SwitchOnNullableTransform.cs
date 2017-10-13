@@ -92,15 +92,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!condition.MatchLogicNot(out var getHasValue))
 				return false;
-			if (!(getValueOrDefault is Call getValueOrDefaultCall) || getValueOrDefaultCall.Method.FullName != "System.Nullable.GetValueOrDefault" ||
-				getValueOrDefaultCall.Method.DeclaringType.TypeParameterCount != 1)
+			if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, out ILInstruction getValueOrDefaultArg))
 				return false;
-			if (!(getHasValue is Call getHasValueCall) || !getHasValueCall.Method.IsAccessor || getHasValueCall.Method.FullName != "System.Nullable.get_HasValue" ||
-				getHasValueCall.Method.DeclaringType.TypeParameterCount != 1)
+			if (!NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILInstruction getHasValueArg))
 				return false;
-			if (getHasValueCall.Arguments.Count != 1 || getValueOrDefaultCall.Arguments.Count != 1)
-				return false;
-			if (!getHasValueCall.Arguments[0].MatchLdLoc(tmp) || !getValueOrDefaultCall.Arguments[0].MatchLdLoc(tmp))
+			if (!(getHasValueArg.MatchLdLoc(tmp) && getValueOrDefaultArg.MatchLdLoc(tmp)))
 				return false;
 			// match second block: switchBlock
 			// switch (ldloc switchVariable) {
@@ -112,20 +108,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(switchBlock.Instructions[0] is SwitchInstruction switchInst))
 				return false;
-			newSwitch = new SwitchInstruction(new LdLoc(switchValueVar));
-			newSwitch.IsLifted = true;
-			SwitchSection defaultSection = null;
-			foreach (var section in switchInst.Sections) {
-				if (defaultSection == null || section.Labels.Count() >= defaultSection.Labels.Count())
-					defaultSection = section;
-				newSwitch.Sections.Add(section);
-			}
-			if (defaultSection.Body.MatchBranch(out var defaultBlock) && defaultBlock == nullCaseBlock)
-				defaultSection.HasNullLabel = true;
-			else {
-				newSwitch.Sections.Add(new SwitchSection { Body = new Branch(nullCaseBlock), HasNullLabel = true });
-			}
+			newSwitch = BuildLiftedSwitch(nullCaseBlock, switchInst, new LdLoc(switchValueVar));
 			return true;
+		}
+
+		static SwitchInstruction BuildLiftedSwitch(Block nullCaseBlock, SwitchInstruction switchInst, ILInstruction switchValue)
+		{
+			SwitchInstruction newSwitch = new SwitchInstruction(switchValue);
+			newSwitch.IsLifted = true;
+			newSwitch.Sections.AddRange(switchInst.Sections);
+			newSwitch.Sections.Add(new SwitchSection { Body = new Branch(nullCaseBlock), HasNullLabel = true });
+			return newSwitch;
 		}
 
 		/// <summary>
@@ -142,11 +135,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!instructions[i - 1].MatchStLoc(out var tmp, out var switchValue) ||
 				!instructions[i].MatchIfInstruction(out var condition, out var trueInst))
 				return false;
-			if (tmp.StoreCount != 1 || tmp.AddressCount != 2)
+			if (tmp.StoreCount != 1 || tmp.AddressCount != 2 || tmp.LoadCount != 0)
 				return false;
 			if (!instructions[i + 1].MatchBranch(out var switchBlock) || !trueInst.MatchBranch(out var nullCaseBlock))
 				return false;
-			if (!condition.MatchLogicNot(out var getHasValue) || !NullableLiftingTransform.MatchHasValueCall(getHasValue, out var target1) || target1 != tmp)
+			if (!condition.MatchLogicNot(out var getHasValue) || !NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILVariable target1) || target1 != tmp)
 				return false;
 			// match second block: switchBlock
 			// stloc switchVar(call GetValueOrDefault(ldloca tmp))
@@ -161,23 +154,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!switchVar.IsSingleDefinition || switchVar.LoadCount != 1)
 				return false;
-			if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, out var target2) || target2 != tmp)
+			if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, tmp))
 				return false;
 			if (!(switchBlock.Instructions[1] is SwitchInstruction switchInst))
 				return false;
-			newSwitch = new SwitchInstruction(switchValue);
-			newSwitch.IsLifted = true;
-			SwitchSection defaultSection = null;
-			foreach (var section in switchInst.Sections) {
-				if (defaultSection == null || section.Labels.Count() >= defaultSection.Labels.Count())
-					defaultSection = section;
-				newSwitch.Sections.Add(section);
-			}
-			if (defaultSection.Body.MatchBranch(out var defaultBlock) && defaultBlock == nullCaseBlock)
-				defaultSection.HasNullLabel = true;
-			else {
-				newSwitch.Sections.Add(new SwitchSection { Body = new Branch(nullCaseBlock), HasNullLabel = true });
-			}
+			newSwitch = BuildLiftedSwitch(nullCaseBlock, switchInst, switchValue);
 			return true;
 		}
 	}
