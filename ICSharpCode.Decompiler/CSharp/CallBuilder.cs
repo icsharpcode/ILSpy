@@ -339,18 +339,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
-			var result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, true) as MethodGroupResolveResult;
+			var result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
 
-			if (result == null) {
+			bool needsCast = true;
+			if (result is MethodGroupResolveResult mgrr) {
+				or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
+				needsCast = (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, func.OpCode == OpCode.LdVirtFtn));
+			}
+			if (needsCast) {
 				target = target.ConvertTo(targetType, expressionBuilder);
-			} else {
-				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-				if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, func.OpCode == OpCode.LdVirtFtn))
-					target = target.ConvertTo(targetType, expressionBuilder);
+				result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
 			}
 
 			var mre = new MemberReferenceExpression(target, method.Name);
 			mre.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
+			mre.WithRR(result);
 			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(inst.Method.DeclaringType), mre)
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(

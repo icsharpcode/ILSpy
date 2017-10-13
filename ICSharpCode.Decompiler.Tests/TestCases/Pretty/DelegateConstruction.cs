@@ -88,17 +88,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static Action<string> ExtensionMethodUnbound()
 		{
-			return new Action<string>(DelegateConstruction.Test);
+			return DelegateConstruction.Test;
 		}
 
 		public static Action ExtensionMethodBound()
 		{
-			return new Action("abc".Test);
+			return "abc".Test;
 		}
 
 		public static Action ExtensionMethodBoundOnNull()
 		{
-			return new Action(((string)null).Test);
+			return ((string)null).Test;
 		}
 
 		public static object StaticMethod()

@@ -173,11 +173,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			var type = this.Type;
 			if (type.Equals(targetType)) {
 				// Make explicit conversion implicit, if possible
-				if (allowImplicitConversion && Expression is CastExpression cast && ResolveResult is ConversionResolveResult conversion) {
-					if (type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
-						|| type.Kind == TypeKind.Delegate && conversion.Conversion.IsAnonymousFunctionConversion)
-					{
+				if (allowImplicitConversion && ResolveResult is ConversionResolveResult conversion) {
+					if (Expression is CastExpression cast
+					&& (type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
+						|| type.Kind == TypeKind.Delegate && conversion.Conversion.IsAnonymousFunctionConversion
+						)) {
 						return this.UnwrapChild(cast.Expression);
+					} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion && oce.Arguments.Count == 1) {
+						return this.UnwrapChild(oce.Arguments.Single());
 					}
 				}
 				return this;
