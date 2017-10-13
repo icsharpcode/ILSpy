@@ -265,14 +265,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var sections = new List<SwitchSection>(switchInst.Sections);
 			// switch contains case null:
 			if (nullValueCaseBlock != defaultBlock) {
-				var label = new Util.LongSet(switchInst.Sections.Count);
-				var possibleConflicts = switchInst.Sections.Where(sec => sec.Labels.Overlaps(label)).ToArray();
-				if (possibleConflicts.Length > 1)
+				if (!AddNullSection(sections, stringValues, nullValueCaseBlock)) {
 					return false;
-				else if (possibleConflicts.Length == 1)
-					possibleConflicts[0].Labels = possibleConflicts[0].Labels.ExceptWith(label);
-				stringValues.Add(null);
-				sections.Add(new SwitchSection() { Labels = label, Body = new Branch(nullValueCaseBlock) });
+				}
 			}
 			bool keepAssignmentBefore = false;
 			if (switchValueVar.LoadCount > 2) {
@@ -284,12 +279,30 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			inst.Sections.AddRange(sections);
 			instructions[i + 1].ReplaceWith(inst);
 			if (keepAssignmentBefore) {
+				// delete if (comp(ldloc switchValueVar == ldnull))
 				instructions.RemoveAt(i);
 				i--;
 			} else {
+				// delete both the if and the assignment before
 				instructions.RemoveRange(i - 1, 2);
 				i -= 2;
 			}
+			return true;
+		}
+
+		private bool AddNullSection(List<SwitchSection> sections, List<string> stringValues, Block nullValueCaseBlock)
+		{
+			var label = new LongSet(sections.Count);
+			var possibleConflicts = sections.Where(sec => sec.Labels.Overlaps(label)).ToArray();
+			if (possibleConflicts.Length > 1)
+				return false;
+			else if (possibleConflicts.Length == 1) {
+				if (possibleConflicts[0].Labels.Count() == 1)
+					return false; // cannot remove only label
+				possibleConflicts[0].Labels = possibleConflicts[0].Labels.ExceptWith(label);
+			}
+			stringValues.Add(null);
+			sections.Add(new SwitchSection() { Labels = label, Body = new Branch(nullValueCaseBlock) });
 			return true;
 		}
 
@@ -457,14 +470,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var sections = new List<SwitchSection>(switchInst.Sections);
 			// switch contains case null: 
 			if (nullCaseBlock != defaultBlock) {
-				var label = new Util.LongSet(switchInst.Sections.Count);
-				var possibleConflicts = switchInst.Sections.Where(sec => sec.Labels.Overlaps(label)).ToArray();
-				if (possibleConflicts.Length > 1)
+				if (!AddNullSection(sections, stringValues, nullCaseBlock)) {
 					return false;
-				else if (possibleConflicts.Length == 1)
-					possibleConflicts[0].Labels = possibleConflicts[0].Labels.ExceptWith(label);
-				stringValues.Add(null);
-				sections.Add(new SwitchSection() { Labels = label, Body = new Branch(nullCaseBlock) });
+				}
 			}
 			var stringToInt = new StringToInt(switchValue, stringValues.ToArray());
 			var inst = new SwitchInstruction(stringToInt);
@@ -501,12 +509,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			ILInstruction switchValueInst = switchValueLoad;
 			// stloc switchValueLoadVariable(switchValue)
-			// stloc switchValueVar(call ComputeStringHash(ldloc V_0))
+			// stloc switchValueVar(call ComputeStringHash(ldloc switchValueLoadVariable))
 			// switch (ldloc switchValueVar) {
 			bool keepAssignmentBefore;
 			// if the switchValueLoad.Variable is only used in the compiler generated case equality checks, we can remove it.
 			if (i > 1 && instructions[i - 2].MatchStLoc(switchValueLoad.Variable, out var switchValueTmp) &&
-				switchValueLoad.Variable.IsSingleDefinition && switchValueLoad.Variable.LoadCount == switchInst.Sections.Count) {
+				switchValueLoad.Variable.IsSingleDefinition && switchValueLoad.Variable.LoadCount == switchInst.Sections.Count)
+			{
 				switchValueInst = switchValueTmp;
 				keepAssignmentBefore = false;
 			} else {
@@ -542,19 +551,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!bodyBranch.MatchBranch(out body))
 				return false;
-			if (!MatchStringEqualityComparison(condition, switchValueVar, out stringValue)) {
-				if (condition.MatchLogicNot(out condition) && MatchStringEqualityComparison(condition, switchValueVar, out stringValue)) {
-					if (!target.Instructions[1].MatchBranch(out Block exit))
-						return false;
-					body = exit;
-				} else
+			if (MatchStringEqualityComparison(condition, switchValueVar, out stringValue)) {
+				return body != null;
+			} else if (condition.MatchLogicNot(out condition) && MatchStringEqualityComparison(condition, switchValueVar, out stringValue)) {
+				if (!target.Instructions[1].MatchBranch(out Block exit))
 					return false;
+				body = exit;
+				return true;
+			} else {
+				return false;
 			}
-			return body != null;
 		}
 
 		/// <summary>
-		/// Matches 'stloc(targetVar, call ComputeStringHash(ldloc(switchValue)))'
+		/// Matches 'stloc(targetVar, call ComputeStringHash(ldloc switchValue))'
 		/// </summary>
 		bool MatchComputeStringHashCall(ILInstruction inst, ILVariable targetVar, out LdLoc switchValue)
 		{
