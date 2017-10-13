@@ -40,52 +40,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				bool changed = false;
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-					SwitchInstruction newSwitch;
-					if (SimplifyCascadingIfStatements(block.Instructions, i, out newSwitch, out var extraLoad, out var keepAssignmentBefore)) {
-						if (extraLoad) {
-							block.Instructions[i - 2].ReplaceWith(newSwitch);
-							block.Instructions.RemoveRange(i - 1, 3);
-							i -= 2;
-						} else {
-							if (keepAssignmentBefore) {
-								block.Instructions[i].ReplaceWith(newSwitch);
-								block.Instructions.RemoveAt(i + 1);
-							} else {
-								block.Instructions[i - 1].ReplaceWith(newSwitch);
-								block.Instructions.RemoveRange(i, 2);
-								i--;
-							}
-						}
+					if (SimplifyCascadingIfStatements(block.Instructions, ref i)) {
 						changed = true;
 						continue;
 					}
-					if (MatchLegacySwitchOnStringWithHashtable(block.Instructions, i, out newSwitch)) {
-						block.Instructions[i + 1].ReplaceWith(newSwitch);
-						block.Instructions.RemoveAt(i);
+					if (MatchLegacySwitchOnStringWithHashtable(block.Instructions, ref i)) {
 						changed = true;
 						continue;
 					}
-					if (MatchLegacySwitchOnStringWithDict(block.Instructions, i, out newSwitch, out keepAssignmentBefore)) {
-						block.Instructions[i + 1].ReplaceWith(newSwitch);
-						if (keepAssignmentBefore) {
-							block.Instructions.RemoveAt(i);
-							i--;
-						} else {
-							block.Instructions.RemoveRange(i - 1, 2);
-							i -= 2;
-						}
+					if (MatchLegacySwitchOnStringWithDict(block.Instructions, ref i)) {
 						changed = true;
 						continue;
 					}
-					if (MatchRoslynSwitchOnString(block.Instructions, i, out newSwitch, out keepAssignmentBefore)) {
-						block.Instructions[i].ReplaceWith(newSwitch);
-						if (keepAssignmentBefore) {
-							block.Instructions.RemoveAt(i - 1);
-							i--;
-						} else {
-							block.Instructions.RemoveRange(i - 2, 2);
-							i -= 2;
-						}
+					if (MatchRoslynSwitchOnString(block.Instructions, ref i)) {
 						changed = true;
 						continue;
 					}
@@ -100,11 +67,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				container.SortBlocks(deleteUnreachableBlocks: true);
 		}
 
-		bool SimplifyCascadingIfStatements(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst, out bool extraLoad, out bool keepAssignmentBefore)
+		bool SimplifyCascadingIfStatements(InstructionCollection<ILInstruction> instructions, ref int i)
 		{
-			inst = null;
-			extraLoad = false;
-			keepAssignmentBefore = false;
 			if (i < 1) return false;
 			// match first block: checking switch-value for null or first value (Roslyn)
 			// if (call op_Equality(ldloc switchValueVar, ldstr value)) br firstBlock
@@ -116,6 +80,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			List<(string, Block)> values = new List<(string, Block)>();
 			ILInstruction switchValue = null;
+			bool extraLoad = false;
+			bool keepAssignmentBefore = false;
+
 			// Roslyn: match call to operator ==(string, string)
 			if (MatchStringEqualityComparison(condition, out var switchValueVar, out string value)) {
 				values.Add((value, firstBlock));
@@ -165,8 +132,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var sections = new List<SwitchSection>(values.SelectWithIndex((index, b) => new SwitchSection { Labels = new LongSet(index), Body = new Branch(b.Item2) }));
 			sections.Add(new SwitchSection { Labels = new LongSet(new LongInterval(0, sections.Count)).Invert(), Body = new Branch(currentCaseBlock) });
 			var stringToInt = new StringToInt(switchValue, values.SelectArray(item => item.Item1));
-			inst = new SwitchInstruction(stringToInt);
+			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
+			if (extraLoad) {
+				instructions[i - 2].ReplaceWith(inst);
+				instructions.RemoveRange(i - 1, 3);
+				i -= 2;
+			} else {
+				if (keepAssignmentBefore) {
+					instructions[i].ReplaceWith(inst);
+					instructions.RemoveAt(i + 1);
+				} else {
+					instructions[i - 1].ReplaceWith(inst);
+					instructions.RemoveRange(i, 2);
+					i--;
+				}
+			}
 			return true;
 		}
 
@@ -234,10 +215,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches the C# 2.0 switch-on-string pattern, which uses Dictionary&lt;string, int&gt;.
 		/// </summary>
-		bool MatchLegacySwitchOnStringWithDict(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst, out bool keepAssignmentBefore)
+		bool MatchLegacySwitchOnStringWithDict(InstructionCollection<ILInstruction> instructions, ref int i)
 		{
-			inst = null;
-			keepAssignmentBefore = false;
 			if (i < 1) return false;
 			// match first block: checking switch-value for null
 			if (!(instructions[i].MatchIfInstruction(out var condition, out var exitBlockJump) &&
@@ -299,13 +278,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				stringValues.Add(null);
 				sections.Add(new SwitchSection() { Labels = label, Body = new Branch(nullValueCaseBlock) });
 			}
+			bool keepAssignmentBefore = false;
 			if (switchValueVar.LoadCount > 2) {
 				switchValue = new LdLoc(switchValueVar);
 				keepAssignmentBefore = true;
 			}
 			var stringToInt = new StringToInt(switchValue, stringValues.ToArray());
-			inst = new SwitchInstruction(stringToInt);
+			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
+			instructions[i + 1].ReplaceWith(inst);
+			if (keepAssignmentBefore) {
+				instructions.RemoveAt(i);
+				i--;
+			} else {
+				instructions.RemoveRange(i - 1, 2);
+				i -= 2;
+			}
 			return true;
 		}
 
@@ -365,9 +353,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchLegacySwitchOnStringWithHashtable(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst)
+		bool MatchLegacySwitchOnStringWithHashtable(InstructionCollection<ILInstruction> instructions, ref int i)
 		{
-			inst = null;
 			// match first block: checking compiler-generated Hashtable for null
 			// if (comp(volatile.ldobj System.Collections.Hashtable(ldsflda $$method0x600003f-1) != ldnull)) br switchHeadBlock
 			// br tableInitBlock
@@ -453,15 +440,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				sections.Add(new SwitchSection() { Labels = label, Body = new Branch(nullCaseBlock) });
 			}
 			var stringToInt = new StringToInt(switchValue, stringValues.ToArray());
-			inst = new SwitchInstruction(stringToInt);
+			var inst = new SwitchInstruction(stringToInt);
 			inst.Sections.AddRange(sections);
+			instructions[i + 1].ReplaceWith(inst);
+			instructions.RemoveAt(i);
 			return true;
 		}
 
-		bool MatchRoslynSwitchOnString(InstructionCollection<ILInstruction> instructions, int i, out SwitchInstruction inst, out bool keepAssignmentBefore)
+		bool MatchRoslynSwitchOnString(InstructionCollection<ILInstruction> instructions, ref int i)
 		{
-			inst = null;
-			keepAssignmentBefore = false;
 			if (i < 1) return false;
 			if (!(instructions[i] is SwitchInstruction switchInst && switchInst.Value.MatchLdLoc(out var targetVar) &&
 				MatchComputeStringHashCall(instructions[i - 1], targetVar, out var switchValue)))
@@ -499,17 +486,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				stringValues.Add((index++, stringValue, body));
 			}
 			ILInstruction switchValueInst = switchValue;
+			bool keepAssignmentBefore;
 			if (i > 1 && instructions[i - 2].MatchStLoc(switchValue.Variable, out var switchValueTmp) &&
 				switchValue.Variable.IsSingleDefinition && switchValue.Variable.LoadCount == switchInst.Sections.Count) {
 				switchValueInst = switchValueTmp;
+				keepAssignmentBefore = false;
 			} else {
 				keepAssignmentBefore = true;
 			}
 			var defaultLabel = new LongSet(new LongInterval(0, index)).Invert();
 			var value = new StringToInt(switchValueInst, stringValues.Select(item => item.Item2).ToArray());
-			inst = new SwitchInstruction(value);
-			inst.Sections.AddRange(stringValues.Select(section => new SwitchSection { Labels = new Util.LongSet(section.Item1), Body = new Branch(section.Item3) }));
-			inst.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultBranch });
+			var newSwitch = new SwitchInstruction(value);
+			newSwitch.Sections.AddRange(stringValues.Select(section => new SwitchSection { Labels = new Util.LongSet(section.Item1), Body = new Branch(section.Item3) }));
+			newSwitch.Sections.Add(new SwitchSection { Labels = defaultLabel, Body = defaultBranch });
+			instructions[i].ReplaceWith(newSwitch);
+			if (keepAssignmentBefore) {
+				instructions.RemoveAt(i - 1);
+				i--;
+			} else {
+				instructions.RemoveRange(i - 2, 2);
+				i -= 2;
+			}
 			return true;
 		}
 
