@@ -2,15 +2,15 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using ICSharpCode.NRefactory.CSharp;
+using ICSharpCode.Decompiler.CSharp.Syntax;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	class FlattenSwitchBlocks : IAstTransform
 	{
-		public void Run(AstNode compilationUnit)
+		public void Run(AstNode rootNode, TransformContext context)
 		{
-			foreach (var switchSection in compilationUnit.Descendants.OfType<SwitchSection>())
+			foreach (var switchSection in rootNode.Descendants.OfType<SwitchSection>())
 			{
 				if (switchSection.Statements.Count != 1)
 					continue;
