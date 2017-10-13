@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Switch.dll
-// MVID: {94058166-F81D-4A82-ABCC-FB400C785214}
+// MVID: {F38BF1C4-C0E5-4BAD-8838-849DFFFA97DF}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00EF0000
+// Image base: 0x00300000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -511,6 +511,46 @@
   } // end of method Switch::ShortSwitchOverString
 
   .method public hidebysig static string 
+          ShortSwitchOverStringWithNullCase(string text) cil managed
+  {
+    // Code size       71 (0x47)
+    .maxstack  2
+    IL_0000:  ldstr      "ShortSwitchOverStringWithNullCase: "
+    IL_0005:  ldarg.0
+    IL_0006:  call       string [mscorlib]System.String::Concat(string,
+                                                                string)
+    IL_000b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0010:  ldarg.0
+    IL_0011:  ldstr      "First case"
+    IL_0016:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_001b:  brtrue.s   IL_002f
+
+    IL_001d:  ldarg.0
+    IL_001e:  ldstr      "Second case"
+    IL_0023:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0028:  brtrue.s   IL_0035
+
+    IL_002a:  ldarg.0
+    IL_002b:  brfalse.s  IL_003b
+
+    IL_002d:  br.s       IL_0041
+
+    IL_002f:  ldstr      "Text1"
+    IL_0034:  ret
+
+    IL_0035:  ldstr      "Text2"
+    IL_003a:  ret
+
+    IL_003b:  ldstr      "null"
+    IL_0040:  ret
+
+    IL_0041:  ldstr      "Default"
+    IL_0046:  ret
+  } // end of method Switch::ShortSwitchOverStringWithNullCase
+
+  .method public hidebysig static string 
           SwitchOverString1(string text) cil managed
   {
     // Code size       289 (0x121)
@@ -894,7 +934,7 @@
 
   .method public hidebysig static void  SwitchInLoop(int32 i) cil managed
   {
-    // Code size       122 (0x7a)
+    // Code size       110 (0x6e)
     .maxstack  2
     IL_0000:  ldstr      "SwitchInLoop: "
     IL_0005:  ldarg.0
@@ -908,37 +948,33 @@
     IL_0018:  switch     ( 
                           IL_002f,
                           IL_003b,
-                          IL_0047,
-                          IL_0053)
-    IL_002d:  br.s       IL_005e
+                          IL_0052,
+                          IL_0047)
+    IL_002d:  br.s       IL_0052
 
     IL_002f:  ldstr      "one"
     IL_0034:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0039:  br.s       IL_0073
+    IL_0039:  br.s       IL_0067
 
     IL_003b:  ldstr      "two"
     IL_0040:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0045:  br.s       IL_0073
+    IL_0045:  br.s       IL_0067
 
-    IL_0047:  ldstr      "three"
+    IL_0047:  ldstr      "four"
     IL_004c:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0051:  br.s       IL_0015
+    IL_0051:  ret
 
-    IL_0053:  ldstr      "four"
-    IL_0058:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_005d:  ret
+    IL_0052:  ldstr      "default"
+    IL_0057:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_005c:  ldstr      "more code"
+    IL_0061:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0066:  ret
 
-    IL_005e:  ldstr      "default"
-    IL_0063:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0068:  ldstr      "more code"
-    IL_006d:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0072:  ret
-
-    IL_0073:  ldarg.0
-    IL_0074:  ldc.i4.1
-    IL_0075:  add
-    IL_0076:  starg.s    i
-    IL_0078:  br.s       IL_0015
+    IL_0067:  ldarg.0
+    IL_0068:  ldc.i4.1
+    IL_0069:  add
+    IL_006a:  starg.s    i
+    IL_006c:  br.s       IL_0015
   } // end of method Switch::SwitchInLoop
 
   .method public hidebysig static void  SwitchWithGoto(int32 i) cil managed

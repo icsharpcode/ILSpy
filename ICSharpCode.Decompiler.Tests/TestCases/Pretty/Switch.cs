@@ -213,6 +213,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static string ShortSwitchOverStringWithNullCase(string text)
+		{
+			Console.WriteLine("ShortSwitchOverStringWithNullCase: " + text);
+			switch (text) {
+				case "First case": {
+						return "Text1";
+					}
+				case "Second case": {
+						return "Text2";
+					}
+				case null: {
+						return "null";
+					}
+				default: {
+						return "Default";
+					}
+			}
+		}
+
 		public static string SwitchOverString1(string text)
 		{
 			Console.WriteLine("SwitchOverString1: " + text);
@@ -248,8 +267,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static string SwitchOverString2()
 		{
 			Console.WriteLine("SwitchOverString2:");
-			string userName = Environment.UserName;
-			switch (userName) {
+			switch (Environment.UserName) {
 				case "First case": {
 						return "Text1";
 					}
@@ -318,10 +336,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 							Console.WriteLine("two");
 							break;
 						}
-					case 3: {
-							Console.WriteLine("three");
-							continue;
-						}
+					//case 3: {
+					//		Console.WriteLine("three");
+					//		continue;
+					//	}
 					case 4: {
 							Console.WriteLine("four");
 							return;
@@ -376,8 +394,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			SetProperty[] properties = Switch.GetProperties();
 			for (int i = 0; i < properties.Length; i++) {
 				SetProperty setProperty = properties[i];
-				string name = setProperty.Property.Name;
-				switch (name) {
+				switch (setProperty.Property.Name) {
 					case "Name1": {
 							setProperty.Set = 1;
 							list.Add(setProperty);

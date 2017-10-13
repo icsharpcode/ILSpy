@@ -97,7 +97,7 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
-		[Test, Ignore("unnecessary casts on null literals, control-flow issues with switch in loops, goto, goto case, etc.")]
+		[Test]
 		public void Switch([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
