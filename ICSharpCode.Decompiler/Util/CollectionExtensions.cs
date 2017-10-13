@@ -114,5 +114,81 @@ namespace ICSharpCode.Decompiler.Util
 				moreB = enumB.MoveNext();
 			}
 		}
+
+		/// <summary>
+		/// Returns the minimum element.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">The input sequence is empty</exception>
+		public static T MinBy<T, K>(this IEnumerable<T> source, Func<T, K> keySelector) where K : IComparable<K>
+		{
+			return source.MinBy(keySelector, Comparer<K>.Default);
+		}
+
+		/// <summary>
+		/// Returns the minimum element.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">The input sequence is empty</exception>
+		public static T MinBy<T, K>(this IEnumerable<T> source, Func<T, K> keySelector, IComparer<K> keyComparer)
+		{
+			if (source == null)
+				throw new ArgumentNullException(nameof(source));
+			if (keySelector == null)
+				throw new ArgumentNullException(nameof(keySelector));
+			if (keyComparer == null)
+				keyComparer = Comparer<K>.Default;
+			using (var enumerator = source.GetEnumerator()) {
+				if (!enumerator.MoveNext())
+					throw new InvalidOperationException("Sequence contains no elements");
+				T minElement = enumerator.Current;
+				K minKey = keySelector(minElement);
+				while (enumerator.MoveNext()) {
+					T element = enumerator.Current;
+					K key = keySelector(element);
+					if (keyComparer.Compare(key, minKey) < 0) {
+						minElement = element;
+						minKey = key;
+					}
+				}
+				return minElement;
+			}
+		}
+
+		/// <summary>
+		/// Returns the maximum element.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">The input sequence is empty</exception>
+		public static T MaxBy<T, K>(this IEnumerable<T> source, Func<T, K> keySelector) where K : IComparable<K>
+		{
+			return source.MaxBy(keySelector, Comparer<K>.Default);
+		}
+
+		/// <summary>
+		/// Returns the maximum element.
+		/// </summary>
+		/// <exception cref="InvalidOperationException">The input sequence is empty</exception>
+		public static T MaxBy<T, K>(this IEnumerable<T> source, Func<T, K> keySelector, IComparer<K> keyComparer)
+		{
+			if (source == null)
+				throw new ArgumentNullException(nameof(source));
+			if (keySelector == null)
+				throw new ArgumentNullException(nameof(keySelector));
+			if (keyComparer == null)
+				keyComparer = Comparer<K>.Default;
+			using (var enumerator = source.GetEnumerator()) {
+				if (!enumerator.MoveNext())
+					throw new InvalidOperationException("Sequence contains no elements");
+				T maxElement = enumerator.Current;
+				K maxKey = keySelector(maxElement);
+				while (enumerator.MoveNext()) {
+					T element = enumerator.Current;
+					K key = keySelector(element);
+					if (keyComparer.Compare(key, maxKey) > 0) {
+						maxElement = element;
+						maxKey = key;
+					}
+				}
+				return maxElement;
+			}
+		}
 	}
 }
