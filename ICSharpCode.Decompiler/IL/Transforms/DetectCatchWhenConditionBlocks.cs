@@ -41,10 +41,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					//   br whenConditionBlock
 					// }
 					var instructions = container.EntryPoint.Instructions;
-					((StLoc)instructions[0]).Value = exceptionSlot;
-					instructions[1].ReplaceWith(new Branch(whenConditionBlock));
-					instructions.RemoveAt(2);
-					container.SortBlocks(deleteUnreachableBlocks: true);
+					if (instructions.Count == 3) {
+						// stloc temp(isinst exceptionType(ldloc exceptionVar))
+						// if (comp(ldloc temp != ldnull)) br whenConditionBlock
+						// br falseBlock
+						((StLoc)instructions[0]).Value = exceptionSlot;
+						instructions[1].ReplaceWith(new Branch(whenConditionBlock));
+						instructions.RemoveAt(2);
+						container.SortBlocks(deleteUnreachableBlocks: true);
+					} else if (instructions.Count == 2) {
+						// if (comp(isinst exceptionType(ldloc exceptionVar) != ldnull)) br whenConditionBlock
+						// br falseBlock
+						instructions[0].ReplaceWith(new Branch(whenConditionBlock));
+						instructions.RemoveAt(1);
+						container.SortBlocks(deleteUnreachableBlocks: true);
+					}
 				}
 			}
 		}
@@ -61,21 +72,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			exceptionType = null;
 			exceptionSlot = null;
 			whenConditionBlock = null;
-			if (entryPoint == null || entryPoint.IncomingEdgeCount != 1 || entryPoint.Instructions.Count != 3)
+			if (entryPoint == null || entryPoint.IncomingEdgeCount != 1)
 				return false;
-			if (!entryPoint.Instructions[0].MatchStLoc(out var temp, out var isinst) ||
-				temp.Kind != VariableKind.StackSlot || !isinst.MatchIsInst(out exceptionSlot, out exceptionType))
-				return false;
-			if (!exceptionSlot.MatchLdLoc(out var exceptionVar) || exceptionVar.Kind != VariableKind.Exception)
-				return false;
-			if (!entryPoint.Instructions[1].MatchIfInstruction(out var condition, out var branch))
-				return false;
-			if (!condition.MatchCompNotEquals(out var left, out var right))
-				return false;
-			if (!entryPoint.Instructions[2].MatchBranch(out var falseBlock) || !MatchFalseBlock(container, falseBlock, out var returnVar, out var exitBlock))
-				return false;
-			if ((left.MatchLdNull() && right.MatchLdLoc(temp)) || (right.MatchLdNull() && left.MatchLdLoc(temp))) {
-				return branch.MatchBranch(out whenConditionBlock);
+			if (entryPoint.Instructions.Count == 3) {
+				// stloc temp(isinst exceptionType(ldloc exceptionVar))
+				// if (comp(ldloc temp != ldnull)) br whenConditionBlock
+				// br falseBlock
+				if (!entryPoint.Instructions[0].MatchStLoc(out var temp, out var isinst) ||
+					temp.Kind != VariableKind.StackSlot || !isinst.MatchIsInst(out exceptionSlot, out exceptionType))
+					return false;
+				if (!exceptionSlot.MatchLdLoc(out var exceptionVar) || exceptionVar.Kind != VariableKind.Exception)
+					return false;
+				if (!entryPoint.Instructions[1].MatchIfInstruction(out var condition, out var branch))
+					return false;
+				if (!condition.MatchCompNotEquals(out var left, out var right))
+					return false;
+				if (!entryPoint.Instructions[2].MatchBranch(out var falseBlock) || !MatchFalseBlock(container, falseBlock, out var returnVar, out var exitBlock))
+					return false;
+				if ((left.MatchLdNull() && right.MatchLdLoc(temp)) || (right.MatchLdNull() && left.MatchLdLoc(temp))) {
+					return branch.MatchBranch(out whenConditionBlock);
+				}
+			} else if (entryPoint.Instructions.Count == 2) {
+				// if (comp(isinst exceptionType(ldloc exceptionVar) != ldnull)) br whenConditionBlock
+				// br falseBlock
+				if (!entryPoint.Instructions[0].MatchIfInstruction(out var condition, out var branch))
+					return false;
+				if (!condition.MatchCompNotEquals(out var left, out var right))
+					return false;
+				if (!entryPoint.Instructions[1].MatchBranch(out var falseBlock) || !MatchFalseBlock(container, falseBlock, out var returnVar, out var exitBlock))
+					return false;
+				if (!left.MatchIsInst(out exceptionSlot, out exceptionType))
+					return false;
+				if (!exceptionSlot.MatchLdLoc(out var exceptionVar) || exceptionVar.Kind != VariableKind.Exception)
+					return false;
+				if (right.MatchLdNull()) {
+					return branch.MatchBranch(out whenConditionBlock);
+				}
 			}
 			return false;
 		}

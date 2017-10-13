@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module ExceptionHandling.dll
-// MVID: {07B52948-317B-4C30-A2A5-A7482568AD67}
+// MVID: {9413A96F-08C3-4F13-A800-C6BE70786A44}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00ED0000
+// Image base: 0x00370000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -66,15 +66,14 @@
             instance void  MoveNext() cil managed
     {
       .override [mscorlib]System.Runtime.CompilerServices.IAsyncStateMachine::MoveNext
-      // Code size       306 (0x132)
+      // Code size       295 (0x127)
       .maxstack  3
       .locals init (int32 V_0,
                bool V_1,
                valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool> V_2,
-               bool V_3,
-               class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8' V_4,
-               class [mscorlib]System.Exception V_5,
-               bool V_6)
+               class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8' V_3,
+               class [mscorlib]System.Exception V_4,
+               bool V_5)
       IL_0000:  ldarg.0
       IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>1__state'
       IL_0006:  stloc.0
@@ -96,7 +95,7 @@
 
           IL_0013:  br.s       IL_0017
 
-          IL_0015:  br.s       IL_0065
+          IL_0015:  br.s       IL_0064
 
           IL_0017:  nop
           IL_0018:  ldstr      "Try"
@@ -109,7 +108,7 @@
           IL_0033:  stloc.2
           IL_0034:  ldloca.s   V_2
           IL_0036:  call       instance bool valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool>::get_IsCompleted()
-          IL_003b:  brtrue.s   IL_0081
+          IL_003b:  brtrue.s   IL_0080
 
           IL_003d:  ldarg.0
           IL_003e:  ldc.i4.0
@@ -120,117 +119,113 @@
           IL_0047:  ldloc.2
           IL_0048:  stfld      valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>u__1'
           IL_004d:  ldarg.0
-          IL_004e:  stloc.s    V_4
-          IL_0050:  ldarg.0
-          IL_0051:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>t__builder'
-          IL_0056:  ldloca.s   V_2
-          IL_0058:  ldloca.s   V_4
-          IL_005a:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool>::AwaitUnsafeOnCompleted<valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool>,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'>(!!0&,
+          IL_004e:  stloc.3
+          IL_004f:  ldarg.0
+          IL_0050:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>t__builder'
+          IL_0055:  ldloca.s   V_2
+          IL_0057:  ldloca.s   V_3
+          IL_0059:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool>::AwaitUnsafeOnCompleted<valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool>,class ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'>(!!0&,
                                                                                                                                                                                                                                                                                                                                                                       !!1&)
-          IL_005f:  nop
-          IL_0060:  leave      IL_0131
+          IL_005e:  nop
+          IL_005f:  leave      IL_0126
 
-          IL_0065:  ldarg.0
-          IL_0066:  ldfld      valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>u__1'
-          IL_006b:  stloc.2
-          IL_006c:  ldarg.0
-          IL_006d:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>u__1'
-          IL_0072:  initobj    valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool>
-          IL_0078:  ldarg.0
-          IL_0079:  ldc.i4.m1
-          IL_007a:  dup
-          IL_007b:  stloc.0
-          IL_007c:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>1__state'
+          IL_0064:  ldarg.0
+          IL_0065:  ldfld      valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>u__1'
+          IL_006a:  stloc.2
+          IL_006b:  ldarg.0
+          IL_006c:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>u__1'
+          IL_0071:  initobj    valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool>
+          IL_0077:  ldarg.0
+          IL_0078:  ldc.i4.m1
+          IL_0079:  dup
+          IL_007a:  stloc.0
+          IL_007b:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>1__state'
+          IL_0080:  ldarg.0
           IL_0081:  ldloca.s   V_2
           IL_0083:  call       instance !0 valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool>::GetResult()
-          IL_0088:  stloc.3
-          IL_0089:  ldloca.s   V_2
-          IL_008b:  initobj    valuetype [mscorlib]System.Runtime.CompilerServices.TaskAwaiter`1<bool>
-          IL_0091:  ldarg.0
-          IL_0092:  ldloc.3
-          IL_0093:  stfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>s__1'
-          IL_0098:  ldarg.0
-          IL_0099:  ldfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>s__1'
-          IL_009e:  stloc.1
-          IL_009f:  leave.s    IL_011c
+          IL_0088:  stfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>s__1'
+          IL_008d:  ldarg.0
+          IL_008e:  ldfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>s__1'
+          IL_0093:  stloc.1
+          IL_0094:  leave.s    IL_0111
 
         }  // end .try
         filter
         {
-          IL_00a1:  isinst     [mscorlib]System.Exception
-          IL_00a6:  dup
-          IL_00a7:  brtrue.s   IL_00ad
+          IL_0096:  isinst     [mscorlib]System.Exception
+          IL_009b:  dup
+          IL_009c:  brtrue.s   IL_00a2
 
-          IL_00a9:  pop
-          IL_00aa:  ldc.i4.0
-          IL_00ab:  br.s       IL_00dc
+          IL_009e:  pop
+          IL_009f:  ldc.i4.0
+          IL_00a0:  br.s       IL_00d1
 
-          IL_00ad:  stloc.s    V_5
-          IL_00af:  ldarg.0
-          IL_00b0:  ldloc.s    V_5
-          IL_00b2:  stfld      class [mscorlib]System.Exception ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<ex>5__2'
-          IL_00b7:  ldarg.0
-          IL_00b8:  ldfld      class [mscorlib]System.Exception ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<ex>5__2'
-          IL_00bd:  isinst     [mscorlib]System.ArgumentException
-          IL_00c2:  brtrue.s   IL_00d4
+          IL_00a2:  stloc.s    V_4
+          IL_00a4:  ldarg.0
+          IL_00a5:  ldloc.s    V_4
+          IL_00a7:  stfld      class [mscorlib]System.Exception ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<ex>5__2'
+          IL_00ac:  ldarg.0
+          IL_00ad:  ldfld      class [mscorlib]System.Exception ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<ex>5__2'
+          IL_00b2:  isinst     [mscorlib]System.ArgumentException
+          IL_00b7:  brtrue.s   IL_00c9
 
-          IL_00c4:  ldarg.0
-          IL_00c5:  ldfld      class [mscorlib]System.Exception ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<ex>5__2'
-          IL_00ca:  isinst     [mscorlib]System.IO.IOException
-          IL_00cf:  ldnull
-          IL_00d0:  cgt.un
-          IL_00d2:  br.s       IL_00d5
+          IL_00b9:  ldarg.0
+          IL_00ba:  ldfld      class [mscorlib]System.Exception ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<ex>5__2'
+          IL_00bf:  isinst     [mscorlib]System.IO.IOException
+          IL_00c4:  ldnull
+          IL_00c5:  cgt.un
+          IL_00c7:  br.s       IL_00ca
 
-          IL_00d4:  ldc.i4.1
-          IL_00d5:  stloc.s    V_6
-          IL_00d7:  ldloc.s    V_6
-          IL_00d9:  ldc.i4.0
-          IL_00da:  cgt.un
-          IL_00dc:  endfilter
+          IL_00c9:  ldc.i4.1
+          IL_00ca:  stloc.s    V_5
+          IL_00cc:  ldloc.s    V_5
+          IL_00ce:  ldc.i4.0
+          IL_00cf:  cgt.un
+          IL_00d1:  endfilter
         }  // end filter
         {  // handler
-          IL_00de:  pop
-          IL_00df:  nop
-          IL_00e0:  ldstr      "CatchException ex: "
-          IL_00e5:  ldarg.0
-          IL_00e6:  ldfld      class [mscorlib]System.Exception ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<ex>5__2'
-          IL_00eb:  callvirt   instance string [mscorlib]System.Object::ToString()
-          IL_00f0:  call       string [mscorlib]System.String::Concat(string,
+          IL_00d3:  pop
+          IL_00d4:  nop
+          IL_00d5:  ldstr      "CatchException ex: "
+          IL_00da:  ldarg.0
+          IL_00db:  ldfld      class [mscorlib]System.Exception ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<ex>5__2'
+          IL_00e0:  callvirt   instance string [mscorlib]System.Object::ToString()
+          IL_00e5:  call       string [mscorlib]System.String::Concat(string,
                                                                       string)
-          IL_00f5:  call       void [mscorlib]System.Console::WriteLine(string)
-          IL_00fa:  nop
-          IL_00fb:  nop
-          IL_00fc:  leave.s    IL_00fe
+          IL_00ea:  call       void [mscorlib]System.Console::WriteLine(string)
+          IL_00ef:  nop
+          IL_00f0:  nop
+          IL_00f1:  leave.s    IL_00f3
 
         }  // end handler
-        IL_00fe:  ldc.i4.0
-        IL_00ff:  stloc.1
-        IL_0100:  leave.s    IL_011c
+        IL_00f3:  ldc.i4.0
+        IL_00f4:  stloc.1
+        IL_00f5:  leave.s    IL_0111
 
       }  // end .try
       catch [mscorlib]System.Exception 
       {
-        IL_0102:  stloc.s    V_5
-        IL_0104:  ldarg.0
-        IL_0105:  ldc.i4.s   -2
-        IL_0107:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>1__state'
-        IL_010c:  ldarg.0
-        IL_010d:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>t__builder'
-        IL_0112:  ldloc.s    V_5
-        IL_0114:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool>::SetException(class [mscorlib]System.Exception)
-        IL_0119:  nop
-        IL_011a:  leave.s    IL_0131
+        IL_00f7:  stloc.s    V_4
+        IL_00f9:  ldarg.0
+        IL_00fa:  ldc.i4.s   -2
+        IL_00fc:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>1__state'
+        IL_0101:  ldarg.0
+        IL_0102:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>t__builder'
+        IL_0107:  ldloc.s    V_4
+        IL_0109:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool>::SetException(class [mscorlib]System.Exception)
+        IL_010e:  nop
+        IL_010f:  leave.s    IL_0126
 
       }  // end handler
-      IL_011c:  ldarg.0
-      IL_011d:  ldc.i4.s   -2
-      IL_011f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>1__state'
-      IL_0124:  ldarg.0
-      IL_0125:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>t__builder'
-      IL_012a:  ldloc.1
-      IL_012b:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool>::SetResult(!0)
-      IL_0130:  nop
-      IL_0131:  ret
+      IL_0111:  ldarg.0
+      IL_0112:  ldc.i4.s   -2
+      IL_0114:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>1__state'
+      IL_0119:  ldarg.0
+      IL_011a:  ldflda     valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.ExceptionHandling/'<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::'<>t__builder'
+      IL_011f:  ldloc.1
+      IL_0120:  call       instance void valuetype [mscorlib]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<bool>::SetResult(!0)
+      IL_0125:  nop
+      IL_0126:  ret
     } // end of method '<SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr>d__8'::MoveNext
 
     .method private hidebysig newslot virtual final 
@@ -570,6 +565,56 @@
     IL_003a:  ret
   } // end of method ExceptionHandling::SimpleAsyncTryCatchExceptionWithNameAndConditionWithOr
 
+  .method public hidebysig instance void 
+          CatchWhenWithConditionWithoutExceptionVar() cil managed
+  {
+    // Code size       51 (0x33)
+    .maxstack  2
+    .locals init (int32 V_0,
+             bool V_1)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.0
+    IL_0002:  stloc.0
+    .try
+    {
+      IL_0003:  nop
+      IL_0004:  newobj     instance void [mscorlib]System.Exception::.ctor()
+      IL_0009:  throw
+
+    }  // end .try
+    filter
+    {
+      IL_000a:  isinst     [mscorlib]System.Exception
+      IL_000f:  dup
+      IL_0010:  brtrue.s   IL_0016
+
+      IL_0012:  pop
+      IL_0013:  ldc.i4.0
+      IL_0014:  br.s       IL_0020
+
+      IL_0016:  pop
+      IL_0017:  ldloc.0
+      IL_0018:  ldc.i4.0
+      IL_0019:  ceq
+      IL_001b:  stloc.1
+      IL_001c:  ldloc.1
+      IL_001d:  ldc.i4.0
+      IL_001e:  cgt.un
+      IL_0020:  endfilter
+    }  // end filter
+    {  // handler
+      IL_0022:  pop
+      IL_0023:  nop
+      IL_0024:  ldstr      "jo"
+      IL_0029:  call       void [mscorlib]System.Console::WriteLine(string)
+      IL_002e:  nop
+      IL_002f:  nop
+      IL_0030:  leave.s    IL_0032
+
+    }  // end handler
+    IL_0032:  ret
+  } // end of method ExceptionHandling::CatchWhenWithConditionWithoutExceptionVar
+
   .method public hidebysig instance bool 
           SimpleTryFinally() cil managed
   {
@@ -700,7 +745,7 @@
     // Code size       67 (0x43)
     .maxstack  1
     .locals init (class [mscorlib]System.InvalidOperationException V_0,
-             class [mscorlib]System.Exception V_1)
+             class [mscorlib]System.SystemException V_1)
     IL_0000:  nop
     .try
     {
@@ -724,7 +769,7 @@
       IL_001f:  leave.s    IL_0042
 
     }  // end handler
-    catch [mscorlib]System.Exception 
+    catch [mscorlib]System.SystemException 
     {
       IL_0021:  stloc.1
       IL_0022:  nop
