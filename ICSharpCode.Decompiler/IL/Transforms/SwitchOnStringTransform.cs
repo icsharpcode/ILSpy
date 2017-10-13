@@ -338,8 +338,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// final store to compiler-generated variable:
 			// volatile.stobj dictionaryType(ldsflda dictionaryField, ldloc dictVar)
 			if (!(block.Instructions[i + 1].MatchStObj(out var loadField, out var dictVarLoad, out var dictType) &&
-				dictType.Equals(dictionaryType) && loadField.MatchLdsFlda(out var dictField) && dictField.Equals(dictionaryField)) &&
-				dictVarLoad.MatchLdLoc(dictVar))
+				dictType.Equals(dictionaryType) && loadField.MatchLdsFlda(out var dictField) && dictField.Equals(dictionaryField) &&
+				dictVarLoad.MatchLdLoc(dictVar)))
 				return false;
 			return block.Instructions[i + 2].MatchBranch(targetBlock);
 		}
@@ -356,7 +356,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(c.Arguments[0].MatchLdLoc(dictVar) && c.Arguments[1].MatchLdStr(out value)))
 				return false;
-			if (!(c.Method.DeclaringType.Equals(dictionaryType) && c.Method.IsStatic))
+			if (!(c.Method.DeclaringType.Equals(dictionaryType) && !c.Method.IsStatic))
 				return false;
 			return (c.Arguments[2].MatchLdcI4(index) || (c.Arguments[2].MatchBox(out var arg, out _) && arg.MatchLdcI4(index)));
 		}
