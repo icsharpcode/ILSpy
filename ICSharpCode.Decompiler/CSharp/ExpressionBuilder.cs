@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
 		readonly TypeSystemAstBuilder astBuilder;
-		readonly DecompilerSettings settings;
+		internal readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 		
 		public ExpressionBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, DecompilerSettings settings, CancellationToken cancellationToken)

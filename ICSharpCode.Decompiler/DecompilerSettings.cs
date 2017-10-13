@@ -228,7 +228,24 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
+		bool useImplicitMethodGroupConversion = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 2.0 method group conversions.
+		/// true: <c>EventHandler h = this.OnClick;</c>
+		/// false: <c>EventHandler h = new EventHandler(this.OnClick);</c>
+		/// </summary>
+		public bool UseImplicitMethodGroupConversion {
+			get { return useImplicitMethodGroupConversion; }
+			set {
+				if (useImplicitMethodGroupConversion != value) {
+					useImplicitMethodGroupConversion = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool fullyQualifyAmbiguousTypeNames = true;
 		
 		public bool FullyQualifyAmbiguousTypeNames {

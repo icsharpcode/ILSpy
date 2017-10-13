@@ -179,7 +179,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						|| type.Kind == TypeKind.Delegate && conversion.Conversion.IsAnonymousFunctionConversion
 						)) {
 						return this.UnwrapChild(cast.Expression);
-					} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion && oce.Arguments.Count == 1) {
+					} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
+							&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion)
+					{
 						return this.UnwrapChild(oce.Arguments.Single());
 					}
 				}
