@@ -64,8 +64,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool IsCatchWhenBlock(Block block)
 		{
-			return block.Parent is BlockContainer container && container.Parent is TryCatchHandler handler
-				&& handler.Filter == container && block == container.EntryPoint;
+			var container = BlockContainer.FindClosestContainer(block);
+			return container?.Parent is TryCatchHandler handler
+				&& handler.Filter == container;
 		}
 
 		/// <summary>
