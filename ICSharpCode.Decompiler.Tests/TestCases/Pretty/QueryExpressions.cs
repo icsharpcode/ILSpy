@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public object FromLetWhereSelect()
 		{
 			return from o in this.orders
-				   let t = o.Details.Sum((Func<OrderDetail, decimal>)((OrderDetail d) => d.UnitPrice * d.Quantity))
+				   let t = o.Details.Sum((OrderDetail d) => d.UnitPrice * d.Quantity)
 				   where t >= 1000m
 				   select new {
 					   OrderID = o.OrderID,

@@ -198,8 +198,8 @@ namespace ICSharpCode.Decompiler.Tests
 			RunCS(options: options);
 		}
 
-		[Test, Ignore("Run() method cannot be fully decompiled.")]
-		public void Async([ValueSource("defaultOptions")] CompilerOptions options)
+		[Test]
+		public void Async([Values(CompilerOptions.None, CompilerOptions.Optimize)] CompilerOptions options)
 		{
 			RunCS(options: options);
 		}

@@ -8,7 +8,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		protected internal virtual Task<string> Test(string test)
 		{
-			return Task.Run((Func<string>)(() => test.ToUpper()));
+			return Task.Run(() => test.ToUpper());
 		}
 	}
 
@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		protected internal override string Test(string test)
 		{
-			Func<string, string> func = (Func<string, string>)((string a) => base.Test(a));
+			Func<string, string> func = (string a) => base.Test(a);
 			test = string.Join(test, "aa");
 			return func(test);
 		}
@@ -66,7 +66,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		protected internal override void Test(string test)
 		{
-			Action<string> action = (Action<string>)delegate(string a) {
+			Action<string> action = delegate(string a) {
 				base.Test(a);
 			};
 			if (test.Equals(1)) {
@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.ILPretty
 	{
 		protected internal override void Test(int a)
 		{
-			Action action = (Action)delegate {
+			Action action = delegate {
 				base.Test(a);
 			};
 			if (a.Equals(1)) {
