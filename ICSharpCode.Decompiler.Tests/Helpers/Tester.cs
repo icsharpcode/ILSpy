@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static string AssembleIL(string sourceFileName, AssemblerOptions options = AssemblerOptions.UseDebug)
 		{
 			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
-			string outputFile = Path.GetFileNameWithoutExtension(sourceFileName);
+			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
 			string otherOptions = " ";
 			if (options.HasFlag(AssemblerOptions.Library)) {
 				outputFile += ".dll";
@@ -156,7 +156,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			};
 		});
 		
-		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug)
+		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
 			foreach (Match match in Regex.Matches(File.ReadAllText(sourceFileName), @"#include ""([\w\d./]+)""")) {
@@ -181,7 +181,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 					deterministic: true
 				));
 				CompilerResults results = new CompilerResults(new TempFileCollection());
-				results.PathToAssembly = Path.GetTempFileName();
+				results.PathToAssembly = outputFileName ?? Path.GetTempFileName();
 				var emitResult = compilation.Emit(results.PathToAssembly);
 				if (!emitResult.Success) {
 					StringBuilder b = new StringBuilder("Compiler error:");
@@ -202,6 +202,9 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				if (preprocessorSymbols.Count > 0) {
 					options.CompilerOptions += " /d:" + string.Join(";", preprocessorSymbols);
 				}
+				if (outputFileName != null) {
+					options.OutputAssembly = outputFileName;
+				}
 
 				options.ReferencedAssemblies.Add("System.Core.dll");
 				CompilerResults results = provider.CompileAssemblyFromFile(options, sourceFileNames.ToArray());
@@ -214,6 +217,20 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 				return results;
 			}
+		}
+
+		internal static string GetSuffix(CompilerOptions cscOptions)
+		{
+			string suffix = "";
+			if ((cscOptions & CompilerOptions.Optimize) != 0)
+				suffix += ".opt";
+			if ((cscOptions & CompilerOptions.Force32Bit) != 0)
+				suffix += ".32";
+			if ((cscOptions & CompilerOptions.UseDebug) != 0)
+				suffix += ".dbg";
+			if ((cscOptions & CompilerOptions.UseRoslyn) != 0)
+				suffix += ".roslyn";
+			return suffix;
 		}
 
 		public static int Run(string assemblyFileName, out string output, out string error)

@@ -11,3 +11,4 @@ _ReSharper*/
 *.patch
 .vs/
 /ILSpy.AddIn/Packages/*
+/ICSharpCode.Decompiler.Tests/TestCases/Correctness/*.exe

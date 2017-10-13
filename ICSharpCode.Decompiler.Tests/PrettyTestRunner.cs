@@ -196,16 +196,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None)
 		{
-			var ilFile = Path.Combine(TestCasePath, testName);
-			if ((cscOptions & CompilerOptions.Optimize) != 0)
-				ilFile += ".opt";
-			if ((cscOptions & CompilerOptions.Force32Bit) != 0)
-				ilFile += ".32";
-			if ((cscOptions & CompilerOptions.UseDebug) != 0)
-				ilFile += ".dbg";
-			if ((cscOptions & CompilerOptions.UseRoslyn) != 0)
-				ilFile += ".roslyn";
-			ilFile += ".il";
+			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 
 			if (!File.Exists(ilFile)) {
