@@ -207,7 +207,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!exitBlockJump.MatchBranch(out var nullValueCaseBlock))
 				return false;
-			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && (left.Match(switchValue).Success || left.MatchLdLoc(switchValueVar))))
+			if (!(condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull()
+				&& ((SemanticHelper.IsPure(switchValue.Flags) && left.Match(switchValue).Success) || left.MatchLdLoc(switchValueVar))))
 				return false;
 			var nextBlockJump = instructions.ElementAtOrDefault(i + 1) as Branch;
 			if (nextBlockJump == null || nextBlockJump.TargetBlock.IncomingEdgeCount != 1)
@@ -311,15 +312,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool ExtractStringValuesFromInitBlock(Block block, out List<string> values, Block targetBlock, IType dictionaryType, IField dictionaryField)
 		{
 			values = null;
-			if (!(block.Instructions[0].MatchStLoc(out var dictVar, out var newObjDict) &&
-				newObjDict is NewObj newObj && newObj.Arguments.Count >= 1 && newObj.Arguments[0].MatchLdcI4(out var valuesLength)))
+			// stloc dictVar(newobj Dictionary..ctor(ldc.i4 valuesLength))
+			// -or-
+			// stloc dictVar(newobj Hashtable..ctor(ldc.i4 capacity, ldc.f loadFactor))
+			if (!(block.Instructions[0].MatchStLoc(out var dictVar, out var newObjDict) && newObjDict is NewObj newObj))
 				return false;
+			if (!newObj.Method.DeclaringType.Equals(dictionaryType))
+				return false;
+			int valuesLength = 0;
+			if (newObj.Arguments.Count == 2) {
+				if (!newObj.Arguments[0].MatchLdcI4(out valuesLength))
+					return false;
+				if (!newObj.Arguments[1].MatchLdcF(0.5))
+					return false;
+			} else if (newObj.Arguments.Count == 1) {
+				if (!newObj.Arguments[0].MatchLdcI4(out valuesLength))
+					return false;
+			}
 			values = new List<string>(valuesLength);
 			int i = 0;
-			while (i + 1 < block.Instructions.Count - 2 && MatchAddCall(block.Instructions[i + 1], dictVar, i, out var value)) {
+			while (MatchAddCall(dictionaryType, block.Instructions[i + 1], dictVar, i, out var value)) {
 				values.Add(value);
 				i++;
 			}
+			// final store to compiler-generated variable:
+			// volatile.stobj dictionaryType(ldsflda dictionaryField, ldloc dictVar)
 			if (!(block.Instructions[i + 1].MatchStObj(out var loadField, out var dictVarLoad, out var dictType) &&
 				dictType.Equals(dictionaryType) && loadField.MatchLdsFlda(out var dictField) && dictField.Equals(dictionaryField)) &&
 				dictVarLoad.MatchLdLoc(dictVar))
@@ -332,12 +349,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -or-
 		/// call Add(ldloc dictVar, ldstr value, box System.Int32(ldc.i4 index))
 		/// </summary>
-		bool MatchAddCall(ILInstruction inst, ILVariable dictVar, int index, out string value)
+		bool MatchAddCall(IType dictionaryType, ILInstruction inst, ILVariable dictVar, int index, out string value)
 		{
 			value = null;
-			return inst is Call c && c.Method.Name == "Add" && c.Arguments.Count == 3 &&
-				c.Arguments[0].MatchLdLoc(dictVar) && c.Arguments[1].MatchLdStr(out value) &&
-				(c.Arguments[2].MatchLdcI4(index) || (c.Arguments[2].MatchBox(out var arg, out _) && arg.MatchLdcI4(index)));
+			if (!(inst is Call c && c.Method.Name == "Add" && c.Arguments.Count == 3))
+				return false;
+			if (!(c.Arguments[0].MatchLdLoc(dictVar) && c.Arguments[1].MatchLdStr(out value)))
+				return false;
+			if (!(c.Method.DeclaringType.Equals(dictionaryType) && c.Method.IsStatic))
+				return false;
+			return (c.Arguments[2].MatchLdcI4(index) || (c.Arguments[2].MatchBox(out var arg, out _) && arg.MatchLdcI4(index)));
 		}
 
 		bool IsStringToIntDictionary(IType dictionaryType)
