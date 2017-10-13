@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Switch.dll
-// MVID: {F38BF1C4-C0E5-4BAD-8838-849DFFFA97DF}
+// MVID: {4366DF41-DCD0-42E1-B99D-7B67787ECEA9}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00300000
+// Image base: 0x00690000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -231,6 +231,48 @@
   } // end of method Switch::SwitchOverNullableInt
 
   .method public hidebysig static string 
+          SwitchOverNullableIntNullCaseCombined(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
+  {
+    // Code size       57 (0x39)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
+             int32 V_1)
+    IL_0000:  ldarg.0
+    IL_0001:  stloc.0
+    IL_0002:  ldloca.s   V_0
+    IL_0004:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0009:  brfalse.s  IL_0021
+
+    IL_000b:  ldloca.s   V_0
+    IL_000d:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0012:  stloc.1
+    IL_0013:  ldloc.1
+    IL_0014:  brfalse.s  IL_0021
+
+    IL_0016:  ldloc.1
+    IL_0017:  ldc.i4.5
+    IL_0018:  beq.s      IL_0027
+
+    IL_001a:  ldloc.1
+    IL_001b:  ldc.i4.s   10
+    IL_001d:  beq.s      IL_002d
+
+    IL_001f:  br.s       IL_0033
+
+    IL_0021:  ldstr      "zero"
+    IL_0026:  ret
+
+    IL_0027:  ldstr      "five"
+    IL_002c:  ret
+
+    IL_002d:  ldstr      "ten"
+    IL_0032:  ret
+
+    IL_0033:  ldstr      "large"
+    IL_0038:  ret
+  } // end of method Switch::SwitchOverNullableIntNullCaseCombined
+
+  .method public hidebysig static string 
           SwitchOverNullableIntShifted(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
   {
     // Code size       98 (0x62)
@@ -291,6 +333,65 @@
     IL_005c:  ldstr      "large"
     IL_0061:  ret
   } // end of method Switch::SwitchOverNullableIntShifted
+
+  .method public hidebysig static string 
+          SwitchOverNullableIntShiftedNullCaseCombined(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed
+  {
+    // Code size       92 (0x5c)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<int32> V_0,
+             valuetype [mscorlib]System.Nullable`1<int32> V_1,
+             valuetype [mscorlib]System.Nullable`1<int32> V_2,
+             int32 V_3)
+    IL_0000:  ldarg.0
+    IL_0001:  stloc.1
+    IL_0002:  ldloca.s   V_1
+    IL_0004:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_0009:  brtrue.s   IL_0016
+
+    IL_000b:  ldloca.s   V_2
+    IL_000d:  initobj    valuetype [mscorlib]System.Nullable`1<int32>
+    IL_0013:  ldloc.2
+    IL_0014:  br.s       IL_0024
+
+    IL_0016:  ldloca.s   V_1
+    IL_0018:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_001d:  ldc.i4.5
+    IL_001e:  add
+    IL_001f:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
+    IL_0024:  stloc.0
+    IL_0025:  ldloca.s   V_0
+    IL_0027:  call       instance bool valuetype [mscorlib]System.Nullable`1<int32>::get_HasValue()
+    IL_002c:  brfalse.s  IL_0044
+
+    IL_002e:  ldloca.s   V_0
+    IL_0030:  call       instance !0 valuetype [mscorlib]System.Nullable`1<int32>::GetValueOrDefault()
+    IL_0035:  stloc.3
+    IL_0036:  ldloc.3
+    IL_0037:  brfalse.s  IL_0044
+
+    IL_0039:  ldloc.3
+    IL_003a:  ldc.i4.5
+    IL_003b:  beq.s      IL_004a
+
+    IL_003d:  ldloc.3
+    IL_003e:  ldc.i4.s   10
+    IL_0040:  beq.s      IL_0050
+
+    IL_0042:  br.s       IL_0056
+
+    IL_0044:  ldstr      "zero"
+    IL_0049:  ret
+
+    IL_004a:  ldstr      "five"
+    IL_004f:  ret
+
+    IL_0050:  ldstr      "ten"
+    IL_0055:  ret
+
+    IL_0056:  ldstr      "large"
+    IL_005b:  ret
+  } // end of method Switch::SwitchOverNullableIntShiftedNullCaseCombined
 
   .method public hidebysig static string 
           SwitchOverNullableIntNoNullCase(valuetype [mscorlib]System.Nullable`1<int32> i) cil managed

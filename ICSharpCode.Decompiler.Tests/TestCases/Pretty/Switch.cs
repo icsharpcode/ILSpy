@@ -86,11 +86,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public static string SwitchOverNullableIntNullCaseCombined(int? i)
+		{
+			switch (i) {
+				case null:
+				case 0:
+					return "zero";
+				case 5:
+					return "five";
+				case 10:
+					return "ten";
+				default:
+					return "large";
+			}
+		}
+
 		public static string SwitchOverNullableIntShifted(int? i)
 		{
 			switch (i + 5) {
 				case null:
 					return "null";
+				case 0:
+					return "zero";
+				case 5:
+					return "five";
+				case 10:
+					return "ten";
+				default:
+					return "large";
+			}
+		}
+
+		public static string SwitchOverNullableIntShiftedNullCaseCombined(int? i)
+		{
+			switch (i + 5) {
+				case null:
 				case 0:
 					return "zero";
 				case 5:
