@@ -115,36 +115,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!firstBlockJump.MatchBranch(out var firstBlock))
 				return false;
 			List<(string, Block)> values = new List<(string, Block)>();
-			// match null check: this is used by the old C# compiler.
-			if (condition.MatchCompEquals(out var left, out var right) && right.MatchLdNull() && left.MatchLdLoc(out var switchValueVar)) {
-				values.Add((null, firstBlock));
-				// Roslyn: match call to operator ==(string, string)
-			} else if (MatchStringEqualityComparison(condition, out switchValueVar, out string value)) {
+			ILInstruction switchValue = null;
+			// Roslyn: match call to operator ==(string, string)
+			if (MatchStringEqualityComparison(condition, out var switchValueVar, out string value)) {
 				values.Add((value, firstBlock));
-			} else return false;
-			// switchValueVar must be assigned only once and must be of type string.
-			if (!switchValueVar.IsSingleDefinition || !switchValueVar.Type.IsKnownType(KnownTypeCode.String))
-				return false;
-			// if instruction must be preceeded by a stloc to the switchValueVar
-			if (instructions[i - 1].MatchStLoc(switchValueVar, out var switchValue)) { }
-			// in case of legacy code there are two stlocs:
-			// stloc switchValueVar(ldloc switchValue)
-			// stloc otherSwitchValueVar(ldloc switchValueVar)
-			// if (comp(ldloc switchValueVar == ldnull)) br nullCase
-			else if (i > 1 && instructions[i - 2].MatchStLoc(switchValueVar, out switchValue) &&
-				instructions[i - 1].MatchStLoc(out var otherSwitchValueVar, out var switchValueCopyInst) &&
-				switchValueCopyInst.MatchLdLoc(switchValueVar) && otherSwitchValueVar.IsSingleDefinition && switchValueVar.LoadCount == 2)
-			{
-				extraLoad = true;
+				if(!instructions[i - 1].MatchStLoc(switchValueVar, out switchValue)) {
+					switchValue = new LdLoc(switchValueVar);
+				}
+			} else {
+				// match null check with different variable:
+				// this is used by the old C# compiler.
+				if (MatchCompEqualsNull(condition, out var otherSwitchValueVar)) {
+					values.Add((null, firstBlock));
+				} else {
+					return false;
+				}
+
+				// in case of optimized legacy code there are two stlocs:
+				// stloc otherSwitchValueVar(ldloc switchValue)
+				// stloc switchValueVar(ldloc otherSwitchValueVar)
+				// if (comp(ldloc otherSwitchValueVar == ldnull)) br nullCase
+				if (i > 1 && otherSwitchValueVar != null && instructions[i - 2].MatchStLoc(otherSwitchValueVar, out switchValue)
+					&& instructions[i - 1].MatchStLoc(out switchValueVar, out var switchValueCopyInst)
+					&& switchValueCopyInst.MatchLdLoc(otherSwitchValueVar) && otherSwitchValueVar.IsSingleDefinition && otherSwitchValueVar.LoadCount == 2) {
+					extraLoad = true;
+				} else if (instructions[i - 1].MatchStLoc(out switchValueVar, out switchValue)) {
+					// unoptimized legacy switch
+				}
 			}
-			else return false;
+
 			// if instruction must be followed by a branch to the next case
 			if (!(instructions.ElementAtOrDefault(i + 1) is Branch nextCaseJump))
 				return false;
 			// extract all cases and add them to the values list.
 			Block currentCaseBlock = nextCaseJump.TargetBlock;
 			Block nextCaseBlock;
-			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, ref switchValueVar, out string value, out Block block)) != null) {
+			while ((nextCaseBlock = MatchCaseBlock(currentCaseBlock, switchValueVar, out value, out Block block)) != null) {
 				values.Add((value, block));
 				currentCaseBlock = nextCaseBlock;
 			}
@@ -169,13 +175,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 1. block:
 		/// if (call op_Equality(ldloc switchVariable, ldstr value)) br caseBlock
 		/// br nextBlock
+		/// -or-
+		/// if (comp(ldloc switchValueVar == ldnull)) br nextBlock
+		/// br caseBlock
+		/// 2. block is caseBlock
 		/// This method matches the above pattern or its inverted form:
 		/// the call to ==(string, string) is wrapped in logic.not and the branch targets are reversed.
 		/// Returns the next block that follows in the block-chain.
 		/// The <paramref name="switchVariable"/> is updated if the value gets copied to a different variable.
 		/// See comments below for more info.
 		/// </summary>
-		Block MatchCaseBlock(Block currentBlock, ref ILVariable switchVariable, out string value, out Block caseBlock)
+		Block MatchCaseBlock(Block currentBlock, ILVariable switchVariable, out string value, out Block caseBlock)
 		{
 			value = null;
 			caseBlock = null;
@@ -196,19 +206,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (!currentBlock.Instructions[1].MatchBranch(out nextBlock))
 					return null;
 			}
-			// Sometimes the switch pattern uses one variable at the beginning for null checks
-			// and another variable for the if-else-if-else-pattern.
-			// both variables must be only assigned once and be of the type: System.String.
-			if (!MatchStringEqualityComparison(condition, out var newSwitchVariable, out value))
+			if (!MatchStringEqualityComparison(condition, out var v, out value)) {
+				if (MatchCompEqualsNull(condition, out v)) {
+					value = null;
+				} else {
+					return null;
+				}
+			}
+			if (v != switchVariable)
 				return null;
-			if (!newSwitchVariable.IsSingleDefinition)
-				return null;
-			// if the used variable differs and both variables are not related, return null:
-			if (switchVariable != newSwitchVariable && !(IsInitializedBy(switchVariable, newSwitchVariable) || IsInitializedBy(newSwitchVariable, switchVariable)))
-				return null;
-			if (!newSwitchVariable.Type.IsKnownType(KnownTypeCode.String))
-				return null;
-			switchVariable = newSwitchVariable;
 			return nextBlock;
 		}
 
@@ -482,8 +488,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!bodyBranch.MatchBranch(out Block body))
 					return false;
-				if (!MatchStringEqualityComparison(condition, switchValue.Variable, out string stringValue)) {
-					if (condition.MatchLogicNot(out condition) && MatchStringEqualityComparison(condition, switchValue.Variable, out stringValue)) {
+				if (!MatchStringEqualityOrNullComparison(condition, switchValue.Variable, out string stringValue)) {
+					if (condition.MatchLogicNot(out condition) && MatchStringEqualityOrNullComparison(condition, switchValue.Variable, out stringValue)) {
 						if (!target.Instructions[1].MatchBranch(out Block exit))
 							return false;
 						body = exit;
@@ -520,9 +526,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchStringEqualityComparison(ILInstruction condition, ILVariable variable, out string stringValue)
+		bool MatchStringEqualityOrNullComparison(ILInstruction condition, ILVariable variable, out string stringValue)
 		{
-			return MatchStringEqualityComparison(condition, out var v, out stringValue) && v == variable;
+			if (!MatchStringEqualityComparison(condition, out var v, out stringValue)) {
+				if (!MatchCompEqualsNull(condition, out v))
+					return false;
+				stringValue = null;
+			}
+				
+			return v == variable;
 		}
 
 		bool MatchStringEqualityComparison(ILInstruction condition, out ILVariable variable, out string stringValue)
@@ -535,9 +547,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				right = c.Arguments[1];
 				if (!right.MatchLdStr(out stringValue))
 					return false;
-			} else if (condition.MatchCompEquals(out left, out right) && right.MatchLdNull()) {
-			} else return false;
+			} else {
+				return false;
+			}
 			return left.MatchLdLoc(out variable);
+		}
+
+		bool MatchCompEqualsNull(ILInstruction condition, out ILVariable variable)
+		{
+			variable = null;
+			if (!condition.MatchCompEquals(out var left, out var right))
+				return false;
+			return right.MatchLdNull() && left.MatchLdLoc(out variable);
 		}
 	}
 }
