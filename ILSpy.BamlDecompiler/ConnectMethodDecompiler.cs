@@ -10,6 +10,7 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 using Mono.Cecil;
 
 namespace ILSpy.BamlDecompiler
@@ -34,9 +35,9 @@ namespace ILSpy.BamlDecompiler
 			this.assembly = assembly;
 		}
 		
-		public Dictionary<long, EventRegistration[]> DecompileEventMappings(string fullTypeName, CancellationToken cancellationToken)
+		public List<(LongSet, EventRegistration[])> DecompileEventMappings(string fullTypeName, CancellationToken cancellationToken)
 		{
-			var result = new Dictionary<long, EventRegistration[]>();
+			var result = new List<(LongSet, EventRegistration[])>();
 			TypeDefinition type = this.assembly.MainModule.GetType(fullTypeName);
 			
 			if (type == null)
@@ -65,13 +66,12 @@ namespace ILSpy.BamlDecompiler
 			function.RunTransforms(CSharpDecompiler.GetILTransforms(), context);
 			
 			var block = function.Body.Children.OfType<Block>().First();
-			var ilSwitch = block.Children.OfType<SwitchInstruction>().FirstOrDefault();
+			var ilSwitch = block.Descendants.OfType<SwitchInstruction>().FirstOrDefault();
 			
 			if (ilSwitch != null) {
 				foreach (var section in ilSwitch.Sections) {
 					var events = FindEvents(section.Body);
-					foreach (long id in section.Labels.Values)
-						result.Add(id, events);
+					result.Add((section.Labels, events));
 				}
 			} else {
 				foreach (var ifInst in function.Descendants.OfType<IfInstruction>()) {
@@ -82,7 +82,7 @@ namespace ILSpy.BamlDecompiler
 					if (!comp.Right.MatchLdcI4(out id))
 						continue;
 					var events = FindEvents(comp.Kind == ComparisonKind.Inequality ? ifInst.FalseInst : ifInst.TrueInst);
-					result.Add(id, events);
+					result.Add((new LongSet(id), events));
 				}
 			}
 			return result;
@@ -92,13 +92,18 @@ namespace ILSpy.BamlDecompiler
 		{
 			var events = new List<EventRegistration>();
 			
-			if (inst is Block) {
-				foreach (var node in ((Block)inst).Instructions) {
-					FindEvents(node, events);
-				}
-				FindEvents(((Block)inst).FinalInstruction, events);
-			} else {
-				FindEvents(inst, events);
+			switch (inst) {
+				case Block b:
+					foreach (var node in ((Block)inst).Instructions) {
+						FindEvents(node, events);
+					}
+					FindEvents(((Block)inst).FinalInstruction, events);
+					break;
+				case Branch br:
+					return FindEvents(br.TargetBlock);
+				default:
+					FindEvents(inst, events);
+					break;
 			}
 			return events.ToArray();
 		}

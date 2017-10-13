@@ -71,6 +71,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(),
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
+				new InlineReturnTransform(),
 				new YieldReturnDecompiler(), // must run after inlining but before loop detection
 				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
 				new DetectCatchWhenConditionBlocks(), // must run after inlining but before loop detection
@@ -81,6 +82,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				new RemoveDeadVariableInit(),
 				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
 				new SwitchDetection(),
+				new SwitchOnStringTransform(),
+				new SwitchOnNullableTransform(),
+				new SplitVariables(), // split variables once again, because SwitchOnNullableTransform eliminates ldloca 
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						// Even though it's a post-order block-transform as most other transforms,
@@ -140,7 +144,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
 			new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods
 			new CombineQueryExpressions(),
-			//new FlattenSwitchBlocks(),
+			new FlattenSwitchBlocks(),
 			new FixNameCollisions(),
 			new AddXmlDocumentationTransform(),
 		};
@@ -197,8 +201,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(type))
 						return true;
 				} else if (type.IsCompilerGenerated()) {
-//					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
-//						return true;
+					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+						return true;
 					if (settings.AnonymousTypes && type.IsAnonymousType())
 						return true;
 				}
@@ -211,8 +215,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 					if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field))
 						return true;
-//					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
-//						return true;
+					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
+						return true;
 				}
 				// event-fields are not [CompilerGenerated]
 				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))

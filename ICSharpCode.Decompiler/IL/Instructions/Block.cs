@@ -108,6 +108,9 @@ namespace ICSharpCode.Decompiler.IL
 				// only the last instruction may have an unreachable endpoint
 				Debug.Assert(!Instructions[i].HasFlag(InstructionFlags.EndPointUnreachable));
 			}
+			if (this.Type == BlockType.ControlFlow) {
+				Debug.Assert(finalInstruction.OpCode == OpCode.Nop);
+			}
 		}
 		
 		public override StackType ResultType {

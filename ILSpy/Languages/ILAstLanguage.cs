@@ -169,6 +169,10 @@ namespace ICSharpCode.ILSpy
 				try {
 					il.RunTransforms(transforms, context);
 				} catch (StepLimitReachedException) {
+				} catch (Exception ex) {
+					output.WriteLine(ex.ToString());
+					output.WriteLine();
+					output.WriteLine("ILAst after the crash:");
 				} finally {
 					// update stepper even if a transform crashed unexpectedly
 					if (options.StepLimit == int.MaxValue) {

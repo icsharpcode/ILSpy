@@ -16,26 +16,30 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	partial class LockInstruction
+	partial class StringToInt
 	{
+		public string[] Map { get; }
+
+		public StringToInt(ILInstruction argument, string[] map)
+			: base(OpCode.StringToInt)
+		{
+			this.Argument = argument;
+			this.Map = map;
+		}
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
-			output.Write("lock (");
-			OnExpression.WriteTo(output, options);
-			output.WriteLine(") {");
-			output.Indent();
-			Body.WriteTo(output, options);
-			output.Unindent();
-			output.WriteLine();
-			output.Write("}");
+			output.Write("string.to.int (");
+			Argument.WriteTo(output, options);
+			output.Write(", { ");
+			for (int i = 0; i < Map.Length; i++) {
+				if (i > 0) output.Write(", ");
+				output.Write($"[{i}] = \"{Map[i]}\"");
+			}
+			output.Write(" })");
 		}
 	}
 }

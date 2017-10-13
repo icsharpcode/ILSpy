@@ -45,9 +45,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (f != null) {
 							call.Arguments[0].ReplaceWith(new Nop());
 							call.Arguments[1].ReplaceWith(f);
-							if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
-								targetsToReplace.Add((IInstructionWithVariableOperand)target);
-						}
+						if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
+							targetsToReplace.Add((IInstructionWithVariableOperand)target);
+					}
 					}
 					if (block.Instructions[i].MatchStLoc(out ILVariable targetVariable, out ILInstruction value)) {
 						var newObj = value as NewObj;
@@ -314,7 +314,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				base.VisitCompoundAssignmentInstruction(inst);
 				if (inst.Target.MatchLdLoc(out var v)) {
 					inst.ReplaceWith(new StLoc(v, new BinaryNumericInstruction(inst.Operator, inst.Target, inst.Value, inst.CheckForOverflow, inst.Sign)));
-				}
+		}
 			}
 		}
 		#endregion

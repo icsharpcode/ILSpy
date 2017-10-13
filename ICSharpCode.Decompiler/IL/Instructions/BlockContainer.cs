@@ -154,7 +154,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(EntryPoint == Blocks[0]);
 			Debug.Assert(!IsConnected || EntryPoint.IncomingEdgeCount >= 1);
 			Debug.Assert(Blocks.All(b => b.HasFlag(InstructionFlags.EndPointUnreachable)));
-			Debug.Assert(Blocks.All(b => b.FinalInstruction.OpCode == OpCode.Nop));
+			Debug.Assert(Blocks.All(b => b.Type == BlockType.ControlFlow)); // this also implies that the blocks don't use FinalInstruction
 		}
 		
 		protected override InstructionFlags ComputeFlags()
@@ -221,6 +221,16 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			while (inst != null) {
 				if (inst is BlockContainer bc)
+					return bc;
+				inst = inst.Parent;
+			}
+			return null;
+		}
+
+		public static BlockContainer FindClosestSwitchContainer(ILInstruction inst)
+		{
+			while (inst != null) {
+				if (inst is BlockContainer bc && bc.entryPoint.Instructions.FirstOrDefault() is SwitchInstruction)
 					return bc;
 				inst = inst.Parent;
 			}
