@@ -774,17 +774,26 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			if (!target.MatchLdThis())
 				return false;
-			if (field.MemberDefinition != awaiterField)
+			if (!field.Equals(awaiterField))
 				return false;
 			pos++;
 
 			// stfld awaiterField(ldloc this, default.value)
 			if (block.Instructions[pos].MatchStFld(out target, out field, out value)
 				&& target.MatchLdThis()
-				&& field.MemberDefinition == awaiterField
+				&& field.Equals(awaiterField)
 				&& value.OpCode == OpCode.DefaultValue)
 			{
 				pos++;
+			} else {
+				// {stloc V_6(default.value System.Runtime.CompilerServices.TaskAwaiter)}
+				// {stobj System.Runtime.CompilerServices.TaskAwaiter`1[[System.Int32]](ldflda <>u__$awaiter4(ldloc this), ldloc V_6) at IL_0163}
+				if (block.Instructions[pos].MatchStLoc(out var variable, out value) && value.OpCode == OpCode.DefaultValue
+					&& block.Instructions[pos + 1].MatchStFld(out target, out field, out value)
+					&& field.Equals(awaiterField)
+					&& value.MatchLdLoc(variable)) {
+					pos += 2;
+				}
 			}
 
 			// stloc S_28(ldc.i4 -1)
@@ -804,7 +813,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (block.Instructions[pos].MatchStFld(out target, out field, out value)) {
 				if (!target.MatchLdThis())
 					return false;
-				if (field.MemberDefinition != stateField)
+				if (!field.MemberDefinition.Equals(stateField.MemberDefinition))
 					return false;
 				if (!(value.MatchLdcI4(initialState) || value.MatchLdLoc(m1Var)))
 					return false;
