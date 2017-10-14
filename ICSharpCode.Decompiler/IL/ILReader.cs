@@ -304,7 +304,8 @@ namespace ICSharpCode.Decompiler.IL
 				inst.WriteTo(output, new ILAstWritingOptions());
 				output.WriteLine();
 			}
-			new Disassembler.MethodBodyDisassembler(output, false, cancellationToken).WriteExceptionHandlers(body);
+			new Disassembler.MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
+				.WriteExceptionHandlers(body);
 		}
 
 		/// <summary>

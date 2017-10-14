@@ -35,8 +35,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 		MethodBodyDisassembler methodBodyDisassembler;
 		MemberReference currentMember;
 
-		public ReflectionDisassembler(ITextOutput output, bool detectControlStructure, CancellationToken cancellationToken)
-			: this(output, new MethodBodyDisassembler(output, detectControlStructure, cancellationToken), cancellationToken)
+		public bool DetectControlStructure {
+			get => methodBodyDisassembler.DetectControlStructure;
+			set => methodBodyDisassembler.DetectControlStructure = value;
+		}
+
+		public bool ShowSequencePoints {
+			get => methodBodyDisassembler.ShowSequencePoints;
+			set => methodBodyDisassembler.ShowSequencePoints = value;
+		}
+
+		public ReflectionDisassembler(ITextOutput output, CancellationToken cancellationToken)
+			: this(output, new MethodBodyDisassembler(output, cancellationToken), cancellationToken)
 		{
 		}
 

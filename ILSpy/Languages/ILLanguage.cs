@@ -46,7 +46,10 @@ namespace ICSharpCode.ILSpy
 		
 		protected virtual ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
-			return new ReflectionDisassembler(output, detectControlStructure, options.CancellationToken);
+			return new ReflectionDisassembler(output, options.CancellationToken) {
+				DetectControlStructure = detectControlStructure,
+				ShowSequencePoints = true
+			};
 		}
 
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)

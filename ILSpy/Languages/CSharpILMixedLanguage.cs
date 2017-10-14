@@ -28,7 +28,10 @@ namespace ICSharpCode.ILSpy
 		protected override ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
 			return new ReflectionDisassembler(output, 
-				new MixedMethodBodyDisassembler(output, detectControlStructure, options),
+				new MixedMethodBodyDisassembler(output, options) {
+					DetectControlStructure = detectControlStructure,
+					ShowSequencePoints = true
+				},
 				options.CancellationToken);
 		}
 
@@ -55,8 +58,8 @@ namespace ICSharpCode.ILSpy
 			// lines of raw c# source code
 			string[] codeLines;
 
-			public MixedMethodBodyDisassembler(ITextOutput output, bool detectControlStructure, DecompilationOptions options)
-				: base(output, detectControlStructure, options.CancellationToken)
+			public MixedMethodBodyDisassembler(ITextOutput output, DecompilationOptions options)
+				: base(output, options.CancellationToken)
 			{
 				this.options = options;
 			}
@@ -102,7 +105,7 @@ namespace ICSharpCode.ILSpy
 					} else {
 						output.Write("// ");
 						highlightingOutput?.BeginSpan(gray);
-						output.WriteLine("(hidden sequence point)");
+						output.WriteLine("(no C# code)");
 						highlightingOutput?.EndSpan();
 					}
 				}
