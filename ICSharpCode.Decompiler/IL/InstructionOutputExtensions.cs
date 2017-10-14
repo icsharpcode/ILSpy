@@ -18,6 +18,7 @@
 
 using ICSharpCode.Decompiler.Disassembler;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL
 {
@@ -49,6 +50,16 @@ namespace ICSharpCode.Decompiler.IL
 				output.WriteReference(method.DeclaringType?.Name + "." + method.Name, symbol);
 			else
 				output.WriteReference(symbol.Name, symbol);
+		}
+
+		public static void WriteTo(this Interval interval, ITextOutput output, ILAstWritingOptions options)
+		{
+			if (!options.ShowILRanges)
+				return;
+			if (interval.IsEmpty)
+				output.Write("[empty] ");
+			else
+				output.Write($"[{interval.Start}..{interval.InclusiveEnd}] ");
 		}
 	}
 }

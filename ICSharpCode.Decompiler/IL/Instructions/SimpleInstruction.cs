@@ -26,6 +26,7 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			// the non-custom WriteTo would add useless parentheses
 		}
@@ -37,6 +38,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			if (!string.IsNullOrEmpty(Comment)) {
 				output.Write(" // " + Comment);
@@ -60,6 +62,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			if (!string.IsNullOrEmpty(Message)) {
 				output.Write("(\"");
@@ -86,6 +89,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			if (!string.IsNullOrEmpty(Message)) {
 				output.Write("(\"");

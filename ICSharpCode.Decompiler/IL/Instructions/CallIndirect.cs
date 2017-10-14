@@ -91,6 +91,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write("call.indirect ");
 			ReturnType.WriteTo(output);
 			output.Write('(');
