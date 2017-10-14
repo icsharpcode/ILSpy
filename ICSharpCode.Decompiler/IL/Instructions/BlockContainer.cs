@@ -40,11 +40,19 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly InstructionCollection<Block> Blocks;
 
 		public StackType ExpectedResultType { get; set; }
-		
+
+		int leaveCount;
+
 		/// <summary>
 		/// Gets the number of 'leave' instructions that target this BlockContainer.
 		/// </summary>
-		public int LeaveCount { get; internal set; }
+		public int LeaveCount {
+			get => leaveCount;
+			internal set {
+				leaveCount = value;
+				InvalidateFlags();
+			}
+		}
 		
 		Block entryPoint;
 
