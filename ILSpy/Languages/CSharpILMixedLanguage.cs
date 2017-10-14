@@ -92,7 +92,7 @@ namespace ICSharpCode.ILSpy
 									startColumn = info.StartColumn;
 								if (line == info.EndLine)
 									endColumn = info.EndColumn;
-								WriteHighlightedCommentLine(highlightingOutput, text, startColumn - 1, endColumn - 1);
+								WriteHighlightedCommentLine(highlightingOutput, text, startColumn - 1, endColumn - 1, info.StartLine == info.EndLine);
 							} else
 								WriteCommentLine(output, codeLines[line - 1]);
 						}
@@ -106,10 +106,13 @@ namespace ICSharpCode.ILSpy
 			HighlightingColor gray = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.DarkGray) };
 			HighlightingColor black = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Black) };
 
-			void WriteHighlightedCommentLine(ISmartTextOutput output, string text, int startColumn, int endColumn)
+			void WriteHighlightedCommentLine(ISmartTextOutput output, string text, int startColumn, int endColumn, bool isSingleLine)
 			{
 				output.BeginSpan(gray);
-				output.Write("// " + text.Substring(0, startColumn));
+				if (isSingleLine)
+					output.Write("// " + text.Substring(0, startColumn).TrimStart());
+				else
+					output.Write("// " + text.Substring(0, startColumn));
 				output.BeginSpan(black);
 				output.Write(text.Substring(startColumn, endColumn - startColumn));
 				output.EndSpan();
