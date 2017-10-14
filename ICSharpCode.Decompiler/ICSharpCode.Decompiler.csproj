@@ -60,6 +60,7 @@
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
+    <Compile Include="CSharp\SequencePointBuilder.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
     <Compile Include="CSharp\Syntax\AstType.cs" />
@@ -272,6 +273,7 @@
     <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
     <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
+    <Compile Include="IL\SequencePoint.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />
