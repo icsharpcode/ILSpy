@@ -117,6 +117,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.WriteDefinition("BlockContainer", this);
 			output.Write(' ');
+			if (entryPoint.IncomingEdgeCount > 1) {
+				output.Write("(loop) ");
+			}
+			if (entryPoint.Instructions.Count == 1 && entryPoint.Instructions[0] is SwitchInstruction) {
+				output.Write("(switch) ");
+			}
 			output.MarkFoldStart("{...}");
 			output.WriteLine("{");
 			output.Indent();

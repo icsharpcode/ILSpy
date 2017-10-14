@@ -135,7 +135,7 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(" (incoming: {0})", IncomingEdgeCount);
 			output.Write(' ');
 			output.MarkFoldStart("{...}");
-			output.WriteLine(" {");
+			output.WriteLine("{");
 			output.Indent();
 			foreach (var inst in Instructions) {
 				inst.WriteTo(output, options);
