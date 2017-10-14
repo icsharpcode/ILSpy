@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.IL;
@@ -131,8 +132,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		void EndSequencePoint(TextLocation startLocation, TextLocation endLocation)
 		{
 			if (current.Intervals.Count > 0 && current.Function != null) {
+				// use LongSet to deduplicate and merge the intervals
+				var longSet = new LongSet(current.Intervals.Select(i => new LongInterval(i.Start, i.End)));
+				Debug.Assert(!longSet.IsEmpty);
 				sequencePoints.Add((current.Function, new SequencePoint {
-					Offset = current.Intervals.Select(i => i.Start).Min(),
+					Offset = (int)longSet.Intervals[0].Start,
+					EndOffset = (int)longSet.Intervals[0].End,
 					StartLine = startLocation.Line,
 					StartColumn = startLocation.Column,
 					EndLine = endLocation.Line,
@@ -183,8 +188,24 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				list.Add(sequencePoint);
 			}
-			foreach (var list in dict.Values) {
-				list.Sort((a, b) => a.Offset.CompareTo(b.Offset));
+			foreach (var (function, list) in dict.ToList()) {
+				// For each function, sort sequence points
+				// and insert hidden sequence points in the gaps.
+				var newList = new List<SequencePoint>();
+				int pos = 0;
+				foreach (var sequencePoint in list.OrderBy(sp => sp.Offset)) {
+					Debug.Assert(sequencePoint.Offset >= pos);
+					if (sequencePoint.Offset > pos) {
+						var hidden = new SequencePoint();
+						hidden.Offset = pos;
+						hidden.EndOffset = sequencePoint.Offset;
+						hidden.SetHidden();
+						newList.Add(hidden);
+					}
+					newList.Add(sequencePoint);
+					pos = sequencePoint.EndOffset;
+				}
+				dict[function] = newList;
 			}
 			return dict;
 		}

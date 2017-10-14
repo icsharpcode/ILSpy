@@ -82,9 +82,10 @@ namespace ICSharpCode.ILSpy
 				int index = sequencePoints.BinarySearch(instruction.Offset, seq => seq.Offset);
 				if (index >= 0) {
 					var info = sequencePoints[index];
+					var highlightingOutput = output as ISmartTextOutput;
 					if (!info.IsHidden) {
 						for (int line = info.StartLine; line <= info.EndLine; line++) {
-							if (output is ISmartTextOutput highlightingOutput) {
+							if (highlightingOutput != null) {
 								string text = codeLines[line - 1];
 								int startColumn = 1;
 								int endColumn = text.Length + 1;
@@ -97,25 +98,28 @@ namespace ICSharpCode.ILSpy
 								WriteCommentLine(output, codeLines[line - 1]);
 						}
 					} else {
-						WriteCommentLine(output, "no code");
+						output.Write("// ");
+						highlightingOutput?.BeginSpan(gray);
+						output.WriteLine("(hidden sequence point)");
+						highlightingOutput?.EndSpan();
 					}
 				}
 				base.WriteInstruction(output, instruction);
 			}
 
 			HighlightingColor gray = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.DarkGray) };
-			HighlightingColor black = new HighlightingColor { Foreground = new SimpleHighlightingBrush(Colors.Black) };
 
 			void WriteHighlightedCommentLine(ISmartTextOutput output, string text, int startColumn, int endColumn, bool isSingleLine)
 			{
+				output.Write("// ");
 				output.BeginSpan(gray);
 				if (isSingleLine)
-					output.Write("// " + text.Substring(0, startColumn).TrimStart());
+					output.Write(text.Substring(0, startColumn).TrimStart());
 				else
-					output.Write("// " + text.Substring(0, startColumn));
-				output.BeginSpan(black);
-				output.Write(text.Substring(startColumn, endColumn - startColumn));
+					output.Write(text.Substring(0, startColumn));
 				output.EndSpan();
+				output.Write(text.Substring(startColumn, endColumn - startColumn));
+				output.BeginSpan(gray);
 				output.Write(text.Substring(endColumn));
 				output.EndSpan();
 				output.WriteLine();
