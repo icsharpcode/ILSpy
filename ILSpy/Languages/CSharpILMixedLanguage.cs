@@ -30,7 +30,7 @@ namespace ICSharpCode.ILSpy
 			return new ReflectionDisassembler(output, 
 				new MixedMethodBodyDisassembler(output, options) {
 					DetectControlStructure = detectControlStructure,
-					ShowSequencePoints = true
+					ShowSequencePoints = options.DecompilerSettings.ShowDebugInfo
 				},
 				options.CancellationToken);
 		}

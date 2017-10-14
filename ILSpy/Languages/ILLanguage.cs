@@ -48,7 +48,7 @@ namespace ICSharpCode.ILSpy
 		{
 			return new ReflectionDisassembler(output, options.CancellationToken) {
 				DetectControlStructure = detectControlStructure,
-				ShowSequencePoints = true
+				ShowSequencePoints = options.DecompilerSettings.ShowDebugInfo
 			};
 		}
 
