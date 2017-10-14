@@ -208,10 +208,26 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public Interval ILRange;
 
-		public void AddILRange(Interval ilRange)
+		public void AddILRange(Interval newRange)
 		{
-			// TODO: try to combine the two ranges
-			this.ILRange = ilRange;
+			if (newRange.IsEmpty) {
+				return;
+			}
+			if (this.ILRange.IsEmpty) {
+				this.ILRange = newRange;
+				return;
+			}
+			if (newRange.Start <= this.ILRange.Start) {
+				if (newRange.End < this.ILRange.Start) {
+					this.ILRange = newRange; // use the earlier range
+				} else {
+					// join overlapping ranges
+					this.ILRange = new Interval(newRange.Start, Math.Max(newRange.End, this.ILRange.End));
+				}
+			} else if (newRange.Start <= this.ILRange.End) {
+				// join overlapping ranges
+				this.ILRange = new Interval(this.ILRange.Start, Math.Max(newRange.End, this.ILRange.End));
+			}
 		}
 
 		/// <summary>
