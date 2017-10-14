@@ -7,8 +7,8 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// A sequence point produced by the decompiler.
 	/// </summary>
-    public struct SequencePoint
-    {
+	public struct SequencePoint
+	{
 		/// <summary>
 		/// IL offset.
 		/// </summary>

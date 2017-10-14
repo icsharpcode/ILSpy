@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 	/// <summary>
 	/// Disassembles a method body.
 	/// </summary>
-	public sealed class MethodBodyDisassembler
+	public class MethodBodyDisassembler
 	{
 		readonly ITextOutput output;
 		readonly bool detectControlStructure;
@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.cancellationToken = cancellationToken;
 		}
 
-		public void Disassemble(MethodBody body/*, MemberMapping methodMapping*/)
+		public void Disassemble(MethodBody body)
 		{
 			// start writing IL code
 			MethodDefinition method = body.Method;
@@ -61,20 +61,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 				WriteStructureBody(new ILStructure(body), branchTargets, ref inst, method.Body.CodeSize);
 			} else {
 				foreach (var inst in method.Body.Instructions) {
-					//var startLocation = output.Location;
-					inst.WriteTo(output);
-
-					/*
-					if (debugSymbols != null) {
-						// add IL code mappings - used in debugger
-						debugSymbols.SequencePoints.Add(
-							new SequencePoint() {
-								StartLocation = output.Location,
-								EndLocation = output.Location,
-								ILRanges = new ILRange[] { new ILRange(inst.Offset, inst.Next == null ? method.Body.CodeSize : inst.Next.Offset) }
-							});
-					}*/
-
+					WriteInstruction(output, inst);
 					output.WriteLine();
 				}
 				WriteExceptionHandlers(body);
@@ -191,19 +178,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					if (!isFirstInstructionInStructure && (prevInstructionWasBranch || branchTargets.Contains(offset))) {
 						output.WriteLine();	// put an empty line after branches, and in front of branch targets
 					}
-					//var startLocation = output.Location;
-					inst.WriteTo(output);
-
-					/*// add IL code mappings - used in debugger
-					if (debugSymbols != null) {
-						debugSymbols.SequencePoints.Add(
-							new SequencePoint() {
-								StartLocation = startLocation,
-								EndLocation = output.Location,
-								ILRanges = new ILRange[] { new ILRange(inst.Offset, inst.Next == null ? codeSize : inst.Next.Offset) }
-							});
-					}*/
-
+					WriteInstruction(output, inst);
 					output.WriteLine();
 
 					prevInstructionWasBranch = inst.OpCode.FlowControl == FlowControl.Branch
@@ -236,6 +211,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 				default:
 					throw new NotSupportedException();
 			}
+		}
+
+		protected virtual void WriteInstruction(ITextOutput output, Instruction instruction)
+		{
+			instruction.WriteTo(output);
 		}
 	}
 }

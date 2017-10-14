@@ -36,12 +36,17 @@ namespace ICSharpCode.Decompiler.Disassembler
 		MemberReference currentMember;
 
 		public ReflectionDisassembler(ITextOutput output, bool detectControlStructure, CancellationToken cancellationToken)
+			: this(output, new MethodBodyDisassembler(output, detectControlStructure, cancellationToken), cancellationToken)
+		{
+		}
+
+		public ReflectionDisassembler(ITextOutput output, MethodBodyDisassembler methodBodyDisassembler, CancellationToken cancellationToken)
 		{
 			if (output == null)
 				throw new ArgumentNullException(nameof(output));
 			this.output = output;
 			this.cancellationToken = cancellationToken;
-			this.methodBodyDisassembler = new MethodBodyDisassembler(output, detectControlStructure, cancellationToken);
+			this.methodBodyDisassembler = methodBodyDisassembler;
 		}
 
 		#region Disassemble Method
