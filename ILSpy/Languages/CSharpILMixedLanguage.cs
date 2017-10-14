@@ -69,7 +69,8 @@ namespace ICSharpCode.ILSpy
 					CSharpDecompiler decompiler = CreateDecompiler(method.Module, options);
 					var st = decompiler.Decompile(method);
 					WriteCode(csharpOutput, options.DecompilerSettings, st, decompiler.TypeSystem);
-					this.sequencePoints = decompiler.CreateSequencePoints(st).FirstOrDefault(kvp => kvp.Key.CecilMethod == method).Value ?? (IList<Decompiler.IL.SequencePoint>)EmptyList<Decompiler.IL.SequencePoint>.Instance;
+					var mapping = decompiler.CreateSequencePoints(st).FirstOrDefault(kvp => kvp.Key.CecilMethod == method);
+					this.sequencePoints = mapping.Value ?? (IList<Decompiler.IL.SequencePoint>)EmptyList<Decompiler.IL.SequencePoint>.Instance;
 					this.codeLines = csharpOutput.ToString().Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 					base.Disassemble(body);
 				} finally {

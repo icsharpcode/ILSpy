@@ -120,6 +120,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		public override void VisitLambdaExpression(LambdaExpression lambdaExpression)
+		{
+			AddToSequencePoint(lambdaExpression);
+			VisitAsSequencePoint(lambdaExpression.Body);
+		}
+
 		/// <summary>
 		/// Start a new C# statement = new sequence point.
 		/// </summary>
@@ -160,7 +166,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void AddToSequencePoint(ILInstruction inst)
 		{
-			if (!mappedInstructions.Add(inst)) {
+			if (!mappedInstructions.Add(inst) || inst is ILFunction) {
 				// inst was already used by a nested sequence point within this sequence point
 				return;
 			}
