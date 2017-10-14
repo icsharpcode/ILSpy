@@ -1026,7 +1026,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new CallBuilder(this, typeSystem, settings).Build(inst);
 		}
 
-		internal TranslatedExpression TranslateFunction(IType delegateType, ILFunction function)
+		internal ExpressionWithResolveResult TranslateFunction(IType delegateType, ILFunction function)
 		{
 			var method = function.Method.MemberDefinition as IMethod;
 			Debug.Assert(method != null);
@@ -1098,7 +1098,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			TranslatedExpression translatedLambda = replacement.WithILInstruction(function).WithRR(rr);
 			return new CastExpression(ConvertType(delegateType), translatedLambda)
-				.WithoutILInstruction().WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
+				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
 		}
 
 		IType InferReturnType(BlockStatement body)

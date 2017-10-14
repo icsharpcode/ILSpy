@@ -323,7 +323,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					break;
 				case OpCode.ILFunction:
 					method = ((ILFunction)func).Method;
-					return expressionBuilder.TranslateFunction(inst.Method.DeclaringType, (ILFunction)func);
+					return expressionBuilder.TranslateFunction(inst.Method.DeclaringType, (ILFunction)func)
+						.WithILInstruction(inst);
 				default:
 					throw new ArgumentException($"Unknown instruction type: {func.OpCode}");
 			}
