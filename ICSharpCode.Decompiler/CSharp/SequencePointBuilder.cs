@@ -171,9 +171,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				return;
 			}
 			// Add the IL range associated with this instruction to the current sequence point.
-			if (!inst.ILRange.IsEmpty && current.Intervals != null) {
+			if (HasUsableILRange(inst) && current.Intervals != null) {
 				current.Intervals.Add(inst.ILRange);
-				current.Function = inst.Parent.Ancestors.OfType<ILFunction>().FirstOrDefault();
+				var function = inst.Parent.Ancestors.OfType<ILFunction>().FirstOrDefault();
+				Debug.Assert(current.Function == null || current.Function == function);
+				current.Function = function;
 			}
 
 			// Do not add instructions of lambdas/delegates.
@@ -185,6 +187,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			foreach (var child in inst.Children) {
 				AddToSequencePoint(child);
 			}
+		}
+
+		internal static bool HasUsableILRange(ILInstruction inst)
+		{
+			if (inst.ILRange.IsEmpty)
+				return false;
+			return !(inst is BlockContainer || inst is Block);
 		}
 
 		/// <summary>
@@ -226,6 +235,13 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					newList.Add(sequencePoint);
 					pos = sequencePoint.EndOffset;
+				}
+				if (pos < function.CecilMethod.Body.CodeSize) {
+					var hidden = new SequencePoint();
+					hidden.Offset = pos;
+					hidden.EndOffset = function.CecilMethod.Body.CodeSize;
+					hidden.SetHidden();
+					newList.Add(hidden);
 				}
 				dict[function] = newList;
 			}

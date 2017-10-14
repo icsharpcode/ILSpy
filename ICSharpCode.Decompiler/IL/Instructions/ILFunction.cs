@@ -114,12 +114,41 @@ namespace ICSharpCode.Decompiler.IL
 			}
 
 			body.WriteTo(output, options);
-			
 			output.WriteLine();
+
+			if (options.ShowILRanges) {
+				var unusedILRanges = FindUnusedILRanges();
+				if (!unusedILRanges.IsEmpty) {
+					output.Write("// Unused IL Ranges: ");
+					output.Write(string.Join(", ", unusedILRanges.Intervals.Select(
+						range => $"[{range.Start:x4}..{range.InclusiveEnd:x4}]")));
+					output.WriteLine();
+				}
+			}
+
 			output.Unindent();
 			output.WriteLine("}");
 		}
 		
+		LongSet FindUnusedILRanges()
+		{
+			var usedILRanges = new List<LongInterval>();
+			MarkUsedILRanges(body);
+			return new LongSet(new LongInterval(0, CecilMethod.Body.CodeSize)).ExceptWith(new LongSet(usedILRanges));
+
+			void MarkUsedILRanges(ILInstruction inst)
+			{
+				if (CSharp.SequencePointBuilder.HasUsableILRange(inst)) {
+					usedILRanges.Add(new LongInterval(inst.ILRange.Start, inst.ILRange.End));
+				}
+				if (!(inst is ILFunction)) {
+					foreach (var child in inst.Children) {
+						MarkUsedILRanges(child);
+					}
+				}
+			}
+		}
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			// Creating a lambda may throw OutOfMemoryException
