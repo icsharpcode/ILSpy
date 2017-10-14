@@ -85,6 +85,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			if (Method != null) {
 				output.Write(' ');

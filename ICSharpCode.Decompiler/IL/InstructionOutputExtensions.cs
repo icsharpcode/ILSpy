@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler.IL
 			if (interval.IsEmpty)
 				output.Write("[empty] ");
 			else
-				output.Write($"[{interval.Start}..{interval.InclusiveEnd}] ");
+				output.Write($"[{interval.Start:x4}..{interval.InclusiveEnd:x4}] ");
 		}
 	}
 }
