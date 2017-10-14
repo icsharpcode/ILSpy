@@ -103,13 +103,14 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		public override void WritePrimitiveValue(object value, string literalValue = null)
 		{
 			Expression node = nodes.Peek().LastOrDefault() as Expression;
+			var startLocation = locationProvider.Location;
+			base.WritePrimitiveValue(value, literalValue);
 			if (node is PrimitiveExpression) {
-				((PrimitiveExpression)node).SetStartLocation(locationProvider.Location);
+				((PrimitiveExpression)node).SetLocation(startLocation, locationProvider.Location);
 			}
 			if (node is NullReferenceExpression) {
-				((NullReferenceExpression)node).SetStartLocation(locationProvider.Location);
+				((NullReferenceExpression)node).SetStartLocation(startLocation);
 			}
-			base.WritePrimitiveValue(value, literalValue);
 		}
 		
 		public override void WritePrimitiveType(string type)
