@@ -32,8 +32,19 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		struct StatePerSequencePoint
 		{
+			/// <summary>
+			/// Main AST node associated with this sequence point.
+			/// </summary>
 			internal readonly AstNode PrimaryNode;
+
+			/// <summary>
+			/// List of IL intervals that are associated with this sequence point.
+			/// </summary>
 			internal readonly List<Interval> Intervals;
+
+			/// <summary>
+			/// The function containing this sequence point.
+			/// </summary>
 			internal ILFunction Function;
 
 			public StatePerSequencePoint(AstNode primaryNode)
@@ -46,7 +57,11 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		readonly List<(ILFunction, SequencePoint)> sequencePoints = new List<(ILFunction, SequencePoint)>();
 		readonly HashSet<ILInstruction> mappedInstructions = new HashSet<ILInstruction>();
+		
+		// Stack holding information for outer statements.
 		readonly Stack<StatePerSequencePoint> outerStates = new Stack<StatePerSequencePoint>();
+
+		// Collects information for the current sequence point.
 		StatePerSequencePoint current = new StatePerSequencePoint();
 
 		void VisitAsSequencePoint(AstNode node)
@@ -71,6 +86,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		public override void VisitForStatement(ForStatement forStatement)
 		{
+			// Every element of a for-statement is it's own sequence point.
 			foreach (var init in forStatement.Initializers) {
 				VisitAsSequencePoint(init);
 			}
@@ -79,6 +95,28 @@ namespace ICSharpCode.Decompiler.CSharp
 				VisitAsSequencePoint(inc);
 			}
 			VisitAsSequencePoint(forStatement.EmbeddedStatement);
+		}
+		
+		public override void VisitSwitchStatement(SwitchStatement switchStatement)
+		{
+			StartSequencePoint(switchStatement);
+			switchStatement.Expression.AcceptVisitor(this);
+			foreach (var section in switchStatement.SwitchSections) {
+				// note: sections will not contribute to the current sequence point
+				section.AcceptVisitor(this);
+			}
+			// add switch statement itself to sequence point
+			// (call only after the sections are visited)
+			AddToSequencePoint(switchStatement);
+			EndSequencePoint(switchStatement.StartLocation, switchStatement.RParToken.EndLocation);
+		}
+
+		public override void VisitSwitchSection(Syntax.SwitchSection switchSection)
+		{
+			// every statement in the switch section is its own sequence point
+			foreach (var stmt in switchSection.Statements) {
+				VisitAsSequencePoint(stmt);
+			}
 		}
 
 		/// <summary>
@@ -104,6 +142,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			current = outerStates.Pop();
 		}
 
+		/// <summary>
+		/// Add the ILAst instruction associated with the AstNode to the sequence point.
+		/// Also add all its ILAst sub-instructions (unless they were already added to another sequence point).
+		/// </summary>
 		void AddToSequencePoint(AstNode node)
 		{
 			foreach (var inst in node.Annotations.OfType<ILInstruction>()) {
@@ -129,6 +171,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
+		/// <summary>
+		/// Called after the visitor is done to return the results.
+		/// </summary>
 		internal Dictionary<ILFunction, List<SequencePoint>> GetSequencePoints()
 		{
 			var dict = new Dictionary<ILFunction, List<SequencePoint>>();
