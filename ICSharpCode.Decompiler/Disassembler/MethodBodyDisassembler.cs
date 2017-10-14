@@ -42,7 +42,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 			this.cancellationToken = cancellationToken;
 		}
 
-		public void Disassemble(MethodBody body)
+		public virtual void Disassemble(MethodBody body)
 		{
 			// start writing IL code
 			MethodDefinition method = body.Method;

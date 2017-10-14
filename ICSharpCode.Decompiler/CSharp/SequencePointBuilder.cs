@@ -63,7 +63,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		readonly Stack<StatePerSequencePoint> outerStates = new Stack<StatePerSequencePoint>();
 
 		// Collects information for the current sequence point.
-		StatePerSequencePoint current = new StatePerSequencePoint();
+		StatePerSequencePoint current;
 
 		void VisitAsSequencePoint(AstNode node)
 		{
@@ -165,7 +165,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				return;
 			}
 			// Add the IL range associated with this instruction to the current sequence point.
-			if (!inst.ILRange.IsEmpty) {
+			if (!inst.ILRange.IsEmpty && current.Intervals != null) {
 				current.Intervals.Add(inst.ILRange);
 				current.Function = inst.Ancestors.OfType<ILFunction>().FirstOrDefault();
 			}
@@ -189,13 +189,24 @@ namespace ICSharpCode.Decompiler.CSharp
 				list.Add(sequencePoint);
 			}
 			foreach (var (function, list) in dict.ToList()) {
-				// For each function, sort sequence points
-				// and insert hidden sequence points in the gaps.
+				// For each function, sort sequence points and fix overlaps+gaps
 				var newList = new List<SequencePoint>();
 				int pos = 0;
-				foreach (var sequencePoint in list.OrderBy(sp => sp.Offset)) {
-					Debug.Assert(sequencePoint.Offset >= pos);
-					if (sequencePoint.Offset > pos) {
+				foreach (var sequencePoint in list.OrderBy(sp => sp.Offset).ThenBy(sp => sp.EndOffset)) {
+					if (sequencePoint.Offset < pos) {
+						// overlapping sequence point?
+						// delete previous sequence points that are after sequencePoint.Offset
+						while (newList.Count > 0 && newList.Last().EndOffset > pos) {
+							var last = newList.Last();
+							if (last.Offset >= sequencePoint.Offset) {
+								newList.RemoveAt(newList.Count - 1);
+							} else {
+								last.EndOffset = sequencePoint.Offset;
+								newList[newList.Count - 1] = last;
+							}
+						}
+					} else if (sequencePoint.Offset > pos) {
+						// insert hidden sequence point in the gap.
 						var hidden = new SequencePoint();
 						hidden.Offset = pos;
 						hidden.EndOffset = sequencePoint.Offset;

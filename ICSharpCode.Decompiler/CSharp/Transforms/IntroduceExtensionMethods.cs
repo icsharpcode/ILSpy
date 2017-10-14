@@ -43,15 +43,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			this.context = context;
 			this.usingScope = this.rootUsingScope = rootNode.Annotation<UsingScope>();
+			currentMember = context.DecompiledMember;
+			SetContext();
 			rootNode.AcceptVisitor(this);
 		}
 
 		void SetContext()
 		{
 			this.usingScope = rootUsingScope;
-			foreach (var name in currentMember.Namespace.Split('.'))
-				usingScope = new UsingScope(usingScope, name);
-			resolveContext = new CSharpTypeResolveContext(currentMember.ParentAssembly, usingScope.Resolve(context.TypeSystem.Compilation), currentMember.DeclaringTypeDefinition, currentMember);
+			string ns = currentMember?.Namespace ?? context.DecompiledTypeDefinition?.Namespace;
+			if (ns != null) {
+				foreach (var name in ns.Split('.'))
+					usingScope = new UsingScope(usingScope, name);
+			}
+			resolveContext = new CSharpTypeResolveContext(
+				context.DecompiledAssembly, 
+				usingScope.Resolve(context.TypeSystem.Compilation), 
+				currentMember?.DeclaringTypeDefinition ?? context.DecompiledTypeDefinition,
+				currentMember);
 			resolver = new CSharpResolver(resolveContext);
 		}
 
