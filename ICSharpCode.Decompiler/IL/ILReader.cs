@@ -650,7 +650,7 @@ namespace ICSharpCode.Decompiler.IL
 					return BinaryNumeric(BinaryNumericOperator.BitOr);
 				case Cil.Code.Pop:
 					Pop();
-					return new Nop();
+					return new Nop() { Kind = NopKind.Pop };
 				case Cil.Code.Rem:
 					return BinaryNumeric(BinaryNumericOperator.Rem, false, Sign.Signed);
 				case Cil.Code.Rem_Un:

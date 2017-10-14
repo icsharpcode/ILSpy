@@ -506,6 +506,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
 			foreachStmt.AddAnnotation(new ILVariableResolveResult(foreachVariable, foreachVariable.Type));
+			foreachStmt.AddAnnotation(new ForeachAnnotation(inst.ResourceExpression, loop.Conditions.Single(), singleGetter));
 			// If there was an optional return statement, return it as well.
 			if (optionalReturnAfterLoop != null) {
 				return new BlockStatement {

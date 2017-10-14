@@ -44,9 +44,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				context.CancellationToken.ThrowIfCancellationRequested();
 
-				// Remove 'nop' instructions
-				block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.Nop);
-				
+				RemoveNopInstructions(block);
+
 				InlineVariableInReturnBlock(block, context);
 				// 1st pass SimplifySwitchInstruction before SimplifyBranchChains()
 				// starts duplicating return instructions.
@@ -55,7 +54,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			SimplifyBranchChains(function, context);
 			CleanUpEmptyBlocks(function, context);
 		}
-		
+
+		private static void RemoveNopInstructions(Block block)
+		{
+			// Move ILRanges of special nop instructions to the previous non-nop instruction.
+			for (int i = block.Instructions.Count - 1; i > 0; i--) {
+				if (block.Instructions[i] is Nop nop && nop.Kind == NopKind.Pop) {
+					block.Instructions[i - 1].AddILRange(nop.ILRange);
+				}
+			}
+
+			// Remove 'nop' instructions
+			block.Instructions.RemoveAll(inst => inst.OpCode == OpCode.Nop);
+		}
+
 		void InlineVariableInReturnBlock(Block block, ILTransformContext context)
 		{
 			// In debug mode, the C#-compiler generates 'return blocks' that

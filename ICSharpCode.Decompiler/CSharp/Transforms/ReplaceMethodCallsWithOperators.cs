@@ -69,7 +69,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case "System.Type.GetTypeFromHandle":
 					if (arguments.Length == 1) {
 						if (typeHandleOnTypeOfPattern.IsMatch(arguments[0])) {
-							invocationExpression.ReplaceWith(((MemberReferenceExpression)arguments[0]).Target);
+							Expression target = ((MemberReferenceExpression)arguments[0]).Target;
+							target.CopyInstructionsFrom(invocationExpression);
+							invocationExpression.ReplaceWith(target);
 							return;
 						}
 					}

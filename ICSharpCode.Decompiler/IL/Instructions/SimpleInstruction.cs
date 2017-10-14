@@ -31,15 +31,26 @@ namespace ICSharpCode.Decompiler.IL
 			// the non-custom WriteTo would add useless parentheses
 		}
 	}
+
+	public enum NopKind
+	{
+		Normal,
+		Pop
+	}
 	
 	partial class Nop
 	{
 		public string Comment;
 
+		public NopKind Kind;
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
+			if (Kind != NopKind.Normal) {
+				output.Write("." + Kind.ToString().ToLowerInvariant());
+			}
 			if (!string.IsNullOrEmpty(Comment)) {
 				output.Write(" // " + Comment);
 			}

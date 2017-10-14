@@ -135,6 +135,36 @@ namespace ICSharpCode.Decompiler.CSharp
 			EndSequencePoint(usingStatement.StartLocation, usingStatement.RParToken.EndLocation);
 		}
 
+		public override void VisitForeachStatement(ForeachStatement foreachStatement)
+		{
+			var foreachInfo = foreachStatement.Annotation<ForeachAnnotation>();
+			if (foreachInfo == null) {
+				base.VisitForeachStatement(foreachStatement);
+				return;
+			}
+			// TODO : Add a sequence point on foreach token (mapped to nop before using instruction).
+			StartSequencePoint(foreachStatement);
+			foreachStatement.InExpression.AcceptVisitor(this);
+			AddToSequencePoint(foreachInfo.GetEnumeratorCall);
+			EndSequencePoint(foreachStatement.InExpression.StartLocation, foreachStatement.InExpression.EndLocation);
+			StartSequencePoint(foreachStatement);
+			AddToSequencePoint(foreachInfo.MoveNextCall);
+			EndSequencePoint(foreachStatement.InToken.StartLocation, foreachStatement.InToken.EndLocation);
+			StartSequencePoint(foreachStatement);
+			AddToSequencePoint(foreachInfo.GetCurrentCall);
+			EndSequencePoint(foreachStatement.VariableType.StartLocation, foreachStatement.VariableNameToken.EndLocation);
+			VisitAsSequencePoint(foreachStatement.EmbeddedStatement);
+		}
+
+		public override void VisitLockStatement(LockStatement lockStatement)
+		{
+			StartSequencePoint(lockStatement);
+			lockStatement.Expression.AcceptVisitor(this);
+			VisitAsSequencePoint(lockStatement.EmbeddedStatement);
+			AddToSequencePoint(lockStatement);
+			EndSequencePoint(lockStatement.StartLocation, lockStatement.RParToken.EndLocation);
+		}
+
 		/// <summary>
 		/// Start a new C# statement = new sequence point.
 		/// </summary>
@@ -146,6 +176,8 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void EndSequencePoint(TextLocation startLocation, TextLocation endLocation)
 		{
+			Debug.Assert(!startLocation.IsEmpty, "missing startLocation");
+			Debug.Assert(!endLocation.IsEmpty, "missing endLocation");
 			if (current.Intervals.Count > 0 && current.Function != null) {
 				// use LongSet to deduplicate and merge the intervals
 				var longSet = new LongSet(current.Intervals.Select(i => new LongInterval(i.Start, i.End)));

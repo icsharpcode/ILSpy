@@ -88,7 +88,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				if (node != null)
 					node.Location = start;
 			}
-			if (t != null) currentList.Add(t);
+			if (t != null) {
+				currentList.Add(t);
+				t.Role = role;
+			}
 			base.WriteKeyword(role, keyword);
 		}
 		
