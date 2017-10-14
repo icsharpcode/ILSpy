@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 
 namespace ICSharpCode.ILSpy
@@ -12,6 +13,13 @@ namespace ICSharpCode.ILSpy
 	/// </summary>
 	public partial class DebugSteps : UserControl, IPane
 	{
+		static readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
+			UseFieldSugar = true,
+			UseLogicOperationSugar = true
+		};
+
+		public static ILAstWritingOptions Options => writingOptions;
+
 #if DEBUG
 		ILAstLanguage language;
 #endif
@@ -23,6 +31,7 @@ namespace ICSharpCode.ILSpy
 #if DEBUG
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged += FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged += SelectionChanged;
+			writingOptions.PropertyChanged += WritingOptions_PropertyChanged;
 
 			if (MainWindow.Instance.CurrentLanguage is ILAstLanguage l) {
 				l.StepperUpdated += ILAstStepperUpdated;
@@ -32,9 +41,17 @@ namespace ICSharpCode.ILSpy
 #endif
 		}
 
+		private void WritingOptions_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		{
+			DecompileAsync(lastSelectedStep);
+		}
+
 		private void SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
-			Dispatcher.Invoke(() => tree.ItemsSource = null);
+			Dispatcher.Invoke(() => {
+				tree.ItemsSource = null;
+				lastSelectedStep = int.MaxValue;
+			});
 		}
 
 		private void FilterSettings_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
@@ -57,7 +74,10 @@ namespace ICSharpCode.ILSpy
 		{
 #if DEBUG
 			if (language == null) return;
-			Dispatcher.Invoke(() => tree.ItemsSource = language.Stepper.Steps);
+			Dispatcher.Invoke(() => {
+				tree.ItemsSource = language.Stepper.Steps;
+				lastSelectedStep = int.MaxValue;
+			});
 #endif
 		}
 
@@ -71,6 +91,7 @@ namespace ICSharpCode.ILSpy
 #if DEBUG
 			MainWindow.Instance.SessionSettings.FilterSettings.PropertyChanged -= FilterSettings_PropertyChanged;
 			MainWindow.Instance.SelectionChanged -= SelectionChanged;
+			writingOptions.PropertyChanged -= WritingOptions_PropertyChanged;
 			if (language != null) {
 				language.StepperUpdated -= ILAstStepperUpdated;
 			}
@@ -98,8 +119,11 @@ namespace ICSharpCode.ILSpy
 			DecompileAsync(n.BeginStep, true);
 		}
 
+		int lastSelectedStep = int.MaxValue;
+
 		void DecompileAsync(int step, bool isDebug = false)
 		{
+			lastSelectedStep = step;
 			var window = MainWindow.Instance;
 			var state = window.TextView.GetState();
 			window.TextView.DecompileAsync(window.CurrentLanguage, window.SelectedNodes,
