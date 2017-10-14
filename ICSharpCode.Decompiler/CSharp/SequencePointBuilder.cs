@@ -126,6 +126,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			VisitAsSequencePoint(lambdaExpression.Body);
 		}
 
+		public override void VisitUsingStatement(UsingStatement usingStatement)
+		{
+			StartSequencePoint(usingStatement);
+			usingStatement.ResourceAcquisition.AcceptVisitor(this);
+			VisitAsSequencePoint(usingStatement.EmbeddedStatement);
+			AddToSequencePoint(usingStatement);
+			EndSequencePoint(usingStatement.StartLocation, usingStatement.RParToken.EndLocation);
+		}
+
 		/// <summary>
 		/// Start a new C# statement = new sequence point.
 		/// </summary>
