@@ -166,15 +166,20 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void AddToSequencePoint(ILInstruction inst)
 		{
-			if (!mappedInstructions.Add(inst) || inst is ILFunction) {
+			if (!mappedInstructions.Add(inst)) {
 				// inst was already used by a nested sequence point within this sequence point
 				return;
 			}
 			// Add the IL range associated with this instruction to the current sequence point.
 			if (!inst.ILRange.IsEmpty && current.Intervals != null) {
 				current.Intervals.Add(inst.ILRange);
-				current.Function = inst.Ancestors.OfType<ILFunction>().FirstOrDefault();
+				current.Function = inst.Parent.Ancestors.OfType<ILFunction>().FirstOrDefault();
 			}
+
+			// Do not add instructions of lambdas/delegates.
+			if (inst is ILFunction)
+				return;
+
 			// Also add the child IL instructions, unless they were already processed by
 			// another C# expression.
 			foreach (var child in inst.Children) {
