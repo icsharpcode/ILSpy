@@ -116,6 +116,7 @@
     <Compile Include="GuessFileType.cs" />
     <Compile Include="ContextMenuEntry.cs" />
     <Compile Include="Languages\CSharpLexer.cs" />
+    <Compile Include="Languages\CSharpHighlightingTokenWriter.cs" />
     <Compile Include="Languages\ILAstLanguage.cs" />
     <Compile Include="ILSpySettings.cs" />
     <Compile Include="Images\AccessOverlayIcon.cs" />
