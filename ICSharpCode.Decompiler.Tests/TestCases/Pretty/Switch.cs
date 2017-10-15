@@ -39,6 +39,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public enum State
+		{
+			False = 0,
+			True = 1,
+			Null = 2
+		}
+
+		public static State SwitchOverNullableBool(bool? value)
+		{
+			switch (value) {
+				case false:
+					return State.False;
+				case true:
+					return State.True;
+				case null:
+					return State.Null;
+				default:
+					throw new InvalidOperationException();
+			}
+		}
+
+		//public static bool? SwitchOverNullableEnum(State? state)
+		//{
+		//	switch (state) {
+		//		case State.False:
+		//			return false;
+		//		case State.True:
+		//			return true;
+		//		case State.Null:
+		//			return null;
+		//		default:
+		//			throw new InvalidOperationException();
+		//	}
+		//}
+
 		public static string SparseIntegerSwitch(int i)
 		{
 			Console.WriteLine("SparseIntegerSwitch: " + i);

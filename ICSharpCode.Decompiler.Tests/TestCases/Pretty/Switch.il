@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly '4doqvnxq'
+.assembly mhfw1ujx
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module '4doqvnxq.dll'
-// MVID: {5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}
+.module mhfw1ujx.dll
+// MVID: {2E35825E-3352-4C5E-B230-3B3F7055B304}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03320000
+// Image base: 0x005A0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -92,6 +92,55 @@
       .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
     } // end of property SetProperty::Set
   } // end of class SetProperty
+
+  .class auto ansi sealed nested public State
+         extends [mscorlib]System.Enum
+  {
+    .field public specialname rtspecialname int32 value__
+    .field public static literal valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/State False = int32(0x00000000)
+    .field public static literal valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/State True = int32(0x00000001)
+    .field public static literal valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/State Null = int32(0x00000002)
+  } // end of class State
+
+  .method public hidebysig static valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/State 
+          SwitchOverNullableBool(valuetype [mscorlib]System.Nullable`1<bool> 'value') cil managed
+  {
+    // Code size       53 (0x35)
+    .maxstack  2
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/State V_0,
+             bool V_1)
+    IL_0000:  nop
+    IL_0001:  ldarga.s   'value'
+    IL_0003:  dup
+    IL_0004:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0009:  stloc.1
+    IL_000a:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_000f:  brfalse.s  IL_0029
+
+    IL_0011:  ldloc.1
+    IL_0012:  switch     ( 
+                          IL_0021,
+                          IL_0025)
+    IL_001f:  br.s       IL_002d
+
+    IL_0021:  ldc.i4.0
+    IL_0022:  stloc.0
+    IL_0023:  br.s       IL_0033
+
+    IL_0025:  ldc.i4.1
+    IL_0026:  stloc.0
+    IL_0027:  br.s       IL_0033
+
+    IL_0029:  ldc.i4.2
+    IL_002a:  stloc.0
+    IL_002b:  br.s       IL_0033
+
+    IL_002d:  newobj     instance void [mscorlib]System.InvalidOperationException::.ctor()
+    IL_0032:  throw
+
+    IL_0033:  ldloc.0
+    IL_0034:  ret
+  } // end of method Switch::SwitchOverNullableBool
 
   .method public hidebysig static string 
           SparseIntegerSwitch(int32 i) cil managed
@@ -785,7 +834,7 @@
     IL_0015:  brfalse    IL_00e9
 
     IL_001a:  volatile.
-    IL_001c:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'::'$$method0x600000b-1'
+    IL_001c:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'::'$$method0x600000c-1'
     IL_0021:  brtrue.s   IL_0084
 
     IL_0023:  ldc.i4.7
@@ -826,9 +875,9 @@
     IL_0078:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
     IL_007d:  volatile.
-    IL_007f:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'::'$$method0x600000b-1'
+    IL_007f:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'::'$$method0x600000c-1'
     IL_0084:  volatile.
-    IL_0086:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'::'$$method0x600000b-1'
+    IL_0086:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'::'$$method0x600000c-1'
     IL_008b:  ldloc.1
     IL_008c:  ldloca.s   V_2
     IL_008e:  call       instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::TryGetValue(!0,
@@ -900,7 +949,7 @@
     IL_0013:  brfalse    IL_0158
 
     IL_0018:  volatile.
-    IL_001a:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'::'$$method0x600000c-1'
+    IL_001a:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'::'$$method0x600000d-1'
     IL_001f:  brtrue     IL_00b8
 
     IL_0024:  ldc.i4.s   11
@@ -961,9 +1010,9 @@
     IL_00ac:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
     IL_00b1:  volatile.
-    IL_00b3:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'::'$$method0x600000c-1'
+    IL_00b3:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'::'$$method0x600000d-1'
     IL_00b8:  volatile.
-    IL_00ba:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'::'$$method0x600000c-1'
+    IL_00ba:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'::'$$method0x600000d-1'
     IL_00bf:  ldloc.1
     IL_00c0:  ldloca.s   V_2
     IL_00c2:  call       instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::TryGetValue(!0,
@@ -1248,7 +1297,7 @@
     IL_0030:  brfalse    IL_0121
 
     IL_0035:  volatile.
-    IL_0037:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'::'$$method0x6000011-1'
+    IL_0037:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'::'$$method0x6000012-1'
     IL_003c:  brtrue.s   IL_0093
 
     IL_003e:  ldc.i4.6
@@ -1284,9 +1333,9 @@
     IL_0087:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
     IL_008c:  volatile.
-    IL_008e:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'::'$$method0x6000011-1'
+    IL_008e:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'::'$$method0x6000012-1'
     IL_0093:  volatile.
-    IL_0095:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'::'$$method0x6000011-1'
+    IL_0095:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'::'$$method0x6000012-1'
     IL_009a:  ldloc.s    V_5
     IL_009c:  ldloca.s   V_6
     IL_009e:  call       instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::TryGetValue(!0,
@@ -1513,14 +1562,14 @@
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch
 
-.class private auto ansi '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'
+.class private auto ansi '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'
        extends [mscorlib]System.Object
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-  .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x600000b-1'
   .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x600000c-1'
-  .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x6000011-1'
-} // end of class '<PrivateImplementationDetails>{5E65DF13-3C5E-44CA-97E7-5B58ACBAF9BF}'
+  .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x600000d-1'
+  .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x6000012-1'
+} // end of class '<PrivateImplementationDetails>{2E35825E-3352-4C5E-B230-3B3F7055B304}'
 
 
 // =============================================================

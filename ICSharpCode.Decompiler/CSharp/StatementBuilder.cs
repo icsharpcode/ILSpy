@@ -86,6 +86,9 @@ namespace ICSharpCode.Decompiler.CSharp
 		ConstantResolveResult CreateTypedCaseLabel(long i, IType type, string[] map = null)
 		{
 			object value;
+			// unpack nullable type, if necessary:
+			// we need to do this in all cases, because there are nullable bools and enum types as well.
+			type = NullableType.GetUnderlyingType(type);
 			if (type.IsKnownType(KnownTypeCode.Boolean)) {
 				value = i != 0;
 			} else if (type.IsKnownType(KnownTypeCode.String) && map != null) {
@@ -93,9 +96,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else if (type.Kind == TypeKind.Enum) {
 				var enumType = type.GetDefinition().EnumUnderlyingType;
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(enumType), i, false);
-			} else if (type.IsKnownType(KnownTypeCode.NullableOfT)) {
-				var nullableType = NullableType.GetUnderlyingType(type);
-				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(nullableType), i, false);
 			} else {
 				value = CSharpPrimitiveCast.Cast(ReflectionHelper.GetTypeCode(type), i, false);
 			}
