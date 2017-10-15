@@ -67,6 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void VisitAsSequencePoint(AstNode node)
 		{
+			if (node.IsNull) return;
 			StartSequencePoint(node);
 			node.AcceptVisitor(this);
 			EndSequencePoint(node.StartLocation, node.EndLocation);
@@ -163,6 +164,34 @@ namespace ICSharpCode.Decompiler.CSharp
 			VisitAsSequencePoint(lockStatement.EmbeddedStatement);
 			AddToSequencePoint(lockStatement);
 			EndSequencePoint(lockStatement.StartLocation, lockStatement.RParToken.EndLocation);
+		}
+
+		public override void VisitIfElseStatement(IfElseStatement ifElseStatement)
+		{
+			StartSequencePoint(ifElseStatement);
+			ifElseStatement.Condition.AcceptVisitor(this);
+			VisitAsSequencePoint(ifElseStatement.TrueStatement);
+			VisitAsSequencePoint(ifElseStatement.FalseStatement);
+			AddToSequencePoint(ifElseStatement);
+			EndSequencePoint(ifElseStatement.StartLocation, ifElseStatement.RParToken.EndLocation);
+		}
+
+		public override void VisitWhileStatement(WhileStatement whileStatement)
+		{
+			StartSequencePoint(whileStatement);
+			whileStatement.Condition.AcceptVisitor(this);
+			VisitAsSequencePoint(whileStatement.EmbeddedStatement);
+			AddToSequencePoint(whileStatement);
+			EndSequencePoint(whileStatement.StartLocation, whileStatement.RParToken.EndLocation);
+		}
+
+		public override void VisitDoWhileStatement(DoWhileStatement doWhileStatement)
+		{
+			StartSequencePoint(doWhileStatement);
+			VisitAsSequencePoint(doWhileStatement.EmbeddedStatement);
+			doWhileStatement.Condition.AcceptVisitor(this);
+			AddToSequencePoint(doWhileStatement);
+			EndSequencePoint(doWhileStatement.WhileToken.StartLocation, doWhileStatement.RParToken.EndLocation);
 		}
 
 		/// <summary>
