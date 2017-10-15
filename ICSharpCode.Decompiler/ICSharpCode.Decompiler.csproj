@@ -274,6 +274,7 @@
     <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
+    <Compile Include="IL\Transforms\InlineExpressionTreeParameterDeclarations.cs" />
     <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />
     <Compile Include="IL\Instructions\StringToInt.cs" />
     <Compile Include="IL\Instructions\UsingInstruction.cs" />

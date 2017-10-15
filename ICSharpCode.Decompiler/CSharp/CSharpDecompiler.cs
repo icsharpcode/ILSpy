@@ -121,7 +121,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							new NullCoalescingTransform(),
 							new NullableLiftingStatementTransform(),
 							new TransformArrayInitializers(),
-							new TransformCollectionAndObjectInitializers()
+							new TransformCollectionAndObjectInitializers(),
+							new InlineExpressionTreeParameterDeclarationsTransform()
 						)
 					}
 				},
