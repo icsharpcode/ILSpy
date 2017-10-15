@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
+using ICSharpCode.Decompiler.TypeSystem;
+using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -8,12 +11,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
-			throw new NotImplementedException();
+			if (InlineExpressionTreeParameterDeclarations(block.Instructions, block.Instructions[pos] as CallInstruction, pos)) {
+				context.RequestRerun(0);
+			}
 		}
 
 		#region InlineExpressionTreeParameterDeclarations
-		bool InlineExpressionTreeParameterDeclarations(List<ILNode> body, ILExpression expr, int pos)
+		bool InlineExpressionTreeParameterDeclarations(InstructionCollection<ILInstruction> body, CallInstruction expr, int pos)
 		{
+			if (expr == null)
+				return false;
 			// When there is a Expression.Lambda() call, and the parameters are declared in the
 			// IL statement immediately prior to the one containing the Lambda() call,
 			// using this code for the3 declaration:
@@ -26,64 +33,80 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// of expression trees into C# will be performed by a C# AST transformer.
 
 			for (int i = expr.Arguments.Count - 1; i >= 0; i--) {
-				if (InlineExpressionTreeParameterDeclarations(body, expr.Arguments[i], pos))
+				if (InlineExpressionTreeParameterDeclarations(body, expr.Arguments[i] as CallInstruction, pos))
 					return true;
 			}
 
-			MethodReference mr;
-			ILExpression lambdaBodyExpr, parameterArray;
-			if (!(expr.Match(ILCode.Call, out mr, out lambdaBodyExpr, out parameterArray) && mr.Name == "Lambda"))
+			IMethod mr;
+			ILInstruction lambdaBodyExpr;
+			Block parameterArrayBlock;
+			mr = expr.Method;
+			if (expr.Arguments.Count != 2)
 				return false;
-			if (!(parameterArray.Code == ILCode.InitArray && mr.DeclaringType.FullName == "System.Linq.Expressions.Expression"))
+			lambdaBodyExpr = expr.Arguments[0];
+			parameterArrayBlock = expr.Arguments[1] as Block; 
+			if (mr.Name != "Lambda")
 				return false;
-			int firstParameterPos = pos - parameterArray.Arguments.Count;
+			if (parameterArrayBlock == null)
+				return false;
+			if (parameterArrayBlock.Type != BlockType.ArrayInitializer)
+				return false;
+			List<ILInstruction> parameterList = new List<ILInstruction>(parameterArrayBlock.Instructions);
+			parameterList.RemoveAt(0); // newarr
+			if (mr.DeclaringType.FullName != "System.Linq.Expressions.Expression")
+				return false;
+			int firstParameterPos = pos - parameterList.Count;
 			if (firstParameterPos < 0)
 				return false;
 
-			ILExpression[] parameterInitExpressions = new ILExpression[parameterArray.Arguments.Count + 1];
-			for (int i = 0; i < parameterArray.Arguments.Count; i++) {
-				parameterInitExpressions[i] = body[firstParameterPos + i] as ILExpression;
+			ILInstruction[] parameterInitExpressions = new ILInstruction[parameterList.Count + 1];
+			for (int i = 0; i < parameterList.Count; i++) {
+				parameterInitExpressions[i] = body[firstParameterPos + i];
 				if (!MatchParameterVariableAssignment(parameterInitExpressions[i]))
 					return false;
-				ILVariable v = (ILVariable)parameterInitExpressions[i].Operand;
-				if (!parameterArray.Arguments[i].MatchLdloc(v))
+				ILVariable v = (parameterInitExpressions[i] as StLoc).Variable;
+				if (!(parameterList[i] as StObj).Value.MatchLdLoc(v)) // stobj System.Linq.Expressions.ParameterExpression(ldelema System.Linq.Expressions.ParameterExpression(ldloc I_0, ldc.i4 0), ldloc parameterExpression)
 					return false;
 				// TODO: validate that the variable is only used here and within 'body'
 			}
-
 			parameterInitExpressions[parameterInitExpressions.Length - 1] = lambdaBodyExpr;
 			Debug.Assert(expr.Arguments[0] == lambdaBodyExpr);
-			expr.Arguments[0] = new ILExpression(ILCode.ExpressionTreeParameterDeclarations, null, parameterInitExpressions);
+			Block block = new Block(); // TODO do we need a new BlockType?
+			block.Instructions.AddRange(parameterInitExpressions);
+			expr.Arguments[0] = block;
 
-			body.RemoveRange(firstParameterPos, parameterArray.Arguments.Count);
+			body.RemoveRange(firstParameterPos, parameterList.Count);
 
 			return true;
 		}
 
-		bool MatchParameterVariableAssignment(ILExpression expr)
+		bool MatchParameterVariableAssignment(ILInstruction expr)
 		{
 			// stloc(v, call(Expression::Parameter, call(Type::GetTypeFromHandle, ldtoken(...)), ldstr(...)))
-			ILVariable v;
-			ILExpression init;
-			if (!expr.Match(ILCode.Stloc, out v, out init))
+			if (!expr.MatchStLoc(out ILVariable v, out ILInstruction init))
 				return false;
-			if (v.IsGenerated || v.IsParameter || v.IsPinned)
+			if (/*v.HasGeneratedName || */v.Kind == VariableKind.Parameter /*|| v.IsPinned*/) // TODO
 				return false;
 			if (v.Type == null || v.Type.FullName != "System.Linq.Expressions.ParameterExpression")
 				return false;
-			MethodReference parameterMethod;
-			ILExpression typeArg, nameArg;
-			if (!init.Match(ILCode.Call, out parameterMethod, out typeArg, out nameArg))
+			if (!(init is CallInstruction initCall))
 				return false;
+			if (initCall.Arguments.Count != 2)
+				return false;
+			IMethod parameterMethod = initCall.Method;
+			CallInstruction typeArg = initCall.Arguments[0] as CallInstruction;
+			ILInstruction nameArg = initCall.Arguments[1];
 			if (!(parameterMethod.Name == "Parameter" && parameterMethod.DeclaringType.FullName == "System.Linq.Expressions.Expression"))
 				return false;
-			MethodReference getTypeFromHandle;
-			ILExpression typeToken;
-			if (!typeArg.Match(ILCode.Call, out getTypeFromHandle, out typeToken))
+			if (typeArg == null)
 				return false;
+			if (typeArg.Arguments.Count != 1)
+				return false;
+			IMethod getTypeFromHandle = typeArg.Method;
+			ILInstruction typeToken = typeArg.Arguments[0];
 			if (!(getTypeFromHandle.Name == "GetTypeFromHandle" && getTypeFromHandle.DeclaringType.FullName == "System.Type"))
 				return false;
-			return typeToken.Code == ILCode.Ldtoken && nameArg.Code == ILCode.Ldstr;
+			return typeToken.OpCode == OpCode.LdTypeToken && nameArg.OpCode == OpCode.LdStr;
 		}
 		#endregion
 	}
