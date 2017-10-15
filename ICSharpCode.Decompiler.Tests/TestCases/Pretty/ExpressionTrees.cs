@@ -20,10 +20,15 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Xml;
 
 public class ExpressionTrees
 {
+	private class XmlReaderSettings
+	{
+		internal bool CloseInput;
+		internal bool CheckCharacters;
+	}
+
 	class GenericClass<X>
 	{
 		public static X StaticField;

@@ -65,6 +65,7 @@
     <Compile Include="TestCases\Correctness\TrickyTypes.cs" />
     <Compile Include="TestCases\Correctness\Using.cs" />
     <Compile Include="TestCases\ILPretty\Issue379.cs" />
+    <Compile Include="TestCases\Pretty\ExpressionTrees.cs" />
     <Compile Include="TestCases\Pretty\FixProxyCalls.cs" />
     <None Include="TestCases\ILPretty\Issue646.cs" />
     <Compile Include="TestCases\Pretty\Async.cs" />
