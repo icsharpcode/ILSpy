@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Switch.dll
-// MVID: {0EBEAA6B-55A7-4255-9CA2-CE888E0F54BA}
+// MVID: {7ADDBD28-42D6-469D-B92D-065C803347D0}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00690000
+// Image base: 0x00C40000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -91,6 +91,66 @@
       .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
     } // end of property SetProperty::Set
   } // end of class SetProperty
+
+  .class auto ansi sealed nested public State
+         extends [mscorlib]System.Enum
+  {
+    .field public specialname rtspecialname int32 value__
+    .field public static literal valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/State False = int32(0x00000000)
+    .field public static literal valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/State True = int32(0x00000001)
+    .field public static literal valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/State Null = int32(0x00000002)
+  } // end of class State
+
+  .method public hidebysig static valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/State 
+          SwitchOverNullableBool(valuetype [mscorlib]System.Nullable`1<bool> 'value') cil managed
+  {
+    // Code size       53 (0x35)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<bool> V_0,
+             valuetype [mscorlib]System.Nullable`1<bool> V_1,
+             bool V_2,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/State V_3)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  stloc.1
+    IL_0003:  ldloc.1
+    IL_0004:  stloc.0
+    IL_0005:  ldloca.s   V_0
+    IL_0007:  call       instance bool valuetype [mscorlib]System.Nullable`1<bool>::get_HasValue()
+    IL_000c:  brfalse.s  IL_0029
+
+    IL_000e:  ldloca.s   V_0
+    IL_0010:  call       instance !0 valuetype [mscorlib]System.Nullable`1<bool>::GetValueOrDefault()
+    IL_0015:  stloc.2
+    IL_0016:  ldloc.2
+    IL_0017:  brfalse.s  IL_0021
+
+    IL_0019:  br.s       IL_001b
+
+    IL_001b:  ldloc.2
+    IL_001c:  ldc.i4.1
+    IL_001d:  beq.s      IL_0025
+
+    IL_001f:  br.s       IL_002d
+
+    IL_0021:  ldc.i4.0
+    IL_0022:  stloc.3
+    IL_0023:  br.s       IL_0033
+
+    IL_0025:  ldc.i4.1
+    IL_0026:  stloc.3
+    IL_0027:  br.s       IL_0033
+
+    IL_0029:  ldc.i4.2
+    IL_002a:  stloc.3
+    IL_002b:  br.s       IL_0033
+
+    IL_002d:  newobj     instance void [mscorlib]System.InvalidOperationException::.ctor()
+    IL_0032:  throw
+
+    IL_0033:  ldloc.3
+    IL_0034:  ret
+  } // end of method Switch::SwitchOverNullableBool
 
   .method public hidebysig static string 
           SparseIntegerSwitch(int32 i) cil managed
