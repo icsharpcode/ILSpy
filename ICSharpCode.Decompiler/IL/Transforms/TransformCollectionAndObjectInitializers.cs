@@ -43,6 +43,66 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool DoTransform(Block body, int pos)
 		{
 			ILInstruction inst = body.Instructions[pos];
+			
+			// Match callvirt set_Content(ldloc obj, newobj)
+			if (inst is CallInstruction callInst) {
+				(var kind, var path, var values, var targetVariable) = AccessPathElement.GetAccessPath(callInst, null, new Dictionary<ILVariable, (int Index, ILInstruction Value)>());
+				if (kind != AccessPathKind.Setter)
+					return false;
+				string propertyName = callInst.Method.FullName.Replace("set", "");
+				int initializerItemsCount = 0;
+				while (pos + initializerItemsCount + 1 < body.Instructions.Count
+					&& CheckSetter(body.Instructions[pos + initializerItemsCount + 1], propertyName, callInst.Arguments[0])) {
+					initializerItemsCount++;
+				}
+				if (initializerItemsCount == 0)
+					return false;
+				Block initializerBlock = new Block(BlockType.ObjectInitializer);
+				IType instType = null;
+				switch (callInst.Arguments[1]) {
+					case NewObj newObjInst:
+						instType = newObjInst.Method.DeclaringType;
+						break;
+					case DefaultValue defaultVal:
+						instType = defaultVal.Type;
+						break;
+					case Block existingInitializer:
+						if (existingInitializer.Type == BlockType.CollectionInitializer || existingInitializer.Type == BlockType.ObjectInitializer) {
+							initializerBlock = existingInitializer;
+							var value = ((StLoc)initializerBlock.Instructions[0]).Value;
+							if (value is NewObj no)
+								instType = no.Method.DeclaringType;
+							else
+								instType = ((DefaultValue)value).Type;
+							break;
+						}
+						return false;
+					default:
+						return false;
+				}
+				var finalSlot = context.Function.RegisterVariable(VariableKind.InitializerTarget, instType);
+				initializerBlock.FinalInstruction = new LdLoc(finalSlot);
+				initializerBlock.Instructions.Add(new StLoc(finalSlot, callInst.Arguments[1].Clone()));
+
+				for (int i = 1; i <= initializerItemsCount; i++) {
+					CallInstruction c = body.Instructions[i + pos].Clone() as CallInstruction;
+					foreach (CallInstruction call in c.Descendants.OfType<CallInstruction>()) {
+						if (call.Method.FullName.Replace("get", "").Equals(propertyName)) {
+							// callvirt get_Content(ldloc obj)
+							if (SpecialToString(callInst.Arguments[0]).Equals(SpecialToString(callInst.Arguments[0]))) {
+								call.ReplaceWith(new LdLoc(finalSlot));
+							}
+						}
+					}
+					initializerBlock.Instructions.Add(c);
+				}
+
+				callInst.Arguments[1].ReplaceWith(initializerBlock);
+				body.Instructions.RemoveRange(pos + 1, initializerItemsCount);
+				ILInlining.InlineIfPossible(body, pos, context);
+				return true;
+			}
+
 			// Match stloc(v, newobj)
 			if (inst.MatchStLoc(out var v, out var initInst) && (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot)) {
 				Block initializerBlock = null;
@@ -160,6 +220,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				default:
 					return false;
 			}
+		}
+
+		private string SpecialToString(ILInstruction instruction)
+		{
+			var output = new PlainTextOutput();
+			instruction.WriteTo(output, new ILAstWritingOptions());
+			return output.ToString();
+		}
+
+		private bool CheckSetter(ILInstruction inst, string propertyName, ILInstruction onObject)
+		{
+			if (!(inst is CallInstruction setterInst))
+				return false;
+			if (!setterInst.Method.Name.StartsWith("set_"))
+				return false;
+			// inst: callvirt set...(callvirt get...(callvirt get_Content(ldloc obj)), newobj)
+			// propertyName: Content
+			// onObject: ldloc obj
+			foreach (CallInstruction callInst in inst.Descendants.OfType<CallInstruction>()) {
+				if (callInst.Method.FullName.Replace("get", "").Equals(propertyName)) {
+					// callvirt get_Content(ldloc obj)
+					if (SpecialToString(callInst.Arguments[0]).Equals(SpecialToString(onObject)))
+						return true;
+				}
+			}
+			return false;
 		}
 	}
 

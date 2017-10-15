@@ -41,6 +41,12 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			Run();
 		}
+
+		[Test]
+		public void ObjectInitializer()
+		{
+			Run();
+		}
 		
 		void Run([CallerMemberName] string testName = null)
 		{
