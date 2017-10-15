@@ -224,17 +224,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							}
 						}
 						break;
-					case LdObj ldobj:
+					case LdObj ldobj: {
 						if (ldobj.Target is LdFlda ldflda) {
 							path.Insert(0, new AccessPathElement(ldflda.Field));
 							instruction = ldflda.Target;
 							break;
 						}
 						goto default;
-					case StObj stobj:
-						if (stobj.Target is LdFlda ldflda2) {
-							path.Insert(0, new AccessPathElement(ldflda2.Field));
-							instruction = ldflda2.Target;
+					}
+					case StObj stobj: {
+						if (stobj.Target is LdFlda ldflda) {
+							path.Insert(0, new AccessPathElement(ldflda.Field));
+							instruction = ldflda.Target;
 							if (values == null) {
 								values = new List<ILInstruction>(new[] { stobj.Value });
 								kind = AccessPathKind.Setter;
@@ -242,6 +243,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							break;
 						}
 						goto default;
+					}
 					case LdLoc ldloc:
 						target = ldloc.Variable;
 						instruction = null;
@@ -249,6 +251,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case LdLoca ldloca:
 						target = ldloca.Variable;
 						instruction = null;
+						break;
+					case LdFlda ldflda:
+						path.Insert(0, new AccessPathElement(ldflda.Field));
+						instruction = ldflda.Target;
 						break;
 					default:
 						kind = AccessPathKind.Invalid;

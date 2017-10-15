@@ -189,6 +189,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void InitializerTests([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void FixProxyCalls([Values(CompilerOptions.None, CompilerOptions.Optimize, CompilerOptions.UseRoslyn)] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
