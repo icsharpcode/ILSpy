@@ -77,10 +77,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#region Main Convert method
 		Expression Convert(Expression expr)
 		{
-			InvocationExpression invocation = expr as InvocationExpression;
-			if (invocation != null) {
-				IMethod mr = invocation.GetSymbol() as IMethod;
-				if (mr != null && mr.DeclaringType.FullName == "System.Linq.Expressions.Expression") {
+			if (expr is InvocationExpression invocation) {
+				if (invocation.GetSymbol() is IMethod mr && mr.DeclaringType.FullName == "System.Linq.Expressions.Expression") {
 					switch (mr.Name) {
 						case "Add":
 							return ConvertBinaryOperator(invocation, BinaryOperatorType.Add, false);
@@ -210,10 +208,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					}
 				}
 			}
-			IdentifierExpression ident = expr as IdentifierExpression;
-			if (ident != null) {
-				ILVariable v = ident.GetSymbol() as ILVariable;
-				if (v != null) {
+			if (expr is IdentifierExpression ident) {
+				if (ident.GetSymbol() is ILVariable v) {
 					foreach (LambdaExpression lambda in activeLambdas) {
 						foreach (ParameterDeclaration p in lambda.Parameters) {
 							if ((p.GetSymbol() as ILVariable) == v)
@@ -440,8 +436,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					arguments.Add(convertedArgument);
 				}
 			}
-			MethodDefinition methodDef = context.TypeSystem.GetCecil(mr) as MethodDefinition;
-			if (methodDef != null && methodDef.IsGetter) {
+			if (context.TypeSystem.GetCecil(mr) is MethodDefinition methodDef && methodDef.IsGetter) {
 				PropertyDefinition indexer = GetIndexer(methodDef);
 				if (indexer != null)
 					return new IndexerExpression(mre.Target.Detach(), arguments).WithAnnotation(indexer);
@@ -561,18 +556,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Convert New Object
-		static readonly Expression newObjectCtorPattern = new TypePattern(typeof(MethodBase)).Invoke
-			(
-				"GetMethodFromHandle",
-				new LdTokenPattern("ctor").ToExpression().Member("MethodHandle"),
-				new OptionalNode(new TypeOfExpression(new AnyNode("declaringType")).Member("TypeHandle"))
-			).CastTo(new TypePattern(typeof(ConstructorInfo)));
+		static readonly Expression newObjectCtorPattern = new CastExpression(
+				new SimpleType("ConstructorInfo"),
+				new InvocationExpression(
+					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")), "GetMethodFromHandle"),
+					new CastExpression(
+						new SimpleType("RuntimeMethodHandle"),
+						new LdTokenPattern("ctor")),
+					new OptionalNode(new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")), "TypeHandle"))));
 
 		Expression ConvertNewObject(InvocationExpression invocation)
 		{
-			if (invocation.Arguments.Count < 1 || invocation.Arguments.Count > 3)
+			if (invocation.Arguments.Count < 1)
 				return NotSupported(invocation);
 
+			//PrintMatchPattern("", invocation.Arguments.First());
 			Match m = newObjectCtorPattern.Match(invocation.Arguments.First());
 			if (!m.Success)
 				return NotSupported(invocation);
@@ -585,7 +583,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			IType declaringType;
 			if (m.Has("declaringType")) {
 				declaringTypeNode = m.Get<AstType>("declaringType").Single().Clone();
-				declaringType = declaringTypeNode.Annotation<LdMemberToken>().Member as IType;
+				declaringType = declaringTypeNode.GetSymbol() as IType;
 			} else {
 				declaringTypeNode = astBuilder.ConvertType(ctor.DeclaringType);
 				declaringType = ctor.DeclaringType;
@@ -625,9 +623,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Convert ListInit
-		static readonly Pattern elementInitArrayPattern = ArrayInitializationPattern(
-			typeof(System.Linq.Expressions.ElementInit),
-			new TypePattern(typeof(System.Linq.Expressions.Expression)).Invoke("ElementInit", new AnyNode("methodInfos"), new AnyNode("addArgumentsArrays"))
+		static readonly Pattern elementInitArrayPattern = ArrayInitializationPattern(new SimpleType("ElementInit"),
+			new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Linq.Expressions.Expression))), "ElementInit"), new AnyNode("methodInfos"), new AnyNode("addArgumentsArrays")).Clone()
 		);
 
 		Expression ConvertListInit(InvocationExpression invocation)
@@ -683,7 +680,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return oce;
 		}
 
-		static readonly Pattern memberBindingArrayPattern = ArrayInitializationPattern(typeof(System.Linq.Expressions.MemberBinding), new AnyNode("binding"));
+		static readonly Pattern memberBindingArrayPattern = ArrayInitializationPattern(new SimpleType("MemberBinding"), new AnyNode("binding"));
 		static readonly INode expressionTypeReference = new TypeReferenceExpression(new TypePattern(typeof(System.Linq.Expressions.Expression)));
 
 		ArrayInitializerExpression ConvertMemberBindings(Expression elementsArray)
@@ -760,29 +757,74 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 		#endregion
+		
+		static T Use<T>(T node)
+		{
+			if (node is ICloneable cloneable) {
+				return (T)cloneable.Clone();
+			}
+			return node;
+		}
 
 		#region ConvertExpressionsArray
-		static Pattern ArrayInitializationPattern(Type arrayElementType, INode elementPattern)
+		static Pattern ArrayInitializationPattern(SimpleType arrayElementType, INode elementPattern)
 		{
 			return new Choice {
 				new ArrayCreateExpression {
-					Type = new TypePattern(arrayElementType),
+					Type = Use(arrayElementType),
 					Arguments = { new PrimitiveExpression(0) }
 				},
 				new ArrayCreateExpression {
-					Type = new TypePattern(arrayElementType),
+					Type = Use(arrayElementType),
 					AdditionalArraySpecifiers = { new ArraySpecifier() },
 					Initializer = new ArrayInitializerExpression {
-						Elements = { new Repeat(elementPattern) }
+						Elements = { new Repeat(Use(elementPattern)) }
 					}
-				}
+				},
+				new ArrayCreateExpression {
+					Type = Use(arrayElementType),
+					Initializer = new ArrayInitializerExpression {
+						Elements = { new Repeat(Use(elementPattern)) }
+					},
+					Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
+				},
+				new InvocationExpression(Use(elementPattern) as AnyNode),
+				new CastExpression(new SimpleType("IEnumerable",new SimpleType("Expression")),
+				new ArrayCreateExpression {
+					Type = Use(arrayElementType),
+					Initializer = new ArrayInitializerExpression {
+						Elements = { new Repeat(Use(elementPattern)) }
+					},
+					Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
+				}),
+				new LambdaExpression {
+					Body = Use(elementPattern) as AnyNode
+				},
+				new InvocationExpression( // maybe this block has to be removed as it may produce wrong results
+					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")), "Convert"),
+					new InvocationExpression(
+						new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")), "Call"),
+						new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")), "Constant"),new CastExpression(new SimpleType("MethodInfo"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")), "GetMethodFromHandle"),new CastExpression(new SimpleType("RuntimeMethodHandle"), new LdTokenPattern("jojo")))),new TypeOfExpression(new SimpleType("MethodInfo"))),
+						new CastExpression(new SimpleType("MethodInfo"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")), "GetMethodFromHandle"),new CastExpression(new SimpleType("RuntimeMethodHandle"),new LdTokenPattern("jojo2")))),
+						new ArrayCreateExpression {
+							Type = arrayElementType,
+							Initializer = new ArrayInitializerExpression {
+								Elements = { new Repeat(elementPattern) }
+							},
+							Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
+						}
+					),
+					new TypeOfExpression(new SimpleType("Func", new Syntax.PrimitiveType("object"),
+					new Syntax.PrimitiveType("object"), new Syntax.PrimitiveType("bool")))
+				)
 			};
 		}
 
-		static readonly Pattern expressionArrayPattern = ArrayInitializationPattern(typeof(System.Linq.Expressions.Expression), new AnyNode("elements"));
+		static readonly Pattern expressionArrayPattern = ArrayInitializationPattern(new SimpleType("Expression"), new AnyNode("elements"));
 
 		IList<Expression> ConvertExpressionsArray(Expression arrayExpression)
 		{
+			//PrintMatchPattern("", arrayExpression);
 			Match m = expressionArrayPattern.Match(arrayExpression);
 			if (m.Success) {
 				List<Expression> result = new List<Expression>();
@@ -799,7 +841,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Convert TypeAs/TypeIs
-		static readonly TypeOfPattern typeOfPattern = new TypeOfPattern("type");
+		static readonly TypeOfExpression typeOfPattern = new TypeOfExpression(new AnyNode("type"));
 
 		AstType ConvertTypeReference(Expression typeOfExpression)
 		{
@@ -869,7 +911,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		Expression ConvertNewArrayInit(InvocationExpression invocation)
 		{
-			if (invocation.Arguments.Count != 2)
+			if (invocation.Arguments.Count < 1)
 				return NotSupported(invocation);
 
 			AstType elementType = ConvertTypeReference(invocation.Arguments.ElementAt(0));
@@ -909,8 +951,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		bool ContainsAnonymousType(AstType type)
 		{
 			foreach (AstType t in type.DescendantsAndSelf.OfType<AstType>()) {
-				IType tr = t.Annotation<LdMemberToken>().Member as IType;
-				if (tr != null && tr.IsAnonymousType())
+				if (t.Annotation<LdMemberToken>().Member is IType tr && tr.IsAnonymousType())
 					return true;
 			}
 			return false;
@@ -925,7 +966,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		private class ParameterDeclarationAnnotation
 		{
-			internal IEnumerable<ParameterDeclaration> Parameters;
 		}
 
 		static PropertyDefinition GetIndexer(MethodDefinition cecilMethodDef)
@@ -959,7 +999,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				Debug.Write("\"" + astNode.ToString() + "\"");
 				return;
 			}
-			Debug.Write(prefix + "new " + (astNode.GetType().Name.Equals("PrimitiveType") ? "Syntax.PrimitiveType" : astNode.GetType().Name) + "(");
+			Debug.Write("new " + (astNode.GetType().Name.Equals("PrimitiveType") ? "Syntax.PrimitiveType" : astNode.GetType().Name) + "(");
 			foreach (var child in astNode.Children) {
 				PrintMatchPattern(prefix + " ", child);
 				if (astNode.Children.Last() != child)
