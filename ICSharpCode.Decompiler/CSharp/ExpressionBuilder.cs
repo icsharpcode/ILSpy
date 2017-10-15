@@ -645,7 +645,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				case BinaryNumericOperator.Mul:
 					return HandleBinaryNumeric(inst, BinaryOperatorType.Multiply);
 				case BinaryNumericOperator.Div:
-					return HandleBinaryNumeric(inst, BinaryOperatorType.Divide);
+					return HandlePointerSubtraction(inst)
+						?? HandleBinaryNumeric(inst, BinaryOperatorType.Divide);
 				case BinaryNumericOperator.Rem:
 					return HandleBinaryNumeric(inst, BinaryOperatorType.Modulus);
 				case BinaryNumericOperator.BitAnd:
@@ -724,7 +725,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			TranslatedExpression? GetPointerArithmeticOffset()
 			{
 				int? elementSize = ComputeSizeOf(pointerType.ElementType);
-				int val;
 				if (elementSize == 1) {
 					return byteOffsetExpr;
 				} else if (byteOffsetInst is BinaryNumericInstruction mul && mul.Operator == BinaryNumericOperator.Mul) {
@@ -732,31 +732,95 @@ namespace ICSharpCode.Decompiler.CSharp
 						return null;
 					if (mul.IsLifted)
 						return null;
-					if (elementSize > 0 && mul.Right.UnwrapConv(ConversionKind.SignExtend).MatchLdcI4(elementSize.Value)) {
+					if (elementSize > 0 && mul.Right.MatchLdcI(elementSize.Value)) {
 						return Translate(mul.Left);
-					} else {
-						return null;
 					}
-				} else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend).MatchLdcI4(out val)) {
+				} else if (byteOffsetInst.MatchLdcI(out long val)) {
 					// If the offset is a constant, it's possible that the compiler
 					// constant-folded the multiplication.
 					if (elementSize > 0 && (val % elementSize == 0) && val > 0) {
 						val /= elementSize.Value;
-						return new PrimitiveExpression(val)
-							.WithILInstruction(byteOffsetInst)
-							.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), val));
-					} else {
-						return null;
+						if (val <= int.MaxValue) {
+							return new PrimitiveExpression((int)val)
+								.WithILInstruction(byteOffsetInst)
+								.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), val));
+						}
 					}
-				} else {
-					return null;
 				}
+				return null;
 			}
-			
+
 			TranslatedExpression FallBackToBytePointer()
 			{
 				pointerType = new PointerType(compilation.FindType(KnownTypeCode.Byte));
 				return byteOffsetExpr;
+			}
+		}
+
+		/// <summary>
+		/// Called for divisions, detect and handles the code pattern:
+		///   div(sub(a, b), sizeof(T))
+		/// when a,b are of type T*.
+		/// This is what the C# compiler generates for pointer subtraction.
+		/// </summary>
+		TranslatedExpression? HandlePointerSubtraction(BinaryNumericInstruction inst)
+		{
+			Debug.Assert(inst.Operator == BinaryNumericOperator.Div);
+			if (inst.CheckForOverflow || inst.LeftInputType != StackType.I)
+				return null;
+			if (!(inst.Left is BinaryNumericInstruction sub && sub.Operator == BinaryNumericOperator.Sub))
+				return null;
+			if (sub.CheckForOverflow)
+				return null;
+			// First, attempt to parse the 'sizeof' on the RHS
+			IType elementType;
+			if (inst.Right.MatchLdcI(out long elementSize)) {
+				elementType = null;
+				// OK, might be pointer subtraction if the element size matches
+			} else if (inst.Right.MatchSizeOf(out elementType)) {
+				// OK, might be pointer subtraction if the element type matches
+			} else {
+				return null;
+			}
+			var left = Translate(sub.Left);
+			var right = Translate(sub.Right);
+			IType pointerType;
+			if (IsMatchingPointerType(left.Type)) {
+				pointerType = left.Type;
+			} else if (IsMatchingPointerType(right.Type)) {
+				pointerType = right.Type;
+			} else if (elementSize == 1 && left.Type.Kind == TypeKind.Pointer && right.Type.Kind == TypeKind.Pointer) {
+				// two pointers (neither matching), we're dividing by 1 (debug builds only),
+				// -> subtract two byte pointers
+				pointerType = new PointerType(compilation.FindType(KnownTypeCode.Byte));
+			} else {
+				// neither is a matching pointer type
+				// -> not a pointer subtraction after all
+				return null;
+			}
+			// We got a pointer subtraction.
+			left = left.ConvertTo(pointerType, this);
+			right = right.ConvertTo(pointerType, this);
+			var rr = new OperatorResolveResult(
+				compilation.FindType(KnownTypeCode.Int64),
+				ExpressionType.Subtract,
+				left.ResolveResult, right.ResolveResult
+			);
+			var result = new BinaryOperatorExpression(
+				left.Expression, BinaryOperatorType.Subtract, right.Expression
+			).WithILInstruction(new[] { inst, sub })
+			 .WithRR(rr);
+			return result;
+
+			bool IsMatchingPointerType(IType type)
+			{
+				if (type is PointerType pt) {
+					if (elementType != null)
+						return elementType.Equals(pt.ElementType);
+					else if (elementSize > 0)
+						return ComputeSizeOf(pt.ElementType) == elementSize;
+				}
+				return false;
 			}
 		}
 
@@ -1081,7 +1145,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// We just need to ensure the input type before the conversion is signed.
 					// Also, if the argument was translated into an oversized C# type,
 					// we need to perform the truncatation to the input stack type.
-					if (inputType.GetSign() != Sign.Signed || inputType.GetSize() > inputStackType.GetSize()) {
+					if (inputType.GetSign() != Sign.Signed || ValueMightBeOversized(arg.ResolveResult, inputStackType)) {
 						// Note that an undersized C# type is handled just fine:
 						// If it is unsigned we'll zero-extend it to the width of the inputStackType here,
 						// and it is signed we just combine the two sign-extensions into a single sign-extending conversion.
@@ -1141,6 +1205,32 @@ namespace ICSharpCode.Decompiler.CSharp
 					return arg.ConvertTo(GetType(inst.TargetType.ToKnownTypeCode()), this, inst.CheckForOverflow)
 						.WithILInstruction(inst);
 			}
+		}
+
+		/// <summary>
+		/// Gets whether the ResolveResult computes a value that might be oversized for the specified stack type.
+		/// </summary>
+		bool ValueMightBeOversized(ResolveResult rr, StackType stackType)
+		{
+			IType inputType = NullableType.GetUnderlyingType(rr.Type);
+			if (inputType.GetSize() <= stackType.GetSize()) {
+				// The input type is smaller or equal to the stack type,
+				// it can't be an oversized value.
+				return false;
+			}
+			if (rr is OperatorResolveResult orr) {
+				if (stackType == StackType.I && orr.OperatorType == ExpressionType.Subtract
+					&& orr.Operands.Count == 2
+					&& orr.Operands[0].Type.Kind == TypeKind.Pointer
+					&& orr.Operands[1].Type.Kind == TypeKind.Pointer)
+				{
+					// Even though a pointer subtraction produces a value of type long in C#,
+					// the value will always fit in a native int.
+					return false;
+				}
+			}
+			// We don't have any information about the value, so it might be oversized.
+			return true;
 		}
 
 		protected internal override TranslatedExpression VisitCall(Call inst, TranslationContext context)

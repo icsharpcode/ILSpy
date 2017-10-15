@@ -198,17 +198,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public unsafe int PointerSubtraction(long* p, long* q)
 		{
-			return (int)((long)(p - q));
+			return (int)(p - q);
+		}
+
+		public unsafe long PointerSubtractionLong(long* p, long* q)
+		{
+			return p - q;
 		}
 
 		public unsafe int PointerSubtraction2(long* p, short* q)
 		{
-			return (int)((long)((byte*)p - (byte*)q));
+			return (int)((byte*)p - (byte*)q);
 		}
 
 		public unsafe int PointerSubtraction3(void* p, void* q)
 		{
-			return (int)((long)((byte*)p - (byte*)q));
+			return (int)((byte*)p - (byte*)q);
 		}
 
 		unsafe ~UnsafeCode()

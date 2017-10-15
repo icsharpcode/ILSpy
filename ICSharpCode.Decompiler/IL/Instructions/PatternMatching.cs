@@ -33,7 +33,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 
 		/// <summary>
-		/// Matches either LdcI4 or LdcI8.
+		/// Matches ldc.i4, ldc.i8, and extending conversions.
 		/// </summary>
 		public bool MatchLdcI(out long val)
 		{
@@ -42,6 +42,17 @@ namespace ICSharpCode.Decompiler.IL
 			if (MatchLdcI4(out int intVal)) {
 				val = intVal;
 				return true;
+			}
+			if (this is Conv conv) {
+				if (conv.Kind == ConversionKind.SignExtend) {
+					return conv.Argument.MatchLdcI(out val);
+				} else if (conv.Kind == ConversionKind.ZeroExtend && conv.InputType == StackType.I4) {
+					if (conv.Argument.MatchLdcI(out val)) {
+						// clear top 32 bits
+						val &= uint.MaxValue;
+						return true;
+					}
+				}
 			}
 			return false;
 		}
