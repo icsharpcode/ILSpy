@@ -1199,19 +1199,35 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst, TranslationContext context)
 		{
 			var target = Translate(inst.Target);
-			if (target.Expression is DirectionExpression && TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
-				// we can dereference the managed reference by stripping away the 'ref'
-				var result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
+			if (TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
+				TranslatedExpression result;
+				if (target.Expression is DirectionExpression dirExpr) {
+					// we can dereference the managed reference by stripping away the 'ref'
+					result = target.UnwrapChild(dirExpr.Expression);
+					result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
+				} else if (target.Type is PointerType pointerType) {
+					// Dereference the existing pointer
+					result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
+						.WithILInstruction(inst)
+						.WithRR(new ResolveResult(pointerType.ElementType));
+				} else {
+					// reference type behind non-DirectionExpression?
+					// this case should be impossible, but we can use a pointer cast
+					// just to make sure
+					target = target.ConvertTo(new PointerType(inst.Type), this);
+					return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
+						.WithILInstruction(inst)
+						.WithRR(new ResolveResult(inst.Type));
+				}
 				// we don't convert result to inst.Type, because the LdObj type
 				// might be inaccurate (it's often System.Object for all reference types),
 				// and our parent node should already insert casts where necessary
-				result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
-				
+
 				if (target.Type.IsSmallIntegerType() && inst.Type.IsSmallIntegerType() && target.Type.GetSign() != inst.Type.GetSign())
 					return result.ConvertTo(inst.Type, this);
 				return result;
 			} else {
-				// Cast pointer type if necessary:
+				// We need to cast the pointer type:
 				target = target.ConvertTo(new PointerType(inst.Type), this);
 				return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
 					.WithILInstruction(inst)
