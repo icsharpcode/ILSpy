@@ -194,6 +194,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			EndSequencePoint(doWhileStatement.WhileToken.StartLocation, doWhileStatement.RParToken.EndLocation);
 		}
 
+		public override void VisitFixedStatement(FixedStatement fixedStatement)
+		{
+			foreach (var v in fixedStatement.Variables) {
+				VisitAsSequencePoint(v);
+			}
+			VisitAsSequencePoint(fixedStatement.EmbeddedStatement);
+		}
+
 		/// <summary>
 		/// Start a new C# statement = new sequence point.
 		/// </summary>
