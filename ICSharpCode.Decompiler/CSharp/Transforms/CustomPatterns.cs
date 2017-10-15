@@ -57,6 +57,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			return name;
 		}
+
+		internal InvocationExpression Invoke(string v, Expression anyNode1, Expression anyNode2)
+		{
+			return new InvocationExpression(new MemberReferenceExpression(this, v), anyNode1, anyNode2);
+		}
 	}
 	
 	sealed class LdTokenPattern : Pattern
