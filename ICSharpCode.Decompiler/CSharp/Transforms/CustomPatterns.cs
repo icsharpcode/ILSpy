@@ -17,9 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using Mono.Cecil;
 
@@ -75,9 +77,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override bool DoMatch(INode other, Match match)
 		{
-			InvocationExpression ie = other as InvocationExpression;
-			if (ie != null && ie.Annotation<LdTokenAnnotation>() != null && ie.Arguments.Count == 1) {
-				return childNode.DoMatch(ie.Arguments.Single(), match);
+			// new ErrorExpression("/*ldmembertoken ...*/")
+			if (other is ErrorExpression ee) {
+				match.Add(childNode.GroupName, ee);
+				return true;
 			}
 			return false;
 		}

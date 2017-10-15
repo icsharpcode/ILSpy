@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		public static bool CouldBeExpressionTree(InvocationExpression expr)
 		{
 			if (expr != null && expr.Arguments.Count == 2) {
-				MethodReference mr = expr.Annotation<MethodReference>();
+				IMethod mr = expr.GetSymbol() as IMethod;
 				return mr != null && mr.Name == "Lambda" && mr.DeclaringType.FullName == "System.Linq.Expressions.Expression";
 			}
 			return false;
@@ -79,7 +79,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			InvocationExpression invocation = expr as InvocationExpression;
 			if (invocation != null) {
-				MethodReference mr = invocation.Annotation<MethodReference>();
+				IMethod mr = invocation.GetSymbol() as IMethod;
 				if (mr != null && mr.DeclaringType.FullName == "System.Linq.Expressions.Expression") {
 					switch (mr.Name) {
 						case "Add":
@@ -212,31 +212,46 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			IdentifierExpression ident = expr as IdentifierExpression;
 			if (ident != null) {
-				ILVariable v = ident.Annotation<ILVariable>();
+				ILVariable v = ident.GetSymbol() as ILVariable;
 				if (v != null) {
 					foreach (LambdaExpression lambda in activeLambdas) {
 						foreach (ParameterDeclaration p in lambda.Parameters) {
-							if (p.Annotation<ILVariable>() == v)
+							if ((p.GetSymbol() as ILVariable) == v)
 								return new IdentifierExpression(p.Name).WithAnnotation(v);
 						}
 					}
 				}
+			}
+			if (expr is CastExpression cast) {
+				return Convert(cast.Expression);
 			}
 			return NotSupported(expr);
 		}
 
 		Expression NotSupported(Expression expr)
 		{
-			Debug.WriteLine("Expression Tree Conversion Failed: '" + expr + "' is not supported");
+			//Debug.WriteLine("Expression Tree Conversion Failed: '" + expr + "' is not supported");
 			return null;
 		}
 		#endregion
 
+
+
 		#region Convert Lambda
-		static readonly Expression emptyArrayPattern = new ArrayCreateExpression {
-			Type = new AnyNode(),
-			Arguments = { new PrimitiveExpression(0) }
-		};
+		// Array.Empty<ParameterExpression> ()
+		static readonly Expression emptyArrayPattern = new InvocationExpression(
+			new MemberReferenceExpression(
+				new TypeReferenceExpression(new SimpleType("Array")),
+				"Empty",
+				new SimpleType("ParameterExpression")
+			)
+		);
+
+		private ParameterDeclaration ConvertParameter(InvocationExpression invocation)
+		{
+			return new ParameterDeclaration((invocation.Arguments.ElementAt(0) as TypeOfExpression).Type.Clone(),
+						(invocation.Arguments.ElementAt(1) as PrimitiveExpression).Value.ToString());
+		}
 
 		Expression ConvertLambda(InvocationExpression invocation)
 		{
@@ -244,15 +259,29 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return NotSupported(invocation);
 			LambdaExpression lambda = new LambdaExpression();
 			Expression body = invocation.Arguments.First();
-			ArrayCreateExpression parameterArray = invocation.Arguments.Last() as ArrayCreateExpression;
-			if (parameterArray == null)
+			//Debug.WriteLine("invocation.Arguments.Last().GetType(): "+invocation.Arguments.Last().GetType());
+			Expression parameterArray = invocation.Arguments.Last();
+			if (parameterArray.GetType() != typeof(InvocationExpression) && parameterArray.GetType() != typeof(ArrayCreateExpression))
 				return NotSupported(invocation);
 
-			var annotation = body.Annotation<ParameterDeclarationAnnotation>();
-			if (annotation != null) {
-				lambda.Parameters.AddRange(annotation.Parameters);
+			if (parameterArray is ArrayCreateExpression arrayCreate) {
+				foreach (var arg in arrayCreate.Initializer.Elements) {
+					// arrayCreate.Initializer.Elements Expression.Parameter (typeof(bool), "a")
+					// arrayCreate.Initializer.Elements.GetType() ICSharpCode.Decompiler.CSharp.Syntax.InvocationExpression
+					//Debug.WriteLine("arrayCreate.Initializer.Elements " + arg);
+					//Debug.WriteLine("arrayCreate.Initializer.Elements.GetType() " + arg.GetType());
+					//foreach (var invarg in invExp.Arguments) {
+					//	Debug.WriteLine("invarg " + invarg);
+					//	Debug.WriteLine("invarg.getType() " + invarg.GetType());
+					//}
+					// Arguments[0] = TypeOfExpression
+					// Arguments[1] = PrimitiveExpression
+					lambda.Parameters.Add(ConvertParameter(arg as InvocationExpression));
+				}
 			} else {
 				// No parameter declaration annotation found.
+				// 
+				//PrintMatchPattern("", parameterArray);
 				if (!emptyArrayPattern.IsMatch(parameterArray))
 					return null;
 			}
@@ -269,11 +298,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		#region Convert Field
 		static readonly Expression getFieldFromHandlePattern =
-			new TypePattern(typeof(FieldInfo)).Invoke(
-				"GetFieldFromHandle",
-				new LdTokenPattern("field").ToExpression().Member("FieldHandle"),
-				new OptionalNode(new TypeOfExpression(new AnyNode("declaringType")).Member("TypeHandle"))
-			);
+			new InvocationExpression(
+				new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("FieldInfo")), "GetFieldFromHandle"), new CastExpression(new SimpleType("RuntimeFieldHandle"), new LdTokenPattern("field")),
+				new OptionalNode(new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")), "TypeHandle")));
 
 		Expression ConvertField(InvocationExpression invocation)
 		{
@@ -281,11 +308,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return NotSupported(invocation);
 
 			Expression fieldInfoExpr = invocation.Arguments.ElementAt(1);
+			//PrintMatchPattern("", fieldInfoExpr);
 			Match m = getFieldFromHandlePattern.Match(fieldInfoExpr);
 			if (!m.Success)
 				return NotSupported(invocation);
 
-			FieldReference fr = m.Get<AstNode>("field").Single().Annotation<FieldReference>();
+			AstNode field = m.Get<AstNode>("field").Single();
+			IField fr = field.Annotation<LdMemberToken>().Member as IField;
 			if (fr == null)
 				return null;
 
@@ -295,7 +324,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (m.Has("declaringType"))
 					convertedTarget = new TypeReferenceExpression(m.Get<AstType>("declaringType").Single().Clone());
 				else
-					convertedTarget = new TypeReferenceExpression(astBuilder.ConvertType(context.TypeSystem.Resolve(fr.DeclaringType)));
+					convertedTarget = new TypeReferenceExpression(astBuilder.ConvertType(fr.DeclaringType));
 			} else {
 				convertedTarget = Convert(target);
 				if (convertedTarget == null)
@@ -323,7 +352,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!m.Success)
 				return NotSupported(invocation);
 
-			MethodReference mr = m.Get<AstNode>("method").Single().Annotation<MethodReference>();
+			IMethod mr = m.Get<AstNode>("method").Single().Annotation<LdMemberToken>().Member as IMethod;
 			if (mr == null)
 				return null;
 
@@ -333,7 +362,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (m.Has("declaringType"))
 					convertedTarget = new TypeReferenceExpression(m.Get<AstType>("declaringType").Single().Clone());
 				else
-					convertedTarget = new TypeReferenceExpression(astBuilder.ConvertType(context.TypeSystem.Resolve(mr.DeclaringType)));
+					convertedTarget = new TypeReferenceExpression(astBuilder.ConvertType(mr.DeclaringType));
 			} else {
 				convertedTarget = Convert(target);
 				if (convertedTarget == null)
@@ -343,7 +372,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return convertedTarget.Member(GetPropertyName(mr)).WithAnnotation(mr);
 		}
 
-		string GetPropertyName(MethodReference accessor)
+		string GetPropertyName(IMethod accessor)
 		{
 			string name = accessor.Name;
 			if (name.StartsWith("get_", StringComparison.Ordinal) || name.StartsWith("set_", StringComparison.Ordinal))
@@ -373,7 +402,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				firstArgumentPosition = 2;
 			}
 
-			MethodReference mr = m.Get<AstNode>("method").Single().Annotation<MethodReference>();
+			IMethod mr = m.Get<AstNode>("method").Single().Annotation<LdMemberToken>().Member as IMethod;
 			if (mr == null)
 				return null;
 
@@ -383,7 +412,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (m.Has("declaringType"))
 					convertedTarget = new TypeReferenceExpression(m.Get<AstType>("declaringType").Single().Clone());
 				else
-					convertedTarget = new TypeReferenceExpression(astBuilder.ConvertType(context.TypeSystem.Resolve(mr.DeclaringType)));
+					convertedTarget = new TypeReferenceExpression(astBuilder.ConvertType(mr.DeclaringType));
 			} else {
 				convertedTarget = Convert(target);
 				if (convertedTarget == null)
@@ -391,7 +420,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 
 			MemberReferenceExpression mre = convertedTarget.Member(mr.Name);
-			GenericInstanceMethod gim = mr as GenericInstanceMethod;
+			GenericInstanceMethod gim = context.TypeSystem.GetCecil(mr) as GenericInstanceMethod;
 			if (gim != null) {
 				foreach (TypeReference tr in gim.GenericArguments) {
 					mre.TypeArguments.Add(astBuilder.ConvertType(context.TypeSystem.Resolve(tr)));
@@ -411,7 +440,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					arguments.Add(convertedArgument);
 				}
 			}
-			MethodDefinition methodDef = mr.Resolve();
+			MethodDefinition methodDef = context.TypeSystem.GetCecil(mr) as MethodDefinition;
 			if (methodDef != null && methodDef.IsGetter) {
 				PropertyDefinition indexer = GetIndexer(methodDef);
 				if (indexer != null)
@@ -462,7 +491,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case 3:
 					Match m = getMethodFromHandlePattern.Match(invocation.Arguments.ElementAt(2));
 					if (m.Success)
-						return boe.WithAnnotation(m.Get<AstNode>("method").Single().Annotation<MethodReference>());
+						return boe.WithAnnotation(m.Get<AstNode>("method").Single().Annotation<LdMemberToken>().Member as IMethod);
 					else
 						return null;
 				case 4:
@@ -470,7 +499,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						return null;
 					m = getMethodFromHandlePattern.Match(invocation.Arguments.ElementAt(3));
 					if (m.Success)
-						return boe.WithAnnotation(m.Get<AstNode>("method").Single().Annotation<MethodReference>());
+						return boe.WithAnnotation(m.Get<AstNode>("method").Single().Annotation<LdMemberToken>().Member as IMethod);
 					else
 						return null;
 				default:
@@ -506,7 +535,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case 2:
 					Match m = getMethodFromHandlePattern.Match(invocation.Arguments.ElementAt(1));
 					if (m.Success)
-						return uoe.WithAnnotation(m.Get<AstNode>("method").Single().Annotation<MethodReference>());
+						return uoe.WithAnnotation(m.Get<AstNode>("method").Single().Annotation<LdMemberToken>().Member as IMethod);
 					else
 						return null;
 				default:
@@ -548,17 +577,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!m.Success)
 				return NotSupported(invocation);
 
-			MethodReference ctor = m.Get<AstNode>("ctor").Single().Annotation<MethodReference>();
+			IMethod ctor = m.Get<AstNode>("ctor").Single().Annotation<LdMemberToken>().Member as IMethod;
 			if (ctor == null)
 				return null;
 
 			AstType declaringTypeNode;
-			TypeReference declaringType;
+			IType declaringType;
 			if (m.Has("declaringType")) {
 				declaringTypeNode = m.Get<AstType>("declaringType").Single().Clone();
-				declaringType = declaringTypeNode.Annotation<TypeReference>();
+				declaringType = declaringTypeNode.Annotation<LdMemberToken>().Member as IType;
 			} else {
-				declaringTypeNode = astBuilder.ConvertType(context.TypeSystem.Resolve(ctor.DeclaringType));
+				declaringTypeNode = astBuilder.ConvertType(ctor.DeclaringType);
 				declaringType = ctor.DeclaringType;
 			}
 			if (declaringTypeNode == null)
@@ -572,7 +601,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				oce.Arguments.AddRange(arguments);
 			}
 			if (invocation.Arguments.Count >= 3 && declaringType.IsAnonymousType()) {
-				IMethod resolvedCtor = context.TypeSystem.Resolve(ctor);
+				IMethod resolvedCtor = ctor;
 				if (resolvedCtor == null || resolvedCtor.Parameters.Count != oce.Arguments.Count)
 					return null;
 				AnonymousTypeCreateExpression atce = new AnonymousTypeCreateExpression();
@@ -677,7 +706,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				string memberName;
 				Match m2 = getMethodFromHandlePattern.Match(bindingTarget);
 				if (m2.Success) {
-					MethodReference setter = m2.Get<AstNode>("method").Single().Annotation<MethodReference>();
+					IMethod setter = m2.Get<AstNode>("method").Single().Annotation<LdMemberToken>().Member as IMethod;
 					if (setter == null)
 						return null;
 					memberName = GetPropertyName(setter);
@@ -723,7 +752,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					case 3:
 						Match m = getMethodFromHandlePattern.Match(invocation.Arguments.ElementAt(2));
 						if (m.Success)
-							return cast.WithAnnotation(m.Get<AstNode>("method").Single().Annotation<MethodReference>());
+							return cast.WithAnnotation(m.Get<AstNode>("method").Single().Annotation<LdMemberToken>().Member as IMethod);
 						else
 							return null;
 				}
@@ -880,7 +909,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		bool ContainsAnonymousType(AstType type)
 		{
 			foreach (AstType t in type.DescendantsAndSelf.OfType<AstType>()) {
-				TypeReference tr = t.Annotation<TypeReference>();
+				IType tr = t.Annotation<LdMemberToken>().Member as IType;
 				if (tr != null && tr.IsAnonymousType())
 					return true;
 			}
@@ -923,5 +952,25 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 		#endregion
+
+		private void PrintMatchPattern(string prefix, AstNode astNode)
+		{
+			if (astNode.GetType().Name.Equals("Identifier") || astNode.GetType().Name.Equals("Comment")) {
+				Debug.Write("\"" + astNode.ToString() + "\"");
+				return;
+			}
+			Debug.Write(prefix + "new " + (astNode.GetType().Name.Equals("PrimitiveType") ? "Syntax.PrimitiveType" : astNode.GetType().Name) + "(");
+			foreach (var child in astNode.Children) {
+				PrintMatchPattern(prefix + " ", child);
+				if (astNode.Children.Last() != child)
+					Debug.Write(",");
+			}
+			if (!astNode.HasChildren) {
+				Debug.Write("\"" + astNode.ToString() + "\"");
+			}
+			Debug.Write(")");
+			if (prefix.Length == 0)
+				Debug.WriteLine(";");
+		}
 	}
 }

@@ -1742,5 +1742,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			e.AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);
 			return e.WithoutILInstruction().WithRR(ErrorResolveResult.UnknownError);
 		}
+
+		protected internal override TranslatedExpression VisitLdMemberToken(LdMemberToken inst, TranslationContext context)
+		{
+			var e = new ErrorExpression();
+			e.AddChild(new Comment("ldmembertoken "+inst.Member, CommentType.MultiLine), Roles.Comment);
+			return e.WithILInstruction(inst).WithRR(ErrorResolveResult.UnknownError);
+		}
 	}
 }
