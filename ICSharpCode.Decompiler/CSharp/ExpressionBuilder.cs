@@ -662,15 +662,128 @@ namespace ICSharpCode.Decompiler.CSharp
 					throw new ArgumentOutOfRangeException();
 			}
 		}
-		
+
+		/// <summary>
+		/// Translates pointer arithmetic:
+		///   ptr + int
+		///   int + ptr
+		///   ptr - int
+		/// Returns null if 'inst' is not performing pointer arithmetic.
+		/// This function not handle 'ptr - ptr'!
+		/// </summary>
+		TranslatedExpression? HandlePointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left, TranslatedExpression right)
+		{
+			if (!(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub))
+				return null;
+			if (inst.CheckForOverflow || inst.IsLifted)
+				return null;
+			if (!(inst.LeftInputType == StackType.I && inst.RightInputType == StackType.I))
+				return null;
+			PointerType pointerType;
+			ILInstruction byteOffsetInst;
+			TranslatedExpression byteOffsetExpr;
+			if (left.Type.Kind == TypeKind.Pointer) {
+				byteOffsetInst = inst.Right;
+				byteOffsetExpr = right;
+				pointerType = (PointerType)left.Type;
+			} else if (right.Type.Kind == TypeKind.Pointer) {
+				if (inst.Operator != BinaryNumericOperator.Add)
+					return null;
+				byteOffsetInst = inst.Left;
+				byteOffsetExpr = left;
+				pointerType = (PointerType)right.Type;
+			} else {
+				return null;
+			}
+			TranslatedExpression offsetExpr = GetPointerArithmeticOffset() ?? FallBackToBytePointer();
+			if (!offsetExpr.Type.IsCSharpPrimitiveIntegerType()) {
+				// pointer arithmetic accepts all primitive integer types, but no enums etc.
+				StackType targetType = offsetExpr.Type.GetStackType() == StackType.I4 ? StackType.I4 : StackType.I8;
+				offsetExpr = offsetExpr.ConvertTo(
+					compilation.FindType(targetType.ToKnownTypeCode(offsetExpr.Type.GetSign())),
+					this);
+			}
+
+			if (left.Type.Kind == TypeKind.Pointer) {
+				Debug.Assert(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub);
+				left = left.ConvertTo(pointerType, this);
+				right = offsetExpr;
+			} else {
+				Debug.Assert(inst.Operator == BinaryNumericOperator.Add);
+				Debug.Assert(right.Type.Kind == TypeKind.Pointer);
+				left = offsetExpr;
+				right = right.ConvertTo(pointerType, this);
+			}
+			var operatorType = inst.Operator == BinaryNumericOperator.Add ? BinaryOperatorType.Add : BinaryOperatorType.Subtract;
+			return new BinaryOperatorExpression(left, operatorType, right)
+				.WithILInstruction(inst)
+				.WithRR(new OperatorResolveResult(
+					pointerType, BinaryOperatorExpression.GetLinqNodeType(operatorType, inst.CheckForOverflow),
+					left.ResolveResult, right.ResolveResult));
+
+			TranslatedExpression? GetPointerArithmeticOffset()
+			{
+				int? elementSize = ComputeSizeOf(pointerType.ElementType);
+				int val;
+				if (elementSize == 1) {
+					return byteOffsetExpr;
+				} else if (byteOffsetInst is BinaryNumericInstruction mul && mul.Operator == BinaryNumericOperator.Mul) {
+					if (mul.CheckForOverflow != inst.CheckForOverflow)
+						return null;
+					if (mul.IsLifted)
+						return null;
+					if (elementSize > 0 && mul.Right.UnwrapConv(ConversionKind.SignExtend).MatchLdcI4(elementSize.Value)) {
+						return Translate(mul.Left);
+					} else {
+						return null;
+					}
+				} else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend).MatchLdcI4(out val)) {
+					// If the offset is a constant, it's possible that the compiler
+					// constant-folded the multiplication.
+					if (elementSize > 0 && (val % elementSize == 0) && val > 0) {
+						val /= elementSize.Value;
+						return new PrimitiveExpression(val)
+							.WithILInstruction(byteOffsetInst)
+							.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), val));
+					} else {
+						return null;
+					}
+				} else {
+					return null;
+				}
+			}
+			
+			TranslatedExpression FallBackToBytePointer()
+			{
+				pointerType = new PointerType(compilation.FindType(KnownTypeCode.Byte));
+				return byteOffsetExpr;
+			}
+		}
+
+		int? ComputeSizeOf(IType type)
+		{
+			var rr = resolver.ResolveSizeOf(type);
+			if (rr.IsCompileTimeConstant && rr.ConstantValue is int size)
+				return size;
+			else
+				return null;
+		}
+
 		TranslatedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op)
 		{
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
+
+			if (left.Type.Kind == TypeKind.Pointer || right.Type.Kind == TypeKind.Pointer) {
+				var ptrResult = HandlePointerArithmetic(inst, left, right);
+				if (ptrResult != null)
+					return ptrResult.Value;
+			}
+
 			left = PrepareArithmeticArgument(left, inst.LeftInputType, inst.Sign, inst.IsLifted);
 			right = PrepareArithmeticArgument(right, inst.RightInputType, inst.Sign, inst.IsLifted);
-			
+
 			if (op == BinaryOperatorType.Subtract && inst.Left.MatchLdcI(0)) {
 				IType rightUType = NullableType.GetUnderlyingType(right.Type);
 				if (rightUType.IsKnownType(KnownTypeCode.Int32) || rightUType.IsKnownType(KnownTypeCode.Int64) || rightUType.IsCSharpSmallIntegerType()) {
@@ -719,6 +832,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// If the argument is oversized (needs truncation to match stack size of its ILInstruction),
 				// perform the truncation now.
 				IType targetType = compilation.FindType(argStackType.ToKnownTypeCode(sign));
+				argUType = targetType;
 				if (isLifted)
 					targetType = NullableType.Create(compilation, targetType);
 				arg = arg.ConvertTo(targetType, this);

@@ -66,6 +66,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			return *(float*)(&d);
 		}
 
+		public unsafe int PointerCasts()
+		{
+			int i = 0;
+			*(float*)&i = 0.5f;
+			((byte*)&i)[3] = 3;
+			return i;
+		}
+
 		public unsafe void PassRefParameterAsPointer(ref int p)
 		{
 			fixed (int* ptr = &p) {
