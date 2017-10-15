@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.Composition;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -116,6 +117,14 @@ namespace ICSharpCode.ILSpy
 
 			void WriteHighlightedCommentLine(ISmartTextOutput output, string text, int startColumn, int endColumn, bool isSingleLine)
 			{
+				if (startColumn > text.Length) {
+					Debug.Fail("startColumn is invalid");
+					startColumn = text.Length;
+				}
+				if (endColumn > text.Length) {
+					Debug.Fail("endColumn is invalid");
+					endColumn = text.Length;
+				}
 				output.Write("// ");
 				output.BeginSpan(gray);
 				if (isSingleLine)
