@@ -22,16 +22,11 @@ using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using ExpressionType = System.Linq.Expressions.ExpressionType;
-using PrimitiveType = ICSharpCode.Decompiler.CSharp.Syntax.PrimitiveType;
-using System.Threading;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -163,6 +158,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					return HandleAccessorCall(inst, target, method, arguments.ToList());
 				} else if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate) {
 					return new InvocationExpression(target, arguments.Select(arg => arg.Expression)).WithILInstruction(inst).WithRR(rr);
+				} else if (IsDelegateEqualityComparison(method, arguments)) {
+					return HandleDelegateEqualityComparison(method, arguments)
+						.WithILInstruction(inst).WithRR(rr);
 				} else {
 					bool requireTypeArguments = false;
 					bool targetCasted = false;
@@ -213,6 +211,28 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new InvocationExpression(mre, argumentExpressions).WithILInstruction(inst).WithRR(rr);
 				}
 			}
+		}
+
+		private bool IsDelegateEqualityComparison(IMethod method, IList<TranslatedExpression> arguments)
+		{
+			// Comparison on a delegate type is a C# builtin operator
+			// that compiles down to a Delegate.op_Equality call.
+			// We handle this as a special case to avoid inserting a cast to System.Delegate.
+			return method.IsOperator
+				&& method.DeclaringType.IsKnownType(KnownTypeCode.Delegate)
+				&& (method.Name == "op_Equality" || method.Name == "op_Inequality")
+				&& arguments.Count == 2
+				&& arguments[0].Type.Kind == TypeKind.Delegate
+				&& arguments[1].Type.Equals(arguments[0].Type);
+		}
+
+		private Expression HandleDelegateEqualityComparison(IMethod method, IList<TranslatedExpression> arguments)
+		{
+			return new BinaryOperatorExpression(
+				arguments[0],
+				method.Name == "op_Equality" ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality,
+				arguments[1]
+			);
 		}
 
 		OverloadResolutionErrors IsUnambiguousCall(ILInstruction inst, TranslatedExpression target, IMethod method, IType[] typeArguments, IList<TranslatedExpression> arguments)
