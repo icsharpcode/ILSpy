@@ -487,6 +487,20 @@ namespace ICSharpCode.Decompiler.CSharp
 					return right;
 				}
 			}
+			// Handle comparisons between unsafe pointers and null:
+			if (left.Type.Kind == TypeKind.Pointer && inst.Right.MatchLdcI(0)) {
+				negateOutput = false;
+				right = new NullReferenceExpression().WithRR(new ConstantResolveResult(SpecialType.NullType, null))
+					.WithILInstruction(inst.Right);
+				return CreateBuiltinBinaryOperator(left, inst.Kind.ToBinaryOperatorType(), right)
+					.WithILInstruction(inst);
+			} else if (right.Type.Kind == TypeKind.Pointer && inst.Left.MatchLdcI(0)) {
+				negateOutput = false;
+				left = new NullReferenceExpression().WithRR(new ConstantResolveResult(SpecialType.NullType, null))
+					.WithILInstruction(inst.Left);
+				return CreateBuiltinBinaryOperator(left, inst.Kind.ToBinaryOperatorType(), right)
+					.WithILInstruction(inst);
+			}
 
 			// Special case comparisons with enum and char literals
 			left = AdjustConstantExpressionToType(left, right.Type);
@@ -497,12 +511,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				// When comparing a delegate with null, the C# compiler generates a reference comparison.
 				negateOutput = false;
-				return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
-					.WithILInstruction(inst)
-					.WithRR(new OperatorResolveResult(
-						compilation.FindType(KnownTypeCode.Boolean),
-						inst.Kind == ComparisonKind.Equality ? ExpressionType.Equal : ExpressionType.NotEqual,
-						left.ResolveResult, right.ResolveResult));
+				return CreateBuiltinBinaryOperator(left, inst.Kind.ToBinaryOperatorType(), right)
+					.WithILInstruction(inst);
 			}
 
 			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
@@ -514,7 +524,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (inst.InputType == StackType.O) {
 					targetType = compilation.FindType(KnownTypeCode.Object);
 				} else {
-					targetType = TypeUtils.GetLargerType(NullableType.GetUnderlyingType(left.Type), NullableType.GetUnderlyingType(right.Type));
+					var leftUType = NullableType.GetUnderlyingType(left.Type);
+					var rightUType = NullableType.GetUnderlyingType(right.Type);
+					if (leftUType.GetStackType() == inst.InputType) {
+						targetType = leftUType;
+					} else if (rightUType.GetStackType() == inst.InputType) {
+						targetType = rightUType;
+					} else {
+						targetType = compilation.FindType(inst.InputType.ToKnownTypeCode(leftUType.GetSign()));
+					}
 				}
 				if (inst.IsLifted) {
 					targetType = NullableType.Create(compilation, targetType);
@@ -542,6 +560,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst)
 				.WithRR(rr);
 		}
+
+		ExpressionWithResolveResult CreateBuiltinBinaryOperator(
+			TranslatedExpression left, BinaryOperatorType type, TranslatedExpression right,
+			bool checkForOverflow = false)
+		{
+			return new BinaryOperatorExpression(left.Expression, type, right.Expression)
+			.WithRR(new OperatorResolveResult(
+				compilation.FindType(KnownTypeCode.Boolean),
+				BinaryOperatorExpression.GetLinqNodeType(type, checkForOverflow),
+				left.ResolveResult, right.ResolveResult));
+		}
 		
 		/// <summary>
 		/// Handle Comp instruction, operators other than equality/inequality.
@@ -551,6 +580,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			var op = inst.Kind.ToBinaryOperatorType();
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
+
+			if (left.Type.Kind == TypeKind.Pointer && right.Type.Kind == TypeKind.Pointer) {
+				return CreateBuiltinBinaryOperator(left, op, right)
+					.WithILInstruction(inst);
+			}
+
 			left = PrepareArithmeticArgument(left, inst.InputType, inst.Sign, inst.IsLifted);
 			right = PrepareArithmeticArgument(right, inst.InputType, inst.Sign, inst.IsLifted);
 

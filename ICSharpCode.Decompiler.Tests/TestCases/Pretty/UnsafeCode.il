@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly aaldze1a
+.assembly '40okgik0'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module aaldze1a.dll
-// MVID: {70B2C372-F51A-4F0B-B8F4-F20FC0522B70}
+.module '40okgik0.dll'
+// MVID: {668B0983-7797-493E-81D1-A040A24E86AA}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x015B0000
+// Image base: 0x00C20000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -58,6 +58,98 @@
     IL_0006:  ldloc.0
     IL_0007:  ret
   } // end of method UnsafeCode::get_NullPointer
+
+  .method public hidebysig instance int32 
+          SizeOf() cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  1
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method UnsafeCode::SizeOf
+
+  .method private hidebysig static void  UseBool(bool b) cil managed
+  {
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ret
+  } // end of method UnsafeCode::UseBool
+
+  .method public hidebysig instance void 
+          PointerComparison(int32* a,
+                            float64* b) cil managed
+  {
+    // Code size       71 (0x47)
+    .maxstack  2
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  ceq
+    IL_0005:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_000a:  nop
+    IL_000b:  ldarg.1
+    IL_000c:  ldarg.2
+    IL_000d:  ceq
+    IL_000f:  ldc.i4.0
+    IL_0010:  ceq
+    IL_0012:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_0017:  nop
+    IL_0018:  ldarg.1
+    IL_0019:  ldarg.2
+    IL_001a:  clt.un
+    IL_001c:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_0021:  nop
+    IL_0022:  ldarg.1
+    IL_0023:  ldarg.2
+    IL_0024:  cgt.un
+    IL_0026:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_002b:  nop
+    IL_002c:  ldarg.1
+    IL_002d:  ldarg.2
+    IL_002e:  cgt.un
+    IL_0030:  ldc.i4.0
+    IL_0031:  ceq
+    IL_0033:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_0038:  nop
+    IL_0039:  ldarg.1
+    IL_003a:  ldarg.2
+    IL_003b:  clt.un
+    IL_003d:  ldc.i4.0
+    IL_003e:  ceq
+    IL_0040:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_0045:  nop
+    IL_0046:  ret
+  } // end of method UnsafeCode::PointerComparison
+
+  .method public hidebysig instance void 
+          PointerComparisonWithNull(int32* a) cil managed
+  {
+    // Code size       27 (0x1b)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.0
+    IL_0003:  conv.u
+    IL_0004:  ceq
+    IL_0006:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_000b:  nop
+    IL_000c:  ldarg.1
+    IL_000d:  ldc.i4.0
+    IL_000e:  conv.u
+    IL_000f:  ceq
+    IL_0011:  ldc.i4.0
+    IL_0012:  ceq
+    IL_0014:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_0019:  nop
+    IL_001a:  ret
+  } // end of method UnsafeCode::PointerComparisonWithNull
 
   .method public hidebysig instance int32* 
           PointerCast(int64* p) cil managed

@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module UnsafeCode.dll
-// MVID: {858D67FE-2C39-4F0B-B696-FA10954BDC00}
+// MVID: {98803778-6CDE-4C69-BDF2-64568153FD06}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01270000
+// Image base: 0x02790000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -56,6 +56,81 @@
     IL_0001:  conv.u
     IL_0002:  ret
   } // end of method UnsafeCode::get_NullPointer
+
+  .method public hidebysig instance int32 
+          SizeOf() cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_0006:  ret
+  } // end of method UnsafeCode::SizeOf
+
+  .method private hidebysig static void  UseBool(bool b) cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method UnsafeCode::UseBool
+
+  .method public hidebysig instance void 
+          PointerComparison(int32* a,
+                            float64* b) cil managed
+  {
+    // Code size       64 (0x40)
+    .maxstack  2
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  ceq
+    IL_0004:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_0009:  ldarg.1
+    IL_000a:  ldarg.2
+    IL_000b:  ceq
+    IL_000d:  ldc.i4.0
+    IL_000e:  ceq
+    IL_0010:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_0015:  ldarg.1
+    IL_0016:  ldarg.2
+    IL_0017:  clt.un
+    IL_0019:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_001e:  ldarg.1
+    IL_001f:  ldarg.2
+    IL_0020:  cgt.un
+    IL_0022:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_0027:  ldarg.1
+    IL_0028:  ldarg.2
+    IL_0029:  cgt.un
+    IL_002b:  ldc.i4.0
+    IL_002c:  ceq
+    IL_002e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_0033:  ldarg.1
+    IL_0034:  ldarg.2
+    IL_0035:  clt.un
+    IL_0037:  ldc.i4.0
+    IL_0038:  ceq
+    IL_003a:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_003f:  ret
+  } // end of method UnsafeCode::PointerComparison
+
+  .method public hidebysig instance void 
+          PointerComparisonWithNull(int32* a) cil managed
+  {
+    // Code size       24 (0x18)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldc.i4.0
+    IL_0002:  conv.u
+    IL_0003:  ceq
+    IL_0005:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_000a:  ldarg.1
+    IL_000b:  ldc.i4.0
+    IL_000c:  conv.u
+    IL_000d:  ceq
+    IL_000f:  ldc.i4.0
+    IL_0010:  ceq
+    IL_0012:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseBool(bool)
+    IL_0017:  ret
+  } // end of method UnsafeCode::PointerComparisonWithNull
 
   .method public hidebysig instance int32* 
           PointerCast(int64* p) cil managed

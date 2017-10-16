@@ -52,7 +52,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitPointerReferenceExpression(pointerReferenceExpression);
 			return true;
 		}
-		
+
+		public override bool VisitSizeOfExpression(SizeOfExpression sizeOfExpression)
+		{
+			// C# sizeof(MyStruct) requires unsafe{}
+			// (not for sizeof(int), but that gets constant-folded and thus decompiled to 4)
+			return true;
+		}
+
 		public override bool VisitComposedType(ComposedType composedType)
 		{
 			if (composedType.PointerRank > 0)

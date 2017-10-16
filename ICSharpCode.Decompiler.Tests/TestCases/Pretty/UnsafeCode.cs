@@ -32,6 +32,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public unsafe int SizeOf()
+		{
+			return sizeof(SimpleStruct);
+		}
+
+		private static void UseBool(bool b)
+		{
+		}
+
+		public unsafe void PointerComparison(int* a, double* b)
+		{
+			UnsafeCode.UseBool(a == b);
+			UnsafeCode.UseBool(a != b);
+			UnsafeCode.UseBool(a < b);
+			UnsafeCode.UseBool(a > b);
+			UnsafeCode.UseBool(a <= b);
+			UnsafeCode.UseBool(a >= b);
+		}
+
+		public unsafe void PointerComparisonWithNull(int* a)
+		{
+			UnsafeCode.UseBool(a == null);
+			UnsafeCode.UseBool(a != null);
+		}
+
 		public unsafe int* PointerCast(long* p)
 		{
 			return (int*)p;
