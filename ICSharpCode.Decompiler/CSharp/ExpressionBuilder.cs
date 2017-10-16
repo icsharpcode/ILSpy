@@ -759,6 +759,9 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			TranslatedExpression? GetPointerArithmeticOffset()
 			{
+				if (byteOffsetInst is Conv conv && conv.InputType == StackType.I8 && conv.ResultType == StackType.I) {
+					byteOffsetInst = conv.Argument;
+				}
 				int? elementSize = ComputeSizeOf(pointerType.ElementType);
 				if (elementSize == 1) {
 					return byteOffsetExpr;
@@ -768,6 +771,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (mul.IsLifted)
 						return null;
 					if (elementSize > 0 && mul.Right.MatchLdcI(elementSize.Value)) {
+						return Translate(mul.Left);
+					} else if (mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerType.ElementType)) {
 						return Translate(mul.Left);
 					}
 				} else if (byteOffsetInst.MatchLdcI(out long val)) {
@@ -812,7 +817,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (inst.Right.MatchLdcI(out long elementSize)) {
 				elementType = null;
 				// OK, might be pointer subtraction if the element size matches
-			} else if (inst.Right.MatchSizeOf(out elementType)) {
+			} else if (inst.Right.UnwrapConv(ConversionKind.SignExtend).MatchSizeOf(out elementType)) {
 				// OK, might be pointer subtraction if the element type matches
 			} else {
 				return null;

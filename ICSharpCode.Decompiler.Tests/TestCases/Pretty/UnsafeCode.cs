@@ -20,7 +20,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class UnsafeCode
 	{
-		private struct SimpleStruct
+		public struct SimpleStruct
 		{
 			public int X;
 			public double Y;
@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return p + 2;
 		}
 
-		public unsafe long* PointerArithmetic2(long* p, int y, int x)
+		public unsafe long* PointerArithmetic2(long* p)
 		{
 			return 3 + p;
 		}
@@ -168,6 +168,41 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe int PointerArithmetic5(void* p, byte* q, int i)
 		{
 			return q[i] + *(byte*)p;
+		}
+
+		public unsafe int PointerArithmetic6(SimpleStruct* p, int i)
+		{
+			return p[i].X;
+		}
+
+		public unsafe int* PointerArithmeticLong1(int* p, long offset)
+		{
+			return p + offset;
+		}
+
+		public unsafe int* PointerArithmeticLong2(int* p, long offset)
+		{
+			return offset + p;
+		}
+
+		public unsafe int* PointerArithmeticLong3(int* p, long offset)
+		{
+			return p - offset;
+		}
+
+		public unsafe SimpleStruct* PointerArithmeticLong1s(SimpleStruct* p, long offset)
+		{
+			return p + offset;
+		}
+
+		public unsafe SimpleStruct* PointerArithmeticLong2s(SimpleStruct* p, long offset)
+		{
+			return offset + p;
+		}
+
+		public unsafe SimpleStruct* PointerArithmeticLong3s(SimpleStruct* p, long offset)
+		{
+			return p - offset;
 		}
 
 		public unsafe int PointerSubtraction(long* p, long* q)
@@ -188,6 +223,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe int PointerSubtraction3(void* p, void* q)
 		{
 			return (int)((byte*)p - (byte*)q);
+		}
+
+		public unsafe long PointerSubtraction4(sbyte* p, sbyte* q)
+		{
+			return p - q;
+		}
+
+		public unsafe long PointerSubtraction5(SimpleStruct* p, SimpleStruct* q)
+		{
+			return p - q;
 		}
 
 		unsafe ~UnsafeCode()

@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly '40okgik0'
+.assembly p1cal2uj
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module '40okgik0.dll'
-// MVID: {668B0983-7797-493E-81D1-A040A24E86AA}
+.module p1cal2uj.dll
+// MVID: {BD577496-1116-4E18-AF25-DE99056CECA8}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00C20000
+// Image base: 0x03220000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -36,7 +36,7 @@
 .class public auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode
        extends [mscorlib]System.Object
 {
-  .class sequential ansi sealed nested private beforefieldinit SimpleStruct
+  .class sequential ansi sealed nested public beforefieldinit SimpleStruct
          extends [mscorlib]System.ValueType
   {
     .field public int32 X
@@ -501,9 +501,7 @@
   } // end of method UnsafeCode::PointerArithmetic
 
   .method public hidebysig instance int64* 
-          PointerArithmetic2(int64* p,
-                             int32 y,
-                             int32 x) cil managed
+          PointerArithmetic2(int64* p) cil managed
   {
     // Code size       11 (0xb)
     .maxstack  2
@@ -578,6 +576,160 @@
     IL_000b:  ldloc.0
     IL_000c:  ret
   } // end of method UnsafeCode::PointerArithmetic5
+
+  .method public hidebysig instance int32 
+          PointerArithmetic6(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* p,
+                             int32 i) cil managed
+  {
+    // Code size       22 (0x16)
+    .maxstack  3
+    .locals init (int32 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  conv.i
+    IL_0004:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_000a:  mul
+    IL_000b:  add
+    IL_000c:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct::X
+    IL_0011:  stloc.0
+    IL_0012:  br.s       IL_0014
+
+    IL_0014:  ldloc.0
+    IL_0015:  ret
+  } // end of method UnsafeCode::PointerArithmetic6
+
+  .method public hidebysig instance int32* 
+          PointerArithmeticLong1(int32* p,
+                                 int64 offset) cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  3
+    .locals init (int32* V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  ldc.i4.4
+    IL_0004:  conv.i8
+    IL_0005:  mul
+    IL_0006:  conv.i
+    IL_0007:  add
+    IL_0008:  stloc.0
+    IL_0009:  br.s       IL_000b
+
+    IL_000b:  ldloc.0
+    IL_000c:  ret
+  } // end of method UnsafeCode::PointerArithmeticLong1
+
+  .method public hidebysig instance int32* 
+          PointerArithmeticLong2(int32* p,
+                                 int64 offset) cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  2
+    .locals init (int32* V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.2
+    IL_0002:  ldc.i4.4
+    IL_0003:  conv.i8
+    IL_0004:  mul
+    IL_0005:  conv.i
+    IL_0006:  ldarg.1
+    IL_0007:  add
+    IL_0008:  stloc.0
+    IL_0009:  br.s       IL_000b
+
+    IL_000b:  ldloc.0
+    IL_000c:  ret
+  } // end of method UnsafeCode::PointerArithmeticLong2
+
+  .method public hidebysig instance int32* 
+          PointerArithmeticLong3(int32* p,
+                                 int64 offset) cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  3
+    .locals init (int32* V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  ldc.i4.4
+    IL_0004:  conv.i8
+    IL_0005:  mul
+    IL_0006:  conv.i
+    IL_0007:  sub
+    IL_0008:  stloc.0
+    IL_0009:  br.s       IL_000b
+
+    IL_000b:  ldloc.0
+    IL_000c:  ret
+  } // end of method UnsafeCode::PointerArithmeticLong3
+
+  .method public hidebysig instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* 
+          PointerArithmeticLong1s(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* p,
+                                  int64 offset) cil managed
+  {
+    // Code size       18 (0x12)
+    .maxstack  3
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_0009:  conv.i8
+    IL_000a:  mul
+    IL_000b:  conv.i
+    IL_000c:  add
+    IL_000d:  stloc.0
+    IL_000e:  br.s       IL_0010
+
+    IL_0010:  ldloc.0
+    IL_0011:  ret
+  } // end of method UnsafeCode::PointerArithmeticLong1s
+
+  .method public hidebysig instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* 
+          PointerArithmeticLong2s(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* p,
+                                  int64 offset) cil managed
+  {
+    // Code size       18 (0x12)
+    .maxstack  2
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.2
+    IL_0002:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_0008:  conv.i8
+    IL_0009:  mul
+    IL_000a:  conv.i
+    IL_000b:  ldarg.1
+    IL_000c:  add
+    IL_000d:  stloc.0
+    IL_000e:  br.s       IL_0010
+
+    IL_0010:  ldloc.0
+    IL_0011:  ret
+  } // end of method UnsafeCode::PointerArithmeticLong2s
+
+  .method public hidebysig instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* 
+          PointerArithmeticLong3s(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* p,
+                                  int64 offset) cil managed
+  {
+    // Code size       18 (0x12)
+    .maxstack  3
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_0009:  conv.i8
+    IL_000a:  mul
+    IL_000b:  conv.i
+    IL_000c:  sub
+    IL_000d:  stloc.0
+    IL_000e:  br.s       IL_0010
+
+    IL_0010:  ldloc.0
+    IL_0011:  ret
+  } // end of method UnsafeCode::PointerArithmeticLong3s
 
   .method public hidebysig instance int32 
           PointerSubtraction(int64* p,
@@ -665,6 +817,48 @@
     IL_000b:  ldloc.0
     IL_000c:  ret
   } // end of method UnsafeCode::PointerSubtraction3
+
+  .method public hidebysig instance int64 
+          PointerSubtraction4(int8* p,
+                              int8* q) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  2
+    .locals init (int64 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  sub
+    IL_0004:  ldc.i4.1
+    IL_0005:  div
+    IL_0006:  conv.i8
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method UnsafeCode::PointerSubtraction4
+
+  .method public hidebysig instance int64 
+          PointerSubtraction5(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* p,
+                              valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* q) cil managed
+  {
+    // Code size       17 (0x11)
+    .maxstack  2
+    .locals init (int64 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  sub
+    IL_0004:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_000a:  div
+    IL_000b:  conv.i8
+    IL_000c:  stloc.0
+    IL_000d:  br.s       IL_000f
+
+    IL_000f:  ldloc.0
+    IL_0010:  ret
+  } // end of method UnsafeCode::PointerSubtraction5
 
   .method family hidebysig virtual instance void 
           Finalize() cil managed
