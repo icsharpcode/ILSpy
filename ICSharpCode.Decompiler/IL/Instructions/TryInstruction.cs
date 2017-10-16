@@ -67,6 +67,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(".try ");
 			TryBlock.WriteTo(output, options);
 			foreach (var handler in Handlers) {
@@ -161,6 +162,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write("catch ");
 			if (variable != null) {
 				output.WriteDefinition(variable.Name, variable);
@@ -202,6 +204,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(".try ");
 			TryBlock.WriteTo(output, options);
 			output.Write(" finally ");
@@ -297,6 +300,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(".try ");
 			TryBlock.WriteTo(output, options);
 			output.Write(" fault ");

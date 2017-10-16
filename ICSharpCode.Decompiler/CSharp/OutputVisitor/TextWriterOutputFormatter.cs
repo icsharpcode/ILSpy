@@ -128,7 +128,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case CommentType.SingleLine:
 					textWriter.Write("//");
 					textWriter.WriteLine(content);
-					column += 2 + content.Length;
+					column = 1;
+					line++;
 					needsIndent = true;
 					isAtStartOfLine = true;
 					break;
@@ -144,7 +145,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case CommentType.Documentation:
 					textWriter.Write("///");
 					textWriter.WriteLine(content);
-					column += 3 + content.Length;
+					column = 1;
+					line++;
 					needsIndent = true;
 					isAtStartOfLine = true;
 					break;

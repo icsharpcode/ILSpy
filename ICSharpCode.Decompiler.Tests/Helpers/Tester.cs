@@ -111,7 +111,8 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				using (var writer = new StreamWriter(outputFile)) {
 					module.Name = Path.GetFileNameWithoutExtension(outputFile);
 					var output = new PlainTextOutput(writer);
-					ReflectionDisassembler rd = new ReflectionDisassembler(output, false, CancellationToken.None);
+					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
+					rd.DetectControlStructure = false;
 					rd.WriteAssemblyReferences(module);
 					if (module.Assembly != null)
 						rd.WriteAssemblyHeader(module.Assembly);

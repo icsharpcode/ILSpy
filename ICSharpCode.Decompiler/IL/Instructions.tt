@@ -499,6 +499,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public IEnumerable<string> WriteToBody {
 			get {
+				yield return "ILRange.WriteTo(output, options);";
 				foreach (string line in WriteOpCodePrefix)
 					yield return line;
 				yield return "output.Write(OpCode);";

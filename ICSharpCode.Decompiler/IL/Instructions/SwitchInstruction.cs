@@ -76,6 +76,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write("switch");
 			if (IsLifted)
 				output.Write(".lifted");
@@ -180,6 +181,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.WriteDefinition("case", this, isLocal: true);
 			output.Write(' ');
 			if (HasNullLabel) {

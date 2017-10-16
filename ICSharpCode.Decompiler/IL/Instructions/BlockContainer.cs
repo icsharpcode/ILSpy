@@ -115,6 +115,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.WriteDefinition("BlockContainer", this);
 			output.Write(' ');
 			if (entryPoint.IncomingEdgeCount > 1) {

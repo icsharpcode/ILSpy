@@ -83,7 +83,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.Step("LockTransformV2", block);
 			block.Instructions.RemoveAt(i - 1);
 			block.Instructions.RemoveAt(i - 2);
-			body.ReplaceWith(new LockInstruction(objectStore.Value, body.TryBlock));
+			body.ReplaceWith(new LockInstruction(objectStore.Value, body.TryBlock) { ILRange = objectStore.ILRange });
 			return true;
 		}
 
@@ -127,7 +127,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.Step("LockTransformV4", block);
 			block.Instructions.RemoveAt(i - 1);
 			tryContainer.EntryPoint.Instructions.RemoveAt(0);
-			body.ReplaceWith(new LockInstruction(objectStore.Value, body.TryBlock));
+			body.ReplaceWith(new LockInstruction(objectStore.Value, body.TryBlock) { ILRange = objectStore.ILRange });
 			return true;
 		}
 
@@ -173,7 +173,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			block.Instructions.RemoveAt(i - 1);
 			block.Instructions.RemoveAt(i - 2);
 			tryContainer.EntryPoint.Instructions.RemoveAt(0);
-			body.ReplaceWith(new LockInstruction(objectStore.Value, body.TryBlock));
+			body.ReplaceWith(new LockInstruction(objectStore.Value, body.TryBlock) { ILRange = objectStore.ILRange });
 			return true;
 		}
 

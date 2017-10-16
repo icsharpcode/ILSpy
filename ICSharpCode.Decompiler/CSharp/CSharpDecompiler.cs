@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -982,6 +983,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 		#endregion
 
+		#region Sequence Points
+		/// <summary>
+		/// Creates sequence points for the given syntax tree.
+		/// 
+		/// This only works correctly when the nodes in the syntax tree have line/column information.
+		/// </summary>
+		public Dictionary<ILFunction, List<SequencePoint>> CreateSequencePoints(SyntaxTree syntaxTree)
+		{
+			SequencePointBuilder spb = new SequencePointBuilder();
+			syntaxTree.AcceptVisitor(spb);
+			return spb.GetSequencePoints();
+		}
+		#endregion
 	}
 
 	[Flags]

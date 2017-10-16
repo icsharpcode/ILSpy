@@ -43,7 +43,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					foreach (var call in block.Instructions[i].Descendants.OfType<NewObj>()) {
 						ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
 						if (f != null) {
-							call.Arguments[0].ReplaceWith(new Nop());
+							f.AddILRange(call.Arguments[0].ILRange);
+							f.AddILRange(call.Arguments[1].ILRange);
+							call.Arguments[0].ReplaceWith(new LdNull());
 							call.Arguments[1].ReplaceWith(f);
 						if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
 							targetsToReplace.Add((IInstructionWithVariableOperand)target);

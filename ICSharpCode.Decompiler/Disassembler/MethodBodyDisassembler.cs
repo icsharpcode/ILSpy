@@ -21,28 +21,38 @@ using System.Collections.Generic;
 using System.Threading;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
+using Mono.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
 	/// <summary>
 	/// Disassembles a method body.
 	/// </summary>
-	public sealed class MethodBodyDisassembler
+	public class MethodBodyDisassembler
 	{
 		readonly ITextOutput output;
-		readonly bool detectControlStructure;
 		readonly CancellationToken cancellationToken;
 
-		public MethodBodyDisassembler(ITextOutput output, bool detectControlStructure, CancellationToken cancellationToken)
+		/// <summary>
+		/// Show .try/finally as blocks in IL code; indent loops.
+		/// </summary>
+		public bool DetectControlStructure { get; set; } = true;
+
+		/// <summary>
+		/// Show sequence points if debug information is loaded in Cecil.
+		/// </summary>
+		public bool ShowSequencePoints { get; set; }
+
+		Collection<SequencePoint> sequencePoints;
+		int nextSequencePointIndex;
+
+		public MethodBodyDisassembler(ITextOutput output, CancellationToken cancellationToken)
 		{
-			if (output == null)
-				throw new ArgumentNullException(nameof(output));
-			this.output = output;
-			this.detectControlStructure = detectControlStructure;
+			this.output = output ?? throw new ArgumentNullException(nameof(output));
 			this.cancellationToken = cancellationToken;
 		}
 
-		public void Disassemble(MethodBody body/*, MemberMapping methodMapping*/)
+		public virtual void Disassemble(MethodBody body)
 		{
 			// start writing IL code
 			MethodDefinition method = body.Method;
@@ -55,30 +65,20 @@ namespace ICSharpCode.Decompiler.Disassembler
 			DisassembleLocalsBlock(body);
 			output.WriteLine();
 
-			if (detectControlStructure && body.Instructions.Count > 0) {
+			sequencePoints = method.DebugInformation?.SequencePoints;
+			nextSequencePointIndex = 0;
+			if (DetectControlStructure && body.Instructions.Count > 0) {
 				Instruction inst = body.Instructions[0];
 				HashSet<int> branchTargets = GetBranchTargets(body.Instructions);
 				WriteStructureBody(new ILStructure(body), branchTargets, ref inst, method.Body.CodeSize);
 			} else {
 				foreach (var inst in method.Body.Instructions) {
-					//var startLocation = output.Location;
-					inst.WriteTo(output);
-
-					/*
-					if (debugSymbols != null) {
-						// add IL code mappings - used in debugger
-						debugSymbols.SequencePoints.Add(
-							new SequencePoint() {
-								StartLocation = output.Location,
-								EndLocation = output.Location,
-								ILRanges = new ILRange[] { new ILRange(inst.Offset, inst.Next == null ? method.Body.CodeSize : inst.Next.Offset) }
-							});
-					}*/
-
+					WriteInstruction(output, inst);
 					output.WriteLine();
 				}
 				WriteExceptionHandlers(body);
 			}
+			sequencePoints = null;
 		}
 
 		private void DisassembleLocalsBlock(MethodBody body)
@@ -191,19 +191,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					if (!isFirstInstructionInStructure && (prevInstructionWasBranch || branchTargets.Contains(offset))) {
 						output.WriteLine();	// put an empty line after branches, and in front of branch targets
 					}
-					//var startLocation = output.Location;
-					inst.WriteTo(output);
-
-					/*// add IL code mappings - used in debugger
-					if (debugSymbols != null) {
-						debugSymbols.SequencePoints.Add(
-							new SequencePoint() {
-								StartLocation = startLocation,
-								EndLocation = output.Location,
-								ILRanges = new ILRange[] { new ILRange(inst.Offset, inst.Next == null ? codeSize : inst.Next.Offset) }
-							});
-					}*/
-
+					WriteInstruction(output, inst);
 					output.WriteLine();
 
 					prevInstructionWasBranch = inst.OpCode.FlowControl == FlowControl.Branch
@@ -236,6 +224,26 @@ namespace ICSharpCode.Decompiler.Disassembler
 				default:
 					throw new NotSupportedException();
 			}
+		}
+
+		protected virtual void WriteInstruction(ITextOutput output, Instruction instruction)
+		{
+			if (ShowSequencePoints && nextSequencePointIndex < sequencePoints?.Count) {
+				SequencePoint sp = sequencePoints[nextSequencePointIndex];
+				if (sp.Offset <= instruction.Offset) {
+					output.Write("// sequence point: ");
+					if (sp.Offset != instruction.Offset) {
+						output.Write("!! at " + DisassemblerHelpers.OffsetToString(sp.Offset) + " !!");
+					}
+					if (sp.IsHidden) {
+						output.WriteLine("hidden");
+					} else {
+						output.WriteLine($"(line {sp.StartLine}, col {sp.StartColumn}) to (line {sp.EndLine}, col {sp.EndColumn}) in {sp.Document?.Url}");
+					}
+					nextSequencePointIndex++;
+				}
+			}
+			instruction.WriteTo(output);
 		}
 	}
 }

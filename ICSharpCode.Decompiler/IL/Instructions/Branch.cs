@@ -113,6 +113,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			output.WriteReference(TargetLabel, (object)targetBlock ?? TargetILOffset, isLocal: true);
