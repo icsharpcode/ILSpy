@@ -697,7 +697,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		ArrayInitializerExpression ConvertMemberBindings(Expression elementsArray)
 		{
-			PrintMatchPattern("", elementsArray);
+			//PrintMatchPattern("", elementsArray);
 			Match m = memberBindingArrayPattern.Match(elementsArray);
 			if (!m.Success)
 				return null;
@@ -714,7 +714,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				Expression bindingValue = bindingInvocation.Arguments.ElementAt(1);
 
 				string memberName;
-				PrintMatchPattern("", bindingTarget);
+				//PrintMatchPattern("", bindingTarget);
 				Match m2 = getFieldFromHandlePattern.Match(bindingTarget); // getFieldFromHandle
 				if (m2.Success) {
 					IField setter = m2.Get<AstNode>("field").Single().Annotation<LdMemberToken>().Member as IField;
@@ -865,7 +865,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		IList<Expression> ConvertExpressionsArray(Expression arrayExpression)
 		{
-			PrintMatchPattern("", arrayExpression);
+			//PrintMatchPattern("", arrayExpression);
 			Match m = expressionArrayPattern.Match(arrayExpression);
 			if (m.Success) {
 				List<Expression> result = new List<Expression>();

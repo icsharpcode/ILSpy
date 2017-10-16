@@ -18,8 +18,10 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 
 public class ExpressionTrees
 {
@@ -29,12 +31,18 @@ public class ExpressionTrees
 		internal bool CheckCharacters;
 	}
 
-	class GenericClass<X>
+	private class GenericClass<X>
 	{
 		public static X StaticField;
 		public X InstanceField;
-		public static X StaticProperty { get; set; }
-		public X InstanceProperty { get; set; }
+		public static X StaticProperty {
+			get;
+			set;
+		}
+		public X InstanceProperty {
+			get;
+			set;
+		}
 		
 		public static bool GenericMethod<Y>()
 		{
@@ -42,244 +50,297 @@ public class ExpressionTrees
 		}
 	}
 	
-	int field;
+	private int field;
 	
-	static object ToCode<R>(object x, Expression<Func<R>> expr)
+	private static object ToCode<R>(object x, Expression<Func<R>> expr)
 	{
 		return expr;
 	}
 	
-	static object ToCode<T, R>(object x, Expression<Func<T, R>> expr)
+	private static object ToCode<T, R>(object x, Expression<Func<T, R>> expr)
 	{
 		return expr;
 	}
 	
-	static object X()
+	private static object X()
 	{
 		return null;
 	}
 	
 	public void Parameter(bool a)
 	{
-		ToCode(X(), () => a);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => a);
 	}
 	
 	public void LocalVariable()
 	{
 		bool a = true;
-		ToCode(X(), () => a);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => a);
 	}
 	
 	public void LambdaParameter()
 	{
-		ToCode(X(), (bool a) => a);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), (bool a) => a);
 	}
 	
 	public void AddOperator(int x)
 	{
-		ToCode(X(), () => 1 + x + 2);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => 1 + x + 2);
 	}
 	
 	public void AnonymousClasses()
 	{
-		ToCode(X(), () => new { X = 3, A = "a" });
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new {
+			X = 3,
+			A = "a"
+		});
 	}
 	
 	public void ArrayIndex()
 	{
-		ToCode(X(), () => new[] { 3, 4, 5 }[0 + (int)(DateTime.Now.Ticks % 3)]);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (new int[] {
+			3,
+			4,
+			5
+		})[0 + (int)(DateTime.Now.Ticks % 3)]);
 	}
 	
 	public void ArrayLengthAndDoubles()
 	{
-		ToCode(X(), () => new[] { 1.0, 2.01, 3.5 }.Concat(new[] { 1.0, 2.0 }).ToArray().Length);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Concat(new double[] {
+			1.0,
+			2.01,
+			3.5
+		}, new double[] {
+			1.0,
+			2.0
+		})).Length);
 	}
 	
 	public void AsOperator()
 	{
-		ToCode(X(), () => new object() as string);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new object() as string);
 	}
 	
 	public void ComplexGenericName()
 	{
-		ToCode(X(), () => ((Func<int, bool>)(x => x > 0))(0));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((Func<int, bool>)((int x) => x > 0))(0));
 	}
 	
 	public void DefaultValue()
 	{
-		ToCode(X(), () => new TimeSpan(1, 2, 3) == default(TimeSpan));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new System.TimeSpan(1, 2, 3) == default(TimeSpan));
 	}
 	
 	public void EnumConstant()
 	{
-		ToCode(X(), () => new object().Equals(MidpointRounding.ToEven));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new object().Equals((object)MidpointRounding.ToEven));
 	}
 	
 	public void IndexerAccess()
 	{
-		var dict = Enumerable.Range(1, 20).ToDictionary(n => n.ToString());
-		ToCode(X(), () => dict["3"] == 3);
+		Dictionary<string, int> dict = Enumerable.Range(1, 20).ToDictionary((int n) => n.ToString());
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => dict["3"] == 3);
 	}
 	
 	public void IsOperator()
 	{
-		ToCode(X(), () => new object() is string);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new object() is string);
 	}
 	
 	public void ListInitializer()
 	{
-		ToCode(X(), () => new Dictionary<int, int> { { 1, 1 }, { 2, 2 }, { 3, 4 } }.Count == 3);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new Dictionary<int, int> {
+			{
+				1,
+				1
+			},
+			{
+				2,
+				2
+			},
+			{
+				3,
+				4
+			}
+		}.Count == 3);
 	}
 	
 	public void ListInitializer2()
 	{
-		ToCode(X(), () => new List<int>(50) { 1, 2, 3 }.Count == 3);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new List<int>(50) {
+			1,
+			2,
+			3
+		}.Count == 3);
 	}
 	
 	public void ListInitializer3()
 	{
-		ToCode(X(), () => new List<int> { 1, 2, 3 }.Count == 3);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new List<int> {
+			1,
+			2,
+			3
+		}.Count == 3);
 	}
 	
 	public void LiteralCharAndProperty()
 	{
-		ToCode(X(), () => new string(' ', 3).Length == 1);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new string(' ', 3).Length == 1);
 	}
 	
 	public void CharNoCast()
 	{
-		ToCode(X(), () => "abc"[1] == 'b');
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (int)"abc"[1] == 98);
 	}
 	
 	public void StringsImplicitCast()
 	{
 		int i = 1;
 		string x = "X";
-		ToCode(X(), () => (("a\n\\b" ?? x) + x).Length == 2 ? false : true && (1m + -i > 0 || false));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (("a\n\\b" ?? x) + x).Length == 2 ? false : true && (1m + -i > 0 || false));
 	}
 	
 	public void NotImplicitCast()
 	{
 		byte z = 42;
-		ToCode(X(), () => ~z == 0);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~z == 0);
 	}
 	
 	public void MembersBuiltin()
 	{
-		ToCode(X(), () => 1.23m.ToString());
-		ToCode(X(), () => AttributeTargets.All.HasFlag((Enum)AttributeTargets.Assembly));
-		ToCode(X(), () => "abc".Length == 3);
-		ToCode(X(), () => 'a'.CompareTo('b') < 0);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => 1.23m.ToString());
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => AttributeTargets.All.HasFlag((Enum)AttributeTargets.Assembly));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => "abc".Length == 3);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => 'a'.CompareTo('b') < 0);
 	}
 	
 	public void MembersDefault()
 	{
-		ToCode(X(), () => default(DateTime).Ticks == 0);
-		ToCode(X(), () => default(int[]).Length == 0);
-		ToCode(X(), () => default(Type).IsLayoutSequential);
-		ToCode(X(), () => default(List<int>).Count);
-		ToCode(X(), () => default(int[]).Clone() == null);
-		ToCode(X(), () => default(Type).IsInstanceOfType(new object()));
-		ToCode(X(), () => default(List<int>).AsReadOnly());
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => default(DateTime).Ticks == 0L);
+	}
+
+	public void Test()
+	{
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[0].Length == 0);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.GetType().IsLayoutSequential);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new List<int>().Count);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[0].Clone() == null);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.GetType().IsInstanceOfType(new object()));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new List<int>().AsReadOnly());
 	}
 	
 	public void DoAssert()
 	{
-		field = 37;
-		ToCode(X(), () => field != C());
-		ToCode(X(), () => !ReferenceEquals(this, new ExpressionTrees()));
-		ToCode(X(), () => MyEquals(this) && !MyEquals(default(ExpressionTrees)));
+		this.field = 37;
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.field != this.C());
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !object.ReferenceEquals(this, new ExpressionTrees()));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.MyEquals(this) && !this.MyEquals(new ExpressionTrees()));
 	}
 	
-	int C()
+	private int C()
 	{
-		return field + 5;
+		return this.field + 5;
 	}
 	
-	bool MyEquals(ExpressionTrees other)
+	private bool MyEquals(ExpressionTrees other)
 	{
-		return other != null && field == other.field;
+		return other != null && this.field == other.field;
 	}
 	
 	public void MethodGroupAsExtensionMethod()
 	{
-		ToCode(X(), () => (Func<bool>)new[] { 2000, 2004, 2008, 2012 }.Any);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Func<bool>)new[] { 2000, 2004, 2008, 2012 }.Any);
 	}
 	
 	public void MethodGroupConstant()
 	{
-		ToCode(X(), () => Array.TrueForAll(new[] { 2000, 2004, 2008, 2012 }, DateTime.IsLeapYear));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Array.TrueForAll(new[] { 2000, 2004, 2008, 2012 }, DateTime.IsLeapYear));
 		
 		HashSet<int> set = new HashSet<int>();
-		ToCode(X(), () => new[] { 2000, 2004, 2008, 2012 }.All(set.Add));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] { 2000, 2004, 2008, 2012 }.All(set.Add));
 		
 		Func<Func<object, object, bool>, bool> sink = f => f(null, null);
-		ToCode(X(), () => sink(int.Equals));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => sink(int.Equals));
 	}
 	
 	public void MultipleCasts()
 	{
-		ToCode(X(), () => 1 == (int)(object)1);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => 1 == (int)(object)1);
 	}
 	
 	public void MultipleDots()
 	{
-		ToCode(X(), () => 3.ToString().ToString().Length > 0);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => 3.ToString().ToString().Length > 0);
 	}
 	
 	public void NestedLambda()
 	{
-		Func<Func<int>, int> call = f => f();
+		Func<Func<int>, int> call = (Func<int> f) => f();
 		//no params
-		ToCode(X(), () => call(() => 42));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => call(() => 42));
 		//one param
-		ToCode(X(), () => new[] { 37, 42 }.Select(x => x * 2));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Select(new int[] {
+			37,
+			42
+		}, (int x) => x * 2));
 		//two params
-		ToCode(X(), () => new[] { 37, 42 }.Select((x, i) => x * 2));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Select(new int[] {
+			37,
+			42
+		}, (int x, int i) => x * 2));
 	}
 	
 	public void CurriedLambda()
 	{
-		ToCode<int, Func<int, Func<int, int>>>(X(), a => b => c => a + b + c);
+		ToCode<int, Func<int, Func<int, int>>>(X(), (int a) => (int b) => (int c) => a + b + c);
 	}
 	
-	bool Fizz(Func<int, bool> a)
+	private bool Fizz(Func<int, bool> a)
 	{
 		return a(42);
 	}
 	
-	bool Buzz(Func<int, bool> a)
+	private bool Buzz(Func<int, bool> a)
 	{
 		return a(42);
 	}
 	
-	bool Fizz(Func<string, bool> a)
+	private bool Fizz(Func<string, bool> a)
 	{
 		return a("42");
 	}
 	
 	public void NestedLambda2()
 	{
-		ToCode(X(), () => Fizz(x => x == "a"));
-		ToCode(X(), () => Fizz(x => x == 37));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((string x) => x == "a"));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((int x) => x == 37));
 		
-		ToCode(X(), () => Fizz((int x) => true));
-		ToCode(X(), () => Buzz(x => true));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((int x) => true));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Buzz((int x) => true));
 	}
 	
 	public void NewArrayAndExtensionMethod()
 	{
-		ToCode(X(), () => new[] { 1.0, 2.01, 3.5 }.SequenceEqual(new[] { 1.0, 2.01, 3.5 }));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.SequenceEqual(new double[] {
+			1.0,
+			2.01,
+			3.5
+		}, new double[] {
+			1.0,
+			2.01,
+			3.5
+		}));
 	}
 	
 	public void NewMultiDimArray()
 	{
-		ToCode(X(), () => new int[3, 4].Length == 1);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[3, 4].Length == 1);
 	}
 	
 	public void NewObject()
 	{
-		ToCode(X(), () => new object() != new object());
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new object() != new object());
 	}
 	
 	public void NotOperator()
@@ -287,9 +348,9 @@ public class ExpressionTrees
 		bool x = true;
 		int y = 3;
 		byte z = 42;
-		ToCode(X(), () => ~(int)z == 0);
-		ToCode(X(), () => ~y == 0);
-		ToCode(X(), () => !x);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~(int)z == 0);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~y == 0);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !x);
 	}
 	
 	public void ObjectInitializers()
@@ -298,78 +359,89 @@ public class ExpressionTrees
 			CloseInput = false,
 			CheckCharacters = false
 		};
-		ToCode(X(), () => new XmlReaderSettings { CloseInput = s.CloseInput, CheckCharacters = s.CheckCharacters }.Equals(s));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new XmlReaderSettings {
+			CloseInput = s.CloseInput,
+			CheckCharacters = s.CheckCharacters
+		}.Equals(s));
 	}
 	
 	public void Quoted()
 	{
-		ToCode(X(), () => (Expression<Func<int, string, string>>)((n, s) => s + n.ToString()) != null);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null);
 	}
 	
 	public void Quoted2()
 	{
-		ToCode(X(), () => ToCode(X(), () => true).Equals(null));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ExpressionTrees.ToCode(ExpressionTrees.X(), () => true).Equals(null));
 	}
 	
 	public void QuotedWithAnonymous()
 	{
-		ToCode(X(), () => new[] { new { X = "a", Y = "b" } }.Select(o => o.X + o.Y).Single());
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] {
+			new {
+				X = "a",
+				Y = "b"
+			}
+		}.Select(o => o.X + o.Y).Single());
 	}
 	
 	public void StaticCall()
 	{
-		ToCode(X(), () => Equals(3, 0));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => object.Equals((object)3, (object)0));
 	}
 	
 	public void ThisCall()
 	{
-		ToCode(X(), () => !Equals(3));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !this.Equals((object)3));
 	}
 	
 	public void ThisExplicit()
 	{
-		ToCode(X(), () => object.Equals(this, 3));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => object.Equals(this, (object)3));
 	}
 	
 	public void TypedConstant()
 	{
-		ToCode(X(), () => new[] { typeof(int), typeof(string) });
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new Type[] {
+			typeof(int),
+			typeof(string)
+		});
 	}
 	
 	public void StaticCallImplicitCast()
 	{
-		ToCode(X(), () => Equals(3, 0));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => object.Equals((object)3, (object)0));
 	}
 	
 	public void StaticMembers()
 	{
-		ToCode(X(), () => (DateTime.Now > DateTime.Now + TimeSpan.FromMilliseconds(10.001)).ToString() == "False");
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (System.DateTime.Now > System.DateTime.Now + System.TimeSpan.FromMilliseconds(10.001)).ToString() == "False");
 	}
 	
 	public void Strings()
 	{
 		int i = 1;
 		string x = "X";
-		ToCode(X(), () => (("a\n\\b" ?? x) + x).Length == 2 ? false : true && (1m + (decimal)-i > 0m || false));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (("a\n\\b" ?? x) + x).Length == 2 ? false : true && (1m + (decimal)-i > 0m || false));
 	}
 	
 	public void StringAccessor()
 	{
-		ToCode(X(), () => (int)"abc"[1] == 98);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (int)"abc"[1] == 98);
 	}
 	
 	public void GenericClassInstance()
 	{
-		ToCode(X(), () => new GenericClass<int>().InstanceField + new GenericClass<double>().InstanceProperty);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (double)new GenericClass<int>().InstanceField + new GenericClass<double>().InstanceProperty);
 	}
 	
 	public void GenericClassStatic()
 	{
-		ToCode(X(), () => GenericClass<int>.StaticField + GenericClass<double>.StaticProperty);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (double)GenericClass<int>.StaticField + GenericClass<double>.StaticProperty);
 	}
 	
 	public void InvokeGenericMethod()
 	{
-		ToCode(X(), () => GenericClass<int>.GenericMethod<double>());
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => GenericClass<int>.GenericMethod<double>());
 	}
 }

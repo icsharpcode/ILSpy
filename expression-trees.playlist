@@ -1,0 +1,1 @@
+<Playlist Version="1.0"><Add Test="ICSharpCode.Decompiler.Tests.PrettyTestRunner.ExpressionTrees(Optimize, UseRoslyn)" /><Add Test="ICSharpCode.Decompiler.Tests.PrettyTestRunner.ExpressionTrees(UseRoslyn)" /></Playlist>
