@@ -197,6 +197,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 			}
 			if (string.IsNullOrEmpty(proposedName)) {
+				var proposedNameForStoresFromNewObj = variable.StoreInstructions.OfType<StLoc>()
+					.Select(expr => GetNameByType(GuessType(expr.Value, context)))
+					.Except(currentFieldNames).ToList();
+				if (proposedNameForStoresFromNewObj.Count == 1) {
+					proposedName = proposedNameForStoresFromNewObj[0];
+				}
+			}
+			if (string.IsNullOrEmpty(proposedName)) {
 				proposedName = GetNameByType(variable.Type);
 			}
 
@@ -347,6 +355,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return "obj";
 			else
 				return char.ToLower(name[0]) + name.Substring(1);
+		}
+
+		internal static IType GuessType(ILInstruction inst, ILTransformContext context)
+		{
+			switch (inst) {
+				case NewObj newObj:
+					return newObj.Method.DeclaringType;
+				case Call call:
+					return call.Method.ReturnType;
+				case CallVirt callVirt:
+					return callVirt.Method.ReturnType;
+				case CallIndirect calli:
+					return calli.ReturnType;
+				default:
+					return context.TypeSystem.Compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			}
 		}
 
 		internal static string GenerateForeachVariableName(ILFunction function, ILInstruction valueContext, ILVariable existingVariable = null)

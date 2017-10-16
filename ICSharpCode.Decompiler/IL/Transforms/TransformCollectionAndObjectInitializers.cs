@@ -97,6 +97,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockType)) {
 					initializerItemsCount++;
 				}
+				if (IsMethodCallOnVariable(body.Instructions[pos + initializerItemsCount + 1], v))
+					return false;
 				var index = possibleIndexVariables.Where(info => info.Value.Index > -1).Min(info => (int?)info.Value.Index);
 				if (index != null) {
 					initializerItemsCount = index.Value - pos - 1;
@@ -142,6 +144,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				ILInlining.InlineIfPossible(body, pos, context);
 			}
 			return true;
+		}
+
+		bool IsMethodCallOnVariable(ILInstruction inst, ILVariable variable)
+		{
+			if (inst.MatchLdLocRef(variable))
+				return true;
+			if (inst is CallInstruction call && call.Arguments.Count > 0 && !call.Method.IsStatic)
+				return IsMethodCallOnVariable(call.Arguments[0], variable);
+			if (inst.MatchLdFld(out var target, out _) || inst.MatchStFld(out target, out _, out _) || inst.MatchLdFlda(out target, out _))
+				return IsMethodCallOnVariable(target, variable);
+			return false;
 		}
 
 		Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables;
