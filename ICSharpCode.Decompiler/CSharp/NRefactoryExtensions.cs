@@ -17,8 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -31,7 +33,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				node.AddAnnotation(annotation);
 			return node;
 		}
-		
+
 		public static T CopyAnnotationsFrom<T>(this T node, AstNode other) where T : AstNode
 		{
 			foreach (object annotation in other.Annotations) {
@@ -39,7 +41,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			return node;
 		}
-		
+
+		public static T CopyInstructionsFrom<T>(this T node, AstNode other) where T : AstNode
+		{
+			foreach (object annotation in other.Annotations.OfType<ILInstruction>()) {
+				node.AddAnnotation(annotation);
+			}
+			return node;
+		}
+
 		public static T Detach<T>(this T node) where T : AstNode
 		{
 			node.Remove();

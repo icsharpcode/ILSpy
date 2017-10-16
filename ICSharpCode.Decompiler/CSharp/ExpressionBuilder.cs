@@ -492,6 +492,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			left = AdjustConstantExpressionToType(left, right.Type);
 			right = AdjustConstantExpressionToType(right, left.Type);
 			
+			if (left.Type.Kind == TypeKind.Delegate && right.Type.Kind == TypeKind.Null
+				|| left.Type.Kind == TypeKind.Null && right.Type.Kind == TypeKind.Delegate)
+			{
+				// When comparing a delegate with null, the C# compiler generates a reference comparison.
+				negateOutput = false;
+				return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
+					.WithILInstruction(inst)
+					.WithRR(new OperatorResolveResult(
+						compilation.FindType(KnownTypeCode.Boolean),
+						inst.Kind == ComparisonKind.Equality ? ExpressionType.Equal : ExpressionType.NotEqual,
+						left.ResolveResult, right.ResolveResult));
+			}
+
 			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
 				as OperatorResolveResult;
 			if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
@@ -1026,7 +1039,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new CallBuilder(this, typeSystem, settings).Build(inst);
 		}
 
-		internal TranslatedExpression TranslateFunction(IType delegateType, ILFunction function)
+		internal ExpressionWithResolveResult TranslateFunction(IType delegateType, ILFunction function)
 		{
 			var method = function.Method.MemberDefinition as IMethod;
 			Debug.Assert(method != null);
@@ -1098,7 +1111,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			TranslatedExpression translatedLambda = replacement.WithILInstruction(function).WithRR(rr);
 			return new CastExpression(ConvertType(delegateType), translatedLambda)
-				.WithoutILInstruction().WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
+				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
 		}
 
 		IType InferReturnType(BlockStatement body)

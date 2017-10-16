@@ -26,18 +26,31 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			// the non-custom WriteTo would add useless parentheses
 		}
+	}
+
+	public enum NopKind
+	{
+		Normal,
+		Pop
 	}
 	
 	partial class Nop
 	{
 		public string Comment;
 
+		public NopKind Kind;
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
+			if (Kind != NopKind.Normal) {
+				output.Write("." + Kind.ToString().ToLowerInvariant());
+			}
 			if (!string.IsNullOrEmpty(Comment)) {
 				output.Write(" // " + Comment);
 			}
@@ -60,6 +73,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			if (!string.IsNullOrEmpty(Message)) {
 				output.Write("(\"");
@@ -86,6 +100,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			if (!string.IsNullOrEmpty(Message)) {
 				output.Write("(\"");

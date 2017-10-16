@@ -360,8 +360,21 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
+
+		bool showDebugInfo;
+
+		public bool ShowDebugInfo {
+			get { return showDebugInfo; }
+			set {
+				if (showDebugInfo != value) {
+					showDebugInfo = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#endregion
-		
+
 		CSharpFormattingOptions csharpFormattingOptions;
 		
 		public CSharpFormattingOptions CSharpFormattingOptions {
@@ -382,7 +395,7 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		public event PropertyChangedEventHandler PropertyChanged;
 		
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

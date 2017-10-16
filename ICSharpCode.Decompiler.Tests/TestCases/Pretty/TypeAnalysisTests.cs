@@ -199,5 +199,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return Math.Abs(a - b);
 		}
+
+		public bool CompareDelegatesByValue(Action a, Action b)
+		{
+			return a == b;
+		}
+
+		public bool CompareDelegatesByReference(Action a, Action b)
+		{
+			return (object)a == b;
+		}
+
+		public bool CompareDelegateWithNull(Action a)
+		{
+			return a == null;
+		}
 	}
 }
