@@ -50,7 +50,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
-			VisitChildren(invocationExpression);
 			if (CouldBeExpressionTree(invocationExpression)) {
 				Expression newExpression = Convert(invocationExpression);
 				if (newExpression != null) {
@@ -58,6 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					newExpression.AddAnnotation(new ExpressionTreeLambdaAnnotation());
 				}
 			}
+			VisitChildren(invocationExpression);
 		}
 
 		#region static TryConvert method
@@ -571,7 +571,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (invocation.Arguments.Count < 1)
 				return NotSupported(invocation);
 
-			PrintMatchPattern("", invocation.Arguments.First());
+			//PrintMatchPattern("", invocation.Arguments.First());
 			Match m = newObjectCtorPattern.Match(invocation.Arguments.First());
 			if (!m.Success)
 				return NotSupported(invocation);
@@ -634,18 +634,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		Expression ConvertListInit(InvocationExpression invocation)
 		{
-			if (invocation.Arguments.Count != 2)
+			if (invocation.Arguments.Count < 1)
 				return NotSupported(invocation);
 			ObjectCreateExpression oce = Convert(invocation.Arguments.ElementAt(0)) as ObjectCreateExpression;
 			if (oce == null)
 				return null;
-			Expression elementsArray = invocation.Arguments.ElementAt(1);
-			ArrayInitializerExpression initializer = ConvertElementInit(elementsArray);
-			if (initializer != null) {
-				oce.Initializer = initializer;
-				return oce;
+			ArrayInitializerExpression initializer;
+			if (invocation.Arguments.Count == 2) {
+				initializer = ConvertElementInit(invocation.Arguments.ElementAt(1));
+				if (initializer != null) {
+					oce.Initializer = initializer;
+					return oce;
+				} else {
+					return null;
+				}
 			} else {
-				return null;
+				initializer = new ArrayInitializerExpression();
+				for (int i = 1; i < invocation.Arguments.Count; i++) {
+					initializer.Elements.Add(ConvertElementInit(invocation.Arguments.ElementAt(i)));
+				}
+				return initializer;
 			}
 		}
 
@@ -814,7 +822,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						new ArrayCreateExpression {
 							Type = arrayElementType,
 							Initializer = new ArrayInitializerExpression {
-								Elements = { new Repeat(elementPattern) }
+								Elements = { new Repeat(Use(elementPattern)) }
 							},
 							Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
 						}
@@ -825,16 +833,28 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				new InvocationExpression(
 					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"NewArrayInit"),
 					new TypeOfExpression(new AnyNode()),
-					new Repeat(elementPattern)
-				)
-			};
+					new Repeat(Use(elementPattern))
+				),
+				new InvocationExpression(
+					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"ElementInit"),
+					new CastExpression(
+						new SimpleType("MethodInfo"),
+						new InvocationExpression(new MemberReferenceExpression(
+							new TypeReferenceExpression(new SimpleType("MethodBase")),"GetMethodFromHandle"),
+							new CastExpression(new SimpleType("RuntimeMethodHandle"),new LdTokenPattern("test")),
+							new MemberReferenceExpression(new TypeOfExpression(new AnyNode()),"TypeHandle")
+							)),
+					new Repeat(Use(elementPattern))),
+				//new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"ElementInit"),new CastExpression(new SimpleType("MethodInfo"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")),"GetMethodFromHandle"),new CastExpression(new SimpleType("RuntimeMethodHandle"),new LdTokenPattern("blabla")),new MemberReferenceExpression(new TypeOfExpression(new SimpleType("Dictionary",new Syntax.PrimitiveType("int"),new Syntax.PrimitiveType("int"))),"TypeHandle"))),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Constant"),new PrimitiveExpression("1"),new TypeOfExpression(new Syntax.PrimitiveType("int"))),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Constant"),new PrimitiveExpression("1"),new TypeOfExpression(new Syntax.PrimitiveType("int"))))
+			//Use(elementPattern) // TODO may be removed
+		};
 		}
 
 		static readonly Pattern expressionArrayPattern = ArrayInitializationPattern(new SimpleType("Expression"), new AnyNode("elements"));
 
 		IList<Expression> ConvertExpressionsArray(Expression arrayExpression)
 		{
-			//PrintMatchPattern("", arrayExpression);
+			PrintMatchPattern("", arrayExpression);
 			Match m = expressionArrayPattern.Match(arrayExpression);
 			if (m.Success) {
 				List<Expression> result = new List<Expression>();
