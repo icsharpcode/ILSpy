@@ -1,6 +1,6 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
-//  Copyright (c) Microsoft Corporation.  All rights reserved.
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
+//  Copyright (c) Microsoft Corporation. Alle Rechte vorbehalten.
 
 
 
@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Loops.dll
-// MVID: {8D392B4A-5D21-407A-B579-FCDFA93069CE}
+// MVID: {13449EE0-18A5-44A4-B482-40B5C738DFBB}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00DA0000
+// Image base: 0x00D70000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -554,7 +554,7 @@
   } // end of method Loops::Operation
 
   .method public hidebysig instance void 
-          ForEach(class [mscorlib]System.Collections.Generic.IEnumerable`1<string> enumerable) cil managed
+          ForEach(class [mscorlib]System.Collections.Generic.IEnumerable`1<string> alternatives) cil managed
   {
     // Code size       42 (0x2a)
     .maxstack  1

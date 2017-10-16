@@ -260,10 +260,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
-		public void ForEach(IEnumerable<string> enumerable)
+		public void ForEach(IEnumerable<string> alternatives)
 		{
-			foreach (string item in enumerable) {
-				item.ToLower();
+			foreach (string alternative in alternatives) {
+				alternative.ToLower();
 			}
 		}
 
