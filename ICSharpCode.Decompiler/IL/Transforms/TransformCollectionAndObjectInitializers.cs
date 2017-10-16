@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -83,13 +84,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				int initializerItemsCount = 0;
 				var blockType = initializerBlock?.Type ?? BlockType.CollectionInitializer;
-				var possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
+				possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
+				currentPath = new List<AccessPathElement>();
+				isCollection = false;
+				pathStack = new Stack<HashSet<AccessPathElement>>();
+				pathStack.Push(new HashSet<AccessPathElement>());
 				// Detect initializer type by scanning the following statements
 				// each must be a callvirt with ldloc v as first argument
 				// if the method is a setter we're dealing with an object initializer
 				// if the method is named Add and has at least 2 arguments we're dealing with a collection/dictionary initializer
 				while (pos + initializerItemsCount + 1 < body.Instructions.Count
-					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockType, possibleIndexVariables)) {
+					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockType)) {
 					initializerItemsCount++;
 				}
 				var index = possibleIndexVariables.Where(info => info.Value.Index > -1).Min(info => (int?)info.Value.Index);
@@ -139,7 +144,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, IType rootType, ref BlockType blockType, Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables)
+		Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables;
+		List<AccessPathElement> currentPath;
+		bool isCollection;
+		Stack<HashSet<AccessPathElement>> pathStack;
+
+		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, IType rootType, ref BlockType blockType)
 		{
 			if (instructions[pos] is StLoc stloc && stloc.Variable.Kind == VariableKind.Local && stloc.Variable.IsSingleDefinition) {
 				if (stloc.Value.Descendants.OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
@@ -147,12 +157,40 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				possibleIndexVariables.Add(stloc.Variable, (stloc.ChildIndex, stloc.Value));
 				return true;
 			}
-			(var kind, var path, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType, possibleIndexVariables);
+			(var kind, var newPath, var values, var targetVariable) = AccessPathElement.GetAccessPath(instructions[pos], rootType, possibleIndexVariables);
+			if (kind == AccessPathKind.Invalid || target != targetVariable)
+				return false;
+			// Treat last element separately:
+			// Can either be an Add method call or property setter.
+			var lastElement = newPath.Last();
+			newPath.RemoveLast();
+			// Compare new path with current path:
+			int minLen = Math.Min(currentPath.Count, newPath.Count);
+			int firstDifferenceIndex = 0;
+			while (firstDifferenceIndex < minLen && newPath[firstDifferenceIndex] == currentPath[firstDifferenceIndex])
+				firstDifferenceIndex++;
+			while (currentPath.Count > firstDifferenceIndex) {
+				isCollection = false;
+				currentPath.RemoveAt(currentPath.Count - 1);
+				pathStack.Pop();
+			}
+			while (currentPath.Count < newPath.Count) {
+				AccessPathElement newElement = newPath[currentPath.Count];
+				currentPath.Add(newElement);
+				if (isCollection || !pathStack.Peek().Add(newElement))
+					return false;
+				pathStack.Push(new HashSet<AccessPathElement>());
+			}
 			switch (kind) {
 				case AccessPathKind.Adder:
-					return target == targetVariable;
+					isCollection = true;
+					if (pathStack.Peek().Count != 0)
+						return false;
+					return true;
 				case AccessPathKind.Setter:
-					if (values.Count == 1 && target == targetVariable) {
+					if (isCollection || !pathStack.Peek().Add(lastElement))
+						return false;
+					if (values.Count == 1) {
 						blockType = BlockType.ObjectInitializer;
 						return true;
 					}
@@ -319,7 +357,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public bool Equals(AccessPathElement other)
 		{
-			return other.Member.Equals(this.Member) && (other.Indices == this.Indices || other.Indices.SequenceEqual(this.Indices, ILInstructionMatchComparer.Instance));
+			return other.Member.Equals(this.Member)
+				&& (other.Indices == this.Indices || other.Indices.SequenceEqual(this.Indices, ILInstructionMatchComparer.Instance));
 		}
 
 		public static bool operator ==(AccessPathElement lhs, AccessPathElement rhs)
@@ -343,12 +382,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			if (x == null || y == null)
 				return false;
-			return x.Match(y).Success;
+			return SemanticHelper.IsPure(x.Flags)
+				&& SemanticHelper.IsPure(y.Flags)
+				&& x.Match(y).Success;
 		}
 
 		public int GetHashCode(ILInstruction obj)
 		{
-			return obj.GetHashCode();
+			throw new NotSupportedException();
 		}
 	}
 }

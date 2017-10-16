@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module InitializerTests.dll
-// MVID: {73C118AC-648F-43DB-A2FB-1B159DF870BA}
+// MVID: {F2C6C41E-98CC-4261-BF7B-1991B54DA121}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03230000
+// Image base: 0x029A0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -90,7 +90,7 @@
   } // end of method InitializerTests::TestCall
 
   .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C 
-          Test() cil managed
+          Test1() cil managed
   {
     // Code size       34 (0x22)
     .maxstack  8
@@ -104,7 +104,26 @@
     IL_0017:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S::.ctor(int32)
     IL_001c:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S>::Add(!0)
     IL_0021:  ret
-  } // end of method InitializerTests::Test
+  } // end of method InitializerTests::Test1
+
+  .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C 
+          Test1Alternative() cil managed
+  {
+    // Code size       35 (0x23)
+    .maxstack  8
+    IL_0000:  ldc.i4.1
+    IL_0001:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::.ctor()
+    IL_0006:  dup
+    IL_0007:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S>::.ctor()
+    IL_000c:  dup
+    IL_000d:  ldc.i4.1
+    IL_000e:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S::.ctor(int32)
+    IL_0013:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S>::Add(!0)
+    IL_0018:  stfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::L
+    IL_001d:  call       class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::TestCall(int32,
+                                                                                                                                                                         class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C)
+    IL_0022:  ret
+  } // end of method InitializerTests::Test1Alternative
 
   .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C 
           Test2() cil managed
@@ -168,12 +187,12 @@
     IL_000b:  ldc.i4.1
     IL_000c:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S::A
     IL_0011:  dup
-    IL_0012:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::Y
-    IL_0017:  ldc.i4.3
-    IL_0018:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S::B
-    IL_001d:  dup
-    IL_001e:  ldc.i4.2
-    IL_001f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::Z
+    IL_0012:  ldc.i4.2
+    IL_0013:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::Z
+    IL_0018:  dup
+    IL_0019:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::Y
+    IL_001e:  ldc.i4.3
+    IL_001f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S::B
     IL_0024:  ret
   } // end of method InitializerTests::Test4
 

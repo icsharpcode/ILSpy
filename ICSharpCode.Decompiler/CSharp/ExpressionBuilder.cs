@@ -1427,11 +1427,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (currentPath == null) {
 					currentPath = info.Path;
 				} else {
-					int firstDifferenceIndex = Math.Min(currentPath.Count, info.Path.Count);
-					int index = 0;
-					while (index < firstDifferenceIndex && info.Path[index] == currentPath[index])
-						index++;
-					firstDifferenceIndex = index;
+					int minLen = Math.Min(currentPath.Count, info.Path.Count);
+					int firstDifferenceIndex = 0;
+					while (firstDifferenceIndex < minLen && info.Path[firstDifferenceIndex] == currentPath[firstDifferenceIndex])
+						firstDifferenceIndex++;
 					while (elementsStack.Count - 1 > firstDifferenceIndex) {
 						var methodElement = currentPath[elementsStack.Count - 1];
 						var pathElement = currentPath[elementsStack.Count - 2];

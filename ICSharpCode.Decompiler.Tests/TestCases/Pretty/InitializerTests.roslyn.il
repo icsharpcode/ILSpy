@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module InitializerTests.dll
-// MVID: {53F415C2-DC80-4EFA-8787-82F129B1AC28}
+// MVID: {7000C1D7-C4EC-4376-B053-4BE74428CE7A}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x002F0000
+// Image base: 0x00C90000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -98,7 +98,7 @@
   } // end of method InitializerTests::TestCall
 
   .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C 
-          Test() cil managed
+          Test1() cil managed
   {
     // Code size       42 (0x2a)
     .maxstack  2
@@ -122,7 +122,33 @@
 
     IL_0028:  ldloc.1
     IL_0029:  ret
-  } // end of method InitializerTests::Test
+  } // end of method InitializerTests::Test1
+
+  .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C 
+          Test1Alternative() cil managed
+  {
+    // Code size       41 (0x29)
+    .maxstack  6
+    .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.1
+    IL_0002:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::.ctor()
+    IL_0007:  dup
+    IL_0008:  newobj     instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S>::.ctor()
+    IL_000d:  dup
+    IL_000e:  ldc.i4.1
+    IL_000f:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S::.ctor(int32)
+    IL_0014:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S>::Add(!0)
+    IL_0019:  nop
+    IL_001a:  stfld      class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::L
+    IL_001f:  call       class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::TestCall(int32,
+                                                                                                                                                                         class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C)
+    IL_0024:  stloc.0
+    IL_0025:  br.s       IL_0027
+
+    IL_0027:  ldloc.0
+    IL_0028:  ret
+  } // end of method InitializerTests::Test1Alternative
 
   .method public hidebysig instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C 
           Test2() cil managed
@@ -214,12 +240,12 @@
     IL_000d:  ldc.i4.1
     IL_000e:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S::A
     IL_0013:  ldloc.0
-    IL_0014:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::Y
-    IL_0019:  ldc.i4.3
-    IL_001a:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S::B
-    IL_001f:  ldloc.0
-    IL_0020:  ldc.i4.2
-    IL_0021:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::Z
+    IL_0014:  ldc.i4.2
+    IL_0015:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::Z
+    IL_001a:  ldloc.0
+    IL_001b:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/C::Y
+    IL_0020:  ldc.i4.3
+    IL_0021:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/S::B
     IL_0026:  ldloc.0
     IL_0027:  stloc.1
     IL_0028:  br.s       IL_002a

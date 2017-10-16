@@ -46,12 +46,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return c;
 		}
 
-		public C Test()
+		public C Test1()
 		{
 			C c = new C();
 			c.L = new List<S>();
 			c.L.Add(new S(1));
 			return c;
+		}
+
+		public C Test1Alternative()
+		{
+			return InitializerTests.TestCall(1, new C {
+				L = new List<S> {
+					new S(1)
+				}
+			});
 		}
 
 		public C Test2()
@@ -84,8 +93,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			C c = new C();
 			c.Y.A = 1;
-			c.Y.B = 3;
 			c.Z = 2;
+			c.Y.B = 3;
 			return c;
 		}
 	}
