@@ -526,9 +526,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else {
 					var leftUType = NullableType.GetUnderlyingType(left.Type);
 					var rightUType = NullableType.GetUnderlyingType(right.Type);
-					if (leftUType.GetStackType() == inst.InputType) {
+					if (leftUType.GetStackType() == inst.InputType && !leftUType.IsSmallIntegerType()) {
 						targetType = leftUType;
-					} else if (rightUType.GetStackType() == inst.InputType) {
+					} else if (rightUType.GetStackType() == inst.InputType && !rightUType.IsSmallIntegerType()) {
 						targetType = rightUType;
 					} else {
 						targetType = compilation.FindType(inst.InputType.ToKnownTypeCode(leftUType.GetSign()));
@@ -550,9 +550,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					// If converting one input wasn't sufficient, convert both:
 					left = left.ConvertTo(targetType, this);
 					right = right.ConvertTo(targetType, this);
-					rr = new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean),
-												   BinaryOperatorExpression.GetLinqNodeType(BinaryOperatorType.Equality, false),
-												   left.ResolveResult, right.ResolveResult);
+					rr = new OperatorResolveResult(
+						compilation.FindType(KnownTypeCode.Boolean),
+						BinaryOperatorExpression.GetLinqNodeType(inst.Kind.ToBinaryOperatorType(), false),
+						left.ResolveResult, right.ResolveResult);
 				}
 			}
 			negateOutput = false;
