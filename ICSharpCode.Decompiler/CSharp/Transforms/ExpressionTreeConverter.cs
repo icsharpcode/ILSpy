@@ -182,6 +182,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							return ConvertAssignmentOperator(invocation, AssignmentOperatorType.BitwiseOr);
 						case "OrElse":
 							return ConvertBinaryOperator(invocation, BinaryOperatorType.ConditionalOr);
+						case "Parameter":
+							return new IdentifierExpression(ConvertParameter(invocation).Name);
 						case "Property":
 							return ConvertProperty(invocation);
 						case "Quote":
@@ -332,18 +334,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Convert Property
-		static readonly Expression getMethodFromHandlePattern =
-			new TypePattern(typeof(MethodBase)).Invoke(
-				"GetMethodFromHandle",
-				new LdTokenPattern("method").ToExpression().Member("MethodHandle"),
-				new OptionalNode(new TypeOfExpression(new AnyNode("declaringType")).Member("TypeHandle"))
-			).CastTo(new TypePattern(typeof(MethodInfo)));
+		static readonly Expression getMethodFromHandlePattern = new CastExpression(new SimpleType("MethodInfo"), new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")), "GetMethodFromHandle"), new CastExpression(new SimpleType("RuntimeMethodHandle"), new LdTokenPattern("method")), new OptionalNode(new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")), "TypeHandle"))));
 
 		Expression ConvertProperty(InvocationExpression invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return NotSupported(invocation);
 
+			//PrintMatchPattern("", invocation.Arguments.ElementAt(1));
 			Match m = getMethodFromHandlePattern.Match(invocation.Arguments.ElementAt(1));
 			if (!m.Success)
 				return NotSupported(invocation);
@@ -556,28 +554,35 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Convert New Object
-		static readonly Expression newObjectCtorPattern = new CastExpression(
+		static readonly Expression newObjectCtorPattern = new Choice() {
+			new CastExpression(
 				new SimpleType("ConstructorInfo"),
 				new InvocationExpression(
 					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")), "GetMethodFromHandle"),
 					new CastExpression(
 						new SimpleType("RuntimeMethodHandle"),
 						new LdTokenPattern("ctor")),
-					new OptionalNode(new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")), "TypeHandle"))));
+					new OptionalNode(new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")), "TypeHandle")))),
+			new TypeOfExpression(new AnyNode("declaringType"))
+	};
 
 		Expression ConvertNewObject(InvocationExpression invocation)
 		{
 			if (invocation.Arguments.Count < 1)
 				return NotSupported(invocation);
 
-			//PrintMatchPattern("", invocation.Arguments.First());
+			PrintMatchPattern("", invocation.Arguments.First());
 			Match m = newObjectCtorPattern.Match(invocation.Arguments.First());
 			if (!m.Success)
 				return NotSupported(invocation);
 
-			IMethod ctor = m.Get<AstNode>("ctor").Single().Annotation<LdMemberToken>().Member as IMethod;
-			if (ctor == null)
+			IMethod ctor = m.Get<AstNode>("ctor").SingleOrDefault()?.Annotation<LdMemberToken>()?.Member as IMethod;
+			if (ctor == null) {
+				if (m.Has("declaringType")) {
+					return new ObjectCreateExpression(m.Get<AstType>("declaringType").Single().Clone());
+				}
 				return null;
+			}
 
 			AstType declaringTypeNode;
 			IType declaringType;
@@ -816,6 +821,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					),
 					new TypeOfExpression(new SimpleType("Func", new Syntax.PrimitiveType("object"),
 					new Syntax.PrimitiveType("object"), new Syntax.PrimitiveType("bool")))
+				),
+				new InvocationExpression(
+					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"NewArrayInit"),
+					new TypeOfExpression(new AnyNode()),
+					new Repeat(elementPattern)
 				)
 			};
 		}
@@ -915,7 +925,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return NotSupported(invocation);
 
 			AstType elementType = ConvertTypeReference(invocation.Arguments.ElementAt(0));
-			IList<Expression> elements = ConvertExpressionsArray(invocation.Arguments.ElementAt(1));
+			IList<Expression> elements = ConvertExpressionsArray(invocation);
 			if (elementType != null && elements != null) {
 				if (ContainsAnonymousType(elementType)) {
 					elementType = null;
@@ -951,7 +961,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		bool ContainsAnonymousType(AstType type)
 		{
 			foreach (AstType t in type.DescendantsAndSelf.OfType<AstType>()) {
-				if (t.Annotation<LdMemberToken>().Member is IType tr && tr.IsAnonymousType())
+				if (t.GetSymbol() is IType tr && tr.IsAnonymousType())
 					return true;
 			}
 			return false;
