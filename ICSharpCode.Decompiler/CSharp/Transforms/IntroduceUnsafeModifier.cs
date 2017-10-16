@@ -57,6 +57,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			// C# sizeof(MyStruct) requires unsafe{}
 			// (not for sizeof(int), but that gets constant-folded and thus decompiled to 4)
+			base.VisitSizeOfExpression(sizeOfExpression);
 			return true;
 		}
 
@@ -125,6 +126,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (rr != null && rr.Type is PointerType)
 				return true;
 			return result;
+		}
+
+		public override bool VisitFixedVariableInitializer(FixedVariableInitializer fixedVariableInitializer)
+		{
+			base.VisitFixedVariableInitializer(fixedVariableInitializer);
+			return true;
 		}
 	}
 }

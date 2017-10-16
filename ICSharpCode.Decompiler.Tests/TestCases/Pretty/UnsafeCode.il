@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly p1cal2uj
+.assembly '4mqlts3y'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module p1cal2uj.dll
-// MVID: {BD577496-1116-4E18-AF25-DE99056CECA8}
+.module '4mqlts3y.dll'
+// MVID: {5733C4E7-C3DA-4F38-A641-CE223719D7AA}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03220000
+// Image base: 0x01000000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -42,6 +42,71 @@
     .field public int32 X
     .field public float64 Y
   } // end of class SimpleStruct
+
+  .class sequential ansi sealed nested public beforefieldinit StructWithFixedSizeMembers
+         extends [mscorlib]System.ValueType
+  {
+    .class sequential ansi sealed nested public beforefieldinit '<Integers>e__FixedBuffer0'
+           extends [mscorlib]System.ValueType
+    {
+      .pack 0
+      .size 400
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.UnsafeValueTypeAttribute::.ctor() = ( 01 00 00 00 ) 
+      .field public int32 FixedElementField
+    } // end of class '<Integers>e__FixedBuffer0'
+
+    .class sequential ansi sealed nested public beforefieldinit '<Doubles>e__FixedBuffer1'
+           extends [mscorlib]System.ValueType
+    {
+      .pack 0
+      .size 1600
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.UnsafeValueTypeAttribute::.ctor() = ( 01 00 00 00 ) 
+      .field public float64 FixedElementField
+    } // end of class '<Doubles>e__FixedBuffer1'
+
+    .class sequential ansi sealed nested public beforefieldinit '<Old>e__FixedBuffer2'
+           extends [mscorlib]System.ValueType
+    {
+      .pack 0
+      .size 1
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.UnsafeValueTypeAttribute::.ctor() = ( 01 00 00 00 ) 
+      .field public uint8 FixedElementField
+    } // end of class '<Old>e__FixedBuffer2'
+
+    .field public valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer0' Integers
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.FixedBufferAttribute::.ctor(class [mscorlib]System.Type,
+                                                                                                int32) = ( 01 00 59 53 79 73 74 65 6D 2E 49 6E 74 33 32 2C   // ..YSystem.Int32,
+                                                                                                           20 6D 73 63 6F 72 6C 69 62 2C 20 56 65 72 73 69   //  mscorlib, Versi
+                                                                                                           6F 6E 3D 34 2E 30 2E 30 2E 30 2C 20 43 75 6C 74   // on=4.0.0.0, Cult
+                                                                                                           75 72 65 3D 6E 65 75 74 72 61 6C 2C 20 50 75 62   // ure=neutral, Pub
+                                                                                                           6C 69 63 4B 65 79 54 6F 6B 65 6E 3D 62 37 37 61   // licKeyToken=b77a
+                                                                                                           35 63 35 36 31 39 33 34 65 30 38 39 64 00 00 00   // 5c561934e089d...
+                                                                                                           00 00 ) 
+    .field public int32 NormalMember
+    .field public valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Doubles>e__FixedBuffer1' Doubles
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.FixedBufferAttribute::.ctor(class [mscorlib]System.Type,
+                                                                                                int32) = ( 01 00 5A 53 79 73 74 65 6D 2E 44 6F 75 62 6C 65   // ..ZSystem.Double
+                                                                                                           2C 20 6D 73 63 6F 72 6C 69 62 2C 20 56 65 72 73   // , mscorlib, Vers
+                                                                                                           69 6F 6E 3D 34 2E 30 2E 30 2E 30 2C 20 43 75 6C   // ion=4.0.0.0, Cul
+                                                                                                           74 75 72 65 3D 6E 65 75 74 72 61 6C 2C 20 50 75   // ture=neutral, Pu
+                                                                                                           62 6C 69 63 4B 65 79 54 6F 6B 65 6E 3D 62 37 37   // blicKeyToken=b77
+                                                                                                           61 35 63 35 36 31 39 33 34 65 30 38 39 C8 00 00   // a5c561934e089...
+                                                                                                           00 00 00 ) 
+    .field public valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Old>e__FixedBuffer2' Old
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.FixedBufferAttribute::.ctor(class [mscorlib]System.Type,
+                                                                                                int32) = ( 01 00 58 53 79 73 74 65 6D 2E 42 79 74 65 2C 20   // ..XSystem.Byte, 
+                                                                                                           6D 73 63 6F 72 6C 69 62 2C 20 56 65 72 73 69 6F   // mscorlib, Versio
+                                                                                                           6E 3D 34 2E 30 2E 30 2E 30 2C 20 43 75 6C 74 75   // n=4.0.0.0, Cultu
+                                                                                                           72 65 3D 6E 65 75 74 72 61 6C 2C 20 50 75 62 6C   // re=neutral, Publ
+                                                                                                           69 63 4B 65 79 54 6F 6B 65 6E 3D 62 37 37 61 35   // icKeyToken=b77a5
+                                                                                                           63 35 36 31 39 33 34 65 30 38 39 01 00 00 00 00   // c561934e089.....
+                                                                                                           00 ) 
+    .custom instance void [mscorlib]System.ObsoleteAttribute::.ctor(string) = ( 01 00 11 61 6E 6F 74 68 65 72 20 61 74 74 72 69   // ...another attri
+                                                                                62 75 74 65 00 00 )                               // bute..
+  } // end of class StructWithFixedSizeMembers
 
   .method public hidebysig specialname instance int32* 
           get_NullPointer() cil managed
@@ -859,6 +924,61 @@
     IL_000f:  ldloc.0
     IL_0010:  ret
   } // end of method UnsafeCode::PointerSubtraction5
+
+  .method public hidebysig instance float64 
+          FixedMemberAccess(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers* m,
+                            int32 i) cil managed
+  {
+    // Code size       44 (0x2c)
+    .maxstack  4
+    .locals init (float64 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Integers
+    IL_0007:  ldflda     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer0'::FixedElementField
+    IL_000c:  conv.u
+    IL_000d:  ldarg.2
+    IL_000e:  conv.i
+    IL_000f:  ldc.i4.4
+    IL_0010:  mul
+    IL_0011:  add
+    IL_0012:  ldind.i4
+    IL_0013:  conv.r8
+    IL_0014:  ldarg.1
+    IL_0015:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Doubles>e__FixedBuffer1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Doubles
+    IL_001a:  ldflda     float64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Doubles>e__FixedBuffer1'::FixedElementField
+    IL_001f:  conv.u
+    IL_0020:  ldarg.2
+    IL_0021:  conv.i
+    IL_0022:  ldc.i4.8
+    IL_0023:  mul
+    IL_0024:  add
+    IL_0025:  ldind.r8
+    IL_0026:  add
+    IL_0027:  stloc.0
+    IL_0028:  br.s       IL_002a
+
+    IL_002a:  ldloc.0
+    IL_002b:  ret
+  } // end of method UnsafeCode::FixedMemberAccess
+
+  .method public hidebysig instance float64* 
+          FixedMemberBasePointer(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers* m) cil managed
+  {
+    // Code size       18 (0x12)
+    .maxstack  1
+    .locals init (float64* V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Doubles>e__FixedBuffer1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Doubles
+    IL_0007:  ldflda     float64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Doubles>e__FixedBuffer1'::FixedElementField
+    IL_000c:  conv.u
+    IL_000d:  stloc.0
+    IL_000e:  br.s       IL_0010
+
+    IL_0010:  ldloc.0
+    IL_0011:  ret
+  } // end of method UnsafeCode::FixedMemberBasePointer
 
   .method family hidebysig virtual instance void 
           Finalize() cil managed

@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Semantics;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -199,6 +200,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
 						return true;
 					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(type))
+						return true;
+					if (settings.FixedBuffers && type.Name.StartsWith("<", StringComparison.Ordinal) && type.Name.Contains("__FixedBuffer"))
 						return true;
 				} else if (type.IsCompilerGenerated()) {
 					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
@@ -735,7 +738,35 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
 			SetNewModifier(fieldDecl);
+			if (settings.FixedBuffers && IsFixedField(field, out var elementType, out var elementCount)) {
+				var fixedFieldDecl = new FixedFieldDeclaration();
+				fieldDecl.Attributes.MoveTo(fixedFieldDecl.Attributes);
+				fixedFieldDecl.Modifiers = fieldDecl.Modifiers;
+				fixedFieldDecl.ReturnType = typeSystemAstBuilder.ConvertType(elementType);
+				fixedFieldDecl.Variables.Add(new FixedVariableInitializer(field.Name, new PrimitiveExpression(elementCount)));
+				fixedFieldDecl.Variables.Single().CopyAnnotationsFrom(((FieldDeclaration)fieldDecl).Variables.Single());
+				fixedFieldDecl.CopyAnnotationsFrom(fieldDecl);
+				RemoveAttribute(fixedFieldDecl, fixedBufferAttributeTypeName);
+				return fixedFieldDecl;
+			}
 			return fieldDecl;
+		}
+
+		static readonly FullTypeName fixedBufferAttributeTypeName = new TopLevelTypeName("System.Runtime.CompilerServices", "FixedBufferAttribute");
+
+		internal static bool IsFixedField(IField field, out IType type, out int elementCount)
+		{
+			type = null;
+			elementCount = 0;
+			IAttribute attr = field.GetAttribute(fixedBufferAttributeTypeName, inherit: false);
+			if (attr != null && attr.PositionalArguments.Count == 2) {
+				if (attr.PositionalArguments[0] is TypeOfResolveResult trr && attr.PositionalArguments[1].ConstantValue is int length) {
+					type = trr.ReferencedType;
+					elementCount = length;
+					return true;
+				}
+			}
+			return false;
 		}
 
 		EntityDeclaration DoDecompile(PropertyDefinition propertyDefinition, IProperty property, ITypeResolveContext decompilationContext)

@@ -192,7 +192,8 @@
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, ResultType("Void")),
 
 		new OpCode("ldflda", "Load address of instance field",
-			CustomClassName("LdFlda"), CustomArguments("target"), MayThrowIfNotDelayed, HasFieldOperand, ResultType("Ref")),
+			CustomClassName("LdFlda"), CustomArguments("target"), MayThrowIfNotDelayed, HasFieldOperand,
+			ResultType("target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref")),
 		new OpCode("ldsflda", "Load static field address",
 			CustomClassName("LdsFlda"), NoArguments, ResultType("Ref"), HasFieldOperand),
 			

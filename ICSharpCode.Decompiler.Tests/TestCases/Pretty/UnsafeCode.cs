@@ -16,6 +16,8 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
+
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	public class UnsafeCode
@@ -26,6 +28,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public double Y;
 		}
 		
+		public struct StructWithFixedSizeMembers
+		{
+			public unsafe fixed int Integers[100];
+			public int NormalMember;
+			public unsafe fixed double Doubles[200];
+
+			[Obsolete("another attribute")]
+			public unsafe fixed byte Old[1];
+		}
+
 		public unsafe int* NullPointer {
 			get {
 				return null;
@@ -233,6 +245,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe long PointerSubtraction5(SimpleStruct* p, SimpleStruct* q)
 		{
 			return p - q;
+		}
+
+		public unsafe double FixedMemberAccess(StructWithFixedSizeMembers* m, int i)
+		{
+			return (double)m->Integers[i] + m->Doubles[i];
+		}
+
+		public unsafe double* FixedMemberBasePointer(StructWithFixedSizeMembers* m)
+		{
+			return m->Doubles;
 		}
 
 		unsafe ~UnsafeCode()

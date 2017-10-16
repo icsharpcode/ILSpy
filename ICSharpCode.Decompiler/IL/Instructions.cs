@@ -3242,7 +3242,7 @@ namespace ICSharpCode.Decompiler.IL
 		readonly IField field;
 		/// <summary>Returns the field operand.</summary>
 		public IField Field { get { return field; } }
-		public override StackType ResultType { get { return StackType.Ref; } }
+		public override StackType ResultType { get { return target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref; } }
 		protected override InstructionFlags ComputeFlags()
 		{
 			return target.Flags | (DelayExceptions ? InstructionFlags.None : InstructionFlags.MayThrow);

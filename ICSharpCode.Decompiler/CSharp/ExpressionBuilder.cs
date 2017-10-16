@@ -1450,10 +1450,16 @@ namespace ICSharpCode.Decompiler.CSharp
 					result = target.UnwrapChild(dirExpr.Expression);
 					result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
 				} else if (target.Type is PointerType pointerType) {
-					// Dereference the existing pointer
-					result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
-						.WithILInstruction(inst)
-						.WithRR(new ResolveResult(pointerType.ElementType));
+					if (target.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf) {
+						// We can dereference the pointer by stripping away the '&'
+						result = target.UnwrapChild(uoe.Expression);
+						result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
+					} else {
+						// Dereference the existing pointer
+						result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
+							.WithILInstruction(inst)
+							.WithRR(new ResolveResult(pointerType.ElementType));
+					}
 				} else {
 					// reference type behind non-DirectionExpression?
 					// this case should be impossible, but we can use a pointer cast
@@ -1518,14 +1524,30 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLdFlda(LdFlda inst, TranslationContext context)
 		{
-			var expr = ConvertField(inst.Field, inst.Target);
-			return new DirectionExpression(FieldDirection.Ref, expr)
-				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+			if (settings.FixedBuffers && inst.Field.Name == "FixedElementField"
+				&& inst.Target is LdFlda nestedLdFlda
+				&& CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _))
+			{
+				Expression result = ConvertField(nestedLdFlda.Field, nestedLdFlda.Target);
+				result.RemoveAnnotations<ResolveResult>();
+				return result.WithRR(new ResolveResult(new PointerType(elementType)))
+					.WithILInstruction(inst);
+			}
+			var expr = ConvertField(inst.Field, inst.Target).WithILInstruction(inst);
+			if (inst.ResultType == StackType.I) {
+				// ldflda producing native pointer
+				return new UnaryOperatorExpression(UnaryOperatorType.AddressOf, expr)
+					.WithoutILInstruction().WithRR(new ResolveResult(new PointerType(expr.Type)));
+			} else {
+				// ldflda producing managed pointer
+				return new DirectionExpression(FieldDirection.Ref, expr)
+					.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+			}
 		}
 		
 		protected internal override TranslatedExpression VisitLdsFlda(LdsFlda inst, TranslationContext context)
 		{
-			var expr = ConvertField(inst.Field);
+			var expr = ConvertField(inst.Field).WithILInstruction(inst);
 			return new DirectionExpression(FieldDirection.Ref, expr)
 				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
 		}
