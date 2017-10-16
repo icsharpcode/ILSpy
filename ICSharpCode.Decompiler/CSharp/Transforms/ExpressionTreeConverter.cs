@@ -680,13 +680,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#region Convert MemberInit
 		Expression ConvertMemberInit(InvocationExpression invocation)
 		{
-			if (invocation.Arguments.Count != 2)
+			if (invocation.Arguments.Count < 1)
 				return NotSupported(invocation);
 			ObjectCreateExpression oce = Convert(invocation.Arguments.ElementAt(0)) as ObjectCreateExpression;
 			if (oce == null)
 				return null;
-			Expression elementsArray = invocation.Arguments.ElementAt(1);
-			ArrayInitializerExpression bindings = ConvertMemberBindings(elementsArray);
+			ArrayInitializerExpression bindings = ConvertMemberBindings(invocation);
 			if (bindings == null)
 				return null;
 			oce.Initializer = bindings;
@@ -698,6 +697,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		ArrayInitializerExpression ConvertMemberBindings(Expression elementsArray)
 		{
+			PrintMatchPattern("", elementsArray);
 			Match m = memberBindingArrayPattern.Match(elementsArray);
 			if (!m.Success)
 				return null;
@@ -714,12 +714,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				Expression bindingValue = bindingInvocation.Arguments.ElementAt(1);
 
 				string memberName;
-				Match m2 = getMethodFromHandlePattern.Match(bindingTarget);
+				PrintMatchPattern("", bindingTarget);
+				Match m2 = getFieldFromHandlePattern.Match(bindingTarget); // getFieldFromHandle
 				if (m2.Success) {
-					IMethod setter = m2.Get<AstNode>("method").Single().Annotation<LdMemberToken>().Member as IMethod;
+					IField setter = m2.Get<AstNode>("field").Single().Annotation<LdMemberToken>().Member as IField;
 					if (setter == null)
 						return null;
-					memberName = GetPropertyName(setter);
+					memberName = setter.Name;
 				} else {
 					return null;
 				}
@@ -801,7 +802,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					},
 					Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
 				},
-				new InvocationExpression(Use(elementPattern) as AnyNode),
 				new CastExpression(new SimpleType("IEnumerable",new SimpleType("Expression")),
 				new ArrayCreateExpression {
 					Type = Use(arrayElementType),
@@ -845,9 +845,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							new MemberReferenceExpression(new TypeOfExpression(new AnyNode()),"TypeHandle")
 							)),
 					new Repeat(Use(elementPattern))),
-				//new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"ElementInit"),new CastExpression(new SimpleType("MethodInfo"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")),"GetMethodFromHandle"),new CastExpression(new SimpleType("RuntimeMethodHandle"),new LdTokenPattern("blabla")),new MemberReferenceExpression(new TypeOfExpression(new SimpleType("Dictionary",new Syntax.PrimitiveType("int"),new Syntax.PrimitiveType("int"))),"TypeHandle"))),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Constant"),new PrimitiveExpression("1"),new TypeOfExpression(new Syntax.PrimitiveType("int"))),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Constant"),new PrimitiveExpression("1"),new TypeOfExpression(new Syntax.PrimitiveType("int"))))
-			//Use(elementPattern) // TODO may be removed
-		};
+				new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Array")),"Empty",new SimpleType("Expression"))),
+				new InvocationExpression(
+					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"MemberInit"),
+					new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"New"),new TypeOfExpression(new AnyNode())),
+					new Repeat(
+						new AnyNode("binding")
+						//new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Bind"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("FieldInfo")),"GetFieldFromHandle"),new CastExpression(new SimpleType("RuntimeFieldHandle"),new LdTokenPattern("property"))),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Field"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Field"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Constant"),new IdentifierExpression("value"),new TypeOfExpression(new AnyNode("className"))),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("FieldInfo")),"GetFieldFromHandle"),new CastExpression(new SimpleType("RuntimeFieldHandle"),new LdTokenPattern("classElement")))),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("FieldInfo")),"GetFieldFromHandle"),new CastExpression(new SimpleType("RuntimeFieldHandle"),new LdTokenPattern("sameProperty")))))
+					)
+				),
+
+
+				new InvocationExpression(Use(elementPattern) as AnyNode),
+				Use(elementPattern)
+			};
 		}
 
 		static readonly Pattern expressionArrayPattern = ArrayInitializationPattern(new SimpleType("Expression"), new AnyNode("elements"));
@@ -961,11 +972,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		Expression ConvertNewArrayBounds(InvocationExpression invocation)
 		{
-			if (invocation.Arguments.Count != 2)
+			if (invocation.Arguments.Count < 2)
 				return NotSupported(invocation);
 
 			AstType elementType = ConvertTypeReference(invocation.Arguments.ElementAt(0));
-			IList<Expression> arguments = ConvertExpressionsArray(invocation.Arguments.ElementAt(1));
+			List<Expression> arguments = new List<Expression>();
+			for (int i = 1; i < invocation.Arguments.Count; i++) {
+				arguments.AddRange(ConvertExpressionsArray(invocation.Arguments.ElementAt(i)));
+			}
 			if (elementType != null && arguments != null) {
 				if (ContainsAnonymousType(elementType)) {
 					elementType = null;
