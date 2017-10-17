@@ -653,7 +653,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				for (int i = 1; i < invocation.Arguments.Count; i++) {
 					initializer.Elements.Add(ConvertElementInit(invocation.Arguments.ElementAt(i)));
 				}
-				return initializer;
+				oce.Initializer = initializer;
+				return oce;
 			}
 		}
 
