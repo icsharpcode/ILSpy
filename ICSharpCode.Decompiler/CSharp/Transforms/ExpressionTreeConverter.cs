@@ -414,11 +414,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 
 			MemberReferenceExpression mre = convertedTarget.Member(mr.Name);
-			GenericInstanceMethod gim = context.TypeSystem.GetCecil(mr) as GenericInstanceMethod;
-			if (gim != null) {
-				foreach (TypeReference tr in gim.GenericArguments) {
-					mre.TypeArguments.Add(astBuilder.ConvertType(context.TypeSystem.Resolve(tr)));
-				}
+			foreach (IType tr in mr.TypeArguments) {
+				mre.TypeArguments.Add(astBuilder.ConvertType(tr));
 			}
 			IList<Expression> arguments = null;
 			if (invocation.Arguments.Count == firstArgumentPosition + 1) {
