@@ -362,6 +362,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				AddExistingName(reservedVariableNames, f);
 
 			string baseName = GetNameFromInstruction(valueContext);
+			if (string.IsNullOrEmpty(baseName)) {
+				if (valueContext is LdLoc ldloc && ldloc.Variable.Kind == VariableKind.Parameter) {
+					baseName = ldloc.Variable.Name;
+				}
+			}
 			string proposedName = "item";
 			
 			if (!string.IsNullOrEmpty(baseName)) {
