@@ -252,12 +252,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private IEnumerable<string> alternatives;
+
 		private static void Operation(ref int item)
 		{
 		}
 
 		private static void Operation(Func<bool> f)
 		{
+		}
+
+		public void ForEachOnField()
+		{
+			foreach (string alternative in this.alternatives) {
+				alternative.ToLower();
+			}
 		}
 
 		public void ForEach(IEnumerable<string> alternatives)
