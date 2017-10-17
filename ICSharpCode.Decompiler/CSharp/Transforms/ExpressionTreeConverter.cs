@@ -259,6 +259,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Expression body = invocation.Arguments.First();
 			Expression parameterArray = invocation.Arguments.Last();
 
+			if (invocation.Parent.GetSymbol() is IMethod parentMethod) {
+				if (parentMethod.TypeArguments.Count > 0) {
+					if (invocation.Parent is InvocationExpression invocationExpression &&
+						invocationExpression.Target is MemberReferenceExpression memberReferenceExpression) {
+						string test = parentMethod.FullName + "<";
+						IEnumerable<AstType> typeArgs = parentMethod.TypeArguments.Select(astBuilder.ConvertType);
+						for (int i = 0; i < typeArgs.Count(); i++) {
+							test += typeArgs.ElementAt(i) + (i + 1 != typeArgs.Count() ? "," : "");
+						}
+						memberReferenceExpression.MemberName = test + ">";
+					}
+				}
+			}
+
 			if (parameterArray is ArrayCreateExpression arrayCreate) {
 				foreach (var arg in arrayCreate.Initializer.Elements) {
 					ParameterDeclaration parameter = ConvertParameter(arg as InvocationExpression);
