@@ -239,7 +239,40 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					child.AcceptVisitor(this);
 				}
 			}
-			
+
+			// Handle variables in ExpressionTrees
+			// call Field(call Constant(ldloc V_0, call GetTypeFromHandle(ldtypetoken ExpressionTrees+<>c__DisplayClass56_0)), call GetFieldFromHandle(ldmembertoken i)) at IL_0114
+			// -> call Constant(ldloc i, call GetTypeFromHandle(ldtypetoken System.Int32))
+			protected internal override void VisitCall(Call inst)
+			{
+				if (inst.Method.FullName.Equals("System.Linq.Expressions.Expression.Field") &&
+					inst.Arguments.Count == 2 &&
+					inst.Arguments[0] is CallInstruction constantCall &&
+					inst.Arguments[1] is CallInstruction getFieldFromHandleCall &&
+					constantCall.Method.FullName.Equals("System.Linq.Expressions.Expression.Constant") &&
+					getFieldFromHandleCall.Method.Name.Equals("GetFieldFromHandle") &&
+					constantCall.Arguments.Count == 2 &&
+					constantCall.Arguments[0].MatchLdLoc(out ILVariable constantVar) &&
+					constantCall.Arguments[1] is CallInstruction getTypeFromHandleCall &&
+					getTypeFromHandleCall.Method.Name.Equals("GetTypeFromHandle") &&
+					getTypeFromHandleCall.Arguments.Count == 1 &&
+					getTypeFromHandleCall.Arguments[0] is LdTypeToken ldTypeToken &&
+					getFieldFromHandleCall.Arguments.Count == 1 &&
+					getFieldFromHandleCall.Arguments[0] is LdMemberToken ldMemberToken &&
+					targetLoad.Variable == constantVar &&
+					initValues.TryGetValue(ldMemberToken.Member as IField, out DisplayClassVariable info)) {
+
+					Call replace = new Call(constantCall.Method);
+					replace.Arguments.Add(new LdLoc(info.variable));
+					Call typeOfInstruction = new Call(getTypeFromHandleCall.Method);
+					typeOfInstruction.Arguments.Add(new LdTypeToken(info.variable.Type));
+					replace.Arguments.Add(typeOfInstruction);
+					inst.ReplaceWith(replace);
+				} else {
+					Default(inst);
+				}
+			}
+
 			protected internal override void VisitStLoc(StLoc inst)
 			{
 				base.VisitStLoc(inst);
