@@ -514,7 +514,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Expression expr = Convert(invocation.Arguments.ElementAt(0));
 			if (expr == null)
 				return null;
-
+			if (expr is IdentifierExpression ident) {
+				// check if identifier is integer
+				// invocation.Arguments.ElementAt(0) = Expression.Constant (y, typeof(int))
+				// TODO hack to get the type of the constant expression and check if it is an integer type
+				;
+			}
+			if (expr is CastExpression cast &&
+				cast.Type.ToTypeReference().Resolve(context.TypeSystem.Compilation).GetStackType().IsIntegerType() &&
+				op == UnaryOperatorType.Not) {
+				op = UnaryOperatorType.BitNot;
+			}
+			
 			UnaryOperatorExpression uoe = new UnaryOperatorExpression(op, expr);
 			if (isChecked != null)
 				uoe.AddAnnotation(isChecked.Value ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
