@@ -77,9 +77,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override bool DoMatch(INode other, Match match)
 		{
-			// new ErrorExpression("/*ldmembertoken ...*/")
-			if (other is ErrorExpression ee) {
-				match.Add(childNode.GroupName, ee);
+			if (other is AstNode node && node.Annotation<LdMemberToken>() != null) {
+				match.Add(childNode.GroupName, other);
 				return true;
 			}
 			return false;
