@@ -102,7 +102,7 @@ public class ExpressionTrees
 			3,
 			4,
 			5
-		})[0 + (int)(DateTime.Now.Ticks % 3)]);
+		})[0 + (int)(System.DateTime.Now.Ticks % 3L)]);
 	}
 	
 	public void ArrayLengthAndDoubles()
@@ -198,13 +198,13 @@ public class ExpressionTrees
 	{
 		int i = 1;
 		string x = "X";
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (("a\n\\b" ?? x) + x).Length == 2 ? false : true && (1m + -i > 0 || false));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((("a\n\\b" ?? x) + x).Length == 2) ? false : (true && (1m + (decimal)(-i) > 0m || false)));
 	}
 	
 	public void NotImplicitCast()
 	{
 		byte z = 42;
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~z == 0);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~(int)z == 0);
 	}
 	
 	public void MembersBuiltin()
@@ -245,22 +245,40 @@ public class ExpressionTrees
 	
 	private bool MyEquals(ExpressionTrees other)
 	{
-		return other != null && this.field == other.field;
+		if (other != null) {
+			return this.field == other.field;
+		}
+		return false;
 	}
 	
 	public void MethodGroupAsExtensionMethod()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Func<bool>)new[] { 2000, 2004, 2008, 2012 }.Any);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Func<bool>)new int[] {
+			2000,
+			2004,
+			2008,
+			2012
+		}.Any);
 	}
 	
 	public void MethodGroupConstant()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Array.TrueForAll(new[] { 2000, 2004, 2008, 2012 }, DateTime.IsLeapYear));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Array.TrueForAll(new int[] {
+			2000,
+			2004,
+			2008,
+			2012
+		}, DateTime.IsLeapYear));
 		
 		HashSet<int> set = new HashSet<int>();
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] { 2000, 2004, 2008, 2012 }.All(set.Add));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[] {
+			2000,
+			2004,
+			2008,
+			2012
+		}.All(set.Add));
 		
-		Func<Func<object, object, bool>, bool> sink = f => f(null, null);
+		Func<Func<object, object, bool>, bool> sink = (Func<object, object, bool> f) => f(null, null);
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => sink(int.Equals));
 	}
 	
@@ -377,12 +395,12 @@ public class ExpressionTrees
 	
 	public void QuotedWithAnonymous()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Single(System.Linq.Enumerable.Select(new[] {
 			new {
 				X = "a",
 				Y = "b"
 			}
-		}.Select(o => o.X + o.Y).Single());
+		}, (o) => o.X + o.Y)));
 	}
 	
 	public void StaticCall()
@@ -422,7 +440,7 @@ public class ExpressionTrees
 	{
 		int i = 1;
 		string x = "X";
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (("a\n\\b" ?? x) + x).Length == 2 ? false : true && (1m + (decimal)-i > 0m || false));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((("a\n\\b" ?? x) + x).Length == 2) ? false : (true && (1m + (decimal)(-i) > 0m || false)));
 	}
 	
 	public void StringAccessor()
