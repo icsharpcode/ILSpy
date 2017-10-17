@@ -107,7 +107,7 @@ public class ExpressionTrees
 	
 	public void ArrayLengthAndDoubles()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.ToArray(System.Linq.Enumerable.Concat(new double[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.ToArray<double>(System.Linq.Enumerable.Concat<double>(new double[] {
 			1.0,
 			2.01,
 			3.5
@@ -263,7 +263,7 @@ public class ExpressionTrees
 	
 	public void MethodGroupConstant()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Array.TrueForAll(new int[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Array.TrueForAll<int>(new int[] {
 			2000,
 			2004,
 			2008,
@@ -298,12 +298,12 @@ public class ExpressionTrees
 		//no params
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => call(() => 42));
 		//one param
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Select(new int[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Select<int, int>(new int[] {
 			37,
 			42
 		}, (int x) => x * 2));
 		//two params
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Select(new int[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Select<int, int>(new int[] {
 			37,
 			42
 		}, (int x, int i) => x * 2));
@@ -340,7 +340,7 @@ public class ExpressionTrees
 	
 	public void NewArrayAndExtensionMethod()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.SequenceEqual(new double[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.SequenceEqual<double>(new double[] {
 			1.0,
 			2.01,
 			3.5
@@ -390,12 +390,12 @@ public class ExpressionTrees
 	
 	public void Quoted2()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ExpressionTrees.ToCode(ExpressionTrees.X(), () => true).Equals(null));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => true).Equals(null));
 	}
 	
 	public void QuotedWithAnonymous()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Single(System.Linq.Enumerable.Select(new[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Single<string>(System.Linq.Enumerable.Select(new[] {
 			new {
 				X = "a",
 				Y = "b"
