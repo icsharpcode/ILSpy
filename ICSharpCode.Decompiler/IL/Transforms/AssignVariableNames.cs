@@ -198,7 +198,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			if (string.IsNullOrEmpty(proposedName)) {
 				var proposedNameForStoresFromNewObj = variable.StoreInstructions.OfType<StLoc>()
-					.Select(expr => GetNameByType(GuessType(expr.Value, context)))
+					.Select(expr => GetNameByType(GuessType(variable.Type, expr.Value, context)))
 					.Except(currentFieldNames).ToList();
 				if (proposedNameForStoresFromNewObj.Count == 1) {
 					proposedName = proposedNameForStoresFromNewObj[0];
@@ -357,8 +357,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return char.ToLower(name[0]) + name.Substring(1);
 		}
 
-		internal static IType GuessType(ILInstruction inst, ILTransformContext context)
+		internal static IType GuessType(IType variableType, ILInstruction inst, ILTransformContext context)
 		{
+			if (!variableType.IsKnownType(KnownTypeCode.Object))
+				return variableType;
+
 			switch (inst) {
 				case NewObj newObj:
 					return newObj.Method.DeclaringType;
