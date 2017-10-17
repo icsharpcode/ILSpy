@@ -228,7 +228,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		Expression NotSupported(Expression expr)
 		{
-			//Debug.WriteLine("Expression Tree Conversion Failed: '" + expr + "' is not supported");
+			Debug.WriteLine("Expression Tree Conversion Failed: '" + expr + "' is not supported");
 			return null;
 		}
 		#endregion
@@ -257,31 +257,22 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return NotSupported(invocation);
 			LambdaExpression lambda = new LambdaExpression();
 			Expression body = invocation.Arguments.First();
-			//Debug.WriteLine("invocation.Arguments.Last().GetType(): "+invocation.Arguments.Last().GetType());
 			Expression parameterArray = invocation.Arguments.Last();
-			if (parameterArray.GetType() != typeof(InvocationExpression) && parameterArray.GetType() != typeof(ArrayCreateExpression))
-				return NotSupported(invocation);
 
 			if (parameterArray is ArrayCreateExpression arrayCreate) {
 				foreach (var arg in arrayCreate.Initializer.Elements) {
-					// arrayCreate.Initializer.Elements Expression.Parameter (typeof(bool), "a")
-					// arrayCreate.Initializer.Elements.GetType() ICSharpCode.Decompiler.CSharp.Syntax.InvocationExpression
-					//Debug.WriteLine("arrayCreate.Initializer.Elements " + arg);
-					//Debug.WriteLine("arrayCreate.Initializer.Elements.GetType() " + arg.GetType());
-					//foreach (var invarg in invExp.Arguments) {
-					//	Debug.WriteLine("invarg " + invarg);
-					//	Debug.WriteLine("invarg.getType() " + invarg.GetType());
-					//}
-					// Arguments[0] = TypeOfExpression
-					// Arguments[1] = PrimitiveExpression
-					lambda.Parameters.Add(ConvertParameter(arg as InvocationExpression));
+					ParameterDeclaration parameter = ConvertParameter(arg as InvocationExpression);
+					IType type = parameter.Type.ToTypeReference().Resolve(context.TypeSystem.Compilation);
+					if (type.IsAnonymousType()) {
+						parameter.Type = null;
+					}
+					lambda.Parameters.Add(parameter);
 				}
-			} else {
-				// No parameter declaration annotation found.
-				// 
-				//PrintMatchPattern("", parameterArray);
+			} else if (parameterArray is InvocationExpression) {
 				if (!emptyArrayPattern.IsMatch(parameterArray))
 					return null;
+			} else {
+				return NotSupported(invocation);
 			}
 
 			activeLambdas.Push(lambda);
@@ -517,8 +508,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (expr is IdentifierExpression ident) {
 				// check if identifier is integer
 				// invocation.Arguments.ElementAt(0) = Expression.Constant (y, typeof(int))
-				// TODO hack to get the type of the constant expression and check if it is an integer type
-				;
+				// hack to get the type of the constant expression and check if it is an integer type
+				if (invocation.Arguments.ElementAt(0) is InvocationExpression constantInvocation) {
+					if (constantInvocation.GetSymbol() is IMethod constantMethod) {
+						if (constantMethod.FullName.Equals("System.Linq.Expressions.Expression.Constant")) {
+							if (constantInvocation.Arguments.Count == 2 &&
+								constantInvocation.Arguments.ElementAt(1) is TypeOfExpression type) {
+								if (type.Type.ToTypeReference().Resolve(context.TypeSystem.Compilation).GetStackType().IsIntegerType() &&
+									op == UnaryOperatorType.Not) {
+									op = UnaryOperatorType.BitNot;
+								}
+							}
+						}
+					}
+				}
 			}
 			if (expr is CastExpression cast &&
 				cast.Type.ToTypeReference().Resolve(context.TypeSystem.Compilation).GetStackType().IsIntegerType() &&
