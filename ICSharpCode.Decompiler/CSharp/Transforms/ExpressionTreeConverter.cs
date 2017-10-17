@@ -406,6 +406,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			MemberReferenceExpression mre = convertedTarget.Member(mr.Name);
 			foreach (IType tr in mr.TypeArguments) {
+				if (tr.IsAnonymousType()) {
+					mre.TypeArguments.Clear();
+					break;
+				}
 				mre.TypeArguments.Add(astBuilder.ConvertType(tr));
 			}
 			IList<Expression> arguments = null;
