@@ -69,23 +69,23 @@ public class ExpressionTrees
 	
 	public void Parameter(bool a)
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => a);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => a);
 	}
 	
 	public void LocalVariable()
 	{
 		bool a = true;
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => a);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => a);
 	}
 	
 	public void LambdaParameter()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), (bool a) => a);
+		ExpressionTrees.ToCode<bool, bool>(ExpressionTrees.X(), (bool a) => a);
 	}
 	
 	public void AddOperator(int x)
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => 1 + x + 2);
+		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => 1 + x + 2);
 	}
 	
 	public void AnonymousClasses()
@@ -98,7 +98,7 @@ public class ExpressionTrees
 	
 	public void ArrayIndex()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (new int[] {
+		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => (new int[] {
 			3,
 			4,
 			5
@@ -107,7 +107,7 @@ public class ExpressionTrees
 	
 	public void ArrayLengthAndDoubles()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.ToArray<double>(System.Linq.Enumerable.Concat<double>(new double[] {
+		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => System.Linq.Enumerable.ToArray<double>(System.Linq.Enumerable.Concat<double>(new double[] {
 			1.0,
 			2.01,
 			3.5
@@ -119,38 +119,38 @@ public class ExpressionTrees
 	
 	public void AsOperator()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new object() as string);
+		ExpressionTrees.ToCode<string>(ExpressionTrees.X(), () => new object() as string);
 	}
 	
 	public void ComplexGenericName()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((Func<int, bool>)((int x) => x > 0))(0));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => ((Func<int, bool>)((int x) => x > 0))(0));
 	}
 	
 	public void DefaultValue()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new System.TimeSpan(1, 2, 3) == default(TimeSpan));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new System.TimeSpan(1, 2, 3) == default(TimeSpan));
 	}
 	
 	public void EnumConstant()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new object().Equals((object)MidpointRounding.ToEven));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new object().Equals((object)MidpointRounding.ToEven));
 	}
 	
 	public void IndexerAccess()
 	{
 		Dictionary<string, int> dict = Enumerable.Range(1, 20).ToDictionary((int n) => n.ToString());
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => dict["3"] == 3);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => dict["3"] == 3);
 	}
 	
 	public void IsOperator()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new object() is string);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new object() is string);
 	}
 	
 	public void ListInitializer()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new Dictionary<int, int> {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new Dictionary<int, int> {
 			{
 				1,
 				1
@@ -168,7 +168,7 @@ public class ExpressionTrees
 	
 	public void ListInitializer2()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new List<int>(50) {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new List<int>(50) {
 			1,
 			2,
 			3
@@ -177,7 +177,7 @@ public class ExpressionTrees
 	
 	public void ListInitializer3()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new List<int> {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new List<int> {
 			1,
 			2,
 			3
@@ -186,56 +186,56 @@ public class ExpressionTrees
 	
 	public void LiteralCharAndProperty()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new string(' ', 3).Length == 1);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new string(' ', 3).Length == 1);
 	}
 	
 	public void CharNoCast()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (int)"abc"[1] == 98);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => (int)"abc"[1] == 98);
 	}
 	
 	public void StringsImplicitCast()
 	{
 		int i = 1;
 		string x = "X";
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((("a\n\\b" ?? x) + x).Length == 2) ? false : (true && (1m + (decimal)(-i) > 0m || false)));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => ((("a\n\\b" ?? x) + x).Length == 2) ? false : (true && (1m + (decimal)(-i) > 0m || false)));
 	}
 	
 	public void NotImplicitCast()
 	{
 		byte z = 42;
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~(int)z == 0);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => ~(int)z == 0);
 	}
 	
 	public void MembersBuiltin()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => 1.23m.ToString());
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => AttributeTargets.All.HasFlag((Enum)AttributeTargets.Assembly));
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => "abc".Length == 3);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => 'a'.CompareTo('b') < 0);
+		ExpressionTrees.ToCode<string>(ExpressionTrees.X(), () => 1.23m.ToString());
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => AttributeTargets.All.HasFlag((Enum)AttributeTargets.Assembly));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => "abc".Length == 3);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => 'a'.CompareTo('b') < 0);
 	}
 	
 	public void MembersDefault()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => default(DateTime).Ticks == 0L);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => default(DateTime).Ticks == 0L);
 	}
 
 	public void Test()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[0].Length == 0);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.GetType().IsLayoutSequential);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new List<int>().Count);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[0].Clone() == null);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.GetType().IsInstanceOfType(new object()));
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new List<int>().AsReadOnly());
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[0].Length == 0);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.GetType().IsLayoutSequential);
+		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => new List<int>().Count);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[0].Clone() == null);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.GetType().IsInstanceOfType(new object()));
+		ExpressionTrees.ToCode<System.Collections.ObjectModel.ReadOnlyCollection<int>>(ExpressionTrees.X(), () => new List<int>().AsReadOnly());
 	}
 	
 	public void DoAssert()
 	{
 		this.field = 37;
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.field != this.C());
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !object.ReferenceEquals(this, new ExpressionTrees()));
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.MyEquals(this) && !this.MyEquals(new ExpressionTrees()));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.field != this.C());
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => !object.ReferenceEquals(this, new ExpressionTrees()));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.MyEquals(this) && !this.MyEquals(new ExpressionTrees()));
 	}
 	
 	private int C()
@@ -253,7 +253,7 @@ public class ExpressionTrees
 	
 	public void MethodGroupAsExtensionMethod()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Func<bool>)new int[] {
+		ExpressionTrees.ToCode<System.Func<bool>>(ExpressionTrees.X(), () => (Func<bool>)new int[] {
 			2000,
 			2004,
 			2008,
@@ -263,7 +263,7 @@ public class ExpressionTrees
 	
 	public void MethodGroupConstant()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Array.TrueForAll<int>(new int[] {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => System.Array.TrueForAll<int>(new int[] {
 			2000,
 			2004,
 			2008,
@@ -271,7 +271,7 @@ public class ExpressionTrees
 		}, DateTime.IsLeapYear));
 		
 		HashSet<int> set = new HashSet<int>();
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[] {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[] {
 			2000,
 			2004,
 			2008,
@@ -279,31 +279,31 @@ public class ExpressionTrees
 		}.All(set.Add));
 		
 		Func<Func<object, object, bool>, bool> sink = (Func<object, object, bool> f) => f(null, null);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => sink(int.Equals));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => sink(int.Equals));
 	}
 	
 	public void MultipleCasts()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => 1 == (int)(object)1);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => 1 == (int)(object)1);
 	}
 	
 	public void MultipleDots()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => 3.ToString().ToString().Length > 0);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => 3.ToString().ToString().Length > 0);
 	}
 	
 	public void NestedLambda()
 	{
 		Func<Func<int>, int> call = (Func<int> f) => f();
 		//no params
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => call(() => 42));
+		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => call(() => 42));
 		//one param
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Select<int, int>(new int[] {
+		ExpressionTrees.ToCode<System.Collections.Generic.IEnumerable<int>>(ExpressionTrees.X(), () => System.Linq.Enumerable.Select<int, int>(new int[] {
 			37,
 			42
 		}, (int x) => x * 2));
 		//two params
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Select<int, int>(new int[] {
+		ExpressionTrees.ToCode<System.Collections.Generic.IEnumerable<int>>(ExpressionTrees.X(), () => System.Linq.Enumerable.Select<int, int>(new int[] {
 			37,
 			42
 		}, (int x, int i) => x * 2));
@@ -311,7 +311,7 @@ public class ExpressionTrees
 	
 	public void CurriedLambda()
 	{
-		ToCode<int, Func<int, Func<int, int>>>(X(), (int a) => (int b) => (int c) => a + b + c);
+		ExpressionTrees.ToCode<int, System.Func<int, System.Func<int, int>>>(ExpressionTrees.X(), (int a) => (int b) => (int c) => a + b + c);
 	}
 	
 	private bool Fizz(Func<int, bool> a)
@@ -331,16 +331,16 @@ public class ExpressionTrees
 	
 	public void NestedLambda2()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((string x) => x == "a"));
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((int x) => x == 37));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.Fizz((string x) => x == "a"));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.Fizz((int x) => x == 37));
 		
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((int x) => true));
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Buzz((int x) => true));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.Fizz((int x) => true));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.Buzz((int x) => true));
 	}
 	
 	public void NewArrayAndExtensionMethod()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.SequenceEqual<double>(new double[] {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => System.Linq.Enumerable.SequenceEqual<double>(new double[] {
 			1.0,
 			2.01,
 			3.5
@@ -353,12 +353,12 @@ public class ExpressionTrees
 	
 	public void NewMultiDimArray()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[3, 4].Length == 1);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[3, 4].Length == 1);
 	}
 	
 	public void NewObject()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new object() != new object());
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new object() != new object());
 	}
 	
 	public void NotOperator()
@@ -366,9 +366,9 @@ public class ExpressionTrees
 		bool x = true;
 		int y = 3;
 		byte z = 42;
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~(int)z == 0);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~y == 0);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !x);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => ~(int)z == 0);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => ~y == 0);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => !x);
 	}
 	
 	public void ObjectInitializers()
@@ -377,7 +377,7 @@ public class ExpressionTrees
 			CloseInput = false,
 			CheckCharacters = false
 		};
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new XmlReaderSettings {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new XmlReaderSettings {
 			CloseInput = s.CloseInput,
 			CheckCharacters = s.CheckCharacters
 		}.Equals(s));
@@ -385,42 +385,42 @@ public class ExpressionTrees
 	
 	public void Quoted()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null);
 	}
 	
 	public void Quoted2()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => true).Equals(null));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => true).Equals(null));
 	}
 	
 	public void QuotedWithAnonymous()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => System.Linq.Enumerable.Single<string>(System.Linq.Enumerable.Select(new[] {
+		ExpressionTrees.ToCode<string>(ExpressionTrees.X(), () => System.Linq.Enumerable.Single<string>(System.Linq.Enumerable.Select(new[] {
 			new {
 				X = "a",
 				Y = "b"
 			}
-		}, (o) => o.X + o.Y)));
+		}, o => o.X + o.Y)));
 	}
 	
 	public void StaticCall()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => object.Equals((object)3, (object)0));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => object.Equals((object)3, (object)0));
 	}
 	
 	public void ThisCall()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !this.Equals((object)3));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => !this.Equals((object)3));
 	}
 	
 	public void ThisExplicit()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => object.Equals(this, (object)3));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => object.Equals(this, (object)3));
 	}
 	
 	public void TypedConstant()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new Type[] {
+		ExpressionTrees.ToCode<System.Type[]>(ExpressionTrees.X(), () => new Type[] {
 			typeof(int),
 			typeof(string)
 		});
@@ -428,38 +428,38 @@ public class ExpressionTrees
 	
 	public void StaticCallImplicitCast()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => object.Equals((object)3, (object)0));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => object.Equals((object)3, (object)0));
 	}
 	
 	public void StaticMembers()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (System.DateTime.Now > System.DateTime.Now + System.TimeSpan.FromMilliseconds(10.001)).ToString() == "False");
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => (System.DateTime.Now > System.DateTime.Now + System.TimeSpan.FromMilliseconds(10.001)).ToString() == "False");
 	}
 	
 	public void Strings()
 	{
 		int i = 1;
 		string x = "X";
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((("a\n\\b" ?? x) + x).Length == 2) ? false : (true && (1m + (decimal)(-i) > 0m || false)));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => ((("a\n\\b" ?? x) + x).Length == 2) ? false : (true && (1m + (decimal)(-i) > 0m || false)));
 	}
 	
 	public void StringAccessor()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (int)"abc"[1] == 98);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => (int)"abc"[1] == 98);
 	}
 	
 	public void GenericClassInstance()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (double)new GenericClass<int>().InstanceField + new GenericClass<double>().InstanceProperty);
+		ExpressionTrees.ToCode<double>(ExpressionTrees.X(), () => (double)new GenericClass<int>().InstanceField + new GenericClass<double>().InstanceProperty);
 	}
 	
 	public void GenericClassStatic()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (double)GenericClass<int>.StaticField + GenericClass<double>.StaticProperty);
+		ExpressionTrees.ToCode<double>(ExpressionTrees.X(), () => (double)GenericClass<int>.StaticField + GenericClass<double>.StaticProperty);
 	}
 	
 	public void InvokeGenericMethod()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => GenericClass<int>.GenericMethod<double>());
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => GenericClass<int>.GenericMethod<double>());
 	}
 }

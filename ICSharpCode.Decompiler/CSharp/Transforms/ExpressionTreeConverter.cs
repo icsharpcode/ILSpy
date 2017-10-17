@@ -259,16 +259,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			Expression body = invocation.Arguments.First();
 			Expression parameterArray = invocation.Arguments.Last();
 
+			// add missing type arguments - kind of a hack as they are missing sometimes (CurriedLambda)
 			if (invocation.Parent.GetSymbol() is IMethod parentMethod) {
 				if (parentMethod.TypeArguments.Count > 0) {
-					if (invocation.Parent is InvocationExpression invocationExpression &&
-						invocationExpression.Target is MemberReferenceExpression memberReferenceExpression) {
-						string test = parentMethod.FullName + "<";
-						IEnumerable<AstType> typeArgs = parentMethod.TypeArguments.Select(astBuilder.ConvertType);
-						for (int i = 0; i < typeArgs.Count(); i++) {
-							test += typeArgs.ElementAt(i) + (i + 1 != typeArgs.Count() ? "," : "");
+					bool isAnonymous = false;
+					foreach (var typearg in parentMethod.TypeArguments) {
+						if (typearg.IsAnonymousType()) { 
+							isAnonymous = true;
+							break;
 						}
-						memberReferenceExpression.MemberName = test + ">";
+					}
+					if (!isAnonymous && invocation.Parent is InvocationExpression invocationExpression &&
+						invocationExpression.Target is MemberReferenceExpression memberReferenceExpression) {
+						invocationExpression.Target = new MemberReferenceExpression(memberReferenceExpression.Target.Clone(), memberReferenceExpression.MemberName, parentMethod.TypeArguments.Select(astBuilder.ConvertType));
 					}
 				}
 			}
@@ -533,6 +536,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							if (constantInvocation.Arguments.Count == 2 &&
 								constantInvocation.Arguments.ElementAt(1) is TypeOfExpression type) {
 								if (type.Type.ToTypeReference().Resolve(context.TypeSystem.Compilation).GetStackType().IsIntegerType() &&
+									!type.Type.ToString().Equals("bool") &&
 									op == UnaryOperatorType.Not) {
 									op = UnaryOperatorType.BitNot;
 								}
@@ -543,6 +547,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			if (expr is CastExpression cast &&
 				cast.Type.ToTypeReference().Resolve(context.TypeSystem.Compilation).GetStackType().IsIntegerType() &&
+				!cast.Type.ToString().Equals("bool") &&
 				op == UnaryOperatorType.Not) {
 				op = UnaryOperatorType.BitNot;
 			}
