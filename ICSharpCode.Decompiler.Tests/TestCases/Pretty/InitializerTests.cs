@@ -338,7 +338,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			InitializerTests.X(InitializerTests.Y(), new Data {
 				MoreData = {
 					a = MyEnum.a,
-					[2] = (Data)null
+					[2] = null
 				}
 			});
 		}
@@ -348,11 +348,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			InitializerTests.X(InitializerTests.Y(), new Data {
 				MoreData = {
 					a = MyEnum.a,
-					[GetInt()] = {
+					[InitializerTests.GetInt()] = {
 						a = MyEnum.b,
-						FieldList = { MyEnum2.c },
-						[GetInt(), GetString()] = new Data(),
-						[2] = (Data)null
+						FieldList = {
+							MyEnum2.c
+						},
+						[InitializerTests.GetInt(), InitializerTests.GetString()] = new Data(),
+						[2] = null
 					}
 				}
 			});
@@ -397,7 +399,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public static void NotAStructInitializer_DefaultConstructor()
 		{
-			StructData structData = new StructData();
+			StructData structData = default(StructData);
 			structData.Field = 1;
 			structData.Property = 2;
 			InitializerTests.X(InitializerTests.Y(), structData);

@@ -66,6 +66,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						instType = newObjInst.Method.DeclaringType;
 						break;
 					case DefaultValue defaultVal:
+						if (defaultVal.ILStackWasEmpty && v.Kind == VariableKind.Local && !context.Function.Method.IsConstructor) {
+							// on statement level (no other expressions on IL stack),
+							// prefer to keep local variables (but not stack slots),
+							// unless we are in a constructor (where inlining object initializers might be critical
+							// for the base ctor call)
+							return false;
+						}
 						instType = defaultVal.Type;
 						break;
 					case Block existingInitializer:
