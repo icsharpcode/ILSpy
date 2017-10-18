@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -98,6 +99,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				set {
 				}
 			}
+
+			public event EventHandler TestEvent;
 		}
 
 		private struct StructData
@@ -263,6 +266,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			Data data = new Data();
 			data.a = MyEnum.a;
+			InitializerTests.X(InitializerTests.Y(), data);
+		}
+
+		public static void NotAnObjectInitializerWithEvent()
+		{
+			Data data = new Data();
+			data.TestEvent += delegate(object sender, EventArgs e) {
+				Console.WriteLine();
+			};
 			InitializerTests.X(InitializerTests.Y(), data);
 		}
 
