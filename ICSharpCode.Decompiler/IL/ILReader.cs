@@ -1011,7 +1011,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction InitObj(ILInstruction target, IType type)
 		{
-			return new StObj(target, new DefaultValue(type), type);
+			var value = new DefaultValue(type);
+			value.ILStackWasEmpty = currentStack.IsEmpty;
+			return new StObj(target, value, type);
 		}
 		
 		private ILInstruction DecodeConstrainedCall()

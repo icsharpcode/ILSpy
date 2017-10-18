@@ -190,5 +190,12 @@ namespace ICSharpCode.Decompiler.Util
 				return maxElement;
 			}
 		}
+
+		public static void RemoveLast<T>(this IList<T> list)
+		{
+			if (list == null)
+				throw new ArgumentNullException(nameof(list));
+			list.RemoveAt(list.Count - 1);
+		}
 	}
 }
