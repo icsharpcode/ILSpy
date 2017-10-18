@@ -196,7 +196,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					proposedName = proposedNameForLoads[0];
 				}
 			}
-			if (string.IsNullOrEmpty(proposedName)) {
+			if (string.IsNullOrEmpty(proposedName) && variable.Kind == VariableKind.StackSlot) {
 				var proposedNameForStoresFromNewObj = variable.StoreInstructions.OfType<StLoc>()
 					.Select(expr => GetNameByType(GuessType(variable.Type, expr.Value, context)))
 					.Except(currentFieldNames).ToList();
