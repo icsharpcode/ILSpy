@@ -46,7 +46,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction inst = body.Instructions[pos];
 			// Match stloc(v, newobj)
 			if (inst.MatchStLoc(out var v, out var initInst) && (v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot)) {
-				Block initializerBlock = null;
 				IType instType;
 				switch (initInst) {
 					case NewObj newObjInst:
@@ -75,22 +74,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						}
 						instType = defaultVal.Type;
 						break;
-					case Block existingInitializer:
-						if (existingInitializer.Type == BlockType.CollectionInitializer || existingInitializer.Type == BlockType.ObjectInitializer) {
-							initializerBlock = existingInitializer;
-							var value = ((StLoc)initializerBlock.Instructions[0]).Value;
-							if (value is NewObj no)
-								instType = no.Method.DeclaringType;
-							else
-								instType = ((DefaultValue)value).Type;
-							break;
-						}
-						return false;
 					default:
 						return false;
 				}
 				int initializerItemsCount = 0;
-				var blockType = initializerBlock?.Type ?? BlockType.CollectionInitializer;
+				var blockType = BlockType.CollectionInitializer;
 				possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
 				currentPath = new List<AccessPathElement>();
 				isCollection = false;
@@ -104,24 +92,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockType)) {
 					initializerItemsCount++;
 				}
+				// Do not convert the statements into an initializer if there's an incompatible usage of the initializer variable
+				// directly after the possible initializer.
 				if (IsMethodCallOnVariable(body.Instructions[pos + initializerItemsCount + 1], v))
 					return false;
+				// Calculate the correct number of statements inside the initializer:
+				// All index variables that were used in the initializer have Index set to -1.
+				// We fetch the first unused variable from the list and remove all instructions after its
+				// first usage (i.e. the init store) from the initializer.
 				var index = possibleIndexVariables.Where(info => info.Value.Index > -1).Min(info => (int?)info.Value.Index);
 				if (index != null) {
 					initializerItemsCount = index.Value - pos - 1;
 				}
+				// The initializer would be empty, there's nothing to do here.
 				if (initializerItemsCount <= 0)
 					return false;
 				context.Step("CollectionOrObjectInitializer", inst);
-				ILVariable finalSlot;
-				if (initializerBlock == null) {
-					initializerBlock = new Block(blockType);
-					finalSlot = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
-					initializerBlock.FinalInstruction = new LdLoc(finalSlot);
-					initializerBlock.Instructions.Add(new StLoc(finalSlot, initInst.Clone()));
-				} else {
-					finalSlot = ((LdLoc)initializerBlock.FinalInstruction).Variable;
-				}
+				// Create a new block and final slot (initializer target variable)
+				var initializerBlock = new Block(blockType);
+				ILVariable finalSlot = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
+				initializerBlock.FinalInstruction = new LdLoc(finalSlot);
+				initializerBlock.Instructions.Add(new StLoc(finalSlot, initInst.Clone()));
+				// Move all instructions to the initializer block.
 				for (int i = 1; i <= initializerItemsCount; i++) {
 					switch (body.Instructions[i + pos]) {
 						case CallInstruction call:
@@ -171,6 +163,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, IType rootType, ref BlockType blockType)
 		{
+			// Include any stores to local variables that are single-assigned and do not reference the initializer-variable
+			// in the list of possible index variables.
+			// Index variables are used to implement dictionary initializers.
 			if (instructions[pos] is StLoc stloc && stloc.Variable.Kind == VariableKind.Local && stloc.Variable.IsSingleDefinition) {
 				if (stloc.Value.Descendants.OfType<IInstructionWithVariableOperand>().Any(ld => ld.Variable == target && (ld is LdLoc || ld is LdLoca)))
 					return false;
@@ -241,7 +236,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public override string ToString() => $"[{Member}, {Indices}]";
 
-		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction> Values, ILVariable Target) GetAccessPath(ILInstruction instruction, IType rootType, Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables = null)
+		public static (AccessPathKind Kind, List<AccessPathElement> Path, List<ILInstruction> Values, ILVariable Target) GetAccessPath(
+			ILInstruction instruction, IType rootType, Dictionary<ILVariable, (int Index, ILInstruction Value)> possibleIndexVariables = null)
 		{
 			List<AccessPathElement> path = new List<AccessPathElement>();
 			ILVariable target = null;
@@ -261,6 +257,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							var isGetter = property?.Getter == method;
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
 							if (possibleIndexVariables != null) {
+								// Mark all index variables as used
 								foreach (var index in indices.OfType<IInstructionWithVariableOperand>()) {
 									if (possibleIndexVariables.TryGetValue(index.Variable, out var info))
 										possibleIndexVariables[index.Variable] = (-1, info.Value);
