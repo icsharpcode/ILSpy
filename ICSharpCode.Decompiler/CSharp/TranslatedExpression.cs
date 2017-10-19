@@ -173,16 +173,26 @@ namespace ICSharpCode.Decompiler.CSharp
 			var type = this.Type;
 			if (type.Equals(targetType)) {
 				// Make explicit conversion implicit, if possible
-				if (allowImplicitConversion && ResolveResult is ConversionResolveResult conversion) {
-					if (Expression is CastExpression cast
-					&& (type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
-						|| type.Kind == TypeKind.Delegate && conversion.Conversion.IsAnonymousFunctionConversion
-						)) {
-						return this.UnwrapChild(cast.Expression);
-					} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
-							&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion)
-					{
-						return this.UnwrapChild(oce.Arguments.Single());
+				if (allowImplicitConversion) {
+					switch (ResolveResult) {
+						case ConversionResolveResult conversion: {
+							if (Expression is CastExpression cast
+							&& (type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
+								|| type.Kind == TypeKind.Delegate && conversion.Conversion.IsAnonymousFunctionConversion
+								)) {
+								return this.UnwrapChild(cast.Expression);
+							} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
+									&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion) {
+								return this.UnwrapChild(oce.Arguments.Single());
+							}
+							break;
+						}
+						case InvocationResolveResult invocation: {
+							if (Expression is ObjectCreateExpression oce && oce.Arguments.Count == 1 && invocation.Type.IsKnownType(KnownTypeCode.NullableOfT)) {
+								return this.UnwrapChild(oce.Arguments.Single());
+							}
+							break;
+						}
 					}
 				}
 				return this;

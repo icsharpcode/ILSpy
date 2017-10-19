@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		/// Can differ from <c>ReturnType</c> if a return statement
 		/// performs an implicit conversion.
 		/// </summary>
-		public readonly IType InferredReturnType;
+		public IType InferredReturnType;
 
 		public DecompiledLambdaResolveResult(IL.ILFunction function,
 			IType delegateType,

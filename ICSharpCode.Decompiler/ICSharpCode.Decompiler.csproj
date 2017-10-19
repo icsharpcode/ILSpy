@@ -277,6 +277,7 @@
     <Compile Include="IL\ILAstWritingOptions.cs" />
     <Compile Include="IL\SequencePoint.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
+    <Compile Include="IL\Instructions\DefaultValue.cs" />
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
     <Compile Include="IL\Transforms\InlineExpressionTreeParameterDeclarations.cs" />
     <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />
