@@ -143,10 +143,16 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(inst)
 						.WithRR(rr);
 				} else {
+
 					if (IsUnambiguousCall(inst, target, method, Array.Empty<IType>(), arguments) != OverloadResolutionErrors.None) {
 						for (int i = 0; i < arguments.Count; i++) {
-							if (!settings.AnonymousTypes || !expectedParameters[i].Type.ContainsAnonymousType())
+							if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
+								if (arguments[i].Expression is LambdaExpression lambda) {
+									ModifyReturnTypeOfLambda(lambda);
+								}
+							} else {
 								arguments[i] = arguments[i].ConvertTo(expectedParameters[i].Type, expressionBuilder);
+							}
 						}
 					}
 					return new ObjectCreateExpression(expressionBuilder.ConvertType(inst.Method.DeclaringType), arguments.SelectArray(arg => arg.Expression))
@@ -180,8 +186,13 @@ namespace ICSharpCode.Decompiler.CSharp
 								if (!argumentsCasted) {
 									argumentsCasted = true;
 									for (int i = 0; i < arguments.Count; i++) {
-										if (!settings.AnonymousTypes || !expectedParameters[i].Type.ContainsAnonymousType())
+										if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
+											if (arguments[i].Expression is LambdaExpression lambda) {
+												ModifyReturnTypeOfLambda(lambda);
+											}
+										} else {
 											arguments[i] = arguments[i].ConvertTo(expectedParameters[i].Type, expressionBuilder);
+										}
 									}
 								} else if (!targetCasted) {
 									targetCasted = true;
@@ -210,6 +221,29 @@ namespace ICSharpCode.Decompiler.CSharp
 					var argumentExpressions = arguments.Select(arg => arg.Expression);
 					return new InvocationExpression(mre, argumentExpressions).WithILInstruction(inst).WithRR(rr);
 				}
+			}
+		}
+
+		private void ModifyReturnTypeOfLambda(LambdaExpression lambda)
+		{
+			var resolveResult = (DecompiledLambdaResolveResult)lambda.GetResolveResult();
+			if (lambda.Body is Expression exprBody)
+				lambda.Body = new TranslatedExpression(exprBody.Detach()).ConvertTo(resolveResult.ReturnType, expressionBuilder);
+			else
+				ModifyReturnStatementInsideLambda(resolveResult.ReturnType, lambda);
+			resolveResult.InferredReturnType = resolveResult.ReturnType;
+		}
+
+		private void ModifyReturnStatementInsideLambda(IType returnType, AstNode parent)
+		{
+			foreach (var child in parent.Children) {
+				if (child is LambdaExpression || child is AnonymousMethodExpression)
+					continue;
+				if (child is ReturnStatement ret) {
+					ret.Expression = new TranslatedExpression(ret.Expression.Detach()).ConvertTo(returnType, expressionBuilder);
+					continue;
+				}
+				ModifyReturnStatementInsideLambda(returnType, child);
 			}
 		}
 
