@@ -342,9 +342,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Convert Property
-		static readonly Expression getMethodFromHandlePattern = new CastExpression(new SimpleType("MethodInfo"), new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")), "GetMethodFromHandle"), new CastExpression(new SimpleType("RuntimeMethodHandle"), new LdTokenPattern("method")), new OptionalNode(new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")), "TypeHandle"))));
+		static readonly Expression getMethodFromHandlePattern = 
+			new Choice() {
+				new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Constant"),new CastExpression(new SimpleType("MethodInfo"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")),"GetMethodFromHandle"),new CastExpression(new SimpleType("RuntimeMethodHandle"),new LdTokenPattern("method")))),new TypeOfExpression(new SimpleType("MethodInfo"))),
+				new CastExpression(new SimpleType("MethodInfo"), new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")), "GetMethodFromHandle"), new CastExpression(new SimpleType("RuntimeMethodHandle"), new LdTokenPattern("method")), new OptionalNode(new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")), "TypeHandle")))),
+				new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Constant"),new CastExpression(new SimpleType("MethodInfo"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")),"GetMethodFromHandle"),new CastExpression(new SimpleType("RuntimeMethodHandle"),new LdTokenPattern("method")),new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")),"TypeHandle"))),new TypeOfExpression(new SimpleType("MethodInfo")))
+	};
 
-		Expression ConvertProperty(InvocationExpression invocation)
+	Expression ConvertProperty(InvocationExpression invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return NotSupported(invocation);
@@ -389,13 +394,23 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (invocation.Arguments.Count < 2)
 				return NotSupported(invocation);
 
+			bool createDelegate = false;
+			foreach (var arg in invocation.Arguments) {
+				Match m1 = getMethodFromHandlePattern.Match(arg);
+				if (m1.Success) {
+					if (m1.Get<AstNode>("method").Single().Annotation<LdMemberToken>().Member is IMethod mr1 && mr1.Name.Equals("CreateDelegate"))
+						createDelegate = true;
+				}
+			}
+
 			Expression target;
 			int firstArgumentPosition;
 
+			PrintMatchPattern("", invocation.Arguments.ElementAt(0));
 			Match m = getMethodFromHandlePattern.Match(invocation.Arguments.ElementAt(0));
 			if (m.Success) {
 				target = null;
-				firstArgumentPosition = 1;
+				firstArgumentPosition = 2; // test for create delegate
 			} else {
 				m = getMethodFromHandlePattern.Match(invocation.Arguments.ElementAt(1));
 				if (!m.Success)
@@ -448,6 +463,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (indexer != null)
 					return new IndexerExpression(mre.Target.Detach(), arguments).WithAnnotation(indexer);
 			}
+
+			if (createDelegate) { 
+				if (arguments.Last().GetType() == typeof(NullReferenceExpression)) {
+					return mre;
+				} else { 
+					return new MemberReferenceExpression(arguments.Last(), mre.MemberName);
+				}
+			}
+
 			return new InvocationExpression(mre, arguments).WithAnnotation(mr);
 		}
 
@@ -457,7 +481,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return NotSupported(invocation);
 
 			Expression convertedTarget = Convert(invocation.Arguments.ElementAt(0));
-			IList<Expression> convertedArguments = ConvertExpressionsArray(invocation.Arguments.ElementAt(1));
+			IList<Expression> convertedArguments;
+			Expression convertedArgument = Convert(invocation.Arguments.ElementAt(1));
+			if (convertedArgument == null) {
+				convertedArguments = ConvertExpressionsArray(invocation.Arguments.ElementAt(1));
+			} else {
+				convertedArguments = new Expression[] { convertedArgument };
+			}
 			if (convertedTarget != null && convertedArguments != null)
 				return new InvocationExpression(convertedTarget, convertedArguments);
 			else
@@ -900,7 +930,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		IList<Expression> ConvertExpressionsArray(Expression arrayExpression)
 		{
-			//PrintMatchPattern("", arrayExpression);
+			PrintMatchPattern("", arrayExpression);
 			Match m = expressionArrayPattern.Match(arrayExpression);
 			if (m.Success) {
 				List<Expression> result = new List<Expression>();

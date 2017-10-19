@@ -250,7 +250,7 @@ public class ExpressionTrees
 		}
 		return false;
 	}
-	
+
 	public void MethodGroupAsExtensionMethod()
 	{
 		ExpressionTrees.ToCode<System.Func<bool>>(ExpressionTrees.X(), () => (Func<bool>)new int[] {
@@ -260,7 +260,7 @@ public class ExpressionTrees
 			2012
 		}.Any);
 	}
-	
+
 	public void MethodGroupConstant()
 	{
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => System.Array.TrueForAll<int>(new int[] {
@@ -268,18 +268,18 @@ public class ExpressionTrees
 			2004,
 			2008,
 			2012
-		}, DateTime.IsLeapYear));
-		
+		}, (Predicate<int>)System.DateTime.IsLeapYear));
+
 		HashSet<int> set = new HashSet<int>();
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[] {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => System.Linq.Enumerable.All<int>(new int[] {
 			2000,
 			2004,
 			2008,
 			2012
-		}.All(set.Add));
+		}, (Func<int, bool>)set.Add));
 		
 		Func<Func<object, object, bool>, bool> sink = (Func<object, object, bool> f) => f(null, null);
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => sink(int.Equals));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => sink((Func<object, object, bool>)object.Equals));
 	}
 	
 	public void MultipleCasts()

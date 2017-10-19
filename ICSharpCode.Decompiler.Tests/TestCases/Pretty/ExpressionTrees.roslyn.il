@@ -30,14 +30,14 @@
   .ver 0:0:0:0
 }
 .module ExpressionTrees.dll
-// MVID: {9277121D-FA56-41A6-A12D-2EE70B031B4D}
+// MVID: {989E4BAD-6FBE-4D32-B91B-3AC4B1F26B0C}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02AA0000
+// Image base: 0x01530000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -2679,26 +2679,33 @@
   .method private hidebysig instance bool 
           MyEquals(class ExpressionTrees other) cil managed
   {
-    // Code size       26 (0x1a)
+    // Code size       33 (0x21)
     .maxstack  2
-    .locals init (bool V_0)
+    .locals init (bool V_0,
+             bool V_1)
     IL_0000:  nop
     IL_0001:  ldarg.1
-    IL_0002:  brfalse.s  IL_0014
+    IL_0002:  ldnull
+    IL_0003:  cgt.un
+    IL_0005:  stloc.0
+    IL_0006:  ldloc.0
+    IL_0007:  brfalse.s  IL_001b
 
-    IL_0004:  ldarg.0
-    IL_0005:  ldfld      int32 ExpressionTrees::'field'
-    IL_000a:  ldarg.1
+    IL_0009:  nop
+    IL_000a:  ldarg.0
     IL_000b:  ldfld      int32 ExpressionTrees::'field'
-    IL_0010:  ceq
-    IL_0012:  br.s       IL_0015
+    IL_0010:  ldarg.1
+    IL_0011:  ldfld      int32 ExpressionTrees::'field'
+    IL_0016:  ceq
+    IL_0018:  stloc.1
+    IL_0019:  br.s       IL_001f
 
-    IL_0014:  ldc.i4.0
-    IL_0015:  stloc.0
-    IL_0016:  br.s       IL_0018
+    IL_001b:  ldc.i4.0
+    IL_001c:  stloc.1
+    IL_001d:  br.s       IL_001f
 
-    IL_0018:  ldloc.0
-    IL_0019:  ret
+    IL_001f:  ldloc.1
+    IL_0020:  ret
   } // end of method ExpressionTrees::MyEquals
 
   .method public hidebysig instance void 
