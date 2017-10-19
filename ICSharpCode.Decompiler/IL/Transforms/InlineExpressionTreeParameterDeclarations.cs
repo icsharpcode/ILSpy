@@ -9,13 +9,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
 			if (block.Instructions[pos] is StLoc parameterVariableInst) {
+				bool alwaysInlined = true;
 				if (MatchParameterVariableAssignment(parameterVariableInst, out ILVariable v, out ILInstruction init)) {
 					foreach (var LdParameterVariableInst in context.Function.Descendants.OfType<LdLoc>()) {
 						if (LdParameterVariableInst.MatchLdLoc(v)) {
-							LdParameterVariableInst.ReplaceWith(init.Clone());
+							ILInstruction parent = LdParameterVariableInst.Parent;
+							while (parent != null) {
+								if (parent is CallInstruction call &&
+									call.Method.FullName.Equals("System.Linq.Expressions.Expression.Lambda") &&
+									!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.LambdaExpression.Compile") ?? false) &&
+									!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.Expression.Compile") ?? false)) {
+									LdParameterVariableInst.ReplaceWith(init.Clone());
+									goto skipAlwaysInlined;
+								}
+								parent = parent.Parent;
+							}
+							alwaysInlined = false;
+							skipAlwaysInlined: ;
 						}
 					}
-					block.Instructions.RemoveAt(pos);
+					if (alwaysInlined)
+						block.Instructions.RemoveAt(pos);
 				}
 			}
 		}
