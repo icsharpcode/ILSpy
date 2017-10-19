@@ -278,6 +278,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			if (parameterArray is ArrayCreateExpression arrayCreate) {
 				foreach (var arg in arrayCreate.Initializer.Elements) {
+					if (!(arg is InvocationExpression))
+						return NotSupported(invocation);
 					ParameterDeclaration parameter = ConvertParameter(arg as InvocationExpression);
 					IType type = parameter.Type.ToTypeReference().Resolve(context.TypeSystem.Compilation);
 					if (type.IsAnonymousType()) {
