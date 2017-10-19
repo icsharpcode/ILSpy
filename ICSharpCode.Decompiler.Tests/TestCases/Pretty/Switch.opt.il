@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly pryqrprl
+.assembly wn5i3ung
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module pryqrprl.dll
-// MVID: {FFEEBB9C-152A-467A-A4B4-51CF03878E20}
+.module wn5i3ung.dll
+// MVID: {DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00B70000
+// Image base: 0x00AB0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -749,7 +749,7 @@
     IL_0013:  brfalse    IL_00db
 
     IL_0018:  volatile.
-    IL_001a:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'::'$$method0x600000d-1'
+    IL_001a:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'::'$$method0x600000d-1'
     IL_001f:  brtrue.s   IL_0082
 
     IL_0021:  ldc.i4.7
@@ -790,9 +790,9 @@
     IL_0076:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
     IL_007b:  volatile.
-    IL_007d:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'::'$$method0x600000d-1'
+    IL_007d:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'::'$$method0x600000d-1'
     IL_0082:  volatile.
-    IL_0084:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'::'$$method0x600000d-1'
+    IL_0084:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'::'$$method0x600000d-1'
     IL_0089:  ldloc.0
     IL_008a:  ldloca.s   V_1
     IL_008c:  call       instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::TryGetValue(!0,
@@ -850,7 +850,7 @@
     IL_0011:  brfalse    IL_013d
 
     IL_0016:  volatile.
-    IL_0018:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'::'$$method0x600000e-1'
+    IL_0018:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'::'$$method0x600000e-1'
     IL_001d:  brtrue     IL_00b6
 
     IL_0022:  ldc.i4.s   11
@@ -911,9 +911,9 @@
     IL_00aa:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
     IL_00af:  volatile.
-    IL_00b1:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'::'$$method0x600000e-1'
+    IL_00b1:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'::'$$method0x600000e-1'
     IL_00b6:  volatile.
-    IL_00b8:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'::'$$method0x600000e-1'
+    IL_00b8:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'::'$$method0x600000e-1'
     IL_00bd:  ldloc.0
     IL_00be:  ldloca.s   V_1
     IL_00c0:  call       instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::TryGetValue(!0,
@@ -1106,7 +1106,7 @@
 
   .method public hidebysig static void  SwitchOnStringInForLoop() cil managed
   {
-    // Code size       299 (0x12b)
+    // Code size       309 (0x135)
     .maxstack  4
     .locals init (class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty> V_0,
              class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty> V_1,
@@ -1123,126 +1123,128 @@
     IL_0011:  stloc.2
     IL_0012:  ldc.i4.0
     IL_0013:  stloc.3
-    IL_0014:  br         IL_0121
+    IL_0014:  br         IL_012b
 
-    IL_0019:  ldloc.2
-    IL_001a:  ldloc.3
-    IL_001b:  ldelem.ref
-    IL_001c:  stloc.s    V_4
-    IL_001e:  ldloc.s    V_4
-    IL_0020:  ldfld      class [mscorlib]System.Reflection.PropertyInfo ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::Property
-    IL_0025:  callvirt   instance string [mscorlib]System.Reflection.MemberInfo::get_Name()
-    IL_002a:  dup
-    IL_002b:  stloc.s    V_5
-    IL_002d:  brfalse    IL_0115
+    IL_0019:  ldstr      "In for-loop"
+    IL_001e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0023:  ldloc.2
+    IL_0024:  ldloc.3
+    IL_0025:  ldelem.ref
+    IL_0026:  stloc.s    V_4
+    IL_0028:  ldloc.s    V_4
+    IL_002a:  ldfld      class [mscorlib]System.Reflection.PropertyInfo ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::Property
+    IL_002f:  callvirt   instance string [mscorlib]System.Reflection.MemberInfo::get_Name()
+    IL_0034:  dup
+    IL_0035:  stloc.s    V_5
+    IL_0037:  brfalse    IL_011f
 
-    IL_0032:  volatile.
-    IL_0034:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'::'$$method0x6000013-1'
-    IL_0039:  brtrue.s   IL_0090
+    IL_003c:  volatile.
+    IL_003e:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'::'$$method0x6000013-1'
+    IL_0043:  brtrue.s   IL_009a
 
-    IL_003b:  ldc.i4.6
-    IL_003c:  newobj     instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::.ctor(int32)
-    IL_0041:  dup
-    IL_0042:  ldstr      "Name1"
-    IL_0047:  ldc.i4.0
-    IL_0048:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+    IL_0045:  ldc.i4.6
+    IL_0046:  newobj     instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::.ctor(int32)
+    IL_004b:  dup
+    IL_004c:  ldstr      "Name1"
+    IL_0051:  ldc.i4.0
+    IL_0052:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
-    IL_004d:  dup
-    IL_004e:  ldstr      "Name2"
-    IL_0053:  ldc.i4.1
-    IL_0054:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+    IL_0057:  dup
+    IL_0058:  ldstr      "Name2"
+    IL_005d:  ldc.i4.1
+    IL_005e:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
-    IL_0059:  dup
-    IL_005a:  ldstr      "Name3"
-    IL_005f:  ldc.i4.2
-    IL_0060:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+    IL_0063:  dup
+    IL_0064:  ldstr      "Name3"
+    IL_0069:  ldc.i4.2
+    IL_006a:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
-    IL_0065:  dup
-    IL_0066:  ldstr      "Name4"
-    IL_006b:  ldc.i4.3
-    IL_006c:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+    IL_006f:  dup
+    IL_0070:  ldstr      "Name4"
+    IL_0075:  ldc.i4.3
+    IL_0076:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
-    IL_0071:  dup
-    IL_0072:  ldstr      "Name5"
-    IL_0077:  ldc.i4.4
-    IL_0078:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+    IL_007b:  dup
+    IL_007c:  ldstr      "Name5"
+    IL_0081:  ldc.i4.4
+    IL_0082:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
-    IL_007d:  dup
-    IL_007e:  ldstr      "Name6"
-    IL_0083:  ldc.i4.5
-    IL_0084:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
+    IL_0087:  dup
+    IL_0088:  ldstr      "Name6"
+    IL_008d:  ldc.i4.5
+    IL_008e:  call       instance void class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::Add(!0,
                                                                                                                   !1)
-    IL_0089:  volatile.
-    IL_008b:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'::'$$method0x6000013-1'
-    IL_0090:  volatile.
-    IL_0092:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'::'$$method0x6000013-1'
-    IL_0097:  ldloc.s    V_5
-    IL_0099:  ldloca.s   V_6
-    IL_009b:  call       instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::TryGetValue(!0,
+    IL_0093:  volatile.
+    IL_0095:  stsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'::'$$method0x6000013-1'
+    IL_009a:  volatile.
+    IL_009c:  ldsfld     class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'::'$$method0x6000013-1'
+    IL_00a1:  ldloc.s    V_5
+    IL_00a3:  ldloca.s   V_6
+    IL_00a5:  call       instance bool class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32>::TryGetValue(!0,
                                                                                                                           !1&)
-    IL_00a0:  brfalse.s  IL_0115
+    IL_00aa:  brfalse.s  IL_011f
 
-    IL_00a2:  ldloc.s    V_6
-    IL_00a4:  switch     ( 
-                          IL_00c3,
-                          IL_00d5,
-                          IL_00e7,
-                          IL_00f9,
-                          IL_010b,
-                          IL_010b)
-    IL_00c1:  br.s       IL_0115
+    IL_00ac:  ldloc.s    V_6
+    IL_00ae:  switch     ( 
+                          IL_00cd,
+                          IL_00df,
+                          IL_00f1,
+                          IL_0103,
+                          IL_0115,
+                          IL_0115)
+    IL_00cb:  br.s       IL_011f
 
-    IL_00c3:  ldloc.s    V_4
-    IL_00c5:  ldc.i4.1
-    IL_00c6:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
-    IL_00cb:  ldloc.0
-    IL_00cc:  ldloc.s    V_4
-    IL_00ce:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
-    IL_00d3:  br.s       IL_011d
+    IL_00cd:  ldloc.s    V_4
+    IL_00cf:  ldc.i4.1
+    IL_00d0:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_00d5:  ldloc.0
+    IL_00d6:  ldloc.s    V_4
+    IL_00d8:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_00dd:  br.s       IL_0127
 
-    IL_00d5:  ldloc.s    V_4
-    IL_00d7:  ldc.i4.2
-    IL_00d8:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
-    IL_00dd:  ldloc.0
-    IL_00de:  ldloc.s    V_4
-    IL_00e0:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
-    IL_00e5:  br.s       IL_011d
+    IL_00df:  ldloc.s    V_4
+    IL_00e1:  ldc.i4.2
+    IL_00e2:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_00e7:  ldloc.0
+    IL_00e8:  ldloc.s    V_4
+    IL_00ea:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_00ef:  br.s       IL_0127
 
-    IL_00e7:  ldloc.s    V_4
-    IL_00e9:  ldc.i4.3
-    IL_00ea:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
-    IL_00ef:  ldloc.0
-    IL_00f0:  ldloc.s    V_4
-    IL_00f2:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
-    IL_00f7:  br.s       IL_011d
+    IL_00f1:  ldloc.s    V_4
+    IL_00f3:  ldc.i4.3
+    IL_00f4:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_00f9:  ldloc.0
+    IL_00fa:  ldloc.s    V_4
+    IL_00fc:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_0101:  br.s       IL_0127
 
-    IL_00f9:  ldloc.s    V_4
-    IL_00fb:  ldc.i4.4
-    IL_00fc:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
-    IL_0101:  ldloc.0
-    IL_0102:  ldloc.s    V_4
-    IL_0104:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
-    IL_0109:  br.s       IL_011d
-
+    IL_0103:  ldloc.s    V_4
+    IL_0105:  ldc.i4.4
+    IL_0106:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
     IL_010b:  ldloc.0
     IL_010c:  ldloc.s    V_4
     IL_010e:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
-    IL_0113:  br.s       IL_011d
+    IL_0113:  br.s       IL_0127
 
-    IL_0115:  ldloc.1
+    IL_0115:  ldloc.0
     IL_0116:  ldloc.s    V_4
     IL_0118:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
-    IL_011d:  ldloc.3
-    IL_011e:  ldc.i4.1
-    IL_011f:  add
-    IL_0120:  stloc.3
-    IL_0121:  ldloc.3
-    IL_0122:  ldloc.2
-    IL_0123:  ldlen
-    IL_0124:  conv.i4
-    IL_0125:  blt        IL_0019
+    IL_011d:  br.s       IL_0127
 
-    IL_012a:  ret
+    IL_011f:  ldloc.1
+    IL_0120:  ldloc.s    V_4
+    IL_0122:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_0127:  ldloc.3
+    IL_0128:  ldc.i4.1
+    IL_0129:  add
+    IL_012a:  stloc.3
+    IL_012b:  ldloc.3
+    IL_012c:  ldloc.2
+    IL_012d:  ldlen
+    IL_012e:  conv.i4
+    IL_012f:  blt        IL_0019
+
+    IL_0134:  ret
   } // end of method Switch::SwitchOnStringInForLoop
 
   .method public hidebysig static void  SwitchWithComplexCondition(string[] args) cil managed
@@ -1369,14 +1371,14 @@
 
 } // end of class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch
 
-.class private auto ansi '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'
+.class private auto ansi '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'
        extends [mscorlib]System.Object
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
   .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x600000d-1'
   .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x600000e-1'
   .field static assembly class [mscorlib]System.Collections.Generic.Dictionary`2<string,int32> '$$method0x6000013-1'
-} // end of class '<PrivateImplementationDetails>{FFEEBB9C-152A-467A-A4B4-51CF03878E20}'
+} // end of class '<PrivateImplementationDetails>{DBA055A4-E95E-43C4-8BA9-D8F45F1AB075}'
 
 
 // =============================================================

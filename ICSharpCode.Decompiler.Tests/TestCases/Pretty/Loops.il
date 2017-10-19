@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly ic2bztjj
+.assembly ev4s5oix
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module ic2bztjj.dll
-// MVID: {821665CB-F67F-4600-8C6C-27617D873D36}
+.module ev4s5oix.dll
+// MVID: {2CE88082-2B99-4514-B562-457B10DE03C1}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01550000
+// Image base: 0x02F30000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1499,6 +1499,53 @@
   } // end of method Loops::LastOrDefault
 
   .method public hidebysig instance void 
+          ForEachOverArray(string[] 'array') cil managed
+  {
+    // Code size       52 (0x34)
+    .maxstack  2
+    .locals init (string V_0,
+             string[] V_1,
+             int32 V_2,
+             bool V_3)
+    IL_0000:  nop
+    IL_0001:  nop
+    IL_0002:  ldarg.1
+    IL_0003:  stloc.1
+    IL_0004:  ldc.i4.0
+    IL_0005:  stloc.2
+    IL_0006:  br.s       IL_0029
+
+    IL_0008:  ldloc.1
+    IL_0009:  ldloc.2
+    IL_000a:  ldelem.ref
+    IL_000b:  stloc.0
+    IL_000c:  nop
+    IL_000d:  ldloc.0
+    IL_000e:  callvirt   instance string [mscorlib]System.String::ToLower()
+    IL_0013:  ldloc.0
+    IL_0014:  callvirt   instance string [mscorlib]System.String::ToUpper()
+    IL_0019:  call       string [mscorlib]System.String::Concat(string,
+                                                                string)
+    IL_001e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0023:  nop
+    IL_0024:  nop
+    IL_0025:  ldloc.2
+    IL_0026:  ldc.i4.1
+    IL_0027:  add
+    IL_0028:  stloc.2
+    IL_0029:  ldloc.2
+    IL_002a:  ldloc.1
+    IL_002b:  ldlen
+    IL_002c:  conv.i4
+    IL_002d:  clt
+    IL_002f:  stloc.3
+    IL_0030:  ldloc.3
+    IL_0031:  brtrue.s   IL_0008
+
+    IL_0033:  ret
+  } // end of method Loops::ForEachOverArray
+
+  .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed
   {
     // Code size       31 (0x1f)
@@ -1532,6 +1579,57 @@
 
     IL_001e:  ret
   } // end of method Loops::ForOverArray
+
+  .method public hidebysig instance void 
+          NoForeachOverArray(string[] 'array') cil managed
+  {
+    // Code size       48 (0x30)
+    .maxstack  2
+    .locals init (int32 V_0,
+             string V_1,
+             bool V_2)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.0
+    IL_0002:  stloc.0
+    IL_0003:  br.s       IL_0025
+
+    IL_0005:  nop
+    IL_0006:  ldarg.1
+    IL_0007:  ldloc.0
+    IL_0008:  ldelem.ref
+    IL_0009:  stloc.1
+    IL_000a:  ldloc.0
+    IL_000b:  ldc.i4.5
+    IL_000c:  rem
+    IL_000d:  ldc.i4.0
+    IL_000e:  ceq
+    IL_0010:  ldc.i4.0
+    IL_0011:  ceq
+    IL_0013:  stloc.2
+    IL_0014:  ldloc.2
+    IL_0015:  brtrue.s   IL_0020
+
+    IL_0017:  nop
+    IL_0018:  ldloc.1
+    IL_0019:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_001e:  nop
+    IL_001f:  nop
+    IL_0020:  nop
+    IL_0021:  ldloc.0
+    IL_0022:  ldc.i4.1
+    IL_0023:  add
+    IL_0024:  stloc.0
+    IL_0025:  ldloc.0
+    IL_0026:  ldarg.1
+    IL_0027:  ldlen
+    IL_0028:  conv.i4
+    IL_0029:  clt
+    IL_002b:  stloc.2
+    IL_002c:  ldloc.2
+    IL_002d:  brtrue.s   IL_0005
+
+    IL_002f:  ret
+  } // end of method Loops::NoForeachOverArray
 
   .method public hidebysig instance void 
           NestedLoops() cil managed

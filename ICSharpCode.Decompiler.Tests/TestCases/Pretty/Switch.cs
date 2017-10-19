@@ -380,6 +380,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			List<SetProperty> list2 = new List<SetProperty>();
 			SetProperty[] properties = Switch.GetProperties();
 			for (int i = 0; i < properties.Length; i++) {
+				Console.WriteLine("In for-loop");
 				SetProperty setProperty = properties[i];
 				switch (setProperty.Property.Name) {
 					case "Name1":
