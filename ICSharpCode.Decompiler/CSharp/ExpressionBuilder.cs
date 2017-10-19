@@ -325,8 +325,15 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal ExpressionWithResolveResult GetDefaultValueExpression(IType type)
 		{
-			var expr = type.IsReferenceType == true ? (Expression)new NullReferenceExpression() : new DefaultValueExpression(ConvertType(type));
-			var constantType = type.IsReferenceType == true ? SpecialType.NullType : type;
+			Expression expr;
+			IType constantType;
+			if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT)) {
+				expr = new NullReferenceExpression();
+				constantType = SpecialType.NullType;
+			} else {
+				expr = new DefaultValueExpression(ConvertType(type));
+				constantType = type;
+			}
 			return expr.WithRR(new ConstantResolveResult(constantType, null));
 		}
 		
