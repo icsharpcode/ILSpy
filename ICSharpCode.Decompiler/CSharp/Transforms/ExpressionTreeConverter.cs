@@ -714,7 +714,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return null;
 			ArrayInitializerExpression initializer;
 			if (invocation.Arguments.Count == 2) {
-				initializer = ConvertElementInit(invocation.Arguments.ElementAt(1));
+				initializer = ConvertElementInit(invocation.Arguments.ElementAt(1) as InvocationExpression);
 				if (initializer != null) {
 					oce.Initializer = initializer;
 					return oce;
@@ -724,16 +724,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			} else {
 				initializer = new ArrayInitializerExpression();
 				for (int i = 1; i < invocation.Arguments.Count; i++) {
-					initializer.Elements.Add(ConvertElementInit(invocation.Arguments.ElementAt(i)));
+					initializer.Elements.Add(ConvertElementInit(invocation.Arguments.ElementAt(i) as InvocationExpression));
 				}
 				oce.Initializer = initializer;
 				return oce;
 			}
 		}
 
-		ArrayInitializerExpression ConvertElementInit(Expression elementsArray)
+		ArrayInitializerExpression ConvertElementInit(InvocationExpression elementsArray)
 		{
-			IList<Expression> elements = ConvertExpressionsArray(elementsArray);
+			IList<Expression> elements;
+			if (elementsArray.Arguments.Count > 1) {
+				elements = new List<Expression>();
+				foreach (var element in elementsArray.Arguments.Skip(1)) {
+					elements.Add(Convert(element));
+				}
+			} else {
+				elements = ConvertExpressionsArray(elementsArray);
+			}
 			if (elements != null) {
 				return new ArrayInitializerExpression(elements);
 			}
@@ -806,7 +814,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						convertedValue = ConvertMemberBindings(bindingValue);
 						break;
 					case "ListBind":
-						convertedValue = ConvertElementInit(bindingValue);
+						convertedValue = ConvertElementInit(bindingValue as InvocationExpression);
 						break;
 					default:
 						return null;
@@ -872,21 +880,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
 					}
 				),
-				new InvocationExpression(
-					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"NewArrayInit"),
-					new TypeOfExpression(new AnyNode()),
-					new Repeat(Use(elementPattern))
-				),
-				new InvocationExpression(
-					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"ElementInit"),
-					new CastExpression(
-						new SimpleType("MethodInfo"),
-						new InvocationExpression(new MemberReferenceExpression(
-							new TypeReferenceExpression(new SimpleType("MethodBase")),"GetMethodFromHandle"),
-							new CastExpression(new SimpleType("RuntimeMethodHandle"),new LdTokenPattern("test")),
-							new MemberReferenceExpression(new TypeOfExpression(new AnyNode()),"TypeHandle")
-							)),
-					new Repeat(Use(elementPattern))),
 				new InvocationExpression(
 					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"MemberInit"),
 					new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"New"),new TypeOfExpression(new AnyNode())),
@@ -991,7 +984,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return NotSupported(invocation);
 
 			AstType elementType = ConvertTypeReference(invocation.Arguments.ElementAt(0));
-			IList<Expression> elements = ConvertExpressionsArray(invocation);
+			IList<Expression> elements = new List<Expression>();
+			foreach (var element in invocation.Arguments.Skip(1)) {
+				var convertedElement = Convert(element);
+				if (convertedElement == null) {
+					elements = null;
+					break;
+				}
+				elements.Add(convertedElement);
+			}
+			if (elements == null && invocation.Arguments.Count == 2) {
+				elements = ConvertExpressionsArray(invocation.Arguments.ElementAt(1));
+			}
+			
 			if (elementType != null && elements != null) {
 				if (ContainsAnonymousType(elementType)) {
 					elementType = null;
