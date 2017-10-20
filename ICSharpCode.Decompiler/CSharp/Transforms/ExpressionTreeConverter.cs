@@ -769,10 +769,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				return null;
 			List<Expression> memberBindings = new List<Expression>();
 			foreach (var memberBinding in invocation.Arguments.Skip(1)) {
-				List<Expression> bindings = ConvertMemberBindings(memberBinding);
-				if (bindings == null)
+				Expression binding = ConvertMemberBinding(memberBinding as InvocationExpression);
+				if (binding == null)
 					return null;
-				memberBindings.AddRange(bindings);
+				memberBindings.Add(binding);
 			}
 			oce.Initializer = new ArrayInitializerExpression(memberBindings);
 			return oce;
@@ -788,48 +788,52 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (!m.Success)
 				return null;
 			foreach (var binding in m.Get<Expression>("binding")) {
-				InvocationExpression bindingInvocation = binding as InvocationExpression;
-				if (bindingInvocation == null || bindingInvocation.Arguments.Count != 2)
-					return null;
-				MemberReferenceExpression bindingMRE = bindingInvocation.Target as MemberReferenceExpression;
-				if (bindingMRE == null || !expressionTypeReference.IsMatch(bindingMRE.Target))
-					return null;
-
-				Expression bindingTarget = bindingInvocation.Arguments.ElementAt(0);
-				Expression bindingValue = bindingInvocation.Arguments.ElementAt(1);
-
-				string memberName;
-				Match m2 = getFieldFromHandlePattern.Match(bindingTarget); // getFieldFromHandle
-				if (m2.Success) {
-					IField setter = m2.Get<AstNode>("field").Single().Annotation<LdMemberToken>().Member as IField;
-					if (setter == null)
-						return null;
-					memberName = setter.Name;
-				} else {
-					return null;
-				}
-
-				Expression convertedValue;
-				switch (bindingMRE.MemberName) {
-					case "Bind":
-						convertedValue = Convert(bindingValue);
-						break;
-					case "MemberBind":
-						convertedValue = new ArrayInitializerExpression(ConvertMemberBindings(bindingValue));
-						break;
-					case "ListBind":
-						convertedValue = ConvertElementInit(bindingValue as InvocationExpression);
-						break;
-					default:
-						return null;
-				}
-				if (convertedValue == null)
-					return null;
-				memberBindings.Add(new NamedExpression(memberName, convertedValue));
+				memberBindings.Add(ConvertMemberBinding(binding as InvocationExpression));
 			}
 			return memberBindings;
 		}
 		#endregion
+
+		Expression ConvertMemberBinding(InvocationExpression bindingInvocation)
+		{
+			if (bindingInvocation == null || bindingInvocation.Arguments.Count != 2)
+				return null;
+			MemberReferenceExpression bindingMRE = bindingInvocation.Target as MemberReferenceExpression;
+			if (bindingMRE == null || !expressionTypeReference.IsMatch(bindingMRE.Target))
+				return null;
+
+			Expression bindingTarget = bindingInvocation.Arguments.ElementAt(0);
+			Expression bindingValue = bindingInvocation.Arguments.ElementAt(1);
+
+			string memberName;
+			Match m2 = getFieldFromHandlePattern.Match(bindingTarget); // getFieldFromHandle
+			if (m2.Success) {
+				IField setter = m2.Get<AstNode>("field").Single().Annotation<LdMemberToken>().Member as IField;
+				if (setter == null)
+					return null;
+				memberName = setter.Name;
+			} else {
+				return null;
+			}
+
+			Expression convertedValue;
+			switch (bindingMRE.MemberName) {
+				case "Bind":
+					convertedValue = Convert(bindingValue);
+					break;
+				case "MemberBind":
+					convertedValue = new ArrayInitializerExpression(ConvertMemberBindings(bindingValue));
+					break;
+				case "ListBind":
+					convertedValue = ConvertElementInit(bindingValue as InvocationExpression);
+					break;
+				default:
+					return null;
+			}
+			if (convertedValue == null)
+				return null;
+			return new NamedExpression(memberName, convertedValue);
+		}
 
 		#region Convert Cast
 		Expression ConvertCast(InvocationExpression invocation, bool isChecked)
