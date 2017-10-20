@@ -767,22 +767,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			ObjectCreateExpression oce = Convert(invocation.Arguments.ElementAt(0)) as ObjectCreateExpression;
 			if (oce == null)
 				return null;
-			ArrayInitializerExpression bindings = ConvertMemberBindings(invocation);
-			if (bindings == null)
-				return null;
-			oce.Initializer = bindings;
+			List<Expression> memberBindings = new List<Expression>();
+			foreach (var memberBinding in invocation.Arguments.Skip(1)) {
+				List<Expression> bindings = ConvertMemberBindings(memberBinding);
+				if (bindings == null)
+					return null;
+				memberBindings.AddRange(bindings);
+			}
+			oce.Initializer = new ArrayInitializerExpression(memberBindings);
 			return oce;
 		}
 
 		static readonly Pattern memberBindingArrayPattern = ArrayInitializationPattern(new SimpleType("MemberBinding"), new AnyNode("binding"));
 		static readonly INode expressionTypeReference = new TypeReferenceExpression(new TypePattern(typeof(System.Linq.Expressions.Expression)));
 
-		ArrayInitializerExpression ConvertMemberBindings(Expression elementsArray)
+		List<Expression> ConvertMemberBindings(Expression elementsArray)
 		{
+			List<Expression> memberBindings = new List<Expression>();
 			Match m = memberBindingArrayPattern.Match(elementsArray);
 			if (!m.Success)
 				return null;
-			ArrayInitializerExpression result = new ArrayInitializerExpression();
 			foreach (var binding in m.Get<Expression>("binding")) {
 				InvocationExpression bindingInvocation = binding as InvocationExpression;
 				if (bindingInvocation == null || bindingInvocation.Arguments.Count != 2)
@@ -811,7 +815,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						convertedValue = Convert(bindingValue);
 						break;
 					case "MemberBind":
-						convertedValue = ConvertMemberBindings(bindingValue);
+						convertedValue = new ArrayInitializerExpression(ConvertMemberBindings(bindingValue));
 						break;
 					case "ListBind":
 						convertedValue = ConvertElementInit(bindingValue as InvocationExpression);
@@ -821,9 +825,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 				if (convertedValue == null)
 					return null;
-				result.Elements.Add(new NamedExpression(memberName, convertedValue));
+				memberBindings.Add(new NamedExpression(memberName, convertedValue));
 			}
-			return result;
+			return memberBindings;
 		}
 		#endregion
 
@@ -879,14 +883,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						},
 						Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
 					}
-				),
-				new InvocationExpression(
-					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"MemberInit"),
-					new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"New"),new TypeOfExpression(new AnyNode())),
-					new Repeat(
-						Use(elementPattern)
-					)
-				),
+				)
 			};
 		}
 
