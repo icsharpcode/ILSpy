@@ -858,49 +858,19 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return new Choice {
 				new ArrayCreateExpression {
 					Type = Use(arrayElementType),
-					Arguments = { new PrimitiveExpression(0) }
-				},
-				new ArrayCreateExpression {
-					Type = Use(arrayElementType),
-					AdditionalArraySpecifiers = { new ArraySpecifier() },
-					Initializer = new ArrayInitializerExpression {
-						Elements = { new Repeat(Use(elementPattern)) }
-					}
-				},
-				new ArrayCreateExpression {
-					Type = Use(arrayElementType),
 					Initializer = new ArrayInitializerExpression {
 						Elements = { new Repeat(Use(elementPattern)) }
 					},
 					Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
 				},
 				new CastExpression(new SimpleType("IEnumerable",new SimpleType("Expression")),
-				new ArrayCreateExpression {
-					Type = Use(arrayElementType),
-					Initializer = new ArrayInitializerExpression {
-						Elements = { new Repeat(Use(elementPattern)) }
-					},
-					Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
-				}),
-				new LambdaExpression {
-					Body = Use(elementPattern) as AnyNode
-				},
-				new InvocationExpression( // maybe this block has to be removed as it may produce wrong results
-					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")), "Convert"),
-					new InvocationExpression(
-						new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")), "Call"),
-						new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")), "Constant"),new CastExpression(new SimpleType("MethodInfo"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")), "GetMethodFromHandle"),new CastExpression(new SimpleType("RuntimeMethodHandle"), new LdTokenPattern("jojo")))),new TypeOfExpression(new SimpleType("MethodInfo"))),
-						new CastExpression(new SimpleType("MethodInfo"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")), "GetMethodFromHandle"),new CastExpression(new SimpleType("RuntimeMethodHandle"),new LdTokenPattern("jojo2")))),
-						new ArrayCreateExpression {
-							Type = arrayElementType,
-							Initializer = new ArrayInitializerExpression {
-								Elements = { new Repeat(Use(elementPattern)) }
-							},
-							Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
-						}
-					),
-					new TypeOfExpression(new SimpleType("Func", new Syntax.PrimitiveType("object"),
-					new Syntax.PrimitiveType("object"), new Syntax.PrimitiveType("bool")))
+					new ArrayCreateExpression {
+						Type = Use(arrayElementType),
+						Initializer = new ArrayInitializerExpression {
+							Elements = { new Repeat(Use(elementPattern)) }
+						},
+						Arguments = { new PrimitiveExpression(PrimitiveExpression.AnyValue) }
+					}
 				),
 				new InvocationExpression(
 					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"NewArrayInit"),
@@ -917,19 +887,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							new MemberReferenceExpression(new TypeOfExpression(new AnyNode()),"TypeHandle")
 							)),
 					new Repeat(Use(elementPattern))),
-				new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Array")),"Empty",new SimpleType("Expression"))),
 				new InvocationExpression(
 					new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"MemberInit"),
 					new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"New"),new TypeOfExpression(new AnyNode())),
 					new Repeat(
-						new AnyNode("binding")
-						//new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Bind"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("FieldInfo")),"GetFieldFromHandle"),new CastExpression(new SimpleType("RuntimeFieldHandle"),new LdTokenPattern("property"))),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Field"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Field"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Constant"),new IdentifierExpression("value"),new TypeOfExpression(new AnyNode("className"))),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("FieldInfo")),"GetFieldFromHandle"),new CastExpression(new SimpleType("RuntimeFieldHandle"),new LdTokenPattern("classElement")))),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("FieldInfo")),"GetFieldFromHandle"),new CastExpression(new SimpleType("RuntimeFieldHandle"),new LdTokenPattern("sameProperty")))))
+						Use(elementPattern)
 					)
 				),
-
-
-				new InvocationExpression(Use(elementPattern) as AnyNode),
-				Use(elementPattern)
 			};
 		}
 
@@ -1049,7 +1013,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			AstType elementType = ConvertTypeReference(invocation.Arguments.ElementAt(0));
 			List<Expression> arguments = new List<Expression>();
 			for (int i = 1; i < invocation.Arguments.Count; i++) {
-				arguments.AddRange(ConvertExpressionsArray(invocation.Arguments.ElementAt(i)));
+				Expression convertedExpression = Convert(invocation.Arguments.ElementAt(i));
+				if (convertedExpression != null) {
+					arguments.Add(convertedExpression);
+				} else { 
+					arguments.AddRange(ConvertExpressionsArray(invocation.Arguments.ElementAt(i)));
+				}
 			}
 			if (elementType != null && arguments != null) {
 				if (ContainsAnonymousType(elementType)) {
