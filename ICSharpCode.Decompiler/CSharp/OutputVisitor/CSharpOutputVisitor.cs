@@ -890,6 +890,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(nullReferenceExpression);
 			writer.WritePrimitiveValue(null);
+			isAfterSpace = false;
 			EndNode(nullReferenceExpression);
 		}
 		
