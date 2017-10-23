@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>ICSharpCode.Decompiler</id>
-    <version>3.0.0-alpha3</version>
+    <version>3.0.0-beta1</version>
     <title>ILSpy Decompiler Engine</title>
     <authors>Daniel Grunwald, David Srbecky, Ed Harvey, Siegfried Pammer</authors>
     <owners>Daniel Grunwald, SharpDevelop</owners>
@@ -15,9 +15,10 @@
     <copyright>Copyright 2011-2017 AlphaSierraPapa</copyright>
     <tags>C# Decompiler ILSpy</tags>
     <dependencies>
-      <dependency id="System.Collections.Immutable" version="1.3.0" />
-      <dependency id="System.ValueTuple" version="4.3.0" />
-      <dependency id="Newtonsoft.Json" version="10.0.3" />	  
+      <dependency id="Humanizer.Core" version="2.2.0" />
+      <dependency id="Newtonsoft.Json" version="10.0.3" />
+      <dependency id="System.Collections.Immutable" version="1.4.0" />
+      <dependency id="System.ValueTuple" version="4.4.0" />
     </dependencies>
   </metadata>
   <files>
