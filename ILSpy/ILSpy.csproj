@@ -346,6 +346,7 @@
     <Resource Include="Images\PrivateInternal.png" />
     <Resource Include="Images\Refresh.png" />
     <Resource Include="Images\Constructor.png" />
+    <Resource Include="Images\CollapseAll.png" />
     <Resource Include="Images\EnumValue.png" />
     <Resource Include="Images\FieldReadOnly.png" />
     <Resource Include="Images\OverlayInternal.png" />

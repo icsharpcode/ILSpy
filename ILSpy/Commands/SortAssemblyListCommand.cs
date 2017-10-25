@@ -18,12 +18,13 @@
 
 using System;
 using System.Collections.Generic;
+using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy
 {
 	[ExportMainMenuCommand(Menu = "_View", Header = "Sort assembly list by name", MenuIcon = "Images/Sort.png", MenuCategory = "View")]
 	[ExportToolbarCommand(ToolTip = "Sort assembly list by name", ToolbarIcon = "Images/Sort.png", ToolbarCategory = "View")]
-	class SortAssemblyListCommand : SimpleCommand, IComparer<LoadedAssembly>
+	sealed class SortAssemblyListCommand : SimpleCommand, IComparer<LoadedAssembly>
 	{
 		public override void Execute(object parameter)
 		{
@@ -34,6 +35,27 @@ namespace ICSharpCode.ILSpy
 		int IComparer<LoadedAssembly>.Compare(LoadedAssembly x, LoadedAssembly y)
 		{
 			return string.Compare(x.ShortName, y.ShortName, StringComparison.CurrentCulture);
+		}
+	}
+
+	[ExportMainMenuCommand(Menu = "_View", Header = "Collapse all tree nodes", MenuIcon = "Images/CollapseAll.png", MenuCategory = "View")]
+	[ExportToolbarCommand(ToolTip = "Collapse all tree nodes", ToolbarIcon = "Images/CollapseAll.png", ToolbarCategory = "View")]
+	sealed class CollapseAllCommand : SimpleCommand
+	{
+		public override void Execute(object parameter)
+		{
+			using (MainWindow.Instance.treeView.LockUpdates())
+				CollapseChildren(MainWindow.Instance.treeView.Root);
+
+			void CollapseChildren(SharpTreeNode node)
+			{
+				foreach (var child in node.Children) {
+					if (!child.IsExpanded)
+						continue;
+					CollapseChildren(child);
+					child.IsExpanded = false;
+				}
+			}
 		}
 	}
 }
