@@ -42,6 +42,7 @@ function gitBranch() {
 $templateFiles = (
 	@{Input=$globalAssemblyInfoTemplateFile; Output="ILSpy/Properties/AssemblyInfo.cs"},
 	@{Input="ICSharpCode.Decompiler/Properties/AssemblyInfo.template.cs"; Output="ICSharpCode.Decompiler/Properties/AssemblyInfo.cs"},
+	@{Input="ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec.template"; Output="ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec"},
 	@{Input="ILSpy/Properties/app.config.template"; Output = "ILSpy/app.config"}
 );
 [string]$mutexId = "ILSpyUpdateAssemblyInfo" + $PSScriptRoot.GetHashCode();

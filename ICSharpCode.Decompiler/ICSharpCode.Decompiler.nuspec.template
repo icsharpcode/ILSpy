@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
   <metadata>
     <id>ICSharpCode.Decompiler</id>
-    <version>3.0.0-beta1</version>
+    <version>$INSERTVERSION$$INSERTVERSIONNAMEPOSTFIX$</version>
     <title>ILSpy Decompiler Engine</title>
     <authors>Daniel Grunwald, David Srbecky, Ed Harvey, Siegfried Pammer</authors>
     <owners>Daniel Grunwald, SharpDevelop</owners>
@@ -12,7 +12,7 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>ICSharpCode.Decompiler is the decompiler engine used in ILSpy.</description>
     <!--<releaseNotes></releaseNotes>-->
-    <copyright>Copyright 2011-2017 AlphaSierraPapa</copyright>
+    <copyright>Copyright 2011-$INSERTYEAR$ AlphaSierraPapa</copyright>
     <tags>C# Decompiler ILSpy</tags>
     <dependencies>
       <dependency id="Humanizer.Core" version="2.2.0" />
