@@ -24,7 +24,7 @@
   <!-- HACK: Disable package generation on Unix due to tooling issues. -->
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSymbolsInPackage>true</IncludeSymbolsInPackage>
     <NuspecFile>ICSharpCode.Decompiler.nuspec</NuspecFile>
     <NuspecProperties>Configuration=$(Configuration)</NuspecProperties>
   </PropertyGroup>
@@ -591,9 +591,7 @@
   </Target>
 
   <!-- Workaround for EmbedSources support, see https://github.com/dotnet/roslyn/issues/19127 -->
-  <Target Name="PopulateEmbeddedFiles"
-          AfterTargets="BeforeCompile"
-          BeforeTargets="CoreCompile">
+  <Target Name="PopulateEmbeddedFiles" AfterTargets="BeforeCompile" BeforeTargets="CoreCompile">
     <ItemGroup>
       <EmbeddedFiles Include="@(Compile)" />
     </ItemGroup>
