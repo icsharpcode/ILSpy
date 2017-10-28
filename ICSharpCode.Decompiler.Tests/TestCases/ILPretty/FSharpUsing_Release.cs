@@ -31,28 +31,28 @@ public static class FSharpUsingPatterns
 	public static void sample4()
 	{
 		Console.WriteLine("some text");
-		int num;
+		int num = default(int);
 		using (FileStream fileStream = File.OpenRead("x.txt")) {
 			num = fileStream.ReadByte();
 		}
-		int firstByte = num;
-		Console.WriteLine("read:" + firstByte.ToString());
+		int num2 = num;
+		Console.WriteLine("read:" + num2.ToString());
 	}
 
 	public static void sample5()
 	{
 		Console.WriteLine("some text");
-		int secondByte;
+		int num = default(int);
 		using (FileStream fileStream = File.OpenRead("x.txt")) {
-			secondByte = fileStream.ReadByte();
+			num = fileStream.ReadByte();
 		}
-		int firstByte = secondByte;
-		int num2;
+		int num2 = num;
+		int num3 = default(int);
 		using (FileStream fileStream = File.OpenRead("x.txt")) {
-			int num = fileStream.ReadByte();
-			num2 = fileStream.ReadByte();
+			fileStream.ReadByte();
+			num3 = fileStream.ReadByte();
 		}
-		secondByte = num2;
-		Console.WriteLine("read: {0}, {1}", firstByte, secondByte);
+		num = num3;
+		Console.WriteLine("read: {0}, {1}", num2, num);
 	}
 }
