@@ -694,6 +694,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
+			if ((op == BinaryOperatorType.BitwiseAnd || op == BinaryOperatorType.BitwiseOr || op == BinaryOperatorType.ExclusiveOr)
+				&& (left.Type.Kind == TypeKind.Enum || right.Type.Kind == TypeKind.Enum)) {
+				left = AdjustConstantExpressionToType(left, right.Type);
+				right = AdjustConstantExpressionToType(right, left.Type);
+			}
+
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 			if (rr.IsError || NullableType.GetUnderlyingType(rr.Type).GetStackType() != inst.UnderlyingResultType
 			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
