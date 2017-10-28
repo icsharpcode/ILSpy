@@ -1673,7 +1673,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// ILAst LogicAnd/LogicOr can return a different value than 0 or 1
 			// if the rhs is evaluated.
 			// We can only correctly translate it to C# if the rhs is of type boolean:
-			if (op != BinaryOperatorType.Any && rhs.Type.IsKnownType(KnownTypeCode.Boolean)) {
+			if (op != BinaryOperatorType.Any && (rhs.Type.IsKnownType(KnownTypeCode.Boolean) || IfInstruction.IsInConditionSlot(inst))) {
+				rhs = rhs.ConvertToBoolean(this);
 				return new BinaryOperatorExpression(condition, op, rhs)
 					.WithILInstruction(inst)
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));
