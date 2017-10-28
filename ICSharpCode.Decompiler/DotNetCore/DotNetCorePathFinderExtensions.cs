@@ -8,7 +8,6 @@ using Newtonsoft.Json.Linq;
 
 namespace ICSharpCode.Decompiler
 {
-
 	public static class DotNetCorePathFinderExtensions
 	{
 		public static string DetectTargetFrameworkId(this AssemblyDefinition assembly)

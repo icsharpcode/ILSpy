@@ -163,6 +163,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Jmp()
+		{
+			RunIL("Jmp.il");
+		}
+
+		[Test]
 		public void UnsafeCode([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);
@@ -192,8 +198,14 @@ namespace ICSharpCode.Decompiler.Tests
 			RunCS(options: options);
 		}
 
-		[Test, Ignore("Run() method cannot be fully decompiled.")]
-		public void Async([ValueSource("defaultOptions")] CompilerOptions options)
+		[Test]
+		public void Async([Values(CompilerOptions.None, CompilerOptions.Optimize)] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
+		public void LINQRaytracer([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);
 		}
@@ -201,17 +213,18 @@ namespace ICSharpCode.Decompiler.Tests
 		void RunCS([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug)
 		{
 			string testFileName = testName + ".cs";
+			string testOutputFileName = testName + Tester.GetSuffix(options) + ".exe";
 			CompilerResults outputFile = null, decompiledOutputFile = null;
 
 			try {
-				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options);
+				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
+					outputFileName: Path.Combine(TestCasePath, testOutputFileName));
 				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly);
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
 				
 				Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
 				
 				File.Delete(decompiledCodeFile);
-				File.Delete(outputFile.PathToAssembly);
 				File.Delete(decompiledOutputFile.PathToAssembly);
 			} finally {
 				if (outputFile != null)

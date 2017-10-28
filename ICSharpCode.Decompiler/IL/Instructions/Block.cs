@@ -108,6 +108,9 @@ namespace ICSharpCode.Decompiler.IL
 				// only the last instruction may have an unreachable endpoint
 				Debug.Assert(!Instructions[i].HasFlag(InstructionFlags.EndPointUnreachable));
 			}
+			if (this.Type == BlockType.ControlFlow) {
+				Debug.Assert(finalInstruction.OpCode == OpCode.Nop);
+			}
 		}
 		
 		public override StackType ResultType {
@@ -126,13 +129,14 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write("Block ");
 			output.WriteDefinition(Label, this);
 			if (Parent is BlockContainer)
 				output.Write(" (incoming: {0})", IncomingEdgeCount);
 			output.Write(' ');
 			output.MarkFoldStart("{...}");
-			output.WriteLine(" {");
+			output.WriteLine("{");
 			output.Indent();
 			foreach (var inst in Instructions) {
 				inst.WriteTo(output, options);

@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.FlowAnalysis
 {
@@ -118,35 +119,37 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			}
 			return false;
 		}
-		
-		//public static GraphVizGraph ExportGraph(IReadOnlyList<ControlFlowNode> nodes, Func<ControlFlowNode, string> labelFunc = null)
-		//{
-		//	if (labelFunc == null) {
-		//		labelFunc = node => {
-		//			var block = node.UserData as IL.Block;
-		//			return block != null ? block.Label : node.UserData?.ToString();
-		//		};
-		//	}
-		//	GraphVizGraph g = new GraphVizGraph();
-		//	GraphVizNode[] n = new GraphVizNode[nodes.Count];
-		//	for (int i = 0; i < n.Length; i++) {
-		//		n[i] = new GraphVizNode(nodes[i].UserIndex);
-		//		n[i].shape = "box";
-		//		n[i].label = labelFunc(nodes[i]);
-		//		g.AddNode(n[i]);
-		//	}
-		//	foreach (var source in nodes) {
-		//		foreach (var target in source.Successors) {
-		//			g.AddEdge(new GraphVizEdge(source.UserIndex, target.UserIndex));
-		//		}
-		//		if (source.ImmediateDominator != null) {
-		//			g.AddEdge(
-		//				new GraphVizEdge(source.ImmediateDominator.UserIndex, source.UserIndex) {
-		//					color = "green"
-		//				});
-		//		}
-		//	}
-		//	return g;
-		//}
+
+#if DEBUG
+		internal static GraphVizGraph ExportGraph(IReadOnlyList<ControlFlowNode> nodes, Func<ControlFlowNode, string> labelFunc = null)
+		{
+			if (labelFunc == null) {
+				labelFunc = node => {
+					var block = node.UserData as IL.Block;
+					return block != null ? block.Label : node.UserData?.ToString();
+				};
+			}
+			GraphVizGraph g = new GraphVizGraph();
+			GraphVizNode[] n = new GraphVizNode[nodes.Count];
+			for (int i = 0; i < n.Length; i++) {
+				n[i] = new GraphVizNode(nodes[i].UserIndex);
+				n[i].shape = "box";
+				n[i].label = labelFunc(nodes[i]);
+				g.AddNode(n[i]);
+			}
+			foreach (var source in nodes) {
+				foreach (var target in source.Successors) {
+					g.AddEdge(new GraphVizEdge(source.UserIndex, target.UserIndex));
+				}
+				if (source.ImmediateDominator != null) {
+					g.AddEdge(
+						new GraphVizEdge(source.ImmediateDominator.UserIndex, source.UserIndex) {
+							color = "green"
+						});
+				}
+			}
+			return g;
+		}
+#endif
 	}
 }

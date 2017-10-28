@@ -51,13 +51,14 @@ namespace ICSharpCode.ILSpy
 			
 			this.assemblyTask = Task.Factory.StartNew<ModuleDefinition>(LoadAssembly, stream); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
-			this.targetFrameworkId = new Lazy<string>(AssemblyDefinition.DetectTargetFrameworkId, false);
+			this.targetFrameworkId = new Lazy<string>(() => AssemblyDefinition?.DetectTargetFrameworkId(), false);
 		}
 
 		/// <summary>
 		/// Returns a target framework identifier in the form '&lt;framework&gt;Version=v&lt;version&gt;'.
+		/// Returns an empty string if no TargetFrameworkAttribute was found or the file doesn't contain an assembly header, i.e., is only a module.
 		/// </summary>
-		public string TargetFrameworkId => targetFrameworkId.Value;
+		public string TargetFrameworkId => targetFrameworkId.Value ?? string.Empty;
 
 		public Dictionary<string, UnresolvedAssemblyNameReference> LoadedAssemblyReferencesInfo => loadedAssemblyReferences;
 

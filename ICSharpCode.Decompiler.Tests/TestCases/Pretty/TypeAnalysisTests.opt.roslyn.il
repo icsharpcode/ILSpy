@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.18020
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module TypeAnalysisTests.dll
-// MVID: {60E6985E-8E86-4693-9F02-AD3FF7341588}
+// MVID: {B6659F2C-8CAA-447B-9D1D-D59D8C40C6D7}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02440000
+// Image base: 0x003E0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -475,6 +475,42 @@
     IL_0003:  call       int32 [mscorlib]System.Math::Abs(int32)
     IL_0008:  ret
   } // end of method TypeAnalysisTests::EnumDiff
+
+  .method public hidebysig instance bool 
+          CompareDelegatesByValue(class [mscorlib]System.Action a,
+                                  class [mscorlib]System.Action b) cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  call       bool [mscorlib]System.Delegate::op_Equality(class [mscorlib]System.Delegate,
+                                                                     class [mscorlib]System.Delegate)
+    IL_0007:  ret
+  } // end of method TypeAnalysisTests::CompareDelegatesByValue
+
+  .method public hidebysig instance bool 
+          CompareDelegatesByReference(class [mscorlib]System.Action a,
+                                      class [mscorlib]System.Action b) cil managed
+  {
+    // Code size       5 (0x5)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  ceq
+    IL_0004:  ret
+  } // end of method TypeAnalysisTests::CompareDelegatesByReference
+
+  .method public hidebysig instance bool 
+          CompareDelegateWithNull(class [mscorlib]System.Action a) cil managed
+  {
+    // Code size       5 (0x5)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldnull
+    IL_0002:  ceq
+    IL_0004:  ret
+  } // end of method TypeAnalysisTests::CompareDelegateWithNull
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

@@ -140,7 +140,6 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					SymbolicValue val = evalContext.Eval(switchInst.Value);
 					if (val.Type != SymbolicValueType.State)
 						goto default;
-					List<LongInterval> allSectionLabels = new List<LongInterval>();
 					List<LongInterval> exitIntervals = new List<LongInterval>();
 					foreach (var section in switchInst.Sections) {
 						// switch (state + Constant)
@@ -148,12 +147,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						// iff (state + Constant == value)
 						// iff (state == value - Constant)
 						var effectiveLabels = section.Labels.AddOffset(unchecked(-val.Constant));
-						allSectionLabels.AddRange(effectiveLabels.Intervals);
 						var result = AssignStateRanges(section.Body, stateRange.IntersectWith(effectiveLabels));
 						exitIntervals.AddRange(result.Intervals);
 					}
-					var defaultSectionLabels = stateRange.ExceptWith(new LongSet(allSectionLabels));
-					exitIntervals.AddRange(AssignStateRanges(switchInst.DefaultBody, defaultSectionLabels).Intervals);
 					// exitIntervals = union of exits of all sections
 					return new LongSet(exitIntervals);
 				case IfInstruction ifInst:

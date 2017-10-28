@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -71,6 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				new SplitVariables(),
 				new ILInlining(),
 				new DetectPinnedRegions(), // must run after inlining but before non-critical control flow transforms
+				new InlineReturnTransform(),
 				new YieldReturnDecompiler(), // must run after inlining but before loop detection
 				new AsyncAwaitDecompiler(),  // must run after inlining but before loop detection
 				new DetectCatchWhenConditionBlocks(), // must run after inlining but before loop detection
@@ -81,6 +83,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				new RemoveDeadVariableInit(),
 				new SplitVariables(), // split variables once again, because the stobj(ldloca V, ...) may open up new replacements
 				new SwitchDetection(),
+				new SwitchOnStringTransform(),
+				new SwitchOnNullableTransform(),
+				new SplitVariables(), // split variables once again, because SwitchOnNullableTransform eliminates ldloca 
 				new BlockILTransform { // per-block transforms
 					PostOrderTransforms = {
 						// Even though it's a post-order block-transform as most other transforms,
@@ -121,8 +126,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						)
 					}
 				},
+				new ProxyCallReplacer(),
 				new DelegateConstruction(),
-				new AssignVariableNames()
+				new AssignVariableNames(),
 			};
 		}
 
@@ -139,7 +145,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
 			new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods
 			new CombineQueryExpressions(),
-			//new FlattenSwitchBlocks(),
+			new FlattenSwitchBlocks(),
 			new FixNameCollisions(),
 			new AddXmlDocumentationTransform(),
 		};
@@ -196,8 +202,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(type))
 						return true;
 				} else if (type.IsCompilerGenerated()) {
-//					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
-//						return true;
+					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+						return true;
 					if (settings.AnonymousTypes && type.IsAnonymousType())
 						return true;
 				}
@@ -210,8 +216,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 					if (settings.AutomaticProperties && IsAutomaticPropertyBackingField(field))
 						return true;
-//					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
-//						return true;
+					if (settings.SwitchStatementOnString && IsSwitchOnStringCache(field))
+						return true;
 				}
 				// event-fields are not [CompilerGenerated]
 				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
@@ -977,6 +983,19 @@ namespace ICSharpCode.Decompiler.CSharp
 		}
 		#endregion
 
+		#region Sequence Points
+		/// <summary>
+		/// Creates sequence points for the given syntax tree.
+		/// 
+		/// This only works correctly when the nodes in the syntax tree have line/column information.
+		/// </summary>
+		public Dictionary<ILFunction, List<SequencePoint>> CreateSequencePoints(SyntaxTree syntaxTree)
+		{
+			SequencePointBuilder spb = new SequencePointBuilder();
+			syntaxTree.AcceptVisitor(spb);
+			return spb.GetSequencePoints();
+		}
+		#endregion
 	}
 
 	[Flags]

@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		public void Run(ILFunction function, ILTransformContext context)
 		{
 			this.context = context;
-			currentFieldNames = function.Method.DeclaringType.Fields.Select(f => f.Name).ToArray();
+			currentFieldNames = function.CecilMethod.DeclaringType.Fields.Select(f => f.Name).ToArray();
 			reservedVariableNames = new Dictionary<string, int>();
 			loopCounters = CollectLoopCounters(function);
 			foreach (var p in function.Descendants.OfType<ILFunction>().Select(f => f.Method).SelectMany(m => m.Parameters))
@@ -194,6 +194,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					.Except(currentFieldNames).ToList();
 				if (proposedNameForLoads.Count == 1) {
 					proposedName = proposedNameForLoads[0];
+				}
+			}
+			if (string.IsNullOrEmpty(proposedName) && variable.Kind == VariableKind.StackSlot) {
+				var proposedNameForStoresFromNewObj = variable.StoreInstructions.OfType<StLoc>()
+					.Select(expr => GetNameByType(GuessType(variable.Type, expr.Value, context)))
+					.Except(currentFieldNames).ToList();
+				if (proposedNameForStoresFromNewObj.Count == 1) {
+					proposedName = proposedNameForStoresFromNewObj[0];
 				}
 			}
 			if (string.IsNullOrEmpty(proposedName)) {
@@ -349,6 +357,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return char.ToLower(name[0]) + name.Substring(1);
 		}
 
+		internal static IType GuessType(IType variableType, ILInstruction inst, ILTransformContext context)
+		{
+			if (!variableType.IsKnownType(KnownTypeCode.Object))
+				return variableType;
+
+			switch (inst) {
+				case NewObj newObj:
+					return newObj.Method.DeclaringType;
+				case Call call:
+					return call.Method.ReturnType;
+				case CallVirt callVirt:
+					return callVirt.Method.ReturnType;
+				case CallIndirect calli:
+					return calli.ReturnType;
+				default:
+					return context.TypeSystem.Compilation.FindType(inst.ResultType.ToKnownTypeCode());
+			}
+		}
+
 		internal static string GenerateForeachVariableName(ILFunction function, ILInstruction valueContext, ILVariable existingVariable = null)
 		{
 			if (function == null)
@@ -358,10 +385,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (v != existingVariable)
 					AddExistingName(reservedVariableNames, v.Name);
 			}
-			foreach (var f in function.Method.DeclaringType.Fields.Select(f => f.Name))
+			foreach (var f in function.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
 				AddExistingName(reservedVariableNames, f);
 
 			string baseName = GetNameFromInstruction(valueContext);
+			if (string.IsNullOrEmpty(baseName)) {
+				if (valueContext is LdLoc ldloc && ldloc.Variable.Kind == VariableKind.Parameter) {
+					baseName = ldloc.Variable.Name;
+				}
+			}
 			string proposedName = "item";
 			
 			if (!string.IsNullOrEmpty(baseName)) {
@@ -399,7 +431,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (v != existingVariable)
 					AddExistingName(reservedVariableNames, v.Name);
 			}
-			foreach (var f in function.Method.DeclaringType.Fields.Select(f => f.Name))
+			foreach (var f in function.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
 				AddExistingName(reservedVariableNames, f);
 
 			string baseName = GetNameByType(type);

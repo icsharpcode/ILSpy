@@ -90,6 +90,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Space(policy.SpaceBeforeBracketComma);
 			// TODO: Comma policy has changed.
 			writer.WriteToken(Roles.Comma, ",");
+			isAfterSpace = false;
 			Space(!noSpaceAfterComma && policy.SpaceAfterBracketComma);
 			// TODO: Comma policy has changed.
 		}
@@ -194,6 +195,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		#region Write tokens
 		protected bool isAtStartOfLine = true;
+		protected bool isAfterSpace;
 		
 		/// <summary>
 		/// Writes a keyword, and all specials up to
@@ -207,18 +209,21 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			writer.WriteKeyword(tokenRole, token);
 			isAtStartOfLine = false;
+			isAfterSpace = false;
 		}
 		
 		protected virtual void WriteIdentifier(Identifier identifier)
 		{
 			writer.WriteIdentifier(identifier);
 			isAtStartOfLine = false;
+			isAfterSpace = false;
 		}
 		
 		protected virtual void WriteIdentifier(string identifier)
 		{
 			AstType.Create(identifier).AcceptVisitor(this);
 			isAtStartOfLine = false;
+			isAfterSpace = false;
 		}
 		
 		protected virtual void WriteToken(TokenRole tokenRole)
@@ -230,6 +235,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			writer.WriteToken(tokenRole, token);
 			isAtStartOfLine = false;
+			isAfterSpace = false;
 		}
 		
 		protected virtual void LPar()
@@ -260,8 +266,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		/// </summary>
 		protected virtual void Space(bool addSpace = true)
 		{
-			if (addSpace) {
+			if (addSpace && !isAfterSpace) {
 				writer.Space();
+				isAfterSpace = true;
 			}
 		}
 		
@@ -269,6 +276,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			writer.NewLine();
 			isAtStartOfLine = true;
+			isAfterSpace = false;
 		}
 		
 		protected virtual void OpenBrace(BraceStyle style)
@@ -278,7 +286,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 				case BraceStyle.EndOfLine:
 				case BraceStyle.BannerStyle:
 					if (!isAtStartOfLine)
-						writer.Space();
+						Space();
 					writer.WriteToken(Roles.LBrace, "{");
 					break;
 				case BraceStyle.EndOfLineWithoutSpace:
@@ -882,6 +890,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(nullReferenceExpression);
 			writer.WritePrimitiveValue(null);
+			isAfterSpace = false;
 			EndNode(nullReferenceExpression);
 		}
 		
@@ -937,6 +946,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(primitiveExpression);
 			writer.WritePrimitiveValue(primitiveExpression.Value, primitiveExpression.UnsafeLiteralValue);
+			isAfterSpace = false;
 			EndNode(primitiveExpression);
 		}
 		#endregion

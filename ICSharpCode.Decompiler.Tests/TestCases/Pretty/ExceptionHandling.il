@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly lxxrs5dq
+.assembly vicbdq3v
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module lxxrs5dq.dll
-// MVID: {82D6FFAF-FF9D-4E8C-AC93-080CC89EB80E}
+.module vicbdq3v.dll
+// MVID: {5E2AA050-D333-4323-8C5A-29B86C8D98BB}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02E30000
+// Image base: 0x01160000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -323,7 +323,7 @@
     // Code size       68 (0x44)
     .maxstack  1
     .locals init (class [mscorlib]System.InvalidOperationException V_0,
-             class [mscorlib]System.Exception V_1)
+             class [mscorlib]System.SystemException V_1)
     IL_0000:  nop
     .try
     {
@@ -347,7 +347,7 @@
       IL_001f:  leave.s    IL_0042
 
     }  // end handler
-    catch [mscorlib]System.Exception 
+    catch [mscorlib]System.SystemException 
     {
       IL_0021:  stloc.1
       IL_0022:  nop

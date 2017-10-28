@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
 		readonly TypeSystemAstBuilder astBuilder;
-		readonly DecompilerSettings settings;
+		internal readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 		
 		public ExpressionBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, DecompilerSettings settings, CancellationToken cancellationToken)
@@ -93,19 +93,21 @@ namespace ICSharpCode.Decompiler.CSharp
 			return astType;
 		}
 		
-		public ExpressionWithResolveResult ConvertConstantValue(ResolveResult rr)
+		public ExpressionWithResolveResult ConvertConstantValue(ResolveResult rr, bool allowImplicitConversion = false)
 		{
 			var expr = astBuilder.ConvertConstantValue(rr);
-			if (expr is NullReferenceExpression && rr.Type.Kind != TypeKind.Null) {
-				expr = new CastExpression(ConvertType(rr.Type), expr);
-			} else {
-				switch (rr.Type.GetDefinition()?.KnownTypeCode) {
-					case KnownTypeCode.SByte:
-					case KnownTypeCode.Byte:
-					case KnownTypeCode.Int16:
-					case KnownTypeCode.UInt16:
-						expr = new CastExpression(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)), expr);
-						break;
+			if (!allowImplicitConversion) {
+				if (expr is NullReferenceExpression && rr.Type.Kind != TypeKind.Null) {
+					expr = new CastExpression(ConvertType(rr.Type), expr);
+				} else {
+					switch (rr.Type.GetDefinition()?.KnownTypeCode) {
+						case KnownTypeCode.SByte:
+						case KnownTypeCode.Byte:
+						case KnownTypeCode.Int16:
+						case KnownTypeCode.UInt16:
+							expr = new CastExpression(new PrimitiveType(KnownTypeReference.GetCSharpNameByTypeCode(rr.Type.GetDefinition().KnownTypeCode)), expr);
+							break;
+					}
 				}
 			}
 			var exprRR = expr.Annotation<ResolveResult>();
@@ -310,12 +312,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.String), inst.Value));
 		}
-		
+
 		protected internal override TranslatedExpression VisitLdNull(LdNull inst, TranslationContext context)
 		{
 			return GetDefaultValueExpression(SpecialType.NullType).WithILInstruction(inst);
 		}
-		
+
 		protected internal override TranslatedExpression VisitDefaultValue(DefaultValue inst, TranslationContext context)
 		{
 			return GetDefaultValueExpression(inst.Type).WithILInstruction(inst);
@@ -323,8 +325,15 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal ExpressionWithResolveResult GetDefaultValueExpression(IType type)
 		{
-			var expr = type.IsReferenceType == true ? (Expression)new NullReferenceExpression() : new DefaultValueExpression(ConvertType(type));
-			var constantType = type.IsReferenceType == true ? SpecialType.NullType : type;
+			Expression expr;
+			IType constantType;
+			if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT)) {
+				expr = new NullReferenceExpression();
+				constantType = SpecialType.NullType;
+			} else {
+				expr = new DefaultValueExpression(ConvertType(type));
+				constantType = type;
+			}
 			return expr.WithRR(new ConstantResolveResult(constantType, null));
 		}
 		
@@ -490,6 +499,19 @@ namespace ICSharpCode.Decompiler.CSharp
 			left = AdjustConstantExpressionToType(left, right.Type);
 			right = AdjustConstantExpressionToType(right, left.Type);
 			
+			if (left.Type.Kind == TypeKind.Delegate && right.Type.Kind == TypeKind.Null
+				|| left.Type.Kind == TypeKind.Null && right.Type.Kind == TypeKind.Delegate)
+			{
+				// When comparing a delegate with null, the C# compiler generates a reference comparison.
+				negateOutput = false;
+				return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
+					.WithILInstruction(inst)
+					.WithRR(new OperatorResolveResult(
+						compilation.FindType(KnownTypeCode.Boolean),
+						inst.Kind == ComparisonKind.Equality ? ExpressionType.Equal : ExpressionType.NotEqual,
+						left.ResolveResult, right.ResolveResult));
+			}
+
 			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
 				as OperatorResolveResult;
 			if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
@@ -670,6 +692,12 @@ namespace ICSharpCode.Decompiler.CSharp
 						inst.CheckForOverflow ? ExpressionType.NegateChecked : ExpressionType.Negate,
 						right.ResolveResult));
 				}
+			}
+
+			if ((op == BinaryOperatorType.BitwiseAnd || op == BinaryOperatorType.BitwiseOr || op == BinaryOperatorType.ExclusiveOr)
+				&& (left.Type.Kind == TypeKind.Enum || right.Type.Kind == TypeKind.Enum)) {
+				left = AdjustConstantExpressionToType(left, right.Type);
+				right = AdjustConstantExpressionToType(right, left.Type);
 			}
 
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
@@ -1024,31 +1052,30 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new CallBuilder(this, typeSystem, settings).Build(inst);
 		}
 
-		internal TranslatedExpression TranslateFunction(TranslatedExpression objectCreateExpression, TranslatedExpression target, ILFunction function)
+		internal ExpressionWithResolveResult TranslateFunction(IType delegateType, ILFunction function)
 		{
-			var method = typeSystem.Resolve(function.Method)?.MemberDefinition as IMethod;
+			var method = function.Method.MemberDefinition as IMethod;
 			Debug.Assert(method != null);
 
 			// Create AnonymousMethodExpression and prepare parameters
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.IsAsync = function.IsAsync;
 			ame.Parameters.AddRange(MakeParameters(method, function));
-			ame.HasParameterList = true;
+			ame.HasParameterList = ame.Parameters.Count > 0;
 			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method, function, settings, cancellationToken);
 			var body = builder.ConvertAsBlock(function.Body);
-			bool isLambda = false;
-			bool isMultiLineLambda = false;
 
 			Comment prev = null;
 			foreach (string warning in function.Warnings) {
 				body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
 			}
 
-			// if there is an anonymous type involved, we are forced to use a lambda expression.
+			bool isLambda = false;
 			if (ame.Parameters.Any(p => p.Type.IsNull)) {
+				// if there is an anonymous type involved, we are forced to use a lambda expression.
 				isLambda = true;
-				isMultiLineLambda = body.Statements.Count > 1;
 			} else if (ame.Parameters.All(p => p.ParameterModifier == ParameterModifier.None)) {
+				// otherwise use lambda only if an expression lambda is possible
 				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
 			}
 			// Remove the parameter list from an AnonymousMethodExpression if the original method had no names,
@@ -1064,39 +1091,81 @@ namespace ICSharpCode.Decompiler.CSharp
 					ame.HasParameterList = false;
 				}
 			}
-			
+
 			Expression replacement;
+			IType inferredReturnType;
 			if (isLambda) {
 				LambdaExpression lambda = new LambdaExpression();
+				lambda.IsAsync = ame.IsAsync;
 				lambda.CopyAnnotationsFrom(ame);
 				ame.Parameters.MoveTo(lambda.Parameters);
-				if (isMultiLineLambda) {
-					lambda.Body = body;
+				if (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement returnStmt) {
+					lambda.Body = returnStmt.Expression.Detach();
+					inferredReturnType = lambda.Body.GetResolveResult().Type;
 				} else {
-					Expression returnExpr = ((ReturnStatement)body.Statements.Single()).Expression;
-					returnExpr.Remove();
-					lambda.Body = returnExpr;
+					lambda.Body = body;
+					inferredReturnType = InferReturnType(body);
 				}
 				replacement = lambda;
 			} else {
 				ame.Body = body;
+				inferredReturnType = InferReturnType(body);
 				replacement = ame;
 			}
-			var expectedType = objectCreateExpression.ResolveResult.Type;
-			var expectedTypeDefinition = expectedType.GetDefinition();
-			if (expectedTypeDefinition != null && expectedTypeDefinition.Kind != TypeKind.Delegate) {
-				var simplifiedDelegateCreation = (ObjectCreateExpression)objectCreateExpression.Expression.Clone();
-				simplifiedDelegateCreation.Arguments.Clear();
-				simplifiedDelegateCreation.Arguments.Add(replacement);
-				replacement = simplifiedDelegateCreation;
-			} else if (!settings.AnonymousTypes || !expectedType.ContainsAnonymousType()) {
-				replacement = new CastExpression(ConvertType(expectedType), replacement);
+			if (ame.IsAsync) {
+				inferredReturnType = GetTaskType(inferredReturnType);
 			}
-			return replacement
-				.WithILInstruction(function)
-				.WithRR(objectCreateExpression.ResolveResult);
+
+			var rr = new DecompiledLambdaResolveResult(
+				function, delegateType, inferredReturnType,
+				hasParameterList: ame.HasParameterList,
+				isAnonymousMethod: !isLambda,
+				isImplicitlyTyped: ame.Parameters.Any(p => p.Type.IsNull));
+
+			TranslatedExpression translatedLambda = replacement.WithILInstruction(function).WithRR(rr);
+			return new CastExpression(ConvertType(delegateType), translatedLambda)
+				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
 		}
-		
+
+		IType InferReturnType(BlockStatement body)
+		{
+			var returnExpressions = new List<ResolveResult>();
+			CollectReturnExpressions(body);
+			var ti = new TypeInference(compilation, resolver.conversions);
+			return ti.GetBestCommonType(returnExpressions, out _);
+			// Failure to infer a return type does not make the lambda invalid,
+			// so we can ignore the 'success' value
+
+			void CollectReturnExpressions(AstNode node)
+			{
+				if (node is ReturnStatement ret) {
+					if (!ret.Expression.IsNull) {
+						returnExpressions.Add(ret.Expression.GetResolveResult());
+					}
+				} else if (node is LambdaExpression || node is AnonymousMethodExpression) {
+					// do not recurse into nested lambdas
+					return;
+				}
+				foreach (var child in node.Children) {
+					CollectReturnExpressions(child);
+				}
+			}
+		}
+
+		IType GetTaskType(IType resultType)
+		{
+			if (resultType.Kind == TypeKind.Unknown)
+				return SpecialType.UnknownType;
+			if (resultType.Kind == TypeKind.Void)
+				return compilation.FindType(KnownTypeCode.Task);
+
+			ITypeDefinition def = compilation.FindType(KnownTypeCode.TaskOfT).GetDefinition();
+			if (def != null)
+				return new ParameterizedType(def, new[] { resultType });
+			else
+				return SpecialType.UnknownType;
+		}
+
 		IEnumerable<ParameterDeclaration> MakeParameters(IMethod method, ILFunction function)
 		{
 			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
@@ -1384,11 +1453,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (currentPath == null) {
 					currentPath = info.Path;
 				} else {
-					int firstDifferenceIndex = Math.Min(currentPath.Count, info.Path.Count);
-					int index = 0;
-					while (index < firstDifferenceIndex && info.Path[index] == currentPath[index])
-						index++;
-					firstDifferenceIndex = index;
+					int minLen = Math.Min(currentPath.Count, info.Path.Count);
+					int firstDifferenceIndex = 0;
+					while (firstDifferenceIndex < minLen && info.Path[firstDifferenceIndex] == currentPath[firstDifferenceIndex])
+						firstDifferenceIndex++;
 					while (elementsStack.Count - 1 > firstDifferenceIndex) {
 						var methodElement = currentPath[elementsStack.Count - 1];
 						var pathElement = currentPath[elementsStack.Count - 2];

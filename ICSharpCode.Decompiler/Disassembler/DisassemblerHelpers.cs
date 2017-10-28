@@ -289,6 +289,19 @@ namespace ICSharpCode.Decompiler.Disassembler
 				writer.Write(" modreq(");
 				((RequiredModifierType)type).ModifierType.WriteTo(writer, ILNameSyntax.TypeName);
 				writer.Write(") ");
+			} else if (type is FunctionPointerType fpt) {
+				writer.Write("method ");
+				fpt.ReturnType.WriteTo(writer, syntax);
+				writer.Write(" *(");
+				bool first = true;
+				foreach (var p in fpt.Parameters) {
+					if (first)
+						first = false;
+					else
+						writer.Write(", ");
+					p.ParameterType.WriteTo(writer, syntax);
+				}
+				writer.Write(')');
 			} else if (type is SentinelType) {
 				writer.Write("..., ");
 				((SentinelType)type).ElementType.WriteTo(writer, syntax);
@@ -343,9 +356,10 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			ParameterReference paramRef = operand as ParameterReference;
 			if (paramRef != null) {
-				if (string.IsNullOrEmpty(paramRef.Name))
-					writer.WriteReference(paramRef.Index.ToString(), paramRef);
-				else
+				if (string.IsNullOrEmpty(paramRef.Name)) {
+					var paramDef = paramRef.Resolve();
+					writer.WriteReference((paramDef == null ? paramRef.Index : paramDef.Sequence).ToString(), paramRef);
+				} else
 					writer.WriteReference(Escape(paramRef.Name), paramRef);
 				return;
 			}

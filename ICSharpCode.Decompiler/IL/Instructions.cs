@@ -83,6 +83,8 @@ namespace ICSharpCode.Decompiler.IL
 		Call,
 		/// <summary>Virtual method call.</summary>
 		CallVirt,
+		/// <summary>Unsafe function pointer call.</summary>
+		CallIndirect,
 		/// <summary>Checks that the input float is not NaN or infinite.</summary>
 		Ckfinite,
 		/// <summary>Numeric cast.</summary>
@@ -121,6 +123,10 @@ namespace ICSharpCode.Decompiler.IL
 		LdMemberToken,
 		/// <summary>Allocates space in the stack frame</summary>
 		LocAlloc,
+		/// <summary>memcpy(destAddress, sourceAddress, size);</summary>
+		Cpblk,
+		/// <summary>memset(address, value, size)</summary>
+		Initblk,
 		/// <summary>Load address of instance field</summary>
 		LdFlda,
 		/// <summary>Load static field address</summary>
@@ -158,6 +164,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty.
 		/// Also used to convert a string to a reference to the first character.</summary>
 		ArrayToPointer,
+		/// <summary>Maps a string value to an integer. This is used in switch(string).</summary>
+		StringToInt,
 		/// <summary>Push a typed reference of type class onto the stack.</summary>
 		MakeRefAny,
 		/// <summary>Push the type token stored in a typed reference.</summary>
@@ -289,6 +297,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.argument.WriteTo(output, options);
@@ -381,6 +390,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.left.WriteTo(output, options);
@@ -808,6 +818,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -1012,6 +1023,15 @@ namespace ICSharpCode.Decompiler.IL
 	public sealed partial class Branch : SimpleInstruction
 	{
 		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.EndPointUnreachable | InstructionFlags.MayBranch;
+			}
+		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
 			visitor.VisitBranch(this);
@@ -1317,7 +1337,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as SwitchInstruction;
-			return o != null && Value.PerformMatch(o.Value, ref match) && DefaultBody.PerformMatch(o.DefaultBody, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match);
+			return o != null && IsLifted == o.IsLifted && Value.PerformMatch(o.Value, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match);
 		}
 	}
 }
@@ -1389,7 +1409,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as SwitchSection;
-			return o != null && this.body.PerformMatch(o.body, ref match) && this.Labels.Intervals.SequenceEqual(o.Labels.Intervals);
+			return o != null && this.body.PerformMatch(o.body, ref match) && this.Labels.SetEquals(o.Labels) && this.HasNullLabel == o.HasNullLabel;
 		}
 	}
 }
@@ -1951,6 +1971,31 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>Unsafe function pointer call.</summary>
+	public sealed partial class CallIndirect : ILInstruction
+	{
+
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCallIndirect(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitCallIndirect(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitCallIndirect(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as CallIndirect;
+			return o != null && EqualSignature(o) && Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match) && this.FunctionPointer.PerformMatch(o.FunctionPointer, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Checks that the input float is not NaN or infinite.</summary>
 	public sealed partial class Ckfinite : UnaryInstruction
 	{
@@ -2071,6 +2116,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2145,6 +2191,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2276,6 +2323,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2370,6 +2418,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.value.WriteTo(output, options);
@@ -2463,6 +2512,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2499,6 +2549,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2535,6 +2586,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I8; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2571,6 +2623,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.F; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2607,6 +2660,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2673,6 +2727,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			method.WriteTo(output);
@@ -2720,6 +2775,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			method.WriteTo(output);
@@ -2761,6 +2817,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -2799,6 +2856,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			member.WriteTo(output);
@@ -2856,6 +2914,288 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as LocAlloc;
 			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>memcpy(destAddress, sourceAddress, size);</summary>
+	public sealed partial class Cpblk : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	{
+		public Cpblk(ILInstruction destAddress, ILInstruction sourceAddress, ILInstruction size) : base(OpCode.Cpblk)
+		{
+			this.DestAddress = destAddress;
+			this.SourceAddress = sourceAddress;
+			this.Size = size;
+		}
+		public static readonly SlotInfo DestAddressSlot = new SlotInfo("DestAddress", canInlineInto: true);
+		ILInstruction destAddress;
+		public ILInstruction DestAddress {
+			get { return this.destAddress; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.destAddress, value, 0);
+			}
+		}
+		public static readonly SlotInfo SourceAddressSlot = new SlotInfo("SourceAddress", canInlineInto: true);
+		ILInstruction sourceAddress;
+		public ILInstruction SourceAddress {
+			get { return this.sourceAddress; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.sourceAddress, value, 1);
+			}
+		}
+		public static readonly SlotInfo SizeSlot = new SlotInfo("Size", canInlineInto: true);
+		ILInstruction size;
+		public ILInstruction Size {
+			get { return this.size; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.size, value, 2);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 3;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.destAddress;
+				case 1:
+					return this.sourceAddress;
+				case 2:
+					return this.size;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.DestAddress = value;
+					break;
+				case 1:
+					this.SourceAddress = value;
+					break;
+				case 2:
+					this.Size = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return DestAddressSlot;
+				case 1:
+					return SourceAddressSlot;
+				case 2:
+					return SizeSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (Cpblk)ShallowClone();
+			clone.DestAddress = this.destAddress.Clone();
+			clone.SourceAddress = this.sourceAddress.Clone();
+			clone.Size = this.size.Clone();
+			return clone;
+		}
+		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
+		public bool IsVolatile { get; set; }
+		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
+		public byte UnalignedPrefix { get; set; }
+		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return destAddress.Flags | sourceAddress.Flags | size.Flags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			}
+		}
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
+			if (IsVolatile)
+				output.Write("volatile.");
+			if (UnalignedPrefix > 0)
+				output.Write("unaligned(" + UnalignedPrefix + ").");
+			output.Write(OpCode);
+			output.Write('(');
+			this.destAddress.WriteTo(output, options);
+			output.Write(", ");
+			this.sourceAddress.WriteTo(output, options);
+			output.Write(", ");
+			this.size.WriteTo(output, options);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitCpblk(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitCpblk(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitCpblk(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Cpblk;
+			return o != null && this.destAddress.PerformMatch(o.destAddress, ref match) && this.sourceAddress.PerformMatch(o.sourceAddress, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>memset(address, value, size)</summary>
+	public sealed partial class Initblk : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
+	{
+		public Initblk(ILInstruction address, ILInstruction value, ILInstruction size) : base(OpCode.Initblk)
+		{
+			this.Address = address;
+			this.Value = value;
+			this.Size = size;
+		}
+		public static readonly SlotInfo AddressSlot = new SlotInfo("Address", canInlineInto: true);
+		ILInstruction address;
+		public ILInstruction Address {
+			get { return this.address; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.address, value, 0);
+			}
+		}
+		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
+		ILInstruction value;
+		public ILInstruction Value {
+			get { return this.value; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.value, value, 1);
+			}
+		}
+		public static readonly SlotInfo SizeSlot = new SlotInfo("Size", canInlineInto: true);
+		ILInstruction size;
+		public ILInstruction Size {
+			get { return this.size; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.size, value, 2);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 3;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.address;
+				case 1:
+					return this.value;
+				case 2:
+					return this.size;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Address = value;
+					break;
+				case 1:
+					this.Value = value;
+					break;
+				case 2:
+					this.Size = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return AddressSlot;
+				case 1:
+					return ValueSlot;
+				case 2:
+					return SizeSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (Initblk)ShallowClone();
+			clone.Address = this.address.Clone();
+			clone.Value = this.value.Clone();
+			clone.Size = this.size.Clone();
+			return clone;
+		}
+		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
+		public bool IsVolatile { get; set; }
+		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
+		public byte UnalignedPrefix { get; set; }
+		public override StackType ResultType { get { return StackType.Void; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return address.Flags | value.Flags | size.Flags | InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.MayThrow | InstructionFlags.SideEffect;
+			}
+		}
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
+			if (IsVolatile)
+				output.Write("volatile.");
+			if (UnalignedPrefix > 0)
+				output.Write("unaligned(" + UnalignedPrefix + ").");
+			output.Write(OpCode);
+			output.Write('(');
+			this.address.WriteTo(output, options);
+			output.Write(", ");
+			this.value.WriteTo(output, options);
+			output.Write(", ");
+			this.size.WriteTo(output, options);
+			output.Write(')');
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitInitblk(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitInitblk(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitInitblk(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as Initblk;
+			return o != null && this.address.PerformMatch(o.address, ref match) && this.value.PerformMatch(o.value, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
 	}
 }
@@ -2932,6 +3272,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			field.WriteTo(output);
@@ -2973,6 +3314,7 @@ namespace ICSharpCode.Decompiler.IL
 		public IField Field { get { return field; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			field.WriteTo(output);
@@ -3020,6 +3362,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3061,6 +3404,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3163,6 +3507,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			if (IsVolatile)
 				output.Write("volatile.");
 			if (UnalignedPrefix > 0)
@@ -3287,6 +3632,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			if (IsVolatile)
 				output.Write("volatile.");
 			if (UnalignedPrefix > 0)
@@ -3343,6 +3689,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3393,6 +3740,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3443,6 +3791,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3553,6 +3902,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3598,6 +3948,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3710,6 +4061,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3895,6 +4247,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			if (IsReadOnly)
 				output.Write("readonly.");
 			output.Write(OpCode);
@@ -3996,6 +4349,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.array.WriteTo(output, options);
@@ -4022,6 +4376,87 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>Maps a string value to an integer. This is used in switch(string).</summary>
+	public sealed partial class StringToInt : ILInstruction
+	{
+		public static readonly SlotInfo ArgumentSlot = new SlotInfo("Argument", canInlineInto: true);
+		ILInstruction argument;
+		public ILInstruction Argument {
+			get { return this.argument; }
+			set {
+				ValidateChild(value);
+				SetChildInstruction(ref this.argument, value, 0);
+			}
+		}
+		protected sealed override int GetChildCount()
+		{
+			return 1;
+		}
+		protected sealed override ILInstruction GetChild(int index)
+		{
+			switch (index) {
+				case 0:
+					return this.argument;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override void SetChild(int index, ILInstruction value)
+		{
+			switch (index) {
+				case 0:
+					this.Argument = value;
+					break;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		protected sealed override SlotInfo GetChildSlot(int index)
+		{
+			switch (index) {
+				case 0:
+					return ArgumentSlot;
+				default:
+					throw new IndexOutOfRangeException();
+			}
+		}
+		public sealed override ILInstruction Clone()
+		{
+			var clone = (StringToInt)ShallowClone();
+			clone.Argument = this.argument.Clone();
+			return clone;
+		}
+		public override StackType ResultType { get { return StackType.I4; } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return argument.Flags;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return InstructionFlags.None;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitStringToInt(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitStringToInt(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitStringToInt(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as StringToInt;
+			return o != null && this.argument.PerformMatch(o.argument, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Push a typed reference of type class onto the stack.</summary>
 	public sealed partial class MakeRefAny : UnaryInstruction
 	{
@@ -4035,6 +4470,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4113,6 +4549,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4207,6 +4644,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.value.WriteTo(output, options);
@@ -4299,6 +4737,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.value.WriteTo(output, options);
@@ -4360,6 +4799,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			output.Write(')');
@@ -4485,6 +4925,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitCallIndirect(CallIndirect inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitCkfinite(Ckfinite inst)
 		{
 			Default(inst);
@@ -4561,6 +5005,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitCpblk(Cpblk inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitInitblk(Initblk inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitLdFlda(LdFlda inst)
 		{
 			Default(inst);
@@ -4630,6 +5082,10 @@ namespace ICSharpCode.Decompiler.IL
 			Default(inst);
 		}
 		protected internal virtual void VisitArrayToPointer(ArrayToPointer inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitStringToInt(StringToInt inst)
 		{
 			Default(inst);
 		}
@@ -4771,6 +5227,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitCallIndirect(CallIndirect inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitCkfinite(Ckfinite inst)
 		{
 			return Default(inst);
@@ -4847,6 +5307,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
+		protected internal virtual T VisitCpblk(Cpblk inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitInitblk(Initblk inst)
+		{
+			return Default(inst);
+		}
 		protected internal virtual T VisitLdFlda(LdFlda inst)
 		{
 			return Default(inst);
@@ -4916,6 +5384,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitArrayToPointer(ArrayToPointer inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitStringToInt(StringToInt inst)
 		{
 			return Default(inst);
 		}
@@ -5057,6 +5529,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitCallIndirect(CallIndirect inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitCkfinite(Ckfinite inst, C context)
 		{
 			return Default(inst, context);
@@ -5133,6 +5609,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitCpblk(Cpblk inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitInitblk(Initblk inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitLdFlda(LdFlda inst, C context)
 		{
 			return Default(inst, context);
@@ -5205,6 +5689,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitStringToInt(StringToInt inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitMakeRefAny(MakeRefAny inst, C context)
 		{
 			return Default(inst, context);
@@ -5257,6 +5745,7 @@ namespace ICSharpCode.Decompiler.IL
 			"comp",
 			"call",
 			"callvirt",
+			"calli",
 			"ckfinite",
 			"conv",
 			"ldloc",
@@ -5276,6 +5765,8 @@ namespace ICSharpCode.Decompiler.IL
 			"ldtypetoken",
 			"ldmembertoken",
 			"localloc",
+			"cpblk",
+			"initblk",
 			"ldflda",
 			"ldsflda",
 			"castclass",
@@ -5294,6 +5785,7 @@ namespace ICSharpCode.Decompiler.IL
 			"ldlen",
 			"ldelema",
 			"array.to.pointer",
+			"string.to.int",
 			"mkrefany",
 			"refanytype",
 			"refanyval",
@@ -5583,6 +6075,34 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			}
 			argument = default(ILInstruction);
+			return false;
+		}
+		public bool MatchCpblk(out ILInstruction destAddress, out ILInstruction sourceAddress, out ILInstruction size)
+		{
+			var inst = this as Cpblk;
+			if (inst != null) {
+				destAddress = inst.DestAddress;
+				sourceAddress = inst.SourceAddress;
+				size = inst.Size;
+				return true;
+			}
+			destAddress = default(ILInstruction);
+			sourceAddress = default(ILInstruction);
+			size = default(ILInstruction);
+			return false;
+		}
+		public bool MatchInitblk(out ILInstruction address, out ILInstruction value, out ILInstruction size)
+		{
+			var inst = this as Initblk;
+			if (inst != null) {
+				address = inst.Address;
+				value = inst.Value;
+				size = inst.Size;
+				return true;
+			}
+			address = default(ILInstruction);
+			value = default(ILInstruction);
+			size = default(ILInstruction);
 			return false;
 		}
 		public bool MatchLdFlda(out ILInstruction target, out IField field)

@@ -35,13 +35,28 @@ namespace ICSharpCode.Decompiler.Disassembler
 		MethodBodyDisassembler methodBodyDisassembler;
 		MemberReference currentMember;
 
-		public ReflectionDisassembler(ITextOutput output, bool detectControlStructure, CancellationToken cancellationToken)
+		public bool DetectControlStructure {
+			get => methodBodyDisassembler.DetectControlStructure;
+			set => methodBodyDisassembler.DetectControlStructure = value;
+		}
+
+		public bool ShowSequencePoints {
+			get => methodBodyDisassembler.ShowSequencePoints;
+			set => methodBodyDisassembler.ShowSequencePoints = value;
+		}
+
+		public ReflectionDisassembler(ITextOutput output, CancellationToken cancellationToken)
+			: this(output, new MethodBodyDisassembler(output, cancellationToken), cancellationToken)
+		{
+		}
+
+		public ReflectionDisassembler(ITextOutput output, MethodBodyDisassembler methodBodyDisassembler, CancellationToken cancellationToken)
 		{
 			if (output == null)
 				throw new ArgumentNullException(nameof(output));
 			this.output = output;
 			this.cancellationToken = cancellationToken;
-			this.methodBodyDisassembler = new MethodBodyDisassembler(output, detectControlStructure, cancellationToken);
+			this.methodBodyDisassembler = methodBodyDisassembler;
 		}
 
 		#region Disassemble Method

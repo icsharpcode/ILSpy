@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 
 using ICSharpCode.AvalonEdit.Highlighting;
+using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
@@ -135,7 +136,7 @@ namespace ILSpy.BamlDecompiler
 			}
 		}
 		
-		static void RemoveConnectionIds(XElement element, Dictionary<long, EventRegistration[]> eventMappings)
+		static void RemoveConnectionIds(XElement element, List<(LongSet key, EventRegistration[] value)> eventMappings)
 		{
 			foreach (var child in element.Elements())
 				RemoveConnectionIds(child, eventMappings);
@@ -143,10 +144,9 @@ namespace ILSpy.BamlDecompiler
 			var removableAttrs = new List<XAttribute>();
 			var addableAttrs = new List<XAttribute>();
 			foreach (var attr in element.Attributes(XName.Get("ConnectionId", XmlBamlReader.XWPFNamespace))) {
-				int id;
-				if (int.TryParse(attr.Value, out id) && eventMappings.ContainsKey(id)) {
-					var map = eventMappings[id];
-					foreach (var entry in map) {
+				int id, index;
+				if (int.TryParse(attr.Value, out id) && (index = eventMappings.FindIndex(item => item.key.Contains(id))) > -1) {
+					foreach (var entry in eventMappings[index].value) {
 						string xmlns = ""; // TODO : implement xmlns resolver!
 						addableAttrs.Add(new XAttribute(xmlns + entry.EventName, entry.MethodName));
 					}

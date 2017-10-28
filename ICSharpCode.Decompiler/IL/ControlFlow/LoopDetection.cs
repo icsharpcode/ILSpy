@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -56,6 +57,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 			// Because this is a post-order block transform, we can assume that
 			// any nested loops within this loop have already been constructed.
+
+			if (block.Instructions.Last() is SwitchInstruction switchInst) {
+				// Switch instructions support "break;" just like loops
+				DetectSwitchBody(block, switchInst);
+			}
 
 			ControlFlowNode h = context.ControlFlowNode; // CFG node for our potential loop head
 			Debug.Assert(h.UserData == block);
@@ -101,7 +107,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ConstructLoop(loop, exitPoint);
 			}
 		}
-		
+
 		/// <summary>
 		/// Recurse into the dominator tree and find back edges/natural loops.
 		/// </summary>
@@ -202,9 +208,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// 
 		/// Precondition: Requires that a node is marked as visited iff it is contained in the loop.
 		/// </remarks>
-		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop, out ControlFlowNode exitPoint)
+		void ExtendLoop(ControlFlowNode loopHead, List<ControlFlowNode> loop, out ControlFlowNode exitPoint, bool isSwitch=false)
 		{
-			exitPoint = FindExitPoint(loopHead, loop);
+			exitPoint = FindExitPoint(loopHead, loop, isSwitch);
 			Debug.Assert(!loop.Contains(exitPoint), "Cannot pick an exit point that is part of the natural loop");
 			if (exitPoint != null) {
 				// Either we are in case 1 and just picked an exit that maximizes the amount of code
@@ -227,9 +233,15 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		/// Finds a suitable single exit point for the specified loop.
 		/// </summary>
 		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
-		ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop)
+		ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop, bool treatBackEdgesAsExits)
 		{
-			if (!context.ControlFlowGraph.HasReachableExit(loopHead)) {
+			bool hasReachableExit = context.ControlFlowGraph.HasReachableExit(loopHead);
+			if (!hasReachableExit && treatBackEdgesAsExits) {
+				// If we're analyzing the switch, there's no reachable exit, but the loopHead (=switchHead) block
+				// is also a loop head, we consider the back-edge a reachable exit for the switch.
+				hasReachableExit = loopHead.Predecessors.Any(p => loopHead.Dominates(p));
+			}
+			if (!hasReachableExit) {
 				// Case 1:
 				// There are no nodes n so that loopHead dominates a predecessor of n but not n itself
 				// -> we could build a loop with zero exit points.
@@ -244,7 +256,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// We need to pick our exit point so that all paths from the loop head
 				// to the reachable exits run through that exit point.
 				var cfg = context.ControlFlowGraph.cfg;
-				var revCfg = PrepareReverseCFG(loopHead);
+				var revCfg = PrepareReverseCFG(loopHead, treatBackEdgesAsExits);
 				//ControlFlowNode.ExportGraph(cfg).Show("cfg");
 				//ControlFlowNode.ExportGraph(revCfg).Show("rev");
 				ControlFlowNode commonAncestor = revCfg[loopHead.UserIndex];
@@ -255,19 +267,60 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 						commonAncestor = Dominance.FindCommonDominator(commonAncestor, revNode);
 					}
 				}
+				// All paths from within the loop to a reachable exit run through 'commonAncestor'.
+				// However, this doesn't mean that 'commonAncestor' is valid as an exit point.
+				// We walk up the post-dominator tree until we've got a valid exit point:
 				ControlFlowNode exitPoint;
 				while (commonAncestor.UserIndex >= 0) {
 					exitPoint = cfg[commonAncestor.UserIndex];
 					Debug.Assert(exitPoint.Visited == naturalLoop.Contains(exitPoint));
-					if (exitPoint.Visited) {
-						commonAncestor = commonAncestor.ImmediateDominator;
-						continue;
-					} else {
+					// It's possible that 'commonAncestor' is itself part of the natural loop.
+					// If so, it's not a valid exit point.
+					if (!exitPoint.Visited && ValidateExitPoint(loopHead, exitPoint)) {
+						// we found an exit point
 						return exitPoint;
 					}
+					commonAncestor = commonAncestor.ImmediateDominator;
 				}
-				// least common dominator is the artificial exit node
+				// least common post-dominator is the artificial exit node
 				return null;
+			}
+		}
+
+		/// <summary>
+		/// Validates an exit point.
+		/// 
+		/// An exit point is invalid iff there is a node reachable from the exit point that
+		/// is dominated by the loop head, but not by the exit point.
+		/// (i.e. this method returns false iff the exit point's dominance frontier contains
+		/// a node dominated by the loop head. but we implement this the slow way because
+		/// we don't have dominance frontiers precomputed)
+		/// </summary>
+		/// <remarks>
+		/// We need this because it's possible that there's a return block (thus reverse-unreachable node ignored by post-dominance)
+		/// that is reachable both directly from the loop, and from the exit point.
+		/// </remarks>
+		bool ValidateExitPoint(ControlFlowNode loopHead, ControlFlowNode exitPoint)
+		{
+			var cfg = context.ControlFlowGraph;
+			return IsValid(exitPoint);
+
+			bool IsValid(ControlFlowNode node)
+			{
+				if (!cfg.HasReachableExit(node)) {
+					// Optimization: if the dominance frontier is empty, we don't need
+					// to check every node.
+					return true;
+				}
+				foreach (var succ in node.Successors) {
+					if (loopHead != succ && loopHead.Dominates(succ) && !exitPoint.Dominates(succ))
+						return false;
+				}
+				foreach (var child in node.DominatorTreeChildren) {
+					if (!IsValid(child))
+						return false;
+				}
+				return true;
 			}
 		}
 
@@ -308,7 +361,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 		}
 		
-		ControlFlowNode[] PrepareReverseCFG(ControlFlowNode loopHead)
+		ControlFlowNode[] PrepareReverseCFG(ControlFlowNode loopHead, bool treatBackEdgesAsExits)
 		{
 			ControlFlowNode[] cfg = context.ControlFlowGraph.cfg;
 			ControlFlowNode[] rev = new ControlFlowNode[cfg.Length + 1];
@@ -322,7 +375,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					continue;
 				// Add reverse edges for all edges in cfg
 				foreach (var succ in cfg[i].Successors) {
-					if (loopHead.Dominates(succ)) {
+					if (loopHead.Dominates(succ) && (!treatBackEdgesAsExits || loopHead != succ)) {
 						rev[succ.UserIndex].AddEdgeTo(rev[i]);
 					} else {
 						exitNode.AddEdgeTo(rev[i]);
@@ -412,13 +465,25 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			// Move contents of oldEntryPoint to newEntryPoint
 			// (we can't move the block itself because it might be the target of branch instructions outside the loop)
 			newEntryPoint.Instructions.ReplaceList(oldEntryPoint.Instructions);
-			newEntryPoint.FinalInstruction = oldEntryPoint.FinalInstruction;
 			newEntryPoint.ILRange = oldEntryPoint.ILRange;
 			oldEntryPoint.Instructions.ReplaceList(new[] { loopContainer });
 			if (exitTargetBlock != null)
 				oldEntryPoint.Instructions.Add(new Branch(exitTargetBlock));
-			oldEntryPoint.FinalInstruction = new Nop();
-			
+
+			MoveBlocksIntoContainer(loop, loopContainer);
+
+			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
+			foreach (var branch in loopContainer.Descendants.OfType<Branch>()) {
+				if (branch.TargetBlock == oldEntryPoint) {
+					branch.TargetBlock = newEntryPoint;
+				} else if (branch.TargetBlock == exitTargetBlock) {
+					branch.ReplaceWith(new Leave(loopContainer) { ILRange = branch.ILRange });
+				}
+			}
+		}
+
+		private void MoveBlocksIntoContainer(List<ControlFlowNode> loop, BlockContainer loopContainer)
+		{
 			// Move other blocks into the loop body: they're all dominated by the loop header,
 			// and thus cannot be the target of branch instructions outside the loop.
 			for (int i = 1; i < loop.Count; i++) {
@@ -440,12 +505,56 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Block block = (Block)loop[i].UserData;
 				Debug.Assert(block.IsDescendantOf(loopContainer));
 			}
+		}
+
+		private void DetectSwitchBody(Block block, SwitchInstruction switchInst)
+		{
+			Debug.Assert(block.Instructions.Last() == switchInst);
+			ControlFlowNode h = context.ControlFlowNode; // CFG node for our switch head
+			Debug.Assert(h.UserData == block);
+			Debug.Assert(!TreeTraversal.PreOrder(h, n => n.DominatorTreeChildren).Any(n => n.Visited));
+
+			var nodesInSwitch = new List<ControlFlowNode>();
+			nodesInSwitch.Add(h);
+			h.Visited = true;
+			ExtendLoop(h, nodesInSwitch, out var exitPoint, isSwitch: true);
+			if (exitPoint != null && exitPoint.Predecessors.Count == 1 && !context.ControlFlowGraph.HasReachableExit(exitPoint)) {
+				// If the exit point is reachable from just one single "break;",
+				// it's better to move the code into the switch.
+				// (unlike loops which should not be nested unless necessary,
+				//  nesting switches makes it clearer in which cases a piece of code is reachable)
+				nodesInSwitch.AddRange(TreeTraversal.PreOrder(exitPoint, p => p.DominatorTreeChildren));
+				exitPoint = null;
+			}
+
+			context.Step("Create BlockContainer for switch", switchInst);
+			// Sort blocks in the loop in reverse post-order to make the output look a bit nicer.
+			// (if the loop doesn't contain nested loops, this is a topological sort)
+			nodesInSwitch.Sort((a, b) => b.PostOrderNumber.CompareTo(a.PostOrderNumber));
+			Debug.Assert(nodesInSwitch[0] == h);
+			foreach (var node in nodesInSwitch) {
+				node.Visited = false; // reset visited flag so that we can find outer loops
+				Debug.Assert(h.Dominates(node) || !node.IsReachable, "The switch body must be dominated by the switch head");
+			}
+
+			BlockContainer switchContainer = new BlockContainer();
+			Block newEntryPoint = new Block();
+			newEntryPoint.ILRange = switchInst.ILRange;
+			switchContainer.Blocks.Add(newEntryPoint);
+			newEntryPoint.Instructions.Add(switchInst);
+			block.Instructions[block.Instructions.Count - 1] = switchContainer;
+
+			Block exitTargetBlock = (Block)exitPoint?.UserData;
+			if (exitTargetBlock != null) {
+				block.Instructions.Add(new Branch(exitTargetBlock));
+			}
+
+			MoveBlocksIntoContainer(nodesInSwitch, switchContainer);
+
 			// Rewrite branches within the loop from oldEntryPoint to newEntryPoint:
-			foreach (var branch in loopContainer.Descendants.OfType<Branch>()) {
-				if (branch.TargetBlock == oldEntryPoint) {
-					branch.TargetBlock = newEntryPoint;
-				} else if (branch.TargetBlock == exitTargetBlock) {
-					branch.ReplaceWith(new Leave(loopContainer) { ILRange = branch.ILRange });
+			foreach (var branch in switchContainer.Descendants.OfType<Branch>()) {
+				if (branch.TargetBlock == exitTargetBlock) {
+					branch.ReplaceWith(new Leave(switchContainer) { ILRange = branch.ILRange });
 				}
 			}
 		}

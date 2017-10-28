@@ -106,7 +106,8 @@ namespace ICSharpCode.ILSpy.TextView
 			textEditor.Options.RequireControlModifierForHyperlinkClick = false;
 			textEditor.TextArea.TextView.MouseHover += TextViewMouseHover;
 			textEditor.TextArea.TextView.MouseHoverStopped += TextViewMouseHoverStopped;
-			textEditor.TextArea.TextView.MouseDown += TextViewMouseDown;
+			textEditor.TextArea.PreviewMouseDown += TextAreaMouseDown;
+			textEditor.TextArea.PreviewMouseUp += TextAreaMouseUp;
 			textEditor.SetBinding(Control.FontFamilyProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFont") });
 			textEditor.SetBinding(Control.FontSizeProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("SelectedFontSize") });
 			textEditor.SetBinding(TextEditor.WordWrapProperty, new Binding { Source = DisplaySettingsPanel.CurrentDisplaySettings, Path = new PropertyPath("EnableWordWrap") });
@@ -602,12 +603,36 @@ namespace ICSharpCode.ILSpy.TextView
 			MainWindow.Instance.JumpToReference(reference);
 		}
 
-		void TextViewMouseDown(object sender, MouseButtonEventArgs e)
-		{
-			if (GetReferenceSegmentAtMousePosition() == null)
-				ClearLocalReferenceMarks();
-		}
+		Point? mouseDownPos;
 
+		void TextAreaMouseDown(object sender, MouseButtonEventArgs e)
+		{
+			mouseDownPos = e.GetPosition(this);
+		}
+		
+		void TextAreaMouseUp(object sender, MouseButtonEventArgs e)
+		{
+			if (mouseDownPos == null)
+				return;
+			Vector dragDistance = e.GetPosition(this) - mouseDownPos.Value;
+			if (Math.Abs(dragDistance.X) < SystemParameters.MinimumHorizontalDragDistance
+				&& Math.Abs(dragDistance.Y) < SystemParameters.MinimumVerticalDragDistance
+				&& e.ChangedButton == MouseButton.Left)
+			{
+				// click without moving mouse
+				var referenceSegment = GetReferenceSegmentAtMousePosition();
+				if (referenceSegment == null) {
+					ClearLocalReferenceMarks();
+				} else {
+					JumpToReference(referenceSegment);
+					textEditor.TextArea.ClearSelection();
+				}
+				// cancel mouse selection to avoid AvalonEdit selecting between the new
+				// cursor position and the mouse position.
+				textEditor.TextArea.MouseSelectionMode = MouseSelectionMode.None;
+			}
+		}
+		
 		void ClearLocalReferenceMarks()
 		{
 			foreach (var mark in localReferenceMarks) {

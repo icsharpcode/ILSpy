@@ -26,10 +26,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			TestCase(SparseIntegerSwitch, -100, 1, 2, 3, 4);
 			TestCase(ShortSwitchOverString, "First case", "Else");
+			TestCase(ShortSwitchOverString2, "First case", "Second case", "Third case", "Else");
+			TestCase(ShortSwitchOverStringNoExplicitDefault, "First case", "Second case", "Third case", "Else");
 			TestCase(SwitchOverString1, "First case", "Second case", "2nd case", "Third case", "Fourth case", "Fifth case", "Sixth case", null, "default", "else");
 			Console.WriteLine(SwitchOverString2());
 			Console.WriteLine(SwitchOverBool(true));
 			Console.WriteLine(SwitchOverBool(false));
+			SwitchInLoop(0);
+			SwitchWithGoto(1);
+			SwitchWithGoto(2);
+			SwitchWithGoto(3);
+			SwitchWithGoto(4);
 		}
 
 		static void TestCase<T>(Func<T, string> target, params T[] args)
@@ -41,6 +48,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static string SparseIntegerSwitch(int i)
 		{
+			Console.WriteLine("SparseIntegerSwitch: " + i);
 			switch (i) {
 				case -10000000: return "-10 mln";
 				case -100: return "-hundred";
@@ -59,6 +67,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static string ShortSwitchOverString(string text)
 		{
+			Console.WriteLine("ShortSwitchOverString: " + text);
 			switch (text) {
 				case "First case":
 					return "Text";
@@ -67,8 +76,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 		}
 
+		public static string ShortSwitchOverString2(string text)
+		{
+			Console.WriteLine("ShortSwitchOverString2: " + text);
+			switch (text) {
+				case "First case":
+					return "Text1";
+				case "Second case":
+					return "Text2";
+				case "Third case":
+					return "Text3";
+				default:
+					return "Default";
+			}
+		}
+
+		public static string ShortSwitchOverStringNoExplicitDefault(string text)
+		{
+			Console.WriteLine("ShortSwitchOverStringNoExplicitDefault: " + text);
+			switch (text) {
+				case "First case":
+					return "Text1";
+				case "Second case":
+					return "Text2";
+				case "Third case":
+					return "Text3";
+			}
+			return "Default";
+		}
+
 		public static string SwitchOverString1(string text)
 		{
+			Console.WriteLine("SwitchOverString1: " + text);
 			switch (text) {
 				case "First case":
 					return "Text1";
@@ -92,6 +131,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static string SwitchOverString2()
 		{
+			Console.WriteLine("SwitchOverString2:");
 			switch (Environment.UserName) {
 				case "First case":
 					return "Text1";
@@ -105,6 +145,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					return "Text5";
 				case "Sixth case":
 					return "Text6";
+				case "Seventh case":
+					return "Text7";
+				case "Eighth case":
+					return "Text8";
+				case "Ninth case":
+					return "Text9";
+				case "Tenth case":
+					return "Text10";
+				case "Eleventh case":
+					return "Text11";
 				default:
 					return "Default";
 			}
@@ -112,6 +162,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static string SwitchOverBool(bool b)
 		{
+			Console.WriteLine("SwitchOverBool: " + b);
 			switch (b) {
 				case true:
 					return bool.TrueString;
@@ -124,6 +175,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 
 		public static void SwitchInLoop(int i)
 		{
+			Console.WriteLine("SwitchInLoop: " + i);
 			while (true) {
 				switch (i) {
 					case 1:
@@ -141,9 +193,31 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 					default:
 						Console.WriteLine("default");
 						Console.WriteLine("more code");
-						throw new ArgumentException();
+						return;
 				}
 				i++;
+			}
+		}
+
+		public static void SwitchWithGoto(int i)
+		{
+			Console.WriteLine("SwitchWithGoto: " + i);
+			switch (i) {
+				case 1:
+					Console.WriteLine("one");
+					goto default;
+				case 2:
+					Console.WriteLine("two");
+					goto case 3;
+				case 3:
+					Console.WriteLine("three");
+					break;
+				case 4:
+					Console.WriteLine("four");
+					return;
+				default:
+					Console.WriteLine("default");
+					break;
 			}
 		}
 	}

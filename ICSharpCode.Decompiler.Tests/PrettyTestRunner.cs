@@ -98,6 +98,18 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Switch([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void DelegateConstruction([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void AnonymousTypes([Values(CompilerOptions.None, CompilerOptions.Optimize)] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
@@ -176,18 +188,21 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions, asmOptions: AssemblerOptions.UseOwnDisassembler);
 		}
 
+		[Test]
+		public void InitializerTests([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void FixProxyCalls([Values(CompilerOptions.None, CompilerOptions.Optimize, CompilerOptions.UseRoslyn)] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
 		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None)
 		{
-			var ilFile = Path.Combine(TestCasePath, testName);
-			if ((cscOptions & CompilerOptions.Optimize) != 0)
-				ilFile += ".opt";
-			if ((cscOptions & CompilerOptions.Force32Bit) != 0)
-				ilFile += ".32";
-			if ((cscOptions & CompilerOptions.UseDebug) != 0)
-				ilFile += ".dbg";
-			if ((cscOptions & CompilerOptions.UseRoslyn) != 0)
-				ilFile += ".roslyn";
-			ilFile += ".il";
+			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 
 			if (!File.Exists(ilFile)) {

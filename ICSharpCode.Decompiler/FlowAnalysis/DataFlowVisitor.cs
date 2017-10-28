@@ -614,17 +614,17 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 			DebugStartPoint(inst);
 			inst.Value.AcceptVisitor(this);
 			State beforeSections = state.Clone();
-			inst.DefaultBody.AcceptVisitor(this);
+			inst.Sections[0].AcceptVisitor(this);
 			State afterSections = state.Clone();
-			foreach (var section in inst.Sections) {
+			for (int i = 1; i < inst.Sections.Count; ++i) {
 				state.ReplaceWith(beforeSections);
-				section.AcceptVisitor(this);
+				inst.Sections[i].AcceptVisitor(this);
 				afterSections.JoinWith(state);
 			}
 			state = afterSections;
 			DebugEndPoint(inst);
 		}
-
+		
 		protected internal override void VisitYieldReturn(YieldReturn inst)
 		{
 			DebugStartPoint(inst);

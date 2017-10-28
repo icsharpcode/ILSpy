@@ -172,10 +172,27 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			var type = this.Type;
 			if (type.Equals(targetType)) {
-				// Remove boxing conversion if possible
-				if (allowImplicitConversion && type.IsKnownType(KnownTypeCode.Object)) {
-					if (Expression is CastExpression cast && ResolveResult is ConversionResolveResult conversion && conversion.Conversion.IsBoxingConversion) {
-						return this.UnwrapChild(cast.Expression);
+				// Make explicit conversion implicit, if possible
+				if (allowImplicitConversion) {
+					switch (ResolveResult) {
+						case ConversionResolveResult conversion: {
+							if (Expression is CastExpression cast
+							&& (type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
+								|| type.Kind == TypeKind.Delegate && conversion.Conversion.IsAnonymousFunctionConversion
+								)) {
+								return this.UnwrapChild(cast.Expression);
+							} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
+									&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion) {
+								return this.UnwrapChild(oce.Arguments.Single());
+							}
+							break;
+						}
+						case InvocationResolveResult invocation: {
+							if (Expression is ObjectCreateExpression oce && oce.Arguments.Count == 1 && invocation.Type.IsKnownType(KnownTypeCode.NullableOfT)) {
+								return this.UnwrapChild(oce.Arguments.Single());
+							}
+							break;
+						}
 					}
 				}
 				return this;
@@ -296,7 +313,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var rr = expressionBuilder.resolver.WithCheckForOverflow(checkForOverflow).ResolveCast(targetType, ResolveResult);
 			if (rr.IsCompileTimeConstant && !rr.IsError) {
-				return expressionBuilder.ConvertConstantValue(rr)
+				return expressionBuilder.ConvertConstantValue(rr, allowImplicitConversion)
 					.WithILInstruction(this.ILInstructions);
 			}
 			if (targetType.Kind == TypeKind.Pointer && (0.Equals(ResolveResult.ConstantValue) || 0u.Equals(ResolveResult.ConstantValue))) {

@@ -27,6 +27,11 @@ namespace ICSharpCode.Decompiler.IL
 			return OpCode == OpCode.LdcI4 && ((LdcI4)this).Value == val;
 		}
 
+		public bool MatchLdcF(double value)
+		{
+			return MatchLdcF(out var v) && v == value;
+		}
+
 		/// <summary>
 		/// Matches either LdcI4 or LdcI8.
 		/// </summary>
@@ -317,6 +322,27 @@ namespace ICSharpCode.Decompiler.IL
 			} else {
 				left = null;
 				right = null;
+				return false;
+			}
+		}
+
+		/// <summary>
+		/// Matches 'comp(arg == ldnull)'
+		/// </summary>
+		public bool MatchCompEqualsNull(out ILInstruction arg)
+		{
+			if (!MatchCompEquals(out var left, out var right)) {
+				arg = null;
+				return false;
+			}
+			if (right.MatchLdNull()) {
+				arg = left;
+				return true;
+			} else if (left.MatchLdNull()) {
+				arg = right;
+				return true;
+			} else {
+				arg = null;
 				return false;
 			}
 		}

@@ -106,16 +106,6 @@ namespace ICSharpCode.ILSpy.TextView
 		}
 		
 		/// <inheritdoc/>
-		protected override void OnMouseDown(MouseButtonEventArgs e)
-		{
-			if (e.ChangedButton == MouseButton.Left && !e.Handled) {
-				parent.JumpToReference(referenceSegment);
-				if(!referenceSegment.IsLocal)
-					e.Handled = true;
-			}
-		}
-		
-		/// <inheritdoc/>
 		protected override VisualLineText CreateInstance(int length)
 		{
 			return new VisualLineReferenceText(ParentVisualLine, length, parent, referenceSegment);

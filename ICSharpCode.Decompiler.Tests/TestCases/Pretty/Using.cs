@@ -58,7 +58,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void SimpleUsingExpressionStatementWithDeclaration()
 		{
 			using (MemoryStream memoryStream = new MemoryStream()) {
-				memoryStream.WriteByte((byte)42);
+				memoryStream.WriteByte(42);
 				Console.WriteLine("using-body: " + memoryStream.Position);
 			}
 		}

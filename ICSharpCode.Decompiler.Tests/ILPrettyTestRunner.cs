@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			Run();
 		}
-
+		
 		[Test]
 		public void FSharpUsing_Debug()
 		{

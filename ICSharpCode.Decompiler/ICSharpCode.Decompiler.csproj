@@ -24,21 +24,23 @@
   <!-- HACK: Disable package generation on Unix due to tooling issues. -->
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSymbolsInPackage>true</IncludeSymbolsInPackage>
     <NuspecFile>ICSharpCode.Decompiler.nuspec</NuspecFile>
     <NuspecProperties>Configuration=$(Configuration)</NuspecProperties>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <DebugType>full</DebugType>
+    <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <EmbedSources>true</EmbedSources>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>$(DefineConstants);STEP</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <EmbedSources>true</EmbedSources>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -60,6 +62,7 @@
   <ItemGroup>
     <Compile Include="CSharp\Annotations.cs" />
     <Compile Include="CSharp\CallBuilder.cs" />
+    <Compile Include="CSharp\SequencePointBuilder.cs" />
     <Compile Include="CSharp\Syntax\AstNode.cs" />
     <Compile Include="CSharp\Syntax\AstNodeCollection.cs" />
     <Compile Include="CSharp\Syntax\AstType.cs" />
@@ -224,6 +227,7 @@
     <Compile Include="CSharp\Resolver\RenameCallbackArguments.cs" />
     <Compile Include="CSharp\Resolver\TypeInference.cs" />
     <Compile Include="CSharp\Transforms\CombineQueryExpressions.cs" />
+    <Compile Include="CSharp\Transforms\FlattenSwitchBlocks.cs" />
     <Compile Include="CSharp\Transforms\IntroduceExtensionMethods.cs" />
     <Compile Include="CSharp\Transforms\IntroduceQueryExpressions.cs" />
     <Compile Include="CSharp\Transforms\PrettifyAssignments.cs" />
@@ -272,7 +276,17 @@
     <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
     <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
     <Compile Include="IL\Instructions\ILInstructionExtensions.cs" />
+    <Compile Include="IL\ILAstWritingOptions.cs" />
+    <Compile Include="IL\SequencePoint.cs" />
+    <Compile Include="IL\Instructions\CallIndirect.cs" />
+    <Compile Include="IL\Instructions\DefaultValue.cs" />
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
+    <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />
+    <Compile Include="IL\Instructions\StringToInt.cs" />
+    <Compile Include="IL\Instructions\UsingInstruction.cs" />
+    <Compile Include="IL\Transforms\InlineReturnTransform.cs" />
+    <Compile Include="IL\Transforms\SwitchOnNullableTransform.cs" />
+    <Compile Include="IL\Transforms\SwitchOnStringTransform.cs" />
     <Compile Include="IL\Transforms\UsingTransform.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
@@ -294,6 +308,7 @@
     <Compile Include="IL\Transforms\StatementTransform.cs" />
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
+    <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />
     <Compile Include="Util\UnicodeNewline.cs" />
@@ -574,5 +589,12 @@
       <UpdateAssemblyInfo Condition="$(OS)=='Unix'">powershell -NoProfile -ExecutionPolicy Bypass -File $(SolutionDir)\BuildTools\update-assemblyinfo.ps1</UpdateAssemblyInfo>
     </PropertyGroup>
     <Exec WorkingDirectory="$(SolutionDir)" Command="$(UpdateAssemblyInfo)" Timeout="60000" />
+  </Target>
+
+  <!-- Workaround for EmbedSources support, see https://github.com/dotnet/roslyn/issues/19127 -->
+  <Target Name="PopulateEmbeddedFiles" AfterTargets="BeforeCompile" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <EmbeddedFiles Include="@(Compile)" />
+    </ItemGroup>
   </Target>
 </Project>

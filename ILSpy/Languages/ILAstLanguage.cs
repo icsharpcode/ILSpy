@@ -53,47 +53,6 @@ namespace ICSharpCode.ILSpy
 		}
 		
 		public override string Name { get { return name; } }
-		/*
-		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
-		{
-			if (!method.HasBody) {
-				return;
-			}
-			
-			ILAstBuilder astBuilder = new ILAstBuilder();
-			ILBlock ilMethod = new ILBlock();
-			DecompilerContext context = new DecompilerContext(method.Module) { CurrentType = method.DeclaringType, CurrentMethod = method };
-			ilMethod.Body = astBuilder.Build(method, inlineVariables, context);
-			
-			if (abortBeforeStep != null) {
-				new ILAstOptimizer().Optimize(context, ilMethod, abortBeforeStep.Value);
-			}
-			
-			if (context.CurrentMethodIsAsync)
-				output.WriteLine("async/await");
-			
-			var allVariables = ilMethod.GetSelfAndChildrenRecursive<ILExpression>().Select(e => e.Operand as ILVariable)
-				.Where(v => v != null && !v.IsParameter).Distinct();
-			foreach (ILVariable v in allVariables) {
-				output.WriteDefinition(v.Name, v);
-				if (v.Type != null) {
-					output.Write(" : ");
-					if (v.IsPinned)
-						output.Write("pinned ");
-					v.Type.WriteTo(output, ILNameSyntax.ShortTypeName);
-				}
-				if (v.IsGenerated) {
-					output.Write(" [generated]");
-				}
-				output.WriteLine();
-			}
-			output.WriteLine();
-			
-			foreach (ILNode node in ilMethod.Body) {
-				node.WriteTo(output);
-				output.WriteLine();
-			}
-	}*/
 
 		internal static IEnumerable<ILAstLanguage> GetDebugLanguages()
 		{
@@ -118,7 +77,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			base.DecompileMethod(method, output, options);
-			new ReflectionDisassembler(output, false, options.CancellationToken).DisassembleMethodHeader(method);
+			new ReflectionDisassembler(output, options.CancellationToken).DisassembleMethodHeader(method);
 			output.WriteLine();
 			output.WriteLine();
 		}
@@ -141,10 +100,6 @@ namespace ICSharpCode.ILSpy
 		class BlockIL : ILAstLanguage
 		{
 			readonly IReadOnlyList<IILTransform> transforms;
-			readonly ILAstWritingOptions writingOptions = new ILAstWritingOptions {
-				UseFieldSugar = true,
-				UseLogicOperationSugar = true
-			};
 
 			public BlockIL(IReadOnlyList<IILTransform> transforms) : base("ILAst")
 			{
@@ -169,6 +124,10 @@ namespace ICSharpCode.ILSpy
 				try {
 					il.RunTransforms(transforms, context);
 				} catch (StepLimitReachedException) {
+				} catch (Exception ex) {
+					output.WriteLine(ex.ToString());
+					output.WriteLine();
+					output.WriteLine("ILAst after the crash:");
 				} finally {
 					// update stepper even if a transform crashed unexpectedly
 					if (options.StepLimit == int.MaxValue) {
@@ -176,27 +135,11 @@ namespace ICSharpCode.ILSpy
 						OnStepperUpdated(new EventArgs());
 					}
 				}
-				(output as ISmartTextOutput)?.AddUIElement(OptionsCheckBox(nameof(writingOptions.UseFieldSugar)));
-				output.WriteLine();
-				(output as ISmartTextOutput)?.AddUIElement(OptionsCheckBox(nameof(writingOptions.UseLogicOperationSugar)));
-				output.WriteLine();
 				(output as ISmartTextOutput)?.AddButton(Images.ViewCode, "Show Steps", delegate {
 					DebugSteps.Show();
 				});
 				output.WriteLine();
-				il.WriteTo(output, writingOptions);
-			}
-
-			Func<System.Windows.UIElement> OptionsCheckBox(string propertyName)
-			{
-				return () => {
-					var checkBox = new System.Windows.Controls.CheckBox();
-					checkBox.Content = propertyName;
-					checkBox.Cursor = System.Windows.Input.Cursors.Arrow;
-					checkBox.SetBinding(System.Windows.Controls.CheckBox.IsCheckedProperty,
-						new System.Windows.Data.Binding(propertyName) { Source = writingOptions });
-					return checkBox;
-				};
+				il.WriteTo(output, DebugSteps.Options);
 			}
 		}
 	}

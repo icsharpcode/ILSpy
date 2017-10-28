@@ -28,40 +28,9 @@ namespace ICSharpCode.Decompiler.IL
 	{
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write("lock (");
 			OnExpression.WriteTo(output, options);
-			output.WriteLine(") {");
-			output.Indent();
-			Body.WriteTo(output, options);
-			output.Unindent();
-			output.WriteLine();
-			output.Write("}");
-		}
-	}
-
-	/// <summary>
-	/// IL using instruction.
-	/// Equivalent to:
-	/// <code>
-	/// stloc v(resourceExpression)
-	/// try {
-	///    body
-	/// } finally {
-	///    v?.Dispose();
-	/// }
-	/// </code>
-	/// </summary>
-	/// <remarks>
-	/// The value of v is undefined after the end of the body block.
-	/// </remarks>
-	partial class UsingInstruction
-	{
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
-		{
-			output.Write("using (");
-			Variable.WriteTo(output);
-			output.Write(" = ");
-			ResourceExpression.WriteTo(output, options);
 			output.WriteLine(") {");
 			output.Indent();
 			Body.WriteTo(output, options);

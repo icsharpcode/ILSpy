@@ -40,11 +40,19 @@ namespace ICSharpCode.Decompiler.IL
 		public readonly InstructionCollection<Block> Blocks;
 
 		public StackType ExpectedResultType { get; set; }
-		
+
+		int leaveCount;
+
 		/// <summary>
 		/// Gets the number of 'leave' instructions that target this BlockContainer.
 		/// </summary>
-		public int LeaveCount { get; internal set; }
+		public int LeaveCount {
+			get => leaveCount;
+			internal set {
+				leaveCount = value;
+				InvalidateFlags();
+			}
+		}
 		
 		Block entryPoint;
 
@@ -107,8 +115,15 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.WriteDefinition("BlockContainer", this);
 			output.Write(' ');
+			if (entryPoint.IncomingEdgeCount > 1) {
+				output.Write("(loop) ");
+			}
+			if (entryPoint.Instructions.Count == 1 && entryPoint.Instructions[0] is SwitchInstruction) {
+				output.Write("(switch) ");
+			}
 			output.MarkFoldStart("{...}");
 			output.WriteLine("{");
 			output.Indent();
@@ -154,7 +169,7 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(EntryPoint == Blocks[0]);
 			Debug.Assert(!IsConnected || EntryPoint.IncomingEdgeCount >= 1);
 			Debug.Assert(Blocks.All(b => b.HasFlag(InstructionFlags.EndPointUnreachable)));
-			Debug.Assert(Blocks.All(b => b.FinalInstruction.OpCode == OpCode.Nop));
+			Debug.Assert(Blocks.All(b => b.Type == BlockType.ControlFlow)); // this also implies that the blocks don't use FinalInstruction
 		}
 		
 		protected override InstructionFlags ComputeFlags()
@@ -221,6 +236,16 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			while (inst != null) {
 				if (inst is BlockContainer bc)
+					return bc;
+				inst = inst.Parent;
+			}
+			return null;
+		}
+
+		public static BlockContainer FindClosestSwitchContainer(ILInstruction inst)
+		{
+			while (inst != null) {
+				if (inst is BlockContainer bc && bc.entryPoint.Instructions.FirstOrDefault() is SwitchInstruction)
 					return bc;
 				inst = inst.Parent;
 			}

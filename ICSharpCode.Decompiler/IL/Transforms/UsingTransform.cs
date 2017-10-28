@@ -87,7 +87,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			context.Step("UsingTransform", tryFinally);
 			storeInst.Variable.Kind = VariableKind.UsingLocal;
 			block.Instructions.RemoveAt(i);
-			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock);
+			block.Instructions[i - 1] = new UsingInstruction(storeInst.Variable, storeInst.Value, tryFinally.TryBlock) { ILRange = storeInst.ILRange };
 			return true;
 		}
 
@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (objVar.Type.IsKnownType(KnownTypeCode.NullableOfT)) {
 				if (!entryPoint.Instructions[checkIndex].MatchIfInstruction(out var condition, out var disposeInst))
 					return false;
-				if (!(NullableLiftingTransform.MatchHasValueCall(condition, out var v) && v == objVar))
+				if (!NullableLiftingTransform.MatchHasValueCall(condition, objVar))
 					return false;
 				if (!(disposeInst is Block disposeBlock) || disposeBlock.Instructions.Count != 1)
 					return false;

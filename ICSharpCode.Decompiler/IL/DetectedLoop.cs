@@ -76,7 +76,7 @@ namespace ICSharpCode.Decompiler.IL
 						conditions.Add(ifInst.Condition);
 						i--;
 					}
-					if (i == -1) {
+					if (i == -1 && conditions.Any()) {
 						return b;
 					}
 				}
@@ -116,10 +116,10 @@ namespace ICSharpCode.Decompiler.IL
 					AdditionalBlocks = Container.Blocks.Skip(1).Where(b => b != IncrementBlock).ToArray();
 					return this;
 				} else if (trueInst is Block block) {
-					var variable = GetVariableFromCondition(conditionInst);
 					var last = block.Instructions.LastOrDefault();
 					var secondToLast = block.Instructions.SecondToLastOrDefault();
-					if (variable != null && last != null && secondToLast != null && last.MatchBranch(Container.EntryPoint) && MatchIncrement(secondToLast, variable)) {
+					if (last != null && secondToLast != null && last.MatchBranch(Container.EntryPoint) &&
+						MatchIncrement(secondToLast, out var variable) && conditionInst.Children.Any(c => c.MatchLdLoc(variable))) {
 						Kind = LoopKind.For;
 						IncrementTarget = variable;
 						AdditionalBlocks = Container.Blocks.Skip(1).ToArray();
@@ -144,22 +144,16 @@ namespace ICSharpCode.Decompiler.IL
 			return this;
 		}
 
-		static ILVariable GetVariableFromCondition(ILInstruction conditionInst)
+		static bool MatchIncrement(ILInstruction inst, out ILVariable variable)
 		{
-			var ldLocs = conditionInst.Children.OfType<LdLoc>().ToArray();
-			if (ldLocs.Length == 1)
-				return ldLocs[0].Variable;
-			else
-				return null;
-		}
-
-		static bool MatchIncrement(ILInstruction inst, ILVariable variable)
-		{
-			if (!inst.MatchStLoc(variable, out var value))
+			if (!inst.MatchStLoc(out variable, out var value))
 				return false;
-			if (!value.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right))
-				return false;
-			return left.MatchLdLoc(variable) && right.MatchLdcI(out var val) && val == 1;
+			if (!value.MatchBinaryNumericInstruction(BinaryNumericOperator.Add, out var left, out var right)) {
+				if (value is CompoundAssignmentInstruction cai) {
+					left = cai.Target;
+				} else return false;
+			}
+			return left.MatchLdLoc(variable);
 		}
 	}
 }

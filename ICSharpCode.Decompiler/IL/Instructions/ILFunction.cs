@@ -18,10 +18,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using ICSharpCode.Decompiler.IL.Transforms;
 using Mono.Cecil;
-using ICSharpCode.Decompiler.Disassembler;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -31,7 +29,8 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class ILFunction
 	{
-		public readonly MethodDefinition Method;
+		public readonly IMethod Method;
+		public readonly MethodDefinition CecilMethod;
 		public readonly ILVariableCollection Variables;
 
 		/// <summary>
@@ -62,10 +61,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IType AsyncReturnType;
 
-		public ILFunction(MethodDefinition method, ILInstruction body) : base(OpCode.ILFunction)
+		public ILFunction(IMethod method, MethodDefinition cecilMethod, ILInstruction body) : base(OpCode.ILFunction)
 		{
 			this.Body = body;
 			this.Method = method;
+			this.CecilMethod = cecilMethod;
 			this.Variables = new ILVariableCollection(this);
 		}
 
@@ -85,6 +85,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			if (Method != null) {
 				output.Write(' ');
@@ -113,12 +114,41 @@ namespace ICSharpCode.Decompiler.IL
 			}
 
 			body.WriteTo(output, options);
-			
 			output.WriteLine();
+
+			if (options.ShowILRanges) {
+				var unusedILRanges = FindUnusedILRanges();
+				if (!unusedILRanges.IsEmpty) {
+					output.Write("// Unused IL Ranges: ");
+					output.Write(string.Join(", ", unusedILRanges.Intervals.Select(
+						range => $"[{range.Start:x4}..{range.InclusiveEnd:x4}]")));
+					output.WriteLine();
+				}
+			}
+
 			output.Unindent();
 			output.WriteLine("}");
 		}
 		
+		LongSet FindUnusedILRanges()
+		{
+			var usedILRanges = new List<LongInterval>();
+			MarkUsedILRanges(body);
+			return new LongSet(new LongInterval(0, CecilMethod.Body.CodeSize)).ExceptWith(new LongSet(usedILRanges));
+
+			void MarkUsedILRanges(ILInstruction inst)
+			{
+				if (CSharp.SequencePointBuilder.HasUsableILRange(inst)) {
+					usedILRanges.Add(new LongInterval(inst.ILRange.Start, inst.ILRange.End));
+				}
+				if (!(inst is ILFunction)) {
+					foreach (var child in inst.Children) {
+						MarkUsedILRanges(child);
+					}
+				}
+			}
+		}
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			// Creating a lambda may throw OutOfMemoryException

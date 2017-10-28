@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		#region AnalyzeCondition
 		bool AnalyzeCondition(ILInstruction condition)
 		{
-			if (MatchHasValueCall(condition, out var v)) {
+			if (MatchHasValueCall(condition, out ILVariable v)) {
 				if (nullableVars == null)
 					nullableVars = new List<ILVariable>();
 				nullableVars.Add(v);
@@ -387,9 +387,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// Comparing two nullables: HasValue comparison must be the same operator as the Value comparison
 				if ((hasValueTestNegated ? hasValueComp.Kind.Negate() : hasValueComp.Kind) != newComparisonKind)
 					return null;
-				if (!MatchHasValueCall(hasValueComp.Left, out var leftVar))
+				if (!MatchHasValueCall(hasValueComp.Left, out ILVariable leftVar))
 					return null;
-				if (!MatchHasValueCall(hasValueComp.Right, out var rightVar))
+				if (!MatchHasValueCall(hasValueComp.Right, out ILVariable rightVar))
 					return null;
 				nullableVars = new List<ILVariable> { leftVar };
 				var (left, leftBits) = DoLift(valueComp.Left);
@@ -401,7 +401,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					context.Step("NullableLiftingTransform: C# (in)equality comparison", valueComp.Instruction);
 					return valueComp.MakeLifted(newComparisonKind, left, right);
 				}
-			} else if (newComparisonKind == ComparisonKind.Equality && !hasValueTestNegated && MatchHasValueCall(hasValueTest, out var v)) {
+			} else if (newComparisonKind == ComparisonKind.Equality && !hasValueTestNegated && MatchHasValueCall(hasValueTest, out ILVariable v)) {
 				// Comparing nullable with non-nullable -> we can fall back to the normal comparison code.
 				nullableVars = new List<ILVariable> { v };
 				return LiftCSharpComparison(valueComp, newComparisonKind);
@@ -461,13 +461,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			//      else
 			//         ldc.i4 0
 
-			if (!MatchHasValueCall(hasValueComp.Left, out var nullable1))
+			if (!MatchHasValueCall(hasValueComp.Left, out ILVariable nullable1))
 				return null;
-			if (!MatchHasValueCall(hasValueComp.Right, out var nullable2))
+			if (!MatchHasValueCall(hasValueComp.Right, out ILVariable nullable2))
 				return null;
 			if (!nestedIfInst.MatchIfInstructionPositiveCondition(out var condition, out var trueInst, out var falseInst))
 				return null;
-			if (!MatchHasValueCall(condition, out var nullable))
+			if (!MatchHasValueCall(condition, out ILVariable nullable))
 				return null;
 			if (nullable != nullable1 && nullable != nullable2)
 				return null;
@@ -516,7 +516,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (trueInst.MatchIfInstructionPositiveCondition(out var nestedCondition, out var nestedTrue, out var nestedFalse)) {
 				// Sometimes Roslyn generates pointless conditions like:
 				//   if (nullable.HasValue && (!nullable.HasValue || nullable.GetValueOrDefault() == b))
-				if (MatchHasValueCall(nestedCondition, out var v) && nullableVars.Contains(v)) {
+				if (MatchHasValueCall(nestedCondition, out ILVariable v) && nullableVars.Contains(v)) {
 					trueInst = nestedTrue;
 				}
 			}
@@ -758,11 +758,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		#region Match...Call
 		/// <summary>
-		/// Matches 'call get_HasValue(ldloca v)'
+		/// Matches 'call get_HasValue(arg)'
 		/// </summary>
-		internal static bool MatchHasValueCall(ILInstruction inst, out ILVariable v)
+		internal static bool MatchHasValueCall(ILInstruction inst, out ILInstruction arg)
 		{
-			v = null;
+			arg = null;
 			if (!(inst is Call call))
 				return false;
 			if (call.Arguments.Count != 1)
@@ -771,7 +771,20 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (call.Method.DeclaringTypeDefinition?.KnownTypeCode != KnownTypeCode.NullableOfT)
 				return false;
-			return call.Arguments[0].MatchLdLoca(out v);
+			arg = call.Arguments[0];
+			return true;
+		}
+
+		/// <summary>
+		/// Matches 'call get_HasValue(ldloca v)'
+		/// </summary>
+		internal static bool MatchHasValueCall(ILInstruction inst, out ILVariable v)
+		{
+			if (MatchHasValueCall(inst, out ILInstruction arg)) {
+				return arg.MatchLdLoca(out v);
+			}
+			v = null;
+			return false;
 		}
 
 		/// <summary>
@@ -779,7 +792,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		internal static bool MatchHasValueCall(ILInstruction inst, ILVariable v)
 		{
-			return MatchHasValueCall(inst, out var v2) && v == v2;
+			return MatchHasValueCall(inst, out ILVariable v2) && v == v2;
 		}
 
 		/// <summary>
@@ -811,7 +824,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <summary>
 		/// Matches 'call Nullable{T}.GetValueOrDefault(arg)'
 		/// </summary>
-		static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction arg)
+		internal static bool MatchGetValueOrDefault(ILInstruction inst, out ILInstruction arg)
 		{
 			arg = null;
 			if (!(inst is Call call))

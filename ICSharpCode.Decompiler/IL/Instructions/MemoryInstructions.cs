@@ -41,13 +41,15 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (options.UseFieldSugar) {
 				if (this.MatchLdFld(out var target, out var field)) {
+					ILRange.WriteTo(output, options);
 					output.Write("ldfld ");
 					Disassembler.DisassemblerHelpers.WriteOperand(output, field);
 					output.Write('(');
-					this.target.WriteTo(output, options);
+					target.WriteTo(output, options);
 					output.Write(')');
 					return;
 				} else if (this.MatchLdsFld(out field)) {
+					ILRange.WriteTo(output, options);
 					output.Write("ldsfld ");
 					Disassembler.DisassemblerHelpers.WriteOperand(output, field);
 					return;
@@ -63,19 +65,21 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			if (options.UseFieldSugar) {
 				if (this.MatchStFld(out var target, out var field, out var value)) {
+					ILRange.WriteTo(output, options);
 					output.Write("stfld ");
 					Disassembler.DisassemblerHelpers.WriteOperand(output, field);
 					output.Write('(');
-					this.target.WriteTo(output, options);
+					target.WriteTo(output, options);
 					output.Write(", ");
-					this.value.WriteTo(output, options);
+					value.WriteTo(output, options);
 					output.Write(')');
 					return;
 				} else if (this.MatchStsFld(out field, out value)) {
+					ILRange.WriteTo(output, options);
 					output.Write("stsfld ");
 					Disassembler.DisassemblerHelpers.WriteOperand(output, field);
 					output.Write('(');
-					this.value.WriteTo(output, options);
+					value.WriteTo(output, options);
 					output.Write(')');
 					return;
 				}

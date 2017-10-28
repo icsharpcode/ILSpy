@@ -22,16 +22,11 @@ using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using ExpressionType = System.Linq.Expressions.ExpressionType;
-using PrimitiveType = ICSharpCode.Decompiler.CSharp.Syntax.PrimitiveType;
-using System.Threading;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -140,7 +135,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							atce.Initializers.Add(
 								new NamedExpression {
 									Name = expectedParameters[i].Name,
-									Expression = argumentExpressions[i]
+									Expression = arguments[i].ConvertTo(expectedParameters[i].Type, expressionBuilder)
 								});
 						}
 					}
@@ -148,10 +143,16 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithILInstruction(inst)
 						.WithRR(rr);
 				} else {
+
 					if (IsUnambiguousCall(inst, target, method, Array.Empty<IType>(), arguments) != OverloadResolutionErrors.None) {
 						for (int i = 0; i < arguments.Count; i++) {
-							if (!settings.AnonymousTypes || !expectedParameters[i].Type.ContainsAnonymousType())
+							if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
+								if (arguments[i].Expression is LambdaExpression lambda) {
+									ModifyReturnTypeOfLambda(lambda);
+								}
+							} else {
 								arguments[i] = arguments[i].ConvertTo(expectedParameters[i].Type, expressionBuilder);
+							}
 						}
 					}
 					return new ObjectCreateExpression(expressionBuilder.ConvertType(inst.Method.DeclaringType), arguments.SelectArray(arg => arg.Expression))
@@ -163,6 +164,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					return HandleAccessorCall(inst, target, method, arguments.ToList());
 				} else if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate) {
 					return new InvocationExpression(target, arguments.Select(arg => arg.Expression)).WithILInstruction(inst).WithRR(rr);
+				} else if (IsDelegateEqualityComparison(method, arguments)) {
+					return HandleDelegateEqualityComparison(method, arguments)
+						.WithILInstruction(inst).WithRR(rr);
 				} else {
 					bool requireTypeArguments = false;
 					bool targetCasted = false;
@@ -182,8 +186,13 @@ namespace ICSharpCode.Decompiler.CSharp
 								if (!argumentsCasted) {
 									argumentsCasted = true;
 									for (int i = 0; i < arguments.Count; i++) {
-										if (!settings.AnonymousTypes || !expectedParameters[i].Type.ContainsAnonymousType())
+										if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
+											if (arguments[i].Expression is LambdaExpression lambda) {
+												ModifyReturnTypeOfLambda(lambda);
+											}
+										} else {
 											arguments[i] = arguments[i].ConvertTo(expectedParameters[i].Type, expressionBuilder);
+										}
 									}
 								} else if (!targetCasted) {
 									targetCasted = true;
@@ -213,6 +222,51 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new InvocationExpression(mre, argumentExpressions).WithILInstruction(inst).WithRR(rr);
 				}
 			}
+		}
+
+		private void ModifyReturnTypeOfLambda(LambdaExpression lambda)
+		{
+			var resolveResult = (DecompiledLambdaResolveResult)lambda.GetResolveResult();
+			if (lambda.Body is Expression exprBody)
+				lambda.Body = new TranslatedExpression(exprBody.Detach()).ConvertTo(resolveResult.ReturnType, expressionBuilder);
+			else
+				ModifyReturnStatementInsideLambda(resolveResult.ReturnType, lambda);
+			resolveResult.InferredReturnType = resolveResult.ReturnType;
+		}
+
+		private void ModifyReturnStatementInsideLambda(IType returnType, AstNode parent)
+		{
+			foreach (var child in parent.Children) {
+				if (child is LambdaExpression || child is AnonymousMethodExpression)
+					continue;
+				if (child is ReturnStatement ret) {
+					ret.Expression = new TranslatedExpression(ret.Expression.Detach()).ConvertTo(returnType, expressionBuilder);
+					continue;
+				}
+				ModifyReturnStatementInsideLambda(returnType, child);
+			}
+		}
+
+		private bool IsDelegateEqualityComparison(IMethod method, IList<TranslatedExpression> arguments)
+		{
+			// Comparison on a delegate type is a C# builtin operator
+			// that compiles down to a Delegate.op_Equality call.
+			// We handle this as a special case to avoid inserting a cast to System.Delegate.
+			return method.IsOperator
+				&& method.DeclaringType.IsKnownType(KnownTypeCode.Delegate)
+				&& (method.Name == "op_Equality" || method.Name == "op_Inequality")
+				&& arguments.Count == 2
+				&& arguments[0].Type.Kind == TypeKind.Delegate
+				&& arguments[1].Type.Equals(arguments[0].Type);
+		}
+
+		private Expression HandleDelegateEqualityComparison(IMethod method, IList<TranslatedExpression> arguments)
+		{
+			return new BinaryOperatorExpression(
+				arguments[0],
+				method.Name == "op_Equality" ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality,
+				arguments[1]
+			);
 		}
 
 		OverloadResolutionErrors IsUnambiguousCall(ILInstruction inst, TranslatedExpression target, IMethod method, IType[] typeArguments, IList<TranslatedExpression> arguments)
@@ -321,39 +375,47 @@ namespace ICSharpCode.Decompiler.CSharp
 				case OpCode.LdVirtFtn:
 					method = ((LdVirtFtn)func).Method;
 					break;
+				case OpCode.ILFunction:
+					method = ((ILFunction)func).Method;
+					return expressionBuilder.TranslateFunction(inst.Method.DeclaringType, (ILFunction)func)
+						.WithILInstruction(inst);
 				default:
-					method = (IMethod)typeSystem.Resolve(((ILFunction)func).Method);
-					break;
+					throw new ArgumentException($"Unknown instruction type: {func.OpCode}");
 			}
-			var target = expressionBuilder.TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
+			var invokeMethod = inst.Method.DeclaringType.GetDelegateInvokeMethod();
+			TranslatedExpression target;
+			IType targetType;
+			if (method.IsExtensionMethod && invokeMethod != null && method.Parameters.Count - 1 == invokeMethod.Parameters.Count) {
+				target = expressionBuilder.Translate(inst.Arguments[0]);
+				targetType = method.Parameters[0].Type;
+			} else {
+				target = expressionBuilder.TranslateTarget(method, inst.Arguments[0], func.OpCode == OpCode.LdFtn);
+				targetType = method.DeclaringType;
+			}
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 			var or = new OverloadResolution(resolver.Compilation, method.Parameters.SelectArray(p => new TypeResolveResult(p.Type)));
-			var result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, true) as MethodGroupResolveResult;
+			var result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
 
-			if (result == null) {
-				target = target.ConvertTo(method.DeclaringType, expressionBuilder);
-			} else {
-				or.AddMethodLists(result.MethodsGroupedByDeclaringType.ToArray());
-				if (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, func.OpCode == OpCode.LdVirtFtn))
-					target = target.ConvertTo(method.DeclaringType, expressionBuilder);
+			bool needsCast = true;
+			if (result is MethodGroupResolveResult mgrr) {
+				or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
+				needsCast = (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, func.OpCode == OpCode.LdVirtFtn));
+			}
+			if (needsCast) {
+				target = target.ConvertTo(targetType, expressionBuilder);
+				result = lookup.Lookup(target.ResolveResult, method.Name, method.TypeArguments, false);
 			}
 
 			var mre = new MemberReferenceExpression(target, method.Name);
 			mre.TypeArguments.AddRange(method.TypeArguments.Select(expressionBuilder.ConvertType));
+			mre.WithRR(result);
 			var oce = new ObjectCreateExpression(expressionBuilder.ConvertType(inst.Method.DeclaringType), mre)
-				//				.WithAnnotation(new DelegateConstruction.Annotation(func.OpCode == OpCode.LdVirtFtn, target, method.Name))
 				.WithILInstruction(inst)
 				.WithRR(new ConversionResolveResult(
 					inst.Method.DeclaringType,
 					new MemberResolveResult(target.ResolveResult, method),
-					// TODO handle extension methods capturing the first argument
 					Conversion.MethodGroupConversion(method, func.OpCode == OpCode.LdVirtFtn, false)));
-
-			if (func is ILFunction) {
-				return expressionBuilder.TranslateFunction(oce, target, (ILFunction)func);
-			} else {
-				return oce;
-			}
+			return oce;
 		}
 	}
 }

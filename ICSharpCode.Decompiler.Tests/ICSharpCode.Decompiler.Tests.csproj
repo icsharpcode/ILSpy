@@ -44,6 +44,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="TestCases\Correctness\Jmp.il" />
     <None Include="TestCases\ILPretty\FSharpUsing.fs" />
     <None Include="TestCases\ILPretty\FSharpUsing_Debug.il" />
     <None Include="TestCases\ILPretty\FSharpUsing_Release.il" />
@@ -53,6 +54,8 @@
 
   <ItemGroup>
     <Compile Include="DataFlowTest.cs" />
+    <Compile Include="TestCases\Correctness\LINQRaytracer.cs" />
+    <Compile Include="TestCases\Pretty\DelegateConstruction.cs" />
     <None Include="TestCases\ILPretty\FSharpUsing_Debug.cs" />
     <None Include="TestCases\ILPretty\FSharpUsing_Release.cs" />
     <Compile Include="Helpers\CodeAssert.cs" />
@@ -67,6 +70,8 @@
     <Compile Include="TestCases\Correctness\TrickyTypes.cs" />
     <Compile Include="TestCases\Correctness\Using.cs" />
     <Compile Include="TestCases\ILPretty\Issue379.cs" />
+    <Compile Include="TestCases\Pretty\FixProxyCalls.cs" />
+    <Compile Include="TestCases\Pretty\InitializerTests.cs" />
     <None Include="TestCases\ILPretty\Issue646.cs" />
     <Compile Include="TestCases\Pretty\Async.cs" />
     <Compile Include="TestCases\Pretty\CheckedUnchecked.cs" />
@@ -106,6 +111,7 @@
     <Compile Include="TestCases\Pretty\PropertiesAndEvents.cs" />
     <Compile Include="TestCases\Pretty\QueryExpressions.cs" />
     <Compile Include="TestCases\Pretty\ShortCircuit.cs" />
+    <Compile Include="TestCases\Pretty\Switch.cs" />
     <Compile Include="TestCases\Pretty\TypeAnalysisTests.cs" />
     <Compile Include="TestCases\Pretty\Using.cs" />
     <Compile Include="TestTraceListener.cs" />

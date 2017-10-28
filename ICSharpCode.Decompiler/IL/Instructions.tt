@@ -73,7 +73,7 @@
 		new OpCode("bit.not", "Bitwise NOT", Unary, CustomConstructor, MatchCondition("IsLifted == o.IsLifted && UnderlyingResultType == o.UnderlyingResultType")),
 		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
 		new OpCode("br", "Unconditional branch. <c>goto target;</c>",
-			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch, CustomComputeFlags,
+			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch,
 			MatchCondition("this.TargetBlock == o.TargetBlock")),
 		new OpCode("leave", "Unconditional branch to end of block container. Return is represented using IsLeavingFunction and an (optional) return value. The block container evaluates to the value produced by the argument of the leave instruction.",
 			CustomConstructor, CustomArguments("value"), UnconditionalBranch, MayBranch, CustomWriteTo, CustomComputeFlags,
@@ -93,11 +93,11 @@
 			}), CustomConstructor, CustomComputeFlags, CustomWriteTo),
 		new OpCode("switch", "Switch statement",
 			CustomClassName("SwitchInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo, ResultType("Void"),
-			MatchCondition("Value.PerformMatch(o.Value, ref match) && DefaultBody.PerformMatch(o.DefaultBody, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match)")),
+			MatchCondition("IsLifted == o.IsLifted && Value.PerformMatch(o.Value, ref match) && Patterns.ListMatch.DoMatch(this.Sections, o.Sections, ref match)")),
 		new OpCode("switch.section", "Switch section within a switch statement",
 			CustomClassName("SwitchSection"), CustomChildren(new [] { new ChildInfo("body") }),
 			CustomConstructor, CustomComputeFlags, CustomWriteTo, ResultType("Void"),
-			MatchCondition("this.Labels.Intervals.SequenceEqual(o.Labels.Intervals)")),
+			MatchCondition("this.Labels.SetEquals(o.Labels) && this.HasNullLabel == o.HasNullLabel")),
 		new OpCode("try.catch", "Try-catch statement.",
 			BaseClass("TryInstruction"), CustomConstructor, CustomComputeFlags, CustomWriteTo,
 			MatchCondition("TryBlock.PerformMatch(o.TryBlock, ref match)"),
@@ -135,6 +135,12 @@
 		new OpCode("call", "Non-virtual method call.", Call),
 		new OpCode("callvirt", "Virtual method call.", 
 			CustomClassName("CallVirt"), Call),
+		new OpCode("calli", "Unsafe function pointer call.",
+			CustomClassName("CallIndirect"),
+			CustomConstructor, CustomWriteTo,
+			MatchCondition("EqualSignature(o)"),
+			MatchCondition("Patterns.ListMatch.DoMatch(this.Arguments, o.Arguments, ref match)"),
+			MatchCondition("this.FunctionPointer.PerformMatch(o.FunctionPointer, ref match)")),
 		new OpCode("ckfinite", "Checks that the input float is not NaN or infinite.",
 			Unary, MayThrow, VoidResult),
 		new OpCode("conv", "Numeric cast.",
@@ -176,7 +182,15 @@
 			CustomClassName("LdMemberToken"), NoArguments, HasMemberOperand, ResultType("O")),
 		new OpCode("localloc", "Allocates space in the stack frame",
 			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
-		
+		new OpCode("cpblk", "memcpy(destAddress, sourceAddress, size);",
+			CustomArguments("destAddress", "sourceAddress", "size"),
+			MayThrow, MemoryAccess,
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, ResultType("Void")),
+		new OpCode("initblk", "memset(address, value, size)",
+			CustomArguments("address", "value", "size"),
+			MayThrow, MemoryAccess,
+			SupportsVolatilePrefix, SupportsUnalignedPrefix, ResultType("Void")),
+
 		new OpCode("ldflda", "Load address of instance field",
 			CustomClassName("LdFlda"), CustomArguments("target"), MayThrowIfNotDelayed, HasFieldOperand, ResultType("Ref")),
 		new OpCode("ldsflda", "Load static field address",
@@ -220,6 +234,8 @@
 		new OpCode("array.to.pointer", "Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty." + Environment.NewLine
 			+ "Also used to convert a string to a reference to the first character.",
 			CustomArguments("array"), ResultType("Ref")),
+		new OpCode("string.to.int", "Maps a string value to an integer. This is used in switch(string).",
+			CustomArguments("argument"), CustomConstructor, CustomWriteTo, ResultType("I4")),
 
 		new OpCode("mkrefany", "Push a typed reference of type class onto the stack.",
 			CustomClassName("MakeRefAny"), Unary, HasTypeOperand, ResultType("O")),
@@ -483,6 +499,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public IEnumerable<string> WriteToBody {
 			get {
+				yield return "ILRange.WriteTo(output, options);";
 				foreach (string line in WriteOpCodePrefix)
 					yield return line;
 				yield return "output.Write(OpCode);";
