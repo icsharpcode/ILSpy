@@ -694,8 +694,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
-			if ((op == BinaryOperatorType.BitwiseAnd || op == BinaryOperatorType.BitwiseOr || op == BinaryOperatorType.ExclusiveOr)
-				&& (left.Type.Kind == TypeKind.Enum || right.Type.Kind == TypeKind.Enum)) {
+			if (op.IsBitwise() && (left.Type.Kind == TypeKind.Enum || right.Type.Kind == TypeKind.Enum)) {
 				left = AdjustConstantExpressionToType(left, right.Type);
 				right = AdjustConstantExpressionToType(right, left.Type);
 			}
