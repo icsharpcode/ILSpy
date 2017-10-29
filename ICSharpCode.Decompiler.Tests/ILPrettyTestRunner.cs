@@ -42,6 +42,18 @@ namespace ICSharpCode.Decompiler.Tests
 			Run();
 		}
 		
+		[Test]
+		public void FSharpUsing_Debug()
+		{
+			Run();
+		}
+
+		[Test]
+		public void FSharpUsing_Release()
+		{
+			Run();
+		}
+
 		void Run([CallerMemberName] string testName = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");

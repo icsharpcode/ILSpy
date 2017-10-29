@@ -172,10 +172,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (DetectExitPoints.CompatibleExitInstruction(trueExitInst, falseExitInst)) {
 					// if (...) { ...; goto exitPoint; } goto nextBlock; nextBlock: ...; goto exitPoint;
 					// -> if (...) { ... } else { ... } goto exitPoint;
-					context.Step("Inline block as else-branch", ifInst);
-					targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
-					targetBlock.Remove();
-					ifInst.FalseInst = targetBlock;
+					
+					// the else block is not empty or nop-only:
+					if (targetBlock.Children.Any(inst => !(inst is Nop) && inst != falseExitInst)) {
+						context.Step("Inline block as else-branch", ifInst);
+						targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
+						targetBlock.Remove();
+						ifInst.FalseInst = targetBlock;
+					} else {
+						// the else block is empty or nop-only and can be safely removed:
+						context.Step("Remove empty else-branch", ifInst);
+						targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
+						targetBlock.Remove();
+					}
 					exitInst = block.Instructions[block.Instructions.Count - 1] = falseExitInst;
 					Block trueBlock = ifInst.TrueInst as Block;
 					if (trueBlock != null) {

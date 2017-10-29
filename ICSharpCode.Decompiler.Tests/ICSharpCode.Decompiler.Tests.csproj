@@ -45,6 +45,9 @@
 
   <ItemGroup>
     <None Include="TestCases\Correctness\Jmp.il" />
+    <None Include="TestCases\ILPretty\FSharpUsing.fs" />
+    <None Include="TestCases\ILPretty\FSharpUsing_Debug.il" />
+    <None Include="TestCases\ILPretty\FSharpUsing_Release.il" />
     <None Include="TestCases\Correctness\BitNot.il" />
     <None Include="TestCases\Correctness\Readme.txt" />
   </ItemGroup>
@@ -53,6 +56,8 @@
     <Compile Include="DataFlowTest.cs" />
     <Compile Include="TestCases\Correctness\LINQRaytracer.cs" />
     <Compile Include="TestCases\Pretty\DelegateConstruction.cs" />
+    <None Include="TestCases\ILPretty\FSharpUsing_Debug.cs" />
+    <None Include="TestCases\ILPretty\FSharpUsing_Release.cs" />
     <Compile Include="Helpers\CodeAssert.cs" />
     <Compile Include="Helpers\SdkUtility.cs" />
     <Compile Include="Helpers\RemoveCompilerAttribute.cs" />
