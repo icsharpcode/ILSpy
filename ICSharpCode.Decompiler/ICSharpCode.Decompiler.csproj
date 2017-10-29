@@ -205,7 +205,7 @@
     <Compile Include="CSharp\OutputVisitor\InsertRequiredSpacesDecorator.cs" />
     <Compile Include="CSharp\OutputVisitor\InsertSpecialsDecorator.cs" />
     <Compile Include="CSharp\OutputVisitor\ITokenWriter.cs" />
-    <Compile Include="CSharp\OutputVisitor\TextWriterOutputFormatter.cs" />
+    <Compile Include="CSharp\OutputVisitor\TextWriterTokenWriter.cs" />
     <Compile Include="CSharp\Resolver\AliasNamespaceResolveResult.cs" />
     <Compile Include="CSharp\Resolver\AliasTypeResolveResult.cs" />
     <Compile Include="CSharp\Resolver\AwaitResolveResult.cs" />
