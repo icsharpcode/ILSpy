@@ -174,7 +174,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					// -> if (...) { ... } else { ... } goto exitPoint;
 					
 					// the else block is not empty or nop-only:
-					if (!targetBlock.IsNopBlock(ignoreExitPoint: falseExitInst)) {
+					if (targetBlock.Children.Any(inst => !(inst is Nop) && inst != falseExitInst)) {
 						context.Step("Inline block as else-branch", ifInst);
 						targetBlock.Instructions.RemoveAt(targetBlock.Instructions.Count - 1);
 						targetBlock.Remove();
