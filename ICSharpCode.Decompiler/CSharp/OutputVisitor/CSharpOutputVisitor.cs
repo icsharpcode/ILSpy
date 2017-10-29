@@ -1890,8 +1890,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Space(policy.SpaceBeforeConstructorDeclarationParentheses);
 			WriteCommaSeparatedListInParenthesis(constructorDeclaration.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
 			if (!constructorDeclaration.Initializer.IsNull) {
-				Space();
+				NewLine();
+				writer.Indent();
 				constructorDeclaration.Initializer.AcceptVisitor(this);
+				writer.Unindent();
 			}
 			WriteMethodBody(constructorDeclaration.Body, policy.ConstructorBraceStyle);
 			EndNode(constructorDeclaration);
