@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 using System.IO;
 
@@ -206,6 +207,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
 						return true;
 					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(type))
+						return true;
+					if (settings.FixedBuffers && type.Name.StartsWith("<", StringComparison.Ordinal) && type.Name.Contains("__FixedBuffer"))
 						return true;
 				} else if (type.IsCompilerGenerated()) {
 					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
@@ -822,7 +825,35 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
 			SetNewModifier(fieldDecl);
+			if (settings.FixedBuffers && IsFixedField(field, out var elementType, out var elementCount)) {
+				var fixedFieldDecl = new FixedFieldDeclaration();
+				fieldDecl.Attributes.MoveTo(fixedFieldDecl.Attributes);
+				fixedFieldDecl.Modifiers = fieldDecl.Modifiers;
+				fixedFieldDecl.ReturnType = typeSystemAstBuilder.ConvertType(elementType);
+				fixedFieldDecl.Variables.Add(new FixedVariableInitializer(field.Name, new PrimitiveExpression(elementCount)));
+				fixedFieldDecl.Variables.Single().CopyAnnotationsFrom(((FieldDeclaration)fieldDecl).Variables.Single());
+				fixedFieldDecl.CopyAnnotationsFrom(fieldDecl);
+				RemoveAttribute(fixedFieldDecl, fixedBufferAttributeTypeName);
+				return fixedFieldDecl;
+			}
 			return fieldDecl;
+		}
+
+		static readonly FullTypeName fixedBufferAttributeTypeName = new TopLevelTypeName("System.Runtime.CompilerServices", "FixedBufferAttribute");
+
+		internal static bool IsFixedField(IField field, out IType type, out int elementCount)
+		{
+			type = null;
+			elementCount = 0;
+			IAttribute attr = field.GetAttribute(fixedBufferAttributeTypeName, inherit: false);
+			if (attr != null && attr.PositionalArguments.Count == 2) {
+				if (attr.PositionalArguments[0] is TypeOfResolveResult trr && attr.PositionalArguments[1].ConstantValue is int length) {
+					type = trr.ReferencedType;
+					elementCount = length;
+					return true;
+				}
+			}
+			return false;
 		}
 
 		EntityDeclaration DoDecompile(PropertyDefinition propertyDefinition, IProperty property, ITypeResolveContext decompilationContext)
@@ -937,11 +968,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				string namepart = ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name);
 				AstType memberType;
 				if ((options & (ConvertTypeOptions.IncludeOuterTypeName | ConvertTypeOptions.IncludeNamespace)) != 0) {
-					AstType typeRef = ConvertType(type.DeclaringType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
+				AstType typeRef = ConvertType(type.DeclaringType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
 					memberType = new MemberType { Target = typeRef, MemberName = namepart };
-					if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
-						AddTypeParameterDefininitionsTo(type, memberType);
-					}
+				if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
+					AddTypeParameterDefininitionsTo(type, memberType);
+				}
 				} else {
 					memberType = new SimpleType(namepart);
 					if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
@@ -1054,9 +1085,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						typeParameterCount = typeArguments.Count;
 					st.TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
 				} else {
-					st.TypeArguments.AddRange(typeArguments);
+				st.TypeArguments.AddRange(typeArguments);
 
-				}
+			}
 			}
 			MemberType mt = baseType as MemberType;
 			if (mt != null) {
@@ -1106,7 +1137,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			SequencePointBuilder spb = new SequencePointBuilder();
 			syntaxTree.AcceptVisitor(spb);
 			return spb.GetSequencePoints();
-		}
+	}
 		#endregion
 	}
 

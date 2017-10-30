@@ -103,6 +103,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool fixedBuffers = true;
+
+		/// <summary>
+		/// Decompile C# 1.0 'public unsafe fixed int arr[10];' members.
+		/// </summary>
+		public bool FixedBuffers {
+			get { return fixedBuffers; }
+			set {
+				if (fixedBuffers != value) {
+					fixedBuffers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool liftNullables = true;
 
 		/// <summary>

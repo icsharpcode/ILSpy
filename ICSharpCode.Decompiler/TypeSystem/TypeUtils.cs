@@ -128,6 +128,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 
 		/// <summary>
+		/// Gets whether the type is a C# primitive integer type: byte, sbyte, short, ushort, int, uint, long and ulong.
+		/// 
+		/// Unlike the ILAst, C# does not consider bool, enums, pointers or IntPtr to be integers.
+		/// </summary>
+		public static bool IsCSharpPrimitiveIntegerType(this IType type)
+		{
+			switch (type.GetDefinition()?.KnownTypeCode) {
+				case KnownTypeCode.Byte:
+				case KnownTypeCode.SByte:
+				case KnownTypeCode.Int16:
+				case KnownTypeCode.UInt16:
+				case KnownTypeCode.Int32:
+				case KnownTypeCode.UInt32:
+				case KnownTypeCode.Int64:
+				case KnownTypeCode.UInt64:
+					return true;
+				default:
+					return false;
+			}
+		}
+
+		/// <summary>
 		/// Gets whether the type is an IL integer type.
 		/// Returns true for I4, I, or I8.
 		/// </summary>
@@ -282,6 +304,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case KnownTypeCode.Byte:
 					return PrimitiveType.U1;
 				case KnownTypeCode.UInt16:
+				case KnownTypeCode.Char:
 					return PrimitiveType.U2;
 				case KnownTypeCode.UInt32:
 					return PrimitiveType.U4;
