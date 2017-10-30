@@ -245,6 +245,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// -> call Constant(ldloc i, call GetTypeFromHandle(ldtypetoken System.Int32))
 			protected internal override void VisitCall(Call inst)
 			{
+				base.VisitCall(inst);
 				if (inst.Method.FullName.Equals("System.Linq.Expressions.Expression.Field") &&
 					inst.Arguments.Count == 2 &&
 					inst.Arguments[0] is CallInstruction constantCall &&
@@ -268,8 +269,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					typeOfInstruction.Arguments.Add(new LdTypeToken(info.variable.Type));
 					replace.Arguments.Add(typeOfInstruction);
 					inst.ReplaceWith(replace);
-				} else {
-					Default(inst);
 				}
 			}
 
