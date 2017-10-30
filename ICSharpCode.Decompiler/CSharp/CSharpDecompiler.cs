@@ -31,6 +31,7 @@ using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using System.IO;
 
 namespace ICSharpCode.Decompiler.CSharp
 {
@@ -185,7 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.typeSystem = typeSystem;
 			this.settings = settings;
 		}
-		
+
 		#region MemberIsHidden
 		public static bool MemberIsHidden(MemberReference member, DecompilerSettings settings)
 		{
@@ -213,7 +214,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 				}
 			}
-			
+
 			FieldDefinition field = member as FieldDefinition;
 			if (field != null) {
 				if (field.IsCompilerGenerated()) {
@@ -235,10 +236,10 @@ namespace ICSharpCode.Decompiler.CSharp
 						return true;
 				}
 			}
-			
+
 			return false;
 		}
-		
+
 		static bool IsSwitchOnStringCache(FieldDefinition field)
 		{
 			return field.Name.StartsWith("<>f__switch", StringComparison.Ordinal);
@@ -263,7 +264,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return type.BaseType.FullName == "System.Object" && !type.HasInterfaces;
 		}
 		#endregion
-		
+
 		TypeSystemAstBuilder CreateAstBuilder(ITypeResolveContext decompilationContext)
 		{
 			var typeSystemAstBuilder = new TypeSystemAstBuilder();
@@ -272,7 +273,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			typeSystemAstBuilder.AddResolveResultAnnotations = true;
 			return typeSystemAstBuilder;
 		}
-		
+
 		void RunTransforms(AstNode rootNode, ITypeResolveContext decompilationContext)
 		{
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
@@ -283,7 +284,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			rootNode.AcceptVisitor(new InsertParenthesesVisitor { InsertParenthesesForReadability = true });
 		}
-		
+
+		string SyntaxTreeToString(SyntaxTree syntaxTree)
+		{
+			StringWriter w = new StringWriter();
+			syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
+			return w.ToString();
+		}
+
 		/// <summary>
 		/// Decompile assembly and module attributes.
 		/// </summary>
@@ -295,6 +303,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			DoDecompileModuleAndAssemblyAttributes(decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompilationContext);
 			return syntaxTree;
+		}
+
+		/// <summary>
+		/// Decompile assembly and module attributes.
+		/// </summary>
+		public string DecompileModuleAndAssemblyAttributesToString()
+		{
+			return SyntaxTreeToString(DecompileModuleAndAssemblyAttributes());
 		}
 
 		void DoDecompileModuleAndAssemblyAttributes(ITypeResolveContext decompilationContext, SyntaxTree syntaxTree)
@@ -330,7 +346,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				groupNode.AddChild(typeDecl, SyntaxTree.MemberRole);
 			}
 		}
-		
+
 		/// <summary>
 		/// Decompiles the whole module into a single syntax tree.
 		/// </summary>
@@ -344,7 +360,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			RunTransforms(syntaxTree, decompilationContext);
 			return syntaxTree;
 		}
-		
+
+		/// <summary>
+		/// Decompiles the whole module into a single string.
+		/// </summary>
+		public string DecompileWholeModuleAsString()
+		{
+			return SyntaxTreeToString(DecompileWholeModuleAsSingleFile());
+		}
+
 		/// <summary>
 		/// Decompile the given types.
 		/// </summary>
@@ -361,6 +385,47 @@ namespace ICSharpCode.Decompiler.CSharp
 			DoDecompileTypes(types, decompilationContext, syntaxTree);
 			RunTransforms(syntaxTree, decompilationContext);
 			return syntaxTree;
+		}
+
+		/// <summary>
+		/// Decompile the given types.
+		/// </summary>
+		/// <remarks>
+		/// Unlike Decompile(IMemberDefinition[]), this method will add namespace declarations around the type definitions.
+		/// </remarks>
+		public string DecompileTypesAsString(IEnumerable<TypeDefinition> types)
+		{
+			return SyntaxTreeToString(DecompileTypes(types));
+		}
+
+		/// <summary>
+		/// Decompile the given type.
+		/// </summary>
+		/// <remarks>
+		/// Unlike Decompile(IMemberDefinition[]), this method will add namespace declarations around the type definition.
+		/// </remarks>
+		public SyntaxTree DecompileType(FullTypeName fullTypeName)
+		{
+			var type = typeSystem.Compilation.FindType(fullTypeName).GetDefinition();
+			if (type == null)
+				throw new InvalidOperationException($"Could not find type definition {fullTypeName} in type system.");
+			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
+			syntaxTree = new SyntaxTree();
+			definedSymbols = new HashSet<string>();
+			DoDecompileTypes(new[] { typeSystem.GetCecil(type) }, decompilationContext, syntaxTree);
+			RunTransforms(syntaxTree, decompilationContext);
+			return syntaxTree;
+		}
+
+		/// <summary>
+		/// Decompile the given type.
+		/// </summary>
+		/// <remarks>
+		/// Unlike Decompile(IMemberDefinition[]), this method will add namespace declarations around the type definition.
+		/// </remarks>
+		public string DecompileTypeAsString(FullTypeName fullTypeName)
+		{
+			return SyntaxTreeToString(DecompileType(fullTypeName));
 		}
 
 		/// <summary>
@@ -427,6 +492,22 @@ namespace ICSharpCode.Decompiler.CSharp
 			return syntaxTree;
 		}
 
+		/// <summary>
+		/// Decompile the specified types and/or members.
+		/// </summary>
+		public string DecompileAsString(params IMemberDefinition[] definitions)
+		{
+			return SyntaxTreeToString(Decompile(definitions));
+		}
+
+		/// <summary>
+		/// Decompile the specified types and/or members.
+		/// </summary>
+		public string DecompileAsString(IList<IMemberDefinition> definitions)
+		{
+			return SyntaxTreeToString(Decompile(definitions));
+		}
+
 		IEnumerable<EntityDeclaration> AddInterfaceImplHelpers(EntityDeclaration memberDecl, MethodDefinition methodDef,
 		                                                       TypeSystemAstBuilder astBuilder)
 		{
@@ -446,7 +527,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				methodDecl.Parameters.AddRange(memberDecl.GetChildrenByRole(Roles.Parameter).Select(n => n.Clone()));
 				methodDecl.Constraints.AddRange(memberDecl.GetChildrenByRole(Roles.Constraint)
 				                                .Select(n => (Constraint)n.Clone()));
-				
+
 				methodDecl.Body = new BlockStatement();
 				methodDecl.Body.AddChild(new Comment(
 					"ILSpy generated this explicit interface implementation from .override directive in " + memberDecl.Name),
@@ -463,7 +544,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				yield return methodDecl;
 			}
 		}
-		
+
 		Expression ForwardParameter(ParameterDeclaration p)
 		{
 			switch (p.ParameterModifier) {
@@ -475,7 +556,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new IdentifierExpression(p.Name);
 			}
 		}
-		
+
 		/// <summary>
 		/// Sets new modifier if the member hides some other member from a base type.
 		/// </summary>
@@ -485,7 +566,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool addNewModifier = false;
 			var entity = (IEntity)member.GetSymbol();
 			var lookup = new MemberLookup(entity.DeclaringTypeDefinition, entity.ParentAssembly);
-			
+
 			var baseTypes = entity.DeclaringType.GetNonInterfaceBaseTypes().Where(t => entity.DeclaringType != t);
 			if (entity is ITypeDefinition) {
 				addNewModifier = baseTypes.SelectMany(b => b.GetNestedTypes(t => t.Name == entity.Name && lookup.IsAccessible(t, true))).Any();
@@ -523,7 +604,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				i++;
 			}
 		}
-		
+
 		EntityDeclaration DoDecompile(ITypeDefinition typeDef, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentTypeDefinition == typeDef);
@@ -622,7 +703,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			return method;
 		}
-		
+
 		EntityDeclaration DoDecompile(MethodDefinition methodDefinition, IMethod method, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == method);
@@ -661,7 +742,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					i++;
 				}
 			}
-			
+
 			var context = new ILTransformContext(function, specializingTypeSystem, settings) {
 				CancellationToken = CancellationToken
 			};
@@ -773,7 +854,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				SetNewModifier(propertyDecl);
 			return propertyDecl;
 		}
-		
+
 		EntityDeclaration DoDecompile(EventDefinition eventDefinition, IEvent ev, ITypeResolveContext decompilationContext)
 		{
 			Debug.Assert(decompilationContext.CurrentMember == ev);
