@@ -274,6 +274,7 @@
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
+    <Compile Include="DotNetCore\UniversalAssemblyResolver.cs" />
     <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
     <Compile Include="IL\ILAstWritingOptions.cs" />
     <Compile Include="IL\SequencePoint.cs" />
