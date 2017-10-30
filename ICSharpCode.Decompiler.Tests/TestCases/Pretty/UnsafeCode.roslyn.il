@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module UnsafeCode.dll
-// MVID: {A389E3D9-8350-4463-A41E-65C50B6E19ED}
+// MVID: {A3E96E65-04A9-4270-81A4-F0FB3CB8D517}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01620000
+// Image base: 0x01310000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -985,6 +985,124 @@
     IL_0010:  ldloc.0
     IL_0011:  ret
   } // end of method UnsafeCode::FixedMemberBasePointer
+
+  .method public hidebysig instance string 
+          UsePointer(float64* ptr) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  1
+    .locals init (string V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance string [mscorlib]System.Double::ToString()
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method UnsafeCode::UsePointer
+
+  .method public hidebysig instance string 
+          StackAlloc(int32 count) cil managed
+  {
+    // Code size       65 (0x41)
+    .maxstack  3
+    .locals init (char* V_0,
+             char* V_1,
+             int32 V_2,
+             bool V_3,
+             string V_4)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  conv.u
+    IL_0003:  ldc.i4.2
+    IL_0004:  mul.ovf.un
+    IL_0005:  localloc
+    IL_0007:  stloc.0
+    IL_0008:  ldc.i4.s   100
+    IL_000a:  conv.u
+    IL_000b:  ldc.i4.2
+    IL_000c:  mul.ovf.un
+    IL_000d:  localloc
+    IL_000f:  stloc.1
+    IL_0010:  ldc.i4.0
+    IL_0011:  stloc.2
+    IL_0012:  br.s       IL_002b
+
+    IL_0014:  nop
+    IL_0015:  ldloc.0
+    IL_0016:  ldloc.2
+    IL_0017:  conv.i
+    IL_0018:  ldc.i4.2
+    IL_0019:  mul
+    IL_001a:  add
+    IL_001b:  ldloc.2
+    IL_001c:  conv.u2
+    IL_001d:  stind.i2
+    IL_001e:  ldloc.1
+    IL_001f:  ldloc.2
+    IL_0020:  conv.i
+    IL_0021:  ldc.i4.2
+    IL_0022:  mul
+    IL_0023:  add
+    IL_0024:  ldc.i4.0
+    IL_0025:  stind.i2
+    IL_0026:  nop
+    IL_0027:  ldloc.2
+    IL_0028:  ldc.i4.1
+    IL_0029:  add
+    IL_002a:  stloc.2
+    IL_002b:  ldloc.2
+    IL_002c:  ldarg.1
+    IL_002d:  clt
+    IL_002f:  stloc.3
+    IL_0030:  ldloc.3
+    IL_0031:  brtrue.s   IL_0014
+
+    IL_0033:  ldarg.0
+    IL_0034:  ldloc.0
+    IL_0035:  call       instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UsePointer(float64*)
+    IL_003a:  stloc.s    V_4
+    IL_003c:  br.s       IL_003e
+
+    IL_003e:  ldloc.s    V_4
+    IL_0040:  ret
+  } // end of method UnsafeCode::StackAlloc
+
+  .method public hidebysig instance string 
+          StackAllocStruct(int32 count) cil managed
+  {
+    // Code size       46 (0x2e)
+    .maxstack  2
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* V_0,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* V_1,
+             string V_2)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldc.i4.2
+    IL_0003:  mul.ovf
+    IL_0004:  conv.u
+    IL_0005:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_000b:  mul.ovf.un
+    IL_000c:  localloc
+    IL_000e:  stloc.0
+    IL_000f:  ldc.i4.s   10
+    IL_0011:  conv.u
+    IL_0012:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_0018:  mul.ovf.un
+    IL_0019:  localloc
+    IL_001b:  stloc.1
+    IL_001c:  ldarg.0
+    IL_001d:  ldloc.0
+    IL_001e:  ldflda     float64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct::Y
+    IL_0023:  conv.u
+    IL_0024:  call       instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UsePointer(float64*)
+    IL_0029:  stloc.2
+    IL_002a:  br.s       IL_002c
+
+    IL_002c:  ldloc.2
+    IL_002d:  ret
+  } // end of method UnsafeCode::StackAllocStruct
 
   .method family hidebysig virtual instance void 
           Finalize() cil managed

@@ -257,6 +257,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return m->Doubles;
 		}
 
+		public unsafe string UsePointer(double* ptr)
+		{
+			return ptr->ToString();
+		}
+
+		public unsafe string StackAlloc(int count)
+		{
+			char* ptr = stackalloc char[count];
+			char* ptr2 = stackalloc char[100];
+			for (int i = 0; i < count; i++) {
+				ptr[i] = (char)i;
+				ptr2[i] = '\0';
+			}
+			return this.UsePointer((double*)ptr);
+		}
+
+		public unsafe string StackAllocStruct(int count)
+		{
+			SimpleStruct* ptr = stackalloc SimpleStruct[checked(count * 2)];
+			SimpleStruct* _ = stackalloc SimpleStruct[10];
+			return this.UsePointer(&ptr->Y);
+		}
+
 		unsafe ~UnsafeCode()
 		{
 			this.PassPointerAsRefParameter(this.NullPointer);
