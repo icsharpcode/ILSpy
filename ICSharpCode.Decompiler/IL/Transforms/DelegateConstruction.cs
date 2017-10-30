@@ -217,7 +217,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			readonly List<ILVariable> targetAndCopies = new List<ILVariable>();
 			readonly List<ILInstruction> orphanedVariableInits;
 			readonly Dictionary<IField, DisplayClassVariable> initValues = new Dictionary<IField, DisplayClassVariable>();
-			
+
 			struct DisplayClassVariable
 			{
 				public ILVariable variable;
@@ -241,11 +241,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			// Handle variables in ExpressionTrees
-			// call Field(call Constant(ldloc V_0, call GetTypeFromHandle(ldtypetoken ExpressionTrees+<>c__DisplayClass56_0)), call GetFieldFromHandle(ldmembertoken i)) at IL_0114
-			// -> call Constant(ldloc i, call GetTypeFromHandle(ldtypetoken System.Int32))
 			protected internal override void VisitCall(Call inst)
 			{
 				base.VisitCall(inst);
+
+				// call Field(call Constant(ldloc V_0, call GetTypeFromHandle(ldtypetoken ExpressionTrees+<>c__DisplayClass56_0)), call GetFieldFromHandle(ldmembertoken i)) at IL_0114
+				// -> call Constant(ldloc i, call GetTypeFromHandle(ldtypetoken System.Int32))
 				if (inst.Method.FullName.Equals("System.Linq.Expressions.Expression.Field")
 					&& inst.Arguments.Count == 2
 					&& inst.Arguments[0] is CallInstruction constantCall
@@ -268,6 +269,26 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					Call typeOfInstruction = new Call(getTypeFromHandleCall.Method);
 					typeOfInstruction.Arguments.Add(new LdTypeToken(info.variable.Type));
 					replace.Arguments.Add(typeOfInstruction);
+					inst.ReplaceWith(replace);
+				}
+
+				// call Field(call Constant(ldloc V_0), call GetFieldFromHandle(ldmembertoken a))
+				// -> call Constant(ldloc a)
+				if (inst.Method.FullName.Equals("System.Linq.Expressions.Expression.Field")
+					&& inst.Arguments.Count == 2
+					&& inst.Arguments[0] is CallInstruction constantCall1
+					&& inst.Arguments[1] is CallInstruction getFieldFromHandleCall1
+					&& constantCall1.Method.FullName.Equals("System.Linq.Expressions.Expression.Constant")
+					&& getFieldFromHandleCall1.Method.Name.Equals("GetFieldFromHandle")
+					&& constantCall1.Arguments.Count == 1
+					&& constantCall1.Arguments[0].MatchLdLoc(out ILVariable constantVar1)
+					&& getFieldFromHandleCall1.Arguments.Count == 1
+					&& getFieldFromHandleCall1.Arguments[0] is LdMemberToken ldMemberToken1
+					&& targetLoad.Variable == constantVar1
+					&& initValues.TryGetValue(ldMemberToken1.Member as IField, out DisplayClassVariable info1)
+					) {
+					Call replace = new Call(constantCall1.Method);
+					replace.Arguments.Add(new LdLoc(info1.variable));
 					inst.ReplaceWith(replace);
 				}
 			}
