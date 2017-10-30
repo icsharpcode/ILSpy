@@ -6,26 +6,32 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	class InlineExpressionTreeParameterDeclarationsTransform : IStatementTransform
 	{
+		public bool TryInline(ILInstruction LdParameterVariableInst, ILVariable v, ILInstruction init)
+		{
+			if (LdParameterVariableInst.MatchLdLoc(v)) {
+				ILInstruction parent = LdParameterVariableInst.Parent;
+				while (parent != null) {
+					if (parent is CallInstruction call &&
+						call.Method.FullName.Equals("System.Linq.Expressions.Expression.Lambda") &&
+						!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.LambdaExpression.Compile") ?? false) &&
+						!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.Expression.Compile") ?? false)) {
+						LdParameterVariableInst.ReplaceWith(init.Clone());
+						return true;
+					}
+					parent = parent.Parent;
+				}
+			}
+			return false;
+		}
+
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
 			if (block.Instructions[pos] is StLoc parameterVariableInst) {
 				bool alwaysInlined = true;
 				if (MatchParameterVariableAssignment(parameterVariableInst, out ILVariable v, out ILInstruction init)) {
 					foreach (var LdParameterVariableInst in context.Function.Descendants.OfType<LdLoc>()) {
-						if (LdParameterVariableInst.MatchLdLoc(v)) {
-							ILInstruction parent = LdParameterVariableInst.Parent;
-							while (parent != null) {
-								if (parent is CallInstruction call &&
-									call.Method.FullName.Equals("System.Linq.Expressions.Expression.Lambda") &&
-									!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.LambdaExpression.Compile") ?? false) &&
-									!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.Expression.Compile") ?? false)) {
-									LdParameterVariableInst.ReplaceWith(init.Clone());
-									goto skipAlwaysInlined;
-								}
-								parent = parent.Parent;
-							}
+						if (!TryInline(LdParameterVariableInst, v, init)) {
 							alwaysInlined = false;
-							skipAlwaysInlined: ;
 						}
 					}
 					if (alwaysInlined)
