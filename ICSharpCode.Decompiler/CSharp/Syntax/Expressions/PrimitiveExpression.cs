@@ -43,11 +43,11 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 			}
 		}
 		
-		internal void SetStartLocation(TextLocation value)
+		internal void SetLocation(TextLocation startLocation, TextLocation endLocation)
 		{
 			ThrowIfFrozen();
-			this.startLocation = value;
-			this.endLocation = null;
+			this.startLocation = startLocation;
+			this.endLocation = endLocation;
 		}
 		
 		string literalValue;

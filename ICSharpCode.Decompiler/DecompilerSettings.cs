@@ -375,8 +375,49 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
+
+		bool showDebugInfo;
+
+		public bool ShowDebugInfo {
+			get { return showDebugInfo; }
+			set {
+				if (showDebugInfo != value) {
+					showDebugInfo = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#endregion
-		
+
+		#region Assembly Load and Resolve options
+
+		bool loadInMemory = false;
+
+		public bool LoadInMemory {
+			get { return loadInMemory; }
+			set {
+				if (loadInMemory != value) {
+					loadInMemory = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool throwOnAssemblyResolveErrors = false;
+
+		public bool ThrowOnAssemblyResolveErrors {
+			get { return throwOnAssemblyResolveErrors; }
+			set {
+				if (throwOnAssemblyResolveErrors != value) {
+					throwOnAssemblyResolveErrors = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		#endregion
+
 		CSharpFormattingOptions csharpFormattingOptions;
 		
 		public CSharpFormattingOptions CSharpFormattingOptions {
@@ -397,7 +438,7 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		public event PropertyChangedEventHandler PropertyChanged;
 		
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)

@@ -304,7 +304,8 @@ namespace ICSharpCode.Decompiler.IL
 				inst.WriteTo(output, new ILAstWritingOptions());
 				output.WriteLine();
 			}
-			new Disassembler.MethodBodyDisassembler(output, false, cancellationToken).WriteExceptionHandlers(body);
+			new Disassembler.MethodBodyDisassembler(output, cancellationToken) { DetectControlStructure = false }
+				.WriteExceptionHandlers(body);
 		}
 
 		/// <summary>
@@ -649,7 +650,7 @@ namespace ICSharpCode.Decompiler.IL
 					return BinaryNumeric(BinaryNumericOperator.BitOr);
 				case Cil.Code.Pop:
 					Pop();
-					return new Nop();
+					return new Nop() { Kind = NopKind.Pop };
 				case Cil.Code.Rem:
 					return BinaryNumeric(BinaryNumericOperator.Rem, false, Sign.Signed);
 				case Cil.Code.Rem_Un:
@@ -1010,7 +1011,9 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILInstruction InitObj(ILInstruction target, IType type)
 		{
-			return new StObj(target, new DefaultValue(type), type);
+			var value = new DefaultValue(type);
+			value.ILStackWasEmpty = currentStack.IsEmpty;
+			return new StObj(target, value, type);
 		}
 		
 		private ILInstruction DecodeConstrainedCall()

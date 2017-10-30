@@ -116,7 +116,7 @@ namespace ICSharpCode.Decompiler
 			if (symbol == null && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression) {
 				symbol = node.Parent.GetSymbol();
 			}
-			if (symbol != null && node.Parent is ObjectCreateExpression) {
+			if (symbol != null && node.Role == Roles.Type && node.Parent is ObjectCreateExpression) {
 				symbol = node.Parent.GetSymbol();
 			}
 			if (node is IdentifierExpression && node.Role == Roles.TargetExpression && node.Parent is InvocationExpression && symbol is IMember member) {
@@ -335,9 +335,15 @@ namespace ICSharpCode.Decompiler
 				case "char":
 				case "string":
 				case "object":
-					var typeSymbol = (nodeStack.Peek().GetSymbol() as IType)?.GetDefinition();
-					if (typeSymbol == null) goto default;
-					output.WriteReference(type, typeSystem.GetCecil(typeSymbol));
+					var node = nodeStack.Peek();
+					ISymbol symbol;
+					if (node.Role == Roles.Type && node.Parent is ObjectCreateExpression) {
+						symbol = node.Parent.GetSymbol();
+					} else {
+						symbol = nodeStack.Peek().GetSymbol();
+					}
+					if (symbol == null) goto default;
+					output.WriteReference(type, SymbolToCecil(symbol));
 					break;
 				default:
 					output.Write(type);

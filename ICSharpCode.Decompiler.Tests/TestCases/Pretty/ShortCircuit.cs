@@ -27,6 +27,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		public abstract void B(bool b);
 		public abstract bool F(int i);
+		public abstract int GetInt(int i);
 		public abstract void M1();
 		public abstract void M2();
 		public abstract void E();
@@ -84,6 +85,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void StmtOr3()
 		{
 			if (this.F(0) || this.F(1) || this.F(3)) {
+				this.M1();
+			} else {
+				this.M2();
+			}
+			this.E();
+		}
+
+		public void StmtOr4()
+		{
+			if (this.GetInt(0) != 0 || this.GetInt(1) != 0) {
 				this.M1();
 			} else {
 				this.M2();

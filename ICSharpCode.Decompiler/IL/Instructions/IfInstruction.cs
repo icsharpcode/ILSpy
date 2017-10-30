@@ -78,6 +78,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			if (options.UseLogicOperationSugar) {
 				if (MatchLogicAnd(out var lhs, out var rhs)) {
 					output.Write("logic.and(");
@@ -105,6 +106,25 @@ namespace ICSharpCode.Decompiler.IL
 				output.Write(" else ");
 				falseInst.WriteTo(output, options);
 			}
+		}
+
+		/// <summary>
+		/// Gets whether the input instruction occurs in a context where it is being compared with 0.
+		/// </summary>
+		internal static bool IsInConditionSlot(ILInstruction inst)
+		{
+			var slot = inst.SlotInfo;
+			if (slot == IfInstruction.ConditionSlot)
+				return true;
+			if (slot == IfInstruction.TrueInstSlot || slot == IfInstruction.FalseInstSlot || slot == NullCoalescingInstruction.FallbackInstSlot)
+				return IsInConditionSlot(inst.Parent);
+			if (inst.Parent is Comp comp) {
+				if (comp.Left == inst && comp.Right.MatchLdcI4(0))
+					return true;
+				if (comp.Right == inst && comp.Left.MatchLdcI4(0))
+					return true;
+			}
+			return false;
 		}
 	}
 }

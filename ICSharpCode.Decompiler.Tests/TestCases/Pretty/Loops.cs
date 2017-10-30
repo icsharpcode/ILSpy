@@ -252,6 +252,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		private IEnumerable<string> alternatives;
+
 		private static void Operation(ref int item)
 		{
 		}
@@ -260,10 +262,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 		}
 
-		public void ForEach(IEnumerable<string> enumerable)
+		public void ForEachOnField()
 		{
-			foreach (string item in enumerable) {
-				item.ToLower();
+			foreach (string alternative in this.alternatives) {
+				alternative.ToLower();
+			}
+		}
+
+		public void ForEach(IEnumerable<string> alternatives)
+		{
+			foreach (string alternative in alternatives) {
+				alternative.ToLower();
 			}
 		}
 

@@ -60,19 +60,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		//public static bool? SwitchOverNullableEnum(State? state)
-		//{
-		//	switch (state) {
-		//		case State.False:
-		//			return false;
-		//		case State.True:
-		//			return true;
-		//		case State.Null:
-		//			return null;
-		//		default:
-		//			throw new InvalidOperationException();
-		//	}
-		//}
+		public static bool? SwitchOverNullableEnum(State? state)
+		{
+			switch (state) {
+				case State.False:
+					return false;
+				case State.True:
+					return true;
+				case State.Null:
+					return null;
+				default:
+					throw new InvalidOperationException();
+			}
+		}
 
 		public static string SparseIntegerSwitch(int i)
 		{

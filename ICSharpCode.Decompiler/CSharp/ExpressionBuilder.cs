@@ -325,8 +325,15 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal ExpressionWithResolveResult GetDefaultValueExpression(IType type)
 		{
-			var expr = type.IsReferenceType == true ? (Expression)new NullReferenceExpression() : new DefaultValueExpression(ConvertType(type));
-			var constantType = type.IsReferenceType == true ? SpecialType.NullType : type;
+			Expression expr;
+			IType constantType;
+			if (type.IsReferenceType == true || type.IsKnownType(KnownTypeCode.NullableOfT)) {
+				expr = new NullReferenceExpression();
+				constantType = SpecialType.NullType;
+			} else {
+				expr = new DefaultValueExpression(ConvertType(type));
+				constantType = type;
+			}
 			return expr.WithRR(new ConstantResolveResult(constantType, null));
 		}
 		
@@ -905,6 +912,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
+			if (op.IsBitwise() && (left.Type.Kind == TypeKind.Enum || right.Type.Kind == TypeKind.Enum)) {
+				left = AdjustConstantExpressionToType(left, right.Type);
+				right = AdjustConstantExpressionToType(right, left.Type);
+			}
+
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 			if (rr.IsError || NullableType.GetUnderlyingType(rr.Type).GetStackType() != inst.UnderlyingResultType
 			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
@@ -1284,7 +1296,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new CallBuilder(this, typeSystem, settings).Build(inst);
 		}
 
-		internal TranslatedExpression TranslateFunction(IType delegateType, ILFunction function)
+		internal ExpressionWithResolveResult TranslateFunction(IType delegateType, ILFunction function)
 		{
 			var method = function.Method.MemberDefinition as IMethod;
 			Debug.Assert(method != null);
@@ -1356,7 +1368,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			TranslatedExpression translatedLambda = replacement.WithILInstruction(function).WithRR(rr);
 			return new CastExpression(ConvertType(delegateType), translatedLambda)
-				.WithoutILInstruction().WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
+				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
 		}
 
 		IType InferReturnType(BlockStatement body)
@@ -1723,11 +1735,10 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (currentPath == null) {
 					currentPath = info.Path;
 				} else {
-					int firstDifferenceIndex = Math.Min(currentPath.Count, info.Path.Count);
-					int index = 0;
-					while (index < firstDifferenceIndex && info.Path[index] == currentPath[index])
-						index++;
-					firstDifferenceIndex = index;
+					int minLen = Math.Min(currentPath.Count, info.Path.Count);
+					int firstDifferenceIndex = 0;
+					while (firstDifferenceIndex < minLen && info.Path[firstDifferenceIndex] == currentPath[firstDifferenceIndex])
+						firstDifferenceIndex++;
 					while (elementsStack.Count - 1 > firstDifferenceIndex) {
 						var methodElement = currentPath[elementsStack.Count - 1];
 						var pathElement = currentPath[elementsStack.Count - 2];
@@ -1944,7 +1955,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// ILAst LogicAnd/LogicOr can return a different value than 0 or 1
 			// if the rhs is evaluated.
 			// We can only correctly translate it to C# if the rhs is of type boolean:
-			if (op != BinaryOperatorType.Any && rhs.Type.IsKnownType(KnownTypeCode.Boolean)) {
+			if (op != BinaryOperatorType.Any && (rhs.Type.IsKnownType(KnownTypeCode.Boolean) || IfInstruction.IsInConditionSlot(inst))) {
+				rhs = rhs.ConvertToBoolean(this);
 				return new BinaryOperatorExpression(condition, op, rhs)
 					.WithILInstruction(inst)
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));

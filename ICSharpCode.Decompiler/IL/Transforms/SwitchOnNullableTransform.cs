@@ -142,22 +142,43 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!condition.MatchLogicNot(out var getHasValue) || !NullableLiftingTransform.MatchHasValueCall(getHasValue, out ILVariable target1) || target1 != tmp)
 				return false;
 			// match second block: switchBlock
+			// note: I have seen cases where switchVar is inlined into the switch.
 			// stloc switchVar(call GetValueOrDefault(ldloca tmp))
 			// switch (ldloc switchVar) {
 			// 	case [0..1): br caseBlock1
 			// ... more cases ...
 			// 	case [long.MinValue..0),[1..5),[6..10),[11..long.MaxValue]: br defaultBlock
 			// }
-			if (switchBlock.Instructions.Count != 2 || switchBlock.IncomingEdgeCount != 1)
+			if (switchBlock.IncomingEdgeCount != 1)
 				return false;
-			if (!switchBlock.Instructions[0].MatchStLoc(out var switchVar, out var getValueOrDefault))
-				return false;
-			if (!switchVar.IsSingleDefinition || switchVar.LoadCount != 1)
-				return false;
-			if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, tmp))
-				return false;
-			if (!(switchBlock.Instructions[1] is SwitchInstruction switchInst))
-				return false;
+			SwitchInstruction switchInst;
+			switch (switchBlock.Instructions.Count) {
+				case 2: {
+					// this is the normal case described by the pattern above
+					if (!switchBlock.Instructions[0].MatchStLoc(out var switchVar, out var getValueOrDefault))
+						return false;
+					if (!switchVar.IsSingleDefinition || switchVar.LoadCount != 1)
+						return false;
+					if (!NullableLiftingTransform.MatchGetValueOrDefault(getValueOrDefault, tmp))
+						return false;
+					if (!(switchBlock.Instructions[1] is SwitchInstruction si))
+						return false;
+					switchInst = si;
+					break;
+				}
+				case 1: {
+					// this is the special case where `call GetValueOrDefault(ldloca tmp)` is inlined into the switch.
+					if (!(switchBlock.Instructions[0] is SwitchInstruction si))
+						return false;
+					if (!NullableLiftingTransform.MatchGetValueOrDefault(si.Value, tmp))
+						return false;
+					switchInst = si;
+					break;
+				}
+				default: {
+					return false;
+				}
+			}
 			newSwitch = BuildLiftedSwitch(nullCaseBlock, switchInst, switchValue);
 			return true;
 		}

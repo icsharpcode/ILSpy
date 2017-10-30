@@ -49,11 +49,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				if (block.Instructions[i].MatchStLoc(out v, out copiedExpr)) {
 					if (v.IsSingleDefinition && v.LoadCount == 0 && v.Kind == VariableKind.StackSlot) {
 						// dead store to stack
-						if (copiedExpr.Flags == InstructionFlags.None) {
+						if (SemanticHelper.IsPure(copiedExpr.Flags)) {
 							// no-op -> delete
+							context.Step("remove dead store to stack: no-op -> delete", block.Instructions[i]);
 							block.Instructions.RemoveAt(i--);
 						} else {
 							// evaluate the value for its side-effects
+							context.Step("remove dead store to stack: evaluate the value for its side-effects", block.Instructions[i]);
+							copiedExpr.AddILRange(block.Instructions[i].ILRange);
 							block.Instructions[i] = copiedExpr;
 						}
 					} else if (v.IsSingleDefinition && CanPerformCopyPropagation(v, copiedExpr)) {

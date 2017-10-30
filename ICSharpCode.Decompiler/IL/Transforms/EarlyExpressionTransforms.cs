@@ -104,6 +104,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var newObj = new NewObj(inst.Method);
 				newObj.ILRange = inst.ILRange;
 				newObj.Arguments.AddRange(inst.Arguments.Skip(1));
+				newObj.ILStackWasEmpty = inst.ILStackWasEmpty;
 				var expr = new StObj(inst.Arguments[0], newObj, inst.Method.DeclaringType);
 				inst.ReplaceWith(expr);
 				return expr;

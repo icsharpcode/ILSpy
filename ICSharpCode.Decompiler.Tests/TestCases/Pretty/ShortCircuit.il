@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly '0fqx5k1s'
+.assembly bqtfnoxz
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module '0fqx5k1s.dll'
-// MVID: {40923C21-ED40-40E0-8D2A-58DE2CA84852}
+.module bqtfnoxz.dll
+// MVID: {E41D831E-089A-4F86-AA5D-FD2CB6D7C452}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x031A0000
+// Image base: 0x03120000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -45,6 +45,11 @@
           instance bool  F(int32 i) cil managed
   {
   } // end of method ShortCircuit::F
+
+  .method public hidebysig newslot abstract virtual 
+          instance int32  GetInt(int32 i) cil managed
+  {
+  } // end of method ShortCircuit::GetInt
 
   .method public hidebysig newslot abstract virtual 
           instance void  M1() cil managed
@@ -349,6 +354,49 @@
   } // end of method ShortCircuit::StmtOr3
 
   .method public hidebysig instance void 
+          StmtOr4() cil managed
+  {
+    // Code size       56 (0x38)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldc.i4.0
+    IL_0003:  callvirt   instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::GetInt(int32)
+    IL_0008:  brtrue.s   IL_0016
+
+    IL_000a:  ldarg.0
+    IL_000b:  ldc.i4.1
+    IL_000c:  callvirt   instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::GetInt(int32)
+    IL_0011:  ldc.i4.0
+    IL_0012:  ceq
+    IL_0014:  br.s       IL_0017
+
+    IL_0016:  ldc.i4.0
+    IL_0017:  nop
+    IL_0018:  stloc.0
+    IL_0019:  ldloc.0
+    IL_001a:  brtrue.s   IL_0027
+
+    IL_001c:  nop
+    IL_001d:  ldarg.0
+    IL_001e:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::M1()
+    IL_0023:  nop
+    IL_0024:  nop
+    IL_0025:  br.s       IL_0030
+
+    IL_0027:  nop
+    IL_0028:  ldarg.0
+    IL_0029:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::M2()
+    IL_002e:  nop
+    IL_002f:  nop
+    IL_0030:  ldarg.0
+    IL_0031:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.ShortCircuit::E()
+    IL_0036:  nop
+    IL_0037:  ret
+  } // end of method ShortCircuit::StmtOr4
+
+  .method public hidebysig instance void 
           StmtComplex() cil managed
   {
     // Code size       87 (0x57)
@@ -588,4 +636,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../Tests/TestCases/Pretty\ShortCircuit.res
+// WARNING: Created Win32 resource file ../../../TestCases/Pretty\ShortCircuit.res

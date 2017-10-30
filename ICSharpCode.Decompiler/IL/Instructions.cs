@@ -297,6 +297,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.argument.WriteTo(output, options);
@@ -389,6 +390,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.left.WriteTo(output, options);
@@ -816,6 +818,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2113,6 +2116,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2187,6 +2191,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2318,6 +2323,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			variable.WriteTo(output);
@@ -2412,6 +2418,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.value.WriteTo(output, options);
@@ -2505,6 +2512,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2541,6 +2549,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2577,6 +2586,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I8; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2613,6 +2623,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.F; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2649,6 +2660,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
@@ -2715,6 +2727,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			method.WriteTo(output);
@@ -2762,6 +2775,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			method.WriteTo(output);
@@ -2803,6 +2817,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -2841,6 +2856,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			member.WriteTo(output);
@@ -3009,6 +3025,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			if (IsVolatile)
 				output.Write("volatile.");
 			if (UnalignedPrefix > 0)
@@ -3149,6 +3166,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			if (IsVolatile)
 				output.Write("volatile.");
 			if (UnalignedPrefix > 0)
@@ -3254,6 +3272,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			field.WriteTo(output);
@@ -3295,6 +3314,7 @@ namespace ICSharpCode.Decompiler.IL
 		public IField Field { get { return field; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			field.WriteTo(output);
@@ -3342,6 +3362,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3383,6 +3404,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3485,6 +3507,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			if (IsVolatile)
 				output.Write("volatile.");
 			if (UnalignedPrefix > 0)
@@ -3609,6 +3632,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		void OriginalWriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			if (IsVolatile)
 				output.Write("volatile.");
 			if (UnalignedPrefix > 0)
@@ -3665,6 +3689,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3715,6 +3740,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3765,6 +3791,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3875,6 +3902,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -3920,6 +3948,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4032,6 +4061,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4217,6 +4247,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			if (IsReadOnly)
 				output.Write("readonly.");
 			output.Write(OpCode);
@@ -4318,6 +4349,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.array.WriteTo(output, options);
@@ -4438,6 +4470,7 @@ namespace ICSharpCode.Decompiler.IL
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4516,6 +4549,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write(' ');
 			type.WriteTo(output);
@@ -4610,6 +4644,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.value.WriteTo(output, options);
@@ -4702,6 +4737,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			this.value.WriteTo(output, options);
@@ -4763,6 +4799,7 @@ namespace ICSharpCode.Decompiler.IL.Patterns
 		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
+			ILRange.WriteTo(output, options);
 			output.Write(OpCode);
 			output.Write('(');
 			output.Write(')');
