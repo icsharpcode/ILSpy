@@ -8,18 +8,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	{
 		public bool TryInline(ILInstruction LdParameterVariableInst, ILVariable v, ILInstruction init)
 		{
-			if (LdParameterVariableInst.MatchLdLoc(v)) {
-				ILInstruction parent = LdParameterVariableInst.Parent;
-				while (parent != null) {
-					if (parent is CallInstruction call &&
-						call.Method.FullName.Equals("System.Linq.Expressions.Expression.Lambda") &&
-						!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.LambdaExpression.Compile") ?? false) &&
-						!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.Expression.Compile") ?? false)) {
-						LdParameterVariableInst.ReplaceWith(init.Clone());
-						return true;
-					}
-					parent = parent.Parent;
+			ILInstruction parent = LdParameterVariableInst.Parent;
+			while (parent != null) {
+				if (parent is CallInstruction call &&
+					call.Method.FullName.Equals("System.Linq.Expressions.Expression.Lambda") &&
+					!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.LambdaExpression.Compile") ?? false) &&
+					!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.Expression.Compile") ?? false)) {
+					LdParameterVariableInst.ReplaceWith(init.Clone());
+					return true;
 				}
+				parent = parent.Parent;
 			}
 			return false;
 		}
@@ -30,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				bool alwaysInlined = true;
 				if (MatchParameterVariableAssignment(parameterVariableInst, out ILVariable v, out ILInstruction init)) {
 					foreach (var LdParameterVariableInst in context.Function.Descendants.OfType<LdLoc>()) {
-						if (!TryInline(LdParameterVariableInst, v, init)) {
+						if (LdParameterVariableInst.MatchLdLoc(v) && !TryInline(LdParameterVariableInst, v, init)) {
 							alwaysInlined = false;
 						}
 					}
