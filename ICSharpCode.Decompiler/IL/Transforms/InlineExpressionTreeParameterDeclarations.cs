@@ -10,10 +10,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			ILInstruction parent = LdParameterVariableInst.Parent;
 			while (parent != null) {
-				if (parent is CallInstruction call &&
-					call.Method.FullName.Equals("System.Linq.Expressions.Expression.Lambda") &&
-					!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.LambdaExpression.Compile") ?? false) &&
-					!((call.Parent as CallInstruction)?.Method.FullName.Equals("System.Linq.Expressions.Expression.Compile") ?? false)) {
+				if (parent is CallInstruction call
+					&& call.Method.FullName.Equals("System.Linq.Expressions.Expression.Lambda")) {
+					if (call.Parent is CallInstruction parentCall
+						&& (parentCall.Method.FullName.Equals("System.Linq.Expressions.LambdaExpression.Compile")
+						|| parentCall.Method.FullName.Equals("System.Linq.Expressions.Expression.Compile"))) {
+						return false; // Compiled ParameterDeclarations can't be inlined.
+					}
 					LdParameterVariableInst.ReplaceWith(init.Clone());
 					return true;
 				}
@@ -43,7 +46,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// stloc(v, call(Expression::Parameter, call(Type::GetTypeFromHandle, ldtoken(...)), ldstr(...)))
 			if (!expr.MatchStLoc(out v, out init))
 				return false;
-			if (/*v.HasGeneratedName || */v.Kind == VariableKind.Parameter /*|| v.IsPinned*/) // TODO
+			if (!(v.Kind == VariableKind.Local || v.Kind == VariableKind.StackSlot))
 				return false;
 			if (v.Type == null || v.Type.FullName != "System.Linq.Expressions.ParameterExpression")
 				return false;
