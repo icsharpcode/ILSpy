@@ -145,12 +145,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			new PrettifyAssignments(), // must run after DeclareVariables
 			new IntroduceUsingDeclarations(),
 			new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
+			new ExpressionTreeConverter(), // must run before IntroduceQueryExpressions
 			new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods
 			new CombineQueryExpressions(),
 			new FlattenSwitchBlocks(),
 			new FixNameCollisions(),
 			new AddXmlDocumentationTransform(),
-			new ExpressionTreeConverter(),
 		};
 
 		public CancellationToken CancellationToken { get; set; }
