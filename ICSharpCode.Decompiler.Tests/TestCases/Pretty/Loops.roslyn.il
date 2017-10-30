@@ -1,6 +1,6 @@
 
 //  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation. Alle Rechte vorbehalten.
+//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Loops.dll
-// MVID: {A2180394-EF43-440C-8C7A-EFCA148DB606}
+// MVID: {721D369B-DC6E-425B-AE0E-46C242DEFDF5}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00C10000
+// Image base: 0x00480000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1442,6 +1442,51 @@
 
     IL_002f:  ret
   } // end of method Loops::ForEachOverArray
+
+  .method public hidebysig instance void 
+          ForEachOverArrayOfPointers(int32*[] 'array') cil managed
+  {
+    // Code size       59 (0x3b)
+    .maxstack  2
+    .locals init (int32*[] V_0,
+             int32 V_1,
+             int32* V_2)
+    IL_0000:  nop
+    IL_0001:  nop
+    IL_0002:  ldarg.1
+    IL_0003:  stloc.0
+    IL_0004:  ldc.i4.0
+    IL_0005:  stloc.1
+    IL_0006:  br.s       IL_0034
+
+    IL_0008:  ldloc.0
+    IL_0009:  ldloc.1
+    IL_000a:  ldelem.i
+    IL_000b:  stloc.2
+    IL_000c:  nop
+    IL_000d:  ldloc.2
+    IL_000e:  newobj     instance void [mscorlib]System.IntPtr::.ctor(void*)
+    IL_0013:  box        [mscorlib]System.IntPtr
+    IL_0018:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_001d:  nop
+    IL_001e:  ldloc.2
+    IL_001f:  newobj     instance void [mscorlib]System.IntPtr::.ctor(void*)
+    IL_0024:  box        [mscorlib]System.IntPtr
+    IL_0029:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_002e:  nop
+    IL_002f:  nop
+    IL_0030:  ldloc.1
+    IL_0031:  ldc.i4.1
+    IL_0032:  add
+    IL_0033:  stloc.1
+    IL_0034:  ldloc.1
+    IL_0035:  ldloc.0
+    IL_0036:  ldlen
+    IL_0037:  conv.i4
+    IL_0038:  blt.s      IL_0008
+
+    IL_003a:  ret
+  } // end of method Loops::ForEachOverArrayOfPointers
 
   .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed

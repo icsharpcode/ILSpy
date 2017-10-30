@@ -1,6 +1,6 @@
 
 //  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation. Alle Rechte vorbehalten.
+//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Loops.dll
-// MVID: {6ED0C8DC-47D3-4564-B22B-E2917EC72DC8}
+// MVID: {30F4646B-D900-420C-89F2-283C178D2EAC}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00E00000
+// Image base: 0x00E90000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1201,6 +1201,42 @@
 
     IL_002a:  ret
   } // end of method Loops::ForEachOverArray
+
+  .method public hidebysig instance void 
+          ForEachOverArrayOfPointers(int32*[] 'array') cil managed
+  {
+    // Code size       51 (0x33)
+    .maxstack  2
+    .locals init (int32*[] V_0,
+             int32 V_1)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.0
+    IL_0002:  ldc.i4.0
+    IL_0003:  stloc.1
+    IL_0004:  br.s       IL_002c
+
+    IL_0006:  ldloc.0
+    IL_0007:  ldloc.1
+    IL_0008:  ldelem.i
+    IL_0009:  dup
+    IL_000a:  newobj     instance void [mscorlib]System.IntPtr::.ctor(void*)
+    IL_000f:  box        [mscorlib]System.IntPtr
+    IL_0014:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0019:  newobj     instance void [mscorlib]System.IntPtr::.ctor(void*)
+    IL_001e:  box        [mscorlib]System.IntPtr
+    IL_0023:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_0028:  ldloc.1
+    IL_0029:  ldc.i4.1
+    IL_002a:  add
+    IL_002b:  stloc.1
+    IL_002c:  ldloc.1
+    IL_002d:  ldloc.0
+    IL_002e:  ldlen
+    IL_002f:  conv.i4
+    IL_0030:  blt.s      IL_0006
+
+    IL_0032:  ret
+  } // end of method Loops::ForEachOverArrayOfPointers
 
   .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed

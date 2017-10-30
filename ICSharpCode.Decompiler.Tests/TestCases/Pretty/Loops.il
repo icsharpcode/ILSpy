@@ -1,6 +1,6 @@
 
 //  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation. Alle Rechte vorbehalten.
+//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly ev4s5oix
+.assembly vsvybxtk
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module ev4s5oix.dll
-// MVID: {2CE88082-2B99-4514-B562-457B10DE03C1}
+.module vsvybxtk.dll
+// MVID: {6C5236E6-826F-4D2D-AF03-574254796A89}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02F30000
+// Image base: 0x02F80000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1546,6 +1546,55 @@
   } // end of method Loops::ForEachOverArray
 
   .method public hidebysig instance void 
+          ForEachOverArrayOfPointers(int32*[] 'array') cil managed
+  {
+    // Code size       63 (0x3f)
+    .maxstack  2
+    .locals init (int32* V_0,
+             int32*[] V_1,
+             int32 V_2,
+             bool V_3)
+    IL_0000:  nop
+    IL_0001:  nop
+    IL_0002:  ldarg.1
+    IL_0003:  stloc.1
+    IL_0004:  ldc.i4.0
+    IL_0005:  stloc.2
+    IL_0006:  br.s       IL_0034
+
+    IL_0008:  ldloc.1
+    IL_0009:  ldloc.2
+    IL_000a:  ldelem.i
+    IL_000b:  stloc.0
+    IL_000c:  nop
+    IL_000d:  ldloc.0
+    IL_000e:  newobj     instance void [mscorlib]System.IntPtr::.ctor(void*)
+    IL_0013:  box        [mscorlib]System.IntPtr
+    IL_0018:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_001d:  nop
+    IL_001e:  ldloc.0
+    IL_001f:  newobj     instance void [mscorlib]System.IntPtr::.ctor(void*)
+    IL_0024:  box        [mscorlib]System.IntPtr
+    IL_0029:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_002e:  nop
+    IL_002f:  nop
+    IL_0030:  ldloc.2
+    IL_0031:  ldc.i4.1
+    IL_0032:  add
+    IL_0033:  stloc.2
+    IL_0034:  ldloc.2
+    IL_0035:  ldloc.1
+    IL_0036:  ldlen
+    IL_0037:  conv.i4
+    IL_0038:  clt
+    IL_003a:  stloc.3
+    IL_003b:  ldloc.3
+    IL_003c:  brtrue.s   IL_0008
+
+    IL_003e:  ret
+  } // end of method Loops::ForEachOverArrayOfPointers
+
+  .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed
   {
     // Code size       31 (0x1f)
@@ -1902,4 +1951,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// Warnung: Win32-Ressourcendatei "../../../TestCases/Pretty\Loops.res" wurde erstellt.
+// WARNING: Created Win32 resource file ../../../TestCases/Pretty\Loops.res

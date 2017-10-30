@@ -409,7 +409,6 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return result;
 		}
-		#endregion
 
 		public void ForEachOverArray(string[] array)
 		{
@@ -417,6 +416,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine(text.ToLower() + text.ToUpper());
 			}
 		}
+
+		public unsafe void ForEachOverArrayOfPointers(int*[] array)
+		{
+			foreach (int* value in array) {
+				Console.WriteLine(new IntPtr(value));
+				Console.WriteLine(new IntPtr(value));
+			}
+		}
+		#endregion
 
 		public void ForOverArray(string[] array)
 		{
