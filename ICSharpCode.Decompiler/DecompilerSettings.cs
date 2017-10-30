@@ -375,6 +375,34 @@ namespace ICSharpCode.Decompiler
 
 		#endregion
 
+		#region Assembly Load and Resolve options
+
+		bool loadInMemory = false;
+
+		public bool LoadInMemory {
+			get { return loadInMemory; }
+			set {
+				if (loadInMemory != value) {
+					loadInMemory = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool throwOnAssemblyResolveErrors = false;
+
+		public bool ThrowOnAssemblyResolveErrors {
+			get { return throwOnAssemblyResolveErrors; }
+			set {
+				if (throwOnAssemblyResolveErrors != value) {
+					throwOnAssemblyResolveErrors = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		#endregion
+
 		CSharpFormattingOptions csharpFormattingOptions;
 		
 		public CSharpFormattingOptions CSharpFormattingOptions {

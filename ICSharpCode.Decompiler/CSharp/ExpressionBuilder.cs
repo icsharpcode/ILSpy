@@ -694,6 +694,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 			}
 
+			if (op.IsBitwise() && (left.Type.Kind == TypeKind.Enum || right.Type.Kind == TypeKind.Enum)) {
+				left = AdjustConstantExpressionToType(left, right.Type);
+				right = AdjustConstantExpressionToType(right, left.Type);
+			}
+
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
 			if (rr.IsError || NullableType.GetUnderlyingType(rr.Type).GetStackType() != inst.UnderlyingResultType
 			    || !IsCompatibleWithSign(left.Type, inst.Sign) || !IsCompatibleWithSign(right.Type, inst.Sign))
@@ -1667,7 +1672,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// ILAst LogicAnd/LogicOr can return a different value than 0 or 1
 			// if the rhs is evaluated.
 			// We can only correctly translate it to C# if the rhs is of type boolean:
-			if (op != BinaryOperatorType.Any && rhs.Type.IsKnownType(KnownTypeCode.Boolean)) {
+			if (op != BinaryOperatorType.Any && (rhs.Type.IsKnownType(KnownTypeCode.Boolean) || IfInstruction.IsInConditionSlot(inst))) {
+				rhs = rhs.ConvertToBoolean(this);
 				return new BinaryOperatorExpression(condition, op, rhs)
 					.WithILInstruction(inst)
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));

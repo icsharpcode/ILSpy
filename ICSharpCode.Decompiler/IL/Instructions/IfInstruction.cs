@@ -107,5 +107,24 @@ namespace ICSharpCode.Decompiler.IL
 				falseInst.WriteTo(output, options);
 			}
 		}
+
+		/// <summary>
+		/// Gets whether the input instruction occurs in a context where it is being compared with 0.
+		/// </summary>
+		internal static bool IsInConditionSlot(ILInstruction inst)
+		{
+			var slot = inst.SlotInfo;
+			if (slot == IfInstruction.ConditionSlot)
+				return true;
+			if (slot == IfInstruction.TrueInstSlot || slot == IfInstruction.FalseInstSlot || slot == NullCoalescingInstruction.FallbackInstSlot)
+				return IsInConditionSlot(inst.Parent);
+			if (inst.Parent is Comp comp) {
+				if (comp.Left == inst && comp.Right.MatchLdcI4(0))
+					return true;
+				if (comp.Right == inst && comp.Left.MatchLdcI4(0))
+					return true;
+			}
+			return false;
+		}
 	}
 }

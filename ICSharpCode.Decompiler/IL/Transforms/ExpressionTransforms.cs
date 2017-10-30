@@ -54,18 +54,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// we know those were already handled previously.
 		}
 
-		static bool IsInConditionSlot(ILInstruction inst)
-		{
-			var slot = inst.SlotInfo;
-			if (slot == IfInstruction.ConditionSlot)
-				return true;
-			if (slot == IfInstruction.TrueInstSlot || slot == IfInstruction.FalseInstSlot || slot == NullCoalescingInstruction.FallbackInstSlot)
-				return IsInConditionSlot(inst.Parent);
-			if (inst.Parent.MatchLogicNot(out _))
-				return true;
-			return false;
-		}
-
 		protected internal override void VisitComp(Comp inst)
 		{
 			// "logic.not(arg)" is sugar for "comp(arg != ldc.i4 0)"
@@ -73,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				VisitLogicNot(inst, arg);
 				return;
 			} else if (inst.Kind == ComparisonKind.Inequality && inst.LiftingKind == ComparisonLiftingKind.None
-				&& inst.Right.MatchLdcI4(0) && (IsInConditionSlot(inst) || inst.Left is Comp)
+				&& inst.Right.MatchLdcI4(0) && (IfInstruction.IsInConditionSlot(inst) || inst.Left is Comp)
 			) {
 				// if (comp(x != 0)) ==> if (x)
 				// comp(comp(...) != 0) => comp(...)

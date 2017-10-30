@@ -24,21 +24,23 @@
   <!-- HACK: Disable package generation on Unix due to tooling issues. -->
   <PropertyGroup Condition=" '$(OS)' == 'Windows_NT' ">
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSymbolsInPackage>true</IncludeSymbolsInPackage>
     <NuspecFile>ICSharpCode.Decompiler.nuspec</NuspecFile>
     <NuspecProperties>Configuration=$(Configuration)</NuspecProperties>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-    <DebugType>full</DebugType>
+    <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <EmbedSources>true</EmbedSources>
     <CheckForOverflowUnderflow>True</CheckForOverflowUnderflow>
     <DefineConstants>$(DefineConstants);STEP</DefineConstants>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
-    <DebugType>pdbonly</DebugType>
+    <DebugType>portable</DebugType>
     <DebugSymbols>true</DebugSymbols>
+    <EmbedSources>true</EmbedSources>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -203,7 +205,7 @@
     <Compile Include="CSharp\OutputVisitor\InsertRequiredSpacesDecorator.cs" />
     <Compile Include="CSharp\OutputVisitor\InsertSpecialsDecorator.cs" />
     <Compile Include="CSharp\OutputVisitor\ITokenWriter.cs" />
-    <Compile Include="CSharp\OutputVisitor\TextWriterOutputFormatter.cs" />
+    <Compile Include="CSharp\OutputVisitor\TextWriterTokenWriter.cs" />
     <Compile Include="CSharp\Resolver\AliasNamespaceResolveResult.cs" />
     <Compile Include="CSharp\Resolver\AliasTypeResolveResult.cs" />
     <Compile Include="CSharp\Resolver\AwaitResolveResult.cs" />
@@ -273,6 +275,7 @@
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
+    <Compile Include="DotNetCore\UniversalAssemblyResolver.cs" />
     <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
     <Compile Include="IL\ILAstWritingOptions.cs" />
     <Compile Include="IL\SequencePoint.cs" />
@@ -588,5 +591,12 @@
       <UpdateAssemblyInfo Condition="$(OS)=='Unix'">powershell -NoProfile -ExecutionPolicy Bypass -File $(SolutionDir)\BuildTools\update-assemblyinfo.ps1</UpdateAssemblyInfo>
     </PropertyGroup>
     <Exec WorkingDirectory="$(SolutionDir)" Command="$(UpdateAssemblyInfo)" Timeout="60000" />
+  </Target>
+
+  <!-- Workaround for EmbedSources support, see https://github.com/dotnet/roslyn/issues/19127 -->
+  <Target Name="PopulateEmbeddedFiles" AfterTargets="BeforeCompile" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <EmbeddedFiles Include="@(Compile)" />
+    </ItemGroup>
   </Target>
 </Project>

@@ -327,9 +327,9 @@ namespace ICSharpCode.ILSpy
 				decompiler.ProjectGuid = App.CommandLineArguments.FixedGuid;
 				decompiler.DecompileProject(assembly.ModuleDefinition, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			} else {
-				base.DecompileAssembly(assembly, output, options);
 				AddReferenceWarningMessage(assembly.AssemblyDefinition, output);
 				output.WriteLine();
+				base.DecompileAssembly(assembly, output, options);
 				ModuleDefinition mainModule = assembly.ModuleDefinition;
 				if (mainModule.Types.Count > 0) {
 					output.Write("// Global type: ");
