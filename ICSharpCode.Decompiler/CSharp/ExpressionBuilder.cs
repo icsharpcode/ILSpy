@@ -1243,9 +1243,19 @@ namespace ICSharpCode.Decompiler.CSharp
 						// Case 4 (left-over extension from implicit conversion) can also be handled by our caller.
 						return arg.WithILInstruction(inst);
 					}
-				default:
-					return arg.ConvertTo(GetType(inst.TargetType.ToKnownTypeCode()), this, inst.CheckForOverflow)
-						.WithILInstruction(inst);
+				default: {
+						// We need to convert to inst.TargetType, or to an equivalent type.
+						IType targetType;
+						if (inst.TargetType == NullableType.GetUnderlyingType(context.TypeHint).ToPrimitiveType()
+							&& NullableType.IsNullable(context.TypeHint) == inst.IsLifted)
+						{
+							targetType = context.TypeHint;
+						} else {
+							targetType = GetType(inst.TargetType.ToKnownTypeCode());
+						}
+						return arg.ConvertTo(targetType, this, inst.CheckForOverflow)
+							.WithILInstruction(inst);
+					}
 			}
 		}
 

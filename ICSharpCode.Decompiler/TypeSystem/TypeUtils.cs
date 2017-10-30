@@ -304,6 +304,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case KnownTypeCode.Byte:
 					return PrimitiveType.U1;
 				case KnownTypeCode.UInt16:
+				case KnownTypeCode.Char:
 					return PrimitiveType.U2;
 				case KnownTypeCode.UInt32:
 					return PrimitiveType.U4;
