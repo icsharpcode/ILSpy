@@ -49,7 +49,15 @@ public class ExpressionTrees
 			return false;
 		}
 	}
-	
+
+	private class Magic
+	{
+		public bool TestMagic(int test)
+		{
+			return test > 5;
+		}
+	}
+
 	private int field;
 	
 	private static object ToCode<R>(object x, Expression<Func<R>> expr)
@@ -270,13 +278,13 @@ public class ExpressionTrees
 			2012
 		}, (Predicate<int>)System.DateTime.IsLeapYear));
 
-		int test = 2004;
+		Magic test = new Magic();
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => System.Linq.Enumerable.All<int>(new int[] {
 			2000,
 			2004,
 			2008,
 			2012
-		}, test.Equals));
+		}, (int bob) => test.TestMagic(bob)));
 		
 		Func<Func<object, object, bool>, bool> sink = (Func<object, object, bool> f) => f(null, null);
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => sink((Func<object, object, bool>)object.Equals));
