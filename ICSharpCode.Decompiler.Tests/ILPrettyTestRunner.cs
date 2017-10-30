@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			Run();
 		}
-		
+
 		[Test]
 		public void FSharpUsing_Debug()
 		{
@@ -50,6 +50,18 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public void FSharpUsing_Release()
+		{
+			Run();
+		}
+
+		[Test, Ignore]
+		public void FSharpLoops_Debug()
+		{
+			Run();
+		}
+
+		[Test, Ignore]
+		public void FSharpLoops_Release()
 		{
 			Run();
 		}
