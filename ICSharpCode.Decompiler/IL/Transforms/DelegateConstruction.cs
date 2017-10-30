@@ -246,22 +246,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			protected internal override void VisitCall(Call inst)
 			{
 				base.VisitCall(inst);
-				if (inst.Method.FullName.Equals("System.Linq.Expressions.Expression.Field") &&
-					inst.Arguments.Count == 2 &&
-					inst.Arguments[0] is CallInstruction constantCall &&
-					inst.Arguments[1] is CallInstruction getFieldFromHandleCall &&
-					constantCall.Method.FullName.Equals("System.Linq.Expressions.Expression.Constant") &&
-					getFieldFromHandleCall.Method.Name.Equals("GetFieldFromHandle") &&
-					constantCall.Arguments.Count == 2 &&
-					constantCall.Arguments[0].MatchLdLoc(out ILVariable constantVar) &&
-					constantCall.Arguments[1] is CallInstruction getTypeFromHandleCall &&
-					getTypeFromHandleCall.Method.Name.Equals("GetTypeFromHandle") &&
-					getTypeFromHandleCall.Arguments.Count == 1 &&
-					getTypeFromHandleCall.Arguments[0] is LdTypeToken ldTypeToken &&
-					getFieldFromHandleCall.Arguments.Count == 1 &&
-					getFieldFromHandleCall.Arguments[0] is LdMemberToken ldMemberToken &&
-					targetLoad.Variable == constantVar &&
-					initValues.TryGetValue(ldMemberToken.Member as IField, out DisplayClassVariable info)) {
+				if (inst.Method.FullName.Equals("System.Linq.Expressions.Expression.Field")
+					&& inst.Arguments.Count == 2
+					&& inst.Arguments[0] is CallInstruction constantCall
+					&& inst.Arguments[1] is CallInstruction getFieldFromHandleCall
+					&& constantCall.Method.FullName.Equals("System.Linq.Expressions.Expression.Constant") 
+					&& getFieldFromHandleCall.Method.Name.Equals("GetFieldFromHandle") 
+					&& constantCall.Arguments.Count == 2
+					&& constantCall.Arguments[0].MatchLdLoc(out ILVariable constantVar)
+					&& constantCall.Arguments[1] is CallInstruction getTypeFromHandleCall
+					&& getTypeFromHandleCall.Method.Name.Equals("GetTypeFromHandle")
+					&& getTypeFromHandleCall.Arguments.Count == 1
+					&& getTypeFromHandleCall.Arguments[0] is LdTypeToken ldTypeToken
+					&& getFieldFromHandleCall.Arguments.Count == 1
+					&& getFieldFromHandleCall.Arguments[0] is LdMemberToken ldMemberToken 
+					&& targetLoad.Variable == constantVar 
+					&& initValues.TryGetValue(ldMemberToken.Member as IField, out DisplayClassVariable info)) {
 
 					Call replace = new Call(constantCall.Method);
 					replace.Arguments.Add(new LdLoc(info.variable));
