@@ -168,6 +168,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			get { return astTransforms; }
 		}
 
+		public CSharpDecompiler(string fileName, DecompilerSettings settings)
+			: this(UniversalAssemblyResolver.LoadMainModule(fileName, settings.ThrowOnAssemblyResolveErrors, settings.LoadInMemory), settings)
+		{
+		}
+
 		public CSharpDecompiler(ModuleDefinition module, DecompilerSettings settings)
 			: this(new DecompilerTypeSystem(module), settings)
 		{
