@@ -934,13 +934,31 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else if (type is GenericParameter) {
 				return new SimpleType(type.Name);
 			} else if (type.IsNested) {
-				AstType typeRef = ConvertType(type.DeclaringType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
 				string namepart = ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name);
-				MemberType memberType = new MemberType { Target = typeRef, MemberName = namepart };
-				memberType.AddAnnotation(type);
-				if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
-					AddTypeParameterDefininitionsTo(type, memberType);
+				AstType memberType;
+				if ((options & (ConvertTypeOptions.IncludeOuterTypeName | ConvertTypeOptions.IncludeNamespace)) != 0) {
+					AstType typeRef = ConvertType(type.DeclaringType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
+					memberType = new MemberType { Target = typeRef, MemberName = namepart };
+					if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
+						AddTypeParameterDefininitionsTo(type, memberType);
+					}
+				} else {
+					memberType = new SimpleType(namepart);
+					if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
+						if (type.HasGenericParameters) {
+							List<AstType> typeArguments = new List<AstType>();
+							foreach (GenericParameter gp in type.GenericParameters) {
+								typeArguments.Add(new SimpleType(gp.Name));
+							}
+							ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
+							if (typeParameterCount > typeArguments.Count)
+								typeParameterCount = typeArguments.Count;
+							((SimpleType)memberType).TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
+							typeArguments.RemoveRange(typeArguments.Count - typeParameterCount, typeParameterCount);
+						}
+					}
 				}
+				memberType.AddAnnotation(type);
 				return memberType;
 			} else {
 				string ns = type.Namespace ?? string.Empty;
@@ -1029,14 +1047,22 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			SimpleType st = baseType as SimpleType;
 			if (st != null) {
-				st.TypeArguments.AddRange(typeArguments);
+				TypeReference type = st.Annotation<TypeReference>();
+				if (type != null) {
+					ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
+					if (typeParameterCount > typeArguments.Count)
+						typeParameterCount = typeArguments.Count;
+					st.TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
+				} else {
+					st.TypeArguments.AddRange(typeArguments);
+
+				}
 			}
 			MemberType mt = baseType as MemberType;
 			if (mt != null) {
 				TypeReference type = mt.Annotation<TypeReference>();
 				if (type != null) {
-					int typeParameterCount;
-					ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out typeParameterCount);
+					ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
 					if (typeParameterCount > typeArguments.Count)
 						typeParameterCount = typeArguments.Count;
 					mt.TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
@@ -1090,6 +1116,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		None = 0,
 		IncludeNamespace = 1,
 		IncludeTypeParameterDefinitions = 2,
-		DoNotUsePrimitiveTypeNames = 4
+		DoNotUsePrimitiveTypeNames = 4,
+		IncludeOuterTypeName = 8,
 	}
 }
