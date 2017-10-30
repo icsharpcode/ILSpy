@@ -70,6 +70,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			char* ptr2 = stackalloc char[100];
 			for (int i = 0; i < count; i++) {
 				ptr[i] = (char)i;
+				ptr2[i] = '\0';
 			}
 			return this.UsePointer((double*)ptr);
 		}
@@ -77,7 +78,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		public unsafe string StackAllocStruct(int count)
 		{
 			SimpleStruct* s = stackalloc SimpleStruct[checked(count * 2)];
-			SimpleStruct* p = stackalloc SimpleStruct[10];
+			SimpleStruct* _ = stackalloc SimpleStruct[10];
 			return this.UsePointer(&s->Y);
 		}
 		
