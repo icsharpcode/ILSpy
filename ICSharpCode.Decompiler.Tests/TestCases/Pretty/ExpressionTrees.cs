@@ -270,13 +270,13 @@ public class ExpressionTrees
 			2012
 		}, (Predicate<int>)System.DateTime.IsLeapYear));
 
-		HashSet<int> set = new HashSet<int>();
+		int test = 2004;
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => System.Linq.Enumerable.All<int>(new int[] {
 			2000,
 			2004,
 			2008,
 			2012
-		}, (Func<int, bool>)set.Add));
+		}, test.Equals));
 		
 		Func<Func<object, object, bool>, bool> sink = (Func<object, object, bool> f) => f(null, null);
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => sink((Func<object, object, bool>)object.Equals));

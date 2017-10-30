@@ -201,7 +201,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void ExpressionTrees([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		public void ExpressionTrees([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
 		}
