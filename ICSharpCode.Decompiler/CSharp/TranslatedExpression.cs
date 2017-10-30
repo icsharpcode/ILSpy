@@ -179,7 +179,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							if (Expression is CastExpression cast
 							&& (type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
 								|| type.Kind == TypeKind.Delegate && conversion.Conversion.IsAnonymousFunctionConversion
-								)) {
+								|| (conversion.Conversion.IsImplicit && (conversion.Conversion.IsUserDefined || targetType.IsKnownType(KnownTypeCode.Decimal)))
+							)) {
 								return this.UnwrapChild(cast.Expression);
 							} else if (Expression is ObjectCreateExpression oce && conversion.Conversion.IsMethodGroupConversion
 									&& oce.Arguments.Count == 1 && expressionBuilder.settings.UseImplicitMethodGroupConversion) {

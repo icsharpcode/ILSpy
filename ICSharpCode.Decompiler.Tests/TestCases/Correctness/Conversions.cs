@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			TypeCode.UInt64,
 			TypeCode.Single,
 			TypeCode.Double,
-			//TypeCode.Decimal
+			TypeCode.Decimal
 		};
 		
 		static object[] inputValues = {
@@ -109,6 +109,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			RunTest(checkForOverflow: true);
 			
 			Console.WriteLine(ReadZeroTerminatedString("Hello World!".Length));
+			C1.Test();
 		}
 		
 		static void RunTest(bool checkForOverflow)
@@ -154,6 +155,39 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		
 		static byte[] ReadBytes(int length) {
 			return System.Text.Encoding.ASCII.GetBytes("Hello World!");
+		}
+	}
+
+	class C1
+	{
+		public static implicit operator Type(C1 c)
+		{
+			return c.GetType();
+		}
+
+		public static void Test()
+		{
+			Console.WriteLine("op_Implicit tests");
+			ExplicitUseOfImplicitConversion(new C1());
+			Console.WriteLine(ChainedImplicitConversions(new C2()).Name);
+		}
+
+		static void ExplicitUseOfImplicitConversion(C1 c)
+		{
+			Console.WriteLine(((Type)c).Name);
+		}
+		
+		static Type ChainedImplicitConversions(C2 c)
+		{
+			return (C1)c;
+		}
+	}
+
+	class C2
+	{
+		public static implicit operator C1(C2 c)
+		{
+			return new C1();
 		}
 	}
 }

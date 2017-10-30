@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module TypeAnalysisTests.dll
-// MVID: {B6659F2C-8CAA-447B-9D1D-D59D8C40C6D7}
+// MVID: {7D2FE161-359E-42EC-B423-26BEB23F890D}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x003E0000
+// Image base: 0x01730000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -511,6 +511,26 @@
     IL_0002:  ceq
     IL_0004:  ret
   } // end of method TypeAnalysisTests::CompareDelegateWithNull
+
+  .method public hidebysig instance valuetype [mscorlib]System.Decimal 
+          ImplicitConversionToDecimal(uint8 v) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Implicit(uint8)
+    IL_0006:  ret
+  } // end of method TypeAnalysisTests::ImplicitConversionToDecimal
+
+  .method public hidebysig instance valuetype [mscorlib]System.Decimal 
+          ImplicitConversionToDecimal(uint64 v) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  call       valuetype [mscorlib]System.Decimal [mscorlib]System.Decimal::op_Implicit(uint64)
+    IL_0006:  ret
+  } // end of method TypeAnalysisTests::ImplicitConversionToDecimal
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
