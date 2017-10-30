@@ -34,7 +34,7 @@
 
 			<StackPanel DockPanel.Dock="Left" Orientation="Horizontal" HorizontalAlignment="Left">
 				<Button Margin="2,0" Click="CreateButton_Click">_Create</Button>
-				<Button Margin="2,0" IsEnabled="False" Name="removeButton" Click="RemoveButton_Click">_Delete</Button>
+				<Button Margin="2,0" IsEnabled="False" Name="deleteButton" Click="DeleteButton_Click">_Delete</Button>
 				<Button Margin="2,0" Click="ResetButton_Click">_Reset</Button>
 			</StackPanel>
 		</DockPanel>
