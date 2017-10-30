@@ -42,7 +42,9 @@ namespace ICSharpCode.Decompiler
 		{
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);
-
+			this.throwOnError = throwOnError;
+			if (string.IsNullOrWhiteSpace(this.baseDirectory))
+				this.baseDirectory = Environment.CurrentDirectory;
 			AddSearchDirectory(baseDirectory);
 		}
 
