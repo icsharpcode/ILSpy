@@ -229,55 +229,38 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLocAlloc(LocAlloc inst, TranslationContext context)
 		{
-			IType elementType;
-			TranslatedExpression countExpression = TranslatePointerArgument(inst.Argument, context, out elementType);
+			TranslatedExpression countExpression;
+			PointerType pointerType;
+			if (inst.Argument.MatchBinaryNumericInstruction(BinaryNumericOperator.Mul, out var left, out var right)
+				&& right.UnwrapConv(ConversionKind.SignExtend).UnwrapConv(ConversionKind.ZeroExtend).MatchSizeOf(out var elementType))
+			{
+				// Determine the element type from the sizeof
+				countExpression = Translate(left.UnwrapConv(ConversionKind.ZeroExtend));
+				pointerType = new PointerType(elementType);
+			} else {
+				// Determine the element type from the expected pointer type in this context
+				pointerType = context.TypeHint as PointerType;
+				if (pointerType != null && GetPointerArithmeticOffset(
+						inst.Argument, Translate(inst.Argument),
+						pointerType, checkForOverflow: true,
+						unwrapZeroExtension: true
+					) is TranslatedExpression offset)
+				{
+					countExpression = offset;
+					elementType = pointerType.ElementType;
+				} else {
+					elementType = compilation.FindType(KnownTypeCode.Byte);
+					pointerType = new PointerType(elementType);
+					countExpression = Translate(inst.Argument);
+				}
+			}
 			countExpression = countExpression.ConvertTo(compilation.FindType(KnownTypeCode.Int32), this);
-			if (elementType == null)
-				elementType = compilation.FindType(KnownTypeCode.Byte);
 			return new StackAllocExpression {
 				Type = ConvertType(elementType),
 				CountExpression = countExpression
 			}.WithILInstruction(inst).WithRR(new ResolveResult(new PointerType(elementType)));
 		}
 		
-		/// <summary>
-		/// Translate the argument of an operation that deals with pointers:
-		/// * undoes the implicit multiplication with `sizeof(elementType)` and returns `elementType`
-		/// * on failure, translates the whole expression and returns `elementType = null`.
-		/// </summary>
-		TranslatedExpression TranslatePointerArgument(ILInstruction countExpr, TranslationContext context, out IType elementType)
-		{
-			ILInstruction left;
-			ILInstruction right;
-			if (countExpr.MatchBinaryNumericInstruction(BinaryNumericOperator.Mul, out left, out right)
-			    && right.UnwrapConv(ConversionKind.SignExtend).UnwrapConv(ConversionKind.ZeroExtend).MatchSizeOf(out elementType))
-			{
-				return Translate(left);
-			}
-			
-			var pointerTypeHint = context.TypeHint as PointerType;
-			if (pointerTypeHint == null) {
-				elementType = null;
-				return Translate(countExpr);
-			}
-			ResolveResult sizeofRR = resolver.ResolveSizeOf(pointerTypeHint.ElementType);
-			if (!(sizeofRR.IsCompileTimeConstant && sizeofRR.ConstantValue is int)) {
-				elementType = null;
-				return Translate(countExpr);
-			}
-			int typeSize = (int)sizeofRR.ConstantValue;
-			
-			if (countExpr.MatchBinaryNumericInstruction(BinaryNumericOperator.Mul, out left, out right)
-			    && right.UnwrapConv(ConversionKind.SignExtend).UnwrapConv(ConversionKind.ZeroExtend).MatchLdcI4(typeSize))
-			{
-				elementType = pointerTypeHint.ElementType;
-				return Translate(left);
-			}
-			
-			elementType = null;
-			return Translate(countExpr);
-		}
-
 		protected internal override TranslatedExpression VisitLdcI4(LdcI4 inst, TranslationContext context)
 		{
 			return new PrimitiveExpression(inst.Value)
@@ -494,6 +477,20 @@ namespace ICSharpCode.Decompiler.CSharp
 					return right;
 				}
 			}
+			// Handle comparisons between unsafe pointers and null:
+			if (left.Type.Kind == TypeKind.Pointer && inst.Right.MatchLdcI(0)) {
+				negateOutput = false;
+				right = new NullReferenceExpression().WithRR(new ConstantResolveResult(SpecialType.NullType, null))
+					.WithILInstruction(inst.Right);
+				return CreateBuiltinBinaryOperator(left, inst.Kind.ToBinaryOperatorType(), right)
+					.WithILInstruction(inst);
+			} else if (right.Type.Kind == TypeKind.Pointer && inst.Left.MatchLdcI(0)) {
+				negateOutput = false;
+				left = new NullReferenceExpression().WithRR(new ConstantResolveResult(SpecialType.NullType, null))
+					.WithILInstruction(inst.Left);
+				return CreateBuiltinBinaryOperator(left, inst.Kind.ToBinaryOperatorType(), right)
+					.WithILInstruction(inst);
+			}
 
 			// Special case comparisons with enum and char literals
 			left = AdjustConstantExpressionToType(left, right.Type);
@@ -504,12 +501,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			{
 				// When comparing a delegate with null, the C# compiler generates a reference comparison.
 				negateOutput = false;
-				return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
-					.WithILInstruction(inst)
-					.WithRR(new OperatorResolveResult(
-						compilation.FindType(KnownTypeCode.Boolean),
-						inst.Kind == ComparisonKind.Equality ? ExpressionType.Equal : ExpressionType.NotEqual,
-						left.ResolveResult, right.ResolveResult));
+				return CreateBuiltinBinaryOperator(left, inst.Kind.ToBinaryOperatorType(), right)
+					.WithILInstruction(inst);
 			}
 
 			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
@@ -521,7 +514,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (inst.InputType == StackType.O) {
 					targetType = compilation.FindType(KnownTypeCode.Object);
 				} else {
-					targetType = TypeUtils.GetLargerType(NullableType.GetUnderlyingType(left.Type), NullableType.GetUnderlyingType(right.Type));
+					var leftUType = NullableType.GetUnderlyingType(left.Type);
+					var rightUType = NullableType.GetUnderlyingType(right.Type);
+					if (leftUType.GetStackType() == inst.InputType && !leftUType.IsSmallIntegerType()) {
+						targetType = leftUType;
+					} else if (rightUType.GetStackType() == inst.InputType && !rightUType.IsSmallIntegerType()) {
+						targetType = rightUType;
+					} else {
+						targetType = compilation.FindType(inst.InputType.ToKnownTypeCode(leftUType.GetSign()));
+					}
 				}
 				if (inst.IsLifted) {
 					targetType = NullableType.Create(compilation, targetType);
@@ -539,15 +540,27 @@ namespace ICSharpCode.Decompiler.CSharp
 					// If converting one input wasn't sufficient, convert both:
 					left = left.ConvertTo(targetType, this);
 					right = right.ConvertTo(targetType, this);
-					rr = new OperatorResolveResult(compilation.FindType(KnownTypeCode.Boolean),
-												   BinaryOperatorExpression.GetLinqNodeType(BinaryOperatorType.Equality, false),
-												   left.ResolveResult, right.ResolveResult);
+					rr = new OperatorResolveResult(
+						compilation.FindType(KnownTypeCode.Boolean),
+						BinaryOperatorExpression.GetLinqNodeType(inst.Kind.ToBinaryOperatorType(), false),
+						left.ResolveResult, right.ResolveResult);
 				}
 			}
 			negateOutput = false;
 			return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(rr);
+		}
+
+		ExpressionWithResolveResult CreateBuiltinBinaryOperator(
+			TranslatedExpression left, BinaryOperatorType type, TranslatedExpression right,
+			bool checkForOverflow = false)
+		{
+			return new BinaryOperatorExpression(left.Expression, type, right.Expression)
+			.WithRR(new OperatorResolveResult(
+				compilation.FindType(KnownTypeCode.Boolean),
+				BinaryOperatorExpression.GetLinqNodeType(type, checkForOverflow),
+				left.ResolveResult, right.ResolveResult));
 		}
 		
 		/// <summary>
@@ -558,6 +571,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			var op = inst.Kind.ToBinaryOperatorType();
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
+
+			if (left.Type.Kind == TypeKind.Pointer && right.Type.Kind == TypeKind.Pointer) {
+				return CreateBuiltinBinaryOperator(left, op, right)
+					.WithILInstruction(inst);
+			}
+
 			left = PrepareArithmeticArgument(left, inst.InputType, inst.Sign, inst.IsLifted);
 			right = PrepareArithmeticArgument(right, inst.InputType, inst.Sign, inst.IsLifted);
 
@@ -652,7 +671,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				case BinaryNumericOperator.Mul:
 					return HandleBinaryNumeric(inst, BinaryOperatorType.Multiply);
 				case BinaryNumericOperator.Div:
-					return HandleBinaryNumeric(inst, BinaryOperatorType.Divide);
+					return HandlePointerSubtraction(inst)
+						?? HandleBinaryNumeric(inst, BinaryOperatorType.Divide);
 				case BinaryNumericOperator.Rem:
 					return HandleBinaryNumeric(inst, BinaryOperatorType.Modulus);
 				case BinaryNumericOperator.BitAnd:
@@ -669,15 +689,202 @@ namespace ICSharpCode.Decompiler.CSharp
 					throw new ArgumentOutOfRangeException();
 			}
 		}
-		
+
+		/// <summary>
+		/// Translates pointer arithmetic:
+		///   ptr + int
+		///   int + ptr
+		///   ptr - int
+		/// Returns null if 'inst' is not performing pointer arithmetic.
+		/// This function not handle 'ptr - ptr'!
+		/// </summary>
+		TranslatedExpression? HandlePointerArithmetic(BinaryNumericInstruction inst, TranslatedExpression left, TranslatedExpression right)
+		{
+			if (!(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub))
+				return null;
+			if (inst.CheckForOverflow || inst.IsLifted)
+				return null;
+			if (!(inst.LeftInputType == StackType.I && inst.RightInputType == StackType.I))
+				return null;
+			PointerType pointerType;
+			ILInstruction byteOffsetInst;
+			TranslatedExpression byteOffsetExpr;
+			if (left.Type.Kind == TypeKind.Pointer) {
+				byteOffsetInst = inst.Right;
+				byteOffsetExpr = right;
+				pointerType = (PointerType)left.Type;
+			} else if (right.Type.Kind == TypeKind.Pointer) {
+				if (inst.Operator != BinaryNumericOperator.Add)
+					return null;
+				byteOffsetInst = inst.Left;
+				byteOffsetExpr = left;
+				pointerType = (PointerType)right.Type;
+			} else {
+				return null;
+			}
+			TranslatedExpression offsetExpr = GetPointerArithmeticOffset(byteOffsetInst, byteOffsetExpr, pointerType, inst.CheckForOverflow)
+				?? FallBackToBytePointer();
+			if (!offsetExpr.Type.IsCSharpPrimitiveIntegerType()) {
+				// pointer arithmetic accepts all primitive integer types, but no enums etc.
+				StackType targetType = offsetExpr.Type.GetStackType() == StackType.I4 ? StackType.I4 : StackType.I8;
+				offsetExpr = offsetExpr.ConvertTo(
+					compilation.FindType(targetType.ToKnownTypeCode(offsetExpr.Type.GetSign())),
+					this);
+			}
+
+			if (left.Type.Kind == TypeKind.Pointer) {
+				Debug.Assert(inst.Operator == BinaryNumericOperator.Add || inst.Operator == BinaryNumericOperator.Sub);
+				left = left.ConvertTo(pointerType, this);
+				right = offsetExpr;
+			} else {
+				Debug.Assert(inst.Operator == BinaryNumericOperator.Add);
+				Debug.Assert(right.Type.Kind == TypeKind.Pointer);
+				left = offsetExpr;
+				right = right.ConvertTo(pointerType, this);
+			}
+			var operatorType = inst.Operator == BinaryNumericOperator.Add ? BinaryOperatorType.Add : BinaryOperatorType.Subtract;
+			return new BinaryOperatorExpression(left, operatorType, right)
+				.WithILInstruction(inst)
+				.WithRR(new OperatorResolveResult(
+					pointerType, BinaryOperatorExpression.GetLinqNodeType(operatorType, inst.CheckForOverflow),
+					left.ResolveResult, right.ResolveResult));
+
+			TranslatedExpression FallBackToBytePointer()
+			{
+				pointerType = new PointerType(compilation.FindType(KnownTypeCode.Byte));
+				return byteOffsetExpr;
+			}
+		}
+
+		TranslatedExpression? GetPointerArithmeticOffset(ILInstruction byteOffsetInst, TranslatedExpression byteOffsetExpr,
+			PointerType pointerType, bool checkForOverflow, bool unwrapZeroExtension = false)
+		{
+			if (byteOffsetInst is Conv conv && conv.InputType == StackType.I8 && conv.ResultType == StackType.I) {
+				byteOffsetInst = conv.Argument;
+			}
+			int? elementSize = ComputeSizeOf(pointerType.ElementType);
+			if (elementSize == 1) {
+				return byteOffsetExpr;
+			} else if (byteOffsetInst is BinaryNumericInstruction mul && mul.Operator == BinaryNumericOperator.Mul) {
+				if (mul.CheckForOverflow != checkForOverflow)
+					return null;
+				if (mul.IsLifted)
+					return null;
+				if (elementSize > 0 && mul.Right.MatchLdcI(elementSize.Value)
+					|| mul.Right.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerType.ElementType))
+				{
+					var countOffsetInst = mul.Left;
+					if (unwrapZeroExtension) {
+						countOffsetInst = countOffsetInst.UnwrapConv(ConversionKind.ZeroExtend);
+					}
+					return Translate(countOffsetInst);
+				}
+			} else if (byteOffsetInst.MatchLdcI(out long val)) {
+				// If the offset is a constant, it's possible that the compiler
+				// constant-folded the multiplication.
+				if (elementSize > 0 && (val % elementSize == 0) && val > 0) {
+					val /= elementSize.Value;
+					if (val <= int.MaxValue) {
+						return new PrimitiveExpression((int)val)
+							.WithILInstruction(byteOffsetInst)
+							.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), val));
+					}
+				}
+			}
+			return null;
+		}
+
+		/// <summary>
+		/// Called for divisions, detect and handles the code pattern:
+		///   div(sub(a, b), sizeof(T))
+		/// when a,b are of type T*.
+		/// This is what the C# compiler generates for pointer subtraction.
+		/// </summary>
+		TranslatedExpression? HandlePointerSubtraction(BinaryNumericInstruction inst)
+		{
+			Debug.Assert(inst.Operator == BinaryNumericOperator.Div);
+			if (inst.CheckForOverflow || inst.LeftInputType != StackType.I)
+				return null;
+			if (!(inst.Left is BinaryNumericInstruction sub && sub.Operator == BinaryNumericOperator.Sub))
+				return null;
+			if (sub.CheckForOverflow)
+				return null;
+			// First, attempt to parse the 'sizeof' on the RHS
+			IType elementType;
+			if (inst.Right.MatchLdcI(out long elementSize)) {
+				elementType = null;
+				// OK, might be pointer subtraction if the element size matches
+			} else if (inst.Right.UnwrapConv(ConversionKind.SignExtend).MatchSizeOf(out elementType)) {
+				// OK, might be pointer subtraction if the element type matches
+			} else {
+				return null;
+			}
+			var left = Translate(sub.Left);
+			var right = Translate(sub.Right);
+			IType pointerType;
+			if (IsMatchingPointerType(left.Type)) {
+				pointerType = left.Type;
+			} else if (IsMatchingPointerType(right.Type)) {
+				pointerType = right.Type;
+			} else if (elementSize == 1 && left.Type.Kind == TypeKind.Pointer && right.Type.Kind == TypeKind.Pointer) {
+				// two pointers (neither matching), we're dividing by 1 (debug builds only),
+				// -> subtract two byte pointers
+				pointerType = new PointerType(compilation.FindType(KnownTypeCode.Byte));
+			} else {
+				// neither is a matching pointer type
+				// -> not a pointer subtraction after all
+				return null;
+			}
+			// We got a pointer subtraction.
+			left = left.ConvertTo(pointerType, this);
+			right = right.ConvertTo(pointerType, this);
+			var rr = new OperatorResolveResult(
+				compilation.FindType(KnownTypeCode.Int64),
+				ExpressionType.Subtract,
+				left.ResolveResult, right.ResolveResult
+			);
+			var result = new BinaryOperatorExpression(
+				left.Expression, BinaryOperatorType.Subtract, right.Expression
+			).WithILInstruction(new[] { inst, sub })
+			 .WithRR(rr);
+			return result;
+
+			bool IsMatchingPointerType(IType type)
+			{
+				if (type is PointerType pt) {
+					if (elementType != null)
+						return elementType.Equals(pt.ElementType);
+					else if (elementSize > 0)
+						return ComputeSizeOf(pt.ElementType) == elementSize;
+				}
+				return false;
+			}
+		}
+
+		int? ComputeSizeOf(IType type)
+		{
+			var rr = resolver.ResolveSizeOf(type);
+			if (rr.IsCompileTimeConstant && rr.ConstantValue is int size)
+				return size;
+			else
+				return null;
+		}
+
 		TranslatedExpression HandleBinaryNumeric(BinaryNumericInstruction inst, BinaryOperatorType op)
 		{
 			var resolverWithOverflowCheck = resolver.WithCheckForOverflow(inst.CheckForOverflow);
 			var left = Translate(inst.Left);
 			var right = Translate(inst.Right);
+
+			if (left.Type.Kind == TypeKind.Pointer || right.Type.Kind == TypeKind.Pointer) {
+				var ptrResult = HandlePointerArithmetic(inst, left, right);
+				if (ptrResult != null)
+					return ptrResult.Value;
+			}
+
 			left = PrepareArithmeticArgument(left, inst.LeftInputType, inst.Sign, inst.IsLifted);
 			right = PrepareArithmeticArgument(right, inst.RightInputType, inst.Sign, inst.IsLifted);
-			
+
 			if (op == BinaryOperatorType.Subtract && inst.Left.MatchLdcI(0)) {
 				IType rightUType = NullableType.GetUnderlyingType(right.Type);
 				if (rightUType.IsKnownType(KnownTypeCode.Int32) || rightUType.IsKnownType(KnownTypeCode.Int64) || rightUType.IsCSharpSmallIntegerType()) {
@@ -692,6 +899,11 @@ namespace ICSharpCode.Decompiler.CSharp
 						inst.CheckForOverflow ? ExpressionType.NegateChecked : ExpressionType.Negate,
 						right.ResolveResult));
 				}
+			}
+
+			if (op.IsBitwise() && (left.Type.Kind == TypeKind.Enum || right.Type.Kind == TypeKind.Enum)) {
+				left = AdjustConstantExpressionToType(left, right.Type);
+				right = AdjustConstantExpressionToType(right, left.Type);
 			}
 
 			var rr = resolverWithOverflowCheck.ResolveBinaryOperator(op, left.ResolveResult, right.ResolveResult);
@@ -726,6 +938,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// If the argument is oversized (needs truncation to match stack size of its ILInstruction),
 				// perform the truncation now.
 				IType targetType = compilation.FindType(argStackType.ToKnownTypeCode(sign));
+				argUType = targetType;
 				if (isLifted)
 					targetType = NullableType.Create(compilation, targetType);
 				arg = arg.ConvertTo(targetType, this);
@@ -974,7 +1187,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					// We just need to ensure the input type before the conversion is signed.
 					// Also, if the argument was translated into an oversized C# type,
 					// we need to perform the truncatation to the input stack type.
-					if (inputType.GetSign() != Sign.Signed || inputType.GetSize() > inputStackType.GetSize()) {
+					if (inputType.GetSign() != Sign.Signed || ValueMightBeOversized(arg.ResolveResult, inputStackType)) {
 						// Note that an undersized C# type is handled just fine:
 						// If it is unsigned we'll zero-extend it to the width of the inputStackType here,
 						// and it is signed we just combine the two sign-extensions into a single sign-extending conversion.
@@ -1030,10 +1243,46 @@ namespace ICSharpCode.Decompiler.CSharp
 						// Case 4 (left-over extension from implicit conversion) can also be handled by our caller.
 						return arg.WithILInstruction(inst);
 					}
-				default:
-					return arg.ConvertTo(GetType(inst.TargetType.ToKnownTypeCode()), this, inst.CheckForOverflow)
-						.WithILInstruction(inst);
+				default: {
+						// We need to convert to inst.TargetType, or to an equivalent type.
+						IType targetType;
+						if (inst.TargetType == NullableType.GetUnderlyingType(context.TypeHint).ToPrimitiveType()
+							&& NullableType.IsNullable(context.TypeHint) == inst.IsLifted)
+						{
+							targetType = context.TypeHint;
+						} else {
+							targetType = GetType(inst.TargetType.ToKnownTypeCode());
+						}
+						return arg.ConvertTo(targetType, this, inst.CheckForOverflow)
+							.WithILInstruction(inst);
+					}
 			}
+		}
+
+		/// <summary>
+		/// Gets whether the ResolveResult computes a value that might be oversized for the specified stack type.
+		/// </summary>
+		bool ValueMightBeOversized(ResolveResult rr, StackType stackType)
+		{
+			IType inputType = NullableType.GetUnderlyingType(rr.Type);
+			if (inputType.GetSize() <= stackType.GetSize()) {
+				// The input type is smaller or equal to the stack type,
+				// it can't be an oversized value.
+				return false;
+			}
+			if (rr is OperatorResolveResult orr) {
+				if (stackType == StackType.I && orr.OperatorType == ExpressionType.Subtract
+					&& orr.Operands.Count == 2
+					&& orr.Operands[0].Type.Kind == TypeKind.Pointer
+					&& orr.Operands[1].Type.Kind == TypeKind.Pointer)
+				{
+					// Even though a pointer subtraction produces a value of type long in C#,
+					// the value will always fit in a native int.
+					return false;
+				}
+			}
+			// We don't have any information about the value, so it might be oversized.
+			return true;
 		}
 
 		protected internal override TranslatedExpression VisitCall(Call inst, TranslationContext context)
@@ -1206,19 +1455,41 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitLdObj(LdObj inst, TranslationContext context)
 		{
 			var target = Translate(inst.Target);
-			if (target.Expression is DirectionExpression && TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
-				// we can dereference the managed reference by stripping away the 'ref'
-				var result = target.UnwrapChild(((DirectionExpression)target.Expression).Expression);
+			if (TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
+				TranslatedExpression result;
+				if (target.Expression is DirectionExpression dirExpr) {
+					// we can dereference the managed reference by stripping away the 'ref'
+					result = target.UnwrapChild(dirExpr.Expression);
+					result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
+				} else if (target.Type is PointerType pointerType) {
+					if (target.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf) {
+						// We can dereference the pointer by stripping away the '&'
+						result = target.UnwrapChild(uoe.Expression);
+						result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
+					} else {
+						// Dereference the existing pointer
+						result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
+							.WithILInstruction(inst)
+							.WithRR(new ResolveResult(pointerType.ElementType));
+					}
+				} else {
+					// reference type behind non-DirectionExpression?
+					// this case should be impossible, but we can use a pointer cast
+					// just to make sure
+					target = target.ConvertTo(new PointerType(inst.Type), this);
+					return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
+						.WithILInstruction(inst)
+						.WithRR(new ResolveResult(inst.Type));
+				}
 				// we don't convert result to inst.Type, because the LdObj type
 				// might be inaccurate (it's often System.Object for all reference types),
 				// and our parent node should already insert casts where necessary
-				result.Expression.AddAnnotation(inst); // add LdObj in addition to the existing ILInstruction annotation
-				
+
 				if (target.Type.IsSmallIntegerType() && inst.Type.IsSmallIntegerType() && target.Type.GetSign() != inst.Type.GetSign())
 					return result.ConvertTo(inst.Type, this);
 				return result;
 			} else {
-				// Cast pointer type if necessary:
+				// We need to cast the pointer type:
 				target = target.ConvertTo(new PointerType(inst.Type), this);
 				return new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
 					.WithILInstruction(inst)
@@ -1265,14 +1536,30 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLdFlda(LdFlda inst, TranslationContext context)
 		{
-			var expr = ConvertField(inst.Field, inst.Target);
-			return new DirectionExpression(FieldDirection.Ref, expr)
-				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+			if (settings.FixedBuffers && inst.Field.Name == "FixedElementField"
+				&& inst.Target is LdFlda nestedLdFlda
+				&& CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _))
+			{
+				Expression result = ConvertField(nestedLdFlda.Field, nestedLdFlda.Target);
+				result.RemoveAnnotations<ResolveResult>();
+				return result.WithRR(new ResolveResult(new PointerType(elementType)))
+					.WithILInstruction(inst);
+			}
+			var expr = ConvertField(inst.Field, inst.Target).WithILInstruction(inst);
+			if (inst.ResultType == StackType.I) {
+				// ldflda producing native pointer
+				return new UnaryOperatorExpression(UnaryOperatorType.AddressOf, expr)
+					.WithoutILInstruction().WithRR(new ResolveResult(new PointerType(expr.Type)));
+			} else {
+				// ldflda producing managed pointer
+				return new DirectionExpression(FieldDirection.Ref, expr)
+					.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
+			}
 		}
 		
 		protected internal override TranslatedExpression VisitLdsFlda(LdsFlda inst, TranslationContext context)
 		{
-			var expr = ConvertField(inst.Field);
+			var expr = ConvertField(inst.Field).WithILInstruction(inst);
 			return new DirectionExpression(FieldDirection.Ref, expr)
 				.WithoutILInstruction().WithRR(new ResolveResult(new ByReferenceType(expr.Type)));
 		}
@@ -1667,7 +1954,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			// ILAst LogicAnd/LogicOr can return a different value than 0 or 1
 			// if the rhs is evaluated.
 			// We can only correctly translate it to C# if the rhs is of type boolean:
-			if (op != BinaryOperatorType.Any && rhs.Type.IsKnownType(KnownTypeCode.Boolean)) {
+			if (op != BinaryOperatorType.Any && (rhs.Type.IsKnownType(KnownTypeCode.Boolean) || IfInstruction.IsInConditionSlot(inst))) {
+				rhs = rhs.ConvertToBoolean(this);
 				return new BinaryOperatorExpression(condition, op, rhs)
 					.WithILInstruction(inst)
 					.WithRR(new ResolveResult(compilation.FindType(KnownTypeCode.Boolean)));

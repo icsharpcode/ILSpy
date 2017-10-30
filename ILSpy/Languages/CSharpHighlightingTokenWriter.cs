@@ -127,8 +127,13 @@ namespace ICSharpCode.ILSpy
 				case "global":
 				case "dynamic":
 				case "await":
-				case "where":
 					color = structureKeywordsColor;
+					break;
+				case "where":
+					if (nodeStack.PeekOrDefault() is QueryClause)
+						color = queryKeywordsColor;
+					else
+						color = structureKeywordsColor;
 					break;
 				case "in":
 					if (nodeStack.PeekOrDefault() is ForeachStatement)

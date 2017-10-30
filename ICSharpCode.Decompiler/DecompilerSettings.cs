@@ -103,6 +103,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool fixedBuffers = true;
+
+		/// <summary>
+		/// Decompile C# 1.0 'public unsafe fixed int arr[10];' members.
+		/// </summary>
+		public bool FixedBuffers {
+			get { return fixedBuffers; }
+			set {
+				if (fixedBuffers != value) {
+					fixedBuffers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool liftNullables = true;
 
 		/// <summary>
@@ -368,6 +383,34 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (showDebugInfo != value) {
 					showDebugInfo = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		#endregion
+
+		#region Assembly Load and Resolve options
+
+		bool loadInMemory = false;
+
+		public bool LoadInMemory {
+			get { return loadInMemory; }
+			set {
+				if (loadInMemory != value) {
+					loadInMemory = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool throwOnAssemblyResolveErrors = false;
+
+		public bool ThrowOnAssemblyResolveErrors {
+			get { return throwOnAssemblyResolveErrors; }
+			set {
+				if (throwOnAssemblyResolveErrors != value) {
+					throwOnAssemblyResolveErrors = value;
 					OnPropertyChanged();
 				}
 			}

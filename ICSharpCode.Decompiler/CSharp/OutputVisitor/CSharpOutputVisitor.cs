@@ -278,6 +278,30 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			isAtStartOfLine = true;
 			isAfterSpace = false;
 		}
+
+		int GetCallChainLengthLimited(MemberReferenceExpression expr)
+		{
+			int callChainLength = 0;
+			var node = expr;
+
+			while (node.Target is InvocationExpression invocation && invocation.Target is MemberReferenceExpression mre && callChainLength < 4) {
+				node = mre;
+				callChainLength++;
+			}
+			return callChainLength;
+		}
+
+		protected virtual void InsertNewLineWhenInMethodCallChain(MemberReferenceExpression expr)
+		{
+			int callChainLength = GetCallChainLengthLimited(expr);
+			if (callChainLength < 3) return;
+			if (callChainLength == 3)
+				writer.Indent();
+			writer.NewLine();
+			
+			isAtStartOfLine = true;
+			isAfterSpace = false;
+		}
 		
 		protected virtual void OpenBrace(BraceStyle style)
 		{
@@ -810,6 +834,12 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			invocationExpression.Target.AcceptVisitor(this);
 			Space(policy.SpaceBeforeMethodCallParentheses);
 			WriteCommaSeparatedListInParenthesis(invocationExpression.Arguments, policy.SpaceWithinMethodCallParentheses);
+			if (!(invocationExpression.Parent is MemberReferenceExpression)) {
+				if (invocationExpression.Target is MemberReferenceExpression mre) {
+					if (GetCallChainLengthLimited(mre) >= 3)
+						writer.Unindent();
+				}
+			}
 			EndNode(invocationExpression);
 		}
 		
@@ -859,6 +889,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(memberReferenceExpression);
 			memberReferenceExpression.Target.AcceptVisitor(this);
+			InsertNewLineWhenInMethodCallChain(memberReferenceExpression);
 			WriteToken(Roles.Dot);
 			WriteIdentifier(memberReferenceExpression.MemberNameToken);
 			WriteTypeArguments(memberReferenceExpression.TypeArguments);
@@ -890,6 +921,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		{
 			StartNode(nullReferenceExpression);
 			writer.WritePrimitiveValue(null);
+			isAfterSpace = false;
 			EndNode(nullReferenceExpression);
 		}
 		
@@ -1858,8 +1890,10 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			Space(policy.SpaceBeforeConstructorDeclarationParentheses);
 			WriteCommaSeparatedListInParenthesis(constructorDeclaration.Parameters, policy.SpaceWithinMethodDeclarationParentheses);
 			if (!constructorDeclaration.Initializer.IsNull) {
-				Space();
+				NewLine();
+				writer.Indent();
 				constructorDeclaration.Initializer.AcceptVisitor(this);
+				writer.Unindent();
 			}
 			WriteMethodBody(constructorDeclaration.Body, policy.ConstructorBraceStyle);
 			EndNode(constructorDeclaration);

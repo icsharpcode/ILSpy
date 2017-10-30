@@ -226,14 +226,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			switch (inst) {
 				case LdObj ldobj:
-					IField field;
-					if (ldobj.Target is LdFlda ldflda)
-						field = ldflda.Field;
-					else if (ldobj.Target is LdsFlda ldsflda)
-						field = ldsflda.Field;
-					else
-						break;
-					return CleanUpVariableName(field.Name);
+					return GetNameFromInstruction(ldobj.Target);
+				case LdFlda ldflda:
+					return CleanUpVariableName(ldflda.Field.Name);
+				case LdsFlda ldsflda:
+					return CleanUpVariableName(ldsflda.Field.Name);
 				case CallInstruction call:
 					if (call is NewObj) break;
 					IMethod m = call.Method;

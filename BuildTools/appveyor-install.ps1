@@ -32,5 +32,7 @@ if ($env:APPVEYOR_PULL_REQUEST_NUMBER) {
 $revision = [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
 
 $newVersion="$major.$minor.$build.$revision";
-$env:appveyor_build_version="$newVersion$branch$versionName$suffix";
+$env:APPVEYOR_BUILD_VERSION="$newVersion$branch$versionName$suffix";
+$env:ILSPY_VERSION_NUMBER="$newVersion$branch$versionName$suffix";
 appveyor UpdateBuild -Version "$newVersion$branch$versionName$suffix";
+Write-Host "new version: $newVersion$branch$versionName$suffix";

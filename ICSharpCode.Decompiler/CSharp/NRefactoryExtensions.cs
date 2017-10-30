@@ -99,5 +99,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			var simpleType = type as SimpleType;
 			return simpleType != null && simpleType.Identifier == "__arglist";
 		}
+
+		/// <summary>
+		/// Returns true if <paramref name="operatorType"/> is bitwise and, bitwise or, or exclusive or.
+		/// </summary>
+		public static bool IsBitwise(this BinaryOperatorType operatorType)
+		{
+			return operatorType == BinaryOperatorType.BitwiseAnd
+				|| operatorType == BinaryOperatorType.BitwiseOr
+				|| operatorType == BinaryOperatorType.ExclusiveOr;
+		}
 	}
 }

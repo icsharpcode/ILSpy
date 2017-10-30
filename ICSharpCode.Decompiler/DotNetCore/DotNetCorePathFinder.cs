@@ -52,7 +52,7 @@ namespace ICSharpCode.Decompiler
 
 			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
 			if (!File.Exists(depsJsonFileName)) {
-				loadInfo.AddMessage(assemblyName, MessageKind.Error, $"{assemblyName}.deps.json could not be found!");
+				loadInfo.AddMessage(assemblyName, MessageKind.Warning, $"{assemblyName}.deps.json could not be found!");
 				return;
 			}
 

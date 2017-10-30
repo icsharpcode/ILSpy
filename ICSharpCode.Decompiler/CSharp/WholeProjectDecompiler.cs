@@ -283,8 +283,8 @@ namespace ICSharpCode.Decompiler.CSharp
 			const string prop = "Properties";
 			if (directories.Add(prop))
 				Directory.CreateDirectory(Path.Combine(targetDirectory, prop));
-			string assemblyInfo = Path.Combine(targetDirectory, prop, "AssemblyInfo.cs");
-			using (StreamWriter w = new StreamWriter(assemblyInfo)) {
+			string assemblyInfo = Path.Combine(prop, "AssemblyInfo.cs");
+			using (StreamWriter w = new StreamWriter(Path.Combine(targetDirectory, assemblyInfo))) {
 				syntaxTree.AcceptVisitor(new CSharpOutputVisitor(w, settings.CSharpFormattingOptions));
 			}
 			return new Tuple<string, string>[] { Tuple.Create("Compile", assemblyInfo) };
