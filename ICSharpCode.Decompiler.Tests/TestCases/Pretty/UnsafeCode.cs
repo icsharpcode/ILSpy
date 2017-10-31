@@ -38,10 +38,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			public unsafe fixed byte Old[1];
 		}
 
+		public unsafe delegate void UnsafeDelegate(byte* ptr);
+
+		private UnsafeDelegate unsafeDelegate;
+		private static UnsafeDelegate staticUnsafeDelegate;
+
 		public unsafe int* NullPointer {
 			get {
 				return null;
 			}
+		}
+
+		unsafe static UnsafeCode()
+		{
+			UnsafeCode.staticUnsafeDelegate = UnsafeCode.UnsafeStaticMethod;
+		}
+
+		public unsafe UnsafeCode()
+		{
+			this.unsafeDelegate = this.UnsafeMethod;
 		}
 
 		public unsafe int SizeOf()
@@ -51,6 +66,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private static void UseBool(bool b)
 		{
+		}
+
+		private unsafe void UnsafeMethod(byte* ptr)
+		{
+
+		}
+
+		private unsafe static void UnsafeStaticMethod(byte* ptr)
+		{
+
 		}
 
 		public unsafe void PointerComparison(int* a, double* b)

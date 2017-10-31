@@ -108,8 +108,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				memberReferenceExpression.ReplaceWith(pre);
 			}
 			var rr = memberReferenceExpression.GetResolveResult();
-			if (rr != null && rr.Type is PointerType)
-				return true;
+			if (rr != null) {
+				if (rr.Type is PointerType)
+					return true;
+				if (rr is MemberResolveResult mrr && mrr.Member.ReturnType.Kind == TypeKind.Delegate) {
+					var method = mrr.Member.ReturnType.GetDefinition()?.GetDelegateInvokeMethod();
+					if (method != null && (method.ReturnType is PointerType || method.Parameters.Any(p => p.Type is PointerType)))
+						return true;
+				}
+			}
+
 			return result;
 		}
 		
