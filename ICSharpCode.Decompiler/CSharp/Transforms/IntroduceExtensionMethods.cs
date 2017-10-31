@@ -134,14 +134,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var method = invocationExpression.GetSymbol() as IMethod;
 			if (method == null || !method.IsExtensionMethod || mre == null || !(mre.Target is TypeReferenceExpression) || !invocationExpression.Arguments.Any())
 				return;
+			var typeArguments = mre.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
 			var firstArgument = invocationExpression.Arguments.First();
 			var target = firstArgument.GetResolveResult();
 			var args = invocationExpression.Arguments.Skip(1).Select(a => a.GetResolveResult()).ToArray();
-			var rr = resolver.ResolveMemberAccess(target, method.Name, method.TypeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
+			var rr = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
 			if (rr == null)
 				return;
 			var or = rr.PerformOverloadResolution(resolveContext.Compilation, args, allowExtensionMethods: true);
-			if (or == null || or.IsAmbiguous)
+			if (or == null || or.IsAmbiguous || !method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments()))
 				return;
 			if (firstArgument is NullReferenceExpression)
 				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()));
