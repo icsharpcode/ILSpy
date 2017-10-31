@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="ICSharpCode.Decompiler" Version="3.0.0.3201-beta1" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="3.0.0.3206-beta1" />
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.0.1" />
   </ItemGroup>
 

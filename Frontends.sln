@@ -17,6 +17,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.Console", "ICSharpCode.Decompiler.Console\ICSharpCode.Decompiler.Console.csproj", "{8FDA011E-FAF8-4C1F-A695-21E2C6B5375F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ICSharpCode.Decompiler.PowerShell", "ICSharpCode.Decompiler.PowerShell\ICSharpCode.Decompiler.PowerShell.csproj", "{FF7D6041-3C52-47D1-A32A-0BFE8EE4EEEB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{8FDA011E-FAF8-4C1F-A695-21E2C6B5375F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8FDA011E-FAF8-4C1F-A695-21E2C6B5375F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8FDA011E-FAF8-4C1F-A695-21E2C6B5375F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FF7D6041-3C52-47D1-A32A-0BFE8EE4EEEB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FF7D6041-3C52-47D1-A32A-0BFE8EE4EEEB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FF7D6041-3C52-47D1-A32A-0BFE8EE4EEEB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FF7D6041-3C52-47D1-A32A-0BFE8EE4EEEB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
