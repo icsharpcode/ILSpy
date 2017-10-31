@@ -77,6 +77,7 @@
     <Compile Include="TestCases\ILPretty\Issue379.cs" />
     <Compile Include="TestCases\Pretty\ExpressionTrees.cs" />
     <Compile Include="TestCases\Pretty\FixProxyCalls.cs" />
+    <Compile Include="TestCases\Pretty\UnsafeCode.cs" />
     <Compile Include="TestCases\Pretty\InitializerTests.cs" />
     <None Include="TestCases\ILPretty\Issue646.cs" />
     <Compile Include="TestCases\Pretty\Async.cs" />

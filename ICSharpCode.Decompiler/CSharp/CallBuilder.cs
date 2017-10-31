@@ -167,6 +167,8 @@ namespace ICSharpCode.Decompiler.CSharp
 				} else if (IsDelegateEqualityComparison(method, arguments)) {
 					return HandleDelegateEqualityComparison(method, arguments)
 						.WithILInstruction(inst).WithRR(rr);
+				} else if (method.IsOperator && method.Name == "op_Implicit" && arguments.Count == 1) {
+					return HandleImplicitConversion(inst, arguments[0]);
 				} else {
 					bool requireTypeArguments = false;
 					bool targetCasted = false;
@@ -267,6 +269,21 @@ namespace ICSharpCode.Decompiler.CSharp
 				method.Name == "op_Equality" ? BinaryOperatorType.Equality : BinaryOperatorType.InEquality,
 				arguments[1]
 			);
+		}
+
+		private TranslatedExpression HandleImplicitConversion(CallInstruction call, TranslatedExpression argument)
+		{
+			var conversions = CSharpConversions.Get(expressionBuilder.compilation);
+			IType targetType = call.Method.ReturnType;
+			var conv = conversions.ImplicitConversion(argument.Type, targetType);
+			if (!(conv.IsUserDefined && conv.Method.Equals(call.Method))) {
+				// implicit conversion to targetType isn't directly possible, so first insert a cast to the argument type
+				argument = argument.ConvertTo(call.Method.Parameters[0].Type, expressionBuilder);
+				conv = conversions.ImplicitConversion(argument.Type, targetType);
+			}
+			return new CastExpression(expressionBuilder.ConvertType(targetType), argument.Expression)
+				.WithILInstruction(call)
+				.WithRR(new ConversionResolveResult(targetType, argument.ResolveResult, conv));
 		}
 
 		OverloadResolutionErrors IsUnambiguousCall(ILInstruction inst, TranslatedExpression target, IMethod method, IType[] typeArguments, IList<TranslatedExpression> arguments)

@@ -214,5 +214,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return a == null;
 		}
+
+		public decimal ImplicitConversionToDecimal(byte v)
+		{
+			return v;
+		}
+
+		public decimal ImplicitConversionToDecimal(ulong v)
+		{
+			return v;
+		}
 	}
 }

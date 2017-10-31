@@ -836,7 +836,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			WriteCommaSeparatedListInParenthesis(invocationExpression.Arguments, policy.SpaceWithinMethodCallParentheses);
 			if (!(invocationExpression.Parent is MemberReferenceExpression)) {
 				if (invocationExpression.Target is MemberReferenceExpression mre) {
-					if (GetCallChainLengthLimited(mre) > 3)
+					if (GetCallChainLengthLimited(mre) >= 3)
 						writer.Unindent();
 				}
 			}

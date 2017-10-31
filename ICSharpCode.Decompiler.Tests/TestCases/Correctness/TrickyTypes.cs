@@ -25,6 +25,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		static void Main()
 		{
 			InterestingConstants();
+			TruncatedComp();
 		}
 
 		static void Print<T>(T val)
@@ -45,6 +46,51 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Print(2147483648L);
 			Print(val2);
 			Print(2147483648u);
+		}
+
+		static void TruncatedComp()
+		{
+			Console.WriteLine("TruncatedComp1(1):");
+			TruncatedComp1(1);
+
+			Console.WriteLine("TruncatedComp1(-1):");
+			TruncatedComp1(-1);
+			
+			Console.WriteLine("TruncatedComp1(0x100000001):");
+			TruncatedComp1(0x100000001);
+
+			Console.WriteLine("TruncatedComp1(long.MinValue):");
+			TruncatedComp1(long.MinValue);
+			
+			Console.WriteLine("TruncatedComp2(1):");
+			TruncatedComp2(1, 1);
+
+			Console.WriteLine("TruncatedComp2(-1):");
+			TruncatedComp2(-1, -1);
+
+			Console.WriteLine("TruncatedComp2(0x100000001):");
+			TruncatedComp2(0x100000001, 1);
+
+			Console.WriteLine("TruncatedComp2(long.MinValue):");
+			TruncatedComp2(long.MinValue, int.MinValue);
+		}
+
+		static void TruncatedComp1(long val)
+		{
+			Print((int)val == val);
+			Print(val == (int)val);
+			Print(val < (int)val);
+			Print((int)val >= val);
+		}
+
+		static void TruncatedComp2(long val1, int val2)
+		{
+			Print(val1 == val2);
+			Print((int)val1 == val2);
+			Print(val1 < val2);
+			Print((int)val1 < val2);
+			Print(val1 <= val2);
+			Print((int)val1 <= val2);
 		}
 	}
 }

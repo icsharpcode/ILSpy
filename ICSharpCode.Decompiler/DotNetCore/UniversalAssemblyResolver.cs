@@ -14,7 +14,7 @@ namespace ICSharpCode.Decompiler
 		readonly string mainAssemblyFileName;
 		readonly string baseDirectory;
 		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences;
-		readonly List<string> directories;
+		readonly List<string> directories = new List<string>();
 		readonly List<string> gac_paths = GetGacPaths();
 
 		public static readonly bool OnMono = Type.GetType("Mono.Runtime") != null;

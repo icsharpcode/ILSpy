@@ -30,6 +30,7 @@ using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.ControlFlow;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.Util;
 using System.IO;
 
@@ -208,6 +209,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.YieldReturn && YieldReturnDecompiler.IsCompilerGeneratorEnumerator(type))
 						return true;
 					if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedStateMachine(type))
+						return true;
+					if (settings.FixedBuffers && type.Name.StartsWith("<", StringComparison.Ordinal) && type.Name.Contains("__FixedBuffer"))
 						return true;
 				} else if (type.IsCompilerGenerated()) {
 					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
@@ -824,7 +827,35 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			var fieldDecl = typeSystemAstBuilder.ConvertEntity(field);
 			SetNewModifier(fieldDecl);
+			if (settings.FixedBuffers && IsFixedField(field, out var elementType, out var elementCount)) {
+				var fixedFieldDecl = new FixedFieldDeclaration();
+				fieldDecl.Attributes.MoveTo(fixedFieldDecl.Attributes);
+				fixedFieldDecl.Modifiers = fieldDecl.Modifiers;
+				fixedFieldDecl.ReturnType = typeSystemAstBuilder.ConvertType(elementType);
+				fixedFieldDecl.Variables.Add(new FixedVariableInitializer(field.Name, new PrimitiveExpression(elementCount)));
+				fixedFieldDecl.Variables.Single().CopyAnnotationsFrom(((FieldDeclaration)fieldDecl).Variables.Single());
+				fixedFieldDecl.CopyAnnotationsFrom(fieldDecl);
+				RemoveAttribute(fixedFieldDecl, fixedBufferAttributeTypeName);
+				return fixedFieldDecl;
+			}
 			return fieldDecl;
+		}
+
+		static readonly FullTypeName fixedBufferAttributeTypeName = new TopLevelTypeName("System.Runtime.CompilerServices", "FixedBufferAttribute");
+
+		internal static bool IsFixedField(IField field, out IType type, out int elementCount)
+		{
+			type = null;
+			elementCount = 0;
+			IAttribute attr = field.GetAttribute(fixedBufferAttributeTypeName, inherit: false);
+			if (attr != null && attr.PositionalArguments.Count == 2) {
+				if (attr.PositionalArguments[0] is TypeOfResolveResult trr && attr.PositionalArguments[1].ConstantValue is int length) {
+					type = trr.ReferencedType;
+					elementCount = length;
+					return true;
+				}
+			}
+			return false;
 		}
 
 		EntityDeclaration DoDecompile(PropertyDefinition propertyDefinition, IProperty property, ITypeResolveContext decompilationContext)
@@ -936,13 +967,31 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else if (type is GenericParameter) {
 				return new SimpleType(type.Name);
 			} else if (type.IsNested) {
-				AstType typeRef = ConvertType(type.DeclaringType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
 				string namepart = ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name);
-				MemberType memberType = new MemberType { Target = typeRef, MemberName = namepart };
-				memberType.AddAnnotation(type);
+				AstType memberType;
+				if ((options & (ConvertTypeOptions.IncludeOuterTypeName | ConvertTypeOptions.IncludeNamespace)) != 0) {
+				AstType typeRef = ConvertType(type.DeclaringType, typeAttributes, ref typeIndex, options & ~ConvertTypeOptions.IncludeTypeParameterDefinitions);
+					memberType = new MemberType { Target = typeRef, MemberName = namepart };
 				if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
 					AddTypeParameterDefininitionsTo(type, memberType);
 				}
+				} else {
+					memberType = new SimpleType(namepart);
+					if ((options & ConvertTypeOptions.IncludeTypeParameterDefinitions) == ConvertTypeOptions.IncludeTypeParameterDefinitions) {
+						if (type.HasGenericParameters) {
+							List<AstType> typeArguments = new List<AstType>();
+							foreach (GenericParameter gp in type.GenericParameters) {
+								typeArguments.Add(new SimpleType(gp.Name));
+							}
+							ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
+							if (typeParameterCount > typeArguments.Count)
+								typeParameterCount = typeArguments.Count;
+							((SimpleType)memberType).TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
+							typeArguments.RemoveRange(typeArguments.Count - typeParameterCount, typeParameterCount);
+						}
+					}
+				}
+				memberType.AddAnnotation(type);
 				return memberType;
 			} else {
 				string ns = type.Namespace ?? string.Empty;
@@ -1031,14 +1080,22 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			SimpleType st = baseType as SimpleType;
 			if (st != null) {
+				TypeReference type = st.Annotation<TypeReference>();
+				if (type != null) {
+					ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
+					if (typeParameterCount > typeArguments.Count)
+						typeParameterCount = typeArguments.Count;
+					st.TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
+				} else {
 				st.TypeArguments.AddRange(typeArguments);
+
+			}
 			}
 			MemberType mt = baseType as MemberType;
 			if (mt != null) {
 				TypeReference type = mt.Annotation<TypeReference>();
 				if (type != null) {
-					int typeParameterCount;
-					ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out typeParameterCount);
+					ReflectionHelper.SplitTypeParameterCountFromReflectionName(type.Name, out int typeParameterCount);
 					if (typeParameterCount > typeArguments.Count)
 						typeParameterCount = typeArguments.Count;
 					mt.TypeArguments.AddRange(typeArguments.GetRange(typeArguments.Count - typeParameterCount, typeParameterCount));
@@ -1082,7 +1139,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			SequencePointBuilder spb = new SequencePointBuilder();
 			syntaxTree.AcceptVisitor(spb);
 			return spb.GetSequencePoints();
-		}
+	}
 		#endregion
 	}
 
@@ -1092,6 +1149,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		None = 0,
 		IncludeNamespace = 1,
 		IncludeTypeParameterDefinitions = 2,
-		DoNotUsePrimitiveTypeNames = 4
+		DoNotUsePrimitiveTypeNames = 4,
+		IncludeOuterTypeName = 8,
 	}
 }

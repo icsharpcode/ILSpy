@@ -20,6 +20,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Mono.Cecil;
 using System.Windows.Input;
+using System;
 
 namespace ICSharpCode.ILSpy
 {
@@ -50,7 +51,7 @@ namespace ICSharpCode.ILSpy
 		void ListView_SelectionChanged(object sender, SelectionChangedEventArgs e)
 		{
 			okButton.IsEnabled = listView.SelectedItem != null;
-			removeButton.IsEnabled = listView.SelectedItem != null;
+			deleteButton.IsEnabled = listView.SelectedItem != null;
 		}
 
 		void OKButton_Click(object sender, RoutedEventArgs e)
@@ -174,10 +175,14 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		private void RemoveButton_Click(object sender, RoutedEventArgs e)
+		private void DeleteButton_Click(object sender, RoutedEventArgs e)
 		{
-			if (listView.SelectedItem != null)
-				manager.DeleteList(listView.SelectedItem.ToString());
+			if (listView.SelectedItem == null)
+				return;
+			if (MessageBox.Show(this, "Are you sure that you want to delete the selected assembly list?",
+"ILSpy", MessageBoxButton.YesNo, MessageBoxImage.Warning, MessageBoxResult.No, MessageBoxOptions.None) != MessageBoxResult.Yes)
+				return;
+			manager.DeleteList(listView.SelectedItem.ToString());
 		}
 
 		private void ResetButton_Click(object sender, RoutedEventArgs e)

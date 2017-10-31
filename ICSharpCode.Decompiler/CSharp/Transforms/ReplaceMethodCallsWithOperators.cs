@@ -131,10 +131,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				);
 				return;
 			}
-			if (method.Name == "op_Implicit" && arguments.Length == 1) {
-				invocationExpression.ReplaceWith(arguments[0]);
-				return;
-			}
 			if (method.Name == "op_True" && arguments.Length == 1 && invocationExpression.Role == Roles.Condition) {
 				invocationExpression.ReplaceWith(arguments[0]);
 				return;

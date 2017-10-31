@@ -182,6 +182,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void UnsafeCode([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
 		public void PInvoke([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			// This tests needs our own disassembler; ildasm has a bug with marshalinfo.

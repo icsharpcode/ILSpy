@@ -16,17 +16,15 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {
 	public class IntroduceUnsafeModifier : DepthFirstAstVisitor<bool>, IAstTransform
 	{
-		public static readonly object PointerArithmeticAnnotation = new PointerArithmetic();
-		
-		sealed class PointerArithmetic {}
-		
 		public void Run(AstNode compilationUnit, TransformContext context)
 		{
 			compilationUnit.AcceptVisitor(this);
@@ -54,7 +52,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			base.VisitPointerReferenceExpression(pointerReferenceExpression);
 			return true;
 		}
-		
+
+		public override bool VisitSizeOfExpression(SizeOfExpression sizeOfExpression)
+		{
+			// C# sizeof(MyStruct) requires unsafe{}
+			// (not for sizeof(int), but that gets constant-folded and thus decompiled to 4)
+			base.VisitSizeOfExpression(sizeOfExpression);
+			return true;
+		}
+
 		public override bool VisitComposedType(ComposedType composedType)
 		{
 			if (composedType.PointerRank > 0)
@@ -67,8 +73,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			bool result = base.VisitUnaryOperatorExpression(unaryOperatorExpression);
 			if (unaryOperatorExpression.Operator == UnaryOperatorType.Dereference) {
-				BinaryOperatorExpression bop = unaryOperatorExpression.Expression as BinaryOperatorExpression;
-				if (bop != null && bop.Operator == BinaryOperatorType.Add && bop.Annotation<PointerArithmetic>() != null) {
+				var bop = unaryOperatorExpression.Expression as BinaryOperatorExpression;
+				if (bop != null && bop.Operator == BinaryOperatorType.Add 
+					&& bop.GetResolveResult() is OperatorResolveResult orr
+					&& orr.Operands.FirstOrDefault()?.Type.Kind == TypeKind.Pointer)
+				{
 					// transform "*(ptr + int)" to "ptr[int]"
 					IndexerExpression indexer = new IndexerExpression();
 					indexer.Target = bop.Left.Detach();
@@ -117,6 +126,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (rr != null && rr.Type is PointerType)
 				return true;
 			return result;
+		}
+
+		public override bool VisitFixedVariableInitializer(FixedVariableInitializer fixedVariableInitializer)
+		{
+			base.VisitFixedVariableInitializer(fixedVariableInitializer);
+			return true;
 		}
 	}
 }

@@ -100,7 +100,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return from c in this.customers
 				   from o in c.Orders
 				   from d in o.Details
-				   let x = d.Quantity * d.UnitPrice
+				   let x = (decimal)d.Quantity * d.UnitPrice
 				   select new {
 					   c.Name,
 					   o.OrderID,
@@ -111,7 +111,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public object FromLetWhereSelect()
 		{
 			return from o in this.orders
-				   let t = o.Details.Sum((OrderDetail d) => d.UnitPrice * d.Quantity)
+				   let t = o.Details.Sum((OrderDetail d) => d.UnitPrice * (decimal)d.Quantity)
 				   where t >= 1000m
 				   select new {
 					   OrderID = o.OrderID,
