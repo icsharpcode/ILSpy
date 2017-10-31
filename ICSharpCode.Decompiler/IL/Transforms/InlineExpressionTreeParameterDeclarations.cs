@@ -27,6 +27,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
+			return;
 			if (block.Instructions[pos] is StLoc parameterVariableInst) {
 				bool alwaysInlined = true;
 				if (MatchParameterVariableAssignment(parameterVariableInst, out ILVariable v, out ILInstruction init)) {

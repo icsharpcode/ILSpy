@@ -103,6 +103,26 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		}
 		#endregion
 	
+		Dictionary<ILVariable, Expression> parameterExpressionInitializations = new Dictionary<ILVariable, Expression>();
+
+		public override void VisitVariableInitializer(VariableInitializer variableInitializer)
+		{
+			if (variableInitializer.Initializer.GetSymbol() is IMethod method) {
+				if (method.ReturnType.FullName.Equals("System.Linq.Expressions.ParameterExpression")) {
+					Debug.WriteLine(variableInitializer);
+					ILVariable var = variableInitializer.Annotation<ILVariableResolveResult>().Variable;
+					/*foreach (var annot in variableInitializer.Annotations) {
+						Debug.WriteLine(annot);
+						Debug.WriteLine(annot.GetType());
+						// Stloc
+						// ILVariableResolveResult
+					}*/
+					parameterExpressionInitializations[var] = variableInitializer.Initializer;
+				}
+			}
+			VisitChildren(variableInitializer);
+		}
+
 		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
 			if (CouldBeExpressionTree(invocationExpression)) {
@@ -265,12 +285,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 			if (expr is IdentifierExpression ident) {
-				if (ident.GetSymbol() is ILVariable v) {
+				ILVariable v = ident.Annotation<ILVariableResolveResult>().Variable; 
+				if (v != null) {
 					foreach (LambdaExpression lambda in activeLambdas) {
 						foreach (ParameterDeclaration p in lambda.Parameters) {
 							if ((p.GetSymbol() as ILVariable) == v)
 								return new IdentifierExpression(p.Name);
 						}
+					}
+					IdentifierExpression identExp = new IdentifierExpression(ConvertParameter(ident).Name);
+					if (identExp != null) {
+						return identExp;
 					}
 				}
 			}
@@ -299,18 +324,24 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			)
 		);
 
-		private ParameterDeclaration ConvertParameter(InvocationExpression invocation)
+		private ParameterDeclaration ConvertParameter(Expression expression)
 		{
-			if (invocation == null)
-				return null;
-			if (invocation.Arguments.Count != 2)
-				return null;
-			if (!(invocation.Arguments.ElementAt(0) is TypeOfExpression typeOfExpression))
-				return null;
-			if (!(invocation.Arguments.ElementAt(1) is PrimitiveExpression primitiveExpression))
-				return null;
-			return new ParameterDeclaration(typeOfExpression.Type.Clone(),
-						primitiveExpression.Value.ToString());
+			if (expression is InvocationExpression invocation) {
+				if (invocation.Arguments.Count != 2)
+					return null;
+				if (!(invocation.Arguments.ElementAt(0) is TypeOfExpression typeOfExpression))
+					return null;
+				if (!(invocation.Arguments.ElementAt(1) is PrimitiveExpression primitiveExpression))
+					return null;
+				return new ParameterDeclaration(typeOfExpression.Type.Clone(),
+							primitiveExpression.Value.ToString());
+			} else if (expression is IdentifierExpression identifier) {
+				ILVariable v = identifier.Annotation<ILVariableResolveResult>().Variable;
+				if (parameterExpressionInitializations.TryGetValue(v, out Expression test)) {
+					return ConvertParameter(test);
+				}
+			}
+			return null;
 		}
 
 		Expression ConvertLambda(InvocationExpression invocation)
@@ -327,7 +358,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				if (parentMethod.TypeArguments.Count > 0) {
 					bool isAnonymous = false;
 					foreach (var typearg in parentMethod.TypeArguments) {
-						if (typearg.IsAnonymousType()) { 
+						if (typearg.IsAnonymousType()) {
 							isAnonymous = true;
 							break;
 						}
@@ -341,7 +372,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			if (parameterArray is ArrayCreateExpression arrayCreate) {
 				foreach (var arg in arrayCreate.Initializer.Elements) {
-					ParameterDeclaration parameter = ConvertParameter(arg as InvocationExpression);
+					ParameterDeclaration parameter = ConvertParameter(arg);
 					if (parameter == null)
 						return NotSupported(invocation);
 					IType type = parameter.Type.ToTypeReference().Resolve(context.TypeSystem.Compilation);
@@ -406,14 +437,14 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		#endregion
 
 		#region Convert Property
-		static readonly Expression getMethodFromHandlePattern = 
+		static readonly Expression getMethodFromHandlePattern =
 			new Choice() {
 				new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Constant"),new CastExpression(new SimpleType("MethodInfo"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")),"GetMethodFromHandle"),new CastExpression(new SimpleType("RuntimeMethodHandle"),new LdTokenPattern("method")))),new TypeOfExpression(new SimpleType("MethodInfo"))),
 				new CastExpression(new SimpleType("MethodInfo"), new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")), "GetMethodFromHandle"), new CastExpression(new SimpleType("RuntimeMethodHandle"), new LdTokenPattern("method")), new OptionalNode(new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")), "TypeHandle")))),
 				new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("Expression")),"Constant"),new CastExpression(new SimpleType("MethodInfo"),new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new SimpleType("MethodBase")),"GetMethodFromHandle"),new CastExpression(new SimpleType("RuntimeMethodHandle"),new LdTokenPattern("method")),new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")),"TypeHandle"))),new TypeOfExpression(new SimpleType("MethodInfo")))
 	};
 
-	Expression ConvertProperty(InvocationExpression invocation)
+		Expression ConvertProperty(InvocationExpression invocation)
 		{
 			if (invocation.Arguments.Count != 2)
 				return NotSupported(invocation);
@@ -459,7 +490,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			// System.Reflection.MethodInfo.CreateDelegate
 			Match m1 = getMethodFromHandlePattern.Match(invocation.Arguments.ElementAt(1));
-			bool isCreateDelegateCall = 
+			bool isCreateDelegateCall =
 				m1.Success &&
 				m1.Get<AstNode>("method").Single().Annotation<LdMemberToken>().Member is IMethod mr1 &&
 				mr1.FullName.Equals("System.Reflection.MethodInfo.CreateDelegate");
@@ -647,7 +678,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						break;
 				}
 			}
-			
+
 			UnaryOperatorExpression uoe = new UnaryOperatorExpression(op, expr);
 			if (isChecked != null)
 				uoe.AddAnnotation(isChecked.Value ? AddCheckedBlocks.CheckedAnnotation : AddCheckedBlocks.UncheckedAnnotation);
@@ -921,7 +952,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return null;
 		}
 		#endregion
-		
+
 		static T Use<T>(T node)
 		{
 			if (node is ICloneable cloneable) {
@@ -1059,7 +1090,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (elements == null && invocation.Arguments.Count == 2) {
 				elements = ConvertExpressionsArray(invocation.Arguments.ElementAt(1));
 			}
-			
+
 			if (elementType != null && elements != null) {
 				if (ContainsAnonymousType(elementType)) {
 					elementType = null;
@@ -1084,7 +1115,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				Expression convertedExpression = Convert(invocation.Arguments.ElementAt(i));
 				if (convertedExpression != null) {
 					arguments.Add(convertedExpression);
-				} else { 
+				} else {
 					arguments.AddRange(ConvertExpressionsArray(invocation.Arguments.ElementAt(i)));
 				}
 			}
