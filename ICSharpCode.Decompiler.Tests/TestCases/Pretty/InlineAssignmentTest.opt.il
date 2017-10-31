@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly b1jpssom
+.assembly zztqnmi4
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module b1jpssom.dll
-// MVID: {7C6502B0-8536-4BED-9395-765EB2F77653}
+.module zztqnmi4.dll
+// MVID: {038F2DF5-AE7B-4B0A-B846-AC254CE46038}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02B00000
+// Image base: 0x006A0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -39,6 +39,7 @@
   .field private int32 field1
   .field private static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest field2
   .field private int32[] field3
+  .field private int16 field4
   .method public hidebysig instance void 
           SimpleInlineWithLocals() cil managed
   {
@@ -84,9 +85,10 @@
   .method public hidebysig instance void 
           SimpleInlineWithFields2() cil managed
   {
-    // Code size       53 (0x35)
-    .maxstack  3
-    .locals init (int32 V_0)
+    // Code size       80 (0x50)
+    .maxstack  4
+    .locals init (int32 V_0,
+             int16 V_1)
     IL_0000:  ldarg.0
     IL_0001:  ldc.i4.5
     IL_0002:  dup
@@ -103,8 +105,48 @@
     IL_0025:  call       void [mscorlib]System.Console::WriteLine(object)
     IL_002a:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field2
     IL_002f:  call       void [mscorlib]System.Console::WriteLine(object)
-    IL_0034:  ret
+    IL_0034:  ldarg.0
+    IL_0035:  ldarg.0
+    IL_0036:  ldc.i4.6
+    IL_0037:  dup
+    IL_0038:  stloc.1
+    IL_0039:  stfld      int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field4
+    IL_003e:  ldloc.1
+    IL_003f:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::UseShort(int16)
+    IL_0044:  ldarg.0
+    IL_0045:  ldfld      int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field4
+    IL_004a:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_004f:  ret
   } // end of method InlineAssignmentTest::SimpleInlineWithFields2
+
+  .method public hidebysig instance void 
+          UseShort(int16 s) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0006:  ret
+  } // end of method InlineAssignmentTest::UseShort
+
+  .method public hidebysig instance void 
+          ReadLoop1(class [mscorlib]System.IO.TextReader r) cil managed
+  {
+    // Code size       19 (0x13)
+    .maxstack  2
+    .locals init (string V_0)
+    IL_0000:  br.s       IL_0008
+
+    IL_0002:  ldloc.0
+    IL_0003:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0008:  ldarg.1
+    IL_0009:  callvirt   instance string [mscorlib]System.IO.TextReader::ReadLine()
+    IL_000e:  dup
+    IL_000f:  stloc.0
+    IL_0010:  brtrue.s   IL_0002
+
+    IL_0012:  ret
+  } // end of method InlineAssignmentTest::ReadLoop1
 
   .method public hidebysig instance void 
           AccessArray(int32[] a) cil managed
@@ -247,4 +289,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../Tests/TestCases/Pretty\InlineAssignmentTest.opt.res
+// WARNING: Created Win32 resource file ../../../TestCases/Pretty\InlineAssignmentTest.opt.res

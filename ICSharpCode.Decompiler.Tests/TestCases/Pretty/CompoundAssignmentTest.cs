@@ -30,7 +30,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Two = 2,
 			Four = 4
 		}
-		
+
+		public enum ShortEnum : short
+		{
+			None = 0,
+			One = 1,
+			Two = 2,
+			Four = 4
+		}
+
 		private struct StructContainer
 		{
 			public bool HasIndex;
@@ -40,8 +48,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public class MutableClass
 		{
 			public int Field;
+			public short ShortField;
 			
 			public int Property {
+				get;
+				set;
+			}
+
+			public byte ByteProperty {
 				get;
 				set;
 			}
@@ -65,12 +79,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private StructContainer field1;
 		private MyEnum enumField;
 		public static int StaticField;
-		
+		public static short StaticShortField;
+
 		public static int StaticProperty {
 			get;
 			set;
 		}
-		
+
+		public static ShortEnum StaticShortProperty {
+			get;
+			set;
+		}
+
 		private MutableClass M()
 		{
 			return new MutableClass();
@@ -230,15 +250,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			array[pos]++;
 		}
 
+		public int PreIncrementShortArrayElement(short[] array, int pos)
+		{
+			return --array[pos];
+		}
+
+		public int PostIncrementShortArrayElement(short[] array, int pos)
+		{
+			return array[pos]++;
+		}
+
+		public void IncrementShortArrayElement(short[] array, int pos)
+		{
+			array[pos]++;
+		}
+
 		public int PreIncrementInstanceField()
 		{
 			return ++this.M().Field;
 		}
 		
-		//public int PostIncrementInstanceField()
-		//{
-		//	return this.M().Field++;
-		//}
+		public int PostIncrementInstanceField()
+		{
+			return this.M().Field++;
+		}
 
 		public void IncrementInstanceField()
 		{
@@ -250,14 +285,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return ++m.Field;
 		}
 		
-		//public int PostIncrementInstanceField2(MutableClass m)
-		//{
-		//	return m.Field++;
-		//}
+		public int PostIncrementInstanceField2(MutableClass m)
+		{
+			return m.Field++;
+		}
 
 		public void IncrementInstanceField2(MutableClass m)
 		{
 			m.Field++;
+		}
+
+		public int PreIncrementInstanceFieldShort()
+		{
+			return ++this.M().ShortField;
+		}
+
+		public int PostIncrementInstanceFieldShort()
+		{
+			return this.M().ShortField++;
+		}
+
+		public void IncrementInstanceFieldShort()
+		{
+			this.M().ShortField++;
 		}
 
 		public int PreIncrementInstanceProperty()
@@ -265,14 +315,29 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return ++this.M().Property;
 		}
 
-		//public int PostIncrementInstanceProperty()
-		//{
-		//	return this.M().Property++;
-		//}
+		public int PostIncrementInstanceProperty()
+		{
+			return this.M().Property++;
+		}
 
 		public void IncrementInstanceProperty()
 		{
 			this.M().Property++;
+		}
+
+		public int PreIncrementInstancePropertyByte()
+		{
+			return ++this.M().ByteProperty;
+		}
+
+		public int PostIncrementInstancePropertyByte()
+		{
+			return this.M().ByteProperty++;
+		}
+
+		public void IncrementInstancePropertyByte()
+		{
+			this.M().ByteProperty++;
 		}
 
 		public int PreIncrementStaticField()
@@ -290,21 +355,51 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			CompoundAssignmentTest.StaticField++;
 		}
 
+		public int PreIncrementStaticFieldShort()
+		{
+			return ++CompoundAssignmentTest.StaticShortField;
+		}
+
+		public int PostIncrementStaticFieldShort()
+		{
+			return CompoundAssignmentTest.StaticShortField++;
+		}
+
+		public void IncrementStaticFieldShort()
+		{
+			CompoundAssignmentTest.StaticShortField++;
+		}
+
 		public int PreIncrementStaticProperty()
 		{
 			return ++CompoundAssignmentTest.StaticProperty;
 		}
 
-		//public int PostIncrementStaticProperty()
-		//{
-		//	return CompoundAssignmentTest.StaticProperty++;
-		//}
+		public int PostIncrementStaticProperty()
+		{
+			return CompoundAssignmentTest.StaticProperty++;
+		}
 
 		public void IncrementStaticProperty()
 		{
 			CompoundAssignmentTest.StaticProperty++;
 		}
-		
+
+		public ShortEnum PreIncrementStaticPropertyShort()
+		{
+			return ++CompoundAssignmentTest.StaticShortProperty;
+		}
+
+		public ShortEnum PostIncrementStaticPropertyShort()
+		{
+			return CompoundAssignmentTest.StaticShortProperty++;
+		}
+
+		public void IncrementStaticPropertyShort()
+		{
+			CompoundAssignmentTest.StaticShortProperty++;
+		}
+
 		private static Item GetItem(object obj)
 		{
 			return null;

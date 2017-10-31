@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.IO;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -25,7 +26,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private int field1;
 		private static InlineAssignmentTest field2;
 		private int[] field3;
-		
+		private short field4;
+
 		public void SimpleInlineWithLocals()
 		{
 			int value;
@@ -41,24 +43,30 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(this.field1 = 5);
 			Console.WriteLine(InlineAssignmentTest.field2 = new InlineAssignmentTest());
 		}
-		
+
 		public void SimpleInlineWithFields2()
 		{
 			Console.WriteLine(this.field1 = 5);
 			Console.WriteLine(this.field1);
 			Console.WriteLine(InlineAssignmentTest.field2 = new InlineAssignmentTest());
 			Console.WriteLine(InlineAssignmentTest.field2);
+			this.UseShort(this.field4 = 6);
+			Console.WriteLine(this.field4);
 		}
-		
-//		public void ReadLoop1(TextReader r)
-//		{
-//			string V_0;
-//			while ((V_0 = r.ReadLine()) != null)
-//			{
-//				Console.WriteLine(V_0);
-//			}
-//		}
-		
+
+		public void UseShort(short s)
+		{
+			Console.WriteLine(s);
+		}
+
+		public void ReadLoop1(TextReader r)
+		{
+			string value;
+			while ((value = r.ReadLine()) != null) {
+				Console.WriteLine(value);
+			}
+		}
+
 		public void AccessArray(int[] a)
 		{
 			int num;
