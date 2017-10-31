@@ -1,6 +1,6 @@
 
 //  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation. Alle Rechte vorbehalten.
+//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -30,14 +30,14 @@
   .ver 0:0:0:0
 }
 .module InitializerTests.dll
-// MVID: {764AEFFE-E491-413B-876B-B40EBE774D84}
+// MVID: {4E6BCF8B-3662-4EB0-88AA-8085A69A4D25}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00FC0000
+// Image base: 0x02C10000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -531,7 +531,7 @@
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c' '<>9'
     .field public static class [mscorlib]System.EventHandler '<>9__23_0'
-    .field public static class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> '<>9__41_0'
+    .field public static class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> '<>9__42_0'
     .method private hidebysig specialname rtspecialname static 
             void  .cctor() cil managed
     {
@@ -557,15 +557,16 @@
             '<NotAnObjectInitializerWithEvent>b__23_0'(object sender,
                                                        class [mscorlib]System.EventArgs e) cil managed
     {
-      // Code size       7 (0x7)
+      // Code size       8 (0x8)
       .maxstack  8
-      IL_0000:  call       void [mscorlib]System.Console::WriteLine()
-      IL_0005:  nop
-      IL_0006:  ret
+      IL_0000:  nop
+      IL_0001:  call       void [mscorlib]System.Console::WriteLine()
+      IL_0006:  nop
+      IL_0007:  ret
     } // end of method '<>c'::'<NotAnObjectInitializerWithEvent>b__23_0'
 
     .method assembly hidebysig instance bool 
-            '<Bug270_NestedInitialisers>b__41_0'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
+            '<Bug270_NestedInitialisers>b__42_0'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
     {
       // Code size       17 (0x11)
       .maxstack  8
@@ -575,7 +576,7 @@
       IL_000b:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                      string)
       IL_0010:  ret
-    } // end of method '<>c'::'<Bug270_NestedInitialisers>b__41_0'
+    } // end of method '<>c'::'<Bug270_NestedInitialisers>b__42_0'
 
   } // end of class '<>c'
 
@@ -1149,6 +1150,14 @@
     IL_000a:  ret
   } // end of method InitializerTests::GetString
 
+  .method private hidebysig static void  NoOp(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[] 'array') cil managed
+  {
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ret
+  } // end of method InitializerTests::NoOp
+
   .method public hidebysig static void  SimpleDictInitializer() cil managed
   {
     // Code size       45 (0x2d)
@@ -1490,17 +1499,17 @@
     IL_003b:  nop
     IL_003c:  dup
     IL_003d:  ldloc.0
-    IL_003e:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__41_0'
+    IL_003e:  ldsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__42_0'
     IL_0043:  dup
     IL_0044:  brtrue.s   IL_005d
 
     IL_0046:  pop
     IL_0047:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9'
-    IL_004c:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<Bug270_NestedInitialisers>b__41_0'(class [mscorlib]System.Globalization.NumberFormatInfo)
+    IL_004c:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<Bug270_NestedInitialisers>b__42_0'(class [mscorlib]System.Globalization.NumberFormatInfo)
     IL_0052:  newobj     instance void class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool>::.ctor(object,
                                                                                                                                         native int)
     IL_0057:  dup
-    IL_0058:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__41_0'
+    IL_0058:  stsfld     class [mscorlib]System.Func`2<class [mscorlib]System.Globalization.NumberFormatInfo,bool> ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests/'<>c'::'<>9__42_0'
     IL_005d:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0> [System.Core]System.Linq.Enumerable::Where<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>,
                                                                                                                                                                                          class [mscorlib]System.Func`2<!!0,bool>)
     IL_0062:  call       !!0 [System.Core]System.Linq.Enumerable::First<class [mscorlib]System.Globalization.NumberFormatInfo>(class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0>)
@@ -1513,6 +1522,23 @@
     IL_0078:  nop
     IL_0079:  ret
   } // end of method InitializerTests::Bug270_NestedInitialisers
+
+  .method public hidebysig static void  Bug953_MissingNullableSpecifierForArrayInitializer() cil managed
+  {
+    // Code size       31 (0x1f)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldc.i4.1
+    IL_0002:  newarr     valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_0007:  dup
+    IL_0008:  ldc.i4.0
+    IL_0009:  ldsfld     valuetype [mscorlib]System.Guid [mscorlib]System.Guid::Empty
+    IL_000e:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>::.ctor(!0)
+    IL_0013:  stelem     valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_0018:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::NoOp(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[])
+    IL_001d:  nop
+    IL_001e:  ret
+  } // end of method InitializerTests::Bug953_MissingNullableSpecifierForArrayInitializer
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

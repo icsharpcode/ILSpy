@@ -1852,9 +1852,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				additionalSpecifiers = new[] { new ArraySpecifier() };
 			} else {
 				typeExpression = ConvertType(type);
-				if (typeExpression is ComposedType) {
-					additionalSpecifiers = ((ComposedType)typeExpression).ArraySpecifiers.SelectArray(a => (ArraySpecifier)a.Clone());
-					typeExpression = ((ComposedType)typeExpression).BaseType.Clone();
+				if (typeExpression is ComposedType compType && compType.ArraySpecifiers.Count > 0) {
+					additionalSpecifiers = compType.ArraySpecifiers.SelectArray(a => (ArraySpecifier)a.Clone());
+					compType.ArraySpecifiers.Clear();
 				} else {
 					additionalSpecifiers = NoSpecifiers;
 				}

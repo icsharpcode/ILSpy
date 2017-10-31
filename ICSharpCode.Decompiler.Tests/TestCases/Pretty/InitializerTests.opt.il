@@ -1,6 +1,6 @@
 
 //  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation. Alle Rechte vorbehalten.
+//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -15,7 +15,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly mo2wq1js
+.assembly awwuldf0
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -25,15 +25,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module mo2wq1js.dll
-// MVID: {99F5978B-D68E-4578-9D8F-7D47C1F63A30}
+.module awwuldf0.dll
+// MVID: {59891EFA-EBA3-4F9A-9034-4F24037CEC15}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x027A0000
+// Image base: 0x03070000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -981,6 +981,13 @@
     IL_0005:  ret
   } // end of method InitializerTests::GetString
 
+  .method private hidebysig static void  NoOp(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[] 'array') cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method InitializerTests::NoOp
+
   .method public hidebysig static void  ObjectInitializerWithInitializationOfDeeplyNestedObjects() cil managed
   {
     // Code size       79 (0x4f)
@@ -1239,6 +1246,25 @@
     IL_0076:  ret
   } // end of method InitializerTests::Bug270_NestedInitialisers
 
+  .method public hidebysig static void  Bug953_MissingNullableSpecifierForArrayInitializer() cil managed
+  {
+    // Code size       36 (0x24)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[] V_0)
+    IL_0000:  ldc.i4.1
+    IL_0001:  newarr     valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_0006:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  ldc.i4.0
+    IL_0009:  ldelema    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_000e:  ldsfld     valuetype [mscorlib]System.Guid [mscorlib]System.Guid::Empty
+    IL_0013:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>::.ctor(!0)
+    IL_0018:  stobj      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_001d:  ldloc.0
+    IL_001e:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::NoOp(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[])
+    IL_0023:  ret
+  } // end of method InitializerTests::Bug953_MissingNullableSpecifierForArrayInitializer
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -1278,4 +1304,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// Warnung: Win32-Ressourcendatei "../../../TestCases/Pretty\InitializerTests.opt.res" wurde erstellt.
+// WARNING: Created Win32 resource file ../../../TestCases/Pretty\InitializerTests.opt.res

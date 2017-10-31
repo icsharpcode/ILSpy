@@ -344,6 +344,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return "Test";
 		}
 
+		private static void NoOp(Guid?[] array)
+		{
+
+		}
+
 #if !LEGACY_CSC
 		public static void SimpleDictInitializer()
 		{
@@ -478,6 +483,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 									where format.CurrencySymbol == "$"
 									select format).First()
 				}
+			});
+		}
+
+		public static void Bug953_MissingNullableSpecifierForArrayInitializer()
+		{
+			InitializerTests.NoOp(new Guid?[1] {
+				Guid.Empty
 			});
 		}
 	}
