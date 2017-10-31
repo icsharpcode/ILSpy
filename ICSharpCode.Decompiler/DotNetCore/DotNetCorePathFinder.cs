@@ -40,19 +40,17 @@ namespace ICSharpCode.Decompiler
 		readonly string targetFrameworkId;
 		readonly string version;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
-		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadInfo;
 
-		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkId, string version, Dictionary<string, UnresolvedAssemblyNameReference> loadInfo)
+		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkId, string version, Dictionary<string, UnresolvedAssemblyNameReference> loadInfo = null)
 		{
 			this.assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
 			this.basePath = Path.GetDirectoryName(parentAssemblyFileName);
 			this.targetFrameworkId = targetFrameworkId;
 			this.version = version;
-			this.loadInfo = loadInfo;
 
 			var depsJsonFileName = Path.Combine(basePath, $"{assemblyName}.deps.json");
 			if (!File.Exists(depsJsonFileName)) {
-				loadInfo.AddMessage(assemblyName, MessageKind.Warning, $"{assemblyName}.deps.json could not be found!");
+				loadInfo?.AddMessage(assemblyName, MessageKind.Warning, $"{assemblyName}.deps.json could not be found!");
 				return;
 			}
 
