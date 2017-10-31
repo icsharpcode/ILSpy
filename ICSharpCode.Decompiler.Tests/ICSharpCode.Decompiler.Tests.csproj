@@ -45,6 +45,7 @@
 
   <ItemGroup>
     <None Include="TestCases\Correctness\Jmp.il" />
+    <None Include="TestCases\Correctness\StackTypes.il" />
     <None Include="TestCases\ILPretty\FSharpLoops.fs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.il" />
     <None Include="TestCases\ILPretty\FSharpLoops_Release.il" />
@@ -134,12 +135,6 @@
 
   <ItemGroup>
     <None Include="TestCases\ILPretty\Issue646.il" />
-    <None Include="TestCases\Pretty\HelloWorld.il">
-      <DependentUpon>HelloWorld.cs</DependentUpon>
-    </None>
-    <None Include="TestCases\Pretty\InlineAssignmentTest.il">
-      <DependentUpon>InlineAssignmentTest.cs</DependentUpon>
-    </None>
     <None Include="TestCases\ILPretty\Issue379.il" />
     <None Include="TestCases\Pretty\Readme.txt" />
   </ItemGroup>

@@ -156,16 +156,33 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
-		public void BitNot()
+		public void BitNot([Values(false, true)] bool force32Bit)
 		{
-			RunIL("BitNot.il");
-			RunIL("BitNot.il", CompilerOptions.UseDebug | CompilerOptions.Force32Bit, AssemblerOptions.Force32Bit);
+			CompilerOptions compiler = CompilerOptions.UseDebug;
+			AssemblerOptions asm = AssemblerOptions.None;
+			if (force32Bit) {
+				compiler |= CompilerOptions.Force32Bit;
+				asm |= AssemblerOptions.Force32Bit;
+			}
+			RunIL("BitNot.il", compiler, asm);
 		}
 
 		[Test]
 		public void Jmp()
 		{
 			RunIL("Jmp.il");
+		}
+
+		[Test]
+		public void StackTypes([Values(false, true)] bool force32Bit)
+		{
+			CompilerOptions compiler = CompilerOptions.UseDebug;
+			AssemblerOptions asm = AssemblerOptions.None;
+			if (force32Bit) {
+				compiler |= CompilerOptions.Force32Bit;
+				asm |= AssemblerOptions.Force32Bit;
+			}
+			RunIL("StackTypes.il", compiler, asm);
 		}
 
 		[Test]
@@ -209,7 +226,7 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunCS(options: options);
 		}
-
+		
 		void RunCS([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug)
 		{
 			string testFileName = testName + ".cs";

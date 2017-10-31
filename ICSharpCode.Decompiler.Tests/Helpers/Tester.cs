@@ -67,6 +67,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
 			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
 			string otherOptions = " ";
+			if (options.HasFlag(AssemblerOptions.Force32Bit)) {
+				outputFile += ".32";
+				otherOptions += "/32BitPreferred ";
+			}
 			if (options.HasFlag(AssemblerOptions.Library)) {
 				outputFile += ".dll";
 				otherOptions += "/dll ";
@@ -78,9 +82,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			
 			if (options.HasFlag(AssemblerOptions.UseDebug)) {
 				otherOptions += "/debug ";
-			}
-			if (options.HasFlag(AssemblerOptions.Force32Bit)) {
-				otherOptions += "/32BitPreferred ";
 			}
 			
 			ProcessStartInfo info = new ProcessStartInfo(ilasmPath);
