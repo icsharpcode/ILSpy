@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					block.Instructions.RemoveAt(i);
 					continue;
 				}
-				if (TransformInlineAssignmentStObj(block, i))
+				if (TransformInlineAssignmentStObj(block, i) || TransformInlineAssignmentLocal(block, i))
 					continue;
 				if (TransformInlineCompoundAssignmentCall(block, i))
 					continue;
@@ -59,13 +59,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc l(stobj (..., value))
 		/// </code>
+		/// e.g. used for inline assignment to instance field
+		/// 
 		/// -or-
+		/// 
 		/// <code>
 		/// stloc s(value)
 		/// stobj (..., ldloc s)
 		/// -->
 		/// stloc s(stobj (..., value))
 		/// </code>
+		/// e.g. used for inline assignment to static field
 		bool TransformInlineAssignmentStObj(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
@@ -76,27 +80,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction replacement;
 			StObj fieldStore;
 			ILVariable local;
-			if (nextInst is StLoc) { // instance fields
-				var localStore = (StLoc)nextInst;
-				if (localStore.Variable.Kind == VariableKind.StackSlot || !localStore.Value.MatchLdLoc(inst.Variable))
+			if (nextInst is StLoc localStore) { // with extra local
+				if (localStore.Variable.Kind != VariableKind.Local || !localStore.Value.MatchLdLoc(inst.Variable))
+					return false;
+				if (!(inst.Variable.IsSingleDefinition && inst.Variable.LoadCount == 2))
 					return false;
 				var memberStore = block.Instructions.ElementAtOrDefault(i + 2);
 				if (memberStore is StObj) {
 					fieldStore = memberStore as StObj;
-					if (!fieldStore.Value.MatchLdLoc(inst.Variable))
+					if (!fieldStore.Value.MatchLdLoc(inst.Variable) || localStore.Variable.IsUsedWithin(fieldStore.Target))
 						return false;
 					replacement = new StObj(fieldStore.Target, inst.Value, fieldStore.Type);
-				} else { // otherwise it must be local
-					return TransformInlineAssignmentLocal(block, i);
+				} else {
+					return false;
 				}
-				context.Step("Inline assignment to instance field", fieldStore);
+				context.Step("Inline assignment stobj (with extra local)", fieldStore);
 				local = localStore.Variable;
 				block.Instructions.RemoveAt(i + 1);
-			} else if (nextInst is StObj) { // static fields
+			} else if (nextInst is StObj) { // without extra local
 				fieldStore = (StObj)nextInst;
-				if (!fieldStore.Value.MatchLdLoc(inst.Variable) || (fieldStore.Target.MatchLdFlda(out var target, out _) && target.MatchLdLoc(inst.Variable)))
+				if (!fieldStore.Value.MatchLdLoc(inst.Variable) || inst.Variable.IsUsedWithin(fieldStore.Target))
 					return false;
-				context.Step("Inline assignment to static field", fieldStore);
+				context.Step("Inline assignment stobj", fieldStore);
 				local = inst.Variable;
 				replacement = new StObj(fieldStore.Target, inst.Value, fieldStore.Type);
 			} else {
@@ -246,7 +251,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
 			if (inst == null || nextInst == null)
 				return false;
-			if (nextInst.Variable.Kind == VariableKind.StackSlot || !nextInst.Value.MatchLdLoc(inst.Variable))
+			if (inst.Variable.Kind != VariableKind.StackSlot)
+				return false;
+			if (nextInst.Variable.Kind != VariableKind.Local || !nextInst.Value.MatchLdLoc(inst.Variable))
 				return false;
 			context.Step("Inline assignment to local variable", inst);
 			var value = inst.Value;

@@ -150,7 +150,8 @@
 			CustomClassName("LdLoc"), NoArguments, HasVariableOperand("Load"), ResultType("variable.StackType")),
 		new OpCode("ldloca", "Loads the address of a local variable. (ldarga/ldloca)",
 			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand("Address")),
-		new OpCode("stloc", "Stores a value into a local variable. (starg/stloc)",
+		new OpCode("stloc", "Stores a value into a local variable. (IL: starg/stloc)" + Environment.NewLine
+				+ "Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value)",
 			CustomClassName("StLoc"), HasVariableOperand("Store"), CustomArguments("value"),
 			ResultType("variable.StackType")),
 		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
@@ -204,10 +205,11 @@
 		new OpCode("ldobj", "Indirect load (ref/pointer dereference).",
 			CustomClassName("LdObj"), CustomArguments("target"), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
-		new OpCode("stobj", "Indirect store (store to ref/pointer).",
+		new OpCode("stobj", "Indirect store (store to ref/pointer)." + Environment.NewLine
+				+ "Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value)",
 			CustomClassName("StObj"), CustomArguments("target", "value"), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
-		
+
 		new OpCode("box", "Boxes a value.",
 			Unary, HasTypeOperand, MemoryAccess, MayThrow, ResultType("O")),
 		new OpCode("unbox", "Compute address inside box.",
