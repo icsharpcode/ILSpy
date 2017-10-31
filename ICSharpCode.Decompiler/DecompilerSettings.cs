@@ -404,7 +404,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		bool throwOnAssemblyResolveErrors = false;
+		bool throwOnAssemblyResolveErrors = true;
 
 		public bool ThrowOnAssemblyResolveErrors {
 			get { return throwOnAssemblyResolveErrors; }

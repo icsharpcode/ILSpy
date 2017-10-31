@@ -99,7 +99,7 @@ namespace ICSharpCode.Decompiler
 		string FallbackToDotNetSharedDirectory(AssemblyNameReference name, string version)
 		{
 			if (dotnetBasePath == null) return null;
-			var basePath = Path.Combine(dotnetBasePath, "shared\\Microsoft.NETCore.App", version);
+			var basePath = Path.Combine(dotnetBasePath, "shared", "Microsoft.NETCore.App", version);
 			if (File.Exists(Path.Combine(basePath, name.Name + ".dll"))) {
 				return Path.Combine(basePath, name.Name + ".dll");
 			} else if (File.Exists(Path.Combine(basePath, name.Name + ".exe"))) {

@@ -8,12 +8,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\cecil\Mono.Cecil.csproj" AdditionalProperties="NuGetRestoreTargets=;ResolveNuGetPackages=false" />
-    <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="3.0.0.3206-beta1" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.0.1" />
   </ItemGroup>
 
 </Project>
