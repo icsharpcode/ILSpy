@@ -194,6 +194,64 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			  });
 		}
 
+		public static void NestedNullableArray(int a, int b, int c)
+		{
+			InitializerTests.X(InitializerTests.Y(), new int?[][]
+			{
+				new int?[]
+					{
+						1,
+					2,
+					3,
+					4,
+					5,
+					6,
+					7,
+					8,
+					9,
+					10,
+					null
+					},
+				new int?[]
+					{
+						a,
+					b,
+					c,
+					null
+					},
+				new int?[]
+					{
+						1,
+					2,
+					3,
+					4,
+					5,
+					6,
+					null
+					}
+			  });
+		}
+		public unsafe static void NestedPointerArray(int a, int b, int c)
+		{
+			InitializerTests.X(InitializerTests.Y(), new void*[][]
+			{
+				new void*[]
+					{
+						null
+					},
+				new void*[]
+					{
+					(void*)200,
+					null
+					},
+				new void*[]
+					{
+					(void*)100,
+					null
+					}
+			  });
+		}
+
 		public static void ArrayBoolean()
 		{
 			InitializerTests.X(InitializerTests.Y(), new bool[]

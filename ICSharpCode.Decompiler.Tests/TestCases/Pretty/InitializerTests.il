@@ -1,6 +1,6 @@
 
 //  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation. Alle Rechte vorbehalten.
+//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -15,7 +15,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly n0iwoj0v
+.assembly '31sn40gd'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -25,15 +25,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module n0iwoj0v.dll
-// MVID: {04AC1961-FA71-4E8B-A77B-45FF217A617C}
+.module '31sn40gd.dll'
+// MVID: {EE7CB403-8040-4C94-B17A-F697CE60CA23}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x009A0000
+// Image base: 0x02FB0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1172,6 +1172,14 @@
     IL_000a:  ret
   } // end of method InitializerTests::GetString
 
+  .method private hidebysig static void  NoOp(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[] 'array') cil managed
+  {
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ret
+  } // end of method InitializerTests::NoOp
+
   .method public hidebysig static void  ObjectInitializerWithInitializationOfDeeplyNestedObjects() cil managed
   {
     // Code size       84 (0x54)
@@ -1474,6 +1482,27 @@
     IL_007f:  ret
   } // end of method InitializerTests::Bug270_NestedInitialisers
 
+  .method public hidebysig static void  Bug953_MissingNullableSpecifierForArrayInitializer() cil managed
+  {
+    // Code size       38 (0x26)
+    .maxstack  2
+    .locals init (valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[] V_0)
+    IL_0000:  nop
+    IL_0001:  ldc.i4.1
+    IL_0002:  newarr     valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_0007:  stloc.0
+    IL_0008:  ldloc.0
+    IL_0009:  ldc.i4.0
+    IL_000a:  ldelema    valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_000f:  ldsfld     valuetype [mscorlib]System.Guid [mscorlib]System.Guid::Empty
+    IL_0014:  newobj     instance void valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>::.ctor(!0)
+    IL_0019:  stobj      valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>
+    IL_001e:  ldloc.0
+    IL_001f:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InitializerTests::NoOp(valuetype [mscorlib]System.Nullable`1<valuetype [mscorlib]System.Guid>[])
+    IL_0024:  nop
+    IL_0025:  ret
+  } // end of method InitializerTests::Bug953_MissingNullableSpecifierForArrayInitializer
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
@@ -1488,11 +1517,12 @@
                                                                                  class [mscorlib]System.EventArgs e) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       7 (0x7)
+    // Code size       8 (0x8)
     .maxstack  8
-    IL_0000:  call       void [mscorlib]System.Console::WriteLine()
-    IL_0005:  nop
-    IL_0006:  ret
+    IL_0000:  nop
+    IL_0001:  call       void [mscorlib]System.Console::WriteLine()
+    IL_0006:  nop
+    IL_0007:  ret
   } // end of method InitializerTests::'<NotAnObjectInitializerWithEvent>b__7'
 
   .method private hidebysig static bool  '<Bug270_NestedInitialisers>b__1b'(class [mscorlib]System.Globalization.NumberFormatInfo format) cil managed
@@ -1519,4 +1549,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// Warnung: Win32-Ressourcendatei "../../../TestCases/Pretty\InitializerTests.res" wurde erstellt.
+// WARNING: Created Win32 resource file ../../../TestCases/Pretty\InitializerTests.res
