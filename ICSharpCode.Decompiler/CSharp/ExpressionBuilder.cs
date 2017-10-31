@@ -69,6 +69,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		internal readonly ICompilation compilation;
 		internal readonly CSharpResolver resolver;
 		readonly TypeSystemAstBuilder astBuilder;
+		readonly TypeInference typeInference;
 		internal readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 		
@@ -84,6 +85,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			this.astBuilder = new TypeSystemAstBuilder(resolver);
 			this.astBuilder.AlwaysUseShortTypeNames = true;
 			this.astBuilder.AddResolveResultAnnotations = true;
+			this.typeInference = new TypeInference(compilation) { Algorithm = TypeInferenceAlgorithm.Improved };
 		}
 
 		public AstType ConvertType(IType type)
@@ -1968,7 +1970,9 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (rr.IsError) {
 				IType targetType;
 				if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType) && !trueBranch.Type.Equals(falseBranch.Type)) {
-					targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+					targetType = typeInference.GetBestCommonType(new[] { trueBranch.ResolveResult, falseBranch.ResolveResult }, out bool success);
+					if (!success)
+						targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
 				} else {
 					targetType = trueBranch.Type.Equals(SpecialType.NullType) ? falseBranch.Type : trueBranch.Type;
 				}
