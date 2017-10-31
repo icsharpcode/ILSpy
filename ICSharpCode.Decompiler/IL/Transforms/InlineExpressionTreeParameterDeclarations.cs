@@ -30,8 +30,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (block.Instructions[pos] is StLoc parameterVariableInst) {
 				bool alwaysInlined = true;
 				if (MatchParameterVariableAssignment(parameterVariableInst, out ILVariable v, out ILInstruction init)) {
-					foreach (var LdParameterVariableInst in context.Function.Descendants.OfType<LdLoc>()) {
-						if (LdParameterVariableInst.MatchLdLoc(v) && !TryInline(LdParameterVariableInst, v, init)) {
+					foreach (LdLoc LdParameterVariableInst in v.LoadInstructions.ToArray()) {
+						if (!TryInline(LdParameterVariableInst, v, init)) {
 							alwaysInlined = false;
 						}
 					}
