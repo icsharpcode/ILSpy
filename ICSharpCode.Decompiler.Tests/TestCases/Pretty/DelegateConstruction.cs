@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -79,6 +80,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			public void Bar(Func<int> f)
 			{
+			}
+
+			private void Bug955()
+			{
+				new Thread((ThreadStart)delegate {
+				});
 			}
 		}
 

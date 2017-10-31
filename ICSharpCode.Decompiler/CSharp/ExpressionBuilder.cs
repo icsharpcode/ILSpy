@@ -1363,7 +1363,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var rr = new DecompiledLambdaResolveResult(
 				function, delegateType, inferredReturnType,
-				hasParameterList: ame.HasParameterList,
+				hasParameterList: isLambda || ame.HasParameterList,
 				isAnonymousMethod: !isLambda,
 				isImplicitlyTyped: ame.Parameters.Any(p => p.Type.IsNull));
 

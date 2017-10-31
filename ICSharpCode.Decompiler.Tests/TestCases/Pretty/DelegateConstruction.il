@@ -15,7 +15,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly kdaefnvq
+.assembly '3jzwaefw'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -26,15 +26,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module kdaefnvq.dll
-// MVID: {568C8EB4-6E17-4688-8B36-6BFD1BF31DEB}
+.module '3jzwaefw.dll'
+// MVID: {915B6C12-1305-49DC-868B-18153BA75025}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00C30000
+// Image base: 0x012B0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -213,6 +213,8 @@
 
     } // end of class '<>c__DisplayClass30'
 
+    .field private static class [mscorlib]System.Threading.ThreadStart 'CS$<>9__CachedAnonymousMethodDelegate35'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .method public hidebysig instance class [mscorlib]System.Action 
             CaptureOfThis() cil managed
     {
@@ -536,6 +538,28 @@
       IL_0001:  ret
     } // end of method InstanceTests::Bar
 
+    .method private hidebysig instance void 
+            Bug955() cil managed
+    {
+      // Code size       39 (0x27)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ldsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'CS$<>9__CachedAnonymousMethodDelegate35'
+      IL_0006:  brtrue.s   IL_001b
+
+      IL_0008:  ldnull
+      IL_0009:  ldftn      void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'<Bug955>b__34'()
+      IL_000f:  newobj     instance void [mscorlib]System.Threading.ThreadStart::.ctor(object,
+                                                                                       native int)
+      IL_0014:  stsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'CS$<>9__CachedAnonymousMethodDelegate35'
+      IL_0019:  br.s       IL_001b
+
+      IL_001b:  ldsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'CS$<>9__CachedAnonymousMethodDelegate35'
+      IL_0020:  newobj     instance void [mscorlib]System.Threading.Thread::.ctor(class [mscorlib]System.Threading.ThreadStart)
+      IL_0025:  pop
+      IL_0026:  ret
+    } // end of method InstanceTests::Bug955
+
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {
@@ -574,6 +598,16 @@
       IL_0009:  ldloc.0
       IL_000a:  ret
     } // end of method InstanceTests::'<LambdaInForLoop>b__32'
+
+    .method private hidebysig static void 
+            '<Bug955>b__34'() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method InstanceTests::'<Bug955>b__34'
 
   } // end of class InstanceTests
 

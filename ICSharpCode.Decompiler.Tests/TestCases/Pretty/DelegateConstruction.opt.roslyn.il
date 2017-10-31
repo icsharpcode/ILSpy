@@ -31,14 +31,14 @@
   .ver 0:0:0:0
 }
 .module DelegateConstruction.dll
-// MVID: {534F3E90-3206-4E6A-821F-26BFD75A6959}
+// MVID: {732578B7-A105-4FCC-BD88-23E06857F316}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01460000
+// Image base: 0x013F0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -215,6 +215,42 @@
       } // end of method '<>c__DisplayClass3_2'::'<CaptureOfThisAndParameterInForEachWithItemCopy>b__0'
 
     } // end of class '<>c__DisplayClass3_2'
+
+    .class auto ansi serializable sealed nested private beforefieldinit '<>c'
+           extends [mscorlib]System.Object
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c' '<>9'
+      .field public static class [mscorlib]System.Threading.ThreadStart '<>9__7_0'
+      .method private hidebysig specialname rtspecialname static 
+              void  .cctor() cil managed
+      {
+        // Code size       11 (0xb)
+        .maxstack  8
+        IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::.ctor()
+        IL_0005:  stsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9'
+        IL_000a:  ret
+      } // end of method '<>c'::.cctor
+
+      .method public hidebysig specialname rtspecialname 
+              instance void  .ctor() cil managed
+      {
+        // Code size       7 (0x7)
+        .maxstack  8
+        IL_0000:  ldarg.0
+        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+        IL_0006:  ret
+      } // end of method '<>c'::.ctor
+
+      .method assembly hidebysig instance void 
+              '<Bug955>b__7_0'() cil managed
+      {
+        // Code size       1 (0x1)
+        .maxstack  8
+        IL_0000:  ret
+      } // end of method '<>c'::'<Bug955>b__7_0'
+
+    } // end of class '<>c'
 
     .method public hidebysig instance class [mscorlib]System.Action 
             CaptureOfThis() cil managed
@@ -437,6 +473,27 @@
       .maxstack  8
       IL_0000:  ret
     } // end of method InstanceTests::Bar
+
+    .method private hidebysig instance void 
+            Bug955() cil managed
+    {
+      // Code size       38 (0x26)
+      .maxstack  8
+      IL_0000:  ldsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9__7_0'
+      IL_0005:  dup
+      IL_0006:  brtrue.s   IL_001f
+
+      IL_0008:  pop
+      IL_0009:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9'
+      IL_000e:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<Bug955>b__7_0'()
+      IL_0014:  newobj     instance void [mscorlib]System.Threading.ThreadStart::.ctor(object,
+                                                                                       native int)
+      IL_0019:  dup
+      IL_001a:  stsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9__7_0'
+      IL_001f:  newobj     instance void [mscorlib]System.Threading.Thread::.ctor(class [mscorlib]System.Threading.ThreadStart)
+      IL_0024:  pop
+      IL_0025:  ret
+    } // end of method InstanceTests::Bug955
 
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed

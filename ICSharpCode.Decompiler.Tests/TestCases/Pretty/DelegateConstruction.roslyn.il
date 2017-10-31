@@ -31,14 +31,14 @@
   .ver 0:0:0:0
 }
 .module DelegateConstruction.dll
-// MVID: {8AC9B4E6-77A7-45DC-BBF4-76DB9EA29AFF}
+// MVID: {CAEDF2ED-ABA8-46FA-95A9-59299B362410}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01820000
+// Image base: 0x01390000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -224,6 +224,44 @@
       } // end of method '<>c__DisplayClass3_2'::'<CaptureOfThisAndParameterInForEachWithItemCopy>b__0'
 
     } // end of class '<>c__DisplayClass3_2'
+
+    .class auto ansi serializable sealed nested private beforefieldinit '<>c'
+           extends [mscorlib]System.Object
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c' '<>9'
+      .field public static class [mscorlib]System.Threading.ThreadStart '<>9__7_0'
+      .method private hidebysig specialname rtspecialname static 
+              void  .cctor() cil managed
+      {
+        // Code size       11 (0xb)
+        .maxstack  8
+        IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::.ctor()
+        IL_0005:  stsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9'
+        IL_000a:  ret
+      } // end of method '<>c'::.cctor
+
+      .method public hidebysig specialname rtspecialname 
+              instance void  .ctor() cil managed
+      {
+        // Code size       8 (0x8)
+        .maxstack  8
+        IL_0000:  ldarg.0
+        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+        IL_0006:  nop
+        IL_0007:  ret
+      } // end of method '<>c'::.ctor
+
+      .method assembly hidebysig instance void 
+              '<Bug955>b__7_0'() cil managed
+      {
+        // Code size       2 (0x2)
+        .maxstack  8
+        IL_0000:  nop
+        IL_0001:  ret
+      } // end of method '<>c'::'<Bug955>b__7_0'
+
+    } // end of class '<>c'
 
     .method public hidebysig instance class [mscorlib]System.Action 
             CaptureOfThis() cil managed
@@ -498,6 +536,28 @@
       IL_0000:  nop
       IL_0001:  ret
     } // end of method InstanceTests::Bar
+
+    .method private hidebysig instance void 
+            Bug955() cil managed
+    {
+      // Code size       39 (0x27)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ldsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9__7_0'
+      IL_0006:  dup
+      IL_0007:  brtrue.s   IL_0020
+
+      IL_0009:  pop
+      IL_000a:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9'
+      IL_000f:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<Bug955>b__7_0'()
+      IL_0015:  newobj     instance void [mscorlib]System.Threading.ThreadStart::.ctor(object,
+                                                                                       native int)
+      IL_001a:  dup
+      IL_001b:  stsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9__7_0'
+      IL_0020:  newobj     instance void [mscorlib]System.Threading.Thread::.ctor(class [mscorlib]System.Threading.ThreadStart)
+      IL_0025:  pop
+      IL_0026:  ret
+    } // end of method InstanceTests::Bug955
 
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
