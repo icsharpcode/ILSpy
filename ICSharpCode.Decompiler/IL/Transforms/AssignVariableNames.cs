@@ -378,11 +378,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (function == null)
 				throw new ArgumentNullException(nameof(function));
 			var reservedVariableNames = new Dictionary<string, int>();
-			foreach (var v in function.Descendants.OfType<ILFunction>().SelectMany(m => m.Variables)) {
+			var rootFunction = function.Ancestors.OfType<ILFunction>().Single(f => f.Parent == null);
+			foreach (var v in rootFunction.Descendants.OfType<ILFunction>().SelectMany(m => m.Variables)) {
 				if (v != existingVariable)
 					AddExistingName(reservedVariableNames, v.Name);
 			}
-			foreach (var f in function.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
+			foreach (var f in rootFunction.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
 				AddExistingName(reservedVariableNames, f);
 
 			string baseName = GetNameFromInstruction(valueContext);
