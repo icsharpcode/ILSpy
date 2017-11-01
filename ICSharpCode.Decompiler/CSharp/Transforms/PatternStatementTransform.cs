@@ -72,8 +72,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override AstNode VisitExpressionStatement(ExpressionStatement expressionStatement)
 		{
-			AstNode result;
-			result = TransformFor(expressionStatement);
+			AstNode result = TransformFor(expressionStatement);
 			if (result != null)
 				return result;
 			if (context.Settings.AutomaticProperties) {
@@ -88,12 +87,20 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 			return base.VisitExpressionStatement(expressionStatement);
 		}
-		
+
+		public override AstNode VisitForStatement(ForStatement forStatement)
+		{
+			AstNode result = TransformForeachOnArray(forStatement);
+			if (result != null)
+				return result;
+			return base.VisitForStatement(forStatement);
+		}
+
 		public override AstNode VisitWhileStatement(WhileStatement whileStatement)
 		{
 			return TransformDoWhile(whileStatement) ?? base.VisitWhileStatement(whileStatement);
 		}
-		
+
 		public override AstNode VisitIfElseStatement(IfElseStatement ifElseStatement)
 		{
 			AstNode simplifiedIfElse = SimplifyCascadingIfElseStatements(ifElseStatement);
@@ -203,7 +210,70 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return forStatement;
 		}
 		#endregion
-		
+
+		#region foreach
+
+		static readonly ForStatement forOnArrayPattern = new ForStatement {
+			Initializers = {
+				new ExpressionStatement(
+				new AssignmentExpression(
+					new NamedNode("indexVariable", new IdentifierExpression(Pattern.AnyString)),
+					new PrimitiveExpression(0)
+				))
+			},
+			Condition = new BinaryOperatorExpression(
+				new IdentifierExpressionBackreference("indexVariable"),
+				BinaryOperatorType.LessThan,
+				new MemberReferenceExpression(new NamedNode("arrayVariable", new IdentifierExpression(Pattern.AnyString)), "Length")
+			),
+			Iterators = {
+				new ExpressionStatement(
+				new AssignmentExpression(
+					new IdentifierExpressionBackreference("indexVariable"),
+					new BinaryOperatorExpression(new IdentifierExpressionBackreference("indexVariable"), BinaryOperatorType.Add, new PrimitiveExpression(1))
+				))
+			},
+			EmbeddedStatement = new BlockStatement {
+				Statements = {
+					new ExpressionStatement(new AssignmentExpression(
+						new NamedNode("itemVariable", new IdentifierExpression(Pattern.AnyString)),
+						new IndexerExpression(new IdentifierExpressionBackreference("arrayVariable"), new IdentifierExpressionBackreference("indexVariable"))
+					)),
+					new Repeat(new AnyNode("statements"))
+				}
+			}
+		};
+
+		Statement TransformForeachOnArray(ForStatement forStatement)
+		{
+			Match m = forOnArrayPattern.Match(forStatement);
+			if (!m.Success) return null;
+			var itemVariable = m.Get<IdentifierExpression>("itemVariable").Single().GetILVariable();
+			var indexVariable = m.Get<IdentifierExpression>("indexVariable").Single().GetILVariable();
+			var arrayVariable = m.Get<IdentifierExpression>("arrayVariable").Single().GetILVariable();
+			if (!itemVariable.IsSingleDefinition)
+				return null;
+			if (indexVariable.StoreCount != 2 || indexVariable.LoadCount != 3 || indexVariable.AddressCount != 0)
+				return null;
+			var body = new BlockStatement();
+			foreach (var statement in m.Get<Statement>("statements"))
+				body.Statements.Add(statement.Detach());
+			var foreachStmt = new ForeachStatement {
+				VariableType = context.Settings.AnonymousTypes && itemVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVariable.Type),
+				VariableName = itemVariable.Name,
+				InExpression = m.Get<IdentifierExpression>("arrayVariable").Single().Detach(),
+				EmbeddedStatement = body
+			};
+			itemVariable.Kind = IL.VariableKind.ForeachLocal;
+			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
+			foreachStmt.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
+			// TODO : add ForeachAnnotation
+			forStatement.ReplaceWith(foreachStmt);
+			return foreachStmt;
+		}
+
+		#endregion
+
 		#region doWhile
 		static readonly WhileStatement doWhilePattern = new WhileStatement {
 			Condition = new PrimitiveExpression(true),

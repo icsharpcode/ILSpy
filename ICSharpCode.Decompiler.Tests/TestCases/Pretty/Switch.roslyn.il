@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Switch.dll
-// MVID: {EF7D776C-0F54-445C-8A74-2D49ADE35F46}
+// MVID: {02FDDCA9-8509-4A55-A2B4-ECC54A6801AF}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00C40000
+// Image base: 0x02460000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1533,7 +1533,7 @@
 
   .method public hidebysig static void  SwitchOnStringInForLoop() cil managed
   {
-    // Code size       255 (0xff)
+    // Code size       266 (0x10a)
     .maxstack  2
     .locals init (class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty> V_0,
              class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty> V_1,
@@ -1551,122 +1551,125 @@
     IL_0012:  stloc.2
     IL_0013:  ldc.i4.0
     IL_0014:  stloc.3
-    IL_0015:  br         IL_00ef
+    IL_0015:  br         IL_00fa
 
     IL_001a:  nop
-    IL_001b:  ldloc.2
-    IL_001c:  ldloc.3
-    IL_001d:  ldelem.ref
-    IL_001e:  stloc.s    V_4
-    IL_0020:  ldloc.s    V_4
-    IL_0022:  ldfld      class [mscorlib]System.Reflection.PropertyInfo ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::Property
-    IL_0027:  callvirt   instance string [mscorlib]System.Reflection.MemberInfo::get_Name()
-    IL_002c:  stloc.s    V_5
-    IL_002e:  ldloc.s    V_5
-    IL_0030:  ldstr      "Name1"
-    IL_0035:  call       bool [mscorlib]System.String::op_Equality(string,
+    IL_001b:  ldstr      "In for-loop"
+    IL_0020:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0025:  nop
+    IL_0026:  ldloc.2
+    IL_0027:  ldloc.3
+    IL_0028:  ldelem.ref
+    IL_0029:  stloc.s    V_4
+    IL_002b:  ldloc.s    V_4
+    IL_002d:  ldfld      class [mscorlib]System.Reflection.PropertyInfo ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::Property
+    IL_0032:  callvirt   instance string [mscorlib]System.Reflection.MemberInfo::get_Name()
+    IL_0037:  stloc.s    V_5
+    IL_0039:  ldloc.s    V_5
+    IL_003b:  ldstr      "Name1"
+    IL_0040:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                    string)
-    IL_003a:  brtrue.s   IL_0084
+    IL_0045:  brtrue.s   IL_008f
 
-    IL_003c:  ldloc.s    V_5
-    IL_003e:  ldstr      "Name2"
-    IL_0043:  call       bool [mscorlib]System.String::op_Equality(string,
+    IL_0047:  ldloc.s    V_5
+    IL_0049:  ldstr      "Name2"
+    IL_004e:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                    string)
-    IL_0048:  brtrue.s   IL_0098
+    IL_0053:  brtrue.s   IL_00a3
 
-    IL_004a:  ldloc.s    V_5
-    IL_004c:  ldstr      "Name3"
-    IL_0051:  call       bool [mscorlib]System.String::op_Equality(string,
+    IL_0055:  ldloc.s    V_5
+    IL_0057:  ldstr      "Name3"
+    IL_005c:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                    string)
-    IL_0056:  brtrue.s   IL_00ac
+    IL_0061:  brtrue.s   IL_00b7
 
-    IL_0058:  ldloc.s    V_5
-    IL_005a:  ldstr      "Name4"
-    IL_005f:  call       bool [mscorlib]System.String::op_Equality(string,
+    IL_0063:  ldloc.s    V_5
+    IL_0065:  ldstr      "Name4"
+    IL_006a:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                    string)
-    IL_0064:  brtrue.s   IL_00c0
+    IL_006f:  brtrue.s   IL_00cb
 
-    IL_0066:  ldloc.s    V_5
-    IL_0068:  ldstr      "Name5"
-    IL_006d:  call       bool [mscorlib]System.String::op_Equality(string,
+    IL_0071:  ldloc.s    V_5
+    IL_0073:  ldstr      "Name5"
+    IL_0078:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                    string)
-    IL_0072:  brtrue.s   IL_00d4
+    IL_007d:  brtrue.s   IL_00df
 
-    IL_0074:  ldloc.s    V_5
-    IL_0076:  ldstr      "Name6"
-    IL_007b:  call       bool [mscorlib]System.String::op_Equality(string,
+    IL_007f:  ldloc.s    V_5
+    IL_0081:  ldstr      "Name6"
+    IL_0086:  call       bool [mscorlib]System.String::op_Equality(string,
                                                                    string)
-    IL_0080:  brtrue.s   IL_00d4
+    IL_008b:  brtrue.s   IL_00df
 
-    IL_0082:  br.s       IL_00df
+    IL_008d:  br.s       IL_00ea
 
-    IL_0084:  ldloc.s    V_4
-    IL_0086:  ldc.i4.1
-    IL_0087:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
-    IL_008c:  nop
-    IL_008d:  ldloc.0
-    IL_008e:  ldloc.s    V_4
-    IL_0090:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
-    IL_0095:  nop
-    IL_0096:  br.s       IL_00ea
-
-    IL_0098:  ldloc.s    V_4
-    IL_009a:  ldc.i4.2
-    IL_009b:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_008f:  ldloc.s    V_4
+    IL_0091:  ldc.i4.1
+    IL_0092:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_0097:  nop
+    IL_0098:  ldloc.0
+    IL_0099:  ldloc.s    V_4
+    IL_009b:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
     IL_00a0:  nop
-    IL_00a1:  ldloc.0
-    IL_00a2:  ldloc.s    V_4
-    IL_00a4:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
-    IL_00a9:  nop
-    IL_00aa:  br.s       IL_00ea
+    IL_00a1:  br.s       IL_00f5
 
-    IL_00ac:  ldloc.s    V_4
-    IL_00ae:  ldc.i4.3
-    IL_00af:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_00a3:  ldloc.s    V_4
+    IL_00a5:  ldc.i4.2
+    IL_00a6:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_00ab:  nop
+    IL_00ac:  ldloc.0
+    IL_00ad:  ldloc.s    V_4
+    IL_00af:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
     IL_00b4:  nop
-    IL_00b5:  ldloc.0
-    IL_00b6:  ldloc.s    V_4
-    IL_00b8:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
-    IL_00bd:  nop
-    IL_00be:  br.s       IL_00ea
+    IL_00b5:  br.s       IL_00f5
 
-    IL_00c0:  ldloc.s    V_4
-    IL_00c2:  ldc.i4.4
-    IL_00c3:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_00b7:  ldloc.s    V_4
+    IL_00b9:  ldc.i4.3
+    IL_00ba:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_00bf:  nop
+    IL_00c0:  ldloc.0
+    IL_00c1:  ldloc.s    V_4
+    IL_00c3:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
     IL_00c8:  nop
-    IL_00c9:  ldloc.0
-    IL_00ca:  ldloc.s    V_4
-    IL_00cc:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
-    IL_00d1:  nop
-    IL_00d2:  br.s       IL_00ea
+    IL_00c9:  br.s       IL_00f5
 
+    IL_00cb:  ldloc.s    V_4
+    IL_00cd:  ldc.i4.4
+    IL_00ce:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty::set_Set(int32)
+    IL_00d3:  nop
     IL_00d4:  ldloc.0
     IL_00d5:  ldloc.s    V_4
     IL_00d7:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
     IL_00dc:  nop
-    IL_00dd:  br.s       IL_00ea
+    IL_00dd:  br.s       IL_00f5
 
-    IL_00df:  ldloc.1
+    IL_00df:  ldloc.0
     IL_00e0:  ldloc.s    V_4
     IL_00e2:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
     IL_00e7:  nop
-    IL_00e8:  br.s       IL_00ea
+    IL_00e8:  br.s       IL_00f5
 
-    IL_00ea:  nop
-    IL_00eb:  ldloc.3
-    IL_00ec:  ldc.i4.1
-    IL_00ed:  add
-    IL_00ee:  stloc.3
-    IL_00ef:  ldloc.3
-    IL_00f0:  ldloc.2
-    IL_00f1:  ldlen
-    IL_00f2:  conv.i4
-    IL_00f3:  clt
-    IL_00f5:  stloc.s    V_6
-    IL_00f7:  ldloc.s    V_6
-    IL_00f9:  brtrue     IL_001a
+    IL_00ea:  ldloc.1
+    IL_00eb:  ldloc.s    V_4
+    IL_00ed:  callvirt   instance void class [mscorlib]System.Collections.Generic.List`1<class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Switch/SetProperty>::Add(!0)
+    IL_00f2:  nop
+    IL_00f3:  br.s       IL_00f5
 
-    IL_00fe:  ret
+    IL_00f5:  nop
+    IL_00f6:  ldloc.3
+    IL_00f7:  ldc.i4.1
+    IL_00f8:  add
+    IL_00f9:  stloc.3
+    IL_00fa:  ldloc.3
+    IL_00fb:  ldloc.2
+    IL_00fc:  ldlen
+    IL_00fd:  conv.i4
+    IL_00fe:  clt
+    IL_0100:  stloc.s    V_6
+    IL_0102:  ldloc.s    V_6
+    IL_0104:  brtrue     IL_001a
+
+    IL_0109:  ret
   } // end of method Switch::SwitchOnStringInForLoop
 
   .method public hidebysig static void  SwitchWithComplexCondition(string[] args) cil managed

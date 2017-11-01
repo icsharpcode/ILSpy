@@ -409,18 +409,37 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return result;
 		}
+
+		public void ForEachOverArray(string[] array)
+		{
+			foreach (string text in array) {
+				Console.WriteLine(text.ToLower() + text.ToUpper());
+			}
+		}
+
+		public unsafe void ForEachOverArrayOfPointers(int*[] array)
+		{
+			foreach (int* value in array) {
+				Console.WriteLine(new IntPtr(value));
+				Console.WriteLine(new IntPtr(value));
+			}
+		}
 		#endregion
-		//public void ForEachOverArray(string[] array)
-		//{
-		//	foreach (string text in array) {
-		//		text.ToLower();
-		//	}
-		//}
 
 		public void ForOverArray(string[] array)
 		{
 			for (int i = 0; i < array.Length; i++) {
 				array[i].ToLower();
+			}
+		}
+
+		public void NoForeachOverArray(string[] array)
+		{
+			for (int i = 0; i < array.Length; i++) {
+				string value = array[i];
+				if (i % 5 == 0) {
+					Console.WriteLine(value);
+				}
 			}
 		}
 
