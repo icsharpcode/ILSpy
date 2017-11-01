@@ -181,78 +181,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false; // conv does not match binary operation
 			return true;
 		}
-
-		/// <code>
-		/// stloc s(binary(callvirt(getter), value))
-		/// callvirt (setter, ldloc s)
-		/// (followed by single usage of s in next instruction)
-		/// -->
-		/// stloc s(compound.op.new(callvirt(getter), value))
-		/// </code>
-		bool TransformInlineCompoundAssignmentCall(Block block, int i)
-		{
-			var mainStLoc = block.Instructions[i] as StLoc;
-			// in some cases it can be a compiler-generated local
-			if (mainStLoc == null || (mainStLoc.Variable.Kind != VariableKind.StackSlot && mainStLoc.Variable.Kind != VariableKind.Local))
-				return false;
-			BinaryNumericInstruction binary = UnwrapSmallIntegerConv(mainStLoc.Value, out var conv) as BinaryNumericInstruction;
-			ILVariable localVariable = mainStLoc.Variable;
-			if (!localVariable.IsSingleDefinition)
-				return false;
-			if (localVariable.LoadCount != 2)
-				return false;
-			var getterCall = binary?.Left as CallInstruction;
-			var setterCall = block.Instructions.ElementAtOrDefault(i + 1) as CallInstruction;
-			if (!MatchingGetterAndSetterCalls(getterCall, setterCall))
-				return false;
-			if (!setterCall.Arguments.Last().MatchLdLoc(localVariable))
-				return false;
-			
-			var next = block.Instructions.ElementAtOrDefault(i + 2);
-			if (next == null)
-				return false;
-			if (next.Descendants.Where(d => d.MatchLdLoc(localVariable)).Count() != 1)
-				return false;
-			IType targetType = getterCall.Method.ReturnType;
-			if (!ValidateCompoundAssign(binary, conv, targetType))
-				return false;
-			context.Step($"Inline compound assignment to '{getterCall.Method.AccessorOwner.Name}'", setterCall);
-			block.Instructions.RemoveAt(i + 1); // remove setter call
-			mainStLoc.Value = new CompoundAssignmentInstruction(
-				binary, getterCall, binary.Right,
-				targetType, CompoundAssignmentType.EvaluatesToNewValue);
-			return true;
-		}
-
-		/// <summary>
-		/// Roslyn compound assignment that's not inline within another instruction.
-		/// </summary>
-		bool TransformRoslynCompoundAssignmentCall(Block block, int i)
-		{
-			// stloc variable(callvirt get_Property(ldloc obj))
-			// callvirt set_Property(ldloc obj, binary.op(ldloc variable, ldc.i4 1))
-			// => compound.op.new(callvirt get_Property(ldloc obj), ldc.i4 1)
-			if (!(block.Instructions[i] is StLoc stloc))
-				return false;
-			if (!(stloc.Variable.IsSingleDefinition && stloc.Variable.LoadCount == 1))
-				return false;
-			var getterCall = stloc.Value as CallInstruction;
-			var setterCall = block.Instructions[i + 1] as CallInstruction;
-			if (!(MatchingGetterAndSetterCalls(getterCall, setterCall)))
-				return false;
-			var binary = setterCall.Arguments.Last() as BinaryNumericInstruction;
-			if (binary == null || !binary.Left.MatchLdLoc(stloc.Variable))
-				return false;
-			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, getterCall.Method.ReturnType))
-				return false;
-			context.Step($"Compound assignment to '{getterCall.Method.AccessorOwner.Name}'", setterCall);
-			block.Instructions.RemoveAt(i + 1); // remove setter call
-			stloc.ReplaceWith(new CompoundAssignmentInstruction(
-				binary, getterCall, binary.Right,
-				getterCall.Method.ReturnType, CompoundAssignmentType.EvaluatesToNewValue));
-			return true;
-		}
-
+		
 		static bool MatchingGetterAndSetterCalls(CallInstruction getterCall, CallInstruction setterCall)
 		{
 			if (getterCall == null || setterCall == null || !IsSameMember(getterCall.Method.AccessorOwner, setterCall.Method.AccessorOwner))
@@ -486,7 +415,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}
 				storeType = call.Method.Parameters.Last().Type;
 				value = call.Arguments.Last();
-				return call.Method.Equals((call.Method.AccessorOwner as IProperty)?.Setter);
+				return IsSameMember(call.Method, (call.Method.AccessorOwner as IProperty)?.Setter);
 			} else {
 				return false;
 			}
@@ -585,85 +514,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// dead store -> it was a statement-level post-increment
 				inst.ReplaceWith(inst.Value);
 			}
-			return true;
-		}
-
-		/// <code>
-		/// stloc s(ldflda)
-		/// stloc s2(ldobj(ldflda(ldloc s)))
-		/// stloc l(ldloc s2)
-		/// stobj (ldflda(ldloc s), binary.add(ldloc s2, ldc.i4 1))
-		/// -->
-		/// stloc l(compound.op.old(ldobj(ldflda(ldflda)), ldc.i4 1))
-		/// </code>
-		bool TransformCSharp4PostIncDecOperatorOnAddress(Block block, int i)
-		{
-			var baseFieldAddress = block.Instructions[i] as StLoc;
-			var fieldValue = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
-			var fieldValueCopyToLocal = block.Instructions.ElementAtOrDefault(i + 2) as StLoc;
-			var stobj = block.Instructions.ElementAtOrDefault(i + 3) as StObj;
-			if (baseFieldAddress == null || fieldValue == null || fieldValueCopyToLocal == null || stobj == null)
-				return false;
-			if (baseFieldAddress.Variable.Kind != VariableKind.StackSlot || fieldValue.Variable.Kind != VariableKind.StackSlot || fieldValueCopyToLocal.Variable.Kind != VariableKind.Local)
-				return false;
-			IType t;
-			IField targetField;
-			ILInstruction targetFieldLoad, baseFieldAddressLoad2;
-			if (!fieldValue.Value.MatchLdObj(out targetFieldLoad, out t))
-				return false;
-			ILInstruction baseAddress;
-			if (baseFieldAddress.Value is LdFlda) {
-				IField targetField2;
-				ILInstruction baseFieldAddressLoad3;
-				if (!targetFieldLoad.MatchLdFlda(out baseFieldAddressLoad2, out targetField) || !baseFieldAddressLoad2.MatchLdLoc(baseFieldAddress.Variable))
-					return false;
-				if (!stobj.Target.MatchLdFlda(out baseFieldAddressLoad3, out targetField2) || !baseFieldAddressLoad3.MatchLdLoc(baseFieldAddress.Variable) || !IsSameMember(targetField, targetField2))
-					return false;
-				baseAddress = new LdFlda(baseFieldAddress.Value, targetField);
-			} else if (baseFieldAddress.Value is LdElema) {
-				if (!targetFieldLoad.MatchLdLoc(baseFieldAddress.Variable) || !stobj.Target.MatchLdLoc(baseFieldAddress.Variable))
-					return false;
-				baseAddress = baseFieldAddress.Value;
-			} else {
-				return false;
-			}
-			BinaryNumericInstruction binary = stobj.Value as BinaryNumericInstruction;
-			if (binary == null || !binary.Left.MatchLdLoc(fieldValue.Variable) || !binary.Right.MatchLdcI4(1)
-			    || (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
-				return false;
-			context.Step($"TransformCSharp4PostIncDecOperatorOnAddress", baseFieldAddress);
-			var assignment = new CompoundAssignmentInstruction(binary, new LdObj(baseAddress, t), binary.Right, t, CompoundAssignmentType.EvaluatesToOldValue);
-			stobj.ReplaceWith(new StLoc(fieldValueCopyToLocal.Variable, assignment));
-			block.Instructions.RemoveAt(i + 2);
-			block.Instructions.RemoveAt(i + 1);
-			return true;
-		}
-		
-		/// <code>
-		/// stloc s(ldobj(ldsflda))
-		/// stobj (ldsflda, binary.op(ldloc s, ldc.i4 1))
-		/// -->
-		/// stloc s(compound.op.old(ldobj(ldsflda), ldc.i4 1))
-		/// </code>
-		bool TransformPostIncDecOnStaticField(Block block, int pos)
-		{
-			var inst = block.Instructions[pos] as StLoc;
-			var stobj = block.Instructions.ElementAtOrDefault(pos + 1) as StObj;
-			if (inst == null || stobj == null)
-				return false;
-			ILInstruction target;
-			IType type;
-			IField field, field2;
-			if (inst.Variable.Kind != VariableKind.StackSlot || !inst.Value.MatchLdObj(out target, out type) || !target.MatchLdsFlda(out field))
-				return false;
-			if (!stobj.Target.MatchLdsFlda(out field2) || !IsSameMember(field, field2))
-				return false;
-			var binary = stobj.Value as BinaryNumericInstruction;
-			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
-				return false;
-			context.Step($"TransformPostIncDecOnStaticField", inst);
-			var assignment = new CompoundAssignmentInstruction(binary, inst.Value, binary.Right, type, CompoundAssignmentType.EvaluatesToOldValue);
-			stobj.ReplaceWith(new StLoc(inst.Variable, assignment));
 			return true;
 		}
 		
