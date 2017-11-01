@@ -87,6 +87,39 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				new Thread((ThreadStart)delegate {
 				});
 			}
+
+			public void Bug951(int amount)
+			{
+				this.DoAction(delegate {
+					if (amount < 0) {
+						amount = 0;
+					}
+					this.DoAction(delegate {
+						this.NoOp(amount);
+					});
+				});
+			}
+
+			public void Bug951b()
+			{
+				int amount = this.Foo();
+				this.DoAction(delegate {
+					if (amount < 0) {
+						amount = 0;
+					}
+					this.DoAction(delegate {
+						this.NoOp(amount);
+					});
+				});
+			}
+
+			private void DoAction(Action action)
+			{
+			}
+
+			private void NoOp(int a)
+			{
+			}
 		}
 
 		public static void Test(this string a)

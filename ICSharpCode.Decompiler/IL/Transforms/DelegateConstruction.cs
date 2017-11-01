@@ -37,6 +37,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.decompilationContext = new SimpleTypeResolveContext(function.Method);
 			var orphanedVariableInits = new List<ILInstruction>();
 			var targetsToReplace = new List<IInstructionWithVariableOperand>();
+			var translatedDisplayClasses = new HashSet<ITypeDefinition>();
 			foreach (var block in function.Descendants.OfType<Block>()) {
 				for (int i = block.Instructions.Count - 1; i >= 0; i--) {
 					context.CancellationToken.ThrowIfCancellationRequested();
@@ -58,12 +59,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						if (newObj != null && IsInSimpleDisplayClass(newObj.Method)) {
 							targetVariable.CaptureScope = FindBlockContainer(block);
 							targetsToReplace.Add((IInstructionWithVariableOperand)block.Instructions[i]);
+							translatedDisplayClasses.Add(newObj.Method.DeclaringTypeDefinition);
 						}
 					}
 				}
 			}
 			foreach (var target in targetsToReplace.OrderByDescending(t => ((ILInstruction)t).ILRange.Start)) {
-				function.AcceptVisitor(new TransformDisplayClassUsages(function, target, target.Variable.CaptureScope, orphanedVariableInits));
+				function.AcceptVisitor(new TransformDisplayClassUsages(function, target, target.Variable.CaptureScope, orphanedVariableInits, translatedDisplayClasses));
 			}
 			foreach (var store in orphanedVariableInits) {
 				if (store.Parent is Block containingBlock)
@@ -216,6 +218,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			readonly IInstructionWithVariableOperand targetLoad;
 			readonly List<ILVariable> targetAndCopies = new List<ILVariable>();
 			readonly List<ILInstruction> orphanedVariableInits;
+			readonly HashSet<ITypeDefinition> translatedDisplayClasses;
 			readonly Dictionary<IField, DisplayClassVariable> initValues = new Dictionary<IField, DisplayClassVariable>();
 			
 			struct DisplayClassVariable
@@ -224,12 +227,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				public ILInstruction value;
 			}
 			
-			public TransformDisplayClassUsages(ILFunction function, IInstructionWithVariableOperand targetLoad, BlockContainer captureScope, List<ILInstruction> orphanedVariableInits)
+			public TransformDisplayClassUsages(ILFunction function, IInstructionWithVariableOperand targetLoad, BlockContainer captureScope, List<ILInstruction> orphanedVariableInits, HashSet<ITypeDefinition> translatedDisplayClasses)
 			{
 				this.currentFunction = function;
 				this.targetLoad = targetLoad;
 				this.captureScope = captureScope;
 				this.orphanedVariableInits = orphanedVariableInits;
+				this.translatedDisplayClasses = translatedDisplayClasses;
 				this.targetAndCopies.Add(targetLoad.Variable);
 			}
 			
@@ -271,6 +275,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						orphanedVariableInits.Add(inst);
 						value = inst.Value;
 					} else {
+						if (!translatedDisplayClasses.Contains(field.DeclaringTypeDefinition))
+							return;
 						v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 						v.CaptureScope = captureScope;
 						inst.ReplaceWith(new StLoc(v, inst.Value));
