@@ -31,7 +31,7 @@ namespace ICSharpCode.Decompiler
 			if (decompilationContext.CurrentTypeDefinition != null)
 				classTypeParameters = decompilationContext.CurrentTypeDefinition.TypeArguments;
 			IMethod method = decompilationContext.CurrentMember as IMethod;
-			if (method != null)
+			if (method != null && method.TypeParameters.Count > 0)
 				methodTypeParameters = method.TypeArguments;
 			if (typeSystem is SpecializingDecompilerTypeSystem)
 				typeSystem = ((SpecializingDecompilerTypeSystem)typeSystem).Context;

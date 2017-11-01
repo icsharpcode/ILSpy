@@ -57,11 +57,35 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		}
 	}
 
-	public class BaseClass
+	public abstract class BaseClass
 	{
+		protected abstract void Method1<T>(T test);
 	}
 
 	public class DerivedClass : BaseClass
 	{
+		protected override void Method1<T>(T test) { }
+
+		private void Method2()
+		{
+			this.Method1(0);
+		}
 	}
+
+	#region Issue 958 - Invalid cast in generic class for abstract base call
+	internal abstract class BaseClass<T>
+	{
+		protected abstract void Method1();
+	}
+
+	internal class DerivedClass<T> : BaseClass<T>
+	{
+		protected override void Method1() { }
+
+		private void Method2()
+		{
+			this.Method1();
+		}
+	}
+	#endregion
 }
