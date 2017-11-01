@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.IO;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -25,15 +26,25 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private int field1;
 		private static InlineAssignmentTest field2;
 		private int[] field3;
-		
+		private short field4;
+
+		public int InstanceProperty {
+			get;
+			set;
+		}
+		public static int StaticProperty {
+			get;
+			set;
+		}
+
 		public void SimpleInlineWithLocals()
 		{
-			int value;
-			Console.WriteLine(value = 5);
+			int index;
+			Console.WriteLine(this.GetFormat(), index = this.GetIndex());
+			Console.WriteLine(index);
+			InlineAssignmentTest value;
+			Console.WriteLine(this.GetFormat(), value = new InlineAssignmentTest());
 			Console.WriteLine(value);
-			InlineAssignmentTest value2;
-			Console.WriteLine(value2 = new InlineAssignmentTest());
-			Console.WriteLine(value2);
 		}
 		
 		public void SimpleInlineWithFields()
@@ -41,24 +52,34 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(this.field1 = 5);
 			Console.WriteLine(InlineAssignmentTest.field2 = new InlineAssignmentTest());
 		}
-		
+
 		public void SimpleInlineWithFields2()
 		{
 			Console.WriteLine(this.field1 = 5);
 			Console.WriteLine(this.field1);
 			Console.WriteLine(InlineAssignmentTest.field2 = new InlineAssignmentTest());
 			Console.WriteLine(InlineAssignmentTest.field2);
+			this.UseShort(this.field4 = 6);
+			this.UseShort(this.field4 = -10000);
+			this.UseShort(this.field4 = (short)this.field1);
+			this.UseShort(this.field4 = this.UseShort(0));
+			Console.WriteLine(this.field4);
 		}
 		
-//		public void ReadLoop1(TextReader r)
-//		{
-//			string V_0;
-//			while ((V_0 = r.ReadLine()) != null)
-//			{
-//				Console.WriteLine(V_0);
-//			}
-//		}
-		
+		public short UseShort(short s)
+		{
+			Console.WriteLine(s);
+			return s;
+		}
+
+		public void ReadLoop1(TextReader r)
+		{
+			string value;
+			while ((value = r.ReadLine()) != null) {
+				Console.WriteLine(value);
+			}
+		}
+
 		public void AccessArray(int[] a)
 		{
 			int num;
@@ -91,6 +112,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			throw new NotImplementedException();
 		}
 		
+		public string GetFormat()
+		{
+			return "{0}";
+		}
+
 		public int GetValue(int value)
 		{
 			return value;
@@ -99,6 +125,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int ArrayUsageWithMethods()
 		{
 			return this.GetArray()[this.GetIndex()] = this.GetValue(this.GetIndex());
+		}
+
+		public int StaticPropertyTest()
+		{
+			return InlineAssignmentTest.StaticProperty = this.GetIndex();
+		}
+
+		public int InstancePropertyTest()
+		{
+			return this.InstanceProperty = this.GetIndex();
 		}
 	}
 }

@@ -108,8 +108,13 @@ namespace ICSharpCode.Decompiler.IL
 				// only the last instruction may have an unreachable endpoint
 				Debug.Assert(!Instructions[i].HasFlag(InstructionFlags.EndPointUnreachable));
 			}
-			if (this.Type == BlockType.ControlFlow) {
-				Debug.Assert(finalInstruction.OpCode == OpCode.Nop);
+			switch (this.Type) {
+				case BlockType.ControlFlow:
+					Debug.Assert(finalInstruction.OpCode == OpCode.Nop);
+					break;
+				case BlockType.CallInlineAssign:
+					Debug.Assert(MatchInlineAssignBlock(out _, out _));
+					break;
 			}
 		}
 		
@@ -251,13 +256,62 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return inst;
 		}
+
+		public bool MatchInlineAssignBlock(out CallInstruction call, out ILInstruction value)
+		{
+			call = null;
+			value = null;
+			if (this.Type != BlockType.CallInlineAssign)
+				return false;
+			if (this.Instructions.Count != 1)
+				return false;
+			call = this.Instructions[0] as CallInstruction;
+			if (call == null || call.Arguments.Count == 0)
+				return false;
+			if (!call.Arguments.Last().MatchStLoc(out var tmp, out value))
+				return false;
+			if (!(tmp.IsSingleDefinition && tmp.LoadCount == 1))
+				return false;
+			return this.FinalInstruction.MatchLdLoc(tmp);
+		}
 	}
 	
-	public enum BlockType {
+	public enum BlockType
+	{
+		/// <summary>
+		/// Block is used for control flow.
+		/// All blocks in block containers must have this type.
+		/// Control flow blocks cannot evaluate to a value (FinalInstruction must be Nop).
+		/// </summary>
 		ControlFlow,
+		/// <summary>
+		/// Block is used for array initializers, e.g. `new int[] { expr1, expr2 }`.
+		/// </summary>
 		ArrayInitializer,
 		CollectionInitializer,
 		ObjectInitializer,
-		PostfixOperator
+		/// <summary>
+		/// Block is used for postfix operator on local variable.
+		/// </summary>
+		/// <remarks>
+		/// Postfix operators on non-locals use CompoundAssignmentInstruction with CompoundAssignmentType.EvaluatesToOldValue.
+		/// </remarks>
+		PostfixOperator,
+		/// <summary>
+		/// Block is used for using the result of a property setter inline.
+		/// Example: <code>Use(this.Property = value);</code>
+		/// This is only for inline assignments to property or indexers; other inline assignments work
+		/// by using the result value of the stloc/stobj instructions.
+		/// 
+		/// Constructed by TransformAssignment.
+		/// Can be deconstructed using Block.MatchInlineAssignBlock().
+		/// </summary>
+		/// <example>
+		/// Block {
+		///   call setter(..., stloc s(...))
+		///   final: ldloc s
+		/// }
+		/// </example>
+		CallInlineAssign
 	}
 }

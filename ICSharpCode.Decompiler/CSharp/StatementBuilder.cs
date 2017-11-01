@@ -463,26 +463,6 @@ namespace ICSharpCode.Decompiler.CSharp
 					foreachVariable.Kind = VariableKind.ForeachLocal;
 					foreachVariable.Name = AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>(), foreachVariable);
 					break;
-				case RequiredGetCurrentTransformation.UninlineAndUseExistingVariable:
-					// Unwrap stloc chain.
-					var nestedStores = new Stack<ILVariable>();
-					var currentInst = instToReplace; // instToReplace is the innermost value of the stloc chain.
-					while (currentInst.Parent is StLoc stloc) {
-						// Exclude nested stores to foreachVariable
-						// we'll insert one store at the beginning of the block.
-						if (stloc.Variable != foreachVariable && stloc.Parent is StLoc)
-							nestedStores.Push(stloc.Variable);
-						currentInst = stloc;
-					}
-					// Rebuild the nested store instructions:
-					ILInstruction reorderedStores = new LdLoc(foreachVariable);
-					while (nestedStores.Count > 0) {
-						reorderedStores = new StLoc(nestedStores.Pop(), reorderedStores);
-					}
-					currentInst.ReplaceWith(reorderedStores);
-					body.Instructions.Insert(0, new StLoc(foreachVariable, instToReplace));
-					// Adjust variable type, kind and name.
-					goto case RequiredGetCurrentTransformation.UseExistingVariable;
 				case RequiredGetCurrentTransformation.IntroduceNewVariable:
 					foreachVariable = currentFunction.RegisterVariable(
 						VariableKind.ForeachLocal, type,
@@ -567,16 +547,6 @@ namespace ICSharpCode.Decompiler.CSharp
 			/// </summary>
 			UseExistingVariable,
 			/// <summary>
-			/// Uninline (and possibly reorder) multiple stloc instructions and insert stloc foreachVar(call get_Current()) as first statement in the loop body.
-			/// <code>
-			///	... (stloc foreachVar(stloc otherVar(call get_Current())) ...
-			///	=>
-			///	stloc foreachVar(call get_Current())
-			///	... (stloc otherVar(ldloc foreachVar)) ...
-			/// </code>
-			/// </summary>
-			UninlineAndUseExistingVariable,
-			/// <summary>
 			/// No store was found, thus create a new variable and use it as foreach variable.
 			/// <code>
 			///	... (call get_Current()) ...
@@ -617,32 +587,15 @@ namespace ICSharpCode.Decompiler.CSharp
 			// the result of call get_Current is casted.
 			while (inst.Parent is UnboxAny || inst.Parent is CastClass)
 				inst = inst.Parent;
-			// Gather all nested assignments to determine the foreach variable.
-			List<StLoc> nestedStores = new List<StLoc>();
-			while (inst.Parent is StLoc stloc) {
-				nestedStores.Add(stloc);
-				inst = stloc;
-			}
-			// No variable was found: we need a new one.
-			if (nestedStores.Count == 0)
-				return RequiredGetCurrentTransformation.IntroduceNewVariable;
 			// One variable was found.
-			if (nestedStores.Count == 1) {
+			if (inst.Parent is StLoc stloc) {
 				// Must be a plain assignment expression and variable must only be used in 'body' + only assigned once.
-				if (nestedStores[0].Parent == loopBody && VariableIsOnlyUsedInBlock(nestedStores[0], usingContainer)) {
-					foreachVariable = nestedStores[0].Variable;
+				if (stloc.Parent == loopBody && VariableIsOnlyUsedInBlock(stloc, usingContainer)) {
+					foreachVariable = stloc.Variable;
 					return RequiredGetCurrentTransformation.UseExistingVariable;
 				}
-			} else {
-				// Check if any of the variables is usable as foreach variable.
-				foreach (var store in nestedStores) {
-					if (VariableIsOnlyUsedInBlock(store, usingContainer)) {
-						foreachVariable = store.Variable;
-						return RequiredGetCurrentTransformation.UninlineAndUseExistingVariable;
-					}
-				}
 			}
-			// No suitable variable found.
+			// No suitable variable was found: we need a new one.
 			return RequiredGetCurrentTransformation.IntroduceNewVariable;
 		}
 

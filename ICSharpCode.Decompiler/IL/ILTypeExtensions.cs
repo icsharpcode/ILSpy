@@ -127,5 +127,40 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return primitiveType.GetStackType().IsIntegerType();
 		}
+
+		/// <summary>
+		/// Infers the C# type for an IL instruction.
+		/// 
+		/// Returns SpecialType.UnknownType for unsupported instructions.
+		/// </summary>
+		public static IType InferType(this ILInstruction inst)
+		{
+			switch (inst) {
+				case NewObj newObj:
+					return newObj.Method.DeclaringType;
+				case Call call:
+					return call.Method.ReturnType;
+				case CallVirt callVirt:
+					return callVirt.Method.ReturnType;
+				case CallIndirect calli:
+					return calli.ReturnType;
+				case LdObj ldobj:
+					return ldobj.Type;
+				case StObj stobj:
+					return stobj.Type;
+				case LdLoc ldloc:
+					return ldloc.Variable.Type;
+				case StLoc stloc:
+					return stloc.Variable.Type;
+				case LdLoca ldloca:
+					return new TypeSystem.ByReferenceType(ldloca.Variable.Type);
+				case LdFlda ldflda:
+					return new TypeSystem.ByReferenceType(ldflda.Field.Type);
+				case LdsFlda ldsflda:
+					return new TypeSystem.ByReferenceType(ldsflda.Field.Type);
+				default:
+					return SpecialType.UnknownType;
+			}
+		}
 	}
 }

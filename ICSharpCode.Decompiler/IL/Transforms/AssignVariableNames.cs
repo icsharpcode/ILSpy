@@ -359,18 +359,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!variableType.IsKnownType(KnownTypeCode.Object))
 				return variableType;
 
-			switch (inst) {
-				case NewObj newObj:
-					return newObj.Method.DeclaringType;
-				case Call call:
-					return call.Method.ReturnType;
-				case CallVirt callVirt:
-					return callVirt.Method.ReturnType;
-				case CallIndirect calli:
-					return calli.ReturnType;
-				default:
-					return context.TypeSystem.Compilation.FindType(inst.ResultType.ToKnownTypeCode());
-			}
+			IType inferredType = inst.InferType();
+			if (inferredType.Kind != TypeKind.Unknown)
+				return inferredType;
+			else
+				return variableType;
 		}
 
 		internal static string GenerateForeachVariableName(ILFunction function, ILInstruction valueContext, ILVariable existingVariable = null)

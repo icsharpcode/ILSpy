@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 		
 		[Test]
-		public void InlineAssignmentTest([ValueSource("noRoslynOptions")] CompilerOptions cscOptions)
+		public void InlineAssignmentTest([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
 		}
@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var executable = Tester.AssembleIL(ilFile, asmOptions | AssemblerOptions.Library);
 			var decompiled = Tester.DecompileCSharp(executable);
 			
-			CodeAssert.FilesAreEqual(csFile, decompiled, cscOptions.HasFlag(CompilerOptions.UseRoslyn) ? null : new[] { "LEGACY_CSC" });
+			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).ToArray());
 		}
 	}
 }

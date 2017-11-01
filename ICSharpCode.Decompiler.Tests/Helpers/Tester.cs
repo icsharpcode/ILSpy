@@ -158,6 +158,24 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			};
 		});
 		
+
+		public static List<string> GetPreprocessorSymbols(CompilerOptions flags)
+		{
+			var preprocessorSymbols = new List<string>();
+			if (flags.HasFlag(CompilerOptions.UseDebug)) {
+				preprocessorSymbols.Add("DEBUG");
+			}
+			if (flags.HasFlag(CompilerOptions.Optimize)) {
+				preprocessorSymbols.Add("OPT");
+			}
+			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
+				preprocessorSymbols.Add("ROSLYN");
+			} else {
+				preprocessorSymbols.Add("LEGACY_CSC");
+			}
+			return preprocessorSymbols;
+		}
+
 		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
@@ -165,10 +183,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
 
-			var preprocessorSymbols = new List<string>();
-			if (flags.HasFlag(CompilerOptions.UseDebug)) {
-				preprocessorSymbols.Add("DEBUG");
-			}
+			var preprocessorSymbols = GetPreprocessorSymbols(flags);
 
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
 				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray());
@@ -194,7 +209,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 				return results;
 			} else {
-				preprocessorSymbols.Add("LEGACY_CSC");
 				var provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 				CompilerParameters options = new CompilerParameters();
 				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);

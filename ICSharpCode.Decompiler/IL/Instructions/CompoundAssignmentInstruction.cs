@@ -85,6 +85,18 @@ namespace ICSharpCode.Decompiler.IL
 					return false;
 				type = NullableType.GetUnderlyingType(type);
 			}
+			if (type.Kind == TypeKind.Enum) {
+				switch (binary.Operator) {
+					case BinaryNumericOperator.Add:
+					case BinaryNumericOperator.Sub:
+					case BinaryNumericOperator.BitAnd:
+					case BinaryNumericOperator.BitOr:
+					case BinaryNumericOperator.BitXor:
+						break; // OK
+					default:
+						return false; // operator not supported on enum types
+				}
+			}
 			if (binary.Sign != Sign.None) {
 				if (type.GetSign() != binary.Sign)
 					return false;
@@ -95,7 +107,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal static bool IsValidCompoundAssignmentTarget(ILInstruction inst)
 		{
 			switch (inst.OpCode) {
-				case OpCode.LdLoc:
+				// case OpCode.LdLoc: -- not valid -- does not mark the variable as written to
 				case OpCode.LdObj:
 					return true;
 				case OpCode.Call:

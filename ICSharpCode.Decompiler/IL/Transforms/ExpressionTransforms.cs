@@ -16,9 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -277,20 +279,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.RequestRerun();
 				return;
 			}
-
-			if (inst.Value is BinaryNumericInstruction binary
-				&& binary.Left.MatchLdObj(out ILInstruction target, out IType t)
-				&& inst.Target.Match(target).Success
-				&& SemanticHelper.IsPure(target.Flags)
-				&& CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, t))
-			{
-				context.Step("compound assignment", inst);
-				// stobj(target, binary.op(ldobj(target), ...))
-				// => compound.op(target, ...)
-				inst.ReplaceWith(new CompoundAssignmentInstruction(
-					binary, binary.Left, binary.Right,
-					t, CompoundAssignmentType.EvaluatesToNewValue));
-			}
+			TransformAssignment.HandleStObjCompoundAssign(inst, context);
 		}
 
 		protected internal override void VisitIfInstruction(IfInstruction inst)

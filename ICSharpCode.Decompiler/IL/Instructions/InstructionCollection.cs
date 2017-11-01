@@ -140,6 +140,10 @@ namespace ICSharpCode.Decompiler.IL
 		/// </remarks>
 		public int IndexOf(T item)
 		{
+			if (item == null) {
+				// InstructionCollection can't contain nulls
+				return -1;
+			}
 			// If this collection is the item's primary position, we can use ChildIndex:
 			int index = item.ChildIndex - firstChildIndex;
 			if (index >= 0 && index < list.Count && list[index] == item)
