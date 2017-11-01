@@ -54,7 +54,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// stloc s(value)
 		/// stloc l(ldloc s)
 		/// stobj(..., ldloc s)
-		///   where ... is pure and does not use s or l
+		///   where ... is pure and does not use s or l,
+		///   and where neither the 'stloc s' nor the 'stobj' truncates
 		/// -->
 		/// stloc l(stobj (..., value))
 		/// </code>
@@ -65,6 +66,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <code>
 		/// stloc s(value)
 		/// stobj (..., ldloc s)
+		///   where ... is pure and does not use s, and where the 'stobj' does not truncate
 		/// -->
 		/// stloc s(stobj (..., value))
 		/// </code>
@@ -75,9 +77,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <code>
 		/// stloc s(value)
 		/// call set_Property(..., ldloc s)
-		///   where the '...' arguments are free of side-effects and not using 's'
+		///   where the '...' arguments are pure and not using 's'
 		/// -->
 		/// stloc s(Block InlineAssign { call set_Property(..., stloc i(value)); final: ldloc i })
+		///   new temporary 'i' has type of the property; transform only valid if 'stloc i' doesn't truncate
 		/// </code>
 		bool TransformInlineAssignmentStObjOrCall(Block block, int pos)
 		{
@@ -94,6 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (block.Instructions[pos + 1] is StLoc localStore) { // with extra local
 				if (localStore.Variable.Kind != VariableKind.Local || !localStore.Value.MatchLdLoc(inst.Variable))
 					return false;
+				// if we're using an extra local, we'll delete "s", so check that that doesn't have any additional uses
 				if (!(inst.Variable.IsSingleDefinition && inst.Variable.LoadCount == 2))
 					return false;
 				local = localStore.Variable;
@@ -211,30 +215,31 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		internal static bool HandleCallCompoundAssign(CallInstruction setterCall, StatementTransformContext context)
 		{
 			// callvirt set_Property(ldloc S_1, binary.op(callvirt get_Property(ldloc S_1), value))
-			// ==> compound.op.new(callvirt(callvirt get_Property(ldloc S_1)), value)
+			// ==> compound.op.new(callvirt get_Property(ldloc S_1), value)
 			var setterValue = setterCall.Arguments.LastOrDefault();
 			var storeInSetter = setterValue as StLoc;
 			if (storeInSetter != null) {
 				// callvirt set_Property(ldloc S_1, stloc v(binary.op(callvirt get_Property(ldloc S_1), value)))
-				// ==> stloc v(compound.op.new(callvirt(callvirt get_Property(ldloc S_1)), value))
+				// ==> stloc v(compound.op.new(callvirt get_Property(ldloc S_1), value))
 				setterValue = storeInSetter.Value;
 			}
-			if (setterValue is Conv conv && conv.Kind == ConversionKind.Truncate && conv.TargetType.IsSmallIntegerType()) {
-				// for compound assignments to small integers, the compiler emits a "conv" instruction
-				setterValue = conv.Argument;
-			} else {
-				conv = null;
-			}
+			setterValue = UnwrapSmallIntegerConv(setterValue, out var conv);
 			if (!(setterValue is BinaryNumericInstruction binary))
 				return false;
 			var getterCall = binary.Left as CallInstruction;
 			if (!MatchingGetterAndSetterCalls(getterCall, setterCall))
 				return false;
 			IType targetType = getterCall.Method.ReturnType;
-			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, targetType))
+			if (!ValidateCompoundAssign(binary, conv, targetType))
 				return false;
-			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() && conv.CheckForOverflow == binary.CheckForOverflow))
-				return false; // conv does not match binary operation
+			if (storeInSetter != null && storeInSetter.Variable.Type.IsSmallIntegerType()) {
+				// 'stloc v' implicitly truncates.
+				// Ensure that type of 'v' must match type of the property:
+				if (storeInSetter.Variable.Type.GetSize() != targetType.GetSize())
+					return false;
+				if (storeInSetter.Variable.Type.GetSign() != targetType.GetSign())
+					return false;
+			}
 			context.Step($"Compound assignment to '{getterCall.Method.AccessorOwner.Name}'", setterCall);
 			ILInstruction newInst = new CompoundAssignmentInstruction(
 				binary, getterCall, binary.Right,
@@ -250,6 +255,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		/// <summary>
 		/// stobj(target, binary.op(ldobj(target), ...))
+		///   where target is pure
 		/// => compound.op(target, ...)
 		/// </summary>
 		/// <remarks>
@@ -288,6 +294,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <code>
 		/// stloc s(value)
 		/// stloc l(ldloc s)
+		///   where neither 'stloc s' nor 'stloc l' truncates the value
 		/// -->
 		/// stloc s(stloc l(value))
 		/// </code>
@@ -304,6 +311,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!nextInst.Value.MatchLdLoc(inst.Variable))
 				return false;
+			if (IsImplicitTruncation(inst.Value, inst.Variable.Type)) {
+				// 'stloc s' is implicitly truncating the stack value
+				return false;
+			}
 			if (IsImplicitTruncation(inst.Value, nextInst.Variable.Type)) {
 				// 'stloc l' is implicitly truncating the stack value
 				return false;
@@ -441,14 +452,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		/// <code>
 		/// stobj(target, binary.add(stloc l(ldobj(target)), ldc.i4 1))
-		///   where target is pure and does not use 'l'
+		///   where target is pure and does not use 'l', and the 'stloc l' does not truncate
 		/// -->
 		/// stloc l(compound.op.old(ldobj(target), ldc.i4 1))
 		/// 
 		///  -or-
 		/// 
 		/// call set_Prop(args..., binary.add(stloc l(call get_Prop(args...)), ldc.i4 1))
-		///   where target is pure and does not use 'l'
+		///   where args.. are pure and do not use 'l', and the 'stloc l' does not truncate
 		/// -->
 		/// stloc l(compound.op.old(call get_Prop(target), ldc.i4 1))
 		/// </code>
@@ -474,6 +485,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!ValidateCompoundAssign(binary, conv, targetType))
 				return false;
+			if (IsImplicitTruncation(stloc.Value, stloc.Variable.Type))
+				return false;
 			context.Step("TransformPostIncDecOperatorWithInlineStore", store);
 			block.Instructions[pos] = new StLoc(stloc.Variable, new CompoundAssignmentInstruction(
 				binary, stloc.Value, binary.Right, targetType, CompoundAssignmentType.EvaluatesToOldValue));
@@ -483,7 +496,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// <code>
 		/// stloc l(ldobj(target))
 		/// stobj(target, binary.op(ldloc l, ldc.i4 1))
-		///   target is pure and does not use 'l'
+		///   target is pure and does not use 'l', 'stloc does not truncate'
 		/// -->
 		/// stloc l(compound.op.old(ldobj(target), ldc.i4 1))
 		/// </code>
@@ -506,6 +519,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
 				return false;
 			if (!ValidateCompoundAssign(binary, conv, targetType))
+				return false;
+			if (IsImplicitTruncation(value, targetType))
 				return false;
 			context.Step("TransformPostIncDecOperator", inst);
 			inst.Value = new CompoundAssignmentInstruction(binary, inst.Value, binary.Right, targetType, CompoundAssignmentType.EvaluatesToOldValue);
