@@ -106,7 +106,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static bool IsSmallIntegerType(this IType type)
 		{
-			return GetSize(type) < 4;
+			int size = GetSize(type);
+			return size > 0 && size < 4;
 		}
 
 		/// <summary>

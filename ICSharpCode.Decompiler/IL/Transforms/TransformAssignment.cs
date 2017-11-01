@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 
@@ -70,45 +71,43 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// stloc s(stobj (..., value))
 		/// </code>
 		/// e.g. used for inline assignment to static field
-		bool TransformInlineAssignmentStObj(Block block, int i)
+		bool TransformInlineAssignmentStObj(Block block, int pos)
 		{
-			var inst = block.Instructions[i] as StLoc;
+			var inst = block.Instructions[pos] as StLoc;
 			// in some cases it can be a compiler-generated local
 			if (inst == null || (inst.Variable.Kind != VariableKind.StackSlot && inst.Variable.Kind != VariableKind.Local))
 				return false;
-			var nextInst = block.Instructions.ElementAtOrDefault(i + 1);
-			ILInstruction replacement;
-			StObj fieldStore;
+			if (IsImplicitTruncation(inst.Value, inst.Variable.Type)) {
+				// 'stloc s' is implicitly truncating the value
+				return false;
+			}
 			ILVariable local;
-			if (nextInst is StLoc localStore) { // with extra local
+			int nextPos;
+			if (block.Instructions[pos + 1] is StLoc localStore) { // with extra local
 				if (localStore.Variable.Kind != VariableKind.Local || !localStore.Value.MatchLdLoc(inst.Variable))
 					return false;
 				if (!(inst.Variable.IsSingleDefinition && inst.Variable.LoadCount == 2))
 					return false;
-				var memberStore = block.Instructions.ElementAtOrDefault(i + 2);
-				if (memberStore is StObj) {
-					fieldStore = memberStore as StObj;
-					if (!fieldStore.Value.MatchLdLoc(inst.Variable) || localStore.Variable.IsUsedWithin(fieldStore.Target))
-						return false;
-					replacement = new StObj(fieldStore.Target, inst.Value, fieldStore.Type);
-				} else {
-					return false;
-				}
-				context.Step("Inline assignment stobj (with extra local)", fieldStore);
 				local = localStore.Variable;
-				block.Instructions.RemoveAt(i + 1);
-			} else if (nextInst is StObj) { // without extra local
-				fieldStore = (StObj)nextInst;
-				if (!fieldStore.Value.MatchLdLoc(inst.Variable) || inst.Variable.IsUsedWithin(fieldStore.Target))
-					return false;
-				context.Step("Inline assignment stobj", fieldStore);
-				local = inst.Variable;
-				replacement = new StObj(fieldStore.Target, inst.Value, fieldStore.Type);
+				nextPos = pos + 2;
 			} else {
+				local = inst.Variable;
+				localStore = null;
+				nextPos = pos + 1;
+			}
+			if (!(block.Instructions[nextPos] is StObj stobj))
+				return false;
+			if (!stobj.Value.MatchLdLoc(inst.Variable) || inst.Variable.IsUsedWithin(stobj.Target))
+				return false;
+			if (IsImplicitTruncation(inst.Value, stobj.Type)) {
+				// 'stloc s' is implicitly truncating the value
 				return false;
 			}
-			block.Instructions.RemoveAt(i + 1);
-			inst.ReplaceWith(new StLoc(local, replacement));
+			context.Step("Inline assignment stobj", stobj);
+			block.Instructions.Remove(localStore);
+			block.Instructions.Remove(stobj);
+			stobj.Value = inst.Value;
+			inst.ReplaceWith(new StLoc(local, stobj));
 			return true;
 		}
 		
@@ -253,8 +252,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (inst.Variable.Kind != VariableKind.StackSlot)
 				return false;
+			Debug.Assert(!inst.Variable.Type.IsSmallIntegerType());
 			if (nextInst.Variable.Kind != VariableKind.Local || !nextInst.Value.MatchLdLoc(inst.Variable))
 				return false;
+			if (IsImplicitTruncation(inst.Value, nextInst.Variable.Type)) {
+				// 'stloc l' is implicitly truncating the stack value
+				return false;
+			}
 			context.Step("Inline assignment to local variable", inst);
 			var value = inst.Value;
 			var var = nextInst.Variable;
@@ -263,7 +267,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			nextInst.ReplaceWith(new StLoc(stackVar, new StLoc(var, value)));
 			return true;
 		}
-		
+
+		bool IsImplicitTruncation(ILInstruction value, IType type)
+		{
+			return type.IsSmallIntegerType();
+		}
+
 		/// <code>
 		/// stloc s(ldloc l)
 		/// stloc l(binary.op(ldloc s, ldc.i4 1))
