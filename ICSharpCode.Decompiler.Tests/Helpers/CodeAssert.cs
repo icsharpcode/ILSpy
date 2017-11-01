@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using DiffLib;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
@@ -115,24 +117,23 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return NormalizeLine(line) == string.Empty;
 		}
 
-		private static IEnumerable<string> NormalizeAndSplitCode(string input, string[] definedSymbols)
+		class DeleteDisabledTextRewriter : CSharpSyntaxRewriter
 		{
-			bool include = true;
-			foreach (string line in input.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries)) {
-				var temp = line.Trim();
-				if (temp.StartsWith("#if !", StringComparison.Ordinal)) {
-					string symbol = temp.Substring(5);
-					if (definedSymbols.Contains(symbol))
-						include = false;
-				} else if (temp.StartsWith("#if ", StringComparison.Ordinal)) {
-					string symbol = temp.Substring(4);
-					if (!definedSymbols.Contains(symbol))
-						include = false;
-				} else if (temp.StartsWith("#endif", StringComparison.Ordinal)) {
-					include = true;
+			public override SyntaxTrivia VisitTrivia(SyntaxTrivia trivia)
+			{
+				if (trivia.IsKind(SyntaxKind.DisabledTextTrivia)) {
+					return default(SyntaxTrivia); // delete
 				}
-				if (include) yield return line;
+				return base.VisitTrivia(trivia);
 			}
+		}
+
+		private static IEnumerable<string> NormalizeAndSplitCode(string input, IEnumerable<string> definedSymbols)
+		{
+			var syntaxTree = CSharpSyntaxTree.ParseText(input, new CSharpParseOptions(preprocessorSymbols: definedSymbols));
+			var result = new DeleteDisabledTextRewriter().Visit(syntaxTree.GetRoot());
+			input = result.ToFullString();
+			return input.Split(new[] { "\r\n", "\n", "\r" }, StringSplitOptions.RemoveEmptyEntries);
 		}
 	}
 }

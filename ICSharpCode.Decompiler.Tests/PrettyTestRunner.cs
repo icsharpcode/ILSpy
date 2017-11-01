@@ -226,7 +226,7 @@ namespace ICSharpCode.Decompiler.Tests
 			var executable = Tester.AssembleIL(ilFile, asmOptions | AssemblerOptions.Library);
 			var decompiled = Tester.DecompileCSharp(executable);
 			
-			CodeAssert.FilesAreEqual(csFile, decompiled, cscOptions.HasFlag(CompilerOptions.UseRoslyn) ? null : new[] { "LEGACY_CSC" });
+			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).ToArray());
 		}
 	}
 }

@@ -388,8 +388,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void ForeachWithRefUsage(List<int> items)
 		{
 			foreach (int item in items) {
+#if ROSLYN && OPT
+				// The variable names differs based on whether roslyn optimizes out the 'item' variable
 				int current = item;
 				Loops.Operation(ref current);
+#else
+				int num = item;
+				Loops.Operation(ref num);
+#endif
 			}
 		}
 
