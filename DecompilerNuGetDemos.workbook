@@ -1,0 +1,34 @@
+---
+uti: com.xamarin.workbook
+id: de255e90-ba7b-4070-be45-65e544ae8219
+title: DecompilerPackageDemos
+platforms:
+- DotNetCore
+packages:
+- id: ICSharpCode.Decompiler
+  version: 3.0.0.3214-beta1
+---
+
+Load the references required to work with the decompiler
+
+```csharp
+#r "ICSharpCode.Decompiler"
+#r "Mono.Cecil"
+
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.CSharp;
+using ICSharpCode.Decompiler.TypeSystem;
+```
+
+You must have compiled frontends.sln first - please adapt basePath accordingly so that the console assembly is found
+
+```csharp
+string basePath = @"D:\GitWorkspace\ILSpy";
+string fileName = basePath + @"\ICSharpCode.Decompiler.Console\bin\Debug\netcoreapp2.0\ilspycmd.dll";
+var decompiler = new CSharpDecompiler(fileName, new DecompilerSettings());
+```
+
+```csharp
+var types = decompiler.TypeSystem.Compilation.MainAssembly.GetAllTypeDefinitions();
+Console.WriteLine(types.Count());
+```
