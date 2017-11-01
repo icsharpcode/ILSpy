@@ -765,6 +765,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			entityDecl.AddChild(body, Roles.Body);
+			entityDecl.AddAnnotation(function);
 
 			if (function.IsIterator) {
 				if (!body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement)) {

@@ -22,6 +22,7 @@ using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.IL;
+using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
@@ -152,9 +153,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			foreach (var stmt in rootNode.DescendantsAndSelf.OfType<ExpressionStatement>()) {
 				if (!IsValidInStatementExpression(stmt.Expression)) {
+					// fetch ILFunction
+					var function = stmt.Ancestors.SelectMany(a => a.Annotations.OfType<ILFunction>()).First(f => f.Parent == null);
 					// assign result to dummy variable
-					var v = new ILVariable(VariableKind.StackSlot, stmt.Expression.GetResolveResult().Type, 0);
-					v.Name = "_";
+					var type = stmt.Expression.GetResolveResult().Type;
+					var v = function.RegisterVariable(
+						VariableKind.StackSlot,
+						type,
+						AssignVariableNames.GenerateVariableName(function, type)
+					);
 					stmt.Expression = new AssignmentExpression(
 						new IdentifierExpression(v.Name).WithRR(new ILVariableResolveResult(v, v.Type)),
 						stmt.Expression.Detach());

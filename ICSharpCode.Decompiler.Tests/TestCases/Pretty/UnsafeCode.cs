@@ -301,7 +301,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe string StackAllocStruct(int count)
 		{
 			SimpleStruct* ptr = stackalloc SimpleStruct[checked(count * 2)];
-			SimpleStruct* _ = stackalloc SimpleStruct[10];
+			SimpleStruct* ptr2 = stackalloc SimpleStruct[10];
 			return this.UsePointer(&ptr->Y);
 		}
 
