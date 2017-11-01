@@ -39,6 +39,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			rootNode.AcceptVisitor(requiredImports);
 			
 			var usingScope = new UsingScope();
+			rootNode.AddAnnotation(usingScope);
 
 			if (context.Settings.UsingDeclarations) {
 				var insertionPoint = rootNode.Children.LastOrDefault(n => n is PreProcessorDirective p && p.Type == PreProcessorDirectiveType.Define);
@@ -66,7 +67,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			// verify that the SimpleTypes refer to the correct type (no ambiguities)
 			rootNode.AcceptVisitor(new FullyQualifyAmbiguousTypeNamesVisitor(context, usingScope));
-			rootNode.AddAnnotation(usingScope);
 		}
 		
 		sealed class FindRequiredImports : DepthFirstAstVisitor
