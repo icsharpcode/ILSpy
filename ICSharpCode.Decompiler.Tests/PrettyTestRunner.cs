@@ -74,7 +74,7 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 		
 		[Test]
-		public void InlineAssignmentTest([ValueSource("noRoslynOptions")] CompilerOptions cscOptions)
+		public void InlineAssignmentTest([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
 		}

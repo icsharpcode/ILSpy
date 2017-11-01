@@ -39,12 +39,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public void SimpleInlineWithLocals()
 		{
-			int value;
-			Console.WriteLine(value = 5);
+			int index;
+			Console.WriteLine(this.GetFormat(), index = this.GetIndex());
+			Console.WriteLine(index);
+			InlineAssignmentTest value;
+			Console.WriteLine(this.GetFormat(), value = new InlineAssignmentTest());
 			Console.WriteLine(value);
-			InlineAssignmentTest value2;
-			Console.WriteLine(value2 = new InlineAssignmentTest());
-			Console.WriteLine(value2);
 		}
 		
 		public void SimpleInlineWithFields()
@@ -112,6 +112,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			throw new NotImplementedException();
 		}
 		
+		public string GetFormat()
+		{
+			return "{0}";
+		}
+
 		public int GetValue(int value)
 		{
 			return value;

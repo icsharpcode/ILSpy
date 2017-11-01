@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly vm2ov5l1
+.assembly iwgzkcmd
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module vm2ov5l1.dll
-// MVID: {F7BCAA28-E619-40E7-921D-149FF48046FD}
+.module iwgzkcmd.dll
+// MVID: {80313F66-9892-4910-999C-C098CFBAAB05}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x052F0000
+// Image base: 0x02540000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -692,7 +692,7 @@
   .method public hidebysig instance void 
           ShortEnumTest() cil managed
   {
-    // Code size       62 (0x3e)
+    // Code size       61 (0x3d)
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  dup
@@ -704,25 +704,25 @@
     IL_000f:  ldarg.0
     IL_0010:  dup
     IL_0011:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
-    IL_0016:  ldc.i4.s   -5
-    IL_0018:  and
-    IL_0019:  conv.i2
-    IL_001a:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
-    IL_001f:  ldarg.0
-    IL_0020:  dup
-    IL_0021:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
-    IL_0026:  ldc.i4.2
-    IL_0027:  add
-    IL_0028:  conv.i2
-    IL_0029:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
-    IL_002e:  ldarg.0
-    IL_002f:  dup
-    IL_0030:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
-    IL_0035:  ldc.i4.3
-    IL_0036:  sub
-    IL_0037:  conv.i2
-    IL_0038:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
-    IL_003d:  ret
+    IL_0016:  ldc.i4.4
+    IL_0017:  and
+    IL_0018:  conv.i2
+    IL_0019:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_001e:  ldarg.0
+    IL_001f:  dup
+    IL_0020:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_0025:  ldc.i4.2
+    IL_0026:  add
+    IL_0027:  conv.i2
+    IL_0028:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_002d:  ldarg.0
+    IL_002e:  dup
+    IL_002f:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_0034:  ldc.i4.3
+    IL_0035:  sub
+    IL_0036:  conv.i2
+    IL_0037:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_003c:  ret
   } // end of method CompoundAssignmentTest::ShortEnumTest
 
   .method public hidebysig instance int32 

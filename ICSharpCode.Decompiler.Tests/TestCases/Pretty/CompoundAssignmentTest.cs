@@ -236,7 +236,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void ShortEnumTest()
 		{
 			this.shortEnumField |= ShortEnum.Two;
-			this.shortEnumField &= ~ShortEnum.Four;
+			this.shortEnumField &= ShortEnum.Four;
 			this.shortEnumField += 2;
 			this.shortEnumField -= 3;
 		}

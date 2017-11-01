@@ -10,25 +10,29 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly cljdpn4p
+.assembly InlineAssignmentTest
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
                                                                                                              63 65 70 74 69 6F 6E 54 68 72 6F 77 73 01 )       // ceptionThrows.
+
+  // --- The following custom attribute is added automatically, do not uncomment -------
+  //  .custom instance void [mscorlib]System.Diagnostics.DebuggableAttribute::.ctor(valuetype [mscorlib]System.Diagnostics.DebuggableAttribute/DebuggingModes) = ( 01 00 07 01 00 00 00 00 ) 
+
   .permissionset reqmin
              = {[mscorlib]System.Security.Permissions.SecurityPermissionAttribute = {property bool 'SkipVerification' = bool(true)}}
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module cljdpn4p.dll
-// MVID: {4E91830C-4968-4AA2-B516-7FDA32452515}
+.module InlineAssignmentTest.dll
+// MVID: {370735A1-C3D5-4BD3-8F9B-CC3F81FB734E}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x006A0000
+// Image base: 0x00BE0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -42,22 +46,19 @@
   .field private int16 field4
   .field private int32 '<InstanceProperty>k__BackingField'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void [mscorlib]System.Diagnostics.DebuggerBrowsableAttribute::.ctor(valuetype [mscorlib]System.Diagnostics.DebuggerBrowsableState) = ( 01 00 00 00 00 00 00 00 ) 
   .field private static int32 '<StaticProperty>k__BackingField'
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+  .custom instance void [mscorlib]System.Diagnostics.DebuggerBrowsableAttribute::.ctor(valuetype [mscorlib]System.Diagnostics.DebuggerBrowsableState) = ( 01 00 00 00 00 00 00 00 ) 
   .method public hidebysig specialname instance int32 
           get_InstanceProperty() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       11 (0xb)
-    .maxstack  1
-    .locals init (int32 V_0)
+    // Code size       7 (0x7)
+    .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::'<InstanceProperty>k__BackingField'
-    IL_0006:  stloc.0
-    IL_0007:  br.s       IL_0009
-
-    IL_0009:  ldloc.0
-    IL_000a:  ret
+    IL_0006:  ret
   } // end of method InlineAssignmentTest::get_InstanceProperty
 
   .method public hidebysig specialname instance void 
@@ -76,15 +77,10 @@
           int32  get_StaticProperty() cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-    // Code size       10 (0xa)
-    .maxstack  1
-    .locals init (int32 V_0)
+    // Code size       6 (0x6)
+    .maxstack  8
     IL_0000:  ldsfld     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::'<StaticProperty>k__BackingField'
-    IL_0005:  stloc.0
-    IL_0006:  br.s       IL_0008
-
-    IL_0008:  ldloc.0
-    IL_0009:  ret
+    IL_0005:  ret
   } // end of method InlineAssignmentTest::get_StaticProperty
 
   .method public hidebysig specialname static 
@@ -252,7 +248,7 @@
   .method public hidebysig instance void 
           ReadLoop1(class [mscorlib]System.IO.TextReader r) cil managed
   {
-    // Code size       31 (0x1f)
+    // Code size       28 (0x1c)
     .maxstack  2
     .locals init (string V_0,
              bool V_1)
@@ -269,14 +265,12 @@
     IL_0012:  dup
     IL_0013:  stloc.0
     IL_0014:  ldnull
-    IL_0015:  ceq
-    IL_0017:  ldc.i4.0
-    IL_0018:  ceq
-    IL_001a:  stloc.1
-    IL_001b:  ldloc.1
-    IL_001c:  brtrue.s   IL_0003
+    IL_0015:  cgt.un
+    IL_0017:  stloc.1
+    IL_0018:  ldloc.1
+    IL_0019:  brtrue.s   IL_0003
 
-    IL_001e:  ret
+    IL_001b:  ret
   } // end of method InlineAssignmentTest::ReadLoop1
 
   .method public hidebysig instance void 
@@ -317,13 +311,13 @@
     IL_0001:  ldarg.1
     IL_0002:  ldc.i4.3
     IL_0003:  dup
-    IL_0004:  stloc.1
+    IL_0004:  stloc.0
     IL_0005:  stind.i4
-    IL_0006:  ldloc.1
-    IL_0007:  stloc.0
+    IL_0006:  ldloc.0
+    IL_0007:  stloc.1
     IL_0008:  br.s       IL_000a
 
-    IL_000a:  ldloc.0
+    IL_000a:  ldloc.1
     IL_000b:  ret
   } // end of method InlineAssignmentTest::Return
 
@@ -340,13 +334,13 @@
     IL_0002:  ldarg.2
     IL_0003:  ldarg.2
     IL_0004:  dup
-    IL_0005:  stloc.1
+    IL_0005:  stloc.0
     IL_0006:  stelem.i4
-    IL_0007:  ldloc.1
-    IL_0008:  stloc.0
+    IL_0007:  ldloc.0
+    IL_0008:  stloc.1
     IL_0009:  br.s       IL_000b
 
-    IL_000b:  ldloc.0
+    IL_000b:  ldloc.1
     IL_000c:  ret
   } // end of method InlineAssignmentTest::Array
 
@@ -363,13 +357,13 @@
     IL_0007:  ldarg.1
     IL_0008:  ldc.i4.1
     IL_0009:  dup
-    IL_000a:  stloc.1
+    IL_000a:  stloc.0
     IL_000b:  stelem.i4
-    IL_000c:  ldloc.1
-    IL_000d:  stloc.0
+    IL_000c:  ldloc.0
+    IL_000d:  stloc.1
     IL_000e:  br.s       IL_0010
 
-    IL_0010:  ldloc.0
+    IL_0010:  ldloc.1
     IL_0011:  ret
   } // end of method InlineAssignmentTest::Array2
 
@@ -449,13 +443,13 @@
     IL_000f:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::GetIndex()
     IL_0014:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::GetValue(int32)
     IL_0019:  dup
-    IL_001a:  stloc.1
+    IL_001a:  stloc.0
     IL_001b:  stelem.i4
-    IL_001c:  ldloc.1
-    IL_001d:  stloc.0
+    IL_001c:  ldloc.0
+    IL_001d:  stloc.1
     IL_001e:  br.s       IL_0020
 
-    IL_0020:  ldloc.0
+    IL_0020:  ldloc.1
     IL_0021:  ret
   } // end of method InlineAssignmentTest::ArrayUsageWithMethods
 
@@ -490,25 +484,26 @@
     IL_0002:  ldarg.0
     IL_0003:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::GetIndex()
     IL_0008:  dup
-    IL_0009:  stloc.1
+    IL_0009:  stloc.0
     IL_000a:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::set_InstanceProperty(int32)
     IL_000f:  nop
-    IL_0010:  ldloc.1
-    IL_0011:  stloc.0
+    IL_0010:  ldloc.0
+    IL_0011:  stloc.1
     IL_0012:  br.s       IL_0014
 
-    IL_0014:  ldloc.0
+    IL_0014:  ldloc.1
     IL_0015:  ret
   } // end of method InlineAssignmentTest::InstancePropertyTest
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
-    // Code size       7 (0x7)
+    // Code size       8 (0x8)
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
-    IL_0006:  ret
+    IL_0006:  nop
+    IL_0007:  ret
   } // end of method InlineAssignmentTest::.ctor
 
   .property instance int32 InstanceProperty()
@@ -527,4 +522,3 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// WARNING: Created Win32 resource file ../../../TestCases/Pretty\InlineAssignmentTest.res

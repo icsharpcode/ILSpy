@@ -35,28 +35,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			this.context = context;
-			/*if (TransformPostIncDecOperatorOnAddress(block, i) || TransformPostIncDecOnStaticField(block, i) || TransformCSharp4PostIncDecOperatorOnAddress(block, i)) {
-				block.Instructions.RemoveAt(i);
-				continue;
-			}
-			if (TransformPostIncDecOperator(block, i)) {
-				block.Instructions.RemoveAt(i);
-				continue;
-			}*/
 			if (TransformInlineAssignmentStObjOrCall(block, pos) || TransformInlineAssignmentLocal(block, pos)) {
 				// both inline assignments create a top-level stloc which might affect inlining
 				context.RequestRerun();
 				return;
 			}
-			/*
-			TransformInlineCompoundAssignmentCall(block, pos);
-			TransformRoslynCompoundAssignmentCall(block, pos);
-			// TODO: post-increment on local
-			// post-increment on address (e.g. field or array element)
-			TransformPostIncDecOperatorOnAddress(block, pos);
-			TransformRoslynPostIncDecOperatorOnAddress(block, pos);
-			// TODO: post-increment on call
-			*/
+			if (TransformPostIncDecOperatorWithInlineStore(block, pos)
+				|| TransformPostIncDecOperator(block, pos)
+				|| TransformPostIncDecOperatorLocal(block, pos))
+			{
+				// again, new top-level stloc might need inlining:
+				context.RequestRerun();
+				return;
+			}
 		}
 
 		/// <code>
@@ -126,6 +117,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions.Remove(stobj);
 				stobj.Value = inst.Value;
 				inst.ReplaceWith(new StLoc(local, stobj));
+				// note: our caller will trigger a re-run, which will call HandleStObjCompoundAssign if applicable
 				return true;
 			} else if (block.Instructions[nextPos] is CallInstruction call) {
 				// call must be a setter call:
@@ -151,10 +143,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions.Remove(call);
 				var newVar = context.Function.RegisterVariable(VariableKind.StackSlot, call.Method.Parameters.Last().Type);
 				call.Arguments[call.Arguments.Count - 1] = new StLoc(newVar, inst.Value);
-				inst.ReplaceWith(new StLoc(local, new Block(BlockType.CallInlineAssign) {
+				var inlineBlock = new Block(BlockType.CallInlineAssign) {
 					Instructions = { call },
 					FinalInstruction = new LdLoc(newVar)
-				}));
+				};
+				inst.ReplaceWith(new StLoc(local, inlineBlock));
+				// because the ExpressionTransforms don't look into inline blocks, manually trigger HandleCallCompoundAssign
+				if (HandleCallCompoundAssign(call, context)) {
+					// if we did construct a compound assignment, it should have made our inline block redundant:
+					if (inlineBlock.Instructions.Single().MatchStLoc(newVar, out var compoundAssign)) {
+						Debug.Assert(newVar.IsSingleDefinition && newVar.LoadCount == 1);
+						inlineBlock.ReplaceWith(compoundAssign);
+					}
+				}
 				return true;
 			} else {
 				return false;
@@ -439,10 +440,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// 	final: ldloc s2
 		/// })
 		/// </code>
-		bool TransformPostIncDecOperator(Block block, int i)
+		bool TransformPostIncDecOperatorLocal(Block block, int pos)
 		{
-			var inst = block.Instructions[i] as StLoc;
-			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
+			var inst = block.Instructions[pos] as StLoc;
+			var nextInst = block.Instructions.ElementAtOrDefault(pos + 1) as StLoc;
 			if (inst == null || nextInst == null || !inst.Value.MatchLdLoc(out var l) || !ILVariableEqualityComparer.Instance.Equals(l, nextInst.Variable))
 				return false;
 			var binary = nextInst.Value as BinaryNumericInstruction;
@@ -452,14 +453,61 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if ((binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub) || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
 				return false;
-			context.Step($"TransformPostIncDecOperator", inst);
+			context.Step($"TransformPostIncDecOperatorLocal", inst);
 			var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, inst.Variable.Type);
 			var assignment = new Block(BlockType.PostfixOperator);
 			assignment.Instructions.Add(new StLoc(tempStore, new LdLoc(nextInst.Variable)));
 			assignment.Instructions.Add(new StLoc(nextInst.Variable, new BinaryNumericInstruction(binary.Operator, new LdLoc(tempStore), new LdcI4(1), binary.CheckForOverflow, binary.Sign)));
 			assignment.FinalInstruction = new LdLoc(tempStore);
-			nextInst.ReplaceWith(new StLoc(inst.Variable, assignment));
+			inst.Value = assignment;
+			block.Instructions.RemoveAt(pos + 1); // remove nextInst
 			return true;
+		}
+		
+		/// <summary>
+		/// Gets whether 'inst' is a possible store for use as a compound store.
+		/// </summary>
+		bool IsCompoundStore(ILInstruction inst, out IType storeType, out ILInstruction value)
+		{
+			value = null;
+			storeType = null;
+			if (inst is StObj stobj) {
+				storeType = stobj.Type;
+				value = stobj.Value;
+				return SemanticHelper.IsPure(stobj.Target.Flags);
+			} else if (inst is CallInstruction call && (call.OpCode == OpCode.Call || call.OpCode == OpCode.CallVirt)) {
+				if (call.Method.Parameters.Count == 0) {
+					return false;
+				}
+				foreach (var arg in call.Arguments.SkipLast(1)) {
+					if (!SemanticHelper.IsPure(arg.Flags)) {
+						return false;
+					}
+				}
+				storeType = call.Method.Parameters.Last().Type;
+				value = call.Arguments.Last();
+				return call.Method.Equals((call.Method.AccessorOwner as IProperty)?.Setter);
+			} else {
+				return false;
+			}
+		}
+
+		bool IsMatchingCompoundLoad(ILInstruction load, ILInstruction store, ILVariable forbiddenVariable)
+		{
+			if (load is LdObj ldobj && store is StObj stobj) {
+				Debug.Assert(SemanticHelper.IsPure(stobj.Target.Flags));
+				if (!SemanticHelper.IsPure(ldobj.Target.Flags))
+					return false;
+				if (forbiddenVariable.IsUsedWithin(ldobj.Target))
+					return false;
+				return ldobj.Target.Match(stobj.Target).Success;
+			} else if (MatchingGetterAndSetterCalls(load as CallInstruction, store as CallInstruction)) {
+				if (forbiddenVariable.IsUsedWithin(load))
+					return false;
+				return true;
+			} else {
+				return false;
+			}
 		}
 
 		/// <code>
@@ -467,12 +515,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		///   where target is pure and does not use 'l'
 		/// -->
 		/// stloc l(compound.op.old(ldobj(target), ldc.i4 1))
+		/// 
+		///  -or-
+		/// 
+		/// call set_Prop(args..., binary.add(stloc l(call get_Prop(args...)), ldc.i4 1))
+		///   where target is pure and does not use 'l'
+		/// -->
+		/// stloc l(compound.op.old(call get_Prop(target), ldc.i4 1))
 		/// </code>
-		bool TransformPostIncDecOperatorOnAddress(Block block, int i)
+		/// <remarks>
+		/// Even though this transform operates only on a single expression, it's not an expression transform
+		/// as the result value of the expression changes (this is OK only for statements in a block).
+		/// </remarks>
+		bool TransformPostIncDecOperatorWithInlineStore(Block block, int pos)
 		{
-			if (!(block.Instructions[i] is StObj stobj))
+			var store = block.Instructions[pos];
+			if (!IsCompoundStore(store, out var targetType, out var value))
 				return false;
-			var binary = UnwrapSmallIntegerConv(stobj.Value, out var conv) as BinaryNumericInstruction;
+			var binary = UnwrapSmallIntegerConv(value, out var conv) as BinaryNumericInstruction;
 			if (binary == null || !binary.Right.MatchLdcI4(1))
 				return false;
 			if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
@@ -481,20 +541,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!(stloc.Variable.Kind == VariableKind.Local || stloc.Variable.Kind == VariableKind.StackSlot))
 				return false;
-			if (!(stloc.Value is LdObj ldobj))
+			if (!IsMatchingCompoundLoad(stloc.Value, store, stloc.Variable))
 				return false;
-			if (!SemanticHelper.IsPure(ldobj.Target.Flags))
-				return false;
-			if (!ldobj.Target.Match(stobj.Target).Success)
-				return false;
-			if (stloc.Variable.IsUsedWithin(ldobj.Target))
-				return false;
-			IType targetType = ldobj.Type;
 			if (!ValidateCompoundAssign(binary, conv, targetType))
 				return false;
-			context.Step("TransformPostIncDecOperatorOnAddress", stobj);
-			block.Instructions[i] = new StLoc(stloc.Variable, new CompoundAssignmentInstruction(
-				binary, ldobj, binary.Right, targetType, CompoundAssignmentType.EvaluatesToOldValue));
+			context.Step("TransformPostIncDecOperatorWithInlineStore", store);
+			block.Instructions[pos] = new StLoc(stloc.Variable, new CompoundAssignmentInstruction(
+				binary, stloc.Value, binary.Right, targetType, CompoundAssignmentType.EvaluatesToOldValue));
 			return true;
 		}
 
@@ -505,31 +558,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc l(compound.op.old(ldobj(target), ldc.i4 1))
 		/// </code>
-		bool TransformRoslynPostIncDecOperatorOnAddress(Block block, int i)
+		/// <remarks>
+		/// This pattern occurs with legacy csc for static fields, and with Roslyn for most post-increments.
+		/// </remarks>
+		bool TransformPostIncDecOperator(Block block, int i)
 		{
 			var inst = block.Instructions[i] as StLoc;
-			var stobj = block.Instructions.ElementAtOrDefault(i + 1) as StObj;
-			if (inst == null || stobj == null)
+			var store = block.Instructions.ElementAtOrDefault(i + 1);
+			if (inst == null || store == null)
 				return false;
-			if (!(inst.Value is LdObj ldobj))
+			if (!IsCompoundStore(store, out var targetType, out var value))
 				return false;
-			if (!SemanticHelper.IsPure(ldobj.Target.Flags))
+			if (!IsMatchingCompoundLoad(inst.Value, store, inst.Variable))
 				return false;
-			if (!ldobj.Target.Match(stobj.Target).Success)
-				return false;
-			if (inst.Variable.IsUsedWithin(ldobj.Target))
-				return false;
-			var binary = UnwrapSmallIntegerConv(stobj.Value, out var conv) as BinaryNumericInstruction;
+			var binary = UnwrapSmallIntegerConv(value, out var conv) as BinaryNumericInstruction;
 			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
 				return false;
 			if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
 				return false;
-			var targetType = ldobj.Type;
 			if (!ValidateCompoundAssign(binary, conv, targetType))
 				return false;
-			context.Step("TransformRoslynPostIncDecOperatorOnAddress", inst);
+			context.Step("TransformPostIncDecOperator", inst);
 			inst.Value = new CompoundAssignmentInstruction(binary, inst.Value, binary.Right, targetType, CompoundAssignmentType.EvaluatesToOldValue);
 			block.Instructions.RemoveAt(i + 1);
+			if (inst.Variable.IsSingleDefinition && inst.Variable.LoadCount == 0) {
+				// dead store -> it was a statement-level post-increment
+				inst.ReplaceWith(inst.Value);
+			}
 			return true;
 		}
 
@@ -590,10 +645,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc s(compound.op.old(ldobj(ldsflda), ldc.i4 1))
 		/// </code>
-		bool TransformPostIncDecOnStaticField(Block block, int i)
+		bool TransformPostIncDecOnStaticField(Block block, int pos)
 		{
-			var inst = block.Instructions[i] as StLoc;
-			var stobj = block.Instructions.ElementAtOrDefault(i + 1) as StObj;
+			var inst = block.Instructions[pos] as StLoc;
+			var stobj = block.Instructions.ElementAtOrDefault(pos + 1) as StObj;
 			if (inst == null || stobj == null)
 				return false;
 			ILInstruction target;
