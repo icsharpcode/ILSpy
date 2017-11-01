@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -78,6 +79,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private int[] array1;
 		private StructContainer field1;
 		private MyEnum enumField;
+		private Dictionary<ushort, ushort> ushortDict = new Dictionary<ushort, ushort>();
+		private ushort ushortField;
 		private ShortEnum shortEnumField;
 		public static int StaticField;
 		public static short StaticShortField;
@@ -508,6 +511,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			a = (MyEnum)((int)a % (int)b);
 			// same with enum field:
 			this.enumField = (MyEnum)((int)this.enumField % (int)b);
+		}
+
+		private void Issue588(ushort val)
+		{
+			this.ushortDict.Add(this.ushortField++, val);
 		}
 	}
 }

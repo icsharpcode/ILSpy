@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly njho1304
+.assembly ky5fl4b0
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module njho1304.dll
-// MVID: {06E90287-B329-43EC-805F-F8BC42EE77DE}
+.module ky5fl4b0.dll
+// MVID: {C370770B-D135-491B-8AAA-78D09B51E79A}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00C00000
+// Image base: 0x018D0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -203,6 +203,8 @@
   .field private int32[] array1
   .field private valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer field1
   .field private valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum enumField
+  .field private class [mscorlib]System.Collections.Generic.Dictionary`2<uint16,uint16> ushortDict
+  .field private uint16 ushortField
   .field private valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum shortEnumField
   .field public static int32 StaticField
   .field public static int16 StaticShortField
@@ -1936,14 +1938,44 @@
     IL_0015:  ret
   } // end of method CompoundAssignmentTest::Issue954
 
+  .method private hidebysig instance void 
+          Issue588(uint16 val) cil managed
+  {
+    // Code size       33 (0x21)
+    .maxstack  4
+    .locals init (uint16 V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldfld      class [mscorlib]System.Collections.Generic.Dictionary`2<uint16,uint16> ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::ushortDict
+    IL_0007:  ldarg.0
+    IL_0008:  dup
+    IL_0009:  ldfld      uint16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::ushortField
+    IL_000e:  dup
+    IL_000f:  stloc.0
+    IL_0010:  ldc.i4.1
+    IL_0011:  add
+    IL_0012:  conv.u2
+    IL_0013:  stfld      uint16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::ushortField
+    IL_0018:  ldloc.0
+    IL_0019:  ldarg.1
+    IL_001a:  callvirt   instance void class [mscorlib]System.Collections.Generic.Dictionary`2<uint16,uint16>::Add(!0,
+                                                                                                                   !1)
+    IL_001f:  nop
+    IL_0020:  ret
+  } // end of method CompoundAssignmentTest::Issue588
+
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
   {
-    // Code size       7 (0x7)
+    // Code size       19 (0x13)
     .maxstack  8
     IL_0000:  ldarg.0
-    IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
-    IL_0006:  ret
+    IL_0001:  newobj     instance void class [mscorlib]System.Collections.Generic.Dictionary`2<uint16,uint16>::.ctor()
+    IL_0006:  stfld      class [mscorlib]System.Collections.Generic.Dictionary`2<uint16,uint16> ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::ushortDict
+    IL_000b:  ldarg.0
+    IL_000c:  call       instance void [mscorlib]System.Object::.ctor()
+    IL_0011:  nop
+    IL_0012:  ret
   } // end of method CompoundAssignmentTest::.ctor
 
   .property int32 StaticProperty()
