@@ -61,6 +61,8 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowDebugInfo = (bool?)e.Attribute("showDebugInfo") ?? s.ShowDebugInfo;
 			s.ShowXmlDocumentation = (bool?)e.Attribute("xmlDoc") ?? s.ShowXmlDocumentation;
 			s.FoldBraces = (bool?)e.Attribute("foldBraces") ?? s.FoldBraces;
+			s.UsingDeclarations = (bool?)e.Attribute("usingDeclarations") ?? s.UsingDeclarations;
+			s.FullyQualifyAmbiguousTypeNames = (bool?)e.Attribute("fullyQualifyAmbiguousTypeNames") ?? s.FullyQualifyAmbiguousTypeNames;
 			return s;
 		}
 		
@@ -79,7 +81,10 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("showDebugInfo", s.ShowDebugInfo);
 			section.SetAttributeValue("xmlDoc", s.ShowXmlDocumentation);
 			section.SetAttributeValue("foldBraces", s.FoldBraces);
-			
+			section.SetAttributeValue("foldBraces", s.RemoveDeadCode);
+			section.SetAttributeValue("usingDeclarations", s.UsingDeclarations);
+			section.SetAttributeValue("fullyQualifyAmbiguousTypeNames", s.FullyQualifyAmbiguousTypeNames);
+
 			XElement existingElement = root.Element("DecompilerSettings");
 			if (existingElement != null)
 				existingElement.ReplaceWith(section);
