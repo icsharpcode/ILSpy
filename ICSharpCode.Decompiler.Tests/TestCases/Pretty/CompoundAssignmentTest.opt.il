@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly fwwjsv0p
+.assembly '0ffxad1m'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module fwwjsv0p.dll
-// MVID: {115B8AEA-ECDD-40D2-AD1D-BE7A4D5D451E}
+.module '0ffxad1m.dll'
+// MVID: {C53B3CFA-3FF4-4724-8DBE-8B180FA612BA}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00950000
+// Image base: 0x028A0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -637,26 +637,45 @@
   .method public hidebysig instance void 
           NestedField() cil managed
   {
-    // Code size       41 (0x29)
+    // Code size       87 (0x57)
     .maxstack  3
-    .locals init (int32 V_0)
+    .locals init (int32 V_0,
+             int32 V_1)
     IL_0000:  ldarg.0
     IL_0001:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::field1
     IL_0006:  ldfld      bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer::HasIndex
-    IL_000b:  brfalse.s  IL_0028
+    IL_000b:  brfalse.s  IL_0056
 
     IL_000d:  ldarg.0
     IL_000e:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::field1
     IL_0013:  dup
     IL_0014:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer::Field
-    IL_0019:  dup
-    IL_001a:  stloc.0
-    IL_001b:  ldc.i4.1
-    IL_001c:  add
+    IL_0019:  ldc.i4.2
+    IL_001a:  mul
+    IL_001b:  dup
+    IL_001c:  stloc.0
     IL_001d:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer::Field
     IL_0022:  ldloc.0
     IL_0023:  call       void [mscorlib]System.Console::WriteLine(int32)
-    IL_0028:  ret
+    IL_0028:  ldarg.0
+    IL_0029:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::field1
+    IL_002e:  dup
+    IL_002f:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer::Field
+    IL_0034:  ldc.i4.1
+    IL_0035:  add
+    IL_0036:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer::Field
+    IL_003b:  ldarg.0
+    IL_003c:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::field1
+    IL_0041:  dup
+    IL_0042:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer::Field
+    IL_0047:  dup
+    IL_0048:  stloc.1
+    IL_0049:  ldc.i4.1
+    IL_004a:  add
+    IL_004b:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer::Field
+    IL_0050:  ldloc.1
+    IL_0051:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0056:  ret
   } // end of method CompoundAssignmentTest::NestedField
 
   .method public hidebysig instance void 

@@ -224,6 +224,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void NestedField()
 		{
 			if (this.field1.HasIndex) {
+				Console.WriteLine(this.field1.Field *= 2);
+				this.field1.Field++;
 				Console.WriteLine(this.field1.Field++);
 			}
 		}
