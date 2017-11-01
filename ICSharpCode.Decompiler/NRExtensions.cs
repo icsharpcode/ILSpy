@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler
 			IList<IType> classTypeParameters = null;
 			IList<IType> methodTypeParameters = null;
 			
-			if (decompilationContext.CurrentTypeDefinition != null)
+			if (decompilationContext.CurrentTypeDefinition != null && decompilationContext.CurrentTypeDefinition.TypeParameterCount > 0)
 				classTypeParameters = decompilationContext.CurrentTypeDefinition.TypeArguments;
 			IMethod method = decompilationContext.CurrentMember as IMethod;
 			if (method != null && method.TypeParameters.Count > 0)
