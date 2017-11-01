@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly '20aqunvz'
+.assembly vm2ov5l1
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module '20aqunvz.dll'
-// MVID: {3A9D60C3-9668-4C33-85C8-329DB1EEECE6}
+.module vm2ov5l1.dll
+// MVID: {F7BCAA28-E619-40E7-921D-149FF48046FD}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x029E0000
+// Image base: 0x052F0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -186,6 +186,7 @@
   .field private int32[] array1
   .field private valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/StructContainer field1
   .field private valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum enumField
+  .field private valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum shortEnumField
   .field public static int32 StaticField
   .field public static int16 StaticShortField
   .field private static int32 '<StaticProperty>k__BackingField'
@@ -659,7 +660,7 @@
   .method public hidebysig instance void 
           Enum() cil managed
   {
-    // Code size       30 (0x1e)
+    // Code size       58 (0x3a)
     .maxstack  8
     IL_0000:  ldarg.0
     IL_0001:  dup
@@ -673,8 +674,56 @@
     IL_0015:  ldc.i4.s   -5
     IL_0017:  and
     IL_0018:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::enumField
-    IL_001d:  ret
+    IL_001d:  ldarg.0
+    IL_001e:  dup
+    IL_001f:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::enumField
+    IL_0024:  ldc.i4.2
+    IL_0025:  add
+    IL_0026:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::enumField
+    IL_002b:  ldarg.0
+    IL_002c:  dup
+    IL_002d:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::enumField
+    IL_0032:  ldc.i4.3
+    IL_0033:  sub
+    IL_0034:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::enumField
+    IL_0039:  ret
   } // end of method CompoundAssignmentTest::Enum
+
+  .method public hidebysig instance void 
+          ShortEnumTest() cil managed
+  {
+    // Code size       62 (0x3e)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  dup
+    IL_0002:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_0007:  ldc.i4.2
+    IL_0008:  or
+    IL_0009:  conv.i2
+    IL_000a:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_000f:  ldarg.0
+    IL_0010:  dup
+    IL_0011:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_0016:  ldc.i4.s   -5
+    IL_0018:  and
+    IL_0019:  conv.i2
+    IL_001a:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_001f:  ldarg.0
+    IL_0020:  dup
+    IL_0021:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_0026:  ldc.i4.2
+    IL_0027:  add
+    IL_0028:  conv.i2
+    IL_0029:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_002e:  ldarg.0
+    IL_002f:  dup
+    IL_0030:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_0035:  ldc.i4.3
+    IL_0036:  sub
+    IL_0037:  conv.i2
+    IL_0038:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::shortEnumField
+    IL_003d:  ret
+  } // end of method CompoundAssignmentTest::ShortEnumTest
 
   .method public hidebysig instance int32 
           PreIncrementInAddition(int32 i,
@@ -751,8 +800,46 @@
     IL_0014:  ret
   } // end of method CompoundAssignmentTest::IncrementArrayElement
 
+  .method public hidebysig instance void 
+          DoubleArrayElement(int32[] 'array',
+                             int32 pos) cil managed
+  {
+    // Code size       21 (0x15)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  ldelema    [mscorlib]System.Int32
+    IL_0007:  dup
+    IL_0008:  ldobj      [mscorlib]System.Int32
+    IL_000d:  ldc.i4.2
+    IL_000e:  mul
+    IL_000f:  stobj      [mscorlib]System.Int32
+    IL_0014:  ret
+  } // end of method CompoundAssignmentTest::DoubleArrayElement
+
   .method public hidebysig instance int32 
-          PreIncrementShortArrayElement(int16[] 'array',
+          DoubleArrayElementAndReturn(int32[] 'array',
+                                      int32 pos) cil managed
+  {
+    // Code size       24 (0x18)
+    .maxstack  3
+    .locals init (int32 V_0)
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  ldelema    [mscorlib]System.Int32
+    IL_0007:  dup
+    IL_0008:  ldobj      [mscorlib]System.Int32
+    IL_000d:  ldc.i4.2
+    IL_000e:  mul
+    IL_000f:  dup
+    IL_0010:  stloc.0
+    IL_0011:  stobj      [mscorlib]System.Int32
+    IL_0016:  ldloc.0
+    IL_0017:  ret
+  } // end of method CompoundAssignmentTest::DoubleArrayElementAndReturn
+
+  .method public hidebysig instance int32 
+          PreIncrementArrayElementShort(int16[] 'array',
                                         int32 pos) cil managed
   {
     // Code size       25 (0x19)
@@ -771,10 +858,10 @@
     IL_0012:  stobj      [mscorlib]System.Int16
     IL_0017:  ldloc.0
     IL_0018:  ret
-  } // end of method CompoundAssignmentTest::PreIncrementShortArrayElement
+  } // end of method CompoundAssignmentTest::PreIncrementArrayElementShort
 
   .method public hidebysig instance int32 
-          PostIncrementShortArrayElement(int16[] 'array',
+          PostIncrementArrayElementShort(int16[] 'array',
                                          int32 pos) cil managed
   {
     // Code size       25 (0x19)
@@ -793,10 +880,10 @@
     IL_0012:  stobj      [mscorlib]System.Int16
     IL_0017:  ldloc.0
     IL_0018:  ret
-  } // end of method CompoundAssignmentTest::PostIncrementShortArrayElement
+  } // end of method CompoundAssignmentTest::PostIncrementArrayElementShort
 
   .method public hidebysig instance void 
-          IncrementShortArrayElement(int16[] 'array',
+          IncrementArrayElementShort(int16[] 'array',
                                      int32 pos) cil managed
   {
     // Code size       22 (0x16)
@@ -811,7 +898,47 @@
     IL_000f:  conv.i2
     IL_0010:  stobj      [mscorlib]System.Int16
     IL_0015:  ret
-  } // end of method CompoundAssignmentTest::IncrementShortArrayElement
+  } // end of method CompoundAssignmentTest::IncrementArrayElementShort
+
+  .method public hidebysig instance void 
+          DoubleArrayElementShort(int16[] 'array',
+                                  int32 pos) cil managed
+  {
+    // Code size       22 (0x16)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  ldelema    [mscorlib]System.Int16
+    IL_0007:  dup
+    IL_0008:  ldobj      [mscorlib]System.Int16
+    IL_000d:  ldc.i4.2
+    IL_000e:  mul
+    IL_000f:  conv.i2
+    IL_0010:  stobj      [mscorlib]System.Int16
+    IL_0015:  ret
+  } // end of method CompoundAssignmentTest::DoubleArrayElementShort
+
+  .method public hidebysig instance int16 
+          DoubleArrayElementShortAndReturn(int16[] 'array',
+                                           int32 pos) cil managed
+  {
+    // Code size       25 (0x19)
+    .maxstack  3
+    .locals init (int16 V_0)
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  ldelema    [mscorlib]System.Int16
+    IL_0007:  dup
+    IL_0008:  ldobj      [mscorlib]System.Int16
+    IL_000d:  ldc.i4.2
+    IL_000e:  mul
+    IL_000f:  conv.i2
+    IL_0010:  dup
+    IL_0011:  stloc.0
+    IL_0012:  stobj      [mscorlib]System.Int16
+    IL_0017:  ldloc.0
+    IL_0018:  ret
+  } // end of method CompoundAssignmentTest::DoubleArrayElementShortAndReturn
 
   .method public hidebysig instance int32 
           PreIncrementInstanceField() cil managed
@@ -865,6 +992,40 @@
     IL_000e:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::Field
     IL_0013:  ret
   } // end of method CompoundAssignmentTest::IncrementInstanceField
+
+  .method public hidebysig instance void 
+          DoubleInstanceField() cil managed
+  {
+    // Code size       20 (0x14)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::M()
+    IL_0006:  dup
+    IL_0007:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::Field
+    IL_000c:  ldc.i4.2
+    IL_000d:  mul
+    IL_000e:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::Field
+    IL_0013:  ret
+  } // end of method CompoundAssignmentTest::DoubleInstanceField
+
+  .method public hidebysig instance int32 
+          DoubleInstanceFieldAndReturn() cil managed
+  {
+    // Code size       23 (0x17)
+    .maxstack  3
+    .locals init (int32 V_0)
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::M()
+    IL_0006:  dup
+    IL_0007:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::Field
+    IL_000c:  ldc.i4.2
+    IL_000d:  mul
+    IL_000e:  dup
+    IL_000f:  stloc.0
+    IL_0010:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::Field
+    IL_0015:  ldloc.0
+    IL_0016:  ret
+  } // end of method CompoundAssignmentTest::DoubleInstanceFieldAndReturn
 
   .method public hidebysig instance int32 
           PreIncrementInstanceField2(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass m) cil managed
@@ -1025,6 +1186,40 @@
     IL_0013:  ret
   } // end of method CompoundAssignmentTest::IncrementInstanceProperty
 
+  .method public hidebysig instance void 
+          DoubleInstanceProperty() cil managed
+  {
+    // Code size       20 (0x14)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::M()
+    IL_0006:  dup
+    IL_0007:  callvirt   instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::get_Property()
+    IL_000c:  ldc.i4.2
+    IL_000d:  mul
+    IL_000e:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::set_Property(int32)
+    IL_0013:  ret
+  } // end of method CompoundAssignmentTest::DoubleInstanceProperty
+
+  .method public hidebysig instance int32 
+          DoubleInstancePropertyAndReturn() cil managed
+  {
+    // Code size       23 (0x17)
+    .maxstack  3
+    .locals init (int32 V_0)
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::M()
+    IL_0006:  dup
+    IL_0007:  callvirt   instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::get_Property()
+    IL_000c:  ldc.i4.2
+    IL_000d:  mul
+    IL_000e:  dup
+    IL_000f:  stloc.0
+    IL_0010:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::set_Property(int32)
+    IL_0015:  ldloc.0
+    IL_0016:  ret
+  } // end of method CompoundAssignmentTest::DoubleInstancePropertyAndReturn
+
   .method public hidebysig instance int32 
           PreIncrementInstancePropertyByte() cil managed
   {
@@ -1081,6 +1276,42 @@
     IL_0014:  ret
   } // end of method CompoundAssignmentTest::IncrementInstancePropertyByte
 
+  .method public hidebysig instance void 
+          DoubleInstancePropertyByte() cil managed
+  {
+    // Code size       21 (0x15)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::M()
+    IL_0006:  dup
+    IL_0007:  callvirt   instance uint8 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::get_ByteProperty()
+    IL_000c:  ldc.i4.2
+    IL_000d:  mul
+    IL_000e:  conv.u1
+    IL_000f:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::set_ByteProperty(uint8)
+    IL_0014:  ret
+  } // end of method CompoundAssignmentTest::DoubleInstancePropertyByte
+
+  .method public hidebysig instance int32 
+          DoubleInstancePropertyByteAndReturn() cil managed
+  {
+    // Code size       24 (0x18)
+    .maxstack  3
+    .locals init (uint8 V_0)
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::M()
+    IL_0006:  dup
+    IL_0007:  callvirt   instance uint8 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::get_ByteProperty()
+    IL_000c:  ldc.i4.2
+    IL_000d:  mul
+    IL_000e:  conv.u1
+    IL_000f:  dup
+    IL_0010:  stloc.0
+    IL_0011:  callvirt   instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MutableClass::set_ByteProperty(uint8)
+    IL_0016:  ldloc.0
+    IL_0017:  ret
+  } // end of method CompoundAssignmentTest::DoubleInstancePropertyByteAndReturn
+
   .method public hidebysig instance int32 
           PreIncrementStaticField() cil managed
   {
@@ -1118,6 +1349,31 @@
     IL_0007:  stsfld     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticField
     IL_000c:  ret
   } // end of method CompoundAssignmentTest::IncrementStaticField
+
+  .method public hidebysig instance void 
+          DoubleStaticField() cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  8
+    IL_0000:  ldsfld     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticField
+    IL_0005:  ldc.i4.2
+    IL_0006:  mul
+    IL_0007:  stsfld     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticField
+    IL_000c:  ret
+  } // end of method CompoundAssignmentTest::DoubleStaticField
+
+  .method public hidebysig instance int32 
+          DoubleStaticFieldAndReturn() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldsfld     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticField
+    IL_0005:  ldc.i4.2
+    IL_0006:  mul
+    IL_0007:  dup
+    IL_0008:  stsfld     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticField
+    IL_000d:  ret
+  } // end of method CompoundAssignmentTest::DoubleStaticFieldAndReturn
 
   .method public hidebysig instance int32 
           PreIncrementStaticFieldShort() cil managed
@@ -1160,6 +1416,33 @@
     IL_000d:  ret
   } // end of method CompoundAssignmentTest::IncrementStaticFieldShort
 
+  .method public hidebysig instance void 
+          DoubleStaticFieldShort() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  ldsfld     int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticShortField
+    IL_0005:  ldc.i4.2
+    IL_0006:  mul
+    IL_0007:  conv.i2
+    IL_0008:  stsfld     int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticShortField
+    IL_000d:  ret
+  } // end of method CompoundAssignmentTest::DoubleStaticFieldShort
+
+  .method public hidebysig instance int16 
+          DoubleStaticFieldAndReturnShort() cil managed
+  {
+    // Code size       15 (0xf)
+    .maxstack  8
+    IL_0000:  ldsfld     int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticShortField
+    IL_0005:  ldc.i4.2
+    IL_0006:  mul
+    IL_0007:  conv.i2
+    IL_0008:  dup
+    IL_0009:  stsfld     int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::StaticShortField
+    IL_000e:  ret
+  } // end of method CompoundAssignmentTest::DoubleStaticFieldAndReturnShort
+
   .method public hidebysig instance int32 
           PreIncrementStaticProperty() cil managed
   {
@@ -1197,6 +1480,31 @@
     IL_0007:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::set_StaticProperty(int32)
     IL_000c:  ret
   } // end of method CompoundAssignmentTest::IncrementStaticProperty
+
+  .method public hidebysig instance void 
+          DoubleStaticProperty() cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  8
+    IL_0000:  call       int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::get_StaticProperty()
+    IL_0005:  ldc.i4.2
+    IL_0006:  mul
+    IL_0007:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::set_StaticProperty(int32)
+    IL_000c:  ret
+  } // end of method CompoundAssignmentTest::DoubleStaticProperty
+
+  .method public hidebysig instance int32 
+          DoubleStaticPropertyAndReturn() cil managed
+  {
+    // Code size       14 (0xe)
+    .maxstack  8
+    IL_0000:  call       int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::get_StaticProperty()
+    IL_0005:  ldc.i4.2
+    IL_0006:  mul
+    IL_0007:  dup
+    IL_0008:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::set_StaticProperty(int32)
+    IL_000d:  ret
+  } // end of method CompoundAssignmentTest::DoubleStaticPropertyAndReturn
 
   .method public hidebysig instance valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/ShortEnum 
           PreIncrementStaticPropertyShort() cil managed
@@ -1266,7 +1574,7 @@
           Issue954(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum& a,
                    valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum b) cil managed
   {
-    // Code size       7 (0x7)
+    // Code size       21 (0x15)
     .maxstack  8
     IL_0000:  ldarg.1
     IL_0001:  ldarg.1
@@ -1274,7 +1582,13 @@
     IL_0003:  ldarg.2
     IL_0004:  rem
     IL_0005:  stind.i4
-    IL_0006:  ret
+    IL_0006:  ldarg.0
+    IL_0007:  ldarg.0
+    IL_0008:  ldfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::enumField
+    IL_000d:  ldarg.2
+    IL_000e:  rem
+    IL_000f:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest::enumField
+    IL_0014:  ret
   } // end of method CompoundAssignmentTest::Issue954
 
   .method public hidebysig specialname rtspecialname 

@@ -78,6 +78,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private int[] array1;
 		private StructContainer field1;
 		private MyEnum enumField;
+		private ShortEnum shortEnumField;
 		public static int StaticField;
 		public static short StaticShortField;
 
@@ -228,8 +229,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			this.enumField |= MyEnum.Two;
 			this.enumField &= ~MyEnum.Four;
+			this.enumField += 2;
+			this.enumField -= 3;
 		}
-		
+
+		public void ShortEnumTest()
+		{
+			this.shortEnumField |= ShortEnum.Two;
+			this.shortEnumField &= ~ShortEnum.Four;
+			this.shortEnumField += 2;
+			this.shortEnumField -= 3;
+		}
+
 		public int PreIncrementInAddition(int i, int j)
 		{
 			return i + ++j;
@@ -250,19 +261,39 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			array[pos]++;
 		}
 
-		public int PreIncrementShortArrayElement(short[] array, int pos)
+		public void DoubleArrayElement(int[] array, int pos)
+		{
+			array[pos] *= 2;
+		}
+
+		public int DoubleArrayElementAndReturn(int[] array, int pos)
+		{
+			return array[pos] *= 2;
+		}
+
+		public int PreIncrementArrayElementShort(short[] array, int pos)
 		{
 			return --array[pos];
 		}
 
-		public int PostIncrementShortArrayElement(short[] array, int pos)
+		public int PostIncrementArrayElementShort(short[] array, int pos)
 		{
 			return array[pos]++;
 		}
 
-		public void IncrementShortArrayElement(short[] array, int pos)
+		public void IncrementArrayElementShort(short[] array, int pos)
 		{
 			array[pos]++;
+		}
+
+		public void DoubleArrayElementShort(short[] array, int pos)
+		{
+			array[pos] *= 2;
+		}
+
+		public short DoubleArrayElementShortAndReturn(short[] array, int pos)
+		{
+			return array[pos] *= 2;
 		}
 
 		public int PreIncrementInstanceField()
@@ -278,6 +309,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void IncrementInstanceField()
 		{
 			this.M().Field++;
+		}
+
+		public void DoubleInstanceField()
+		{
+			this.M().Field *= 2;
+		}
+
+		public int DoubleInstanceFieldAndReturn()
+		{
+			return this.M().Field *= 2;
 		}
 
 		public int PreIncrementInstanceField2(MutableClass m)
@@ -325,6 +366,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			this.M().Property++;
 		}
 
+		public void DoubleInstanceProperty()
+		{
+			this.M().Property *= 2;
+		}
+
+		public int DoubleInstancePropertyAndReturn()
+		{
+			return this.M().Property *= 2;
+		}
+
 		public int PreIncrementInstancePropertyByte()
 		{
 			return ++this.M().ByteProperty;
@@ -338,6 +389,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void IncrementInstancePropertyByte()
 		{
 			this.M().ByteProperty++;
+		}
+
+		public void DoubleInstancePropertyByte()
+		{
+			this.M().ByteProperty *= 2;
+		}
+
+		public int DoubleInstancePropertyByteAndReturn()
+		{
+			return this.M().ByteProperty *= 2;
 		}
 
 		public int PreIncrementStaticField()
@@ -355,6 +416,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			CompoundAssignmentTest.StaticField++;
 		}
 
+		public void DoubleStaticField()
+		{
+			CompoundAssignmentTest.StaticField *= 2;
+		}
+
+		public int DoubleStaticFieldAndReturn()
+		{
+			return CompoundAssignmentTest.StaticField *= 2;
+		}
+
 		public int PreIncrementStaticFieldShort()
 		{
 			return ++CompoundAssignmentTest.StaticShortField;
@@ -368,6 +439,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void IncrementStaticFieldShort()
 		{
 			CompoundAssignmentTest.StaticShortField++;
+		}
+
+		public void DoubleStaticFieldShort()
+		{
+			CompoundAssignmentTest.StaticShortField *= 2;
+		}
+
+		public short DoubleStaticFieldAndReturnShort()
+		{
+			return CompoundAssignmentTest.StaticShortField *= 2;
 		}
 
 		public int PreIncrementStaticProperty()
@@ -385,6 +466,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			CompoundAssignmentTest.StaticProperty++;
 		}
 
+		public void DoubleStaticProperty()
+		{
+			CompoundAssignmentTest.StaticProperty *= 2;
+		}
+
+		public int DoubleStaticPropertyAndReturn()
+		{
+			return CompoundAssignmentTest.StaticProperty *= 2;
+		}
+
 		public ShortEnum PreIncrementStaticPropertyShort()
 		{
 			return ++CompoundAssignmentTest.StaticShortProperty;
@@ -399,7 +490,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			CompoundAssignmentTest.StaticShortProperty++;
 		}
-
+		
 		private static Item GetItem(object obj)
 		{
 			return null;
@@ -411,10 +502,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			item.Self = item;
 		}
 
-		void Issue954(ref MyEnum a, MyEnum b)
+		private void Issue954(ref MyEnum a, MyEnum b)
 		{
 			// cannot decompile to: "a %= b;", because the % operator does not apply to enums
 			a = (MyEnum)((int)a % (int)b);
+			// same with enum field:
+			this.enumField = (MyEnum)((int)this.enumField % (int)b);
 		}
 	}
 }

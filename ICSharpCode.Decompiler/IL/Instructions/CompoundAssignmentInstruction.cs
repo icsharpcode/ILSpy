@@ -86,8 +86,16 @@ namespace ICSharpCode.Decompiler.IL
 				type = NullableType.GetUnderlyingType(type);
 			}
 			if (type.Kind == TypeKind.Enum) {
-				if (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub)
-					return false;
+				switch (binary.Operator) {
+					case BinaryNumericOperator.Add:
+					case BinaryNumericOperator.Sub:
+					case BinaryNumericOperator.BitAnd:
+					case BinaryNumericOperator.BitOr:
+					case BinaryNumericOperator.BitXor:
+						break; // OK
+					default:
+						return false; // operator not supported on enum types
+				}
 			}
 			if (binary.Sign != Sign.None) {
 				if (type.GetSign() != binary.Sign)

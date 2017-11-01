@@ -1078,7 +1078,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							if (NullableType.IsNullable(value.Type)) {
 								targetType = NullableType.Create(compilation, targetType);
 							}
-							value = value.ConvertTo(targetType, this, inst.CheckForOverflow);
+							value = value.ConvertTo(targetType, this, inst.CheckForOverflow, allowImplicitConversion: true);
 							break;
 						}
 					case AssignmentOperatorType.Multiply:
@@ -1091,7 +1091,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							if (NullableType.IsNullable(value.Type)) {
 								targetType = NullableType.Create(compilation, targetType);
 							}
-							value = value.ConvertTo(targetType, this, inst.CheckForOverflow);
+							value = value.ConvertTo(targetType, this, inst.CheckForOverflow, allowImplicitConversion: true);
 							break;
 						}
 				}

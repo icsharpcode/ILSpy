@@ -94,7 +94,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Loads the address of a local variable. (ldarga/ldloca)</summary>
 		LdLoca,
 		/// <summary>Stores a value into a local variable. (IL: starg/stloc)
-		/// Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value)</summary>
+		/// Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value, sign/zero extended back to I4 based on variable.Type.GetSign())</summary>
 		StLoc,
 		/// <summary>Stores the value into an anonymous temporary variable, and returns the address of that variable.</summary>
 		AddressOf,
@@ -139,7 +139,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>Indirect load (ref/pointer dereference).</summary>
 		LdObj,
 		/// <summary>Indirect store (store to ref/pointer).
-		/// Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value)</summary>
+		/// Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())</summary>
 		StObj,
 		/// <summary>Boxes a value.</summary>
 		Box,
@@ -2223,7 +2223,7 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Stores a value into a local variable. (IL: starg/stloc)
-	/// Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value)</summary>
+	/// Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value, sign/zero extended back to I4 based on variable.Type.GetSign())</summary>
 	public sealed partial class StLoc : ILInstruction, IStoreInstruction
 	{
 		public StLoc(ILVariable variable, ILInstruction value) : base(OpCode.StLoc)
@@ -3559,7 +3559,7 @@ namespace ICSharpCode.Decompiler.IL
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Indirect store (store to ref/pointer).
-	/// Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value)</summary>
+	/// Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())</summary>
 	public sealed partial class StObj : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
 		public StObj(ILInstruction target, ILInstruction value, IType type) : base(OpCode.StObj)

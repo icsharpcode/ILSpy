@@ -279,32 +279,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.RequestRerun();
 				return;
 			}
-
-			if (inst.Value is BinaryNumericInstruction binary
-				&& binary.Left is LdObj ldobj
-				&& inst.Target.Match(ldobj.Target).Success
-				&& SemanticHelper.IsPure(ldobj.Target.Flags))
-			{
-				// ldobj.Type may just be 'int' (due to ldind.i4) when we're actually operating on a 'ref MyEnum'.
-				// Try to determine the real type of the object we're modifying:
-				IType targetType = ldobj.Target.InferType();
-				if (targetType.Kind == TypeKind.Pointer || targetType.Kind == TypeKind.ByReference) {
-					targetType = ((TypeWithElementType)targetType).ElementType;
-					if (targetType.Kind == TypeKind.Unknown || targetType.GetSize() != ldobj.Type.GetSize()) {
-						targetType = ldobj.Type;
-					}
-				} else {
-					targetType = ldobj.Type;
-				}
-				if (CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, targetType)) {
-					context.Step("compound assignment", inst);
-					// stobj(target, binary.op(ldobj(target), ...))
-					// => compound.op(target, ...)
-					inst.ReplaceWith(new CompoundAssignmentInstruction(
-						binary, binary.Left, binary.Right,
-						targetType, CompoundAssignmentType.EvaluatesToNewValue));
-				}
-			}
+			TransformAssignment.HandleStObjCompoundAssign(inst, context);
 		}
 
 		protected internal override void VisitIfInstruction(IfInstruction inst)

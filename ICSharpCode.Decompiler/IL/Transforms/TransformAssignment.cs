@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -124,7 +125,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// in some cases it can be a compiler-generated local
 			if (mainStLoc == null || (mainStLoc.Variable.Kind != VariableKind.StackSlot && mainStLoc.Variable.Kind != VariableKind.Local))
 				return false;
-			BinaryNumericInstruction binary = mainStLoc.Value as BinaryNumericInstruction;
+			ILInstruction value = mainStLoc.Value;
+			if (value is Conv conv && conv.Kind == ConversionKind.Truncate && conv.TargetType.IsSmallIntegerType()) {
+				// for compound assignments to small integers, the compiler emits a "conv" instruction
+				value = conv.Argument;
+			} else {
+				conv = null;
+			}
+			BinaryNumericInstruction binary = value as BinaryNumericInstruction;
 			ILVariable localVariable = mainStLoc.Variable;
 			if (!localVariable.IsSingleDefinition)
 				return false;
@@ -142,13 +150,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (next.Descendants.Where(d => d.MatchLdLoc(localVariable)).Count() != 1)
 				return false;
-			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, getterCall.Method.ReturnType))
+			IType targetType = getterCall.Method.ReturnType;
+			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, targetType))
 				return false;
+			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() && conv.CheckForOverflow == binary.CheckForOverflow))
+				return false; // conv does not match binary operation
 			context.Step($"Inline compound assignment to '{getterCall.Method.AccessorOwner.Name}'", setterCall);
 			block.Instructions.RemoveAt(i + 1); // remove setter call
-			binary.ReplaceWith(new CompoundAssignmentInstruction(
+			mainStLoc.Value = new CompoundAssignmentInstruction(
 				binary, getterCall, binary.Right,
-			    getterCall.Method.ReturnType, CompoundAssignmentType.EvaluatesToNewValue));
+				targetType, CompoundAssignmentType.EvaluatesToNewValue);
 			return true;
 		}
 
@@ -218,13 +229,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// ==> stloc v(compound.op.new(callvirt(callvirt get_Property(ldloc S_1)), value))
 				setterValue = storeInSetter.Value;
 			}
+			if (setterValue is Conv conv && conv.Kind == ConversionKind.Truncate && conv.TargetType.IsSmallIntegerType()) {
+				// for compound assignments to small integers, the compiler emits a "conv" instruction
+				setterValue = conv.Argument;
+			} else {
+				conv = null;
+			}
 			if (!(setterValue is BinaryNumericInstruction binary))
 				return false;
 			var getterCall = binary.Left as CallInstruction;
 			if (!MatchingGetterAndSetterCalls(getterCall, setterCall))
 				return false;
-			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, getterCall.Method.ReturnType))
+			IType targetType = getterCall.Method.ReturnType;
+			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, targetType))
 				return false;
+			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() && conv.CheckForOverflow == binary.CheckForOverflow))
+				return false; // conv does not match binary operation
 			context.Step($"Compound assignment to '{getterCall.Method.AccessorOwner.Name}'", setterCall);
 			ILInstruction newInst = new CompoundAssignmentInstruction(
 				binary, getterCall, binary.Right,
@@ -235,6 +255,52 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.RequestRerun(); // moving stloc to top-level might trigger inlining
 			}
 			setterCall.ReplaceWith(newInst);
+			return true;
+		}
+
+		/// <summary>
+		/// stobj(target, binary.op(ldobj(target), ...))
+		/// => compound.op(target, ...)
+		/// </summary>
+		/// <remarks>
+		/// Called by ExpressionTransforms.
+		/// </remarks>
+		internal static bool HandleStObjCompoundAssign(StObj inst, ILTransformContext context)
+		{
+			ILInstruction value = inst.Value;
+			if (value is Conv conv && conv.Kind == ConversionKind.Truncate && conv.TargetType.IsSmallIntegerType()) {
+				// for compound assignments to small integers, the compiler emits a "conv" instruction
+				value = conv.Argument;
+			} else {
+				conv = null;
+			}
+			if (!(value is BinaryNumericInstruction binary))
+				return false;
+			if (!(binary.Left is LdObj ldobj))
+				return false;
+			if (!inst.Target.Match(ldobj.Target).Success)
+				return false;
+			if (!SemanticHelper.IsPure(ldobj.Target.Flags))
+				return false;
+			// ldobj.Type may just be 'int' (due to ldind.i4) when we're actually operating on a 'ref MyEnum'.
+			// Try to determine the real type of the object we're modifying:
+			IType targetType = ldobj.Target.InferType();
+			if (targetType.Kind == TypeKind.Pointer || targetType.Kind == TypeKind.ByReference) {
+				targetType = ((TypeWithElementType)targetType).ElementType;
+				if (targetType.Kind == TypeKind.Unknown || targetType.GetSize() != ldobj.Type.GetSize()) {
+					targetType = ldobj.Type;
+				}
+			} else {
+				targetType = ldobj.Type;
+			}
+			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, targetType))
+				return false;
+			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() && conv.CheckForOverflow == binary.CheckForOverflow))
+				return false; // conv does not match binary operation
+			context.Step("compound assignment", inst);
+			inst.ReplaceWith(new CompoundAssignmentInstruction(
+				binary, binary.Left, binary.Right,
+				targetType, CompoundAssignmentType.EvaluatesToNewValue));
 			return true;
 		}
 
@@ -280,8 +346,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// conv instructions.
 				return false;
 			}
-			// With small integer types, test whether the value being stored
-			// is being truncated:
+			// With small integer types, test whether the value might be changed by
+			// truncation (based on type.GetSize()) followed by sign/zero extension (based on type.GetSign()).
+			// (it's OK to have false-positives here if we're unsure)
 			if (value.MatchLdcI4(out int val)) {
 				switch (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode) {
 					case KnownTypeCode.Boolean:
