@@ -21,43 +21,49 @@ using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// Constructs compound assignments and inline assignments.
 	/// </summary>
-	public class TransformAssignment : IBlockTransform
+	public class TransformAssignment : IStatementTransform
 	{
-		BlockTransformContext context;
+		StatementTransformContext context;
 		
-		void IBlockTransform.Run(Block block, BlockTransformContext context)
+		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
 			this.context = context;
-			for (int i = block.Instructions.Count - 1; i >= 0; i--) {
-				if (TransformPostIncDecOperatorOnAddress(block, i) || TransformPostIncDecOnStaticField(block, i) || TransformCSharp4PostIncDecOperatorOnAddress(block, i)) {
-					block.Instructions.RemoveAt(i);
-					continue;
-				}
-				if (TransformPostIncDecOperator(block, i)) {
-					block.Instructions.RemoveAt(i);
-					continue;
-				}
-				if (TransformInlineAssignmentStObj(block, i) || TransformInlineAssignmentLocal(block, i))
-					continue;
-				if (TransformInlineCompoundAssignmentCall(block, i))
-					continue;
-				if (TransformRoslynCompoundAssignmentCall(block, i))
-					continue;
-				if (TransformRoslynPostIncDecOperatorOnAddress(block, i))
-					continue;
+			/*if (TransformPostIncDecOperatorOnAddress(block, i) || TransformPostIncDecOnStaticField(block, i) || TransformCSharp4PostIncDecOperatorOnAddress(block, i)) {
+				block.Instructions.RemoveAt(i);
+				continue;
 			}
+			if (TransformPostIncDecOperator(block, i)) {
+				block.Instructions.RemoveAt(i);
+				continue;
+			}*/
+			if (TransformInlineAssignmentStObjOrCall(block, pos) || TransformInlineAssignmentLocal(block, pos)) {
+				// both inline assignments create a top-level stloc which might affect inlining
+				context.RequestRerun();
+				return;
+			}
+			/*
+			TransformInlineCompoundAssignmentCall(block, pos);
+			TransformRoslynCompoundAssignmentCall(block, pos);
+			// TODO: post-increment on local
+			// post-increment on address (e.g. field or array element)
+			TransformPostIncDecOperatorOnAddress(block, pos);
+			TransformRoslynPostIncDecOperatorOnAddress(block, pos);
+			// TODO: post-increment on call
+			*/
 		}
 
 		/// <code>
 		/// stloc s(value)
 		/// stloc l(ldloc s)
 		/// stobj(..., ldloc s)
+		///   where ... is pure and does not use s or l
 		/// -->
 		/// stloc l(stobj (..., value))
 		/// </code>
@@ -72,7 +78,17 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// stloc s(stobj (..., value))
 		/// </code>
 		/// e.g. used for inline assignment to static field
-		bool TransformInlineAssignmentStObj(Block block, int pos)
+		/// 
+		/// -or-
+		/// 
+		/// <code>
+		/// stloc s(value)
+		/// call set_Property(..., ldloc s)
+		///   where the '...' arguments are free of side-effects and not using 's'
+		/// -->
+		/// stloc s(Block InlineAssign { call set_Property(..., stloc i(value)); final: ldloc i })
+		/// </code>
+		bool TransformInlineAssignmentStObjOrCall(Block block, int pos)
 		{
 			var inst = block.Instructions[pos] as StLoc;
 			// in some cases it can be a compiler-generated local
@@ -96,22 +112,75 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				localStore = null;
 				nextPos = pos + 1;
 			}
-			if (!(block.Instructions[nextPos] is StObj stobj))
-				return false;
-			if (!stobj.Value.MatchLdLoc(inst.Variable) || inst.Variable.IsUsedWithin(stobj.Target))
-				return false;
-			if (IsImplicitTruncation(inst.Value, stobj.Type)) {
-				// 'stloc s' is implicitly truncating the value
+			if (block.Instructions[nextPos] is StObj stobj) {
+				if (!stobj.Value.MatchLdLoc(inst.Variable))
+					return false;
+				if (!SemanticHelper.IsPure(stobj.Target.Flags) || inst.Variable.IsUsedWithin(stobj.Target))
+					return false;
+				if (IsImplicitTruncation(inst.Value, stobj.Type)) {
+					// 'stobj' is implicitly truncating the value
+					return false;
+				}
+				context.Step("Inline assignment stobj", stobj);
+				block.Instructions.Remove(localStore);
+				block.Instructions.Remove(stobj);
+				stobj.Value = inst.Value;
+				inst.ReplaceWith(new StLoc(local, stobj));
+				return true;
+			} else if (block.Instructions[nextPos] is CallInstruction call) {
+				// call must be a setter call:
+				if (!(call.OpCode == OpCode.Call || call.OpCode == OpCode.CallVirt))
+					return false;
+				if (call.ResultType != StackType.Void || call.Arguments.Count == 0)
+					return false;
+				if (!call.Method.Equals((call.Method.AccessorOwner as IProperty)?.Setter))
+					return false;
+				if (!call.Arguments.Last().MatchLdLoc(inst.Variable))
+					return false;
+				foreach (var arg in call.Arguments.SkipLast(1)) {
+					if (!SemanticHelper.IsPure(arg.Flags) || inst.Variable.IsUsedWithin(arg))
+						return false;
+				}
+				if (IsImplicitTruncation(inst.Value, call.Method.Parameters.Last().Type)) {
+					// setter call is implicitly truncating the value
+					return false;
+				}
+				// stloc s(Block InlineAssign { call set_Property(..., stloc i(value)); final: ldloc i })
+				context.Step("Inline assignment call", call);
+				block.Instructions.Remove(localStore);
+				block.Instructions.Remove(call);
+				var newVar = context.Function.RegisterVariable(VariableKind.StackSlot, call.Method.Parameters.Last().Type);
+				call.Arguments[call.Arguments.Count - 1] = new StLoc(newVar, inst.Value);
+				inst.ReplaceWith(new StLoc(local, new Block(BlockType.CallInlineAssign) {
+					Instructions = { call },
+					FinalInstruction = new LdLoc(newVar)
+				}));
+				return true;
+			} else {
 				return false;
 			}
-			context.Step("Inline assignment stobj", stobj);
-			block.Instructions.Remove(localStore);
-			block.Instructions.Remove(stobj);
-			stobj.Value = inst.Value;
-			inst.ReplaceWith(new StLoc(local, stobj));
-			return true;
 		}
 		
+		static ILInstruction UnwrapSmallIntegerConv(ILInstruction inst, out Conv conv)
+		{
+			conv = inst as Conv;
+			if (conv != null && conv.Kind == ConversionKind.Truncate && conv.TargetType.IsSmallIntegerType()) {
+				// for compound assignments to small integers, the compiler emits a "conv" instruction
+				return conv.Argument;
+			} else {
+				return inst;
+			}
+		}
+
+		static bool ValidateCompoundAssign(BinaryNumericInstruction binary, Conv conv, IType targetType)
+		{
+			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, targetType))
+				return false;
+			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() && conv.CheckForOverflow == binary.CheckForOverflow))
+				return false; // conv does not match binary operation
+			return true;
+		}
+
 		/// <code>
 		/// stloc s(binary(callvirt(getter), value))
 		/// callvirt (setter, ldloc s)
@@ -125,14 +194,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// in some cases it can be a compiler-generated local
 			if (mainStLoc == null || (mainStLoc.Variable.Kind != VariableKind.StackSlot && mainStLoc.Variable.Kind != VariableKind.Local))
 				return false;
-			ILInstruction value = mainStLoc.Value;
-			if (value is Conv conv && conv.Kind == ConversionKind.Truncate && conv.TargetType.IsSmallIntegerType()) {
-				// for compound assignments to small integers, the compiler emits a "conv" instruction
-				value = conv.Argument;
-			} else {
-				conv = null;
-			}
-			BinaryNumericInstruction binary = value as BinaryNumericInstruction;
+			BinaryNumericInstruction binary = UnwrapSmallIntegerConv(mainStLoc.Value, out var conv) as BinaryNumericInstruction;
 			ILVariable localVariable = mainStLoc.Variable;
 			if (!localVariable.IsSingleDefinition)
 				return false;
@@ -151,10 +213,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (next.Descendants.Where(d => d.MatchLdLoc(localVariable)).Count() != 1)
 				return false;
 			IType targetType = getterCall.Method.ReturnType;
-			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, targetType))
+			if (!ValidateCompoundAssign(binary, conv, targetType))
 				return false;
-			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() && conv.CheckForOverflow == binary.CheckForOverflow))
-				return false; // conv does not match binary operation
 			context.Step($"Inline compound assignment to '{getterCall.Method.AccessorOwner.Name}'", setterCall);
 			block.Instructions.RemoveAt(i + 1); // remove setter call
 			mainStLoc.Value = new CompoundAssignmentInstruction(
@@ -267,14 +327,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </remarks>
 		internal static bool HandleStObjCompoundAssign(StObj inst, ILTransformContext context)
 		{
-			ILInstruction value = inst.Value;
-			if (value is Conv conv && conv.Kind == ConversionKind.Truncate && conv.TargetType.IsSmallIntegerType()) {
-				// for compound assignments to small integers, the compiler emits a "conv" instruction
-				value = conv.Argument;
-			} else {
-				conv = null;
-			}
-			if (!(value is BinaryNumericInstruction binary))
+			if (!(UnwrapSmallIntegerConv(inst.Value, out var conv) is BinaryNumericInstruction binary))
 				return false;
 			if (!(binary.Left is LdObj ldobj))
 				return false;
@@ -293,10 +346,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				targetType = ldobj.Type;
 			}
-			if (!CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, targetType))
+			if (!ValidateCompoundAssign(binary, conv, targetType))
 				return false;
-			if (conv != null && !(conv.TargetType == targetType.ToPrimitiveType() && conv.CheckForOverflow == binary.CheckForOverflow))
-				return false; // conv does not match binary operation
 			context.Step("compound assignment", inst);
 			inst.ReplaceWith(new CompoundAssignmentInstruction(
 				binary, binary.Left, binary.Right,
@@ -310,16 +361,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// -->
 		/// stloc s(stloc l(value))
 		/// </code>
-		bool TransformInlineAssignmentLocal(Block block, int i)
+		bool TransformInlineAssignmentLocal(Block block, int pos)
 		{
-			var inst = block.Instructions[i] as StLoc;
-			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
+			var inst = block.Instructions[pos] as StLoc;
+			var nextInst = block.Instructions.ElementAtOrDefault(pos + 1) as StLoc;
 			if (inst == null || nextInst == null)
 				return false;
 			if (inst.Variable.Kind != VariableKind.StackSlot)
 				return false;
 			Debug.Assert(!inst.Variable.Type.IsSmallIntegerType());
-			if (nextInst.Variable.Kind != VariableKind.Local || !nextInst.Value.MatchLdLoc(inst.Variable))
+			if (!(nextInst.Variable.Kind == VariableKind.Local || nextInst.Variable.Kind == VariableKind.Parameter))
+				return false;
+			if (!nextInst.Value.MatchLdLoc(inst.Variable))
 				return false;
 			if (IsImplicitTruncation(inst.Value, nextInst.Variable.Type)) {
 				// 'stloc l' is implicitly truncating the stack value
@@ -329,7 +382,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var value = inst.Value;
 			var var = nextInst.Variable;
 			var stackVar = inst.Variable;
-			block.Instructions.RemoveAt(i);
+			block.Instructions.RemoveAt(pos);
 			nextInst.ReplaceWith(new StLoc(stackVar, new StLoc(var, value)));
 			return true;
 		}
@@ -408,48 +461,49 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			nextInst.ReplaceWith(new StLoc(inst.Variable, assignment));
 			return true;
 		}
-		
-		/// ldaddress ::= ldelema | ldflda | ldsflda;
+
 		/// <code>
-		/// stloc s(ldaddress)
-		/// stloc l(ldobj(ldloc s))
-		/// stobj(ldloc s, binary.op(ldloc l, ldc.i4 1))
+		/// stobj(target, binary.add(stloc l(ldobj(target)), ldc.i4 1))
+		///   where target is pure and does not use 'l'
 		/// -->
-		/// stloc l(compound.op.old(ldobj(ldaddress), ldc.i4 1))
+		/// stloc l(compound.op.old(ldobj(target), ldc.i4 1))
 		/// </code>
 		bool TransformPostIncDecOperatorOnAddress(Block block, int i)
 		{
-			var inst = block.Instructions[i] as StLoc;
-			var nextInst = block.Instructions.ElementAtOrDefault(i + 1) as StLoc;
-			var stobj = block.Instructions.ElementAtOrDefault(i + 2) as StObj;
-			if (inst == null || nextInst == null || stobj == null)
+			if (!(block.Instructions[i] is StObj stobj))
 				return false;
-			if (!inst.Variable.IsSingleDefinition || inst.Variable.LoadCount != 2)
+			var binary = UnwrapSmallIntegerConv(stobj.Value, out var conv) as BinaryNumericInstruction;
+			if (binary == null || !binary.Right.MatchLdcI4(1))
 				return false;
-			if (!(inst.Value is LdElema || inst.Value is LdFlda || inst.Value is LdsFlda))
+			if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
 				return false;
-			ILInstruction target;
-			IType targetType;
-			if (nextInst.Variable.Kind == VariableKind.StackSlot || !nextInst.Value.MatchLdObj(out target, out targetType) || !target.MatchLdLoc(inst.Variable))
+			if (!(binary.Left is StLoc stloc))
 				return false;
-			if (!stobj.Target.MatchLdLoc(inst.Variable))
+			if (!(stloc.Variable.Kind == VariableKind.Local || stloc.Variable.Kind == VariableKind.StackSlot))
 				return false;
-			var binary = stobj.Value as BinaryNumericInstruction;
-			if (binary == null || !binary.Left.MatchLdLoc(nextInst.Variable) || !binary.Right.MatchLdcI4(1)
-			    || (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
+			if (!(stloc.Value is LdObj ldobj))
 				return false;
-			context.Step($"TransformPostIncDecOperator", inst);
-			var assignment = new CompoundAssignmentInstruction(binary, new LdObj(inst.Value, targetType), binary.Right, targetType, CompoundAssignmentType.EvaluatesToOldValue);
-			stobj.ReplaceWith(new StLoc(nextInst.Variable, assignment));
-			block.Instructions.RemoveAt(i + 1);
+			if (!SemanticHelper.IsPure(ldobj.Target.Flags))
+				return false;
+			if (!ldobj.Target.Match(stobj.Target).Success)
+				return false;
+			if (stloc.Variable.IsUsedWithin(ldobj.Target))
+				return false;
+			IType targetType = ldobj.Type;
+			if (!ValidateCompoundAssign(binary, conv, targetType))
+				return false;
+			context.Step("TransformPostIncDecOperatorOnAddress", stobj);
+			block.Instructions[i] = new StLoc(stloc.Variable, new CompoundAssignmentInstruction(
+				binary, ldobj, binary.Right, targetType, CompoundAssignmentType.EvaluatesToOldValue));
 			return true;
 		}
 
 		/// <code>
-		/// stloc l(ldobj(ldflda(target)))
-		/// stobj(ldflda(target), binary.op(ldloc l, ldc.i4 1))
+		/// stloc l(ldobj(target))
+		/// stobj(target, binary.op(ldloc l, ldc.i4 1))
+		///   target is pure and does not use 'l'
 		/// -->
-		/// compound.op.old(ldobj(ldflda(target)), ldc.i4 1)
+		/// stloc l(compound.op.old(ldobj(target), ldc.i4 1))
 		/// </code>
 		bool TransformRoslynPostIncDecOperatorOnAddress(Block block, int i)
 		{
@@ -457,21 +511,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var stobj = block.Instructions.ElementAtOrDefault(i + 1) as StObj;
 			if (inst == null || stobj == null)
 				return false;
-			if (!inst.Variable.IsSingleDefinition || inst.Variable.LoadCount != 1)
+			if (!(inst.Value is LdObj ldobj))
 				return false;
-			if (!inst.Value.MatchLdObj(out var loadTarget, out var loadType) || !loadTarget.MatchLdFlda(out var fieldTarget, out var field))
+			if (!SemanticHelper.IsPure(ldobj.Target.Flags))
 				return false;
-			if (!stobj.Target.MatchLdFlda(out var fieldTarget2, out var field2))
+			if (!ldobj.Target.Match(stobj.Target).Success)
 				return false;
-			if (!fieldTarget.Match(fieldTarget2).Success || !field.Equals(field2))
+			if (inst.Variable.IsUsedWithin(ldobj.Target))
 				return false;
-			var binary = stobj.Value as BinaryNumericInstruction;
-			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1)
-				|| (binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub))
+			var binary = UnwrapSmallIntegerConv(stobj.Value, out var conv) as BinaryNumericInstruction;
+			if (binary == null || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
 				return false;
-			context.Step("TransformRoslynPostIncDecOperator", inst);
-			stobj.ReplaceWith(new CompoundAssignmentInstruction(binary, inst.Value, binary.Right, loadType, CompoundAssignmentType.EvaluatesToOldValue));
-			block.Instructions.RemoveAt(i);
+			if (!(binary.Operator == BinaryNumericOperator.Add || binary.Operator == BinaryNumericOperator.Sub))
+				return false;
+			var targetType = ldobj.Type;
+			if (!ValidateCompoundAssign(binary, conv, targetType))
+				return false;
+			context.Step("TransformRoslynPostIncDecOperatorOnAddress", inst);
+			inst.Value = new CompoundAssignmentInstruction(binary, inst.Value, binary.Right, targetType, CompoundAssignmentType.EvaluatesToOldValue);
+			block.Instructions.RemoveAt(i + 1);
 			return true;
 		}
 

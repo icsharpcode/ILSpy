@@ -109,9 +109,6 @@ namespace ICSharpCode.Decompiler.CSharp
 						// CachedDelegateInitialization must run after ConditionDetection and before/in LoopingBlockTransform
 						// and must run before NullCoalescingTransform
 						new CachedDelegateInitialization(),
-						new ILInlining(),
-						new TransformAssignment(), // must run before CopyPropagation
-						new CopyPropagation(),
 						new StatementTransform(
 							// per-block transforms that depend on each other, and thus need to
 							// run interleaved (statement by statement).
@@ -121,11 +118,13 @@ namespace ICSharpCode.Decompiler.CSharp
 							// Inlining must be first, because it doesn't trigger re-runs.
 							// Any other transform that opens up new inlining opportunities should call RequestRerun().
 							new ExpressionTransforms(),
+							new TransformAssignment(), // inline and compound assignments
 							new NullCoalescingTransform(),
 							new NullableLiftingStatementTransform(),
 							new TransformArrayInitializers(),
 							new TransformCollectionAndObjectInitializers()
-						)
+						),
+						new CopyPropagation()
 					}
 				},
 				new ProxyCallReplacer(),

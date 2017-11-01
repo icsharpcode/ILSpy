@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.IL
 		internal static bool IsValidCompoundAssignmentTarget(ILInstruction inst)
 		{
 			switch (inst.OpCode) {
-				case OpCode.LdLoc:
+				// case OpCode.LdLoc: -- not valid -- does not mark the variable as written to
 				case OpCode.LdObj:
 					return true;
 				case OpCode.Call:

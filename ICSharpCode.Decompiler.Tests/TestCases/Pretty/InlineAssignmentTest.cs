@@ -28,6 +28,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		private int[] field3;
 		private short field4;
 
+		public int InstanceProperty {
+			get;
+			set;
+		}
+		public static int StaticProperty {
+			get;
+			set;
+		}
+
 		public void SimpleInlineWithLocals()
 		{
 			int value;
@@ -56,7 +65,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			this.UseShort(this.field4 = this.UseShort(0));
 			Console.WriteLine(this.field4);
 		}
-
+		
 		public short UseShort(short s)
 		{
 			Console.WriteLine(s);
@@ -111,6 +120,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public int ArrayUsageWithMethods()
 		{
 			return this.GetArray()[this.GetIndex()] = this.GetValue(this.GetIndex());
+		}
+
+		public int StaticPropertyTest()
+		{
+			return InlineAssignmentTest.StaticProperty = this.GetIndex();
+		}
+
+		public int InstancePropertyTest()
+		{
+			return this.InstanceProperty = this.GetIndex();
 		}
 	}
 }
