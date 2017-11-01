@@ -268,9 +268,55 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
+		/// <summary>
+		/// Gets whether 'stobj type(..., value)' would evaluate to a different value than 'value'
+		/// due to implicit truncation.
+		/// </summary>
 		bool IsImplicitTruncation(ILInstruction value, IType type)
 		{
-			return type.IsSmallIntegerType();
+			if (!type.IsSmallIntegerType()) {
+				// Implicit truncation in ILAst only happens for small integer types;
+				// other types of implicit truncation in IL cause the ILReader to insert
+				// conv instructions.
+				return false;
+			}
+			// With small integer types, test whether the value being stored
+			// is being truncated:
+			if (value.MatchLdcI4(out int val)) {
+				switch (type.GetEnumUnderlyingType().GetDefinition()?.KnownTypeCode) {
+					case KnownTypeCode.Boolean:
+						return !(val == 0 || val == 1);
+					case KnownTypeCode.Byte:
+						return !(val >= byte.MinValue && val <= byte.MaxValue);
+					case KnownTypeCode.SByte:
+						return !(val >= sbyte.MinValue && val <= sbyte.MaxValue);
+					case KnownTypeCode.Int16:
+						return !(val >= short.MinValue && val <= short.MaxValue);
+					case KnownTypeCode.UInt16:
+					case KnownTypeCode.Char:
+						return !(val >= ushort.MinValue && val <= ushort.MaxValue);
+				}
+			} else if (value is LdObj ldobj) {
+				return IsImplicitTruncation(ldobj.Type, type);
+			} else if (value is StObj stobj) {
+				return IsImplicitTruncation(stobj.Type, type);
+			} else if (value is LdLoc ldloc) {
+				return IsImplicitTruncation(ldloc.Variable.Type, type);
+			} else if (value is StLoc stloc) {
+				return IsImplicitTruncation(stloc.Variable.Type, type);
+			} else if (value is CallInstruction call) {
+				return IsImplicitTruncation(call.Method.ReturnType, type);
+			} else if (value is Conv conv) {
+				return conv.TargetType != type.ToPrimitiveType();
+			} else if (value is Comp) {
+				return false; // comp returns 0 or 1, which always fits
+			}
+			return true;
+		}
+
+		bool IsImplicitTruncation(IType fromType, IType toType)
+		{
+			return !(fromType.GetSize() <= toType.GetSize() && fromType.GetSign() == toType.GetSign());
 		}
 
 		/// <code>

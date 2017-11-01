@@ -51,12 +51,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Console.WriteLine(InlineAssignmentTest.field2 = new InlineAssignmentTest());
 			Console.WriteLine(InlineAssignmentTest.field2);
 			this.UseShort(this.field4 = 6);
+			this.UseShort(this.field4 = -10000);
+			this.UseShort(this.field4 = (short)this.field1);
+			this.UseShort(this.field4 = this.UseShort(0));
 			Console.WriteLine(this.field4);
 		}
 
-		public void UseShort(short s)
+		public short UseShort(short s)
 		{
 			Console.WriteLine(s);
+			return s;
 		}
 
 		public void ReadLoop1(TextReader r)

@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly zztqnmi4
+.assembly f1ibwsev
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module zztqnmi4.dll
-// MVID: {038F2DF5-AE7B-4B0A-B846-AC254CE46038}
+.module f1ibwsev.dll
+// MVID: {8DB4E6AA-A0C2-49F3-8E9C-A28CE30F145A}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x006A0000
+// Image base: 0x01400000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -85,10 +85,13 @@
   .method public hidebysig instance void 
           SimpleInlineWithFields2() cil managed
   {
-    // Code size       80 (0x50)
+    // Code size       150 (0x96)
     .maxstack  4
     .locals init (int32 V_0,
-             int16 V_1)
+             int16 V_1,
+             int16 V_2,
+             int16 V_3,
+             int16 V_4)
     IL_0000:  ldarg.0
     IL_0001:  ldc.i4.5
     IL_0002:  dup
@@ -112,21 +115,54 @@
     IL_0038:  stloc.1
     IL_0039:  stfld      int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field4
     IL_003e:  ldloc.1
-    IL_003f:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::UseShort(int16)
-    IL_0044:  ldarg.0
-    IL_0045:  ldfld      int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field4
-    IL_004a:  call       void [mscorlib]System.Console::WriteLine(int32)
-    IL_004f:  ret
+    IL_003f:  call       instance int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::UseShort(int16)
+    IL_0044:  pop
+    IL_0045:  ldarg.0
+    IL_0046:  ldarg.0
+    IL_0047:  ldc.i4     0xffffd8f0
+    IL_004c:  dup
+    IL_004d:  stloc.2
+    IL_004e:  stfld      int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field4
+    IL_0053:  ldloc.2
+    IL_0054:  call       instance int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::UseShort(int16)
+    IL_0059:  pop
+    IL_005a:  ldarg.0
+    IL_005b:  ldarg.0
+    IL_005c:  ldarg.0
+    IL_005d:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field1
+    IL_0062:  conv.i2
+    IL_0063:  dup
+    IL_0064:  stloc.3
+    IL_0065:  stfld      int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field4
+    IL_006a:  ldloc.3
+    IL_006b:  call       instance int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::UseShort(int16)
+    IL_0070:  pop
+    IL_0071:  ldarg.0
+    IL_0072:  ldarg.0
+    IL_0073:  ldarg.0
+    IL_0074:  ldc.i4.0
+    IL_0075:  call       instance int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::UseShort(int16)
+    IL_007a:  dup
+    IL_007b:  stloc.s    V_4
+    IL_007d:  stfld      int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field4
+    IL_0082:  ldloc.s    V_4
+    IL_0084:  call       instance int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::UseShort(int16)
+    IL_0089:  pop
+    IL_008a:  ldarg.0
+    IL_008b:  ldfld      int16 ICSharpCode.Decompiler.Tests.TestCases.Pretty.InlineAssignmentTest::field4
+    IL_0090:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0095:  ret
   } // end of method InlineAssignmentTest::SimpleInlineWithFields2
 
-  .method public hidebysig instance void 
+  .method public hidebysig instance int16 
           UseShort(int16 s) cil managed
   {
-    // Code size       7 (0x7)
+    // Code size       8 (0x8)
     .maxstack  8
     IL_0000:  ldarg.1
     IL_0001:  call       void [mscorlib]System.Console::WriteLine(int32)
-    IL_0006:  ret
+    IL_0006:  ldarg.1
+    IL_0007:  ret
   } // end of method InlineAssignmentTest::UseShort
 
   .method public hidebysig instance void 
