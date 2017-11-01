@@ -410,5 +410,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			Item item = CompoundAssignmentTest.GetItem(null);
 			item.Self = item;
 		}
+
+		void Issue954(ref MyEnum a, MyEnum b)
+		{
+			// cannot decompile to: "a %= b;", because the % operator does not apply to enums
+			a = (MyEnum)((int)a % (int)b);
+		}
 	}
 }

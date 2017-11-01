@@ -939,12 +939,15 @@ protected override void Disconnected()
 
 	static Action<OpCode> HasTypeOperand = opCode => {
 		opCode.ConstructorParameters.Add("IType type");
-		opCode.Members.Add("readonly IType type;");
+		opCode.Members.Add("IType type;");
 		opCode.ConstructorBody.Add("this.type = type;");
 		opCode.MatchParameters.Add(new MatchParamInfo { TypeName = "IType", Name = "type", FieldName = "Type" });
 		opCode.PerformMatchConditions.Add("type.Equals(o.type)");
 		opCode.Members.Add("/// <summary>Returns the type operand.</summary>" + Environment.NewLine
-						+ "public IType Type { get { return type; } }");
+						+ "public IType Type {" + Environment.NewLine
+						+ "\tget { return type; }" + Environment.NewLine
+						+ "\tset { type = value; InvalidateFlags(); }" + Environment.NewLine
+						+ "}");
 		opCode.GenerateWriteTo = true;
 		opCode.WriteOperand.Add("output.Write(' ');");
 		opCode.WriteOperand.Add("type.WriteTo(output);");

@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module CompoundAssignmentTest.dll
-// MVID: {514BA798-3837-4D3D-8485-D675114840C6}
+// MVID: {9D118C00-E9E9-446E-9B2F-0C32732A9171}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01590000
+// Image base: 0x02BF0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1537,6 +1537,22 @@
     IL_000a:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/Item::Self
     IL_000f:  ret
   } // end of method CompoundAssignmentTest::Issue882
+
+  .method private hidebysig instance void 
+          Issue954(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum& a,
+                   valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.CompoundAssignmentTest/MyEnum b) cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.1
+    IL_0003:  ldind.i4
+    IL_0004:  ldarg.2
+    IL_0005:  rem
+    IL_0006:  stind.i4
+    IL_0007:  ret
+  } // end of method CompoundAssignmentTest::Issue954
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

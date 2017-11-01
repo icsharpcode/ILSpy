@@ -296,29 +296,19 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					case KnownTypeCode.Char:
 						return !(val >= ushort.MinValue && val <= ushort.MaxValue);
 				}
-			} else if (value is LdObj ldobj) {
-				return IsImplicitTruncation(ldobj.Type, type);
-			} else if (value is StObj stobj) {
-				return IsImplicitTruncation(stobj.Type, type);
-			} else if (value is LdLoc ldloc) {
-				return IsImplicitTruncation(ldloc.Variable.Type, type);
-			} else if (value is StLoc stloc) {
-				return IsImplicitTruncation(stloc.Variable.Type, type);
-			} else if (value is CallInstruction call) {
-				return IsImplicitTruncation(call.Method.ReturnType, type);
 			} else if (value is Conv conv) {
 				return conv.TargetType != type.ToPrimitiveType();
 			} else if (value is Comp) {
 				return false; // comp returns 0 or 1, which always fits
+			} else {
+				IType inferredType = value.InferType();
+				if (inferredType.Kind != TypeKind.Unknown) {
+					return !(inferredType.GetSize() <= type.GetSize() && inferredType.GetSign() == type.GetSign());
+				}
 			}
 			return true;
 		}
-
-		bool IsImplicitTruncation(IType fromType, IType toType)
-		{
-			return !(fromType.GetSize() <= toType.GetSize() && fromType.GetSign() == toType.GetSign());
-		}
-
+		
 		/// <code>
 		/// stloc s(ldloc l)
 		/// stloc l(binary.op(ldloc s, ldc.i4 1))

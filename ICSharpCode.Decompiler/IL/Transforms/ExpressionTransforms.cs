@@ -16,9 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
@@ -279,17 +281,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			if (inst.Value is BinaryNumericInstruction binary
-				&& binary.Left.MatchLdObj(out ILInstruction target, out IType t)
-				&& inst.Target.Match(target).Success
-				&& SemanticHelper.IsPure(target.Flags)
-				&& CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, t))
+				&& binary.Left is LdObj ldobj
+				&& inst.Target.Match(ldobj.Target).Success
+				&& SemanticHelper.IsPure(ldobj.Target.Flags))
 			{
-				context.Step("compound assignment", inst);
-				// stobj(target, binary.op(ldobj(target), ...))
-				// => compound.op(target, ...)
-				inst.ReplaceWith(new CompoundAssignmentInstruction(
-					binary, binary.Left, binary.Right,
-					t, CompoundAssignmentType.EvaluatesToNewValue));
+				// ldobj.Type may just be 'int' (due to ldind.i4) when we're actually operating on a 'ref MyEnum'.
+				// Try to determine the real type of the object we're modifying:
+				IType targetType = ldobj.Target.InferType();
+				if (targetType.Kind == TypeKind.Pointer || targetType.Kind == TypeKind.ByReference) {
+					targetType = ((TypeWithElementType)targetType).ElementType;
+					if (targetType.Kind == TypeKind.Unknown || targetType.GetSize() != ldobj.Type.GetSize()) {
+						targetType = ldobj.Type;
+					}
+				} else {
+					targetType = ldobj.Type;
+				}
+				if (CompoundAssignmentInstruction.IsBinaryCompatibleWithType(binary, targetType)) {
+					context.Step("compound assignment", inst);
+					// stobj(target, binary.op(ldobj(target), ...))
+					// => compound.op(target, ...)
+					inst.ReplaceWith(new CompoundAssignmentInstruction(
+						binary, binary.Left, binary.Right,
+						targetType, CompoundAssignmentType.EvaluatesToNewValue));
+				}
 			}
 		}
 
