@@ -62,8 +62,3 @@ If you need the Cecil ModuleDefinition
 ITypeDefinition type = decompiler.TypeSystem.Compilation.FindType(nameOfUniResolver).GetDefinition();
 var module = decompiler.TypeSystem.GetCecil(type).Module
 ```
-
-```csharp
-#r "ICSharpCode.Decompiler"
-#r "Mono.Cecil"
-```
