@@ -585,10 +585,9 @@
 
   <Target Name="BeforeBuild">
     <PropertyGroup>
-      <UpdateAssemblyInfo>powershell.exe -NoProfile -ExecutionPolicy Bypass -File $(SolutionDir)\BuildTools\update-assemblyinfo.ps1</UpdateAssemblyInfo>
-      <UpdateAssemblyInfo Condition="$(OS)=='Unix'">powershell -NoProfile -ExecutionPolicy Bypass -File $(SolutionDir)\BuildTools\update-assemblyinfo.ps1</UpdateAssemblyInfo>
+      <UpdateAssemblyInfo>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1</UpdateAssemblyInfo>
     </PropertyGroup>
-    <Exec WorkingDirectory="$(SolutionDir)" Command="$(UpdateAssemblyInfo)" Timeout="60000" />
+    <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" />
   </Target>
 
   <!-- Workaround for EmbedSources support, see https://github.com/dotnet/roslyn/issues/19127 -->
