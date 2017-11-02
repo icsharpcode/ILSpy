@@ -230,10 +230,16 @@ public class ExpressionTrees
 
 	public void Test()
 	{
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[0].Length == 0);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[1] {
+			1
+		}.Length == 0);
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.GetType().IsLayoutSequential);
 		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => new List<int>().Count);
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[0].Clone() == null);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[1] {
+			2
+		}.Clone() == new int[2] {
+			2, 3
+		});
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.GetType().IsInstanceOfType(new object()));
 		ExpressionTrees.ToCode<ReadOnlyCollection<int>>(ExpressionTrees.X(), () => new List<int>().AsReadOnly());
 	}
@@ -393,12 +399,12 @@ public class ExpressionTrees
 	
 	public void Quoted()
 	{
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null);
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => ((Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString())).Equals("fds"));
 	}
 	
 	public void Quoted2()
 	{
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => true).Equals(null));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => true).Equals(""));
 	}
 	
 	public void QuotedWithAnonymous()
