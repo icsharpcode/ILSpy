@@ -9,26 +9,53 @@ packages:
   version: 3.0.0.3214-beta1
 ---
 
-Load the references required to work with the decompiler
+Setup: load the references required to work with the decompiler
 
 ```csharp
 #r "ICSharpCode.Decompiler"
 #r "Mono.Cecil"
 
+using Mono.Cecil;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
 ```
 
-You must have compiled frontends.sln first - please adapt basePath accordingly so that the console assembly is found
+You must have compiled **frontends.sln** first (run “dotnet build” in ICSharpCode.Decompiler.PowerShell folder)
 
 ```csharp
-string basePath = @"D:\GitWorkspace\ILSpy";
-string fileName = basePath + @"\ICSharpCode.Decompiler.Console\bin\Debug\netcoreapp2.0\ilspycmd.dll";
+string workbookBasePath = System.IO.Directory.GetCurrentDirectory();
+string fileName = System.IO.Path.Combine(workbookBasePath, "ICSharpCode.Decompiler.PowerShell", "bin", "Debug", "netstandard2.0", "ICSharpCode.Decompiler.dll");
 var decompiler = new CSharpDecompiler(fileName, new DecompilerSettings());
 ```
+
+Get the count of types in this assembly
 
 ```csharp
 var types = decompiler.TypeSystem.Compilation.MainAssembly.GetAllTypeDefinitions();
 Console.WriteLine(types.Count());
+```
+
+Decompile a known type (as a whole)
+
+```csharp
+// ICSharpCode.Decompiler.Util.Empty<T> -> translates to `n, where n is the # of generic parameters
+var nameOfGenericType =  new FullTypeName("ICSharpCode.Decompiler.Util.Empty`1");
+Console.WriteLine(decompiler.DecompileTypeAsString(nameOfGenericType));
+```
+
+If you want to decompile one single member (sample: first property)
+
+```csharp
+var nameOfUniResolver =  new FullTypeName("ICSharpCode.Decompiler.UniversalAssemblyResolver");
+ITypeDefinition typeInfo = decompiler.TypeSystem.Compilation.FindType(nameOfUniResolver).GetDefinition();
+IMemberDefinition cecilProperty = decompiler.TypeSystem.GetCecil(typeInfo.Properties.First()).Resolve();
+Console.WriteLine(decompiler.DecompileAsString(cecilProperty));
+```
+
+If you need the Cecil ModuleDefinition
+
+```csharp
+ITypeDefinition type = decompiler.TypeSystem.Compilation.FindType(nameOfUniResolver).GetDefinition();
+var module = decompiler.TypeSystem.GetCecil(type).Module
 ```
