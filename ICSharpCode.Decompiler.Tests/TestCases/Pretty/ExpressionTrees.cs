@@ -110,12 +110,12 @@ public class ExpressionTrees
 			3,
 			4,
 			5
-		})[0 + (int)(System.DateTime.Now.Ticks % 3L)]);
+		})[0 + (int)(DateTime.Now.Ticks % 3L)]);
 	}
 	
 	public void ArrayLengthAndDoubles()
 	{
-		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => System.Linq.Enumerable.ToArray<double>(System.Linq.Enumerable.Concat<double>(new double[] {
+		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => Enumerable.ToArray<double>(Enumerable.Concat<double>(new double[] {
 			1.0,
 			2.01,
 			3.5
@@ -137,7 +137,7 @@ public class ExpressionTrees
 	
 	public void DefaultValue()
 	{
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new System.TimeSpan(1, 2, 3) == default(TimeSpan));
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new TimeSpan(1, 2, 3) == default(TimeSpan));
 	}
 	
 	public void EnumConstant()
@@ -235,7 +235,7 @@ public class ExpressionTrees
 		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => new List<int>().Count);
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[0].Clone() == null);
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.GetType().IsInstanceOfType(new object()));
-		ExpressionTrees.ToCode<System.Collections.ObjectModel.ReadOnlyCollection<int>>(ExpressionTrees.X(), () => new List<int>().AsReadOnly());
+		ExpressionTrees.ToCode<ReadOnlyCollection<int>>(ExpressionTrees.X(), () => new List<int>().AsReadOnly());
 	}
 	
 	public void DoAssert()
@@ -261,7 +261,7 @@ public class ExpressionTrees
 
 	public void MethodGroupAsExtensionMethod()
 	{
-		ExpressionTrees.ToCode<System.Func<bool>>(ExpressionTrees.X(), () => (Func<bool>)new int[] {
+		ExpressionTrees.ToCode<Func<bool>>(ExpressionTrees.X(), () => (Func<bool>)new int[] {
 			2000,
 			2004,
 			2008,
@@ -271,15 +271,15 @@ public class ExpressionTrees
 
 	public void MethodGroupConstant()
 	{
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => System.Array.TrueForAll<int>(new int[] {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => Array.TrueForAll<int>(new int[] {
 			2000,
 			2004,
 			2008,
 			2012
-		}, (Predicate<int>)System.DateTime.IsLeapYear));
+		}, (Predicate<int>)DateTime.IsLeapYear));
 
 		Magic test = new Magic();
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => System.Linq.Enumerable.All<int>(new int[] {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => Enumerable.All<int>(new int[] {
 			2000,
 			2004,
 			2008,
@@ -306,12 +306,12 @@ public class ExpressionTrees
 		//no params
 		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => call(() => 42));
 		//one param
-		ExpressionTrees.ToCode<System.Collections.Generic.IEnumerable<int>>(ExpressionTrees.X(), () => System.Linq.Enumerable.Select<int, int>(new int[] {
+		ExpressionTrees.ToCode<IEnumerable<int>>(ExpressionTrees.X(), () => Enumerable.Select<int, int>(new int[] {
 			37,
 			42
 		}, (int x) => x * 2));
 		//two params
-		ExpressionTrees.ToCode<System.Collections.Generic.IEnumerable<int>>(ExpressionTrees.X(), () => System.Linq.Enumerable.Select<int, int>(new int[] {
+		ExpressionTrees.ToCode<IEnumerable<int>>(ExpressionTrees.X(), () => Enumerable.Select<int, int>(new int[] {
 			37,
 			42
 		}, (int x, int i) => x * 2));
@@ -319,7 +319,7 @@ public class ExpressionTrees
 	
 	public void CurriedLambda()
 	{
-		ExpressionTrees.ToCode<int, System.Func<int, System.Func<int, int>>>(ExpressionTrees.X(), (int a) => (int b) => (int c) => a + b + c);
+		ExpressionTrees.ToCode<int, Func<int, Func<int, int>>>(ExpressionTrees.X(), (int a) => (int b) => (int c) => a + b + c);
 	}
 	
 	private bool Fizz(Func<int, bool> a)
@@ -348,7 +348,7 @@ public class ExpressionTrees
 	
 	public void NewArrayAndExtensionMethod()
 	{
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => System.Linq.Enumerable.SequenceEqual<double>(new double[] {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => Enumerable.SequenceEqual<double>(new double[] {
 			1.0,
 			2.01,
 			3.5
@@ -403,7 +403,7 @@ public class ExpressionTrees
 	
 	public void QuotedWithAnonymous()
 	{
-		ExpressionTrees.ToCode<string>(ExpressionTrees.X(), () => System.Linq.Enumerable.Single<string>(System.Linq.Enumerable.Select(new[] {
+		ExpressionTrees.ToCode<string>(ExpressionTrees.X(), () => Enumerable.Single<string>(Enumerable.Select(new[] {
 			new {
 				X = "a",
 				Y = "b"
@@ -428,7 +428,7 @@ public class ExpressionTrees
 	
 	public void TypedConstant()
 	{
-		ExpressionTrees.ToCode<System.Type[]>(ExpressionTrees.X(), () => new Type[] {
+		ExpressionTrees.ToCode<Type[]>(ExpressionTrees.X(), () => new Type[] {
 			typeof(int),
 			typeof(string)
 		});
@@ -441,7 +441,7 @@ public class ExpressionTrees
 	
 	public void StaticMembers()
 	{
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => (System.DateTime.Now > System.DateTime.Now + System.TimeSpan.FromMilliseconds(10.001)).ToString() == "False");
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => (DateTime.Now > DateTime.Now + TimeSpan.FromMilliseconds(10.001)).ToString() == "False");
 	}
 	
 	public void Strings()

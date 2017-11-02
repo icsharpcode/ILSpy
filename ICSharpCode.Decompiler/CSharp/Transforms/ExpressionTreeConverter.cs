@@ -41,11 +41,67 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{
-			CSharpResolver resolver = new CSharpResolver(new CSharpTypeResolveContext(context.TypeSystem.Compilation.MainAssembly, null, context.DecompiledTypeDefinition, context.DecompiledMember));
-			astBuilder = new TypeSystemAstBuilder(resolver);
 			this.context = context;
+			InitializeAstBuilderAndContext(rootNode.Annotation<UsingScope>());
 			rootNode.AcceptVisitor(this);
 		}
+
+		#region TypeSystemAstBuilder context handling
+		Stack<CSharpTypeResolveContext> resolveContextStack = new Stack<CSharpTypeResolveContext>();
+
+		static TypeSystemAstBuilder CreateAstBuilder(CSharpTypeResolveContext context)
+		{
+			return new TypeSystemAstBuilder(new CSharpResolver(context)) {
+				AddResolveResultAnnotations = true,
+				UseAliases = true
+			};
+		}
+
+		void InitializeAstBuilderAndContext(UsingScope usingScope)
+		{
+			this.resolveContextStack = new Stack<CSharpTypeResolveContext>();
+			if (!string.IsNullOrEmpty(context.DecompiledTypeDefinition?.Namespace)) {
+				foreach (string ns in context.DecompiledTypeDefinition.Namespace.Split('.')) {
+					usingScope = new UsingScope(usingScope, ns);
+				}
+			}
+			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly, usingScope.Resolve(context.TypeSystem.Compilation), context.DecompiledTypeDefinition);
+			this.resolveContextStack.Push(currentContext);
+			this.astBuilder = CreateAstBuilder(currentContext);
+		}
+
+		public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
+		{
+			var previousContext = resolveContextStack.Peek();
+			var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
+			foreach (string ident in namespaceDeclaration.Identifiers) {
+				usingScope = new UsingScope(usingScope, ident);
+			}
+			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, usingScope.Resolve(previousContext.Compilation));
+			resolveContextStack.Push(currentContext);
+			try {
+				astBuilder = CreateAstBuilder(currentContext);
+				base.VisitNamespaceDeclaration(namespaceDeclaration);
+			} finally {
+				astBuilder = CreateAstBuilder(previousContext);
+				resolveContextStack.Pop();
+			}
+		}
+
+		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
+		{
+			var previousContext = resolveContextStack.Peek();
+			var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
+			resolveContextStack.Push(currentContext);
+			try {
+				astBuilder = CreateAstBuilder(currentContext);
+				base.VisitTypeDeclaration(typeDeclaration);
+			} finally {
+				astBuilder = CreateAstBuilder(previousContext);
+				resolveContextStack.Pop();
+			}
+		}
+		#endregion
 
 		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
