@@ -62,3 +62,17 @@ If you need the Cecil ModuleDefinition
 ITypeDefinition type = decompiler.TypeSystem.Compilation.FindType(nameOfUniResolver).GetDefinition();
 var module = decompiler.TypeSystem.GetCecil(type).Module
 ```
+
+Get the child namespaces
+
+```csharp
+var icsdns = decompiler.TypeSystem.Compilation.RootNamespace.ChildNamespaces.First();
+foreach (var ns in icsdns.ChildNamespaces.First().ChildNamespaces) Console.WriteLine(ns.FullName);
+```
+
+Get types in a single namespace
+
+```csharp
+// ICSharpCode.Decompiler.TypeSystem is the first namespace
+var typesInNamespace = icsdns.ChildNamespaces.First().ChildNamespaces.First().Types;
+```
