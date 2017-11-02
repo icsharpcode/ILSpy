@@ -727,10 +727,18 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 			ObjectCreateExpression oce = new ObjectCreateExpression(declaringTypeNode);
 			if (invocation.Arguments.Count >= 2) {
-				IList<Expression> arguments = ConvertExpressionsArray(invocation.Arguments.ElementAtOrDefault(1));
-				if (arguments == null)
-					return null;
-				oce.Arguments.AddRange(arguments);
+				if (invocation.Arguments.Count == 2) { 
+					IList<Expression> arguments = ConvertExpressionsArray(invocation.Arguments.ElementAtOrDefault(1));
+					if (arguments == null)
+						return null;
+					oce.Arguments.AddRange(arguments);
+				} else {
+					List<Expression> arguments = new List<Expression>();
+					foreach (Expression argument in invocation.Arguments.Skip(1)) {
+						arguments.Add(Convert(argument));
+					}
+					oce.Arguments.AddRange(arguments);
+				}
 			}
 			if (invocation.Arguments.Count >= 3 && declaringType.IsAnonymousType()) {
 				IMethod resolvedCtor = ctor;
