@@ -230,15 +230,16 @@ public class ExpressionTrees
 
 	public void Test()
 	{
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[1] {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[] {
 			1
 		}.Length == 0);
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.GetType().IsLayoutSequential);
 		ExpressionTrees.ToCode<int>(ExpressionTrees.X(), () => new List<int>().Count);
-		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[1] {
+		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => new int[] {
 			2
-		}.Clone() == new int[2] {
-			2, 3
+		}.Clone() == new int[] {
+			2,
+			3
 		});
 		ExpressionTrees.ToCode<bool>(ExpressionTrees.X(), () => this.GetType().IsInstanceOfType(new object()));
 		ExpressionTrees.ToCode<ReadOnlyCollection<int>>(ExpressionTrees.X(), () => new List<int>().AsReadOnly());
