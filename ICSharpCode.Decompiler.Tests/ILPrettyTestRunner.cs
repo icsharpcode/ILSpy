@@ -43,6 +43,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue959()
+		{
+			Run();
+		}
+
+		[Test]
 		public void FSharpUsing_Debug()
 		{
 			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
