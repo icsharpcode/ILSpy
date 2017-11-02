@@ -6,7 +6,7 @@ platforms:
 - DotNetCore
 packages:
 - id: ICSharpCode.Decompiler
-  version: 3.0.0.3214-beta1
+  version: 3.0.0.3246-beta1
 ---
 
 Setup: load the references required to work with the decompiler
@@ -19,6 +19,9 @@ using Mono.Cecil;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.TypeSystem;
+
+// Version sanity check
+Console.WriteLine(typeof(FullTypeName).Assembly.GetName());
 ```
 
 You must have compiled **frontends.sln** first (run “dotnet build” in ICSharpCode.Decompiler.PowerShell folder)
@@ -58,4 +61,9 @@ If you need the Cecil ModuleDefinition
 ```csharp
 ITypeDefinition type = decompiler.TypeSystem.Compilation.FindType(nameOfUniResolver).GetDefinition();
 var module = decompiler.TypeSystem.GetCecil(type).Module
+```
+
+```csharp
+#r "ICSharpCode.Decompiler"
+#r "Mono.Cecil"
 ```
