@@ -45,34 +45,34 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void FSharpUsing_Debug()
 		{
-			Run();
+			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
 		}
 
 		[Test]
 		public void FSharpUsing_Release()
 		{
-			Run();
+			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
 		}
 
 		[Test, Ignore]
 		public void FSharpLoops_Debug()
 		{
-			Run();
+			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
 		}
 
 		[Test, Ignore]
 		public void FSharpLoops_Release()
 		{
-			Run();
+			Run(settings: new DecompilerSettings { RemoveDeadCode = true });
 		}
 
-		void Run([CallerMemberName] string testName = null)
+		void Run([CallerMemberName] string testName = null, DecompilerSettings settings = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName + ".il");
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
 
 			var executable = Tester.AssembleIL(ilFile, AssemblerOptions.Library);
-			var decompiled = Tester.DecompileCSharp(executable);
+			var decompiled = Tester.DecompileCSharp(executable, settings);
 
 			CodeAssert.FilesAreEqual(csFile, decompiled);
 		}

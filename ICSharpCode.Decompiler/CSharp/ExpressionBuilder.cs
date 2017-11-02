@@ -1078,7 +1078,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							if (NullableType.IsNullable(value.Type)) {
 								targetType = NullableType.Create(compilation, targetType);
 							}
-							value = value.ConvertTo(targetType, this, inst.CheckForOverflow);
+							value = value.ConvertTo(targetType, this, inst.CheckForOverflow, allowImplicitConversion: true);
 							break;
 						}
 					case AssignmentOperatorType.Multiply:
@@ -1091,7 +1091,7 @@ namespace ICSharpCode.Decompiler.CSharp
 							if (NullableType.IsNullable(value.Type)) {
 								targetType = NullableType.Create(compilation, targetType);
 							}
-							value = value.ConvertTo(targetType, this, inst.CheckForOverflow);
+							value = value.ConvertTo(targetType, this, inst.CheckForOverflow, allowImplicitConversion: true);
 							break;
 						}
 				}
@@ -1363,7 +1363,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 			var rr = new DecompiledLambdaResolveResult(
 				function, delegateType, inferredReturnType,
-				hasParameterList: ame.HasParameterList,
+				hasParameterList: isLambda || ame.HasParameterList,
 				isAnonymousMethod: !isLambda,
 				isImplicitlyTyped: ame.Parameters.Any(p => p.Type.IsNull));
 
@@ -1694,9 +1694,24 @@ namespace ICSharpCode.Decompiler.CSharp
 					return TranslateObjectAndCollectionInitializer(block);
 				case BlockType.PostfixOperator:
 					return TranslatePostfixOperator(block);
+				case BlockType.CallInlineAssign:
+					return TranslateSetterCallAssignment(block);
 				default:
 					return ErrorExpression("Unknown block type: " + block.Type);
 			}
+		}
+
+		private TranslatedExpression TranslateSetterCallAssignment(Block block)
+		{
+			if (!block.MatchInlineAssignBlock(out var call, out var value)) {
+				// should never happen unless the ILAst is invalid
+				return ErrorExpression("Error: MatchInlineAssignBlock() returned false");
+			}
+			var arguments = call.Arguments.ToList();
+			arguments[arguments.Count - 1] = value;
+			return new CallBuilder(this, typeSystem, settings)
+				.Build(call.OpCode, call.Method, arguments)
+				.WithILInstruction(call);
 		}
 
 		TranslatedExpression TranslateObjectAndCollectionInitializer(Block block)

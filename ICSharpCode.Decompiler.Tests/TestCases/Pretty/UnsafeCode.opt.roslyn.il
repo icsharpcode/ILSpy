@@ -25,19 +25,19 @@
   .ver 0:0:0:0
 }
 .module UnsafeCode.dll
-// MVID: {958D637E-F39D-447B-A248-B73AECEC847A}
+// MVID: {CBE9626D-F9BD-4008-A325-BABE72F089C1}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x007C0000
+// Image base: 0x01600000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
 
-.class public auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode
+.class public auto ansi ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode
        extends [mscorlib]System.Object
 {
   .class sequential ansi sealed nested public beforefieldinit SimpleStruct
@@ -112,6 +112,37 @@
                                                                                 62 75 74 65 00 00 )                               // bute..
   } // end of class StructWithFixedSizeMembers
 
+  .class auto ansi sealed nested public UnsafeDelegate
+         extends [mscorlib]System.MulticastDelegate
+  {
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor(object 'object',
+                                 native int 'method') runtime managed
+    {
+    } // end of method UnsafeDelegate::.ctor
+
+    .method public hidebysig newslot virtual 
+            instance void  Invoke(uint8* ptr) runtime managed
+    {
+    } // end of method UnsafeDelegate::Invoke
+
+    .method public hidebysig newslot virtual 
+            instance class [mscorlib]System.IAsyncResult 
+            BeginInvoke(uint8* ptr,
+                        class [mscorlib]System.AsyncCallback callback,
+                        object 'object') runtime managed
+    {
+    } // end of method UnsafeDelegate::BeginInvoke
+
+    .method public hidebysig newslot virtual 
+            instance void  EndInvoke(class [mscorlib]System.IAsyncResult result) runtime managed
+    {
+    } // end of method UnsafeDelegate::EndInvoke
+
+  } // end of class UnsafeDelegate
+
+  .field private class ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/UnsafeDelegate unsafeDelegate
+  .field private static class ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/UnsafeDelegate staticUnsafeDelegate
   .method public hidebysig specialname instance int32* 
           get_NullPointer() cil managed
   {
@@ -121,6 +152,35 @@
     IL_0001:  conv.u
     IL_0002:  ret
   } // end of method UnsafeCode::get_NullPointer
+
+  .method private hidebysig specialname rtspecialname static 
+          void  .cctor() cil managed
+  {
+    // Code size       18 (0x12)
+    .maxstack  8
+    IL_0000:  ldnull
+    IL_0001:  ldftn      void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UnsafeStaticMethod(uint8*)
+    IL_0007:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/UnsafeDelegate::.ctor(object,
+                                                                                                                      native int)
+    IL_000c:  stsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/UnsafeDelegate ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::staticUnsafeDelegate
+    IL_0011:  ret
+  } // end of method UnsafeCode::.cctor
+
+  .method public hidebysig specialname rtspecialname 
+          instance void  .ctor() cil managed
+  {
+    // Code size       25 (0x19)
+    .maxstack  8
+    IL_0000:  ldarg.0
+    IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+    IL_0006:  ldarg.0
+    IL_0007:  ldarg.0
+    IL_0008:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UnsafeMethod(uint8*)
+    IL_000e:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/UnsafeDelegate::.ctor(object,
+                                                                                                                      native int)
+    IL_0013:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/UnsafeDelegate ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::unsafeDelegate
+    IL_0018:  ret
+  } // end of method UnsafeCode::.ctor
 
   .method public hidebysig instance int32 
           SizeOf() cil managed
@@ -137,6 +197,21 @@
     .maxstack  8
     IL_0000:  ret
   } // end of method UnsafeCode::UseBool
+
+  .method private hidebysig instance void 
+          UnsafeMethod(uint8* ptr) cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method UnsafeCode::UnsafeMethod
+
+  .method private hidebysig static void  UnsafeStaticMethod(uint8* ptr) cil managed
+  {
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method UnsafeCode::UnsafeStaticMethod
 
   .method public hidebysig instance void 
           PointerComparison(int32* a,
@@ -887,16 +962,6 @@
     }  // end handler
     IL_0015:  ret
   } // end of method UnsafeCode::Finalize
-
-  .method public hidebysig specialname rtspecialname 
-          instance void  .ctor() cil managed
-  {
-    // Code size       7 (0x7)
-    .maxstack  8
-    IL_0000:  ldarg.0
-    IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
-    IL_0006:  ret
-  } // end of method UnsafeCode::.ctor
 
   .property instance int32* NullPointer()
   {

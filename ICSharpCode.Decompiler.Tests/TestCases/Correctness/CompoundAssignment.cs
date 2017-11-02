@@ -30,6 +30,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			CallTwice();
 			UnsignedShiftRightInstanceField();
 			UnsignedShiftRightStaticProperty();
+			DivideByBigValue();
 		}
 
 		static void Test(int a, int b)
@@ -73,6 +74,19 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			set {
 				Console.WriteLine("In set_StaticProperty, value=" + value);
 				staticField = value;
+			}
+		}
+
+		static ushort shortField;
+
+		public static ushort ShortProperty {
+			get {
+				Console.WriteLine("In get_ShortProperty");
+				return shortField;
+			}
+			set {
+				Console.WriteLine("In set_ShortProperty, value={0}", value);
+				shortField = value;
 			}
 		}
 
@@ -132,6 +146,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			StaticProperty = -15;
 			Test(X(), StaticProperty = (int)((uint)StaticProperty >> 2));
+		}
+		
+		static void DivideByBigValue()
+		{
+			ShortProperty = 5;
+			// can't use "ShortProperty /= (ushort)(ushort.MaxValue + 3)" because that would be division by 2.
+			ShortProperty = (ushort)(ShortProperty / (ushort.MaxValue + 3));
 		}
 	}
 }

@@ -29,7 +29,7 @@ namespace ICSharpCode.Decompiler
 	public class DecompilerSettings : INotifyPropertyChanged
 	{
 		bool anonymousMethods = true;
-		
+
 		/// <summary>
 		/// Decompile anonymous methods/lambdas.
 		/// </summary>
@@ -59,7 +59,7 @@ namespace ICSharpCode.Decompiler
 		}
 
 		bool expressionTrees = true;
-		
+
 		/// <summary>
 		/// Decompile expression trees.
 		/// </summary>
@@ -72,9 +72,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool yieldReturn = true;
-		
+
 		/// <summary>
 		/// Decompile enumerators.
 		/// </summary>
@@ -87,9 +87,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool asyncAwait = true;
-		
+
 		/// <summary>
 		/// Decompile async methods.
 		/// </summary>
@@ -134,7 +134,7 @@ namespace ICSharpCode.Decompiler
 		}
 
 		bool automaticProperties = true;
-		
+
 		/// <summary>
 		/// Decompile automatic properties
 		/// </summary>
@@ -147,9 +147,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool automaticEvents = true;
-		
+
 		/// <summary>
 		/// Decompile automatic events
 		/// </summary>
@@ -162,9 +162,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool usingStatement = true;
-		
+
 		/// <summary>
 		/// Decompile using statements.
 		/// </summary>
@@ -177,9 +177,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool forEachStatement = true;
-		
+
 		/// <summary>
 		/// Decompile foreach statements.
 		/// </summary>
@@ -192,9 +192,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool lockStatement = true;
-		
+
 		/// <summary>
 		/// Decompile lock statements.
 		/// </summary>
@@ -207,9 +207,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool switchStatementOnString = true;
-		
+
 		public bool SwitchStatementOnString {
 			get { return switchStatementOnString; }
 			set {
@@ -219,9 +219,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool usingDeclarations = true;
-		
+
 		public bool UsingDeclarations {
 			get { return usingDeclarations; }
 			set {
@@ -231,9 +231,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool queryExpressions = true;
-		
+
 		public bool QueryExpressions {
 			get { return queryExpressions; }
 			set {
@@ -262,7 +262,7 @@ namespace ICSharpCode.Decompiler
 		}
 
 		bool fullyQualifyAmbiguousTypeNames = true;
-		
+
 		public bool FullyQualifyAmbiguousTypeNames {
 			get { return fullyQualifyAmbiguousTypeNames; }
 			set {
@@ -272,9 +272,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool useDebugSymbols = true;
-		
+
 		/// <summary>
 		/// Gets/Sets whether to use variable names from debug symbols, if available.
 		/// </summary>
@@ -287,9 +287,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool objectCollectionInitializers = true;
-		
+
 		/// <summary>
 		/// Gets/Sets whether to use C# 3.0 object/collection initializers
 		/// </summary>
@@ -302,9 +302,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool showXmlDocumentation = true;
-		
+
 		/// <summary>
 		/// Gets/Sets whether to include XML documentation comments in the decompiled code
 		/// </summary>
@@ -319,7 +319,7 @@ namespace ICSharpCode.Decompiler
 		}
 
 		bool foldBraces = false;
-		
+
 		public bool FoldBraces {
 			get { return foldBraces; }
 			set {
@@ -329,10 +329,10 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		#region Options to aid VB decompilation
 		bool introduceIncrementAndDecrement = true;
-		
+
 		/// <summary>
 		/// Gets/Sets whether to use increment and decrement operators
 		/// </summary>
@@ -345,9 +345,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool makeAssignmentExpressions = true;
-		
+
 		/// <summary>
 		/// Gets/Sets whether to use assignment expressions such as in while ((count = Do()) != 0) ;
 		/// </summary>
@@ -360,9 +360,9 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 		}
-		
+
 		bool alwaysGenerateExceptionVariableForCatchBlocks = false;
-		
+
 		/// <summary>
 		/// Gets/Sets whether to always generate exception variables in catch blocks
 		/// </summary>
@@ -388,6 +388,20 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		#endregion
+
+		#region Options to aid F# decompilation
+		bool removeDeadCode = false;
+
+		public bool RemoveDeadCode {
+			get { return removeDeadCode; }
+			set {
+				if (removeDeadCode != value) {
+					removeDeadCode = value;
+					OnPropertyChanged();
+				}
+			}
+		}
 		#endregion
 
 		#region Assembly Load and Resolve options
@@ -419,7 +433,7 @@ namespace ICSharpCode.Decompiler
 		#endregion
 
 		CSharpFormattingOptions csharpFormattingOptions;
-		
+
 		public CSharpFormattingOptions CSharpFormattingOptions {
 			get {
 				if (csharpFormattingOptions == null) {
@@ -440,14 +454,14 @@ namespace ICSharpCode.Decompiler
 		}
 
 		public event PropertyChangedEventHandler PropertyChanged;
-		
+
 		protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
 		{
 			if (PropertyChanged != null) {
 				PropertyChanged(this, new PropertyChangedEventArgs(propertyName));
 			}
 		}
-		
+
 		public DecompilerSettings Clone()
 		{
 			DecompilerSettings settings = (DecompilerSettings)MemberwiseClone();

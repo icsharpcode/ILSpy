@@ -93,7 +93,8 @@ namespace ICSharpCode.Decompiler.IL
 		LdLoc,
 		/// <summary>Loads the address of a local variable. (ldarga/ldloca)</summary>
 		LdLoca,
-		/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
+		/// <summary>Stores a value into a local variable. (IL: starg/stloc)
+		/// Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value, sign/zero extended back to I4 based on variable.Type.GetSign())</summary>
 		StLoc,
 		/// <summary>Stores the value into an anonymous temporary variable, and returns the address of that variable.</summary>
 		AddressOf,
@@ -137,7 +138,8 @@ namespace ICSharpCode.Decompiler.IL
 		IsInst,
 		/// <summary>Indirect load (ref/pointer dereference).</summary>
 		LdObj,
-		/// <summary>Indirect store (store to ref/pointer).</summary>
+		/// <summary>Indirect store (store to ref/pointer).
+		/// Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())</summary>
 		StObj,
 		/// <summary>Boxes a value.</summary>
 		Box,
@@ -941,9 +943,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2217,7 +2222,8 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>Stores a value into a local variable. (starg/stloc)</summary>
+	/// <summary>Stores a value into a local variable. (IL: starg/stloc)
+	/// Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value, sign/zero extended back to I4 based on variable.Type.GetSign())</summary>
 	public sealed partial class StLoc : ILInstruction, IStoreInstruction
 	{
 		public StLoc(ILVariable variable, ILInstruction value) : base(OpCode.StLoc)
@@ -2811,9 +2817,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -3347,9 +3356,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -3398,9 +3410,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -3488,9 +3503,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Target = this.target.Clone();
 			return clone;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -3540,7 +3558,8 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>Indirect store (store to ref/pointer).</summary>
+	/// <summary>Indirect store (store to ref/pointer).
+	/// Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())</summary>
 	public sealed partial class StObj : ILInstruction, ISupportsVolatilePrefix, ISupportsUnalignedPrefix
 	{
 		public StObj(ILInstruction target, ILInstruction value, IType type) : base(OpCode.StObj)
@@ -3613,9 +3632,12 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		/// <summary>Gets/Sets whether the memory access is volatile.</summary>
 		public bool IsVolatile { get; set; }
 		/// <summary>Returns the alignment specified by the 'unaligned' prefix; or 0 if there was no 'unaligned' prefix.</summary>
@@ -3674,9 +3696,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return StackType.O; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -3725,9 +3750,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return StackType.Ref; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -3776,9 +3804,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -3852,9 +3883,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Indices = new InstructionCollection<ILInstruction>(this, 0);
 			this.Indices.AddRange(indices);
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public static readonly SlotInfo IndicesSlot = new SlotInfo("Indices", canInlineInto: true);
 		public InstructionCollection<ILInstruction> Indices { get; private set; }
 		protected sealed override int GetChildCount()
@@ -3942,9 +3976,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return type.GetStackType(); } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -4055,9 +4092,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return StackType.I4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -4177,9 +4217,12 @@ namespace ICSharpCode.Decompiler.IL
 			this.Indices = new InstructionCollection<ILInstruction>(this, 1);
 			this.Indices.AddRange(indices);
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public static readonly SlotInfo ArraySlot = new SlotInfo("Array", canInlineInto: true);
 		ILInstruction array;
 		public ILInstruction Array {
@@ -4464,9 +4507,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return StackType.O; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
@@ -4534,9 +4580,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			this.type = type;
 		}
-		readonly IType type;
+		IType type;
 		/// <summary>Returns the type operand.</summary>
-		public IType Type { get { return type; } }
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
 		public override StackType ResultType { get { return StackType.Ref; } }
 		protected override InstructionFlags ComputeFlags()
 		{

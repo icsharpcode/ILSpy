@@ -388,8 +388,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void ForeachWithRefUsage(List<int> items)
 		{
 			foreach (int item in items) {
+#if ROSLYN && OPT
+				// The variable names differs based on whether roslyn optimizes out the 'item' variable
 				int current = item;
 				Loops.Operation(ref current);
+#else
+				int num = item;
+				Loops.Operation(ref num);
+#endif
 			}
 		}
 
@@ -409,18 +415,37 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			return result;
 		}
+
+		public void ForEachOverArray(string[] array)
+		{
+			foreach (string text in array) {
+				Console.WriteLine(text.ToLower() + text.ToUpper());
+			}
+		}
+
+		public unsafe void ForEachOverArrayOfPointers(int*[] array)
+		{
+			foreach (int* value in array) {
+				Console.WriteLine(new IntPtr(value));
+				Console.WriteLine(new IntPtr(value));
+			}
+		}
 		#endregion
-		//public void ForEachOverArray(string[] array)
-		//{
-		//	foreach (string text in array) {
-		//		text.ToLower();
-		//	}
-		//}
 
 		public void ForOverArray(string[] array)
 		{
 			for (int i = 0; i < array.Length; i++) {
 				array[i].ToLower();
+			}
+		}
+
+		public void NoForeachOverArray(string[] array)
+		{
+			for (int i = 0; i < array.Length; i++) {
+				string value = array[i];
+				if (i % 5 == 0) {
+					Console.WriteLine(value);
+				}
 			}
 		}
 

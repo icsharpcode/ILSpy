@@ -335,8 +335,23 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			output.WriteReference(this.Name, this, isLocal: true);
 		}
+		
+		/// <summary>
+		/// Gets whether this variable occurs within the specified instruction.
+		/// </summary>
+		internal bool IsUsedWithin(ILInstruction inst)
+		{
+			if (inst is IInstructionWithVariableOperand iwvo && iwvo.Variable == this) {
+				return true;
+			}
+			foreach (var child in inst.Children) {
+				if (IsUsedWithin(child))
+					return true;
+			}
+			return false;
+		}
 	}
-	
+
 	public interface IInstructionWithVariableOperand
 	{
 		ILVariable Variable { get; set; }

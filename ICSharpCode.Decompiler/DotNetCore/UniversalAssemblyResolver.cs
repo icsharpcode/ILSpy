@@ -74,14 +74,15 @@ namespace ICSharpCode.Decompiler
 			switch (targetFramework[0]) {
 				case ".NETCoreApp":
 				case ".NETStandard":
-					if (targetFramework.Length != 2) goto default;
+					if (targetFramework.Length != 2)
+						return ResolveInternal(name, parameters);
 					if (dotNetCorePathFinder == null) {
 						var version = targetFramework[1].Length == 3 ? targetFramework[1] + ".0" : targetFramework[1];
 						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, TargetFramework, version, this.loadedAssemblyReferences);
 					}
 					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
 					if (file == null)
-						goto default;
+						return ResolveInternal(name, parameters);
 					else {
 						var asm = ModuleDefinition.ReadModule(file, parameters).Assembly;
 						if (throwOnError && asm == null)

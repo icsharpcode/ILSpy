@@ -1,6 +1,6 @@
 
 //  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
-//  Copyright (c) Microsoft Corporation. Alle Rechte vorbehalten.
+//  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly fabjeeha
+.assembly hrizu0iy
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module fabjeeha.dll
-// MVID: {4FB3AE1F-ECE0-4E7D-84DC-E693282CA0AF}
+.module hrizu0iy.dll
+// MVID: {8FC80EBC-E149-454A-A769-13F3C07EB46F}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00D90000
+// Image base: 0x02CE0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1203,6 +1203,83 @@
   } // end of method Loops::LastOrDefault
 
   .method public hidebysig instance void 
+          ForEachOverArray(string[] 'array') cil managed
+  {
+    // Code size       43 (0x2b)
+    .maxstack  2
+    .locals init (string V_0,
+             string[] V_1,
+             int32 V_2)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.1
+    IL_0002:  ldc.i4.0
+    IL_0003:  stloc.2
+    IL_0004:  br.s       IL_0024
+
+    IL_0006:  ldloc.1
+    IL_0007:  ldloc.2
+    IL_0008:  ldelem.ref
+    IL_0009:  stloc.0
+    IL_000a:  ldloc.0
+    IL_000b:  callvirt   instance string [mscorlib]System.String::ToLower()
+    IL_0010:  ldloc.0
+    IL_0011:  callvirt   instance string [mscorlib]System.String::ToUpper()
+    IL_0016:  call       string [mscorlib]System.String::Concat(string,
+                                                                string)
+    IL_001b:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0020:  ldloc.2
+    IL_0021:  ldc.i4.1
+    IL_0022:  add
+    IL_0023:  stloc.2
+    IL_0024:  ldloc.2
+    IL_0025:  ldloc.1
+    IL_0026:  ldlen
+    IL_0027:  conv.i4
+    IL_0028:  blt.s      IL_0006
+
+    IL_002a:  ret
+  } // end of method Loops::ForEachOverArray
+
+  .method public hidebysig instance void 
+          ForEachOverArrayOfPointers(int32*[] 'array') cil managed
+  {
+    // Code size       53 (0x35)
+    .maxstack  2
+    .locals init (int32* V_0,
+             int32*[] V_1,
+             int32 V_2)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.1
+    IL_0002:  ldc.i4.0
+    IL_0003:  stloc.2
+    IL_0004:  br.s       IL_002e
+
+    IL_0006:  ldloc.1
+    IL_0007:  ldloc.2
+    IL_0008:  ldelem.i
+    IL_0009:  stloc.0
+    IL_000a:  ldloc.0
+    IL_000b:  newobj     instance void [mscorlib]System.IntPtr::.ctor(void*)
+    IL_0010:  box        [mscorlib]System.IntPtr
+    IL_0015:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_001a:  ldloc.0
+    IL_001b:  newobj     instance void [mscorlib]System.IntPtr::.ctor(void*)
+    IL_0020:  box        [mscorlib]System.IntPtr
+    IL_0025:  call       void [mscorlib]System.Console::WriteLine(object)
+    IL_002a:  ldloc.2
+    IL_002b:  ldc.i4.1
+    IL_002c:  add
+    IL_002d:  stloc.2
+    IL_002e:  ldloc.2
+    IL_002f:  ldloc.1
+    IL_0030:  ldlen
+    IL_0031:  conv.i4
+    IL_0032:  blt.s      IL_0006
+
+    IL_0034:  ret
+  } // end of method Loops::ForEachOverArrayOfPointers
+
+  .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed
   {
     // Code size       24 (0x18)
@@ -1229,6 +1306,41 @@
 
     IL_0017:  ret
   } // end of method Loops::ForOverArray
+
+  .method public hidebysig instance void 
+          NoForeachOverArray(string[] 'array') cil managed
+  {
+    // Code size       30 (0x1e)
+    .maxstack  2
+    .locals init (int32 V_0,
+             string V_1)
+    IL_0000:  ldc.i4.0
+    IL_0001:  stloc.0
+    IL_0002:  br.s       IL_0017
+
+    IL_0004:  ldarg.1
+    IL_0005:  ldloc.0
+    IL_0006:  ldelem.ref
+    IL_0007:  stloc.1
+    IL_0008:  ldloc.0
+    IL_0009:  ldc.i4.5
+    IL_000a:  rem
+    IL_000b:  brtrue.s   IL_0013
+
+    IL_000d:  ldloc.1
+    IL_000e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0013:  ldloc.0
+    IL_0014:  ldc.i4.1
+    IL_0015:  add
+    IL_0016:  stloc.0
+    IL_0017:  ldloc.0
+    IL_0018:  ldarg.1
+    IL_0019:  ldlen
+    IL_001a:  conv.i4
+    IL_001b:  blt.s      IL_0004
+
+    IL_001d:  ret
+  } // end of method Loops::NoForeachOverArray
 
   .method public hidebysig instance void 
           NestedLoops() cil managed
@@ -1402,4 +1514,4 @@
 // =============================================================
 
 // *********** DISASSEMBLY COMPLETE ***********************
-// Warnung: Win32-Ressourcendatei "../../../TestCases/Pretty\Loops.opt.res" wurde erstellt.
+// WARNING: Created Win32 resource file ../../../TestCases/Pretty\Loops.opt.res

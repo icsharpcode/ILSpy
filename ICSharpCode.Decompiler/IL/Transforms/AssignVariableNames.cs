@@ -359,18 +359,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!variableType.IsKnownType(KnownTypeCode.Object))
 				return variableType;
 
-			switch (inst) {
-				case NewObj newObj:
-					return newObj.Method.DeclaringType;
-				case Call call:
-					return call.Method.ReturnType;
-				case CallVirt callVirt:
-					return callVirt.Method.ReturnType;
-				case CallIndirect calli:
-					return calli.ReturnType;
-				default:
-					return context.TypeSystem.Compilation.FindType(inst.ResultType.ToKnownTypeCode());
-			}
+			IType inferredType = inst.InferType();
+			if (inferredType.Kind != TypeKind.Unknown)
+				return inferredType;
+			else
+				return variableType;
 		}
 
 		internal static string GenerateForeachVariableName(ILFunction function, ILInstruction valueContext, ILVariable existingVariable = null)
@@ -378,11 +371,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (function == null)
 				throw new ArgumentNullException(nameof(function));
 			var reservedVariableNames = new Dictionary<string, int>();
-			foreach (var v in function.Descendants.OfType<ILFunction>().SelectMany(m => m.Variables)) {
+			var rootFunction = function.Ancestors.OfType<ILFunction>().Single(f => f.Parent == null);
+			foreach (var v in rootFunction.Descendants.OfType<ILFunction>().SelectMany(m => m.Variables)) {
 				if (v != existingVariable)
 					AddExistingName(reservedVariableNames, v.Name);
 			}
-			foreach (var f in function.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
+			foreach (var f in rootFunction.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
 				AddExistingName(reservedVariableNames, f);
 
 			string baseName = GetNameFromInstruction(valueContext);

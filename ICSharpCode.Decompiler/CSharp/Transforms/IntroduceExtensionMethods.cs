@@ -17,11 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
-using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 
@@ -33,98 +33,60 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 	public class IntroduceExtensionMethods : DepthFirstAstVisitor, IAstTransform
 	{
 		TransformContext context;
-		UsingScope rootUsingScope;
-		UsingScope usingScope;
-		IMember currentMember;
-		CSharpTypeResolveContext resolveContext;
 		CSharpResolver resolver;
 
 		public void Run(AstNode rootNode, TransformContext context)
 		{
 			this.context = context;
-			this.usingScope = this.rootUsingScope = rootNode.Annotation<UsingScope>();
-			currentMember = context.DecompiledMember;
-			SetContext();
+			InitializeContext(rootNode.Annotation<UsingScope>());
 			rootNode.AcceptVisitor(this);
 		}
 
-		void SetContext()
+		Stack<CSharpTypeResolveContext> resolveContextStack = new Stack<CSharpTypeResolveContext>();
+
+		void InitializeContext(UsingScope usingScope)
 		{
-			this.usingScope = rootUsingScope;
-			string ns = currentMember?.Namespace ?? context.DecompiledTypeDefinition?.Namespace;
-			if (ns != null) {
-				foreach (var name in ns.Split('.'))
-					usingScope = new UsingScope(usingScope, name);
+			this.resolveContextStack = new Stack<CSharpTypeResolveContext>();
+			if (!string.IsNullOrEmpty(context.DecompiledTypeDefinition?.Namespace)) {
+				foreach (string ns in context.DecompiledTypeDefinition.Namespace.Split('.')) {
+					usingScope = new UsingScope(usingScope, ns);
+				}
 			}
-			resolveContext = new CSharpTypeResolveContext(
-				context.DecompiledAssembly, 
-				usingScope.Resolve(context.TypeSystem.Compilation), 
-				currentMember?.DeclaringTypeDefinition ?? context.DecompiledTypeDefinition,
-				currentMember);
-			resolver = new CSharpResolver(resolveContext);
+			var currentContext = new CSharpTypeResolveContext(context.TypeSystem.MainAssembly, usingScope.Resolve(context.TypeSystem.Compilation), context.DecompiledTypeDefinition);
+			this.resolveContextStack.Push(currentContext);
+			this.resolver = new CSharpResolver(currentContext);
 		}
 
-		public override void VisitMethodDeclaration(MethodDeclaration methodDeclaration)
+		public override void VisitNamespaceDeclaration(NamespaceDeclaration namespaceDeclaration)
 		{
-			currentMember = methodDeclaration.GetSymbol() as IMember;
-			if (currentMember == null) return;
-			SetContext();
-			base.VisitMethodDeclaration(methodDeclaration);
-			currentMember = null;
+			var previousContext = resolveContextStack.Peek();
+			var usingScope = previousContext.CurrentUsingScope.UnresolvedUsingScope;
+			foreach (string ident in namespaceDeclaration.Identifiers) {
+				usingScope = new UsingScope(usingScope, ident);
+			}
+			var currentContext = new CSharpTypeResolveContext(previousContext.CurrentAssembly, usingScope.Resolve(previousContext.Compilation));
+			resolveContextStack.Push(currentContext);
+			try {
+				this.resolver = new CSharpResolver(currentContext);
+				base.VisitNamespaceDeclaration(namespaceDeclaration);
+			} finally {
+				this.resolver = new CSharpResolver(previousContext);
+				resolveContextStack.Pop();
+			}
 		}
 
-		public override void VisitConstructorDeclaration(ConstructorDeclaration constructorDeclaration)
+		public override void VisitTypeDeclaration(TypeDeclaration typeDeclaration)
 		{
-			currentMember = constructorDeclaration.GetSymbol() as IMember;
-			if (currentMember == null) return;
-			SetContext();
-			base.VisitConstructorDeclaration(constructorDeclaration);
-			currentMember = null;
-		}
-
-		public override void VisitDestructorDeclaration(DestructorDeclaration destructorDeclaration)
-		{
-			currentMember = destructorDeclaration.GetSymbol() as IMember;
-			if (currentMember == null) return;
-			SetContext();
-			base.VisitDestructorDeclaration(destructorDeclaration);
-			currentMember = null;
-		}
-
-		public override void VisitPropertyDeclaration(PropertyDeclaration propertyDeclaration)
-		{
-			currentMember = propertyDeclaration.GetSymbol() as IMember;
-			if (currentMember == null) return;
-			SetContext();
-			base.VisitPropertyDeclaration(propertyDeclaration);
-			currentMember = null;
-		}
-
-		public override void VisitFieldDeclaration(FieldDeclaration fieldDeclaration)
-		{
-			currentMember = fieldDeclaration.GetSymbol() as IMember;
-			if (currentMember == null) return;
-			SetContext();
-			base.VisitFieldDeclaration(fieldDeclaration);
-			currentMember = null;
-		}
-
-		public override void VisitEventDeclaration(EventDeclaration eventDeclaration)
-		{
-			currentMember = eventDeclaration.GetSymbol() as IMember;
-			if (currentMember == null) return;
-			SetContext();
-			base.VisitEventDeclaration(eventDeclaration);
-			currentMember = null;
-		}
-
-		public override void VisitCustomEventDeclaration(CustomEventDeclaration eventDeclaration)
-		{
-			currentMember = eventDeclaration.GetSymbol() as IMember;
-			if (currentMember == null) return;
-			SetContext();
-			base.VisitCustomEventDeclaration(eventDeclaration);
-			currentMember = null;
+			var previousContext = resolveContextStack.Peek();
+			var currentContext = previousContext.WithCurrentTypeDefinition(typeDeclaration.GetSymbol() as ITypeDefinition);
+			resolveContextStack.Push(currentContext);
+			try {
+				this.resolver = new CSharpResolver(currentContext);
+				base.VisitTypeDeclaration(typeDeclaration);
+			} finally {
+				this.resolver = new CSharpResolver(previousContext);
+				resolveContextStack.Pop();
+			}
 		}
 
 		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
@@ -134,14 +96,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var method = invocationExpression.GetSymbol() as IMethod;
 			if (method == null || !method.IsExtensionMethod || mre == null || !(mre.Target is TypeReferenceExpression) || !invocationExpression.Arguments.Any())
 				return;
+			var typeArguments = mre.TypeArguments.Any() ? method.TypeArguments : EmptyList<IType>.Instance;
 			var firstArgument = invocationExpression.Arguments.First();
 			var target = firstArgument.GetResolveResult();
 			var args = invocationExpression.Arguments.Skip(1).Select(a => a.GetResolveResult()).ToArray();
-			var rr = resolver.ResolveMemberAccess(target, method.Name, method.TypeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
+			var rr = resolver.ResolveMemberAccess(target, method.Name, typeArguments, NameLookupMode.InvocationTarget) as MethodGroupResolveResult;
 			if (rr == null)
 				return;
-			var or = rr.PerformOverloadResolution(resolveContext.Compilation, args, allowExtensionMethods: true);
-			if (or == null || or.IsAmbiguous)
+			var or = rr.PerformOverloadResolution(resolver.CurrentTypeResolveContext.Compilation, args, allowExtensionMethods: true);
+			if (or == null || or.IsAmbiguous || !method.Equals(or.GetBestCandidateWithSubstitutedTypeArguments()))
 				return;
 			if (firstArgument is NullReferenceExpression)
 				firstArgument = firstArgument.ReplaceWith(expr => new CastExpression(context.TypeSystemAstBuilder.ConvertType(method.Parameters[0].Type), expr.Detach()));

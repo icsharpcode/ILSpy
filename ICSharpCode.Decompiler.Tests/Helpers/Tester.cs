@@ -67,6 +67,10 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			string ilasmPath = Path.Combine(Environment.GetEnvironmentVariable("windir"), @"Microsoft.NET\Framework\v4.0.30319\ilasm.exe");
 			string outputFile = Path.Combine(Path.GetDirectoryName(sourceFileName), Path.GetFileNameWithoutExtension(sourceFileName));
 			string otherOptions = " ";
+			if (options.HasFlag(AssemblerOptions.Force32Bit)) {
+				outputFile += ".32";
+				otherOptions += "/32BitPreferred ";
+			}
 			if (options.HasFlag(AssemblerOptions.Library)) {
 				outputFile += ".dll";
 				otherOptions += "/dll ";
@@ -78,9 +82,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			
 			if (options.HasFlag(AssemblerOptions.UseDebug)) {
 				otherOptions += "/debug ";
-			}
-			if (options.HasFlag(AssemblerOptions.Force32Bit)) {
-				otherOptions += "/32BitPreferred ";
 			}
 			
 			ProcessStartInfo info = new ProcessStartInfo(ilasmPath);
@@ -157,6 +158,24 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			};
 		});
 		
+
+		public static List<string> GetPreprocessorSymbols(CompilerOptions flags)
+		{
+			var preprocessorSymbols = new List<string>();
+			if (flags.HasFlag(CompilerOptions.UseDebug)) {
+				preprocessorSymbols.Add("DEBUG");
+			}
+			if (flags.HasFlag(CompilerOptions.Optimize)) {
+				preprocessorSymbols.Add("OPT");
+			}
+			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
+				preprocessorSymbols.Add("ROSLYN");
+			} else {
+				preprocessorSymbols.Add("LEGACY_CSC");
+			}
+			return preprocessorSymbols;
+		}
+
 		public static CompilerResults CompileCSharp(string sourceFileName, CompilerOptions flags = CompilerOptions.UseDebug, string outputFileName = null)
 		{
 			List<string> sourceFileNames = new List<string> { sourceFileName };
@@ -164,10 +183,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				sourceFileNames.Add(Path.GetFullPath(Path.Combine(Path.GetDirectoryName(sourceFileName), match.Groups[1].Value)));
 			}
 
-			var preprocessorSymbols = new List<string>();
-			if (flags.HasFlag(CompilerOptions.UseDebug)) {
-				preprocessorSymbols.Add("DEBUG");
-			}
+			var preprocessorSymbols = GetPreprocessorSymbols(flags);
 
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
 				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray());
@@ -193,7 +209,6 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				}
 				return results;
 			} else {
-				preprocessorSymbols.Add("LEGACY_CSC");
 				var provider = new CSharpCodeProvider(new Dictionary<string, string> { { "CompilerVersion", "v4.0" } });
 				CompilerParameters options = new CompilerParameters();
 				options.GenerateExecutable = !flags.HasFlag(CompilerOptions.Library);
@@ -255,11 +270,11 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			return process.ExitCode;
 		}
 
-		public static string DecompileCSharp(string assemblyFileName)
+		public static string DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
 			using (var module = ModuleDefinition.ReadModule(assemblyFileName)) {
 				var typeSystem = new DecompilerTypeSystem(module);
-				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, new DecompilerSettings());
+				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());
 				decompiler.AstTransforms.Add(new EscapeInvalidIdentifiers());
 				var syntaxTree = decompiler.DecompileWholeModuleAsSingleFile();

@@ -147,15 +147,18 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 
 		public override Conversion IsValid(IType[] parameterTypes, IType returnType, CSharpConversions conversions)
 		{
-			if (this.Parameters.Count != parameterTypes.Length)
-				return Conversion.None;
-			for (int i = 0; i < parameterTypes.Length; ++i) {
-				if (!parameterTypes[i].Equals(this.Parameters[i].Type)) {
-					if (IsImplicitlyTyped) {
-						// it's possible that different parameter types also lead to a valid conversion
-						return LambdaConversion.Instance;
-					} else {
-						return Conversion.None;
+			// Anonymous method expressions without parameter lists are applicable to any parameter list.
+			if (HasParameterList) {
+				if (this.Parameters.Count != parameterTypes.Length)
+					return Conversion.None;
+				for (int i = 0; i < parameterTypes.Length; ++i) {
+					if (!parameterTypes[i].Equals(this.Parameters[i].Type)) {
+						if (IsImplicitlyTyped) {
+							// it's possible that different parameter types also lead to a valid conversion
+							return LambdaConversion.Instance;
+						} else {
+							return Conversion.None;
+						}
 					}
 				}
 			}
