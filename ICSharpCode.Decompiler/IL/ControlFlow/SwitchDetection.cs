@@ -158,7 +158,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				return false;
 			}
 			defaultSection = analysis.Sections.FirstOrDefault(s => s.Key.Count() > MaxValuesPerSection);
-			if (defaultSection.Key.IsEmpty) {
+			if (defaultSection.Value == null) {
+				// no default section found?
+				// This should never happen, as we'd need 2^64/MaxValuesPerSection sections to hit this case...
 				return false;
 			}
 			ulong valuePerSectionLimit = MaxValuesPerSection;
@@ -173,9 +175,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			var defaultSectionKey = defaultSection.Key;
 			if (analysis.Sections.Any(s => !s.Key.SetEquals(defaultSectionKey)
 										&& s.Key.Count() > valuePerSectionLimit)) {
+				// Only the default section is allowed to have tons of keys.
+				// C# doesn't support "case 1 to 100000000", and we don't want to generate
+				// gigabytes of case labels.
 				return false;
 			}
-			return analysis.InnerBlocks.Any();
+			return true;
 		}
 	}
 }
