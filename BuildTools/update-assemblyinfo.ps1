@@ -13,23 +13,34 @@ function Test-Dir([string]$name) {
     return [System.IO.Directory]::Exists( (Join-Path (Get-Location) $name) );
 }
 
+function Find-Git() {
+	if ($env:PATH.Contains("git\cmd")) {
+		return $true;
+	}
+	if (Test-Dir "$env:PROGRAMFILES\git\cmd\") {
+		$env:PATH = $env:PATH + ";$env:PROGRAMFILES\git\cmd\";
+		return $true;
+	}
+	return $false;
+}
+
 function gitVersion() {
-    if (-not (Test-Dir ".git")) {
-        return 1;
+    if (-not ((Test-Dir ".git") -and (Find-Git))) {
+        return 9999;
     }
     return [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
 }
 
 function gitCommitHash() {
-    if (-not (Test-Dir ".git")) {
-        return "";
+    if (-not ((Test-Dir ".git") -and (Find-Git))) {
+        return "0000000000000000000000000000000000000000";
     }
     return (git rev-list "$baseCommit..HEAD") | Select -First 1;
 }
 
 function gitBranch() {
-    if (-not (Test-Dir ".git")) {
-        return "";
+    if (-not ((Test-Dir ".git") -and (Find-Git))) {
+        return "no-branch";
     }
 
     if ($env:APPVEYOR_REPO_BRANCH -ne $null) {
