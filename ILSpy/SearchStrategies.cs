@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
+using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TreeNodes;
 using Mono.Cecil;
@@ -36,8 +37,10 @@ namespace ICSharpCode.ILSpy
 			searchTerm = terms;
 		}
 
-		protected float CalculateFitness(MemberReference member, string text)
+		protected float CalculateFitness(MemberReference member)
 		{
+			string text = member.Name;
+
 			// Probably compiler generated types without meaningful names, show them last
 			if (text.StartsWith("<")) {
 				return 0;
@@ -45,22 +48,14 @@ namespace ICSharpCode.ILSpy
 
 			// Constructors always have the same name in IL:
 			// Use type name instead
-			if (text == "..ctor" || text == ".ctor") {
+			if (text == ".cctor" || text == ".ctor") {
 				text = member.DeclaringType.Name;
 			}
 
 			// Ignore generic arguments, it not possible to search based on them either
-			int length = 0;
-			int generics = 0;
-			for (int i = 0; i < text.Length; i++) {
-				if (text[i] == '<')
-					generics++;
-				else if (text[i] == '>')
-					generics--;
-				else if (generics == 0)
-					length++;
-			}
-			return 1.0f / length;
+			text = ReflectionHelper.SplitTypeParameterCountFromReflectionName(text);
+
+			return 1.0f / text.Length;
 		}
 
 		protected virtual bool IsMatch(FieldDefinition field, Language language)
@@ -151,7 +146,7 @@ namespace ICSharpCode.ILSpy
 					addResult(new SearchResult
 					{
 						Member = item,
-						Fitness = CalculateFitness(item, item.Name),
+						Fitness = CalculateFitness(item),
 						Image = image(item),
 						Name = GetLanguageSpecificName(language, (IMemberDefinition)item),
 						LocationImage = TypeTreeNode.GetIcon(type),
@@ -423,7 +418,7 @@ namespace ICSharpCode.ILSpy
 				string name = language.TypeToString(type, includeNamespace: false);
 				addResult(new SearchResult {
 					Member = type,
-					Fitness = CalculateFitness(type, name),
+					Fitness = CalculateFitness(type),
 					Image = TypeTreeNode.GetIcon(type),
 					Name = name,
 					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
@@ -453,7 +448,7 @@ namespace ICSharpCode.ILSpy
 				{
 					Member = type,
 					Image = TypeTreeNode.GetIcon(type),
-					Fitness = CalculateFitness(type, name),
+					Fitness = CalculateFitness(type),
 					Name = name,
 					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
 					Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
