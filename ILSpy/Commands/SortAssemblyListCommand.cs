@@ -22,7 +22,7 @@ using ICSharpCode.TreeView;
 
 namespace ICSharpCode.ILSpy
 {
-	[ExportMainMenuCommand(Menu = "_View", Header = "Sort assembly list by name", MenuIcon = "Images/Sort.png", MenuCategory = "View")]
+	[ExportMainMenuCommand(Menu = "_View", Header = "Sort assembly _list by name", MenuIcon = "Images/Sort.png", MenuCategory = "View")]
 	[ExportToolbarCommand(ToolTip = "Sort assembly list by name", ToolbarIcon = "Images/Sort.png", ToolbarCategory = "View")]
 	sealed class SortAssemblyListCommand : SimpleCommand, IComparer<LoadedAssembly>
 	{
@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy
 		}
 	}
 
-	[ExportMainMenuCommand(Menu = "_View", Header = "Collapse all tree nodes", MenuIcon = "Images/CollapseAll.png", MenuCategory = "View")]
+	[ExportMainMenuCommand(Menu = "_View", Header = "_Collapse all tree nodes", MenuIcon = "Images/CollapseAll.png", MenuCategory = "View")]
 	[ExportToolbarCommand(ToolTip = "Collapse all tree nodes", ToolbarIcon = "Images/CollapseAll.png", ToolbarCategory = "View")]
 	sealed class CollapseAllCommand : SimpleCommand
 	{
