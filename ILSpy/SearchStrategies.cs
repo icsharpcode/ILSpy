@@ -39,16 +39,20 @@ namespace ICSharpCode.ILSpy
 		protected float CalculateFitness(MemberReference member, string text)
 		{
 			// Probably compiler generated types without meaningful names, show them last
-			if (text.StartsWith("<"))
-			{
+			if (text.StartsWith("<")) {
 				return 0;
+			}
+
+			// Constructors always have the same name in IL:
+			// Use type name instead
+			if (text == "..ctor" || text == ".ctor") {
+				text = member.DeclaringType.Name;
 			}
 
 			// Ignore generic arguments, it not possible to search based on them either
 			int length = 0;
 			int generics = 0;
-			for (int i = 0; i < text.Length; i++)
-			{
+			for (int i = 0; i < text.Length; i++) {
 				if (text[i] == '<')
 					generics++;
 				else if (text[i] == '>')
