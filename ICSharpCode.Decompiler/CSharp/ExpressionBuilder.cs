@@ -265,18 +265,47 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitLdcI4(LdcI4 inst, TranslationContext context)
 		{
-			return new PrimitiveExpression(inst.Value)
+			string literalValue = null;
+			if (ShouldDisplayAsHex(inst.Value, inst.Parent)) {
+				literalValue = $"0x{inst.Value:X}";
+			}
+			return new PrimitiveExpression(inst.Value, literalValue)
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), inst.Value));
 		}
-		
+
 		protected internal override TranslatedExpression VisitLdcI8(LdcI8 inst, TranslationContext context)
 		{
-			return new PrimitiveExpression(inst.Value)
+			string literalValue = null;
+			if (ShouldDisplayAsHex(inst.Value, inst.Parent)) {
+				literalValue = $"0x{inst.Value:X}";
+			}
+			return new PrimitiveExpression(inst.Value, literalValue)
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int64), inst.Value));
 		}
-		
+
+		private bool ShouldDisplayAsHex(long value, ILInstruction parent)
+		{
+			if (parent is Conv conv)
+				parent = conv.Parent;
+			if (value <= 9)
+				return false;
+			if (value < long.MaxValue) {
+				if (!((value & (value - 1)) == 0 || (value & (value + 1)) == 0))
+					return false;
+			}
+			switch (parent) {
+				case BinaryNumericInstruction bni:
+					if (bni.Operator == BinaryNumericOperator.BitAnd
+						|| bni.Operator == BinaryNumericOperator.BitOr
+						|| bni.Operator == BinaryNumericOperator.BitXor)
+						return true;
+					break;
+			}
+			return false;
+		}
+
 		protected internal override TranslatedExpression VisitLdcF(LdcF inst, TranslationContext context)
 		{
 			return new PrimitiveExpression(inst.Value)
