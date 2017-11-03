@@ -48,14 +48,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		private enum MyEnum
 		{
-			a = 0,
-			b = 1
+			a,
+			b
 		}
 
 		private enum MyEnum2
 		{
-			c = 0,
-			d = 1
+			c,
+			d
 		}
 
 		private class Data

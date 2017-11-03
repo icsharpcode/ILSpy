@@ -820,10 +820,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			Debug.Assert(decompilationContext.CurrentMember == field);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
 			if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum) {
-				var enumDec = new EnumMemberDeclaration {
-					Name = field.Name,
-					Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue),
-				};
+				var index = decompilationContext.CurrentTypeDefinition.Members.IndexOf(field);
+				long previousValue = -1;
+				if (index > 0) {
+					var previousMember = (IField)decompilationContext.CurrentTypeDefinition.Members[index - 1];
+					previousValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, previousMember.ConstantValue, false);
+				}
+				long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
+				var enumDec = new EnumMemberDeclaration { Name = field.Name };
+				if (previousValue + 1 != initValue || decompilationContext.CurrentTypeDefinition.Attributes.Any(a => a.AttributeType.FullName == "System.FlagsAttribute")) {
+					enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
+					if (enumDec.Initializer is PrimitiveExpression primitive && initValue > 9 && ((initValue & (initValue - 1)) == 0 || (initValue & (initValue + 1)) == 0)) {
+						primitive.SetValue(initValue, $"0x{initValue:X}");
+					}
+				}
 				enumDec.Attributes.AddRange(field.Attributes.Select(a => new AttributeSection(typeSystemAstBuilder.ConvertAttribute(a))));
 				enumDec.AddAnnotation(new Semantics.MemberResolveResult(null, field));
 				return enumDec;

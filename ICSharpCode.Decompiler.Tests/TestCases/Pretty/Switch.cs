@@ -41,9 +41,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public enum State
 		{
-			False = 0,
-			True = 1,
-			Null = 2
+			False,
+			True,
+			Null
 		}
 
 		public static State SwitchOverNullableBool(bool? value)
