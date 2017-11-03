@@ -17,8 +17,12 @@ function Find-Git() {
 	if ($env:PATH.Contains("git\cmd")) {
 		return $true;
 	}
-	if (Test-Dir "$env:PROGRAMFILES\git\cmd\") {
-		$env:PATH = $env:PATH + ";$env:PROGRAMFILES\git\cmd\";
+	#hack for x86 powershell used by default (yuck!)
+	if (${env:PROGRAMFILES(X86)} -eq ${env:PROGRAMFILES}) {
+		$env:PROGRAMFILES = $env:PROGRAMFILES.Substring(0, $env:PROGRAMFILES.Length - 6);
+	}
+	if ([System.IO.Directory]::Exists("$env:PROGRAMFILES\git\cmd\")) {
+		$env:PATH = "$env:PATH;$env:PROGRAMFILES\git\cmd\";
 		return $true;
 	}
 	return $false;
