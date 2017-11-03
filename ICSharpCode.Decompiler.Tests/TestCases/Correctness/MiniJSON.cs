@@ -6,6 +6,9 @@ using System.Text;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
+	// taken from https://github.com/Jackyjjc/MiniJSON.cs
+	// Copyright (c) 2013 Calvin Rien.
+	// Licensed under the MIT LICENSE.
 	public class MiniJSONTest {
 	    public static void Main(string[] args) {
 	        var jsonString = "{ \"array\": [1.44,2,3], " +
