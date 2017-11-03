@@ -226,7 +226,13 @@ namespace ICSharpCode.Decompiler.Tests
 		{
 			RunCS(options: options);
 		}
-		
+
+		[Test]
+		public void MiniJSON([ValueSource("defaultOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
 		void RunCS([CallerMemberName] string testName = null, CompilerOptions options = CompilerOptions.UseDebug)
 		{
 			string testFileName = testName + ".cs";
