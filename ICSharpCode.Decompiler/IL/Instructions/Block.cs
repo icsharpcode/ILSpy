@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo InstructionSlot = new SlotInfo("Instruction", isCollection: true);
 		public static readonly SlotInfo FinalInstructionSlot = new SlotInfo("FinalInstruction");
 		
-		public readonly BlockType Type;
+		public readonly BlockKind Kind;
 		public readonly InstructionCollection<ILInstruction> Instructions;
 		ILInstruction finalInstruction;
 		
@@ -88,16 +88,16 @@ namespace ICSharpCode.Decompiler.IL
 				finalInstruction.ChildIndex = Instructions.Count;
 		}
 		
-		public Block(BlockType type = BlockType.ControlFlow) : base(OpCode.Block)
+		public Block(BlockKind kind = BlockKind.ControlFlow) : base(OpCode.Block)
 		{
-			this.Type = type;
+			this.Kind = kind;
 			this.Instructions = new InstructionCollection<ILInstruction>(this, 0);
 			this.FinalInstruction = new Nop();
 		}
 		
 		public override ILInstruction Clone()
 		{
-			Block clone = new Block(Type);
+			Block clone = new Block(Kind);
 			clone.ILRange = this.ILRange;
 			clone.Instructions.AddRange(this.Instructions.Select(inst => inst.Clone()));
 			clone.FinalInstruction = this.FinalInstruction.Clone();
@@ -111,11 +111,11 @@ namespace ICSharpCode.Decompiler.IL
 				// only the last instruction may have an unreachable endpoint
 				Debug.Assert(!Instructions[i].HasFlag(InstructionFlags.EndPointUnreachable));
 			}
-			switch (this.Type) {
-				case BlockType.ControlFlow:
+			switch (this.Kind) {
+				case BlockKind.ControlFlow:
 					Debug.Assert(finalInstruction.OpCode == OpCode.Nop);
 					break;
-				case BlockType.CallInlineAssign:
+				case BlockKind.CallInlineAssign:
 					Debug.Assert(MatchInlineAssignBlock(out _, out _));
 					break;
 			}
@@ -264,7 +264,7 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			call = null;
 			value = null;
-			if (this.Type != BlockType.CallInlineAssign)
+			if (this.Kind != BlockKind.CallInlineAssign)
 				return false;
 			if (this.Instructions.Count != 1)
 				return false;
@@ -279,7 +279,7 @@ namespace ICSharpCode.Decompiler.IL
 		}
 	}
 	
-	public enum BlockType
+	public enum BlockKind
 	{
 		/// <summary>
 		/// Block is used for control flow.

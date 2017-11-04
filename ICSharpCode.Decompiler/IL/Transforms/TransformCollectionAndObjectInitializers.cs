@@ -78,7 +78,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return false;
 				}
 				int initializerItemsCount = 0;
-				var blockType = BlockType.CollectionInitializer;
+				var blockKind = BlockKind.CollectionInitializer;
 				possibleIndexVariables = new Dictionary<ILVariable, (int Index, ILInstruction Value)>();
 				currentPath = new List<AccessPathElement>();
 				isCollection = false;
@@ -89,7 +89,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// if the method is a setter we're dealing with an object initializer
 				// if the method is named Add and has at least 2 arguments we're dealing with a collection/dictionary initializer
 				while (pos + initializerItemsCount + 1 < body.Instructions.Count
-					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockType)) {
+					&& IsPartOfInitializer(body.Instructions, pos + initializerItemsCount + 1, v, instType, ref blockKind)) {
 					initializerItemsCount++;
 				}
 				// Do not convert the statements into an initializer if there's an incompatible usage of the initializer variable
@@ -109,7 +109,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				context.Step("CollectionOrObjectInitializer", inst);
 				// Create a new block and final slot (initializer target variable)
-				var initializerBlock = new Block(blockType);
+				var initializerBlock = new Block(blockKind);
 				ILVariable finalSlot = context.Function.RegisterVariable(VariableKind.InitializerTarget, v.Type);
 				initializerBlock.FinalInstruction = new LdLoc(finalSlot);
 				initializerBlock.Instructions.Add(new StLoc(finalSlot, initInst.Clone()));
@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		bool isCollection;
 		Stack<HashSet<AccessPathElement>> pathStack;
 
-		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, IType rootType, ref BlockType blockType)
+		bool IsPartOfInitializer(InstructionCollection<ILInstruction> instructions, int pos, ILVariable target, IType rootType, ref BlockKind blockKind)
 		{
 			// Include any stores to local variables that are single-assigned and do not reference the initializer-variable
 			// in the list of possible index variables.
@@ -206,7 +206,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (isCollection || !pathStack.Peek().Add(lastElement))
 						return false;
 					if (values.Count == 1) {
-						blockType = BlockType.ObjectInitializer;
+						blockKind = BlockKind.ObjectInitializer;
 						return true;
 					}
 					return false;

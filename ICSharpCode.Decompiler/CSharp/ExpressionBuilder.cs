@@ -1721,18 +1721,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		protected internal override TranslatedExpression VisitBlock(Block block, TranslationContext context)
 		{
-			switch (block.Type) {
-				case BlockType.ArrayInitializer:
+			switch (block.Kind) {
+				case BlockKind.ArrayInitializer:
 					return TranslateArrayInitializer(block);
-				case BlockType.CollectionInitializer:
-				case BlockType.ObjectInitializer:
+				case BlockKind.CollectionInitializer:
+				case BlockKind.ObjectInitializer:
 					return TranslateObjectAndCollectionInitializer(block);
-				case BlockType.PostfixOperator:
+				case BlockKind.PostfixOperator:
 					return TranslatePostfixOperator(block);
-				case BlockType.CallInlineAssign:
+				case BlockKind.CallInlineAssign:
 					return TranslateSetterCallAssignment(block);
 				default:
-					return ErrorExpression("Unknown block type: " + block.Type);
+					return ErrorExpression("Unknown block type: " + block.Kind);
 			}
 		}
 

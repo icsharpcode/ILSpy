@@ -690,7 +690,7 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as Block;
-			return o != null && this.Type == o.Type && Patterns.ListMatch.DoMatch(this.Instructions, o.Instructions, ref match) && this.FinalInstruction.PerformMatch(o.FinalInstruction, ref match);
+			return o != null && this.Kind == o.Kind && Patterns.ListMatch.DoMatch(this.Instructions, o.Instructions, ref match) && this.FinalInstruction.PerformMatch(o.FinalInstruction, ref match);
 		}
 	}
 }

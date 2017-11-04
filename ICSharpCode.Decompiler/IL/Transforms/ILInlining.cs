@@ -331,10 +331,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return true;
 			} else if (expr is Block block && block.Instructions.Count > 0) {
 				// Inlining into inline-blocks? only for some block types, and only into the first instruction.
-				switch (block.Type) {
-					case BlockType.ArrayInitializer:
-					case BlockType.CollectionInitializer:
-					case BlockType.ObjectInitializer:
+				switch (block.Kind) {
+					case BlockKind.ArrayInitializer:
+					case BlockKind.CollectionInitializer:
+					case BlockKind.ObjectInitializer:
 						return FindLoadInNext(block.Instructions[0], v, expressionBeingMoved, out loadInst) ?? false;
 						// If FindLoadInNext() returns null, we still can't continue searching
 						// because we can't inline over the remainder of the block.

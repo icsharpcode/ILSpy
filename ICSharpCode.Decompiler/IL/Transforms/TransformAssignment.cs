@@ -147,7 +147,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				block.Instructions.Remove(call);
 				var newVar = context.Function.RegisterVariable(VariableKind.StackSlot, call.Method.Parameters.Last().Type);
 				call.Arguments[call.Arguments.Count - 1] = new StLoc(newVar, inst.Value);
-				var inlineBlock = new Block(BlockType.CallInlineAssign) {
+				var inlineBlock = new Block(BlockKind.CallInlineAssign) {
 					Instructions = { call },
 					FinalInstruction = new LdLoc(newVar)
 				};
@@ -395,7 +395,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			context.Step($"TransformPostIncDecOperatorLocal", inst);
 			var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, inst.Variable.Type);
-			var assignment = new Block(BlockType.PostfixOperator);
+			var assignment = new Block(BlockKind.PostfixOperator);
 			assignment.Instructions.Add(new StLoc(tempStore, new LdLoc(nextInst.Variable)));
 			assignment.Instructions.Add(new StLoc(nextInst.Variable, new BinaryNumericInstruction(binary.Operator, new LdLoc(tempStore), new LdcI4(1), binary.CheckForOverflow, binary.Sign)));
 			assignment.FinalInstruction = new LdLoc(tempStore);
