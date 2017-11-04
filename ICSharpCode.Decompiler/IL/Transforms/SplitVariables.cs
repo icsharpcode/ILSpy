@@ -33,7 +33,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var groupStores = new GroupStores(function, context.CancellationToken);
 			function.Body.AcceptVisitor(groupStores);
-			var newVariables = new Dictionary<ILInstruction, ILVariable>();
 			// Replace analyzed variables with their split versions:
 			foreach (var inst in function.Descendants.OfType<IInstructionWithVariableOperand>()) {
 				if (groupStores.IsAnalyzedVariable(inst.Variable)) {

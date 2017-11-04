@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
@@ -59,6 +60,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			var gvt = new GenericValueType<string>("Test");
 			gvt.Call(ref gvt);
 			new ValueTypeCall().InstanceFieldTests();
+			ForEach();
 		}
 		
 		static void RefParameter(ref MutValueType m)
@@ -152,6 +154,42 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			using (z = new MutValueType()) {
 				z.Increment();
 			}
+		}
+
+		static void ForEach()
+		{
+			var list = new List<MutValueType> {
+				new MutValueType { val = 10 },
+				new MutValueType { val = 20 },
+				new MutValueType { val = 30 },
+			};
+			ForEach1(list);
+			var array = new MutValueType[] {
+				new MutValueType { val = 100 },
+				new MutValueType { val = 200 },
+				new MutValueType { val = 300 },
+			};
+			ForEachArray1(array);
+		}
+
+		static void ForEach1(List<MutValueType> list)
+		{
+			Console.WriteLine("ForEach1:");
+			foreach (var val in list) {
+				val.Increment();
+				val.Increment();
+			}
+			Console.WriteLine("after: " + list[0].val);
+		}
+
+		static void ForEachArray1(MutValueType[] list)
+		{
+			Console.WriteLine("ForEachArray1:");
+			foreach (var val in list) {
+				val.Increment();
+				val.Increment();
+			}
+			Console.WriteLine("after: " + list[0].val);
 		}
 	}
 }
