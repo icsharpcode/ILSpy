@@ -17,6 +17,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			Console.WriteLine("MutValueType disposed on {0}", val);
 		}
+
+		public override string ToString()
+		{
+			return "MutValueType.ToString() " + (++val);
+		}
 	}
 	
 	public struct GenericValueType<T>
@@ -56,6 +61,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			ValueParameter(m);
 			Field();
 			Box();
+			BoxToStringCalls();
 			Using();
 			var gvt = new GenericValueType<string>("Test");
 			gvt.Call(ref gvt);
@@ -107,6 +113,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			MutValueType unboxed2 = (MutValueType)o;
 			unboxed2.val = 100;
 			((MutValueType)o).Dispose();
+		}
+
+		static void BoxToStringCalls()
+		{
+			Console.WriteLine("BoxToStringCalls:");
+			MutValueType m = new MutValueType { val = 400 };
+			Console.WriteLine(m.ToString());
+			Console.WriteLine(((object)m).ToString());
+			Console.WriteLine(m.ToString());
 		}
 
 		MutValueType instanceField;

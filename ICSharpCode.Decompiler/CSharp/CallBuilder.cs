@@ -32,6 +32,12 @@ namespace ICSharpCode.Decompiler.CSharp
 {
 	struct CallBuilder
 	{
+		struct ExpectedTargetDetails
+		{
+			public OpCode CallOpCode;
+			public bool NeedsBoxingConversion;
+		}
+
 		readonly DecompilerSettings settings;
 		readonly ExpressionBuilder expressionBuilder;
 		readonly CSharpResolver resolver;
@@ -50,17 +56,34 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (inst is NewObj newobj && IL.Transforms.DelegateConstruction.IsDelegateConstruction(newobj, true)) {
 				return HandleDelegateConstruction(newobj);
 			}
-			return Build(inst.OpCode, inst.Method, inst.Arguments).WithILInstruction(inst);
+			return Build(inst.OpCode, inst.Method, inst.Arguments, inst.ConstrainedTo).WithILInstruction(inst);
 		}
 
-		public ExpressionWithResolveResult Build(OpCode callOpCode, IMethod method, IReadOnlyList<ILInstruction> callArguments)
+		public ExpressionWithResolveResult Build(OpCode callOpCode, IMethod method, IReadOnlyList<ILInstruction> callArguments,
+			IType constrainedTo = null)
 		{
 			// Used for Call, CallVirt and NewObj
+			var expectedTargetDetails = new ExpectedTargetDetails {
+				CallOpCode = callOpCode
+			};
 			TranslatedExpression target;
 			if (callOpCode == OpCode.NewObj) {
 				target = default(TranslatedExpression); // no target
 			} else {
 				target = expressionBuilder.TranslateTarget(method, callArguments.FirstOrDefault(), callOpCode == OpCode.Call);
+				if (callOpCode == OpCode.CallVirt
+					&& constrainedTo == null
+					&& target.Expression is CastExpression cast
+					&& target.ResolveResult is ConversionResolveResult conversion
+					&& target.Type.IsKnownType(KnownTypeCode.Object)
+					&& conversion.Conversion.IsBoxingConversion)
+				{
+					// boxing conversion on call target?
+					// let's see if we can make that implicit:
+					target = target.UnwrapChild(cast.Expression);
+					// we'll need to make sure the boxing effect is preserved
+					expectedTargetDetails.NeedsBoxingConversion = true;
+				}
 			}
 
 			int firstParamIndex = (method.IsStatic || callOpCode == OpCode.NewObj) ? 0 : 1;
@@ -94,7 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp
 									expandedArguments.Add(expressionBuilder.GetDefaultValueExpression(elementType).WithoutILInstruction());
 							}
 						}
-						if (IsUnambiguousCall(callOpCode, target, method, Array.Empty<IType>(), expandedArguments) == OverloadResolutionErrors.None) {
+						if (IsUnambiguousCall(expectedTargetDetails, method, target, Array.Empty<IType>(), expandedArguments) == OverloadResolutionErrors.None) {
 							isExpandedForm = true;
 							expectedParameters = expandedParameters;
 							arguments = expandedArguments.SelectList(a => new TranslatedExpression(a.Expression.Detach()));
@@ -147,7 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(rr);
 				} else {
 
-					if (IsUnambiguousCall(callOpCode, target, method, Array.Empty<IType>(), arguments) != OverloadResolutionErrors.None) {
+					if (IsUnambiguousCall(expectedTargetDetails, method, target, Array.Empty<IType>(), arguments) != OverloadResolutionErrors.None) {
 						for (int i = 0; i < arguments.Count; i++) {
 							if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
 								if (arguments[i].Expression is LambdaExpression lambda) {
@@ -164,7 +187,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			} else {
 				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expectedParameters.Count == allowedParamCount)) {
-					return HandleAccessorCall(callOpCode == OpCode.CallVirt, target, method, arguments.ToList());
+					return HandleAccessorCall(expectedTargetDetails, method, target, arguments.ToList());
 				} else if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate) {
 					return new InvocationExpression(target, arguments.Select(arg => arg.Expression)).WithRR(rr);
 				} else if (IsDelegateEqualityComparison(method, arguments)) {
@@ -179,7 +202,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					IType[] typeArguments = Array.Empty<IType>();
 
 					OverloadResolutionErrors errors;
-					while ((errors = IsUnambiguousCall(callOpCode, target, method, typeArguments, arguments)) != OverloadResolutionErrors.None) {
+					while ((errors = IsUnambiguousCall(expectedTargetDetails, method, target, typeArguments, arguments)) != OverloadResolutionErrors.None) {
 						switch (errors) {
 							case OverloadResolutionErrors.TypeInferenceFailed:
 							case OverloadResolutionErrors.WrongNumberOfTypeArguments:
@@ -288,11 +311,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConversionResolveResult(targetType, argument.ResolveResult, conv));
 		}
 
-		OverloadResolutionErrors IsUnambiguousCall(OpCode callOpCode, TranslatedExpression target, IMethod method, IType[] typeArguments, IList<TranslatedExpression> arguments)
+		OverloadResolutionErrors IsUnambiguousCall(ExpectedTargetDetails expectedTargetDetails, IMethod method,
+			TranslatedExpression target, IType[] typeArguments, IList<TranslatedExpression> arguments)
 		{
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 			var or = new OverloadResolution(resolver.Compilation, arguments.SelectArray(a => a.ResolveResult), typeArguments: typeArguments);
-			if (callOpCode == OpCode.NewObj) {
+			if (expectedTargetDetails.CallOpCode == OpCode.NewObj) {
 				foreach (IMethod ctor in method.DeclaringType.GetConstructors()) {
 					if (lookup.IsAccessible(ctor, allowProtectedAccess: resolver.CurrentTypeDefinition == method.DeclaringTypeDefinition)) {
 						or.AddCandidate(ctor);
@@ -306,7 +330,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			if (or.BestCandidateErrors != OverloadResolutionErrors.None)
 				return or.BestCandidateErrors;
-			if (!IsAppropriateCallTarget(method, or.GetBestCandidateWithSubstitutedTypeArguments(), callOpCode == OpCode.CallVirt))
+			if (!IsAppropriateCallTarget(expectedTargetDetails, method, or.GetBestCandidateWithSubstitutedTypeArguments()))
 				return OverloadResolutionErrors.AmbiguousMatch;
 			return OverloadResolutionErrors.None;
 		}
@@ -329,12 +353,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			return true;
 		}
 
-		ExpressionWithResolveResult HandleAccessorCall(bool isVirtCall, TranslatedExpression target, IMethod method, IList<TranslatedExpression> arguments)
+		ExpressionWithResolveResult HandleAccessorCall(ExpectedTargetDetails expectedTargetDetails, IMethod method, TranslatedExpression target, IList<TranslatedExpression> arguments)
 		{
 			var lookup = new MemberLookup(resolver.CurrentTypeDefinition, resolver.CurrentTypeDefinition.ParentAssembly);
 			var result = lookup.Lookup(target.ResolveResult, method.AccessorOwner.Name, EmptyList<IType>.Instance, isInvocation: false);
 
-			if (result.IsError || (result is MemberResolveResult && !IsAppropriateCallTarget(method.AccessorOwner, ((MemberResolveResult)result).Member, isVirtCall)))
+			if (result.IsError || (result is MemberResolveResult && !IsAppropriateCallTarget(expectedTargetDetails, method.AccessorOwner, ((MemberResolveResult)result).Member)))
 				target = target.ConvertTo(method.AccessorOwner.DeclaringType, expressionBuilder);
 			var rr = new MemberResolveResult(target.ResolveResult, method.AccessorOwner);
 
@@ -367,12 +391,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		bool IsAppropriateCallTarget(IMember expectedTarget, IMember actualTarget, bool isVirtCall)
+		bool IsAppropriateCallTarget(ExpectedTargetDetails expectedTargetDetails, IMember expectedTarget, IMember actualTarget)
 		{
 			if (expectedTarget.Equals(actualTarget))
 				return true;
 
-			if (isVirtCall && actualTarget.IsOverride) {
+			if (expectedTargetDetails.CallOpCode == OpCode.CallVirt && actualTarget.IsOverride) {
+				if (expectedTargetDetails.NeedsBoxingConversion && actualTarget.DeclaringType.IsReferenceType != true)
+					return false;
 				foreach (var possibleTarget in InheritanceHelper.GetBaseMembers(actualTarget, false)) {
 					if (expectedTarget.Equals(possibleTarget))
 						return true;
@@ -418,7 +444,10 @@ namespace ICSharpCode.Decompiler.CSharp
 			bool needsCast = true;
 			if (result is MethodGroupResolveResult mgrr) {
 				or.AddMethodLists(mgrr.MethodsGroupedByDeclaringType.ToArray());
-				needsCast = (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(method, or.BestCandidate, func.OpCode == OpCode.LdVirtFtn));
+				var expectedTargetDetails = new ExpectedTargetDetails {
+					CallOpCode = inst.OpCode
+				};
+				needsCast = (or.BestCandidateErrors != OverloadResolutionErrors.None || !IsAppropriateCallTarget(expectedTargetDetails, method, or.BestCandidate));
 			}
 			if (needsCast) {
 				target = target.ConvertTo(targetType, expressionBuilder);
