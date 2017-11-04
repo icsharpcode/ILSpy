@@ -475,8 +475,16 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Convert the modified body to C# AST:
 			var whileLoop = (WhileStatement)ConvertAsBlock(container).First();
 			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
+			
 			// Remove the first statement, as it is the foreachVariable = enumerator.Current; statement.
-			foreachBody.Statements.First().Detach();
+			Statement firstStatement = foreachBody.Statements.First();
+			if (firstStatement is LabelStatement) {
+				// skip the entry-point label, if any
+				firstStatement = firstStatement.GetNextStatement();
+			}
+			Debug.Assert(firstStatement is ExpressionStatement);
+			firstStatement.Remove();
+
 			// Construct the foreach loop.
 			var foreachStmt = new ForeachStatement {
 				VariableType = settings.AnonymousTypes && foreachVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : exprBuilder.ConvertType(foreachVariable.Type),
@@ -723,14 +731,9 @@ namespace ICSharpCode.Decompiler.CSharp
 					return forStmt;
 				case LoopKind.While:
 					if (loop.Body == null) {
-						blockStatement = ConvertBlockContainer(container, true);
-					} else {
-						blockStatement = ConvertAsBlock(loop.Body);
-						if (!loop.Body.HasFlag(InstructionFlags.EndPointUnreachable))
-							blockStatement.Add(new BreakStatement());
-					}
-					if (loop.Conditions == null) {
+						Debug.Assert(loop.Conditions == null);
 						conditionExpr = new PrimitiveExpression(true);
+						blockStatement = ConvertBlockContainer(container, true);
 						Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
 						Debug.Assert(blockStatement.Statements.First() is LabelStatement);
 						if (container.EntryPoint.IncomingEdgeCount == continueCount + 1) {
@@ -738,9 +741,23 @@ namespace ICSharpCode.Decompiler.CSharp
 							blockStatement.Statements.First().Remove();
 						}
 					} else {
+						Debug.Assert(loop.Conditions.Length == 1);
 						conditionExpr = exprBuilder.TranslateCondition(loop.Conditions[0]);
+						blockStatement = ConvertAsBlock(loop.Body);
+						if (!loop.Body.HasFlag(InstructionFlags.EndPointUnreachable))
+							blockStatement.Add(new BreakStatement());
 						blockStatement = ConvertBlockContainer(blockStatement, container, loop.AdditionalBlocks, true);
+						Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
+						if (continueCount + 1 < container.EntryPoint.IncomingEdgeCount) {
+							// There's an incoming edge to the entry point (=while condition) that wasn't represented as "continue;"
+							// -> emit a real label
+							// We'll also remove any "continue;" in front of the label, as it's redundant.
+							if (blockStatement.LastOrDefault() is ContinueStatement)
+								blockStatement.Last().Remove();
+							blockStatement.Add(new LabelStatement { Label = container.EntryPoint.Label });
+						}
 					}
+
 					if (blockStatement.LastOrDefault() is ContinueStatement stmt)
 						stmt.Remove();
 					return new WhileStatement(conditionExpr, blockStatement);
