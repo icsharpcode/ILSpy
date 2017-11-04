@@ -397,11 +397,11 @@
   (related to https://github.com/icsharpcode/ILSpy/issues/511)
   -->
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="mkdir $(SolutionDir)ILSpy.AddIn\packages\" IgnoreExitCode="true" />
-	  <Exec Command="copy $(TargetDir)\System.ValueTuple.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
-	  <Exec Command="copy $(TargetDir)\System.Collections.Immutable.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
-	  <Exec Command="copy $(TargetDir)\ICSharpCode.AvalonEdit.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
-	  <Exec Command="copy $(TargetDir)\Newtonsoft.Json.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
-	  <Exec Command="copy $(TargetDir)\Humanizer.dll $(SolutionDir)\ILSpy.AddIn\packages\" />
+	  <Exec Command="mkdir ..\ILSpy.AddIn\packages\" IgnoreExitCode="true" />
+	  <Exec Command="copy &quot;$(TargetDir)\System.ValueTuple.dll&quot; ..\ILSpy.AddIn\packages\" />
+	  <Exec Command="copy &quot;$(TargetDir)\System.Collections.Immutable.dll&quot; ..\ILSpy.AddIn\packages\" />
+	  <Exec Command="copy &quot;$(TargetDir)\ICSharpCode.AvalonEdit.dll&quot; ..\ILSpy.AddIn\packages\" />
+	  <Exec Command="copy &quot;$(TargetDir)\Newtonsoft.Json.dll&quot; ..\ILSpy.AddIn\packages\" />
+	  <Exec Command="copy &quot;$(TargetDir)\Humanizer.dll&quot; ..\ILSpy.AddIn\packages\" />
   </Target>
 </Project>
