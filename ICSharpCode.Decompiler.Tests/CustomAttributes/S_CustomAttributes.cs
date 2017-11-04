@@ -26,7 +26,7 @@ namespace CustomAttributes
 		[Flags]
 		public enum EnumWithFlag
 		{
-			All = 15,
+			All = 0xF,
 			None = 0,
 			Item1 = 1,
 			Item2 = 2,

@@ -108,7 +108,7 @@ namespace ICSharpCode.ILSpy.Options
 			}
 		}
 
-		bool sortResults;
+		bool sortResults = true;
 
 		public bool SortResults
 		{

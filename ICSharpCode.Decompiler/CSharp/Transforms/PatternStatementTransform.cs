@@ -251,7 +251,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			var itemVariable = m.Get<IdentifierExpression>("itemVariable").Single().GetILVariable();
 			var indexVariable = m.Get<IdentifierExpression>("indexVariable").Single().GetILVariable();
 			var arrayVariable = m.Get<IdentifierExpression>("arrayVariable").Single().GetILVariable();
-			if (!itemVariable.IsSingleDefinition)
+			var loopContainer = forStatement.Annotation<IL.BlockContainer>();
+			if (!itemVariable.IsSingleDefinition || (itemVariable.CaptureScope != null && itemVariable.CaptureScope != loopContainer))
 				return null;
 			if (indexVariable.StoreCount != 2 || indexVariable.LoadCount != 3 || indexVariable.AddressCount != 0)
 				return null;
@@ -264,6 +265,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				InExpression = m.Get<IdentifierExpression>("arrayVariable").Single().Detach(),
 				EmbeddedStatement = body
 			};
+			foreachStmt.CopyAnnotationsFrom(forStatement);
 			itemVariable.Kind = IL.VariableKind.ForeachLocal;
 			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
 			foreachStmt.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));

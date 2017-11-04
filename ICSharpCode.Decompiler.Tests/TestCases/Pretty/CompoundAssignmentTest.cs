@@ -34,9 +34,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public enum ShortEnum : short
 		{
-			None = 0,
-			One = 1,
-			Two = 2,
+			None,
+			One,
+			Two,
 			Four = 4
 		}
 

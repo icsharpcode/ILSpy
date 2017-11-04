@@ -186,7 +186,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						break;
 				}
 			}
-			if (switchContainer != null) {
+			if (switchContainer != null && stmt.SwitchSections.Count > 0) {
 				// Translate any remaining blocks:
 				var lastSectionStatements = stmt.SwitchSections.Last().Statements;
 				foreach (var block in switchContainer.Blocks.Skip(1)) {
