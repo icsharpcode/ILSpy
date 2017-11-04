@@ -293,9 +293,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 								return new IdentifierExpression(p.Name);
 						}
 					}
-					IdentifierExpression identExp = new IdentifierExpression(ConvertParameter(ident).Name);
-					if (identExp != null) {
-						return identExp;
+					ParameterDeclaration parameterDeclaration = ConvertParameter(ident);
+					if (parameterDeclaration != null) {
+						return new IdentifierExpression(parameterDeclaration.Name);
 					}
 				}
 			}
