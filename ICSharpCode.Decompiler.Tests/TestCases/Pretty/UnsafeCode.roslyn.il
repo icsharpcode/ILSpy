@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module UnsafeCode.dll
-// MVID: {DD8EC7AC-2A00-4D24-83E2-D39C3E04AE41}
+// MVID: {34A4C476-B60D-4D44-9CF4-288026720E1B}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01090000
+// Image base: 0x00AC0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -424,8 +424,8 @@
     IL_0004:  ldarg.0
     IL_0005:  ldloc.0
     IL_0006:  conv.i
-    IL_0007:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::PassPointerAsRefParameter(int32*)
-    IL_000c:  nop
+    IL_0007:  call       instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UsePointer(int32*)
+    IL_000c:  pop
     IL_000d:  nop
     IL_000e:  ldc.i4.0
     IL_000f:  conv.u
@@ -441,7 +441,7 @@
     IL_0000:  nop
     IL_0001:  ldarg.0
     IL_0002:  ldarg.1
-    IL_0003:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::PassRefParameterAsPointer(int32&)
+    IL_0003:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseReference(int32&)
     IL_0008:  nop
     IL_0009:  ret
   } // end of method UnsafeCode::PassPointerAsRefParameter
@@ -1065,6 +1065,96 @@
     IL_0010:  ldloc.0
     IL_0011:  ret
   } // end of method UnsafeCode::FixedMemberBasePointer
+
+  .method public hidebysig instance void 
+          UseFixedMemberAsPointer(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers* m) cil managed
+  {
+    // Code size       21 (0x15)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldarg.1
+    IL_0003:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Integers
+    IL_0008:  ldflda     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer'::FixedElementField
+    IL_000d:  conv.u
+    IL_000e:  call       instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UsePointer(int32*)
+    IL_0013:  pop
+    IL_0014:  ret
+  } // end of method UnsafeCode::UseFixedMemberAsPointer
+
+  .method public hidebysig instance void 
+          UseFixedMemberAsReference(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers* m) cil managed
+  {
+    // Code size       42 (0x2a)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldarg.1
+    IL_0003:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Integers
+    IL_0008:  ldflda     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer'::FixedElementField
+    IL_000d:  conv.u
+    IL_000e:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseReference(int32&)
+    IL_0013:  nop
+    IL_0014:  ldarg.0
+    IL_0015:  ldarg.1
+    IL_0016:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Integers
+    IL_001b:  ldflda     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer'::FixedElementField
+    IL_0020:  conv.u
+    IL_0021:  ldc.i4.4
+    IL_0022:  add
+    IL_0023:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseReference(int32&)
+    IL_0028:  nop
+    IL_0029:  ret
+  } // end of method UnsafeCode::UseFixedMemberAsReference
+
+  .method public hidebysig instance void 
+          PinFixedMember(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers& m) cil managed
+  {
+    // Code size       28 (0x1c)
+    .maxstack  2
+    .locals init (int32& pinned V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer' ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers::Integers
+    IL_0007:  ldflda     int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/StructWithFixedSizeMembers/'<Integers>e__FixedBuffer'::FixedElementField
+    IL_000c:  stloc.0
+    IL_000d:  nop
+    IL_000e:  ldarg.0
+    IL_000f:  ldloc.0
+    IL_0010:  conv.i
+    IL_0011:  call       instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UsePointer(int32*)
+    IL_0016:  pop
+    IL_0017:  nop
+    IL_0018:  ldc.i4.0
+    IL_0019:  conv.u
+    IL_001a:  stloc.0
+    IL_001b:  ret
+  } // end of method UnsafeCode::PinFixedMember
+
+  .method private hidebysig instance void 
+          UseReference(int32& i) cil managed
+  {
+    // Code size       2 (0x2)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ret
+  } // end of method UnsafeCode::UseReference
+
+  .method public hidebysig instance string 
+          UsePointer(int32* ptr) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  1
+    .locals init (string V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  call       instance string [mscorlib]System.Int32::ToString()
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method UnsafeCode::UsePointer
 
   .method public hidebysig instance string 
           UsePointer(float64* ptr) cil managed

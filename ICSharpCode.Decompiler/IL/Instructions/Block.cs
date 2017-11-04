@@ -67,6 +67,9 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		/// <remarks>
 		/// Blocks in containers must have 'Nop' as a final instruction.
+		/// 
+		/// Note that the FinalInstruction is included in Block.Children,
+		/// but not in Block.Instructions!
 		/// </remarks>
 		public ILInstruction FinalInstruction {
 			get {

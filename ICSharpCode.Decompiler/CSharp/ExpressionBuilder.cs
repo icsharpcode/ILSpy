@@ -1571,10 +1571,16 @@ namespace ICSharpCode.Decompiler.CSharp
 				&& inst.Target is LdFlda nestedLdFlda
 				&& CSharpDecompiler.IsFixedField(nestedLdFlda.Field, out var elementType, out _))
 			{
-				Expression result = ConvertField(nestedLdFlda.Field, nestedLdFlda.Target);
-				result.RemoveAnnotations<ResolveResult>();
-				return result.WithRR(new ResolveResult(new PointerType(elementType)))
+				Expression fieldAccess = ConvertField(nestedLdFlda.Field, nestedLdFlda.Target);
+				fieldAccess.RemoveAnnotations<ResolveResult>();
+				var result = fieldAccess.WithRR(new ResolveResult(new PointerType(elementType)))
 					.WithILInstruction(inst);
+				if (inst.ResultType == StackType.Ref) {
+					// convert pointer back to ref
+					return result.ConvertTo(new ByReferenceType(elementType), this);
+				} else {
+					return result;
+				}
 			}
 			var expr = ConvertField(inst.Field, inst.Target).WithILInstruction(inst);
 			if (inst.ResultType == StackType.I) {

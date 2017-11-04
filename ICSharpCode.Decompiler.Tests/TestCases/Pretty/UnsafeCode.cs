@@ -129,14 +129,14 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 		public unsafe void PassRefParameterAsPointer(ref int p)
 		{
-			fixed (int* p2 = &p) {
-				this.PassPointerAsRefParameter(p2);
+			fixed (int* ptr = &p) {
+				this.UsePointer(ptr);
 			}
 		}
 
 		public unsafe void PassPointerAsRefParameter(int* p)
 		{
-			this.PassRefParameterAsPointer(ref *p);
+			this.UseReference(ref *p);
 		}
 
 		public unsafe void AddressInMultiDimensionalArray(double[,] matrix)
@@ -280,6 +280,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe double* FixedMemberBasePointer(StructWithFixedSizeMembers* m)
 		{
 			return m->Doubles;
+		}
+
+		public unsafe void UseFixedMemberAsPointer(StructWithFixedSizeMembers* m)
+		{
+			this.UsePointer(m->Integers);
+		}
+
+		public unsafe void UseFixedMemberAsReference(StructWithFixedSizeMembers* m)
+		{
+			this.UseReference(ref *m->Integers);
+			this.UseReference(ref m->Integers[1]);
+		}
+
+		public unsafe void PinFixedMember(ref StructWithFixedSizeMembers m)
+		{
+			fixed (int* ptr = m.Integers) {
+				this.UsePointer(ptr);
+			}
+		}
+
+		private void UseReference(ref int i)
+		{
+		}
+
+		public unsafe string UsePointer(int* ptr)
+		{
+			return ptr->ToString();
 		}
 
 		public unsafe string UsePointer(double* ptr)

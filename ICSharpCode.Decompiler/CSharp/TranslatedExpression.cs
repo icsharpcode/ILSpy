@@ -292,6 +292,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				// convert from reference to pointer
 				Expression arg = ((DirectionExpression)Expression).Expression.Detach();
 				var pointerType = new PointerType(((ByReferenceType)type).ElementType);
+				if (arg is UnaryOperatorExpression argUOE && argUOE.Operator == UnaryOperatorType.Dereference) {
+					// &*ptr -> ptr
+					return new TranslatedExpression(argUOE).UnwrapChild(argUOE.Expression)
+						.ConvertTo(targetType, expressionBuilder);
+				}
 				var pointerExpr = new UnaryOperatorExpression(UnaryOperatorType.AddressOf, arg)
 					.WithILInstruction(this.ILInstructions)
 					.WithRR(new ResolveResult(pointerType));
