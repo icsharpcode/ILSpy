@@ -20,6 +20,7 @@ using System;
 using System.Diagnostics;
 using ICSharpCode.Decompiler.IL.Transforms;
 using System.Threading;
+using System.Collections.Generic;
 
 namespace ICSharpCode.Decompiler.IL.ControlFlow
 {
@@ -48,8 +49,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 	/// </summary>
 	public class DetectExitPoints : ILVisitor, IILTransform
 	{
-		static readonly Nop ExitNotYetDetermined = new Nop();
-		static readonly Nop NoExit = new Nop();
+		static readonly Nop ExitNotYetDetermined = new Nop { Comment = "ExitNotYetDetermined" };
+		static readonly Nop NoExit = new Nop { Comment = "NoExit" };
 
 		bool canIntroduceExitForReturn;
 
@@ -106,11 +107,17 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		/// <summary>
 		/// The instruction that will be executed next after leaving the currentContainer.
-		/// <c>null</c> means the container is last in its parent block, and thus does not
+		/// <c>ExitNotYetDetermined</c> means the container is last in its parent block, and thus does not
 		/// yet have any leave instructions. This means we can move any exit instruction of
 		/// our choice our of the container and replace it with a leave instruction.
 		/// </summary>
 		ILInstruction currentExit;
+
+		/// <summary>
+		/// If <c>currentExit==ExitNotYetDetermined</c>, holds the list of potential exit instructions.
+		/// After the currentContainer was visited completely, one of these will be selected as exit instruction.
+		/// </summary>
+		List<ILInstruction> potentialExits;
 
 		public void Run(ILFunction function, ILTransformContext context)
 		{
@@ -129,12 +136,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		{
 			var oldExit = currentExit;
 			var oldContainer = currentContainer;
+			var oldPotentialExits = potentialExits;
 			var thisExit = GetExit(container);
 			currentExit = thisExit;
 			currentContainer = container;
+			potentialExits = (thisExit == ExitNotYetDetermined ? new List<ILInstruction>() : null);
 			base.VisitBlockContainer(container);
-			if (thisExit == ExitNotYetDetermined && currentExit != ExitNotYetDetermined) {
+			if (thisExit == ExitNotYetDetermined && potentialExits.Count > 0) {
 				// This transform determined an exit point.
+				currentExit = ChooseExit(potentialExits);
+				foreach (var exit in potentialExits) {
+					if (CompatibleExitInstruction(currentExit, exit)) {
+						exit.ReplaceWith(new Leave(currentContainer) { ILRange = exit.ILRange });
+					}
+				}
 				Debug.Assert(!currentExit.MatchLeave(currentContainer));
 				ILInstruction inst = container;
 				// traverse up to the block (we'll always find one because GetExit
@@ -148,6 +163,20 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			}
 			currentExit = oldExit;
 			currentContainer = oldContainer;
+			potentialExits = oldPotentialExits;
+		}
+
+		static ILInstruction ChooseExit(List<ILInstruction> potentialExits)
+		{
+			ILInstruction first = potentialExits[0];
+			if (first is Leave l && l.IsLeavingFunction) {
+				for (int i = 1; i < potentialExits.Count; i++) {
+					var exit = potentialExits[i];
+					if (!(exit is Leave l2 && l2.IsLeavingFunction))
+						return exit;
+				}
+			}
+			return first;
 		}
 
 		protected internal override void VisitBlock(Block block)
@@ -162,8 +191,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		void HandleExit(ILInstruction inst)
 		{
 			if (currentExit == ExitNotYetDetermined && CanIntroduceAsExit(inst)) {
-				currentExit = inst;
-				inst.ReplaceWith(new Leave(currentContainer) { ILRange = inst.ILRange });
+				potentialExits.Add(inst);
 			} else if (CompatibleExitInstruction(inst, currentExit)) {
 				inst.ReplaceWith(new Leave(currentContainer) { ILRange = inst.ILRange });
 			}
@@ -198,44 +226,4 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			HandleExit(inst);
 		}
 	}
-
-	/*
-	/// <summary>
-	/// Like DetectExitPoints, but only uses existing exit points
-	/// (by replacing compatible instructions with Leave),
-	/// without introducing any exit points even if it were possible.
-	/// </summary>
-	class UseExitPoints : IBlockTransform
-	{
-		BlockContainer currentContainer;
-		ILInstruction exitPoint;
-
-		public void Run(Block block, BlockTransformContext context)
-		{
-			Debug.Assert(block.Parent == context.Container);
-			currentContainer = context.Container;
-			exitPoint = DetectExitPoints.GetExit(context.Container);
-			Visit(block);
-		}
-
-		void Visit(ILInstruction inst)
-		{
-			switch (inst.OpCode) {
-				case OpCode.Leave:
-				case OpCode.Branch:
-					if (DetectExitPoints.CompatibleExitInstruction(inst, exitPoint)) {
-						inst.ReplaceWith(new Leave(currentContainer) { ILRange = inst.ILRange });
-					}
-					break;
-				case OpCode.Block:
-					// This is a post-order block transform; skip over nested blocks
-					// as those are already processed.
-					return;
-			}
-			foreach (var c in inst.Children) {
-				Visit(c);
-			}
-		}
-	}
-	*/
 }
