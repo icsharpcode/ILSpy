@@ -60,7 +60,8 @@ $templateFiles = (
 	@{Input="ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec.template"; Output="ICSharpCode.Decompiler/ICSharpCode.Decompiler.nuspec"},
 	@{Input="ILSpy/Properties/app.config.template"; Output = "ILSpy/app.config"}
 );
-[string]$mutexId = "ILSpyUpdateAssemblyInfo" + (Get-Location).GetHashCode();
+[string]$mutexId = "ILSpyUpdateAssemblyInfo" + (Get-Location).ToString().GetHashCode();
+Write-Host $mutexId;
 [bool]$createdNew = $false;
 $mutex = New-Object System.Threading.Mutex($true, $mutexId, [ref]$createdNew);
 try {
@@ -123,5 +124,5 @@ try {
     }
 } finally {
     $mutex.ReleaseMutex();
-    $mutex.Dispose();
+    $mutex.Close();
 }
