@@ -14,16 +14,23 @@ function Test-Dir([string]$name) {
 }
 
 function Find-Git() {
-	if ($env:PATH.Contains("git\cmd")) {
-		return $true;
+	try {
+		$executable = (get-command git).Path;
+		return $executable -ne $null;
+	} catch {
+		#git not found in path, continue;
 	}
-	#hack for x86 powershell used by default (yuck!)
-	if (${env:PROGRAMFILES(X86)} -eq ${env:PROGRAMFILES}) {
-		$env:PROGRAMFILES = $env:PROGRAMFILES.Substring(0, $env:PROGRAMFILES.Length - 6);
-	}
-	if ([System.IO.Directory]::Exists("$env:PROGRAMFILES\git\cmd\")) {
-		$env:PATH = "$env:PATH;$env:PROGRAMFILES\git\cmd\";
-		return $true;
+	#we're on Windows
+	if ($env:PROGRAMFILES -ne $null) {
+		#hack for x86 powershell used by default (yuck!)
+		if (${env:PROGRAMFILES(X86)} -eq ${env:PROGRAMFILES}) {
+			$env:PROGRAMFILES = $env:PROGRAMFILES.Substring(0, $env:PROGRAMFILES.Length - 6);
+		}
+		#try to add git to path
+		if ([System.IO.Directory]::Exists("$env:PROGRAMFILES\git\cmd\")) {
+			$env:PATH = "$env:PATH;$env:PROGRAMFILES\git\cmd\";
+			return $true;
+		}
 	}
 	return $false;
 }
