@@ -213,8 +213,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				instructionsToRemove += inc;
 			}
 			ILInstruction array;
-			if (block.Instructions[pos].MatchStLoc(out finalStore, out array))
+			// In case there is an extra copy of the store variable
+			// Remove it and use its value instead.
+			if (block.Instructions[pos].MatchStLoc(out finalStore, out array)) {
+				instructionsToRemove++;
 				return array.MatchLdLoc(store);
+			}
 			finalStore = store;
 			return true;
 		}
