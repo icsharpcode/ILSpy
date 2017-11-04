@@ -459,7 +459,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Block oldEntryPoint = (Block)loop[0].UserData;
 			Block exitTargetBlock = (Block)exitPoint?.UserData;
 
-			BlockContainer loopContainer = new BlockContainer();
+			BlockContainer loopContainer = new BlockContainer(ContainerKind.Loop);
 			Block newEntryPoint = new Block();
 			loopContainer.Blocks.Add(newEntryPoint);
 			// Move contents of oldEntryPoint to newEntryPoint
@@ -537,7 +537,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				Debug.Assert(h.Dominates(node) || !node.IsReachable, "The switch body must be dominated by the switch head");
 			}
 
-			BlockContainer switchContainer = new BlockContainer();
+			BlockContainer switchContainer = new BlockContainer(ContainerKind.Switch);
 			Block newEntryPoint = new Block();
 			newEntryPoint.ILRange = switchInst.ILRange;
 			switchContainer.Blocks.Add(newEntryPoint);

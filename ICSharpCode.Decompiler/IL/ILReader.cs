@@ -84,7 +84,7 @@ namespace ICSharpCode.Decompiler.IL
 					v.HasInitialValue = true;
 				}
 			}
-			mainContainer = new BlockContainer(methodReturnStackType);
+			mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
 			this.instructionBuilder = new List<ILInstruction>();
 			this.isBranchTarget = new BitArray(body.CodeSize);
 			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();

@@ -39,6 +39,7 @@ namespace ICSharpCode.Decompiler.IL
 		public static readonly SlotInfo BlockSlot = new SlotInfo("Block", isCollection: true);
 		public readonly InstructionCollection<Block> Blocks;
 
+		public ContainerKind Kind { get; set; }
 		public StackType ExpectedResultType { get; set; }
 
 		int leaveCount;
@@ -70,8 +71,9 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		public BlockContainer(StackType expectedResultType = StackType.Void) : base(OpCode.BlockContainer)
+		public BlockContainer(ContainerKind kind = ContainerKind.Normal, StackType expectedResultType = StackType.Void) : base(OpCode.BlockContainer)
 		{
+			this.Kind = kind;
 			this.Blocks = new InstructionCollection<Block>(this, 0);
 			this.ExpectedResultType = expectedResultType;
 		}
@@ -118,11 +120,22 @@ namespace ICSharpCode.Decompiler.IL
 			ILRange.WriteTo(output, options);
 			output.WriteDefinition("BlockContainer", this);
 			output.Write(' ');
-			if (entryPoint.IncomingEdgeCount > 1) {
-				output.Write("(loop) ");
-			}
-			if (entryPoint.Instructions.Count == 1 && entryPoint.Instructions[0] is SwitchInstruction) {
-				output.Write("(switch) ");
+			switch (Kind) {
+				case ContainerKind.Loop:
+					output.Write("(while-true) ");
+					break;
+				case ContainerKind.Switch:
+					output.Write("(switch) ");
+					break;
+				case ContainerKind.While:
+					output.Write("(while) ");
+					break;
+				case ContainerKind.DoWhile:
+					output.Write("(do-while) ");
+					break;
+				case ContainerKind.For:
+					output.Write("(for) ");
+					break;
 			}
 			output.MarkFoldStart("{...}");
 			output.WriteLine("{");
@@ -170,8 +183,39 @@ namespace ICSharpCode.Decompiler.IL
 			Debug.Assert(!IsConnected || EntryPoint.IncomingEdgeCount >= 1);
 			Debug.Assert(Blocks.All(b => b.HasFlag(InstructionFlags.EndPointUnreachable)));
 			Debug.Assert(Blocks.All(b => b.Kind == BlockKind.ControlFlow)); // this also implies that the blocks don't use FinalInstruction
+			Block bodyStartBlock;
+			switch (Kind) {
+				case ContainerKind.Normal:
+					break;
+				case ContainerKind.Loop:
+					Debug.Assert(EntryPoint.IncomingEdgeCount > 1);
+					break;
+				case ContainerKind.Switch:
+					Debug.Assert(EntryPoint.Instructions.Count == 1);
+					Debug.Assert(EntryPoint.Instructions[0] is SwitchInstruction);
+					break;
+				case ContainerKind.While:
+					Debug.Assert(EntryPoint.IncomingEdgeCount > 1);
+					Debug.Assert(Blocks.Count >= 2);
+					Debug.Assert(MatchConditionBlock(EntryPoint, out _, out bodyStartBlock));
+					Debug.Assert(bodyStartBlock == Blocks[1]);
+					break;
+				case ContainerKind.DoWhile:
+					Debug.Assert(EntryPoint.IncomingEdgeCount > 1);
+					Debug.Assert(Blocks.Count >= 2);
+					Debug.Assert(MatchConditionBlock(Blocks.Last(), out _, out bodyStartBlock));
+					Debug.Assert(bodyStartBlock == EntryPoint);
+					break;
+				case ContainerKind.For:
+					Debug.Assert(EntryPoint.IncomingEdgeCount == 2);
+					Debug.Assert(Blocks.Count >= 3);
+					Debug.Assert(MatchConditionBlock(EntryPoint, out _, out bodyStartBlock));
+					Debug.Assert(MatchIncrementBlock(Blocks.Last()));
+					Debug.Assert(bodyStartBlock == Blocks[1]);
+					break;
+			}
 		}
-		
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			InstructionFlags flags = InstructionFlags.ControlFlow;
@@ -251,5 +295,76 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return null;
 		}
+
+		public bool MatchConditionBlock(Block block, out ILInstruction condition, out Block bodyStartBlock)
+		{
+			condition = null;
+			bodyStartBlock = null;
+			if (block.Instructions.Count != 1)
+				return false;
+			if (!block.Instructions[0].MatchIfInstruction(out condition, out var trueInst, out var falseInst))
+				return false;
+			return falseInst.MatchLeave(this) && trueInst.MatchBranch(out bodyStartBlock);
+		}
+
+		public bool MatchIncrementBlock(Block block)
+		{
+			if (block.Instructions.Count == 0)
+				return false;
+			if (!block.Instructions.Last().MatchBranch(EntryPoint))
+				return false;
+			return true;
+		}
+	}
+
+	public enum ContainerKind
+	{
+		/// <summary>
+		/// Normal container that contains control-flow blocks.
+		/// </summary>
+		Normal,
+		/// <summary>
+		/// A while-true loop.
+		/// Continue is represented as branch to entry-point.
+		/// Return/break is represented as leave.
+		/// </summary>
+		Loop,
+		/// <summary>
+		/// Container that has a switch instruction as entry-point.
+		/// Goto case is represented as branch.
+		/// Break is represented as leave.
+		/// </summary>
+		Switch,
+		/// <summary>
+		/// while-loop.
+		/// The entry-point is a block consisting of a single if instruction
+		/// that if true: jumps to the head of the loop body,
+		/// if false: leaves the block.
+		/// Continue is a branch to the entry-point.
+		/// Break is a leave.
+		/// </summary>
+		While,
+		/// <summary>
+		/// do-while-loop.
+		/// The entry-point is a block that is the head of the loop body.
+		/// The last block consists of a single if instruction
+		/// that if true: jumps to the head of the loop body,
+		/// if false: leaves the block.
+		/// Only the last block is allowed to jump to the entry-point.
+		/// Continue is a branch to the last block.
+		/// Break is a leave.
+		/// </summary>
+		DoWhile,
+		/// <summary>
+		/// for-loop.
+		/// The entry-point is a block consisting of a single if instruction
+		/// that if true: jumps to the head of the loop body,
+		/// if false: leaves the block.
+		/// The last block is the increment block.
+		/// Only the last block is allowed to jump to the entry-point.
+		/// Continue is a branch to the last block.
+		/// Break is a leave.
+		/// </summary>
+		For
 	}
 }
