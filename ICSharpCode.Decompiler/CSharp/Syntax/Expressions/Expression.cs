@@ -126,5 +126,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				throw new ArgumentNullException("replaceFunction");
 			return (Expression)base.ReplaceWith(node => replaceFunction((Expression)node));
 		}
+
+		internal MemberReferenceExpression Member(string v)
+		{
+			return new MemberReferenceExpression(this, v);
+		}
+
+		internal CastExpression CastTo(AstType type)
+		{
+			return new CastExpression(type, this);
+		}
 	}
 }

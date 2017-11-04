@@ -17,9 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
+using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.Semantics;
 using Mono.Cecil;
 
@@ -57,6 +59,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			return name;
 		}
+
+		internal InvocationExpression Invoke(string v, Expression anyNode1, Expression anyNode2)
+		{
+			return new InvocationExpression(new MemberReferenceExpression(this, v), anyNode1, anyNode2);
+		}
 	}
 	
 	sealed class LdTokenPattern : Pattern
@@ -70,9 +77,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override bool DoMatch(INode other, Match match)
 		{
-			InvocationExpression ie = other as InvocationExpression;
-			if (ie != null && ie.Annotation<LdTokenAnnotation>() != null && ie.Arguments.Count == 1) {
-				return childNode.DoMatch(ie.Arguments.Single(), match);
+			if (other is AstNode node && node.Annotation<LdMemberToken>() != null) {
+				match.Add(childNode.GroupName, other);
+				return true;
 			}
 			return false;
 		}

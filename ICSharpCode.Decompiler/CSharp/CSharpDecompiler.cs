@@ -128,8 +128,9 @@ namespace ICSharpCode.Decompiler.CSharp
 							new NullCoalescingTransform(),
 							new NullableLiftingStatementTransform(),
 							new TransformArrayInitializers(),
-							new TransformCollectionAndObjectInitializers()
-						),
+							new TransformCollectionAndObjectInitializers(),
+							new InlineExpressionTreeParameterDeclarationsTransform()
+						)
 					}
 				},
 				new ProxyCallReplacer(),
@@ -149,6 +150,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new PrettifyAssignments(), // must run after DeclareVariables
 			new IntroduceUsingDeclarations(),
 			new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
+			new ExpressionTreeConverter(), // must run before IntroduceQueryExpressions
 			new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods
 			new CombineQueryExpressions(),
 			new FlattenSwitchBlocks(),
