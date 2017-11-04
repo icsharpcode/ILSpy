@@ -37,7 +37,7 @@ function Find-Git() {
 
 function gitVersion() {
     if (-not ((Test-Dir ".git") -and (Find-Git))) {
-        return 9999;
+        return 0;
     }
     return [Int32]::Parse((git rev-list --count "$baseCommit..HEAD")) + $baseCommitRev;
 }
@@ -107,6 +107,13 @@ try {
     } else {
         $postfixVersionName = "-$versionName";
     }
+	
+	$buildConfig = $args[0].ToString().ToLower();
+	if ($buildConfig -eq "release") {
+		$buildConfig = "";
+	} else {
+		$buildConfig = "-" + $buildConfig;
+	}
 
     $fullVersionNumber = "$major.$minor.$build.$revision";
     
@@ -124,7 +131,7 @@ try {
         $out = $out.Replace('$INSERTBRANCHPOSTFIX$', $postfixBranchName);
 		$out = $out.Replace('$INSERTVERSIONNAME$', $versionName);
         $out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
-        $out = $out.Replace('$INSERTBUILDCONFIG$', $args[0].ToString().ToLower());
+        $out = $out.Replace('$INSERTBUILDCONFIG$', $buildConfig);
 
         if (((Get-Content $file.Input) -Join [System.Environment]::NewLine) -ne $out) {
             $out | Out-File -Encoding utf8 $file.Output;
