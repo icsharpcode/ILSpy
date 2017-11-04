@@ -27,7 +27,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// Enum representing the type of an <see cref="ILInstruction"/>.
 	/// </summary>
-	public enum OpCode
+	public enum OpCode : byte
 	{
 		/// <summary>Represents invalid IL. Semantically, this instruction is considered to throw some kind of exception.</summary>
 		InvalidBranch,

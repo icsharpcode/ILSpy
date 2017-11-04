@@ -22,7 +22,7 @@ using System.Collections.Generic;
 namespace ICSharpCode.Decompiler.Util
 {
 	/// <summary>
-	/// Contains extension methods for use within NRefactory.
+	/// Contains extension methods for internal use within the decompiler.
 	/// </summary>
 	static class ExtensionMethods
 	{
@@ -33,6 +33,13 @@ namespace ICSharpCode.Decompiler.Util
 			if (filter2 == null)
 				return filter1;
 			return m => filter1(m) && filter2(m);
+		}
+
+		public static void Swap<T>(ref T a, ref T b)
+		{
+			T tmp = a;
+			a = b;
+			b = tmp;
 		}
 	}
 }

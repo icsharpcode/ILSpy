@@ -37,10 +37,6 @@ namespace ICSharpCode.Decompiler.IL
 	/// 1) Blocks in block containers. Used as targets for Branch instructions.
 	/// 2) Blocks to group a bunch of statements, e.g. the TrueInst of an IfInstruction.
 	/// 3) Inline blocks that evaluate to a value, e.g. for array initializers.
-	/// 
-	/// TODO: consider splitting inline blocks (with FinalInstruction) from those
-	/// used in containers for control flow purposes -- these are very different things
-	/// which should not share a class.
 	/// </summary>
 	partial class Block : ILInstruction
 	{
