@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			InitializeAstBuilderAndContext(rootNode.Annotation<UsingScope>());
 			rootNode.AcceptVisitor(this);
 		}
-
+		
 		#region TypeSystemAstBuilder context handling
 		Stack<CSharpTypeResolveContext> resolveContextStack = new Stack<CSharpTypeResolveContext>();
 
@@ -102,7 +102,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 		#endregion
-
+	
 		public override void VisitInvocationExpression(InvocationExpression invocationExpression)
 		{
 			if (CouldBeExpressionTree(invocationExpression)) {

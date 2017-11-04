@@ -58,6 +58,7 @@
 
   <ItemGroup>
     <Compile Include="DataFlowTest.cs" />
+    <Compile Include="TestCases\Correctness\ExpressionTrees.cs" />
     <Compile Include="TestCases\Correctness\LINQRaytracer.cs" />
     <Compile Include="TestCases\Correctness\MiniJSON.cs" />
     <Compile Include="TestCases\ILPretty\Issue959.cs" />

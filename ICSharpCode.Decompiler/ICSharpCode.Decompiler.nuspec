@@ -1,0 +1,35 @@
+﻿<?xml version="1.0"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2011/08/nuspec.xsd">
+  <metadata>
+    <id>ICSharpCode.Decompiler</id>
+    <version>3.0.0.3324-beta1</version>
+    <title>ILSpy Decompiler Engine</title>
+    <authors>Daniel Grunwald, David Srbecky, Ed Harvey, Siegfried Pammer</authors>
+    <owners>Daniel Grunwald, SharpDevelop</owners>
+    <licenseUrl>http://www.opensource.org/licenses/mit-license.php</licenseUrl>
+    <projectUrl>https://github.com/icsharpcode/ILSpy/</projectUrl>
+    <iconUrl>http://ilspy.net/images/icon32.png</iconUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>ICSharpCode.Decompiler is the decompiler engine used in ILSpy.</description>
+    <!--<releaseNotes></releaseNotes>-->
+    <copyright>Copyright 2011-2017 AlphaSierraPapa</copyright>
+    <tags>C# Decompiler ILSpy</tags>
+    <dependencies>
+      <dependency id="Humanizer.Core" version="2.2.0" />
+      <dependency id="Newtonsoft.Json" version="10.0.3" />
+      <dependency id="System.Collections.Immutable" version="1.4.0" />
+      <dependency id="System.ValueTuple" version="4.4.0" />
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="bin\$Configuration$\net461\ICSharpCode.Decompiler.dll" target="lib\net461" />
+    <file src="bin\$Configuration$\net461\ICSharpCode.Decompiler.pdb" target="lib\net461" />
+    <file src="bin\$Configuration$\net461\Mono.Cecil.dll" target="lib\net461" />
+    <file src="bin\$Configuration$\net461\Mono.Cecil.pdb" target="lib\net461" />
+
+    <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.dll" target="lib\netstandard2.0" />
+    <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.pdb" target="lib\netstandard2.0" />
+    <file src="bin\$Configuration$\netstandard2.0\Mono.Cecil.dll" target="lib\netstandard2.0" />
+    <file src="bin\$Configuration$\netstandard2.0\Mono.Cecil.pdb" target="lib\netstandard2.0" />
+  </files>
+</package>
