@@ -585,7 +585,7 @@
 
   <Target Name="BeforeBuild">
     <PropertyGroup>
-      <UpdateAssemblyInfo>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1</UpdateAssemblyInfo>
+      <UpdateAssemblyInfo>powershell -NoProfile -ExecutionPolicy Bypass -File BuildTools/update-assemblyinfo.ps1 $(Configuration)</UpdateAssemblyInfo>
     </PropertyGroup>
     <Exec WorkingDirectory=".." Command="$(UpdateAssemblyInfo)" Timeout="60000" />
   </Target>

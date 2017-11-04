@@ -117,6 +117,7 @@ try {
         $out = $out.Replace('$INSERTBRANCHPOSTFIX$', $postfixBranchName);
 		$out = $out.Replace('$INSERTVERSIONNAME$', $versionName);
         $out = $out.Replace('$INSERTVERSIONNAMEPOSTFIX$', $postfixVersionName);
+        $out = $out.Replace('$INSERTBUILDCONFIG$', $args[0].ToString().ToLower());
 
         if (((Get-Content $file.Input) -Join [System.Environment]::NewLine) -ne $out) {
             $out | Out-File -Encoding utf8 $file.Output;
