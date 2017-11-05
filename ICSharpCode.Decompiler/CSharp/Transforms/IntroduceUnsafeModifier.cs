@@ -104,6 +104,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				pre.MemberName = memberReferenceExpression.MemberName;
 				memberReferenceExpression.TypeArguments.MoveTo(pre.TypeArguments);
 				pre.CopyAnnotationsFrom(uoe);
+				pre.RemoveAnnotations<ResolveResult>(); // only copy the ResolveResult from the MRE
 				pre.CopyAnnotationsFrom(memberReferenceExpression);
 				memberReferenceExpression.ReplaceWith(pre);
 			}
