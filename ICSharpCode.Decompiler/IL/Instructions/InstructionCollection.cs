@@ -333,7 +333,41 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			return removed;
 		}
-		
+
+		public void MoveElementToIndex(int oldIndex, int newIndex)
+		{
+			parentInstruction.AssertNoEnumerators();
+			var item = list[oldIndex];
+			Insert(newIndex, item);
+			if (oldIndex < newIndex)
+				RemoveAt(oldIndex);
+			else
+				RemoveAt(oldIndex + 1);
+		}
+
+		public void MoveElementToIndex(T item, int newIndex)
+		{
+			parentInstruction.AssertNoEnumerators();
+			int oldIndex = IndexOf(item);
+			if (oldIndex >= 0) {
+				Insert(newIndex, item);
+				if (oldIndex < newIndex)
+					RemoveAt(oldIndex);
+				else
+					RemoveAt(oldIndex + 1);
+			}
+		}
+
+		public void MoveElementToEnd(int index)
+		{
+			MoveElementToIndex(index, list.Count);
+		}
+
+		public void MoveElementToEnd(T item)
+		{
+			MoveElementToIndex(item, list.Count);
+		}
+
 		// more efficient versions of some LINQ methods:
 		public T First()
 		{
