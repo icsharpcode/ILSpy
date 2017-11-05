@@ -82,6 +82,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			Console.WriteLine(FirstOrDefault(new List<int> { 1, 2, 3, 4, 5 }));
 			Console.WriteLine(NoForeachDueToMultipleCurrentAccess(new List<int> { 1, 2, 3, 4, 5 }));
 			Console.WriteLine(NoForeachCallWithSideEffect(new CustomClassEnumeratorWithIDisposable<int>()));
+			LoopWithGotoRepeat();
 		}
 
 		public static void ForWithMultipleVariables()
@@ -221,6 +222,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 				}
 				return CallWithSideEffect<T>();
 			}
+		}
+		
+		static bool GetBool(string text)
+		{
+			return false;
+		}
+
+		// https://github.com/icsharpcode/ILSpy/issues/915
+		static void LoopWithGotoRepeat()
+		{
+			Console.WriteLine("LoopWithGotoRepeat:");
+			try {
+				REPEAT:
+				Console.WriteLine("after repeat label");
+				while (GetBool("Loop condition")) {
+					if (GetBool("if1")) {
+						if (GetBool("if3")) {
+							goto REPEAT;
+						}
+						break;
+					}
+				}
+				Console.WriteLine("after loop");
+			} finally {
+				Console.WriteLine("finally");
+			}
+			Console.WriteLine("after finally");
 		}
 	}
 }

@@ -93,6 +93,9 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				var headBlock = (Block)h.UserData;
 				context.Step($"Construct loop with head {headBlock.Label}", headBlock);
 				// loop now is the union of all natural loops with loop head h.
+
+				// Ensure any block included into nested loops is also considered part of this loop:
+				IncludeNestedContainers(loop);
 				// Try to extend the loop to reduce the number of exit points:
 				ExtendLoop(h, loop, out var exitPoint);
 
@@ -109,24 +112,46 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 		}
 
 		/// <summary>
-		/// Recurse into the dominator tree and find back edges/natural loops.
+		/// For each block in the input loop that is the head of a nested loop or switch,
+		/// include all blocks from the nested container into the loop.
+		/// 
+		/// This ensures that all blocks that were included into inner loops are also
+		/// included into the outer loop, thus keeping our loops well-nested.
 		/// </summary>
 		/// <remarks>
+		/// More details for why this is necessary are here:
+		/// https://github.com/icsharpcode/ILSpy/issues/915
 		/// 
-		/// Preconditions:
-		/// * dominance was computed for h
-		/// * all blocks in the dominator subtree starting at h are in the same BlockContainer
-		/// * the visited flag is set to false
+		/// Pre+Post-Condition: node.Visited iff loop.Contains(node)
 		/// </remarks>
-		void FindLoops(ControlFlowNode h)
+		void IncludeNestedContainers(List<ControlFlowNode> loop)
 		{
-			// Recurse into the dominator tree to find other possible loop heads
-			foreach (var child in h.DominatorTreeChildren) {
-				FindLoops(child);
+			for (int i = 0; i < loop.Count; i++) {
+				IncludeBlock((Block)loop[i].UserData);
 			}
 
+			void IncludeBlock(Block block)
+			{
+				if (block.Instructions[0] is BlockContainer nestedContainer) {
+					// Just in case the block has multiple nested containers (e.g. due to loop and switch),
+					// also check the entry point:
+					IncludeBlock(nestedContainer.EntryPoint);
+					// Use normal processing for all non-entry-point blocks
+					// (the entry-point itself doesn't have a CFG node, because it's newly created by this transform)
+					for (int i = 1; i < nestedContainer.Blocks.Count; i++) {
+						var node = context.ControlFlowGraph.GetNode(nestedContainer.Blocks[i]);
+						Debug.Assert(loop[0].Dominates(node));
+						if (!node.Visited) {
+							node.Visited = true;
+							loop.Add(node);
+							// note: this block will be re-visited when the "i < loop.Count"
+							// gets around to the new entry
+						}
+					}
+				}
+			}
 		}
-
+		
 		#region ExtendLoop
 		/// <summary>
 		/// Given a natural loop, add additional CFG nodes to the loop in order
