@@ -152,6 +152,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!MatchIncrement(secondToLast, out var incrementVariable))
 					return false;
+				if (incrementVariable.Kind == VariableKind.Parameter)
+					return false;
 				if (!condition.Descendants.Any(inst => inst.MatchLdLoc(incrementVariable)))
 					return false;
 				context.Step("Transform to for loop", loop);
