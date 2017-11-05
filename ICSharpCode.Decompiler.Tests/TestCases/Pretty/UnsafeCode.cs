@@ -150,10 +150,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe void FixedStringAccess(string text)
 		{
 			fixed (char* ptr = text) {
-				char* ptr2 = ptr;
-				while (*ptr2 == 'a') {
+				for (char* ptr2 = ptr; *ptr2 == 'a'; ptr2++) {
 					*ptr2 = 'A';
-					ptr2++;
 				}
 			}
 		}

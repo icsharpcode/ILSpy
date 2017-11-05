@@ -29,8 +29,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
 	public class HighLevelLoopTransform : IILTransform
 	{
+		ILTransformContext context;
+
 		public void Run(ILFunction function, ILTransformContext context)
 		{
+			this.context = context;
+
 			foreach (var loop in function.Descendants.OfType<BlockContainer>()) {
 				if (loop.Kind != ContainerKind.Loop)
 					continue;
@@ -64,15 +68,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!loop.EntryPoint.Instructions[1].MatchLeave(loop))
 				return false;
 			if (trueInst is Block b) {
+				context.Step("Transform to while (condition) loop", loop);
 				loopBody = b;
-				if (!MatchWhileLoopBody(loopBody, loop))
-					return false;
 				trueInst.ReplaceWith(new Branch(loopBody));
 				loop.Blocks.Insert(1, loopBody);
+				if (!loopBody.HasFlag(InstructionFlags.EndPointUnreachable))
+					loopBody.Instructions.Add(new Leave(loop));
 			} else if (trueInst is Branch br) {
+				context.Step("Transform to while (condition) loop", loop);
 				loopBody = br.TargetBlock;
-				if (!MatchWhileLoopBody(loopBody, loop))
-					return false;
 			} else {
 				return false;
 			}
@@ -101,6 +105,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!last.MatchBranch(loop.EntryPoint))
 					return false;
+				context.Step("Transform to do-while loop", loop);
 				ifInstruction.FalseInst = ifInstruction.TrueInst;
 				ifInstruction.TrueInst = last;
 				ifInstruction.Condition = condition;
@@ -109,6 +114,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!last.MatchLeave(loop))
 					return false;
+				context.Step("Transform to do-while loop", loop);
 				ifInstruction.Condition = condition;
 				ifInstruction.FalseInst = last;
 			}
@@ -129,41 +135,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			var incrementBlock = loop.Blocks.SingleOrDefault(
 				b => b.Instructions.Last().MatchBranch(loop.EntryPoint)
-					 && b.Instructions.SkipLast(1).All(IsSimpleStatement));
-			if (incrementBlock == null) {
-				incrementBlock = whileLoopBody;
+					 && b.Instructions.SkipLast(1).All(inst => MatchIncrement(inst, out _)));
+			if (incrementBlock != null) {
+				if (incrementBlock.Instructions.Count <= 1 || loop.Blocks.Count < 3)
+					return false;
+				context.Step("Transform to for loop", loop);
+				loop.Blocks.MoveElementToEnd(incrementBlock);
+				loop.Kind = ContainerKind.For;
+			} else {
+				var last = whileLoopBody.Instructions.LastOrDefault();
+				var secondToLast = whileLoopBody.Instructions.SecondToLastOrDefault();
+				if (last == null || secondToLast == null)
+					return false;
+				if (!last.MatchBranch(loop.EntryPoint))
+					return false;
+				if (!MatchIncrement(secondToLast, out _))
+					return false;
+				context.Step("Transform to for loop", loop);
+				int secondToLastIndex = secondToLast.ChildIndex;
+				var newIncremenBlock = new Block();
+				loop.Blocks.Add(newIncremenBlock);
+				newIncremenBlock.Instructions.Add(secondToLast);
+				newIncremenBlock.Instructions.Add(last);
+				newIncremenBlock.AddILRange(secondToLast.ILRange);
+				whileLoopBody.Instructions.RemoveRange(secondToLastIndex, 2);
+				whileLoopBody.Instructions.Add(new Branch(newIncremenBlock));
+				loop.Kind = ContainerKind.For;
 			}
-			var last = incrementBlock.Instructions.LastOrDefault();
-			var secondToLast = incrementBlock.Instructions.SecondToLastOrDefault();
-			if (last == null || secondToLast == null)
-				return false;
-			if (!last.MatchBranch(loop.EntryPoint))
-				return false;
-			if (!MatchIncrement(secondToLast, out var variable))
-				return false;
-			if (!condition.Children.Any(c => c.MatchLdLoc(variable)))
-				return false;
-			int secondToLastIndex = secondToLast.ChildIndex;
-			var newIncremenBlock = new Block();
-			loop.Blocks.Add(newIncremenBlock);
-			newIncremenBlock.Instructions.Add(secondToLast);
-			newIncremenBlock.Instructions.Add(last);
-			newIncremenBlock.AddILRange(secondToLast.ILRange);
-			incrementBlock.Instructions.RemoveRange(secondToLastIndex, 2);
-			incrementBlock.Instructions.Add(new Branch(newIncremenBlock));
-			loop.Kind = ContainerKind.For;
-			return true;
-		}
-
-		/// <summary>
-		/// The last instruction of the while body must be a branch to the loop head.
-		/// </summary>
-		static bool MatchWhileLoopBody(Block loopBody, BlockContainer loop)
-		{
-			if (loopBody.Instructions.Count == 0)
-				return false;
-			if (!loopBody.Instructions.Last().MatchBranch(loop.EntryPoint))
-				return false;
 			return true;
 		}
 
