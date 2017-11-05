@@ -24,6 +24,15 @@ namespace ICSharpCode.Decompiler.IL
 	/// </summary>
 	public enum StackType : byte
 	{
+		// Note: the numeric of these enum members is relevant for ILReader.MergeStacks:
+		// when two branches meet where a stack slot has different types, the type after
+		// the branch is the one with the higher numeric value.
+
+		/// <summary>
+		/// The stack type is unknown; for example a call returning an unknown type
+		/// because an assembly reference isn't loaded.
+		/// Can also occur with invalid IL.
+		/// </summary>
 		Unknown,
 		/// <summary>32-bit integer</summary>
 		/// <remarks>
@@ -33,23 +42,24 @@ namespace ICSharpCode.Decompiler.IL
 		/// and any enums with one of the above as underlying type.
 		/// </remarks>
 		I4,
+		/// <summary>native-size integer, or unmanaged pointer</summary>
+		/// <remarks>
+		/// Used for C# <c>IntPtr</c>, <c>UIntPtr</c> and any native pointer types (<c>void*</c> etc.)
+		/// Also used for IL function pointer types.
+		/// </remarks>
+		I,
 		/// <summary>64-bit integer</summary>
 		/// <remarks>
 		/// Used for C# <c>long</c>, <c>ulong</c>,
 		/// and any enums with one of the above as underlying type.
 		/// </remarks>
 		I8,
-		/// <summary>native-size integer, or unmanaged pointer</summary>
-		/// <remarks>
-		/// Used for C# <c>IntPtr</c>, <c>UIntPtr</c> and any native pointer types (<c>void*</c> etc.)
-		/// </remarks>
-		I,
 		/// <summary>Floating point number</summary>
 		/// <remarks>
 		/// Used for C# <c>float</c> and <c>double</c>.
 		/// </remarks>
 		F,
-		/// <summary>Another stack type. Includes objects, value types, function pointers, ...</summary>
+		/// <summary>Another stack type. Includes objects, value types, ...</summary>
 		O,
 		/// <summary>A managed pointer</summary>
 		Ref,

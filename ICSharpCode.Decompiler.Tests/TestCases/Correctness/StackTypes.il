@@ -21,7 +21,7 @@ extends [mscorlib]System.Object
     .entrypoint
 
     call void Program::InlineAssignByte()
-    //call void Program::Int32OrNativeTests()
+    call void Program::Int32OrNativeTests()
 
     ret
   } // end of method Main
@@ -48,7 +48,6 @@ pointless:
     ret
   }
 
-  /*
   .method public static void Int32OrNativeTests()
   {
     ldstr "Int32OrNative(0x7fffffff, false) = {0}"
@@ -79,6 +78,7 @@ pointless:
     box native int
     call void [mscorlib]System.Console::WriteLine(string, object)
 
+    /*
     ldstr "Int32OrNativeLoopStyle(0x7fffffff):"
     call void [mscorlib]System.Console::WriteLine(string)
     ldc.i4 0x7fffffff
@@ -100,6 +100,7 @@ pointless:
     call native int Program::Int32OrNativeDeadCode(int32)
     box native int
     call void [mscorlib]System.Console::WriteLine(string, object)
+    */
 
     ldc.i4 0x7fffffff
     call void Program::RunInt32OrNativeMultiUse(int32)
@@ -115,6 +116,26 @@ pointless:
   use_i4:
     ldarg.0
     br after_if
+  use_native_int:
+    ldarg.0
+    conv.u
+    br after_if
+  after_if:
+    ldc.i4.1
+    add
+    ret
+  }
+  
+  /*
+  .method public static native int Int32OrNativeReordered(int32 val, bool use_native)
+  {
+    // The spec is ambiguous whether the addition will be in 32-bits or native size.
+    // The microsoft runtime picks native size.
+    ldarg.1
+    brtrue use_native_int
+  use_i4:
+    ldarg.0
+    br after_if
   after_if:
     ldc.i4.1
     add
@@ -124,9 +145,11 @@ pointless:
     conv.u
     br after_if
   }
-
+  
   .method public static void Int32OrNativeLoopStyle(int32 val)
   {
+    // The spec is ambiguous whether the addition will be in 32-bits or native size.
+    // The microsoft runtime picks native size.
     .locals init (
       int32 i
     )
@@ -149,6 +172,8 @@ pointless:
 
   .method public static native int Int32OrNativeDeadCode(int32 val)
   {
+    // The spec is ambiguous whether the addition will be in 32-bits or native size.
+    // The microsoft runtime picks 32-bits.
   use_i4:
     ldarg.0
     br after_if
@@ -161,6 +186,7 @@ pointless:
     conv.u
     br after_if
   }
+  */
 
   .method public static void RunInt32OrNativeMultiUse(int32 val)
   {
@@ -229,8 +255,7 @@ pointless:
     add
     ret
   }
-  */
-  
+
   .method public static void Print(native int val)
   {
     ldarg.0
