@@ -680,16 +680,49 @@ namespace ICSharpCode.Decompiler.CSharp
 		
 		Statement ConvertLoop(BlockContainer container)
 		{
-			DetectedLoop loop = DetectedLoop.DetectLoop(container);
+			ILInstruction condition;
+			Block loopBody;
+			BlockStatement blockStatement;
 			continueCount = 0;
 			breakTarget = container;
-			continueTarget = loop.ContinueJumpTarget;
-			Expression conditionExpr;
-			BlockStatement blockStatement;
-			switch (loop.Kind) {
-				case LoopKind.DoWhile:
-					blockStatement = ConvertBlockContainer(new BlockStatement(), loop.Container, loop.AdditionalBlocks, true);
-					if (container.EntryPoint.IncomingEdgeCount == continueCount) {
+			switch (container.Kind) {
+				case ContainerKind.Loop:
+					continueTarget = container.EntryPoint;
+					blockStatement = ConvertBlockContainer(container, true);
+					Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
+					Debug.Assert(blockStatement.Statements.First() is LabelStatement);
+					if (container.EntryPoint.IncomingEdgeCount == continueCount + 1) {
+						// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
+						blockStatement.Statements.First().Remove();
+					}
+					return new WhileStatement(new PrimitiveExpression(true), blockStatement);
+				case ContainerKind.While:
+					continueTarget = container.EntryPoint;
+					if (!container.MatchConditionBlock(continueTarget, out condition, out loopBody))
+						throw new NotSupportedException("Invalid condition block in while loop.");
+					blockStatement = ConvertAsBlock(loopBody);
+					if (!loopBody.HasFlag(InstructionFlags.EndPointUnreachable))
+						blockStatement.Add(new BreakStatement());
+					blockStatement = ConvertBlockContainer(blockStatement, container, container.Blocks.Skip(1).Except(new[] { loopBody }), true);
+					Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
+					if (continueCount + 1 < container.EntryPoint.IncomingEdgeCount) {
+						// There's an incoming edge to the entry point (=while condition) that wasn't represented as "continue;"
+						// -> emit a real label
+						// We'll also remove any "continue;" in front of the label, as it's redundant.
+						if (blockStatement.LastOrDefault() is ContinueStatement)
+							blockStatement.Last().Remove();
+						blockStatement.Add(new LabelStatement { Label = container.EntryPoint.Label });
+					}
+
+					if (blockStatement.LastOrDefault() is ContinueStatement stmt)
+						stmt.Remove();
+					return new WhileStatement(exprBuilder.TranslateCondition(condition), blockStatement);
+				case ContainerKind.DoWhile:
+					continueTarget = container.Blocks.Last();
+					if (!container.MatchConditionBlock(continueTarget, out condition, out _))
+						throw new NotSupportedException("Invalid condition block in do-while loop.");
+					blockStatement = ConvertBlockContainer(new BlockStatement(), container, container.Blocks.SkipLast(1), true);
+					if (continueTarget.IncomingEdgeCount == continueCount) {
 						// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
 						blockStatement.Statements.First().Remove();
 					}
@@ -697,85 +730,32 @@ namespace ICSharpCode.Decompiler.CSharp
 						continueStmt.Remove();
 					return new DoWhileStatement {
 						EmbeddedStatement = blockStatement,
-						Condition = exprBuilder.TranslateCondition(CombineConditions(loop.Conditions))
+						Condition = exprBuilder.TranslateCondition(condition)
 					};
-				case LoopKind.For:
-					conditionExpr = exprBuilder.TranslateCondition(loop.Conditions[0]);
-					blockStatement = ConvertAsBlock(loop.Body);
-					if (!loop.Body.HasFlag(InstructionFlags.EndPointUnreachable))
+				case ContainerKind.For:
+					continueTarget = container.Blocks.Last();
+					if (!container.MatchConditionBlock(container.EntryPoint, out condition, out loopBody))
+						throw new NotSupportedException("Invalid condition block in for loop.");
+					blockStatement = ConvertAsBlock(loopBody);
+					if (!loopBody.HasFlag(InstructionFlags.EndPointUnreachable))
 						blockStatement.Add(new BreakStatement());
-					Statement iterator = null;
-					if (loop.IncrementBlock == null) {
-						// increment check is done by DetectLoop
-						var statement = blockStatement.Last();
-						while (statement is ContinueStatement)
-							statement = (Statement)statement.PrevSibling;
-						iterator = statement.Detach();
-					}
-					var forBody = ConvertBlockContainer(blockStatement, container, loop.AdditionalBlocks, true);
+					if (!container.MatchIncrementBlock(continueTarget))
+						throw new NotSupportedException("Invalid increment block in for loop.");
+					blockStatement = ConvertBlockContainer(blockStatement, container, container.Blocks.SkipLast(1).Skip(1).Except(new[] { loopBody }), true);
 					var forStmt = new ForStatement() {
-						Condition = conditionExpr,
-						EmbeddedStatement = forBody
+						Condition = exprBuilder.TranslateCondition(condition),
+						EmbeddedStatement = blockStatement
 					};
-					if (forBody.LastOrDefault() is ContinueStatement continueStmt2)
+					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt2)
 						continueStmt2.Remove();
-					if (loop.IncrementBlock != null) {
-						for (int i = 0; i < loop.IncrementBlock.Instructions.Count - 1; i++) {
-							forStmt.Iterators.Add(Convert(loop.IncrementBlock.Instructions[i]));
-						}
-						if (loop.IncrementBlock.IncomingEdgeCount > continueCount)
-							forBody.Add(new LabelStatement { Label = loop.IncrementBlock.Label });
-					} else if (iterator != null) {
-						forStmt.Iterators.Add(iterator.Detach());
+					for (int i = 0; i < continueTarget.Instructions.Count - 1; i++) {
+						forStmt.Iterators.Add(Convert(continueTarget.Instructions[i]));
 					}
+					if (continueTarget.IncomingEdgeCount > continueCount)
+						blockStatement.Add(new LabelStatement { Label = continueTarget.Label });
 					return forStmt;
-				case LoopKind.While:
-					if (loop.Body == null) {
-						Debug.Assert(loop.Conditions == null);
-						conditionExpr = new PrimitiveExpression(true);
-						blockStatement = ConvertBlockContainer(container, true);
-						Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
-						Debug.Assert(blockStatement.Statements.First() is LabelStatement);
-						if (container.EntryPoint.IncomingEdgeCount == continueCount + 1) {
-							// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
-							blockStatement.Statements.First().Remove();
-						}
-					} else {
-						Debug.Assert(loop.Conditions.Length == 1);
-						conditionExpr = exprBuilder.TranslateCondition(loop.Conditions[0]);
-						blockStatement = ConvertAsBlock(loop.Body);
-						if (!loop.Body.HasFlag(InstructionFlags.EndPointUnreachable))
-							blockStatement.Add(new BreakStatement());
-						blockStatement = ConvertBlockContainer(blockStatement, container, loop.AdditionalBlocks, true);
-						Debug.Assert(continueCount < container.EntryPoint.IncomingEdgeCount);
-						if (continueCount + 1 < container.EntryPoint.IncomingEdgeCount) {
-							// There's an incoming edge to the entry point (=while condition) that wasn't represented as "continue;"
-							// -> emit a real label
-							// We'll also remove any "continue;" in front of the label, as it's redundant.
-							if (blockStatement.LastOrDefault() is ContinueStatement)
-								blockStatement.Last().Remove();
-							blockStatement.Add(new LabelStatement { Label = container.EntryPoint.Label });
-						}
-					}
-
-					if (blockStatement.LastOrDefault() is ContinueStatement stmt)
-						stmt.Remove();
-					return new WhileStatement(conditionExpr, blockStatement);
-				default:
-					throw new ArgumentOutOfRangeException();
 			}
-		}
-
-		private ILInstruction CombineConditions(ILInstruction[] conditions)
-		{
-			ILInstruction condition = null;
-			foreach (var c in conditions) {
-				if (condition == null)
-					condition = Comp.LogicNot(c);
-				else
-					condition = IfInstruction.LogicAnd(Comp.LogicNot(c), condition);
-			}
-			return condition;
+			throw new NotSupportedException();
 		}
 
 		BlockStatement ConvertBlockContainer(BlockContainer container, bool isLoop)
