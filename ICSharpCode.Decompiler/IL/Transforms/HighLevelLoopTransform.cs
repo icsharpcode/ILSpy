@@ -134,8 +134,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (loop.EntryPoint.IncomingEdgeCount != 2)
 				return false;
 			var incrementBlock = loop.Blocks.SingleOrDefault(
-				b => b.Instructions.Last().MatchBranch(loop.EntryPoint)
-					 && b.Instructions.SkipLast(1).All(inst => MatchIncrement(inst, out _)));
+				b => b != whileLoopBody
+					 && b.Instructions.Last().MatchBranch(loop.EntryPoint)
+					 && b.Instructions.SkipLast(1).All(IsSimpleStatement));
 			if (incrementBlock != null) {
 				if (incrementBlock.Instructions.Count <= 1 || loop.Blocks.Count < 3)
 					return false;
@@ -149,7 +150,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return false;
 				if (!last.MatchBranch(loop.EntryPoint))
 					return false;
-				if (!MatchIncrement(secondToLast, out _))
+				if (!MatchIncrement(secondToLast, out var incrementVariable))
+					return false;
+				if (!condition.Descendants.Any(inst => inst.MatchLdLoc(incrementVariable)))
 					return false;
 				context.Step("Transform to for loop", loop);
 				int secondToLastIndex = secondToLast.ChildIndex;
