@@ -695,6 +695,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
 						blockStatement.Statements.First().Remove();
 					}
+
+					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt)
+						continueStmt.Remove();
 					return new WhileStatement(new PrimitiveExpression(true), blockStatement);
 				case ContainerKind.While:
 					continueTarget = container.EntryPoint;
@@ -714,8 +717,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						blockStatement.Add(new LabelStatement { Label = container.EntryPoint.Label });
 					}
 
-					if (blockStatement.LastOrDefault() is ContinueStatement stmt)
-						stmt.Remove();
+					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt2)
+						continueStmt2.Remove();
 					return new WhileStatement(exprBuilder.TranslateCondition(condition), blockStatement);
 				case ContainerKind.DoWhile:
 					continueTarget = container.Blocks.Last();
@@ -726,8 +729,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						// Remove the entrypoint label if all jumps to the label were replaced with 'continue;' statements
 						blockStatement.Statements.First().Remove();
 					}
-					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt)
-						continueStmt.Remove();
+					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt3)
+						continueStmt3.Remove();
 					return new DoWhileStatement {
 						EmbeddedStatement = blockStatement,
 						Condition = exprBuilder.TranslateCondition(condition)
@@ -746,8 +749,8 @@ namespace ICSharpCode.Decompiler.CSharp
 						Condition = exprBuilder.TranslateCondition(condition),
 						EmbeddedStatement = blockStatement
 					};
-					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt2)
-						continueStmt2.Remove();
+					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt4)
+						continueStmt4.Remove();
 					for (int i = 0; i < continueTarget.Instructions.Count - 1; i++) {
 						forStmt.Iterators.Add(Convert(continueTarget.Instructions[i]));
 					}

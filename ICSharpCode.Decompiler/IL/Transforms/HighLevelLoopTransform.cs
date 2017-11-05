@@ -88,7 +88,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			var last = loop.EntryPoint.Instructions.Last();
 			var ifInstruction = loop.EntryPoint.Instructions.SecondToLastOrDefault() as IfInstruction;
-			if (!ifInstruction.FalseInst.MatchNop())
+			if (ifInstruction == null || !ifInstruction.FalseInst.MatchNop())
 				return false;
 			bool swapBranches = false;
 			ILInstruction condition = ifInstruction.Condition;
