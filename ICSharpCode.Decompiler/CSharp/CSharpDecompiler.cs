@@ -134,6 +134,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				},
 				new ProxyCallReplacer(),
 				new DelegateConstruction(),
+				new HighLevelLoopTransform(),
 				new AssignVariableNames(),
 			};
 		}
