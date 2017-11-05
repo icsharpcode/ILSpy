@@ -430,6 +430,16 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine(new IntPtr(value));
 			}
 		}
+
+		public void ForEachBreakWhenFound(string name, ref StringComparison output)
+		{
+			foreach (StringComparison value in Enum.GetValues(typeof(StringComparison))) {
+				if (value.ToString() == name) {
+					output = value;
+					break;
+				}
+			}
+		}
 		#endregion
 
 		public void ForOverArray(string[] array)

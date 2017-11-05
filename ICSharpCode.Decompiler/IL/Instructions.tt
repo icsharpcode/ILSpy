@@ -271,7 +271,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// <summary>
 	/// Enum representing the type of an <see cref="ILInstruction"/>.
 	/// </summary>
-	public enum OpCode
+	public enum OpCode : byte
 	{
 <#	foreach (OpCode opCode in opCodes) { #>
 		/// <summary><#=opCode.Description.Replace("\n", "\n\t\t/// ")#></summary>

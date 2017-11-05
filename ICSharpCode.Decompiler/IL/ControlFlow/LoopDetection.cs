@@ -215,6 +215,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (exitPoint != null) {
 				// Either we are in case 1 and just picked an exit that maximizes the amount of code
 				// outside the loop, or we are in case 2 and found an exit point via post-dominance.
+				// Note that if exitPoint == NoExitPoint, we end up adding all dominated blocks to the loop.
 				var ep = exitPoint;
 				foreach (var node in TreeTraversal.PreOrder(loopHead, n => (n != ep) ? n.DominatorTreeChildren : null)) {
 					if (node != exitPoint && !node.Visited) {
@@ -228,10 +229,21 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				ExtendLoopHeuristic(loopHead, loop, loopHead);
 			}
 		}
-		
+
+		/// <summary>
+		/// Special control flow node (not part of any graph) that signifies that we want to construct a loop
+		/// without any exit point.
+		/// </summary>
+		static readonly ControlFlowNode NoExitPoint = new ControlFlowNode();
+
 		/// <summary>
 		/// Finds a suitable single exit point for the specified loop.
 		/// </summary>
+		/// <returns>
+		/// 1) If a suitable exit point was found: the control flow block that should be reached when breaking from the loop
+		/// 2) If the loop should not have any exit point (extend by all dominated blocks): NoExitPoint
+		/// 3) otherwise (exit point unknown, heuristically extend loop): null
+		/// </returns>
 		/// <remarks>This method must not write to the Visited flags on the CFG.</remarks>
 		ControlFlowNode FindExitPoint(ControlFlowNode loopHead, IReadOnlyList<ControlFlowNode> naturalLoop, bool treatBackEdgesAsExits)
 		{
@@ -245,6 +257,16 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// Case 1:
 				// There are no nodes n so that loopHead dominates a predecessor of n but not n itself
 				// -> we could build a loop with zero exit points.
+				if (IsPossibleForeachLoop((Block)loopHead.UserData, out var exitBranch)) {
+					if (exitBranch != null) {
+						// let's see if the target of the exit branch is a suitable exit point
+						var cfgNode = loopHead.Successors.FirstOrDefault(n => n.UserData == exitBranch.TargetBlock);
+						if (cfgNode != null && loopHead.Dominates(cfgNode) && !context.ControlFlowGraph.HasReachableExit(cfgNode)) {
+							return cfgNode;
+						}
+					}
+					return NoExitPoint;
+				}
 				ControlFlowNode exitPoint = null;
 				int exitPointILOffset = -1;
 				foreach (var node in loopHead.DominatorTreeChildren) {
@@ -388,8 +410,38 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			Dominance.ComputeDominance(exitNode, context.CancellationToken);
 			return rev;
 		}
+
+		static bool IsPossibleForeachLoop(Block loopHead, out Branch exitBranch)
+		{
+			exitBranch = null;
+			var container = (BlockContainer)loopHead.Parent;
+			if (!(container.SlotInfo == TryInstruction.TryBlockSlot && container.Parent is TryFinally))
+				return false;
+			if (loopHead.Instructions.Count != 2)
+				return false;
+			if (!loopHead.Instructions[0].MatchIfInstruction(out var condition, out var trueInst))
+				return false;
+			var falseInst = loopHead.Instructions[1];
+			while (condition.MatchLogicNot(out var arg)) {
+				condition = arg;
+				ExtensionMethods.Swap(ref trueInst, ref falseInst);
+			}
+			if (!(condition is CallInstruction call && call.Method.Name == "MoveNext"))
+				return false;
+			if (!(call.Arguments.Count == 1 && call.Arguments[0].MatchLdLocRef(out var enumeratorVar)))
+				return false;
+			exitBranch = falseInst as Branch;
+
+			// Check that loopHead is entry-point of try-block:
+			Block entryPoint = container.EntryPoint;
+			while (entryPoint.IncomingEdgeCount == 1 && entryPoint.Instructions.Count == 1 && entryPoint.Instructions[0].MatchBranch(out var targetBlock)) {
+				// skip blocks that only branch to another block
+				entryPoint = targetBlock;
+			}
+			return entryPoint == loopHead;
+		}
 		#endregion
-		
+
 		#region ExtendLoop (fall-back heuristic)
 		/// <summary>
 		/// This function implements a heuristic algorithm that tries to reduce the number of exit

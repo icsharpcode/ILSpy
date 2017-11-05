@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Loops.dll
-// MVID: {721D369B-DC6E-425B-AE0E-46C242DEFDF5}
+// MVID: {8261F08F-23F6-43C1-9650-C5B6A10A0F30}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00480000
+// Image base: 0x00720000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1487,6 +1487,72 @@
 
     IL_003a:  ret
   } // end of method Loops::ForEachOverArrayOfPointers
+
+  .method public hidebysig instance void 
+          ForEachBreakWhenFound(string name,
+                                valuetype [mscorlib]System.StringComparison& output) cil managed
+  {
+    // Code size       97 (0x61)
+    .maxstack  2
+    .locals init (class [mscorlib]System.Collections.IEnumerator V_0,
+             valuetype [mscorlib]System.StringComparison V_1,
+             bool V_2,
+             class [mscorlib]System.IDisposable V_3)
+    IL_0000:  nop
+    IL_0001:  nop
+    IL_0002:  ldtoken    [mscorlib]System.StringComparison
+    IL_0007:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_000c:  call       class [mscorlib]System.Array [mscorlib]System.Enum::GetValues(class [mscorlib]System.Type)
+    IL_0011:  callvirt   instance class [mscorlib]System.Collections.IEnumerator [mscorlib]System.Array::GetEnumerator()
+    IL_0016:  stloc.0
+    .try
+    {
+      IL_0017:  br.s       IL_0044
+
+      IL_0019:  ldloc.0
+      IL_001a:  callvirt   instance object [mscorlib]System.Collections.IEnumerator::get_Current()
+      IL_001f:  unbox.any  [mscorlib]System.StringComparison
+      IL_0024:  stloc.1
+      IL_0025:  nop
+      IL_0026:  ldloca.s   V_1
+      IL_0028:  constrained. [mscorlib]System.StringComparison
+      IL_002e:  callvirt   instance string [mscorlib]System.Object::ToString()
+      IL_0033:  ldarg.1
+      IL_0034:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                     string)
+      IL_0039:  stloc.2
+      IL_003a:  ldloc.2
+      IL_003b:  brfalse.s  IL_0043
+
+      IL_003d:  nop
+      IL_003e:  ldarg.2
+      IL_003f:  ldloc.1
+      IL_0040:  stind.i4
+      IL_0041:  br.s       IL_004c
+
+      IL_0043:  nop
+      IL_0044:  ldloc.0
+      IL_0045:  callvirt   instance bool [mscorlib]System.Collections.IEnumerator::MoveNext()
+      IL_004a:  brtrue.s   IL_0019
+
+      IL_004c:  leave.s    IL_0060
+
+    }  // end .try
+    finally
+    {
+      IL_004e:  ldloc.0
+      IL_004f:  isinst     [mscorlib]System.IDisposable
+      IL_0054:  stloc.3
+      IL_0055:  ldloc.3
+      IL_0056:  brfalse.s  IL_005f
+
+      IL_0058:  ldloc.3
+      IL_0059:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_005e:  nop
+      IL_005f:  endfinally
+    }  // end handler
+    IL_0060:  ret
+  } // end of method Loops::ForEachBreakWhenFound
 
   .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed

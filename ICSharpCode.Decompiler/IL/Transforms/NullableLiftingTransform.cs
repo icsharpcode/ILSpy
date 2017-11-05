@@ -126,7 +126,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ILInstruction condition = ifInst.Condition;
 			while (condition.MatchLogicNot(out var arg)) {
 				condition = arg;
-				Swap(ref trueInst, ref falseInst);
+				ExtensionMethods.Swap(ref trueInst, ref falseInst);
 			}
 			if (AnalyzeCondition(condition)) {
 				// (v1 != null && ... && vn != null) ? trueInst : falseInst
@@ -140,7 +140,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					// for equality/inequality, the HasValue bits must also compare equal/inequal
 					if (comp.Kind == ComparisonKind.Inequality) {
 						// handle inequality by swapping one last time
-						Swap(ref trueInst, ref falseInst);
+						ExtensionMethods.Swap(ref trueInst, ref falseInst);
 					}
 					if (falseInst.MatchLdcI4(0)) {
 						// (a.GetValueOrDefault() == b.GetValueOrDefault()) ? (a.HasValue == b.HasValue) : false
@@ -281,13 +281,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!rhs.MatchLogicNot(out arg))
 				return false;
 			return MatchHasValueCall(arg, nullable1);
-		}
-
-		static void Swap<T>(ref T a, ref T b)
-		{
-			T tmp = a;
-			a = b;
-			b = tmp;
 		}
 		#endregion
 
