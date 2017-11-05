@@ -167,7 +167,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static bool MatchIncrement(ILInstruction inst, out ILVariable variable)
+		public static bool MatchIncrement(ILInstruction inst, out ILVariable variable)
 		{
 			if (!inst.MatchStLoc(out variable, out var value))
 				return false;

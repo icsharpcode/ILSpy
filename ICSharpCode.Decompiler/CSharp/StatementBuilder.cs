@@ -414,11 +414,12 @@ namespace ICSharpCode.Decompiler.CSharp
 			// If there's an extra leave inside the block, extract it into optionalReturnAfterLoop.
 			var loopContainer = UnwrapNestedContainerIfPossible(container, out var optionalReturnAfterLoop);
 			// Detect whether we're dealing with a while loop with multiple embedded statements.
-			var loop = DetectedLoop.DetectLoop(loopContainer);
-			if (loop.Kind != LoopKind.While || !(loop.Body is Block body))
+			if (loopContainer.Kind != ContainerKind.While)
+				return null;
+			if (!loopContainer.MatchConditionBlock(loopContainer.EntryPoint, out var conditionInst, out var body))
 				return null;
 			// The loop condition must be a call to enumerator.MoveNext()
-			var condition = exprBuilder.TranslateCondition(loop.Conditions.Single());
+			var condition = exprBuilder.TranslateCondition(conditionInst);
 			var m2 = moveNextConditionPattern.Match(condition.Expression);
 			if (!m2.Success)
 				return null;
@@ -427,8 +428,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (enumeratorVar2 != enumeratorVar)
 				return null;
 			// Detect which foreach-variable transformation is necessary/possible.
-			var transformation = DetectGetCurrentTransformation(container, body, enumeratorVar, condition.ILInstructions.Single(),
-																out var singleGetter, out var foreachVariable);
+			var transformation = DetectGetCurrentTransformation(container, body, enumeratorVar, conditionInst, out var singleGetter, out var foreachVariable);
 			if (transformation == RequiredGetCurrentTransformation.NoForeach)
 				return null;
 			// The existing foreach variable, if found, can only be used in the loop container.
@@ -475,7 +475,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			// Convert the modified body to C# AST:
 			var whileLoop = (WhileStatement)ConvertAsBlock(container).First();
 			BlockStatement foreachBody = (BlockStatement)whileLoop.EmbeddedStatement.Detach();
-			
+	
 			// Remove the first statement, as it is the foreachVariable = enumerator.Current; statement.
 			Statement firstStatement = foreachBody.Statements.First();
 			if (firstStatement is LabelStatement) {
@@ -494,7 +494,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			};
 			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
 			foreachStmt.AddAnnotation(new ILVariableResolveResult(foreachVariable, foreachVariable.Type));
-			foreachStmt.AddAnnotation(new ForeachAnnotation(inst.ResourceExpression, loop.Conditions.Single(), singleGetter));
+			foreachStmt.AddAnnotation(new ForeachAnnotation(inst.ResourceExpression, conditionInst, singleGetter));
 			// If there was an optional return statement, return it as well.
 			if (optionalReturnAfterLoop != null) {
 				return new BlockStatement {

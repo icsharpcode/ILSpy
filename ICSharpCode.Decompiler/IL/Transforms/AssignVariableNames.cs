@@ -156,10 +156,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var loopCounters = new HashSet<ILVariable>();
 			
 			foreach (BlockContainer possibleLoop in function.Descendants.OfType<BlockContainer>()) {
-				if (possibleLoop.EntryPoint.IncomingEdgeCount == 1) continue;
-				var loop = DetectedLoop.DetectLoop(possibleLoop);
-				if (loop.Kind != LoopKind.For || loop.IncrementTarget == null) continue;
-				loopCounters.Add(loop.IncrementTarget);
+				if (possibleLoop.Kind != ContainerKind.For) continue;
+				foreach (var inst in possibleLoop.Blocks.Last().Instructions) {
+					if (HighLevelLoopTransform.MatchIncrement(inst, out var variable))
+						loopCounters.Add(variable);
+				}
 			}
 
 			return loopCounters;
