@@ -18,6 +18,10 @@ test:
     - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net461\ILSpy.BamlDecompiler.Tests.dll'
 after_test:
 - python BuildTools\tidy.py
+for:
+  branches:
+    only:
+      - master
 artifacts:
   - path: ILSpy_binaries.zip
     name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries
