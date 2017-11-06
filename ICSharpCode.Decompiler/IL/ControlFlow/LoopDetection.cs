@@ -303,7 +303,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				// We need to pick our exit point so that all paths from the loop head
 				// to the reachable exits run through that exit point.
 				var cfg = context.ControlFlowGraph.cfg;
-				var revCfg = PrepareReverseCFG(loopHead, treatBackEdgesAsExits);
+				var revCfg = PrepareReverseCFG(loopHead, treatBackEdgesAsExits, out int exitNodeArity);
 				//ControlFlowNode.ExportGraph(cfg).Show("cfg");
 				//ControlFlowNode.ExportGraph(revCfg).Show("rev");
 				ControlFlowNode commonAncestor = revCfg[loopHead.UserIndex];
@@ -330,7 +330,19 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					commonAncestor = commonAncestor.ImmediateDominator;
 				}
 				// least common post-dominator is the artificial exit node
-				return null;
+				// This means we're in one of two cases:
+				// * The loop might have multiple exit points.
+				//     -> we should return null
+				// * The loop has a single exit point that wasn't considered during post-dominance analysis.
+				//        (which means the single exit isn't dominated by the loop head)
+				//     -> we should return NoExitPoint so that all code dominated by the loop head is included into the loop
+				if (exitNodeArity > 1) {
+					return null;
+				} else {
+					// If exitNodeArity == 0, we should maybe look test if our exits out of the block container are all compatible?
+					// but I don't think it hurts to have a bit too much code inside the loop in this rare case.
+					return NoExitPoint;
+				}
 			}
 		}
 
@@ -407,14 +419,33 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				PickExitPoint(child, ref exitPoint, ref exitPointILOffset);
 			}
 		}
-		
-		ControlFlowNode[] PrepareReverseCFG(ControlFlowNode loopHead, bool treatBackEdgesAsExits)
+
+		/// <summary>
+		/// Constructs a new control flow graph.
+		/// Each node cfg[i] has a corresponding node rev[i].
+		/// Edges are only created for nodes dominated by loopHead, and are in reverse from their direction
+		/// in the primary CFG.
+		/// An artificial exit node is used for edges that leave the set of nodes dominated by loopHead,
+		/// or that leave the block Container.
+		/// </summary>
+		/// <param name="loopHead">Entry point of the loop.</param>
+		/// <param name="treatBackEdgesAsExits">Whether to treat loop back edges as exit points.</param>
+		/// <param name="exitNodeArity">out: The number of different CFG nodes.
+		/// Possible values:
+		///  0 = no CFG nodes used as exit nodes (although edges leaving the block container might still be exits);
+		///  1 = a single CFG node (not dominated by loopHead) was used as an exit node;
+		///  2 = more than one CFG node (not dominated by loopHead) was used as an exit node.
+		/// </param>
+		/// <returns></returns>
+		ControlFlowNode[] PrepareReverseCFG(ControlFlowNode loopHead, bool treatBackEdgesAsExits, out int exitNodeArity)
 		{
 			ControlFlowNode[] cfg = context.ControlFlowGraph.cfg;
 			ControlFlowNode[] rev = new ControlFlowNode[cfg.Length + 1];
 			for (int i = 0; i < cfg.Length; i++) {
 				rev[i] = new ControlFlowNode { UserIndex = i, UserData = cfg[i].UserData };
 			}
+			ControlFlowNode nodeTreatedAsExitNode = null;
+			bool multipleNodesTreatedAsExitNodes = false;
 			ControlFlowNode exitNode = new ControlFlowNode { UserIndex = -1 };
 			rev[cfg.Length] = exitNode;
 			for (int i = 0; i < cfg.Length; i++) {
@@ -425,6 +456,10 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					if (loopHead.Dominates(succ) && (!treatBackEdgesAsExits || loopHead != succ)) {
 						rev[succ.UserIndex].AddEdgeTo(rev[i]);
 					} else {
+						if (nodeTreatedAsExitNode == null)
+							nodeTreatedAsExitNode = succ;
+						if (nodeTreatedAsExitNode != succ)
+							multipleNodesTreatedAsExitNodes = true;
 						exitNode.AddEdgeTo(rev[i]);
 					}
 				}
@@ -432,6 +467,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					exitNode.AddEdgeTo(rev[i]);
 				}
 			}
+			if (multipleNodesTreatedAsExitNodes)
+				exitNodeArity = 2; // more than 1
+			else if (nodeTreatedAsExitNode != null)
+				exitNodeArity = 1;
+			else
+				exitNodeArity = 0;
 			Dominance.ComputeDominance(exitNode, context.CancellationToken);
 			return rev;
 		}
