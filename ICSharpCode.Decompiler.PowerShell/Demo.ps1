@@ -18,6 +18,6 @@ foreach ($c in $classes)
 }
 
 
-Get-DecompiledSource $decompiler -TypeName ICSharpCode.Decompiler.Powershell.GetDecompilerCmdlet
+Get-DecompiledSource $decompiler -TypeName ICSharpCode.Decompiler.PowerShell.GetDecompilerCmdlet
 
 Get-DecompiledProject $decompiler -OutputPath .\decomptest
