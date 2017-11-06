@@ -19,7 +19,7 @@ test:
 after_test:
 - python BuildTools\tidy.py
 for:
-  branches:
+- branches:
     only:
       - master
 artifacts:
