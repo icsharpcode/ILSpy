@@ -64,6 +64,7 @@ namespace ICSharpCode.Decompiler.IL
 		Dictionary<int, ImmutableStack<ILVariable>> stackByOffset;
 		Dictionary<Cil.ExceptionHandler, ILVariable> variableByExceptionHandler;
 		UnionFind<ILVariable> unionFind;
+		List<(ILVariable, ILVariable)> stackMismatchPairs;
 		IEnumerable<ILVariable> stackVariables;
 		
 		void Init(Cil.MethodBody body)
@@ -74,8 +75,9 @@ namespace ICSharpCode.Decompiler.IL
 			this.debugInfo = body.Method.DebugInformation;
 			this.currentInstruction = null;
 			this.nextInstructionIndex = 0;
-			this.currentStack = System.Collections.Immutable.ImmutableStack<ILVariable>.Empty;
+			this.currentStack = ImmutableStack<ILVariable>.Empty;
 			this.unionFind = new UnionFind<ILVariable>();
+			this.stackMismatchPairs = new List<(ILVariable, ILVariable)>();
 			this.methodReturnStackType = typeSystem.Resolve(body.Method.ReturnType).GetStackType();
 			InitParameterVariables();
 			this.localVariables = body.Variables.SelectArray(CreateILVariable);
@@ -84,7 +86,7 @@ namespace ICSharpCode.Decompiler.IL
 					v.HasInitialValue = true;
 				}
 			}
-			mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
+			this.mainContainer = new BlockContainer(expectedResultType: methodReturnStackType);
 			this.instructionBuilder = new List<ILInstruction>();
 			this.isBranchTarget = new BitArray(body.CodeSize);
 			this.stackByOffset = new Dictionary<int, ImmutableStack<ILVariable>>();
@@ -186,35 +188,87 @@ namespace ICSharpCode.Decompiler.IL
 			Warnings.Add(string.Format("IL_{0:x4}: {1}", currentInstruction.Offset, message));
 		}
 
-		void MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
+		ImmutableStack<ILVariable> MergeStacks(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
 		{
-			var enum1 = a.GetEnumerator();
-			var enum2 = b.GetEnumerator();
-			bool ok1 = enum1.MoveNext();
-			bool ok2 = enum2.MoveNext();
-			while (ok1 && ok2) {
-				if (enum1.Current.StackType != enum2.Current.StackType) {
-					Warn("Incompatible stack types: " + enum1.Current.StackType + " vs " + enum2.Current.StackType);
+			if (CheckStackCompatibleWithoutAdjustments(a, b)) {
+				// We only need to union the input variables, but can 
+				// otherwise re-use the existing stack.
+				ImmutableStack<ILVariable> output = a;
+				while (!a.IsEmpty && !b.IsEmpty) {
+					Debug.Assert(a.Peek().StackType == b.Peek().StackType);
+					unionFind.Merge(a.Peek(), b.Peek());
+					a = a.Pop();
+					b = b.Pop();
 				}
-				unionFind.Merge(enum1.Current, enum2.Current);
-				ok1 = enum1.MoveNext();
-				ok2 = enum2.MoveNext();
-			}
-			if (ok1 || ok2) {
+				return output;
+			} else if (a.Count() != b.Count()) {
+				// Let's not try to merge mismatched stacks.
 				Warn("Incompatible stack heights: " + a.Count() + " vs " + b.Count());
+				return a;
+			} else {
+				// The more complex case where the stacks don't match exactly.
+				var output = new List<ILVariable>();
+				while (!a.IsEmpty && !b.IsEmpty) {
+					var varA = a.Peek();
+					var varB = b.Peek();
+					if (varA.StackType == varB.StackType) {
+						unionFind.Merge(varA, varB);
+						output.Add(varA);
+					} else {
+						if (!IsValidTypeStackTypeMerge(varA.StackType, varB.StackType)) {
+							Warn("Incompatible stack types: " + varA.StackType + " vs " + varB.StackType);
+						}
+						if (varA.StackType > varB.StackType) {
+							output.Add(varA);
+							// every store to varB should also store to varA
+							stackMismatchPairs.Add((varB, varA));
+						} else {
+							output.Add(varB);
+							// every store to varA should also store to varB
+							stackMismatchPairs.Add((varA, varB));
+						}
+					}
+					a = a.Pop();
+					b = b.Pop();
+				}
+				// because we built up output by popping from the input stacks, we need to reverse it to get back the original order
+				output.Reverse();
+				return ImmutableStack.CreateRange(output);
 			}
+		}
+
+		static bool CheckStackCompatibleWithoutAdjustments(ImmutableStack<ILVariable> a, ImmutableStack<ILVariable> b)
+		{
+			while (!a.IsEmpty && !b.IsEmpty) {
+				if (a.Peek().StackType != b.Peek().StackType)
+					return false;
+				a = a.Pop();
+				b = b.Pop();
+			}
+			return a.IsEmpty && b.IsEmpty;
+		}
+
+		private bool IsValidTypeStackTypeMerge(StackType stackType1, StackType stackType2)
+		{
+			if (stackType1 == StackType.I && stackType2 == StackType.I4)
+				return true;
+			if (stackType1 == StackType.I4 && stackType2 == StackType.I)
+				return true;
+			// allow merging unknown type with any other type
+			return stackType1 == StackType.Unknown || stackType2 == StackType.Unknown;
 		}
 
 		void StoreStackForOffset(int offset, ImmutableStack<ILVariable> stack)
 		{
-			ImmutableStack<ILVariable> existing;
-			if (stackByOffset.TryGetValue(offset, out existing)) {
-				MergeStacks(existing, stack);
+			if (stackByOffset.TryGetValue(offset, out var existing)) {
+				var newStack = MergeStacks(existing, stack);
+				if (newStack != existing)
+					stackByOffset[offset] = newStack;
 			} else {
 				stackByOffset.Add(offset, stack);
 			}
 		}
-
+		
 		void ReadInstructions(CancellationToken cancellationToken)
 		{
 			// Fill isBranchTarget and branchStackDict based on exception handlers
@@ -272,6 +326,44 @@ namespace ICSharpCode.Decompiler.IL
 				instructionBuilder[i] = instructionBuilder[i].AcceptVisitor(visitor);
 			}
 			stackVariables = visitor.variables;
+			InsertStackAdjustments();
+		}
+
+		void InsertStackAdjustments()
+		{
+			if (stackMismatchPairs.Count == 0)
+				return;
+			var dict = new MultiDictionary<ILVariable, ILVariable>();
+			foreach (var (origA, origB) in stackMismatchPairs) {
+				var a = unionFind.Find(origA);
+				var b = unionFind.Find(origB);
+				Debug.Assert(a.StackType < b.StackType);
+				// For every store to a, insert a converting store to b.
+				if (!dict[a].Contains(b))
+					dict.Add(a, b);
+			}
+			var newInstructions = new List<ILInstruction>();
+			foreach (var inst in instructionBuilder) {
+				newInstructions.Add(inst);
+				if (inst is StLoc store) {
+					foreach (var additionalVar in dict[store.Variable]) {
+						ILInstruction value = new LdLoc(store.Variable);
+						switch (additionalVar.StackType) {
+							case StackType.I:
+								value = new Conv(value, PrimitiveType.I, false, Sign.None);
+								break;
+							case StackType.I8:
+								value = new Conv(value, PrimitiveType.I8, false, Sign.None);
+								break;
+						}
+						newInstructions.Add(new StLoc(additionalVar, value) {
+							IsStackAdjustment = true,
+							ILRange = inst.ILRange
+						});
+					}
+				}
+			}
+			instructionBuilder = newInstructions;
 		}
 
 		/// <summary>
@@ -282,6 +374,12 @@ namespace ICSharpCode.Decompiler.IL
 			Init(body);
 			ReadInstructions(cancellationToken);
 			foreach (var inst in instructionBuilder) {
+				if (inst is StLoc stloc && stloc.IsStackAdjustment) {
+					output.Write("          ");
+					inst.WriteTo(output, new ILAstWritingOptions());
+					output.WriteLine();
+					continue;
+				}
 				output.Write("   [");
 				bool isFirstElement = true;
 				foreach (var element in stackByOffset[inst.ILRange.Start]) {

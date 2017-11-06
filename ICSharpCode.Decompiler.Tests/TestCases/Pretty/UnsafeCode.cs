@@ -327,6 +327,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			SimpleStruct* ptr = stackalloc SimpleStruct[checked(count * 2)];
 			SimpleStruct* ptr2 = stackalloc SimpleStruct[10];
+			ptr->X = count;
+			ptr[1].X = ptr->X;
+			for (int i = 2; i < 10; i++) {
+				ptr[i].X = count;
+			}
 			return this.UsePointer(&ptr->Y);
 		}
 

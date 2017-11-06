@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly veti52ie
+.assembly '5mgf1rnb'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module veti52ie.dll
-// MVID: {F873CF77-738D-4A61-B0C6-96B9F5621119}
+.module '5mgf1rnb.dll'
+// MVID: {C39B0AE8-69C3-4207-B912-FCEE701C71E8}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x028F0000
+// Image base: 0x00C60000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1238,11 +1238,13 @@
   .method public hidebysig instance string 
           StackAllocStruct(int32 count) cil managed
   {
-    // Code size       46 (0x2e)
-    .maxstack  2
+    // Code size       110 (0x6e)
+    .maxstack  3
     .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* V_0,
              valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct* V_1,
-             string V_2)
+             int32 V_2,
+             string V_3,
+             bool V_4)
     IL_0000:  nop
     IL_0001:  ldarg.1
     IL_0002:  ldc.i4.2
@@ -1258,16 +1260,50 @@
     IL_0018:  mul.ovf.un
     IL_0019:  localloc
     IL_001b:  stloc.1
-    IL_001c:  ldarg.0
-    IL_001d:  ldloc.0
-    IL_001e:  ldflda     float64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct::Y
-    IL_0023:  conv.u
-    IL_0024:  call       instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UsePointer(float64*)
-    IL_0029:  stloc.2
-    IL_002a:  br.s       IL_002c
+    IL_001c:  ldloc.0
+    IL_001d:  ldarg.1
+    IL_001e:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct::X
+    IL_0023:  ldloc.0
+    IL_0024:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_002a:  add
+    IL_002b:  ldloc.0
+    IL_002c:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct::X
+    IL_0031:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct::X
+    IL_0036:  ldc.i4.2
+    IL_0037:  stloc.2
+    IL_0038:  br.s       IL_0051
 
-    IL_002c:  ldloc.2
-    IL_002d:  ret
+    IL_003a:  nop
+    IL_003b:  ldloc.0
+    IL_003c:  ldloc.2
+    IL_003d:  conv.i
+    IL_003e:  sizeof     ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct
+    IL_0044:  mul
+    IL_0045:  add
+    IL_0046:  ldarg.1
+    IL_0047:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct::X
+    IL_004c:  nop
+    IL_004d:  ldloc.2
+    IL_004e:  ldc.i4.1
+    IL_004f:  add
+    IL_0050:  stloc.2
+    IL_0051:  ldloc.2
+    IL_0052:  ldc.i4.s   10
+    IL_0054:  clt
+    IL_0056:  stloc.s    V_4
+    IL_0058:  ldloc.s    V_4
+    IL_005a:  brtrue.s   IL_003a
+
+    IL_005c:  ldarg.0
+    IL_005d:  ldloc.0
+    IL_005e:  ldflda     float64 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/SimpleStruct::Y
+    IL_0063:  conv.u
+    IL_0064:  call       instance string ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UsePointer(float64*)
+    IL_0069:  stloc.3
+    IL_006a:  br.s       IL_006c
+
+    IL_006c:  ldloc.3
+    IL_006d:  ret
   } // end of method UnsafeCode::StackAllocStruct
 
   .method family hidebysig virtual instance void 

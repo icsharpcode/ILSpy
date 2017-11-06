@@ -153,6 +153,9 @@
 		new OpCode("stloc", "Stores a value into a local variable. (IL: starg/stloc)" + Environment.NewLine
 				+ "Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value, sign/zero extended back to I4 based on variable.Type.GetSign())",
 			CustomClassName("StLoc"), HasVariableOperand("Store"), CustomArguments("value"),
+			AdditionalMember(
+				"/// <summary>If true, this stloc represents a stack type adjustment. This field is only used in ILReader and BlockBuilder, and should be ignored by ILAst transforms.</summary>" + Environment.NewLine
+				+ "internal bool IsStackAdjustment;"),
 			ResultType("variable.StackType")),
 		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
 			CustomClassName("AddressOf"), CustomArguments("value"), ResultType("Ref")),
@@ -568,6 +571,13 @@ namespace ICSharpCode.Decompiler.IL
 		return opCode => {
 			opCode.Flags.Add(name);
 			opCode.DirectFlags.Add(name);
+		};
+	}
+
+	static Action<OpCode> AdditionalMember(string declaration)
+	{
+		return opCode => {
+			opCode.Members.Add(declaration);
 		};
 	}
 

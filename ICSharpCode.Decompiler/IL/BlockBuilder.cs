@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.IL
 			foreach (var inst in instructions) {
 				cancellationToken.ThrowIfCancellationRequested();
 				int start = inst.ILRange.Start;
-				if (currentBlock == null || incomingBranches[start]) {
+				if (currentBlock == null || (incomingBranches[start] && !IsStackAdjustment(inst))) {
 					// Finish up the previous block
 					FinalizeCurrentBlock(start, fallthrough: true);
 					// Leave nested containers if necessary
@@ -156,6 +156,11 @@ namespace ICSharpCode.Decompiler.IL
 			FinalizeCurrentBlock(body.CodeSize, fallthrough: false);
 			containerStack.Clear();
 			ConnectBranches(mainContainer, cancellationToken);
+		}
+
+		static bool IsStackAdjustment(ILInstruction inst)
+		{
+			return inst is StLoc stloc && stloc.IsStackAdjustment;
 		}
 
 		private void FinalizeCurrentBlock(int currentILOffset, bool fallthrough)

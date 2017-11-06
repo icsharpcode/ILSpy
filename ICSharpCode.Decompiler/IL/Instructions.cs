@@ -2317,6 +2317,8 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
+		/// <summary>If true, this stloc represents a stack type adjustment. This field is only used in ILReader and BlockBuilder, and should be ignored by ILAst transforms.</summary>
+		internal bool IsStackAdjustment;
 		public override StackType ResultType { get { return variable.StackType; } }
 		protected override InstructionFlags ComputeFlags()
 		{

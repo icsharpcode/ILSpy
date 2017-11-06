@@ -810,6 +810,10 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					return Translate(countOffsetInst);
 				}
+			} else if (byteOffsetInst.UnwrapConv(ConversionKind.SignExtend) is SizeOf sizeOf && sizeOf.Type.Equals(pointerType.ElementType)) {
+				return new PrimitiveExpression(1)
+					.WithILInstruction(byteOffsetInst)
+					.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Int32), 1));
 			} else if (byteOffsetInst.MatchLdcI(out long val)) {
 				// If the offset is a constant, it's possible that the compiler
 				// constant-folded the multiplication.
@@ -1540,9 +1544,14 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (!TypeUtils.IsCompatibleTypeForMemoryAccess(target.Type, inst.Type)) {
 					target = target.ConvertTo(new PointerType(inst.Type), this);
 				}
-				result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
-					.WithoutILInstruction()
-					.WithRR(new ResolveResult(((TypeWithElementType)target.Type).ElementType));
+				if (target.Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.AddressOf) {
+					// *&ptr -> ptr
+					result = target.UnwrapChild(uoe.Expression);
+				} else {
+					result = new UnaryOperatorExpression(UnaryOperatorType.Dereference, target.Expression)
+						.WithoutILInstruction()
+						.WithRR(new ResolveResult(((TypeWithElementType)target.Type).ElementType));
+				}
 			}
 			var value = Translate(inst.Value, typeHint: result.Type);
 			return Assignment(result, value).WithILInstruction(inst);
