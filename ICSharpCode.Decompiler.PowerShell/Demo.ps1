@@ -1,5 +1,5 @@
-Import-Module .\bin\Debug\netstandard2.0\ICSharpCode.Decompiler.PSCore.dll
-$decompiler = Get-Decompiler .\bin\Debug\netstandard2.0\ICSharpCode.Decompiler.PSCore.dll
+Import-Module .\bin\Debug\netstandard2.0\ICSharpCode.Decompiler.Powershell.dll
+$decompiler = Get-Decompiler .\bin\Debug\netstandard2.0\ICSharpCode.Decompiler.Powershell.dll
 
 $classes = Get-DecompiledTypes $decompiler -Types class
 $classes.Count
@@ -10,6 +10,6 @@ foreach ($c in $classes)
 }
 
 
-Get-DecompiledSource $decompiler -TypeName ICSharpCode.Decompiler.PSCore.GetDecompilerCmdlet
+Get-DecompiledSource $decompiler -TypeName ICSharpCode.Decompiler.Powershell.GetDecompilerCmdlet
 
 Get-DecompiledProject $decompiler -OutputPath .\decomptest
