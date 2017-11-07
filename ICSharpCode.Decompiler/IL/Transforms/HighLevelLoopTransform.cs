@@ -94,39 +94,54 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var ifInstruction = loop.EntryPoint.Instructions.SecondToLastOrDefault() as IfInstruction;
 			if (ifInstruction == null || !ifInstruction.FalseInst.MatchNop())
 				return false;
-			bool swapBranches = false;
-			ILInstruction condition = ifInstruction.Condition;
-			while (condition.MatchLogicNot(out var arg)) {
-				swapBranches = !swapBranches;
-				condition = arg;
-			}
+			bool swapBranches;
+			if (last.MatchBranch(loop.EntryPoint))
+				swapBranches = true;
+			else if (last.MatchLeave(loop))
+				swapBranches = false;
+			else return false;
 			if (swapBranches) {
 				if (!ifInstruction.TrueInst.MatchLeave(loop))
-					return false;
-				if (!last.MatchBranch(loop.EntryPoint))
 					return false;
 				context.Step("Transform to do-while loop", loop);
 				ifInstruction.FalseInst = ifInstruction.TrueInst;
 				ifInstruction.TrueInst = last;
-				ifInstruction.Condition = condition;
+				ifInstruction.Condition = Comp.LogicNot(ifInstruction.Condition);
 			} else {
 				if (!ifInstruction.TrueInst.MatchBranch(loop.EntryPoint))
 					return false;
-				if (!last.MatchLeave(loop))
-					return false;
 				context.Step("Transform to do-while loop", loop);
-				ifInstruction.Condition = condition;
 				ifInstruction.FalseInst = last;
+			}
+			int i = loop.EntryPoint.Instructions.Count - 3;
+			var conditions = new List<ILInstruction>();
+			while (i >= 0 && loop.EntryPoint.Instructions[i] is IfInstruction ifInstruction2) {
+				if (!ifInstruction2.FalseInst.MatchNop())
+					break;
+				if (swapBranches) {
+					if (!ifInstruction2.TrueInst.MatchLeave(loop))
+						break;
+					conditions.Add(Comp.LogicNot(ifInstruction2.Condition));
+				} else {
+					if (!ifInstruction2.TrueInst.MatchBranch(loop.EntryPoint))
+						break;
+					conditions.Add(ifInstruction2.Condition);
+				}
+				i--;
 			}
 			Block conditionBlock = new Block();
 			loop.Blocks.Add(conditionBlock);
-			loop.EntryPoint.Instructions.RemoveRange(ifInstruction.ChildIndex, 2);
+			loop.EntryPoint.Instructions.RemoveRange(i + 1, conditions.Count + 2);
+			foreach (var inst in conditions) {
+				ifInstruction.Condition = IfInstruction.LogicAnd(ifInstruction.Condition, inst);
+				conditionBlock.AddILRange(inst.ILRange);
+			}
 			conditionBlock.Instructions.Add(ifInstruction);
-			conditionBlock.AddILRange(ifInstruction.ILRange);
 			conditionBlock.AddILRange(last.ILRange);
+			new ExpressionTransforms().Run(conditionBlock, 0, new StatementTransformContext(new BlockTransformContext(context)));
 			loop.EntryPoint.Instructions.Add(new Branch(conditionBlock));
 			loop.Kind = ContainerKind.DoWhile;
-			return false;
+			return true;
 		}
 
 		bool MatchForLoop(BlockContainer loop, ILInstruction condition, Block whileLoopBody)
