@@ -488,8 +488,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 							MemberName = Pattern.AnyString
 						})
 				},
-				new WhileStatement {
-					Condition = new PrimitiveExpression(true),
+				new DoWhileStatement {
 					EmbeddedStatement = new BlockStatement {
 						new AssignmentExpression(new NamedNode("var2", new IdentifierExpression(Pattern.AnyString)), new IdentifierExpressionBackreference("var1")),
 						new AssignmentExpression {
@@ -507,18 +506,16 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 									new IdentifierExpressionBackreference("var3"),
 									new IdentifierExpressionBackreference("var2")
 								}
-							)},
-						new IfElseStatement {
-							Condition = new BinaryOperatorExpression {
-								Left = new CastExpression(new TypePattern(typeof(object)), new IdentifierExpressionBackreference("var1")),
-								Operator = BinaryOperatorType.Equality,
-								Right = new IdentifierExpressionBackreference("var2")
-							},
-							TrueStatement = new BreakStatement()
-						}
-					}
+							)}
+					},
+					Condition = new BinaryOperatorExpression {
+						Left = new CastExpression(new TypePattern(typeof(object)), new IdentifierExpressionBackreference("var1")),
+						Operator = BinaryOperatorType.InEquality,
+						Right = new IdentifierExpressionBackreference("var2")
+					},
 				}
-			}};
+			}
+		};
 		
 		bool CheckAutomaticEventMatch(Match m, CustomEventDeclaration ev, bool isAddAccessor)
 		{
