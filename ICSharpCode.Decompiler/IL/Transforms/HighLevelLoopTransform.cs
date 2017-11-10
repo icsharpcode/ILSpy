@@ -26,6 +26,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 {
 	/// <summary>
 	/// If possible, transforms plain ILAst loops into while (condition), do-while and for-loops.
+	/// For the invariants of the transforms <see cref="BlockContainer.CheckInvariant(ILPhase)"/>.
 	/// </summary>
 	public class HighLevelLoopTransform : IILTransform
 	{
@@ -69,9 +70,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (trueInst is Block b) {
 				context.Step("Transform to while (condition) loop", loop);
+				// move the loop body to its own block:
 				loopBody = b;
 				trueInst.ReplaceWith(new Branch(loopBody));
 				loop.Blocks.Insert(1, loopBody);
+				// sometimes the loop-content-block does not end with a leave/branch
 				if (!loopBody.HasFlag(InstructionFlags.EndPointUnreachable))
 					loopBody.Instructions.Add(new Leave(loop));
 			} else if (trueInst is Branch br) {
@@ -80,111 +83,214 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				return false;
 			}
+			// move the branch/leave instruction into the condition block
 			ifInstruction.FalseInst = loop.EntryPoint.Instructions[1];
 			loop.EntryPoint.Instructions.RemoveAt(1);
 			loop.Kind = ContainerKind.While;
 			return true;
 		}
 
+		/// <summary>
+		/// Matches a do-while loop and performs the following transformations:
+		/// - combine all compatible conditions into one IfInstruction.
+		/// - extract conditions into a condition block, or move the existing condition block to the end.
+		/// </summary>
+		/// <param name="loop"></param>
+		/// <returns></returns>
 		bool MatchDoWhileLoop(BlockContainer loop)
 		{
-			if (loop.EntryPoint.Instructions.Count < 2)
+			(List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split) = AnalyzeDoWhileConditions(loop);
+			// not a do-while loop, exit.
+			if (conditions == null || conditions.Count == 0)
 				return false;
-			var last = loop.EntryPoint.Instructions.Last();
-			var ifInstruction = loop.EntryPoint.Instructions.SecondToLastOrDefault() as IfInstruction;
+			context.Step("Transform to do-while loop", loop);
+			Block conditionBlock;
+			// first we remove all extracted instructions from the original block.
+			var originalBlock = (Block)exit.Parent;
+			originalBlock.Instructions.RemoveRange(originalBlock.Instructions.Count - conditions.Count - 1, conditions.Count + 1);
+			// we need to split the block:
+			if (split) {
+				// add a new block at the end and add a branch to the new block.
+				conditionBlock = new Block();
+				loop.Blocks.Add(conditionBlock);
+				originalBlock.Instructions.Add(new Branch(conditionBlock));
+			} else {
+				// move the condition block to the end.
+				conditionBlock = originalBlock;
+				loop.Blocks.MoveElementToEnd(originalBlock);
+			}
+			// combine all conditions and the exit instruction into one IfInstruction:
+			IfInstruction condition = null;
+			conditionBlock.AddILRange(exit.ILRange);
+			foreach (var inst in conditions) {
+				conditionBlock.AddILRange(inst.ILRange);
+				if (condition == null) {
+					condition = inst;
+					if (swap) {
+						// branches must be swapped and condition negated:
+						condition.Condition = Comp.LogicNot(condition.Condition);
+						condition.FalseInst = condition.TrueInst;
+						condition.TrueInst = exit;
+					} else {
+						condition.FalseInst = exit;
+					}
+				} else {
+					if (swap) {
+						condition.Condition = IfInstruction.LogicAnd(Comp.LogicNot(inst.Condition), condition.Condition);
+					} else {
+						condition.Condition = IfInstruction.LogicAnd(inst.Condition, condition.Condition);
+					}
+				}
+			}
+			// insert the combined conditions into the condition block:
+			conditionBlock.Instructions.Add(condition);
+			// simplify the condition:
+			new ExpressionTransforms().Run(conditionBlock, condition.ChildIndex, new StatementTransformContext(new BlockTransformContext(context)));
+			// transform complete
+			loop.Kind = ContainerKind.DoWhile;
+			return true;
+		}
+
+		static (List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split) AnalyzeDoWhileConditions(BlockContainer loop)
+		{
+			bool swap;
+			// we iterate over all blocks from the bottom, because the entry-point
+			// should only be considered as condition block, if there are no other blocks.
+			foreach (var block in loop.Blocks.Reverse()) {
+				// first we match the end of the block:
+				if (MatchDoWhileConditionBlock(loop, block, out swap)) {
+					// now collect all instructions that are usable as loop conditions
+					var conditions = CollectConditions(loop, block, swap);
+					// split only if the block is either the entry-point or contains other instructions as well.
+					var split = block == loop.EntryPoint || block.Instructions.Count > conditions.Count + 1; // + 1 is the final leave/branch.
+					return (conditions, block.Instructions.Last(), swap, split);
+				}
+			}
+			return (null, null, false, false);
+		}
+
+		/// <summary>
+		/// Returns a list of all IfInstructions that can be used as loop conditon, i.e.,
+		/// that have no false-instruction and have leave loop (if swapped) or branch entry-point as true-instruction.
+		/// </summary>
+		static List<IfInstruction> CollectConditions(BlockContainer loop, Block block, bool swap)
+		{
+			var list = new List<IfInstruction>();
+			int i = block.Instructions.Count - 2;
+			while (i >= 0 && block.Instructions[i] is IfInstruction ifInst) {
+				if (!ifInst.FalseInst.MatchNop())
+					break;
+				if (swap) {
+					if (!ifInst.TrueInst.MatchLeave(loop))
+						break;
+					list.Add(ifInst);
+				} else {
+					if (!ifInst.TrueInst.MatchBranch(loop.EntryPoint))
+						break;
+					list.Add(ifInst);
+				}
+				i--;
+			}
+
+			return list;
+		}
+
+		static bool MatchDoWhileConditionBlock(BlockContainer loop, Block block, out bool swapBranches)
+		{
+			// match the end of the block:
+			// if (condition) branch entry-point else nop
+			// leave loop
+			// -or-
+			// if (condition) leave loop else nop
+			// branch entry-point
+			swapBranches = false;
+			// empty block?
+			if (block.Instructions.Count < 2)
+				return false;
+			var last = block.Instructions.Last();
+			var ifInstruction = block.Instructions.SecondToLastOrDefault() as IfInstruction;
+			// no IfInstruction or already transformed?
 			if (ifInstruction == null || !ifInstruction.FalseInst.MatchNop())
 				return false;
-			bool swapBranches;
+			// if the last instruction is a branch
+			// we assume the branch instructions need to be swapped.
 			if (last.MatchBranch(loop.EntryPoint))
 				swapBranches = true;
 			else if (last.MatchLeave(loop))
 				swapBranches = false;
 			else return false;
+			// match the IfInstruction
 			if (swapBranches) {
 				if (!ifInstruction.TrueInst.MatchLeave(loop))
 					return false;
-				context.Step("Transform to do-while loop", loop);
-				ifInstruction.FalseInst = ifInstruction.TrueInst;
-				ifInstruction.TrueInst = last;
-				ifInstruction.Condition = Comp.LogicNot(ifInstruction.Condition);
 			} else {
 				if (!ifInstruction.TrueInst.MatchBranch(loop.EntryPoint))
 					return false;
-				context.Step("Transform to do-while loop", loop);
-				ifInstruction.FalseInst = last;
 			}
-			int i = loop.EntryPoint.Instructions.Count - 3;
-			var conditions = new List<ILInstruction>();
-			while (i >= 0 && loop.EntryPoint.Instructions[i] is IfInstruction ifInstruction2) {
-				if (!ifInstruction2.FalseInst.MatchNop())
-					break;
-				if (swapBranches) {
-					if (!ifInstruction2.TrueInst.MatchLeave(loop))
-						break;
-					conditions.Add(Comp.LogicNot(ifInstruction2.Condition));
-				} else {
-					if (!ifInstruction2.TrueInst.MatchBranch(loop.EntryPoint))
-						break;
-					conditions.Add(ifInstruction2.Condition);
-				}
-				i--;
-			}
-			Block conditionBlock = new Block();
-			loop.Blocks.Add(conditionBlock);
-			loop.EntryPoint.Instructions.RemoveRange(i + 1, conditions.Count + 2);
-			foreach (var inst in conditions) {
-				ifInstruction.Condition = IfInstruction.LogicAnd(ifInstruction.Condition, inst);
-				conditionBlock.AddILRange(inst.ILRange);
-			}
-			conditionBlock.Instructions.Add(ifInstruction);
-			conditionBlock.AddILRange(last.ILRange);
-			new ExpressionTransforms().Run(conditionBlock, 0, new StatementTransformContext(new BlockTransformContext(context)));
-			loop.EntryPoint.Instructions.Add(new Branch(conditionBlock));
-			loop.Kind = ContainerKind.DoWhile;
 			return true;
 		}
 
 		bool MatchForLoop(BlockContainer loop, ILInstruction condition, Block whileLoopBody)
 		{
+			// for loops have exactly two incoming edges at the entry point.
 			if (loop.EntryPoint.IncomingEdgeCount != 2)
 				return false;
+			// try to find an increment block:
+			// consists of simple statements only.
 			var incrementBlock = loop.Blocks.SingleOrDefault(
 				b => b != whileLoopBody
 					 && b.Instructions.Last().MatchBranch(loop.EntryPoint)
 					 && b.Instructions.SkipLast(1).All(IsSimpleStatement));
 			if (incrementBlock != null) {
+				// we found a possible increment block, just make sure, that there are at least three blocks:
+				// - condition block
+				// - loop body
+				// - increment block
 				if (incrementBlock.Instructions.Count <= 1 || loop.Blocks.Count < 3)
 					return false;
 				context.Step("Transform to for loop", loop);
+				// move the block to the end of the loop:
 				loop.Blocks.MoveElementToEnd(incrementBlock);
 				loop.Kind = ContainerKind.For;
 			} else {
+				// we need to move the increment statements into its own block:
+				// last must be a branch entry-point
 				var last = whileLoopBody.Instructions.LastOrDefault();
 				var secondToLast = whileLoopBody.Instructions.SecondToLastOrDefault();
 				if (last == null || secondToLast == null)
 					return false;
 				if (!last.MatchBranch(loop.EntryPoint))
 					return false;
+				// we only deal with 'numeric' increments
 				if (!MatchIncrement(secondToLast, out var incrementVariable))
 					return false;
+				// the increment variable must be local/stack variable
 				if (incrementVariable.Kind == VariableKind.Parameter)
 					return false;
+				// the increment variable must be checked in the condition
 				if (!condition.Descendants.Any(inst => inst.MatchLdLoc(incrementVariable)))
 					return false;
 				context.Step("Transform to for loop", loop);
+				// create a new increment block and add it at the end:
 				int secondToLastIndex = secondToLast.ChildIndex;
 				var newIncremenBlock = new Block();
 				loop.Blocks.Add(newIncremenBlock);
+				// move the increment instruction:
 				newIncremenBlock.Instructions.Add(secondToLast);
 				newIncremenBlock.Instructions.Add(last);
 				newIncremenBlock.AddILRange(secondToLast.ILRange);
 				whileLoopBody.Instructions.RemoveRange(secondToLastIndex, 2);
 				whileLoopBody.Instructions.Add(new Branch(newIncremenBlock));
+				// complete transform.
 				loop.Kind = ContainerKind.For;
 			}
 			return true;
 		}
 
+		/// <summary>
+		/// Returns true if the instruction is stloc v(add(ldloc v, arg))
+		/// or stloc v(compound.assign(ldloc v, arg))
+		/// </summary>
 		public static bool MatchIncrement(ILInstruction inst, out ILVariable variable)
 		{
 			if (!inst.MatchStLoc(out variable, out var value))
