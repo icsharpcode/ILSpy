@@ -63,6 +63,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.FoldBraces = (bool?)e.Attribute("foldBraces") ?? s.FoldBraces;
 			s.UsingDeclarations = (bool?)e.Attribute("usingDeclarations") ?? s.UsingDeclarations;
 			s.FullyQualifyAmbiguousTypeNames = (bool?)e.Attribute("fullyQualifyAmbiguousTypeNames") ?? s.FullyQualifyAmbiguousTypeNames;
+			s.AlwaysUseBraces = (bool?)e.Attribute("alwaysUseBraces") ?? s.AlwaysUseBraces;
 			return s;
 		}
 		
@@ -84,6 +85,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("foldBraces", s.RemoveDeadCode);
 			section.SetAttributeValue("usingDeclarations", s.UsingDeclarations);
 			section.SetAttributeValue("fullyQualifyAmbiguousTypeNames", s.FullyQualifyAmbiguousTypeNames);
+			section.SetAttributeValue("alwaysUseBraces", s.AlwaysUseBraces);
 
 			XElement existingElement = root.Element("DecompilerSettings");
 			if (existingElement != null)

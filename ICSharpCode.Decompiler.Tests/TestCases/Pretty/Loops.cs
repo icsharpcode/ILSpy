@@ -379,8 +379,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			} finally {
 				IDisposable disposable = enumerator as IDisposable;
-				if (disposable != null)
+				if (disposable != null) {
 					disposable.Dispose();
+				}
 			}
 			Console.WriteLine("After finally!");
 		}
@@ -527,8 +528,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						if (this.Condition("continue")) {
 							continue;
 						}
-						if (!this.Condition("break"))
+						if (!this.Condition("break")) {
 							break;
+						}
 					}
 					Console.WriteLine("End of loop body");
 				}
@@ -582,8 +584,9 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 						if (this.Condition("continue")) {
 							continue;
 						}
-						if (!this.Condition("not-break"))
+						if (!this.Condition("not-break")) {
 							break;
+						}
 					}
 					Console.WriteLine("End of loop body");
 				}

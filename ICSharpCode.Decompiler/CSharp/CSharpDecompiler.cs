@@ -152,6 +152,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			new IntroduceExtensionMethods(), // must run after IntroduceUsingDeclarations
 			new IntroduceQueryExpressions(), // must run after IntroduceExtensionMethods
 			new CombineQueryExpressions(),
+			new NormalizeBlockStatements(),
 			new FlattenSwitchBlocks(),
 			new FixNameCollisions(),
 			new AddXmlDocumentationTransform(),

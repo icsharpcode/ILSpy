@@ -17,5 +17,6 @@
 		<CheckBox IsChecked="{Binding RemoveDeadCode}">Remove dead and side effect free code</CheckBox>
 		<CheckBox IsChecked="{Binding UsingDeclarations}">Insert using declarations</CheckBox>
 		<CheckBox IsChecked="{Binding FullyQualifyAmbiguousTypeNames}">Fully qualify ambiguous type names</CheckBox>
+		<CheckBox IsChecked="{Binding AlwaysUseBraces}">Always use braces</CheckBox>
 	</StackPanel>
 </UserControl>
