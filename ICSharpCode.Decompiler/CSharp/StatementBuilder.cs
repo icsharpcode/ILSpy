@@ -731,6 +731,12 @@ namespace ICSharpCode.Decompiler.CSharp
 					}
 					if (blockStatement.LastOrDefault() is ContinueStatement continueStmt3)
 						continueStmt3.Remove();
+					if (blockStatement.Statements.Count == 0) {
+						return new WhileStatement {
+							Condition = exprBuilder.TranslateCondition(condition),
+							EmbeddedStatement = blockStatement
+						};
+					}
 					return new DoWhileStatement {
 						EmbeddedStatement = blockStatement,
 						Condition = exprBuilder.TranslateCondition(condition)
