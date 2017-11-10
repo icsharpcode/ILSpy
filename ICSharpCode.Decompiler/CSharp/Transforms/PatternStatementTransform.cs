@@ -96,11 +96,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return base.VisitForStatement(forStatement);
 		}
 
-		public override AstNode VisitWhileStatement(WhileStatement whileStatement)
-		{
-			return TransformDoWhile(whileStatement) ?? base.VisitWhileStatement(whileStatement);
-		}
-
 		public override AstNode VisitIfElseStatement(IfElseStatement ifElseStatement)
 		{
 			AstNode simplifiedIfElse = SimplifyCascadingIfElseStatements(ifElseStatement);
@@ -274,54 +269,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return foreachStmt;
 		}
 
-		#endregion
-
-		#region doWhile
-		static readonly WhileStatement doWhilePattern = new WhileStatement {
-			Condition = new PrimitiveExpression(true),
-			EmbeddedStatement = new BlockStatement {
-				Statements = {
-					new Repeat(new AnyNode("statement")),
-					new IfElseStatement {
-						Condition = new AnyNode("condition"),
-						TrueStatement = new BlockStatement { new BreakStatement() }
-					}
-				}
-			}};
-		
-		public DoWhileStatement TransformDoWhile(WhileStatement whileLoop)
-		{
-			Match m = doWhilePattern.Match(whileLoop);
-			if (m.Success) {
-				DoWhileStatement doLoop = new DoWhileStatement();
-				doLoop.Condition = new UnaryOperatorExpression(UnaryOperatorType.Not, m.Get<Expression>("condition").Single().Detach());
-				//doLoop.Condition.AcceptVisitor(new PushNegation(), null);
-				BlockStatement block = (BlockStatement)whileLoop.EmbeddedStatement;
-				block.Statements.Last().Remove(); // remove if statement
-				doLoop.EmbeddedStatement = block.Detach();
-				doLoop.CopyAnnotationsFrom(whileLoop);
-				whileLoop.ReplaceWith(doLoop);
-				
-				// we may have to extract variable definitions out of the loop if they were used in the condition:
-				foreach (var varDecl in block.Statements.OfType<VariableDeclarationStatement>()) {
-					VariableInitializer v = varDecl.Variables.Single();
-					if (doLoop.Condition.DescendantsAndSelf.OfType<IdentifierExpression>().Any(i => i.Identifier == v.Name)) {
-						AssignmentExpression assign = new AssignmentExpression(new IdentifierExpression(v.Name), v.Initializer.Detach());
-						// move annotations from v to assign:
-						assign.CopyAnnotationsFrom(v);
-						v.RemoveAnnotations<object>();
-						// remove varDecl with assignment; and move annotations from varDecl to the ExpressionStatement:
-						varDecl.ReplaceWith(new ExpressionStatement(assign).CopyAnnotationsFrom(varDecl));
-						varDecl.RemoveAnnotations<object>();
-						
-						// insert the varDecl above the do-while loop:
-						doLoop.Parent.InsertChildBefore(doLoop, varDecl, BlockStatement.StatementRole);
-					}
-				}
-				return doLoop;
-			}
-			return null;
-		}
 		#endregion
 
 		#region Automatic Properties
