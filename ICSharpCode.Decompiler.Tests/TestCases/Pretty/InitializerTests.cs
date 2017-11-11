@@ -272,7 +272,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public static void NotAnObjectInitializerWithEvent()
 		{
 			Data data = new Data();
-			data.TestEvent += delegate(object sender, EventArgs e) {
+			data.TestEvent += delegate {
 				Console.WriteLine();
 			};
 			InitializerTests.X(InitializerTests.Y(), data);

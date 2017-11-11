@@ -127,6 +127,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				});
 			}
 
+			public Action<object> Bug971_DelegateWithoutParameterList()
+			{
+				return delegate {
+				};
+			}
+
 			private void DoAction(Action action)
 			{
 			}

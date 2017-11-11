@@ -1367,18 +1367,15 @@ namespace ICSharpCode.Decompiler.CSharp
 				// otherwise use lambda only if an expression lambda is possible
 				isLambda = (body.Statements.Count == 1 && body.Statements.Single() is ReturnStatement);
 			}
-			// Remove the parameter list from an AnonymousMethodExpression if the original method had no names,
-			// and the parameters are not used in the method body
-			if (!isLambda && method.Parameters.All(p => string.IsNullOrEmpty(p.Name))) {
-				var parameterReferencingIdentifiers =
-					from ident in body.Descendants.OfType<IdentifierExpression>()
-					let v = ident.Annotation<ILVariableResolveResult>()?.Variable
-					where v != null && v.Kind == VariableKind.Parameter
-					select ident;
-				if (!parameterReferencingIdentifiers.Any()) {
-					ame.Parameters.Clear();
-					ame.HasParameterList = false;
-				}
+			// Remove the parameter list from an AnonymousMethodExpression if the parameters are not used in the method body
+			var parameterReferencingIdentifiers =
+				from ident in body.Descendants.OfType<IdentifierExpression>()
+				let v = ident.GetILVariable()
+				where v != null && v.Function == function && v.Kind == VariableKind.Parameter
+				select ident;
+			if (!isLambda && !parameterReferencingIdentifiers.Any()) {
+				ame.Parameters.Clear();
+				ame.HasParameterList = false;
 			}
 
 			Expression replacement;

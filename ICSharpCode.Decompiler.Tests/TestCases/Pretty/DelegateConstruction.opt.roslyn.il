@@ -31,14 +31,14 @@
   .ver 0:0:0:0
 }
 .module DelegateConstruction.dll
-// MVID: {F5BE0762-9125-4B48-8F46-BEC064B8B43B}
+// MVID: {BCE55681-8792-49AA-A3A8-0599BF49400D}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x010B0000
+// Image base: 0x04FD0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -228,6 +228,7 @@
       .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
       .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c' '<>9'
       .field public static class [mscorlib]System.Threading.ThreadStart '<>9__8_0'
+      .field public static class [mscorlib]System.Action`1<object> '<>9__12_0'
       .method private hidebysig specialname rtspecialname static 
               void  .cctor() cil managed
       {
@@ -255,6 +256,14 @@
         .maxstack  8
         IL_0000:  ret
       } // end of method '<>c'::'<Bug955>b__8_0'
+
+      .method assembly hidebysig instance void 
+              '<Bug971_DelegateWithoutParameterList>b__12_0'(object '<p0>') cil managed
+      {
+        // Code size       1 (0x1)
+        .maxstack  8
+        IL_0000:  ret
+      } // end of method '<>c'::'<Bug971_DelegateWithoutParameterList>b__12_0'
 
     } // end of class '<>c'
 
@@ -725,6 +734,25 @@
       IL_0021:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::DoAction(class [mscorlib]System.Action)
       IL_0026:  ret
     } // end of method InstanceTests::Bug951c
+
+    .method public hidebysig instance class [mscorlib]System.Action`1<object> 
+            Bug971_DelegateWithoutParameterList() cil managed
+    {
+      // Code size       32 (0x20)
+      .maxstack  8
+      IL_0000:  ldsfld     class [mscorlib]System.Action`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9__12_0'
+      IL_0005:  dup
+      IL_0006:  brtrue.s   IL_001f
+
+      IL_0008:  pop
+      IL_0009:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9'
+      IL_000e:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<Bug971_DelegateWithoutParameterList>b__12_0'(object)
+      IL_0014:  newobj     instance void class [mscorlib]System.Action`1<object>::.ctor(object,
+                                                                                        native int)
+      IL_0019:  dup
+      IL_001a:  stsfld     class [mscorlib]System.Action`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9__12_0'
+      IL_001f:  ret
+    } // end of method InstanceTests::Bug971_DelegateWithoutParameterList
 
     .method private hidebysig instance void 
             DoAction(class [mscorlib]System.Action action) cil managed

@@ -40,7 +40,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public event EventHandler AutomaticEvent;
 
 		[field: NonSerialized]
-		public event EventHandler AutomaticEventWithInitializer = delegate(object sender, EventArgs e) {
+		public event EventHandler AutomaticEventWithInitializer = delegate {
 		};
 
 		public event EventHandler CustomEvent {

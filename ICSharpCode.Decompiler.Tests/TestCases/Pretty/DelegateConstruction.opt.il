@@ -15,7 +15,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly yf3oha4w
+.assembly ci3jaj4f
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.ExtensionAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -26,15 +26,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module yf3oha4w.dll
-// MVID: {CDC95C8E-FB20-4924-8805-3F3D95A5736B}
+.module ci3jaj4f.dll
+// MVID: {F860E23B-9B90-453A-A3A5-49C4D5AA91F8}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00AB0000
+// Image base: 0x05340000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -373,6 +373,8 @@
 
     .field private static class [mscorlib]System.Threading.ThreadStart 'CS$<>9__CachedAnonymousMethodDelegate35'
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .field private static class [mscorlib]System.Action`1<object> 'CS$<>9__CachedAnonymousMethodDelegate43'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     .method public hidebysig instance class [mscorlib]System.Action 
             CaptureOfThis() cil managed
     {
@@ -709,6 +711,23 @@
       IL_0026:  ret
     } // end of method InstanceTests::Bug951c
 
+    .method public hidebysig instance class [mscorlib]System.Action`1<object> 
+            Bug971_DelegateWithoutParameterList() cil managed
+    {
+      // Code size       30 (0x1e)
+      .maxstack  8
+      IL_0000:  ldsfld     class [mscorlib]System.Action`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'CS$<>9__CachedAnonymousMethodDelegate43'
+      IL_0005:  brtrue.s   IL_0018
+
+      IL_0007:  ldnull
+      IL_0008:  ldftn      void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'<Bug971_DelegateWithoutParameterList>b__42'(object)
+      IL_000e:  newobj     instance void class [mscorlib]System.Action`1<object>::.ctor(object,
+                                                                                        native int)
+      IL_0013:  stsfld     class [mscorlib]System.Action`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'CS$<>9__CachedAnonymousMethodDelegate43'
+      IL_0018:  ldsfld     class [mscorlib]System.Action`1<object> ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'CS$<>9__CachedAnonymousMethodDelegate43'
+      IL_001d:  ret
+    } // end of method InstanceTests::Bug971_DelegateWithoutParameterList
+
     .method private hidebysig instance void 
             DoAction(class [mscorlib]System.Action action) cil managed
     {
@@ -774,6 +793,15 @@
       .maxstack  8
       IL_0000:  ret
     } // end of method InstanceTests::'<Bug955>b__34'
+
+    .method private hidebysig static void 
+            '<Bug971_DelegateWithoutParameterList>b__42'(object param0) cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       1 (0x1)
+      .maxstack  8
+      IL_0000:  ret
+    } // end of method InstanceTests::'<Bug971_DelegateWithoutParameterList>b__42'
 
   } // end of class InstanceTests
 
