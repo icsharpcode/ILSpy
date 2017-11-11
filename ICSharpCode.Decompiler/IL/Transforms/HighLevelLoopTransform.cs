@@ -48,7 +48,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		bool MatchWhileLoop(BlockContainer loop, out ILInstruction condition, out Block loopBody)
+		bool MatchWhileLoop(BlockContainer loop, out IfInstruction condition, out Block loopBody)
 		{
 			// while-loop:
 			// if (loop-condition) br loop-content-block
@@ -64,7 +64,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!ifInstruction.FalseInst.MatchNop())
 				return false;
-			condition = ifInstruction.Condition;
+			condition = ifInstruction;
 			var trueInst = ifInstruction.TrueInst;
 			if (!loop.EntryPoint.Instructions[1].MatchLeave(loop))
 				return false;
@@ -90,13 +90,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
+		void SplitConditions(ILInstruction expression, List<ILInstruction> conditions)
+		{
+			if (expression.MatchLogicAnd(out var l, out var r)) {
+				SplitConditions(l, conditions);
+				SplitConditions(r, conditions);
+			} else {
+				conditions.Add(expression);
+			}
+		}
+
 		/// <summary>
 		/// Matches a do-while loop and performs the following transformations:
 		/// - combine all compatible conditions into one IfInstruction.
 		/// - extract conditions into a condition block, or move the existing condition block to the end.
 		/// </summary>
-		/// <param name="loop"></param>
-		/// <returns></returns>
 		bool MatchDoWhileLoop(BlockContainer loop)
 		{
 			(List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split) = AnalyzeDoWhileConditions(loop);
@@ -230,7 +238,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		bool MatchForLoop(BlockContainer loop, ILInstruction condition, Block whileLoopBody)
+		bool MatchForLoop(BlockContainer loop, IfInstruction whileCondition, Block whileLoopBody)
 		{
 			// for loops have exactly two incoming edges at the entry point.
 			if (loop.EntryPoint.IncomingEdgeCount != 2)
@@ -267,10 +275,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// the increment variable must be local/stack variable
 				if (incrementVariable.Kind == VariableKind.Parameter)
 					return false;
-				// the increment variable must be checked in the condition
-				if (!condition.Descendants.Any(inst => inst.MatchLdLoc(incrementVariable)))
+				// split conditions:
+				var conditions = new List<ILInstruction>();
+				SplitConditions(whileCondition.Condition, conditions);
+				IfInstruction forCondition = null;
+				int numberOfConditions = 0;
+				foreach (var condition in conditions) {
+					// the increment variable must be used in the condition
+					if (!condition.Descendants.Any(inst => inst.MatchLdLoc(incrementVariable)))
+						break;
+					// condition should not contain an assignment
+					if (condition.Descendants.Any(IsAssignment))
+						break;
+					if (forCondition == null) {
+						forCondition = new IfInstruction(condition, whileCondition.TrueInst, whileCondition.FalseInst);
+					} else {
+						forCondition.Condition = IfInstruction.LogicAnd(forCondition.Condition, condition);
+					}
+					numberOfConditions++;
+				}
+				if (numberOfConditions == 0)
 					return false;
 				context.Step("Transform to for loop", loop);
+				// split condition block:
+				whileCondition.ReplaceWith(forCondition);
+				new ExpressionTransforms().Run(loop.EntryPoint, forCondition.ChildIndex, new StatementTransformContext(new BlockTransformContext(context)));
+				for (int i = conditions.Count - 1; i >= numberOfConditions; i--) {
+					whileLoopBody.Instructions.Insert(0, new IfInstruction(Comp.LogicNot(conditions[i]), new Leave(loop)));
+					new ExpressionTransforms().Run(whileLoopBody, 0, new StatementTransformContext(new BlockTransformContext(context)));
+				}
 				// create a new increment block and add it at the end:
 				int secondToLastIndex = secondToLast.ChildIndex;
 				var newIncremenBlock = new Block();
@@ -285,6 +318,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				loop.Kind = ContainerKind.For;
 			}
 			return true;
+		}
+
+		bool IsAssignment(ILInstruction inst)
+		{
+			if (inst is StLoc)
+				return true;
+			if (inst is CompoundAssignmentInstruction)
+				return true;
+			return false;
 		}
 
 		/// <summary>
