@@ -63,14 +63,21 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (statement.IsNull) return;
 			if (context.Settings.AlwaysUseBraces) {
-				InsertBlock(statement);
+				if (!IsElseIf(statement, parent)) {
+					InsertBlock(statement);
+				}
 			} else {
-				if (statement is BlockStatement b && b.Statements.Count == 1 && IsAllowed(b.Statements.First(), parent)) {
+				if (statement is BlockStatement b && b.Statements.Count == 1 && IsAllowedAsEmbeddedStatement(b.Statements.First(), parent)) {
 					statement.ReplaceWith(b.Statements.First().Detach());
-				} else if (!IsAllowed(statement, parent)) {
+				} else if (!IsAllowedAsEmbeddedStatement(statement, parent)) {
 					InsertBlock(statement);
 				}
 			}
+		}
+
+		bool IsElseIf(Statement statement, Statement parent)
+		{
+			return parent is IfElseStatement && statement.Role == IfElseStatement.FalseRole;
 		}
 
 		static void InsertBlock(Statement statement)
@@ -83,11 +90,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 		}
 
-		bool IsAllowed(Statement statement, Statement parent)
+		bool IsAllowedAsEmbeddedStatement(Statement statement, Statement parent)
 		{
 			switch (statement) {
 				case IfElseStatement ies:
-					return !(parent is IfElseStatement);
+					return parent is IfElseStatement && ies.Role == IfElseStatement.FalseRole;
 				case VariableDeclarationStatement vds:
 				case WhileStatement ws:
 				case DoWhileStatement dws:
