@@ -431,7 +431,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					default:
 						continue;
 				}
-				if (!VariableNeedsDeclaration(ilVar.Kind)) continue;
+				if (ilVar == null || !VariableNeedsDeclaration(ilVar.Kind)) continue;
 				var v = variableDict[ilVar];
 				if (!v.RemovedDueToCollision) continue;
 				while (v.RemovedDueToCollision) {
