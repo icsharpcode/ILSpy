@@ -64,6 +64,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (!ifInstruction.FalseInst.MatchNop())
 				return false;
+			if (UsesVariableCapturedInLoop(loop, ifInstruction.Condition))
+				return false;
 			condition = ifInstruction;
 			var trueInst = ifInstruction.TrueInst;
 			if (!loop.EntryPoint.Instructions[1].MatchLeave(loop))
@@ -188,6 +190,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			while (i >= 0 && block.Instructions[i] is IfInstruction ifInst) {
 				if (!ifInst.FalseInst.MatchNop())
 					break;
+				if (UsesVariableCapturedInLoop(loop, ifInst.Condition))
+					break;
 				if (swap) {
 					if (!ifInst.TrueInst.MatchLeave(loop))
 						break;
@@ -201,6 +205,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 
 			return list;
+		}
+
+		static bool UsesVariableCapturedInLoop(BlockContainer loop, ILInstruction condition)
+		{
+			foreach (var inst in condition.Descendants.OfType<IInstructionWithVariableOperand>()) {
+				if (inst.Variable.CaptureScope == loop)
+					return true;
+			}
+			return false;
 		}
 
 		static bool MatchDoWhileConditionBlock(BlockContainer loop, Block block, out bool swapBranches)
