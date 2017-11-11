@@ -2038,7 +2038,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				IType targetType;
 				if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType) && !trueBranch.Type.Equals(falseBranch.Type)) {
 					targetType = typeInference.GetBestCommonType(new[] { trueBranch.ResolveResult, falseBranch.ResolveResult }, out bool success);
-					if (!success)
+					if (!success || targetType.GetStackType() != inst.ResultType)
 						targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
 				} else {
 					targetType = trueBranch.Type.Equals(SpecialType.NullType) ? falseBranch.Type : trueBranch.Type;
