@@ -71,8 +71,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		[DebuggerDisplay("VariableToDeclare(Name={Name})")]
 		class VariableToDeclare
 		{
-			public readonly IType Type;
-			public readonly string Name;
+			public readonly ILVariable ILVariable;
+			public IType Type => ILVariable.Type;
+			public string Name => ILVariable.Name;
 
 			/// <summary>
 			/// Whether the variable needs to be default-initialized.
@@ -94,10 +95,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			public VariableToDeclare ReplacementDueToCollision;
 			public bool RemovedDueToCollision => ReplacementDueToCollision != null;
 
-			public VariableToDeclare(IType type, string name, bool defaultInitialization, InsertionPoint insertionPoint, int sourceOrder)
+			public VariableToDeclare(ILVariable variable, bool defaultInitialization, InsertionPoint insertionPoint, int sourceOrder)
 			{
-				this.Type = type;
-				this.Name = name;
+				this.ILVariable = variable;
 				this.DefaultInitialization = defaultInitialization;
 				this.InsertionPoint = insertionPoint;
 				this.SourceOrder = sourceOrder;
@@ -114,6 +114,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				FindInsertionPoints(rootNode, 0);
 				ResolveCollisions();
 				InsertVariableDeclarations(context);
+				UpdateAnnotations(rootNode);
 			} finally {
 				variableDict.Clear();
 			}
@@ -237,8 +238,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						if (variableDict.TryGetValue(rr.Variable, out v)) {
 							v.InsertionPoint = FindCommonParent(v.InsertionPoint, newPoint);
 						} else {
-							v = new VariableToDeclare(
-								rr.Variable.Type, rr.Variable.Name, rr.Variable.HasInitialValue,
+							v = new VariableToDeclare(rr.Variable, rr.Variable.HasInitialValue,
 								newPoint, sourceOrder: variableDict.Count);
 							variableDict.Add(rr.Variable, v);
 						}
@@ -411,6 +411,34 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			// perform replacements at end, so that we don't replace a node while it is still referenced by a VariableToDeclare
 			foreach (var pair in replacements) {
 				pair.Key.ReplaceWith(pair.Value);
+			}
+		}
+
+		/// <summary>
+		/// Update ILVariableResolveResult annotations of all ILVariables that have been replaced by ResolveCollisions.
+		/// </summary>
+		void UpdateAnnotations(AstNode rootNode)
+		{
+			foreach (var node in rootNode.Descendants) {
+				ILVariable ilVar;
+				switch (node) {
+					case IdentifierExpression id:
+						ilVar = id.GetILVariable();
+						break;
+					case VariableInitializer vi:
+						ilVar = vi.GetILVariable();
+						break;
+					default:
+						continue;
+				}
+				if (!VariableNeedsDeclaration(ilVar.Kind)) continue;
+				var v = variableDict[ilVar];
+				if (!v.RemovedDueToCollision) continue;
+				while (v.RemovedDueToCollision) {
+					v = v.ReplacementDueToCollision;
+				}
+				node.RemoveAnnotations<ILVariableResolveResult>();
+				node.AddAnnotation(new ILVariableResolveResult(v.ILVariable, v.Type));
 			}
 		}
 	}
