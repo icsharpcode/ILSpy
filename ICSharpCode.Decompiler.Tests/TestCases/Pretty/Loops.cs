@@ -252,6 +252,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public struct DataItem
+		{
+			public int Property {
+				get;
+				set;
+			}
+
+			public void TestCall()
+			{
+			}
+		}
+
 		private IEnumerable<string> alternatives;
 
 		private static void Operation(ref int item)
@@ -390,7 +402,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			foreach (int item in items) {
 #if ROSLYN && OPT
-				// The variable names differs based on whether roslyn optimizes out the 'item' variable
+				// The variable name differs based on whether roslyn optimizes out the 'item' variable
 				int current = item;
 				Loops.Operation(ref current);
 #else
@@ -439,6 +451,37 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 					output = value;
 					break;
 				}
+			}
+		}
+
+		public void ForEachOverListOfStruct(List<DataItem> items, int value)
+		{
+			foreach (DataItem item in items) {
+				DataItem dataItem = item;
+				dataItem.Property = value;
+			}
+		}
+
+		public void ForEachOverListOfStruct2(List<DataItem> items, int value)
+		{
+			foreach (DataItem item in items) {
+#if ROSLYN && OPT
+				// The variable name differs based on whether roslyn optimizes out the 'item' variable
+				DataItem current = item;
+				current.TestCall();
+				current.Property = value;
+#else
+				DataItem dataItem = item;
+				dataItem.TestCall();
+				dataItem.Property = value;
+#endif
+			}
+		}
+
+		public void ForEachOverListOfStruct3(List<DataItem> items, int value)
+		{
+			foreach (DataItem item in items) {
+				item.TestCall();
 			}
 		}
 		#endregion

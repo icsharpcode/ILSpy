@@ -471,6 +471,19 @@ namespace ICSharpCode.Decompiler.CSharp
 					instToReplace.ReplaceWith(new LdLoc(foreachVariable));
 					body.Instructions.Insert(0, new StLoc(foreachVariable, instToReplace));
 					break;
+				case RequiredGetCurrentTransformation.IntroduceNewVariableAndLocalCopy:
+					foreachVariable = currentFunction.RegisterVariable(
+						VariableKind.ForeachLocal, type,
+						AssignVariableNames.GenerateForeachVariableName(currentFunction, collectionExpr.Annotation<ILInstruction>())
+					);
+					var localCopyVariable = currentFunction.RegisterVariable(
+						VariableKind.Local, type,
+						AssignVariableNames.GenerateVariableName(currentFunction, type)
+					);
+					instToReplace.Parent.ReplaceWith(new LdLoca(localCopyVariable));
+					body.Instructions.Insert(0, new StLoc(localCopyVariable, new LdLoc(foreachVariable)));
+					body.Instructions.Insert(0, new StLoc(foreachVariable, instToReplace));
+					break;
 			}
 			// Convert the modified body to C# AST:
 			var whileLoop = (WhileStatement)ConvertAsBlock(container).First();
@@ -563,7 +576,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			///	... (ldloc foreachVar) ...
 			/// </code>
 			/// </summary>
-			IntroduceNewVariable
+			IntroduceNewVariable,
+			/// <summary>
+			/// No store was found, thus create a new variable and use it as foreach variable.
+			/// Additionally it is necessary to copy the value of the foreach variable to another local
+			/// to allow safe modification of its value.
+			/// <code>
+			///	... addressof(call get_Current()) ...
+			///	=>
+			///	stloc foreachVar(call get_Current())
+			///	stloc copy(ldloc foreachVar)
+			///	... (ldloca copy) ...
+			/// </code>
+			/// </summary>
+			IntroduceNewVariableAndLocalCopy
 		}
 
 		/// <summary>
@@ -603,6 +629,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					return RequiredGetCurrentTransformation.UseExistingVariable;
 				}
 			}
+			// In optimized Roslyn code it can happen that the foreach variable is referenced via addressof
+			// We only do this unwrapping if where dealing with a custom struct type.
+			if (CurrentIsStructSetterTarget(inst, singleGetter)) {
+				return RequiredGetCurrentTransformation.IntroduceNewVariableAndLocalCopy;
+			}
 			// No suitable variable was found: we need a new one.
 			return RequiredGetCurrentTransformation.IntroduceNewVariable;
 		}
@@ -616,11 +647,44 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			if (storeInst.Variable.LoadInstructions.Any(ld => !ld.IsDescendantOf(usingContainer)))
 				return false;
-			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(usingContainer) || !ILInlining.IsUsedAsThisPointerInCall(la)))
+			if (storeInst.Variable.AddressInstructions.Any(la => !la.IsDescendantOf(usingContainer) || !ILInlining.IsUsedAsThisPointerInCall(la) || IsTargetOfSetterCall(la, la.Variable.Type)))
 				return false;
 			if (storeInst.Variable.StoreInstructions.OfType<ILInstruction>().Any(st => st != storeInst))
 				return false;
 			return true;
+		}
+
+		/// <summary>
+		/// Returns true if singleGetter is a value type and its address is used as setter target.
+		/// </summary>
+		bool CurrentIsStructSetterTarget(ILInstruction inst, CallInstruction singleGetter)
+		{
+			if (!(inst.Parent is AddressOf addr))
+				return false;
+			return IsTargetOfSetterCall(addr, singleGetter.Method.ReturnType);
+		}
+
+		bool IsTargetOfSetterCall(ILInstruction inst, IType targetType)
+		{
+			if (inst.ChildIndex != 0)
+				return false;
+			if (targetType.IsReferenceType ?? false)
+				return false;
+			switch (inst.Parent.OpCode) {
+				case OpCode.Call:
+				case OpCode.CallVirt:
+					var targetMethod = ((CallInstruction)inst.Parent).Method;
+					if (!targetMethod.IsAccessor || targetMethod.IsStatic)
+						return false;
+					switch (targetMethod.AccessorOwner) {
+						case IProperty p:
+							return p.Setter == targetMethod;
+						default:
+							return true;
+					}
+				default:
+					return false;
+			}
 		}
 
 		bool ParentIsCurrentGetter(ILInstruction inst)
