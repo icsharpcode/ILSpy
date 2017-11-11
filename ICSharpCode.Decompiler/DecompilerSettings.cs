@@ -178,6 +178,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool alwaysUseBraces = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use braces for single-statement-blocks. 
+		/// </summary>
+		public bool AlwaysUseBraces {
+			get { return alwaysUseBraces; }
+			set {
+				if (alwaysUseBraces != value) {
+					alwaysUseBraces = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool forEachStatement = true;
 
 		/// <summary>

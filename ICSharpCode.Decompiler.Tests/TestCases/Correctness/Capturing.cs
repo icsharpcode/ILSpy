@@ -19,6 +19,8 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			OutsideLoopOverArray();
 			OutsideLoopOverArray2();
 			InsideLoopOverArray2();
+			NotWhileDueToVariableInsideLoop();
+			NotDoWhileDueToVariableInsideLoop();
 		}
 
 		static void TestCase1()
@@ -172,6 +174,43 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 			}
 			foreach (var func in functions) {
 				Console.WriteLine(func());
+			}
+		}
+
+		static int nextVal;
+
+		static int GetVal()
+		{
+			return ++nextVal & 7;
+		}
+
+		static void NotWhileDueToVariableInsideLoop()
+		{
+			Console.WriteLine("NotWhileDueToVariableInsideLoop:");
+			var functions = new List<Func<int>>();
+			while (true) {
+				int v;
+				if ((v = GetVal()) == 0)
+					break;
+				functions.Add(() => v);
+			}
+			foreach (var f in functions) {
+				Console.WriteLine(f());
+			}
+		}
+
+		static void NotDoWhileDueToVariableInsideLoop()
+		{
+			Console.WriteLine("NotDoWhileDueToVariableInsideLoop:");
+			var functions = new List<Func<int>>();
+			while (true) {
+				int v = GetVal();
+				functions.Add(() => v);
+				if (v == 0)
+					break;
+			}
+			foreach (var f in functions) {
+				Console.WriteLine(f());
 			}
 		}
 	}

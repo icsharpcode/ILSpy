@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly n3qdq2uj
+.assembly dky1g03y
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module n3qdq2uj.dll
-// MVID: {98B4F05B-5E30-48EB-AAF5-A90EA42A94A2}
+.module dky1g03y.dll
+// MVID: {4ADF70C5-8EC0-41AF-A9B1-6DF95B943C1A}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02AD0000
+// Image base: 0x03580000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -583,6 +583,55 @@
       .get instance !T ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/CustomStructEnumeratorWithIDisposable`1::get_Current()
     } // end of property CustomStructEnumeratorWithIDisposable`1::Current
   } // end of class CustomStructEnumeratorWithIDisposable`1
+
+  .class sequential ansi sealed nested public beforefieldinit DataItem
+         extends [mscorlib]System.ValueType
+  {
+    .field private int32 '<Property>k__BackingField'
+    .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+    .method public hidebysig specialname 
+            instance int32  get_Property() cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       11 (0xb)
+      .maxstack  1
+      .locals init (int32 V_0)
+      IL_0000:  ldarg.0
+      IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem::'<Property>k__BackingField'
+      IL_0006:  stloc.0
+      IL_0007:  br.s       IL_0009
+
+      IL_0009:  ldloc.0
+      IL_000a:  ret
+    } // end of method DataItem::get_Property
+
+    .method public hidebysig specialname 
+            instance void  set_Property(int32 'value') cil managed
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      // Code size       8 (0x8)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  ldarg.1
+      IL_0002:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem::'<Property>k__BackingField'
+      IL_0007:  ret
+    } // end of method DataItem::set_Property
+
+    .method public hidebysig instance void 
+            TestCall() cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method DataItem::TestCall
+
+    .property instance int32 Property()
+    {
+      .get instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem::get_Property()
+      .set instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem::set_Property(int32)
+    } // end of property DataItem::Property
+  } // end of class DataItem
 
   .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass1'
          extends [mscorlib]System.Object
@@ -1269,7 +1318,7 @@
 
   .method public hidebysig static void  NonGenericForeachWithReturnFallbackTest(class [mscorlib]System.Collections.IEnumerable e) cil managed
   {
-    // Code size       111 (0x6f)
+    // Code size       113 (0x71)
     .maxstack  2
     .locals init (class [mscorlib]System.Collections.IEnumerator V_0,
              object V_1,
@@ -1308,7 +1357,7 @@
       IL_0044:  nop
       IL_0045:  nop
       IL_0046:  nop
-      IL_0047:  leave.s    IL_0062
+      IL_0047:  leave.s    IL_0064
 
     }  // end .try
     finally
@@ -1322,19 +1371,21 @@
       IL_0053:  ceq
       IL_0055:  stloc.3
       IL_0056:  ldloc.3
-      IL_0057:  brtrue.s   IL_0060
+      IL_0057:  brtrue.s   IL_0062
 
-      IL_0059:  ldloc.2
-      IL_005a:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
-      IL_005f:  nop
+      IL_0059:  nop
+      IL_005a:  ldloc.2
+      IL_005b:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
       IL_0060:  nop
-      IL_0061:  endfinally
+      IL_0061:  nop
+      IL_0062:  nop
+      IL_0063:  endfinally
     }  // end handler
-    IL_0062:  nop
-    IL_0063:  ldstr      "After finally!"
-    IL_0068:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_006d:  nop
-    IL_006e:  ret
+    IL_0064:  nop
+    IL_0065:  ldstr      "After finally!"
+    IL_006a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_006f:  nop
+    IL_0070:  ret
   } // end of method Loops::NonGenericForeachWithReturnFallbackTest
 
   .method public hidebysig static void  ForeachWithRefUsage(class [mscorlib]System.Collections.Generic.List`1<int32> items) cil managed
@@ -1670,6 +1721,158 @@
   } // end of method Loops::ForEachBreakWhenFound
 
   .method public hidebysig instance void 
+          ForEachOverListOfStruct(class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem> items,
+                                  int32 'value') cil managed
+  {
+    // Code size       62 (0x3e)
+    .maxstack  2
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem V_0,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem V_1,
+             valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem> V_2,
+             bool V_3)
+    IL_0000:  nop
+    IL_0001:  nop
+    IL_0002:  ldarg.1
+    IL_0003:  callvirt   instance valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!0> class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>::GetEnumerator()
+    IL_0008:  stloc.2
+    .try
+    {
+      IL_0009:  br.s       IL_0020
+
+      IL_000b:  ldloca.s   V_2
+      IL_000d:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>::get_Current()
+      IL_0012:  stloc.0
+      IL_0013:  nop
+      IL_0014:  ldloc.0
+      IL_0015:  stloc.1
+      IL_0016:  ldloca.s   V_1
+      IL_0018:  ldarg.2
+      IL_0019:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem::set_Property(int32)
+      IL_001e:  nop
+      IL_001f:  nop
+      IL_0020:  ldloca.s   V_2
+      IL_0022:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>::MoveNext()
+      IL_0027:  stloc.3
+      IL_0028:  ldloc.3
+      IL_0029:  brtrue.s   IL_000b
+
+      IL_002b:  leave.s    IL_003c
+
+    }  // end .try
+    finally
+    {
+      IL_002d:  ldloca.s   V_2
+      IL_002f:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>
+      IL_0035:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_003a:  nop
+      IL_003b:  endfinally
+    }  // end handler
+    IL_003c:  nop
+    IL_003d:  ret
+  } // end of method Loops::ForEachOverListOfStruct
+
+  .method public hidebysig instance void 
+          ForEachOverListOfStruct2(class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem> items,
+                                   int32 'value') cil managed
+  {
+    // Code size       70 (0x46)
+    .maxstack  2
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem V_0,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem V_1,
+             valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem> V_2,
+             bool V_3)
+    IL_0000:  nop
+    IL_0001:  nop
+    IL_0002:  ldarg.1
+    IL_0003:  callvirt   instance valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!0> class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>::GetEnumerator()
+    IL_0008:  stloc.2
+    .try
+    {
+      IL_0009:  br.s       IL_0028
+
+      IL_000b:  ldloca.s   V_2
+      IL_000d:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>::get_Current()
+      IL_0012:  stloc.0
+      IL_0013:  nop
+      IL_0014:  ldloc.0
+      IL_0015:  stloc.1
+      IL_0016:  ldloca.s   V_1
+      IL_0018:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem::TestCall()
+      IL_001d:  nop
+      IL_001e:  ldloca.s   V_1
+      IL_0020:  ldarg.2
+      IL_0021:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem::set_Property(int32)
+      IL_0026:  nop
+      IL_0027:  nop
+      IL_0028:  ldloca.s   V_2
+      IL_002a:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>::MoveNext()
+      IL_002f:  stloc.3
+      IL_0030:  ldloc.3
+      IL_0031:  brtrue.s   IL_000b
+
+      IL_0033:  leave.s    IL_0044
+
+    }  // end .try
+    finally
+    {
+      IL_0035:  ldloca.s   V_2
+      IL_0037:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>
+      IL_003d:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0042:  nop
+      IL_0043:  endfinally
+    }  // end handler
+    IL_0044:  nop
+    IL_0045:  ret
+  } // end of method Loops::ForEachOverListOfStruct2
+
+  .method public hidebysig instance void 
+          ForEachOverListOfStruct3(class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem> items,
+                                   int32 'value') cil managed
+  {
+    // Code size       59 (0x3b)
+    .maxstack  1
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem V_0,
+             valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem> V_1,
+             bool V_2)
+    IL_0000:  nop
+    IL_0001:  nop
+    IL_0002:  ldarg.1
+    IL_0003:  callvirt   instance valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!0> class [mscorlib]System.Collections.Generic.List`1<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>::GetEnumerator()
+    IL_0008:  stloc.1
+    .try
+    {
+      IL_0009:  br.s       IL_001d
+
+      IL_000b:  ldloca.s   V_1
+      IL_000d:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>::get_Current()
+      IL_0012:  stloc.0
+      IL_0013:  nop
+      IL_0014:  ldloca.s   V_0
+      IL_0016:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem::TestCall()
+      IL_001b:  nop
+      IL_001c:  nop
+      IL_001d:  ldloca.s   V_1
+      IL_001f:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>::MoveNext()
+      IL_0024:  stloc.2
+      IL_0025:  ldloc.2
+      IL_0026:  brtrue.s   IL_000b
+
+      IL_0028:  leave.s    IL_0039
+
+    }  // end .try
+    finally
+    {
+      IL_002a:  ldloca.s   V_1
+      IL_002c:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/DataItem>
+      IL_0032:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0037:  nop
+      IL_0038:  endfinally
+    }  // end handler
+    IL_0039:  nop
+    IL_003a:  ret
+  } // end of method Loops::ForEachOverListOfStruct3
+
+  .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed
   {
     // Code size       31 (0x1f)
@@ -1848,7 +2051,7 @@
   .method public hidebysig instance void 
           WhileLoop() cil managed
   {
-    // Code size       154 (0x9a)
+    // Code size       155 (0x9b)
     .maxstack  2
     .locals init (bool V_0)
     IL_0000:  nop
@@ -1862,10 +2065,10 @@
     IL_0018:  ceq
     IL_001a:  stloc.0
     IL_001b:  ldloc.0
-    IL_001c:  brtrue.s   IL_008e
+    IL_001c:  brtrue.s   IL_008f
 
     IL_001e:  nop
-    IL_001f:  br.s       IL_0073
+    IL_001f:  br.s       IL_0074
 
     IL_0021:  nop
     IL_0022:  ldstr      "Loop Body"
@@ -1878,7 +2081,7 @@
     IL_0039:  ceq
     IL_003b:  stloc.0
     IL_003c:  ldloc.0
-    IL_003d:  brtrue.s   IL_0067
+    IL_003d:  brtrue.s   IL_0068
 
     IL_003f:  nop
     IL_0040:  ldarg.0
@@ -1891,43 +2094,44 @@
     IL_0050:  brtrue.s   IL_0055
 
     IL_0052:  nop
-    IL_0053:  br.s       IL_0073
+    IL_0053:  br.s       IL_0074
 
     IL_0055:  ldarg.0
     IL_0056:  ldstr      "break"
     IL_005b:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
     IL_0060:  stloc.0
     IL_0061:  ldloc.0
-    IL_0062:  brtrue.s   IL_0066
+    IL_0062:  brtrue.s   IL_0067
 
-    IL_0064:  br.s       IL_0082
+    IL_0064:  nop
+    IL_0065:  br.s       IL_0083
 
-    IL_0066:  nop
-    IL_0067:  ldstr      "End of loop body"
-    IL_006c:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0071:  nop
+    IL_0067:  nop
+    IL_0068:  ldstr      "End of loop body"
+    IL_006d:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_0072:  nop
-    IL_0073:  ldarg.0
-    IL_0074:  ldstr      "while"
-    IL_0079:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
-    IL_007e:  stloc.0
-    IL_007f:  ldloc.0
-    IL_0080:  brtrue.s   IL_0021
+    IL_0073:  nop
+    IL_0074:  ldarg.0
+    IL_0075:  ldstr      "while"
+    IL_007a:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+    IL_007f:  stloc.0
+    IL_0080:  ldloc.0
+    IL_0081:  brtrue.s   IL_0021
 
-    IL_0082:  ldstr      "After loop"
-    IL_0087:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_008c:  nop
+    IL_0083:  ldstr      "After loop"
+    IL_0088:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_008d:  nop
-    IL_008e:  ldstr      "End of method"
-    IL_0093:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0098:  nop
-    IL_0099:  ret
+    IL_008e:  nop
+    IL_008f:  ldstr      "End of method"
+    IL_0094:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0099:  nop
+    IL_009a:  ret
   } // end of method Loops::WhileLoop
 
   .method public hidebysig instance void 
           ForLoop() cil managed
   {
-    // Code size       160 (0xa0)
+    // Code size       161 (0xa1)
     .maxstack  2
     .locals init (int32 V_0,
              bool V_1)
@@ -1942,12 +2146,12 @@
     IL_0018:  ceq
     IL_001a:  stloc.1
     IL_001b:  ldloc.1
-    IL_001c:  brtrue.s   IL_0094
+    IL_001c:  brtrue.s   IL_0095
 
     IL_001e:  nop
     IL_001f:  ldc.i4.0
     IL_0020:  stloc.0
-    IL_0021:  br.s       IL_0079
+    IL_0021:  br.s       IL_007a
 
     IL_0023:  nop
     IL_0024:  ldstr      "Loop Body"
@@ -1960,7 +2164,7 @@
     IL_003b:  ceq
     IL_003d:  stloc.1
     IL_003e:  ldloc.1
-    IL_003f:  brtrue.s   IL_0069
+    IL_003f:  brtrue.s   IL_006a
 
     IL_0041:  nop
     IL_0042:  ldarg.0
@@ -1973,41 +2177,42 @@
     IL_0052:  brtrue.s   IL_0057
 
     IL_0054:  nop
-    IL_0055:  br.s       IL_0075
+    IL_0055:  br.s       IL_0076
 
     IL_0057:  ldarg.0
     IL_0058:  ldstr      "not-break"
     IL_005d:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
     IL_0062:  stloc.1
     IL_0063:  ldloc.1
-    IL_0064:  brtrue.s   IL_0068
+    IL_0064:  brtrue.s   IL_0069
 
-    IL_0066:  br.s       IL_0088
+    IL_0066:  nop
+    IL_0067:  br.s       IL_0089
 
-    IL_0068:  nop
-    IL_0069:  ldstr      "End of loop body"
-    IL_006e:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0073:  nop
+    IL_0069:  nop
+    IL_006a:  ldstr      "End of loop body"
+    IL_006f:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_0074:  nop
-    IL_0075:  ldloc.0
-    IL_0076:  ldc.i4.1
-    IL_0077:  add
-    IL_0078:  stloc.0
-    IL_0079:  ldarg.0
-    IL_007a:  ldstr      "for"
-    IL_007f:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
-    IL_0084:  stloc.1
-    IL_0085:  ldloc.1
-    IL_0086:  brtrue.s   IL_0023
+    IL_0075:  nop
+    IL_0076:  ldloc.0
+    IL_0077:  ldc.i4.1
+    IL_0078:  add
+    IL_0079:  stloc.0
+    IL_007a:  ldarg.0
+    IL_007b:  ldstr      "for"
+    IL_0080:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+    IL_0085:  stloc.1
+    IL_0086:  ldloc.1
+    IL_0087:  brtrue.s   IL_0023
 
-    IL_0088:  ldstr      "After loop"
-    IL_008d:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_0092:  nop
+    IL_0089:  ldstr      "After loop"
+    IL_008e:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_0093:  nop
-    IL_0094:  ldstr      "End of method"
-    IL_0099:  call       void [mscorlib]System.Console::WriteLine(string)
-    IL_009e:  nop
-    IL_009f:  ret
+    IL_0094:  nop
+    IL_0095:  ldstr      "End of method"
+    IL_009a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_009f:  nop
+    IL_00a0:  ret
   } // end of method Loops::ForLoop
 
   .method public hidebysig specialname rtspecialname 
