@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly '0nmkvdgs'
+.assembly '31uigzt1'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module '0nmkvdgs.dll'
-// MVID: {E543BCF9-C441-4A6D-A25F-19C170B765C0}
+.module '31uigzt1.dll'
+// MVID: {77B7D9D4-A6DF-4CC8-B1E3-7B3B553633FF}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00C50000
+// Image base: 0x01360000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -509,6 +509,42 @@
     IL_0002:  ceq
     IL_0004:  ret
   } // end of method TypeAnalysisTests::CompareDelegateWithNull
+
+  .method public hidebysig instance bool 
+          CompareStringsByValue(string a,
+                                string b) cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0007:  ret
+  } // end of method TypeAnalysisTests::CompareStringsByValue
+
+  .method public hidebysig instance bool 
+          CompareStringsByReference(string a,
+                                    string b) cil managed
+  {
+    // Code size       5 (0x5)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  ceq
+    IL_0004:  ret
+  } // end of method TypeAnalysisTests::CompareStringsByReference
+
+  .method public hidebysig instance bool 
+          CompareStringWithNull(string a) cil managed
+  {
+    // Code size       5 (0x5)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldnull
+    IL_0002:  ceq
+    IL_0004:  ret
+  } // end of method TypeAnalysisTests::CompareStringWithNull
 
   .method public hidebysig instance valuetype [mscorlib]System.Decimal 
           ImplicitConversionToDecimal(uint8 v) cil managed

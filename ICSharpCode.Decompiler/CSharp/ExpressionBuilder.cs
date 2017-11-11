@@ -527,17 +527,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			left = AdjustConstantExpressionToType(left, right.Type);
 			right = AdjustConstantExpressionToType(right, left.Type);
 			
-			if (left.Type.Kind == TypeKind.Delegate && right.Type.Kind == TypeKind.Null
-				|| left.Type.Kind == TypeKind.Null && right.Type.Kind == TypeKind.Delegate)
-			{
-				// When comparing a delegate with null, the C# compiler generates a reference comparison.
+			if (IsSpecialCasedReferenceComparisonWithNull(left, right)) {
+				// When comparing a string/delegate with null, the C# compiler generates a reference comparison.
 				negateOutput = false;
 				return CreateBuiltinBinaryOperator(left, inst.Kind.ToBinaryOperatorType(), right)
 					.WithILInstruction(inst);
 			}
 
-			var rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
-				as OperatorResolveResult;
+			OperatorResolveResult rr;
+			if (left.Type.IsKnownType(KnownTypeCode.String) && right.Type.IsKnownType(KnownTypeCode.String)) {
+				rr = null; // it's a string comparison by-value, which is not a reference comparison
+			} else {
+				rr = resolver.ResolveBinaryOperator(inst.Kind.ToBinaryOperatorType(), left.ResolveResult, right.ResolveResult)
+					as OperatorResolveResult;
+			}
 			if (rr == null || rr.IsError || rr.UserDefinedOperatorMethod != null
 			    || NullableType.GetUnderlyingType(rr.Operands[0].Type).GetStackType() != inst.InputType)
 			{
@@ -581,6 +584,14 @@ namespace ICSharpCode.Decompiler.CSharp
 			return new BinaryOperatorExpression(left.Expression, inst.Kind.ToBinaryOperatorType(), right.Expression)
 				.WithILInstruction(inst)
 				.WithRR(rr);
+		}
+
+		bool IsSpecialCasedReferenceComparisonWithNull(TranslatedExpression lhs, TranslatedExpression rhs)
+		{
+			if (lhs.Type.Kind == TypeKind.Null)
+				ExtensionMethods.Swap(ref lhs, ref rhs);
+			return rhs.Type.Kind == TypeKind.Null
+				&& (lhs.Type.Kind == TypeKind.Delegate || lhs.Type.IsKnownType(KnownTypeCode.String));
 		}
 
 		ExpressionWithResolveResult CreateBuiltinBinaryOperator(

@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module TypeAnalysisTests.dll
-// MVID: {6A008C4E-2BC5-45CA-93FB-93A12CD0BC69}
+// MVID: {3A10F4E7-88B8-4945-8775-A3643132F64B}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01320000
+// Image base: 0x01720000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -733,6 +733,60 @@
     IL_0008:  ldloc.0
     IL_0009:  ret
   } // end of method TypeAnalysisTests::CompareDelegateWithNull
+
+  .method public hidebysig instance bool 
+          CompareStringsByValue(string a,
+                                string b) cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  call       bool [mscorlib]System.String::op_Equality(string,
+                                                                   string)
+    IL_0008:  stloc.0
+    IL_0009:  br.s       IL_000b
+
+    IL_000b:  ldloc.0
+    IL_000c:  ret
+  } // end of method TypeAnalysisTests::CompareStringsByValue
+
+  .method public hidebysig instance bool 
+          CompareStringsByReference(string a,
+                                    string b) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  ceq
+    IL_0005:  stloc.0
+    IL_0006:  br.s       IL_0008
+
+    IL_0008:  ldloc.0
+    IL_0009:  ret
+  } // end of method TypeAnalysisTests::CompareStringsByReference
+
+  .method public hidebysig instance bool 
+          CompareStringWithNull(string a) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldnull
+    IL_0003:  ceq
+    IL_0005:  stloc.0
+    IL_0006:  br.s       IL_0008
+
+    IL_0008:  ldloc.0
+    IL_0009:  ret
+  } // end of method TypeAnalysisTests::CompareStringWithNull
 
   .method public hidebysig instance valuetype [mscorlib]System.Decimal 
           ImplicitConversionToDecimal(uint8 v) cil managed

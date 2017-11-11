@@ -215,6 +215,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return a == null;
 		}
 
+		public bool CompareStringsByValue(string a, string b)
+		{
+			return a == b;
+		}
+
+		public bool CompareStringsByReference(string a, string b)
+		{
+			return (object)a == b;
+		}
+
+		public bool CompareStringWithNull(string a)
+		{
+			return a == null;
+		}
+
 		public decimal ImplicitConversionToDecimal(byte v)
 		{
 			return v;
