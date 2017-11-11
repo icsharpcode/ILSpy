@@ -27,6 +27,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 	{
 		private class InstanceTests
 		{
+			public struct SomeData
+			{
+				public string Value;
+			}
+
 			public Action CaptureOfThis()
 			{
 				return delegate {
@@ -113,11 +118,24 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				});
 			}
 
+			public void Bug951c(SomeData data)
+			{
+				this.DoAction(delegate {
+					this.DoAction(delegate {
+						this.DoSomething(data.Value);
+					});
+				});
+			}
+
 			private void DoAction(Action action)
 			{
 			}
 
 			private void NoOp(int a)
+			{
+			}
+
+			private void DoSomething(string text)
 			{
 			}
 		}

@@ -31,14 +31,14 @@
   .ver 0:0:0:0
 }
 .module DelegateConstruction.dll
-// MVID: {FB18F278-AE87-4B57-9460-E08BF17BCEAB}
+// MVID: {6914DD72-BE03-4BA0-9025-522152E6E42F}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01630000
+// Image base: 0x010C0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -50,46 +50,18 @@
   .class auto ansi nested private beforefieldinit InstanceTests
          extends [mscorlib]System.Object
   {
-    .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass1_0'
-           extends [mscorlib]System.Object
+    .class sequential ansi sealed nested public beforefieldinit SomeData
+           extends [mscorlib]System.ValueType
     {
-      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-      .field public int32 a
-      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests '<>4__this'
-      .method public hidebysig specialname rtspecialname 
-              instance void  .ctor() cil managed
-      {
-        // Code size       8 (0x8)
-        .maxstack  8
-        IL_0000:  ldarg.0
-        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
-        IL_0006:  nop
-        IL_0007:  ret
-      } // end of method '<>c__DisplayClass1_0'::.ctor
-
-      .method assembly hidebysig instance void 
-              '<CaptureOfThisAndParameter>b__0'() cil managed
-      {
-        // Code size       20 (0x14)
-        .maxstack  8
-        IL_0000:  nop
-        IL_0001:  ldarg.0
-        IL_0002:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass1_0'::'<>4__this'
-        IL_0007:  ldarg.0
-        IL_0008:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass1_0'::a
-        IL_000d:  call       instance class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::CaptureOfThisAndParameter(int32)
-        IL_0012:  pop
-        IL_0013:  ret
-      } // end of method '<>c__DisplayClass1_0'::'<CaptureOfThisAndParameter>b__0'
-
-    } // end of class '<>c__DisplayClass1_0'
+      .field public string Value
+    } // end of class SomeData
 
     .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass2_0'
            extends [mscorlib]System.Object
     {
       .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-      .field public int32 item
-      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_1' 'CS$<>8__locals1'
+      .field public int32 a
+      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests '<>4__this'
       .method public hidebysig specialname rtspecialname 
               instance void  .ctor() cil managed
       {
@@ -102,45 +74,21 @@
       } // end of method '<>c__DisplayClass2_0'::.ctor
 
       .method assembly hidebysig instance void 
-              '<CaptureOfThisAndParameterInForEach>b__0'() cil managed
+              '<CaptureOfThisAndParameter>b__0'() cil managed
       {
-        // Code size       37 (0x25)
+        // Code size       20 (0x14)
         .maxstack  8
         IL_0000:  nop
         IL_0001:  ldarg.0
-        IL_0002:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::'CS$<>8__locals1'
-        IL_0007:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_1'::'<>4__this'
-        IL_000c:  ldarg.0
-        IL_000d:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::item
-        IL_0012:  ldarg.0
-        IL_0013:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::'CS$<>8__locals1'
-        IL_0018:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_1'::a
-        IL_001d:  add
-        IL_001e:  call       instance class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::CaptureOfThisAndParameter(int32)
-        IL_0023:  pop
-        IL_0024:  ret
-      } // end of method '<>c__DisplayClass2_0'::'<CaptureOfThisAndParameterInForEach>b__0'
+        IL_0002:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::'<>4__this'
+        IL_0007:  ldarg.0
+        IL_0008:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::a
+        IL_000d:  call       instance class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::CaptureOfThisAndParameter(int32)
+        IL_0012:  pop
+        IL_0013:  ret
+      } // end of method '<>c__DisplayClass2_0'::'<CaptureOfThisAndParameter>b__0'
 
     } // end of class '<>c__DisplayClass2_0'
-
-    .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass2_1'
-           extends [mscorlib]System.Object
-    {
-      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-      .field public int32 a
-      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests '<>4__this'
-      .method public hidebysig specialname rtspecialname 
-              instance void  .ctor() cil managed
-      {
-        // Code size       8 (0x8)
-        .maxstack  8
-        IL_0000:  ldarg.0
-        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
-        IL_0006:  nop
-        IL_0007:  ret
-      } // end of method '<>c__DisplayClass2_1'::.ctor
-
-    } // end of class '<>c__DisplayClass2_1'
 
     .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass3_0'
            extends [mscorlib]System.Object
@@ -158,6 +106,26 @@
         IL_0006:  nop
         IL_0007:  ret
       } // end of method '<>c__DisplayClass3_0'::.ctor
+
+      .method assembly hidebysig instance void 
+              '<CaptureOfThisAndParameterInForEach>b__0'() cil managed
+      {
+        // Code size       37 (0x25)
+        .maxstack  8
+        IL_0000:  nop
+        IL_0001:  ldarg.0
+        IL_0002:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::'CS$<>8__locals1'
+        IL_0007:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1'::'<>4__this'
+        IL_000c:  ldarg.0
+        IL_000d:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::item
+        IL_0012:  ldarg.0
+        IL_0013:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::'CS$<>8__locals1'
+        IL_0018:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1'::a
+        IL_001d:  add
+        IL_001e:  call       instance class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::CaptureOfThisAndParameter(int32)
+        IL_0023:  pop
+        IL_0024:  ret
+      } // end of method '<>c__DisplayClass3_0'::'<CaptureOfThisAndParameterInForEach>b__0'
 
     } // end of class '<>c__DisplayClass3_0'
 
@@ -180,12 +148,12 @@
 
     } // end of class '<>c__DisplayClass3_1'
 
-    .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass3_2'
+    .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass4_0'
            extends [mscorlib]System.Object
     {
       .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-      .field public int32 copyOfItem
-      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0' 'CS$<>8__locals2'
+      .field public int32 item
+      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_1' 'CS$<>8__locals1'
       .method public hidebysig specialname rtspecialname 
               instance void  .ctor() cil managed
       {
@@ -195,7 +163,45 @@
         IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
         IL_0006:  nop
         IL_0007:  ret
-      } // end of method '<>c__DisplayClass3_2'::.ctor
+      } // end of method '<>c__DisplayClass4_0'::.ctor
+
+    } // end of class '<>c__DisplayClass4_0'
+
+    .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass4_1'
+           extends [mscorlib]System.Object
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      .field public int32 a
+      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests '<>4__this'
+      .method public hidebysig specialname rtspecialname 
+              instance void  .ctor() cil managed
+      {
+        // Code size       8 (0x8)
+        .maxstack  8
+        IL_0000:  ldarg.0
+        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+        IL_0006:  nop
+        IL_0007:  ret
+      } // end of method '<>c__DisplayClass4_1'::.ctor
+
+    } // end of class '<>c__DisplayClass4_1'
+
+    .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass4_2'
+           extends [mscorlib]System.Object
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      .field public int32 copyOfItem
+      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0' 'CS$<>8__locals2'
+      .method public hidebysig specialname rtspecialname 
+              instance void  .ctor() cil managed
+      {
+        // Code size       8 (0x8)
+        .maxstack  8
+        IL_0000:  ldarg.0
+        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+        IL_0006:  nop
+        IL_0007:  ret
+      } // end of method '<>c__DisplayClass4_2'::.ctor
 
       .method assembly hidebysig instance void 
               '<CaptureOfThisAndParameterInForEachWithItemCopy>b__0'() cil managed
@@ -204,33 +210,33 @@
         .maxstack  8
         IL_0000:  nop
         IL_0001:  ldarg.0
-        IL_0002:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2'::'CS$<>8__locals2'
-        IL_0007:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::'CS$<>8__locals1'
-        IL_000c:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1'::'<>4__this'
+        IL_0002:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2'::'CS$<>8__locals2'
+        IL_0007:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0'::'CS$<>8__locals1'
+        IL_000c:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_1'::'<>4__this'
         IL_0011:  ldarg.0
-        IL_0012:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2'::'CS$<>8__locals2'
-        IL_0017:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::item
+        IL_0012:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2'::'CS$<>8__locals2'
+        IL_0017:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0'::item
         IL_001c:  ldarg.0
-        IL_001d:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2'::'CS$<>8__locals2'
-        IL_0022:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::'CS$<>8__locals1'
-        IL_0027:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1'::a
+        IL_001d:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2'::'CS$<>8__locals2'
+        IL_0022:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0'::'CS$<>8__locals1'
+        IL_0027:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_1'::a
         IL_002c:  add
         IL_002d:  ldarg.0
-        IL_002e:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2'::copyOfItem
+        IL_002e:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2'::copyOfItem
         IL_0033:  add
         IL_0034:  call       instance class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::CaptureOfThisAndParameter(int32)
         IL_0039:  pop
         IL_003a:  ret
-      } // end of method '<>c__DisplayClass3_2'::'<CaptureOfThisAndParameterInForEachWithItemCopy>b__0'
+      } // end of method '<>c__DisplayClass4_2'::'<CaptureOfThisAndParameterInForEachWithItemCopy>b__0'
 
-    } // end of class '<>c__DisplayClass3_2'
+    } // end of class '<>c__DisplayClass4_2'
 
     .class auto ansi serializable sealed nested private beforefieldinit '<>c'
            extends [mscorlib]System.Object
     {
       .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
       .field public static initonly class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c' '<>9'
-      .field public static class [mscorlib]System.Threading.ThreadStart '<>9__7_0'
+      .field public static class [mscorlib]System.Threading.ThreadStart '<>9__8_0'
       .method private hidebysig specialname rtspecialname static 
               void  .cctor() cil managed
       {
@@ -253,80 +259,15 @@
       } // end of method '<>c'::.ctor
 
       .method assembly hidebysig instance void 
-              '<Bug955>b__7_0'() cil managed
+              '<Bug955>b__8_0'() cil managed
       {
         // Code size       2 (0x2)
         .maxstack  8
         IL_0000:  nop
         IL_0001:  ret
-      } // end of method '<>c'::'<Bug955>b__7_0'
+      } // end of method '<>c'::'<Bug955>b__8_0'
 
     } // end of class '<>c'
-
-    .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass8_0'
-           extends [mscorlib]System.Object
-    {
-      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
-      .field public int32 amount
-      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests '<>4__this'
-      .method public hidebysig specialname rtspecialname 
-              instance void  .ctor() cil managed
-      {
-        // Code size       8 (0x8)
-        .maxstack  8
-        IL_0000:  ldarg.0
-        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
-        IL_0006:  nop
-        IL_0007:  ret
-      } // end of method '<>c__DisplayClass8_0'::.ctor
-
-      .method assembly hidebysig instance void 
-              '<Bug951>b__0'() cil managed
-      {
-        // Code size       48 (0x30)
-        .maxstack  3
-        .locals init (bool V_0)
-        IL_0000:  nop
-        IL_0001:  ldarg.0
-        IL_0002:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0'::amount
-        IL_0007:  ldc.i4.0
-        IL_0008:  clt
-        IL_000a:  stloc.0
-        IL_000b:  ldloc.0
-        IL_000c:  brfalse.s  IL_0017
-
-        IL_000e:  nop
-        IL_000f:  ldarg.0
-        IL_0010:  ldc.i4.0
-        IL_0011:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0'::amount
-        IL_0016:  nop
-        IL_0017:  ldarg.0
-        IL_0018:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0'::'<>4__this'
-        IL_001d:  ldarg.0
-        IL_001e:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0'::'<Bug951>b__1'()
-        IL_0024:  newobj     instance void [mscorlib]System.Action::.ctor(object,
-                                                                          native int)
-        IL_0029:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::DoAction(class [mscorlib]System.Action)
-        IL_002e:  nop
-        IL_002f:  ret
-      } // end of method '<>c__DisplayClass8_0'::'<Bug951>b__0'
-
-      .method assembly hidebysig instance void 
-              '<Bug951>b__1'() cil managed
-      {
-        // Code size       20 (0x14)
-        .maxstack  8
-        IL_0000:  nop
-        IL_0001:  ldarg.0
-        IL_0002:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0'::'<>4__this'
-        IL_0007:  ldarg.0
-        IL_0008:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0'::amount
-        IL_000d:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::NoOp(int32)
-        IL_0012:  nop
-        IL_0013:  ret
-      } // end of method '<>c__DisplayClass8_0'::'<Bug951>b__1'
-
-    } // end of class '<>c__DisplayClass8_0'
 
     .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass9_0'
            extends [mscorlib]System.Object
@@ -346,7 +287,7 @@
       } // end of method '<>c__DisplayClass9_0'::.ctor
 
       .method assembly hidebysig instance void 
-              '<Bug951b>b__0'() cil managed
+              '<Bug951>b__0'() cil managed
       {
         // Code size       48 (0x30)
         .maxstack  3
@@ -368,16 +309,16 @@
         IL_0017:  ldarg.0
         IL_0018:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::'<>4__this'
         IL_001d:  ldarg.0
-        IL_001e:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::'<Bug951b>b__1'()
+        IL_001e:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::'<Bug951>b__1'()
         IL_0024:  newobj     instance void [mscorlib]System.Action::.ctor(object,
                                                                           native int)
         IL_0029:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::DoAction(class [mscorlib]System.Action)
         IL_002e:  nop
         IL_002f:  ret
-      } // end of method '<>c__DisplayClass9_0'::'<Bug951b>b__0'
+      } // end of method '<>c__DisplayClass9_0'::'<Bug951>b__0'
 
       .method assembly hidebysig instance void 
-              '<Bug951b>b__1'() cil managed
+              '<Bug951>b__1'() cil managed
       {
         // Code size       20 (0x14)
         .maxstack  8
@@ -389,9 +330,126 @@
         IL_000d:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::NoOp(int32)
         IL_0012:  nop
         IL_0013:  ret
-      } // end of method '<>c__DisplayClass9_0'::'<Bug951b>b__1'
+      } // end of method '<>c__DisplayClass9_0'::'<Bug951>b__1'
 
     } // end of class '<>c__DisplayClass9_0'
+
+    .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass10_0'
+           extends [mscorlib]System.Object
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      .field public int32 amount
+      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests '<>4__this'
+      .method public hidebysig specialname rtspecialname 
+              instance void  .ctor() cil managed
+      {
+        // Code size       8 (0x8)
+        .maxstack  8
+        IL_0000:  ldarg.0
+        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+        IL_0006:  nop
+        IL_0007:  ret
+      } // end of method '<>c__DisplayClass10_0'::.ctor
+
+      .method assembly hidebysig instance void 
+              '<Bug951b>b__0'() cil managed
+      {
+        // Code size       48 (0x30)
+        .maxstack  3
+        .locals init (bool V_0)
+        IL_0000:  nop
+        IL_0001:  ldarg.0
+        IL_0002:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0'::amount
+        IL_0007:  ldc.i4.0
+        IL_0008:  clt
+        IL_000a:  stloc.0
+        IL_000b:  ldloc.0
+        IL_000c:  brfalse.s  IL_0017
+
+        IL_000e:  nop
+        IL_000f:  ldarg.0
+        IL_0010:  ldc.i4.0
+        IL_0011:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0'::amount
+        IL_0016:  nop
+        IL_0017:  ldarg.0
+        IL_0018:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0'::'<>4__this'
+        IL_001d:  ldarg.0
+        IL_001e:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0'::'<Bug951b>b__1'()
+        IL_0024:  newobj     instance void [mscorlib]System.Action::.ctor(object,
+                                                                          native int)
+        IL_0029:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::DoAction(class [mscorlib]System.Action)
+        IL_002e:  nop
+        IL_002f:  ret
+      } // end of method '<>c__DisplayClass10_0'::'<Bug951b>b__0'
+
+      .method assembly hidebysig instance void 
+              '<Bug951b>b__1'() cil managed
+      {
+        // Code size       20 (0x14)
+        .maxstack  8
+        IL_0000:  nop
+        IL_0001:  ldarg.0
+        IL_0002:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0'::'<>4__this'
+        IL_0007:  ldarg.0
+        IL_0008:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0'::amount
+        IL_000d:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::NoOp(int32)
+        IL_0012:  nop
+        IL_0013:  ret
+      } // end of method '<>c__DisplayClass10_0'::'<Bug951b>b__1'
+
+    } // end of class '<>c__DisplayClass10_0'
+
+    .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass11_0'
+           extends [mscorlib]System.Object
+    {
+      .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
+      .field public valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/SomeData data
+      .field public class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests '<>4__this'
+      .method public hidebysig specialname rtspecialname 
+              instance void  .ctor() cil managed
+      {
+        // Code size       8 (0x8)
+        .maxstack  8
+        IL_0000:  ldarg.0
+        IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+        IL_0006:  nop
+        IL_0007:  ret
+      } // end of method '<>c__DisplayClass11_0'::.ctor
+
+      .method assembly hidebysig instance void 
+              '<Bug951c>b__0'() cil managed
+      {
+        // Code size       26 (0x1a)
+        .maxstack  8
+        IL_0000:  nop
+        IL_0001:  ldarg.0
+        IL_0002:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass11_0'::'<>4__this'
+        IL_0007:  ldarg.0
+        IL_0008:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass11_0'::'<Bug951c>b__1'()
+        IL_000e:  newobj     instance void [mscorlib]System.Action::.ctor(object,
+                                                                          native int)
+        IL_0013:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::DoAction(class [mscorlib]System.Action)
+        IL_0018:  nop
+        IL_0019:  ret
+      } // end of method '<>c__DisplayClass11_0'::'<Bug951c>b__0'
+
+      .method assembly hidebysig instance void 
+              '<Bug951c>b__1'() cil managed
+      {
+        // Code size       25 (0x19)
+        .maxstack  8
+        IL_0000:  nop
+        IL_0001:  ldarg.0
+        IL_0002:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass11_0'::'<>4__this'
+        IL_0007:  ldarg.0
+        IL_0008:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/SomeData ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass11_0'::data
+        IL_000d:  ldfld      string ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/SomeData::Value
+        IL_0012:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::DoSomething(string)
+        IL_0017:  nop
+        IL_0018:  ret
+      } // end of method '<>c__DisplayClass11_0'::'<Bug951c>b__1'
+
+    } // end of class '<>c__DisplayClass11_0'
 
     .method public hidebysig instance class [mscorlib]System.Action 
             CaptureOfThis() cil managed
@@ -401,7 +459,7 @@
       .locals init (class [mscorlib]System.Action V_0)
       IL_0000:  nop
       IL_0001:  ldarg.0
-      IL_0002:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'<CaptureOfThis>b__0_0'()
+      IL_0002:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'<CaptureOfThis>b__1_0'()
       IL_0008:  newobj     instance void [mscorlib]System.Action::.ctor(object,
                                                                         native int)
       IL_000d:  stloc.0
@@ -416,19 +474,19 @@
     {
       // Code size       38 (0x26)
       .maxstack  2
-      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass1_0' V_0,
+      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0' V_0,
                class [mscorlib]System.Action V_1)
-      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass1_0'::.ctor()
+      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::.ctor()
       IL_0005:  stloc.0
       IL_0006:  ldloc.0
       IL_0007:  ldarg.0
-      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass1_0'::'<>4__this'
+      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::'<>4__this'
       IL_000d:  ldloc.0
       IL_000e:  ldarg.1
-      IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass1_0'::a
+      IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::a
       IL_0014:  nop
       IL_0015:  ldloc.0
-      IL_0016:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass1_0'::'<CaptureOfThisAndParameter>b__0'()
+      IL_0016:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::'<CaptureOfThisAndParameter>b__0'()
       IL_001c:  newobj     instance void [mscorlib]System.Action::.ctor(object,
                                                                         native int)
       IL_0021:  stloc.1
@@ -443,19 +501,19 @@
     {
       // Code size       121 (0x79)
       .maxstack  2
-      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_1' V_0,
+      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1' V_0,
                class [mscorlib]System.Collections.Generic.IEnumerator`1<int32> V_1,
-               class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0' V_2,
+               class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0' V_2,
                bool V_3,
                class [mscorlib]System.Action V_4)
-      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_1'::.ctor()
+      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1'::.ctor()
       IL_0005:  stloc.0
       IL_0006:  ldloc.0
       IL_0007:  ldarg.0
-      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_1'::'<>4__this'
+      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1'::'<>4__this'
       IL_000d:  ldloc.0
       IL_000e:  ldarg.1
-      IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_1'::a
+      IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1'::a
       IL_0014:  nop
       IL_0015:  nop
       IL_0016:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0> [System.Core]System.Linq.Enumerable::Empty<int32>()
@@ -465,18 +523,18 @@
       {
         IL_0021:  br.s       IL_005c
 
-        IL_0023:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::.ctor()
+        IL_0023:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::.ctor()
         IL_0028:  stloc.2
         IL_0029:  ldloc.2
         IL_002a:  ldloc.0
-        IL_002b:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::'CS$<>8__locals1'
+        IL_002b:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::'CS$<>8__locals1'
         IL_0030:  ldloc.2
         IL_0031:  ldloc.1
         IL_0032:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<int32>::get_Current()
-        IL_0037:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::item
+        IL_0037:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::item
         IL_003c:  nop
         IL_003d:  ldloc.2
-        IL_003e:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::item
+        IL_003e:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::item
         IL_0043:  ldc.i4.0
         IL_0044:  cgt
         IL_0046:  stloc.3
@@ -485,7 +543,7 @@
 
         IL_004a:  nop
         IL_004b:  ldloc.2
-        IL_004c:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass2_0'::'<CaptureOfThisAndParameterInForEach>b__0'()
+        IL_004c:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::'<CaptureOfThisAndParameterInForEach>b__0'()
         IL_0052:  newobj     instance void [mscorlib]System.Action::.ctor(object,
                                                                           native int)
         IL_0057:  stloc.s    V_4
@@ -522,20 +580,20 @@
     {
       // Code size       158 (0x9e)
       .maxstack  2
-      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1' V_0,
+      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_1' V_0,
                class [mscorlib]System.Collections.Generic.IEnumerator`1<int32> V_1,
-               class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0' V_2,
-               class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2' V_3,
+               class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0' V_2,
+               class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2' V_3,
                bool V_4,
                class [mscorlib]System.Action V_5)
-      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1'::.ctor()
+      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_1'::.ctor()
       IL_0005:  stloc.0
       IL_0006:  ldloc.0
       IL_0007:  ldarg.0
-      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1'::'<>4__this'
+      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_1'::'<>4__this'
       IL_000d:  ldloc.0
       IL_000e:  ldarg.1
-      IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1'::a
+      IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_1'::a
       IL_0014:  nop
       IL_0015:  nop
       IL_0016:  call       class [mscorlib]System.Collections.Generic.IEnumerable`1<!!0> [System.Core]System.Linq.Enumerable::Empty<int32>()
@@ -545,29 +603,29 @@
       {
         IL_0021:  br.s       IL_0081
 
-        IL_0023:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::.ctor()
+        IL_0023:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0'::.ctor()
         IL_0028:  stloc.2
         IL_0029:  ldloc.2
         IL_002a:  ldloc.0
-        IL_002b:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::'CS$<>8__locals1'
+        IL_002b:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_1' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0'::'CS$<>8__locals1'
         IL_0030:  ldloc.2
         IL_0031:  ldloc.1
         IL_0032:  callvirt   instance !0 class [mscorlib]System.Collections.Generic.IEnumerator`1<int32>::get_Current()
-        IL_0037:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::item
-        IL_003c:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2'::.ctor()
+        IL_0037:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0'::item
+        IL_003c:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2'::.ctor()
         IL_0041:  stloc.3
         IL_0042:  ldloc.3
         IL_0043:  ldloc.2
-        IL_0044:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2'::'CS$<>8__locals2'
+        IL_0044:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2'::'CS$<>8__locals2'
         IL_0049:  nop
         IL_004a:  ldloc.3
         IL_004b:  ldloc.3
-        IL_004c:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2'::'CS$<>8__locals2'
-        IL_0051:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::item
-        IL_0056:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2'::copyOfItem
+        IL_004c:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2'::'CS$<>8__locals2'
+        IL_0051:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0'::item
+        IL_0056:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2'::copyOfItem
         IL_005b:  ldloc.3
-        IL_005c:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2'::'CS$<>8__locals2'
-        IL_0061:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_0'::item
+        IL_005c:  ldfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2'::'CS$<>8__locals2'
+        IL_0061:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_0'::item
         IL_0066:  ldc.i4.0
         IL_0067:  cgt
         IL_0069:  stloc.s    V_4
@@ -576,7 +634,7 @@
 
         IL_006f:  nop
         IL_0070:  ldloc.3
-        IL_0071:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass3_2'::'<CaptureOfThisAndParameterInForEachWithItemCopy>b__0'()
+        IL_0071:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass4_2'::'<CaptureOfThisAndParameterInForEachWithItemCopy>b__0'()
         IL_0077:  newobj     instance void [mscorlib]System.Action::.ctor(object,
                                                                           native int)
         IL_007c:  stloc.s    V_5
@@ -623,7 +681,7 @@
       IL_0005:  nop
       IL_0006:  ldarg.0
       IL_0007:  ldarg.0
-      IL_0008:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'<LambdaInForLoop>b__4_0'()
+      IL_0008:  ldftn      instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::'<LambdaInForLoop>b__5_0'()
       IL_000e:  newobj     instance void class [mscorlib]System.Func`1<int32>::.ctor(object,
                                                                                      native int)
       IL_0013:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::Bar(class [mscorlib]System.Func`1<int32>)
@@ -673,17 +731,17 @@
       // Code size       39 (0x27)
       .maxstack  8
       IL_0000:  nop
-      IL_0001:  ldsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9__7_0'
+      IL_0001:  ldsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9__8_0'
       IL_0006:  dup
       IL_0007:  brtrue.s   IL_0020
 
       IL_0009:  pop
       IL_000a:  ldsfld     class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c' ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9'
-      IL_000f:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<Bug955>b__7_0'()
+      IL_000f:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<Bug955>b__8_0'()
       IL_0015:  newobj     instance void [mscorlib]System.Threading.ThreadStart::.ctor(object,
                                                                                        native int)
       IL_001a:  dup
-      IL_001b:  stsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9__7_0'
+      IL_001b:  stsfld     class [mscorlib]System.Threading.ThreadStart ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c'::'<>9__8_0'
       IL_0020:  newobj     instance void [mscorlib]System.Threading.Thread::.ctor(class [mscorlib]System.Threading.ThreadStart)
       IL_0025:  pop
       IL_0026:  ret
@@ -694,19 +752,19 @@
     {
       // Code size       41 (0x29)
       .maxstack  3
-      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0' V_0)
-      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0'::.ctor()
+      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0' V_0)
+      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::.ctor()
       IL_0005:  stloc.0
       IL_0006:  ldloc.0
       IL_0007:  ldarg.0
-      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0'::'<>4__this'
+      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::'<>4__this'
       IL_000d:  ldloc.0
       IL_000e:  ldarg.1
-      IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0'::amount
+      IL_000f:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::amount
       IL_0014:  nop
       IL_0015:  ldarg.0
       IL_0016:  ldloc.0
-      IL_0017:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass8_0'::'<Bug951>b__0'()
+      IL_0017:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::'<Bug951>b__0'()
       IL_001d:  newobj     instance void [mscorlib]System.Action::.ctor(object,
                                                                         native int)
       IL_0022:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::DoAction(class [mscorlib]System.Action)
@@ -719,26 +777,51 @@
     {
       // Code size       46 (0x2e)
       .maxstack  3
-      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0' V_0)
-      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::.ctor()
+      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0' V_0)
+      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0'::.ctor()
       IL_0005:  stloc.0
       IL_0006:  ldloc.0
       IL_0007:  ldarg.0
-      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::'<>4__this'
+      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0'::'<>4__this'
       IL_000d:  nop
       IL_000e:  ldloc.0
       IL_000f:  ldarg.0
       IL_0010:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::Foo()
-      IL_0015:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::amount
+      IL_0015:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0'::amount
       IL_001a:  ldarg.0
       IL_001b:  ldloc.0
-      IL_001c:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass9_0'::'<Bug951b>b__0'()
+      IL_001c:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass10_0'::'<Bug951b>b__0'()
       IL_0022:  newobj     instance void [mscorlib]System.Action::.ctor(object,
                                                                         native int)
       IL_0027:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::DoAction(class [mscorlib]System.Action)
       IL_002c:  nop
       IL_002d:  ret
     } // end of method InstanceTests::Bug951b
+
+    .method public hidebysig instance void 
+            Bug951c(valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/SomeData data) cil managed
+    {
+      // Code size       41 (0x29)
+      .maxstack  3
+      .locals init (class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass11_0' V_0)
+      IL_0000:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass11_0'::.ctor()
+      IL_0005:  stloc.0
+      IL_0006:  ldloc.0
+      IL_0007:  ldarg.0
+      IL_0008:  stfld      class ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass11_0'::'<>4__this'
+      IL_000d:  ldloc.0
+      IL_000e:  ldarg.1
+      IL_000f:  stfld      valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/SomeData ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass11_0'::data
+      IL_0014:  nop
+      IL_0015:  ldarg.0
+      IL_0016:  ldloc.0
+      IL_0017:  ldftn      instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests/'<>c__DisplayClass11_0'::'<Bug951c>b__0'()
+      IL_001d:  newobj     instance void [mscorlib]System.Action::.ctor(object,
+                                                                        native int)
+      IL_0022:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::DoAction(class [mscorlib]System.Action)
+      IL_0027:  nop
+      IL_0028:  ret
+    } // end of method InstanceTests::Bug951c
 
     .method private hidebysig instance void 
             DoAction(class [mscorlib]System.Action action) cil managed
@@ -758,6 +841,15 @@
       IL_0001:  ret
     } // end of method InstanceTests::NoOp
 
+    .method private hidebysig instance void 
+            DoSomething(string text) cil managed
+    {
+      // Code size       2 (0x2)
+      .maxstack  8
+      IL_0000:  nop
+      IL_0001:  ret
+    } // end of method InstanceTests::DoSomething
+
     .method public hidebysig specialname rtspecialname 
             instance void  .ctor() cil managed
     {
@@ -770,7 +862,7 @@
     } // end of method InstanceTests::.ctor
 
     .method private hidebysig instance void 
-            '<CaptureOfThis>b__0_0'() cil managed
+            '<CaptureOfThis>b__1_0'() cil managed
     {
       .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
       // Code size       9 (0x9)
@@ -780,10 +872,10 @@
       IL_0002:  call       instance class [mscorlib]System.Action ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::CaptureOfThis()
       IL_0007:  pop
       IL_0008:  ret
-    } // end of method InstanceTests::'<CaptureOfThis>b__0_0'
+    } // end of method InstanceTests::'<CaptureOfThis>b__1_0'
 
     .method private hidebysig instance int32 
-            '<LambdaInForLoop>b__4_0'() cil managed
+            '<LambdaInForLoop>b__5_0'() cil managed
     {
       .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
       // Code size       7 (0x7)
@@ -791,7 +883,7 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.DelegateConstruction/InstanceTests::Foo()
       IL_0006:  ret
-    } // end of method InstanceTests::'<LambdaInForLoop>b__4_0'
+    } // end of method InstanceTests::'<LambdaInForLoop>b__5_0'
 
   } // end of class InstanceTests
 

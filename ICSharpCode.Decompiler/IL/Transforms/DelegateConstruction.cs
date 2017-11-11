@@ -305,6 +305,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return;
 				var field = (IField)inst.Field.MemberDefinition;
 				if (!initValues.TryGetValue(field, out DisplayClassVariable info)) {
+					if (!translatedDisplayClasses.Contains(field.DeclaringTypeDefinition))
+						return;
 					var v = currentFunction.RegisterVariable(VariableKind.Local, field.Type, field.Name);
 					v.CaptureScope = captureScope;
 					inst.ReplaceWith(new LdLoca(v));
