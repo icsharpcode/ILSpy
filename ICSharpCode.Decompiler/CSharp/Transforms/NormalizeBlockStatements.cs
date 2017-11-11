@@ -67,6 +67,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			} else {
 				if (statement is BlockStatement b && b.Statements.Count == 1 && IsAllowed(b.Statements.First(), parent)) {
 					statement.ReplaceWith(b.Statements.First().Detach());
+				} else if (!IsAllowed(statement, parent)) {
+					InsertBlock(statement);
 				}
 			}
 		}
@@ -84,8 +86,9 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		bool IsAllowed(Statement statement, Statement parent)
 		{
 			switch (statement) {
-				case VariableDeclarationStatement vds:
 				case IfElseStatement ies:
+					return !(parent is IfElseStatement);
+				case VariableDeclarationStatement vds:
 				case WhileStatement ws:
 				case DoWhileStatement dws:
 				case SwitchStatement ss:
@@ -97,7 +100,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				case UsingStatement us:
 					return parent is UsingStatement;
 				default:
-					return true;
+					return !(parent?.Parent is IfElseStatement);
 			}
 		}
 
