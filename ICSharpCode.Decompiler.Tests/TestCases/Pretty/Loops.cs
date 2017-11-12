@@ -270,6 +270,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 		private IEnumerable<string> alternatives;
+		private object someObject;
 
 		private void TryGetItem(int id, out Item item)
 		{
@@ -671,6 +672,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Item item = null;
 				this.TryGetItem(ids[i], out item);
 				if (item == null) {
+					break;
+				}
+			}
+		}
+
+		public void ForeachLoopWithEarlyReturn(List<object> items)
+		{
+			foreach (object item in items) {
+				if ((this.someObject = item) == null) {
 					break;
 				}
 			}

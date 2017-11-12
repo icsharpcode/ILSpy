@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Loops.dll
-// MVID: {C5E69070-3D7F-4B1F-B9FD-172AC1104EF4}
+// MVID: {781CB7F6-E31A-4804-B6CA-CB8C7FDF34DA}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00D80000
+// Image base: 0x03730000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -568,7 +568,7 @@
 
   } // end of class Item
 
-  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass28_0'
+  .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass29_0'
          extends [mscorlib]System.Object
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
@@ -581,7 +581,7 @@
       IL_0000:  ldarg.0
       IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
       IL_0006:  ret
-    } // end of method '<>c__DisplayClass28_0'::.ctor
+    } // end of method '<>c__DisplayClass29_0'::.ctor
 
     .method assembly hidebysig instance bool 
             '<ForeachWithCapturedVariable>b__0'() cil managed
@@ -589,15 +589,16 @@
       // Code size       10 (0xa)
       .maxstack  8
       IL_0000:  ldarg.0
-      IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass28_0'::c
+      IL_0001:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass29_0'::c
       IL_0006:  ldc.i4.5
       IL_0007:  ceq
       IL_0009:  ret
-    } // end of method '<>c__DisplayClass28_0'::'<ForeachWithCapturedVariable>b__0'
+    } // end of method '<>c__DisplayClass29_0'::'<ForeachWithCapturedVariable>b__0'
 
-  } // end of class '<>c__DisplayClass28_0'
+  } // end of class '<>c__DisplayClass29_0'
 
   .field private class [mscorlib]System.Collections.Generic.IEnumerable`1<string> alternatives
+  .field private object someObject
   .method private hidebysig instance void 
           TryGetItem(int32 id,
                      [out] class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/Item& item) cil managed
@@ -1171,11 +1172,11 @@
       IL_0009:  ldloca.s   V_0
       IL_000b:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<int32>::get_Current()
       IL_0010:  stloc.1
-      IL_0011:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass28_0'::.ctor()
+      IL_0011:  newobj     instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass29_0'::.ctor()
       IL_0016:  dup
       IL_0017:  ldloc.1
-      IL_0018:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass28_0'::c
-      IL_001d:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass28_0'::'<ForeachWithCapturedVariable>b__0'()
+      IL_0018:  stfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass29_0'::c
+      IL_001d:  ldftn      instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/'<>c__DisplayClass29_0'::'<ForeachWithCapturedVariable>b__0'()
       IL_0023:  newobj     instance void class [mscorlib]System.Func`1<bool>::.ctor(object,
                                                                                     native int)
       IL_0028:  call       void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Operation(class [mscorlib]System.Func`1<bool>)
@@ -1737,13 +1738,13 @@
   .method public hidebysig instance void 
           ForLoopWithEarlyReturn(int32[] ids) cil managed
   {
-    // Code size       32 (0x20)
+    // Code size       31 (0x1f)
     .maxstack  3
     .locals init (int32 V_0,
              class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/Item V_1)
     IL_0000:  ldc.i4.0
     IL_0001:  stloc.0
-    IL_0002:  br.s       IL_0019
+    IL_0002:  br.s       IL_0018
 
     IL_0004:  ldnull
     IL_0005:  stloc.1
@@ -1755,22 +1756,65 @@
     IL_000c:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::TryGetItem(int32,
                                                                                                        class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/Item&)
     IL_0011:  ldloc.1
-    IL_0012:  brtrue.s   IL_0015
+    IL_0012:  brfalse.s  IL_001e
 
-    IL_0014:  ret
+    IL_0014:  ldloc.0
+    IL_0015:  ldc.i4.1
+    IL_0016:  add
+    IL_0017:  stloc.0
+    IL_0018:  ldloc.0
+    IL_0019:  ldarg.1
+    IL_001a:  ldlen
+    IL_001b:  conv.i4
+    IL_001c:  blt.s      IL_0004
 
-    IL_0015:  ldloc.0
-    IL_0016:  ldc.i4.1
-    IL_0017:  add
-    IL_0018:  stloc.0
-    IL_0019:  ldloc.0
-    IL_001a:  ldarg.1
-    IL_001b:  ldlen
-    IL_001c:  conv.i4
-    IL_001d:  blt.s      IL_0004
-
-    IL_001f:  ret
+    IL_001e:  ret
   } // end of method Loops::ForLoopWithEarlyReturn
+
+  .method public hidebysig instance void 
+          ForeachLoopWithEarlyReturn(class [mscorlib]System.Collections.Generic.List`1<object> items) cil managed
+  {
+    // Code size       57 (0x39)
+    .maxstack  3
+    .locals init (valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object> V_0,
+             object V_1,
+             object V_2)
+    IL_0000:  ldarg.1
+    IL_0001:  callvirt   instance valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!0> class [mscorlib]System.Collections.Generic.List`1<object>::GetEnumerator()
+    IL_0006:  stloc.0
+    .try
+    {
+      IL_0007:  br.s       IL_001f
+
+      IL_0009:  ldloca.s   V_0
+      IL_000b:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::get_Current()
+      IL_0010:  stloc.1
+      IL_0011:  ldarg.0
+      IL_0012:  ldloc.1
+      IL_0013:  dup
+      IL_0014:  stloc.2
+      IL_0015:  stfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::someObject
+      IL_001a:  ldloc.2
+      IL_001b:  brtrue.s   IL_001f
+
+      IL_001d:  leave.s    IL_0038
+
+      IL_001f:  ldloca.s   V_0
+      IL_0021:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::MoveNext()
+      IL_0026:  brtrue.s   IL_0009
+
+      IL_0028:  leave.s    IL_0038
+
+    }  // end .try
+    finally
+    {
+      IL_002a:  ldloca.s   V_0
+      IL_002c:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>
+      IL_0032:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0037:  endfinally
+    }  // end handler
+    IL_0038:  ret
+  } // end of method Loops::ForeachLoopWithEarlyReturn
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

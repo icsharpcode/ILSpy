@@ -86,6 +86,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			} else {
 				return false;
 			}
+			// Analyze conditions and decide whether to move some of them out of the condition block:
+			var conditions = new List<ILInstruction>();
+			SplitConditions(condition.Condition, conditions);
+			// Break apart conditions that could be a MoveNext call followed by a Current accessor call:
+			if (MightBeHeaderOfForEach(loop, conditions)) {
+				ifInstruction.Condition = conditions[0];
+				foreach (var cond in conditions.Skip(1).Reverse()) {
+					IfInstruction inst;
+					loopBody.Instructions.Insert(0, inst = new IfInstruction(Comp.LogicNot(cond), new Leave(loop)));
+					ExpressionTransforms.RunOnSingleStatment(inst, context);
+				}
+			}
 			// move the branch/leave instruction into the condition block
 			ifInstruction.FalseInst = loop.EntryPoint.Instructions[1];
 			loop.EntryPoint.Instructions.RemoveAt(1);
@@ -110,6 +122,23 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					loopBody.Instructions.Add(new Leave(loop));
 			}
 			return true;
+		}
+
+		bool MightBeHeaderOfForEach(BlockContainer loop, List<ILInstruction> conditions)
+		{
+			if (conditions.Count <= 1)
+				return false;
+			if (!(conditions[0] is CallInstruction moveNextCall && moveNextCall.Method.Name == "MoveNext"
+				&& conditions[1].Descendants.Any(IsGetCurrentCall)))
+				return false;
+			return loop.Parent?.Parent?.Parent is UsingInstruction;
+
+			bool IsGetCurrentCall(ILInstruction inst)
+			{
+				return inst is CallInstruction getterCall
+					&& getterCall.Method.IsAccessor
+					&& getterCall.Method.Name == "get_Current";
+			}
 		}
 
 		void SplitConditions(ILInstruction expression, List<ILInstruction> conditions)

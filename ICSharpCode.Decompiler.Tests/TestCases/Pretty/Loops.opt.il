@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly nk23jmlw
+.assembly iyvgltxy
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module nk23jmlw.dll
-// MVID: {AA004973-46E8-4F60-871C-9F7A919FE9EF}
+.module iyvgltxy.dll
+// MVID: {29F6B869-DC6A-4F23-A073-750A25BF2F78}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01190000
+// Image base: 0x01130000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -594,6 +594,7 @@
   } // end of class '<>c__DisplayClass1'
 
   .field private class [mscorlib]System.Collections.Generic.IEnumerable`1<string> alternatives
+  .field private object someObject
   .method private hidebysig instance void 
           TryGetItem(int32 id,
                      [out] class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/Item& item) cil managed
@@ -1818,6 +1819,49 @@
 
     IL_001f:  ret
   } // end of method Loops::ForLoopWithEarlyReturn
+
+  .method public hidebysig instance void 
+          ForeachLoopWithEarlyReturn(class [mscorlib]System.Collections.Generic.List`1<object> items) cil managed
+  {
+    // Code size       55 (0x37)
+    .maxstack  3
+    .locals init (object V_0,
+             valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object> V_1,
+             object V_2)
+    IL_0000:  ldarg.1
+    IL_0001:  callvirt   instance valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!0> class [mscorlib]System.Collections.Generic.List`1<object>::GetEnumerator()
+    IL_0006:  stloc.1
+    .try
+    {
+      IL_0007:  br.s       IL_001d
+
+      IL_0009:  ldloca.s   V_1
+      IL_000b:  call       instance !0 valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::get_Current()
+      IL_0010:  stloc.0
+      IL_0011:  ldarg.0
+      IL_0012:  ldloc.0
+      IL_0013:  dup
+      IL_0014:  stloc.2
+      IL_0015:  stfld      object ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::someObject
+      IL_001a:  ldloc.2
+      IL_001b:  brfalse.s  IL_0026
+
+      IL_001d:  ldloca.s   V_1
+      IL_001f:  call       instance bool valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>::MoveNext()
+      IL_0024:  brtrue.s   IL_0009
+
+      IL_0026:  leave.s    IL_0036
+
+    }  // end .try
+    finally
+    {
+      IL_0028:  ldloca.s   V_1
+      IL_002a:  constrained. valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<object>
+      IL_0030:  callvirt   instance void [mscorlib]System.IDisposable::Dispose()
+      IL_0035:  endfinally
+    }  // end handler
+    IL_0036:  ret
+  } // end of method Loops::ForeachLoopWithEarlyReturn
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
