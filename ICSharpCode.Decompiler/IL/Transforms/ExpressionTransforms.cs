@@ -34,7 +34,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	public class ExpressionTransforms : ILVisitor, IStatementTransform
 	{
 		internal StatementTransformContext context;
-		
+
+		public static void RunOnSingleStatment(ILInstruction statement, ILTransformContext context)
+		{
+			if (statement == null)
+				throw new ArgumentNullException(nameof(statement));
+			if (!(statement.Parent is Block parent))
+				throw new ArgumentException("ILInstruction must be a statement, i.e., direct child of a block.");
+			new ExpressionTransforms().Run(parent, statement.ChildIndex, new StatementTransformContext(new BlockTransformContext(context)));
+		}
+
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
 			this.context = context;

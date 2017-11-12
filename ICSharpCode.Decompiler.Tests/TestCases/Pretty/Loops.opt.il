@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly w2cet5qb
+.assembly nk23jmlw
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module w2cet5qb.dll
-// MVID: {F3696C2D-E180-4496-B78F-ACC7FD27833A}
+.module nk23jmlw.dll
+// MVID: {AA004973-46E8-4F60-871C-9F7A919FE9EF}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x04C90000
+// Image base: 0x01190000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -549,6 +549,21 @@
     } // end of property DataItem::Property
   } // end of class DataItem
 
+  .class auto ansi nested public beforefieldinit Item
+         extends [mscorlib]System.Object
+  {
+    .method public hidebysig specialname rtspecialname 
+            instance void  .ctor() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  8
+      IL_0000:  ldarg.0
+      IL_0001:  call       instance void [mscorlib]System.Object::.ctor()
+      IL_0006:  ret
+    } // end of method Item::.ctor
+
+  } // end of class Item
+
   .class auto ansi sealed nested private beforefieldinit '<>c__DisplayClass1'
          extends [mscorlib]System.Object
   {
@@ -579,6 +594,18 @@
   } // end of class '<>c__DisplayClass1'
 
   .field private class [mscorlib]System.Collections.Generic.IEnumerable`1<string> alternatives
+  .method private hidebysig instance void 
+          TryGetItem(int32 id,
+                     [out] class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/Item& item) cil managed
+  {
+    // Code size       4 (0x4)
+    .maxstack  8
+    IL_0000:  ldarg.2
+    IL_0001:  ldnull
+    IL_0002:  stind.ref
+    IL_0003:  ret
+  } // end of method Loops::TryGetItem
+
   .method private hidebysig static void  Operation(int32& item) cil managed
   {
     // Code size       1 (0x1)
@@ -1753,6 +1780,44 @@
     IL_0030:  pop
     IL_0031:  ret
   } // end of method Loops::ReturnFromDoWhileInTryFinally
+
+  .method public hidebysig instance void 
+          ForLoopWithEarlyReturn(int32[] ids) cil managed
+  {
+    // Code size       32 (0x20)
+    .maxstack  3
+    .locals init (int32 V_0,
+             class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/Item V_1)
+    IL_0000:  ldc.i4.0
+    IL_0001:  stloc.0
+    IL_0002:  br.s       IL_0019
+
+    IL_0004:  ldnull
+    IL_0005:  stloc.1
+    IL_0006:  ldarg.0
+    IL_0007:  ldarg.1
+    IL_0008:  ldloc.0
+    IL_0009:  ldelem.i4
+    IL_000a:  ldloca.s   V_1
+    IL_000c:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::TryGetItem(int32,
+                                                                                                       class ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops/Item&)
+    IL_0011:  ldloc.1
+    IL_0012:  brtrue.s   IL_0015
+
+    IL_0014:  ret
+
+    IL_0015:  ldloc.0
+    IL_0016:  ldc.i4.1
+    IL_0017:  add
+    IL_0018:  stloc.0
+    IL_0019:  ldloc.0
+    IL_001a:  ldarg.1
+    IL_001b:  ldlen
+    IL_001c:  conv.i4
+    IL_001d:  blt.s      IL_0004
+
+    IL_001f:  ret
+  } // end of method Loops::ForLoopWithEarlyReturn
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

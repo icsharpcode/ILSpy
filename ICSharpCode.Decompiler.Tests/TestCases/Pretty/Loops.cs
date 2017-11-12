@@ -264,7 +264,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
+		public class Item
+		{
+
+		}
+
 		private IEnumerable<string> alternatives;
+
+		private void TryGetItem(int id, out Item item)
+		{
+			item = null;
+		}
 
 		private static void Operation(ref int item)
 		{
@@ -653,6 +663,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 
 			Environment.GetCommandLineArgs();
+		}
+
+		public void ForLoopWithEarlyReturn(int[] ids)
+		{
+			for (int i = 0; i < ids.Length; i++) {
+				Item item = null;
+				this.TryGetItem(ids[i], out item);
+				if (item == null) {
+					break;
+				}
+			}
 		}
 	}
 }

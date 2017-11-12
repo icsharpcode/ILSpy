@@ -90,6 +90,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			ifInstruction.FalseInst = loop.EntryPoint.Instructions[1];
 			loop.EntryPoint.Instructions.RemoveAt(1);
 			loop.Kind = ContainerKind.While;
+			// Invert condition and unwrap nested block, if loop ends in a break or return statement preceeded by an IfInstruction.
+			while (loopBody.Instructions.Last() is Leave leave && loopBody.Instructions.SecondToLastOrDefault() is IfInstruction nestedIf && nestedIf.FalseInst.MatchNop()) {
+				switch (nestedIf.TrueInst) {
+					case Block nestedBlock:
+						loopBody.Instructions.RemoveAt(leave.ChildIndex);
+						loopBody.Instructions.AddRange(nestedBlock.Instructions);
+						break;
+					case Branch br:
+						leave.ReplaceWith(nestedIf.TrueInst);
+						break;
+					default:
+						return true;
+				}
+				nestedIf.Condition = Comp.LogicNot(nestedIf.Condition);
+				nestedIf.TrueInst = leave;
+				ExpressionTransforms.RunOnSingleStatment(nestedIf, context);
+				if (!loopBody.HasFlag(InstructionFlags.EndPointUnreachable))
+					loopBody.Instructions.Add(new Leave(loop));
+			}
 			return true;
 		}
 
@@ -130,7 +149,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				returnCondition.Condition = Comp.LogicNot(returnCondition.Condition);
 				returnCondition.TrueInst = leaveFunction;
 				// simplify the condition:
-				new ExpressionTransforms().Run(topLevelBlock, returnCondition.ChildIndex, new StatementTransformContext(new BlockTransformContext(context)));
+				ExpressionTransforms.RunOnSingleStatment(returnCondition, context);
 				topLevelBlock.Instructions.RemoveAt(returnCondition.ChildIndex + 1);
 				topLevelBlock.Instructions.AddRange(originalBlock.Instructions);
 				originalBlock = topLevelBlock;
@@ -174,7 +193,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// insert the combined conditions into the condition block:
 			conditionBlock.Instructions.Add(condition);
 			// simplify the condition:
-			new ExpressionTransforms().Run(conditionBlock, condition.ChildIndex, new StatementTransformContext(new BlockTransformContext(context)));
+			ExpressionTransforms.RunOnSingleStatment(condition, context);
 			// transform complete
 			loop.Kind = ContainerKind.DoWhile;
 			return true;
@@ -344,10 +363,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				context.Step("Transform to for loop", loop);
 				// split condition block:
 				whileCondition.ReplaceWith(forCondition);
-				new ExpressionTransforms().Run(loop.EntryPoint, forCondition.ChildIndex, new StatementTransformContext(new BlockTransformContext(context)));
+				ExpressionTransforms.RunOnSingleStatment(forCondition, context);
 				for (int i = conditions.Count - 1; i >= numberOfConditions; i--) {
-					whileLoopBody.Instructions.Insert(0, new IfInstruction(Comp.LogicNot(conditions[i]), new Leave(loop)));
-					new ExpressionTransforms().Run(whileLoopBody, 0, new StatementTransformContext(new BlockTransformContext(context)));
+					IfInstruction inst;
+					whileLoopBody.Instructions.Insert(0, inst = new IfInstruction(Comp.LogicNot(conditions[i]), new Leave(loop)));
+					ExpressionTransforms.RunOnSingleStatment(inst, context);
 				}
 				// create a new increment block and add it at the end:
 				int secondToLastIndex = secondToLast.ChildIndex;
