@@ -129,7 +129,7 @@ namespace ICSharpCode.Decompiler.IL
 
 		ILVariable CreateILVariable(Cil.VariableDefinition v)
 		{
-			VariableKind kind = v.IsPinned ? VariableKind.PinnedLocal : VariableKind.Local;
+			VariableKind kind = IsPinned(v.VariableType) ? VariableKind.PinnedLocal : VariableKind.Local;
 			ILVariable ilVar = new ILVariable(kind, typeSystem.Resolve(v.VariableType), v.Index);
 			if (!UseDebugSymbols || debugInfo == null || !debugInfo.TryGetName(v, out string name)) {
 				ilVar.Name = "V_" + v.Index;
@@ -141,6 +141,14 @@ namespace ICSharpCode.Decompiler.IL
 				ilVar.Name = name;
 			}
 			return ilVar;
+		}
+
+		bool IsPinned(TypeReference type)
+		{
+			while (type is OptionalModifierType || type is RequiredModifierType) {
+				type = ((TypeSpecification)type).ElementType;
+			}
+			return type is PinnedType;
 		}
 
 		ILVariable CreateILVariable(ParameterDefinition p)
@@ -1028,8 +1036,8 @@ namespace ICSharpCode.Decompiler.IL
 					// to a method expecting a native pointer.
 					inst = new Conv(inst, PrimitiveType.I, false, Sign.None);
 				} else if (expectedType == StackType.Ref) {
-					// implicitly start GC tracking
-					if (!inst.ResultType.IsIntegerType()) {
+					// implicitly start GC tracking / object to interior
+					if (!inst.ResultType.IsIntegerType() && inst.ResultType != StackType.O) {
 						// We also handle the invalid to-ref cases here because the else case
 						// below uses expectedType.ToKnownTypeCode(), which doesn't work for Ref.
 						Warn($"Expected {expectedType}, but got {inst.ResultType}");
@@ -1331,6 +1339,12 @@ namespace ICSharpCode.Decompiler.IL
 					condition = new Comp(
 						negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
 						Sign.None, condition, new LdcI8(0));
+					break;
+				case StackType.Ref:
+					// introduce explicit comparison with null ref
+					condition = new Comp(
+						negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
+						Sign.None, new Conv(condition, PrimitiveType.I, false, Sign.None), new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.None));
 					break;
 				default:
 					if (negate) {

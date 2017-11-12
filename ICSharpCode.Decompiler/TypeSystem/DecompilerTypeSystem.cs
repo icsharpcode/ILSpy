@@ -132,6 +132,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			if (typeReference == null)
 				return SpecialType.UnknownType;
+			// We need to skip SentinelType and PinnedType.
+			// But PinnedType can be nested within modopt, so we'll also skip those.
+			while (typeReference is OptionalModifierType || typeReference is RequiredModifierType) {
+				typeReference = ((TypeSpecification)typeReference).ElementType;
+			}
 			if (typeReference is SentinelType || typeReference is PinnedType) {
 				typeReference = ((TypeSpecification)typeReference).ElementType;
 			}

@@ -79,7 +79,15 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Used to convert unmanaged pointers to managed references.
 		/// </summary>
-		StartGCTracking
+		StartGCTracking,
+		/// <summary>
+		/// Converts from an object reference (O) to an interior pointer (Ref) pointing to the start of the object.
+		/// </summary>
+		/// <remarks>
+		/// C++/CLI emits "ldarg.1; stloc.0" where arg1 is a string and loc0 is "ref byte" (e.g. as part of the PtrToStringChars codegen);
+		/// we represent this type conversion explicitly in the ILAst.
+		/// </remarks>
+		ObjectInterior
 	}
 	
 	partial class Conv : UnaryInstruction, ILiftableInstruction
@@ -250,11 +258,15 @@ namespace ICSharpCode.Decompiler.IL
 							return ConversionKind.Invalid;
 					}
 				case PrimitiveType.Ref:
+					// There's no "conv.ref" in IL, but IL allows these conversions implicitly,
+					// whereas we represent them explicitly in the ILAst.
 					switch (inputType) {
 						case StackType.I4:
 						case StackType.I:
 						case StackType.I8:
 							return ConversionKind.StartGCTracking;
+						case StackType.O:
+							return ConversionKind.ObjectInterior;
 						default:
 							return ConversionKind.Invalid;
 					}

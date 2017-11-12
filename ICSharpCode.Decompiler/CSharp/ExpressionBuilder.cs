@@ -1236,8 +1236,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						var pointerType = new PointerType(((ByReferenceType)inputType).ElementType);
 						return arg.ConvertTo(pointerType, this).WithILInstruction(inst);
 					} else {
-						Debug.Fail("ConversionKind.StopGCTracking should only be used with managed references");
-						goto default;
+						// ConversionKind.StopGCTracking should only be used with managed references,
+						// but it's possible that we're supposed to stop tracking something we just started to track.
+						return arg;
 					}
 				case ConversionKind.SignExtend:
 					// We just need to ensure the input type before the conversion is signed.
