@@ -296,10 +296,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				parent = conv.Parent;
 			if (value <= 9)
 				return false;
-			if (value < long.MaxValue) {
-				if (!((value & (value - 1)) == 0 || (value & (value + 1)) == 0))
-					return false;
-			}
 			switch (parent) {
 				case BinaryNumericInstruction bni:
 					if (bni.Operator == BinaryNumericOperator.BitAnd

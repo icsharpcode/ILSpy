@@ -830,7 +830,11 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
 				var enumDec = new EnumMemberDeclaration { Name = field.Name };
-				if (previousValue + 1 != initValue || decompilationContext.CurrentTypeDefinition.Attributes.Any(a => a.AttributeType.FullName == "System.FlagsAttribute")) {
+				if (decompilationContext.CurrentTypeDefinition.Attributes.Any(a => a.AttributeType.FullName == "System.FlagsAttribute")) {
+					enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
+					if (enumDec.Initializer is PrimitiveExpression primitive && initValue > 9)
+						primitive.SetValue(initValue, $"0x{initValue:X}");
+				} else if (previousValue + 1 != initValue) {
 					enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
 					if (enumDec.Initializer is PrimitiveExpression primitive && initValue > 9 && ((initValue & (initValue - 1)) == 0 || (initValue & (initValue + 1)) == 0)) {
 						primitive.SetValue(initValue, $"0x{initValue:X}");
