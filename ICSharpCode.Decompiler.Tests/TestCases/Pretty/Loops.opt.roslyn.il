@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Loops.dll
-// MVID: {F193AB7E-127F-4EFE-9BF9-ADF41756C267}
+// MVID: {54789F7A-02C9-433E-A0D4-8F5763DBAB55}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03460000
+// Image base: 0x034F0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1671,6 +1671,41 @@
     IL_0076:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_007b:  ret
   } // end of method Loops::ForLoop
+
+  .method public hidebysig instance void 
+          ReturnFromDoWhileInTryFinally() cil managed
+  {
+    // Code size       50 (0x32)
+    .maxstack  2
+    .try
+    {
+      IL_0000:  ldarg.0
+      IL_0001:  ldstr      "return"
+      IL_0006:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+      IL_000b:  brfalse.s  IL_000f
+
+      IL_000d:  leave.s    IL_0031
+
+      IL_000f:  ldarg.0
+      IL_0010:  ldstr      "repeat"
+      IL_0015:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+      IL_001a:  brtrue.s   IL_0000
+
+      IL_001c:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+      IL_0021:  pop
+      IL_0022:  leave.s    IL_002b
+
+    }  // end .try
+    finally
+    {
+      IL_0024:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+      IL_0029:  pop
+      IL_002a:  endfinally
+    }  // end handler
+    IL_002b:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+    IL_0030:  pop
+    IL_0031:  ret
+  } // end of method Loops::ReturnFromDoWhileInTryFinally
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module Loops.dll
-// MVID: {8F6E41CD-7AE5-437C-BACB-4A672A0014D0}
+// MVID: {AF6A735F-62A4-480B-8A6B-50E8BB64AD30}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00C80000
+// Image base: 0x05400000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -2082,6 +2082,55 @@
     IL_009d:  nop
     IL_009e:  ret
   } // end of method Loops::ForLoop
+
+  .method public hidebysig instance void 
+          ReturnFromDoWhileInTryFinally() cil managed
+  {
+    // Code size       62 (0x3e)
+    .maxstack  2
+    .locals init (bool V_0,
+             bool V_1)
+    IL_0000:  nop
+    .try
+    {
+      IL_0001:  nop
+      IL_0002:  nop
+      IL_0003:  ldarg.0
+      IL_0004:  ldstr      "return"
+      IL_0009:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+      IL_000e:  stloc.0
+      IL_000f:  ldloc.0
+      IL_0010:  brfalse.s  IL_0015
+
+      IL_0012:  nop
+      IL_0013:  leave.s    IL_003d
+
+      IL_0015:  nop
+      IL_0016:  ldarg.0
+      IL_0017:  ldstr      "repeat"
+      IL_001c:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+      IL_0021:  stloc.1
+      IL_0022:  ldloc.1
+      IL_0023:  brtrue.s   IL_0002
+
+      IL_0025:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+      IL_002a:  pop
+      IL_002b:  nop
+      IL_002c:  leave.s    IL_0037
+
+    }  // end .try
+    finally
+    {
+      IL_002e:  nop
+      IL_002f:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+      IL_0034:  pop
+      IL_0035:  nop
+      IL_0036:  endfinally
+    }  // end handler
+    IL_0037:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+    IL_003c:  pop
+    IL_003d:  ret
+  } // end of method Loops::ReturnFromDoWhileInTryFinally
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

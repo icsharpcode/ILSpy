@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using ICSharpCode.Decompiler.Util;
@@ -109,7 +110,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		bool MatchDoWhileLoop(BlockContainer loop)
 		{
-			(List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split) = AnalyzeDoWhileConditions(loop);
+			(List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split, bool unwrap) = AnalyzeDoWhileConditions(loop);
 			// not a do-while loop, exit.
 			if (conditions == null || conditions.Count == 0)
 				return false;
@@ -117,6 +118,24 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			Block conditionBlock;
 			// first we remove all extracted instructions from the original block.
 			var originalBlock = (Block)exit.Parent;
+			if (unwrap) {
+				// we found a condition block nested in a condition that is followed by a return statement:
+				// we flip the condition and swap the blocks
+				Debug.Assert(originalBlock.Parent is IfInstruction);
+				var returnCondition = (IfInstruction)originalBlock.Parent;
+				var topLevelBlock = (Block)returnCondition.Parent;
+				Debug.Assert(topLevelBlock.Parent == loop);
+				var leaveFunction = topLevelBlock.Instructions[returnCondition.ChildIndex + 1];
+				Debug.Assert(leaveFunction.MatchReturn(out _));
+				returnCondition.Condition = Comp.LogicNot(returnCondition.Condition);
+				returnCondition.TrueInst = leaveFunction;
+				// simplify the condition:
+				new ExpressionTransforms().Run(topLevelBlock, returnCondition.ChildIndex, new StatementTransformContext(new BlockTransformContext(context)));
+				topLevelBlock.Instructions.RemoveAt(returnCondition.ChildIndex + 1);
+				topLevelBlock.Instructions.AddRange(originalBlock.Instructions);
+				originalBlock = topLevelBlock;
+				split = true;
+			}
 			originalBlock.Instructions.RemoveRange(originalBlock.Instructions.Count - conditions.Count - 1, conditions.Count + 1);
 			// we need to split the block:
 			if (split) {
@@ -161,22 +180,21 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return true;
 		}
 
-		static (List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split) AnalyzeDoWhileConditions(BlockContainer loop)
+		static (List<IfInstruction> conditions, ILInstruction exit, bool swap, bool split, bool unwrap) AnalyzeDoWhileConditions(BlockContainer loop)
 		{
-			bool swap;
 			// we iterate over all blocks from the bottom, because the entry-point
 			// should only be considered as condition block, if there are no other blocks.
 			foreach (var block in loop.Blocks.Reverse()) {
 				// first we match the end of the block:
-				if (MatchDoWhileConditionBlock(loop, block, out swap)) {
+				if (MatchDoWhileConditionBlock(loop, block, out bool swap, out bool unwrapCondtionBlock, out Block conditionBlock)) {
 					// now collect all instructions that are usable as loop conditions
-					var conditions = CollectConditions(loop, block, swap);
+					var conditions = CollectConditions(loop, conditionBlock, swap);
 					// split only if the block is either the entry-point or contains other instructions as well.
-					var split = block == loop.EntryPoint || block.Instructions.Count > conditions.Count + 1; // + 1 is the final leave/branch.
-					return (conditions, block.Instructions.Last(), swap, split);
+					var split = conditionBlock == loop.EntryPoint || conditionBlock.Instructions.Count > conditions.Count + 1; // + 1 is the final leave/branch.
+					return (conditions, conditionBlock.Instructions.Last(), swap, split, unwrapCondtionBlock);
 				}
 			}
-			return (null, null, false, false);
+			return (null, null, false, false, false);
 		}
 
 		/// <summary>
@@ -216,7 +234,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		static bool MatchDoWhileConditionBlock(BlockContainer loop, Block block, out bool swapBranches)
+		static bool MatchDoWhileConditionBlock(BlockContainer loop, Block block, out bool swapBranches, out bool unwrapCondtionBlock, out Block conditionBlock)
 		{
 			// match the end of the block:
 			// if (condition) branch entry-point else nop
@@ -225,6 +243,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// if (condition) leave loop else nop
 			// branch entry-point
 			swapBranches = false;
+			unwrapCondtionBlock = false;
+			conditionBlock = block;
 			// empty block?
 			if (block.Instructions.Count < 2)
 				return false;
@@ -233,6 +253,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			// no IfInstruction or already transformed?
 			if (ifInstruction == null || !ifInstruction.FalseInst.MatchNop())
 				return false;
+			// the block ends in a return statement preceeded by an IfInstruction
+			// take a look at the nested block and check if that might be a condition block
+			if (last.MatchReturn(out _) && ifInstruction.TrueInst is Block nestedConditionBlock) {
+				if (nestedConditionBlock.Instructions.Count < 2)
+					return false;
+				last = nestedConditionBlock.Instructions.Last();
+				ifInstruction = nestedConditionBlock.Instructions.SecondToLastOrDefault() as IfInstruction;
+				if (ifInstruction == null || !ifInstruction.FalseInst.MatchNop())
+					return false;
+				unwrapCondtionBlock = true;
+				conditionBlock = nestedConditionBlock;
+			}
 			// if the last instruction is a branch
 			// we assume the branch instructions need to be swapped.
 			if (last.MatchBranch(loop.EntryPoint))

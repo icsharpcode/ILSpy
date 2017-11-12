@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly dky1g03y
+.assembly fawxdzyv
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module dky1g03y.dll
-// MVID: {4ADF70C5-8EC0-41AF-A9B1-6DF95B943C1A}
+.module fawxdzyv.dll
+// MVID: {8B0E086E-9CF4-420F-8491-C1950C43B6C0}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03580000
+// Image base: 0x03590000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -2214,6 +2214,58 @@
     IL_009f:  nop
     IL_00a0:  ret
   } // end of method Loops::ForLoop
+
+  .method public hidebysig instance void 
+          ReturnFromDoWhileInTryFinally() cil managed
+  {
+    // Code size       67 (0x43)
+    .maxstack  2
+    .locals init (bool V_0)
+    IL_0000:  nop
+    .try
+    {
+      IL_0001:  nop
+      IL_0002:  nop
+      IL_0003:  ldarg.0
+      IL_0004:  ldstr      "return"
+      IL_0009:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+      IL_000e:  ldc.i4.0
+      IL_000f:  ceq
+      IL_0011:  stloc.0
+      IL_0012:  ldloc.0
+      IL_0013:  brtrue.s   IL_0018
+
+      IL_0015:  nop
+      IL_0016:  leave.s    IL_0041
+
+      IL_0018:  nop
+      IL_0019:  ldarg.0
+      IL_001a:  ldstr      "repeat"
+      IL_001f:  call       instance bool ICSharpCode.Decompiler.Tests.TestCases.Pretty.Loops::Condition(string)
+      IL_0024:  stloc.0
+      IL_0025:  ldloc.0
+      IL_0026:  brtrue.s   IL_0002
+
+      IL_0028:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+      IL_002d:  pop
+      IL_002e:  nop
+      IL_002f:  leave.s    IL_003a
+
+    }  // end .try
+    finally
+    {
+      IL_0031:  nop
+      IL_0032:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+      IL_0037:  pop
+      IL_0038:  nop
+      IL_0039:  endfinally
+    }  // end handler
+    IL_003a:  nop
+    IL_003b:  call       string[] [mscorlib]System.Environment::GetCommandLineArgs()
+    IL_0040:  pop
+    IL_0041:  nop
+    IL_0042:  ret
+  } // end of method Loops::ReturnFromDoWhileInTryFinally
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

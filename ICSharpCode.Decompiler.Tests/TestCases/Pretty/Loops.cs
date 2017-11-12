@@ -637,5 +637,22 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 			Console.WriteLine("End of method");
 		}
+
+		public void ReturnFromDoWhileInTryFinally()
+		{
+			try {
+				do {
+					if (this.Condition("return")) {
+						return;
+					}
+				} while (this.Condition("repeat"));
+
+				Environment.GetCommandLineArgs();
+			} finally {
+				Environment.GetCommandLineArgs();
+			}
+
+			Environment.GetCommandLineArgs();
+		}
 	}
 }
