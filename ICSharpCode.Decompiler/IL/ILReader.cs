@@ -1015,21 +1015,29 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			ILInstruction inst = Pop();
 			if (expectedType != inst.ResultType) {
-				if (expectedType == StackType.I && inst.ResultType == StackType.I4) {
+				if (inst is InvalidExpression) {
+					((InvalidExpression)inst).ExpectedResultType = expectedType;
+				} else if (expectedType == StackType.I && inst.ResultType == StackType.I4) {
 					// IL allows implicit I4->I conversions
 					inst = new Conv(inst, PrimitiveType.I, false, Sign.None);
 				} else if (expectedType == StackType.I4 && inst.ResultType == StackType.I) {
 					// C++/CLI also sometimes implicitly converts in the other direction:
 					inst = new Conv(inst, PrimitiveType.I4, false, Sign.None);
-				} else if (expectedType == StackType.Ref && inst.ResultType == StackType.I) {
-					// implicitly start GC tracking
 				} else if (expectedType == StackType.I && inst.ResultType == StackType.Ref) {
 					// Implicitly stop GC tracking; this occurs when passing the result of 'ldloca' or 'ldsflda'
 					// to a method expecting a native pointer.
-				} else if (inst is InvalidExpression) {
-					((InvalidExpression)inst).ExpectedResultType = expectedType;
+					inst = new Conv(inst, PrimitiveType.I, false, Sign.None);
+				} else if (expectedType == StackType.Ref) {
+					// implicitly start GC tracking
+					if (!inst.ResultType.IsIntegerType()) {
+						// We also handle the invalid to-ref cases here because the else case
+						// below uses expectedType.ToKnownTypeCode(), which doesn't work for Ref.
+						Warn($"Expected {expectedType}, but got {inst.ResultType}");
+					}
+					inst = new Conv(inst, PrimitiveType.Ref, false, Sign.None);
 				} else {
 					Warn($"Expected {expectedType}, but got {inst.ResultType}");
+					inst = new Conv(inst, expectedType.ToKnownTypeCode().ToPrimitiveType(), false, Sign.None);
 				}
 			}
 			return inst;

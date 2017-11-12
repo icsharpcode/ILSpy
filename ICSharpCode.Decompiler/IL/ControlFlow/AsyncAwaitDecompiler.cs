@@ -903,7 +903,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				}
 			}
 			// if there's any remaining loads (there shouldn't be), replace them with the constant 1
-			foreach (LdLoc load in doFinallyBodies.LoadInstructions) {
+			foreach (LdLoc load in doFinallyBodies.LoadInstructions.ToArray()) {
 				load.ReplaceWith(new LdcI4(1) { ILRange = load.ILRange });
 			}
 			context.StepEndGroup(keepIfEmpty: true);
@@ -914,7 +914,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			if (body == null)
 				return null;
 			Block entryPoint = body.EntryPoint;
-			while (entryPoint.Instructions[0].MatchBranch(out var targetBlock) && targetBlock.IncomingEdgeCount == 1) {
+			while (entryPoint.Instructions[0].MatchBranch(out var targetBlock) && targetBlock.IncomingEdgeCount == 1 && targetBlock.Parent == body) {
 				entryPoint = targetBlock;
 			}
 			return entryPoint;

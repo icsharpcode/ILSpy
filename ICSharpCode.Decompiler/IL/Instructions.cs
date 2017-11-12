@@ -2264,12 +2264,6 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 		
-		internal override void CheckInvariant(ILPhase phase)
-		{
-			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
-			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
-		}
 		public static readonly SlotInfo ValueSlot = new SlotInfo("Value", canInlineInto: true);
 		ILInstruction value;
 		public ILInstruction Value {
@@ -2317,8 +2311,6 @@ namespace ICSharpCode.Decompiler.IL
 			clone.Value = this.value.Clone();
 			return clone;
 		}
-		/// <summary>If true, this stloc represents a stack type adjustment. This field is only used in ILReader and BlockBuilder, and should be ignored by ILAst transforms.</summary>
-		internal bool IsStackAdjustment;
 		public override StackType ResultType { get { return variable.StackType; } }
 		protected override InstructionFlags ComputeFlags()
 		{

@@ -313,8 +313,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		static bool IsNullOrZero(ILInstruction inst)
 		{
-			var conv = inst as Conv;
-			if (conv != null) {
+			while (inst is Conv conv) {
 				inst = conv.Argument;
 			}
 			return inst.MatchLdcI4(0) || inst.MatchLdNull();

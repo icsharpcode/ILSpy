@@ -110,6 +110,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return false;
 			if (v.LoadCount > 1 || v.LoadCount + v.AddressCount != 1)
 				return false;
+			// TODO: inlining of small integer types might be semantically incorrect,
+			// but we can't avoid it this easily without breaking lots of tests.
+			//if (v.Type.IsSmallIntegerType())
+			//	return false; // stloc might perform implicit truncation
 			return InlineOne(stloc, aggressive, context);
 		}
 		

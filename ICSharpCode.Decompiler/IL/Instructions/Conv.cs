@@ -75,7 +75,11 @@ namespace ICSharpCode.Decompiler.IL
 		/// <summary>
 		/// Used to convert managed references/objects to unmanaged pointers.
 		/// </summary>
-		StopGCTracking
+		StopGCTracking,
+		/// <summary>
+		/// Used to convert unmanaged pointers to managed references.
+		/// </summary>
+		StartGCTracking
 	}
 	
 	partial class Conv : UnaryInstruction, ILiftableInstruction
@@ -242,6 +246,15 @@ namespace ICSharpCode.Decompiler.IL
 							return ConversionKind.IntToFloat;
 						case StackType.F:
 							return ConversionKind.FloatPrecisionChange;
+						default:
+							return ConversionKind.Invalid;
+					}
+				case PrimitiveType.Ref:
+					switch (inputType) {
+						case StackType.I4:
+						case StackType.I:
+						case StackType.I8:
+							return ConversionKind.StartGCTracking;
 						default:
 							return ConversionKind.Invalid;
 					}

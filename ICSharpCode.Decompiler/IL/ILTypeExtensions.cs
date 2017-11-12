@@ -41,6 +41,7 @@ namespace ICSharpCode.Decompiler.IL
 				case MetadataType.IntPtr:
 				case MetadataType.UIntPtr:
 				case MetadataType.Pointer:
+				case MetadataType.FunctionPointer:
 					return StackType.I;
 				case MetadataType.Single:
 				case MetadataType.Double:
@@ -82,10 +83,10 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		
 		/// <summary>
-		/// Gets whether the type is a small integer type.
-		/// Small integer types are:
-		/// * bool, sbyte, byte, char, short, ushort
-		/// * any enums that have a small integer type as underlying type
+		/// Gets the size in bytes of the primitive type.
+		/// 
+		/// Returns 0 for non-primitive types.
+		/// Returns <c>NativeIntSize</c> for native int/references.
 		/// </summary>
 		public static int GetSize(this PrimitiveType type)
 		{
@@ -106,6 +107,7 @@ namespace ICSharpCode.Decompiler.IL
 					return 8;
 				case PrimitiveType.I:
 				case PrimitiveType.U:
+				case PrimitiveType.Ref:
 					return TypeUtils.NativeIntSize;
 				default:
 					return 0;

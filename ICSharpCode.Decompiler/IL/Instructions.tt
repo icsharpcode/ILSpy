@@ -53,7 +53,7 @@
 			MatchCondition("Patterns.ListMatch.DoMatch(this.Blocks, o.Blocks, ref match)")),
 		new OpCode("Block", "A block of IL instructions.",
 			CustomConstructor, CustomVariableName("block"),
-			MatchCondition("this.Type == o.Type"),
+			MatchCondition("this.Kind == o.Kind"),
 			MatchCondition("Patterns.ListMatch.DoMatch(this.Instructions, o.Instructions, ref match)"),
 			MatchCondition("this.FinalInstruction.PerformMatch(o.FinalInstruction, ref match)")),
 		new OpCode("PinnedRegion", "A region where a pinned variable is used (initial representation of future fixed statement).",
@@ -152,10 +152,7 @@
 			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand("Address")),
 		new OpCode("stloc", "Stores a value into a local variable. (IL: starg/stloc)" + Environment.NewLine
 				+ "Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value, sign/zero extended back to I4 based on variable.Type.GetSign())",
-			CustomClassName("StLoc"), HasVariableOperand("Store"), CustomArguments("value"),
-			AdditionalMember(
-				"/// <summary>If true, this stloc represents a stack type adjustment. This field is only used in ILReader and BlockBuilder, and should be ignored by ILAst transforms.</summary>" + Environment.NewLine
-				+ "internal bool IsStackAdjustment;"),
+			CustomClassName("StLoc"), HasVariableOperand("Store", generateCheckInvariant: false), CustomArguments("value"),
 			ResultType("variable.StackType")),
 		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
 			CustomClassName("AddressOf"), CustomArguments("value"), ResultType("Ref")),

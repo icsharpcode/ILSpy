@@ -68,6 +68,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		static bool CanPerformCopyPropagation(ILVariable target, ILInstruction value)
 		{
+			Debug.Assert(target.StackType == value.ResultType);
+			if (target.Type.IsSmallIntegerType())
+				return false;
 			switch (value.OpCode) {
 				case OpCode.LdLoca:
 //				case OpCode.LdElema:

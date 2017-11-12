@@ -59,6 +59,9 @@ namespace ICSharpCode.Decompiler.CSharp
 	///        the C# type of the resulting expression shall be Nullable{T}, where T is an integer type (as above).
 	///        The C# value shall be null iff the IL-level value evaluates to null, and otherwise the values shall correspond
 	///        as with non-lifted integer operations.
+	///      * If the IL instruction evaluates to a managed reference (Ref) created by starting tracking of an unmanaged reference,
+	///        the C# instruction may evaluate to any integral/enum/pointer type that when converted to pointer type
+	///        is equivalent to the managed reference.
 	///      * Otherwise, the C# type of the resulting expression shall match the IL stack type,
 	///        and the evaluated values shall be the same.
 	/// </remarks>
@@ -143,6 +146,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					} else {
 						Debug.Assert(underlying.GetStackType() == liftable.UnderlyingResultType);
 					}
+				} else if (inst.ResultType == StackType.Ref) {
+					Debug.Assert(cexpr.Type.GetStackType() == StackType.Ref || cexpr.Type.GetStackType().IsIntegerType());
 				} else {
 					Debug.Assert(cexpr.Type.GetStackType() == inst.ResultType);
 				}
@@ -1220,6 +1225,11 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 			
 			switch (inst.Kind) {
+				case ConversionKind.StartGCTracking:
+					// A "start gc tracking" conversion is inserted in the ILAst whenever
+					// some instruction expects a managed pointer, but we pass an unmanaged pointer.
+					// We'll leave the C#-level conversion (from T* to ref T) to the consumer that expects the managed pointer.
+					return arg;
 				case ConversionKind.StopGCTracking:
 					if (inputType.Kind == TypeKind.ByReference) {
 						// cast to corresponding pointer type:

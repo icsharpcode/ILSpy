@@ -16,25 +16,24 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using Mono.Cecil;
+using System.Diagnostics;
 
 namespace ICSharpCode.Decompiler.IL
 {
-	public enum PrimitiveType : byte
+	partial class StLoc
 	{
-		None = 0,
-		I1 = MetadataType.SByte,
-		I2 = MetadataType.Int16,
-		I4 = MetadataType.Int32,
-		I8 = MetadataType.Int64,
-		R4 = MetadataType.Single,
-		R8 = MetadataType.Double,
-		U1 = MetadataType.Byte,
-		U2 = MetadataType.UInt16,
-		U4 = MetadataType.UInt32,
-		U8 = MetadataType.UInt64,
-		I = MetadataType.IntPtr,
-		U = MetadataType.UIntPtr,
-		Ref = MetadataType.ByReference
+		/// <summary>
+		/// If true, this stloc represents a stack type adjustment.
+		/// This field is only used in ILReader and BlockBuilder, and should be ignored by ILAst transforms.
+		/// </summary>
+		internal bool IsStackAdjustment;
+
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
+			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
+			Debug.Assert(value.ResultType == variable.StackType);
+		}
 	}
 }
