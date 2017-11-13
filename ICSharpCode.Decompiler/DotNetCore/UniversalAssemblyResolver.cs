@@ -13,7 +13,6 @@ namespace ICSharpCode.Decompiler
 		readonly bool throwOnError;
 		readonly string mainAssemblyFileName;
 		readonly string baseDirectory;
-		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences;
 		readonly List<string> directories = new List<string>();
 		readonly List<string> gac_paths = GetGacPaths();
 
@@ -78,7 +77,7 @@ namespace ICSharpCode.Decompiler
 						return ResolveInternal(name, parameters);
 					if (dotNetCorePathFinder == null) {
 						var version = targetFramework[1].Length == 3 ? targetFramework[1] + ".0" : targetFramework[1];
-						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, TargetFramework, version, this.loadedAssemblyReferences);
+						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, TargetFramework, version);
 					}
 					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
 					if (file == null)
