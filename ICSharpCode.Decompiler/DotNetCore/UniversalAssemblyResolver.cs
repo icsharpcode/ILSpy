@@ -37,7 +37,7 @@ namespace ICSharpCode.Decompiler
 
 		public string TargetFramework { get; set; }
 
-		private UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError)
+		protected UniversalAssemblyResolver(string mainAssemblyFileName, bool throwOnError)
 		{
 			this.mainAssemblyFileName = mainAssemblyFileName;
 			this.baseDirectory = Path.GetDirectoryName(mainAssemblyFileName);

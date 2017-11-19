@@ -243,8 +243,14 @@ namespace ICSharpCode.ILSpy
 			return assemblyList.assemblyLookupCache.GetOrAdd(fullName, LookupReferencedAssemblyInternal);
 		}
 
-		DotNetCorePathFinder dotNetCorePathFinder;
-		
+		class MyUniversalResolver : UniversalAssemblyResolver
+		{
+			public MyUniversalResolver(LoadedAssembly assembly)
+				: base(assembly.FileName, false)
+			{
+			}
+		}
+
 		LoadedAssembly LookupReferencedAssemblyInternal(string fullName)
 		{
 			foreach (LoadedAssembly asm in assemblyList.GetAssemblies()) {
@@ -260,33 +266,13 @@ namespace ICSharpCode.ILSpy
 				return (LoadedAssembly)App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Func<string, LoadedAssembly>(LookupReferencedAssembly), fullName);
 			}
 
-			var targetFramework = TargetFrameworkId.Split(new[] { ",Version=v" }, StringSplitOptions.None);
+			var resolver = new MyUniversalResolver(this) { TargetFramework = TargetFrameworkId };
 			var name = AssemblyNameReference.Parse(fullName);
-			string file = null;
-			switch (targetFramework[0]) {
-				case ".NETCoreApp":
-				case ".NETStandard":
-					if (targetFramework.Length != 2) break;
-					if (dotNetCorePathFinder == null) {
-						var version = targetFramework[1].Length == 3 ? targetFramework[1] + ".0" : targetFramework[1];
-						dotNetCorePathFinder = new DotNetCorePathFinder(fileName, TargetFrameworkId, version, this.loadedAssemblyReferences);
-					}
-					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
-					break;
-				default:
-					file = GacInterop.FindAssemblyInNetGac(name);
-					break;
-			}
-			if (file == null) {
-				string dir = Path.GetDirectoryName(this.fileName);
-				if (File.Exists(Path.Combine(dir, name.Name + ".dll")))
-					file = Path.Combine(dir, name.Name + ".dll");
-				else if (File.Exists(Path.Combine(dir, name.Name + ".exe")))
-					file = Path.Combine(dir, name.Name + ".exe");
-			}
+			var file = resolver.Resolve(name);
+
 			if (file != null) {
-				loadedAssemblyReferences.AddMessage(fullName, MessageKind.Info, "Success - Loading from: " + file);
-				return assemblyList.OpenAssembly(file, true);
+				loadedAssemblyReferences.AddMessage(fullName, MessageKind.Info, "Success - Loading from: " + file.MainModule.FileName);
+				return assemblyList.OpenAssembly(file.MainModule.FileName, true);
 			} else {
 				loadedAssemblyReferences.AddMessage(fullName, MessageKind.Error, "Could not find reference: " + fullName);
 				return null;
