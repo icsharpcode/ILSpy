@@ -61,7 +61,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			currentFieldNames = function.CecilMethod.DeclaringType.Fields.Select(f => f.Name).ToArray();
 			reservedVariableNames = new Dictionary<string, int>();
 			loopCounters = CollectLoopCounters(function);
-			foreach (var p in function.Descendants.OfType<ILFunction>().Select(f => f.Method).SelectMany(m => m.Parameters))
+			foreach (var p in function.Descendants.OfType<ILFunction>().SelectMany(f => f.Variables).Where(v => v.Kind == VariableKind.Parameter))
 				AddExistingName(reservedVariableNames, p.Name);
 			foreach (ILFunction f in function.Descendants.OfType<ILFunction>().Reverse()) {
 				PerformAssignment(f);

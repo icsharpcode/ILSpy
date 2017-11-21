@@ -61,11 +61,27 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IType AsyncReturnType;
 
+		public bool IsExpressionTree;
+
+		public readonly IType ReturnType;
+
+		public readonly IList<IParameter> Parameters;
+
 		public ILFunction(IMethod method, MethodDefinition cecilMethod, ILInstruction body) : base(OpCode.ILFunction)
 		{
 			this.Body = body;
 			this.Method = method;
 			this.CecilMethod = cecilMethod;
+			this.ReturnType = Method.ReturnType;
+			this.Parameters = Method.Parameters;
+			this.Variables = new ILVariableCollection(this);
+		}
+
+		public ILFunction(IType returnType, IList<IParameter> parameters, ILInstruction body) : base(OpCode.ILFunction)
+		{
+			this.Body = body;
+			this.ReturnType = returnType;
+			this.Parameters = parameters;
 			this.Variables = new ILVariableCollection(this);
 		}
 

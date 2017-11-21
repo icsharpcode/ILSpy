@@ -35,16 +35,16 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		internal readonly ExpressionBuilder exprBuilder;
 		readonly ILFunction currentFunction;
-		readonly IMethod currentMethod;
+		readonly IDecompilerTypeSystem typeSystem;
 		readonly DecompilerSettings settings;
 		readonly CancellationToken cancellationToken;
 
-		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, IMethod currentMethod, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
+		public StatementBuilder(IDecompilerTypeSystem typeSystem, ITypeResolveContext decompilationContext, ILFunction currentFunction, DecompilerSettings settings, CancellationToken cancellationToken)
 		{
-			Debug.Assert(typeSystem != null && decompilationContext != null && currentMethod != null);
+			Debug.Assert(typeSystem != null && decompilationContext != null);
 			this.exprBuilder = new ExpressionBuilder(typeSystem, decompilationContext, settings, cancellationToken);
 			this.currentFunction = currentFunction;
-			this.currentMethod = currentMethod;
+			this.typeSystem = typeSystem;
 			this.settings = settings;
 			this.cancellationToken = cancellationToken;
 		}
@@ -263,7 +263,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (currentFunction.IsIterator)
 					return new YieldBreakStatement();
 				else if (!inst.Value.MatchNop()) {
-					IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentMethod.ReturnType;
+					IType targetType = currentFunction.IsAsync ? currentFunction.AsyncReturnType : currentFunction.ReturnType;
 					return new ReturnStatement(exprBuilder.Translate(inst.Value).ConvertTo(targetType, exprBuilder, allowImplicitConversion: true));
 				} else
 					return new ReturnStatement();
@@ -288,7 +288,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override Statement VisitYieldReturn(YieldReturn inst)
 		{
-			var elementType = currentMethod.ReturnType.GetElementTypeFromIEnumerable(currentMethod.Compilation, true, out var isGeneric);
+			var elementType = currentFunction.ReturnType.GetElementTypeFromIEnumerable(typeSystem.Compilation, true, out var isGeneric);
 			return new YieldReturnStatement {
 				Expression = exprBuilder.Translate(inst.Value).ConvertTo(elementType, exprBuilder)
 			};
