@@ -290,6 +290,7 @@
     <Compile Include="IL\Transforms\InlineReturnTransform.cs" />
     <Compile Include="IL\Transforms\SwitchOnNullableTransform.cs" />
     <Compile Include="IL\Transforms\SwitchOnStringTransform.cs" />
+    <Compile Include="IL\Transforms\TransformExpressionTrees.cs" />
     <Compile Include="IL\Transforms\UsingTransform.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />
