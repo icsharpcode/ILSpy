@@ -178,7 +178,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						case ConversionResolveResult conversion: {
 							if (Expression is CastExpression cast
 							&& (type.IsKnownType(KnownTypeCode.Object) && conversion.Conversion.IsBoxingConversion
-								|| type.Kind == TypeKind.Delegate && conversion.Conversion.IsAnonymousFunctionConversion
+								|| conversion.Conversion.IsAnonymousFunctionConversion
 								|| (conversion.Conversion.IsImplicit && (conversion.Conversion.IsUserDefined || targetType.IsKnownType(KnownTypeCode.Decimal)))
 							)) {
 								return this.UnwrapChild(cast.Expression);

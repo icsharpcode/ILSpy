@@ -61,7 +61,13 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IType AsyncReturnType;
 
-		public bool IsExpressionTree;
+		/// <summary>
+		/// If this is an expression tree, returns Expression{T}, otherwise null.
+		/// T is the delegate type that matches the signature of this method.
+		/// </summary>
+		public IType ExpressionTreeType;
+
+		public bool IsExpressionTree => ExpressionTreeType != null;
 
 		public readonly IType ReturnType;
 

@@ -132,8 +132,8 @@ namespace ICSharpCode.Decompiler.CSharp.Resolver
 		public override bool IsImplicitlyTyped { get; }
 		public override bool IsAsync => function.IsAsync;
 
-		public override IList<IParameter> Parameters => function.Method.Parameters;
-		public override IType ReturnType => function.Method.ReturnType;
+		public override IList<IParameter> Parameters => function.Parameters;
+		public override IType ReturnType => function.ReturnType;
 
 		public override ResolveResult Body { get; }
 

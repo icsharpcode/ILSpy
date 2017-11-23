@@ -19,16 +19,20 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ICSharpCode.Decompiler.CSharp;
-using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.Decompiler.IL.Transforms
 {
+	/// <summary>
+	/// Converts LINQ Expression Trees to ILFunctions/ILAst instructions.
+	/// </summary>
 	public class TransformExpressionTrees : IStatementTransform
 	{
+		/// <summary>
+		/// Returns true if the instruction matches the pattern for Expression.Lambda calls.
+		/// </summary>
 		static bool MightBeExpressionTree(ILInstruction inst, ILInstruction stmt)
 		{
 			if (!(inst is CallInstruction call
@@ -85,6 +89,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		Dictionary<ILVariable, (IType, string)> parameters;
 		Dictionary<ILVariable, ILVariable> parameterMapping;
 		List<ILInstruction> instructionsToRemove;
+		Stack<ILFunction> lambdaStack;
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
@@ -92,6 +97,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			this.parameters = new Dictionary<ILVariable, (IType, string)>();
 			this.parameterMapping = new Dictionary<ILVariable, ILVariable>();
 			this.instructionsToRemove = new List<ILInstruction>();
+			this.lambdaStack = new Stack<ILFunction>();
 			for (int i = pos; i < block.Instructions.Count; i++) {
 				if (MatchParameterVariableAssignment(block.Instructions[i], out var v, out var type, out var name)) {
 					parameters.Add(v, (type, name));
@@ -124,7 +130,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return false;
 		}
 
-		NewObj ConvertLambda(CallInstruction instruction)
+		/// <summary>
+		/// Converts a Expression.Lambda call into an ILFunction.
+		/// If the conversion fails, null is returned.
+		/// </summary>
+		ILFunction ConvertLambda(CallInstruction instruction)
 		{
 			if (instruction.Method.Name != "Lambda" || instruction.Arguments.Count != 2 || instruction.Method.ReturnType.FullName != "System.Linq.Expressions.Expression" || instruction.Method.ReturnType.TypeArguments.Count != 1)
 				return null;
@@ -132,20 +142,18 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var parameterVariablesList = new List<ILVariable>();
 			if (!ReadParameters(instruction.Arguments[1], parameterList, parameterVariablesList, new SimpleTypeResolveContext(context.Function.Method)))
 				return null;
+			var container = new BlockContainer();
+			var function = new ILFunction(instruction.Method.ReturnType.TypeArguments[0].TypeArguments.LastOrDefault() ?? context.TypeSystem.Compilation.FindType(KnownTypeCode.Void), parameterList, container);
+			function.ExpressionTreeType = instruction.Method.ReturnType;
+			function.Variables.AddRange(parameterVariablesList);
+			lambdaStack.Push(function);
 			var bodyInstruction = ConvertInstruction(instruction.Arguments[0]);
+			lambdaStack.Pop();
 			if (bodyInstruction == null)
 				return null;
-			var container = new BlockContainer(expectedResultType: bodyInstruction.ResultType);
+			container.ExpectedResultType = bodyInstruction.ResultType;
 			container.Blocks.Add(new Block() { Instructions = { new Leave(container, bodyInstruction) } });
-			var function = new ILFunction(instruction.Method.ReturnType.TypeArguments[0].TypeArguments.LastOrDefault() ?? context.TypeSystem.Compilation.FindType(KnownTypeCode.Void), parameterList, container);
-			function.IsExpressionTree = true;
-			function.Variables.AddRange(parameterVariablesList);
-			return new NewObj(instruction.Method.ReturnType.TypeArguments[0].GetConstructors().First()) {
-				Arguments = {
-					new LdNull(),
-					function
-				}
-			};
+			return function;
 		}
 
 		bool ReadParameters(ILInstruction initializer, IList<IParameter> parameters, IList<ILVariable> parameterVariables, ITypeResolveContext resolveContext)
@@ -556,15 +564,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (newObj == null)
 				return null;
 			IList<ILInstruction> arguments = null;
-			ILFunction function;
+			ILFunction function = lambdaStack.Peek();
 			if (!MatchGetMethodFromHandle(invocation.Arguments[1], out var member)) {
 				if (!MatchArgumentList(invocation.Arguments[1], out arguments))
 					return null;
-				function = ((LdLoc)((Block)invocation.Arguments[1]).FinalInstruction).Variable.Function;
 			} else {
 				if (invocation.Arguments.Count != 3 || !MatchArgumentList(invocation.Arguments[2], out arguments))
 					return null;
-				function = ((LdLoc)((Block)invocation.Arguments[2]).FinalInstruction).Variable.Function;
 			}
 			if (arguments == null || arguments.Count == 0)
 				return null;
@@ -634,7 +640,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			if (arguments == null || arguments.Count == 0)
 				return null;
-			var function = ((LdLoc)((Block)invocation.Arguments[1]).FinalInstruction).Variable.Function;
+			var function = lambdaStack.Peek();
 			var initializer = function.RegisterVariable(VariableKind.InitializerTarget, newObj.Method.DeclaringType);
 			for (int i = 0; i < arguments.Count; i++) {
 				ILInstruction arg;
@@ -685,7 +691,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (arguments.Count == 0)
 				return null;
 			var block = (Block)invocation.Arguments[1];
-			var function = ((LdLoc)block.FinalInstruction).Variable.Function;
+			var function = lambdaStack.Peek();
 			var variable = function.RegisterVariable(VariableKind.InitializerTarget, new ArrayType(context.BlockContext.TypeSystem.Compilation, type));
 			Block initializer = new Block(BlockKind.ArrayInitializer);
 			int i = 0;

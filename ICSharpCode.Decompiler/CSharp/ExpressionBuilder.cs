@@ -1420,6 +1420,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
 		}
 
+		protected internal override TranslatedExpression VisitILFunction(ILFunction function, TranslationContext context)
+		{
+			return TranslateFunction(function.ExpressionTreeType, function)
+				.WithILInstruction(function);
+		}
+
 		IType InferReturnType(BlockStatement body)
 		{
 			var returnExpressions = new List<ResolveResult>();
