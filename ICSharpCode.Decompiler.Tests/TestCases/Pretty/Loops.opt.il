@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly iyvgltxy
+.assembly ca3webe1
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module iyvgltxy.dll
-// MVID: {29F6B869-DC6A-4F23-A073-750A25BF2F78}
+.module ca3webe1.dll
+// MVID: {3674B35A-51F1-4E0A-A67E-D7FEBA11373B}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01130000
+// Image base: 0x02DA0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1527,6 +1527,216 @@
     }  // end handler
     IL_0031:  ret
   } // end of method Loops::ForEachOverListOfStruct3
+
+  .method public hidebysig instance void 
+          ForEachOverMultiDimArray(int32[0...,0...] items) cil managed
+  {
+    // Code size       86 (0x56)
+    .maxstack  3
+    .locals init (int32 V_0,
+             int32[0...,0...] V_1,
+             int32 V_2,
+             int32 V_3,
+             int32 V_4,
+             int32 V_5)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.1
+    IL_0002:  ldloc.1
+    IL_0003:  ldc.i4.0
+    IL_0004:  callvirt   instance int32 [mscorlib]System.Array::GetUpperBound(int32)
+    IL_0009:  stloc.2
+    IL_000a:  ldloc.1
+    IL_000b:  ldc.i4.1
+    IL_000c:  callvirt   instance int32 [mscorlib]System.Array::GetUpperBound(int32)
+    IL_0011:  stloc.3
+    IL_0012:  ldloc.1
+    IL_0013:  ldc.i4.0
+    IL_0014:  callvirt   instance int32 [mscorlib]System.Array::GetLowerBound(int32)
+    IL_0019:  stloc.s    V_4
+    IL_001b:  br.s       IL_0050
+
+    IL_001d:  ldloc.1
+    IL_001e:  ldc.i4.1
+    IL_001f:  callvirt   instance int32 [mscorlib]System.Array::GetLowerBound(int32)
+    IL_0024:  stloc.s    V_5
+    IL_0026:  br.s       IL_0045
+
+    IL_0028:  ldloc.1
+    IL_0029:  ldloc.s    V_4
+    IL_002b:  ldloc.s    V_5
+    IL_002d:  call       instance int32 int32[0...,0...]::Get(int32,
+                                                              int32)
+    IL_0032:  stloc.0
+    IL_0033:  ldloc.0
+    IL_0034:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0039:  ldloc.0
+    IL_003a:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_003f:  ldloc.s    V_5
+    IL_0041:  ldc.i4.1
+    IL_0042:  add
+    IL_0043:  stloc.s    V_5
+    IL_0045:  ldloc.s    V_5
+    IL_0047:  ldloc.3
+    IL_0048:  ble.s      IL_0028
+
+    IL_004a:  ldloc.s    V_4
+    IL_004c:  ldc.i4.1
+    IL_004d:  add
+    IL_004e:  stloc.s    V_4
+    IL_0050:  ldloc.s    V_4
+    IL_0052:  ldloc.2
+    IL_0053:  ble.s      IL_001d
+
+    IL_0055:  ret
+  } // end of method Loops::ForEachOverMultiDimArray
+
+  .method public hidebysig instance void 
+          ForEachOverMultiDimArray2(int32[0...,0...,0...] items) cil managed
+  {
+    // Code size       120 (0x78)
+    .maxstack  4
+    .locals init (int32 V_0,
+             int32[0...,0...,0...] V_1,
+             int32 V_2,
+             int32 V_3,
+             int32 V_4,
+             int32 V_5,
+             int32 V_6,
+             int32 V_7)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.1
+    IL_0002:  ldloc.1
+    IL_0003:  ldc.i4.0
+    IL_0004:  callvirt   instance int32 [mscorlib]System.Array::GetUpperBound(int32)
+    IL_0009:  stloc.2
+    IL_000a:  ldloc.1
+    IL_000b:  ldc.i4.1
+    IL_000c:  callvirt   instance int32 [mscorlib]System.Array::GetUpperBound(int32)
+    IL_0011:  stloc.3
+    IL_0012:  ldloc.1
+    IL_0013:  ldc.i4.2
+    IL_0014:  callvirt   instance int32 [mscorlib]System.Array::GetUpperBound(int32)
+    IL_0019:  stloc.s    V_4
+    IL_001b:  ldloc.1
+    IL_001c:  ldc.i4.0
+    IL_001d:  callvirt   instance int32 [mscorlib]System.Array::GetLowerBound(int32)
+    IL_0022:  stloc.s    V_5
+    IL_0024:  br.s       IL_0072
+
+    IL_0026:  ldloc.1
+    IL_0027:  ldc.i4.1
+    IL_0028:  callvirt   instance int32 [mscorlib]System.Array::GetLowerBound(int32)
+    IL_002d:  stloc.s    V_6
+    IL_002f:  br.s       IL_0067
+
+    IL_0031:  ldloc.1
+    IL_0032:  ldc.i4.2
+    IL_0033:  callvirt   instance int32 [mscorlib]System.Array::GetLowerBound(int32)
+    IL_0038:  stloc.s    V_7
+    IL_003a:  br.s       IL_005b
+
+    IL_003c:  ldloc.1
+    IL_003d:  ldloc.s    V_5
+    IL_003f:  ldloc.s    V_6
+    IL_0041:  ldloc.s    V_7
+    IL_0043:  call       instance int32 int32[0...,0...,0...]::Get(int32,
+                                                                   int32,
+                                                                   int32)
+    IL_0048:  stloc.0
+    IL_0049:  ldloc.0
+    IL_004a:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_004f:  ldloc.0
+    IL_0050:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0055:  ldloc.s    V_7
+    IL_0057:  ldc.i4.1
+    IL_0058:  add
+    IL_0059:  stloc.s    V_7
+    IL_005b:  ldloc.s    V_7
+    IL_005d:  ldloc.s    V_4
+    IL_005f:  ble.s      IL_003c
+
+    IL_0061:  ldloc.s    V_6
+    IL_0063:  ldc.i4.1
+    IL_0064:  add
+    IL_0065:  stloc.s    V_6
+    IL_0067:  ldloc.s    V_6
+    IL_0069:  ldloc.3
+    IL_006a:  ble.s      IL_0031
+
+    IL_006c:  ldloc.s    V_5
+    IL_006e:  ldc.i4.1
+    IL_006f:  add
+    IL_0070:  stloc.s    V_5
+    IL_0072:  ldloc.s    V_5
+    IL_0074:  ldloc.2
+    IL_0075:  ble.s      IL_0026
+
+    IL_0077:  ret
+  } // end of method Loops::ForEachOverMultiDimArray2
+
+  .method public hidebysig instance void 
+          ForEachOverMultiDimArray3(int32*[0...,0...] items) cil managed
+  {
+    // Code size       88 (0x58)
+    .maxstack  3
+    .locals init (int32* V_0,
+             int32*[0...,0...] V_1,
+             int32 V_2,
+             int32 V_3,
+             int32 V_4,
+             int32 V_5)
+    IL_0000:  ldarg.1
+    IL_0001:  stloc.1
+    IL_0002:  ldloc.1
+    IL_0003:  ldc.i4.0
+    IL_0004:  callvirt   instance int32 [mscorlib]System.Array::GetUpperBound(int32)
+    IL_0009:  stloc.2
+    IL_000a:  ldloc.1
+    IL_000b:  ldc.i4.1
+    IL_000c:  callvirt   instance int32 [mscorlib]System.Array::GetUpperBound(int32)
+    IL_0011:  stloc.3
+    IL_0012:  ldloc.1
+    IL_0013:  ldc.i4.0
+    IL_0014:  callvirt   instance int32 [mscorlib]System.Array::GetLowerBound(int32)
+    IL_0019:  stloc.s    V_4
+    IL_001b:  br.s       IL_0052
+
+    IL_001d:  ldloc.1
+    IL_001e:  ldc.i4.1
+    IL_001f:  callvirt   instance int32 [mscorlib]System.Array::GetLowerBound(int32)
+    IL_0024:  stloc.s    V_5
+    IL_0026:  br.s       IL_0047
+
+    IL_0028:  ldloc.1
+    IL_0029:  ldloc.s    V_4
+    IL_002b:  ldloc.s    V_5
+    IL_002d:  call       instance int32* int32*[0...,0...]::Get(int32,
+                                                                int32)
+    IL_0032:  stloc.0
+    IL_0033:  ldloc.0
+    IL_0034:  ldind.i4
+    IL_0035:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_003a:  ldloc.0
+    IL_003b:  ldind.i4
+    IL_003c:  call       void [mscorlib]System.Console::WriteLine(int32)
+    IL_0041:  ldloc.s    V_5
+    IL_0043:  ldc.i4.1
+    IL_0044:  add
+    IL_0045:  stloc.s    V_5
+    IL_0047:  ldloc.s    V_5
+    IL_0049:  ldloc.3
+    IL_004a:  ble.s      IL_0028
+
+    IL_004c:  ldloc.s    V_4
+    IL_004e:  ldc.i4.1
+    IL_004f:  add
+    IL_0050:  stloc.s    V_4
+    IL_0052:  ldloc.s    V_4
+    IL_0054:  ldloc.2
+    IL_0055:  ble.s      IL_001d
+
+    IL_0057:  ret
+  } // end of method Loops::ForEachOverMultiDimArray3
 
   .method public hidebysig instance void 
           ForOverArray(string[] 'array') cil managed

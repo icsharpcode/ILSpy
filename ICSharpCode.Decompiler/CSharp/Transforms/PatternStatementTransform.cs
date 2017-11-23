@@ -72,7 +72,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		
 		public override AstNode VisitExpressionStatement(ExpressionStatement expressionStatement)
 		{
-			AstNode result = TransformFor(expressionStatement);
+			AstNode result = TransformForeachOnMultiDimArray(expressionStatement);
+			if (result != null)
+				return result;
+			result = TransformFor(expressionStatement);
 			if (result != null)
 				return result;
 			if (context.Settings.AutomaticProperties) {
@@ -266,6 +269,164 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			foreachStmt.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
 			// TODO : add ForeachAnnotation
 			forStatement.ReplaceWith(foreachStmt);
+			return foreachStmt;
+		}
+
+		static readonly ForStatement forOnArrayMultiDimPattern = new ForStatement {
+			Initializers = { },
+			Condition = new BinaryOperatorExpression(
+				new NamedNode("indexVariable", new IdentifierExpression(Pattern.AnyString)),
+				BinaryOperatorType.LessThanOrEqual,
+				new NamedNode("upperBoundVariable", new IdentifierExpression(Pattern.AnyString))
+			),
+			Iterators = {
+				new ExpressionStatement(
+				new AssignmentExpression(
+					new IdentifierExpressionBackreference("indexVariable"),
+					new BinaryOperatorExpression(new IdentifierExpressionBackreference("indexVariable"), BinaryOperatorType.Add, new PrimitiveExpression(1))
+				))
+			},
+			EmbeddedStatement = new BlockStatement { Statements = { new AnyNode("lowerBoundAssign"), new Repeat(new AnyNode("statements")) } }
+		};
+
+		/// <summary>
+		/// $variable = $collection.GetUpperBound($index);
+		/// </summary>
+		static readonly AstNode variableAssignUpperBoundPattern = new ExpressionStatement(
+			new AssignmentExpression(
+				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
+				new InvocationExpression(
+					new MemberReferenceExpression(
+						new NamedNode("collection", new IdentifierExpression(Pattern.AnyString)),
+						"GetUpperBound"
+					),
+					new NamedNode("index", new PrimitiveExpression(PrimitiveExpression.AnyValue))
+			)));
+
+		/// <summary>
+		/// $variable = $collection.GetLowerBound($index);
+		/// </summary>
+		static readonly ExpressionStatement variableAssignLowerBoundPattern = new ExpressionStatement(
+			new AssignmentExpression(
+				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
+				new InvocationExpression(
+					new MemberReferenceExpression(
+						new NamedNode("collection", new IdentifierExpression(Pattern.AnyString)),
+						"GetLowerBound"
+					),
+					new NamedNode("index", new PrimitiveExpression(PrimitiveExpression.AnyValue))
+			)));
+
+		/// <summary>
+		/// $variable = $collection[$index1, $index2, ...];
+		/// </summary>
+		static readonly ExpressionStatement foreachVariableOnMultArrayAssignPattern = new ExpressionStatement(
+			new AssignmentExpression(
+				new NamedNode("variable", new IdentifierExpression(Pattern.AnyString)),
+				new IndexerExpression(
+					new NamedNode("collection", new IdentifierExpression(Pattern.AnyString)),
+					new Repeat(new NamedNode("index", new IdentifierExpression(Pattern.AnyString))
+				)
+			)));
+
+		bool MatchLowerBound(int indexNum, out IL.ILVariable index, IL.ILVariable collection, Statement statement)
+		{
+			index = null;
+			var m = variableAssignLowerBoundPattern.Match(statement);
+			if (!m.Success) return false;
+			if (!int.TryParse(m.Get<PrimitiveExpression>("index").Single().Value.ToString(), out int i) || indexNum != i)
+				return false;
+			index = m.Get<IdentifierExpression>("variable").Single().GetILVariable();
+			return m.Get<IdentifierExpression>("collection").Single().GetILVariable() == collection;
+		}
+
+		bool MatchForeachOnMultiDimArray(IL.ILVariable[] upperBounds, IL.ILVariable collection, Statement firstInitializerStatement, out IdentifierExpression foreachVariable, out IList<Statement> statements, out IL.ILVariable[] lowerBounds)
+		{
+			int i = 0;
+			foreachVariable = null;
+			statements = null;
+			lowerBounds = new IL.ILVariable[upperBounds.Length];
+			Statement stmt = firstInitializerStatement;
+			Match m = default(Match);
+			while (i < upperBounds.Length && MatchLowerBound(i, out IL.ILVariable indexVariable, collection, stmt)) {
+				m = forOnArrayMultiDimPattern.Match(stmt.GetNextStatement());
+				if (!m.Success) return false;
+				var upperBound = m.Get<IdentifierExpression>("upperBoundVariable").Single().GetILVariable();
+				if (upperBounds[i] != upperBound)
+					return false;
+				stmt = m.Get<Statement>("lowerBoundAssign").Single();
+				lowerBounds[i] = indexVariable;
+				i++;
+			}
+			var m2 = foreachVariableOnMultArrayAssignPattern.Match(stmt);
+			if (!m2.Success)
+				return false;
+			var collection2 = m2.Get<IdentifierExpression>("collection").Single().GetILVariable();
+			if (collection2 != collection)
+				return false;
+			foreachVariable = m2.Get<IdentifierExpression>("variable").Single();
+			statements = m.Get<Statement>("statements").ToList();
+			return true;
+		}
+
+		Statement TransformForeachOnMultiDimArray(ExpressionStatement expressionStatement)
+		{
+			Match m;
+			Statement stmt = expressionStatement;
+			IL.ILVariable collection = null;
+			IL.ILVariable[] upperBounds = null;
+			List<Statement> statementsToDelete = new List<Statement>();
+			int i = 0;
+			// first we look for all the upper bound initializations
+			do {
+				m = variableAssignUpperBoundPattern.Match(stmt);
+				if (!m.Success) break;
+				if (upperBounds == null) {
+					collection = m.Get<IdentifierExpression>("collection").Single().GetILVariable();
+					if (!(collection.Type is Decompiler.TypeSystem.ArrayType arrayType))
+						break;
+					upperBounds = new IL.ILVariable[arrayType.Dimensions];
+				} else {
+					statementsToDelete.Add(stmt);
+				}
+				var nextCollection = m.Get<IdentifierExpression>("collection").Single().GetILVariable();
+				if (nextCollection != collection)
+					break;
+				if (!int.TryParse(m.Get<PrimitiveExpression>("index").Single().Value?.ToString() ?? "", out int index) || index != i)
+					break;
+				upperBounds[i] = m.Get<IdentifierExpression>("variable").Single().GetILVariable();
+				stmt = stmt.GetNextStatement();
+				i++;
+			} while (stmt != null && i < upperBounds.Length);
+
+			if (upperBounds?.LastOrDefault() == null || collection == null)
+				return null;
+			if (!MatchForeachOnMultiDimArray(upperBounds, collection, stmt, out var foreachVariable, out var statements, out var lowerBounds))
+				return null;
+			statementsToDelete.Add(stmt);
+			statementsToDelete.Add(stmt.GetNextStatement());
+			var itemVariable = foreachVariable.GetILVariable();
+			if (!itemVariable.IsSingleDefinition
+				|| !upperBounds.All(ub => ub.IsSingleDefinition && ub.LoadCount == 1)
+				|| !lowerBounds.All(lb => lb.StoreCount == 2 && lb.LoadCount == 3 && lb.AddressCount == 0))
+				return null;
+			var body = new BlockStatement();
+			foreach (var statement in statements)
+				body.Statements.Add(statement.Detach());
+			var foreachStmt = new ForeachStatement {
+				VariableType = context.Settings.AnonymousTypes && itemVariable.Type.ContainsAnonymousType() ? new SimpleType("var") : context.TypeSystemAstBuilder.ConvertType(itemVariable.Type),
+				VariableName = itemVariable.Name,
+				InExpression = m.Get<IdentifierExpression>("collection").Single().Detach(),
+				EmbeddedStatement = body
+			};
+			foreach (var statement in statementsToDelete)
+				statement.Detach();
+			//foreachStmt.CopyAnnotationsFrom(forStatement);
+			itemVariable.Kind = IL.VariableKind.ForeachLocal;
+			// Add the variable annotation for highlighting (TokenTextWriter expects it directly on the ForeachStatement).
+			foreachStmt.AddAnnotation(new ILVariableResolveResult(itemVariable, itemVariable.Type));
+			// TODO : add ForeachAnnotation
+			expressionStatement.ReplaceWith(foreachStmt);
 			return foreachStmt;
 		}
 

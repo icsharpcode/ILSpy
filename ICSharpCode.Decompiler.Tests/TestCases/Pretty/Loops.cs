@@ -495,7 +495,38 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				item.TestCall();
 			}
 		}
-		#endregion
+
+		public void ForEachOverMultiDimArray(int[,] items)
+		{
+			foreach (int value in items) {
+				Console.WriteLine(value);
+				Console.WriteLine(value);
+			}
+		}
+
+		public void ForEachOverMultiDimArray2(int[,,] items)
+		{
+			foreach (int value in items) {
+				Console.WriteLine(value);
+				Console.WriteLine(value);
+			}
+		}
+
+		public unsafe void ForEachOverMultiDimArray3(int*[,] items)
+		{
+#if ROSLYN && OPT
+			foreach (int* intPtr in items) {
+				Console.WriteLine(*intPtr);
+				Console.WriteLine(*intPtr);
+			}
+#else
+			foreach (int* ptr in items) {
+				Console.WriteLine(*ptr);
+				Console.WriteLine(*ptr);
+			}
+#endif
+		}
+#endregion
 
 		public void ForOverArray(string[] array)
 		{
