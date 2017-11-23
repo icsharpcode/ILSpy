@@ -352,6 +352,27 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		ILInstruction ConvertBind(CallInstruction invocation, ILVariable targetVariable)
+		{
+			if (invocation.Arguments.Count != 2)
+				return null;
+			var value = ConvertInstruction(invocation.Arguments[1]);
+			if (value == null)
+				return null;
+			if (MatchGetMethodFromHandle(invocation.Arguments[0], out var member)) {
+			} else if (MatchGetFieldFromHandle(invocation.Arguments[0], out member)) {
+			} else {
+				return null;
+			}
+			switch (member) {
+				case IMethod method:
+					return new Call(method) { Arguments = { new LdLoc(targetVariable), value } };
+				case IField field:
+					return new StObj(new LdFlda(new LdLoc(targetVariable), (IField)member), value, member.ReturnType);
+			}
+			return null;
+		}
+
 		ILInstruction ConvertCall(CallInstruction invocation)
 		{
 			if (invocation.Arguments.Count < 2)
@@ -604,7 +625,33 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		ILInstruction ConvertMemberInit(CallInstruction invocation)
 		{
-			return null;
+			if (invocation.Arguments.Count != 2)
+				return null;
+			var newObj = ConvertInstruction(invocation.Arguments[0]) as NewObj;
+			if (newObj == null)
+				return null;
+			if (!MatchArgumentList(invocation.Arguments[1], out var arguments))
+				return null;
+			if (arguments == null || arguments.Count == 0)
+				return null;
+			var function = ((LdLoc)((Block)invocation.Arguments[1]).FinalInstruction).Variable.Function;
+			var initializer = function.RegisterVariable(VariableKind.InitializerTarget, newObj.Method.DeclaringType);
+			for (int i = 0; i < arguments.Count; i++) {
+				ILInstruction arg;
+				if (arguments[i] is CallInstruction bind && bind.Method.FullName == "System.Linq.Expressions.Expression.Bind") {
+					arg = ConvertBind(bind, initializer);
+					if (arg == null)
+						return null;
+				} else {
+					return null;
+				}
+				arguments[i] = arg;
+			}
+			var initializerBlock = new Block(BlockKind.CollectionInitializer);
+			initializerBlock.FinalInstruction = new LdLoc(initializer);
+			initializerBlock.Instructions.Add(new StLoc(initializer, newObj));
+			initializerBlock.Instructions.AddRange(arguments);
+			return initializerBlock;
 		}
 
 		ILInstruction ConvertNewArrayBounds(CallInstruction invocation)
