@@ -1701,7 +1701,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return Translate(inst.Argument).ConvertTo(inst.Type, this);
 		}
-		
+
+		protected internal override TranslatedExpression VisitExpressionTreeCast(ExpressionTreeCast inst, TranslationContext context)
+		{
+			return Translate(inst.Argument).ConvertTo(inst.Type, this, inst.IsChecked);
+		}
+
 		protected internal override TranslatedExpression VisitArglist(Arglist inst, TranslationContext context)
 		{
 			return new UndocumentedExpression { UndocumentedExpressionType = UndocumentedExpressionType.ArgListAccess }

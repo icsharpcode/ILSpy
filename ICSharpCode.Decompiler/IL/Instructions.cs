@@ -168,6 +168,8 @@ namespace ICSharpCode.Decompiler.IL
 		ArrayToPointer,
 		/// <summary>Maps a string value to an integer. This is used in switch(string).</summary>
 		StringToInt,
+		/// <summary>ILAst representation of Expression.Convert.</summary>
+		ExpressionTreeCast,
 		/// <summary>Push a typed reference of type class onto the stack.</summary>
 		MakeRefAny,
 		/// <summary>Push the type token stored in a typed reference.</summary>
@@ -4494,6 +4496,46 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
+	/// <summary>ILAst representation of Expression.Convert.</summary>
+	public sealed partial class ExpressionTreeCast : UnaryInstruction
+	{
+		IType type;
+		/// <summary>Returns the type operand.</summary>
+		public IType Type {
+			get { return type; }
+			set { type = value; InvalidateFlags(); }
+		}
+		public override StackType ResultType { get { return type.GetStackType(); } }
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayThrow;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayThrow;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitExpressionTreeCast(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitExpressionTreeCast(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitExpressionTreeCast(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as ExpressionTreeCast;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type) && this.IsChecked == o.IsChecked;
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
 	/// <summary>Push a typed reference of type class onto the stack.</summary>
 	public sealed partial class MakeRefAny : UnaryInstruction
 	{
@@ -5132,6 +5174,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitExpressionTreeCast(ExpressionTreeCast inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitMakeRefAny(MakeRefAny inst)
 		{
 			Default(inst);
@@ -5431,6 +5477,10 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitStringToInt(StringToInt inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitExpressionTreeCast(ExpressionTreeCast inst)
 		{
 			return Default(inst);
 		}
@@ -5736,6 +5786,10 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitExpressionTreeCast(ExpressionTreeCast inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitMakeRefAny(MakeRefAny inst, C context)
 		{
 			return Default(inst, context);
@@ -5829,6 +5883,7 @@ namespace ICSharpCode.Decompiler.IL
 			"ldelema",
 			"array.to.pointer",
 			"string.to.int",
+			"expression.tree.cast",
 			"mkrefany",
 			"refanytype",
 			"refanyval",
