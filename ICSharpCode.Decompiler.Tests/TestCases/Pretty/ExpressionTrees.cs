@@ -231,17 +231,17 @@ public class ExpressionTrees
 	
 	private int C()
 	{
-		return field + 5;
+		return this.field + 5;
 	}
 
 	private bool MyEquals(ExpressionTrees other)
 	{
-		return other != null && field == other.field;
+		return other != null && this.field == other.field;
 	}
 	
 	public void MethodGroupAsExtensionMethod()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Func<bool>)new[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Func<bool>)new int[4] {
 			2000,
 			2004,
 			2008,
@@ -251,7 +251,7 @@ public class ExpressionTrees
 	
 	public void MethodGroupConstant()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Array.TrueForAll(new[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Array.TrueForAll(new int[4] {
 			2000,
 			2004,
 			2008,
@@ -259,7 +259,7 @@ public class ExpressionTrees
 		}, DateTime.IsLeapYear));
 		
 		HashSet<int> set = new HashSet<int>();
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[4] {
 			2000,
 			2004,
 			2008,
@@ -267,7 +267,7 @@ public class ExpressionTrees
 		}.All(set.Add));
 		
 		Func<Func<object, object, bool>, bool> sink = f => f(null, null);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => sink(int.Equals));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => sink(object.Equals));
 	}
 	
 	public void MultipleCasts()
@@ -282,13 +282,19 @@ public class ExpressionTrees
 	
 	public void NestedLambda()
 	{
-		Func<Func<int>, int> call = f => f();
+		Func<Func<int>, int> call = (Func<int> f) => f();
 		//no params
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => call(() => 42));
 		//one param
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] { 37, 42 }.Select(x => x * 2));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[2] {
+			37,
+			42
+		}.Select(x => x * 2));
 		//two params
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] { 37, 42 }.Select((x, i) => x * 2));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[2] {
+			37,
+			42
+		}.Select((int x, int i) => x * 2));
 	}
 	
 	public void CurriedLambda()
@@ -367,7 +373,7 @@ public class ExpressionTrees
 	
 	public void Quoted()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Expression<Func<int, string, string>>)((n, s) => s + n.ToString()) != null);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Expression<Func<int, string, string>>)((int n, string s) => s + n.ToString()) != null);
 	}
 	
 	public void Quoted2()
@@ -387,12 +393,12 @@ public class ExpressionTrees
 	
 	public void StaticCall()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Equals(3, 0));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => object.Equals(3, 0));
 	}
 	
 	public void ThisCall()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !Equals(3));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !this.Equals(3));
 	}
 	
 	public void ThisExplicit()
@@ -402,12 +408,15 @@ public class ExpressionTrees
 	
 	public void TypedConstant()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] { typeof(int), typeof(string) });
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new Type[2] {
+			typeof(int),
+			typeof(string)
+		});
 	}
 	
 	public void StaticCallImplicitCast()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Equals(3, 0));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => object.Equals(3, 0));
 	}
 	
 	public void StaticMembers()
@@ -429,12 +438,12 @@ public class ExpressionTrees
 	
 	public void GenericClassInstance()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new GenericClass<int>().InstanceField + new GenericClass<double>().InstanceProperty);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (double)new GenericClass<int>().InstanceField + new GenericClass<double>().InstanceProperty);
 	}
 	
 	public void GenericClassStatic()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => GenericClass<int>.StaticField + GenericClass<double>.StaticProperty);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (double)GenericClass<int>.StaticField + GenericClass<double>.StaticProperty);
 	}
 	
 	public void InvokeGenericMethod()
