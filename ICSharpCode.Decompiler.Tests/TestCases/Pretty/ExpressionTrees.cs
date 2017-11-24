@@ -93,7 +93,7 @@ public class ExpressionTrees
 	
 	public void ArrayIndex()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (new[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (new int[3] {
 			3,
 			4,
 			5
@@ -119,7 +119,7 @@ public class ExpressionTrees
 	
 	public void ComplexGenericName()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((Func<int, bool>)(x => x > 0))(0));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((Func<int, bool>)((int x) => x > 0))(0));
 	}
 	
 	public void DefaultValue()
@@ -134,7 +134,7 @@ public class ExpressionTrees
 	
 	public void IndexerAccess()
 	{
-		var dict = Enumerable.Range(1, 20).ToDictionary(n => n.ToString());
+		Dictionary<string, int> dict = Enumerable.Range(1, 20).ToDictionary((int n) => n.ToString());
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => dict["3"] == 3);
 	}
 	
@@ -213,28 +213,28 @@ public class ExpressionTrees
 	public void MembersDefault()
 	{
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => default(DateTime).Ticks == 0);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => default(int[]).Length == 0);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => default(Type).IsLayoutSequential);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => default(List<int>).Count);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => default(int[]).Clone() == null);
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => default(Type).IsInstanceOfType(new object()));
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => default(List<int>).AsReadOnly());
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((Array)null).Length == 0);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((Type)null).IsLayoutSequential);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((List<int>)null).Count);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((Array)null).Clone() == null);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((Type)null).IsInstanceOfType(new object()));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((List<int>)null).AsReadOnly());
 	}
 	
 	public void DoAssert()
 	{
-		field = 37;
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => field != C());
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !ReferenceEquals(this, new ExpressionTrees()));
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => MyEquals(this) && !MyEquals(default(ExpressionTrees)));
+		this.field = 37;
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.field != this.C());
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !object.ReferenceEquals(this, new ExpressionTrees()));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.MyEquals(this) && !this.MyEquals(null));
 	}
 	
-	int C()
+	private int C()
 	{
 		return field + 5;
 	}
-	
-	bool MyEquals(ExpressionTrees other)
+
+	private bool MyEquals(ExpressionTrees other)
 	{
 		return other != null && field == other.field;
 	}
@@ -295,18 +295,18 @@ public class ExpressionTrees
 	{
 		ExpressionTrees.ToCode<int, Func<int, Func<int, int>>>(ExpressionTrees.X(), a => b => c => a + b + c);
 	}
-	
-	bool Fizz(Func<int, bool> a)
+
+	private bool Fizz(Func<int, bool> a)
 	{
 		return a(42);
 	}
-	
-	bool Buzz(Func<int, bool> a)
+
+	private bool Buzz(Func<int, bool> a)
 	{
 		return a(42);
 	}
-	
-	bool Fizz(Func<string, bool> a)
+
+	private bool Fizz(Func<string, bool> a)
 	{
 		return a("42");
 	}
@@ -322,7 +322,15 @@ public class ExpressionTrees
 	
 	public void NewArrayAndExtensionMethod()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] { 1.0, 2.01, 3.5 }.SequenceEqual(new[] { 1.0, 2.01, 3.5 }));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new double[3] {
+			1.0,
+			2.01,
+			3.5
+		}.SequenceEqual(new double[3] {
+			1.0,
+			2.01,
+			3.5
+		}));
 	}
 	
 	public void NewMultiDimArray()
@@ -351,7 +359,10 @@ public class ExpressionTrees
 			CloseInput = false,
 			CheckCharacters = false
 		};
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new XmlReaderSettings { CloseInput = s.CloseInput, CheckCharacters = s.CheckCharacters }.Equals(s));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new XmlReaderSettings {
+			CloseInput = s.CloseInput,
+			CheckCharacters = s.CheckCharacters
+		}.Equals(s));
 	}
 	
 	public void Quoted()
@@ -366,7 +377,12 @@ public class ExpressionTrees
 	
 	public void QuotedWithAnonymous()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] { new { X = "a", Y = "b" } }.Select(o => o.X + o.Y).Single());
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] {
+			new {
+				X = "a",
+				Y = "b"
+			}
+		}.Select(o => o.X + o.Y).Single());
 	}
 	
 	public void StaticCall()

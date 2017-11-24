@@ -19,6 +19,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -134,7 +135,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// Converts a Expression.Lambda call into an ILFunction.
 		/// If the conversion fails, null is returned.
 		/// </summary>
-		ILFunction ConvertLambda(CallInstruction instruction)
+		ILInstruction ConvertLambda(CallInstruction instruction)
 		{
 			if (instruction.Method.Name != "Lambda" || instruction.Arguments.Count != 2 || instruction.Method.ReturnType.FullName != "System.Linq.Expressions.Expression" || instruction.Method.ReturnType.TypeArguments.Count != 1)
 				return null;
@@ -142,9 +143,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var parameterVariablesList = new List<ILVariable>();
 			if (!ReadParameters(instruction.Arguments[1], parameterList, parameterVariablesList, new SimpleTypeResolveContext(context.Function.Method)))
 				return null;
+			bool isQuotedLambda = instruction.Parent is CallInstruction call && call.Method.FullName == "System.Linq.Expressions.Expression.Quote";
 			var container = new BlockContainer();
-			var function = new ILFunction(instruction.Method.ReturnType.TypeArguments[0].TypeArguments.LastOrDefault() ?? context.TypeSystem.Compilation.FindType(KnownTypeCode.Void), parameterList, container);
-			function.ExpressionTreeType = instruction.Method.ReturnType;
+			var functionType = instruction.Method.ReturnType.TypeArguments[0];
+			var function = new ILFunction(functionType.TypeArguments.LastOrDefault() ?? context.TypeSystem.Compilation.FindType(KnownTypeCode.Void), parameterList, container);
+			if (isQuotedLambda || lambdaStack.Count == 0)
+				function.ExpressionTreeType = instruction.Method.ReturnType;
 			function.Variables.AddRange(parameterVariablesList);
 			lambdaStack.Push(function);
 			var bodyInstruction = ConvertInstruction(instruction.Arguments[0]);
@@ -153,6 +157,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return null;
 			container.ExpectedResultType = bodyInstruction.ResultType;
 			container.Blocks.Add(new Block() { Instructions = { new Leave(container, bodyInstruction) } });
+			if (!isQuotedLambda && lambdaStack.Count > 0)
+				return new NewObj(functionType.GetConstructors().Single()) {
+					Arguments = { new LdNull(), function }
+				};
 			return function;
 		}
 
@@ -348,10 +356,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						Arguments = { left, right }
 					};
 				case 4:
-					//if (!trueOrFalse.IsMatch(invocation.Arguments[2]))
-					//	return null;
+					if (!invocation.Arguments[2].MatchLdcI4(out var isLifted))
+						return null;
 					if (!MatchGetMethodFromHandle(invocation.Arguments[3], out method))
 						return null;
+					if (isLifted != 0)
+						method = CSharpOperators.LiftUserDefinedOperator((IMethod)method);
 					return new Call((IMethod)method) {
 						Arguments = { left, right }
 					};
@@ -459,7 +469,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var right = ConvertInstruction(invocation.Arguments[1]);
 			if (right == null)
 				return null;
-			if (invocation.Arguments.Count == 3 && MatchGetMethodFromHandle(invocation.Arguments[2], out var method)) {
+			if (invocation.Arguments.Count == 4 && invocation.Arguments[2].MatchLdcI4(out var isLifted) && MatchGetMethodFromHandle(invocation.Arguments[3], out var method)) {
+				if (isLifted != 0) {
+					method = CSharpOperators.LiftUserDefinedOperator((IMethod)method);
+				}
 				return new Call((IMethod)method) { Arguments = { left, right } };
 			}
 			// TODO: Sign??
@@ -617,10 +630,12 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						Arguments = { left, right }
 					};
 				case 4:
-					//if (!trueOrFalse.IsMatch(invocation.Arguments[2]))
-					//	return null;
+					if (!invocation.Arguments[2].MatchLdcI4(out var isLifted))
+						return null;
 					if (!MatchGetMethodFromHandle(invocation.Arguments[3], out method))
 						return null;
+					if (isLifted != 0)
+						method = CSharpOperators.LiftUserDefinedOperator((IMethod)method);
 					return new Call((IMethod)method) {
 						Arguments = { left, right }
 					};
