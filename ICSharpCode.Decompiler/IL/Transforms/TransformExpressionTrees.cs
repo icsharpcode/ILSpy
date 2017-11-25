@@ -153,7 +153,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			bool isQuotedLambda = instruction.Parent is CallInstruction call && call.Method.FullName == "System.Linq.Expressions.Expression.Quote";
 			var container = new BlockContainer();
 			var functionType = instruction.Method.ReturnType.TypeArguments[0];
-			var function = new ILFunction(functionType.TypeArguments.LastOrDefault() ?? context.TypeSystem.Compilation.FindType(KnownTypeCode.Void), parameterList, container);
+			var function = new ILFunction(functionType.GetDelegateInvokeMethod()?.ReturnType, parameterList, container);
 			if (isQuotedLambda || lambdaStack.Count == 0)
 				function.DelegateType = instruction.Method.ReturnType;
 			else
