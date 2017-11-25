@@ -1129,16 +1129,19 @@ namespace ICSharpCode.Decompiler.IL
 			value.ILStackWasEmpty = currentStack.IsEmpty;
 			return new StObj(target, value, type);
 		}
-		
+
+		IType constrainedPrefix;
+
 		private ILInstruction DecodeConstrainedCall()
 		{
-			var typeRef = ReadAndDecodeTypeReference();
+			constrainedPrefix = ReadAndDecodeTypeReference();
 			var inst = DecodeInstruction();
 			var call = UnpackPush(inst) as CallInstruction;
 			if (call != null)
-				call.ConstrainedTo = typeRef;
+				Debug.Assert(call.ConstrainedTo == constrainedPrefix);
 			else
 				Warn("Ignored invalid 'constrained' prefix");
+			constrainedPrefix = null;
 			return inst;
 		}
 
@@ -1196,7 +1199,7 @@ namespace ICSharpCode.Decompiler.IL
 				arguments[firstArgument + i] = Pop(method.Parameters[i].Type.GetStackType());
 			}
 			if (firstArgument == 1) {
-				arguments[0] = Pop();
+				arguments[0] = Pop(CallInstruction.ExpectedTypeForThisPointer(constrainedPrefix ?? method.DeclaringType));
 			}
 			switch (method.DeclaringType.Kind) {
 				case TypeKind.Array:
@@ -1224,6 +1227,7 @@ namespace ICSharpCode.Decompiler.IL
 				default:
 					var call = CallInstruction.Create(opCode, method);
 					call.ILStackWasEmpty = currentStack.IsEmpty;
+					call.ConstrainedTo = constrainedPrefix;
 					call.Arguments.AddRange(arguments);
 					if (call.ResultType != StackType.Void)
 						return Push(call);

@@ -73,7 +73,34 @@ namespace ICSharpCode.Decompiler.IL
 					return Method.ReturnType.GetStackType();
 			}
 		}
-		
+
+		/// <summary>
+		/// Gets the expected stack type for passing the this pointer in a method call.
+		/// Returns StackType.O for reference types (this pointer passed as object reference),
+		/// and StackType.Ref for type parameters and value types (this pointer passed as managed reference).
+		/// </summary>
+		internal static StackType ExpectedTypeForThisPointer(IType type)
+		{
+			if (type.Kind == TypeKind.TypeParameter)
+				return StackType.Ref;
+			return type.IsReferenceType == true ? StackType.O : StackType.Ref;
+		}
+
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			int firstArgument = (OpCode != OpCode.NewObj && !Method.IsStatic) ? 1 : 0;
+			Debug.Assert(Method.Parameters.Count + firstArgument == Arguments.Count);
+			if (firstArgument == 1) {
+				Debug.Assert(Arguments[0].ResultType == ExpectedTypeForThisPointer(ConstrainedTo ?? Method.DeclaringType),
+					$"Stack type mismatch in 'this' argument in call to {Method.Name}()");
+			}
+			for (int i = 0; i < Method.Parameters.Count; ++i) {
+				Debug.Assert(Arguments[firstArgument + i].ResultType == Method.Parameters[i].Type.GetStackType(),
+					$"Stack type mismatch in parameter {i} in call to {Method.Name}()");
+			}
+		}
+
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);

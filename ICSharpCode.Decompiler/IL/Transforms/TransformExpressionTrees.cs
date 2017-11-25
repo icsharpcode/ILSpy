@@ -437,6 +437,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			IList<ILInstruction> arguments = null;
 			ILInstruction target = null;
+			IType targetType = null;
 			if (MatchGetMethodFromHandle(invocation.Arguments[0], out var member)) {
 				// static method
 				if (invocation.Arguments.Count != 2 || !MatchArgumentList(invocation.Arguments[1], out arguments)) {
@@ -447,13 +448,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					arguments = new List<ILInstruction>(invocation.Arguments.Skip(2));
 				}
 				if (!invocation.Arguments[0].MatchLdNull()) {
-					IType targetType;
 					(target, targetType) = ConvertInstruction(invocation.Arguments[0]);
 					if (target == null)
 						return (null, SpecialType.UnknownType);
-					if (targetType.IsReferenceType == false) {
-						target = new AddressOf(target);
-					}
 				}
 			}
 			if (arguments == null)
@@ -473,15 +470,35 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				}, delegateType);
 			}
 			CallInstruction call;
-			if (method.IsAbstract || method.IsVirtual || method.IsOverridable) {
+			if (method.IsAbstract || method.IsVirtual || method.IsOverride) {
 				call = new CallVirt(method);
 			} else {
 				call = new Call(method);
 			}
-			if (target != null)
-				call.Arguments.Add(target);
+			if (target != null) {
+				call.Arguments.Add(PrepareCallTarget(method.DeclaringType, target, targetType));
+			}
 			call.Arguments.AddRange(arguments);
 			return (call, method.ReturnType);
+		}
+
+		ILInstruction PrepareCallTarget(IType expectedType, ILInstruction target, IType targetType)
+		{
+			switch (CallInstruction.ExpectedTypeForThisPointer(expectedType)) {
+				case StackType.Ref:
+					if (target.ResultType == StackType.Ref)
+						return target;
+					else
+						return new AddressOf(target);
+				case StackType.O:
+					if (targetType.IsReferenceType == false) {
+						return new Box(target, targetType);
+					} else {
+						return target;
+					}
+				default:
+					return target;
+			}
 		}
 
 		(ILInstruction, IType) ConvertCast(CallInstruction invocation, bool isChecked)
@@ -651,7 +668,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return (null, SpecialType.UnknownType);
 				arguments[i] = arg;
 			}
-			var call = new Call(invokeMethod);
+			var call = new CallVirt(invokeMethod);
 			call.Arguments.Add(target);
 			call.Arguments.AddRange(arguments);
 			return (call, invokeMethod.ReturnType);
@@ -879,8 +896,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (invocation.Arguments.Count < 2)
 				return (null, SpecialType.UnknownType);
 			ILInstruction target = null;
+			IType targetType = null;
 			if (!invocation.Arguments[0].MatchLdNull()) {
-				target = ConvertInstruction(invocation.Arguments[0]).Item1;
+				(target, targetType) = ConvertInstruction(invocation.Arguments[0]);
 				if (target == null)
 					return (null, SpecialType.UnknownType);
 			}
@@ -896,14 +914,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						return (null, SpecialType.UnknownType);
 				}
 			}
-			if (target != null) {
-				arguments.Insert(0, target);
-			}
 			CallInstruction call;
-			if (member.IsAbstract || member.IsVirtual || member.IsOverridable) {
+			if (member.IsAbstract || member.IsVirtual || member.IsOverride) {
 				call = new CallVirt((IMethod)member);
 			} else {
 				call = new Call((IMethod)member);
+			}
+			if (target != null) {
+				call.Arguments.Add(PrepareCallTarget(member.DeclaringType, target, targetType));
 			}
 			call.Arguments.AddRange(arguments);
 			return (call, member.ReturnType);

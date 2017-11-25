@@ -218,7 +218,7 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public void MembersBuiltin()
 		{
 			ExpressionTrees.ToCode(ExpressionTrees.X(), () => 1.23m.ToString());
-			ExpressionTrees.ToCode(ExpressionTrees.X(), () => AttributeTargets.All.HasFlag((Enum)AttributeTargets.Assembly));
+			ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((Enum)(object)AttributeTargets.All).HasFlag((Enum)AttributeTargets.Assembly));
 			ExpressionTrees.ToCode(ExpressionTrees.X(), () => "abc".Length == 3);
 			ExpressionTrees.ToCode(ExpressionTrees.X(), () => 'a'.CompareTo('b') < 0);
 		}
