@@ -1422,7 +1422,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override TranslatedExpression VisitILFunction(ILFunction function, TranslationContext context)
 		{
-			return TranslateFunction(function.ExpressionTreeType, function)
+			return TranslateFunction(function.DelegateType, function)
 				.WithILInstruction(function);
 		}
 

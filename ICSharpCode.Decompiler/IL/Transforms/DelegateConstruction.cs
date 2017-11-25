@@ -44,13 +44,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					foreach (var call in block.Instructions[i].Descendants.OfType<NewObj>()) {
 						ILFunction f = TransformDelegateConstruction(call, out ILInstruction target);
 						if (f != null) {
-							f.AddILRange(call.Arguments[0].ILRange);
-							f.AddILRange(call.Arguments[1].ILRange);
-							call.Arguments[0].ReplaceWith(new LdNull());
-							call.Arguments[1].ReplaceWith(f);
-						if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
-							targetsToReplace.Add((IInstructionWithVariableOperand)target);
-					}
+							call.ReplaceWith(f);
+							if (target is IInstructionWithVariableOperand && !target.MatchLdThis())
+								targetsToReplace.Add((IInstructionWithVariableOperand)target);
+						}
 					}
 					if (block.Instructions[i].MatchStLoc(out ILVariable targetVariable, out ILInstruction value)) {
 						var newObj = value as NewObj;
@@ -144,6 +141,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var ilReader = new ILReader(localTypeSystem);
 				ilReader.UseDebugSymbols = context.Settings.UseDebugSymbols;
 				var function = ilReader.ReadIL(methodDefinition.Body, context.CancellationToken);
+				function.DelegateType = value.Method.DeclaringType;
 				function.CheckInvariant(ILPhase.Normal);
 
 				var contextPrefix = targetMethod.Name;
@@ -158,6 +156,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				function.AcceptVisitor(new ReplaceDelegateTargetVisitor(target, function.Variables.SingleOrDefault(v => v.Index == -1 && v.Kind == VariableKind.Parameter)));
 				// handle nested lambdas
 				((IILTransform)new DelegateConstruction()).Run(function, nestedContext);
+				function.AddILRange(target.ILRange);
+				function.AddILRange(value.Arguments[1].ILRange);
 				return function;
 			}
 			return null;

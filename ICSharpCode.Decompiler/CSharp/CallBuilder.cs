@@ -420,10 +420,6 @@ namespace ICSharpCode.Decompiler.CSharp
 				case OpCode.LdVirtFtn:
 					method = ((LdVirtFtn)func).Method;
 					break;
-				case OpCode.ILFunction:
-					method = ((ILFunction)func).Method;
-					return expressionBuilder.TranslateFunction(inst.Method.DeclaringType, (ILFunction)func)
-						.WithILInstruction(inst);
 				default:
 					throw new ArgumentException($"Unknown instruction type: {func.OpCode}");
 			}

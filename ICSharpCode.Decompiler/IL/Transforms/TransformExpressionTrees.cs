@@ -18,6 +18,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -150,7 +151,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var functionType = instruction.Method.ReturnType.TypeArguments[0];
 			var function = new ILFunction(functionType.TypeArguments.LastOrDefault() ?? context.TypeSystem.Compilation.FindType(KnownTypeCode.Void), parameterList, container);
 			if (isQuotedLambda || lambdaStack.Count == 0)
-				function.ExpressionTreeType = instruction.Method.ReturnType;
+				function.DelegateType = instruction.Method.ReturnType;
+			else
+				function.DelegateType = functionType;
 			function.Variables.AddRange(parameterVariablesList);
 			lambdaStack.Push(function);
 			var (bodyInstruction, type) = ConvertInstruction(instruction.Arguments[0]);
@@ -159,11 +162,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			container.ExpectedResultType = bodyInstruction.ResultType;
 			container.Blocks.Add(new Block() { Instructions = { new Leave(container, bodyInstruction) } });
-			if (!isQuotedLambda && lambdaStack.Count > 0)
-				return (new NewObj(functionType.GetConstructors().Single()) {
-					Arguments = { new LdNull(), function }
-				}, functionType);
-			return (function, function.ExpressionTreeType);
+			return (function, function.DelegateType);
 		}
 
 		bool ReadParameters(ILInstruction initializer, IList<IParameter> parameters, IList<ILVariable> parameterVariables, ITypeResolveContext resolveContext)
@@ -199,111 +198,140 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		(ILInstruction, IType) ConvertInstruction(ILInstruction instruction)
 		{
-			switch (instruction) {
-				case CallInstruction invocation:
-					if (invocation.Method.DeclaringType.FullName != "System.Linq.Expressions.Expression")
-						return (null, SpecialType.UnknownType);
-
-					switch (invocation.Method.Name) {
-						case "Add":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, false);
-						case "AddChecked":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, true);
-						case "And":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitAnd);
-						case "AndAlso":
-							return ConvertLogicOperator(invocation, true);
-						case "ArrayAccess":
-						case "ArrayIndex":
-							return ConvertArrayIndex(invocation);
-						case "ArrayLength":
-							return ConvertArrayLength(invocation);
-						case "Call":
-							return ConvertCall(invocation);
-						case "Coalesce":
-							return ConvertCoalesce(invocation);
-						case "Condition":
-							return ConvertCondition(invocation);
-						case "Constant":
-							return ConvertConstant(invocation);
-						case "Convert":
-							return ConvertCast(invocation, false);
-						case "ConvertChecked":
-							return ConvertCast(invocation, true);
-						case "Divide":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Div);
-						case "Equal":
-							return ConvertComparison(invocation, ComparisonKind.Equality);
-						case "ExclusiveOr":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitXor);
-						case "Field":
-							return ConvertField(invocation);
-						case "GreaterThan":
-							return ConvertComparison(invocation, ComparisonKind.GreaterThan);
-						case "GreaterThanOrEqual":
-							return ConvertComparison(invocation, ComparisonKind.GreaterThanOrEqual);
-						case "Invoke":
-							return ConvertInvoke(invocation);
-						case "Lambda":
-							return ConvertLambda(invocation);
-						case "LeftShift":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftLeft);
-						case "LessThan":
-							return ConvertComparison(invocation, ComparisonKind.LessThan);
-						case "LessThanOrEqual":
-							return ConvertComparison(invocation, ComparisonKind.LessThanOrEqual);
-						case "ListInit":
-							return ConvertListInit(invocation);
-						case "MemberInit":
-							return ConvertMemberInit(invocation);
-						case "Modulo":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Rem);
-						case "Multiply":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, false);
-						case "MultiplyChecked":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, true);
-						case "Negate":
-							return ConvertUnaryNumericOperator(invocation, BinaryNumericOperator.Sub, false);
-						case "NegateChecked":
-							return ConvertUnaryNumericOperator(invocation, BinaryNumericOperator.Sub, true);
-						case "New":
-							return ConvertNewObject(invocation);
-						case "NewArrayBounds":
-							return ConvertNewArrayBounds(invocation);
-						case "NewArrayInit":
-							return ConvertNewArrayInit(invocation);
-						case "Not":
-							return ConvertNotOperator(invocation);
-						case "NotEqual":
-							return ConvertComparison(invocation, ComparisonKind.Inequality);
-						case "OnesComplement":
-							return ConvertNotOperator(invocation);
-						case "Or":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitOr);
-						case "OrElse":
-							return ConvertLogicOperator(invocation, false);
-						case "Property":
-							return ConvertProperty(invocation);
-						case "Quote":
-							if (invocation.Arguments.Count == 1)
-								return ConvertInstruction(invocation.Arguments.Single());
-							else
-								return (null, SpecialType.UnknownType);
-						case "RightShift":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftRight);
-						case "Subtract":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, false);
-						case "SubtractChecked":
-							return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, true);
-						case "TypeAs":
-							return ConvertTypeAs(invocation);
-						case "TypeIs":
-							return ConvertTypeIs(invocation);
-					}
-					return (null, SpecialType.UnknownType);
-				default:
-					return ConvertValue(instruction, instruction.Parent);
+			var result = Convert();
+			if (result.Item1 != null) {
+				Debug.Assert(result.Item2 != null, "IType must be non-null!");
+				Debug.Assert(result.Item1.ResultType == result.Item2.GetStackType(), "StackTypes must match!");
 			}
+			return result;
+
+			(ILInstruction, IType) Convert() {
+				switch (instruction) {
+					case CallInstruction invocation:
+						if (invocation.Method.DeclaringType.FullName != "System.Linq.Expressions.Expression")
+							return (null, SpecialType.UnknownType);
+
+						switch (invocation.Method.Name) {
+							case "Add":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, false);
+							case "AddChecked":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Add, true);
+							case "And":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitAnd);
+							case "AndAlso":
+								return ConvertLogicOperator(invocation, true);
+							case "ArrayAccess":
+							case "ArrayIndex":
+								return ConvertArrayIndex(invocation);
+							case "ArrayLength":
+								return ConvertArrayLength(invocation);
+							case "Call":
+								return ConvertCall(invocation);
+							case "Coalesce":
+								return ConvertCoalesce(invocation);
+							case "Condition":
+								return ConvertCondition(invocation);
+							case "Constant":
+								return ConvertConstant(invocation);
+							case "Convert":
+								return ConvertCast(invocation, false);
+							case "ConvertChecked":
+								return ConvertCast(invocation, true);
+							case "Divide":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Div);
+							case "Equal":
+								return ConvertComparison(invocation, ComparisonKind.Equality);
+							case "ExclusiveOr":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitXor);
+							case "Field":
+								return ConvertField(invocation);
+							case "GreaterThan":
+								return ConvertComparison(invocation, ComparisonKind.GreaterThan);
+							case "GreaterThanOrEqual":
+								return ConvertComparison(invocation, ComparisonKind.GreaterThanOrEqual);
+							case "Invoke":
+								return ConvertInvoke(invocation);
+							case "Lambda":
+								return ConvertLambda(invocation);
+							case "LeftShift":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftLeft);
+							case "LessThan":
+								return ConvertComparison(invocation, ComparisonKind.LessThan);
+							case "LessThanOrEqual":
+								return ConvertComparison(invocation, ComparisonKind.LessThanOrEqual);
+							case "ListInit":
+								return ConvertListInit(invocation);
+							case "MemberInit":
+								return ConvertMemberInit(invocation);
+							case "Modulo":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Rem);
+							case "Multiply":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, false);
+							case "MultiplyChecked":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Mul, true);
+							case "Negate":
+								return ConvertUnaryNumericOperator(invocation, BinaryNumericOperator.Sub, false);
+							case "NegateChecked":
+								return ConvertUnaryNumericOperator(invocation, BinaryNumericOperator.Sub, true);
+							case "New":
+								return ConvertNewObject(invocation);
+							case "NewArrayBounds":
+								return ConvertNewArrayBounds(invocation);
+							case "NewArrayInit":
+								return ConvertNewArrayInit(invocation);
+							case "Not":
+								return ConvertNotOperator(invocation);
+							case "NotEqual":
+								return ConvertComparison(invocation, ComparisonKind.Inequality);
+							case "OnesComplement":
+								return ConvertNotOperator(invocation);
+							case "Or":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.BitOr);
+							case "OrElse":
+								return ConvertLogicOperator(invocation, false);
+							case "Property":
+								return ConvertProperty(invocation);
+							case "Quote":
+								if (invocation.Arguments.Count == 1)
+									return ConvertInstruction(invocation.Arguments.Single());
+								else
+									return (null, SpecialType.UnknownType);
+							case "RightShift":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.ShiftRight);
+							case "Subtract":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, false);
+							case "SubtractChecked":
+								return ConvertBinaryNumericOperator(invocation, BinaryNumericOperator.Sub, true);
+							case "TypeAs":
+								return ConvertTypeAs(invocation);
+							case "TypeIs":
+								return ConvertTypeIs(invocation);
+						}
+						return (null, SpecialType.UnknownType);
+					case ILFunction function:
+						if (function.IsExpressionTree) {
+							function.DelegateType = UnwrapExpressionTree(function.DelegateType);
+						}
+						return (function, function.DelegateType);
+					case LdLoc ldloc:
+						if (IsExpressionTreeParameter(ldloc.Variable)) {
+							if (!parameterMapping.TryGetValue(ldloc.Variable, out var v))
+								return (null, SpecialType.UnknownType);
+							return (new LdLoc(v), v.Type);
+						}
+						return (null, SpecialType.UnknownType);
+					default:
+						return (null, SpecialType.UnknownType);
+				}
+			}
+		}
+
+		IType UnwrapExpressionTree(IType delegateType)
+		{
+			if (delegateType is ParameterizedType pt && pt.FullName == "System.Linq.Expressions.Expression" && pt.TypeArguments.Count == 1) {
+				return pt.TypeArguments[0];
+			}
+			return delegateType;
 		}
 
 		(ILInstruction, IType) ConvertArrayIndex(CallInstruction invocation)
@@ -534,11 +562,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return (null, SpecialType.UnknownType);
 			if (value.MatchBox(out var arg, out var boxType)) {
 				if (boxType.Kind == TypeKind.Enum || boxType.IsKnownType(KnownTypeCode.Boolean))
-					return (new ExpressionTreeCast(boxType, ConvertValue(arg, invocation).Item1, false), boxType);
-				value = ConvertValue(arg, invocation).Item1;
+					return (new ExpressionTreeCast(boxType, ConvertValue(arg, invocation), false), boxType);
+				value = ConvertValue(arg, invocation);
 				return (value, type);
 			}
-			return ConvertValue(value, invocation);
+			return (ConvertValue(value, invocation), type);
 		}
 
 		(ILInstruction, IType) ConvertElementInit(CallInstruction invocation)
@@ -727,7 +755,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					return (null, SpecialType.UnknownType);
 				indices[i] = index;
 			}
-			return (new NewArr(type, indices), type);
+			return (new NewArr(type, indices), new ArrayType(context.TypeSystem.Compilation, type, arguments.Count));
 		}
 
 		(ILInstruction, IType) ConvertNewArrayInit(CallInstruction invocation)
@@ -764,10 +792,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			switch (invocation.Arguments.Count) {
 				case 1:
 					if (MatchGetTypeFromHandle(invocation.Arguments[0], out var type)) {
-						var ctors = type.GetConstructors().ToArray();
-						if (ctors.Length != 1 || ctors[0].Parameters.Count > 0)
+						var ctor = type.GetConstructors(c => c.Parameters.Count == 0).FirstOrDefault();
+						if (ctor == null)
 							return (null, SpecialType.UnknownType);
-						return (new NewObj(ctors[0]), type);
+						return (new NewObj(ctor), type);
 					}
 					if (MatchGetConstructorFromHandle(invocation.Arguments[0], out member)) {
 						return (new NewObj((IMethod)member), member.DeclaringType);
@@ -917,27 +945,25 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return (null, SpecialType.UnknownType);
 		}
 
-		(ILInstruction, IType) ConvertValue(ILInstruction value, ILInstruction context)
+		ILInstruction ConvertValue(ILInstruction value, ILInstruction context)
 		{
 			switch (value) {
 				case LdLoc ldloc:
 					if (IsExpressionTreeParameter(ldloc.Variable)) {
 						if (!parameterMapping.TryGetValue(ldloc.Variable, out var v))
-							return (null, SpecialType.UnknownType);
+							return null;
 						if (context is CallInstruction parentCall
 							&& parentCall.Method.FullName == "System.Linq.Expressions.Expression.Call"
 							&& v.StackType.IsIntegerType())
-							return (new LdLoca(v), new ByReferenceType(v.Type));
-						return (new LdLoc(v), v.Type);
+							return new LdLoca(v);
+						return null;
 					} else {
 						if (ldloc.Variable.Kind != VariableKind.StackSlot)
-							return (new LdLoc(ldloc.Variable), ldloc.Variable.Type);
-						return (null, SpecialType.UnknownType);
+							return new LdLoc(ldloc.Variable);
+						return null;
 					}
 				default:
-					if (SemanticHelper.IsPure(value.Flags))
-						return (value.Clone(), value.InferType());
-					return (value, value.InferType());
+					return value.Clone();
 			}
 		}
 
