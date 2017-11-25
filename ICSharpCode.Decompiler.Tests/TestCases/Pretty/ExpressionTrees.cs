@@ -316,10 +316,18 @@ public class ExpressionTrees
 	{
 		return a("42");
 	}
-	
+
+	private bool Fizz(Func<Action, bool> a)
+	{
+		return a(null);
+	}
+
 	public void NestedLambda2()
 	{
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((string x) => x == "a"));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((string x) => x != "a"));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((Action x) => x == new Action(this.NestedLambda2)));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((Action x) => x != new Action(this.NestedLambda2)));
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((int x) => x == 37));
 		
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((int x) => true));

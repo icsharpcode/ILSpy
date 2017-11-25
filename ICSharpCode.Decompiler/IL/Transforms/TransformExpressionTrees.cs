@@ -21,6 +21,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Resolver;
+using ICSharpCode.Decompiler.CSharp.Syntax;
+using ICSharpCode.Decompiler.Semantics;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
@@ -93,11 +95,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		List<ILInstruction> instructionsToRemove;
 		Stack<ILFunction> lambdaStack;
 		CSharpConversions conversions;
+		CSharpResolver resolver;
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
 			this.context = context;
 			this.conversions = CSharpConversions.Get(context.TypeSystem.Compilation);
+			this.resolver = new CSharpResolver(context.TypeSystem.Compilation);
 			this.parameters = new Dictionary<ILVariable, (IType, string)>();
 			this.parameterMapping = new Dictionary<ILVariable, ILVariable>();
 			this.instructionsToRemove = new List<ILInstruction>();
@@ -248,7 +252,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 							case "GreaterThan":
 								return ConvertComparison(invocation, ComparisonKind.GreaterThan);
 							case "GreaterThanOrEqual":
-								return ConvertComparison(invocation, ComparisonKind.GreaterThanOrEqual);
+								return ConvertComparison(invocation,  ComparisonKind.GreaterThanOrEqual);
 							case "Invoke":
 								return ConvertInvoke(invocation);
 							case "Lambda":
@@ -533,6 +537,28 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					method = CSharpOperators.LiftUserDefinedOperator((IMethod)method);
 				}
 				return (new Call((IMethod)method) { Arguments = { left, right } }, method.ReturnType);
+			}
+			var rr = resolver.ResolveBinaryOperator(kind.ToBinaryOperatorType(), new ResolveResult(leftType), new ResolveResult(rightType)) as OperatorResolveResult;
+			if (rr != null && !rr.IsError && rr.UserDefinedOperatorMethod != null) {
+				return (new Call(rr.UserDefinedOperatorMethod) { Arguments = { left, right } }, rr.UserDefinedOperatorMethod.ReturnType);
+			}
+			if (leftType.IsKnownType(KnownTypeCode.String) && rightType.IsKnownType(KnownTypeCode.String)) {
+				IMethod operatorMethod;
+				switch (kind) {
+					case ComparisonKind.Equality:
+						operatorMethod = leftType.GetMethods(m => m.IsOperator && m.Name == "op_Equality" && m.Parameters.Count == 2).FirstOrDefault(m => m.Parameters[0].Type.IsKnownType(KnownTypeCode.String) && m.Parameters[1].Type.IsKnownType(KnownTypeCode.String));
+						if (operatorMethod == null)
+							return (null, SpecialType.UnknownType);
+						break;
+					case ComparisonKind.Inequality:
+						operatorMethod = leftType.GetMethods(m => m.IsOperator && m.Name == "op_Inequality" && m.Parameters.Count == 2).FirstOrDefault(m => m.Parameters[0].Type.IsKnownType(KnownTypeCode.String) && m.Parameters[1].Type.IsKnownType(KnownTypeCode.String));
+						if (operatorMethod == null)
+							return (null, SpecialType.UnknownType);
+						break;
+					default:
+						return (null, SpecialType.UnknownType);
+				}
+				return (new Call(operatorMethod) { Arguments = { left, right } }, operatorMethod.ReturnType);
 			}
 			var resultType = context.TypeSystem.Compilation.FindType(KnownTypeCode.Boolean);
 			return (new Comp(kind, NullableType.IsNullable(leftType) ? ComparisonLiftingKind.CSharp : ComparisonLiftingKind.None, leftType.GetStackType(), leftType.GetSign(), left, right), resultType);
