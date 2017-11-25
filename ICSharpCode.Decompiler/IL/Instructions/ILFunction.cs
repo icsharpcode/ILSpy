@@ -61,11 +61,33 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		public IType AsyncReturnType;
 
+		/// <summary>
+		/// If this is an expression tree or delegate, returns the expression tree type Expression{T} or T.
+		/// T is the delegate type that matches the signature of this method.
+		/// </summary>
+		public IType DelegateType;
+
+		public bool IsExpressionTree => DelegateType != null && DelegateType.FullName == "System.Linq.Expressions.Expression" && DelegateType.TypeParameterCount == 1;
+
+		public readonly IType ReturnType;
+
+		public readonly IList<IParameter> Parameters;
+
 		public ILFunction(IMethod method, MethodDefinition cecilMethod, ILInstruction body) : base(OpCode.ILFunction)
 		{
 			this.Body = body;
 			this.Method = method;
 			this.CecilMethod = cecilMethod;
+			this.ReturnType = Method?.ReturnType;
+			this.Parameters = Method?.Parameters;
+			this.Variables = new ILVariableCollection(this);
+		}
+
+		public ILFunction(IType returnType, IList<IParameter> parameters, ILInstruction body) : base(OpCode.ILFunction)
+		{
+			this.Body = body;
+			this.ReturnType = returnType;
+			this.Parameters = parameters;
 			this.Variables = new ILVariableCollection(this);
 		}
 
@@ -90,6 +112,14 @@ namespace ICSharpCode.Decompiler.IL
 			if (Method != null) {
 				output.Write(' ');
 				Method.WriteTo(output);
+			}
+			if (IsExpressionTree) {
+				output.Write(".ET");
+			}
+			if (DelegateType != null) {
+				output.Write("[");
+				DelegateType.WriteTo(output);
+				output.Write("]");
 			}
 			output.WriteLine(" {");
 			output.Indent();

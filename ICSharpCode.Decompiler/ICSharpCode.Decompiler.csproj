@@ -283,6 +283,7 @@
     <Compile Include="IL\Instructions\CallIndirect.cs" />
     <Compile Include="IL\Instructions\DefaultValue.cs" />
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
+    <Compile Include="IL\Transforms\ExpressionTreeCast.cs" />
     <Compile Include="IL\Transforms\HighLevelLoopTransform.cs" />
     <Compile Include="IL\Transforms\ProxyCallReplacer.cs" />
     <Compile Include="IL\Instructions\StringToInt.cs" />
@@ -290,6 +291,7 @@
     <Compile Include="IL\Transforms\InlineReturnTransform.cs" />
     <Compile Include="IL\Transforms\SwitchOnNullableTransform.cs" />
     <Compile Include="IL\Transforms\SwitchOnStringTransform.cs" />
+    <Compile Include="IL\Transforms\TransformExpressionTrees.cs" />
     <Compile Include="IL\Transforms\UsingTransform.cs" />
     <Compile Include="IL\ControlFlow\AsyncAwaitDecompiler.cs" />
     <Compile Include="IL\ControlFlow\ControlFlowGraph.cs" />

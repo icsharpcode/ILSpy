@@ -128,7 +128,8 @@ namespace ICSharpCode.Decompiler.CSharp
 							new NullCoalescingTransform(),
 							new NullableLiftingStatementTransform(),
 							new TransformArrayInitializers(),
-							new TransformCollectionAndObjectInitializers()
+							new TransformCollectionAndObjectInitializers(),
+							new TransformExpressionTrees()
 						),
 					}
 				},
@@ -762,7 +763,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 
 			AddDefinesForConditionalAttributes(function);
-			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, method, function, settings, CancellationToken);
+			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, function, settings, CancellationToken);
 			var body = statementBuilder.ConvertAsBlock(function.Body);
 
 			Comment prev = null;

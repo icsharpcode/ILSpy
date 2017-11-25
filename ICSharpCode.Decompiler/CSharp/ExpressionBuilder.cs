@@ -1350,15 +1350,15 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		internal ExpressionWithResolveResult TranslateFunction(IType delegateType, ILFunction function)
 		{
-			var method = function.Method.MemberDefinition as IMethod;
-			Debug.Assert(method != null);
+			var method = function.Method?.MemberDefinition as IMethod;
 
 			// Create AnonymousMethodExpression and prepare parameters
 			AnonymousMethodExpression ame = new AnonymousMethodExpression();
 			ame.IsAsync = function.IsAsync;
-			ame.Parameters.AddRange(MakeParameters(method, function));
+			ame.Parameters.AddRange(MakeParameters(function.Parameters, function));
 			ame.HasParameterList = ame.Parameters.Count > 0;
-			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(new SimpleTypeResolveContext(method)), this.decompilationContext, method, function, settings, cancellationToken);
+			var context = method == null ? decompilationContext : new SimpleTypeResolveContext(method);
+			StatementBuilder builder = new StatementBuilder(typeSystem.GetSpecializingTypeSystem(context), this.decompilationContext, function, settings, cancellationToken);
 			var body = builder.ConvertAsBlock(function.Body);
 
 			Comment prev = null;
@@ -1420,6 +1420,12 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ConversionResolveResult(delegateType, rr, LambdaConversion.Instance));
 		}
 
+		protected internal override TranslatedExpression VisitILFunction(ILFunction function, TranslationContext context)
+		{
+			return TranslateFunction(function.DelegateType, function)
+				.WithILInstruction(function);
+		}
+
 		IType InferReturnType(BlockStatement body)
 		{
 			var returnExpressions = new List<ResolveResult>();
@@ -1459,17 +1465,17 @@ namespace ICSharpCode.Decompiler.CSharp
 				return SpecialType.UnknownType;
 		}
 
-		IEnumerable<ParameterDeclaration> MakeParameters(IMethod method, ILFunction function)
+		IEnumerable<ParameterDeclaration> MakeParameters(IList<IParameter> parameters, ILFunction function)
 		{
 			var variables = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
 			int i = 0;
-			foreach (var parameter in method.Parameters) {
+			foreach (var parameter in parameters) {
 				var pd = astBuilder.ConvertParameter(parameter);
 				if (settings.AnonymousTypes && parameter.Type.ContainsAnonymousType())
 					pd.Type = null;
 				ILVariable v;
 				if (variables.TryGetValue(i, out v))
-					pd.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
+					pd.AddAnnotation(new ILVariableResolveResult(v, parameters[i].Type));
 				yield return pd;
 				i++;
 			}
@@ -1701,7 +1707,12 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			return Translate(inst.Argument).ConvertTo(inst.Type, this);
 		}
-		
+
+		protected internal override TranslatedExpression VisitExpressionTreeCast(ExpressionTreeCast inst, TranslationContext context)
+		{
+			return Translate(inst.Argument).ConvertTo(inst.Type, this, inst.IsChecked);
+		}
+
 		protected internal override TranslatedExpression VisitArglist(Arglist inst, TranslationContext context)
 		{
 			return new UndocumentedExpression { UndocumentedExpressionType = UndocumentedExpressionType.ArgListAccess }
