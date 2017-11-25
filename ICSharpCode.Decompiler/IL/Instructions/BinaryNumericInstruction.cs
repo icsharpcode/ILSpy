@@ -189,6 +189,8 @@ namespace ICSharpCode.Decompiler.IL
 			} else if (Sign == Sign.Signed) {
 				output.Write(".signed");
 			}
+			output.Write('.');
+			output.Write(resultType.ToString().ToLowerInvariant());
 			if (IsLifted) {
 				output.Write(".lifted");
 			}

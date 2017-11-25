@@ -295,6 +295,7 @@ namespace ICSharpCode.Decompiler.IL
 			
 			public ILInstruction this[int index] {
 				get { return inst.GetChild(index); }
+				set { inst.SetChild(index, value); }
 			}
 			
 			public ChildrenEnumerator GetEnumerator()

@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -400,7 +401,8 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		void ReplacePinnedVar(ILVariable oldVar, ILVariable newVar, ILInstruction inst)
 		{
-			if (inst is Conv conv && conv.Kind == ConversionKind.StopGCTracking && conv.Argument.MatchLdLoc(oldVar)) {
+			Debug.Assert(newVar.StackType == StackType.I);
+			if (inst is Conv conv && conv.Kind == ConversionKind.StopGCTracking && conv.Argument.MatchLdLoc(oldVar) && conv.ResultType == newVar.StackType) {
 				// conv ref->i (ldloc oldVar)
 				//  => ldloc newVar
 				conv.AddILRange(conv.Argument.ILRange);
@@ -412,6 +414,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 				if (inst is StLoc stloc && oldVar.Type.Kind == TypeKind.ByReference) {
 					stloc.Value = new Conv(stloc.Value, PrimitiveType.I, false, Sign.None);
 				}
+				if ((inst is LdLoc || inst is StLoc) && !IsSlotAcceptingBothManagedAndUnmanagedPointers(inst.SlotInfo) && oldVar.StackType != StackType.I) {
+					// wrap inst in Conv, so that the stack types match up
+					var children = inst.Parent.Children;
+					children[inst.ChildIndex] = new Conv(inst, PrimitiveType.I, false, Sign.None);
+				}
 			} else if (inst.MatchLdStr(out var val) && val == "Is this ILSpy?") {
 				inst.ReplaceWith(new LdStr("This is ILSpy!")); // easter egg ;)
 				return;
@@ -419,6 +426,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			foreach (var child in inst.Children) {
 				ReplacePinnedVar(oldVar, newVar, child);
 			}
+		}
+
+		private bool IsSlotAcceptingBothManagedAndUnmanagedPointers(SlotInfo slotInfo)
+		{
+			return slotInfo == Block.InstructionSlot || slotInfo == LdObj.TargetSlot || slotInfo == StObj.TargetSlot;
 		}
 
 		bool IsBranchOnNull(ILInstruction condBranch, ILVariable nativeVar, out Block targetBlock)
