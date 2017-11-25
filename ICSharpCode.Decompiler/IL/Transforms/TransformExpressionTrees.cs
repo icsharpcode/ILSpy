@@ -461,6 +461,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			var (expr, exprType) = ConvertInstruction(invocation.Arguments[0]);
 			if (expr == null)
 				return (null, SpecialType.UnknownType);
+			if (exprType.IsSmallIntegerType() && targetType.IsKnownType(KnownTypeCode.Int32))
+				return (expr, targetType);
 			return (new ExpressionTreeCast(targetType, expr, isChecked), targetType);
 		}
 
@@ -531,7 +533,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (!MatchConstantCall(invocation, out var value, out var type))
 				return (null, SpecialType.UnknownType);
 			if (value.MatchBox(out var arg, out var boxType)) {
-				if (boxType.Kind == TypeKind.Enum)
+				if (boxType.Kind == TypeKind.Enum || boxType.IsKnownType(KnownTypeCode.Boolean))
 					return (new ExpressionTreeCast(boxType, ConvertValue(arg, invocation).Item1, false), boxType);
 				value = ConvertValue(arg, invocation).Item1;
 				return (value, type);

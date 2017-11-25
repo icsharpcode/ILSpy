@@ -193,7 +193,7 @@ public class ExpressionTrees
 	{
 		int i = 1;
 		string x = "X";
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (("a\n\\b" ?? x) + x).Length == 2 ? false : true && (1m + -i > 0 || false));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((("a\n\\b" ?? x) + x).Length == 2) ? false : (true && (1m + (decimal)(-i) > 0m || false)));
 	}
 	
 	public void NotImplicitCast()
@@ -241,12 +241,12 @@ public class ExpressionTrees
 	
 	public void MethodGroupAsExtensionMethod()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (Func<bool>)new int[4] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), (Expression<Func<Func<bool>>>)(() => ((IEnumerable<int>)new int[4] {
 			2000,
 			2004,
 			2008,
 			2012
-		}.Any);
+		}).Any<int>));
 	}
 	
 	public void MethodGroupConstant()
@@ -266,7 +266,7 @@ public class ExpressionTrees
 			2012
 		}.All(set.Add));
 		
-		Func<Func<object, object, bool>, bool> sink = f => f(null, null);
+		Func<Func<object, object, bool>, bool> sink = (Func<object, object, bool> f) => f(null, null);
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => sink(object.Equals));
 	}
 	
@@ -299,7 +299,7 @@ public class ExpressionTrees
 	
 	public void CurriedLambda()
 	{
-		ExpressionTrees.ToCode<int, Func<int, Func<int, int>>>(ExpressionTrees.X(), a => b => c => a + b + c);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), (Expression<Func<int, Func<int, Func<int, int>>>>)((int a) => (int b) => (int c) => a + b + c));
 	}
 
 	private bool Fizz(Func<int, bool> a)
@@ -429,11 +429,6 @@ public class ExpressionTrees
 		int i = 1;
 		string x = "X";
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (("a\n\\b" ?? x) + x).Length == 2 ? false : true && (1m + (decimal)-i > 0m || false));
-	}
-	
-	public void StringAccessor()
-	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (int)"abc"[1] == 98);
 	}
 	
 	public void GenericClassInstance()
