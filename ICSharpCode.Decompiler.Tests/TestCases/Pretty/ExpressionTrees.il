@@ -20,7 +20,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly pwk1zrwf
+.assembly '05r5is52'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -30,15 +30,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module pwk1zrwf.dll
-// MVID: {F6BFC7E4-C360-4730-8ABB-47735EBDDEBC}
+.module '05r5is52.dll'
+// MVID: {F70BBCF1-4F46-4420-BD20-CAE864CFD4A5}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00CE0000
+// Image base: 0x00F10000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -2136,199 +2136,172 @@
   .method public hidebysig instance void 
           DoAssert() cil managed
   {
-    // Code size       407 (0x197)
+    // Code size       399 (0x18f)
     .maxstack  8
     .locals init (class [System.Core]System.Linq.Expressions.Expression[] V_0)
     IL_0000:  nop
-    IL_0001:  ldarg.0
-    IL_0002:  ldc.i4.s   37
-    IL_0004:  stfld      int32 ExpressionTrees::'field'
-    IL_0009:  call       object ExpressionTrees::X()
-    IL_000e:  ldarg.0
-    IL_000f:  box        ExpressionTrees
-    IL_0014:  ldtoken    ExpressionTrees
-    IL_0019:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_001e:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_0001:  call       object ExpressionTrees::X()
+    IL_0006:  ldarg.0
+    IL_0007:  box        ExpressionTrees
+    IL_000c:  ldtoken    ExpressionTrees
+    IL_0011:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0016:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_0023:  ldtoken    field int32 ExpressionTrees::'field'
-    IL_0028:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
-    IL_002d:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
+    IL_001b:  ldtoken    field int32 ExpressionTrees::'field'
+    IL_0020:  call       class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Reflection.FieldInfo::GetFieldFromHandle(valuetype [mscorlib]System.RuntimeFieldHandle)
+    IL_0025:  call       class [System.Core]System.Linq.Expressions.MemberExpression [System.Core]System.Linq.Expressions.Expression::Field(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                             class [mscorlib]System.Reflection.FieldInfo)
-    IL_0032:  ldarg.0
-    IL_0033:  box        ExpressionTrees
-    IL_0038:  ldtoken    ExpressionTrees
-    IL_003d:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0042:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_002a:  ldarg.0
+    IL_002b:  box        ExpressionTrees
+    IL_0030:  ldtoken    ExpressionTrees
+    IL_0035:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_003a:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_0047:  ldtoken    method instance int32 ExpressionTrees::C()
-    IL_004c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0051:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0056:  ldc.i4.0
-    IL_0057:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_005c:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_003f:  ldtoken    method instance int32 ExpressionTrees::C()
+    IL_0044:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0049:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_004e:  ldc.i4.0
+    IL_004f:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_0054:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0061:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::NotEqual(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0059:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::NotEqual(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression)
-    IL_0066:  ldc.i4.0
-    IL_0067:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_006c:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`1<bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_005e:  ldc.i4.0
+    IL_005f:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0064:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`1<bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                    class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_0071:  call       object ExpressionTrees::ToCode<bool>(object,
+    IL_0069:  call       object ExpressionTrees::ToCode<bool>(object,
                                                               class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`1<!!0>>)
-    IL_0076:  pop
-    IL_0077:  call       object ExpressionTrees::X()
-    IL_007c:  ldnull
-    IL_007d:  ldtoken    method bool [mscorlib]System.Object::ReferenceEquals(object,
+    IL_006e:  pop
+    IL_006f:  call       object ExpressionTrees::X()
+    IL_0074:  ldnull
+    IL_0075:  ldtoken    method bool [mscorlib]System.Object::ReferenceEquals(object,
                                                                               object)
-    IL_0082:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0087:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_008c:  ldc.i4.2
-    IL_008d:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0092:  stloc.0
-    IL_0093:  ldloc.0
-    IL_0094:  ldc.i4.0
-    IL_0095:  ldarg.0
-    IL_0096:  box        ExpressionTrees
-    IL_009b:  ldtoken    ExpressionTrees
-    IL_00a0:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_00a5:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_007a:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_007f:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0084:  ldc.i4.2
+    IL_0085:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_008a:  stloc.0
+    IL_008b:  ldloc.0
+    IL_008c:  ldc.i4.0
+    IL_008d:  ldarg.0
+    IL_008e:  box        ExpressionTrees
+    IL_0093:  ldtoken    ExpressionTrees
+    IL_0098:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_009d:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_00aa:  stelem.ref
-    IL_00ab:  ldloc.0
-    IL_00ac:  ldc.i4.1
-    IL_00ad:  ldtoken    method instance void ExpressionTrees::.ctor()
-    IL_00b2:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_00b7:  castclass  [mscorlib]System.Reflection.ConstructorInfo
-    IL_00bc:  ldc.i4.0
-    IL_00bd:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_00c2:  call       class [System.Core]System.Linq.Expressions.NewExpression [System.Core]System.Linq.Expressions.Expression::New(class [mscorlib]System.Reflection.ConstructorInfo,
+    IL_00a2:  stelem.ref
+    IL_00a3:  ldloc.0
+    IL_00a4:  ldc.i4.1
+    IL_00a5:  ldtoken    method instance void ExpressionTrees::.ctor()
+    IL_00aa:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_00af:  castclass  [mscorlib]System.Reflection.ConstructorInfo
+    IL_00b4:  ldc.i4.0
+    IL_00b5:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_00ba:  call       class [System.Core]System.Linq.Expressions.NewExpression [System.Core]System.Linq.Expressions.Expression::New(class [mscorlib]System.Reflection.ConstructorInfo,
                                                                                                                                        class [System.Core]System.Linq.Expressions.Expression[])
-    IL_00c7:  stelem.ref
-    IL_00c8:  ldloc.0
-    IL_00c9:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_00bf:  stelem.ref
+    IL_00c0:  ldloc.0
+    IL_00c1:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_00ce:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Not(class [System.Core]System.Linq.Expressions.Expression)
-    IL_00d3:  ldc.i4.0
-    IL_00d4:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_00d9:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`1<bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_00c6:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Not(class [System.Core]System.Linq.Expressions.Expression)
+    IL_00cb:  ldc.i4.0
+    IL_00cc:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_00d1:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`1<bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                    class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_00de:  call       object ExpressionTrees::ToCode<bool>(object,
+    IL_00d6:  call       object ExpressionTrees::ToCode<bool>(object,
                                                               class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`1<!!0>>)
-    IL_00e3:  pop
-    IL_00e4:  call       object ExpressionTrees::X()
-    IL_00e9:  ldarg.0
-    IL_00ea:  box        ExpressionTrees
-    IL_00ef:  ldtoken    ExpressionTrees
-    IL_00f4:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_00f9:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_00db:  pop
+    IL_00dc:  call       object ExpressionTrees::X()
+    IL_00e1:  ldarg.0
+    IL_00e2:  box        ExpressionTrees
+    IL_00e7:  ldtoken    ExpressionTrees
+    IL_00ec:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_00f1:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_00fe:  ldtoken    method instance bool ExpressionTrees::MyEquals(class ExpressionTrees)
-    IL_0103:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0108:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_010d:  ldc.i4.1
-    IL_010e:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_0113:  stloc.0
-    IL_0114:  ldloc.0
-    IL_0115:  ldc.i4.0
-    IL_0116:  ldarg.0
-    IL_0117:  box        ExpressionTrees
-    IL_011c:  ldtoken    ExpressionTrees
-    IL_0121:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0126:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_00f6:  ldtoken    method instance bool ExpressionTrees::MyEquals(class ExpressionTrees)
+    IL_00fb:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0100:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_0105:  ldc.i4.1
+    IL_0106:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_010b:  stloc.0
+    IL_010c:  ldloc.0
+    IL_010d:  ldc.i4.0
+    IL_010e:  ldarg.0
+    IL_010f:  box        ExpressionTrees
+    IL_0114:  ldtoken    ExpressionTrees
+    IL_0119:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_011e:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_012b:  stelem.ref
-    IL_012c:  ldloc.0
-    IL_012d:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0123:  stelem.ref
+    IL_0124:  ldloc.0
+    IL_0125:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_0132:  ldarg.0
-    IL_0133:  box        ExpressionTrees
-    IL_0138:  ldtoken    ExpressionTrees
-    IL_013d:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_0142:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_012a:  ldarg.0
+    IL_012b:  box        ExpressionTrees
+    IL_0130:  ldtoken    ExpressionTrees
+    IL_0135:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_013a:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_0147:  ldtoken    method instance bool ExpressionTrees::MyEquals(class ExpressionTrees)
-    IL_014c:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
-    IL_0151:  castclass  [mscorlib]System.Reflection.MethodInfo
-    IL_0156:  ldc.i4.1
-    IL_0157:  newarr     [System.Core]System.Linq.Expressions.Expression
-    IL_015c:  stloc.0
-    IL_015d:  ldloc.0
-    IL_015e:  ldc.i4.0
-    IL_015f:  ldnull
-    IL_0160:  box        ExpressionTrees
-    IL_0165:  ldtoken    ExpressionTrees
-    IL_016a:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_016f:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
+    IL_013f:  ldtoken    method instance bool ExpressionTrees::MyEquals(class ExpressionTrees)
+    IL_0144:  call       class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+    IL_0149:  castclass  [mscorlib]System.Reflection.MethodInfo
+    IL_014e:  ldc.i4.1
+    IL_014f:  newarr     [System.Core]System.Linq.Expressions.Expression
+    IL_0154:  stloc.0
+    IL_0155:  ldloc.0
+    IL_0156:  ldc.i4.0
+    IL_0157:  ldnull
+    IL_0158:  box        ExpressionTrees
+    IL_015d:  ldtoken    ExpressionTrees
+    IL_0162:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0167:  call       class [System.Core]System.Linq.Expressions.ConstantExpression [System.Core]System.Linq.Expressions.Expression::Constant(object,
                                                                                                                                                  class [mscorlib]System.Type)
-    IL_0174:  stelem.ref
-    IL_0175:  ldloc.0
-    IL_0176:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_016c:  stelem.ref
+    IL_016d:  ldloc.0
+    IL_016e:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_017b:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Not(class [System.Core]System.Linq.Expressions.Expression)
-    IL_0180:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::AndAlso(class [System.Core]System.Linq.Expressions.Expression,
+    IL_0173:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Not(class [System.Core]System.Linq.Expressions.Expression)
+    IL_0178:  call       class [System.Core]System.Linq.Expressions.BinaryExpression [System.Core]System.Linq.Expressions.Expression::AndAlso(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                               class [System.Core]System.Linq.Expressions.Expression)
-    IL_0185:  ldc.i4.0
-    IL_0186:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_018b:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`1<bool>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_017d:  ldc.i4.0
+    IL_017e:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0183:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`1<bool>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                    class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_0190:  call       object ExpressionTrees::ToCode<bool>(object,
+    IL_0188:  call       object ExpressionTrees::ToCode<bool>(object,
                                                               class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`1<!!0>>)
-    IL_0195:  pop
-    IL_0196:  ret
+    IL_018d:  pop
+    IL_018e:  ret
   } // end of method ExpressionTrees::DoAssert
 
   .method private hidebysig instance int32 
           C() cil managed
   {
-    // Code size       14 (0xe)
-    .maxstack  2
-    .locals init (int32 V_0)
+    // Code size       7 (0x7)
+    .maxstack  8
     IL_0000:  nop
-    IL_0001:  ldarg.0
-    IL_0002:  ldfld      int32 ExpressionTrees::'field'
-    IL_0007:  ldc.i4.5
-    IL_0008:  add
-    IL_0009:  stloc.0
-    IL_000a:  br.s       IL_000c
-
-    IL_000c:  ldloc.0
-    IL_000d:  ret
+    IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0006:  throw
   } // end of method ExpressionTrees::C
 
   .method private hidebysig instance bool 
           MyEquals(class ExpressionTrees other) cil managed
   {
-    // Code size       27 (0x1b)
-    .maxstack  2
-    .locals init (bool V_0)
+    // Code size       7 (0x7)
+    .maxstack  8
     IL_0000:  nop
-    IL_0001:  ldarg.1
-    IL_0002:  brfalse.s  IL_0014
-
-    IL_0004:  ldarg.0
-    IL_0005:  ldfld      int32 ExpressionTrees::'field'
-    IL_000a:  ldarg.1
-    IL_000b:  ldfld      int32 ExpressionTrees::'field'
-    IL_0010:  ceq
-    IL_0012:  br.s       IL_0015
-
-    IL_0014:  ldc.i4.0
-    IL_0015:  nop
-    IL_0016:  stloc.0
-    IL_0017:  br.s       IL_0019
-
-    IL_0019:  ldloc.0
-    IL_001a:  ret
+    IL_0001:  newobj     instance void [mscorlib]System.NotImplementedException::.ctor()
+    IL_0006:  throw
   } // end of method ExpressionTrees::MyEquals
 
   .method public hidebysig instance void 
           MethodGroupAsExtensionMethod() cil managed
   {
-    // Code size       273 (0x111)
+    // Code size       288 (0x120)
     .maxstack  10
     .locals init (class [System.Core]System.Linq.Expressions.Expression[] V_0,
              class [System.Core]System.Linq.Expressions.Expression[] V_1)
@@ -2405,23 +2378,27 @@
     IL_00e3:  ldloc.1
     IL_00e4:  call       class [System.Core]System.Linq.Expressions.NewArrayExpression [System.Core]System.Linq.Expressions.Expression::NewArrayInit(class [mscorlib]System.Type,
                                                                                                                                                      class [System.Core]System.Linq.Expressions.Expression[])
-    IL_00e9:  stelem.ref
-    IL_00ea:  ldloc.0
-    IL_00eb:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
+    IL_00e9:  ldtoken    class [mscorlib]System.Collections.Generic.IEnumerable`1<int32>
+    IL_00ee:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_00f3:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Convert(class [System.Core]System.Linq.Expressions.Expression,
+                                                                                                                                             class [mscorlib]System.Type)
+    IL_00f8:  stelem.ref
+    IL_00f9:  ldloc.0
+    IL_00fa:  call       class [System.Core]System.Linq.Expressions.MethodCallExpression [System.Core]System.Linq.Expressions.Expression::Call(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                class [mscorlib]System.Reflection.MethodInfo,
                                                                                                                                                class [System.Core]System.Linq.Expressions.Expression[])
-    IL_00f0:  ldtoken    class [mscorlib]System.Func`1<bool>
-    IL_00f5:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
-    IL_00fa:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Convert(class [System.Core]System.Linq.Expressions.Expression,
+    IL_00ff:  ldtoken    class [mscorlib]System.Func`1<bool>
+    IL_0104:  call       class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+    IL_0109:  call       class [System.Core]System.Linq.Expressions.UnaryExpression [System.Core]System.Linq.Expressions.Expression::Convert(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                              class [mscorlib]System.Type)
-    IL_00ff:  ldc.i4.0
-    IL_0100:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
-    IL_0105:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`1<class [mscorlib]System.Func`1<bool>>>(class [System.Core]System.Linq.Expressions.Expression,
+    IL_010e:  ldc.i4.0
+    IL_010f:  newarr     [System.Core]System.Linq.Expressions.ParameterExpression
+    IL_0114:  call       class [System.Core]System.Linq.Expressions.Expression`1<!!0> [System.Core]System.Linq.Expressions.Expression::Lambda<class [mscorlib]System.Func`1<class [mscorlib]System.Func`1<bool>>>(class [System.Core]System.Linq.Expressions.Expression,
                                                                                                                                                                                                                   class [System.Core]System.Linq.Expressions.ParameterExpression[])
-    IL_010a:  call       object ExpressionTrees::ToCode<class [mscorlib]System.Func`1<bool>>(object,
+    IL_0119:  call       object ExpressionTrees::ToCode<class [mscorlib]System.Func`1<bool>>(object,
                                                                                              class [System.Core]System.Linq.Expressions.Expression`1<class [mscorlib]System.Func`1<!!0>>)
-    IL_010f:  pop
-    IL_0110:  ret
+    IL_011e:  pop
+    IL_011f:  ret
   } // end of method ExpressionTrees::MethodGroupAsExtensionMethod
 
   .method public hidebysig instance void 

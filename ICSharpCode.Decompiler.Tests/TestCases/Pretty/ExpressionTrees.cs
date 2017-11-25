@@ -223,7 +223,6 @@ public class ExpressionTrees
 	
 	public void DoAssert()
 	{
-		this.field = 37;
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.field != this.C());
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !object.ReferenceEquals(this, new ExpressionTrees()));
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.MyEquals(this) && !this.MyEquals(null));
@@ -231,12 +230,12 @@ public class ExpressionTrees
 	
 	private int C()
 	{
-		return this.field + 5;
+		throw new NotImplementedException();
 	}
 
 	private bool MyEquals(ExpressionTrees other)
 	{
-		return other != null && this.field == other.field;
+		throw new NotImplementedException();
 	}
 	
 	public void MethodGroupAsExtensionMethod()
@@ -286,10 +285,11 @@ public class ExpressionTrees
 		//no params
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => call(() => 42));
 		//one param
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[2] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => from x in new int[2] {
 			37,
 			42
-		}.Select(x => x * 2));
+		}
+		select x * 2);
 		//two params
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new int[2] {
 			37,
@@ -319,11 +319,11 @@ public class ExpressionTrees
 	
 	public void NestedLambda2()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Fizz(x => x == "a"));
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Fizz(x => x == 37));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((string x) => x == "a"));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((int x) => x == 37));
 		
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Fizz((int x) => true));
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => Buzz(x => true));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Fizz((int x) => true));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => this.Buzz((int x) => true));
 	}
 	
 	public void NewArrayAndExtensionMethod()
@@ -354,7 +354,7 @@ public class ExpressionTrees
 		bool x = true;
 		int y = 3;
 		byte z = 42;
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~(int)z == 0);
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~z == 0);
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ~y == 0);
 		ExpressionTrees.ToCode(ExpressionTrees.X(), () => !x);
 	}
@@ -383,12 +383,13 @@ public class ExpressionTrees
 	
 	public void QuotedWithAnonymous()
 	{
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => new[] {
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (from o in new[] {
 			new {
 				X = "a",
 				Y = "b"
 			}
-		}.Select(o => o.X + o.Y).Single());
+		}
+		select o.X + o.Y).Single());
 	}
 	
 	public void StaticCall()
@@ -428,7 +429,7 @@ public class ExpressionTrees
 	{
 		int i = 1;
 		string x = "X";
-		ExpressionTrees.ToCode(ExpressionTrees.X(), () => (("a\n\\b" ?? x) + x).Length == 2 ? false : true && (1m + (decimal)-i > 0m || false));
+		ExpressionTrees.ToCode(ExpressionTrees.X(), () => ((("a\n\\b" ?? x) + x).Length == 2) ? false : (true && (1m + (decimal)(-i) > 0m || false)));
 	}
 	
 	public void GenericClassInstance()
