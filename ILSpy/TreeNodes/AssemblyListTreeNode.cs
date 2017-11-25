@@ -1,14 +1,14 @@
 ﻿// Copyright (c) 2011 AlphaSierraPapa for the SharpDevelop Team
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy of this
 // software and associated documentation files (the "Software"), to deal in the Software
 // without restriction, including without limitation the rights to use, copy, modify, merge,
 // publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
 // to whom the Software is furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in all copies or
 // substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
 // INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
 // PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
@@ -17,8 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.IO;
 using System.Linq;
 using System.Windows;
 using ICSharpCode.Decompiler;
@@ -98,11 +100,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				files = e.Data.GetData(DataFormats.FileDrop) as string[];
 			if (files != null) {
 				lock (assemblyList.assemblies) {
-					var assemblies = (from file in files
-									  where file != null
-									  select assemblyList.OpenAssembly(file) into node
-									  where node != null
-									  select node).Distinct().ToList();
+					var assemblies = files
+						.Where(file => file != null)
+						.SelectMany(file => OpenAssembly(assemblyList, file))
+						.Where(asm => asm != null)
+						.Distinct()
+						.ToArray();
 					foreach (LoadedAssembly asm in assemblies) {
 						int nodeIndex = assemblyList.assemblies.IndexOf(asm);
 						if (nodeIndex < index)
@@ -115,6 +118,25 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					}
 				}
 			}
+		}
+
+		private IEnumerable<LoadedAssembly> OpenAssembly(AssemblyList assemblyList, string file)
+		{
+			if (file.EndsWith(".nupkg")) {
+				LoadedNugetPackage package = new LoadedNugetPackage(file);
+				var selectionDialog = new NugetPackageBrowserDialog(package);
+				selectionDialog.Owner = Application.Current.MainWindow;
+				if (selectionDialog.ShowDialog() != true)
+					yield break;
+				foreach (var entry in selectionDialog.SelectedItems) {
+					var nugetAsm = assemblyList.OpenAssembly("nupkg://" + file + ";" + entry.Name, entry.Stream, true);
+					if (nugetAsm != null) {
+						yield return nugetAsm;
+					}
+				}
+				yield break;
+			}
+			yield return assemblyList.OpenAssembly(file);
 		}
 
 		public Action<SharpTreeNode> Select = delegate { };
@@ -168,7 +190,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return null;
 		}
-		
+
 		public AssemblyTreeNode FindAssemblyNode(AssemblyDefinition asm)
 		{
 			if (asm == null)
