@@ -63,8 +63,54 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			loopCounters = CollectLoopCounters(function);
 			foreach (var f in function.Descendants.OfType<ILFunction>()) {
 				if (f.Method != null) {
-					foreach (var p in f.Method.Parameters)
-						AddExistingName(reservedVariableNames, p.Name);
+					if (f.Method.IsAccessor && f.Method.Parameters.Count > 0) {
+						for (int i = 0; i < f.Method.Parameters.Count - 1; i++) {
+							AddExistingName(reservedVariableNames, f.Method.Parameters[i].Name);
+						}
+						var lastParameter = f.Method.Parameters.Last();
+						switch (f.Method.AccessorOwner) {
+							case IProperty prop:
+								if (prop.Setter == f.Method) {
+									if (prop.Parameters.Any(p => p.Name == "value")) {
+										f.Warnings.Add("Parameter named \"value\" already present in property signature!");
+										break;
+									}
+									var variableForLastParameter = f.Variables.FirstOrDefault(v => v.Function == f
+										&& v.Kind == VariableKind.Parameter
+										&& v.Index == f.Method.Parameters.Count - 1);
+									if (variableForLastParameter == null) {
+										AddExistingName(reservedVariableNames, lastParameter.Name);
+									} else {
+										if (variableForLastParameter.Name != "value") {
+											variableForLastParameter.Name = "value";
+										}
+										AddExistingName(reservedVariableNames, variableForLastParameter.Name);
+									}
+								}
+								break;
+							case IEvent ev:
+								if (f.Method != ev.InvokeAccessor) {
+									var variableForLastParameter = f.Variables.FirstOrDefault(v => v.Function == f
+										&& v.Kind == VariableKind.Parameter
+										&& v.Index == f.Method.Parameters.Count - 1);
+									if (variableForLastParameter == null) {
+										AddExistingName(reservedVariableNames, lastParameter.Name);
+									} else {
+										if (variableForLastParameter.Name != "value") {
+											variableForLastParameter.Name = "value";
+										}
+										AddExistingName(reservedVariableNames, variableForLastParameter.Name);
+									}
+								}
+								break;
+							default:
+								AddExistingName(reservedVariableNames, lastParameter.Name);
+								break;
+						}
+					} else {
+						foreach (var p in f.Method.Parameters)
+							AddExistingName(reservedVariableNames, p.Name);
+					}
 				} else {
 					foreach (var p in f.Variables.Where(v => v.Kind == VariableKind.Parameter))
 						AddExistingName(reservedVariableNames, p.Name);
