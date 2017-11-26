@@ -158,6 +158,22 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		/// <remarks>
+		/// Must be in sync with <see cref="GetNameFromInstruction" />.
+		/// </remarks>
+		internal static bool IsSupportedInstruction(object arg)
+		{
+			switch (arg) {
+				case LdObj ldobj:
+				case LdFlda ldflda:
+				case LdsFlda ldsflda:
+				case CallInstruction call:
+					return true;
+				default:
+					return false;
+			}
+		}
+
 		bool ConflictWithLocal(ILVariable v)
 		{
 			if (v.Kind == VariableKind.UsingLocal || v.Kind == VariableKind.ForeachLocal) {
@@ -420,18 +436,29 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return variableType;
 		}
 
+		static Dictionary<string, int> CollectReservedVariableNames(ILFunction function, ILVariable existingVariable)
+		{
+			var reservedVariableNames = new Dictionary<string, int>();
+			var rootFunction = function.Ancestors.OfType<ILFunction>().Single(f => f.Parent == null);
+			foreach (var f in rootFunction.Descendants.OfType<ILFunction>()) {
+				foreach (var p in rootFunction.Parameters) {
+					AddExistingName(reservedVariableNames, p.Name);
+				}
+				foreach (var v in f.Variables.Where(v => v.Kind != VariableKind.Parameter)) {
+					if (v != existingVariable)
+						AddExistingName(reservedVariableNames, v.Name);
+				}
+			}
+			foreach (var f in rootFunction.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
+				AddExistingName(reservedVariableNames, f);
+			return reservedVariableNames;
+		}
+
 		internal static string GenerateForeachVariableName(ILFunction function, ILInstruction valueContext, ILVariable existingVariable = null)
 		{
 			if (function == null)
 				throw new ArgumentNullException(nameof(function));
-			var reservedVariableNames = new Dictionary<string, int>();
-			var rootFunction = function.Ancestors.OfType<ILFunction>().Single(f => f.Parent == null);
-			foreach (var v in rootFunction.Descendants.OfType<ILFunction>().SelectMany(m => m.Variables)) {
-				if (v != existingVariable)
-					AddExistingName(reservedVariableNames, v.Name);
-			}
-			foreach (var f in rootFunction.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
-				AddExistingName(reservedVariableNames, f);
+			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable);
 
 			string baseName = GetNameFromInstruction(valueContext);
 			if (string.IsNullOrEmpty(baseName)) {
@@ -467,19 +494,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
-		internal static string GenerateVariableName(ILFunction function, IType type, ILVariable existingVariable = null)
+		internal static string GenerateVariableName(ILFunction function, IType type, ILInstruction valueContext = null, ILVariable existingVariable = null)
 		{
 			if (function == null)
 				throw new ArgumentNullException(nameof(function));
-			var reservedVariableNames = new Dictionary<string, int>();
-			foreach (var v in function.Descendants.OfType<ILFunction>().SelectMany(m => m.Variables)) {
-				if (v != existingVariable)
-					AddExistingName(reservedVariableNames, v.Name);
-			}
-			foreach (var f in function.CecilMethod.DeclaringType.Fields.Select(f => f.Name))
-				AddExistingName(reservedVariableNames, f);
+			var reservedVariableNames = CollectReservedVariableNames(function, existingVariable);
 
-			string baseName = GetNameByType(type);
+			string baseName = valueContext != null ? GetNameFromInstruction(valueContext) ?? GetNameByType(type) : GetNameByType(type);
 			string proposedName = "obj";
 
 			if (!string.IsNullOrEmpty(baseName)) {

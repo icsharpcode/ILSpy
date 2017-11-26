@@ -63,6 +63,8 @@
     <Compile Include="TestCases\Correctness\MiniJSON.cs" />
     <Compile Include="TestCases\ILPretty\Issue982.cs" />
     <Compile Include="TestCases\Pretty\ExpressionTrees.cs" />
+    <Compile Include="TestCases\Pretty\VariableNaming.cs" />
+    <Compile Include="TestCases\Pretty\VariableNamingWithoutSymbols.cs" />
     <None Include="TestCases\ILPretty\Issue959.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Release.cs" />

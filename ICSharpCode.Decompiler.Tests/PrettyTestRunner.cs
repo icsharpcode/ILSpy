@@ -212,7 +212,19 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
-		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None)
+		[Test]
+		public void VariableNaming([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
+		[Test]
+		public void VariableNamingWithoutSymbols([ValueSource("defaultOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings { UseDebugSymbols = false });
+		}
+
+		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
 			var csFile = Path.Combine(TestCasePath, testName + ".cs");
@@ -230,7 +242,7 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 
 			var executable = Tester.AssembleIL(ilFile, asmOptions | AssemblerOptions.Library);
-			var decompiled = Tester.DecompileCSharp(executable);
+			var decompiled = Tester.DecompileCSharp(executable, decompilerSettings);
 			
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).ToArray());
 		}
