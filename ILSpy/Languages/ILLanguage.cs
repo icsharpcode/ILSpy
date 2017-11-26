@@ -118,16 +118,17 @@ namespace ICSharpCode.ILSpy
 			output.WriteLine();
 			
 			var dis = CreateDisassembler(output, options);
+			var module = assembly.GetModuleDefinitionAsync().Result;
 			if (options.FullDecompilation)
-				dis.WriteAssemblyReferences(assembly.ModuleDefinition);
-			if (assembly.AssemblyDefinition != null)
-				dis.WriteAssemblyHeader(assembly.AssemblyDefinition);
+				dis.WriteAssemblyReferences(module);
+			if (module.Assembly != null)
+				dis.WriteAssemblyHeader(module.Assembly);
 			output.WriteLine();
-			dis.WriteModuleHeader(assembly.ModuleDefinition);
+			dis.WriteModuleHeader(module);
 			if (options.FullDecompilation) {
 				output.WriteLine();
 				output.WriteLine();
-				dis.WriteModuleContents(assembly.ModuleDefinition);
+				dis.WriteModuleContents(module);
 			}
 		}
 		

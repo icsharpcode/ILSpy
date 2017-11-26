@@ -216,7 +216,7 @@ namespace ICSharpCode.ILSpy
 				try {
 					var searcher = GetSearchStrategy(searchMode, searchTerm);
 					foreach (var loadedAssembly in assemblies) {
-						ModuleDefinition module = loadedAssembly.ModuleDefinition;
+						ModuleDefinition module = loadedAssembly.GetModuleDefinitionAsync().Result;
 						if (module == null)
 							continue;
 						CancellationToken cancellationToken = cts.Token;

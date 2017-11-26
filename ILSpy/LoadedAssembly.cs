@@ -20,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
@@ -37,7 +38,6 @@ namespace ICSharpCode.ILSpy
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
 		readonly string shortName;
-		readonly Lazy<string> targetFrameworkId;
 		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences = new Dictionary<string, UnresolvedAssemblyNameReference>();
 
 		public LoadedAssembly(AssemblyList assemblyList, string fileName, Stream stream = null)
@@ -51,14 +51,17 @@ namespace ICSharpCode.ILSpy
 			
 			this.assemblyTask = Task.Factory.StartNew<ModuleDefinition>(LoadAssembly, stream); // requires that this.fileName is set
 			this.shortName = Path.GetFileNameWithoutExtension(fileName);
-			this.targetFrameworkId = new Lazy<string>(() => AssemblyDefinition?.DetectTargetFrameworkId(), false);
 		}
 
 		/// <summary>
 		/// Returns a target framework identifier in the form '&lt;framework&gt;Version=v&lt;version&gt;'.
 		/// Returns an empty string if no TargetFrameworkAttribute was found or the file doesn't contain an assembly header, i.e., is only a module.
 		/// </summary>
-		public string TargetFrameworkId => targetFrameworkId.Value ?? string.Empty;
+		public async Task<string> GetTargetFrameworkIdAsync()
+		{
+			var assembly = await GetAssemblyDefinitionAsync();
+			return assembly?.DetectTargetFrameworkId() ?? string.Empty;
+		}
 
 		public Dictionary<string, UnresolvedAssemblyNameReference> LoadedAssemblyReferencesInfo => loadedAssemblyReferences;
 
@@ -66,25 +69,19 @@ namespace ICSharpCode.ILSpy
 		/// Gets the Cecil ModuleDefinition.
 		/// Can be null when there was a load error.
 		/// </summary>
-		public ModuleDefinition ModuleDefinition {
-			get {
-				try {
-					return assemblyTask.Result;
-				} catch (AggregateException) {
-					return null;
-				}
-			}
+		public Task<ModuleDefinition> GetModuleDefinitionAsync()
+		{
+			return assemblyTask;
 		}
 		
 		/// <summary>
 		/// Gets the Cecil AssemblyDefinition.
 		/// Is null when there was a load error; or when opening a netmodule.
 		/// </summary>
-		public AssemblyDefinition AssemblyDefinition {
-			get {
-				var module = this.ModuleDefinition;
-				return module != null ? module.Assembly : null;
-			}
+		public async Task<AssemblyDefinition> GetAssemblyDefinitionAsync()
+		{
+			var module = await assemblyTask;
+			return module != null ? module.Assembly : null;
 		}
 
 		public AssemblyList AssemblyList => assemblyList;
@@ -95,8 +92,8 @@ namespace ICSharpCode.ILSpy
 
 		public string Text {
 			get {
-				if (AssemblyDefinition != null) {
-					return String.Format("{0} ({1})", ShortName, AssemblyDefinition.Name.Version);
+				if (IsLoaded && !HasLoadError) {
+					return String.Format("{0} ({1})", ShortName, GetAssemblyDefinitionAsync().Result.Name.Version);
 				} else {
 					return ShortName;
 				}
@@ -196,25 +193,25 @@ namespace ICSharpCode.ILSpy
 			public AssemblyDefinition Resolve(AssemblyNameReference name)
 			{
 				var node = parent.LookupReferencedAssembly(name);
-				return node != null ? node.AssemblyDefinition : null;
+				return node != null ? node.GetAssemblyDefinitionAsync().Result : null;
 			}
 			
 			public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
 			{
 				var node = parent.LookupReferencedAssembly(name);
-				return node != null ? node.AssemblyDefinition : null;
+				return node != null ? node.GetAssemblyDefinitionAsync().Result : null;
 			}
 			
 			public AssemblyDefinition Resolve(string fullName)
 			{
 				var node = parent.LookupReferencedAssembly(fullName);
-				return node != null ? node.AssemblyDefinition : null;
+				return node != null ? node.GetAssemblyDefinitionAsync().Result : null;
 			}
 			
 			public AssemblyDefinition Resolve(string fullName, ReaderParameters parameters)
 			{
 				var node = parent.LookupReferencedAssembly(fullName);
-				return node != null ? node.AssemblyDefinition : null;
+				return node != null ? node.GetAssemblyDefinitionAsync().Result : null;
 			}
 
 			public void Dispose()
@@ -254,7 +251,8 @@ namespace ICSharpCode.ILSpy
 		LoadedAssembly LookupReferencedAssemblyInternal(string fullName)
 		{
 			foreach (LoadedAssembly asm in assemblyList.GetAssemblies()) {
-				if (asm.AssemblyDefinition != null && fullName.Equals(asm.AssemblyDefinition.FullName, StringComparison.OrdinalIgnoreCase)) {
+				var asmDef = asm.GetAssemblyDefinitionAsync().Result;
+				if (asmDef != null && fullName.Equals(asmDef.FullName, StringComparison.OrdinalIgnoreCase)) {
 					return asm;
 				}
 			}
@@ -266,7 +264,7 @@ namespace ICSharpCode.ILSpy
 				return (LoadedAssembly)App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Func<string, LoadedAssembly>(LookupReferencedAssembly), fullName);
 			}
 
-			var resolver = new MyUniversalResolver(this) { TargetFramework = TargetFrameworkId };
+			var resolver = new MyUniversalResolver(this) { TargetFramework = GetTargetFrameworkIdAsync().Result };
 			var name = AssemblyNameReference.Parse(fullName);
 			var file = resolver.Resolve(name);
 
@@ -282,7 +280,8 @@ namespace ICSharpCode.ILSpy
 		LoadedAssembly LookupWinRTMetadata(string name)
 		{
 			foreach (LoadedAssembly asm in assemblyList.GetAssemblies()) {
-				if (asm.AssemblyDefinition != null && name.Equals(asm.AssemblyDefinition.Name.Name, StringComparison.OrdinalIgnoreCase))
+				var asmDef = asm.GetAssemblyDefinitionAsync().Result;
+				if (asmDef!= null && name.Equals(asmDef.Name.Name, StringComparison.OrdinalIgnoreCase))
 					return asm;
 			}
 			if (assemblyLoadDisableCount > 0)
@@ -302,7 +301,7 @@ namespace ICSharpCode.ILSpy
 		
 		public Task ContinueWhenLoaded(Action<Task<ModuleDefinition>> onAssemblyLoaded, TaskScheduler taskScheduler)
 		{
-			return this.assemblyTask.ContinueWith(onAssemblyLoaded, taskScheduler);
+			return this.assemblyTask.ContinueWith(onAssemblyLoaded, default(CancellationToken), TaskContinuationOptions.RunContinuationsAsynchronously, taskScheduler);
 		}
 		
 		/// <summary>

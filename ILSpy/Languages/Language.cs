@@ -87,15 +87,15 @@ namespace ICSharpCode.ILSpy
 		public virtual void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, assembly.FileName);
-			if (assembly.AssemblyDefinition != null) {
-				var name = assembly.AssemblyDefinition.Name;
+			if (assembly.GetAssemblyDefinitionAsync().Result != null) {
+				var name = assembly.GetAssemblyDefinitionAsync().Result.Name;
 				if (name.IsWindowsRuntime) {
 					WriteCommentLine(output, name.Name + " [WinRT]");
 				} else {
 					WriteCommentLine(output, name.FullName);
 				}
 			} else {
-				WriteCommentLine(output, assembly.ModuleDefinition.Name);
+				WriteCommentLine(output, assembly.GetModuleDefinitionAsync().Result.Name);
 			}
 		}
 

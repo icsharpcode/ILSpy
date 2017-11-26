@@ -185,7 +185,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return null;
 			App.Current.Dispatcher.VerifyAccess();
 			foreach (AssemblyTreeNode node in this.Children) {
-				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.ModuleDefinition == module)
+				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetModuleDefinitionAsync().Result == module)
 					return node;
 			}
 			return null;
@@ -197,7 +197,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return null;
 			App.Current.Dispatcher.VerifyAccess();
 			foreach (AssemblyTreeNode node in this.Children) {
-				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.AssemblyDefinition == asm)
+				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetAssemblyDefinitionAsync().Result == asm)
 					return node;
 			}
 			return null;

@@ -31,6 +31,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Documentation;
 using ICSharpCode.ILSpy.TextView;
@@ -280,7 +281,7 @@ namespace ICSharpCode.ILSpy
 					}
 				} else {
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
-						ModuleDefinition def = asm.ModuleDefinition;
+						ModuleDefinition def = asm.GetModuleDefinitionAsync().Result;
 						if (def != null) {
 							MemberReference mr = XmlDocKeyProvider.FindMemberByKey(def, args.NavigateTo);
 							if (mr != null) {
@@ -299,7 +300,7 @@ namespace ICSharpCode.ILSpy
 			} else if (commandLineLoadedAssemblies.Count == 1) {
 				// NavigateTo == null and an assembly was given on the command-line:
 				// Select the newly loaded assembly
-				JumpToReference(commandLineLoadedAssemblies[0].ModuleDefinition);
+				JumpToReference(commandLineLoadedAssemblies[0].GetModuleDefinitionAsync().Result);
 			}
 			if (args.Search != null)
 			{
@@ -327,6 +328,12 @@ namespace ICSharpCode.ILSpy
 		}
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
+		{
+			
+			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(InitializeAssemblyListAndOpenAssemblies));
+		}
+
+		void InitializeAssemblyListAndOpenAssemblies()
 		{
 			ILSpySettings spySettings = this.spySettings;
 			this.spySettings = null;

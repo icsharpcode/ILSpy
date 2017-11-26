@@ -95,19 +95,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				if (assembly.HasLoadError)
 					return "Assembly could not be loaded. Click here for details.";
 
-				if (tooltip == null) {
+				if (tooltip == null && assembly.IsLoaded) {
 					tooltip = new TextBlock();
-					if (assembly.AssemblyDefinition != null) {
+					var module = assembly.GetModuleDefinitionAsync().Result;
+					if (assembly.GetAssemblyDefinitionAsync().Result != null) {
 						tooltip.Inlines.Add(new Bold(new Run("Name: ")));
-						tooltip.Inlines.Add(new Run(assembly.AssemblyDefinition.FullName));
+						tooltip.Inlines.Add(new Run(module.Assembly.FullName));
 						tooltip.Inlines.Add(new LineBreak());
 					}
 					tooltip.Inlines.Add(new Bold(new Run("Location: ")));
 					tooltip.Inlines.Add(new Run(assembly.FileName));
 					tooltip.Inlines.Add(new LineBreak());
 					tooltip.Inlines.Add(new Bold(new Run("Architecture: ")));
-					tooltip.Inlines.Add(new Run(CSharpLanguage.GetPlatformDisplayName(assembly.ModuleDefinition)));
-					string runtimeName = CSharpLanguage.GetRuntimeDisplayName(assembly.ModuleDefinition);
+					tooltip.Inlines.Add(new Run(CSharpLanguage.GetPlatformDisplayName(module)));
+					string runtimeName = CSharpLanguage.GetRuntimeDisplayName(module);
 					if (runtimeName != null) {
 						tooltip.Inlines.Add(new LineBreak());
 						tooltip.Inlines.Add(new Bold(new Run("Runtime: ")));
@@ -129,6 +130,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			// change from "Loading" icon to final icon
 			RaisePropertyChanged("Icon");
 			RaisePropertyChanged("ExpandedIcon");
+			RaisePropertyChanged("Tooltip");
 			if (moduleTask.IsFaulted) {
 				RaisePropertyChanged("ShowExpander"); // cannot expand assemblies with load error
 				// observe the exception so that the Task's finalizer doesn't re-throw it
@@ -143,7 +145,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			ModuleDefinition moduleDefinition = assembly.ModuleDefinition;
+			ModuleDefinition moduleDefinition = assembly.GetModuleDefinitionAsync().Result;
 			if (moduleDefinition == null) {
 				// if we crashed on loading, then we don't have any children
 				return;
@@ -381,7 +383,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (var node in context.SelectedTreeNodes) {
 				var la = ((AssemblyTreeNode)node).LoadedAssembly;
 				if (!la.HasLoadError) {
-					foreach (var assyRef in la.ModuleDefinition.AssemblyReferences) {
+					foreach (var assyRef in la.GetModuleDefinitionAsync().Result.AssemblyReferences) {
 						la.LookupReferencedAssembly(assyRef.FullName);
 					}
 				}

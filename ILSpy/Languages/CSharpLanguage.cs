@@ -288,7 +288,7 @@ namespace ICSharpCode.ILSpy
 
 		void AddReferenceWarningMessage(AssemblyDefinition assembly, ITextOutput output)
 		{
-			var loadedAssembly = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().FirstOrDefault(la => la.AssemblyDefinition == assembly);
+			var loadedAssembly = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().FirstOrDefault(la => la.GetAssemblyDefinitionAsync().Result == assembly);
 			if (loadedAssembly == null || !loadedAssembly.LoadedAssemblyReferencesInfo.Any(i => i.Value.HasErrors))
 				return;
 			const string line1 = "Warning: Some assembly references could not be loaded. This might lead to incorrect decompilation of some parts,";
@@ -322,15 +322,16 @@ namespace ICSharpCode.ILSpy
 
 		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
+			var module = assembly.GetModuleDefinitionAsync().Result;
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
 				decompiler.ProjectGuid = App.CommandLineArguments.FixedGuid;
-				decompiler.DecompileProject(assembly.ModuleDefinition, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
+				decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			} else {
-				AddReferenceWarningMessage(assembly.AssemblyDefinition, output);
+				AddReferenceWarningMessage(module.Assembly, output);
 				output.WriteLine();
 				base.DecompileAssembly(assembly, output, options);
-				ModuleDefinition mainModule = assembly.ModuleDefinition;
+				ModuleDefinition mainModule = module;
 				if (mainModule.Types.Count > 0) {
 					output.Write("// Global type: ");
 					output.WriteReference(mainModule.Types[0].FullName, mainModule.Types[0]);
@@ -353,7 +354,7 @@ namespace ICSharpCode.ILSpy
 
 				// don't automatically load additional assemblies when an assembly node is selected in the tree view
 				using (options.FullDecompilation ? null : LoadedAssembly.DisableAssemblyLoad()) {
-					CSharpDecompiler decompiler = new CSharpDecompiler(assembly.ModuleDefinition, options.DecompilerSettings);
+					CSharpDecompiler decompiler = new CSharpDecompiler(module, options.DecompilerSettings);
 					decompiler.CancellationToken = options.CancellationToken;
 					SyntaxTree st;
 					if (options.FullDecompilation) {

@@ -50,7 +50,7 @@ namespace ILSpy.BamlDecompiler
 		{
 			var asm = this.Ancestors().OfType<AssemblyTreeNode>().FirstOrDefault().LoadedAssembly;
 			Data.Position = 0;
-			XDocument xamlDocument = LoadIntoDocument(asm.GetAssemblyResolver(), asm.AssemblyDefinition, Data, cancellationToken);
+			XDocument xamlDocument = LoadIntoDocument(asm.GetAssemblyResolver(), asm.GetAssemblyDefinitionAsync().Result, Data, cancellationToken);
 			output.Write(xamlDocument.ToString());
 			return true;
 		}

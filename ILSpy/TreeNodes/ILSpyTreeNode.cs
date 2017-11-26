@@ -150,11 +150,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		protected override void OnIsVisibleChanged()
+		/*protected override void OnIsVisibleChanged()
 		{
 			base.OnIsVisibleChanged();
 			EnsureChildrenFiltered();
-		}
+		}*/
 
 		internal void EnsureChildrenFiltered()
 		{
