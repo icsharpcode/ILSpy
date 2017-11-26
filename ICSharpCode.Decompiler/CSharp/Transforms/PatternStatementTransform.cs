@@ -78,16 +78,6 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			result = TransformFor(expressionStatement);
 			if (result != null)
 				return result;
-			if (context.Settings.AutomaticProperties) {
-				result = ReplaceBackingFieldUsage(expressionStatement);
-				if (result != null)
-					return result;
-			}
-			if (context.Settings.AutomaticEvents) {
-				result = ReplaceEventFieldAnnotation(expressionStatement);
-				if (result != null)
-					return result;
-			}
 			return base.VisitExpressionStatement(expressionStatement);
 		}
 
@@ -524,44 +514,59 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					section.Remove();
 			}
 		}
+		#endregion
 
-		ExpressionStatement ReplaceBackingFieldUsage(ExpressionStatement expressionStatement)
+		public override AstNode VisitIdentifier(Identifier identifier)
 		{
-			foreach (var identifier in expressionStatement.Descendants.OfType<Identifier>()) {
-				if (identifier.Name.StartsWith("<") && identifier.Name.EndsWith(">k__BackingField")) {
-					var parent = identifier.Parent;
-					var mrr = parent.Annotation<MemberResolveResult>();
-					var field = mrr?.Member as IField;
-					if (field != null && field.IsCompilerGenerated()) {
-						var propertyName = identifier.Name.Substring(1, identifier.Name.Length - 1 - ">k__BackingField".Length);
-						var property = field.DeclaringTypeDefinition.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
-						if (property != null) {
-							identifier.ReplaceWith(Identifier.Create(propertyName));
-							parent.RemoveAnnotations<MemberResolveResult>();
-							parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, property));
-						}
+			if (context.Settings.AutomaticProperties) {
+				var newIdentifier = ReplaceBackingFieldUsage(identifier);
+				if (newIdentifier != null) {
+					identifier.ReplaceWith(newIdentifier);
+					return newIdentifier;
+				}
+			}
+			if (context.Settings.AutomaticEvents) {
+				var newIdentifier = ReplaceEventFieldAnnotation(identifier);
+				if (newIdentifier != null)
+					return newIdentifier;
+			}
+			return base.VisitIdentifier(identifier);
+		}
+
+		Identifier ReplaceBackingFieldUsage(Identifier identifier)
+		{
+			if (identifier.Name.StartsWith("<") && identifier.Name.EndsWith(">k__BackingField")) {
+				var parent = identifier.Parent;
+				var mrr = parent.Annotation<MemberResolveResult>();
+				var field = mrr?.Member as IField;
+				if (field != null && field.IsCompilerGenerated()) {
+					var propertyName = identifier.Name.Substring(1, identifier.Name.Length - 1 - ">k__BackingField".Length);
+					var property = field.DeclaringTypeDefinition.GetProperties(p => p.Name == propertyName, GetMemberOptions.IgnoreInheritedMembers).FirstOrDefault();
+					if (property != null) {
+						parent.RemoveAnnotations<MemberResolveResult>();
+						parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, property));
+						return Identifier.Create(propertyName);
 					}
 				}
 			}
 			return null;
 		}
 
-		ExpressionStatement ReplaceEventFieldAnnotation(ExpressionStatement expressionStatement)
+		Identifier ReplaceEventFieldAnnotation(Identifier identifier)
 		{
-			foreach (var identifier in expressionStatement.Descendants.OfType<Identifier>()) {
-				var parent = identifier.Parent;
-				var mrr = parent.Annotation<MemberResolveResult>();
-				var field = mrr?.Member as IField;
-				if (field == null) continue;
-				var @event = field.DeclaringType.GetEvents(ev => ev.Name == field.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
-				if (@event != null) {
-					parent.RemoveAnnotations<MemberResolveResult>();
-					parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, @event));
-				}
+			var parent = identifier.Parent;
+			var mrr = parent.Annotation<MemberResolveResult>();
+			var field = mrr?.Member as IField;
+			if (field == null)
+				return null;
+			var @event = field.DeclaringType.GetEvents(ev => ev.Name == field.Name, GetMemberOptions.IgnoreInheritedMembers).SingleOrDefault();
+			if (@event != null) {
+				parent.RemoveAnnotations<MemberResolveResult>();
+				parent.AddAnnotation(new MemberResolveResult(mrr.TargetResult, @event));
+				return identifier;
 			}
 			return null;
 		}
-		#endregion
 
 		#region Automatic Events
 		static readonly Accessor automaticEventPatternV2 = new Accessor {
