@@ -445,7 +445,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			VisitChildren (indexerExpression);
 		}
-		
+
+		public virtual void VisitInterpolatedStringExpression(InterpolatedStringExpression interpolatedStringExpression)
+		{
+			VisitChildren(interpolatedStringExpression);
+		}
+
+		public virtual void VisitInterpolation(Interpolation interpolation)
+		{
+			VisitChildren(interpolation);
+		}
+
+		public virtual void VisitInterpolatedStringText(InterpolatedStringText interpolatedStringText)
+		{
+			VisitChildren(interpolatedStringText);
+		}
+
 		public virtual void VisitInvocationExpression (InvocationExpression invocationExpression)
 		{
 			VisitChildren (invocationExpression);
@@ -1062,7 +1077,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (indexerExpression);
 		}
-		
+
+		public virtual T VisitInterpolatedStringExpression(InterpolatedStringExpression interpolatedStringExpression)
+		{
+			return VisitChildren(interpolatedStringExpression);
+		}
+
+		public virtual T VisitInterpolation(Interpolation interpolation)
+		{
+			return VisitChildren(interpolation);
+		}
+
+		public virtual T VisitInterpolatedStringText(InterpolatedStringText interpolatedStringText)
+		{
+			return VisitChildren(interpolatedStringText);
+		}
+
 		public virtual T VisitInvocationExpression (InvocationExpression invocationExpression)
 		{
 			return VisitChildren (invocationExpression);
@@ -1679,7 +1709,22 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		{
 			return VisitChildren (indexerExpression, data);
 		}
-		
+
+		public virtual S VisitInterpolatedStringExpression(InterpolatedStringExpression interpolatedStringExpression, T data)
+		{
+			return VisitChildren(interpolatedStringExpression, data);
+		}
+
+		public virtual S VisitInterpolation(Interpolation interpolation, T data)
+		{
+			return VisitChildren(interpolation, data);
+		}
+
+		public virtual S VisitInterpolatedStringText(InterpolatedStringText interpolatedStringText, T data)
+		{
+			return VisitChildren(interpolatedStringText, data);
+		}
+
 		public virtual S VisitInvocationExpression (InvocationExpression invocationExpression, T data)
 		{
 			return VisitChildren (invocationExpression, data);

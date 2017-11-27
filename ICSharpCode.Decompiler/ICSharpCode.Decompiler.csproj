@@ -88,6 +88,7 @@
     <Compile Include="CSharp\Syntax\Expressions\Expression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\IdentifierExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\IndexerExpression.cs" />
+    <Compile Include="CSharp\Syntax\Expressions\InterpolatedStringExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\InvocationExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\IsExpression.cs" />
     <Compile Include="CSharp\Syntax\Expressions\LambdaExpression.cs" />

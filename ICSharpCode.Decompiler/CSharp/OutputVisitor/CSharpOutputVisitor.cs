@@ -980,8 +980,44 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			isAfterSpace = false;
 			EndNode(primitiveExpression);
 		}
+
+		public virtual void VisitInterpolatedStringExpression(InterpolatedStringExpression interpolatedStringExpression)
+		{
+			StartNode(interpolatedStringExpression);
+
+			writer.WriteToken(Roles.Error, "$\"");
+			foreach (var element in interpolatedStringExpression.Content) {
+				element.AcceptVisitor(this);
+			}
+			writer.WriteToken(Roles.Error, "\"");
+			isAfterSpace = false;
+
+			EndNode(interpolatedStringExpression);
+		}
+
+		public virtual void VisitInterpolation(Interpolation interpolation)
+		{
+			StartNode(interpolation);
+
+			writer.WriteToken(Roles.LBrace, "{");
+			interpolation.Expression.AcceptVisitor(this);
+			if (interpolation.Suffix != null) {
+				writer.WriteToken(Roles.Colon, ":");
+				writer.WritePrimitiveValue("", interpolation.Suffix);
+			}
+			writer.WriteToken(Roles.RBrace, "}");
+
+			EndNode(interpolation);
+		}
+
+		public virtual void VisitInterpolatedStringText(InterpolatedStringText interpolatedStringText)
+		{
+			StartNode(interpolatedStringText);
+			writer.WritePrimitiveValue("", TextWriterTokenWriter.ConvertString(interpolatedStringText.Text));
+			EndNode(interpolatedStringText);
+		}
 		#endregion
-		
+
 		public virtual void VisitSizeOfExpression(SizeOfExpression sizeOfExpression)
 		{
 			StartNode(sizeOfExpression);

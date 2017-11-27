@@ -318,6 +318,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool stringInterpolation = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use C# 6.0 string interpolation
+		/// </summary>
+		public bool StringInterpolation {
+			get { return stringInterpolation; }
+			set {
+				if (stringInterpolation != value) {
+					stringInterpolation = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool showXmlDocumentation = true;
 
 		/// <summary>
