@@ -15,11 +15,11 @@ before_build:
 build_script:
 - msbuild ILSpy.sln /v:minimal /p:ResolveNuGetPackages=false "/logger:%ProgramFiles%\AppVeyor\BuildAgent\Appveyor.MSBuildLogger.dll"
 after_build:
-- 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net461\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net461\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net461\*.config
+- 7z a ILSpy_binaries.zip %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net46\*.dll %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net46\*.exe %APPVEYOR_BUILD_FOLDER%\ILSpy\bin\%configuration%\net46\*.config
 test:
   assemblies:
-    - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net461\ICSharpCode.Decompiler.Tests.exe'
-    - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net461\ILSpy.BamlDecompiler.Tests.dll'
+    - 'ICSharpCode.Decompiler.Tests\bin\%configuration%\net46\ICSharpCode.Decompiler.Tests.exe'
+    - 'ILSpy.BamlDecompiler.Tests\bin\%configuration%\net46\ILSpy.BamlDecompiler.Tests.dll'
 after_test:
 - python BuildTools\tidy.py
 for:
