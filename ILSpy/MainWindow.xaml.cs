@@ -329,29 +329,27 @@ namespace ICSharpCode.ILSpy
 
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
-			
-			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(InitializeAssemblyListAndOpenAssemblies));
-		}
-
-		void InitializeAssemblyListAndOpenAssemblies()
-		{
 			ILSpySettings spySettings = this.spySettings;
 			this.spySettings = null;
-			
+
 			// Load AssemblyList only in Loaded event so that WPF is initialized before we start the CPU-heavy stuff.
 			// This makes the UI come up a bit faster.
 			this.assemblyList = assemblyListManager.LoadList(spySettings, sessionSettings.ActiveAssemblyList);
-			
+
 			HandleCommandLineArguments(App.CommandLineArguments);
-			
+
 			if (assemblyList.GetAssemblies().Length == 0
-				&& assemblyList.ListName == AssemblyListManager.DefaultListName)
-			{
+				&& assemblyList.ListName == AssemblyListManager.DefaultListName) {
 				LoadInitialAssemblies();
 			}
-			
+
 			ShowAssemblyList(this.assemblyList);
-			
+
+			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => OpenAssemblies(spySettings)));
+		}
+
+		void OpenAssemblies(ILSpySettings spySettings)
+		{
 			HandleCommandLineArgumentsAfterShowList(App.CommandLineArguments);
 			if (App.CommandLineArguments.NavigateTo == null && App.CommandLineArguments.AssembliesToLoad.Count != 1) {
 				SharpTreeNode node = null;
