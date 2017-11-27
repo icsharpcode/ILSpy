@@ -224,6 +224,12 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings { UseDebugSymbols = false });
 		}
 
+		[Test]
+		public void CS6_StringInterpolation([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
 		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";
