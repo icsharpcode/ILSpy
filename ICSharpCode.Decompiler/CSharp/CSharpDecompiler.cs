@@ -737,6 +737,15 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext)
 		{
+			// Special case: code size is 0
+			// This might be a reference assembly:
+			if (methodDefinition.Body.CodeSize == 0) {
+				var dummy = new BlockStatement();
+				dummy.InsertChildAfter(null, new EmptyStatement(), BlockStatement.StatementRole);
+				dummy.InsertChildAfter(null, new Comment(" Empty body found. Decompiled assembly might be a reference assembly."), Roles.Comment);
+				entityDecl.AddChild(dummy, Roles.Body);
+				return;
+			}
 			var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(decompilationContext);
 			var ilReader = new ILReader(specializingTypeSystem);
 			ilReader.UseDebugSymbols = settings.UseDebugSymbols;
