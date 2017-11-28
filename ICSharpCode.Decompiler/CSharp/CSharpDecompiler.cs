@@ -737,65 +737,69 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		void DecompileBody(MethodDefinition methodDefinition, IMethod method, EntityDeclaration entityDecl, ITypeResolveContext decompilationContext)
 		{
-			// Special case: code size is 0
-			// This might be a reference assembly:
-			if (methodDefinition.Body.CodeSize == 0) {
-				var dummy = new BlockStatement();
-				dummy.InsertChildAfter(null, new EmptyStatement(), BlockStatement.StatementRole);
-				dummy.InsertChildAfter(null, new Comment(" Empty body found. Decompiled assembly might be a reference assembly."), Roles.Comment);
-				entityDecl.AddChild(dummy, Roles.Body);
-				return;
-			}
-			var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(decompilationContext);
-			var ilReader = new ILReader(specializingTypeSystem);
-			ilReader.UseDebugSymbols = settings.UseDebugSymbols;
-			var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
-			function.CheckInvariant(ILPhase.Normal);
-
-			if (entityDecl != null) {
-				int i = 0;
-				var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
-				foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter)) {
-					if (parameters.TryGetValue(i, out var v))
-						parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
-					i++;
+			try {
+				// Special case: code size is 0
+				// This might be a reference assembly:
+				if (methodDefinition.Body.CodeSize == 0) {
+					var dummy = new BlockStatement();
+					dummy.InsertChildAfter(null, new EmptyStatement(), BlockStatement.StatementRole);
+					dummy.InsertChildAfter(null, new Comment(" Empty body found. Decompiled assembly might be a reference assembly."), Roles.Comment);
+					entityDecl.AddChild(dummy, Roles.Body);
+					return;
 				}
-			}
-
-			var context = new ILTransformContext(function, specializingTypeSystem, settings) {
-				CancellationToken = CancellationToken
-			};
-			foreach (var transform in ilTransforms) {
-				CancellationToken.ThrowIfCancellationRequested();
-				transform.Run(function, context);
+				var specializingTypeSystem = typeSystem.GetSpecializingTypeSystem(decompilationContext);
+				var ilReader = new ILReader(specializingTypeSystem);
+				ilReader.UseDebugSymbols = settings.UseDebugSymbols;
+				var function = ilReader.ReadIL(methodDefinition.Body, CancellationToken);
 				function.CheckInvariant(ILPhase.Normal);
-			}
 
-			AddDefinesForConditionalAttributes(function);
-			var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, function, settings, CancellationToken);
-			var body = statementBuilder.ConvertAsBlock(function.Body);
-
-			Comment prev = null;
-			foreach (string warning in function.Warnings) {
-				body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
-			}
-
-			entityDecl.AddChild(body, Roles.Body);
-			entityDecl.AddAnnotation(function);
-
-			if (function.IsIterator) {
-				if (!body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement)) {
-					body.Add(new YieldBreakStatement());
+				if (entityDecl != null) {
+					int i = 0;
+					var parameters = function.Variables.Where(v => v.Kind == VariableKind.Parameter).ToDictionary(v => v.Index);
+					foreach (var parameter in entityDecl.GetChildrenByRole(Roles.Parameter)) {
+						if (parameters.TryGetValue(i, out var v))
+							parameter.AddAnnotation(new ILVariableResolveResult(v, method.Parameters[i].Type));
+						i++;
+					}
 				}
-				RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IteratorStateMachineAttribute"));
-				if (function.StateMachineCompiledWithMono) {
-					RemoveAttribute(entityDecl, new TopLevelTypeName("System.Diagnostics", "DebuggerHiddenAttribute"));
+
+				var context = new ILTransformContext(function, specializingTypeSystem, settings) {
+					CancellationToken = CancellationToken
+				};
+				foreach (var transform in ilTransforms) {
+					CancellationToken.ThrowIfCancellationRequested();
+					transform.Run(function, context);
+					function.CheckInvariant(ILPhase.Normal);
 				}
-			}
-			if (function.IsAsync) {
-				entityDecl.Modifiers |= Modifiers.Async;
-				RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "AsyncStateMachineAttribute"));
-				RemoveAttribute(entityDecl, new TopLevelTypeName("System.Diagnostics", "DebuggerStepThroughAttribute"));
+
+				AddDefinesForConditionalAttributes(function);
+				var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, function, settings, CancellationToken);
+				var body = statementBuilder.ConvertAsBlock(function.Body);
+
+				Comment prev = null;
+				foreach (string warning in function.Warnings) {
+					body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+				}
+
+				entityDecl.AddChild(body, Roles.Body);
+				entityDecl.AddAnnotation(function);
+
+				if (function.IsIterator) {
+					if (!body.Descendants.Any(d => d is YieldReturnStatement || d is YieldBreakStatement)) {
+						body.Add(new YieldBreakStatement());
+					}
+					RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "IteratorStateMachineAttribute"));
+					if (function.StateMachineCompiledWithMono) {
+						RemoveAttribute(entityDecl, new TopLevelTypeName("System.Diagnostics", "DebuggerHiddenAttribute"));
+					}
+				}
+				if (function.IsAsync) {
+					entityDecl.Modifiers |= Modifiers.Async;
+					RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "AsyncStateMachineAttribute"));
+					RemoveAttribute(entityDecl, new TopLevelTypeName("System.Diagnostics", "DebuggerStepThroughAttribute"));
+				}
+			} catch (Exception innerException) {
+				throw new DecompilerException(methodDefinition, innerException);
 			}
 		}
 
