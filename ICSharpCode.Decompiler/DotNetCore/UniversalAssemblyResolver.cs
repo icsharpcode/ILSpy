@@ -16,7 +16,20 @@ namespace ICSharpCode.Decompiler
 		readonly List<string> directories = new List<string>();
 		readonly List<string> gac_paths = GetGacPaths();
 
-		public static readonly bool OnMono = Type.GetType("Mono.Runtime") != null;
+		/// <summary>
+		/// Detect whether we're in a Mono environment.
+		/// </summary>
+		/// <remarks>This is used whenever we're trying to decompile a plain old .NET framework assembly on Unix.</remarks>
+		static bool DetectMono()
+		{
+			// TODO : test whether this works with Mono on *Windows*, not sure if we'll
+			// ever need this...
+			if (Type.GetType("Mono.Runtime") != null)
+				return true;
+			if (Environment.OSVersion.Platform == PlatformID.Unix)
+				return true;
+			return false;
+		}
 
 		public event AssemblyResolveEventHandler ResolveFailed;
 
@@ -113,7 +126,7 @@ namespace ICSharpCode.Decompiler
 			}
 
 			var framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName);
-			var framework_dirs = OnMono
+			var framework_dirs = DetectMono()
 				? new[] { framework_dir, Path.Combine(framework_dir, "Facades") }
 				: new[] { framework_dir };
 
@@ -188,7 +201,7 @@ namespace ICSharpCode.Decompiler
 					typeof(object).Module.FullyQualifiedName).FullName
 				).FullName;
 
-			if (OnMono) {
+			if (DetectMono()) {
 				if (version.Major == 1)
 					path = Path.Combine(path, "1.0");
 				else if (version.Major == 2) {
@@ -228,7 +241,7 @@ namespace ICSharpCode.Decompiler
 
 		static List<string> GetGacPaths()
 		{
-			if (OnMono)
+			if (DetectMono())
 				return GetDefaultMonoGacPaths();
 
 			var paths = new List<string>(2);
@@ -286,7 +299,7 @@ namespace ICSharpCode.Decompiler
 			if (reference.PublicKeyToken == null || reference.PublicKeyToken.Length == 0)
 				return null;
 
-			if (OnMono)
+			if (DetectMono())
 				return GetAssemblyInMonoGac(reference, parameters);
 
 			return GetAssemblyInNetGac(reference, parameters);
@@ -309,7 +322,7 @@ namespace ICSharpCode.Decompiler
 			var gacs = new[] { "GAC_MSIL", "GAC_32", "GAC_64", "GAC" };
 			var prefixes = new[] { string.Empty, "v4.0_" };
 
-			for (int i = 0; i < 2; i++) {
+			for (int i = 0; i < gac_paths.Count; i++) {
 				for (int j = 0; j < gacs.Length; j++) {
 					var gac = Path.Combine(gac_paths[i], gacs[j]);
 					var file = GetAssemblyFile(reference, prefixes[i], gac);
