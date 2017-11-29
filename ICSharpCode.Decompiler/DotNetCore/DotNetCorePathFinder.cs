@@ -2,7 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using System.Runtime.InteropServices;
+using System.Text;
 using Mono.Cecil;
 using Newtonsoft.Json.Linq;
 
@@ -30,7 +31,7 @@ namespace ICSharpCode.Decompiler
 		}
 
 		static readonly string[] LookupPaths = new string[] {
-			 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget\\packages")
+			 Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".nuget", "packages")
 		};
 
 		readonly Dictionary<string, DotNetCorePackageInfo> packages;
@@ -60,7 +61,7 @@ namespace ICSharpCode.Decompiler
 				foreach (var pk in packages) {
 					foreach (var item in pk.Value.RuntimeComponents) {
 						var itemPath = Path.GetDirectoryName(item);
-						var fullPath = Path.Combine(path, pk.Value.Name, pk.Value.Version, itemPath);
+						var fullPath = Path.Combine(path, pk.Value.Name, pk.Value.Version, itemPath).ToLowerInvariant();
 						if (Directory.Exists(fullPath))
 							packageBasePaths.Add(fullPath);
 					}
@@ -113,11 +114,25 @@ namespace ICSharpCode.Decompiler
 			string dotnetExeName = (Environment.OSVersion.Platform == PlatformID.Unix) ? "dotnet" : "dotnet.exe";
 			foreach (var item in Environment.GetEnvironmentVariable("PATH").Split(Path.PathSeparator)) {
 				try {
-					if (File.Exists(Path.Combine(item, dotnetExeName)))
-						return item;
+					string fileName = Path.Combine(item, dotnetExeName);
+					if (!File.Exists(fileName))
+						continue;
+					if (Environment.OSVersion.Platform == PlatformID.Unix) {
+						if ((new FileInfo(fileName).Attributes & FileAttributes.ReparsePoint) == FileAttributes.ReparsePoint) {
+							var sb = new StringBuilder();
+							realpath(fileName, sb);
+							fileName = sb.ToString();
+							if (!File.Exists(fileName))
+								continue;
+						}
+					}
+					return Path.GetDirectoryName(fileName);
 				} catch (ArgumentException) { }
 			}
 			return null;
 		}
+
+		[DllImport("libc")]
+		static extern void realpath(string path, StringBuilder resolvedPath);
 	}
 }
