@@ -61,6 +61,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				for (int i = 1; i < arguments.Length; i++) {
 					expr = new BinaryOperatorExpression(expr, BinaryOperatorType.Add, arguments[i]);
 				}
+				expr.CopyAnnotationsFrom(invocationExpression);
 				invocationExpression.ReplaceWith(expr);
 				return;
 			}
