@@ -262,6 +262,10 @@ namespace ICSharpCode.Decompiler.IL
 				return true;
 			if (stackType1 == StackType.I4 && stackType2 == StackType.I)
 				return true;
+			if (stackType1 == StackType.F4 && stackType2 == StackType.F8)
+				return true;
+			if (stackType1 == StackType.F8 && stackType2 == StackType.F4)
+				return true;
 			// allow merging unknown type with any other type
 			return stackType1 == StackType.Unknown || stackType2 == StackType.Unknown;
 		}
@@ -1045,6 +1049,12 @@ namespace ICSharpCode.Decompiler.IL
 						Warn($"Expected {expectedType}, but got {inst.ResultType}");
 					}
 					inst = new Conv(inst, PrimitiveType.Ref, false, Sign.None);
+				} else if (expectedType == StackType.F8 && inst.ResultType == StackType.F4) {
+					// IL allows implicit F4->F8 conversions, because in IL F4 and F8 are the same.
+					inst = new Conv(inst, PrimitiveType.R8, false, Sign.Signed);
+				} else if (expectedType == StackType.F4 && inst.ResultType == StackType.F8) {
+					// IL allows implicit F8->F4 conversions, because in IL F4 and F8 are the same.
+					inst = new Conv(inst, PrimitiveType.R4, false, Sign.Signed);
 				} else {
 					Warn($"Expected {expectedType}, but got {inst.ResultType}");
 					inst = new Conv(inst, expectedType.ToKnownTypeCode().ToPrimitiveType(), false, Sign.None);
