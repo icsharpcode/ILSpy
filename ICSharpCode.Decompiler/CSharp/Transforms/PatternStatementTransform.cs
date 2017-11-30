@@ -164,24 +164,17 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			Match m1 = variableAssignPattern.Match(node);
 			if (!m1.Success) return null;
-			var variableName = m1.Get<IdentifierExpression>("variable").Single().Identifier;
+			var variable = m1.Get<IdentifierExpression>("variable").Single().GetILVariable();
 			AstNode next = node.NextSibling;
-			if (next is ForStatement forStatement) {
-				if ((forStatement.Iterators.FirstOrDefault() is ExpressionStatement stmt
-					&& stmt.Expression is AssignmentExpression assign
-					&& variableName == assign.Left.ToString())
-				|| (forStatement.Condition is BinaryOperatorExpression cond
-					&& variableName == cond.Left.ToString()))
-				{
-					node.Remove();
-					forStatement.InsertChildAfter(null, node, ForStatement.InitializerRole);
-					return forStatement;
-				}
+			if (next is ForStatement forStatement && ForStatementUsesVariable(forStatement, variable)) {
+				node.Remove();
+				next.InsertChildAfter(null, node, ForStatement.InitializerRole);
+				return (ForStatement)next;
 			}
 			Match m3 = forPattern.Match(next);
 			if (!m3.Success) return null;
 			// ensure the variable in the for pattern is the same as in the declaration
-			if (variableName != m3.Get<IdentifierExpression>("ident").Single().Identifier)
+			if (variable != m3.Get<IdentifierExpression>("ident").Single().GetILVariable())
 				return null;
 			WhileStatement loop = (WhileStatement)next;
 			node.Remove();
@@ -196,6 +189,15 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			forStatement.EmbeddedStatement = newBody;
 			loop.ReplaceWith(forStatement);
 			return forStatement;
+		}
+
+		bool ForStatementUsesVariable(ForStatement statement, IL.ILVariable variable)
+		{
+			if (!statement.Condition.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable))
+				return false;
+			if (!statement.Iterators.Any(i => i.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable)))
+				return false;
+			return true;
 		}
 		#endregion
 
