@@ -50,7 +50,6 @@
 
   <ItemGroup>
     <PackageReference Include="Humanizer.Core" Version="2.2.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     <PackageReference Include="System.Collections.Immutable" Version="1.3.1" />
     <PackageReference Include="System.ValueTuple" Version="4.3.0" />
   </ItemGroup>
@@ -276,6 +275,16 @@
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
+    <Compile Include="DotNetCore\LightJson\JsonArray.cs" />
+    <Compile Include="DotNetCore\LightJson\JsonObject.cs" />
+    <Compile Include="DotNetCore\LightJson\JsonValue.cs" />
+    <Compile Include="DotNetCore\LightJson\JsonValueType.cs" />
+    <Compile Include="DotNetCore\LightJson\Serialization\JsonParseException.cs" />
+    <Compile Include="DotNetCore\LightJson\Serialization\JsonReader.cs" />
+    <Compile Include="DotNetCore\LightJson\Serialization\JsonSerializationException.cs" />
+    <Compile Include="DotNetCore\LightJson\Serialization\JsonWriter.cs" />
+    <Compile Include="DotNetCore\LightJson\Serialization\TextPosition.cs" />
+    <Compile Include="DotNetCore\LightJson\Serialization\TextScanner.cs" />
     <Compile Include="DotNetCore\UniversalAssemblyResolver.cs" />
     <Compile Include="DotNetCore\UnresolvedAssemblyNameReference.cs" />
     <Compile Include="IL\ILAstWritingOptions.cs" />

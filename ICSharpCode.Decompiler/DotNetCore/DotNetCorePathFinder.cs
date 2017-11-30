@@ -4,8 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using LightJson.Serialization;
 using Mono.Cecil;
-using Newtonsoft.Json.Linq;
 
 namespace ICSharpCode.Decompiler
 {
@@ -84,16 +84,24 @@ namespace ICSharpCode.Decompiler
 
 		static IEnumerable<DotNetCorePackageInfo> LoadPackageInfos(string depsJsonFileName, string targetFramework)
 		{
-			var dependencies = JObject.Parse(File.ReadAllText(depsJsonFileName));
-			var runtimeInfos = dependencies["targets"][targetFramework].Children().OfType<JProperty>().ToArray();
-			var libraries = dependencies["libraries"].Children().OfType<JProperty>().ToArray();
-
+			var dependencies = JsonReader.Parse(File.ReadAllText(depsJsonFileName));
+			var runtimeInfos = dependencies["targets"][targetFramework].AsJsonObject;
+			var libraries = dependencies["libraries"].AsJsonObject;
+			if (runtimeInfos == null || libraries == null)
+				yield break;
 			foreach (var library in libraries) {
-				var type = library.First()["type"].ToString();
-				var path = library.First()["path"]?.ToString();
-				var runtimeInfo = runtimeInfos.FirstOrDefault(r => r.Name == library.Name)?.First()["runtime"]?.Children().OfType<JProperty>().Select(i => i.Name).ToArray();
-
-				yield return new DotNetCorePackageInfo(library.Name, type, path, runtimeInfo);
+				var type = library.Value["type"].AsString;
+				var path = library.Value["path"].AsString;
+				var runtimeInfo = runtimeInfos[library.Key]["runtime"].AsJsonObject;
+				string[] components = new string[runtimeInfo?.Count ?? 0];
+				if (runtimeInfo != null) {
+					int i = 0;
+					foreach (var component in runtimeInfo) {
+						components[i] = component.Key;
+						i++;
+					}
+				}
+				yield return new DotNetCorePackageInfo(library.Key, type, path, components);
 			}
 		}
 
