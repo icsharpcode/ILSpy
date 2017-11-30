@@ -83,7 +83,8 @@ namespace ICSharpCode.ILSpy
 			try {
 				var module = await assemblyTask;
 				return module != null ? module.Assembly : null;
-			} catch {
+			} catch (Exception ex) {
+				System.Diagnostics.Trace.TraceError(ex.ToString());
 				return null;
 			}
 		}
