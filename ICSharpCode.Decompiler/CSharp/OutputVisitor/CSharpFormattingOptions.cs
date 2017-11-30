@@ -86,6 +86,8 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		}
 
 		#region Indentation
+		public string IndentationString { get; set; } = "\t";
+
 		public bool IndentNamespaceBody { // tested
 			get;
 			set;

@@ -76,6 +76,8 @@ namespace ICSharpCode.ILSpy.TextView
 		int indent;
 		/// <summary>Whether indentation should be inserted on the next write</summary>
 		bool needsIndent;
+
+		public string IndentationString { get; set; } = "\t";
 		
 		internal readonly List<VisualLineElementGenerator> elementGenerators = new List<VisualLineElementGenerator>();
 		
@@ -176,7 +178,7 @@ namespace ICSharpCode.ILSpy.TextView
 			if (needsIndent) {
 				needsIndent = false;
 				for (int i = 0; i < indent; i++) {
-					b.Append('\t');
+					b.Append(IndentationString);
 				}
 			}
 		}

@@ -45,7 +45,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			if (formattingPolicy == null) {
 				throw new ArgumentNullException ("formattingPolicy");
 			}
-			this.writer = TokenWriter.Create(textWriter);
+			this.writer = TokenWriter.Create(textWriter, formattingPolicy.IndentationString);
 			this.policy = formattingPolicy;
 		}
 		
