@@ -37,6 +37,7 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="5.0.4" />
+    <PackageReference Include="Mono.Cecil" Version="0.10.0-beta7" />
   </ItemGroup>
 
   <ItemGroup>
@@ -44,9 +45,6 @@
       <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\ILSpy\ILSpy.csproj">
-      <Private>False</Private>
-    </ProjectReference>
-    <ProjectReference Include="..\cecil\Mono.Cecil.csproj" AdditionalProperties="NuGetRestoreTargets=;ResolveNuGetPackages=false">
       <Private>False</Private>
     </ProjectReference>
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj">
