@@ -44,8 +44,9 @@ namespace ICSharpCode.Decompiler.IL
 				case MetadataType.FunctionPointer:
 					return StackType.I;
 				case MetadataType.Single:
+					return StackType.F4;
 				case MetadataType.Double:
-					return StackType.F;
+					return StackType.F8;
 				case MetadataType.ByReference:
 					return StackType.Ref;
 				case MetadataType.Void:

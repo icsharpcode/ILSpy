@@ -184,7 +184,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			ILInstruction lhs, rhs;
 			if (arg is Comp comp) {
-				if ((comp.InputType != StackType.F && !comp.IsLifted) || comp.Kind.IsEqualityOrInequality()) {
+				if ((!comp.InputType.IsFloatType() && !comp.IsLifted) || comp.Kind.IsEqualityOrInequality()) {
 					context.Step("push negation into comparison", inst);
 					comp.Kind = comp.Kind.Negate();
 					comp.AddILRange(inst.ILRange);

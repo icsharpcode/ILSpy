@@ -146,8 +146,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case KnownTypeCode.UInt64:
 					return new LdcI8(0);
 				case KnownTypeCode.Single:
+					return new LdcF4(0);
 				case KnownTypeCode.Double:
-					return new LdcF(0);
+					return new LdcF8(0);
 				case KnownTypeCode.Decimal:
 					return new LdcDecimal(0);
 				case KnownTypeCode.Void:
@@ -384,9 +385,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				case TypeCode.UInt64:
 					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcI8(BitConverter.ToInt64(d, i)));
 				case TypeCode.Single:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcF(BitConverter.ToSingle(d, i)));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcF4(BitConverter.ToSingle(d, i)));
 				case TypeCode.Double:
-					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcF(BitConverter.ToDouble(d, i)));
+					return DecodeArrayInitializer(initialValue, array, arrayLength, output, typeCode, type, (d, i) => new LdcF8(BitConverter.ToDouble(d, i)));
 				case TypeCode.Object:
 				case TypeCode.Empty:
 					var typeDef = type.GetDefinition();

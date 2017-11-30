@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	public static class TypeUtils
 	{
 		public const int NativeIntSize = 6; // between 4 (Int32) and 8 (Int64)
-		
+
 		/// <summary>
 		/// Gets the size (in bytes) of the input type.
 		/// Returns <c>NativeIntSize</c> for pointer-sized types.
@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					type = type.GetEnumUnderlyingType();
 					break;
 			}
-			
+
 			var typeDef = type.GetDefinition();
 			if (typeDef == null)
 				return 0;
@@ -68,7 +68,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return 0;
 		}
-		
+
 		/// <summary>
 		/// Gets the size of the input stack type.
 		/// </summary>
@@ -92,12 +92,12 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return 0;
 			}
 		}
-		
+
 		public static IType GetLargerType(IType type1, IType type2)
 		{
 			return GetSize(type1) >= GetSize(type2) ? type1 : type2;
 		}
-		
+
 		/// <summary>
 		/// Gets whether the type is a small integer type.
 		/// Small integer types are:
@@ -165,7 +165,22 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return false;
 			}
 		}
-		
+
+		/// <summary>
+		/// Gets whether the type is an IL floating point type.
+		/// Returns true for F4 or F8.
+		/// </summary>
+		public static bool IsFloatType(this StackType type)
+		{
+			switch (type) {
+				case StackType.F4:
+				case StackType.F8:
+					return true;
+				default:
+					return false;
+			}
+		}
+
 		/// <summary>
 		/// Gets whether reading/writing an element of accessType from the pointer
 		/// is equivalent to reading/writing an element of the pointer's element type.
@@ -223,8 +238,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				case KnownTypeCode.UInt64:
 					return StackType.I8;
 				case KnownTypeCode.Single:
+					return StackType.F4;
 				case KnownTypeCode.Double:
-					return StackType.F;
+					return StackType.F8;
 				case KnownTypeCode.Void:
 					return StackType.Void;
 				case KnownTypeCode.IntPtr:
@@ -234,7 +250,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return StackType.O;
 			}
 		}
-		
+
 		/// <summary>
 		/// If type is an enumeration type, returns the underlying type.
 		/// Otherwise, returns type unmodified.
@@ -243,7 +259,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			return (type.Kind == TypeKind.Enum) ? type.GetDefinition().EnumUnderlyingType : type;
 		}
-		
+
 		/// <summary>
 		/// Gets the sign of the input type.
 		/// </summary>
@@ -363,7 +379,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return KnownTypeCode.None;
 			}
 		}
-		
+
 		public static KnownTypeCode ToKnownTypeCode(this StackType stackType, Sign sign = Sign.None)
 		{
 			switch (stackType) {
@@ -373,7 +389,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 					return sign == Sign.Unsigned ? KnownTypeCode.UInt64 : KnownTypeCode.Int64;
 				case StackType.I:
 					return sign == Sign.Unsigned ? KnownTypeCode.UIntPtr : KnownTypeCode.IntPtr;
-				case StackType.F:
+				case StackType.F4:
+					return KnownTypeCode.Single;
+				case StackType.F8:
 					return KnownTypeCode.Double;
 				case StackType.O:
 					return KnownTypeCode.Object;
@@ -384,7 +402,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 	}
-	
+
 	public enum Sign : byte
 	{
 		None,

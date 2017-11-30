@@ -972,8 +972,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						case StackType.I:
 							left = new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.None);
 							break;
-						case StackType.F:
-							left = new LdcF(0);
+						case StackType.F4:
+							left = new LdcF4(0);
+							break;
+						case StackType.F8:
+							left = new LdcF8(0);
 							break;
 						default:
 							return (null, SpecialType.UnknownType);

@@ -327,7 +327,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			values = null;
 			// stloc dictVar(newobj Dictionary..ctor(ldc.i4 valuesLength))
 			// -or-
-			// stloc dictVar(newobj Hashtable..ctor(ldc.i4 capacity, ldc.f loadFactor))
+			// stloc dictVar(newobj Hashtable..ctor(ldc.i4 capacity, ldc.f4 loadFactor))
 			if (!(block.Instructions[0].MatchStLoc(out var dictVar, out var newObjDict) && newObjDict is NewObj newObj))
 				return false;
 			if (!newObj.Method.DeclaringType.Equals(dictionaryType))
@@ -336,7 +336,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if (newObj.Arguments.Count == 2) {
 				if (!newObj.Arguments[0].MatchLdcI4(out valuesLength))
 					return false;
-				if (!newObj.Arguments[1].MatchLdcF(0.5))
+				if (!newObj.Arguments[1].MatchLdcF4(0.5f))
 					return false;
 			} else if (newObj.Arguments.Count == 1) {
 				if (!newObj.Arguments[0].MatchLdcI4(out valuesLength))

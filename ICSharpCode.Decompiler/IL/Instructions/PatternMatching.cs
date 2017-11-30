@@ -27,9 +27,14 @@ namespace ICSharpCode.Decompiler.IL
 			return OpCode == OpCode.LdcI4 && ((LdcI4)this).Value == val;
 		}
 
-		public bool MatchLdcF(double value)
+		public bool MatchLdcF4(float value)
 		{
-			return MatchLdcF(out var v) && v == value;
+			return MatchLdcF4(out var v) && v == value;
+		}
+
+		public bool MatchLdcF8(double value)
+		{
+			return MatchLdcF8(out var v) && v == value;
 		}
 
 		/// <summary>
