@@ -54,8 +54,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\cecil\Mono.Cecil.csproj" AdditionalProperties="NuGetRestoreTargets=;ResolveNuGetPackages=false" />
-    <ProjectReference Include="..\cecil\symbols\pdb\Mono.Cecil.Pdb.csproj" AdditionalProperties="NuGetRestoreTargets=;ResolveNuGetPackages=false" />
     <ProjectReference Include="..\ICSharpCode.Decompiler\ICSharpCode.Decompiler.csproj" />
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj" />
   </ItemGroup>
