@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using Mono.Cecil;
-using Newtonsoft.Json.Linq;
 
 namespace ICSharpCode.Decompiler
 {
