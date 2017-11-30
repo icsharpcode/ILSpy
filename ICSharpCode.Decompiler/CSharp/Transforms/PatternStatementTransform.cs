@@ -193,11 +193,11 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		bool ForStatementUsesVariable(ForStatement statement, IL.ILVariable variable)
 		{
-			if (!statement.Condition.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable))
-				return false;
-			if (!statement.Iterators.Any(i => i.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable)))
-				return false;
-			return true;
+			if (statement.Condition.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable))
+				return true;
+			if (statement.Iterators.Any(i => i.DescendantsAndSelf.OfType<IdentifierExpression>().Any(ie => ie.GetILVariable() == variable)))
+				return true;
+			return false;
 		}
 		#endregion
 
