@@ -12,15 +12,15 @@ Looking for a (Linux/Mac/Windows) command line client (or a sample for the [ICSh
 License
 -------
 
-ILSpy is distributed under the MIT License.
+ILSpy is distributed under the MIT License. See [LICENSE](LICENSE) and [THIRD-PARTY-NOTICES](THIRD-PARTY-NOTICES) for more information.
 
 Included open-source libraries:
+
  * Mono.Cecil: MIT License (thanks to Jb Evain)
  * AvalonEdit: LGPL
  * SharpTreeView: LGPL
  * ICSharpCode.Decompiler: MIT License (developed as part of ILSpy)
  * Ricciolo.StylesExplorer: MS-PL (part of ILSpy.BamlDecompiler.Plugin)
- * Newtonsoft Json.NET: MIT License
 
 How to build
 ------------
