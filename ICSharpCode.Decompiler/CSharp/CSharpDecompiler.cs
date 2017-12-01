@@ -416,7 +416,7 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// </remarks>
 		public SyntaxTree DecompileType(FullTypeName fullTypeName)
 		{
-			var type = typeSystem.Compilation.FindType(fullTypeName).GetDefinition();
+			var type = typeSystem.Compilation.FindType(fullTypeName.TopLevelTypeName).GetDefinition();
 			if (type == null)
 				throw new InvalidOperationException($"Could not find type definition {fullTypeName} in type system.");
 			var decompilationContext = new SimpleTypeResolveContext(typeSystem.MainAssembly);
