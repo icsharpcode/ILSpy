@@ -108,8 +108,10 @@ namespace ICSharpCode.Decompiler.IL
 		LdcI4,
 		/// <summary>Loads a constant 64-bit integer.</summary>
 		LdcI8,
-		/// <summary>Loads a constant floating-point number.</summary>
-		LdcF,
+		/// <summary>Loads a constant 32-bit floating-point number.</summary>
+		LdcF4,
+		/// <summary>Loads a constant 64-bit floating-point number.</summary>
+		LdcF8,
 		/// <summary>Loads a constant decimal.</summary>
 		LdcDecimal,
 		/// <summary>Loads the null reference.</summary>
@@ -2614,15 +2616,15 @@ namespace ICSharpCode.Decompiler.IL
 }
 namespace ICSharpCode.Decompiler.IL
 {
-	/// <summary>Loads a constant floating-point number.</summary>
-	public sealed partial class LdcF : SimpleInstruction
+	/// <summary>Loads a constant 32-bit floating-point number.</summary>
+	public sealed partial class LdcF4 : SimpleInstruction
 	{
-		public LdcF(double value) : base(OpCode.LdcF)
+		public LdcF4(float value) : base(OpCode.LdcF4)
 		{
 			this.Value = value;
 		}
-		public readonly double Value;
-		public override StackType ResultType { get { return StackType.F; } }
+		public readonly float Value;
+		public override StackType ResultType { get { return StackType.F4; } }
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
@@ -2632,19 +2634,56 @@ namespace ICSharpCode.Decompiler.IL
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
-			visitor.VisitLdcF(this);
+			visitor.VisitLdcF4(this);
 		}
 		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
 		{
-			return visitor.VisitLdcF(this);
+			return visitor.VisitLdcF4(this);
 		}
 		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
 		{
-			return visitor.VisitLdcF(this, context);
+			return visitor.VisitLdcF4(this, context);
 		}
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
-			var o = other as LdcF;
+			var o = other as LdcF4;
+			return o != null && this.Value == o.Value;
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Loads a constant 64-bit floating-point number.</summary>
+	public sealed partial class LdcF8 : SimpleInstruction
+	{
+		public LdcF8(double value) : base(OpCode.LdcF8)
+		{
+			this.Value = value;
+		}
+		public readonly double Value;
+		public override StackType ResultType { get { return StackType.F8; } }
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			ILRange.WriteTo(output, options);
+			output.Write(OpCode);
+			output.Write(' ');
+			Disassembler.DisassemblerHelpers.WriteOperand(output, Value);
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitLdcF8(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitLdcF8(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitLdcF8(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as LdcF8;
 			return o != null && this.Value == o.Value;
 		}
 	}
@@ -5058,7 +5097,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
-		protected internal virtual void VisitLdcF(LdcF inst)
+		protected internal virtual void VisitLdcF4(LdcF4 inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitLdcF8(LdcF8 inst)
 		{
 			Default(inst);
 		}
@@ -5364,7 +5407,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst);
 		}
-		protected internal virtual T VisitLdcF(LdcF inst)
+		protected internal virtual T VisitLdcF4(LdcF4 inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitLdcF8(LdcF8 inst)
 		{
 			return Default(inst);
 		}
@@ -5670,7 +5717,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
-		protected internal virtual T VisitLdcF(LdcF inst, C context)
+		protected internal virtual T VisitLdcF4(LdcF4 inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitLdcF8(LdcF8 inst, C context)
 		{
 			return Default(inst, context);
 		}
@@ -5854,7 +5905,8 @@ namespace ICSharpCode.Decompiler.IL
 			"ldstr",
 			"ldc.i4",
 			"ldc.i8",
-			"ldc.f",
+			"ldc.f4",
+			"ldc.f8",
 			"ldc.decimal",
 			"ldnull",
 			"ldftn",
@@ -6095,9 +6147,19 @@ namespace ICSharpCode.Decompiler.IL
 			value = default(long);
 			return false;
 		}
-		public bool MatchLdcF(out double value)
+		public bool MatchLdcF4(out float value)
 		{
-			var inst = this as LdcF;
+			var inst = this as LdcF4;
+			if (inst != null) {
+				value = inst.Value;
+				return true;
+			}
+			value = default(float);
+			return false;
+		}
+		public bool MatchLdcF8(out double value)
+		{
+			var inst = this as LdcF8;
 			if (inst != null) {
 				value = inst.Value;
 				return true;

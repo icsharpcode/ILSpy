@@ -66,6 +66,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void FloatingPointArithmetic([ValueSource("defaultOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
 		public void HelloWorld([ValueSource("defaultOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);

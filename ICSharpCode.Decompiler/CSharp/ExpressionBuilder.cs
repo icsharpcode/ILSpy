@@ -307,13 +307,20 @@ namespace ICSharpCode.Decompiler.CSharp
 			return false;
 		}
 
-		protected internal override TranslatedExpression VisitLdcF(LdcF inst, TranslationContext context)
+		protected internal override TranslatedExpression VisitLdcF4(LdcF4 inst, TranslationContext context)
+		{
+			return new PrimitiveExpression(inst.Value)
+				.WithILInstruction(inst)
+				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Single), inst.Value));
+		}
+
+		protected internal override TranslatedExpression VisitLdcF8(LdcF8 inst, TranslationContext context)
 		{
 			return new PrimitiveExpression(inst.Value)
 				.WithILInstruction(inst)
 				.WithRR(new ConstantResolveResult(compilation.FindType(KnownTypeCode.Double), inst.Value));
 		}
-		
+
 		protected internal override TranslatedExpression VisitLdcDecimal(LdcDecimal inst, TranslationContext context)
 		{
 			return new PrimitiveExpression(inst.Value)

@@ -54,11 +54,16 @@ namespace ICSharpCode.Decompiler.IL
 		/// and any enums with one of the above as underlying type.
 		/// </remarks>
 		I8,
-		/// <summary>Floating point number</summary>
+		/// <summary>32-bit floating point number</summary>
 		/// <remarks>
-		/// Used for C# <c>float</c> and <c>double</c>.
+		/// Used for C# <c>float</c>.
 		/// </remarks>
-		F,
+		F4,
+		/// <summary>64-bit floating point number</summary>
+		/// <remarks>
+		/// Used for C# <c>double</c>.
+		/// </remarks>
+		F8,
 		/// <summary>Another stack type. Includes objects, value types, ...</summary>
 		O,
 		/// <summary>A managed pointer</summary>

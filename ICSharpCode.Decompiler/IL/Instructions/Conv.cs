@@ -188,7 +188,8 @@ namespace ICSharpCode.Decompiler.IL
 						case StackType.I8:
 						case StackType.I:
 							return ConversionKind.Truncate;
-						case StackType.F:
+						case StackType.F4:
+						case StackType.F8:
 							return ConversionKind.FloatToInt;
 						default:
 							return ConversionKind.Invalid;
@@ -201,7 +202,8 @@ namespace ICSharpCode.Decompiler.IL
 						case StackType.I:
 						case StackType.I8:
 							return ConversionKind.Truncate;
-						case StackType.F:
+						case StackType.F4:
+						case StackType.F8:
 							return ConversionKind.FloatToInt;
 						default:
 							return ConversionKind.Invalid;
@@ -217,7 +219,8 @@ namespace ICSharpCode.Decompiler.IL
 								return inputSign == Sign.Signed ? ConversionKind.SignExtend : ConversionKind.ZeroExtend;
 						case StackType.I8:
 							return ConversionKind.Nop;
-						case StackType.F:
+						case StackType.F4:
+						case StackType.F8:
 							return ConversionKind.FloatToInt;
 						case StackType.Ref:
 						case StackType.O:
@@ -237,7 +240,8 @@ namespace ICSharpCode.Decompiler.IL
 							return ConversionKind.Nop;
 						case StackType.I8:
 							return ConversionKind.Truncate;
-						case StackType.F:
+						case StackType.F4:
+						case StackType.F8:
 							return ConversionKind.FloatToInt;
 						case StackType.Ref:
 						case StackType.O:
@@ -246,14 +250,28 @@ namespace ICSharpCode.Decompiler.IL
 							return ConversionKind.Invalid;
 					}
 				case PrimitiveType.R4:
+					switch (inputType) {
+						case StackType.I4:
+						case StackType.I:
+						case StackType.I8:
+							return ConversionKind.IntToFloat;
+						case StackType.F4:
+							return ConversionKind.Nop;
+						case StackType.F8:
+							return ConversionKind.FloatPrecisionChange;
+						default:
+							return ConversionKind.Invalid;
+					}
 				case PrimitiveType.R8:
 					switch (inputType) {
 						case StackType.I4:
 						case StackType.I:
 						case StackType.I8:
 							return ConversionKind.IntToFloat;
-						case StackType.F:
+						case StackType.F4:
 							return ConversionKind.FloatPrecisionChange;
+						case StackType.F8:
+							return ConversionKind.Nop;
 						default:
 							return ConversionKind.Invalid;
 					}
