@@ -46,9 +46,6 @@
     <ProjectReference Include="..\ILSpy\ILSpy.csproj">
       <Private>False</Private>
     </ProjectReference>
-    <ProjectReference Include="..\cecil\Mono.Cecil.csproj" AdditionalProperties="NuGetRestoreTargets=;ResolveNuGetPackages=false">
-      <Private>False</Private>
-    </ProjectReference>
     <ProjectReference Include="..\SharpTreeView\ICSharpCode.TreeView.csproj">
       <Private>False</Private>
     </ProjectReference>
