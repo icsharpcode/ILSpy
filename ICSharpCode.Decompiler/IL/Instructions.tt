@@ -27,9 +27,9 @@
 		new OpCode("SimpleInstruction", "Instruction without any arguments",
 			AbstractBaseClass, CustomArguments(), CustomWriteTo, HasFlag("InstructionFlags.None")),
 		new OpCode("UnaryInstruction", "Instruction with a single argument",
-			AbstractBaseClass, CustomArguments("argument"), HasFlag("InstructionFlags.None")),
+			AbstractBaseClass, CustomArguments(("argument", null)), HasFlag("InstructionFlags.None")),
 		new OpCode("BinaryInstruction", "Instruction with two arguments: Left and Right",
-			AbstractBaseClass, CustomArguments("left", "right"), HasFlag("InstructionFlags.None")),
+			AbstractBaseClass, CustomArguments(("left", null), ("right", null)), HasFlag("InstructionFlags.None")),
 		new OpCode("CallInstruction", "Instruction with a list of arguments.",
 			AbstractBaseClass, CustomChildren(new []{ new ArgumentInfo("arguments") { IsCollection = true }}),
 			CustomWriteTo, MayThrow, SideEffect),
@@ -68,7 +68,7 @@
 			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator && IsLifted == o.IsLifted")),
 		new OpCode("compound", "Common instruction for compound assignments.",
 			CustomClassName("CompoundAssignmentInstruction"), CustomConstructor, CustomComputeFlags,
-			MayThrow, CustomArguments("target", "value"), HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo,
+			MayThrow, CustomArguments(("target", null), ("value", null)), HasTypeOperand, ResultType("type.GetStackType()"), CustomWriteTo,
 			MatchCondition("CheckForOverflow == o.CheckForOverflow && Sign == o.Sign && Operator == o.Operator")),
 		new OpCode("bit.not", "Bitwise NOT", Unary, CustomConstructor, MatchCondition("IsLifted == o.IsLifted && UnderlyingResultType == o.UnderlyingResultType")),
 		new OpCode("arglist", "Retrieves the RuntimeArgumentHandle.", NoArguments, ResultType("O")),
@@ -76,7 +76,7 @@
 			CustomClassName("Branch"), NoArguments, CustomConstructor, UnconditionalBranch, MayBranch,
 			MatchCondition("this.TargetBlock == o.TargetBlock")),
 		new OpCode("leave", "Unconditional branch to end of block container. Return is represented using IsLeavingFunction and an (optional) return value. The block container evaluates to the value produced by the argument of the leave instruction.",
-			CustomConstructor, CustomArguments("value"), UnconditionalBranch, MayBranch, CustomWriteTo, CustomComputeFlags,
+			CustomConstructor, CustomArguments(("value", null)), UnconditionalBranch, MayBranch, CustomWriteTo, CustomComputeFlags,
 			MatchCondition("this.TargetContainer == o.TargetContainer")),
 		new OpCode("if", "If statement / conditional expression. <c>if (condition) trueExpr else falseExpr</c>",
 			CustomClassName("IfInstruction"),
@@ -116,12 +116,12 @@
 			MatchCondition("faultBlock.PerformMatch(o.faultBlock, ref match)")),
 		new OpCode("lock", "Lock statement", CustomClassName("LockInstruction"),
 			CustomChildren(new [] {
-				new ArgumentInfo("onExpression"),
+				new ArgumentInfo("onExpression") { ExpectedTypes = new[] { "O" }},
 				new ChildInfo("body")
 			}), CustomWriteTo, ControlFlow, SideEffect, ResultType("Void")),
 		new OpCode("using", "Using statement", CustomClassName("UsingInstruction"), HasVariableOperand("Store"),
 			CustomChildren(new [] {
-				new ArgumentInfo("resourceExpression"),
+				new ArgumentInfo("resourceExpression") { ExpectedTypes = new[] { "O" }},
 				new ChildInfo("body")
 			}), CustomWriteTo, ControlFlow, SideEffect, ResultType("Void")),
 		new OpCode("debug.break", "Breakpoint instruction",
@@ -152,10 +152,10 @@
 			CustomClassName("LdLoca"), NoArguments, ResultType("Ref"), HasVariableOperand("Address")),
 		new OpCode("stloc", "Stores a value into a local variable. (IL: starg/stloc)" + Environment.NewLine
 				+ "Evaluates to the value that was stored (for byte/short variables: evaluates to the truncated value, sign/zero extended back to I4 based on variable.Type.GetSign())",
-			CustomClassName("StLoc"), HasVariableOperand("Store", generateCheckInvariant: false), CustomArguments("value"),
+			CustomClassName("StLoc"), HasVariableOperand("Store", generateCheckInvariant: false), CustomArguments(("value", null)),
 			ResultType("variable.StackType")),
 		new OpCode("addressof", "Stores the value into an anonymous temporary variable, and returns the address of that variable.",
-			CustomClassName("AddressOf"), CustomArguments("value"), ResultType("Ref")),
+			CustomClassName("AddressOf"), CustomArguments(("value", null)), ResultType("Ref")),
 		new OpCode("3vl.logic.and", "Three valued logic and. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.and(), does not have short-circuiting behavior.",
 			CustomClassName("ThreeValuedLogicAnd"), Binary, ResultType("O")),
 		new OpCode("3vl.logic.or", "Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.",
@@ -186,16 +186,16 @@
 		new OpCode("localloc", "Allocates space in the stack frame",
 			CustomClassName("LocAlloc"), Unary, ResultType("I"), MayThrow),
 		new OpCode("cpblk", "memcpy(destAddress, sourceAddress, size);",
-			CustomArguments("destAddress", "sourceAddress", "size"),
+			CustomArguments(("destAddress", new[] { "I", "Ref" }), ("sourceAddress", new[] { "I", "Ref" }), ("size", new[] { "I4" })),
 			MayThrow, MemoryAccess,
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, ResultType("Void")),
 		new OpCode("initblk", "memset(address, value, size)",
-			CustomArguments("address", "value", "size"),
+			CustomArguments(("address", new[] { "I", "Ref" }), ("value", new[] { "I4" }), ("size", new[] { "I4" })),
 			MayThrow, MemoryAccess,
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, ResultType("Void")),
 
 		new OpCode("ldflda", "Load address of instance field",
-			CustomClassName("LdFlda"), CustomArguments("target"), MayThrowIfNotDelayed, HasFieldOperand,
+			CustomClassName("LdFlda"), CustomArguments(("target", null)), MayThrowIfNotDelayed, HasFieldOperand,
 			ResultType("target.ResultType.IsIntegerType() ? StackType.I : StackType.Ref")),
 		new OpCode("ldsflda", "Load static field address",
 			CustomClassName("LdsFlda"), NoArguments, ResultType("Ref"), HasFieldOperand),
@@ -205,11 +205,11 @@
 		new OpCode("isinst", "Test if object is instance of class or interface.",
 			CustomClassName("IsInst"), Unary, HasTypeOperand, ResultType("O")),
 		new OpCode("ldobj", "Indirect load (ref/pointer dereference).",
-			CustomClassName("LdObj"), CustomArguments("target"), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
+			CustomClassName("LdObj"), CustomArguments(("target", new[] { "Ref", "I" })), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
 		new OpCode("stobj", "Indirect store (store to ref/pointer)." + Environment.NewLine
 				+ "Evaluates to the value that was stored (when using type byte/short: evaluates to the truncated value, sign/zero extended back to I4 based on type.GetSign())",
-			CustomClassName("StObj"), CustomArguments("target", "value"), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
+			CustomClassName("StObj"), CustomArguments(("target", new[] { "Ref", "I" }), ("value", new[] { "type.GetStackType()" })), HasTypeOperand, MemoryAccess, CustomWriteToButKeepOriginal,
 			SupportsVolatilePrefix, SupportsUnalignedPrefix, MayThrow, ResultType("type.GetStackType()")),
 
 		new OpCode("box", "Boxes a value.",
@@ -232,15 +232,15 @@
 			CustomClassName("SizeOf"), NoArguments, HasTypeOperand, ResultType("I4")),
 		
 		new OpCode("ldlen", "Returns the length of an array as 'native unsigned int'.",
-			CustomClassName("LdLen"), CustomArguments("array"), CustomConstructor, CustomWriteTo, MayThrow),
+			CustomClassName("LdLen"), CustomArguments(("array", new[] { "O" })), CustomConstructor, CustomWriteTo, MayThrow),
 		new OpCode("ldelema", "Load address of array element.",
 			CustomClassName("LdElema"), HasTypeOperand, CustomChildren(new [] { new ArgumentInfo("array"), new ArgumentInfo("indices") { IsCollection = true } }, true),
 			MayThrowIfNotDelayed, ResultType("Ref"), SupportsReadonlyPrefix),
 		new OpCode("array.to.pointer", "Converts an array pointer (O) to a reference to the first element, or to a null reference if the array is null or empty." + Environment.NewLine
 			+ "Also used to convert a string to a reference to the first character.",
-			CustomArguments("array"), ResultType("Ref")),
+			CustomArguments(("array", new[] { "O" })), ResultType("Ref")),
 		new OpCode("string.to.int", "Maps a string value to an integer. This is used in switch(string).",
-			CustomArguments("argument"), CustomConstructor, CustomWriteTo, ResultType("I4")),
+			CustomArguments(("argument", new[] { "O" })), CustomConstructor, CustomWriteTo, ResultType("I4")),
 
 		new OpCode("expression.tree.cast", "ILAst representation of Expression.Convert.",
 			CustomClassName("ExpressionTreeCast"), Unary, HasTypeOperand, MayThrow, CustomConstructor, CustomWriteTo, ResultType("type.GetStackType()"),
@@ -256,11 +256,11 @@
 		new OpCode("yield.return", "Yield an element from an iterator.",
 			MayBranch, // yield return may end up returning if the consumer disposes the iterator
 			SideEffect, // consumer can have arbitrary side effects while we're yielding
-			CustomArguments("value"), VoidResult),
+			CustomArguments(("value", null)), VoidResult),
 		// note: "yield break" is always represented using a "leave" instruction
 		new OpCode("await", "C# await operator.",
 			SideEffect, // other code can run with arbitrary side effects while we're waiting
-			CustomArguments("value"), ResultType("GetResultMethod?.ReturnType.GetStackType() ?? StackType.Unknown")),
+			CustomArguments(("value", null)), ResultType("GetResultMethod?.ReturnType.GetStackType() ?? StackType.Unknown")),
 
 		// patterns
 		new OpCode("AnyNode", "Matches any node", Pattern, CustomArguments(), CustomConstructor),
@@ -677,9 +677,9 @@ namespace ICSharpCode.Decompiler.IL
 		opCode.WriteArguments.Add("output.Write(')');");
 	};
 	
-	static Action<OpCode> CustomArguments(params string[] arguments)
+	static Action<OpCode> CustomArguments(params (string name, string[] expectedTypes)[] arguments)
 	{
-		return CustomChildren(arguments.Select(arg => new ArgumentInfo(arg)).ToArray(), generateInline: true);
+		return CustomChildren(arguments.Select(arg => new ArgumentInfo(arg.name) { ExpectedTypes = arg.expectedTypes }).ToArray(), generateInline: true);
 	}
 	
 	class ChildInfo
@@ -768,12 +768,16 @@ namespace ICSharpCode.Decompiler.IL
 						+ "}");
 				}
 				if (children[i].ExpectedTypes?.Length > 0) {
+					string checkString = null;
 					foreach (var expectedType in children[i].ExpectedTypes) {
 						var expectedTypeCode = expectedType;
 						if (!expectedType.Contains("."))
 							expectedTypeCode = "StackType." + expectedTypeCode;
-						opCode.Invariants.Add("Debug.Assert(" + arg + ".ResultType == " + expectedTypeCode + ");");
+						if (checkString != null)
+							checkString += " || ";
+						checkString += arg + ".ResultType == " + expectedTypeCode;
 					}
+					opCode.Invariants.Add("Debug.Assert(" + checkString + ");");
 				}
 			}
 			opCode.WriteArguments.Add("output.Write(')');");

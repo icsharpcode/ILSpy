@@ -1725,6 +1725,11 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LockInstruction;
 			return o != null && this.onExpression.PerformMatch(o.onExpression, ref match) && this.body.PerformMatch(o.body, ref match);
 		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(onExpression.ResultType == StackType.O);
+		}
 	}
 }
 namespace ICSharpCode.Decompiler.IL
@@ -1867,6 +1872,7 @@ namespace ICSharpCode.Decompiler.IL
 			base.CheckInvariant(phase);
 			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
 			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
+			Debug.Assert(resourceExpression.ResultType == StackType.O);
 		}
 	}
 }
@@ -3100,6 +3106,13 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as Cpblk;
 			return o != null && this.destAddress.PerformMatch(o.destAddress, ref match) && this.sourceAddress.PerformMatch(o.sourceAddress, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(destAddress.ResultType == StackType.I || destAddress.ResultType == StackType.Ref);
+			Debug.Assert(sourceAddress.ResultType == StackType.I || sourceAddress.ResultType == StackType.Ref);
+			Debug.Assert(size.ResultType == StackType.I4);
+		}
 	}
 }
 namespace ICSharpCode.Decompiler.IL
@@ -3240,6 +3253,13 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as Initblk;
 			return o != null && this.address.PerformMatch(o.address, ref match) && this.value.PerformMatch(o.value, ref match) && this.size.PerformMatch(o.size, ref match) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(address.ResultType == StackType.I || address.ResultType == StackType.Ref);
+			Debug.Assert(value.ResultType == StackType.I4);
+			Debug.Assert(size.ResultType == StackType.I4);
 		}
 	}
 }
@@ -3589,6 +3609,11 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdObj;
 			return o != null && this.target.PerformMatch(o.target, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
 		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
+		}
 	}
 }
 namespace ICSharpCode.Decompiler.IL
@@ -3719,6 +3744,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as StObj;
 			return o != null && this.target.PerformMatch(o.target, ref match) && this.value.PerformMatch(o.value, ref match) && type.Equals(o.type) && IsVolatile == o.IsVolatile && UnalignedPrefix == o.UnalignedPrefix;
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(target.ResultType == StackType.Ref || target.ResultType == StackType.I);
+			Debug.Assert(value.ResultType == type.GetStackType());
 		}
 	}
 }
@@ -4238,6 +4269,11 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as LdLen;
 			return o != null && this.array.PerformMatch(o.array, ref match);
 		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(array.ResultType == StackType.O);
+		}
 	}
 }
 namespace ICSharpCode.Decompiler.IL
@@ -4450,6 +4486,11 @@ namespace ICSharpCode.Decompiler.IL
 			var o = other as ArrayToPointer;
 			return o != null && this.array.PerformMatch(o.array, ref match);
 		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(array.ResultType == StackType.O);
+		}
 	}
 }
 namespace ICSharpCode.Decompiler.IL
@@ -4530,6 +4571,11 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as StringToInt;
 			return o != null && this.argument.PerformMatch(o.argument, ref match);
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(argument.ResultType == StackType.O);
 		}
 	}
 }

@@ -386,8 +386,10 @@ namespace ICSharpCode.Decompiler.IL
 		public bool MatchLdFld(out ILInstruction target, out IField field)
 		{
 			if (this is LdObj ldobj && ldobj.Target is LdFlda ldflda && ldobj.UnalignedPrefix == 0 && !ldobj.IsVolatile) {
-				target = ldflda.Target;
 				field = ldflda.Field;
+				if (field.DeclaringType.IsReferenceType == true || !ldflda.Target.MatchAddressOf(out target)) {
+					target = ldflda.Target;
+				}
 				return true;
 			}
 			target = null;

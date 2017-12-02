@@ -861,14 +861,17 @@ namespace ICSharpCode.Decompiler.IL
 				case Cil.Code.Ldfld:
 					{
 						var field = ReadAndDecodeFieldReference();
-						return Push(new LdObj(new LdFlda(Pop(), field) { DelayExceptions = true }, field.Type));
+						return Push(new LdObj(new LdFlda(PopLdFldTarget(field), field) { DelayExceptions = true }, field.Type));
 					}
 				case Cil.Code.Ldflda:
-					return Push(new LdFlda(Pop(), ReadAndDecodeFieldReference()));
+					{
+						var field = ReadAndDecodeFieldReference();
+						return Push(new LdFlda(PopFieldTarget(field), field));
+					}
 				case Cil.Code.Stfld:
 					{
 						var field = ReadAndDecodeFieldReference();
-						return new StObj(value: Pop(field.Type.GetStackType()), target: new LdFlda(Pop(), field) { DelayExceptions = true }, type: field.Type);
+						return new StObj(value: Pop(field.Type.GetStackType()), target: new LdFlda(PopFieldTarget(field), field) { DelayExceptions = true }, type: field.Type);
 					}
 				case Cil.Code.Ldlen:
 					return Push(new LdLen(StackType.I, Pop()));
@@ -935,7 +938,6 @@ namespace ICSharpCode.Decompiler.IL
 					return new InvalidBranch("Unknown opcode: " + cecilInst.OpCode.ToString());
 			}
 		}
-
 		
 		StackType PeekStackType()
 		{
@@ -1078,7 +1080,20 @@ namespace ICSharpCode.Decompiler.IL
 					return inst;
 			}
 		}
-		
+
+		ILInstruction PopFieldTarget(IField field)
+		{
+			return field.DeclaringType.IsReferenceType == true ? Pop(StackType.O) : PopPointer();
+		}
+
+		ILInstruction PopLdFldTarget(IField field)
+		{
+			if (field.DeclaringType.IsReferenceType == true)
+				return Pop(StackType.O);
+
+			return PeekStackType() == StackType.O ? new AddressOf(Pop()) : PopPointer();
+		}
+
 		private ILInstruction Return()
 		{
 			if (methodReturnStackType == StackType.Void)
