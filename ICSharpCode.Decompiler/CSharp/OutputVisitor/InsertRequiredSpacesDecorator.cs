@@ -131,6 +131,9 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		
 		public override void WritePrimitiveValue(object value, string literalValue = null)
 		{
+			if (lastWritten == LastWritten.KeywordOrIdentifier) {
+				Space();
+			}
 			base.WritePrimitiveValue(value, literalValue);
 			if (value == null || value is bool)
 				return;
