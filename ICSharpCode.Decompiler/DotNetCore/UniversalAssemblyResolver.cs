@@ -211,8 +211,11 @@ namespace ICSharpCode.Decompiler
 						path = Path.Combine(path, "2.0");
 				} else if (version.Major == 4)
 					path = Path.Combine(path, "4.0");
-				else
-					throw new NotSupportedException("Version not supported: " + version);
+				else {
+					if (throwOnError)
+						throw new NotSupportedException("Version not supported: " + version);
+					return null;
+				}
 			} else {
 				switch (version.Major) {
 					case 1:
@@ -228,7 +231,9 @@ namespace ICSharpCode.Decompiler
 						path = Path.Combine(path, "v4.0.30319");
 						break;
 					default:
-						throw new NotSupportedException("Version not supported: " + version);
+						if (throwOnError)
+							throw new NotSupportedException("Version not supported: " + version);
+						return null;
 				}
 			}
 
