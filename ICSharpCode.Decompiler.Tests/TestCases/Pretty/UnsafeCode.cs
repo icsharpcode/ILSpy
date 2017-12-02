@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Runtime.InteropServices;
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
@@ -36,6 +37,20 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 
 			[Obsolete("another attribute")]
 			public unsafe fixed byte Old[1];
+		}
+
+		private struct Data
+		{
+			public Vector Position;
+		}
+
+		[StructLayout(LayoutKind.Sequential, Size = 1)]
+		private struct Vector
+		{
+			public override int GetHashCode()
+			{
+				return 0;
+			}
 		}
 
 		public unsafe delegate void UnsafeDelegate(byte* ptr);
@@ -137,6 +152,11 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		public unsafe void PassPointerAsRefParameter(int* p)
 		{
 			this.UseReference(ref *p);
+		}
+
+		public unsafe void PassPointerCastAsRefParameter(uint* p)
+		{
+			this.UseReference(ref *(int*)p);
 		}
 
 		public unsafe void AddressInMultiDimensionalArray(double[,] matrix)
@@ -338,6 +358,13 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		unsafe ~UnsafeCode()
 		{
 			this.PassPointerAsRefParameter(this.NullPointer);
+		}
+
+		private unsafe void Issue990()
+		{
+			Data data = default(Data);
+			Data* ptr = &data;
+			this.ConvertIntToFloat(ptr->Position.GetHashCode());
 		}
 	}
 }

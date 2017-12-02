@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (callOpCode == OpCode.NewObj) {
 				target = default(TranslatedExpression); // no target
 			} else {
-				target = expressionBuilder.TranslateTarget(method, callArguments.FirstOrDefault(), callOpCode == OpCode.Call);
+				target = expressionBuilder.TranslateTarget(method, callArguments.FirstOrDefault(), callOpCode == OpCode.Call, constrainedTo);
 				if (callOpCode == OpCode.CallVirt
 					&& constrainedTo == null
 					&& target.Expression is CastExpression cast

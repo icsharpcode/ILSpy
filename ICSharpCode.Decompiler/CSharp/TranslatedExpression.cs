@@ -308,12 +308,20 @@ namespace ICSharpCode.Decompiler.CSharp
 				// First, convert to the corresponding pointer type:
 				var elementType = ((ByReferenceType)targetType).ElementType;
 				var arg = this.ConvertTo(new PointerType(elementType), expressionBuilder, checkForOverflow);
-				// Then dereference the pointer:
-				var derefExpr = new UnaryOperatorExpression(UnaryOperatorType.Dereference, arg.Expression);
-				var elementRR = new ResolveResult(elementType);
-				derefExpr.AddAnnotation(elementRR);
+				Expression expr;
+				ResolveResult elementRR;
+				if (arg.Expression is UnaryOperatorExpression unary && unary.Operator == UnaryOperatorType.AddressOf) {
+					// If we already have an address -> unwrap
+					expr = arg.UnwrapChild(unary.Expression);
+					elementRR = expr.GetResolveResult();
+				} else {
+					// Otherwise dereference the pointer:
+					expr = new UnaryOperatorExpression(UnaryOperatorType.Dereference, arg.Expression);
+					elementRR = new ResolveResult(elementType);
+					expr.AddAnnotation(elementRR);
+				}
 				// And then take a reference:
-				return new DirectionExpression(FieldDirection.Ref, derefExpr)
+				return new DirectionExpression(FieldDirection.Ref, expr)
 					.WithoutILInstruction()
 					.WithRR(new ByReferenceResolveResult(elementRR, false));
 			}

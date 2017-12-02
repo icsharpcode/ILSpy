@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module UnsafeCode.dll
-// MVID: {E02FB293-0E44-4F82-B549-8BAB6E8A9750}
+// MVID: {34429304-3762-4E40-977B-76B197A03CDA}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x006B0000
+// Image base: 0x00C50000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -111,6 +111,34 @@
     .custom instance void [mscorlib]System.ObsoleteAttribute::.ctor(string) = ( 01 00 11 61 6E 6F 74 68 65 72 20 61 74 74 72 69   // ...another attri
                                                                                 62 75 74 65 00 00 )                               // bute..
   } // end of class StructWithFixedSizeMembers
+
+  .class sequential ansi sealed nested private beforefieldinit Data
+         extends [mscorlib]System.ValueType
+  {
+    .field public valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Vector Position
+  } // end of class Data
+
+  .class sequential ansi sealed nested private beforefieldinit Vector
+         extends [mscorlib]System.ValueType
+  {
+    .pack 0
+    .size 1
+    .method public hidebysig virtual instance int32 
+            GetHashCode() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  1
+      .locals init (int32 V_0)
+      IL_0000:  nop
+      IL_0001:  ldc.i4.0
+      IL_0002:  stloc.0
+      IL_0003:  br.s       IL_0005
+
+      IL_0005:  ldloc.0
+      IL_0006:  ret
+    } // end of method Vector::GetHashCode
+
+  } // end of class Vector
 
   .class auto ansi sealed nested public UnsafeDelegate
          extends [mscorlib]System.MulticastDelegate
@@ -447,6 +475,19 @@
   } // end of method UnsafeCode::PassPointerAsRefParameter
 
   .method public hidebysig instance void 
+          PassPointerCastAsRefParameter(uint32* p) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldarg.1
+    IL_0003:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseReference(int32&)
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method UnsafeCode::PassPointerCastAsRefParameter
+
+  .method public hidebysig instance void 
           AddressInMultiDimensionalArray(float64[0...,0...] matrix) cil managed
   {
     // Code size       34 (0x22)
@@ -508,11 +549,11 @@
     IL_0017:  ldloc.2
     IL_0018:  ldc.i4.s   65
     IL_001a:  stind.i2
-    IL_001b:  ldloc.2
-    IL_001c:  ldc.i4.2
-    IL_001d:  add
-    IL_001e:  stloc.2
-    IL_001f:  nop
+    IL_001b:  nop
+    IL_001c:  ldloc.2
+    IL_001d:  ldc.i4.2
+    IL_001e:  add
+    IL_001f:  stloc.2
     IL_0020:  ldloc.2
     IL_0021:  ldind.u2
     IL_0022:  ldc.i4.s   97
@@ -1337,6 +1378,29 @@
     }  // end handler
     IL_0019:  ret
   } // end of method UnsafeCode::Finalize
+
+  .method private hidebysig instance void 
+          Issue990() cil managed
+  {
+    // Code size       38 (0x26)
+    .maxstack  2
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Data V_0,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Data* V_1)
+    IL_0000:  nop
+    IL_0001:  ldloca.s   V_0
+    IL_0003:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Data
+    IL_0009:  ldloca.s   V_0
+    IL_000b:  conv.u
+    IL_000c:  stloc.1
+    IL_000d:  ldarg.0
+    IL_000e:  ldloc.1
+    IL_000f:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Vector ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Data::Position
+    IL_0014:  constrained. ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Vector
+    IL_001a:  callvirt   instance int32 [mscorlib]System.Object::GetHashCode()
+    IL_001f:  call       instance float32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::ConvertIntToFloat(int32)
+    IL_0024:  pop
+    IL_0025:  ret
+  } // end of method UnsafeCode::Issue990
 
   .property instance int32* NullPointer()
   {

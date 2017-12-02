@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly '5mgf1rnb'
+.assembly wbbysi3m
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module '5mgf1rnb.dll'
-// MVID: {C39B0AE8-69C3-4207-B912-FCEE701C71E8}
+.module wbbysi3m.dll
+// MVID: {8A733FFA-BF2C-4A07-BAE8-CC2DB20691C0}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00C60000
+// Image base: 0x04D30000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -107,6 +107,34 @@
                                                                                                            63 35 36 31 39 33 34 65 30 38 39 01 00 00 00 00   // c561934e089.....
                                                                                                            00 ) 
   } // end of class StructWithFixedSizeMembers
+
+  .class sequential ansi sealed nested private beforefieldinit Data
+         extends [mscorlib]System.ValueType
+  {
+    .field public valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Vector Position
+  } // end of class Data
+
+  .class sequential ansi sealed nested private beforefieldinit Vector
+         extends [mscorlib]System.ValueType
+  {
+    .pack 0
+    .size 1
+    .method public hidebysig virtual instance int32 
+            GetHashCode() cil managed
+    {
+      // Code size       7 (0x7)
+      .maxstack  1
+      .locals init (int32 V_0)
+      IL_0000:  nop
+      IL_0001:  ldc.i4.0
+      IL_0002:  stloc.0
+      IL_0003:  br.s       IL_0005
+
+      IL_0005:  ldloc.0
+      IL_0006:  ret
+    } // end of method Vector::GetHashCode
+
+  } // end of class Vector
 
   .class auto ansi sealed nested public UnsafeDelegate
          extends [mscorlib]System.MulticastDelegate
@@ -445,6 +473,19 @@
   } // end of method UnsafeCode::PassPointerAsRefParameter
 
   .method public hidebysig instance void 
+          PassPointerCastAsRefParameter(uint32* p) cil managed
+  {
+    // Code size       10 (0xa)
+    .maxstack  8
+    IL_0000:  nop
+    IL_0001:  ldarg.0
+    IL_0002:  ldarg.1
+    IL_0003:  call       instance void ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::UseReference(int32&)
+    IL_0008:  nop
+    IL_0009:  ret
+  } // end of method UnsafeCode::PassPointerCastAsRefParameter
+
+  .method public hidebysig instance void 
           AddressInMultiDimensionalArray(float64[0...,0...] matrix) cil managed
   {
     // Code size       34 (0x22)
@@ -504,12 +545,12 @@
     IL_0015:  ldloc.1
     IL_0016:  ldc.i4.s   65
     IL_0018:  stind.i2
-    IL_0019:  ldloc.1
-    IL_001a:  ldc.i4.2
-    IL_001b:  conv.i
-    IL_001c:  add
-    IL_001d:  stloc.1
-    IL_001e:  nop
+    IL_0019:  nop
+    IL_001a:  ldloc.1
+    IL_001b:  ldc.i4.2
+    IL_001c:  conv.i
+    IL_001d:  add
+    IL_001e:  stloc.1
     IL_001f:  ldloc.1
     IL_0020:  ldind.u2
     IL_0021:  ldc.i4.s   97
@@ -1333,6 +1374,29 @@
     IL_0019:  nop
     IL_001a:  ret
   } // end of method UnsafeCode::Finalize
+
+  .method private hidebysig instance void 
+          Issue990() cil managed
+  {
+    // Code size       38 (0x26)
+    .maxstack  2
+    .locals init (valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Data V_0,
+             valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Data* V_1)
+    IL_0000:  nop
+    IL_0001:  ldloca.s   V_0
+    IL_0003:  initobj    ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Data
+    IL_0009:  ldloca.s   V_0
+    IL_000b:  conv.u
+    IL_000c:  stloc.1
+    IL_000d:  ldarg.0
+    IL_000e:  ldloc.1
+    IL_000f:  ldflda     valuetype ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Vector ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Data::Position
+    IL_0014:  constrained. ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode/Vector
+    IL_001a:  callvirt   instance int32 [mscorlib]System.Object::GetHashCode()
+    IL_001f:  call       instance float32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.UnsafeCode::ConvertIntToFloat(int32)
+    IL_0024:  pop
+    IL_0025:  ret
+  } // end of method UnsafeCode::Issue990
 
   .property instance int32* NullPointer()
   {

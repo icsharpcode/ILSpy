@@ -1488,7 +1488,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 		
-		internal TranslatedExpression TranslateTarget(IMember member, ILInstruction target, bool nonVirtualInvocation)
+		internal TranslatedExpression TranslateTarget(IMember member, ILInstruction target, bool nonVirtualInvocation, IType constrainedTo = null)
 		{
 			// If references are missing member.IsStatic might not be set correctly.
 			// Additionally check target for null, in order to avoid a crash.
@@ -1499,9 +1499,9 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(new ThisResolveResult(member.DeclaringType, nonVirtualInvocation));
 				} else {
 					var translatedTarget = Translate(target);
-					if (member.DeclaringType.IsReferenceType == false && translatedTarget.Type.GetStackType().IsIntegerType()) {
+					if (CallInstruction.ExpectedTypeForThisPointer(constrainedTo ?? member.DeclaringType) == StackType.Ref && translatedTarget.Type.GetStackType().IsIntegerType()) {
 						// when accessing members on value types, ensure we use a reference and not a pointer
-						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(member.DeclaringType), this);
+						translatedTarget = translatedTarget.ConvertTo(new ByReferenceType(constrainedTo ?? member.DeclaringType), this);
 					}
 					if (translatedTarget.Expression is DirectionExpression) {
 						translatedTarget = translatedTarget.UnwrapChild(((DirectionExpression)translatedTarget).Expression);
