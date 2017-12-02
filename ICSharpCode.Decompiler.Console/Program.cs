@@ -65,7 +65,7 @@ namespace ICSharpCode.Decompiler.Console
 						string outputName = Path.GetFileNameWithoutExtension(inputAssemblyFileName.Value);
 						output = File.CreateText(Path.Combine(directory, (typeOption.Value() ?? outputName) + ".decompiled.cs"));
 					}
-					Decompile(inputAssemblyFileName.Value, output);
+					Decompile(inputAssemblyFileName.Value, output, typeOption.Value());
 				}
 				return 0;
 			});
