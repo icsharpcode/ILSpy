@@ -57,8 +57,12 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 			KeyValuePair<LongSet, ILInstruction> defaultSection;
 			if (analysisSuccess && UseCSharpSwitch(analysis, out defaultSection)) {
 				// complex multi-block switch that can be combined into a single SwitchInstruction
-
-				var sw = new SwitchInstruction(new LdLoc(analysis.SwitchVariable));
+				ILInstruction switchValue = new LdLoc(analysis.SwitchVariable);
+				if (switchValue.ResultType == StackType.Unknown) {
+					// switchValue must have a result type of either I4 or I8
+					switchValue = new Conv(switchValue, PrimitiveType.I8, false, TypeSystem.Sign.Signed);
+				}
+				var sw = new SwitchInstruction(switchValue);
 				foreach (var section in analysis.Sections) {
 					sw.Sections.Add(new SwitchSection {
 						Labels = section.Key,
