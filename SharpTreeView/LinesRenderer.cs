@@ -3,6 +3,7 @@
 
 using System.Windows;
 using System.Windows.Media;
+using System.Diagnostics;
 
 namespace ICSharpCode.TreeView
 {
@@ -23,6 +24,12 @@ namespace ICSharpCode.TreeView
 
 		protected override void OnRender(DrawingContext dc)
 		{
+			if (NodeView.Node == null) {
+				// This seems to happen sometimes with DataContext==DisconnectedItem,
+				// though I'm not sure why WPF would call OnRender() on a disconnected node
+				Debug.WriteLine($"LinesRenderer.OnRender() called with DataContext={NodeView.DataContext}");
+				return;
+			}
 			var indent = NodeView.CalculateIndent();
 			var p = new Point(indent + 4.5, 0);
 
