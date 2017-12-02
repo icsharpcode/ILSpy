@@ -1,5 +1,20 @@
-﻿// Copyright (c) AlphaSierraPapa for the SharpDevelop Team (for details please see \doc\copyright.txt)
-// This code is distributed under the GNU LGPL (for details please see \doc\license.txt)
+﻿// Copyright (c) 2014 AlphaSierraPapa for the SharpDevelop Team
+// 
+// Permission is hereby granted, free of charge, to any person obtaining a copy of this
+// software and associated documentation files (the "Software"), to deal in the Software
+// without restriction, including without limitation the rights to use, copy, modify, merge,
+// publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+// to whom the Software is furnished to do so, subject to the following conditions:
+// 
+// The above copyright notice and this permission notice shall be included in all copies or
+// substantial portions of the Software.
+// 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+// INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+// PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+// FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+// DEALINGS IN THE SOFTWARE.
 
 using System;
 using System.Collections.Generic;
@@ -335,19 +350,14 @@ namespace ICSharpCode.TreeView
 		
 		public IEnumerable<SharpTreeNode> Ancestors()
 		{
-			var node = this;
-			while (node.Parent != null) {
-				yield return node.Parent;
-				node = node.Parent;
-			}
+			for (SharpTreeNode n = this.Parent; n != null; n = n.Parent)
+				yield return n;
 		}
 		
 		public IEnumerable<SharpTreeNode> AncestorsAndSelf()
 		{
-			yield return this;
-			foreach (var node in Ancestors()) {
-				yield return node;
-			}
+			for (SharpTreeNode n = this; n != null; n = n.Parent)
+				yield return n;
 		}
 		
 		#endregion
@@ -442,7 +452,10 @@ namespace ICSharpCode.TreeView
 		
 		#region Cut / Copy / Paste / Delete
 		
-		public bool IsCut { get { return false; } }
+		/// <summary>
+		/// Gets whether the node should render transparently because it is 'cut' (but not actually removed yet).
+		/// </summary>
+		public virtual bool IsCut { get { return false; } }
 		/*
 			static List<SharpTreeNode> cuttedNodes = new List<SharpTreeNode>();
 			static IDataObject cuttedData;
@@ -539,66 +552,99 @@ namespace ICSharpCode.TreeView
 			}
 		 */
 		
-		public virtual bool CanDelete()
+		public virtual bool CanDelete(SharpTreeNode[] nodes)
 		{
 			return false;
 		}
 		
-		public virtual void Delete()
+		public virtual void Delete(SharpTreeNode[] nodes)
 		{
 			throw new NotSupportedException(GetType().Name + " does not support deletion");
 		}
 		
-		public virtual void DeleteCore()
+		public virtual void DeleteWithoutConfirmation(SharpTreeNode[] nodes)
 		{
 			throw new NotSupportedException(GetType().Name + " does not support deletion");
 		}
 		
-		public virtual IDataObject Copy(SharpTreeNode[] nodes)
+		public virtual bool CanCut(SharpTreeNode[] nodes)
 		{
-			throw new NotSupportedException(GetType().Name + " does not support copy/paste or drag'n'drop");
+			return CanCopy(nodes) && CanDelete(nodes);
 		}
 		
-		/*
-			public virtual bool CanCopy(SharpTreeNode[] nodes)
-			{
-				return false;
+		public virtual void Cut(SharpTreeNode[] nodes)
+		{
+			var data = GetDataObject(nodes);
+			if (data != null) {
+				// TODO: default cut implementation should not immediately perform deletion, but use 'IsCut'
+				Clipboard.SetDataObject(data, copy: true);
+				DeleteWithoutConfirmation(nodes);
 			}
-	
-			public virtual bool CanPaste(IDataObject data)
-			{
-				return false;
-			}
-	
-			public virtual void Paste(IDataObject data)
-			{
-				EnsureLazyChildren();
-				Drop(data, Children.Count, DropEffect.Copy);
-			}
-		 */
+		}
+		
+		public virtual bool CanCopy(SharpTreeNode[] nodes)
+		{
+			return false;
+		}
+		
+		public virtual void Copy(SharpTreeNode[] nodes)
+		{
+			var data = GetDataObject(nodes);
+			if (data != null)
+				Clipboard.SetDataObject(data, copy: true);
+		}
+		
+		protected virtual IDataObject GetDataObject(SharpTreeNode[] nodes)
+		{
+			return null;
+		}
+		
+		public virtual bool CanPaste(IDataObject data)
+		{
+			return false;
+		}
+		
+		public virtual void Paste(IDataObject data)
+		{
+			throw new NotSupportedException(GetType().Name + " does not support copy/paste");
+		}
 		#endregion
 		
 		#region Drag and Drop
-		public virtual bool CanDrag(SharpTreeNode[] nodes)
-		{
-			return false;
-		}
-		
 		public virtual void StartDrag(DependencyObject dragSource, SharpTreeNode[] nodes)
 		{
-			DragDropEffects effects = DragDropEffects.All;
-			if (!nodes.All(n => n.CanDelete()))
-				effects &= ~DragDropEffects.Move;
-			DragDropEffects result = DragDrop.DoDragDrop(dragSource, Copy(nodes), effects);
+			// The default drag implementation works by reusing the copy infrastructure.
+			// Derived classes should override this method
+			var data = GetDataObject(nodes);
+			if (data == null)
+				return;
+			DragDropEffects effects = DragDropEffects.Copy;
+			if (CanDelete(nodes))
+				effects |= DragDropEffects.Move;
+			DragDropEffects result = DragDrop.DoDragDrop(dragSource, data, effects);
 			if (result == DragDropEffects.Move) {
-				foreach (SharpTreeNode node in nodes)
-					node.DeleteCore();
+				DeleteWithoutConfirmation(nodes);
 			}
 		}
 		
-		public virtual bool CanDrop(DragEventArgs e, int index)
+		/// <summary>
+		/// Gets the possible drop effects.
+		/// If the method returns more than one of (Copy|Move|Link), the tree view will choose one effect based
+		/// on the allowed effects and keyboard status.
+		/// </summary>
+		public virtual DragDropEffects GetDropEffect(DragEventArgs e, int index)
 		{
-			return false;
+			// Since the default drag implementation uses Copy(),
+			// we'll use Paste() in our default drop implementation.
+			if (CanPaste(e.Data)) {
+				// If Ctrl is pressed -> copy
+				// If moving is not allowed -> copy
+				// Otherwise: move
+				if ((e.KeyStates & DragDropKeyStates.ControlKey) != 0 || (e.AllowedEffects & DragDropEffects.Move) == 0)
+					return DragDropEffects.Copy;
+				return DragDropEffects.Move;
+			}
+			return DragDropEffects.None;
 		}
 		
 		internal void InternalDrop(DragEventArgs e, int index)
@@ -613,7 +659,9 @@ namespace ICSharpCode.TreeView
 		
 		public virtual void Drop(DragEventArgs e, int index)
 		{
-			throw new NotSupportedException(GetType().Name + " does not support Drop()");
+			// Since the default drag implementation uses Copy(),
+			// we'll use Paste() in our default drop implementation.
+			Paste(e.Data);
 		}
 		#endregion
 		
@@ -664,10 +712,34 @@ namespace ICSharpCode.TreeView
 		
 		#endregion
 		
+		#region Model
+		/// <summary>
+		/// Gets the underlying model object.
+		/// </summary>
+		/// <remarks>
+		/// This property calls the virtual <see cref="GetModel()"/> helper method.
+		/// I didn't make the property itself virtual because deriving classes
+		/// may wish to replace it with a more specific return type,
+		/// but C# doesn't support variance in override declarations.
+		/// </remarks>
+		public object Model {
+			get { return GetModel(); }
+		}
+		
+		protected virtual object GetModel()
+		{
+			return null;
+		}
+		#endregion
+		
 		/// <summary>
 		/// Gets called when the item is double-clicked.
 		/// </summary>
 		public virtual void ActivateItem(RoutedEventArgs e)
+		{
+		}
+		
+		public virtual void ShowContextMenu(ContextMenuEventArgs e)
 		{
 		}
 		

@@ -237,7 +237,7 @@
                                           Style="{StaticResource ExpandCollapseToggleStyle}"
                                           IsChecked="{Binding IsExpanded}"
                                           Visibility="Hidden"
-                                          Margin="0 0 6 0"
+                                          Margin="0 0 7 0"
                                           VerticalAlignment="Center" />
                             <Border Name="checkBoxContainer"
                                     Width="16"
