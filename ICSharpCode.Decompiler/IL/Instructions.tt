@@ -339,6 +339,15 @@ namespace <#=opCode.Namespace#>
 			return <#=string.Join(" && ", opCode.PerformMatchConditions)#>;
 		}
 <#		} #>
+<#		if (opCode.Invariants.Count > 0) { #>
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+<#			foreach (var invariant in opCode.Invariants) {#>
+			<#=invariant#>
+<#			} #>
+		}
+<#		} #>
 	}
 }
 <#	} #>
@@ -485,6 +494,7 @@ namespace ICSharpCode.Decompiler.IL
 		public bool GeneratePerformMatch = true;
 		public List<MatchParamInfo> MatchParameters = new List<MatchParamInfo>();
 		public List<string> PerformMatchConditions = new List<string>() { "o != null" };
+		public List<string> Invariants = new List<string>();
 
 		public string BaseClass = "ILInstruction";
 		public List<string> Interfaces = new List<string>();
@@ -680,6 +690,7 @@ namespace ICSharpCode.Decompiler.IL
 		
 		public bool IsCollection;
 		public bool CanInlineInto;
+		public string[] ExpectedTypes;
 		
 		public ChildInfo(string name)
 		{
@@ -755,6 +766,14 @@ namespace ICSharpCode.Decompiler.IL
 						+ "\t\tSetChildInstruction(ref this." + arg + ", value, " + i + ");" + Environment.NewLine
 						+ "\t}" + Environment.NewLine
 						+ "}");
+				}
+				if (children[i].ExpectedTypes?.Length > 0) {
+					foreach (var expectedType in children[i].ExpectedTypes) {
+						var expectedTypeCode = expectedType;
+						if (!expectedType.Contains("."))
+							expectedTypeCode = "StackType." + expectedTypeCode;
+						opCode.Invariants.Add("Debug.Assert(" + arg + ".ResultType == " + expectedTypeCode + ");");
+					}
 				}
 			}
 			opCode.WriteArguments.Add("output.Write(')');");
@@ -917,12 +936,8 @@ protected override void Disconnected()
 }
 ".Replace("Access", accessType));
 			if (generateCheckInvariant) {
-				opCode.Members.Add(@"internal override void CheckInvariant(ILPhase phase)
-{
-	base.CheckInvariant(phase);
-	Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
-	Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
-}");
+				opCode.Invariants.Add("Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));");
+				opCode.Invariants.Add("Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);");
 			}
 		};
 		if (accessType == "Load") {

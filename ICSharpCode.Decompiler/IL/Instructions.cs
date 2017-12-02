@@ -743,12 +743,6 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 		
-		internal override void CheckInvariant(ILPhase phase)
-		{
-			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
-			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
-		}
 		public static readonly SlotInfo InitSlot = new SlotInfo("Init", canInlineInto: true);
 		ILInstruction init;
 		public ILInstruction Init {
@@ -850,6 +844,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as PinnedRegion;
 			return o != null && variable == o.variable && this.init.PerformMatch(o.init, ref match) && this.body.PerformMatch(o.body, ref match);
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
+			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
 		}
 	}
 }
@@ -1771,12 +1771,6 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 		
-		internal override void CheckInvariant(ILPhase phase)
-		{
-			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
-			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
-		}
 		public static readonly SlotInfo ResourceExpressionSlot = new SlotInfo("ResourceExpression", canInlineInto: true);
 		ILInstruction resourceExpression;
 		public ILInstruction ResourceExpression {
@@ -1867,6 +1861,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as UsingInstruction;
 			return o != null && variable == o.variable && this.resourceExpression.PerformMatch(o.resourceExpression, ref match) && this.body.PerformMatch(o.body, ref match);
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
+			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
 		}
 	}
 }
@@ -2107,12 +2107,6 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 		
-		internal override void CheckInvariant(ILPhase phase)
-		{
-			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
-			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
-		}
 		public override StackType ResultType { get { return variable.StackType; } }
 		protected override InstructionFlags ComputeFlags()
 		{
@@ -2146,6 +2140,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as LdLoc;
 			return o != null && variable == o.variable;
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
+			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
 		}
 	}
 }
@@ -2192,12 +2192,6 @@ namespace ICSharpCode.Decompiler.IL
 			base.Disconnected();
 		}
 		
-		internal override void CheckInvariant(ILPhase phase)
-		{
-			base.CheckInvariant(phase);
-			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
-			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
-		}
 		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
 		{
 			ILRange.WriteTo(output, options);
@@ -2221,6 +2215,12 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as LdLoca;
 			return o != null && variable == o.variable;
+		}
+		internal override void CheckInvariant(ILPhase phase)
+		{
+			base.CheckInvariant(phase);
+			Debug.Assert(phase <= ILPhase.InILReader || this.IsDescendantOf(variable.Function));
+			Debug.Assert(phase <= ILPhase.InILReader || variable.Function.Variables[variable.IndexInFunction] == variable);
 		}
 	}
 }
