@@ -6,7 +6,7 @@ platforms:
 - DotNetCore
 packages:
 - id: ICSharpCode.Decompiler
-  version: 3.0.0.3362-beta3
+  version: 3.0.0.3403-beta4 
 ---
 
 Setup: load the references required to work with the decompiler
@@ -66,13 +66,13 @@ var module = decompiler.TypeSystem.GetCecil(type).Module
 Get the child namespaces
 
 ```csharp
-var icsdns = decompiler.TypeSystem.Compilation.RootNamespace.ChildNamespaces.First();
-foreach (var ns in icsdns.ChildNamespaces.First().ChildNamespaces) Console.WriteLine(ns.FullName);
+var icsdns = decompiler.TypeSystem.Compilation.RootNamespace;
+foreach (var ns in icsdns.ChildNamespaces) Console.WriteLine(ns.FullName);
 ```
 
 Get types in a single namespace
 
 ```csharp
 // ICSharpCode.Decompiler.TypeSystem is the first namespace
-var typesInNamespace = icsdns.ChildNamespaces.First().ChildNamespaces.First().Types;
+var typesInNamespace = icsdns.ChildNamespaces.First().Types;
 ```
