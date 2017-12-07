@@ -161,7 +161,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 		{
 			if (contextTypeDefinition == null) return;
 			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
-			if (instanceCtors.Length == 1) {
+			if (instanceCtors.Length == 1 && members.Skip(1).Any()) {
 				ConstructorDeclaration emptyCtor = new ConstructorDeclaration();
 				emptyCtor.Modifiers = contextTypeDefinition.IsAbstract ? Modifiers.Protected : Modifiers.Public;
 				emptyCtor.Body = new BlockStatement();
