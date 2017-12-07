@@ -156,12 +156,12 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				} while (allSame);
 			}
 		}
-		
+
 		internal void RemoveSingleEmptyConstructor(IEnumerable<AstNode> members, ITypeDefinition contextTypeDefinition)
 		{
 			if (contextTypeDefinition == null) return;
 			var instanceCtors = members.OfType<ConstructorDeclaration>().Where(c => (c.Modifiers & Modifiers.Static) == 0).ToArray();
-			if (instanceCtors.Length == 1 && members.Skip(1).Any()) {
+			if (instanceCtors.Length == 1 && (members.Skip(1).Any() || instanceCtors[0].Parent is TypeDeclaration)) {
 				ConstructorDeclaration emptyCtor = new ConstructorDeclaration();
 				emptyCtor.Modifiers = contextTypeDefinition.IsAbstract ? Modifiers.Protected : Modifiers.Public;
 				emptyCtor.Body = new BlockStatement();
