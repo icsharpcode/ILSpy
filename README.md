@@ -15,12 +15,13 @@ License
 ILSpy is distributed under the MIT License.
 
 Included open-source libraries:
- * Mono.Cecil: MIT License (thanks to Jb Evain)
- * AvalonEdit: LGPL
+ * Mono.Cecil: MIT License (part of ICSharpCode.Decompiler)
+ * LightJson: MIT License (part of ICSharpCode.Decompiler)
+ * Humanizer: MIT License (part of ICSharpCode.Decompiler)
+ * AvalonEdit: MIT License
  * SharpTreeView: LGPL
- * ICSharpCode.Decompiler: MIT License (developed as part of ILSpy)
  * Ricciolo.StylesExplorer: MS-PL (part of ILSpy.BamlDecompiler.Plugin)
- * Newtonsoft Json.NET: MIT License
+ * CommandLineUtils: Apache License 2.0 (part of ICSharpCode.Decompiler.Console)
 
 How to build
 ------------
