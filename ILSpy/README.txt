@@ -6,17 +6,12 @@ Copyright 2011-2017 AlphaSierraPapa for the SharpDevelop team
 License: ILSpy is distributed under the MIT License.
 
 Included open-source libraries:
- Mono.Cecil: MIT License (thanks to Jb Evain)
- AvalonEdit: LGPL
+ Mono.Cecil: MIT License (part of ICSharpCode.Decompiler)
+ LightJson: MIT License (part of ICSharpCode.Decompiler)
+ Humanizer: MIT License (part of ICSharpCode.Decompiler)
+ AvalonEdit: MIT License
  SharpTreeView: LGPL
- ICSharpCode.Decompiler: MIT License (developed as part of ILSpy)
  Ricciolo.StylesExplorer: MS-PL (part of ILSpy.BamlDecompiler.Plugin)
+ CommandLineUtils: Apache License 2.0 (part of ICSharpCode.Decompiler.Console)
 
-ILSpy Contributors:
-	Daniel Grunwald
-	David Srbecky
-	Ed Harvey
-	Siegfried Pammer
-	Artur Zgodzinski
-	Eusebiu Marcu
-	Pent Ploompuu
+Current and past contributors: https://github.com/icsharpcode/ILSpy/graphs/contributors
