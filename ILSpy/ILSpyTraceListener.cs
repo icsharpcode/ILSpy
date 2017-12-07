@@ -95,6 +95,7 @@ namespace ICSharpCode.ILSpy
 			string[] buttonTexts = { "Throw", "Debug", "Ignore", "Ignore All" };
 			CustomDialog inputBox = new CustomDialog("Assertion Failed", message.TakeStartEllipsis(750), -1, 2, buttonTexts);
 			inputBox.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+			inputBox.ShowInTaskbar = true; // make this window more visible, because it effectively interrupts the decompilation process.
 			try {
 				inputBox.ShowDialog();
 				return inputBox.Result;
