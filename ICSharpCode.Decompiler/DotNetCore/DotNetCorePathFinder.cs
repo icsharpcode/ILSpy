@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -79,7 +80,7 @@ namespace ICSharpCode.Decompiler
 				}
 			}
 
-			return FallbackToDotNetSharedDirectory(name, version);
+			return FallbackToDotNetSharedDirectory(name, new Version(version));
 		}
 
 		static IEnumerable<DotNetCorePackageInfo> LoadPackageInfos(string depsJsonFileName, string targetFramework)
@@ -105,16 +106,47 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		string FallbackToDotNetSharedDirectory(AssemblyNameReference name, string version)
+		string FallbackToDotNetSharedDirectory(AssemblyNameReference name, Version version)
 		{
 			if (dotnetBasePath == null) return null;
-			var basePath = Path.Combine(dotnetBasePath, "shared", "Microsoft.NETCore.App", version);
-			if (File.Exists(Path.Combine(basePath, name.Name + ".dll"))) {
-				return Path.Combine(basePath, name.Name + ".dll");
-			} else if (File.Exists(Path.Combine(basePath, name.Name + ".exe"))) {
-				return Path.Combine(basePath, name.Name + ".exe");
+			var basePath = Path.Combine(dotnetBasePath, "shared", "Microsoft.NETCore.App");
+			var closestVersion = GetClosestVersionFolder(basePath, version);
+			if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".dll"))) {
+				return Path.Combine(basePath, closestVersion, name.Name + ".dll");
+			} else if (File.Exists(Path.Combine(basePath, closestVersion, name.Name + ".exe"))) {
+				return Path.Combine(basePath, closestVersion, name.Name + ".exe");
 			}
 			return null;
+		}
+
+		static string GetClosestVersionFolder(string basePath, Version version)
+		{
+			string result = null;
+			foreach (var folder in new DirectoryInfo(basePath).GetDirectories().Select(d => ConvertToVersion(d.Name)).Where(v => v.Item1 != null).OrderByDescending(v => v.Item1)) {
+				if (folder.Item1 >= version)
+					result = folder.Item2;
+			}
+			return result ?? version.ToString();
+		}
+
+		static (Version, string) ConvertToVersion(string name)
+		{
+			string RemoveTrailingVersionInfo()
+			{
+				string shortName = name;
+				int dashIndex = shortName.IndexOf('-');
+				if (dashIndex > 0) {
+					shortName = shortName.Remove(dashIndex);
+				}
+				return shortName;
+			}
+
+			try {
+				return (new Version(RemoveTrailingVersionInfo()), name);
+			} catch (Exception ex) {
+				Trace.TraceWarning(ex.ToString());
+				return (null, null);
+			}
 		}
 
 		static string FindDotNetExeDirectory()
