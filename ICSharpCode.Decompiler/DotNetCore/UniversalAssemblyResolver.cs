@@ -31,8 +31,6 @@ namespace ICSharpCode.Decompiler
 			return false;
 		}
 
-		public event AssemblyResolveEventHandler ResolveFailed;
-
 		public void AddSearchDirectory(string directory)
 		{
 			directories.Add(directory);
@@ -81,40 +79,43 @@ namespace ICSharpCode.Decompiler
 
 		public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
 		{
+			var file = FindAssemblyFile(name);
+			if (file == null) {
+				if (throwOnError)
+					throw new AssemblyResolutionException(name);
+				return null;
+			}
+			return GetAssembly(file, parameters);
+		}
+
+		public string FindAssemblyFile(AssemblyNameReference name)
+		{
 			var targetFramework = TargetFramework.Split(new[] { ",Version=v" }, StringSplitOptions.None);
 			string file = null;
 			switch (targetFramework[0]) {
 				case ".NETCoreApp":
 				case ".NETStandard":
 					if (targetFramework.Length != 2)
-						return ResolveInternal(name, parameters);
+						return ResolveInternal(name);
 					if (dotNetCorePathFinder == null) {
 						var version = targetFramework[1].Length == 3 ? targetFramework[1] + ".0" : targetFramework[1];
 						dotNetCorePathFinder = new DotNetCorePathFinder(mainAssemblyFileName, TargetFramework, version);
 					}
 					file = dotNetCorePathFinder.TryResolveDotNetCore(name);
-					if (file == null)
-						return ResolveInternal(name, parameters);
-					else {
-						var asm = ModuleDefinition.ReadModule(file, parameters).Assembly;
-						if (throwOnError && asm == null)
-							throw new AssemblyResolutionException(name);
-						return asm;
-					}
+					if (file != null)
+						return file;
+					return ResolveInternal(name);
 				default:
-					return ResolveInternal(name, parameters);
+					return ResolveInternal(name);
 			}
 		}
 
-		AssemblyDefinition ResolveInternal(AssemblyNameReference name, ReaderParameters parameters)
+		string ResolveInternal(AssemblyNameReference name)
 		{
 			if (name == null)
 				throw new ArgumentNullException(nameof(name));
 
-			if (parameters == null)
-				throw new ArgumentNullException(nameof(parameters));
-
-			var assembly = SearchDirectory(name, directories, parameters);
+			var assembly = SearchDirectory(name, directories);
 			if (assembly != null)
 				return assembly;
 
@@ -131,30 +132,24 @@ namespace ICSharpCode.Decompiler
 				: new[] { framework_dir };
 
 			if (IsZero(name.Version)) {
-				assembly = SearchDirectory(name, framework_dirs, parameters);
+				assembly = SearchDirectory(name, framework_dirs);
 				if (assembly != null)
 					return assembly;
 			}
 
 			if (name.Name == "mscorlib") {
-				assembly = GetCorlib(name, parameters);
+				assembly = GetCorlib(name);
 				if (assembly != null)
 					return assembly;
 			}
 
-			assembly = GetAssemblyInGac(name, parameters);
+			assembly = GetAssemblyInGac(name);
 			if (assembly != null)
 				return assembly;
 
-			assembly = SearchDirectory(name, framework_dirs, parameters);
+			assembly = SearchDirectory(name, framework_dirs);
 			if (assembly != null)
 				return assembly;
-
-			if (ResolveFailed != null) {
-				assembly = ResolveFailed(this, name);
-				if (assembly != null)
-					return assembly;
-			}
 
 			if (throwOnError)
 				throw new AssemblyResolutionException(name);
@@ -162,7 +157,7 @@ namespace ICSharpCode.Decompiler
 		}
 
 		#region .NET / mono GAC handling
-		AssemblyDefinition SearchDirectory(AssemblyNameReference name, IEnumerable<string> directories, ReaderParameters parameters)
+		string SearchDirectory(AssemblyNameReference name, IEnumerable<string> directories)
 		{
 			var extensions = name.IsWindowsRuntime ? new[] { ".winmd", ".dll" } : new[] { ".exe", ".dll" };
 			foreach (var directory in directories) {
@@ -171,7 +166,7 @@ namespace ICSharpCode.Decompiler
 					if (!File.Exists(file))
 						continue;
 					try {
-						return GetAssembly(file, parameters);
+						return file;
 					} catch (System.BadImageFormatException) {
 						continue;
 					}
@@ -188,13 +183,13 @@ namespace ICSharpCode.Decompiler
 
 		static Version ZeroVersion = new Version(0, 0, 0, 0);
 
-		AssemblyDefinition GetCorlib(AssemblyNameReference reference, ReaderParameters parameters)
+		string GetCorlib(AssemblyNameReference reference)
 		{
 			var version = reference.Version;
 			var corlib = typeof(object).Assembly.GetName();
 
 			if (corlib.Version == version || IsZero(version))
-				return GetAssembly(typeof(object).Module.FullyQualifiedName, parameters);
+				return typeof(object).Module.FullyQualifiedName;
 
 			var path = Directory.GetParent(
 				Directory.GetParent(
@@ -239,7 +234,7 @@ namespace ICSharpCode.Decompiler
 
 			var file = Path.Combine(path, "mscorlib.dll");
 			if (File.Exists(file))
-				return GetAssembly(file, parameters);
+				return file;
 
 			return null;
 		}
@@ -299,30 +294,30 @@ namespace ICSharpCode.Decompiler
 			return ModuleDefinition.ReadModule(file, parameters).Assembly;
 		}
 
-		AssemblyDefinition GetAssemblyInGac(AssemblyNameReference reference, ReaderParameters parameters)
+		string GetAssemblyInGac(AssemblyNameReference reference)
 		{
 			if (reference.PublicKeyToken == null || reference.PublicKeyToken.Length == 0)
 				return null;
 
 			if (DetectMono())
-				return GetAssemblyInMonoGac(reference, parameters);
+				return GetAssemblyInMonoGac(reference);
 
-			return GetAssemblyInNetGac(reference, parameters);
+			return GetAssemblyInNetGac(reference);
 		}
 
-		AssemblyDefinition GetAssemblyInMonoGac(AssemblyNameReference reference, ReaderParameters parameters)
+		string GetAssemblyInMonoGac(AssemblyNameReference reference)
 		{
 			for (int i = 0; i < gac_paths.Count; i++) {
 				var gac_path = gac_paths[i];
 				var file = GetAssemblyFile(reference, string.Empty, gac_path);
 				if (File.Exists(file))
-					return GetAssembly(file, parameters);
+					return file;
 			}
 
 			return null;
 		}
 
-		AssemblyDefinition GetAssemblyInNetGac(AssemblyNameReference reference, ReaderParameters parameters)
+		string GetAssemblyInNetGac(AssemblyNameReference reference)
 		{
 			var gacs = new[] { "GAC_MSIL", "GAC_32", "GAC_64", "GAC" };
 			var prefixes = new[] { string.Empty, "v4.0_" };
@@ -332,7 +327,7 @@ namespace ICSharpCode.Decompiler
 					var gac = Path.Combine(gac_paths[i], gacs[j]);
 					var file = GetAssemblyFile(reference, prefixes[i], gac);
 					if (Directory.Exists(gac) && File.Exists(file))
-						return GetAssembly(file, parameters);
+						return file;
 				}
 			}
 

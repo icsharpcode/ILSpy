@@ -271,11 +271,11 @@ namespace ICSharpCode.ILSpy
 
 			var resolver = new MyUniversalResolver(this) { TargetFramework = GetTargetFrameworkIdAsync().Result };
 			var name = AssemblyNameReference.Parse(fullName);
-			var file = resolver.Resolve(name);
+			var file = resolver.FindAssemblyFile(name);
 
 			if (file != null) {
-				loadedAssemblyReferences.AddMessage(fullName, MessageKind.Info, "Success - Loading from: " + file.MainModule.FileName);
-				return assemblyList.OpenAssembly(file.MainModule.FileName, true);
+				loadedAssemblyReferences.AddMessage(fullName, MessageKind.Info, "Success - Loading from: " + file);
+				return assemblyList.OpenAssembly(file, true);
 			} else {
 				loadedAssemblyReferences.AddMessage(fullName, MessageKind.Error, "Could not find reference: " + fullName);
 				return null;
