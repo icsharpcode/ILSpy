@@ -345,6 +345,10 @@ namespace ICSharpCode.ILSpy
 
 			ShowAssemblyList(this.assemblyList);
 
+			if (sessionSettings.ActiveAutoLoadedAssembly != null) {
+				this.assemblyList.Open(sessionSettings.ActiveAutoLoadedAssembly, true);
+			}
+
 			Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => OpenAssemblies(spySettings)));
 		}
 
@@ -356,7 +360,6 @@ namespace ICSharpCode.ILSpy
 				if (sessionSettings.ActiveTreeViewPath != null) {
 					node = FindNodeByPath(sessionSettings.ActiveTreeViewPath, true);
 					if (node == this.assemblyListTreeNode && sessionSettings.ActiveAutoLoadedAssembly != null) {
-						this.assemblyList.Open(sessionSettings.ActiveAutoLoadedAssembly, true);
 						node = FindNodeByPath(sessionSettings.ActiveTreeViewPath, true);
 					}
 				}
