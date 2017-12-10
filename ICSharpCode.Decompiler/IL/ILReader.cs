@@ -270,12 +270,17 @@ namespace ICSharpCode.Decompiler.IL
 			return stackType1 == StackType.Unknown || stackType2 == StackType.Unknown;
 		}
 
-		void StoreStackForOffset(int offset, ImmutableStack<ILVariable> stack)
+		/// <summary>
+		/// Stores the given stack for a branch to `offset`.
+		/// 
+		/// The stack may be modified if stack adjustments are necessary. (e.g. implicit I4->I conversion)
+		/// </summary>
+		void StoreStackForOffset(int offset, ref ImmutableStack<ILVariable> stack)
 		{
 			if (stackByOffset.TryGetValue(offset, out var existing)) {
-				var newStack = MergeStacks(existing, stack);
-				if (newStack != existing)
-					stackByOffset[offset] = newStack;
+				stack = MergeStacks(existing, stack);
+				if (stack != existing)
+					stackByOffset[offset] = stack;
 			} else {
 				stackByOffset.Add(offset, stack);
 			}
@@ -305,18 +310,18 @@ namespace ICSharpCode.Decompiler.IL
 				}
 				if (eh.FilterStart != null) {
 					isBranchTarget[eh.FilterStart.Offset] = true;
-					StoreStackForOffset(eh.FilterStart.Offset, ehStack);
+					StoreStackForOffset(eh.FilterStart.Offset, ref ehStack);
 				}
 				if (eh.HandlerStart != null) {
 					isBranchTarget[eh.HandlerStart.Offset] = true;
-					StoreStackForOffset(eh.HandlerStart.Offset, ehStack);
+					StoreStackForOffset(eh.HandlerStart.Offset, ref ehStack);
 				}
 			}
 			
 			while (nextInstructionIndex < body.Instructions.Count) {
 				cancellationToken.ThrowIfCancellationRequested();
 				int start = body.Instructions[nextInstructionIndex].Offset;
-				StoreStackForOffset(start, currentStack);
+				StoreStackForOffset(start, ref currentStack);
 				ILInstruction decodedInstruction = DecodeInstruction();
 				if (decodedInstruction.ResultType == StackType.Unknown)
 					Warn("Unknown result type (might be due to invalid IL)");
@@ -361,11 +366,23 @@ namespace ICSharpCode.Decompiler.IL
 					foreach (var additionalVar in dict[store.Variable]) {
 						ILInstruction value = new LdLoc(store.Variable);
 						switch (additionalVar.StackType) {
+							case StackType.I4:
+								value = new Conv(value, PrimitiveType.I4, false, Sign.None);
+								break;
 							case StackType.I:
 								value = new Conv(value, PrimitiveType.I, false, Sign.None);
 								break;
 							case StackType.I8:
 								value = new Conv(value, PrimitiveType.I8, false, Sign.None);
+								break;
+							case StackType.F4:
+								value = new Conv(value, PrimitiveType.R4, false, Sign.None);
+								break;
+							case StackType.F8:
+								value = new Conv(value, PrimitiveType.R8, false, Sign.None);
+								break;
+							case StackType.Ref:
+								value = new Conv(value, PrimitiveType.Ref, false, Sign.None);
 								break;
 						}
 						newInstructions.Add(new StLoc(additionalVar, value) {
@@ -1420,7 +1437,7 @@ namespace ICSharpCode.Decompiler.IL
 		void MarkBranchTarget(int targetILOffset)
 		{
 			isBranchTarget[targetILOffset] = true;
-			StoreStackForOffset(targetILOffset, currentStack);
+			StoreStackForOffset(targetILOffset, ref currentStack);
 		}
 
 		ILInstruction DecodeSwitch()
