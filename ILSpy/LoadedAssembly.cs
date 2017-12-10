@@ -279,6 +279,12 @@ namespace ICSharpCode.ILSpy
 					file = resolver.FindAssemblyFile(name);
 				}
 
+				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
+					if (loaded.FileName.Equals(file, StringComparison.OrdinalIgnoreCase)) {
+						return loaded;
+					}
+				}
+
 				if (loadingAssemblies.TryGetValue(file, out asm))
 					return asm;
 
