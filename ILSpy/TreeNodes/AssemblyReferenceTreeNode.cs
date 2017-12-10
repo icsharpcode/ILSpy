@@ -88,7 +88,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)
 		{
-			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetValue(r.FullName, out var info);
+			var loaded = parentAssembly.LoadedAssembly.LoadedAssemblyReferencesInfo.TryGetInfo(r.FullName, out var info);
 			if (r.IsWindowsRuntime) {
 				language.WriteCommentLine(output, r.Name + " [WinRT]" + (!loaded ? " (unresolved)" : ""));
 			} else {

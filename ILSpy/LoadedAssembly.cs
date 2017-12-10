@@ -38,7 +38,6 @@ namespace ICSharpCode.ILSpy
 		readonly AssemblyList assemblyList;
 		readonly string fileName;
 		readonly string shortName;
-		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences = new Dictionary<string, UnresolvedAssemblyNameReference>();
 
 		public LoadedAssembly(AssemblyList assemblyList, string fileName, Stream stream = null)
 		{
@@ -63,7 +62,7 @@ namespace ICSharpCode.ILSpy
 			return assembly?.DetectTargetFrameworkId() ?? string.Empty;
 		}
 
-		public Dictionary<string, UnresolvedAssemblyNameReference> LoadedAssemblyReferencesInfo => loadedAssemblyReferences;
+		public ReferenceLoadInfo LoadedAssemblyReferencesInfo { get; } = new ReferenceLoadInfo();
 
 		/// <summary>
 		/// Gets the Cecil ModuleDefinition.
@@ -206,18 +205,6 @@ namespace ICSharpCode.ILSpy
 				var node = parent.LookupReferencedAssembly(name);
 				return node != null ? node.GetAssemblyDefinitionAsync().Result : null;
 			}
-			
-			public AssemblyDefinition Resolve(string fullName)
-			{
-				var node = parent.LookupReferencedAssembly(fullName);
-				return node != null ? node.GetAssemblyDefinitionAsync().Result : null;
-			}
-			
-			public AssemblyDefinition Resolve(string fullName, ReaderParameters parameters)
-			{
-				var node = parent.LookupReferencedAssembly(fullName);
-				return node != null ? node.GetAssemblyDefinitionAsync().Result : null;
-			}
 
 			public void Dispose()
 			{
@@ -234,15 +221,10 @@ namespace ICSharpCode.ILSpy
 			if (name == null)
 				throw new ArgumentNullException(nameof(name));
 			if (name.IsWindowsRuntime) {
-				return assemblyList.winRTMetadataLookupCache.GetOrAdd(name.Name, LookupWinRTMetadata);
+				return assemblyList.assemblyLookupCache.GetOrAdd((name.Name, true), LookupReferencedAssemblyInternal);
 			} else {
-				return assemblyList.assemblyLookupCache.GetOrAdd(name.FullName, LookupReferencedAssemblyInternal);
+				return assemblyList.assemblyLookupCache.GetOrAdd((name.FullName, false), LookupReferencedAssemblyInternal);
 			}
-		}
-		
-		public LoadedAssembly LookupReferencedAssembly(string fullName)
-		{
-			return assemblyList.assemblyLookupCache.GetOrAdd(fullName, LookupReferencedAssemblyInternal);
 		}
 
 		class MyUniversalResolver : UniversalAssemblyResolver
@@ -253,55 +235,52 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		LoadedAssembly LookupReferencedAssemblyInternal(string fullName)
+		static Dictionary<string, LoadedAssembly> loadingAssemblies = new Dictionary<string, LoadedAssembly>();
+
+		LoadedAssembly LookupReferencedAssemblyInternal((string fullName, bool isWinRT) data)
 		{
-			foreach (LoadedAssembly asm in assemblyList.GetAssemblies()) {
-				var asmDef = asm.GetAssemblyDefinitionAsync().Result;
-				if (asmDef != null && fullName.Equals(asmDef.FullName, StringComparison.OrdinalIgnoreCase)) {
-					return asm;
+			string file;
+			LoadedAssembly asm;
+			lock (loadingAssemblies) {
+				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
+					var asmDef = loaded.GetAssemblyDefinitionAsync().Result;
+					if (asmDef != null && data.fullName.Equals(data.isWinRT ? asmDef.Name.Name : asmDef.FullName, StringComparison.OrdinalIgnoreCase)) {
+						return loaded;
+					}
 				}
-			}
-			if (assemblyLoadDisableCount > 0)
-				return null;
-			
-			if (!App.Current.Dispatcher.CheckAccess()) {
-				// Call this method on the GUI thread.
-				return (LoadedAssembly)App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Func<string, LoadedAssembly>(LookupReferencedAssembly), fullName);
-			}
 
-			var resolver = new MyUniversalResolver(this) { TargetFramework = GetTargetFrameworkIdAsync().Result };
-			var name = AssemblyNameReference.Parse(fullName);
-			var file = resolver.FindAssemblyFile(name);
+				if (assemblyLoadDisableCount > 0)
+					return null;
 
-			if (file != null) {
-				loadedAssemblyReferences.AddMessage(fullName, MessageKind.Info, "Success - Loading from: " + file);
-				return assemblyList.OpenAssembly(file, true);
-			} else {
-				loadedAssemblyReferences.AddMessage(fullName, MessageKind.Error, "Could not find reference: " + fullName);
-				return null;
-			}
-		}
-		
-		LoadedAssembly LookupWinRTMetadata(string name)
-		{
-			foreach (LoadedAssembly asm in assemblyList.GetAssemblies()) {
-				var asmDef = asm.GetAssemblyDefinitionAsync().Result;
-				if (asmDef!= null && name.Equals(asmDef.Name.Name, StringComparison.OrdinalIgnoreCase))
+				if (data.isWinRT) {
+					file = Path.Combine(Environment.SystemDirectory, "WinMetadata", data.fullName + ".winmd");
+				} else {
+					var resolver = new MyUniversalResolver(this) { TargetFramework = GetTargetFrameworkIdAsync().Result };
+					var name = AssemblyNameReference.Parse(data.fullName);
+					file = resolver.FindAssemblyFile(name);
+				}
+
+				if (loadingAssemblies.TryGetValue(file, out asm))
 					return asm;
+
+				if (file != null) {
+					LoadedAssemblyReferencesInfo.AddMessage(data.fullName, MessageKind.Info, "Success - Loading from: " + file);
+					asm = new LoadedAssembly(assemblyList, file) { IsAutoLoaded = true };
+				} else {
+					LoadedAssemblyReferencesInfo.AddMessage(data.fullName, MessageKind.Error, "Could not find reference: " + data.fullName);
+					return null;
+				}
+				loadingAssemblies.Add(file, asm);
 			}
-			if (assemblyLoadDisableCount > 0)
-				return null;
-			if (!App.Current.Dispatcher.CheckAccess()) {
-				// Call this method on the GUI thread.
-				return (LoadedAssembly)App.Current.Dispatcher.Invoke(DispatcherPriority.Normal, new Func<string, LoadedAssembly>(LookupWinRTMetadata), name);
-			}
-			
-			string file = Path.Combine(Environment.SystemDirectory, "WinMetadata", name + ".winmd");
-			if (File.Exists(file)) {
-				return assemblyList.OpenAssembly(file, true);
-			} else {
-				return null;
-			}
+			App.Current.Dispatcher.BeginInvoke((Action)delegate() {
+				lock (assemblyList.assemblies) {
+					assemblyList.assemblies.Add(asm);
+				}
+				lock (loadingAssemblies) {
+					loadingAssemblies.Remove(file);
+				}
+			});
+			return asm;
 		}
 		
 		public Task ContinueWhenLoaded(Action<Task<ModuleDefinition>> onAssemblyLoaded, TaskScheduler taskScheduler)

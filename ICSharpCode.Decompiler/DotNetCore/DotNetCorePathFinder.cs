@@ -43,7 +43,7 @@ namespace ICSharpCode.Decompiler
 		readonly string version;
 		readonly string dotnetBasePath = FindDotNetExeDirectory();
 
-		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkId, string version, Dictionary<string, UnresolvedAssemblyNameReference> loadInfo = null)
+		public DotNetCorePathFinder(string parentAssemblyFileName, string targetFrameworkId, string version, ReferenceLoadInfo loadInfo = null)
 		{
 			this.assemblyName = Path.GetFileNameWithoutExtension(parentAssemblyFileName);
 			this.basePath = Path.GetDirectoryName(parentAssemblyFileName);

@@ -23,6 +23,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Threading;
 using System.Xml.Linq;
 
@@ -38,8 +39,7 @@ namespace ICSharpCode.ILSpy
 		/// <summary>Dirty flag, used to mark modifications so that the list is saved later</summary>
 		bool dirty;
 		
-		internal readonly ConcurrentDictionary<string, LoadedAssembly> assemblyLookupCache = new ConcurrentDictionary<string, LoadedAssembly>();
-		internal readonly ConcurrentDictionary<string, LoadedAssembly> winRTMetadataLookupCache = new ConcurrentDictionary<string, LoadedAssembly>();
+		internal readonly ConcurrentDictionary<(string assemblyName, bool isWinRT), LoadedAssembly> assemblyLookupCache = new ConcurrentDictionary<(string assemblyName, bool isWinRT), LoadedAssembly>();
 		
 		/// <summary>
 		/// The assemblies in this list.
@@ -136,7 +136,6 @@ namespace ICSharpCode.ILSpy
 		internal void ClearCache()
 		{
 			assemblyLookupCache.Clear();
-			winRTMetadataLookupCache.Clear();
 		}
 
 		public LoadedAssembly Open(string assemblyUri, bool isAutoLoaded = false)

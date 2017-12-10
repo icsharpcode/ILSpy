@@ -384,7 +384,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				var la = ((AssemblyTreeNode)node).LoadedAssembly;
 				if (!la.HasLoadError) {
 					foreach (var assyRef in la.GetModuleDefinitionAsync().Result.AssemblyReferences) {
-						la.LookupReferencedAssembly(assyRef.FullName);
+						la.LookupReferencedAssembly(assyRef);
 					}
 				}
 			}

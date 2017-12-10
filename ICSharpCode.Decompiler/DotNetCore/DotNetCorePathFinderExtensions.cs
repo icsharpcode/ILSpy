@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using Mono.Cecil;
 
@@ -25,16 +26,36 @@ namespace ICSharpCode.Decompiler
 
 			return string.Empty;
 		}
+	}
 
-		public static void AddMessage(this Dictionary<string, UnresolvedAssemblyNameReference> container, string fullName, MessageKind kind, string message)
+	public class ReferenceLoadInfo
+	{
+		readonly Dictionary<string, UnresolvedAssemblyNameReference> loadedAssemblyReferences = new Dictionary<string, UnresolvedAssemblyNameReference>();
+
+		public void AddMessage(string fullName, MessageKind kind, string message)
 		{
-			if (container == null)
-				throw new ArgumentNullException(nameof(container));
-			if (!container.TryGetValue(fullName, out var referenceInfo)) {
-				referenceInfo = new UnresolvedAssemblyNameReference(fullName);
-				container.Add(fullName, referenceInfo);
+			lock (loadedAssemblyReferences) {
+				if (!loadedAssemblyReferences.TryGetValue(fullName, out var referenceInfo)) {
+					referenceInfo = new UnresolvedAssemblyNameReference(fullName);
+					loadedAssemblyReferences.Add(fullName, referenceInfo);
+				}
+				referenceInfo.Messages.Add((kind, message));
 			}
-			referenceInfo.Messages.Add((kind, message));
+		}
+
+		public bool TryGetInfo(string fullName, out UnresolvedAssemblyNameReference info)
+		{
+			lock (loadedAssemblyReferences) {
+				return loadedAssemblyReferences.TryGetValue(fullName, out info);
+			}
+		}
+
+		public bool HasErrors {
+			get {
+				lock (loadedAssemblyReferences) {
+					return loadedAssemblyReferences.Any(i => i.Value.HasErrors);
+				}
+			}
 		}
 	}
 }
