@@ -376,10 +376,10 @@ namespace ICSharpCode.Decompiler.IL
 								value = new Conv(value, PrimitiveType.I8, false, Sign.None);
 								break;
 							case StackType.F4:
-								value = new Conv(value, PrimitiveType.R4, false, Sign.None);
+								value = new Conv(value, PrimitiveType.R4, false, Sign.Signed);
 								break;
 							case StackType.F8:
-								value = new Conv(value, PrimitiveType.R8, false, Sign.None);
+								value = new Conv(value, PrimitiveType.R8, false, Sign.Signed);
 								break;
 							case StackType.Ref:
 								value = new Conv(value, PrimitiveType.Ref, false, Sign.None);
@@ -1088,6 +1088,8 @@ namespace ICSharpCode.Decompiler.IL
 				} else if (expectedType == StackType.F4 && inst.ResultType == StackType.F8) {
 					// IL allows implicit F8->F4 conversions, because in IL F4 and F8 are the same.
 					inst = new Conv(inst, PrimitiveType.R4, false, Sign.Signed);
+				} else if (expectedType == StackType.Unknown) {
+					inst = new Conv(inst, PrimitiveType.Unknown, false, Sign.None);
 				} else {
 					Warn($"Expected {expectedType}, but got {inst.ResultType}");
 					inst = new Conv(inst, expectedType.ToKnownTypeCode().ToPrimitiveType(), false, Sign.None);

@@ -35,6 +35,7 @@ namespace ICSharpCode.Decompiler.IL
 		U8 = MetadataType.UInt64,
 		I = MetadataType.IntPtr,
 		U = MetadataType.UIntPtr,
-		Ref = MetadataType.ByReference
+		Ref = MetadataType.ByReference,
+		Unknown = 255
 	}
 }

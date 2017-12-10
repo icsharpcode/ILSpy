@@ -51,6 +51,8 @@ namespace ICSharpCode.Decompiler.IL
 					return StackType.Ref;
 				case MetadataType.Void:
 					return StackType.Void;
+				case (MetadataType)PrimitiveType.Unknown:
+					return StackType.Unknown;
 				default:
 					return StackType.O;
 			}

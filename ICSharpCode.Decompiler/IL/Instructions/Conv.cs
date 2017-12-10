@@ -154,6 +154,7 @@ namespace ICSharpCode.Decompiler.IL
 		public Conv(ILInstruction argument, StackType inputType, Sign inputSign, PrimitiveType targetType, bool checkForOverflow, bool isLifted = false)
 			: base(OpCode.Conv, argument)
 		{
+			Debug.Assert(targetType != PrimitiveType.None);
 			bool needsSign = checkForOverflow || targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8;
 			Debug.Assert(!(needsSign && inputSign == Sign.None));
 			this.InputType = inputType;
@@ -161,14 +162,14 @@ namespace ICSharpCode.Decompiler.IL
 			this.TargetType = targetType;
 			this.CheckForOverflow = checkForOverflow;
 			this.Kind = GetConversionKind(targetType, this.InputType, this.InputSign);
-			Debug.Assert(Kind != ConversionKind.Invalid);
+			// Debug.Assert(Kind != ConversionKind.Invalid); // invalid conversion can happen with invalid IL/missing references
 			this.IsLifted = isLifted;
 		}
 
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
-			Debug.Assert(Kind != ConversionKind.Invalid);
+			// Debug.Assert(Kind != ConversionKind.Invalid); // invalid conversion can happen with invalid IL/missing references
 			Debug.Assert(Argument.ResultType == (IsLifted ? StackType.O : InputType));
 			Debug.Assert(!(IsLifted && Kind == ConversionKind.StopGCTracking));
 		}
