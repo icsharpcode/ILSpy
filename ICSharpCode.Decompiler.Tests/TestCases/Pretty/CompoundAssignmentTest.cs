@@ -519,5 +519,12 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			this.ushortDict.Add(this.ushortField++, val);
 		}
+
+		private void Issue1007(TimeSpan[] items, int startIndex, TimeSpan item)
+		{
+			int num = startIndex;
+			items[num++] = item;
+			items[num++] = item;
+		}
 	}
 }

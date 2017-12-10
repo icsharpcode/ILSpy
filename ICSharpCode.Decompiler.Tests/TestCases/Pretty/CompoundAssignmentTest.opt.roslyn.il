@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module CompoundAssignmentTest.dll
-// MVID: {EE880025-0C8C-414F-BD89-E5DB86D9B5FA}
+// MVID: {A41AE390-D37A-4425-A0E0-8C87CC28D8D9}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x016C0000
+// Image base: 0x04BC0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1640,6 +1640,35 @@
                                                                                                                    !1)
     IL_001e:  ret
   } // end of method CompoundAssignmentTest::Issue588
+
+  .method private hidebysig instance void 
+          Issue1007(valuetype [mscorlib]System.TimeSpan[] items,
+                    int32 startIndex,
+                    valuetype [mscorlib]System.TimeSpan item) cil managed
+  {
+    // Code size       27 (0x1b)
+    .maxstack  4
+    .locals init (int32 V_0)
+    IL_0000:  ldarg.2
+    IL_0001:  stloc.0
+    IL_0002:  ldarg.1
+    IL_0003:  ldloc.0
+    IL_0004:  dup
+    IL_0005:  ldc.i4.1
+    IL_0006:  add
+    IL_0007:  stloc.0
+    IL_0008:  ldarg.3
+    IL_0009:  stelem     [mscorlib]System.TimeSpan
+    IL_000e:  ldarg.1
+    IL_000f:  ldloc.0
+    IL_0010:  dup
+    IL_0011:  ldc.i4.1
+    IL_0012:  add
+    IL_0013:  stloc.0
+    IL_0014:  ldarg.3
+    IL_0015:  stelem     [mscorlib]System.TimeSpan
+    IL_001a:  ret
+  } // end of method CompoundAssignmentTest::Issue1007
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

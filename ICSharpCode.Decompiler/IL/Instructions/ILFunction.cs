@@ -243,5 +243,24 @@ namespace ICSharpCode.Decompiler.IL
 			Variables.Add(variable);
 			return variable;
 		}
+
+		/// <summary>
+		/// Recombine split variables by replacing all occurrences of variable2 with variable1.
+		/// </summary>
+		internal void RecombineVariables(ILVariable variable1, ILVariable variable2)
+		{
+			Debug.Assert(ILVariableEqualityComparer.Instance.Equals(variable1, variable2));
+			foreach (var ldloc in variable2.LoadInstructions.ToArray()) {
+				ldloc.Variable = variable1;
+			}
+			foreach (var store in variable2.StoreInstructions.ToArray()) {
+				store.Variable = variable1;
+			}
+			foreach (var ldloca in variable2.AddressInstructions.ToArray()) {
+				ldloca.Variable = variable1;
+			}
+			bool ok = Variables.Remove(variable2);
+			Debug.Assert(ok);
+		}
 	}
 }

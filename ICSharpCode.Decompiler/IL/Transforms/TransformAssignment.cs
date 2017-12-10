@@ -384,7 +384,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		{
 			var inst = block.Instructions[pos] as StLoc;
 			var nextInst = block.Instructions.ElementAtOrDefault(pos + 1) as StLoc;
-			if (inst == null || nextInst == null || !inst.Value.MatchLdLoc(out var l) || !ILVariableEqualityComparer.Instance.Equals(l, nextInst.Variable))
+			if (inst == null || nextInst == null || !inst.Value.MatchLdLoc(out var loadVar) || !ILVariableEqualityComparer.Instance.Equals(loadVar, nextInst.Variable))
 				return false;
 			var binary = nextInst.Value as BinaryNumericInstruction;
 			if (inst.Variable.Kind != VariableKind.StackSlot || nextInst.Variable.Kind == VariableKind.StackSlot || binary == null)
@@ -394,10 +394,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			if ((binary.Operator != BinaryNumericOperator.Add && binary.Operator != BinaryNumericOperator.Sub) || !binary.Left.MatchLdLoc(inst.Variable) || !binary.Right.MatchLdcI4(1))
 				return false;
 			context.Step($"TransformPostIncDecOperatorLocal", inst);
+			if (loadVar != nextInst.Variable) {
+				// load and store are two different variables, that were split from the same variable
+				context.Function.RecombineVariables(loadVar, nextInst.Variable);
+			}
 			var tempStore = context.Function.RegisterVariable(VariableKind.StackSlot, inst.Variable.Type);
 			var assignment = new Block(BlockKind.PostfixOperator);
-			assignment.Instructions.Add(new StLoc(tempStore, new LdLoc(nextInst.Variable)));
-			assignment.Instructions.Add(new StLoc(nextInst.Variable, new BinaryNumericInstruction(binary.Operator, new LdLoc(tempStore), new LdcI4(1), binary.CheckForOverflow, binary.Sign)));
+			assignment.Instructions.Add(new StLoc(tempStore, new LdLoc(loadVar)));
+			assignment.Instructions.Add(new StLoc(loadVar, new BinaryNumericInstruction(binary.Operator, new LdLoc(tempStore), new LdcI4(1), binary.CheckForOverflow, binary.Sign)));
 			assignment.FinalInstruction = new LdLoc(tempStore);
 			inst.Value = assignment;
 			block.Instructions.RemoveAt(pos + 1); // remove nextInst
