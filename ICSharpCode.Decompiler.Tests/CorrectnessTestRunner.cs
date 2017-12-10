@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void StackTypes([Values(false, true)] bool force32Bit)
 		{
-			CompilerOptions compiler = CompilerOptions.UseDebug;
+			CompilerOptions compiler = CompilerOptions.UseRoslyn | CompilerOptions.UseDebug;
 			AssemblerOptions asm = AssemblerOptions.None;
 			if (force32Bit) {
 				compiler |= CompilerOptions.Force32Bit;

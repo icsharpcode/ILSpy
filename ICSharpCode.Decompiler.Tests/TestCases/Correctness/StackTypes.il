@@ -256,6 +256,27 @@ pointless:
     ret
   }
 
+  .method public static void RefOrNull(uint8& r, bool use_null)
+  {
+    // Not quite valid IL due to ref<->I mismatch.
+    // https://github.com/icsharpcode/ILSpy/issues/981
+    ldarg.1
+    brtrue push_null
+    ldarg.0
+    br done
+  push_null:
+    ldc.i4.0
+    conv.u
+  done:
+    call void Program::UseRef(uint8&)
+    ret
+  }
+
+  .method public static void UseRef(uint8& r)
+  {
+    ret
+  }
+
   .method public static void Print(native int val)
   {
     ldarg.0

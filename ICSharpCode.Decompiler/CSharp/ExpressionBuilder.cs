@@ -2063,8 +2063,22 @@ namespace ICSharpCode.Decompiler.CSharp
 				IType targetType;
 				if (!trueBranch.Type.Equals(SpecialType.NullType) && !falseBranch.Type.Equals(SpecialType.NullType) && !trueBranch.Type.Equals(falseBranch.Type)) {
 					targetType = typeInference.GetBestCommonType(new[] { trueBranch.ResolveResult, falseBranch.ResolveResult }, out bool success);
-					if (!success || targetType.GetStackType() != inst.ResultType)
-						targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+					if (!success || targetType.GetStackType() != inst.ResultType) {
+						// Figure out the target type based on inst.ResultType.
+						if (inst.ResultType == StackType.Ref) {
+							// targetType should be a ref-type
+							if (trueBranch.Type.Kind == TypeKind.ByReference) {
+								targetType = trueBranch.Type;
+							} else if (falseBranch.Type.Kind == TypeKind.ByReference) {
+								targetType = falseBranch.Type;
+							} else {
+								// fall back to 'ref byte' if we can't determine a referenced type otherwise
+								targetType = new ByReferenceType(compilation.FindType(KnownTypeCode.Byte));
+							}
+						} else {
+							targetType = compilation.FindType(inst.ResultType.ToKnownTypeCode());
+						}
+					}
 				} else {
 					targetType = trueBranch.Type.Equals(SpecialType.NullType) ? falseBranch.Type : trueBranch.Type;
 				}
@@ -2072,9 +2086,19 @@ namespace ICSharpCode.Decompiler.CSharp
 				falseBranch = falseBranch.ConvertTo(targetType, this);
 				rr = new ResolveResult(targetType);
 			}
-			return new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
-				.WithILInstruction(inst)
-				.WithRR(rr);
+			if (rr.Type.Kind == TypeKind.ByReference) {
+				// C# conditional ref looks like this:
+				// ref (arr != null ? ref trueBranch : ref falseBranch);
+				return new DirectionExpression(FieldDirection.Ref,
+					new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
+						.WithILInstruction(inst)
+						.WithRR(new ResolveResult(((ByReferenceType)rr.Type).ElementType))
+				).WithoutILInstruction().WithRR(rr);
+			} else {
+				return new ConditionalExpression(condition.Expression, trueBranch.Expression, falseBranch.Expression)
+					.WithILInstruction(inst)
+					.WithRR(rr);
+			}
 		}
 		
 		protected internal override TranslatedExpression VisitAddressOf(AddressOf inst, TranslationContext context)

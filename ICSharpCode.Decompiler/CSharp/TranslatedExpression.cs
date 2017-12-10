@@ -198,6 +198,9 @@ namespace ICSharpCode.Decompiler.CSharp
 				}
 				return this;
 			}
+			if (targetType.Kind == TypeKind.Unknown) {
+				return this; // don't attempt to insert cast to '?'
+			}
 			var compilation = expressionBuilder.compilation;
 			bool isLifted = type.IsKnownType(KnownTypeCode.NullableOfT) && targetType.IsKnownType(KnownTypeCode.NullableOfT);
 			IType utype = isLifted ? NullableType.GetUnderlyingType(type) : type;
