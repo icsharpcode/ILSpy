@@ -325,7 +325,6 @@ namespace ICSharpCode.ILSpy
 			var module = assembly.GetModuleDefinitionAsync().Result;
 			if (options.FullDecompilation && options.SaveAsProjectDirectory != null) {
 				var decompiler = new ILSpyWholeProjectDecompiler(assembly, options);
-				decompiler.ProjectGuid = App.CommandLineArguments.FixedGuid;
 				decompiler.DecompileProject(module, options.SaveAsProjectDirectory, new TextOutputWriter(output), options.CancellationToken);
 			} else {
 				AddReferenceWarningMessage(module.Assembly, output);

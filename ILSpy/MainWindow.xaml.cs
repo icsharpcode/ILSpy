@@ -254,15 +254,9 @@ namespace ICSharpCode.ILSpy
 			return true;
 		}
 		
-		async void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args)
+		void HandleCommandLineArgumentsAfterShowList(CommandLineArguments args)
 		{
-			// if a SaveDirectory is given, do not start a second concurrent decompilation
-			// by executing JumpoToReference (leads to https://github.com/icsharpcode/ILSpy/issues/710)
-			if (!string.IsNullOrEmpty(args.SaveDirectory)) {
-				var tasks = commandLineLoadedAssemblies.Select(a => a.GetModuleDefinitionAsync()).ToArray();
-				var modules = await Task.WhenAll(tasks);
-				ExportAssemblies(modules, args.SaveDirectory);
-			} else if (args.NavigateTo != null) {
+			if (args.NavigateTo != null) {
 				bool found = false;
 				if (args.NavigateTo.StartsWith("N:", StringComparison.Ordinal)) {
 					string namespaceName = args.NavigateTo.Substring(2);
@@ -308,29 +302,6 @@ namespace ICSharpCode.ILSpy
 			commandLineLoadedAssemblies.Clear(); // clear references once we don't need them anymore
 		}
 
-		void ExportAssemblies(ModuleDefinition[] modules, string path)
-		{
-			Language language = sessionSettings.FilterSettings.Language;
-			TextView.SaveAssembliesToDisk(language, modules.Select(m => assemblyListTreeNode.FindAssemblyNode(m)).Where(m => m != null).ToArray(), path);
-		}
-
-		void OnExportAssembly(Task<ModuleDefinition> moduleTask, string path)
-		{
-			AssemblyTreeNode asmNode = assemblyListTreeNode.FindAssemblyNode(moduleTask.Result);
-			if (asmNode != null) {
-				string file = DecompilerTextView.CleanUpName(asmNode.LoadedAssembly.ShortName);
-				Language language = sessionSettings.FilterSettings.Language;
-				DecompilationOptions options = new DecompilationOptions();
-				options.FullDecompilation = true;
-				options.SaveAsProjectDirectory = Path.Combine(path, file);
-				if (!Directory.Exists(options.SaveAsProjectDirectory)) {
-					Directory.CreateDirectory(options.SaveAsProjectDirectory);
-				}
-				string fullFile = Path.Combine(options.SaveAsProjectDirectory, file + language.ProjectFileExtension);
-				TextView.SaveToDisk(language, new[] { asmNode }, options, fullFile);
-			}
-		}
-
 		void MainWindow_Loaded(object sender, RoutedEventArgs e)
 		{
 			ILSpySettings spySettings = this.spySettings;
@@ -359,7 +330,7 @@ namespace ICSharpCode.ILSpy
 		void OpenAssemblies(ILSpySettings spySettings)
 		{
 			HandleCommandLineArgumentsAfterShowList(App.CommandLineArguments);
-			if (string.IsNullOrEmpty(App.CommandLineArguments.SaveDirectory) && App.CommandLineArguments.NavigateTo == null && App.CommandLineArguments.AssembliesToLoad.Count != 1) {
+			if (App.CommandLineArguments.NavigateTo == null && App.CommandLineArguments.AssembliesToLoad.Count != 1) {
 				SharpTreeNode node = null;
 				if (sessionSettings.ActiveTreeViewPath != null) {
 					node = FindNodeByPath(sessionSettings.ActiveTreeViewPath, true);
