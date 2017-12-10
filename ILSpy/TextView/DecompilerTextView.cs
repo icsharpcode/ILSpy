@@ -742,6 +742,57 @@ namespace ICSharpCode.ILSpy.TextView
 		{
 			return WholeProjectDecompiler.CleanUpFileName(text);
 		}
+
+		public void SaveAssembliesToDisk(ILSpy.Language language, IEnumerable<AssemblyTreeNode> treeNodes, string path)
+		{
+			RunWithCancellation(
+				async delegate (CancellationToken ct) {
+				AvalonEditTextOutput output = new AvalonEditTextOutput();
+					foreach (var asmNode in treeNodes) {
+						ct.ThrowIfCancellationRequested();
+						string asmName = CleanUpName(asmNode.LoadedAssembly.ShortName);
+						DecompilationOptions options = new DecompilationOptions();
+						options.FullDecompilation = true;
+						options.SaveAsProjectDirectory = Path.Combine(path, asmName);
+						string fileName = Path.Combine(options.SaveAsProjectDirectory, asmName + language.ProjectFileExtension);
+						if (!Directory.Exists(options.SaveAsProjectDirectory)) {
+							Directory.CreateDirectory(options.SaveAsProjectDirectory);
+						}
+						var context = new DecompilationContext(language, new[] { asmNode }, options);
+						context.Options.CancellationToken = ct;
+						await Task.Run(delegate () {
+							Stopwatch stopwatch = new Stopwatch();
+							stopwatch.Start();
+							using (StreamWriter w = new StreamWriter(fileName)) {
+								try {
+									DecompileNodes(context, new PlainTextOutput(w));
+								} catch (OperationCanceledException) {
+									w.WriteLine();
+									w.WriteLine("Decompiled was cancelled.");
+									throw;
+								}
+							}
+							stopwatch.Stop();
+							output.WriteLine("Decompilation of " + asmName + " completed in " + stopwatch.Elapsed.TotalSeconds.ToString("F1") + " seconds.");
+							output.WriteLine();
+							output.AddButton(null, "Open Explorer", delegate { Process.Start("explorer", "/select,\"" + fileName + "\""); });
+							output.WriteLine();
+							output.WriteLine();
+						});
+					}
+					return output;
+				})
+				.Then(output => ShowOutput(output))
+				.Catch((Exception ex) => {
+					textEditor.SyntaxHighlighting = null;
+					Debug.WriteLine("Decompiler crashed: " + ex.ToString());
+					// Unpack aggregate exceptions as long as there's only a single exception:
+					// (assembly load errors might produce nested aggregate exceptions)
+					AvalonEditTextOutput output = new AvalonEditTextOutput();
+					output.WriteLine(ex.ToString());
+					ShowOutput(output);
+				}).HandleExceptions();
+		}
 		#endregion
 
 		internal ReferenceSegment GetReferenceSegmentAtMousePosition()
