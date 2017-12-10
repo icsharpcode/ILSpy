@@ -282,6 +282,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 			
 			var parent = loadInst.Parent;
+			if (NullableLiftingTransform.MatchNullableCtor(parent, out _, out _)) {
+				// inline into nullable ctor call in lifted operator
+				parent = parent.Parent;
+			}
 			if (parent is ILiftableInstruction liftable && liftable.IsLifted) {
 				return true; // inline into lifted operators
 			}
