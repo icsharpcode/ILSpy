@@ -789,7 +789,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					RemoveAttribute(entityDecl, new TopLevelTypeName("System.Runtime.CompilerServices", "AsyncStateMachineAttribute"));
 					RemoveAttribute(entityDecl, new TopLevelTypeName("System.Diagnostics", "DebuggerStepThroughAttribute"));
 				}
-			} catch (Exception innerException) {
+			} catch (Exception innerException) when (!(innerException is OperationCanceledException)) {
 				throw new DecompilerException(methodDefinition, innerException);
 			}
 		}
