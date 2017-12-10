@@ -200,6 +200,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 						break;
 				}
 			}
+			// ignore the branches where Cecil doesn't decode the target
+			result.RemoveAll(x => x.Value == null);
 			return result;
 		}
 

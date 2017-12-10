@@ -1339,26 +1339,30 @@ namespace ICSharpCode.Decompiler.IL
 			}
 		}
 
-		int DecodeBranchTarget(bool shortForm)
+		int? DecodeBranchTarget(bool shortForm)
 		{
 //			int target = shortForm ? reader.ReadSByte() : reader.ReadInt32();
 //			target += reader.Position;
 //			return target;
-			return ((Cil.Instruction)currentInstruction.Operand).Offset;
+			return ((Cil.Instruction)currentInstruction.Operand)?.Offset;
 		}
 		
 		ILInstruction DecodeComparisonBranch(bool shortForm, ComparisonKind kind, bool un = false)
 		{
-			int target = DecodeBranchTarget(shortForm);
+			int? target = DecodeBranchTarget(shortForm);
 			var condition = Comparison(kind, un);
 			condition.ILRange = GetCurrentInstructionInterval();
-			MarkBranchTarget(target);
-			return new IfInstruction(condition, new Branch(target));
+			if (target != null) {
+				MarkBranchTarget(target.Value);
+				return new IfInstruction(condition, new Branch(target.Value));
+			} else {
+				return new IfInstruction(condition, new InvalidBranch("Invalid branch target"));
+			}
 		}
 
 		ILInstruction DecodeConditionalBranch(bool shortForm, bool negate)
 		{
-			int target = DecodeBranchTarget(shortForm);
+			int? target = DecodeBranchTarget(shortForm);
 			ILInstruction condition = Pop();
 			switch (condition.ResultType) {
 				case StackType.O:
@@ -1391,18 +1395,26 @@ namespace ICSharpCode.Decompiler.IL
 					}
 					break;
 			}
-			MarkBranchTarget(target);
-			return new IfInstruction(condition, new Branch(target));
+			if (target != null) {
+				MarkBranchTarget(target.Value);
+				return new IfInstruction(condition, new Branch(target.Value));
+			} else {
+				return new IfInstruction(condition, new InvalidBranch("Invalid branch target"));
+			}
 		}
 
 		ILInstruction DecodeUnconditionalBranch(bool shortForm, bool isLeave = false)
 		{
-			int target = DecodeBranchTarget(shortForm);
+			int? target = DecodeBranchTarget(shortForm);
 			if (isLeave) {
 				currentStack = currentStack.Clear();
 			}
-			MarkBranchTarget(target);
-			return new Branch(target);
+			if (target != null) {
+				MarkBranchTarget(target.Value);
+				return new Branch(target.Value);
+			} else {
+				return new InvalidBranch("Invalid branch target");
+			}
 		}
 
 		void MarkBranchTarget(int targetILOffset)
@@ -1421,9 +1433,13 @@ namespace ICSharpCode.Decompiler.IL
 			for (int i = 0; i < labels.Length; i++) {
 				var section = new SwitchSection();
 				section.Labels = new LongSet(i);
-				int target = labels[i].Offset; // baseOffset + reader.ReadInt32();
-				MarkBranchTarget(target);
-				section.Body = new Branch(target);
+				int? target = labels[i]?.Offset; // baseOffset + reader.ReadInt32();
+				if (target != null) {
+					MarkBranchTarget(target.Value);
+					section.Body = new Branch(target.Value);
+				} else {
+					section.Body = new InvalidBranch("Invalid branch target");
+				}
 				instr.Sections.Add(section);
 			}
 			var defaultSection = new SwitchSection();
