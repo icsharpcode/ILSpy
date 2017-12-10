@@ -324,7 +324,7 @@ namespace ICSharpCode.Decompiler.IL
 				StoreStackForOffset(start, ref currentStack);
 				ILInstruction decodedInstruction = DecodeInstruction();
 				if (decodedInstruction.ResultType == StackType.Unknown)
-					Warn("Unknown result type (might be due to invalid IL)");
+					Warn("Unknown result type (might be due to invalid IL or missing references)");
 				decodedInstruction.CheckInvariant(ILPhase.InILReader);
 				int end = currentInstruction.GetEndOffset();
 				decodedInstruction.ILRange = new Interval(start, end);
@@ -365,26 +365,7 @@ namespace ICSharpCode.Decompiler.IL
 				if (inst is StLoc store) {
 					foreach (var additionalVar in dict[store.Variable]) {
 						ILInstruction value = new LdLoc(store.Variable);
-						switch (additionalVar.StackType) {
-							case StackType.I4:
-								value = new Conv(value, PrimitiveType.I4, false, Sign.None);
-								break;
-							case StackType.I:
-								value = new Conv(value, PrimitiveType.I, false, Sign.None);
-								break;
-							case StackType.I8:
-								value = new Conv(value, PrimitiveType.I8, false, Sign.None);
-								break;
-							case StackType.F4:
-								value = new Conv(value, PrimitiveType.R4, false, Sign.Signed);
-								break;
-							case StackType.F8:
-								value = new Conv(value, PrimitiveType.R8, false, Sign.Signed);
-								break;
-							case StackType.Ref:
-								value = new Conv(value, PrimitiveType.Ref, false, Sign.None);
-								break;
-						}
+						value = new Conv(value, additionalVar.StackType.ToPrimitiveType(), false, Sign.Signed);
 						newInstructions.Add(new StLoc(additionalVar, value) {
 							IsStackAdjustment = true,
 							ILRange = inst.ILRange
@@ -1056,6 +1037,8 @@ namespace ICSharpCode.Decompiler.IL
 				} else if (expectedType == StackType.I4 && inst.ResultType == StackType.I) {
 					// C++/CLI also sometimes implicitly converts in the other direction:
 					inst = new Conv(inst, PrimitiveType.I4, false, Sign.None);
+				} else if (expectedType == StackType.Unknown) {
+					inst = new Conv(inst, PrimitiveType.Unknown, false, Sign.None);
 				} else if (inst.ResultType == StackType.Ref) {
 					// Implicitly stop GC tracking; this occurs when passing the result of 'ldloca' or 'ldsflda'
 					// to a method expecting a native pointer.
@@ -1071,7 +1054,7 @@ namespace ICSharpCode.Decompiler.IL
 							break;
 						default:
 							Warn($"Expected {expectedType}, but got {StackType.Ref}");
-							inst = new Conv(inst, expectedType.ToKnownTypeCode().ToPrimitiveType(), false, Sign.None);
+							inst = new Conv(inst, expectedType.ToPrimitiveType(), false, Sign.None);
 							break;
 					}
 				} else if (expectedType == StackType.Ref) {
@@ -1088,11 +1071,9 @@ namespace ICSharpCode.Decompiler.IL
 				} else if (expectedType == StackType.F4 && inst.ResultType == StackType.F8) {
 					// IL allows implicit F8->F4 conversions, because in IL F4 and F8 are the same.
 					inst = new Conv(inst, PrimitiveType.R4, false, Sign.Signed);
-				} else if (expectedType == StackType.Unknown) {
-					inst = new Conv(inst, PrimitiveType.Unknown, false, Sign.None);
 				} else {
 					Warn($"Expected {expectedType}, but got {inst.ResultType}");
-					inst = new Conv(inst, expectedType.ToKnownTypeCode().ToPrimitiveType(), false, Sign.None);
+					inst = new Conv(inst, expectedType.ToPrimitiveType(), false, Sign.Signed);
 				}
 			}
 			return inst;
@@ -1362,12 +1343,20 @@ namespace ICSharpCode.Decompiler.IL
 				} else {
 					return new Comp(kind, Sign.None, left, right);
 				}
-			} else if (left.ResultType.IsIntegerType() && !kind.IsEqualityOrInequality()) {
+			} else if (left.ResultType.IsIntegerType() && right.ResultType.IsIntegerType() && !kind.IsEqualityOrInequality()) {
 				// integer comparison where the sign matters
 				Debug.Assert(right.ResultType.IsIntegerType());
 				return new Comp(kind, un ? Sign.Unsigned : Sign.Signed, left, right);
-			} else {
+			} else if (left.ResultType == right.ResultType) {
 				// integer equality, object reference or managed reference comparison
+				return new Comp(kind, Sign.None, left, right);
+			} else {
+				Warn($"Invalid comparison between {left.ResultType} and {right.ResultType}");
+				if (left.ResultType < right.ResultType) {
+					left = new Conv(left, right.ResultType.ToPrimitiveType(), false, Sign.Signed);
+				} else {
+					right = new Conv(right, left.ResultType.ToPrimitiveType(), false, Sign.Signed);
+				}
 				return new Comp(kind, Sign.None, left, right);
 			}
 		}
@@ -1422,7 +1411,13 @@ namespace ICSharpCode.Decompiler.IL
 						negate ? ComparisonKind.Equality : ComparisonKind.Inequality,
 						Sign.None, new Conv(condition, PrimitiveType.I, false, Sign.None), new Conv(new LdcI4(0), PrimitiveType.I, false, Sign.None));
 					break;
+				case StackType.I4:
+					if (negate) {
+						condition = Comp.LogicNot(condition);
+					}
+					break;
 				default:
+					condition = new Conv(condition, PrimitiveType.I4, false, Sign.None);
 					if (negate) {
 						condition = Comp.LogicNot(condition);
 					}

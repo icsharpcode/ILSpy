@@ -143,6 +143,8 @@ namespace ICSharpCode.Decompiler.IL
 		/// </summary>
 		/// <remarks>
 		/// For lifted conversions, corresponds to the underlying target type.
+		/// 
+		/// Target type == PrimitiveType.None can happen for implicit conversions to O in invalid IL.
 		/// </remarks>
 		public readonly PrimitiveType TargetType;
 		
@@ -154,7 +156,6 @@ namespace ICSharpCode.Decompiler.IL
 		public Conv(ILInstruction argument, StackType inputType, Sign inputSign, PrimitiveType targetType, bool checkForOverflow, bool isLifted = false)
 			: base(OpCode.Conv, argument)
 		{
-			Debug.Assert(targetType != PrimitiveType.None);
 			bool needsSign = checkForOverflow || targetType == PrimitiveType.R4 || targetType == PrimitiveType.R8;
 			Debug.Assert(!(needsSign && inputSign == Sign.None));
 			this.InputType = inputType;
