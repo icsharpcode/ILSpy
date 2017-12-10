@@ -197,7 +197,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return null;
 			App.Current.Dispatcher.VerifyAccess();
 			foreach (AssemblyTreeNode node in this.Children) {
-				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetAssemblyDefinitionAsync().Result == asm)
+				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetAssemblyDefinitionOrNull() == asm)
 					return node;
 			}
 			return null;

@@ -295,21 +295,24 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 			string requiredAssemblyFullName = asm.FullName;
 
-			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetAssemblyDefinitionAsync().Result != null);
+			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetAssemblyDefinitionOrNull() != null);
 
 			foreach (var assembly in assemblies) {
 				ct.ThrowIfCancellationRequested();
 				bool found = false;
-				foreach (var reference in assembly.GetAssemblyDefinitionAsync().Result.MainModule.AssemblyReferences) {
+				var module = assembly.GetModuleDefinitionOrNull();
+				if (module == null)
+					continue;
+				foreach (var reference in module.AssemblyReferences) {
 					if (requiredAssemblyFullName == reference.FullName) {
 						found = true;
 						break;
 					}
 				}
 				if (found) {
-					var typeref = GetScopeTypeReferenceInAssembly(assembly.GetAssemblyDefinitionAsync().Result);
+					var typeref = GetScopeTypeReferenceInAssembly(module.Assembly);
 					if (typeref != null)
-						yield return new Tuple<AssemblyDefinition, TypeReference>(assembly.GetAssemblyDefinitionAsync().Result, typeref);
+						yield return new Tuple<AssemblyDefinition, TypeReference>(module.Assembly, typeref);
 				}
 			}
 		}
@@ -333,10 +336,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 					foreach (var assembly in assemblies) {
 						ct.ThrowIfCancellationRequested();
+						var module = assembly.GetModuleDefinitionOrNull();
+						if (module == null)
+							continue;
 						if (friendAssemblies.Contains(assembly.ShortName)) {
-							var typeref = GetScopeTypeReferenceInAssembly(assembly.GetAssemblyDefinitionAsync().Result);
+							var typeref = GetScopeTypeReferenceInAssembly(module.Assembly);
 							if (typeref != null) {
-								yield return new Tuple<AssemblyDefinition, TypeReference>(assembly.GetAssemblyDefinitionAsync().Result, typeref);
+								yield return new Tuple<AssemblyDefinition, TypeReference>(module.Assembly, typeref);
 							}
 						}
 					}

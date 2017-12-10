@@ -58,7 +58,7 @@ namespace ICSharpCode.ILSpy
 		/// </summary>
 		public async Task<string> GetTargetFrameworkIdAsync()
 		{
-			var assembly = await GetAssemblyDefinitionAsync();
+			var assembly = await GetAssemblyDefinitionAsync().ConfigureAwait(false);
 			return assembly?.DetectTargetFrameworkId() ?? string.Empty;
 		}
 
@@ -66,22 +66,43 @@ namespace ICSharpCode.ILSpy
 
 		/// <summary>
 		/// Gets the Cecil ModuleDefinition.
-		/// Can return null when there was a load error.
 		/// </summary>
 		public Task<ModuleDefinition> GetModuleDefinitionAsync()
 		{
 			return assemblyTask;
 		}
-		
+
+		/// <summary>
+		/// Gets the Cecil ModuleDefinition.
+		/// Returns null in case of load errors.
+		/// </summary>
+		public ModuleDefinition GetModuleDefinitionOrNull()
+		{
+			try {
+				return GetModuleDefinitionAsync().Result;
+			} catch (Exception ex) {
+				System.Diagnostics.Trace.TraceError(ex.ToString());
+				return null;
+			}
+		}
+
+		/// <summary>
+		/// Gets the Cecil AssemblyDefinition.
+		/// </summary>
+		public async Task<AssemblyDefinition> GetAssemblyDefinitionAsync()
+		{
+			var module = await assemblyTask.ConfigureAwait(false);
+			return module != null ? module.Assembly : null;
+		}
+
 		/// <summary>
 		/// Gets the Cecil AssemblyDefinition.
 		/// Returns null when there was a load error; or when opening a netmodule.
 		/// </summary>
-		public async Task<AssemblyDefinition> GetAssemblyDefinitionAsync()
+		public AssemblyDefinition GetAssemblyDefinitionOrNull()
 		{
 			try {
-				var module = await assemblyTask;
-				return module != null ? module.Assembly : null;
+				return GetAssemblyDefinitionAsync().Result;
 			} catch (Exception ex) {
 				System.Diagnostics.Trace.TraceError(ex.ToString());
 				return null;
@@ -97,7 +118,7 @@ namespace ICSharpCode.ILSpy
 		public string Text {
 			get {
 				if (IsLoaded && !HasLoadError) {
-					return String.Format("{0} ({1})", ShortName, GetAssemblyDefinitionAsync().Result.Name.Version);
+					return String.Format("{0} ({1})", ShortName, GetAssemblyDefinitionOrNull().Name.Version);
 				} else {
 					return ShortName;
 				}
@@ -196,14 +217,12 @@ namespace ICSharpCode.ILSpy
 			
 			public AssemblyDefinition Resolve(AssemblyNameReference name)
 			{
-				var node = parent.LookupReferencedAssembly(name);
-				return node != null ? node.GetAssemblyDefinitionAsync().Result : null;
+				return parent.LookupReferencedAssembly(name)?.GetAssemblyDefinitionOrNull();
 			}
 			
 			public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
 			{
-				var node = parent.LookupReferencedAssembly(name);
-				return node != null ? node.GetAssemblyDefinitionAsync().Result : null;
+				return parent.LookupReferencedAssembly(name)?.GetAssemblyDefinitionOrNull();
 			}
 
 			public void Dispose()
@@ -243,7 +262,7 @@ namespace ICSharpCode.ILSpy
 			LoadedAssembly asm;
 			lock (loadingAssemblies) {
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
-					var asmDef = loaded.GetAssemblyDefinitionAsync().Result;
+					var asmDef = loaded.GetAssemblyDefinitionOrNull();
 					if (asmDef != null && data.fullName.Equals(data.isWinRT ? asmDef.Name.Name : asmDef.FullName, StringComparison.OrdinalIgnoreCase)) {
 						return loaded;
 					}

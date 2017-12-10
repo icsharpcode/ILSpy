@@ -254,19 +254,22 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 			string requiredAssemblyFullName = asm.FullName;
 
-			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetAssemblyDefinitionAsync().Result != null);
+			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetAssemblyDefinitionOrNull() != null);
 
 			foreach (var assembly in assemblies) {
 				ct.ThrowIfCancellationRequested();
 				bool found = false;
-				foreach (var reference in assembly.GetAssemblyDefinitionAsync().Result.MainModule.AssemblyReferences) {
+				var module = assembly.GetModuleDefinitionOrNull();
+				if (module == null)
+					continue;
+				foreach (var reference in module.AssemblyReferences) {
 					if (requiredAssemblyFullName == reference.FullName) {
 						found = true;
 						break;
 					}
 				}
-				if (found && AssemblyReferencesScopeType(assembly.GetAssemblyDefinitionAsync().Result))
-					yield return assembly.GetAssemblyDefinitionAsync().Result;
+				if (found && AssemblyReferencesScopeType(module.Assembly))
+					yield return module.Assembly;
 			}
 		}
 
@@ -289,8 +292,12 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 					foreach (var assembly in assemblies) {
 						ct.ThrowIfCancellationRequested();
-						if (friendAssemblies.Contains(assembly.ShortName) && AssemblyReferencesScopeType(assembly.GetAssemblyDefinitionAsync().Result)) {
-							yield return assembly.GetAssemblyDefinitionAsync().Result;
+						if (friendAssemblies.Contains(assembly.ShortName)) {
+							var module = assembly.GetModuleDefinitionOrNull();
+							if (module == null)
+								continue;
+							if (AssemblyReferencesScopeType(module.Assembly))
+								yield return module.Assembly;
 						}
 					}
 				}

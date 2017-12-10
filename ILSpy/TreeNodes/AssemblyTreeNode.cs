@@ -97,8 +97,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 				if (tooltip == null && assembly.IsLoaded) {
 					tooltip = new TextBlock();
-					var module = assembly.GetModuleDefinitionAsync().Result;
-					if (assembly.GetAssemblyDefinitionAsync().Result != null) {
+					var module = assembly.GetModuleDefinitionOrNull();
+					if (module.Assembly != null) {
 						tooltip.Inlines.Add(new Bold(new Run("Name: ")));
 						tooltip.Inlines.Add(new Run(module.Assembly.FullName));
 						tooltip.Inlines.Add(new LineBreak());
