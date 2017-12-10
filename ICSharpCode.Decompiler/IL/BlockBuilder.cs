@@ -113,6 +113,14 @@ namespace ICSharpCode.Decompiler.IL
 			CreateContainerStructure();
 			mainContainer.ILRange = new Interval(0, body.CodeSize);
 			currentContainer = mainContainer;
+			if (instructions.Count == 0) {
+				currentContainer.Blocks.Add(new Block {
+					Instructions = {
+						new InvalidBranch("Empty body found. Decompiled assembly might be a reference assembly.")
+					}
+				});
+				return;
+			}
 
 			foreach (var inst in instructions) {
 				cancellationToken.ThrowIfCancellationRequested();
