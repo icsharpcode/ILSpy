@@ -118,7 +118,10 @@ namespace ICSharpCode.ILSpy
 		public string Text {
 			get {
 				if (IsLoaded && !HasLoadError) {
-					return String.Format("{0} ({1})", ShortName, GetAssemblyDefinitionOrNull().Name.Version);
+					string version = GetAssemblyDefinitionOrNull()?.Name.Version.ToString();
+					if (version == null)
+						return ShortName;
+					return String.Format("{0} ({1})", ShortName, version);
 				} else {
 					return ShortName;
 				}
