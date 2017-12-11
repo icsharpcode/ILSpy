@@ -205,7 +205,10 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			// 2) Both types are integer types of equal size
 			StackType memoryStackType = memoryType.GetStackType();
 			StackType accessStackType = accessType.GetStackType();
-			return memoryStackType == accessStackType && memoryStackType.IsIntegerType() && GetSize(memoryType) == GetSize(accessType);
+			if (memoryStackType == accessStackType && memoryStackType.IsIntegerType() && GetSize(memoryType) == GetSize(accessType))
+				return true;
+			// 3) Any of the types is unknown: we assume they are compatible.
+			return memoryType.Kind == TypeKind.Unknown || accessType.Kind == TypeKind.Unknown;
 		}
 
 		/// <summary>
@@ -341,6 +344,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		public static PrimitiveType ToPrimitiveType(this IType type)
 		{
+			if (type.Kind == TypeKind.Unknown) return PrimitiveType.Unknown;
 			var def = type.GetEnumUnderlyingType().GetDefinition();
 			return def != null ? def.KnownTypeCode.ToPrimitiveType() : PrimitiveType.None;
 		}
