@@ -7,6 +7,9 @@ if ([string]::IsNullOrEmpty($basePath))
 $modulePath = $basePath + '\bin\Debug\netstandard2.0\ICSharpCode.Decompiler.Powershell.dll'
 
 Import-Module $modulePath
+$version = Get-DecompilerVersion
+Write-Output $version
+
 $decompiler = Get-Decompiler $modulePath
 
 $classes = Get-DecompiledTypes $decompiler -Types class
