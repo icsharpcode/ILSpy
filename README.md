@@ -7,7 +7,7 @@ Download: [latest release](https://github.com/icsharpcode/ILSpy/releases) | [lat
 Decompiler Frontends
 -------
 
-Aside from the WPF UI ILSpy (downloadable via Releases), the following other frontends are available:
+Aside from the WPF UI ILSpy (downloadable via Releases, see also [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins)), the following other frontends are available:
 
 * Linux/Mac/Windows command line client - check out [ICSharpCode.Decompiler.Console](ICSharpCode.Decompiler.Console) in this repository
 * Linux/Mac/Windows [PowerShell cmdlets](ICSharpCode.Decompiler.PowerShell) in this repository
