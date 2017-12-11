@@ -175,8 +175,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					break;
 				if (!block.Instructions[i].MatchStObj(out ILInstruction target, out ILInstruction value, out IType type) || value.Descendants.OfType<IInstructionWithVariableOperand>().Any(inst => inst.Variable == store))
 					break;
-				if (!type.Equals(elementType))
-					return false;
 				var ldelem = target as LdElema;
 				if (ldelem == null || !ldelem.Array.MatchLdLoc(store) || ldelem.Indices.Count != 1 || !ldelem.Indices[0].MatchLdcI4(out index))
 					break;
@@ -202,10 +200,10 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				// 1. Instruction: (optional) temporary copy of store
 				bool hasTemporaryCopy = block.Instructions[pos].MatchStLoc(out ILVariable temp, out ILInstruction storeLoad) && storeLoad.MatchLdLoc(store);
 				if (hasTemporaryCopy) {
-					if (!MatchJaggedArrayStore(block, pos + 1, temp, i, out initializer, out type) || !elementType.Equals(type))
+					if (!MatchJaggedArrayStore(block, pos + 1, temp, i, out initializer, out type))
 						return false;
 				} else {
-					if (!MatchJaggedArrayStore(block, pos, store, i, out initializer, out type) || !elementType.Equals(type))
+					if (!MatchJaggedArrayStore(block, pos, store, i, out initializer, out type))
 						return false;
 				}
 				values[i] = initializer;
@@ -420,6 +418,9 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		
 		static ILInstruction StElem(ILInstruction array, ILInstruction[] indices, ILInstruction value, IType type)
 		{
+			if (type.GetStackType() != value.ResultType) {
+				value = new Conv(value, type.ToPrimitiveType(), false, Sign.None); 
+			}
 			return new StObj(new LdElema(type, array, indices), value, type);
 		}
 
