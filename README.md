@@ -12,7 +12,19 @@ Aside from the WPF UI ILSpy (downloadable via Releases, see also [plugins](https
 * Linux/Mac/Windows command line client - check out [ICSharpCode.Decompiler.Console](ICSharpCode.Decompiler.Console) in this repository
 * Linux/Mac/Windows [PowerShell cmdlets](ICSharpCode.Decompiler.PowerShell) in this repository
 * Visual Studio Code Extension [repository](https://github.com/icsharpcode/ilspy-vscode) | [marketplace](https://marketplace.visualstudio.com/items?itemName=icsharpcode.ilspy-vscode)
-* [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) Nuget for your own projects
+* [ICSharpCode.Decompiler](https://www.nuget.org/packages/ICSharpCode.Decompiler/) NuGet for your own projects
+
+Features
+-------
+
+ * Decompilation to C#
+ * Whole-project decompilation (csproj, not sln!)
+ * Search for types/methods/properties (substring)
+ * Hyperlink-based type/method/property navigation
+ * Base/Derived types navigation, history
+ * BAML to XAML decompiler
+ * Extensible via [plugins](https://github.com/icsharpcode/ILSpy/wiki/Plugins) (MEF)
+ * Check out the [language support status](https://github.com/icsharpcode/ILSpy/issues/829)
 
 License
 -------
