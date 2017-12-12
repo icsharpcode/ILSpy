@@ -53,7 +53,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// The entity is accessible in derived classes within the same project content.
 		/// </summary>
-		/// <remarks>C# does not support this accessibility.</remarks>
+		/// <remarks>This corresponds to C# 'private protected'.</remarks>
 		ProtectedAndInternal,
 	}
 	
