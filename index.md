@@ -1,6 +1,8 @@
 ---
 layout: default
 title: ILSpy
+redirect_to:
+  - https://github.com/icsharpcode/ILSpy#ilspy-------
 subtitle: .NET Decompiler
 binaryDownload: https://github.com/icsharpcode/ILSpy/releases/download/v2.4/ILSpy_Master_2.4.0.1963_Binaries.zip
 sourceDownload: https://github.com/icsharpcode/ILSpy/archive/v2.4.zip

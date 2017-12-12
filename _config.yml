@@ -1,5 +1,8 @@
 markdown: kramdown
 
+plugins:
+  - jekyll-redirect-from
+  
 # GitHub enforces these three options:
 safe: true
 lsi: false
