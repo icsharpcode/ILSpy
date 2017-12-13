@@ -289,7 +289,7 @@ namespace ICSharpCode.ILSpy
 		public override void WriteIdentifier(Identifier identifier)
 		{
 			HighlightingColor color = null;
-			if (identifier.Name == "value" && nodeStack.PeekOrDefault() is Accessor accessor && accessor.Role != PropertyDeclaration.GetterRole)
+			if (identifier.Name == "value" && identifier.Ancestors.OfType<Accessor>().FirstOrDefault() is Accessor accessor && accessor.Role != PropertyDeclaration.GetterRole)
 				color = valueKeywordColor;
 			switch (GetCurrentDefinition()) {
 				case ITypeDefinition t:
