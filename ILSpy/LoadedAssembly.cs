@@ -288,7 +288,7 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 
-				if (loadingAssemblies.TryGetValue(file, out asm))
+				if (file != null && loadingAssemblies.TryGetValue(file, out asm))
 					return asm;
 
 				if (file != null) {
