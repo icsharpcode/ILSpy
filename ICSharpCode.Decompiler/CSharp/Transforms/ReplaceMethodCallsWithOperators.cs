@@ -110,7 +110,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					break;
 				case "System.String.Format":
 					if (context.Settings.StringInterpolation && arguments.Length > 1
-						&& arguments[0] is PrimitiveExpression stringExpression && stringExpression.Value is string)
+						&& arguments[0] is PrimitiveExpression stringExpression && stringExpression.Value is string
+						&& arguments.Skip(1).All(a => !a.DescendantsAndSelf.OfType<PrimitiveExpression>().Any(p => p.Value is string)))
 					{
 						var tokens = new List<(TokenKind, int, string)>();
 						int i = 0;

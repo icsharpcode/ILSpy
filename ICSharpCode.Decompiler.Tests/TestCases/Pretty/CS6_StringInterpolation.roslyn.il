@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module CS6_StringInterpolation.dll
-// MVID: {97DDF3A3-A5BD-433E-B982-F6DD427CE8FF}
+// MVID: {FE9286DD-8C20-4FC8-8786-543E572641EA}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03970000
+// Image base: 0x03840000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -121,8 +121,8 @@
 
   .method public hidebysig static void  Invalid(string[] args) cil managed
   {
-    // Code size       554 (0x22a)
-    .maxstack  2
+    // Code size       581 (0x245)
+    .maxstack  3
     IL_0000:  nop
     IL_0001:  ldstr      ""
     IL_0006:  ldarg.0
@@ -331,7 +331,16 @@
                                                                 object)
     IL_0223:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_0228:  nop
-    IL_0229:  ret
+    IL_0229:  ldstr      "test: {0}"
+    IL_022e:  ldstr      ","
+    IL_0233:  ldarg.0
+    IL_0234:  call       string [mscorlib]System.String::Join(string,
+                                                              string[])
+    IL_0239:  call       string [mscorlib]System.String::Format(string,
+                                                                object)
+    IL_023e:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0243:  nop
+    IL_0244:  ret
   } // end of method CS6_StringInterpolation::Invalid
 
   .method public hidebysig specialname rtspecialname 
