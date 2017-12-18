@@ -10,7 +10,11 @@ Import-Module $modulePath
 $version = Get-DecompilerVersion
 Write-Output $version
 
-$decompiler = Get-Decompiler $modulePath
+# different test assemblies - it makes a difference wrt .deps.json so there are two netstandard tests here
+$asm_netstdWithDepsJson = $basePath + '\bin\Debug\netstandard2.0\ICSharpCode.Decompiler.Powershell.dll'
+$asm_netstd = $basePath + '\bin\Debug\netstandard2.0\ICSharpCode.Decompiler.dll'
+
+$decompiler = Get-Decompiler $asm_netstdWithDepsJson
 
 $classes = Get-DecompiledTypes $decompiler -Types class
 $classes.Count
