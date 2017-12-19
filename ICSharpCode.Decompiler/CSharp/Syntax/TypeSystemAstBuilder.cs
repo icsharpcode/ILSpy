@@ -1057,8 +1057,9 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 				case Accessibility.Internal:
 					return Modifiers.Internal;
 				case Accessibility.ProtectedOrInternal:
-				case Accessibility.ProtectedAndInternal:
 					return Modifiers.Protected | Modifiers.Internal;
+				case Accessibility.ProtectedAndInternal:
+					return Modifiers.Private | Modifiers.Protected;
 				default:
 					return Modifiers.None;
 			}
