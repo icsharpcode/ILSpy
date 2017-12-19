@@ -185,7 +185,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return null;
 			App.Current.Dispatcher.VerifyAccess();
 			foreach (AssemblyTreeNode node in this.Children) {
-				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetModuleDefinitionAsync().Result == module)
+				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetModuleDefinitionOrNull() == module)
 					return node;
 			}
 			return null;
