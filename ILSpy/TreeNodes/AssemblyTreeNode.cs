@@ -145,7 +145,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			ModuleDefinition moduleDefinition = assembly.GetModuleDefinitionAsync().Result;
+			ModuleDefinition moduleDefinition = assembly.GetModuleDefinitionOrNull();
 			if (moduleDefinition == null) {
 				// if we crashed on loading, then we don't have any children
 				return;
@@ -396,8 +396,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return;
 			foreach (var node in context.SelectedTreeNodes) {
 				var la = ((AssemblyTreeNode)node).LoadedAssembly;
-				if (!la.HasLoadError) {
-					foreach (var assyRef in la.GetModuleDefinitionAsync().Result.AssemblyReferences) {
+				var module = la.GetModuleDefinitionOrNull();
+				if (module != null) {
+					foreach (var assyRef in module.AssemblyReferences) {
 						la.LookupReferencedAssembly(assyRef);
 					}
 				}
