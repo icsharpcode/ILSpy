@@ -272,9 +272,6 @@ namespace ICSharpCode.ILSpy
 					}
 				}
 
-				if (assemblyLoadDisableCount > 0)
-					return null;
-
 				if (data.isWinRT) {
 					file = Path.Combine(Environment.SystemDirectory, "WinMetadata", data.fullName + ".winmd");
 				} else {
@@ -291,6 +288,9 @@ namespace ICSharpCode.ILSpy
 
 				if (file != null && loadingAssemblies.TryGetValue(file, out asm))
 					return asm;
+
+				if (assemblyLoadDisableCount > 0)
+					return null;
 
 				if (file != null) {
 					LoadedAssemblyReferencesInfo.AddMessage(data.fullName, MessageKind.Info, "Success - Loading from: " + file);
