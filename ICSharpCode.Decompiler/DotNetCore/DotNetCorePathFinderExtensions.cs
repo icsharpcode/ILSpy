@@ -43,6 +43,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		public void AddMessageOnce(string fullName, MessageKind kind, string message)
+		{
+			lock (loadedAssemblyReferences) {
+				if (!loadedAssemblyReferences.TryGetValue(fullName, out var referenceInfo)) {
+					referenceInfo = new UnresolvedAssemblyNameReference(fullName);
+					loadedAssemblyReferences.Add(fullName, referenceInfo);
+					referenceInfo.Messages.Add((kind, message));
+				} else {
+					var lastMsg = referenceInfo.Messages.LastOrDefault();
+					if (kind != lastMsg.Item1 && message != lastMsg.Item2)
+						referenceInfo.Messages.Add((kind, message));
+				}
+			}
+		}
+
 		public bool TryGetInfo(string fullName, out UnresolvedAssemblyNameReference info)
 		{
 			lock (loadedAssemblyReferences) {

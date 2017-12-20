@@ -267,6 +267,7 @@ namespace ICSharpCode.ILSpy
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
 					var asmDef = loaded.GetAssemblyDefinitionOrNull();
 					if (asmDef != null && data.fullName.Equals(data.isWinRT ? asmDef.Name.Name : asmDef.FullName, StringComparison.OrdinalIgnoreCase)) {
+						LoadedAssemblyReferencesInfo.AddMessageOnce(data.fullName, MessageKind.Info, "Success - Found in Assembly List");
 						return loaded;
 					}
 				}
@@ -295,7 +296,7 @@ namespace ICSharpCode.ILSpy
 					LoadedAssemblyReferencesInfo.AddMessage(data.fullName, MessageKind.Info, "Success - Loading from: " + file);
 					asm = new LoadedAssembly(assemblyList, file) { IsAutoLoaded = true };
 				} else {
-					LoadedAssemblyReferencesInfo.AddMessage(data.fullName, MessageKind.Error, "Could not find reference: " + data.fullName);
+					LoadedAssemblyReferencesInfo.AddMessageOnce(data.fullName, MessageKind.Error, "Could not find reference: " + data.fullName);
 					return null;
 				}
 				loadingAssemblies.Add(file, asm);
