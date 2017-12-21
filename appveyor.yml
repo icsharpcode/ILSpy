@@ -36,6 +36,6 @@ for:
     - path: ILSpy_binaries.zip
       name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries
     - path: '**\*.vsix'
-      name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% VS AddIn
+      name: ILSpy AddIn for Visual Studio
     - path: '**\*.nupkg'
       name: ICSharpCode.Decompiler %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% NuGet
