@@ -3,6 +3,8 @@
 $baseCommit = "d779383cb85003d6dabeb976f0845631e07bf463";
 $baseCommitRev = 1;
 
+$masterBranches = @("master", "3.0.x");
+
 $globalAssemblyInfoTemplateFile = "ILSpy/Properties/AssemblyInfo.template.cs";
 
 function Test-File([string]$filename) {
@@ -96,10 +98,11 @@ try {
     $branchName = gitBranch;
     $gitCommitHash = gitCommitHash;
 
-    $postfixBranchName = "";
-    if ($branchName -ne "master") {
+    if ($masterBranches -contains $branchName) {
+        $postfixBranchName = "";
+    } else {
         $postfixBranchName = "-$branchName";
-    }
+	}
 
     if ($versionName -eq "null") {
         $versionName = "";
