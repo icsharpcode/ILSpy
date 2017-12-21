@@ -1,10 +1,12 @@
 <updateInfo>
-   <band id="stable">
-      <latestVersion>2.4.0.1963</latestVersion>
-	  <downloadUrl>http://www.ilspy.net/</downloadUrl>
-   </band>
-   <band id="beta">
-      <latestVersion>2.2.0.1706</latestVersion>
-	  <downloadUrl>http://www.ilspy.net/</downloadUrl>
-   </band>
+	<band id="stable">
+		<latestVersion>3.0.1.3459</latestVersion>
+		<downloadUrl>https://github.com/icsharpcode/ILSpy/releases/tag/v3.0.1</downloadUrl>
+	</band>
+	<!-- reenable when implemented
+	<band id="beta">
+		<latestVersion>2.2.0.1706</latestVersion>
+		<downloadUrl>http://www.ilspy.net/</downloadUrl>
+	</band>
+	-->
 </updateInfo>
