@@ -90,6 +90,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override FilterResult Filter(FilterSettings settings)
 		{
+			if (!settings.ShowInternalApi && !IsPublicAPI)
+				return FilterResult.Hidden;
 			if (settings.SearchTermMatches(EventDefinition.Name) && settings.Language.ShowMember(EventDefinition))
 				return FilterResult.Match;
 			else

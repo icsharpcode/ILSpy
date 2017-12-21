@@ -267,12 +267,10 @@ namespace ICSharpCode.ILSpy
 				foreach (LoadedAssembly loaded in assemblyList.GetAssemblies()) {
 					var asmDef = loaded.GetAssemblyDefinitionOrNull();
 					if (asmDef != null && data.fullName.Equals(data.isWinRT ? asmDef.Name.Name : asmDef.FullName, StringComparison.OrdinalIgnoreCase)) {
+						LoadedAssemblyReferencesInfo.AddMessageOnce(data.fullName, MessageKind.Info, "Success - Found in Assembly List");
 						return loaded;
 					}
 				}
-
-				if (assemblyLoadDisableCount > 0)
-					return null;
 
 				if (data.isWinRT) {
 					file = Path.Combine(Environment.SystemDirectory, "WinMetadata", data.fullName + ".winmd");
@@ -291,11 +289,14 @@ namespace ICSharpCode.ILSpy
 				if (file != null && loadingAssemblies.TryGetValue(file, out asm))
 					return asm;
 
+				if (assemblyLoadDisableCount > 0)
+					return null;
+
 				if (file != null) {
 					LoadedAssemblyReferencesInfo.AddMessage(data.fullName, MessageKind.Info, "Success - Loading from: " + file);
 					asm = new LoadedAssembly(assemblyList, file) { IsAutoLoaded = true };
 				} else {
-					LoadedAssemblyReferencesInfo.AddMessage(data.fullName, MessageKind.Error, "Could not find reference: " + data.fullName);
+					LoadedAssemblyReferencesInfo.AddMessageOnce(data.fullName, MessageKind.Error, "Could not find reference: " + data.fullName);
 					return null;
 				}
 				loadingAssemblies.Add(file, asm);
