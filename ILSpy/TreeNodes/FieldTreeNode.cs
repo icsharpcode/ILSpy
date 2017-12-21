@@ -87,8 +87,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case FieldAttributes.Public:
 					return AccessOverlayIcon.Public;
 				case FieldAttributes.Assembly:
-				case FieldAttributes.FamANDAssem:
 					return AccessOverlayIcon.Internal;
+				case FieldAttributes.FamANDAssem:
+					return AccessOverlayIcon.PrivateProtected;
 				case FieldAttributes.Family:
 					return AccessOverlayIcon.Protected;
 				case FieldAttributes.FamORAssem:
