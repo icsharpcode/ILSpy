@@ -34,5 +34,7 @@ for:
   artifacts:
     - path: ILSpy_binaries.zip
       name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries
+    - path: '**\*.vsix'
+      name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% VS AddIn
     - path: '**\*.nupkg'
       name: ICSharpCode.Decompiler %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% NuGet
