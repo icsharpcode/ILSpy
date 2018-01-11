@@ -354,6 +354,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				return FindLoadInNext(container.EntryPoint.Instructions[0], v, expressionBeingMoved, out loadInst) ?? false;
 				// If FindLoadInNext() returns null, we still can't continue searching
 				// because we can't inline over the remainder of the blockcontainer.
+			} else if (expr is NullableRewrap) {
+				// Inlining into nullable.rewrap is OK unless the expression being inlined
+				// contains a nullable.wrap that isn't being re-wrapped within the expression being inlined.
+				if (expressionBeingMoved.HasFlag(InstructionFlags.MayUnwrapNull))
+					return false;
 			}
 			foreach (var child in expr.Children) {
 				if (!child.SlotInfo.CanInlineInto)

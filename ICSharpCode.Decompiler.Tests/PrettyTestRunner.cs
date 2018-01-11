@@ -230,6 +230,12 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
+		[Test, Ignore]
+		public void NullPropagation([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		{
+			Run(cscOptions: cscOptions);
+		}
+
 		void Run([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			var ilFile = Path.Combine(TestCasePath, testName) + Tester.GetSuffix(cscOptions) + ".il";

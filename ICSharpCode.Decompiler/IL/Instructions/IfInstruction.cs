@@ -56,12 +56,17 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			base.CheckInvariant(phase);
 			Debug.Assert(condition.ResultType == StackType.I4);
-			Debug.Assert(trueInst.ResultType == falseInst.ResultType);
+			Debug.Assert(trueInst.ResultType == falseInst.ResultType
+				|| trueInst.HasDirectFlag(InstructionFlags.EndPointUnreachable)
+				|| falseInst.HasDirectFlag(InstructionFlags.EndPointUnreachable));
 		}
 		
 		public override StackType ResultType {
 			get {
-				return trueInst.ResultType;
+				if (trueInst.HasDirectFlag(InstructionFlags.EndPointUnreachable))
+					return falseInst.ResultType;
+				else
+					return trueInst.ResultType;
 			}
 		}
 		
