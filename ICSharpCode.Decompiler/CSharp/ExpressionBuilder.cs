@@ -436,12 +436,23 @@ namespace ICSharpCode.Decompiler.CSharp
 		protected internal override TranslatedExpression VisitStLoc(StLoc inst, TranslationContext context)
 		{
 			var translatedValue = Translate(inst.Value, typeHint: inst.Variable.Type);
-			if (inst.Variable.Kind == VariableKind.StackSlot && inst.Variable.IsSingleDefinition
-			    && inst.Variable.StackType == translatedValue.Type.GetStackType()
-			    && translatedValue.Type.Kind != TypeKind.Null && !loadedVariablesSet.Contains(inst.Variable)) {
-				inst.Variable.Type = translatedValue.Type;
+			if (inst.Variable.Kind == VariableKind.StackSlot && !loadedVariablesSet.Contains(inst.Variable)) {
+				// Stack slots in the ILAst have inaccurate types (e.g. System.Object for StackType.O)
+				// so we should replace them with more accurate types where possible:
+				if ((inst.Variable.IsSingleDefinition || IsOtherValueType(translatedValue.Type))
+						&& inst.Variable.StackType == translatedValue.Type.GetStackType()
+						&& translatedValue.Type.Kind != TypeKind.Null) {
+					inst.Variable.Type = translatedValue.Type;
+				} else if (inst.Value.MatchDefaultValue(out var type) && IsOtherValueType(type)) {
+					inst.Variable.Type = type;
+				}
 			}
 			return Assignment(ConvertVariable(inst.Variable).WithoutILInstruction(), translatedValue).WithILInstruction(inst);
+
+			bool IsOtherValueType(IType type)
+			{
+				return type.IsReferenceType == false && type.GetStackType() == StackType.O;
+			}
 		}
 		
 		protected internal override TranslatedExpression VisitComp(Comp inst, TranslationContext context)
