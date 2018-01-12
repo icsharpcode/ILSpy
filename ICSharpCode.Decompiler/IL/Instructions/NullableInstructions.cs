@@ -23,12 +23,29 @@ namespace ICSharpCode.Decompiler.IL
 {
 	partial class NullableUnwrap
 	{
+		public NullableUnwrap(StackType unwrappedType, ILInstruction argument)
+			: base(OpCode.NullableUnwrap, argument)
+		{
+			this.ResultType = unwrappedType;
+		}
+
 		internal override void CheckInvariant(ILPhase phase)
 		{
 			base.CheckInvariant(phase);
 			Debug.Assert(Argument.ResultType == StackType.O, "nullable.unwrap expects nullable type as input");
 			Debug.Assert(Ancestors.Any(a => a is NullableRewrap));
 		}
+
+		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
+		{
+			output.Write("nullable.unwrap ");
+			output.Write(ResultType);
+			output.Write('(');
+			Argument.WriteTo(output, options);
+			output.Write(')');
+		}
+
+		public override StackType ResultType { get; }
 	}
 
 	partial class NullableRewrap

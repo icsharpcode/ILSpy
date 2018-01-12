@@ -1049,7 +1049,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			var opSymbol = UnaryOperatorExpression.GetOperatorRole(opType);
 			if (opType == UnaryOperatorType.Await) {
 				WriteKeyword(opSymbol);
-			} else if (!IsPostfixOperator(opType)) {
+			} else if (!IsPostfixOperator(opType) && opType != UnaryOperatorType.NullConditionalRewrap) {
 				WriteToken(opSymbol);
 			}
 			unaryOperatorExpression.Expression.AcceptVisitor(this);

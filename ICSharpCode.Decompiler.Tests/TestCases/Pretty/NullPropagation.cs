@@ -2,16 +2,25 @@
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
-	class NullPropagation
+	internal class NullPropagation
 	{
-		class MyClass
+		private class MyClass
 		{
 			public int IntVal;
+			public string Text;
 			public MyClass Field;
-			public MyClass Property { get; set; }
-			public MyClass Method(int arg) { return null; }
+			public MyClass Property {
+				get;
+				set;
+			}
 			public MyClass this[int index] {
-				get { return null; }
+				get {
+					return null;
+				}
+			}
+			public MyClass Method(int arg)
+			{
+				return null;
 			}
 
 			public void Done()
@@ -19,16 +28,32 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		struct MyStruct
+		private struct MyStruct
 		{
 			public int IntVal;
 			public MyClass Field;
-			public MyStruct? Property1 { get { return null; } }
-			public MyStruct Property2 { get { return default; } }
-			public MyStruct? Method1(int arg) { return null; }
-			public MyStruct Method2(int arg) { return default; }
+			public MyStruct? Property1 {
+				get {
+					return null;
+				}
+			}
+			public MyStruct Property2 {
+				get {
+					return default(MyStruct);
+				}
+			}
 			public MyStruct? this[int index] {
-				get { return null; }
+				get {
+					return null;
+				}
+			}
+			public MyStruct? Method1(int arg)
+			{
+				return null;
+			}
+			public MyStruct Method2(int arg)
+			{
+				return default(MyStruct);
 			}
 
 			public void Done()
@@ -36,86 +61,123 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			}
 		}
 
-		int GetInt()
+		private int GetInt()
 		{
 			return 9;
 		}
 
-		string GetString()
+		private string GetString()
 		{
 			return null;
 		}
 
-		MyClass GetMyClass()
+		private MyClass GetMyClass()
 		{
 			return null;
 		}
 
-		MyStruct? GetMyStruct()
+		private MyStruct? GetMyStruct()
 		{
 			return null;
 		}
 
-		string Substring()
+		public string Substring()
 		{
-			return GetString()?.Substring(GetInt());
+			return this.GetString()?.Substring(this.GetInt());
 		}
 
-		void CallDone()
+		private void Use<T>(T t)
 		{
-			GetMyClass()?.Done();
-			GetMyClass()?.Field?.Done();
-			GetMyClass()?.Field.Done();
-			GetMyClass()?.Property?.Done();
-			GetMyClass()?.Property.Done();
-			GetMyClass()?.Method(GetInt())?.Done();
-			GetMyClass()?.Method(GetInt()).Done();
-			GetMyClass()?[GetInt()]?.Done();
-			GetMyClass()?[GetInt()].Done();
 		}
 
-		void CallDoneStruct()
+#if VOID_SUPPORTED
+		public void CallDone()
 		{
-			GetMyStruct()?.Done();
-			GetMyStruct()?.Field?.Done();
-			GetMyStruct()?.Field.Done();
-			GetMyStruct()?.Property1?.Done();
-			GetMyStruct()?.Property2.Done();
-			GetMyStruct()?.Method1(GetInt())?.Done();
-			GetMyStruct()?.Method2(GetInt()).Done();
-			GetMyStruct()?[GetInt()]?.Done();
+			this.GetMyClass()?.Done();
+			this.GetMyClass()?.Field?.Done();
+			this.GetMyClass()?.Field.Done();
+			this.GetMyClass()?.Property?.Done();
+			this.GetMyClass()?.Property.Done();
+			this.GetMyClass()?.Method(GetInt())?.Done();
+			this.GetMyClass()?.Method(GetInt()).Done();
+			this.GetMyClass()?[GetInt()]?.Done();
+			this.GetMyClass()?[GetInt()].Done();
 		}
 
-		void RequiredParentheses()
+		public void CallDoneStruct()
 		{
-			(GetMyClass()?.Field).Done();
-			(GetMyClass()?.Method(GetInt())).Done();
-			(GetMyStruct()?.Property2)?.Done();
+			this.GetMyStruct()?.Done();
+			this.GetMyStruct()?.Field?.Done();
+			this.GetMyStruct()?.Field.Done();
+			this.GetMyStruct()?.Property1?.Done();
+			this.GetMyStruct()?.Property2.Done();
+			this.GetMyStruct()?.Method1(GetInt())?.Done();
+			this.GetMyStruct()?.Method2(GetInt()).Done();
+			this.GetMyStruct()?[GetInt()]?.Done();
+		}
+#endif
+
+		public void RequiredParentheses()
+		{
+			(this.GetMyClass()?.Field).Done();
+			(this.GetMyClass()?.Method(this.GetInt())).Done();
+		//	(GetMyStruct()?.Property2)?.Done();
 		}
 
-		int? SumOfChains()
+		public int?[] ChainsOnClass()
 		{
-			return GetMyClass()?.IntVal
-				+ GetMyClass()?.Field.IntVal
-				+ GetMyClass()?.Field?.IntVal
-				+ GetMyClass()?.Property.IntVal
-				+ GetMyClass()?.Property?.IntVal
-				+ GetMyClass()?.Method(GetInt()).IntVal
-				+ GetMyClass()?.Method(GetInt())?.IntVal
-				+ GetMyClass()?[GetInt()].IntVal
-				+ GetMyClass()?[GetInt()]?.IntVal;
+			return new int?[9] {
+				this.GetMyClass()?.IntVal,
+				this.GetMyClass()?.Field.IntVal,
+				this.GetMyClass()?.Field?.IntVal,
+				this.GetMyClass()?.Property.IntVal,
+				this.GetMyClass()?.Property?.IntVal,
+				this.GetMyClass()?.Method(this.GetInt()).IntVal,
+				this.GetMyClass()?.Method(this.GetInt())?.IntVal,
+				this.GetMyClass()?[this.GetInt()].IntVal,
+				this.GetMyClass()?[this.GetInt()]?.IntVal
+			};
 		}
 
-		int? SumOfChainsStruct()
+#if STRUCT_SPLITTING_IMPROVED
+		public int? SumOfChainsStruct()
 		{
-			return GetMyStruct()?.IntVal
-				+ GetMyStruct()?.Field.IntVal
-				+ GetMyStruct()?.Field?.IntVal
-				+ GetMyStruct()?.Property2.IntVal
-				+ GetMyStruct()?.Property1?.IntVal
-				+ GetMyStruct()?.Method2(GetInt()).IntVal
-				+ GetMyStruct()?.Method1(GetInt())?.IntVal
-				+ GetMyStruct()?[GetInt()]?.IntVal;
+			return this.GetMyStruct()?.IntVal
+				+ this.GetMyStruct()?.Field.IntVal
+				+ this.GetMyStruct()?.Field?.IntVal
+				+ this.GetMyStruct()?.Property2.IntVal
+				+ this.GetMyStruct()?.Property1?.IntVal
+				+ this.GetMyStruct()?.Method2(this.GetInt()).IntVal
+				+ this.GetMyStruct()?.Method1(this.GetInt())?.IntVal
+				+ this.GetMyStruct()?[this.GetInt()]?.IntVal;
+		}
+#endif
+
+		public int CoalescingReturn()
+		{
+			return this.GetMyClass()?.IntVal ?? 1;
+		}
+
+		public void Coalescing()
+		{
+			this.Use(this.GetMyClass()?.IntVal ?? 1);
+		}
+
+		public void CoalescingString()
+		{
+			this.Use(this.GetMyClass()?.Text ?? "Hello");
+		}
+
+#if VOID_SUPPORTED
+		public void InvokeDelegate(EventHandler eh)
+		{
+			eh?.Invoke(null, EventArgs.Empty);
+		}
+#endif
+
+		public int? InvokeDelegate(Func<int> f)
+		{
+			return f?.Invoke();
 		}
 	}
 }

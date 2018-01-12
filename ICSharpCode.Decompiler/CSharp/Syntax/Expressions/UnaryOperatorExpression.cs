@@ -116,6 +116,8 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 					return AwaitRole;
 				case UnaryOperatorType.NullConditional:
 					return NullConditionalRole;
+				case UnaryOperatorType.NullConditionalRewrap:
+					return null; // no syntax
 				default:
 					throw new NotSupportedException("Invalid value for UnaryOperatorType");
 			}
@@ -181,7 +183,15 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		Await,
 		/// <summary>C# 6 null-conditional operator.
 		/// Occurs as target of member reference or indexer expressions
-		/// to indicate <c>?.</c> or <c>?[]</c></summary>
-		NullConditional
+		/// to indicate <c>?.</c> or <c>?[]</c>.
+		/// Corresponds to <c>nullable.unwrap</c> in ILAst.
+		/// </summary>
+		NullConditional,
+		/// <summary>
+		/// Wrapper around a primary expression containing a null conditional operator.
+		/// Corresponds to <c>nullable.rewrap</c> in ILAst.
+		/// This has no syntax in C#, but the node is used to ensure parentheses are inserted where necessary.
+		/// </summary>
+		NullConditionalRewrap,
 	}
 }

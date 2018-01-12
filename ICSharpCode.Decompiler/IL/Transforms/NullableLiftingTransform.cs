@@ -36,6 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	///  * lifted unary and binary operators
 	///  * lifted comparisons
 	///  * the ?? operator with type Nullable{T} on the left-hand-side
+	///  * the ?. operator
 	/// </summary>
 	struct NullableLiftingTransform
 	{
@@ -55,8 +56,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 		/// </summary>
 		public bool Run(IfInstruction ifInst)
 		{
-			if (!context.Settings.LiftNullables)
-				return false;
 			var lifted = Lift(ifInst, ifInst.TrueInst, ifInst.FalseInst);
 			if (lifted != null) {
 				ifInst.ReplaceWith(lifted);
@@ -67,8 +66,6 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public bool RunStatements(Block block, int pos)
 		{
-			if (!context.Settings.LiftNullables)
-				return false;
 			/// e.g.:
 			//  if (!condition) Block {
 			//    leave IL_0000 (default.value System.Nullable`1[[System.Int64]])
@@ -128,6 +125,14 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				condition = arg;
 				ExtensionMethods.Swap(ref trueInst, ref falseInst);
 			}
+			if (context.Settings.NullPropagation) {
+				var nullPropagated = new NullPropagationTransform(context)
+					.Run(condition, trueInst, falseInst, ifInst.ILRange);
+				if (nullPropagated != null)
+					return nullPropagated;
+			}
+			if (!context.Settings.LiftNullables)
+				return null;
 			if (AnalyzeCondition(condition)) {
 				// (v1 != null && ... && vn != null) ? trueInst : falseInst
 				// => normal lifting

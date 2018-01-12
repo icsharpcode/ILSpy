@@ -53,6 +53,12 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
 		};
 
+		static readonly CompilerOptions[] roslynOnlyOptions =
+		{
+			CompilerOptions.UseRoslyn,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+		};
+
 		[Test]
 		public void Comparisons([ValueSource("defaultOptions")] CompilerOptions options)
 		{
@@ -163,6 +169,12 @@ namespace ICSharpCode.Decompiler.Tests
 
 		[Test]
 		public void ExpressionTrees([ValueSource("defaultOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
+		public void NullPropagation([ValueSource("roslynOnlyOptions")] CompilerOptions options)
 		{
 			RunCS(options: options);
 		}

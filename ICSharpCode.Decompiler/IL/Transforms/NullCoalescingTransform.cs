@@ -28,7 +28,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// Transform for constructing the NullCoalescingInstruction (if.notnull(a,b), or in C#: ??)
 	/// Note that this transform only handles the case where a,b are reference types.
 	/// 
-	/// The ?? operator for nullables is handled by NullableLiftingTransform.
+	/// The ?? operator for nullable value types is handled by NullableLiftingTransform.
 	/// </summary>
 	class NullCoalescingTransform : IStatementTransform
 	{

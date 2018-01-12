@@ -107,7 +107,7 @@ namespace ICSharpCode.Decompiler.IL
 		/// If the input is null, jumps to the innermost nullable.rewrap instruction that contains this instruction.</summary>
 		NullableUnwrap,
 		/// <summary>Serves as jump target for the nullable.unwrap instruction.
-		/// If the input evaluates normally, evaluates to the input value, wrapped in Nullable<T> if the input is a value type.If a nullable.unwrap encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap evaluates to a null.</summary>
+		/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
 		NullableRewrap,
 		/// <summary>Loads a constant string.</summary>
 		LdStr,
@@ -2523,17 +2523,7 @@ namespace ICSharpCode.Decompiler.IL
 	/// If the input is null, jumps to the innermost nullable.rewrap instruction that contains this instruction.</summary>
 	public sealed partial class NullableUnwrap : UnaryInstruction
 	{
-		public NullableUnwrap(ILInstruction argument, IType type) : base(OpCode.NullableUnwrap, argument)
-		{
-			this.type = type;
-		}
-		IType type;
-		/// <summary>Returns the type operand.</summary>
-		public IType Type {
-			get { return type; }
-			set { type = value; InvalidateFlags(); }
-		}
-		public override StackType ResultType { get { return type.GetStackType(); } }
+
 		protected override InstructionFlags ComputeFlags()
 		{
 			return base.ComputeFlags() | InstructionFlags.MayUnwrapNull;
@@ -2542,16 +2532,6 @@ namespace ICSharpCode.Decompiler.IL
 			get {
 				return base.DirectFlags | InstructionFlags.MayUnwrapNull;
 			}
-		}
-		public override void WriteTo(ITextOutput output, ILAstWritingOptions options)
-		{
-			ILRange.WriteTo(output, options);
-			output.Write(OpCode);
-			output.Write(' ');
-			type.WriteTo(output);
-			output.Write('(');
-			Argument.WriteTo(output, options);
-			output.Write(')');
 		}
 		public override void AcceptVisitor(ILVisitor visitor)
 		{
@@ -2568,14 +2548,14 @@ namespace ICSharpCode.Decompiler.IL
 		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
 		{
 			var o = other as NullableUnwrap;
-			return o != null && this.Argument.PerformMatch(o.Argument, ref match) && type.Equals(o.type);
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 }
 namespace ICSharpCode.Decompiler.IL
 {
 	/// <summary>Serves as jump target for the nullable.unwrap instruction.
-	/// If the input evaluates normally, evaluates to the input value, wrapped in Nullable<T> if the input is a value type.If a nullable.unwrap encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap evaluates to a null.</summary>
+	/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
 	public sealed partial class NullableRewrap : UnaryInstruction
 	{
 		public NullableRewrap(ILInstruction argument) : base(OpCode.NullableRewrap, argument)
@@ -6279,18 +6259,6 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			left = default(ILInstruction);
 			right = default(ILInstruction);
-			return false;
-		}
-		public bool MatchNullableUnwrap(out ILInstruction argument, out IType type)
-		{
-			var inst = this as NullableUnwrap;
-			if (inst != null) {
-				argument = inst.Argument;
-				type = inst.Type;
-				return true;
-			}
-			argument = default(ILInstruction);
-			type = default(IType);
 			return false;
 		}
 		public bool MatchNullableRewrap(out ILInstruction argument)

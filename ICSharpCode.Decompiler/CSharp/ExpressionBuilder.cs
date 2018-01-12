@@ -2145,6 +2145,26 @@ namespace ICSharpCode.Decompiler.CSharp
 				.WithRR(new ResolveResult(inst.GetResultMethod?.ReturnType ?? SpecialType.UnknownType));
 		}
 
+		protected internal override TranslatedExpression VisitNullableRewrap(NullableRewrap inst, TranslationContext context)
+		{
+			var arg = Translate(inst.Argument);
+			IType type = arg.Type;
+			if (NullableType.IsNonNullableValueType(type)) {
+				type = NullableType.Create(compilation, type);
+			}
+			return new UnaryOperatorExpression(UnaryOperatorType.NullConditionalRewrap, arg)
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(type));
+		}
+
+		protected internal override TranslatedExpression VisitNullableUnwrap(NullableUnwrap inst, TranslationContext context)
+		{
+			var arg = Translate(inst.Argument);
+			return new UnaryOperatorExpression(UnaryOperatorType.NullConditional, arg)
+				.WithILInstruction(inst)
+				.WithRR(new ResolveResult(NullableType.GetUnderlyingType(arg.Type)));
+		}
+
 		protected internal override TranslatedExpression VisitInvalidBranch(InvalidBranch inst, TranslationContext context)
 		{
 			string message = "Error";

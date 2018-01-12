@@ -188,7 +188,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				int allowedParamCount = (method.ReturnType.IsKnownType(KnownTypeCode.Void) ? 1 : 0);
 				if (method.IsAccessor && (method.AccessorOwner.SymbolKind == SymbolKind.Indexer || expectedParameters.Count == allowedParamCount)) {
 					return HandleAccessorCall(expectedTargetDetails, method, target, arguments.ToList());
-				} else if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate) {
+				} else if (method.Name == "Invoke" && method.DeclaringType.Kind == TypeKind.Delegate && !IsNullConditional(target)) {
 					return new InvocationExpression(target, arguments.Select(arg => arg.Expression)).WithRR(rr);
 				} else if (IsDelegateEqualityComparison(method, arguments)) {
 					return HandleDelegateEqualityComparison(method, arguments)
@@ -250,6 +250,11 @@ namespace ICSharpCode.Decompiler.CSharp
 					return new InvocationExpression(mre, argumentExpressions).WithRR(rr);
 				}
 			}
+		}
+
+		static bool IsNullConditional(Expression expr)
+		{
+			return expr is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional;
 		}
 
 		private void ModifyReturnTypeOfLambda(LambdaExpression lambda)

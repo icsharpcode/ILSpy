@@ -230,7 +230,7 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
-		[Test, Ignore]
+		[Test]
 		public void NullPropagation([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
 		{
 			Run(cscOptions: cscOptions);
