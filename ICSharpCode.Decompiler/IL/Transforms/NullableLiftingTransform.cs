@@ -36,7 +36,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	///  * lifted unary and binary operators
 	///  * lifted comparisons
 	///  * the ?? operator with type Nullable{T} on the left-hand-side
-	///  * the ?. operator
+	///  * the ?. operator (via NullPropagationTransform)
 	/// </summary>
 	struct NullableLiftingTransform
 	{
@@ -125,7 +125,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				condition = arg;
 				ExtensionMethods.Swap(ref trueInst, ref falseInst);
 			}
-			if (context.Settings.NullPropagation) {
+			if (context.Settings.NullPropagation && !NullPropagationTransform.IsProtectedIfInst(ifInst)) {
 				var nullPropagated = new NullPropagationTransform(context)
 					.Run(condition, trueInst, falseInst, ifInst.ILRange);
 				if (nullPropagated != null)

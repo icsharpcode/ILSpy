@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module NullPropagation.dll
-// MVID: {F0EFC1AB-9F50-47C3-A485-667304613B73}
+// MVID: {024CEB8E-C4C6-4326-B706-A762E1916CDA}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x00BC0000
+// Image base: 0x032C0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -605,6 +605,34 @@
     IL_0013:  newobj     instance void valuetype [mscorlib]System.Nullable`1<int32>::.ctor(!0)
     IL_0018:  ret
   } // end of method NullPropagation::InvokeDelegate
+
+  .method private hidebysig instance void 
+          NotNullPropagation(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass c) cil managed
+  {
+    // Code size       53 (0x35)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  brfalse.s  IL_0015
+
+    IL_0003:  ldarg.1
+    IL_0004:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::IntVal
+    IL_0009:  brfalse.s  IL_0015
+
+    IL_000b:  ldstr      "non-zero"
+    IL_0010:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0015:  ldarg.1
+    IL_0016:  brfalse.s  IL_0020
+
+    IL_0018:  ldarg.1
+    IL_0019:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::IntVal
+    IL_001e:  brtrue.s   IL_002a
+
+    IL_0020:  ldstr      "null or zero"
+    IL_0025:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_002a:  ldstr      "end of method"
+    IL_002f:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_0034:  ret
+  } // end of method NullPropagation::NotNullPropagation
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

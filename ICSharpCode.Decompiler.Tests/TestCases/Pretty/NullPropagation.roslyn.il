@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module NullPropagation.dll
-// MVID: {9DF0D690-F814-4DC7-985C-0407C3EE435D}
+// MVID: {AE2302E9-5EE9-4939-BCA6-21C8604BB095}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x047D0000
+// Image base: 0x04900000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -707,6 +707,58 @@
     IL_001d:  ldloc.1
     IL_001e:  ret
   } // end of method NullPropagation::InvokeDelegate
+
+  .method private hidebysig instance void 
+          NotNullPropagation(class ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass c) cil managed
+  {
+    // Code size       77 (0x4d)
+    .maxstack  2
+    .locals init (bool V_0,
+             bool V_1)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  brfalse.s  IL_000f
+
+    IL_0004:  ldarg.1
+    IL_0005:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::IntVal
+    IL_000a:  ldc.i4.0
+    IL_000b:  cgt.un
+    IL_000d:  br.s       IL_0010
+
+    IL_000f:  ldc.i4.0
+    IL_0010:  stloc.0
+    IL_0011:  ldloc.0
+    IL_0012:  brfalse.s  IL_0021
+
+    IL_0014:  nop
+    IL_0015:  ldstr      "non-zero"
+    IL_001a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_001f:  nop
+    IL_0020:  nop
+    IL_0021:  ldarg.1
+    IL_0022:  brfalse.s  IL_002f
+
+    IL_0024:  ldarg.1
+    IL_0025:  ldfld      int32 ICSharpCode.Decompiler.Tests.TestCases.Pretty.NullPropagation/MyClass::IntVal
+    IL_002a:  ldc.i4.0
+    IL_002b:  ceq
+    IL_002d:  br.s       IL_0030
+
+    IL_002f:  ldc.i4.1
+    IL_0030:  stloc.1
+    IL_0031:  ldloc.1
+    IL_0032:  brfalse.s  IL_0041
+
+    IL_0034:  nop
+    IL_0035:  ldstr      "null or zero"
+    IL_003a:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_003f:  nop
+    IL_0040:  nop
+    IL_0041:  ldstr      "end of method"
+    IL_0046:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_004b:  nop
+    IL_004c:  ret
+  } // end of method NullPropagation::NotNullPropagation
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

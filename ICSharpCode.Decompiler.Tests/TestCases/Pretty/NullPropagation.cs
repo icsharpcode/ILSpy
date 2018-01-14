@@ -179,5 +179,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return f?.Invoke();
 		}
+
+		private void NotNullPropagation(MyClass c)
+		{
+			// don't decompile this to "(c?.IntVal ?? 0) != 0"
+			if (c != null && c.IntVal != 0) {
+				Console.WriteLine("non-zero");
+			}
+			if (c == null || c.IntVal == 0) {
+				Console.WriteLine("null or zero");
+			}
+			Console.WriteLine("end of method");
+		}
 	}
 }

@@ -30,6 +30,15 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// </summary>
     struct NullPropagationTransform
     {
+		internal static bool IsProtectedIfInst(IfInstruction ifInst)
+		{
+			// We exclude logic.and to avoid turning
+			// "logic.and(comp(interfaces != ldnull), call get_Count(interfaces))"
+			// into "if ((interfaces?.Count ?? 0) != 0)".
+			return (ifInst.MatchLogicAnd(out _, out _) || ifInst.MatchLogicOr(out _, out _))
+				&& IfInstruction.IsInConditionSlot(ifInst);
+		}
+
 		readonly ILTransformContext context;
 		
 		public NullPropagationTransform(ILTransformContext context)
