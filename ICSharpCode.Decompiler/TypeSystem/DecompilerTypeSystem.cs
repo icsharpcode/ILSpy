@@ -91,11 +91,19 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				entityDict[entity] = mr;
 		}
 
-		MemberReference GetCecil(IUnresolvedEntity member)
+		/// <summary>
+		/// Retrieves the Cecil member definition for the specified member.
+		/// </summary>
+		/// <remarks>
+		/// Returns null if the member is not defined in the module being decompiled.
+		/// </remarks>
+		public MemberReference GetCecil(IUnresolvedEntity member)
 		{
+			if (member == null)
+				return null;
 			lock (entityDict) {
 				MemberReference mr;
-				if (member != null && entityDict.TryGetValue(member, out mr))
+				if (entityDict.TryGetValue(member, out mr))
 					return mr;
 				return null;
 			}
