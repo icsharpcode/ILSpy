@@ -118,6 +118,42 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			return null;
 		}
 
+		/// <summary>
+		/// if (x != null) x.AccessChain();
+		/// => x?.AccessChain();
+		/// </summary>
+		internal void RunStatements(Block block, int pos)
+		{
+			var ifInst = block.Instructions[pos] as IfInstruction;
+			if (ifInst == null || !ifInst.FalseInst.MatchNop())
+				return;
+			if (ifInst.Condition is Comp comp && comp.Kind == ComparisonKind.Inequality
+				&& comp.Left.MatchLdLoc(out var testedVar) && comp.Right.MatchLdNull()) {
+				TryNullPropForVoidCall(testedVar, true, ifInst.TrueInst as Block, ifInst);
+			} else if (NullableLiftingTransform.MatchHasValueCall(ifInst.Condition, out testedVar)) {
+				TryNullPropForVoidCall(testedVar, false, ifInst.TrueInst as Block, ifInst);
+			}
+		}
+
+		void TryNullPropForVoidCall(ILVariable testedVar, bool testedVarHasReferenceType, Block body, IfInstruction ifInst)
+		{
+			if (body == null || body.Instructions.Count != 1)
+				return;
+			var bodyInst = body.Instructions[0];
+			if (bodyInst.MatchNullableRewrap(out var arg)) {
+				bodyInst = arg;
+			}
+			if (!IsValidAccessChain(testedVar, testedVarHasReferenceType, bodyInst, out var varLoad))
+				return;
+			context.Step("Null-propagation (void call)", body);
+			// if (testedVar != null) { testedVar.AccessChain(); }
+			// => testedVar?.AccessChain();
+			IntroduceUnwrap(testedVar, varLoad);
+			ifInst.ReplaceWith(new NullableRewrap(
+				bodyInst
+			) { ILRange = ifInst.ILRange });
+		}
+
 		bool IsValidAccessChain(ILVariable testedVar, bool testedVarHasReferenceType, ILInstruction inst, out ILInstruction finalLoad)
 		{
 			finalLoad = null;
@@ -136,7 +172,13 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 					if (call.Method.IsStatic && !call.Method.IsExtensionMethod) {
 						return false; // only instance or extension methods can be called with ?. syntax
 					}
+					if (call.Method.IsAccessor && !IsGetter(call.Method)) {
+						return false; // setter/adder/remover cannot be called with ?. syntax
+					}
 					inst = call.Arguments[0];
+					if (call.Method.DeclaringType.IsReferenceType == false && inst.MatchAddressOf(out var arg)) {
+						inst = arg;
+					}
 					// ensure the access chain does not contain any 'nullable.unwrap' that aren't directly part of the chain
 					for (int i = 1; i < call.Arguments.Count; ++i) {
 						if (call.Arguments[i].HasFlag(InstructionFlags.MayUnwrapNull)) {
@@ -162,6 +204,11 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 			}
 		}
 
+		static bool IsGetter(IMethod method)
+		{
+			return method.AccessorOwner is IProperty p && p.Getter == method;
+		}
+
 		private void IntroduceUnwrap(ILVariable testedVar, ILInstruction varLoad)
 		{
 			if (NullableLiftingTransform.MatchGetValueOrDefault(varLoad, testedVar)) {
@@ -174,6 +221,16 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 				var children = varLoad.Parent.Children;
 				children[varLoad.ChildIndex] = new NullableUnwrap(testedVar.StackType, varLoad);
 			}
+		}
+	}
+
+	class NullPropagationStatementTransform : IStatementTransform
+	{
+		public void Run(Block block, int pos, StatementTransformContext context)
+		{
+			if (!context.Settings.NullPropagation)
+				return;
+			new NullPropagationTransform(context).RunStatements(block, pos);
 		}
 	}
 }

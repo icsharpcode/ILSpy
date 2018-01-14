@@ -86,11 +86,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			return this.GetString()?.Substring(this.GetInt());
 		}
 
+		public void CallSubstringAndIgnoreResult()
+		{
+			this.GetString()?.Substring(this.GetInt());
+		}
+
 		private void Use<T>(T t)
 		{
 		}
 
-#if VOID_SUPPORTED
 		public void CallDone()
 		{
 			this.GetMyClass()?.Done();
@@ -98,30 +102,33 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			this.GetMyClass()?.Field.Done();
 			this.GetMyClass()?.Property?.Done();
 			this.GetMyClass()?.Property.Done();
-			this.GetMyClass()?.Method(GetInt())?.Done();
-			this.GetMyClass()?.Method(GetInt()).Done();
-			this.GetMyClass()?[GetInt()]?.Done();
-			this.GetMyClass()?[GetInt()].Done();
+			this.GetMyClass()?.Method(this.GetInt())?.Done();
+			this.GetMyClass()?.Method(this.GetInt()).Done();
+			this.GetMyClass()?[this.GetInt()]?.Done();
+			this.GetMyClass()?[this.GetInt()].Done();
 		}
 
 		public void CallDoneStruct()
 		{
 			this.GetMyStruct()?.Done();
+#if STRUCT_SPLITTING_IMPROVED
 			this.GetMyStruct()?.Field?.Done();
 			this.GetMyStruct()?.Field.Done();
 			this.GetMyStruct()?.Property1?.Done();
 			this.GetMyStruct()?.Property2.Done();
-			this.GetMyStruct()?.Method1(GetInt())?.Done();
-			this.GetMyStruct()?.Method2(GetInt()).Done();
-			this.GetMyStruct()?[GetInt()]?.Done();
-		}
+			this.GetMyStruct()?.Method1(this.GetInt())?.Done();
+			this.GetMyStruct()?.Method2(this.GetInt()).Done();
+			this.GetMyStruct()?[this.GetInt()]?.Done();
 #endif
+		}
 
 		public void RequiredParentheses()
 		{
 			(this.GetMyClass()?.Field).Done();
 			(this.GetMyClass()?.Method(this.GetInt())).Done();
-		//	(GetMyStruct()?.Property2)?.Done();
+#if STRUCT_SPLITTING_IMPROVED
+			(GetMyStruct()?.Property2)?.Done();
+#endif
 		}
 
 		public int?[] ChainsOnClass()
@@ -140,16 +147,18 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		}
 
 #if STRUCT_SPLITTING_IMPROVED
-		public int? SumOfChainsStruct()
+		public int?[] ChainsStruct()
 		{
-			return this.GetMyStruct()?.IntVal
-				+ this.GetMyStruct()?.Field.IntVal
-				+ this.GetMyStruct()?.Field?.IntVal
-				+ this.GetMyStruct()?.Property2.IntVal
-				+ this.GetMyStruct()?.Property1?.IntVal
-				+ this.GetMyStruct()?.Method2(this.GetInt()).IntVal
-				+ this.GetMyStruct()?.Method1(this.GetInt())?.IntVal
-				+ this.GetMyStruct()?[this.GetInt()]?.IntVal;
+			return new int?[8] {
+				this.GetMyStruct()?.IntVal,
+				this.GetMyStruct()?.Field.IntVal,
+				this.GetMyStruct()?.Field?.IntVal,
+				this.GetMyStruct()?.Property2.IntVal,
+				this.GetMyStruct()?.Property1?.IntVal,
+				this.GetMyStruct()?.Method2(this.GetInt()).IntVal,
+				this.GetMyStruct()?.Method1(this.GetInt())?.IntVal,
+				this.GetMyStruct()?[this.GetInt()]?.IntVal
+			};
 		}
 #endif
 
@@ -168,12 +177,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 			this.Use(this.GetMyClass()?.Text ?? "Hello");
 		}
 
-#if VOID_SUPPORTED
 		public void InvokeDelegate(EventHandler eh)
 		{
 			eh?.Invoke(null, EventArgs.Empty);
 		}
-#endif
 
 		public int? InvokeDelegate(Func<int> f)
 		{
@@ -190,6 +197,17 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				Console.WriteLine("null or zero");
 			}
 			Console.WriteLine("end of method");
+		}
+
+		private void Setter(MyClass c)
+		{
+			if (c != null) {
+				c.IntVal = 1;
+			}
+			Console.WriteLine();
+			if (c != null) {
+				c.Property = null;
+			}
 		}
 	}
 }
