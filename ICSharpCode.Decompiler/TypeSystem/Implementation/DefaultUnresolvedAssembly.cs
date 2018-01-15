@@ -98,17 +98,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 				fullAssemblyName = value;
 			}
 		}
-		
-		string location;
-		public string Location {
-			get {
-				return location;
-			}
-			set {
-				FreezableHelper.ThrowIfFrozen(this);
-				location = value;
-			}
-		}
 
 		public IList<IUnresolvedAttribute> AssemblyAttributes {
 			get { return assemblyAttributes; }

@@ -22,6 +22,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -108,19 +110,19 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 		public static string Disassemble(string sourceFileName, string outputFile, AssemblerOptions asmOptions)
 		{
 			if (asmOptions.HasFlag(AssemblerOptions.UseOwnDisassembler)) {
-				using (ModuleDefinition module = ModuleDefinition.ReadModule(sourceFileName))
+				using (var module = new PEReader(new FileStream(sourceFileName, FileMode.Open)))
 				using (var writer = new StreamWriter(outputFile)) {
-					module.Name = Path.GetFileNameWithoutExtension(outputFile);
+					//module.Name = Path.GetFileNameWithoutExtension(outputFile);
 					var output = new PlainTextOutput(writer);
-					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
+					ReflectionDisassembler rd = new ReflectionDisassembler(output, module.GetMetadataReader(), CancellationToken.None);
 					rd.DetectControlStructure = false;
-					rd.WriteAssemblyReferences(module);
-					if (module.Assembly != null)
+					//rd.WriteAssemblyReferences(module);
+					/*if (module.Assembly != null)
 						rd.WriteAssemblyHeader(module.Assembly);
 					output.WriteLine();
 					rd.WriteModuleHeader(module);
 					output.WriteLine();
-					rd.WriteModuleContents(module);
+					rd.WriteModuleContents(module);*/
 				}
 				return outputFile;
 			}
@@ -275,7 +277,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 
 		public static string DecompileCSharp(string assemblyFileName, DecompilerSettings settings = null)
 		{
-			using (var module = ModuleDefinition.ReadModule(assemblyFileName)) {
+			using (var module = Mono.Cecil.ModuleDefinition.ReadModule(assemblyFileName)) {
 				var typeSystem = new DecompilerTypeSystem(module);
 				CSharpDecompiler decompiler = new CSharpDecompiler(typeSystem, settings ?? new DecompilerSettings());
 				decompiler.AstTransforms.Insert(0, new RemoveCompilerAttribute());

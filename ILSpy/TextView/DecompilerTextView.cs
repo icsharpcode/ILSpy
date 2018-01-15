@@ -194,21 +194,18 @@ namespace ICSharpCode.ILSpy.TextView
 		
 		object GenerateTooltip(ReferenceSegment segment)
 		{
-			if (segment.Reference is Mono.Cecil.Cil.OpCode) {
-				Mono.Cecil.Cil.OpCode code = (Mono.Cecil.Cil.OpCode)segment.Reference;
-				string encodedName = code.Code.ToString();
-				string opCodeHex = code.Size > 1 ? string.Format("0x{0:x2}{1:x2}", code.Op1, code.Op2) : string.Format("0x{0:x2}", code.Op2);
+			if (segment.Reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo code) {
 				XmlDocumentationProvider docProvider = XmlDocLoader.MscorlibDocumentation;
 				if (docProvider != null){
-					string documentation = docProvider.GetDocumentation("F:System.Reflection.Emit.OpCodes." + encodedName);
+					string documentation = docProvider.GetDocumentation("F:System.Reflection.Emit.OpCodes." + code.EncodedName);
 					if (documentation != null) {
 						XmlDocRenderer renderer = new XmlDocRenderer();
-						renderer.AppendText(string.Format("{0} ({1}) - ", code.Name, opCodeHex));
+						renderer.AppendText($"{code.Name} (0x{code.Code:x2}) - ");
 						renderer.AddXmlDocumentation(documentation);
 						return renderer.CreateTextBlock();
 					}
 				}
-				return string.Format("{0} ({1})", code.Name, opCodeHex);
+				return $"{code.Name} (0x{code.Code:x2})";
 			} else if (segment.Reference is MemberReference) {
 				MemberReference mr = (MemberReference)segment.Reference;
 				// if possible, resolve the reference

@@ -21,6 +21,7 @@ using System.Collections.Generic;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using System.Text;
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {

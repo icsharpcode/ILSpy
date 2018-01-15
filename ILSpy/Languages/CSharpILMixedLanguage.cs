@@ -21,6 +21,7 @@ using Mono.Cecil.Cil;
 
 namespace ICSharpCode.ILSpy
 {
+#if false
 	[Export(typeof(Language))]
 	class CSharpILMixedLanguage : ILLanguage
 	{
@@ -145,4 +146,5 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 	}
+#endif
 }

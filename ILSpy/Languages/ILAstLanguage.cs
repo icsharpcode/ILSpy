@@ -77,7 +77,7 @@ namespace ICSharpCode.ILSpy
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
 			base.DecompileMethod(method, output, options);
-			new ReflectionDisassembler(output, options.CancellationToken).DisassembleMethodHeader(method);
+			//new ReflectionDisassembler(output, options.CancellationToken).DisassembleMethodHeader(method);
 			output.WriteLine();
 			output.WriteLine();
 		}

@@ -21,7 +21,6 @@ using System.Linq;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.Semantics;
-using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {

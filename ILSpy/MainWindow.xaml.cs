@@ -633,9 +633,8 @@ namespace ICSharpCode.ILSpy
 			ILSpyTreeNode treeNode = FindTreeNode(reference);
 			if (treeNode != null) {
 				SelectNode(treeNode);
-			} else if (reference is Mono.Cecil.Cil.OpCode) {
-				string link = "http://msdn.microsoft.com/library/system.reflection.emit.opcodes." + ((Mono.Cecil.Cil.OpCode)reference).Code.ToString().ToLowerInvariant() + ".aspx";
-				OpenLink(link);
+			} else if (reference is ICSharpCode.Decompiler.Disassembler.OpCodeInfo opCode) {
+				OpenLink(opCode.Link);
 			}
 			return decompilationTask;
 		}

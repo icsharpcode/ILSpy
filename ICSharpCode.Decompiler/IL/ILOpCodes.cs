@@ -17,6 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection.Emit;
 namespace ICSharpCode.Decompiler.IL
 {
 	enum ILOpCode : ushort
@@ -249,7 +250,6 @@ namespace ICSharpCode.Decompiler.IL
 		Readonly = 0x11e,
 	}
 
-	/*
 	static class ILOpCodeExtensions
 	{
 		// We use a byte array instead of an enum array because it can be initialized more efficiently
@@ -260,5 +260,4 @@ namespace ICSharpCode.Decompiler.IL
 			return (OperandType)operandTypes[(ushort)opCode];
 		}
 	}
-	*/
 }

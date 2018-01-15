@@ -23,7 +23,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// CecilLoader used for converting cecil type references to ITypeReference.
 		/// May only be accessed within lock(typeReferenceCecilLoader).
 		/// </summary>
-		readonly CecilLoader typeReferenceCecilLoader = new CecilLoader();
+		readonly MetadataLoader typeReferenceCecilLoader = new MetadataLoader();
 
 		/// <summary>
 		/// Dictionary for NRefactory->Cecil lookup.
@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (moduleDefinition == null)
 				throw new ArgumentNullException(nameof(moduleDefinition));
 			this.moduleDefinition = moduleDefinition;
-			CecilLoader cecilLoader = new CecilLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
+			MetadataLoader cecilLoader = new MetadataLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
 			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
 			// Load referenced assemblies and type-forwarder references.

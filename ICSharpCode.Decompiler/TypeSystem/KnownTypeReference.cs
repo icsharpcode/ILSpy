@@ -123,6 +123,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		INotifyCompletion,
 		/// <summary><c>System.Runtime.CompilerServices.ICriticalNotifyCompletion</c></summary>
 		ICriticalNotifyCompletion,
+		/// <summary><c>System.TypedReference</c></summary>
+		TypedReference,
 	}
 	
 	/// <summary>
@@ -131,8 +133,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 	[Serializable]
 	public sealed class KnownTypeReference : ITypeReference
 	{
-		internal const int KnownTypeCodeCount = (int)KnownTypeCode.ICriticalNotifyCompletion + 1;
-		
+		internal const int KnownTypeCodeCount = (int)KnownTypeCode.TypedReference + 1;
+
 		static readonly KnownTypeReference[] knownTypeReferences = new KnownTypeReference[KnownTypeCodeCount] {
 			null, // None
 			new KnownTypeReference(KnownTypeCode.Object,   "System", "Object", baseType: KnownTypeCode.None),
@@ -181,6 +183,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			new KnownTypeReference(KnownTypeCode.IDisposable, "System", "IDisposable"),
 			new KnownTypeReference(KnownTypeCode.INotifyCompletion, "System.Runtime.CompilerServices", "INotifyCompletion"),
 			new KnownTypeReference(KnownTypeCode.ICriticalNotifyCompletion, "System.Runtime.CompilerServices", "ICriticalNotifyCompletion"),
+
+			new KnownTypeReference(KnownTypeCode.TypedReference, "System", "TypedReference", baseType: KnownTypeCode.ValueType), 
 		};
 		
 		/// <summary>
@@ -411,6 +415,11 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets a type reference pointing to the <c>System.Runtime.CompilerServices.ICriticalNotifyCompletion</c> type.
 		/// </summary>
 		public static readonly KnownTypeReference ICriticalNotifyCompletion = Get(KnownTypeCode.ICriticalNotifyCompletion);
+		
+		/// <summary>
+		/// Gets a type reference pointing to the <c>System.TypedReference</c> type.
+		/// </summary>
+		public static readonly KnownTypeReference TypedReference = Get(KnownTypeCode.TypedReference);
 
 		readonly KnownTypeCode knownTypeCode;
 		readonly string namespaceName;

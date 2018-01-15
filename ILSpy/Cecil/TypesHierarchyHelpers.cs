@@ -22,7 +22,7 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using Mono.Cecil;
 
-namespace ICSharpCode.Decompiler.TypeSystem
+namespace ICSharpCode.ILSpy.Cecil
 {
 	public static class TypesHierarchyHelpers
 	{

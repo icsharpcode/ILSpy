@@ -24,6 +24,7 @@
 <#@ import namespace="System.Reflection.Emit" #>
 <#@ output extension=".cs" #>
 using System;
+using System.Reflection.Emit;
 <#
 	var operandTypes = new OperandType[0x11f];
 
@@ -41,7 +42,6 @@ namespace ICSharpCode.Decompiler.IL
 <#  } // end foreach #>
 	}
 
-	/*
 	static class ILOpCodeExtensions
 	{
 		// We use a byte array instead of an enum array because it can be initialized more efficiently
@@ -57,5 +57,4 @@ namespace ICSharpCode.Decompiler.IL
 			return (OperandType)operandTypes[(ushort)opCode];
 		}
 	}
-	*/
 }

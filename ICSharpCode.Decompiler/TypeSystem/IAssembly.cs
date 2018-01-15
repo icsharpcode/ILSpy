@@ -36,12 +36,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		string FullAssemblyName { get; }
 		
 		/// <summary>
-		/// Gets the path to the assembly location. 
-		/// For projects it is the same as the output path.
-		/// </summary>
-		string Location { get; }
-
-		/// <summary>
 		/// Gets the list of all assembly attributes in the project.
 		/// </summary>
 		IEnumerable<IUnresolvedAttribute> AssemblyAttributes { get; }
