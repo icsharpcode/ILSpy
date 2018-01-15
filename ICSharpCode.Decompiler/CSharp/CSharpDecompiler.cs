@@ -204,6 +204,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					return true;
 				if (settings.AnonymousMethods && method.HasGeneratedName() && method.IsCompilerGenerated())
 					return true;
+				if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(method))
+					return true;
 			}
 
 			TypeDefinition type = member as TypeDefinition;
