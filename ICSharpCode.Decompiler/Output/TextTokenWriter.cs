@@ -40,6 +40,7 @@ namespace ICSharpCode.Decompiler
 		bool lastUsingDeclaration;
 		
 		public bool FoldBraces = false;
+		public bool ExpandMemberDefinitions = false;
 		
 		public TextTokenWriter(ITextOutput output, DecompilerSettings settings, IDecompilerTypeSystem typeSystem)
 		{
@@ -216,7 +217,7 @@ namespace ICSharpCode.Decompiler
 					if (braceLevelWithinType >= 0 || nodeStack.Peek() is TypeDeclaration)
 						braceLevelWithinType++;
 					if (nodeStack.OfType<BlockStatement>().Count() <= 1 || FoldBraces) {
-						output.MarkFoldStart(defaultCollapsed: braceLevelWithinType == 1);
+						output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && braceLevelWithinType == 1);
 					}
 					output.Write("{");
 					break;

@@ -110,13 +110,10 @@ namespace ICSharpCode.ILSpy.Options
 
 		bool sortResults = true;
 
-		public bool SortResults
-		{
+		public bool SortResults {
 			get { return sortResults; }
-			set
-			{
-				if (sortResults != value)
-				{
+			set {
+				if (sortResults != value) {
 					sortResults = value;
 					OnPropertyChanged();
 				}

@@ -45,6 +45,8 @@ namespace ICSharpCode.Decompiler.Disassembler
 			set => methodBodyDisassembler.ShowSequencePoints = value;
 		}
 
+		public bool ExpandMemberDefinitions { get; set; } = false;
+
 		public ReflectionDisassembler(ITextOutput output, CancellationToken cancellationToken)
 			: this(output, new MethodBodyDisassembler(output, cancellationToken), cancellationToken)
 		{
@@ -846,7 +848,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 			output.Write(DisassemblerHelpers.Escape(type.DeclaringType != null ? type.Name : type.FullName));
 			WriteTypeParameters(output, type);
-			output.MarkFoldStart(defaultCollapsed: isInType);
+			output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && isInType);
 			output.WriteLine();
 
 			if (type.BaseType != null) {
@@ -1003,7 +1005,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		void OpenBlock(bool defaultCollapsed)
 		{
-			output.MarkFoldStart(defaultCollapsed: defaultCollapsed);
+			output.MarkFoldStart(defaultCollapsed: !ExpandMemberDefinitions && defaultCollapsed);
 			output.WriteLine();
 			output.WriteLine("{");
 			output.Indent();
