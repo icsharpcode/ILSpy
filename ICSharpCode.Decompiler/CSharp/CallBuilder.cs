@@ -117,7 +117,7 @@ namespace ICSharpCode.Decompiler.CSharp
 									expandedArguments.Add(expressionBuilder.GetDefaultValueExpression(elementType).WithoutILInstruction());
 							}
 						}
-						if (IsUnambiguousCall(expectedTargetDetails, method, target, Array.Empty<IType>(), expandedArguments) == OverloadResolutionErrors.None) {
+						if (IsUnambiguousCall(expectedTargetDetails, method, target, new IType[0], expandedArguments) == OverloadResolutionErrors.None) {
 							isExpandedForm = true;
 							expectedParameters = expandedParameters;
 							arguments = expandedArguments.SelectList(a => new TranslatedExpression(a.Expression.Detach()));
@@ -170,7 +170,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						.WithRR(rr);
 				} else {
 
-					if (IsUnambiguousCall(expectedTargetDetails, method, target, Array.Empty<IType>(), arguments) != OverloadResolutionErrors.None) {
+					if (IsUnambiguousCall(expectedTargetDetails, method, target, new IType[0], arguments) != OverloadResolutionErrors.None) {
 						for (int i = 0; i < arguments.Count; i++) {
 							if (settings.AnonymousTypes && expectedParameters[i].Type.ContainsAnonymousType()) {
 								if (arguments[i].Expression is LambdaExpression lambda) {
@@ -199,7 +199,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					bool requireTypeArguments = false;
 					bool targetCasted = false;
 					bool argumentsCasted = false;
-					IType[] typeArguments = Array.Empty<IType>();
+					IType[] typeArguments = new IType[0];
 
 					OverloadResolutionErrors errors;
 					while ((errors = IsUnambiguousCall(expectedTargetDetails, method, target, typeArguments, arguments)) != OverloadResolutionErrors.None) {
