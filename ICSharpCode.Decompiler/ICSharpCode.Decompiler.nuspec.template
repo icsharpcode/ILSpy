@@ -22,8 +22,11 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="bin\$Configuration$\net46\ICSharpCode.Decompiler.dll" target="lib\net46" />
-    <file src="bin\$Configuration$\net46\ICSharpCode.Decompiler.pdb" target="lib\net46" />
+    <file src="bin\$Configuration$\net45\ICSharpCode.Decompiler.dll" target="lib\net45" />
+    <file src="bin\$Configuration$\net45\ICSharpCode.Decompiler.pdb" target="lib\net45" />
+
+	<file src="bin\$Configuration$\net45\ICSharpCode.Decompiler.dll" target="lib\net46" />
+    <file src="bin\$Configuration$\net45\ICSharpCode.Decompiler.pdb" target="lib\net46" />
 
     <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.dll" target="lib\netstandard2.0" />
     <file src="bin\$Configuration$\netstandard2.0\ICSharpCode.Decompiler.pdb" target="lib\netstandard2.0" />
