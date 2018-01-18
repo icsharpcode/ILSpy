@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 
 		public static bool IsCompilerGeneratedMainMethod(MethodDefinition method)
 		{
-			return method.Name.Equals("<Main>", StringComparison.Ordinal);
+			return method == method.Module.Assembly?.EntryPoint && method.Name.Equals("<Main>", StringComparison.Ordinal);
 		}
 
 		enum AsyncMethodType
