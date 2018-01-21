@@ -24,6 +24,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+using System.ComponentModel;
+
 namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 {
 	public enum BraceStyle
@@ -68,6 +70,7 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 		DoNotIndent
 	}
 
+	[TypeConverter(typeof(ExpandableObjectConverter))]
 	public class CSharpFormattingOptions
 	{
 		public string Name {

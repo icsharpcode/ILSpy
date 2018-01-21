@@ -1,7 +1,12 @@
 ﻿<UserControl x:Class="ICSharpCode.ILSpy.Options.DecompilerSettingsPanel"
              x:ClassModifier="internal"
 	xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+	xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+	xmlns:options="clr-namespace:ICSharpCode.ILSpy.Options"
+	xmlns:controls="clr-namespace:ICSharpCode.ILSpy.Controls">
+	<UserControl.Resources>
+		<controls:BoolToVisibilityConverter x:Key="boolConv" />
+	</UserControl.Resources>
 	<StackPanel Margin="10">
 		<CheckBox IsChecked="{Binding AnonymousMethods}">Decompile anonymous methods/lambdas</CheckBox>
 		<CheckBox IsChecked="{Binding AnonymousTypes}">Decompile anonymous types</CheckBox>
@@ -18,5 +23,6 @@
 		<CheckBox IsChecked="{Binding UsingDeclarations}">Insert using declarations</CheckBox>
 		<CheckBox IsChecked="{Binding FullyQualifyAmbiguousTypeNames}">Fully qualify ambiguous type names</CheckBox>
 		<CheckBox IsChecked="{Binding AlwaysUseBraces}">Always use braces</CheckBox>
+		<Button Content="Advanced" Click="AdvancedOptions_Click" Visibility="{Binding Source={x:Static options:DecompilerSettingsPanel.IsDebug}, Converter={StaticResource boolConv}, ConverterParameter={x:Static Visibility.Collapsed}}" />
 	</StackPanel>
 </UserControl>
