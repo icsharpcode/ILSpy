@@ -47,7 +47,7 @@ namespace ICSharpCode.Decompiler.CSharp
 	{
 		readonly DecompilerTypeSystem typeSystem;
 		readonly DecompilerSettings settings;
-		private SyntaxTree syntaxTree;
+		SyntaxTree syntaxTree;
 
 		List<IILTransform> ilTransforms = GetILTransforms();
 
@@ -761,18 +761,27 @@ namespace ICSharpCode.Decompiler.CSharp
 					CancellationToken.ThrowIfCancellationRequested();
 					transform.Run(function, context);
 					function.CheckInvariant(ILPhase.Normal);
+					// When decompiling definitions only, we can cancel decompilation of all steps
+					// after yield and async detection, because only those are needed to properly set
+					// IsAsync/IsIterator flags on ILFunction.
+					if (!settings.DecompileMemberBodies && transform is AsyncAwaitDecompiler)
+						break;
 				}
 
-				AddDefinesForConditionalAttributes(function);
-				var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, function, settings, CancellationToken);
-				var body = statementBuilder.ConvertAsBlock(function.Body);
+				var body = BlockStatement.Null;
+				// Generate C# AST only if bodies should be displayed.
+				if (settings.DecompileMemberBodies) {
+					AddDefinesForConditionalAttributes(function);
+					var statementBuilder = new StatementBuilder(specializingTypeSystem, decompilationContext, function, settings, CancellationToken);
+					body = statementBuilder.ConvertAsBlock(function.Body);
 
-				Comment prev = null;
-				foreach (string warning in function.Warnings) {
-					body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+					Comment prev = null;
+					foreach (string warning in function.Warnings) {
+						body.InsertChildAfter(prev, prev = new Comment(warning), Roles.Comment);
+					}
+
+					entityDecl.AddChild(body, Roles.Body);
 				}
-
-				entityDecl.AddChild(body, Roles.Body);
 				entityDecl.AddAnnotation(function);
 
 				if (function.IsIterator) {

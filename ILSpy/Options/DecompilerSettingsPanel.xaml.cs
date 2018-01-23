@@ -16,9 +16,11 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System.Windows;
 using System.Windows.Controls;
 using System.Xml.Linq;
 using ICSharpCode.Decompiler;
+using WinForms = System.Windows.Forms;
 
 namespace ICSharpCode.ILSpy.Options
 {
@@ -28,6 +30,12 @@ namespace ICSharpCode.ILSpy.Options
 	[ExportOptionPage(Title = "Decompiler", Order = 0)]
 	partial class DecompilerSettingsPanel : UserControl, IOptionPage
 	{
+#if DEBUG
+		public const bool IsDebug = true;
+#else
+		public const bool IsDebug = false;
+#endif
+
 		public DecompilerSettingsPanel()
 		{
 			InitializeComponent();
@@ -35,7 +43,7 @@ namespace ICSharpCode.ILSpy.Options
 		
 		public void Load(ILSpySettings settings)
 		{
-			this.DataContext = LoadDecompilerSettings(settings);
+			this.DataContext = currentDecompilerSettings ?? LoadDecompilerSettings(settings);
 		}
 		
 		static DecompilerSettings currentDecompilerSettings;
@@ -61,6 +69,7 @@ namespace ICSharpCode.ILSpy.Options
 			s.ShowDebugInfo = (bool?)e.Attribute("showDebugInfo") ?? s.ShowDebugInfo;
 			s.ShowXmlDocumentation = (bool?)e.Attribute("xmlDoc") ?? s.ShowXmlDocumentation;
 			s.FoldBraces = (bool?)e.Attribute("foldBraces") ?? s.FoldBraces;
+			s.RemoveDeadCode = (bool?)e.Attribute("removeDeadCode") ?? s.RemoveDeadCode;
 			s.UsingDeclarations = (bool?)e.Attribute("usingDeclarations") ?? s.UsingDeclarations;
 			s.FullyQualifyAmbiguousTypeNames = (bool?)e.Attribute("fullyQualifyAmbiguousTypeNames") ?? s.FullyQualifyAmbiguousTypeNames;
 			s.AlwaysUseBraces = (bool?)e.Attribute("alwaysUseBraces") ?? s.AlwaysUseBraces;
@@ -82,7 +91,7 @@ namespace ICSharpCode.ILSpy.Options
 			section.SetAttributeValue("showDebugInfo", s.ShowDebugInfo);
 			section.SetAttributeValue("xmlDoc", s.ShowXmlDocumentation);
 			section.SetAttributeValue("foldBraces", s.FoldBraces);
-			section.SetAttributeValue("foldBraces", s.RemoveDeadCode);
+			section.SetAttributeValue("removeDeadCode", s.RemoveDeadCode);
 			section.SetAttributeValue("usingDeclarations", s.UsingDeclarations);
 			section.SetAttributeValue("fullyQualifyAmbiguousTypeNames", s.FullyQualifyAmbiguousTypeNames);
 			section.SetAttributeValue("alwaysUseBraces", s.AlwaysUseBraces);
@@ -93,7 +102,107 @@ namespace ICSharpCode.ILSpy.Options
 			else
 				root.Add(section);
 			
-			currentDecompilerSettings = null; // invalidate cached settings
+			currentDecompilerSettings = s; // update cached settings
 		}
+
+		void AdvancedOptions_Click(object sender, RoutedEventArgs e)
+		{
+#if DEBUG
+			// I know this is crazy, but WindowsFormsHost is too buggy in this scenario...
+			using (var wnd = new PropertyGridHost(((DecompilerSettings)DataContext).Clone())) {
+				if (wnd.ShowDialog() == WinForms.DialogResult.OK) {
+					this.DataContext = wnd.Settings;
+				}
+			}
+#endif
+		}
+
+#if DEBUG
+		class PropertyGridHost : WinForms.Form
+		{
+			private WinForms.PropertyGrid propertyGrid;
+			private WinForms.Button cancelButton;
+			private WinForms.Button okButton;
+
+			public DecompilerSettings Settings { get; }
+
+			public PropertyGridHost(DecompilerSettings settings)
+			{
+				InitializeComponent();
+				this.propertyGrid.SelectedObject = Settings = settings;
+			}
+
+			private void InitializeComponent()
+			{
+				this.propertyGrid = new System.Windows.Forms.PropertyGrid();
+				this.cancelButton = new System.Windows.Forms.Button();
+				this.okButton = new System.Windows.Forms.Button();
+				this.SuspendLayout();
+				// 
+				// propertyGrid
+				// 
+				this.propertyGrid.Anchor = System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom
+				| System.Windows.Forms.AnchorStyles.Left
+				| System.Windows.Forms.AnchorStyles.Right;
+				this.propertyGrid.Location = new System.Drawing.Point(0, 0);
+				this.propertyGrid.Name = "propertyGrid";
+				this.propertyGrid.Size = new System.Drawing.Size(468, 369);
+				this.propertyGrid.TabIndex = 0;
+				// 
+				// cancelButton
+				// 
+				this.cancelButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+				this.cancelButton.DialogResult = System.Windows.Forms.DialogResult.Cancel;
+				this.cancelButton.Location = new System.Drawing.Point(365, 375);
+				this.cancelButton.Name = "cancelButton";
+				this.cancelButton.Size = new System.Drawing.Size(91, 23);
+				this.cancelButton.TabIndex = 1;
+				this.cancelButton.Text = "Cancel";
+				this.cancelButton.UseVisualStyleBackColor = true;
+				this.cancelButton.Click += CancelButton_Click;
+				// 
+				// okButton
+				// 
+				this.okButton.Anchor = System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right;
+				this.okButton.DialogResult = System.Windows.Forms.DialogResult.OK;
+				this.okButton.Location = new System.Drawing.Point(267, 375);
+				this.okButton.Name = "okButton";
+				this.okButton.Size = new System.Drawing.Size(92, 23);
+				this.okButton.TabIndex = 2;
+				this.okButton.Text = "OK";
+				this.okButton.UseVisualStyleBackColor = true;
+				this.okButton.Click += OkButton_Click;
+				// 
+				// Form1
+				// 
+				this.AcceptButton = this.okButton;
+				this.CancelButton = this.cancelButton;
+				this.ClientSize = new System.Drawing.Size(468, 410);
+				this.Controls.Add(this.okButton);
+				this.Controls.Add(this.cancelButton);
+				this.Controls.Add(this.propertyGrid);
+				this.MaximizeBox = false;
+				this.MinimizeBox = false;
+				this.Name = "Form1";
+				this.Text = "Advanced Decompiler Options";
+				this.ShowIcon = false;
+				this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
+				this.ResumeLayout(false);
+
+			}
+
+			private void OkButton_Click(object sender, System.EventArgs e)
+			{
+				DialogResult = WinForms.DialogResult.OK;
+				Close();
+			}
+
+			private void CancelButton_Click(object sender, System.EventArgs e)
+			{
+				DialogResult = WinForms.DialogResult.Cancel;
+				Close();
+			}
+		}
+#endif
 	}
 }
