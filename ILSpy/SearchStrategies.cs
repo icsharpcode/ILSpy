@@ -139,12 +139,17 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		void Add<T>(IEnumerable<T> items, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : MemberReference
+		void Add<T>(Func<IEnumerable<T>> itemsGetter, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : MemberReference
 		{
+			IEnumerable<T> items = Enumerable.Empty<T>();
+			try {
+				items = itemsGetter();
+			} catch (Exception ex) {
+				System.Diagnostics.Debug.Print(ex.ToString());
+			}
 			foreach (var item in items) {
 				if (matcher(item, language)) {
-					addResult(new SearchResult
-					{
+					addResult(new SearchResult {
 						Member = item,
 						Fitness = CalculateFitness(item),
 						Image = image(item),
@@ -158,10 +163,10 @@ namespace ICSharpCode.ILSpy
 
 		public virtual void Search(TypeDefinition type, Language language, Action<SearchResult> addResult)
 		{
-			Add(type.Fields, type, language, addResult, IsMatch, FieldTreeNode.GetIcon);
-			Add(type.Properties, type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
-			Add(type.Events, type, language, addResult, IsMatch, EventTreeNode.GetIcon);
-			Add(type.Methods.Where(NotSpecialMethod), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
+			Add(() => type.Fields, type, language, addResult, IsMatch, FieldTreeNode.GetIcon);
+			Add(() => type.Properties, type, language, addResult, IsMatch, p => PropertyTreeNode.GetIcon(p));
+			Add(() => type.Events, type, language, addResult, IsMatch, EventTreeNode.GetIcon);
+			Add(() => type.Methods.Where(NotSpecialMethod), type, language, addResult, IsMatch, MethodTreeNode.GetIcon);
 
 			foreach (TypeDefinition nestedType in type.NestedTypes) {
 				Search(nestedType, language, addResult);
