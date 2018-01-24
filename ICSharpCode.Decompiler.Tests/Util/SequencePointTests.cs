@@ -24,7 +24,7 @@ namespace ICSharpCode.Decompiler.Tests.Util
 		{
 			var decompiler = Tester.GetDecompilerForSnippet(code);
 
-			var firstType = decompiler.TypeSystem.Compilation.GetTopLevelTypeDefinitons().First(t => code.Contains(t.Name));
+			var firstType = decompiler.TypeSystem.Compilation.GetTopLevelTypeDefinitions().First(t => code.Contains(t.Name));
 			var tree = decompiler.DecompileType(firstType.FullTypeName);
 
 			var output = new StringWriter();
