@@ -24,15 +24,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module CS6_StringInterpolation.dll
-// MVID: {E5F8B296-2C38-455C-B3AC-4CF5B5014FFB}
+.module CS6_StringInterpolation.exe
+// MVID: {EAC42E43-E444-4B60-84F6-6239B79599C4}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
-.imagebase 0x10000000
+.imagebase 0x00400000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x01330000
+// Image base: 0x03670000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -40,6 +40,14 @@
 .class private auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.Pretty.CS6_StringInterpolation
        extends [mscorlib]System.Object
 {
+  .method public hidebysig static void  Main(string[] args) cil managed
+  {
+    .entrypoint
+    // Code size       1 (0x1)
+    .maxstack  8
+    IL_0000:  ret
+  } // end of method CS6_StringInterpolation::Main
+
   .method public hidebysig static void  General(string[] args) cil managed
   {
     // Code size       232 (0xe8)

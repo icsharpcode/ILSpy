@@ -4,6 +4,10 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 {
 	internal class CS6_StringInterpolation
 	{
+		public static void Main(string[] args)
+		{
+		}
+
 		public static void General(string[] args)
 		{
 			Console.WriteLine($"{args.Length}");
