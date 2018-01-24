@@ -62,7 +62,7 @@ namespace ICSharpCode.Decompiler.CSharp.Syntax
 		// Not worth using a dictionary for such few elements.
 		// This table is sorted in the order that modifiers should be output when generating code.
 		static readonly Modifiers[] allModifiers = {
-			Modifiers.Public, Modifiers.Protected, Modifiers.Private, Modifiers.Internal,
+			Modifiers.Public, Modifiers.Private, Modifiers.Protected, Modifiers.Internal,
 			Modifiers.New,
 			Modifiers.Unsafe,
 			Modifiers.Abstract, Modifiers.Virtual, Modifiers.Sealed, Modifiers.Static, Modifiers.Override,

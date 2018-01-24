@@ -147,8 +147,10 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					break;
 				case TypeAttributes.NotPublic:
 				case TypeAttributes.NestedAssembly:
-				case TypeAttributes.NestedFamANDAssem:
 					overlay = AccessOverlayIcon.Internal;
+					break;
+				case TypeAttributes.NestedFamANDAssem:
+					overlay = AccessOverlayIcon.PrivateProtected;
 					break;
 				case TypeAttributes.NestedFamily:
 				case TypeAttributes.NestedFamORAssem:

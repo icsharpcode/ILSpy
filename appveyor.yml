@@ -31,8 +31,11 @@ for:
 - branches:
     only:
       - master
+      - 3.0.x
   artifacts:
     - path: ILSpy_binaries.zip
       name: ILSpy %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% binaries
+    - path: '**\*.vsix'
+      name: ILSpy AddIn for Visual Studio
     - path: '**\*.nupkg'
       name: ICSharpCode.Decompiler %APPVEYOR_REPO_BRANCH% %ILSPY_VERSION_NUMBER% NuGet

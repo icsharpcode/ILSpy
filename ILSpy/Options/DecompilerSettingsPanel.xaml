@@ -18,5 +18,6 @@
 		<CheckBox IsChecked="{Binding UsingDeclarations}">Insert using declarations</CheckBox>
 		<CheckBox IsChecked="{Binding FullyQualifyAmbiguousTypeNames}">Fully qualify ambiguous type names</CheckBox>
 		<CheckBox IsChecked="{Binding AlwaysUseBraces}">Always use braces</CheckBox>
+		<CheckBox IsChecked="{Binding ExpandMemberDefinitions}">Expand member definitions after decompilation</CheckBox>
 	</StackPanel>
 </UserControl>

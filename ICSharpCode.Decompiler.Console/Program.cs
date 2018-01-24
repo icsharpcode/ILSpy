@@ -75,9 +75,14 @@ namespace ICSharpCode.Decompiler.Console
 			return app.Execute(args);
 		}
 
+		static CSharpDecompiler GetDecompiler(string assemblyFileName)
+		{
+			return new CSharpDecompiler(assemblyFileName, new DecompilerSettings() {  ThrowOnAssemblyResolveErrors = false });
+		}
+
 		static void ListContent(string assemblyFileName, TextWriter output, ISet<TypeKind> kinds)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(assemblyFileName, new DecompilerSettings());
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
 
 			foreach (var type in decompiler.TypeSystem.Compilation.MainAssembly.GetAllTypeDefinitions()) {
 				if (!kinds.Contains(type.Kind))
@@ -95,7 +100,7 @@ namespace ICSharpCode.Decompiler.Console
 
 		static void Decompile(string assemblyFileName, TextWriter output, string typeName = null)
 		{
-			CSharpDecompiler decompiler = new CSharpDecompiler(assemblyFileName, new DecompilerSettings());
+			CSharpDecompiler decompiler = GetDecompiler(assemblyFileName);
 
 			if (typeName == null) {
 				output.Write(decompiler.DecompileWholeModuleAsString());

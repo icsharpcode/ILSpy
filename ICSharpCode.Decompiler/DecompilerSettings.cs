@@ -360,6 +360,18 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool expandMemberDefinitions = false;
+
+		public bool ExpandMemberDefinitions {
+			get { return expandMemberDefinitions; }
+			set {
+				if (expandMemberDefinitions != value) {
+					expandMemberDefinitions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		#region Options to aid VB decompilation
 		bool introduceIncrementAndDecrement = true;
 

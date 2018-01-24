@@ -187,7 +187,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			var preprocessorSymbols = GetPreprocessorSymbols(flags);
 
 			if (flags.HasFlag(CompilerOptions.UseRoslyn)) {
-				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray());
+				var parseOptions = new CSharpParseOptions(preprocessorSymbols: preprocessorSymbols.ToArray(), languageVersion: LanguageVersion.Latest);
 				var syntaxTrees = sourceFileNames.Select(f => SyntaxFactory.ParseSyntaxTree(File.ReadAllText(f), parseOptions, path: f));
 				var compilation = CSharpCompilation.Create(Path.GetFileNameWithoutExtension(sourceFileName),
 					syntaxTrees, defaultReferences.Value,

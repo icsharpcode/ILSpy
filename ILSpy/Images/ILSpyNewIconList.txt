@@ -39,7 +39,7 @@ OverlayProtected.png			new (Fugue derived)
 OverlayProtectedInternal.png	new (Fugue derived)
 OverlayStatic.png 				new (Fugue derived)
 PInvokeMethod.png				new (Fugue-Icon-Mashup)
-PrivateInternal.png				new (Fugue derived)
+OverlayPrivateProtected.png			new (Fugue derived)
 Property.png					ClassBrowserIcons\Icons.16x16.Property.png
 ReferenceFolder.Closed.png		ProjectBrowserIcons\ReferenceFolder.Closed.png
 ReferenceFolder.Open.png		ProjectBrowserIcons\ReferenceFolder.Open.png

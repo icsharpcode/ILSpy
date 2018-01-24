@@ -20,7 +20,9 @@ namespace ICSharpCode.Decompiler.PowerShell
             string path = GetUnresolvedProviderPathFromPSPath(LiteralPath);
 
             try {
-                var decompiler = new CSharpDecompiler(path, new DecompilerSettings());
+                var decompiler = new CSharpDecompiler(path, new DecompilerSettings() {
+					ThrowOnAssemblyResolveErrors = false
+                });
                 WriteObject(decompiler);
 
             } catch (Exception e) {

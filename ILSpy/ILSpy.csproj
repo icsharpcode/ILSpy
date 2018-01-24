@@ -349,6 +349,7 @@
     <Resource Include="Images\FieldReadOnly.png" />
     <Resource Include="Images\OverlayInternal.png" />
     <Resource Include="Images\OverlayPrivate.png" />
+    <Resource Include="Images\OverlayPrivateProtected.png" />
     <Resource Include="Images\OverlayProtected.png" />
     <Resource Include="Images\OverlayProtectedInternal.png" />
     <Resource Include="Images\OverlayCompilerControlled.png" />

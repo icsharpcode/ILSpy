@@ -87,8 +87,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				case FieldAttributes.Public:
 					return AccessOverlayIcon.Public;
 				case FieldAttributes.Assembly:
-				case FieldAttributes.FamANDAssem:
 					return AccessOverlayIcon.Internal;
+				case FieldAttributes.FamANDAssem:
+					return AccessOverlayIcon.PrivateProtected;
 				case FieldAttributes.Family:
 					return AccessOverlayIcon.Protected;
 				case FieldAttributes.FamORAssem:
@@ -104,6 +105,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override FilterResult Filter(FilterSettings settings)
 		{
+			if (!settings.ShowInternalApi && !IsPublicAPI)
+				return FilterResult.Hidden;
 			if (settings.SearchTermMatches(FieldDefinition.Name) && settings.Language.ShowMember(FieldDefinition))
 				return FilterResult.Match;
 			else

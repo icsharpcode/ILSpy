@@ -20,6 +20,7 @@ using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
+using Mono.Cecil;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -42,6 +43,11 @@ namespace ICSharpCode.Decompiler.IL.ControlFlow
 					return true;
 			}
 			return false;
+		}
+
+		public static bool IsCompilerGeneratedMainMethod(MethodDefinition method)
+		{
+			return method == method.Module.Assembly?.EntryPoint && method.Name.Equals("<Main>", StringComparison.Ordinal);
 		}
 
 		enum AsyncMethodType

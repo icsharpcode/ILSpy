@@ -204,6 +204,8 @@ namespace ICSharpCode.Decompiler.CSharp
 					return true;
 				if (settings.AnonymousMethods && method.HasGeneratedName() && method.IsCompilerGenerated())
 					return true;
+				if (settings.AsyncAwait && AsyncAwaitDecompiler.IsCompilerGeneratedMainMethod(method))
+					return true;
 			}
 
 			TypeDefinition type = member as TypeDefinition;
@@ -826,15 +828,15 @@ namespace ICSharpCode.Decompiler.CSharp
 		{
 			Debug.Assert(decompilationContext.CurrentMember == field);
 			var typeSystemAstBuilder = CreateAstBuilder(decompilationContext);
-			if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum) {
+			if (decompilationContext.CurrentTypeDefinition.Kind == TypeKind.Enum && field.ConstantValue != null) {
 				var index = decompilationContext.CurrentTypeDefinition.Members.IndexOf(field);
 				long previousValue = -1;
 				if (index > 0) {
 					var previousMember = (IField)decompilationContext.CurrentTypeDefinition.Members[index - 1];
 					previousValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, previousMember.ConstantValue, false);
 				}
-				long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
 				var enumDec = new EnumMemberDeclaration { Name = field.Name };
+				long initValue = (long)CSharpPrimitiveCast.Cast(TypeCode.Int64, field.ConstantValue, false);
 				if (decompilationContext.CurrentTypeDefinition.Attributes.Any(a => a.AttributeType.FullName == "System.FlagsAttribute")) {
 					enumDec.Initializer = typeSystemAstBuilder.ConvertConstantValue(decompilationContext.CurrentTypeDefinition.EnumUnderlyingType, field.ConstantValue);
 					if (enumDec.Initializer is PrimitiveExpression primitive && initValue > 9)

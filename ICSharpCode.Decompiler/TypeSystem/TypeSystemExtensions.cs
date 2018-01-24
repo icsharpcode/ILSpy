@@ -430,7 +430,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// Gets all top level type definitions in the compilation.
 		/// This may include types from referenced assemblies that are not accessible in the main assembly.
 		/// </summary>
-		public static IEnumerable<ITypeDefinition> GetTopLevelTypeDefinitons (this ICompilation compilation)
+		public static IEnumerable<ITypeDefinition> GetTopLevelTypeDefinitions (this ICompilation compilation)
 		{
 			return compilation.Assemblies.SelectMany(a => a.TopLevelTypeDefinitions);
 		}

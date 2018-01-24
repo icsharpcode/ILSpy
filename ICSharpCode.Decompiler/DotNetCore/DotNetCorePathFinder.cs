@@ -86,14 +86,14 @@ namespace ICSharpCode.Decompiler
 		static IEnumerable<DotNetCorePackageInfo> LoadPackageInfos(string depsJsonFileName, string targetFramework)
 		{
 			var dependencies = JsonReader.Parse(File.ReadAllText(depsJsonFileName));
-			var runtimeInfos = dependencies["targets"][targetFramework].AsJsonObject;
+			var runtimeInfos = dependencies["targets"][targetFramework + "/"].AsJsonObject;
 			var libraries = dependencies["libraries"].AsJsonObject;
 			if (runtimeInfos == null || libraries == null)
 				yield break;
 			foreach (var library in libraries) {
 				var type = library.Value["type"].AsString;
 				var path = library.Value["path"].AsString;
-				var runtimeInfo = runtimeInfos[library.Key]["runtime"].AsJsonObject;
+				var runtimeInfo = runtimeInfos[library.Key].AsJsonObject?["runtime"].AsJsonObject;
 				string[] components = new string[runtimeInfo?.Count ?? 0];
 				if (runtimeInfo != null) {
 					int i = 0;

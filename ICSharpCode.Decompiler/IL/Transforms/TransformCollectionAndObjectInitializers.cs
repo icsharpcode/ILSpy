@@ -254,7 +254,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 						instruction = call.Arguments[0];
 						if (method.IsAccessor) {
 							var property = method.AccessorOwner as IProperty;
-							var isGetter = property?.Getter == method;
+							var isGetter = method.Equals(property?.Getter);
 							var indices = call.Arguments.Skip(1).Take(call.Arguments.Count - (isGetter ? 1 : 2)).ToArray();
 							if (possibleIndexVariables != null) {
 								// Mark all index variables as used

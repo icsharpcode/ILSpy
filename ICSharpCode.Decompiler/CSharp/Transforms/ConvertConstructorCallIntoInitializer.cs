@@ -132,7 +132,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					if (!(fieldOrPropertyOrEvent is IField) && !(fieldOrPropertyOrEvent is IProperty) && !(fieldOrPropertyOrEvent is IEvent))
 						break;
 					AstNode fieldOrPropertyOrEventDecl = members.FirstOrDefault(f => f.GetSymbol() == fieldOrPropertyOrEvent);
-					if (fieldOrPropertyOrEventDecl == null)
+					// Cannot transform if member is not found or if it is a custom event.
+					if (fieldOrPropertyOrEventDecl == null || fieldOrPropertyOrEventDecl is CustomEventDeclaration)
 						break;
 					Expression initializer = m.Get<Expression>("initializer").Single();
 					// 'this'/'base' cannot be used in initializers

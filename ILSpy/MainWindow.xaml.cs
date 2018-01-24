@@ -273,7 +273,7 @@ namespace ICSharpCode.ILSpy
 					}
 				} else {
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
-						ModuleDefinition def = asm.GetModuleDefinitionAsync().Result;
+						ModuleDefinition def = asm.GetModuleDefinitionOrNull();
 						if (def != null) {
 							MemberReference mr = XmlDocKeyProvider.FindMemberByKey(def, args.NavigateTo);
 							if (mr != null) {
@@ -292,7 +292,7 @@ namespace ICSharpCode.ILSpy
 			} else if (commandLineLoadedAssemblies.Count == 1) {
 				// NavigateTo == null and an assembly was given on the command-line:
 				// Select the newly loaded assembly
-				JumpToReference(commandLineLoadedAssemblies[0].GetModuleDefinitionAsync().Result);
+				JumpToReference(commandLineLoadedAssemblies[0].GetModuleDefinitionOrNull());
 			}
 			if (args.Search != null)
 			{
