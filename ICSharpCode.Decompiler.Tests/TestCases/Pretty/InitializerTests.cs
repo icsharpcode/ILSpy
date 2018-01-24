@@ -376,6 +376,21 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 				}
 			});
 		}
+
+		public void NestedListWithIndexInitializer()
+		{
+#if !OPT
+			List<List<int>> list = new List<List<int>> {
+#else
+			List<List<int>> obj = new List<List<int>> {
+#endif
+				[0] = {
+					1,
+					2,
+					3
+				}
+			};
+		}
 #endif
 
 		public static void ObjectInitializerWithInitializationOfDeeplyNestedObjects()

@@ -15,7 +15,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly awwuldf0
+.assembly n52bfodk
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -25,15 +25,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module awwuldf0.dll
-// MVID: {59891EFA-EBA3-4F9A-9034-4F24037CEC15}
+.module n52bfodk.dll
+// MVID: {2B30E2AC-D797-4A69-ACEC-93251C343504}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03070000
+// Image base: 0x037A0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -1275,8 +1275,8 @@
     IL_0006:  ret
   } // end of method InitializerTests::.ctor
 
-  .method private hidebysig static void  '<NotAnObjectInitializerWithEvent>b__7'(object sender,
-                                                                                 class [mscorlib]System.EventArgs e) cil managed
+  .method private hidebysig static void  '<NotAnObjectInitializerWithEvent>b__7'(object param0,
+                                                                                 class [mscorlib]System.EventArgs param1) cil managed
   {
     .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilerGeneratedAttribute::.ctor() = ( 01 00 00 00 ) 
     // Code size       6 (0x6)
