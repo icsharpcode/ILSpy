@@ -152,10 +152,10 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 										content.Add(new InterpolatedStringText(text));
 										break;
 									case TokenKind.Argument:
-										content.Add(new Interpolation(arguments[index + 1].Detach()));
+										content.Add(new Interpolation(WrapInParens(arguments[index + 1].Detach())));
 										break;
 									case TokenKind.ArgumentWithFormat:
-										content.Add(new Interpolation(arguments[index + 1].Detach(), text));
+										content.Add(new Interpolation(WrapInParens(arguments[index + 1].Detach()), text));
 										break;
 								}
 							}
@@ -199,6 +199,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			}
 
 			return;
+		}
+
+		Expression WrapInParens(Expression expression)
+		{
+			if (expression is ConditionalExpression)
+				return new ParenthesizedExpression(expression);
+			return expression;
 		}
 
 		enum TokenKind

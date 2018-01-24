@@ -25,14 +25,14 @@
   .ver 0:0:0:0
 }
 .module CS6_StringInterpolation.dll
-// MVID: {FE9286DD-8C20-4FC8-8786-543E572641EA}
+// MVID: {13226DB1-4F60-403F-8874-DA41699044FA}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03840000
+// Image base: 0x00DD0000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -42,7 +42,7 @@
 {
   .method public hidebysig static void  General(string[] args) cil managed
   {
-    // Code size       156 (0x9c)
+    // Code size       241 (0xf1)
     .maxstack  6
     IL_0000:  nop
     IL_0001:  ldstr      "{0}"
@@ -116,10 +116,48 @@
                                                                 object[])
     IL_0095:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_009a:  nop
-    IL_009b:  ret
+    IL_009b:  ldstr      "\ta{0}"
+    IL_00a0:  ldarg.0
+    IL_00a1:  ldlen
+    IL_00a2:  brtrue.s   IL_00a7
+
+    IL_00a4:  ldc.i4.0
+    IL_00a5:  br.s       IL_00a8
+
+    IL_00a7:  ldc.i4.5
+    IL_00a8:  box        [mscorlib]System.Int32
+    IL_00ad:  call       string [mscorlib]System.String::Format(string,
+                                                                object)
+    IL_00b2:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_00b7:  nop
+    IL_00b8:  ldstr      "\ta{0}"
+    IL_00bd:  ldarg.0
+    IL_00be:  dup
+    IL_00bf:  brtrue.s   IL_00c3
+
+    IL_00c1:  pop
+    IL_00c2:  ldarg.0
+    IL_00c3:  call       string [mscorlib]System.String::Format(string,
+                                                                object)
+    IL_00c8:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_00cd:  nop
+    IL_00ce:  ldstr      "\ta{0}"
+    IL_00d3:  ldarg.0
+    IL_00d4:  ldc.i4.0
+    IL_00d5:  ldelem.ref
+    IL_00d6:  ldc.i4.0
+    IL_00d7:  callvirt   instance char [mscorlib]System.String::get_Chars(int32)
+    IL_00dc:  ldc.i4.s   97
+    IL_00de:  ceq
+    IL_00e0:  box        [mscorlib]System.Boolean
+    IL_00e5:  call       string [mscorlib]System.String::Format(string,
+                                                                object)
+    IL_00ea:  call       void [mscorlib]System.Console::WriteLine(string)
+    IL_00ef:  nop
+    IL_00f0:  ret
   } // end of method CS6_StringInterpolation::General
 
-  .method public hidebysig static void  Invalid(string[] args) cil managed
+  .method public hidebysig static void  InvalidFormatString(string[] args) cil managed
   {
     // Code size       581 (0x245)
     .maxstack  3
@@ -341,7 +379,7 @@
     IL_023e:  call       void [mscorlib]System.Console::WriteLine(string)
     IL_0243:  nop
     IL_0244:  ret
-  } // end of method CS6_StringInterpolation::Invalid
+  } // end of method CS6_StringInterpolation::InvalidFormatString
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
