@@ -17,8 +17,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using ICSharpCode.Decompiler.CSharp.Syntax;
 using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.TypeSystem;
@@ -53,7 +55,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			if (method == null)
 				return;
 			var arguments = invocationExpression.Arguments.ToArray();
-			
+
 			// Reduce "String.Concat(a, b)" to "a + b"
 			if (method.Name == "Concat" && method.DeclaringType.FullName == "System.String" && CheckArgumentsForStringConcat(arguments)) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
@@ -65,7 +67,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				invocationExpression.ReplaceWith(expr);
 				return;
 			}
-			
+
 			switch (method.FullName) {
 				case "System.Type.GetTypeFromHandle":
 					if (arguments.Length == 1) {
@@ -106,8 +108,67 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						invocationExpression.ReplaceWith(new ObjectCreateExpression(context.TypeSystemAstBuilder.ConvertType(method.TypeArguments.First())));
 					}
 					break;
+				case "System.String.Format":
+					if (context.Settings.StringInterpolation && arguments.Length > 1
+						&& arguments[0] is PrimitiveExpression stringExpression && stringExpression.Value is string
+						&& arguments.Skip(1).All(a => !a.DescendantsAndSelf.OfType<PrimitiveExpression>().Any(p => p.Value is string)))
+					{
+						var tokens = new List<(TokenKind, int, string)>();
+						int i = 0;
+						foreach (var (kind, data) in TokenizeFormatString((string)stringExpression.Value)) {
+							int index;
+							switch (kind) {
+								case TokenKind.Error:
+									return;
+								case TokenKind.String:
+									tokens.Add((kind, -1, data));
+									break;
+								case TokenKind.Argument:
+									if (!int.TryParse(data, out index) || index != i)
+										return;
+									i++;
+									tokens.Add((kind, index, null));
+									break;
+								case TokenKind.ArgumentWithFormat:
+									string[] arg = data.Split(new[] { ':' }, 2);
+									if (arg.Length != 2 || arg[1].Length == 0)
+										return;
+									if (!int.TryParse(arg[0], out index) || index != i)
+										return;
+									i++;
+									tokens.Add((kind, index, arg[1]));
+									break;
+								default:
+									return;
+							}
+						}
+						if (i != arguments.Length - 1)
+							return;
+						List<InterpolatedStringContent> content = new List<InterpolatedStringContent>();
+						if (tokens.Count > 0) {
+							foreach (var (kind, index, text) in tokens) {
+								switch (kind) {
+									case TokenKind.String:
+										content.Add(new InterpolatedStringText(text));
+										break;
+									case TokenKind.Argument:
+										content.Add(new Interpolation(WrapInParens(arguments[index + 1].Detach())));
+										break;
+									case TokenKind.ArgumentWithFormat:
+										content.Add(new Interpolation(WrapInParens(arguments[index + 1].Detach()), text));
+										break;
+								}
+							}
+							var expr = new InterpolatedStringExpression();
+							expr.Content.AddRange(content);
+							expr.CopyAnnotationsFrom(invocationExpression);
+							invocationExpression.ReplaceWith(expr);
+							return;
+						}
+					}
+					break;
 			}
-			
+
 			BinaryOperatorType? bop = GetBinaryOperatorTypeFromMetadataName(method.Name);
 			if (bop != null && arguments.Length == 2) {
 				invocationExpression.Arguments.Clear(); // detach arguments from invocationExpression
@@ -136,8 +197,88 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				invocationExpression.ReplaceWith(arguments[0]);
 				return;
 			}
-			
+
 			return;
+		}
+
+		Expression WrapInParens(Expression expression)
+		{
+			if (expression is ConditionalExpression)
+				return new ParenthesizedExpression(expression);
+			return expression;
+		}
+
+		enum TokenKind
+		{
+			Error,
+			String,
+			Argument,
+			ArgumentWithFormat
+		}
+
+		private IEnumerable<(TokenKind, string)> TokenizeFormatString(string value)
+		{
+			int pos = -1;
+
+			int Peek(int steps = 1)
+			{
+				if (pos + steps < value.Length)
+					return value[pos + steps];
+				return -1;
+			}
+
+			int Next()
+			{
+				int val = Peek();
+				pos++;
+				return val;
+			}
+
+			int next;
+			TokenKind kind = TokenKind.String;
+			StringBuilder sb = new StringBuilder();
+
+			while ((next = Next()) > -1) {
+				switch ((char)next) {
+					case '{':
+						if (Peek() == '{') {
+							kind = TokenKind.String;
+							sb.Append("{{");
+							Next();
+						} else {
+							if (sb.Length > 0) {
+								yield return (kind, sb.ToString());
+							}
+							kind = TokenKind.Argument;
+							sb.Clear();
+						}
+						break;
+					case '}':
+						if (kind != TokenKind.String) {
+							yield return (kind, sb.ToString());
+							sb.Clear();
+							kind = TokenKind.String;
+						} else {
+							sb.Append((char)next);
+						}
+						break;
+					case ':':
+						if (kind == TokenKind.Argument) {
+							kind = TokenKind.ArgumentWithFormat;
+						}
+						sb.Append(':');
+						break;
+					default:
+						sb.Append((char)next);
+						break;
+				}
+			}
+			if (sb.Length > 0) {
+				if (kind == TokenKind.String)
+					yield return (kind, sb.ToString());
+				else
+					yield return (TokenKind.Error, null);
+			}
 		}
 
 		bool CheckArgumentsForStringConcat(Expression[] arguments)
@@ -188,13 +329,13 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return null;
 			}
 		}
-		
+
 		static UnaryOperatorType? GetUnaryOperatorTypeFromMetadataName(string name)
 		{
 			switch (name) {
 				case "op_LogicalNot":
 					return UnaryOperatorType.Not;
-				case  "op_OnesComplement":
+				case "op_OnesComplement":
 					return UnaryOperatorType.BitNot;
 				case "op_UnaryNegation":
 					return UnaryOperatorType.Minus;
@@ -208,7 +349,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 					return null;
 			}
 		}
-		
+
 		static readonly Expression getMethodOrConstructorFromHandlePattern =
 			new CastExpression(new Choice {
 					 new TypePattern(typeof(MethodInfo)),
@@ -217,7 +358,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				new NamedNode("ldtokenNode", new MemberReferenceExpression(new LdTokenPattern("method").ToExpression(), "MethodHandle")),
 				new OptionalNode(new MemberReferenceExpression(new TypeOfExpression(new AnyNode("declaringType")), "TypeHandle"))
 			));
-		
+
 		public override void VisitCastExpression(CastExpression castExpression)
 		{
 			base.VisitCastExpression(castExpression);
@@ -233,7 +374,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				castExpression.ReplaceWith(m.Get<AstNode>("ldtokenNode").Single().CopyAnnotationsFrom(castExpression));
 			}
 		}
-		
+
 		void IAstTransform.Run(AstNode rootNode, TransformContext context)
 		{
 			try {

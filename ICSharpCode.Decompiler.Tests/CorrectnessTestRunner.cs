@@ -16,6 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+using System;
 using System.CodeDom.Compiler;
 using System.IO;
 using System.Linq;
@@ -254,7 +255,7 @@ namespace ICSharpCode.Decompiler.Tests
 			try {
 				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: Path.Combine(TestCasePath, testOutputFileName));
-				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly);
+				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly, GetSettings(options));
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
 				
 				Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
@@ -268,7 +269,7 @@ namespace ICSharpCode.Decompiler.Tests
 					decompiledOutputFile.TempFiles.Delete();
 			}
 		}
-		
+
 		void RunIL(string testFileName, CompilerOptions options = CompilerOptions.UseDebug, AssemblerOptions asmOptions = AssemblerOptions.None)
 		{
 			string outputFile = null;
@@ -276,7 +277,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			try {
 				outputFile = Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions);
-				string decompiledCodeFile = Tester.DecompileCSharp(outputFile);
+				string decompiledCodeFile = Tester.DecompileCSharp(outputFile, GetSettings(options));
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
 				
 				Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
@@ -287,6 +288,16 @@ namespace ICSharpCode.Decompiler.Tests
 				if (decompiledOutputFile != null)
 					decompiledOutputFile.TempFiles.Delete();
 			}
+		}
+
+		DecompilerSettings GetSettings(CompilerOptions options)
+		{
+			if (!options.HasFlag(CompilerOptions.UseRoslyn)) {
+				return new DecompilerSettings {
+					StringInterpolation = false
+				};
+			}
+			return new DecompilerSettings();
 		}
 	}
 }

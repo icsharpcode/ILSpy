@@ -65,6 +65,7 @@
     <Compile Include="TestCases\ILPretty\Issue982.cs" />
     <Compile Include="TestCases\Pretty\AsyncMain.cs" />
     <Compile Include="TestCases\Pretty\CS72_PrivateProtected.cs" />
+    <Compile Include="TestCases\Pretty\CS6_StringInterpolation.cs" />
     <Compile Include="TestCases\Pretty\ExpressionTrees.cs" />
     <Compile Include="TestCases\Pretty\VariableNaming.cs" />
     <Compile Include="TestCases\Pretty\VariableNamingWithoutSymbols.cs" />
