@@ -306,7 +306,7 @@ namespace ICSharpCode.Decompiler
 		bool objectCollectionInitializers = true;
 
 		/// <summary>
-		/// Gets/Sets whether to use C# 3.0 object/collection initializers
+		/// Gets/Sets whether to use C# 3.0 object/collection initializers.
 		/// </summary>
 		public bool ObjectOrCollectionInitializers {
 			get { return objectCollectionInitializers; }
@@ -336,7 +336,7 @@ namespace ICSharpCode.Decompiler
 		bool showXmlDocumentation = true;
 
 		/// <summary>
-		/// Gets/Sets whether to include XML documentation comments in the decompiled code
+		/// Gets/Sets whether to include XML documentation comments in the decompiled code.
 		/// </summary>
 		public bool ShowXmlDocumentation {
 			get { return showXmlDocumentation; }
@@ -367,6 +367,21 @@ namespace ICSharpCode.Decompiler
 			set {
 				if (expandMemberDefinitions != value) {
 					expandMemberDefinitions = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		bool decompileMemberBodies = true;
+
+		/// <summary>
+		/// Gets/Sets whether member bodies should be decompiled.
+		/// </summary>
+		public bool DecompileMemberBodies {
+			get { return decompileMemberBodies; }
+			set {
+				if (decompileMemberBodies != value) {
+					decompileMemberBodies = value;
 					OnPropertyChanged();
 				}
 			}
