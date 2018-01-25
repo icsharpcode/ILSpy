@@ -238,6 +238,24 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 		}
 
+		public static CSharpDecompiler GetDecompilerForSnippet(string csharpText)
+		{
+			var syntaxTree = SyntaxFactory.ParseSyntaxTree(csharpText);
+			var compilation = CSharpCompilation.Create(
+				"TestAssembly",
+				new[] { syntaxTree },
+				defaultReferences.Value,
+				new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+			var peStream = new MemoryStream();
+			var emitResult = compilation.Emit(peStream);
+			peStream.Position = 0;
+
+			var moduleDefinition = ModuleDefinition.ReadModule(peStream);
+			var decompiler = new CSharpDecompiler(moduleDefinition, new DecompilerSettings());
+
+			return decompiler;
+		}
+
 		internal static string GetSuffix(CompilerOptions cscOptions)
 		{
 			string suffix = "";

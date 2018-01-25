@@ -69,6 +69,7 @@
     <Compile Include="TestCases\Pretty\ExpressionTrees.cs" />
     <Compile Include="TestCases\Pretty\VariableNaming.cs" />
     <Compile Include="TestCases\Pretty\VariableNamingWithoutSymbols.cs" />
+    <Compile Include="Util\SequencePointTests.cs" />
     <None Include="TestCases\ILPretty\Issue959.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Debug.cs" />
     <None Include="TestCases\ILPretty\FSharpLoops_Release.cs" />
