@@ -16,7 +16,7 @@ using System.Diagnostics.CodeAnalysis;
 [assembly: AssemblyDescription(".NET assembly inspector and decompiler")]
 [assembly: AssemblyCompany("ic#code")]
 [assembly: AssemblyProduct("ILSpy")]
-[assembly: AssemblyCopyright("Copyright 2011-2016 AlphaSierraPapa for the SharpDevelop Team")]
+[assembly: AssemblyCopyright("Copyright 2011-$INSERTYEAR$ AlphaSierraPapa for the SharpDevelop Team")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
