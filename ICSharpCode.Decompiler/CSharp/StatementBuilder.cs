@@ -723,7 +723,7 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		protected internal override Statement VisitBlockContainer(BlockContainer container)
 		{
-			if (container.EntryPoint.IncomingEdgeCount > 1) {
+			if (container.Kind != ContainerKind.Normal && container.EntryPoint.IncomingEdgeCount > 1) {
 				var oldContinueTarget = continueTarget;
 				var oldContinueCount = continueCount;
 				var oldBreakTarget = breakTarget;
