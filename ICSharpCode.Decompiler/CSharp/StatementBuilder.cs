@@ -402,6 +402,10 @@ namespace ICSharpCode.Decompiler.CSharp
 
 		Statement TransformToForeach(UsingInstruction inst, out Expression resource)
 		{
+			if (!settings.ForEachStatement) {
+				resource = null;
+				return null;
+			}
 			// Check if the using resource matches the GetEnumerator pattern.
 			resource = exprBuilder.Translate(inst.ResourceExpression);
 			var m = getEnumeratorPattern.Match(resource);

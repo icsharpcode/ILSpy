@@ -236,6 +236,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		Statement TransformForeachOnArray(ForStatement forStatement)
 		{
+			if (!context.Settings.ForEachStatement) return null;
 			Match m = forOnArrayPattern.Match(forStatement);
 			if (!m.Success) return null;
 			var itemVariable = m.Get<IdentifierExpression>("itemVariable").Single().GetILVariable();
@@ -363,6 +364,7 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 
 		Statement TransformForeachOnMultiDimArray(ExpressionStatement expressionStatement)
 		{
+			if (!context.Settings.ForEachStatement) return null;
 			Match m;
 			Statement stmt = expressionStatement;
 			IL.ILVariable collection = null;

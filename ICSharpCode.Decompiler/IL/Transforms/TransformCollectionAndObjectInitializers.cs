@@ -33,6 +33,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		void IStatementTransform.Run(Block block, int pos, StatementTransformContext context)
 		{
+			if (!context.Settings.ObjectOrCollectionInitializers) return;
 			this.context = context;
 			try {
 				DoTransform(block, pos);

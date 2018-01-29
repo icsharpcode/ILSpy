@@ -99,6 +99,7 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 
 		public void Run(Block block, int pos, StatementTransformContext context)
 		{
+			if (!context.Settings.ExpressionTrees) return;
 			this.context = context;
 			this.conversions = CSharpConversions.Get(context.TypeSystem.Compilation);
 			this.resolver = new CSharpResolver(context.TypeSystem.Compilation);
