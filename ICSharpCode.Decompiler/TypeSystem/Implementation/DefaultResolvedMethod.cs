@@ -250,6 +250,8 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		{
 			if (TypeParameterSubstitution.Identity.Equals(substitution))
 				return this;
+			if (DeclaringType is ArrayType)
+				return new SpecializedMethod(this, substitution);
 			if (TypeParameters.Count == 0) {
 				if (DeclaringTypeDefinition == null || DeclaringTypeDefinition.TypeParameterCount == 0)
 					return this;

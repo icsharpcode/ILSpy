@@ -50,5 +50,15 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Pretty
 		{
 			return t == null;
 		}
+
+		public T[] NewArray<T>(int size)
+		{
+			return new T[size];
+		}
+
+		public T[,] NewArray<T>(int size1, int size2)
+		{
+			return new T[size1, size2];
+		}
 	}
 }

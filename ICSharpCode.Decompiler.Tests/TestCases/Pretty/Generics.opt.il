@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly sxsfxc4c
+.assembly '43fwrtdk'
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module sxsfxc4c.dll
-// MVID: {4BDFEFB1-623B-4D1C-B489-AE8EC4D00CF2}
+.module '43fwrtdk.dll'
+// MVID: {9D3BB32A-C2A7-4153-BBA3-FDE1FA41BC2E}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x02FA0000
+// Image base: 0x03A50000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -133,6 +133,29 @@
     IL_0007:  ceq
     IL_0009:  ret
   } // end of method Generics::IsNull
+
+  .method public hidebysig instance !!T[] 
+          NewArray<T>(int32 size) cil managed
+  {
+    // Code size       7 (0x7)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  newarr     !!T
+    IL_0006:  ret
+  } // end of method Generics::NewArray
+
+  .method public hidebysig instance !!T[0...,0...] 
+          NewArray<T>(int32 size1,
+                      int32 size2) cil managed
+  {
+    // Code size       8 (0x8)
+    .maxstack  8
+    IL_0000:  ldarg.1
+    IL_0001:  ldarg.2
+    IL_0002:  newobj     instance void !!T[0...,0...]::.ctor(int32,
+                                                             int32)
+    IL_0007:  ret
+  } // end of method Generics::NewArray
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed

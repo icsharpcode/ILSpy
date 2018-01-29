@@ -1,5 +1,5 @@
 
-//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.0.30319.17929
+//  Microsoft (R) .NET Framework IL Disassembler.  Version 4.6.1055.0
 //  Copyright (c) Microsoft Corporation.  All rights reserved.
 
 
@@ -10,7 +10,7 @@
   .publickeytoken = (B7 7A 5C 56 19 34 E0 89 )                         // .z\V.4..
   .ver 4:0:0:0
 }
-.assembly lb3mdocq
+.assembly xjme13tr
 {
   .custom instance void [mscorlib]System.Runtime.CompilerServices.CompilationRelaxationsAttribute::.ctor(int32) = ( 01 00 08 00 00 00 00 00 ) 
   .custom instance void [mscorlib]System.Runtime.CompilerServices.RuntimeCompatibilityAttribute::.ctor() = ( 01 00 01 00 54 02 16 57 72 61 70 4E 6F 6E 45 78   // ....T..WrapNonEx
@@ -20,15 +20,15 @@
   .hash algorithm 0x00008004
   .ver 0:0:0:0
 }
-.module lb3mdocq.dll
-// MVID: {4412C112-CBEB-40EB-BC42-5C82526C8657}
+.module xjme13tr.dll
+// MVID: {46E33A68-F4FB-4A9A-BF39-6043E66E8EF6}
 .custom instance void [mscorlib]System.Security.UnverifiableCodeAttribute::.ctor() = ( 01 00 00 00 ) 
 .imagebase 0x10000000
 .file alignment 0x00000200
 .stackreserve 0x00100000
 .subsystem 0x0003       // WINDOWS_CUI
 .corflags 0x00000001    //  ILONLY
-// Image base: 0x03060000
+// Image base: 0x04990000
 
 
 // =============== CLASS MEMBERS DECLARATION ===================
@@ -152,6 +152,41 @@
     IL_000d:  ldloc.0
     IL_000e:  ret
   } // end of method Generics::IsNull
+
+  .method public hidebysig instance !!T[] 
+          NewArray<T>(int32 size) cil managed
+  {
+    // Code size       12 (0xc)
+    .maxstack  1
+    .locals init (!!T[] V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  newarr     !!T
+    IL_0007:  stloc.0
+    IL_0008:  br.s       IL_000a
+
+    IL_000a:  ldloc.0
+    IL_000b:  ret
+  } // end of method Generics::NewArray
+
+  .method public hidebysig instance !!T[0...,0...] 
+          NewArray<T>(int32 size1,
+                      int32 size2) cil managed
+  {
+    // Code size       13 (0xd)
+    .maxstack  2
+    .locals init (!!T[0...,0...] V_0)
+    IL_0000:  nop
+    IL_0001:  ldarg.1
+    IL_0002:  ldarg.2
+    IL_0003:  newobj     instance void !!T[0...,0...]::.ctor(int32,
+                                                             int32)
+    IL_0008:  stloc.0
+    IL_0009:  br.s       IL_000b
+
+    IL_000b:  ldloc.0
+    IL_000c:  ret
+  } // end of method Generics::NewArray
 
   .method public hidebysig specialname rtspecialname 
           instance void  .ctor() cil managed
