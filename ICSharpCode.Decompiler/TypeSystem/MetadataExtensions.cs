@@ -1,7 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -9,6 +12,28 @@ namespace ICSharpCode.Decompiler.TypeSystem
 {
 	static class MetadataExtensions
 	{
+		public static string GetFullAssemblyName(this MetadataReader reader)
+		{
+			if (!reader.IsAssembly)
+				return string.Empty;
+			var asm = reader.GetAssemblyDefinition();
+			string publicKey = "null";
+			if (!asm.PublicKey.IsNil) {
+				SHA1 sha1 = SHA1.Create();
+				var publicKeyTokenBytes = sha1.ComputeHash(reader.GetBlobBytes(asm.PublicKey)).Skip(12).ToArray();
+				publicKey = publicKeyTokenBytes.ToHexString();
+			}
+			return $"{reader.GetString(asm.Name)}, Version={asm.Version}, Culture={reader.GetString(asm.Culture)}, PublicKeyToken={publicKey}";
+		}
+
+		static string ToHexString(this byte[] bytes)
+		{
+			StringBuilder sb = new StringBuilder(bytes.Length * 2);
+			foreach (var b in bytes)
+				sb.AppendFormat("{0:x2}", b);
+			return sb.ToString();
+		}
+
 		/// <summary>
 		/// Gets the type of the attribute.
 		/// </summary>
@@ -90,6 +115,23 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		public unsafe static MethodSemanticsAttributes GetMethodSemanticsAttributes(this MethodDefinitionHandle handle, MetadataReader reader)
+		{
+			byte* startPointer = reader.MetadataPointer;
+			int offset = reader.GetTableMetadataOffset(TableIndex.MethodSemantics);
+			int rowSize = reader.GetTableRowSize(TableIndex.MethodSemantics);
+			int rowCount = reader.GetTableRowCount(TableIndex.MethodSemantics);
+			int token = reader.GetToken(handle);
+			for (int row = rowCount - 1; row >= 0; row--) {
+				byte* ptr = startPointer + offset + rowSize * row;
+				ushort methodToken = *(ptr + 2);
+				if (token == methodToken) {
+					return (MethodSemanticsAttributes)(*ptr);
+				}
+			}
+			return 0;
+		}
+
 		public static bool IsValueType(this TypeDefinition typeDefinition, MetadataReader reader)
 		{
 			if (typeDefinition.BaseType.IsNil)
@@ -101,11 +143,41 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return baseType == "System.ValueType" && thisType != "System.Enum";
 		}
 
+		public static bool IsConstructor(this MethodDefinition methodDefinition, MetadataReader reader)
+		{
+			string name = reader.GetString(methodDefinition.Name);
+			return (methodDefinition.Attributes & (MethodAttributes.RTSpecialName | MethodAttributes.SpecialName)) != 0
+				&& (name == ".cctor" || name == ".ctor");
+		}
+
 		public static bool IsEnum(this TypeDefinition typeDefinition, MetadataReader reader)
 		{
 			if (typeDefinition.BaseType.IsNil)
 				return false;
 			return typeDefinition.BaseType.GetFullTypeName(reader).ToString() == "System.Enum";
+		}
+
+		public static bool HasOverrides(this MethodDefinitionHandle handle, MetadataReader reader)
+		{
+			for (int row = 1; row <= reader.GetTableRowCount(TableIndex.MethodImpl); row++) {
+				var impl = reader.GetMethodImplementation(MetadataTokens.MethodImplementationHandle(row));
+				if (impl.MethodBody == handle) return true;
+			}
+			return false;
+		}
+
+		public static bool HasParameters(this PropertyDefinitionHandle handle, MetadataReader reader)
+		{
+			var a = reader.GetPropertyDefinition(handle).GetAccessors();
+			if (!a.Getter.IsNil) {
+				var m = reader.GetMethodDefinition(a.Getter);
+				return m.GetParameters().Count > 0;
+			}
+			if (!a.Setter.IsNil) {
+				var m = reader.GetMethodDefinition(a.Setter);
+				return m.GetParameters().Count > 1;
+			}
+			return false;
 		}
 
 		public static PrimitiveTypeCode ToPrimtiveTypeCode(this KnownTypeCode typeCode)

@@ -73,16 +73,35 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 	public sealed class PinnedTypeReference : ITypeReference
 	{
-		readonly ITypeReference elementType;
+		public ITypeReference ElementType { get; }
 
 		public PinnedTypeReference(ITypeReference elementType)
 		{
-			this.elementType = elementType;
+			ElementType = elementType;
 		}
 
 		public IType Resolve(ITypeResolveContext context)
 		{
-			return new PinnedType(elementType.Resolve(context));
+			return new PinnedType(ElementType.Resolve(context));
+		}
+	}
+
+	public sealed class ModifiedTypeReference : ITypeReference
+	{
+		public ITypeReference ElementType { get; }
+		public ITypeReference ModifierType { get; }
+		public bool IsRequired { get; }
+
+		public ModifiedTypeReference(ITypeReference elementType, ITypeReference modifierType, bool isRequired)
+		{
+			ElementType = elementType;
+			ModifierType = modifierType;
+			IsRequired = isRequired;
+		}
+
+		public IType Resolve(ITypeResolveContext context)
+		{
+			return ElementType.Resolve(context);
 		}
 	}
 
@@ -122,7 +141,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ITypeReference GetModifiedType(ITypeReference modifier, ITypeReference unmodifiedType, bool isRequired)
 		{
-			return unmodifiedType;
+			return new ModifiedTypeReference(unmodifiedType, modifier, isRequired);
 		}
 
 		public ITypeReference GetPinnedType(ITypeReference elementType)
@@ -147,7 +166,7 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 
 		public ITypeReference GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 		{
-			return new DefaultUnresolvedTypeDefinition(handle.GetFullTypeName(reader).ReflectionName);
+			return new GetClassTypeReference(handle.GetFullTypeName(reader), DefaultAssemblyReference.CurrentAssembly);
 		}
 
 		public ITypeReference GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
@@ -165,40 +184,47 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 	}
 
-	class TypeSystemAttributeTypeProvider : ICustomAttributeTypeProvider<ITypeReference>
+	class TypeSystemAttributeTypeProvider : ICustomAttributeTypeProvider<IType>
 	{
-		public ITypeReference GetPrimitiveType(PrimitiveTypeCode typeCode)
+		readonly ITypeResolveContext context;
+
+		public TypeSystemAttributeTypeProvider(ITypeResolveContext context)
 		{
-			return KnownTypeReference.Get(typeCode.ToKnownTypeCode());
+			this.context = context;
 		}
 
-		public ITypeReference GetSystemType()
+		public IType GetPrimitiveType(PrimitiveTypeCode typeCode)
 		{
-			return KnownTypeReference.Get(KnownTypeCode.Type);
+			return context.Compilation.FindType(typeCode.ToKnownTypeCode());
 		}
 
-		public ITypeReference GetSZArrayType(ITypeReference elementType)
+		public IType GetSystemType()
 		{
-			return new ArrayTypeReference(elementType);
+			return context.Compilation.FindType(KnownTypeCode.Type);
 		}
 
-		public ITypeReference GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
+		public IType GetSZArrayType(IType elementType)
+		{
+			return new ArrayType(context.Compilation, elementType);
+		}
+
+		public IType GetTypeFromDefinition(MetadataReader reader, TypeDefinitionHandle handle, byte rawTypeKind)
 		{
 			var type = reader.GetTypeDefinition(handle);
-			return new DefaultUnresolvedTypeDefinition(type.GetFullTypeName(reader).ToString());
+			return new DefaultUnresolvedTypeDefinition(type.GetFullTypeName(reader).ToString()).Resolve(context);
 		}
 
-		public ITypeReference GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
+		public IType GetTypeFromReference(MetadataReader reader, TypeReferenceHandle handle, byte rawTypeKind)
 		{
-			return new DefaultUnresolvedTypeDefinition(handle.GetFullTypeName(reader).ToString());
+			return new DefaultUnresolvedTypeDefinition(handle.GetFullTypeName(reader).ToString()).Resolve(context);
 		}
 
-		public ITypeReference GetTypeFromSerializedName(string name)
+		public IType GetTypeFromSerializedName(string name)
 		{
-			return new GetClassTypeReference(new FullTypeName(name));
+			return new GetClassTypeReference(new FullTypeName(name)).Resolve(context);
 		}
 
-		public PrimitiveTypeCode GetUnderlyingEnumType(ITypeReference type)
+		public PrimitiveTypeCode GetUnderlyingEnumType(IType type)
 		{
 			var def = type.GetEnumUnderlyingType().GetDefinition();
 			if (def == null)
@@ -209,6 +235,40 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		public bool IsSystemType(IType type)
 		{
 			return type.IsKnownType(KnownTypeCode.Type);
+		}
+	}
+
+	public class MetadataUnresolvedAttributeBlob : IUnresolvedAttribute, ISupportsInterning
+	{
+		MetadataReader reader;
+		ITypeReference attributeType;
+		CustomAttribute attribute;
+
+		public MetadataUnresolvedAttributeBlob(MetadataReader reader, ITypeReference attributeType, CustomAttribute attribute)
+		{
+			this.reader = reader;
+			this.attributeType = attributeType;
+			this.attribute = attribute;
+		}
+
+		public DomRegion Region => DomRegion.Empty;
+
+		public IAttribute CreateResolvedAttribute(ITypeResolveContext context)
+		{
+			var blob = reader.GetBlobBytes(attribute.Value);
+			var signature = attribute.DecodeValue(new TypeSystemAttributeTypeProvider(context));
+			return new UnresolvedAttributeBlob(attributeType, signature.FixedArguments.Select(t => t.Type.ToTypeReference()).ToArray(), blob)
+				.CreateResolvedAttribute(context);
+		}
+
+		bool ISupportsInterning.EqualsForInterning(ISupportsInterning other)
+		{
+			throw new NotImplementedException();
+		}
+
+		int ISupportsInterning.GetHashCodeForInterning()
+		{
+			throw new NotImplementedException();
 		}
 	}
 }

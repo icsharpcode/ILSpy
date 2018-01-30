@@ -426,11 +426,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 		void WriteMarshalInfo(BlobReader marshalInfo)
 		{
 			output.Write("marshal(");
-			WriteNativeType(marshalInfo);
+			WriteNativeType(ref marshalInfo);
 			output.Write(") ");
 		}
 
-		void WriteNativeType(BlobReader blob)
+		void WriteNativeType(ref BlobReader blob)
 		{
 			byte type;
 			switch (type = blob.ReadByte()) {
@@ -483,7 +483,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					goto default;  // ??
 				case 0x2a: // NATIVE_TYPE_ARRAY
 					if (blob.RemainingBytes > 0)
-						WriteNativeType(blob);
+						WriteNativeType(ref blob);
 					output.Write('[');
 					int sizeParameterIndex = blob.TryReadCompressedInteger(out int value) ? value : -1;
 					int size = blob.TryReadCompressedInteger(out value) ? value : -1;
@@ -596,7 +596,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					output.Write("fixed array");
 					output.Write("[{0}]", blob.TryReadCompressedInteger(out value) ? value : 0);
 					output.Write(' ');
-					WriteNativeType(blob);
+					WriteNativeType(ref blob);
 					break;
 				case 0x22: // ByValStr
 					output.Write("byvalstr");
