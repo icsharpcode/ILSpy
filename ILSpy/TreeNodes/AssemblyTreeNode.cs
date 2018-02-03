@@ -272,6 +272,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					case FileNotFoundException fileNotFound:
 						HandleException(fileNotFound, "The file was not found.");
 						return;
+					case DirectoryNotFoundException dirNotFound:
+						HandleException(dirNotFound, "The directory was not found.");
+						return;
 					default:
 						throw;
 				}
