@@ -55,6 +55,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void Issue1038()
+		{
+			Run();
+		}
+
+		[Test]
 		public void Issue1047()
 		{
 			Run();

@@ -633,7 +633,46 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 				}
 			}
 		};
-		
+
+		static readonly Accessor automaticEventPatternV4MCS = new Accessor {
+			Attributes = { new Repeat(new AnyNode()) },
+			Body = new BlockStatement {
+				new AssignmentExpression {
+					Left = new NamedNode("var1", new IdentifierExpression(Pattern.AnyString)),
+					Operator = AssignmentOperatorType.Assign,
+					Right = new NamedNode(
+						"field",
+						new MemberReferenceExpression {
+								Target = new Choice { new ThisReferenceExpression(), new TypeReferenceExpression { Type = new AnyNode() } },
+								MemberName = Pattern.AnyString
+						}
+					)
+				},
+				new DoWhileStatement {
+					EmbeddedStatement = new BlockStatement {
+						new AssignmentExpression(new NamedNode("var2", new IdentifierExpression(Pattern.AnyString)), new IdentifierExpressionBackreference("var1")),
+						new AssignmentExpression {
+							Left = new IdentifierExpressionBackreference("var1"),
+							Right = new InvocationExpression(new MemberReferenceExpression(new TypeReferenceExpression(new TypePattern(typeof(System.Threading.Interlocked)).ToType()),
+								"CompareExchange",
+								new AstType[] { new AnyNode("type") }), // type argument+
+								new Expression[] { // arguments
+									new DirectionExpression { FieldDirection = FieldDirection.Ref, Expression = new Backreference("field") },
+									new CastExpression(new Backreference("type"), new InvocationExpression(new AnyNode("delegateCombine").ToExpression(), new IdentifierExpressionBackreference("var2"), new IdentifierExpression("value"))),
+									new IdentifierExpressionBackreference("var1")
+								}
+							)
+						}
+					},
+					Condition = new BinaryOperatorExpression {
+						Left = new CastExpression(new TypePattern(typeof(object)), new IdentifierExpressionBackreference("var1")),
+						Operator = BinaryOperatorType.InEquality,
+						Right = new IdentifierExpressionBackreference("var2")
+					},
+				}
+			}
+		};
+
 		bool CheckAutomaticEventMatch(Match m, CustomEventDeclaration ev, bool isAddAccessor)
 		{
 			if (!m.Success)
@@ -678,10 +717,22 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 			return true;
 		}
 
+		bool CheckAutomaticEventV4MCS(CustomEventDeclaration ev, out Match addMatch, out Match removeMatch)
+		{
+			addMatch = removeMatch = default(Match);
+			addMatch = automaticEventPatternV4MCS.Match(ev.AddAccessor);
+			if (!CheckAutomaticEventMatch(addMatch, ev, true))
+				return false;
+			removeMatch = automaticEventPatternV4MCS.Match(ev.RemoveAccessor);
+			if (!CheckAutomaticEventMatch(removeMatch, ev, false))
+				return false;
+			return true;
+		}
+
 		EventDeclaration TransformAutomaticEvents(CustomEventDeclaration ev)
 		{
 			Match m1, m2;
-			if (!CheckAutomaticEventV4(ev, out m1, out m2) && !CheckAutomaticEventV2(ev, out m1, out m2))
+			if (!CheckAutomaticEventV4(ev, out m1, out m2) && !CheckAutomaticEventV2(ev, out m1, out m2) && !CheckAutomaticEventV4MCS(ev, out m1, out m2))
 				return null;
 			RemoveCompilerGeneratedAttribute(ev.AddAccessor.Attributes, attributeTypesToRemoveFromAutoEvents);
 			EventDeclaration ed = new EventDeclaration();
