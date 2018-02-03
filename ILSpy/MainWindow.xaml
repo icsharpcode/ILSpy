@@ -78,7 +78,7 @@
 				<Image Width="16" Height="16" Source="Images/PrivateInternal.png" />
 			</CheckBox>
 			<Separator />
-			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100"
+			<ComboBox Name="languageComboBox" DisplayMemberPath="Name" Width="100" MaxDropDownHeight="Auto"
 			          ItemsSource="{x:Static local:Languages.AllLanguages}"
 			          SelectedItem="{Binding FilterSettings.Language}"/>
 		</ToolBar>
