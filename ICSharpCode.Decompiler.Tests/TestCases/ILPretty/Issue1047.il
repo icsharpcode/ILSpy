@@ -29,44 +29,14 @@
 
 .class public auto ansi beforefieldinit ICSharpCode.Decompiler.Tests.TestCases.ILPretty.Issue1047
 {
+	.field private static bool dummy;
 	.method private hidebysig instance void ProblemMethod() cil managed 
 	{
-		.maxstack 4
-
-		// loop start
-		IL_0000: nop
-		blt IL_0047
-
-		nop
-		brfalse IL_0037
-
-		nop
-
-		IL_0037: nop
+		IL_0000: ldfld bool ICSharpCode.Decompiler.Tests.TestCases.ILPretty.Issue1047::dummy;
+		brfalse L_tgt1
 		br L_exit
-
-		IL_0047: nop
-		brtrue IL_0083
-
-		nop
+		L_tgt1: br IL_0000
 		br IL_0000
-
-		IL_0083: nop
-		ble.un IL_00fa
-
-		nop
-		brfalse IL_00db
-
-		nop
-		brfalse IL_00fa
-
-		IL_00db: nop
-
-		IL_00fa: br L_exit
-
-		br IL_0000
-		// end loop
-
 		L_exit: ret
 	}
 }
