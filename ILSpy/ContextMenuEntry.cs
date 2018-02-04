@@ -149,21 +149,22 @@ namespace ICSharpCode.ILSpy
 		readonly SharpTreeView treeView;
 		readonly DecompilerTextView textView;
 		readonly ListBox listBox;
+		readonly Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] entries;
 		
-		[ImportMany(typeof(IContextMenuEntry))]
-		Lazy<IContextMenuEntry, IContextMenuEntryMetadata>[] entries = null;
+		private ContextMenuProvider()
+		{
+			entries = App.ExportProvider.GetExports<IContextMenuEntry, IContextMenuEntryMetadata>().ToArray();
+		}
 		
-		ContextMenuProvider(SharpTreeView treeView, DecompilerTextView textView = null)
+		ContextMenuProvider(SharpTreeView treeView, DecompilerTextView textView = null) : this()
 		{
 			this.treeView = treeView;
 			this.textView = textView;
-			App.CompositionContainer.ComposeParts(this);
 		}
 		
-		ContextMenuProvider(ListBox listBox)
+		ContextMenuProvider(ListBox listBox) : this()
 		{
 			this.listBox = listBox;
-			App.CompositionContainer.ComposeParts(this);
 		}
 		
 		void treeView_ContextMenuOpening(object sender, ContextMenuEventArgs e)

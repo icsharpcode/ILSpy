@@ -20,7 +20,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.ComponentModel.Composition;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -55,8 +54,7 @@ namespace ICSharpCode.ILSpy
 		AssemblyList assemblyList;
 		AssemblyListTreeNode assemblyListTreeNode;
 		
-		[Import]
-		DecompilerTextView decompilerTextView = null;
+		readonly DecompilerTextView decompilerTextView;
 		
 		static MainWindow instance;
 		
@@ -80,7 +78,7 @@ namespace ICSharpCode.ILSpy
 			this.DataContext = sessionSettings;
 			
 			InitializeComponent();
-			App.CompositionContainer.ComposeParts(this);
+			decompilerTextView = App.ExportProvider.GetExportedValue<DecompilerTextView>();
 			mainPane.Content = decompilerTextView;
 			
 			if (sessionSettings.SplitterPosition > 0 && sessionSettings.SplitterPosition < 1) {
@@ -105,13 +103,12 @@ namespace ICSharpCode.ILSpy
 		}
 		
 		#region Toolbar extensibility
-		[ImportMany("ToolbarCommand", typeof(ICommand))]
-		Lazy<ICommand, IToolbarCommandMetadata>[] toolbarCommands = null;
 		
 		void InitToolbar()
 		{
 			int navigationPos = 0;
 			int openPos = 1;
+			var toolbarCommands = App.ExportProvider.GetExports<ICommand, IToolbarCommandMetadata>("ToolbarCommand");
 			foreach (var commandGroup in toolbarCommands.OrderBy(c => c.Metadata.ToolbarOrder).GroupBy(c => c.Metadata.ToolbarCategory)) {
 				if (commandGroup.Key == "Navigation") {
 					foreach (var command in commandGroup) {
@@ -148,11 +145,10 @@ namespace ICSharpCode.ILSpy
 		#endregion
 		
 		#region Main Menu extensibility
-		[ImportMany("MainMenuCommand", typeof(ICommand))]
-		Lazy<ICommand, IMainMenuCommandMetadata>[] mainMenuCommands = null;
 		
 		void InitMainMenu()
 		{
+			var mainMenuCommands = App.ExportProvider.GetExports<ICommand, IMainMenuCommandMetadata>("MainMenuCommand");
 			foreach (var topLevelMenu in mainMenuCommands.OrderBy(c => c.Metadata.MenuOrder).GroupBy(c => c.Metadata.Menu)) {
 				var topLevelMenuItem = mainMenu.Items.OfType<MenuItem>().FirstOrDefault(m => (m.Header as string) == topLevelMenu.Key);
 				foreach (var category in topLevelMenu.GroupBy(c => c.Metadata.MenuCategory)) {

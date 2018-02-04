@@ -390,7 +390,7 @@ namespace ICSharpCode.ILSpy
 					}
 					return new[] { Tuple.Create("EmbeddedResource", fileName) };
 				}
-				foreach (var handler in App.CompositionContainer.GetExportedValues<IResourceFileHandler>()) {
+				foreach (var handler in App.ExportProvider.GetExportedValues<IResourceFileHandler>()) {
 					if (handler.CanHandle(fileName, options)) {
 						entryStream.Position = 0;
 						return new[] { Tuple.Create(handler.EntryType, handler.WriteResourceToFile(assembly, fileName, entryStream, options)) };
