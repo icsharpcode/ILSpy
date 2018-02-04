@@ -94,7 +94,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ExceptionHandling([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
-			Run(cscOptions: cscOptions);
+			Run(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				NullPropagation = false
+			});
 		}
 
 		[Test]
@@ -254,7 +256,7 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 
 			var executable = Tester.AssembleIL(ilFile, asmOptions | AssemblerOptions.Library);
-			var decompiled = Tester.DecompileCSharp(executable, decompilerSettings);
+			var decompiled = Tester.DecompileCSharp(executable, decompilerSettings ?? Tester.GetSettings(cscOptions));
 			
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).ToArray());
 		}

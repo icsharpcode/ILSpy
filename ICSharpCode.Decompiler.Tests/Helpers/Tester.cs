@@ -238,6 +238,16 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 			}
 		}
 
+		internal static DecompilerSettings GetSettings(CompilerOptions cscOptions)
+		{
+			var settings = new DecompilerSettings();
+			if ((cscOptions & CompilerOptions.UseRoslyn) == 0) {
+				// disable C# features not available in legacy compiler
+				settings.NullPropagation = false;
+			}
+			return settings;
+		}
+
 		internal static string GetSuffix(CompilerOptions cscOptions)
 		{
 			string suffix = "";
