@@ -186,6 +186,8 @@ namespace ICSharpCode.Decompiler.CSharp.Transforms
 						case UnaryOperatorType.Decrement:
 						case UnaryOperatorType.Await:
 							return true;
+						case UnaryOperatorType.NullConditionalRewrap:
+							return IsValidInStatementExpression(uoe.Expression);
 						default:
 							return false;
 					}

@@ -54,6 +54,12 @@ namespace ICSharpCode.Decompiler.Tests
 			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
 		};
 
+		static readonly CompilerOptions[] roslynOnlyOptions =
+		{
+			CompilerOptions.UseRoslyn,
+			CompilerOptions.Optimize | CompilerOptions.UseRoslyn
+		};
+
 		[Test]
 		public void Comparisons([ValueSource("defaultOptions")] CompilerOptions options)
 		{
@@ -169,6 +175,12 @@ namespace ICSharpCode.Decompiler.Tests
 		}
 
 		[Test]
+		public void NullPropagation([ValueSource("roslynOnlyOptions")] CompilerOptions options)
+		{
+			RunCS(options: options);
+		}
+
+		[Test]
 		public void BitNot([Values(false, true)] bool force32Bit)
 		{
 			CompilerOptions compiler = CompilerOptions.UseDebug;
@@ -255,7 +267,7 @@ namespace ICSharpCode.Decompiler.Tests
 			try {
 				outputFile = Tester.CompileCSharp(Path.Combine(TestCasePath, testFileName), options,
 					outputFileName: Path.Combine(TestCasePath, testOutputFileName));
-				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly, GetSettings(options));
+				string decompiledCodeFile = Tester.DecompileCSharp(outputFile.PathToAssembly, Tester.GetSettings(options));
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
 				
 				Tester.RunAndCompareOutput(testFileName, outputFile.PathToAssembly, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
@@ -277,7 +289,7 @@ namespace ICSharpCode.Decompiler.Tests
 
 			try {
 				outputFile = Tester.AssembleIL(Path.Combine(TestCasePath, testFileName), asmOptions);
-				string decompiledCodeFile = Tester.DecompileCSharp(outputFile, GetSettings(options));
+				string decompiledCodeFile = Tester.DecompileCSharp(outputFile, Tester.GetSettings(options));
 				decompiledOutputFile = Tester.CompileCSharp(decompiledCodeFile, options);
 				
 				Tester.RunAndCompareOutput(testFileName, outputFile, decompiledOutputFile.PathToAssembly, decompiledCodeFile);
@@ -288,16 +300,6 @@ namespace ICSharpCode.Decompiler.Tests
 				if (decompiledOutputFile != null)
 					decompiledOutputFile.TempFiles.Delete();
 			}
-		}
-
-		DecompilerSettings GetSettings(CompilerOptions options)
-		{
-			if (!options.HasFlag(CompilerOptions.UseRoslyn)) {
-				return new DecompilerSettings {
-					StringInterpolation = false
-				};
-			}
-			return new DecompilerSettings();
 		}
 	}
 }

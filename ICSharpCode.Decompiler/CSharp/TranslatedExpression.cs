@@ -201,6 +201,13 @@ namespace ICSharpCode.Decompiler.CSharp
 			if (targetType.Kind == TypeKind.Unknown) {
 				return this; // don't attempt to insert cast to '?'
 			}
+			if (Expression is UnaryOperatorExpression uoe && uoe.Operator == UnaryOperatorType.NullConditional && targetType.IsReferenceType == true) {
+				// "(T)(x?).AccessChain" is invalid, but "((T)x)?.AccessChain" is valid and equivalent
+				return new UnaryOperatorExpression(
+					UnaryOperatorType.NullConditional,
+					UnwrapChild(uoe.Expression).ConvertTo(targetType, expressionBuilder, checkForOverflow, allowImplicitConversion)
+				).WithRR(new ResolveResult(targetType)).WithoutILInstruction();
+			}
 			var compilation = expressionBuilder.compilation;
 			bool isLifted = type.IsKnownType(KnownTypeCode.NullableOfT) && targetType.IsKnownType(KnownTypeCode.NullableOfT);
 			IType utype = isLifted ? NullableType.GetUnderlyingType(type) : type;

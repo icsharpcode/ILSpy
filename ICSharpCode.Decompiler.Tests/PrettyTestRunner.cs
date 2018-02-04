@@ -94,7 +94,9 @@ namespace ICSharpCode.Decompiler.Tests
 		[Test]
 		public void ExceptionHandling([ValueSource("defaultOptions")] CompilerOptions cscOptions)
 		{
-			RunForLibrary(cscOptions: cscOptions);
+			RunForLibrary(cscOptions: cscOptions, decompilerSettings: new DecompilerSettings {
+				NullPropagation = false
+			});
 		}
 
 		[Test]
@@ -236,6 +238,12 @@ namespace ICSharpCode.Decompiler.Tests
 			Run(cscOptions: cscOptions);
 		}
 
+		[Test]
+		public void NullPropagation([ValueSource("roslynOnlyOptions")] CompilerOptions cscOptions)
+		{
+			RunForLibrary(cscOptions: cscOptions);
+		}
+
 		void RunForLibrary([CallerMemberName] string testName = null, AssemblerOptions asmOptions = AssemblerOptions.None, CompilerOptions cscOptions = CompilerOptions.None, DecompilerSettings decompilerSettings = null)
 		{
 			Run(testName, asmOptions | AssemblerOptions.Library, cscOptions | CompilerOptions.Library, decompilerSettings);
@@ -265,7 +273,7 @@ namespace ICSharpCode.Decompiler.Tests
 			}
 
 			var executable = Tester.AssembleIL(ilFile, asmOptions);
-			var decompiled = Tester.DecompileCSharp(executable, decompilerSettings);
+			var decompiled = Tester.DecompileCSharp(executable, decompilerSettings ?? Tester.GetSettings(cscOptions));
 			
 			CodeAssert.FilesAreEqual(csFile, decompiled, Tester.GetPreprocessorSymbols(cscOptions).ToArray());
 		}

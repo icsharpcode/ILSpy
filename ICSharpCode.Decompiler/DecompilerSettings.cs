@@ -133,6 +133,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool nullPropagation = true;
+
+		/// <summary>
+		/// Decompile C# 6 ?. and ?[] operators.
+		/// </summary>
+		public bool NullPropagation {
+			get { return nullPropagation; }
+			set {
+				if (nullPropagation != value) {
+					nullPropagation = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool automaticProperties = true;
 
 		/// <summary>

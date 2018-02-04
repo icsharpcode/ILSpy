@@ -1085,16 +1085,23 @@ namespace ICSharpCode.Decompiler.CSharp.OutputVisitor
 			var opSymbol = UnaryOperatorExpression.GetOperatorRole(opType);
 			if (opType == UnaryOperatorType.Await) {
 				WriteKeyword(opSymbol);
-			} else if (!(opType == UnaryOperatorType.PostIncrement || opType == UnaryOperatorType.PostDecrement)) {
+			} else if (!IsPostfixOperator(opType) && opType != UnaryOperatorType.NullConditionalRewrap) {
 				WriteToken(opSymbol);
 			}
 			unaryOperatorExpression.Expression.AcceptVisitor(this);
-			if (opType == UnaryOperatorType.PostIncrement || opType == UnaryOperatorType.PostDecrement) {
+			if (IsPostfixOperator(opType)) {
 				WriteToken(opSymbol);
 			}
 			EndNode(unaryOperatorExpression);
 		}
 		
+		static bool IsPostfixOperator(UnaryOperatorType op)
+		{
+			return op == UnaryOperatorType.PostIncrement
+				|| op == UnaryOperatorType.PostDecrement
+				|| op == UnaryOperatorType.NullConditional;
+		}
+
 		public virtual void VisitUncheckedExpression(UncheckedExpression uncheckedExpression)
 		{
 			StartNode(uncheckedExpression);

@@ -102,6 +102,13 @@ namespace ICSharpCode.Decompiler.IL
 		ThreeValuedLogicAnd,
 		/// <summary>Three valued logic or. Inputs are of type bool? or I4, output is of type bool?. Unlike logic.or(), does not have short-circuiting behavior.</summary>
 		ThreeValuedLogicOr,
+		/// <summary>The input operand must be either a nullable value type or a reference type.
+		/// If the input is non-null, evaluates to the (unwrapped) input.
+		/// If the input is null, jumps to the innermost nullable.rewrap instruction that contains this instruction.</summary>
+		NullableUnwrap,
+		/// <summary>Serves as jump target for the nullable.unwrap instruction.
+		/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
+		NullableRewrap,
 		/// <summary>Loads a constant string.</summary>
 		LdStr,
 		/// <summary>Loads a constant 32-bit integer.</summary>
@@ -2506,6 +2513,71 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			var o = other as ThreeValuedLogicOr;
 			return o != null && this.Left.PerformMatch(o.Left, ref match) && this.Right.PerformMatch(o.Right, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>The input operand must be either a nullable value type or a reference type.
+	/// If the input is non-null, evaluates to the (unwrapped) input.
+	/// If the input is null, jumps to the innermost nullable.rewrap instruction that contains this instruction.</summary>
+	public sealed partial class NullableUnwrap : UnaryInstruction
+	{
+
+		protected override InstructionFlags ComputeFlags()
+		{
+			return base.ComputeFlags() | InstructionFlags.MayUnwrapNull;
+		}
+		public override InstructionFlags DirectFlags {
+			get {
+				return base.DirectFlags | InstructionFlags.MayUnwrapNull;
+			}
+		}
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitNullableUnwrap(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitNullableUnwrap(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitNullableUnwrap(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as NullableUnwrap;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
+		}
+	}
+}
+namespace ICSharpCode.Decompiler.IL
+{
+	/// <summary>Serves as jump target for the nullable.unwrap instruction.
+	/// If the input evaluates normally, evaluates to the input value (wrapped in Nullable<T> if the input is a non-nullable value type).If a nullable.unwrap instruction encounters a null input and jumps to the (endpoint of the) nullable.rewrap instruction,the nullable.rewrap instruction evaluates to null.</summary>
+	public sealed partial class NullableRewrap : UnaryInstruction
+	{
+		public NullableRewrap(ILInstruction argument) : base(OpCode.NullableRewrap, argument)
+		{
+		}
+
+		public override void AcceptVisitor(ILVisitor visitor)
+		{
+			visitor.VisitNullableRewrap(this);
+		}
+		public override T AcceptVisitor<T>(ILVisitor<T> visitor)
+		{
+			return visitor.VisitNullableRewrap(this);
+		}
+		public override T AcceptVisitor<C, T>(ILVisitor<C, T> visitor, C context)
+		{
+			return visitor.VisitNullableRewrap(this, context);
+		}
+		protected internal override bool PerformMatch(ILInstruction other, ref Patterns.Match match)
+		{
+			var o = other as NullableRewrap;
+			return o != null && this.Argument.PerformMatch(o.Argument, ref match);
 		}
 	}
 }
@@ -5131,6 +5203,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			Default(inst);
 		}
+		protected internal virtual void VisitNullableUnwrap(NullableUnwrap inst)
+		{
+			Default(inst);
+		}
+		protected internal virtual void VisitNullableRewrap(NullableRewrap inst)
+		{
+			Default(inst);
+		}
 		protected internal virtual void VisitLdStr(LdStr inst)
 		{
 			Default(inst);
@@ -5438,6 +5518,14 @@ namespace ICSharpCode.Decompiler.IL
 			return Default(inst);
 		}
 		protected internal virtual T VisitThreeValuedLogicOr(ThreeValuedLogicOr inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitNullableUnwrap(NullableUnwrap inst)
+		{
+			return Default(inst);
+		}
+		protected internal virtual T VisitNullableRewrap(NullableRewrap inst)
 		{
 			return Default(inst);
 		}
@@ -5751,6 +5839,14 @@ namespace ICSharpCode.Decompiler.IL
 		{
 			return Default(inst, context);
 		}
+		protected internal virtual T VisitNullableUnwrap(NullableUnwrap inst, C context)
+		{
+			return Default(inst, context);
+		}
+		protected internal virtual T VisitNullableRewrap(NullableRewrap inst, C context)
+		{
+			return Default(inst, context);
+		}
 		protected internal virtual T VisitLdStr(LdStr inst, C context)
 		{
 			return Default(inst, context);
@@ -5948,6 +6044,8 @@ namespace ICSharpCode.Decompiler.IL
 			"addressof",
 			"3vl.logic.and",
 			"3vl.logic.or",
+			"nullable.unwrap",
+			"nullable.rewrap",
 			"ldstr",
 			"ldc.i4",
 			"ldc.i8",
@@ -6161,6 +6259,16 @@ namespace ICSharpCode.Decompiler.IL
 			}
 			left = default(ILInstruction);
 			right = default(ILInstruction);
+			return false;
+		}
+		public bool MatchNullableRewrap(out ILInstruction argument)
+		{
+			var inst = this as NullableRewrap;
+			if (inst != null) {
+				argument = inst.Argument;
+				return true;
+			}
+			argument = default(ILInstruction);
 			return false;
 		}
 		public bool MatchLdStr(out string value)

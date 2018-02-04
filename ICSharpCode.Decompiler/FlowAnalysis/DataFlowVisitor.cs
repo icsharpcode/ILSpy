@@ -271,7 +271,7 @@ namespace ICSharpCode.Decompiler.FlowAnalysis
 		/// <summary>
 		/// Derived classes may add to this set of flags to ensure they don't forget to override an interesting method.
 		/// </summary>
-		protected InstructionFlags flagsRequiringManualImpl = InstructionFlags.ControlFlow | InstructionFlags.MayBranch | InstructionFlags.EndPointUnreachable;
+		protected InstructionFlags flagsRequiringManualImpl = InstructionFlags.ControlFlow | InstructionFlags.MayBranch | InstructionFlags.MayUnwrapNull | InstructionFlags.EndPointUnreachable;
 		
 		protected sealed override void Default(ILInstruction inst)
 		{
