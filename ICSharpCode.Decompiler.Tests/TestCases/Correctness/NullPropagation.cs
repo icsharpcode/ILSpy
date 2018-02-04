@@ -2,8 +2,8 @@
 
 namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 {
-    class NullPropagation
-    {
+	class NullPropagation
+	{
 		static void Main()
 		{
 			new NullPropagation().TestNotCoalescing();
@@ -25,5 +25,5 @@ namespace ICSharpCode.Decompiler.Tests.TestCases.Correctness
 		{
 			return c != null ? c.Text : "Hello";
 		}
-    }
+	}
 }

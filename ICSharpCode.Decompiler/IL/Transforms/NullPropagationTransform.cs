@@ -28,8 +28,8 @@ namespace ICSharpCode.Decompiler.IL.Transforms
 	/// <summary>
 	/// Transform that converts code patterns like "v != null ? v.M() : null" to "v?.M()"
 	/// </summary>
-    struct NullPropagationTransform
-    {
+	struct NullPropagationTransform
+	{
 		internal static bool IsProtectedIfInst(IfInstruction ifInst)
 		{
 			// We exclude logic.and to avoid turning
