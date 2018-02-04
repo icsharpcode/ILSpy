@@ -220,7 +220,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					if (settings.FixedBuffers && type.Name.StartsWith("<", StringComparison.Ordinal) && type.Name.Contains("__FixedBuffer"))
 						return true;
 				} else if (type.IsCompilerGenerated()) {
-					if (type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
+					if (settings.ArrayInitializers && type.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal))
 						return true;
 					if (settings.AnonymousTypes && type.IsAnonymousType())
 						return true;
@@ -241,7 +241,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				if (settings.AutomaticEvents && field.DeclaringType.Events.Any(ev => ev.Name == field.Name))
 					return true;
 				// HACK : only hide fields starting with '__StaticArrayInit'
-				if (field.DeclaringType.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal)) {
+				if (settings.ArrayInitializers && field.DeclaringType.Name.StartsWith("<PrivateImplementationDetails>", StringComparison.Ordinal)) {
 					if (field.Name.StartsWith("__StaticArrayInit", StringComparison.Ordinal))
 						return true;
 					if (field.FieldType.Name.StartsWith("__StaticArrayInit", StringComparison.Ordinal))
@@ -872,6 +872,13 @@ namespace ICSharpCode.Decompiler.CSharp
 				fixedFieldDecl.CopyAnnotationsFrom(fieldDecl);
 				RemoveAttribute(fixedFieldDecl, fixedBufferAttributeTypeName);
 				return fixedFieldDecl;
+			}
+			if (fieldDefinition.InitialValue.Length > 0) {
+				// Field data as specified in II.16.3.2 of ECMA-335 6th edition:
+				// .data I_X = int32(123)
+				// .field public static int32 _x at I_X
+				var message = string.Format(" Not supported: data({0}) ", BitConverter.ToString(fieldDefinition.InitialValue).Replace('-', ' '));
+				((FieldDeclaration)fieldDecl).Variables.Single().AddChild(new Comment(message, CommentType.MultiLine), Roles.Comment);
 			}
 			return fieldDecl;
 		}

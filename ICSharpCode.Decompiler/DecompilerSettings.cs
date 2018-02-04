@@ -303,6 +303,25 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
+		bool arrayInitializers = true;
+
+		/// <summary>
+		/// Gets/Sets whether to use array initializers.
+		/// If set to false, might produce non-compilable code.
+		/// </summary>
+		public bool ArrayInitializers
+		{
+			get { return arrayInitializers; }
+			set
+			{
+				if (arrayInitializers != value)
+				{
+					arrayInitializers = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
 		bool objectCollectionInitializers = true;
 
 		/// <summary>
