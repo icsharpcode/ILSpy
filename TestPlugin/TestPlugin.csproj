@@ -41,6 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="AboutPageAddition.cs" />
     <Compile Include="ContextMenuCommand.cs" />
     <Compile Include="CustomLanguage.cs" />
     <Compile Include="CustomOptionPage.xaml.cs">
