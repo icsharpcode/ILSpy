@@ -50,6 +50,7 @@ namespace ICSharpCode.ILSpy.Options
 			XElement e = settings["MiscSettings"];
 			var s = new MiscSettings();
 			s.AllowMultipleInstances = (bool?)e.Attribute("AllowMultipleInstances") ?? false;
+			s.DisableJumpToReferenceLinks = (bool?)e.Attribute("DisableJumpToReferenceLinks") ?? false;
 			return s;
 		}
 
@@ -59,6 +60,7 @@ namespace ICSharpCode.ILSpy.Options
 
 			var section = new XElement("MiscSettings");
 			section.SetAttributeValue("AllowMultipleInstances", s.AllowMultipleInstances);
+			section.SetAttributeValue("DisableJumpToReferenceLinks", s.DisableJumpToReferenceLinks);
 
 			XElement existingElement = root.Element("MiscSettings");
 			if (existingElement != null)

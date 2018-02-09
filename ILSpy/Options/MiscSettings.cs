@@ -28,12 +28,26 @@ namespace ICSharpCode.ILSpy.Options
 		/// <summary>
 		/// Allow multiple instances.
 		/// </summary>
-		public bool AllowMultipleInstances
-		{
+		public bool AllowMultipleInstances {
 			get { return allowMultipleInstances; }
 			set {
 				if (allowMultipleInstances != value) {
 					allowMultipleInstances = value;
+					OnPropertyChanged();
+				}
+			}
+		}
+
+		private bool disableJumpToReferenceLinks;
+
+		/// <summary>
+		/// Disable JumpToReference links if not in local
+		/// </summary>
+		public bool DisableJumpToReferenceLinks {
+			get => disableJumpToReferenceLinks;
+			set {
+				if (disableJumpToReferenceLinks != value) {
+					disableJumpToReferenceLinks = value;
 					OnPropertyChanged();
 				}
 			}
