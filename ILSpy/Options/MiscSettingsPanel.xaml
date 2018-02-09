@@ -7,5 +7,6 @@
              d:DesignHeight="300" d:DesignWidth="300">
 	<StackPanel Margin="10">
 		<CheckBox IsChecked="{Binding AllowMultipleInstances}">Allow multiple instances</CheckBox>
+		<CheckBox IsChecked="{Binding DisableJumpToReferenceLinks}">Disable jump to reference links in IL view</CheckBox>
 	</StackPanel>
 </UserControl>
