@@ -42,7 +42,6 @@
   <ItemGroup>
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
-    <Reference Include="System.ComponentModel.Composition" />
     <Reference Include="System.IO.Compression" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
@@ -51,6 +50,7 @@
 
   <ItemGroup>
     <PackageReference Include="AvalonEdit" Version="5.0.4" />
+    <PackageReference Include="Microsoft.VisualStudio.Composition" Version="15.5.23" />
   </ItemGroup>
 
   <ItemGroup>
@@ -397,11 +397,13 @@
   (related to https://github.com/icsharpcode/ILSpy/issues/511)
   -->
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-	  <Exec Command="mkdir ..\ILSpy.AddIn\packages\" IgnoreExitCode="true" />
-	  <Exec Command="copy &quot;$(TargetDir)\System.ValueTuple.dll&quot; ..\ILSpy.AddIn\packages\" />
-	  <Exec Command="copy &quot;$(TargetDir)\System.Collections.Immutable.dll&quot; ..\ILSpy.AddIn\packages\" />
-	  <Exec Command="copy &quot;$(TargetDir)\ICSharpCode.AvalonEdit.dll&quot; ..\ILSpy.AddIn\packages\" />
-    <Exec Command="copy &quot;$(TargetDir)\Humanizer.dll&quot; ..\ILSpy.AddIn\packages\" />
-    <Exec Command="copy &quot;$(TargetDir)\Mono.Cecil.dll&quot; ..\ILSpy.AddIn\packages\" />
+    <ItemGroup>
+      <NuGetPackagesToCopy Include="$(TargetDir)System.ValueTuple.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)System.Collections.Immutable.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)ICSharpCode.AvalonEdit.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Humanizer.dll" />
+      <NuGetPackagesToCopy Include="$(TargetDir)Mono.Cecil.dll" />
+    </ItemGroup>
+    <Copy SourceFiles="@(NuGetPackagesToCopy)" DestinationFolder="..\ILSpy.AddIn\packages" />
   </Target>
 </Project>
