@@ -219,15 +219,15 @@ namespace ICSharpCode.Decompiler.Disassembler
 				switch (thisOpCode.GetOperandType()) {
 					case OperandType.BrTarget:
 					case OperandType.ShortBrTarget:
-						endOffset = body.Offset + thisOpCode.GetBranchOperandSize();
 						target = ILParser.DecodeBranchTarget(ref body, thisOpCode);
+						endOffset = body.Offset;
 						result.Add(new Branch(offset, endOffset, target));
 						bitset[endOffset] = IsUnconditionalBranch(thisOpCode);
 						break;
 					case OperandType.Switch:
 						var targets = ILParser.DecodeSwitchTargets(ref body);
 						foreach (int t in targets)
-							result.Add(new Branch(offset, offset + 4 * (targets.Length + 1), t));
+							result.Add(new Branch(offset, body.Offset, t));
 						break;
 					default:
 						ILParser.SkipOperand(ref body, thisOpCode);
@@ -242,6 +242,11 @@ namespace ICSharpCode.Decompiler.Disassembler
 			switch (opCode) {
 				case ILOpCode.Br:
 				case ILOpCode.Br_s:
+				case ILOpCode.Ret:
+				case ILOpCode.Endfilter:
+				case ILOpCode.Endfinally:
+				case ILOpCode.Throw:
+				case ILOpCode.Rethrow:
 					return true;
 				default:
 					return false;
