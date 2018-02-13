@@ -346,8 +346,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 						//sa.AttributeType.WriteTo(output, ILNameSyntax.TypeName);
 					}
 					output.Write(" = {");
-					blob.ReadByte();
-					int argCount = blob.ReadByte();
+					blob.ReadCompressedInteger(); // ?
+					// The specification seems to be incorrect here, so I'm using the logic from Cecil instead.
+					int argCount = blob.ReadCompressedInteger();
 					if (argCount > 0) {
 						output.WriteLine();
 						output.Indent();
