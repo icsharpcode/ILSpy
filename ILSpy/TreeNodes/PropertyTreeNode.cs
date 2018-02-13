@@ -17,9 +17,12 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Reflection;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
+
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -36,39 +39,37 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				throw new ArgumentNullException(nameof(property));
 			this.PropertyDefinition = property;
 			using (LoadedAssembly.DisableAssemblyLoad()) {
-				this.isIndexer = property.IsIndexer();
+				this.isIndexer = property.IsIndexer;
 			}
 
-			if (property.GetMethod != null)
+			if (!property.GetMethod.IsNil)
 				this.Children.Add(new MethodTreeNode(property.GetMethod));
-			if (property.SetMethod != null)
+			if (!property.SetMethod.IsNil)
 				this.Children.Add(new MethodTreeNode(property.SetMethod));
-			if (property.HasOtherMethods) {
-				foreach (var m in property.OtherMethods)
-					this.Children.Add(new MethodTreeNode(m));
-			}
+			foreach (var m in property.OtherMethods)
+				this.Children.Add(new MethodTreeNode(m));
 		}
 
 		public PropertyDefinition PropertyDefinition { get; }
 
-		public override object Text => GetText(PropertyDefinition, Language, isIndexer) + PropertyDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(PropertyDefinition, Language, isIndexer) + PropertyDefinition.Handle.ToSuffixString();
 
 		public static object GetText(PropertyDefinition property, Language language, bool? isIndexer = null)
 		{
 			string name = language.FormatPropertyName(property, isIndexer);
+			var signature = property.DecodeSignature(language.CreateSignatureTypeProvider(false), new GenericContext(property.DeclaringType));
 
 			var b = new System.Text.StringBuilder();
 			if (property.HasParameters)
 			{
 				b.Append('(');
-				for (int i = 0; i < property.Parameters.Count; i++)
+				for (int i = 0; i < signature.ParameterTypes.Length; i++)
 				{
 					if (i > 0)
 						b.Append(", ");
-					b.Append(language.TypeToString(property.Parameters[i].ParameterType, false, property.Parameters[i]));
+					b.Append(signature.ParameterTypes[i]);
 				}
-				var method = property.GetMethod ?? property.SetMethod;
-				if (method.CallingConvention == MethodCallingConvention.VarArg)
+				if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs)
 				{
 					if (property.HasParameters)
 						b.Append(", ");
@@ -80,7 +81,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			{
 				b.Append(" : ");
 			}
-			b.Append(language.TypeToString(property.PropertyType, false, property));
+			b.Append(signature.ReturnType);
 
 			return HighlightSearchMatch(name, b.ToString());
 		}
@@ -110,7 +111,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					return AccessOverlayIcon.ProtectedInternal;
 				case MethodAttributes.Private:
 					return AccessOverlayIcon.Private;
-				case MethodAttributes.CompilerControlled:
+				case 0:
 					return AccessOverlayIcon.CompilerControlled;
 				default:
 					throw new NotSupportedException();
@@ -128,7 +129,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			// in numeric order, so we can do an integer comparison of the masked attribute
 			int accessLevel = 0;
 
-			if (property.GetMethod != null) {
+			if (!property.GetMethod.IsNil) {
 				int methodAccessLevel = (int)(property.GetMethod.Attributes & MethodAttributes.MemberAccessMask);
 				if (accessLevel < methodAccessLevel) {
 					accessLevel = methodAccessLevel;
@@ -136,7 +137,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 			}
 
-			if (property.SetMethod != null) {
+			if (!property.SetMethod.IsNil) {
 				int methodAccessLevel = (int)(property.SetMethod.Attributes & MethodAttributes.MemberAccessMask);
 				if (accessLevel < methodAccessLevel) {
 					accessLevel = methodAccessLevel;
@@ -144,13 +145,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				}
 			}
 
-			if (property.HasOtherMethods) {
-				foreach (var m in property.OtherMethods) {
-					int methodAccessLevel = (int)(m.Attributes & MethodAttributes.MemberAccessMask);
-					if (accessLevel < methodAccessLevel) {
-						accessLevel = methodAccessLevel;
-						result = m.Attributes;
-					}
+			foreach (var m in property.OtherMethods) {
+				int methodAccessLevel = (int)(m.Attributes & MethodAttributes.MemberAccessMask);
+				if (accessLevel < methodAccessLevel) {
+					accessLevel = methodAccessLevel;
+					result = m.Attributes;
 				}
 			}
 
@@ -185,6 +184,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 		}
 
-		MemberReference IMemberTreeNode.Member => PropertyDefinition;
+		IMemberReference IMemberTreeNode.Member => PropertyDefinition;
 	}
 }

@@ -268,6 +268,8 @@
     <Compile Include="CSharp\Transforms\ReplaceMethodCallsWithOperators.cs" />
     <Compile Include="CSharp\WholeProjectDecompiler.cs" />
     <Compile Include="CSharp\Transforms\AddXmlDocumentationTransform.cs" />
+    <Compile Include="Disassembler\BlobDecoder.cs" />
+    <Compile Include="Disassembler\DomExtensions.cs" />
     <Compile Include="Disassembler\OpCodeInfo.cs" />
     <Compile Include="Documentation\GetPotentiallyNestedClassTypeReference.cs" />
     <Compile Include="Documentation\IdStringMemberReference.cs" />
@@ -275,6 +277,8 @@
     <Compile Include="Documentation\XmlDocKeyProvider.cs" />
     <Compile Include="Documentation\XmlDocLoader.cs" />
     <Compile Include="Documentation\XmlDocumentationProvider.cs" />
+    <Compile Include="Dom\Dom.cs" />
+    <Compile Include="Dom\MetadataResolver.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinder.cs" />
     <Compile Include="DotNetCore\DotNetCorePathFinderExtensions.cs" />
     <Compile Include="DotNetCore\LightJson\JsonArray.cs" />
@@ -292,7 +296,7 @@
     <Compile Include="IL\ILAstWritingOptions.cs" />
     <Compile Include="IL\Instructions\LdFlda.cs" />
     <Compile Include="IL\Instructions\StLoc.cs" />
-    <Compile Include="IL\SequencePoint.cs" />
+    <Compile Include="Dom\SequencePoint.cs" />
     <Compile Include="IL\Instructions\CallIndirect.cs" />
     <Compile Include="IL\Instructions\DefaultValue.cs" />
     <Compile Include="IL\Transforms\EarlyExpressionTransforms.cs" />
@@ -326,7 +330,7 @@
     <Compile Include="IL\Transforms\TransformCollectionAndObjectInitializers.cs" />
     <Compile Include="Output\TextTokenWriter.cs" />
     <Compile Include="TypeSystem\Implementation\TypeSpecification.cs" />
-    <Compile Include="TypeSystem\MetadataExtensions.cs" />
+    <Compile Include="Dom\MetadataExtensions.cs" />
     <Compile Include="Util\GraphVizGraph.cs" />
     <Compile Include="Util\KeyComparer.cs" />
     <Compile Include="Util\LongDict.cs" />

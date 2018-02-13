@@ -17,13 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection;
 using System.Text;
-using System.Windows.Controls;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -36,24 +38,27 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public MethodTreeNode(MethodDefinition method)
 		{
-			if (method == null)
+			if (method.IsNil)
 				throw new ArgumentNullException(nameof(method));
 			this.MethodDefinition = method;
 		}
 
-		public override object Text => GetText(MethodDefinition, Language) + MethodDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(MethodDefinition, Language) + MethodDefinition.Handle.ToSuffixString();
 
 		public static object GetText(MethodDefinition method, Language language)
 		{
-			StringBuilder b = new StringBuilder();
+			var b = new StringBuilder();
+			var signatureProvider = language.CreateSignatureTypeProvider(false);
+			var signature = method.DecodeSignature(signatureProvider, new GenericContext(method));
+
 			b.Append('(');
-			for (int i = 0; i < method.Parameters.Count; i++) {
+			for (int i = 0; i < signature.ParameterTypes.Length; i++) {
 				if (i > 0)
 					b.Append(", ");
-				b.Append(language.TypeToString(method.Parameters[i].ParameterType, false, method.Parameters[i]));
+				b.Append(signature.ParameterTypes[i]);
 			}
-			if (method.CallingConvention == MethodCallingConvention.VarArg) {
-				if (method.HasParameters)
+			if (signature.Header.CallingConvention == SRM.SignatureCallingConvention.VarArgs) {
+				if (signature.ParameterTypes.Length > 0)
 					b.Append(", ");
 				b.Append("...");
 			}
@@ -61,7 +66,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				b.Append(')');
 			} else {
 				b.Append(") : ");
-				b.Append(language.TypeToString(method.ReturnType, false, method.MethodReturnType));
+				b.Append(signature.ReturnType);
 			}
 			return HighlightSearchMatch(language.FormatMethodName(method), b.ToString());
 		}
@@ -70,32 +75,28 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public static ImageSource GetIcon(MethodDefinition method)
 		{
-			if (method.IsSpecialName && method.Name.StartsWith("op_", StringComparison.Ordinal)) {
+			if (method.HasFlag(MethodAttributes.SpecialName) && method.Name.StartsWith("op_", StringComparison.Ordinal)) {
 				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(method.Attributes), false);
 			}
 
-			if (method.IsStatic && method.HasCustomAttributes) {
-				foreach (var ca in method.CustomAttributes) {
-					if (ca.AttributeType.FullName == "System.Runtime.CompilerServices.ExtensionAttribute") {
-						return Images.GetIcon(MemberIcon.ExtensionMethod, GetOverlayIcon(method.Attributes), false);
-					}
-				}
+			if (method.IsExtensionMethod) {
+				return Images.GetIcon(MemberIcon.ExtensionMethod, GetOverlayIcon(method.Attributes), false);
 			}
 
-			if (method.IsSpecialName &&
+			if (method.HasFlag(MethodAttributes.SpecialName) &&
 				(method.Name == ".ctor" || method.Name == ".cctor")) {
-				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(method.Attributes), method.IsStatic);
+				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(method.Attributes), method.HasFlag(MethodAttributes.Static));
 			}
 
 			if (method.HasPInvokeInfo)
 				return Images.GetIcon(MemberIcon.PInvokeMethod, GetOverlayIcon(method.Attributes), true);
 
-			bool showAsVirtual = method.IsVirtual && !(method.IsNewSlot && method.IsFinal) && !method.DeclaringType.IsInterface;
+			bool showAsVirtual = method.HasFlag(MethodAttributes.Virtual) && !(method.HasFlag(MethodAttributes.NewSlot) && method.HasFlag(MethodAttributes.Final)) && !method.DeclaringType.IsInterface;
 
 			return Images.GetIcon(
 				showAsVirtual ? MemberIcon.VirtualMethod : MemberIcon.Method,
 				GetOverlayIcon(method.Attributes),
-				method.IsStatic);
+				method.HasFlag(MethodAttributes.Static));
 		}
 
 		private static AccessOverlayIcon GetOverlayIcon(MethodAttributes methodAttributes)
@@ -113,7 +114,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					return AccessOverlayIcon.ProtectedInternal;
 				case MethodAttributes.Private:
 					return AccessOverlayIcon.Private;
-				case MethodAttributes.CompilerControlled:
+				case 0:
 					return AccessOverlayIcon.CompilerControlled;
 				default:
 					throw new NotSupportedException();
@@ -137,10 +138,17 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool IsPublicAPI {
 			get {
-				return MethodDefinition.IsPublic || MethodDefinition.IsFamily || MethodDefinition.IsFamilyOrAssembly;
+				switch (MethodDefinition.Attributes & MethodAttributes.MemberAccessMask) {
+					case MethodAttributes.Public:
+					case MethodAttributes.Family:
+					case MethodAttributes.FamORAssem:
+						return true;
+					default:
+						return false;
+				}
 			}
 		}
 
-		MemberReference IMemberTreeNode.Member => MethodDefinition;
+		IMemberReference IMemberTreeNode.Member => MethodDefinition;
 	}
 }

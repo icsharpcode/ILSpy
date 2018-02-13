@@ -25,6 +25,7 @@ using System.Reflection.Metadata;
 using System.IO;
 using System.Reflection.Metadata.Ecma335;
 using System.Linq;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy
 {
@@ -48,114 +49,99 @@ namespace ICSharpCode.ILSpy
 			get { return ".il"; }
 		}
 		
-		protected virtual ReflectionDisassembler CreateDisassembler(ITextOutput output, PEReader reader, DecompilationOptions options)
+		protected virtual ReflectionDisassembler CreateDisassembler(ITextOutput output, DecompilationOptions options)
 		{
-			return new ReflectionDisassembler(output, reader, options.CancellationToken) {
+			return new ReflectionDisassembler(output, options.CancellationToken) {
 				DetectControlStructure = detectControlStructure,
 				ShowSequencePoints = options.DecompilerSettings.ShowDebugInfo
 			};
 		}
 
-		public override void DecompileMethod(Mono.Cecil.MethodDefinition method, ITextOutput output, DecompilationOptions options)
+		public override void DecompileMethod(Decompiler.Dom.MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
-			using (var reader = new PEReader(new FileStream(method.Module.FileName, FileMode.Open, FileAccess.Read))) {
-				var dis = CreateDisassembler(output, reader, options);
-				dis.DisassembleMethod(MetadataTokens.MethodDefinitionHandle(method.MetadataToken.ToInt32()));
-			}
+			var dis = CreateDisassembler(output, options);
+			dis.DisassembleMethod(method);
 		}
 		
-		public override void DecompileField(Mono.Cecil.FieldDefinition field, ITextOutput output, DecompilationOptions options)
+		public override void DecompileField(Decompiler.Dom.FieldDefinition field, ITextOutput output, DecompilationOptions options)
 		{
-			using (var reader = new PEReader(new FileStream(field.Module.FileName, FileMode.Open, FileAccess.Read))) {
-				var dis = CreateDisassembler(output, reader, options);
-				dis.DisassembleField(MetadataTokens.FieldDefinitionHandle(field.MetadataToken.ToInt32()));
-			}
+			var dis = CreateDisassembler(output, options);
+			dis.DisassembleField(field);
 		}
 		
-		public override void DecompileProperty(Mono.Cecil.PropertyDefinition property, ITextOutput output, DecompilationOptions options)
+		public override void DecompileProperty(Decompiler.Dom.PropertyDefinition property, ITextOutput output, DecompilationOptions options)
 		{
-			using (var reader = new PEReader(new FileStream(property.Module.FileName, FileMode.Open, FileAccess.Read))) {
-				var dis = CreateDisassembler(output, reader, options);
-				dis.DisassembleProperty(MetadataTokens.PropertyDefinitionHandle(property.MetadataToken.ToInt32()));
+			var dis = CreateDisassembler(output, options);
+			dis.DisassembleProperty(property);
 
-				if (property.GetMethod != null) {
-					output.WriteLine();
-					dis.DisassembleMethod(MetadataTokens.MethodDefinitionHandle(property.GetMethod.MetadataToken.ToInt32()));
-				}
-				if (property.SetMethod != null) {
-					output.WriteLine();
-					dis.DisassembleMethod(MetadataTokens.MethodDefinitionHandle(property.SetMethod.MetadataToken.ToInt32()));
-				}
-				foreach (var m in property.OtherMethods) {
-					output.WriteLine();
-					dis.DisassembleMethod(MetadataTokens.MethodDefinitionHandle(m.MetadataToken.ToInt32()));
-				}
+			if (!property.GetMethod.IsNil) {
+				output.WriteLine();
+				dis.DisassembleMethod(property.GetMethod);
+			}
+			if (!property.SetMethod.IsNil) {
+				output.WriteLine();
+				dis.DisassembleMethod(property.SetMethod);
+			}
+			foreach (var m in property.OtherMethods) {
+				output.WriteLine();
+				dis.DisassembleMethod(m);
 			}
 		}
 		
-		public override void DecompileEvent(Mono.Cecil.EventDefinition ev, ITextOutput output, DecompilationOptions options)
+		public override void DecompileEvent(Decompiler.Dom.EventDefinition ev, ITextOutput output, DecompilationOptions options)
 		{
-			using (var reader = new PEReader(new FileStream(ev.Module.FileName, FileMode.Open, FileAccess.Read))) {
-				var dis = CreateDisassembler(output, reader, options);
-				dis.DisassembleEvent(MetadataTokens.EventDefinitionHandle(ev.MetadataToken.ToInt32()));
-				if (ev.AddMethod != null) {
-					output.WriteLine();
-					dis.DisassembleMethod(MetadataTokens.MethodDefinitionHandle(ev.AddMethod.MetadataToken.ToInt32()));
-				}
-				if (ev.RemoveMethod != null) {
-					output.WriteLine();
-					dis.DisassembleMethod(MetadataTokens.MethodDefinitionHandle(ev.RemoveMethod.MetadataToken.ToInt32()));
-				}
-				foreach (var m in ev.OtherMethods) {
-					output.WriteLine();
-					dis.DisassembleMethod(MetadataTokens.MethodDefinitionHandle(m.MetadataToken.ToInt32()));
-				}
+			var dis = CreateDisassembler(output, options);
+			dis.DisassembleEvent(ev);
+			if (!ev.AddMethod.IsNil) {
+				output.WriteLine();
+				dis.DisassembleMethod(ev.AddMethod);
+			}
+			if (!ev.RemoveMethod.IsNil) {
+				output.WriteLine();
+				dis.DisassembleMethod(ev.RemoveMethod);
+			}
+			foreach (var m in ev.OtherMethods) {
+				output.WriteLine();
+				dis.DisassembleMethod(m);
 			}
 		}
 		
-		public override void DecompileType(Mono.Cecil.TypeDefinition type, ITextOutput output, DecompilationOptions options)
+		public override void DecompileType(Decompiler.Dom.TypeDefinition type, ITextOutput output, DecompilationOptions options)
 		{
-			using (var reader = new PEReader(new FileStream(type.Module.FileName, FileMode.Open, FileAccess.Read))) {
-				var dis = CreateDisassembler(output, reader, options);
-				dis.DisassembleType(MetadataTokens.TypeDefinitionHandle(type.MetadataToken.ToInt32()));
-			}
+			var dis = CreateDisassembler(output, options);
+			dis.DisassembleType(type);
 		}
 		
-		public override void DecompileNamespace(string nameSpace, IEnumerable<Mono.Cecil.TypeDefinition> types, ITextOutput output, DecompilationOptions options)
+		public override void DecompileNamespace(string nameSpace, IEnumerable<Decompiler.Dom.TypeDefinition> types, ITextOutput output, DecompilationOptions options)
 		{
-			if (!types.Any())
-				return;
-			using (var reader = new PEReader(new FileStream(types.First().Module.FileName, FileMode.Open, FileAccess.Read))) {
-				var dis = CreateDisassembler(output, reader, options);
-				dis.DisassembleNamespace(nameSpace, types.Select(t => MetadataTokens.TypeDefinitionHandle(t.MetadataToken.ToInt32())));
-			}
+			var dis = CreateDisassembler(output, options);
+			dis.DisassembleNamespace(nameSpace, types);
 		}
 		
 		public override void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			output.WriteLine("// " + assembly.FileName);
 			output.WriteLine();
-			using (var reader = new PEReader(new FileStream(assembly.FileName, FileMode.Open, FileAccess.Read))) {
-				var dis = CreateDisassembler(output, reader, options);
-				var module = assembly.GetModuleDefinitionAsync().Result;
-				if (options.FullDecompilation)
-					dis.WriteAssemblyReferences();
-				if (module.Assembly != null)
-					dis.WriteAssemblyHeader();
+			var module = assembly.GetPEFileOrNull();
+			var metadata = module.GetMetadataReader();
+			var dis = CreateDisassembler(output, options);
+			if (options.FullDecompilation)
+				dis.WriteAssemblyReferences(module);
+			if (metadata.IsAssembly)
+				dis.WriteAssemblyHeader(module);
+			output.WriteLine();
+			dis.WriteModuleHeader(module);
+			if (options.FullDecompilation) {
 				output.WriteLine();
-				dis.WriteModuleHeader();
-				if (options.FullDecompilation) {
-					output.WriteLine();
-					output.WriteLine();
-					dis.WriteModuleContents(reader.GetMetadataReader().GetModuleDefinition());
-				}
+				output.WriteLine();
+				dis.WriteModuleContents(module);
 			}
 		}
 		
-		public override string TypeToString(Mono.Cecil.TypeReference type, bool includeNamespace, Mono.Cecil.ICustomAttributeProvider typeAttributes = null)
+		public override string TypeToString(Decompiler.Dom.ITypeReference type, bool includeNamespace, Decompiler.Dom.ICustomAttributeProvider typeAttributes = null)
 		{
 			PlainTextOutput output = new PlainTextOutput();
-			type.WriteTo(output, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
+			type.WriteTo(output, GenericContext.Empty, includeNamespace ? ILNameSyntax.TypeName : ILNameSyntax.ShortTypeName);
 			return output.ToString();
 		}
 	}

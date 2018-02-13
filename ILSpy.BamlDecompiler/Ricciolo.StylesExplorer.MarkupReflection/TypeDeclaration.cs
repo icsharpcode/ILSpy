@@ -9,33 +9,33 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 	{
 		readonly XmlBamlReader reader;
 		readonly bool _isExtension;
-		IType _type;
+		IDotNetType _type;
 		bool _typeLoaded;
-		readonly ITypeResolver resolver;
+		readonly IDotNetTypeResolver resolver;
 		
-		protected TypeDeclaration(ITypeResolver resolver)
+		protected TypeDeclaration(IDotNetTypeResolver resolver)
 		{
 			this.resolver = resolver;
 		}
 
-		public TypeDeclaration(ITypeResolver resolver, string name, string namespaceName, short assemblyId)
+		public TypeDeclaration(IDotNetTypeResolver resolver, string name, string namespaceName, short assemblyId)
 			: this(null, resolver, name, namespaceName, assemblyId)
 		{
 		}
 
-		public TypeDeclaration(ITypeResolver resolver, string name, string enclosingTypeName, string namespaceName, short assemblyId)
+		public TypeDeclaration(IDotNetTypeResolver resolver, string name, string enclosingTypeName, string namespaceName, short assemblyId)
 			: this(null, resolver, name, namespaceName, assemblyId)
 		{
 			this.EnclosingTypeName = enclosingTypeName;
 		}
 
-		public TypeDeclaration(ITypeResolver resolver, string name, string namespaceName, short assemblyId, bool isExtension)
+		public TypeDeclaration(IDotNetTypeResolver resolver, string name, string namespaceName, short assemblyId, bool isExtension)
 			: this(null, resolver, name, namespaceName, assemblyId)
 		{
 			_isExtension = isExtension;
 		}
 
-		public TypeDeclaration(XmlBamlReader reader, ITypeResolver resolver, string name, string namespaceName, short assemblyId)
+		public TypeDeclaration(XmlBamlReader reader, IDotNetTypeResolver resolver, string name, string namespaceName, short assemblyId)
 		{
 			this.reader = reader;
 			this.resolver = resolver;
@@ -73,7 +73,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		public virtual string Name { get; protected set; }
 
-		public IType Type {
+		public IDotNetType Type {
 			get {
 				if (!_typeLoaded) {
 					if (this.Name.Length > 0)
@@ -119,7 +119,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 			protected set { throw new NotSupportedException(); }
 		}
 		
-		public ResolverTypeDeclaration(ITypeResolver resolver, string assemblyQualifiedName)
+		public ResolverTypeDeclaration(IDotNetTypeResolver resolver, string assemblyQualifiedName)
 			: base(resolver)
 		{
 			string name, @namespace, assembly;

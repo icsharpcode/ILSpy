@@ -26,7 +26,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.ILSpy.TreeNodes;
 using Mono.Cecil;
 
@@ -216,12 +216,12 @@ namespace ICSharpCode.ILSpy
 				try {
 					var searcher = GetSearchStrategy(searchMode, searchTerm);
 					foreach (var loadedAssembly in assemblies) {
-						ModuleDefinition module = loadedAssembly.GetModuleDefinitionOrNull();
+						var module = loadedAssembly.GetPEFileOrNull();
 						if (module == null)
 							continue;
 						CancellationToken cancellationToken = cts.Token;
 
-						foreach (TypeDefinition type in module.Types) {
+						foreach (var type in module.TypeDefinitions) {
 							cancellationToken.ThrowIfCancellationRequested();
 							searcher.Search(type, language, AddResult);
 						}
@@ -333,7 +333,7 @@ namespace ICSharpCode.ILSpy
 		
 		public static readonly System.Collections.Generic.IComparer<SearchResult> Comparer = new SearchResultComparer();
 		
-		public MemberReference Member { get; set; }
+		public IMemberReference Member { get; set; }
 		public float Fitness { get; set; }
 		
 		public string Location { get; set; }

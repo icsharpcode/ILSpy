@@ -36,7 +36,6 @@ using ICSharpCode.Decompiler.TypeSystem;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CSharp;
-using Mono.Cecil;
 using NUnit.Framework;
 
 namespace ICSharpCode.Decompiler.Tests.Helpers
@@ -114,7 +113,7 @@ namespace ICSharpCode.Decompiler.Tests.Helpers
 				using (var writer = new StreamWriter(outputFile)) {
 					//module.Name = Path.GetFileNameWithoutExtension(outputFile);
 					var output = new PlainTextOutput(writer);
-					ReflectionDisassembler rd = new ReflectionDisassembler(output, module.GetMetadataReader(), CancellationToken.None);
+					ReflectionDisassembler rd = new ReflectionDisassembler(output, CancellationToken.None);
 					rd.DetectControlStructure = false;
 					//rd.WriteAssemblyReferences(module);
 					/*if (module.Assembly != null)

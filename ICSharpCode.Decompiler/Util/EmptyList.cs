@@ -116,4 +116,6 @@ namespace ICSharpCode.Decompiler.Util
 	{
 		public static readonly T[] Array = new T[0];
 	}
+
+	public struct Unit { }
 }

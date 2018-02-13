@@ -56,7 +56,7 @@ namespace ICSharpCode.Decompiler.CSharp
 			}
 		}
 
-		readonly List<(ILFunction, SequencePoint)> sequencePoints = new List<(ILFunction, SequencePoint)>();
+		readonly List<(ILFunction, Dom.SequencePoint)> sequencePoints = new List<(ILFunction, Dom.SequencePoint)>();
 		readonly HashSet<ILInstruction> mappedInstructions = new HashSet<ILInstruction>();
 		
 		// Stack holding information for outer statements.
@@ -219,7 +219,7 @@ namespace ICSharpCode.Decompiler.CSharp
 				// use LongSet to deduplicate and merge the intervals
 				var longSet = new LongSet(current.Intervals.Select(i => new LongInterval(i.Start, i.End)));
 				Debug.Assert(!longSet.IsEmpty);
-				sequencePoints.Add((current.Function, new SequencePoint {
+				sequencePoints.Add((current.Function, new Dom.SequencePoint {
 					Offset = (int)longSet.Intervals[0].Start,
 					EndOffset = (int)longSet.Intervals[0].End,
 					StartLine = startLocation.Line,
@@ -277,18 +277,18 @@ namespace ICSharpCode.Decompiler.CSharp
 		/// <summary>
 		/// Called after the visitor is done to return the results.
 		/// </summary>
-		internal Dictionary<ILFunction, List<SequencePoint>> GetSequencePoints()
+		internal Dictionary<ILFunction, List<Dom.SequencePoint>> GetSequencePoints()
 		{
-			var dict = new Dictionary<ILFunction, List<SequencePoint>>();
+			var dict = new Dictionary<ILFunction, List<Dom.SequencePoint>>();
 			foreach (var (function, sequencePoint) in this.sequencePoints) {
 				if (!dict.TryGetValue(function, out var list)) {
-					dict.Add(function, list = new List<SequencePoint>());
+					dict.Add(function, list = new List<Dom.SequencePoint>());
 				}
 				list.Add(sequencePoint);
 			}
 			foreach (var (function, list) in dict.ToList()) {
 				// For each function, sort sequence points and fix overlaps+gaps
-				var newList = new List<SequencePoint>();
+				var newList = new List<Dom.SequencePoint>();
 				int pos = 0;
 				foreach (var sequencePoint in list.OrderBy(sp => sp.Offset).ThenBy(sp => sp.EndOffset)) {
 					if (sequencePoint.Offset < pos) {
@@ -305,7 +305,7 @@ namespace ICSharpCode.Decompiler.CSharp
 						}
 					} else if (sequencePoint.Offset > pos) {
 						// insert hidden sequence point in the gap.
-						var hidden = new SequencePoint();
+						var hidden = new Dom.SequencePoint();
 						hidden.Offset = pos;
 						hidden.EndOffset = sequencePoint.Offset;
 						hidden.SetHidden();
@@ -315,7 +315,7 @@ namespace ICSharpCode.Decompiler.CSharp
 					pos = sequencePoint.EndOffset;
 				}
 				if (pos < function.CecilMethod.Body.CodeSize) {
-					var hidden = new SequencePoint();
+					var hidden = new Dom.SequencePoint();
 					hidden.Offset = pos;
 					hidden.EndOffset = function.CecilMethod.Body.CodeSize;
 					hidden.SetHidden();

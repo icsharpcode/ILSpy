@@ -16,7 +16,7 @@
 // OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -27,6 +27,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public interface IMemberTreeNode
 	{
-		MemberReference Member { get; }
+		IMemberReference Member { get; }
 	}
 }

@@ -18,7 +18,7 @@
 
 using System;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -32,7 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		{
 			if (analyzedProperty == null)
 				throw new ArgumentNullException(nameof(analyzedProperty));
-			this.isIndexer = analyzedProperty.IsIndexer();
+			this.isIndexer = analyzedProperty.IsIndexer;
 			this.analyzedProperty = analyzedProperty;
 			this.prefix = prefix;
 			this.LazyLoading = true;
@@ -54,9 +54,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		protected override void LoadChildren()
 		{
-			if (analyzedProperty.GetMethod != null)
+			if (!analyzedProperty.GetMethod.IsNil)
 				this.Children.Add(new AnalyzedPropertyAccessorTreeNode(analyzedProperty.GetMethod, "get"));
-			if (analyzedProperty.SetMethod != null)
+			if (!analyzedProperty.SetMethod.IsNil)
 				this.Children.Add(new AnalyzedPropertyAccessorTreeNode(analyzedProperty.SetMethod, "set"));
 			foreach (var accessor in analyzedProperty.OtherMethods)
 				this.Children.Add(new AnalyzedPropertyAccessorTreeNode(accessor, null));
@@ -67,26 +67,23 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				this.Children.Add(new AnalyzedInterfacePropertyImplementedByTreeNode(analyzedProperty));
 		}
 
-		public static AnalyzerTreeNode TryCreateAnalyzer(MemberReference member)
+		public static AnalyzerTreeNode TryCreateAnalyzer(IMemberReference member)
 		{
 			if (CanShow(member))
-				return new AnalyzedPropertyTreeNode(member as PropertyDefinition);
+				return new AnalyzedPropertyTreeNode((PropertyDefinition)member);
 			else
 				return null;
 		}
 
-		public static bool CanShow(MemberReference member)
+		public static bool CanShow(IMemberReference member)
 		{
-			var property = member as PropertyDefinition;
-			if (property == null)
+			if (!(member is PropertyDefinition property))
 				return false;
 
-			return !MainWindow.Instance.CurrentLanguage.ShowMember(property.GetMethod ?? property.SetMethod)
+			return !MainWindow.Instance.CurrentLanguage.ShowMember(property.GetMethod.IsNil ? property.SetMethod : property.GetMethod)
 			    || AnalyzedPropertyOverridesTreeNode.CanShow(property);
 		}
-		
-		public override MemberReference Member {
-			get { return analyzedProperty; }
-		}
+
+		public override IMemberReference Member => analyzedProperty;
 	}
 }

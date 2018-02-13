@@ -19,9 +19,12 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
+using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
 using ICSharpCode.Decompiler.Util;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -30,8 +33,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 	/// </summary>
 	internal class ScopedWhereUsedAnalyzer<T>
 	{
-		private readonly AssemblyDefinition assemblyScope;
+		private readonly PEFile assemblyScope;
 		private TypeDefinition typeScope;
+		private static readonly TypeSystemAttributeTypeProvider typeProvider = TypeSystemAttributeTypeProvider.CreateDefault();
 
 		private readonly Accessibility memberAccessibility = Accessibility.Public;
 		private Accessibility typeAccessibility = Accessibility.Public;
@@ -40,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public ScopedWhereUsedAnalyzer(TypeDefinition type, Func<TypeDefinition, IEnumerable<T>> typeAnalysisFunction)
 		{
 			this.typeScope = type;
-			this.assemblyScope = type.Module.Assembly;
+			this.assemblyScope = type.Module;
 			this.typeAnalysisFunction = typeAnalysisFunction;
 		}
 
@@ -53,8 +57,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public ScopedWhereUsedAnalyzer(PropertyDefinition property, Func<TypeDefinition, IEnumerable<T>> typeAnalysisFunction)
 			: this(property.DeclaringType, typeAnalysisFunction)
 		{
-			Accessibility getterAccessibility = (property.GetMethod == null) ? Accessibility.Private : GetMethodAccessibility(property.GetMethod);
-			Accessibility setterAccessibility = (property.SetMethod == null) ? Accessibility.Private : GetMethodAccessibility(property.SetMethod);
+			Accessibility getterAccessibility = (property.GetMethod.IsNil) ? Accessibility.Private : GetMethodAccessibility(property.GetMethod);
+			Accessibility setterAccessibility = (property.SetMethod.IsNil) ? Accessibility.Private : GetMethodAccessibility(property.SetMethod);
 			this.memberAccessibility = (Accessibility)Math.Max((int)getterAccessibility, (int)setterAccessibility);
 		}
 
@@ -142,7 +146,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		
 		private void DetermineTypeAccessibility()
 		{
-			while (typeScope.IsNested) {
+			while (!typeScope.DeclaringType.IsNil) {
 				Accessibility accessibility = GetNestedTypeAccessibility(typeScope);
 				if ((int)typeAccessibility > (int)accessibility) {
 					typeAccessibility = accessibility;
@@ -215,9 +219,9 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return assemblies.AsParallel().WithCancellation(ct).SelectMany(asm => FindReferencesInAssembly(asm, ct));
 		}
 
-		private IEnumerable<T> FindReferencesInAssembly(AssemblyDefinition asm, CancellationToken ct)
+		private IEnumerable<T> FindReferencesInAssembly(PEFile asm, CancellationToken ct)
 		{
-			foreach (TypeDefinition type in TreeTraversal.PreOrder(asm.MainModule.Types, t => t.NestedTypes)) {
+			foreach (TypeDefinition type in TreeTraversal.PreOrder(asm.TypeDefinitions, t => t.NestedTypes)) {
 				ct.ThrowIfCancellationRequested();
 				foreach (var result in typeAnalysisFunction(type)) {
 					ct.ThrowIfCancellationRequested();
@@ -248,67 +252,66 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			}
 		}
 
-		private IEnumerable<AssemblyDefinition> GetReferencingAssemblies(AssemblyDefinition asm, CancellationToken ct)
+		private IEnumerable<PEFile> GetReferencingAssemblies(PEFile asm, CancellationToken ct)
 		{
 			yield return asm;
 
 			string requiredAssemblyFullName = asm.FullName;
 
-			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetAssemblyDefinitionOrNull() != null);
+			IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies().Where(assy => assy.GetPEFileOrNull()?.IsAssembly == true);
 
 			foreach (var assembly in assemblies) {
 				ct.ThrowIfCancellationRequested();
 				bool found = false;
-				var module = assembly.GetModuleDefinitionOrNull();
+				var module = assembly.GetPEFileOrNull();
 				if (module == null)
 					continue;
+				var metadata = module.GetMetadataReader();
 				foreach (var reference in module.AssemblyReferences) {
 					if (requiredAssemblyFullName == reference.FullName) {
 						found = true;
 						break;
 					}
 				}
-				if (found && AssemblyReferencesScopeType(module.Assembly))
-					yield return module.Assembly;
+				if (found && AssemblyReferencesScopeType(module))
+					yield return module;
 			}
 		}
 
-		private IEnumerable<AssemblyDefinition> GetAssemblyAndAnyFriends(AssemblyDefinition asm, CancellationToken ct)
+		private IEnumerable<PEFile> GetAssemblyAndAnyFriends(PEFile asm, CancellationToken ct)
 		{
 			yield return asm;
+			var reader = asm.GetMetadataReader();
 
-			if (asm.HasCustomAttributes) {
-				var attributes = asm.CustomAttributes
-					.Where(attr => attr.AttributeType.FullName == "System.Runtime.CompilerServices.InternalsVisibleToAttribute");
-				var friendAssemblies = new HashSet<string>();
-				foreach (var attribute in attributes) {
-					string assemblyName = attribute.ConstructorArguments[0].Value as string;
-					assemblyName = assemblyName.Split(',')[0]; // strip off any public key info
-					friendAssemblies.Add(assemblyName);
-				}
+			var attributes = reader.CustomAttributes.Select(h => reader.GetCustomAttribute(h)).Where(ca => ca.GetAttributeType(asm).FullName.ToString() == "System.Runtime.CompilerServices.InternalsVisibleToAttribute");
+			var friendAssemblies = new HashSet<string>();
+			foreach (var attribute in attributes) {
+				string assemblyName = attribute.DecodeValue(typeProvider).FixedArguments[0].Value as string;
+				assemblyName = assemblyName.Split(',')[0]; // strip off any public key info
+				friendAssemblies.Add(assemblyName);
+			}
 
-				if (friendAssemblies.Count > 0) {
-					IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies();
+			if (friendAssemblies.Count > 0) {
+				IEnumerable<LoadedAssembly> assemblies = MainWindow.Instance.CurrentAssemblyList.GetAssemblies();
 
-					foreach (var assembly in assemblies) {
-						ct.ThrowIfCancellationRequested();
-						if (friendAssemblies.Contains(assembly.ShortName)) {
-							var module = assembly.GetModuleDefinitionOrNull();
-							if (module == null)
-								continue;
-							if (AssemblyReferencesScopeType(module.Assembly))
-								yield return module.Assembly;
-						}
+				foreach (var assembly in assemblies) {
+					ct.ThrowIfCancellationRequested();
+					if (friendAssemblies.Contains(assembly.ShortName)) {
+						var module = assembly.GetPEFileOrNull();
+						if (module == null)
+							continue;
+						if (AssemblyReferencesScopeType(module))
+							yield return module;
 					}
 				}
 			}
 		}
 
-		private bool AssemblyReferencesScopeType(AssemblyDefinition asm)
+		private bool AssemblyReferencesScopeType(PEFile asm)
 		{
 			bool hasRef = false;
-			foreach (var typeref in asm.MainModule.GetTypeReferences()) {
-				if (typeref.Name == typeScope.Name && typeref.Namespace == typeScope.Namespace) {
+			foreach (var typeRef in asm.TypeReferences) {
+				if (typeRef.Name == typeScope.Name && typeRef.Namespace == typeScope.Namespace) {
 					hasRef = true;
 					break;
 				}

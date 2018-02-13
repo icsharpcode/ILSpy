@@ -22,7 +22,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		Dictionary<short, TypeDeclaration> typeTable = new Dictionary<short, TypeDeclaration>();
 		Dictionary<short, PropertyDeclaration> propertyTable = new Dictionary<short, PropertyDeclaration>();
 
-		readonly ITypeResolver _resolver;
+		readonly IDotNetTypeResolver _resolver;
 
 		BamlRecordType currentType;
 
@@ -99,7 +99,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 
 		public ISet<XmlNamespace> XmlnsDefinitions { get; } = new HashSet<XmlNamespace>();
 
-		public XmlBamlReader(Stream stream, ITypeResolver resolver)
+		public XmlBamlReader(Stream stream, IDotNetTypeResolver resolver)
 		{
 			if (stream == null)
 				throw new ArgumentNullException(nameof(stream));
@@ -1626,7 +1626,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		/// <summary>
 		/// Returns object used to resolve types
 		/// </summary>
-		public ITypeResolver Resolver
+		public IDotNetTypeResolver Resolver
 		{
 			get { return _resolver; }
 		}

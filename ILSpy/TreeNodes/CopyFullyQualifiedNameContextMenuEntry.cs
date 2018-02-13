@@ -15,9 +15,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public void Execute(TextViewContext context)
 		{
-			var member = GetMemberNodeFromContext(context)?.Member;
+			/*var member = GetMemberNodeFromContext(context)?.Member;
 			if (member == null) return;
-			Clipboard.SetText(GetFullyQualifiedName(member));
+			Clipboard.SetText(GetFullyQualifiedName(member));*/
 		}
 
 		private IMemberTreeNode GetMemberNodeFromContext(TextViewContext context)

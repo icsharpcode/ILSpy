@@ -1,26 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using ICSharpCode.Decompiler.TypeSystem.Implementation;
-using Mono.Cecil;
+using System.Reflection.Metadata;
+using System.Reflection.PortableExecutable;
 
 namespace ICSharpCode.Decompiler
 {
 	public static class DotNetCorePathFinderExtensions
 	{
-		public static string DetectTargetFrameworkId(this AssemblyDefinition assembly)
+		public static string DetectTargetFrameworkId(this PEReader assembly)
 		{
 			if (assembly == null)
 				throw new ArgumentNullException(nameof(assembly));
 
 			const string TargetFrameworkAttributeName = "System.Runtime.Versioning.TargetFrameworkAttribute";
+			var reader = assembly.GetMetadataReader();
 
-			foreach (var attribute in assembly.CustomAttributes) {
-				if (attribute.AttributeType.FullName != TargetFrameworkAttributeName)
+			foreach (var h in reader.GetCustomAttributes(Handle.AssemblyDefinition)) {
+				var attribute = reader.GetCustomAttribute(h);
+				if (attribute.GetAttributeType(reader).ToString() != TargetFrameworkAttributeName)
 					continue;
-				var blobReader = new BlobReader(attribute.GetBlob(), null);
+				var blobReader = reader.GetBlobReader(attribute.Value);
 				if (blobReader.ReadUInt16() == 0x0001) {
-					return blobReader.ReadSerString();
+					return blobReader.ReadSerializedString();
 				}
 			}
 

@@ -19,9 +19,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
-using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -50,11 +51,11 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<AnalyzerTreeNode> FindReferencesInType(TypeDefinition type)
 		{
-			if (!TypesHierarchyHelpers.IsBaseType(analyzedProperty.DeclaringType, type, resolveTypeArguments: false))
+			if (!analyzedProperty.DeclaringType.IsBaseTypeOf(type))
 				yield break;
 
 			foreach (PropertyDefinition property in type.Properties) {
-
+				analyzedProperty.
 				if (TypesHierarchyHelpers.IsBaseProperty(analyzedProperty, property)) {
 					MethodDefinition anyAccessor = property.GetMethod ?? property.SetMethod;
 					bool hidesParent = !anyAccessor.IsVirtual ^ anyAccessor.IsNewSlot;
@@ -67,8 +68,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public static bool CanShow(PropertyDefinition property)
 		{
-			var accessor = property.GetMethod ?? property.SetMethod;
-			return accessor.IsVirtual && !accessor.IsFinal && !accessor.DeclaringType.IsInterface;
+			var accessor = property.GetAccessors().First().Method;
+			return accessor.HasFlag(MethodAttributes.Virtual) && !accessor.HasFlag(MethodAttributes.Final) && !accessor.DeclaringType.IsInterface;
 		}
 	}
 }

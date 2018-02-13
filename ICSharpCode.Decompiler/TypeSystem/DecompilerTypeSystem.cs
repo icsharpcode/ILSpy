@@ -41,7 +41,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (moduleDefinition == null)
 				throw new ArgumentNullException(nameof(moduleDefinition));
 			this.moduleDefinition = moduleDefinition;
-			MetadataLoader cecilLoader = new MetadataLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
+			/*MetadataLoader cecilLoader = new MetadataLoader { IncludeInternalMembers = true, LazyLoad = true, OnEntityLoaded = StoreMemberReference, ShortenInterfaceImplNames = false };
 			typeReferenceCecilLoader.SetCurrentModule(moduleDefinition);
 			IUnresolvedAssembly mainAssembly = cecilLoader.LoadModule(moduleDefinition);
 			// Load referenced assemblies and type-forwarder references.
@@ -69,7 +69,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				referencedAssemblies.Add(MinimalCorlib.Instance);
 				compilation = new SimpleCompilation(mainAssembly, referencedAssemblies);
 			}
-			context = new SimpleTypeResolveContext(compilation.MainAssembly);
+			context = new SimpleTypeResolveContext(compilation.MainAssembly);*/
 		}
 
 		public ICompilation Compilation {
@@ -130,6 +130,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		#region Resolve Type
 		public IType Resolve(TypeReference typeReference)
 		{
+			throw new NotImplementedException();
+#if false
 			if (typeReference == null)
 				return SpecialType.UnknownType;
 			// We need to skip SentinelType and PinnedType.
@@ -137,15 +139,16 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			while (typeReference is OptionalModifierType || typeReference is RequiredModifierType) {
 				typeReference = ((TypeSpecification)typeReference).ElementType;
 			}
-			if (typeReference is SentinelType || typeReference is PinnedType) {
+			if (typeReference is SentinelType || typeReference is Mono.Cecil.PinnedType) {
 				typeReference = ((TypeSpecification)typeReference).ElementType;
 			}
 			ITypeReference typeRef;
 			lock (typeReferenceCecilLoader)
 				typeRef = typeReferenceCecilLoader.ReadTypeReference(typeReference);
 			return typeRef.Resolve(context);
+#endif
 		}
-		#endregion
+#endregion
 
 		#region Resolve Field
 		public IField Resolve(FieldReference fieldReference)
@@ -180,6 +183,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 
 		IField CreateFakeField(FieldReference fieldReference)
 		{
+			throw new NotImplementedException();
+#if false
 			var declaringType = Resolve(fieldReference.DeclaringType);
 			var f = new DefaultUnresolvedField();
 			f.Name = fieldReference.Name;
@@ -187,6 +192,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				f.ReturnType = typeReferenceCecilLoader.ReadTypeReference(fieldReference.FieldType);
 			}
 			return new ResolvedFakeField(f, context.WithCurrentTypeDefinition(declaringType.GetDefinition()), declaringType);
+#endif
 		}
 
 		class ResolvedFakeField : DefaultResolvedField
@@ -204,7 +210,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				get { return declaringType; }
 			}
 		}
-		#endregion
+#endregion
 
 		#region Resolve Method
 		public IMethod Resolve(MethodReference methodReference)
@@ -306,6 +312,8 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// </summary>
 		IMethod CreateFakeMethod(MethodReference methodReference)
 		{
+			throw new NotImplementedException();
+#if false
 			var m = new DefaultUnresolvedMethod();
 			ITypeReference declaringTypeReference;
 			lock (typeReferenceCecilLoader) {
@@ -324,6 +332,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			var type = declaringTypeReference.Resolve(context);
 			return new ResolvedFakeMethod(m, context.WithCurrentTypeDefinition(type.GetDefinition()), type);
+#endif
 		}
 
 		class ResolvedFakeMethod : DefaultResolvedMethod
@@ -343,7 +352,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		}
 		#endregion
 
-		#region Resolve Property
+#region Resolve Property
 		public IProperty Resolve(PropertyReference propertyReference)
 		{
 			if (propertyReference == null)
@@ -378,9 +387,9 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return null;
 		}
-		#endregion
+#endregion
 
-		#region Resolve Event
+#region Resolve Event
 		public IEvent Resolve(EventReference eventReference)
 		{
 			if (eventReference == null)
@@ -412,6 +421,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 			return null;
 		}
-		#endregion
+#endregion
 	}
 }

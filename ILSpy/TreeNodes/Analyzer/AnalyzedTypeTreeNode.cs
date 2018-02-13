@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedTypeTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
+			if (analyzedType.IsNil)
 				throw new ArgumentNullException(nameof(analyzedType));
 			this.analyzedType = analyzedType;
 			this.LazyLoading = true;
@@ -64,8 +64,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				this.Children.Add(new AnalyzedTypeExtensionMethodsTreeNode(analyzedType));
 		}
 
-		public override MemberReference Member {
-			get { return analyzedType; }
-		}
+		public override IMemberReference Member => analyzedType;
 	}
 }

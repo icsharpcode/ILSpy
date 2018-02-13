@@ -18,10 +18,13 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Threading;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.Decompiler.Util;
-using Mono.Cecil;
+
+using static System.Reflection.Metadata.PEReaderExtensions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -60,18 +63,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		IEnumerable<ILSpyTreeNode> FetchChildren(CancellationToken cancellationToken)
 		{
 			// FetchChildren() runs on the main thread; but the enumerator will be consumed on a background thread
-			var assemblies = list.GetAssemblies().Select(node => node.GetModuleDefinitionOrNull()).Where(asm => asm != null).ToArray();
+			var assemblies = list.GetAssemblies().Select(node => node.GetPEFileOrNull()).Where(asm => asm != null).ToArray();
 			return FindDerivedTypes(type, assemblies, cancellationToken);
 		}
 
-		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(TypeDefinition type, ModuleDefinition[] assemblies, CancellationToken cancellationToken)
+		internal static IEnumerable<DerivedTypesEntryNode> FindDerivedTypes(TypeDefinition type, PEFile[] assemblies, CancellationToken cancellationToken)
 		{
-			foreach (ModuleDefinition module in assemblies) {
-				foreach (TypeDefinition td in TreeTraversal.PreOrder(module.Types, t => t.NestedTypes)) {
+			foreach (var module in assemblies) {
+				var reader = module.GetMetadataReader();
+				foreach (var h in TreeTraversal.PreOrder(reader.GetTopLevelTypeDefinitions(), t => reader.GetTypeDefinition(t).GetNestedTypes())) {
 					cancellationToken.ThrowIfCancellationRequested();
+					var td = new TypeDefinition(module, h);
 					if (type.IsInterface && td.HasInterfaces) {
 						foreach (var iface in td.Interfaces) {
-							if (IsSameType(iface.InterfaceType, type))
+							if (IsSameType(iface, type))
 								yield return new DerivedTypesEntryNode(td, assemblies);
 						}
 					} else if (!type.IsInterface && td.BaseType != null && IsSameType(td.BaseType, type)) {
@@ -79,22 +84,13 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					}
 				}
 			}
+			yield break;
 		}
-
-		static bool IsSameType(TypeReference typeRef, TypeDefinition type)
+		
+		static bool IsSameType(ITypeReference typeRef, TypeDefinition type)
 		{
-			if (typeRef.FullName == type.FullName)
-				return true;
-			if (typeRef.Name != type.Name || type.Namespace != typeRef.Namespace)
-				return false;
-			if (typeRef.IsNested || type.IsNested)
-				if (!typeRef.IsNested || !type.IsNested || !IsSameType(typeRef.DeclaringType, type.DeclaringType))
-					return false;
-			var gTypeRef = typeRef as GenericInstanceType;
-			if (gTypeRef != null || type.HasGenericParameters)
-				if (gTypeRef == null || !type.HasGenericParameters || gTypeRef.GenericArguments.Count != type.GenericParameters.Count)
-					return false;
-			return true;
+			// FullName contains only namespace, name and type parameter count, therefore this should suffice.
+			return typeRef.FullName == type.FullName;
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

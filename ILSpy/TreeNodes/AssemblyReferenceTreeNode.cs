@@ -25,7 +25,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// <summary>
 	/// Node within assembly reference list.
 	/// </summary>
-	public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
+	/*public sealed class AssemblyReferenceTreeNode : ILSpyTreeNode
 	{
 		readonly AssemblyNameReference r;
 		readonly AssemblyTreeNode parentAssembly;
@@ -77,7 +77,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (assemblyListNode != null) {
 				var refNode = assemblyListNode.FindAssemblyNode(parentAssembly.LoadedAssembly.LookupReferencedAssembly(r));
 				if (refNode != null) {
-					ModuleDefinition module = refNode.LoadedAssembly.GetModuleDefinitionOrNull();
+					ModuleDefinition module = refNode.LoadedAssembly.GetPEFileOrNull();
 					if (module != null) {
 						foreach (var childRef in module.AssemblyReferences)
 							this.Children.Add(new AssemblyReferenceTreeNode(childRef, refNode));
@@ -106,5 +106,5 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				output.WriteLine();
 			}
 		}
-	}
+	}*/
 }

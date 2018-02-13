@@ -4,8 +4,8 @@
 using System.ComponentModel.Composition;
 using System.Windows.Controls;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.ILSpy;
-using Mono.Cecil;
 
 namespace TestPlugin
 {
@@ -32,6 +32,7 @@ namespace TestPlugin
 		
 		public override void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
+#if false
 			if (method.Body != null) {
 				output.WriteLine("Size of method: {0} bytes", method.Body.CodeSize);
 				
@@ -54,6 +55,7 @@ namespace TestPlugin
 					syntaxTree.AcceptVisitor(visitor);
 				*/
 			}
+#endif
 		}
 	}
 }

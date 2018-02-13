@@ -25,6 +25,7 @@ using ICSharpCode.Decompiler.CSharp.Syntax.PatternMatching;
 using ICSharpCode.Decompiler.CSharp.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Semantics;
+using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler.CSharp.Transforms
 {

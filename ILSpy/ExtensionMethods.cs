@@ -101,13 +101,45 @@ namespace ICSharpCode.ILSpy
 			}
 			return false;
 		}
-		
-		public static string ToSuffixString(this MetadataToken token)
+
+		public static string ToSuffixString(this System.Reflection.Metadata.MethodDefinitionHandle token)
 		{
 			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
 				return string.Empty;
-			
-			return " @" + token.ToInt32().ToString("x8");
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+		}
+
+		public static string ToSuffixString(this System.Reflection.Metadata.PropertyDefinitionHandle token)
+		{
+			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+		}
+
+		public static string ToSuffixString(this System.Reflection.Metadata.EventDefinitionHandle token)
+		{
+			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+		}
+
+		public static string ToSuffixString(this System.Reflection.Metadata.FieldDefinitionHandle token)
+		{
+			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
+		}
+
+		public static string ToSuffixString(this System.Reflection.Metadata.TypeDefinitionHandle token)
+		{
+			if (!DisplaySettingsPanel.CurrentDisplaySettings.ShowMetadataTokens)
+				return string.Empty;
+
+			return " @" + System.Reflection.Metadata.Ecma335.MetadataTokens.GetToken(token).ToString("x8");
 		}
 
 		/// <summary>

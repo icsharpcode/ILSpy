@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Media;
-using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.Util;
 using ICSharpCode.ILSpy.TreeNodes;
-using Mono.Cecil;
-using Code = Mono.Cecil.Cil.Code;
+using ICSharpCode.Decompiler.Dom;
+using System.Reflection;
+using ICSharpCode.Decompiler.Disassembler;
+using ILOpCode = System.Reflection.Metadata.ILOpCode;
 
 namespace ICSharpCode.ILSpy
 {
@@ -37,7 +38,7 @@ namespace ICSharpCode.ILSpy
 			searchTerm = terms;
 		}
 
-		protected float CalculateFitness(MemberReference member)
+		protected float CalculateFitness(IMemberReference member)
 		{
 			string text = member.Name;
 
@@ -49,11 +50,11 @@ namespace ICSharpCode.ILSpy
 			// Constructors always have the same name in IL:
 			// Use type name instead
 			if (text == ".cctor" || text == ".ctor") {
-				text = member.DeclaringType.Name;
+				//text = member.DeclaringType.Name;
 			}
 
 			// Ignore generic arguments, it not possible to search based on them either
-			text = ReflectionHelper.SplitTypeParameterCountFromReflectionName(text);
+			text = Decompiler.TypeSystem.ReflectionHelper.SplitTypeParameterCountFromReflectionName(text);
 
 			return 1.0f / text.Length;
 		}
@@ -139,7 +140,7 @@ namespace ICSharpCode.ILSpy
 			}
 		}
 
-		void Add<T>(IEnumerable<T> items, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : MemberReference
+		void Add<T>(IEnumerable<T> items, TypeDefinition type, Language language, Action<SearchResult> addResult, Func<T, Language, bool> matcher, Func<T, ImageSource> image) where T : IMemberReference
 		{
 			foreach (var item in items) {
 				if (matcher(item, language)) {
@@ -170,12 +171,12 @@ namespace ICSharpCode.ILSpy
 
 		bool NotSpecialMethod(MethodDefinition arg)
 		{
-			return (arg.SemanticsAttributes & (
+			return (arg.GetMethodSemanticsAttributes() & (
 				MethodSemanticsAttributes.Setter
 				| MethodSemanticsAttributes.Getter
-				| MethodSemanticsAttributes.AddOn
-				| MethodSemanticsAttributes.RemoveOn
-				| MethodSemanticsAttributes.Fire)) == 0;
+				| MethodSemanticsAttributes.Adder
+				| MethodSemanticsAttributes.Remover
+				| MethodSemanticsAttributes.Raiser)) == 0;
 		}
 
 		Regex SafeNewRegex(string unsafePattern)
@@ -227,7 +228,7 @@ namespace ICSharpCode.ILSpy
 
 		protected override bool IsMatch(FieldDefinition field, Language language)
 		{
-			return IsLiteralMatch(field.Constant);
+			return IsLiteralMatch(field.DecodeConstant());
 		}
 
 		protected override bool IsMatch(PropertyDefinition property, Language language)
@@ -268,91 +269,115 @@ namespace ICSharpCode.ILSpy
 
 		bool MethodIsLiteralMatch(MethodDefinition m)
 		{
-			if (m == null)
+			if (m == null || !m.HasBody)
 				return false;
-			var body = m.Body;
-			if (body == null)
-				return false;
+			var blob = m.Body.GetILReader();
 			if (searchTermLiteralType == TypeCode.Int64) {
 				long val = (long)searchTermLiteralValue;
-				foreach (var inst in body.Instructions) {
-					switch (inst.OpCode.Code) {
-					case Code.Ldc_I8:
-						if (val == (long)inst.Operand)
-							return true;
-						break;
-					case Code.Ldc_I4:
-						if (val == (int)inst.Operand)
-							return true;
-						break;
-					case Code.Ldc_I4_S:
-						if (val == (sbyte)inst.Operand)
-							return true;
-						break;
-					case Code.Ldc_I4_M1:
-						if (val == -1)
-							return true;
-						break;
-					case Code.Ldc_I4_0:
-						if (val == 0)
-							return true;
-						break;
-					case Code.Ldc_I4_1:
-						if (val == 1)
-							return true;
-						break;
-					case Code.Ldc_I4_2:
-						if (val == 2)
-							return true;
-						break;
-					case Code.Ldc_I4_3:
-						if (val == 3)
-							return true;
-						break;
-					case Code.Ldc_I4_4:
-						if (val == 4)
-							return true;
-						break;
-					case Code.Ldc_I4_5:
-						if (val == 5)
-							return true;
-						break;
-					case Code.Ldc_I4_6:
-						if (val == 6)
-							return true;
-						break;
-					case Code.Ldc_I4_7:
-						if (val == 7)
-							return true;
-						break;
-					case Code.Ldc_I4_8:
-						if (val == 8)
-							return true;
-						break;
+				while (blob.RemainingBytes > 0) {
+					ILOpCode code;
+					switch (code = ILParser.DecodeOpCode(ref blob)) {
+						case ILOpCode.Ldc_i8:
+							if (val == blob.ReadInt64())
+								return true;
+							break;
+						case ILOpCode.Ldc_i4:
+							if (val == blob.ReadInt32())
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_s:
+							if (val == blob.ReadSByte())
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_m1:
+							if (val == -1)
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_0:
+							if (val == 0)
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_1:
+							if (val == 1)
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_2:
+							if (val == 2)
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_3:
+							if (val == 3)
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_4:
+							if (val == 4)
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_5:
+							if (val == 5)
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_6:
+							if (val == 6)
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_7:
+							if (val == 7)
+								return true;
+							break;
+						case ILOpCode.Ldc_i4_8:
+							if (val == 8)
+								return true;
+							break;
+						default:
+							ILParser.SkipOperand(ref blob, code);
+							break;
 					}
 				}
 			} else if (searchTermLiteralType != TypeCode.Empty) {
-				Code expectedCode;
+				ILOpCode expectedCode;
 				switch (searchTermLiteralType) {
-				case TypeCode.Single:
-					expectedCode = Code.Ldc_R4;
-					break;
-				case TypeCode.Double:
-					expectedCode = Code.Ldc_R8;
-					break;
-				case TypeCode.String:
-					expectedCode = Code.Ldstr;
-					break;
-				default:
-					throw new InvalidOperationException();
+					case TypeCode.Single:
+						expectedCode = ILOpCode.Ldc_r4;
+						break;
+					case TypeCode.Double:
+						expectedCode = ILOpCode.Ldc_r8;
+						break;
+					case TypeCode.String:
+						expectedCode = ILOpCode.Ldstr;
+						break;
+					default:
+						throw new InvalidOperationException();
 				}
-				foreach (var inst in body.Instructions) {
-					if (inst.OpCode.Code == expectedCode && searchTermLiteralValue.Equals(inst.Operand))
-						return true;
+				while (blob.RemainingBytes > 0) {
+					var code = ILParser.DecodeOpCode(ref blob);
+					if (code != expectedCode) {
+						ILParser.SkipOperand(ref blob, code);
+						continue;
+					}
+					switch (code) {
+						case ILOpCode.Ldc_r4:
+							if ((float)searchTermLiteralValue == blob.ReadSingle())
+								return true;
+							break;
+						case ILOpCode.Ldc_r8:
+							if ((double)searchTermLiteralValue == blob.ReadDouble())
+								return true;
+							break;
+						case ILOpCode.Ldstr:
+							if ((string)searchTermLiteralValue == ILParser.DecodeUserString(ref blob, m.Module))
+								return true;
+							break;
+					}
 				}
 			} else {
-				foreach (var inst in body.Instructions) {
-					if (inst.OpCode.Code == Code.Ldstr && IsMatch(t => (string)inst.Operand))
+				while (blob.RemainingBytes > 0) {
+					var code = ILParser.DecodeOpCode(ref blob);
+					if (code != ILOpCode.Ldstr) {
+						ILParser.SkipOperand(ref blob, code);
+						continue;
+					}
+					if (IsMatch(t => ILParser.DecodeUserString(ref blob, m.Module)))
 						return true;
 				}
 			}
@@ -450,8 +475,8 @@ namespace ICSharpCode.ILSpy
 					Image = TypeTreeNode.GetIcon(type),
 					Fitness = CalculateFitness(type),
 					Name = name,
-					LocationImage = type.DeclaringType != null ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
-					Location = type.DeclaringType != null ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
+					LocationImage = !type.DeclaringType.IsNil ? TypeTreeNode.GetIcon(type.DeclaringType) : Images.Namespace,
+					Location = !type.DeclaringType.IsNil ? language.TypeToString(type.DeclaringType, includeNamespace: true) : type.Namespace
 				});
 			}
 

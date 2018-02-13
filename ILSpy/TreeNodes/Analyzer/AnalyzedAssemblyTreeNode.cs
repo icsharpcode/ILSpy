@@ -17,15 +17,15 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
 	internal class AnalyzedAssemblyTreeNode : AnalyzerEntityTreeNode
 	{
-		private readonly ModuleDefinition analyzedAssembly;
+		private readonly PEFile analyzedAssembly;
 
-		public AnalyzedAssemblyTreeNode(ModuleDefinition analyzedAssembly)
+		public AnalyzedAssemblyTreeNode(PEFile analyzedAssembly)
 		{
 			if (analyzedAssembly == null)
 				throw new ArgumentNullException(nameof(analyzedAssembly));
@@ -33,27 +33,15 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			//this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return Images.Assembly; }
-		}
+		public override object Icon => Images.Assembly;
 
-		public override object Text
-		{
-			get
-			{
-				return analyzedAssembly.Name;
-			}
-		}
+		public override object Text => analyzedAssembly.Name;
 
 		protected override void LoadChildren()
 		{
 			//this.Children.Add(new AnalyzedAssemblyReferencedByTreeNode(analyzedAssembly));
 		}
 
-		public override MemberReference Member
-		{
-			get { return null; }
-		}
+		public override IMemberReference Member => null;
 	}
 }

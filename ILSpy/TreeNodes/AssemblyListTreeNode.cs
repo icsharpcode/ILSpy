@@ -22,10 +22,11 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Windows;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.TreeView;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -153,7 +154,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		#region Find*Node
-
+		/*
 		public ILSpyTreeNode FindResourceNode(Resource resource)
 		{
 			if (resource == null)
@@ -177,27 +178,15 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return null;
 		}
+		*/
 
-
-		public AssemblyTreeNode FindAssemblyNode(ModuleDefinition module)
+		public AssemblyTreeNode FindAssemblyNode(PEFile module)
 		{
 			if (module == null)
 				return null;
 			App.Current.Dispatcher.VerifyAccess();
 			foreach (AssemblyTreeNode node in this.Children) {
-				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetModuleDefinitionOrNull() == module)
-					return node;
-			}
-			return null;
-		}
-
-		public AssemblyTreeNode FindAssemblyNode(AssemblyDefinition asm)
-		{
-			if (asm == null)
-				return null;
-			App.Current.Dispatcher.VerifyAccess();
-			foreach (AssemblyTreeNode node in this.Children) {
-				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetAssemblyDefinitionOrNull() == asm)
+				if (node.LoadedAssembly.IsLoaded && node.LoadedAssembly.GetPEFileOrNull() == module)
 					return node;
 			}
 			return null;
@@ -221,16 +210,14 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public TypeTreeNode FindTypeNode(TypeDefinition def)
 		{
-			if (def == null)
-				return null;
-			if (def.DeclaringType != null) {
+			if (!def.DeclaringType.IsNil) {
 				TypeTreeNode decl = FindTypeNode(def.DeclaringType);
 				if (decl != null) {
 					decl.EnsureLazyChildren();
 					return decl.Children.OfType<TypeTreeNode>().FirstOrDefault(t => t.TypeDefinition == def && !t.IsHidden);
 				}
 			} else {
-				AssemblyTreeNode asm = FindAssemblyNode(def.Module.Assembly);
+				AssemblyTreeNode asm = FindAssemblyNode(def.Module);
 				if (asm != null) {
 					return asm.FindTypeNode(def);
 				}
@@ -244,8 +231,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public ILSpyTreeNode FindMethodNode(MethodDefinition def)
 		{
-			if (def == null)
-				return null;
 			TypeTreeNode typeNode = FindTypeNode(def.DeclaringType);
 			if (typeNode == null)
 				return null;
@@ -281,8 +266,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public FieldTreeNode FindFieldNode(FieldDefinition def)
 		{
-			if (def == null)
-				return null;
 			TypeTreeNode typeNode = FindTypeNode(def.DeclaringType);
 			if (typeNode == null)
 				return null;
@@ -296,8 +279,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public PropertyTreeNode FindPropertyNode(PropertyDefinition def)
 		{
-			if (def == null)
-				return null;
 			TypeTreeNode typeNode = FindTypeNode(def.DeclaringType);
 			if (typeNode == null)
 				return null;
@@ -311,8 +292,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// </summary>
 		public EventTreeNode FindEventNode(EventDefinition def)
 		{
-			if (def == null)
-				return null;
 			TypeTreeNode typeNode = FindTypeNode(def.DeclaringType);
 			if (typeNode == null)
 				return null;

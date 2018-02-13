@@ -19,35 +19,33 @@
 using System;
 using System.Linq;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.TreeView;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	sealed class BaseTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		private readonly TypeReference tr;
+		private readonly ITypeReference tr;
 		private TypeDefinition def;
 		private readonly bool isInterface;
 
-		public BaseTypesEntryNode(TypeReference tr, bool isInterface)
+		public BaseTypesEntryNode(ITypeReference tr, bool isInterface)
 		{
-			if (tr == null)
-				throw new ArgumentNullException(nameof(tr));
-			this.tr = tr;
-			this.def = tr.Resolve();
+			this.tr = tr ?? throw new ArgumentNullException(nameof(tr));
+			this.def = tr.GetDefinition();
 			this.isInterface = isInterface;
 			this.LazyLoading = true;
 		}
 
 		public override bool ShowExpander
 		{
-			get { return def != null && (def.BaseType != null || def.HasInterfaces); }
+			get { return !def.IsNil && (def.BaseType != null || def.HasInterfaces); }
 		}
 
 		public override object Text
 		{
-			get { return this.Language.TypeToString(tr, true) + tr.MetadataToken.ToSuffixString(); }
+			get { return def.FullName + def.Handle.ToSuffixString(); }
 		}
 
 		public override object Icon
@@ -71,7 +69,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			// on item activation, try to resolve once again (maybe the user loaded the assembly in the meantime)
 			if (def == null) {
-				def = tr.Resolve();
+				def = tr.GetDefinition();
 				if (def != null)
 					this.LazyLoading = true;
 				// re-load children
@@ -96,9 +94,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, language.TypeToString(tr, true));
 		}
 
-		MemberReference IMemberTreeNode.Member
-		{
-			get { return tr; }
-		}
+		IMemberReference IMemberTreeNode.Member => tr;
 	}
 }

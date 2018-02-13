@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection.PortableExecutable;
 using System.Text;
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.Decompiler.Util;
-using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler
 {
@@ -58,26 +59,18 @@ namespace ICSharpCode.Decompiler
 			AddSearchDirectory(baseDirectory);
 		}
 
-		public static ModuleDefinition LoadMainModule(string mainAssemblyFileName, bool throwOnError = true, bool inMemory = false)
+		public static PEFile LoadMainModule(string mainAssemblyFileName, bool throwOnError = true, bool inMemory = false)
 		{
 			var resolver = new UniversalAssemblyResolver(mainAssemblyFileName, throwOnError);
 
-			var module = ModuleDefinition.ReadModule(mainAssemblyFileName, new ReaderParameters {
-				AssemblyResolver = resolver,
-				InMemory = inMemory
-			});
+			var module = new PEReader(new FileStream(mainAssemblyFileName, FileMode.Open));
 
-			resolver.TargetFramework = module.Assembly.DetectTargetFrameworkId();
+			resolver.TargetFramework = module.DetectTargetFrameworkId();
 
-			return module;
+			return new PEFile(mainAssemblyFileName, module, resolver);
 		}
 
-		public AssemblyDefinition Resolve(AssemblyNameReference name)
-		{
-			return Resolve(name, new ReaderParameters());
-		}
-
-		public AssemblyDefinition Resolve(AssemblyNameReference name, ReaderParameters parameters)
+		public PEFile Resolve(IAssemblyReference name)
 		{
 			var file = FindAssemblyFile(name);
 			if (file == null) {
@@ -85,10 +78,10 @@ namespace ICSharpCode.Decompiler
 					throw new AssemblyResolutionException(name);
 				return null;
 			}
-			return GetAssembly(file, parameters);
+			return new PEFile(file, GetAssembly(file), this);
 		}
 
-		public string FindAssemblyFile(AssemblyNameReference name)
+		public string FindAssemblyFile(IAssemblyReference name)
 		{
 			var targetFramework = TargetFramework.Split(new[] { ",Version=v" }, StringSplitOptions.None);
 			string file = null;
@@ -110,28 +103,21 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		string ResolveInternal(AssemblyNameReference name)
+		string ResolveInternal(IAssemblyReference name)
 		{
-			if (name == null)
+			if (name.IsNil())
 				throw new ArgumentNullException(nameof(name));
 
 			var assembly = SearchDirectory(name, directories);
 			if (assembly != null)
 				return assembly;
 
-			if (name.IsRetargetable) {
-				// if the reference is retargetable, zero it
-				name = new AssemblyNameReference(name.Name, ZeroVersion) {
-					PublicKeyToken = Empty<byte>.Array,
-				};
-			}
-
 			var framework_dir = Path.GetDirectoryName(typeof(object).Module.FullyQualifiedName);
 			var framework_dirs = DetectMono()
 				? new[] { framework_dir, Path.Combine(framework_dir, "Facades") }
 				: new[] { framework_dir };
 
-			if (IsZero(name.Version)) {
+			if (IsZeroVersionOrRetargetable(name)) {
 				assembly = SearchDirectory(name, framework_dirs);
 				if (assembly != null)
 					return assembly;
@@ -157,7 +143,7 @@ namespace ICSharpCode.Decompiler
 		}
 
 		#region .NET / mono GAC handling
-		string SearchDirectory(AssemblyNameReference name, IEnumerable<string> directories)
+		string SearchDirectory(IAssemblyReference name, IEnumerable<string> directories)
 		{
 			var extensions = name.IsWindowsRuntime ? new[] { ".winmd", ".dll" } : new[] { ".exe", ".dll" };
 			foreach (var directory in directories) {
@@ -176,19 +162,22 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
+		static bool IsZeroVersionOrRetargetable(IAssemblyReference reference)
+		{
+			return IsZero(reference.Version) || reference.IsRetargetable;
+		}
+
 		static bool IsZero(Version version)
 		{
 			return version.Major == 0 && version.Minor == 0 && version.Build == 0 && version.Revision == 0;
 		}
 
-		static Version ZeroVersion = new Version(0, 0, 0, 0);
-
-		string GetCorlib(AssemblyNameReference reference)
+		string GetCorlib(IAssemblyReference reference)
 		{
 			var version = reference.Version;
 			var corlib = typeof(object).Assembly.GetName();
 
-			if (corlib.Version == version || IsZero(version))
+			if (corlib.Version == version || IsZeroVersionOrRetargetable(reference))
 				return typeof(object).Module.FullyQualifiedName;
 
 			var path = Directory.GetParent(
@@ -286,15 +275,12 @@ namespace ICSharpCode.Decompiler
 				"gac");
 		}
 
-		AssemblyDefinition GetAssembly(string file, ReaderParameters parameters)
+		PEReader GetAssembly(string file)
 		{
-			if (parameters.AssemblyResolver == null)
-				parameters.AssemblyResolver = this;
-
-			return ModuleDefinition.ReadModule(file, parameters).Assembly;
+			return new PEReader(new FileStream(file, FileMode.Open));
 		}
 
-		string GetAssemblyInGac(AssemblyNameReference reference)
+		string GetAssemblyInGac(IAssemblyReference reference)
 		{
 			if (reference.PublicKeyToken == null || reference.PublicKeyToken.Length == 0)
 				return null;
@@ -305,7 +291,7 @@ namespace ICSharpCode.Decompiler
 			return GetAssemblyInNetGac(reference);
 		}
 
-		string GetAssemblyInMonoGac(AssemblyNameReference reference)
+		string GetAssemblyInMonoGac(IAssemblyReference reference)
 		{
 			for (int i = 0; i < gac_paths.Count; i++) {
 				var gac_path = gac_paths[i];
@@ -317,7 +303,7 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		string GetAssemblyInNetGac(AssemblyNameReference reference)
+		string GetAssemblyInNetGac(IAssemblyReference reference)
 		{
 			var gacs = new[] { "GAC_MSIL", "GAC_32", "GAC_64", "GAC" };
 			var prefixes = new[] { string.Empty, "v4.0_" };
@@ -334,7 +320,7 @@ namespace ICSharpCode.Decompiler
 			return null;
 		}
 
-		static string GetAssemblyFile(AssemblyNameReference reference, string prefix, string gac)
+		static string GetAssemblyFile(IAssemblyReference reference, string prefix, string gac)
 		{
 			var gac_folder = new StringBuilder()
 				.Append(prefix)

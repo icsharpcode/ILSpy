@@ -20,15 +20,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.PortableExecutable;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
-using Mono.Cecil;
+
+using SRM = System.Reflection.Metadata;
+using static System.Reflection.Metadata.PEReaderExtensions;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -97,18 +101,19 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 				if (tooltip == null && assembly.IsLoaded) {
 					tooltip = new TextBlock();
-					var module = assembly.GetModuleDefinitionOrNull();
-					if (module.Assembly != null) {
+					var module = assembly.GetPEFileOrNull();
+					var metadata = module?.GetMetadataReader();
+					if (metadata?.IsAssembly == true) {
 						tooltip.Inlines.Add(new Bold(new Run("Name: ")));
-						tooltip.Inlines.Add(new Run(module.Assembly.FullName));
+						tooltip.Inlines.Add(new Run(metadata.GetFullAssemblyName()));
 						tooltip.Inlines.Add(new LineBreak());
 					}
 					tooltip.Inlines.Add(new Bold(new Run("Location: ")));
 					tooltip.Inlines.Add(new Run(assembly.FileName));
 					tooltip.Inlines.Add(new LineBreak());
 					tooltip.Inlines.Add(new Bold(new Run("Architecture: ")));
-					tooltip.Inlines.Add(new Run(CSharpLanguage.GetPlatformDisplayName(module)));
-					string runtimeName = CSharpLanguage.GetRuntimeDisplayName(module);
+					tooltip.Inlines.Add(new Run(Language.GetPlatformDisplayName(module)));
+					string runtimeName = Language.GetRuntimeDisplayName(module);
 					if (runtimeName != null) {
 						tooltip.Inlines.Add(new LineBreak());
 						tooltip.Inlines.Add(new Bold(new Run("Runtime: ")));
@@ -125,7 +130,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			get { return !assembly.HasLoadError; }
 		}
 
-		void OnAssemblyLoaded(Task<ModuleDefinition> moduleTask)
+		void OnAssemblyLoaded(Task<PEFile> moduleTask)
 		{
 			// change from "Loading" icon to final icon
 			RaisePropertyChanged("Icon");
@@ -145,19 +150,20 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			ModuleDefinition moduleDefinition = assembly.GetModuleDefinitionOrNull();
-			if (moduleDefinition == null) {
+			var module = assembly.GetPEFileOrNull();
+			if (module == null) {
 				// if we crashed on loading, then we don't have any children
 				return;
 			}
+			var metadata = module.GetMetadataReader();
 
-			this.Children.Add(new ReferenceFolderTreeNode(moduleDefinition, this));
-			if (moduleDefinition.HasResources)
-				this.Children.Add(new ResourceListTreeNode(moduleDefinition));
+			this.Children.Add(new ReferenceFolderTreeNode(metadata, this));
+			if (module.Resources.Any())
+				this.Children.Add(new ResourceListTreeNode(module));
 			foreach (NamespaceTreeNode ns in namespaces.Values) {
 				ns.Children.Clear();
 			}
-			foreach (TypeDefinition type in moduleDefinition.Types.OrderBy(t => t.FullName, NaturalStringComparer.Instance)) {
+			foreach (TypeDefinition type in metadata.GetTopLevelTypeDefinitions().Select(td => new TypeDefinition(module, td)).OrderBy(t => t.FullName.ToString(), NaturalStringComparer.Instance)) {
 				NamespaceTreeNode ns;
 				if (!namespaces.TryGetValue(type.Namespace, out ns)) {
 					ns = new NamespaceTreeNode(type.Namespace);
@@ -172,10 +178,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					this.Children.Add(ns);
 			}
 		}
-		
-		public override bool CanExpandRecursively {
-			get { return true; }
-		}
+
+		public override bool CanExpandRecursively => true;
 
 		/// <summary>
 		/// Finds the node for a top-level type.
@@ -396,10 +400,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 				return;
 			foreach (var node in context.SelectedTreeNodes) {
 				var la = ((AssemblyTreeNode)node).LoadedAssembly;
-				var module = la.GetModuleDefinitionOrNull();
+				var module = la.GetPEFileOrNull();
 				if (module != null) {
-					foreach (var assyRef in module.AssemblyReferences) {
-						la.LookupReferencedAssembly(assyRef);
+					var metadata = module.GetMetadataReader();
+					foreach (var assyRef in metadata.AssemblyReferences) {
+						la.LookupReferencedAssembly(new AssemblyReference(module, assyRef));
 					}
 				}
 			}

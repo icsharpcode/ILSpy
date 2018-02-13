@@ -25,7 +25,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// <summary>
 	/// Module reference in ReferenceFolderTreeNode.
 	/// </summary>
-	sealed class ModuleReferenceTreeNode : ILSpyTreeNode
+	/*sealed class ModuleReferenceTreeNode : ILSpyTreeNode
 	{
 		readonly ModuleReference r;
 		
@@ -48,5 +48,5 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			language.WriteCommentLine(output, r.Name);
 		}
-	}
+	}*/
 }

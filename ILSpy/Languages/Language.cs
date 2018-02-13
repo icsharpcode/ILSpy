@@ -18,8 +18,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Reflection.PortableExecutable;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
+
+using static System.Reflection.Metadata.PEReaderExtensions;
+using SRM = System.Reflection.Metadata;
 
 namespace ICSharpCode.ILSpy
 {
@@ -87,16 +92,18 @@ namespace ICSharpCode.ILSpy
 		public virtual void DecompileAssembly(LoadedAssembly assembly, ITextOutput output, DecompilationOptions options)
 		{
 			WriteCommentLine(output, assembly.FileName);
-			var asm = assembly.GetAssemblyDefinitionOrNull();
-			if (asm != null) {
-				var name = asm.Name;
-				if (name.IsWindowsRuntime) {
+			var asm = assembly.GetPEFileOrNull();
+			if (asm == null) return;
+			var reader = asm.GetMetadataReader();
+			if (reader.IsAssembly) {
+				var name = reader.GetAssemblyDefinition();
+				if ((name.Flags & System.Reflection.AssemblyFlags.WindowsRuntime) != 0) {
 					WriteCommentLine(output, name.Name + " [WinRT]");
 				} else {
-					WriteCommentLine(output, name.FullName);
+					WriteCommentLine(output, reader.GetFullAssemblyName());
 				}
 			} else {
-				WriteCommentLine(output, assembly.GetModuleDefinitionAsync().Result.Name);
+				WriteCommentLine(output, reader.GetString(reader.GetModuleDefinition().Name));
 			}
 		}
 
@@ -108,57 +115,69 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Converts a type reference into a string. This method is used by the member tree node for parameter and return types.
 		/// </summary>
-		public virtual string TypeToString(TypeReference type, bool includeNamespace, ICustomAttributeProvider typeAttributes = null)
+		public virtual string TypeToString(ITypeReference type, bool includeNamespace, ICustomAttributeProvider typeAttributes = null)
 		{
 			if (includeNamespace)
-				return type.FullName;
+				return type.FullName.ToString();
 			else
 				return type.Name;
+		}
+
+		public virtual SRM.ISignatureTypeProvider<string, GenericContext> CreateSignatureTypeProvider(bool includeNamespace)
+		{
+			return new ILSignatureProvider(includeNamespace);
 		}
 
 		/// <summary>
 		/// Converts a member signature to a string.
 		/// This is used for displaying the tooltip on a member reference.
 		/// </summary>
-		public virtual string GetTooltip(MemberReference member)
+		public virtual string GetTooltip(IMemberReference member)
 		{
-			if (member is TypeReference)
-				return TypeToString((TypeReference)member, true);
-			else
-				return member.ToString();
+			return member.Name;
 		}
+
+		/// <summary>
+		/// Converts a member signature to a string.
+		/// This is used for displaying the tooltip on a member reference.
+		/// </summary>
+		public virtual string GetTooltip(ITypeReference type)
+		{
+			return TypeToString(type, true);
+		}
+
 
 		public virtual string FormatFieldName(FieldDefinition field)
 		{
-			if (field == null)
+			if (field.Handle.IsNil)
 				throw new ArgumentNullException(nameof(field));
 			return field.Name;
 		}
 
 		public virtual string FormatPropertyName(PropertyDefinition property, bool? isIndexer = null)
 		{
-			if (property == null)
+			if (property.Handle.IsNil)
 				throw new ArgumentNullException(nameof(property));
 			return property.Name;
 		}
 
 		public virtual string FormatMethodName(MethodDefinition method)
 		{
-			if (method == null)
+			if (method.Handle.IsNil)
 				throw new ArgumentNullException(nameof(method));
 			return method.Name;
 		}
 
 		public virtual string FormatEventName(EventDefinition @event)
 		{
-			if (@event == null)
+			if (@event.Handle.IsNil)
 				throw new ArgumentNullException(nameof(@event));
 			return @event.Name;
 		}
 
 		public virtual string FormatTypeName(TypeDefinition type)
 		{
-			if (type == null)
+			if (type.Handle.IsNil)
 				throw new ArgumentNullException(nameof(type));
 			return type.Name;
 		}
@@ -171,7 +190,7 @@ namespace ICSharpCode.ILSpy
 			return Name;
 		}
 
-		public virtual bool ShowMember(MemberReference member)
+		public virtual bool ShowMember(IMemberReference member)
 		{
 			return true;
 		}
@@ -179,9 +198,190 @@ namespace ICSharpCode.ILSpy
 		/// <summary>
 		/// Used by the analyzer to map compiler generated code back to the original code's location
 		/// </summary>
-		public virtual MemberReference GetOriginalCodeLocation(MemberReference member)
+		public virtual IMemberReference GetOriginalCodeLocation(IMemberReference member)
 		{
 			return member;
+		}
+
+		public static string GetPlatformDisplayName(PEFile module)
+		{
+			var architecture = module.Reader.PEHeaders.CoffHeader.Machine;
+			var flags = module.Reader.PEHeaders.CorHeader.Flags;
+			switch (architecture) {
+				case Machine.I386:
+					if ((flags & CorFlags.Prefers32Bit) != 0)
+						return "AnyCPU (32-bit preferred)";
+					else if ((flags & CorFlags.Requires32Bit) != 0)
+						return "x86";
+					else
+						return "AnyCPU (64-bit preferred)";
+				case Machine.Amd64:
+					return "x64";
+				case Machine.IA64:
+					return "Itanium";
+				default:
+					return architecture.ToString();
+			}
+		}
+
+		public static string GetRuntimeDisplayName(PEFile module)
+		{
+			string version = module.GetMetadataReader().MetadataVersion;
+			switch (version[1]) {
+				case '1':
+					if (version[3] == 1)
+						return ".NET 1.1";
+					else
+						return ".NET 1.0";
+				case '2':
+					return ".NET 2.0";
+				case '4':
+					return ".NET 4.0";
+			}
+			return null;
+		}
+	}
+
+	class ILSignatureProvider : SRM.ISignatureTypeProvider<string, GenericContext>
+	{
+		bool includeNamespace;
+
+		public ILSignatureProvider(bool includeNamespace)
+		{
+			this.includeNamespace = includeNamespace;
+		}
+
+		public string GetArrayType(string elementType, SRM.ArrayShape shape)
+		{
+			string printedShape = "";
+			for (int i = 0; i < shape.Rank; i++) {
+				if (i > 0)
+					printedShape += ", ";
+				if (i < shape.LowerBounds.Length || i < shape.Sizes.Length) {
+					int lower = 0;
+					if (i < shape.LowerBounds.Length) {
+						lower = shape.LowerBounds[i];
+						printedShape += lower.ToString();
+					}
+					printedShape += "...";
+					if (i < shape.Sizes.Length)
+						printedShape += (lower + shape.Sizes[i] - 1).ToString();
+				}
+			}
+			return $"{elementType}[{printedShape}]";
+		}
+
+		public string GetByReferenceType(string elementType)
+		{
+			return elementType + "&";
+		}
+
+		public string GetFunctionPointerType(SRM.MethodSignature<string> signature)
+		{
+			throw new NotImplementedException();
+		}
+
+		public string GetGenericInstantiation(string genericType, ImmutableArray<string> typeArguments)
+		{
+			return genericType + "<" + string.Join(", ", typeArguments) + ">";
+		}
+
+		public string GetGenericMethodParameter(GenericContext genericContext, int index)
+		{
+			return "!!" + genericContext.GetGenericMethodTypeParameterName(index);
+		}
+
+		public string GetGenericTypeParameter(GenericContext genericContext, int index)
+		{
+			return "!" + genericContext.GetGenericTypeParameterName(index);
+		}
+
+		public string GetModifiedType(string modifier, string unmodifiedType, bool isRequired)
+		{
+			throw new NotImplementedException();
+		}
+
+		public string GetPinnedType(string elementType)
+		{
+			throw new NotImplementedException();
+		}
+
+		public string GetPointerType(string elementType)
+		{
+			return elementType + "*";
+		}
+
+		public string GetPrimitiveType(SRM.PrimitiveTypeCode typeCode)
+		{
+			switch (typeCode) {
+				case SRM.PrimitiveTypeCode.Boolean:
+					return "bool";
+				case SRM.PrimitiveTypeCode.Byte:
+					return "uint8";
+				case SRM.PrimitiveTypeCode.SByte:
+					return "int8";
+				case SRM.PrimitiveTypeCode.Char:
+					return "char";
+				case SRM.PrimitiveTypeCode.Int16:
+					return "int16";
+				case SRM.PrimitiveTypeCode.UInt16:
+					return "uint16";
+				case SRM.PrimitiveTypeCode.Int32:
+					return "int32";
+				case SRM.PrimitiveTypeCode.UInt32:
+					return "uint32";
+				case SRM.PrimitiveTypeCode.Int64:
+					return "int64";
+				case SRM.PrimitiveTypeCode.UInt64:
+					return "uint64";
+				case SRM.PrimitiveTypeCode.Single:
+					return "float32";
+				case SRM.PrimitiveTypeCode.Double:
+					return "float64";
+				case SRM.PrimitiveTypeCode.IntPtr:
+					return "native int";
+				case SRM.PrimitiveTypeCode.UIntPtr:
+					break;
+				case SRM.PrimitiveTypeCode.Object:
+					return "object";
+				case SRM.PrimitiveTypeCode.String:
+					return "string";
+				case SRM.PrimitiveTypeCode.TypedReference:
+					break;
+				case SRM.PrimitiveTypeCode.Void:
+					return "void";
+				default:
+					break;
+			}
+			throw new NotImplementedException();
+		}
+
+		public string GetSZArrayType(string elementType)
+		{
+			return elementType + "[]";
+		}
+
+		public string GetTypeFromDefinition(SRM.MetadataReader reader, SRM.TypeDefinitionHandle handle, byte rawTypeKind)
+		{
+			if (!includeNamespace) {
+				return Decompiler.Disassembler.DisassemblerHelpers.Escape(handle.GetFullTypeName(reader).Name);
+			}
+
+			return handle.GetFullTypeName(reader).ToILNameString();
+		}
+
+		public string GetTypeFromReference(SRM.MetadataReader reader, SRM.TypeReferenceHandle handle, byte rawTypeKind)
+		{
+			if (!includeNamespace) {
+				return Decompiler.Disassembler.DisassemblerHelpers.Escape(handle.GetFullTypeName(reader).Name);
+			}
+
+			return handle.GetFullTypeName(reader).ToILNameString();
+		}
+
+		public string GetTypeFromSpecification(SRM.MetadataReader reader, GenericContext genericContext, SRM.TypeSpecificationHandle handle, byte rawTypeKind)
+		{
+			return reader.GetTypeSpecification(handle).DecodeSignature(this, genericContext);
 		}
 	}
 }

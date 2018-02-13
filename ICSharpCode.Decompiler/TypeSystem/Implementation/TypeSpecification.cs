@@ -105,8 +105,6 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 	}
 
-	public struct Unit { }
-
 	class TypeReferenceSignatureDecoder : ISignatureTypeProvider<ITypeReference, Unit>
 	{
 		public ITypeReference GetArrayType(ITypeReference elementType, ArrayShape shape)
@@ -184,9 +182,11 @@ namespace ICSharpCode.Decompiler.TypeSystem.Implementation
 		}
 	}
 
-	class TypeSystemAttributeTypeProvider : ICustomAttributeTypeProvider<IType>
+	public class TypeSystemAttributeTypeProvider : ICustomAttributeTypeProvider<IType>
 	{
 		readonly ITypeResolveContext context;
+
+		public static TypeSystemAttributeTypeProvider CreateDefault() => new TypeSystemAttributeTypeProvider(new SimpleTypeResolveContext(MinimalCorlib.Instance.CreateCompilation()));
 
 		public TypeSystemAttributeTypeProvider(ITypeResolveContext context)
 		{

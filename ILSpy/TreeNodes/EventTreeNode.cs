@@ -17,9 +17,11 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
+using System.Linq;
+using System.Reflection;
 using System.Windows.Media;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -28,41 +30,39 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	/// </summary>
 	public sealed class EventTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		
 		public EventTreeNode(EventDefinition ev)
 		{
-			if (ev == null)
+			if (ev.IsNil)
 				throw new ArgumentNullException(nameof(ev));
 			this.EventDefinition = ev;
 			
-			if (ev.AddMethod != null)
+			if (!ev.AddMethod.IsNil)
 				this.Children.Add(new MethodTreeNode(ev.AddMethod));
-			if (ev.RemoveMethod != null)
+			if (!ev.RemoveMethod.IsNil)
 				this.Children.Add(new MethodTreeNode(ev.RemoveMethod));
-			if (ev.InvokeMethod != null)
+			if (!ev.InvokeMethod.IsNil)
 				this.Children.Add(new MethodTreeNode(ev.InvokeMethod));
-			if (ev.HasOtherMethods) {
-				foreach (var m in ev.OtherMethods)
-					this.Children.Add(new MethodTreeNode(m));
-			}
+			foreach (var m in ev.OtherMethods)
+				this.Children.Add(new MethodTreeNode(m));
 		}
 
 		public EventDefinition EventDefinition { get; }
 
-		public override object Text => GetText(EventDefinition, this.Language) + EventDefinition.MetadataToken.ToSuffixString();
+		public override object Text => GetText(EventDefinition, this.Language) + EventDefinition.Handle.ToSuffixString();
 
 		public static object GetText(EventDefinition eventDef, Language language)
 		{
-			return HighlightSearchMatch(eventDef.Name, " : " + language.TypeToString(eventDef.EventType, false, eventDef));
+			var eventType = eventDef.DecodeSignature(language.CreateSignatureTypeProvider(false), new GenericContext(eventDef.DeclaringType));
+			return HighlightSearchMatch(eventDef.Name, " : " + eventType);
 		}
 
 		public override object Icon => GetIcon(EventDefinition);
 
 		public static ImageSource GetIcon(EventDefinition eventDef)
 		{
-			MethodDefinition accessor = eventDef.AddMethod ?? eventDef.RemoveMethod;
-			if (accessor != null)
-				return Images.GetIcon(MemberIcon.Event, GetOverlayIcon(eventDef.AddMethod.Attributes), eventDef.AddMethod.IsStatic);
+			MethodDefinition accessor = eventDef.GetAccessors().FirstOrDefault().Method;
+			if (!accessor.IsNil)
+				return Images.GetIcon(MemberIcon.Event, GetOverlayIcon(accessor.Attributes), accessor.HasFlag(MethodAttributes.Static));
 			else
 				return Images.GetIcon(MemberIcon.Event, AccessOverlayIcon.Public, false);
 		}
@@ -82,7 +82,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 					return AccessOverlayIcon.ProtectedInternal;
 				case MethodAttributes.Private:
 					return AccessOverlayIcon.Private;
-				case MethodAttributes.CompilerControlled:
+				case 0:
 					return AccessOverlayIcon.CompilerControlled;
 				default:
 					throw new NotSupportedException();
@@ -104,14 +104,21 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.DecompileEvent(EventDefinition, output, options);
 		}
 		
-		
 		public override bool IsPublicAPI {
 			get {
-				MethodDefinition accessor = EventDefinition.AddMethod ?? EventDefinition.RemoveMethod;
-				return accessor != null && (accessor.IsPublic || accessor.IsFamilyOrAssembly || accessor.IsFamily);
+				MethodDefinition accessor = EventDefinition.GetAccessors().FirstOrDefault().Method;
+				if (accessor.IsNil) return false;
+				switch (accessor.Attributes & MethodAttributes.MemberAccessMask) {
+					case MethodAttributes.Public:
+					case MethodAttributes.FamORAssem:
+					case MethodAttributes.Family:
+						return true;
+					default:
+						return false;
+				}
 			}
 		}
 
-		MemberReference IMemberTreeNode.Member => EventDefinition;
+		IMemberReference IMemberTreeNode.Member => EventDefinition;
 	}
 }

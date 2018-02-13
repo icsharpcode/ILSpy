@@ -17,19 +17,21 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using System.Reflection;
+using System.Reflection.PortableExecutable;
 using System.Threading;
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	class DerivedTypesEntryNode : ILSpyTreeNode, IMemberTreeNode
 	{
 		private readonly TypeDefinition type;
-		private readonly ModuleDefinition[] assemblies;
+		private readonly PEFile[] assemblies;
 		private readonly ThreadingSupport threading;
 
-		public DerivedTypesEntryNode(TypeDefinition type, ModuleDefinition[] assemblies)
+		public DerivedTypesEntryNode(TypeDefinition type, PEFile[] assemblies)
 		{
 			this.type = type;
 			this.assemblies = assemblies;
@@ -39,12 +41,12 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public override bool ShowExpander
 		{
-			get { return !type.IsSealed && base.ShowExpander; }
+			get { return !type.HasFlag(TypeAttributes.Sealed) && base.ShowExpander; }
 		}
 
 		public override object Text
 		{
-			get { return this.Language.TypeToString(type, true) + type.MetadataToken.ToSuffixString(); }
+			get { return type.FullName + type.Handle.ToSuffixString(); }
 		}
 
 		public override object Icon
@@ -57,7 +59,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
 			if (settings.SearchTermMatches(type.Name)) {
-				if (type.IsNested && !settings.Language.ShowMember(type))
+				if (!type.DeclaringType.IsNil && !settings.Language.ShowMember(type))
 					return FilterResult.Hidden;
 				else
 					return FilterResult.Match;
@@ -100,6 +102,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			language.WriteCommentLine(output, language.TypeToString(type, true));
 		}
 
-		MemberReference IMemberTreeNode.Member => type;
+		IMemberReference IMemberTreeNode.Member => type;
 	}
 }

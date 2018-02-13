@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Linq;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -62,32 +62,31 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			}
 		}
 
-		public static void Analyze(MemberReference member)
+		public static void Analyze(IMemberReference member)
 		{
-			if (member is TypeReference) {
-				TypeDefinition type = ((TypeReference)member).Resolve();
-				if (type != null)
-					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedTypeTreeNode(type));
-			}
-			else if (member is FieldReference) {
-				FieldDefinition field = ((FieldReference)member).Resolve();
-				if (field != null)
-					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedFieldTreeNode(field));
-			}
-			else if (member is MethodReference) {
-				MethodDefinition method = ((MethodReference)member).Resolve();
-				if (method != null)
-					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedMethodTreeNode(method));
-			}
-			else if (member is PropertyReference) {
-				PropertyDefinition property = ((PropertyReference)member).Resolve();
-				if (property != null)
-					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedPropertyTreeNode(property));
-			}
-			else if (member is EventReference) {
-				EventDefinition @event = ((EventReference)member).Resolve();
-				if (@event != null)
-					AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedEventTreeNode(@event));
+			var definition = member.GetDefinition();
+			if (definition == null) return;
+			switch (definition) {
+				case TypeDefinition td:
+					if (!td.IsNil)
+						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedTypeTreeNode(td));
+					break;
+				case FieldDefinition fd:
+					if (!fd.IsNil)
+						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedFieldTreeNode(fd));
+					break;
+				case MethodDefinition md:
+					if (!md.IsNil)
+						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedMethodTreeNode(md));
+					break;
+				case PropertyDefinition pd:
+					if (!pd.IsNil)
+						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedPropertyTreeNode(pd));
+					break;
+				case EventDefinition ed:
+					if (!ed.IsNil)
+						AnalyzerTreeView.Instance.ShowOrFocus(new AnalyzedEventTreeNode(ed));
+					break;
 			}
 		}
 	}

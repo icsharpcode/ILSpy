@@ -17,8 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.Collections.Generic;
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.TreeView;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -27,7 +27,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 	/// </summary>
 	public abstract class AnalyzerEntityTreeNode : AnalyzerTreeNode, IMemberTreeNode
 	{
-		public abstract MemberReference Member { get; }
+		public abstract IMemberReference Member { get; }
 		
 		public override void ActivateItem(System.Windows.RoutedEventArgs e)
 		{
@@ -38,7 +38,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 		public override bool HandleAssemblyListChanged(ICollection<LoadedAssembly> removedAssemblies, ICollection<LoadedAssembly> addedAssemblies)
 		{
 			foreach (LoadedAssembly asm in removedAssemblies) {
-				if (this.Member.Module == asm.GetModuleDefinitionOrNull())
+				if (this.Member.Module == asm.GetPEFileOrNull())
 					return false; // remove this node
 			}
 			this.Children.RemoveAll(

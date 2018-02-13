@@ -19,10 +19,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
-using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -33,12 +34,12 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedTypeInstantiationsTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
+			if (analyzedType.IsNil)
 				throw new ArgumentNullException(nameof(analyzedType));
 
 			this.analyzedType = analyzedType;
 
-			this.isSystemObject = (analyzedType.FullName == "System.Object");
+			this.isSystemObject = (analyzedType.FullName.ToString() == "System.Object");
 		}
 
 		public override object Text
@@ -61,21 +62,29 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 				// ignore chained constructors
 				// (since object is the root of everything, we can short circuit the test in this case)
-				if (method.Name == ".ctor" &&
-					(isSystemObject || analyzedType == type || TypesHierarchyHelpers.IsBaseType(analyzedType, type, false)))
+				if (method.IsConstructor && (isSystemObject || analyzedType == type || analyzedType.IsBaseTypeOf(type)))
 					continue;
 
-				foreach (Instruction instr in method.Body.Instructions) {
-					MethodReference mr = instr.Operand as MethodReference;
-					if (mr != null && mr.Name == ".ctor") {
-						if (Helpers.IsReferencedBy(analyzedType, mr.DeclaringType)) {
-							found = true;
+				var blob = method.Body.GetILReader();
+
+				while (!found && blob.RemainingBytes > 0) {
+					var opCode = ILParser.DecodeOpCode(ref blob);
+					switch (opCode.GetOperandType()) {
+						case OperandType.Method:
+						case OperandType.Sig:
+						case OperandType.Tok:
+							var member = ILParser.DecodeMemberToken(ref blob, method.Module);
+							if (member.Name == ".ctor") {
+								if (member.DeclaringType.FullName == analyzedType.FullName) {
+									found = true;
+								}
+							}
 							break;
-						}
+						default:
+							ILParser.SkipOperand(ref blob, opCode);
+							break;
 					}
 				}
-
-				method.Body = null;
 
 				if (found) {
 					var node = new AnalyzedMethodTreeNode(method);
@@ -87,7 +96,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public static bool CanShow(TypeDefinition type)
 		{
-			return (type.IsClass && !(type.IsAbstract && type.IsSealed) && !type.IsEnum);
+			return (type.IsClass && !(type.HasFlag(TypeAttributes.Abstract) && type.HasFlag(TypeAttributes.Sealed)) && !type.IsEnum);
 		}
 	}
 }

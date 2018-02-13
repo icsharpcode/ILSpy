@@ -5,8 +5,8 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using ICSharpCode.Decompiler.Dom;
 using LightJson.Serialization;
-using Mono.Cecil;
 
 namespace ICSharpCode.Decompiler
 {
@@ -70,7 +70,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		public string TryResolveDotNetCore(AssemblyNameReference name)
+		public string TryResolveDotNetCore(IAssemblyReference name)
 		{
 			foreach (var basePath in packageBasePaths) {
 				if (File.Exists(Path.Combine(basePath, name.Name + ".dll"))) {
@@ -106,7 +106,7 @@ namespace ICSharpCode.Decompiler
 			}
 		}
 
-		string FallbackToDotNetSharedDirectory(AssemblyNameReference name, Version version)
+		string FallbackToDotNetSharedDirectory(IAssemblyReference name, Version version)
 		{
 			if (dotnetBasePath == null) return null;
 			var basePath = Path.Combine(dotnetBasePath, "shared", "Microsoft.NETCore.App");

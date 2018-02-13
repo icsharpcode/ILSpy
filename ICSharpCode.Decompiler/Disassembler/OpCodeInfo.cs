@@ -19,22 +19,25 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.Decompiler.Disassembler
 {
 	public struct OpCodeInfo : IEquatable<OpCodeInfo>
 	{
-		public readonly int Code;
+		public readonly ILOpCode Code;
 		public readonly string Name;
 
 		string encodedName;
 
-		public OpCodeInfo(int code, string name)
+		public OpCodeInfo(ILOpCode code, string name)
 		{
 			this.Code = code;
-			this.Name = name;
+			this.Name = name ?? "";
 			this.encodedName = null;
 		}
 
@@ -45,6 +48,18 @@ namespace ICSharpCode.Decompiler.Disassembler
 
 		public static bool operator ==(OpCodeInfo lhs, OpCodeInfo rhs) => lhs.Equals(rhs);
 		public static bool operator !=(OpCodeInfo lhs, OpCodeInfo rhs) => !(lhs == rhs);
+
+		public override bool Equals(object obj)
+		{
+			if (obj is OpCodeInfo opCode)
+				return Equals(opCode);
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return unchecked(982451629 * Code.GetHashCode() + 982451653 * Name.GetHashCode());
+		}
 
 		public string Link => "http://msdn.microsoft.com/library/system.reflection.emit.opcodes." + EncodedName.ToLowerInvariant() + ".aspx";
 		public string EncodedName {
@@ -87,6 +102,100 @@ namespace ICSharpCode.Decompiler.Disassembler
 				encodedName = text;
 				return encodedName;
 			}
+		}
+	}
+
+	public static class ILParser
+	{
+		public static ILOpCode DecodeOpCode(ref BlobReader blob)
+		{
+			byte opCodeByte = blob.ReadByte();
+			return (ILOpCode)(opCodeByte == 0xFE ? 0xFE00 + blob.ReadByte() : opCodeByte);
+		}
+
+		public static void SkipOperand(ref BlobReader blob, ILOpCode opCode)
+		{
+			switch (opCode.GetOperandType()) {
+				// 64-bit
+				case OperandType.I8:
+				case OperandType.R:
+					blob.Offset += 8;
+					break;
+				// 32-bit
+				case OperandType.BrTarget:
+				case OperandType.Field:
+				case OperandType.Method:
+				case OperandType.I:
+				case OperandType.Sig:
+				case OperandType.String:
+				case OperandType.Tok:
+				case OperandType.Type:
+				case OperandType.ShortR:
+					blob.Offset += 4;
+					break;
+				// (n + 1) * 32-bit
+				case OperandType.Switch:
+					uint n = blob.ReadUInt32();
+					blob.Offset += (int)(n * 4);
+					break;
+				// 16-bit
+				case OperandType.Variable:
+					blob.Offset += 2;
+					break;
+				// 8-bit
+				case OperandType.ShortVariable:
+				case OperandType.ShortBrTarget:
+				case OperandType.ShortI:
+					blob.Offset++;
+					break;
+			}
+		}
+
+		public static int DecodeBranchTarget(ref BlobReader blob, ILOpCode opCode)
+		{
+			return (opCode.GetBranchOperandSize() == 4 ? blob.ReadInt32() : blob.ReadSByte()) + blob.Offset;
+		}
+
+		public static int[] DecodeSwitchTargets(ref BlobReader blob)
+		{
+			int[] targets = new int[blob.ReadUInt32()];
+			int offset = blob.Offset + 4 * targets.Length;
+			for (int i = 0; i < targets.Length; i++)
+				targets[i] = blob.ReadInt32() + offset;
+			return targets;
+		}
+
+		public static string DecodeUserString(ref BlobReader blob, Dom.PEFile module)
+		{
+			return module.GetMetadataReader().GetUserString(MetadataTokens.UserStringHandle(blob.ReadInt32()));
+		}
+
+		public static Dom.IMemberReference DecodeMemberToken(ref BlobReader blob, Dom.PEFile module)
+		{
+			var handle = MetadataTokens.EntityHandle(blob.ReadInt32());
+			switch (handle.Kind) {
+				case HandleKind.TypeDefinition:
+					return new Dom.TypeDefinition(module, (TypeDefinitionHandle)handle);
+				case HandleKind.TypeReference:
+					return new Dom.TypeReference(module, (TypeReferenceHandle)handle);
+				case HandleKind.TypeSpecification:
+					return new Dom.TypeSpecification(module, (TypeSpecificationHandle)handle);
+				case HandleKind.MethodDefinition:
+					return new Dom.MethodDefinition(module, (MethodDefinitionHandle)handle);
+				case HandleKind.MethodSpecification:
+					return new Dom.MethodSpecification(module, (MethodSpecificationHandle)handle);
+				case HandleKind.FieldDefinition:
+					return new Dom.FieldDefinition(module, (FieldDefinitionHandle)handle);
+				case HandleKind.MemberReference:
+					return new Dom.MemberReference(module, (MemberReferenceHandle)handle);
+				default:
+					throw new NotSupportedException();
+			}
+		}
+
+		public static bool IsReturn(this ILOpCode opCode)
+		{
+			return opCode == ILOpCode.Ret || opCode == ILOpCode.Endfilter || opCode == ILOpCode.Endfinally;
 		}
 	}
 }

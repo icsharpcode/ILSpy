@@ -17,7 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using Mono.Cecil;
+using System.Linq;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -35,9 +36,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			this.LazyLoading = true;
 		}
 
-		public override MemberReference Member {
-			get { return analyzedEvent; }
-		}
+		public override IMemberReference Member => analyzedEvent;
 
 		public override object Icon
 		{
@@ -82,13 +81,12 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				return null;
 		}
 
-		public static bool CanShow(MemberReference member)
+		public static bool CanShow(IMemberReference member)
 		{
-			var eventDef = member as EventDefinition;
-			if (eventDef == null)
+			if (!(member is EventDefinition eventDef))
 				return false;
 
-			return !MainWindow.Instance.CurrentLanguage.ShowMember(eventDef.AddMethod ?? eventDef.RemoveMethod)
+			return !MainWindow.Instance.CurrentLanguage.ShowMember(eventDef.GetAccessors().First().Method)
 				|| AnalyzedEventOverridesTreeNode.CanShow(eventDef);
 		}
 	}

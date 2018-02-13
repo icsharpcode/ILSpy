@@ -17,7 +17,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -27,16 +27,13 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedFieldTreeNode(FieldDefinition analyzedField)
 		{
-			if (analyzedField == null)
+			if (analyzedField.IsNil)
 				throw new ArgumentNullException(nameof(analyzedField));
 			this.analyzedField = analyzedField;
 			this.LazyLoading = true;
 		}
 
-		public override object Icon
-		{
-			get { return FieldTreeNode.GetIcon(analyzedField); }
-		}
+		public override object Icon => FieldTreeNode.GetIcon(analyzedField);
 
 		public override object Text
 		{
@@ -54,8 +51,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				this.Children.Add(new AnalyzedFieldAccessTreeNode(analyzedField, true));
 		}
 
-		public override MemberReference Member {
-			get { return analyzedField; }
-		}
+		public override IMemberReference Member => analyzedField;
 	}
 }

@@ -23,14 +23,14 @@ using System.Linq;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.Decompiler.IL;
 using ICSharpCode.Decompiler.IL.Transforms;
 using ICSharpCode.Decompiler.TypeSystem;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {
-#if DEBUG
+#if false && DEBUG
 	/// <summary>
 	/// Represents the ILAst "language" used for debugging purposes.
 	/// </summary>

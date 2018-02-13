@@ -31,7 +31,7 @@ namespace Ricciolo.StylesExplorer.MarkupReflection
 		{
 		}
 
-		public KnownInfo(ITypeResolver resolver)
+		public KnownInfo(IDotNetTypeResolver resolver)
 		{
 			switch (resolver.RuntimeVersion) {
 				case "Net_2_0":

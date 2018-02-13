@@ -38,7 +38,6 @@ using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.TreeView;
 using Microsoft.Win32;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {
@@ -273,14 +272,14 @@ namespace ICSharpCode.ILSpy
 					}
 				} else {
 					foreach (LoadedAssembly asm in commandLineLoadedAssemblies) {
-						ModuleDefinition def = asm.GetModuleDefinitionOrNull();
+						var def = asm.GetPEFileOrNull();
 						if (def != null) {
-							MemberReference mr = XmlDocKeyProvider.FindMemberByKey(def, args.NavigateTo);
+							/*MemberReference mr = XmlDocKeyProvider.FindMemberByKey(def, args.NavigateTo);
 							if (mr != null) {
 								found = true;
 								JumpToReference(mr);
 								break;
-							}
+							}*/
 						}
 					}
 				}
@@ -292,7 +291,7 @@ namespace ICSharpCode.ILSpy
 			} else if (commandLineLoadedAssemblies.Count == 1) {
 				// NavigateTo == null and an assembly was given on the command-line:
 				// Select the newly loaded assembly
-				JumpToReference(commandLineLoadedAssemblies[0].GetModuleDefinitionOrNull());
+				JumpToReference(commandLineLoadedAssemblies[0].GetPEFileOrNull());
 			}
 			if (args.Search != null)
 			{
@@ -577,7 +576,7 @@ namespace ICSharpCode.ILSpy
 		
 		public ILSpyTreeNode FindTreeNode(object reference)
 		{
-			if (reference is TypeReference)
+			/*if (reference is TypeReference)
 			{
 				return assemblyListTreeNode.FindTypeNode(((TypeReference)reference).Resolve());
 			}
@@ -597,7 +596,7 @@ namespace ICSharpCode.ILSpy
 			{
 				return assemblyListTreeNode.FindEventNode(((EventReference)reference).Resolve());
 			}
-			else if (reference is AssemblyDefinition)
+			else if (reference is PEFile)
 			{
 				return assemblyListTreeNode.FindAssemblyNode((AssemblyDefinition)reference);
 			}
@@ -607,12 +606,14 @@ namespace ICSharpCode.ILSpy
 			}
 			else if (reference is Resource)
 			{
-				return assemblyListTreeNode.FindResourceNode((Resource)reference);
+				return null;
+				//return assemblyListTreeNode.FindResourceNode((Resource)reference);
 			}
 			else
 			{
 				return null;
-			}
+			}*/
+			return null;
 		}
 		
 		public void JumpToReference(object reference)

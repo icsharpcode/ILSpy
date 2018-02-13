@@ -26,10 +26,10 @@ using System.Linq;
 using System.Resources;
 
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.ILSpy.Controls;
 using ICSharpCode.ILSpy.TextView;
 using Microsoft.Win32;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -38,9 +38,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 	{
 		public ILSpyTreeNode CreateNode(Resource resource)
 		{
-			EmbeddedResource er = resource as EmbeddedResource;
-			if (er != null && er.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
-				return new ResourcesFileTreeNode(er);
+			if (resource.Name.EndsWith(".resources", StringComparison.OrdinalIgnoreCase)) {
+				return new ResourcesFileTreeNode(resource);
 			}
 			return null;
 		}
@@ -56,7 +55,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		readonly ICollection<KeyValuePair<string, string>> stringTableEntries = new ObservableCollection<KeyValuePair<string, string>>();
 		readonly ICollection<SerializedObjectRepresentation> otherEntries = new ObservableCollection<SerializedObjectRepresentation>();
 
-		public ResourcesFileTreeNode(EmbeddedResource er)
+		public ResourcesFileTreeNode(Resource er)
 			: base(er)
 		{
 			this.LazyLoading = true;
@@ -69,20 +68,18 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		protected override void LoadChildren()
 		{
-			EmbeddedResource er = this.Resource as EmbeddedResource;
-			if (er != null) {
-				Stream s = er.GetResourceStream();
-				s.Position = 0;
-				ResourceReader reader;
-				try {
-					reader = new ResourceReader(s);
-				}
-				catch (ArgumentException) {
-					return;
-				}
-				foreach (DictionaryEntry entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
-					ProcessResourceEntry(entry);
-				}
+			Stream s = Resource.TryOpenStream();
+			if (s == null) return;
+			s.Position = 0;
+			ResourceReader reader;
+			try {
+				reader = new ResourceReader(s);
+			}
+			catch (ArgumentException) {
+				return;
+			}
+			foreach (DictionaryEntry entry in reader.Cast<DictionaryEntry>().OrderBy(e => e.Key.ToString())) {
+				ProcessResourceEntry(entry);
 			}
 		}
 
@@ -116,33 +113,30 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		public override bool Save(DecompilerTextView textView)
 		{
-			EmbeddedResource er = this.Resource as EmbeddedResource;
-			if (er != null) {
-				SaveFileDialog dlg = new SaveFileDialog();
-				dlg.FileName = DecompilerTextView.CleanUpName(er.Name);
-				dlg.Filter = "Resources file (*.resources)|*.resources|Resource XML file|*.resx";
-				if (dlg.ShowDialog() == true) {
-					Stream s = er.GetResourceStream();
-					s.Position = 0;
-					switch (dlg.FilterIndex) {
-						case 1:
-							using (var fs = dlg.OpenFile()) {
-								s.CopyTo(fs);
+			Stream s = Resource.TryOpenStream();
+			if (s == null) return false;
+			SaveFileDialog dlg = new SaveFileDialog();
+			dlg.FileName = DecompilerTextView.CleanUpName(Resource.Name);
+			dlg.Filter = "Resources file (*.resources)|*.resources|Resource XML file|*.resx";
+			if (dlg.ShowDialog() == true) {
+				s.Position = 0;
+				switch (dlg.FilterIndex) {
+					case 1:
+						using (var fs = dlg.OpenFile()) {
+							s.CopyTo(fs);
+						}
+						break;
+					case 2:
+						var reader = new ResourceReader(s);
+						using (var writer = new ResXResourceWriter(dlg.OpenFile())) {
+							foreach (DictionaryEntry entry in reader) {
+								writer.AddResource(entry.Key.ToString(), entry.Value);
 							}
-							break;
-						case 2:
-							var reader = new ResourceReader(s);
-							using (var writer = new ResXResourceWriter(dlg.OpenFile())) {
-								foreach (DictionaryEntry entry in reader) {
-									writer.AddResource(entry.Key.ToString(), entry.Value);
-								}
-							}
-							break;
-					}
+						}
+						break;
 				}
-				return true;
 			}
-			return false;
+			return true;
 		}
 
 		public override void Decompile(Language language, ITextOutput output, DecompilationOptions options)

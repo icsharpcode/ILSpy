@@ -1,17 +1,57 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Metadata;
 using System.Reflection.Metadata.Ecma335;
+using System.Reflection.PortableExecutable;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.Decompiler.TypeSystem.Implementation;
+using ICSharpCode.Decompiler.Util;
 
-namespace ICSharpCode.Decompiler.TypeSystem
+namespace ICSharpCode.Decompiler
 {
-	static class MetadataExtensions
+	public static class MetadataExtensions
 	{
+		public static Dom.ITypeReference CoerceTypeReference(this EntityHandle handle, Dom.PEFile module)
+		{
+			if (handle.IsNil)
+				return null;
+			switch (handle.Kind) {
+				case HandleKind.TypeDefinition:
+					return new Dom.TypeDefinition(module, (TypeDefinitionHandle)handle);
+				case HandleKind.TypeReference:
+					return new Dom.TypeReference(module, (TypeReferenceHandle)handle);
+				case HandleKind.TypeSpecification:
+					return new Dom.TypeSpecification(module, (TypeSpecificationHandle)handle);
+				default:
+					throw new ArgumentException("must be either TypeDef, TypeRef or TypeSpec!", nameof(handle));
+			}
+		}
+
+		public static Dom.IMemberReference CoerceMemberReference(this EntityHandle handle, Dom.PEFile module)
+		{
+			if (handle.IsNil)
+				return null;
+			switch (handle.Kind) {
+				case HandleKind.MemberReference:
+					return new Dom.MemberReference(module, (MemberReferenceHandle)handle);
+				case HandleKind.MethodDefinition:
+					return new Dom.MethodDefinition(module, (MethodDefinitionHandle)handle);
+				default:
+					throw new ArgumentException("must be either MethodDef or MemberRef!", nameof(handle));
+			}
+		}
+
+		public static bool IsNil(this Dom.IAssemblyReference reference)
+		{
+			return reference == null || (reference is Dom.AssemblyReference ar && ar.IsNil);
+		}
+
 		public static string GetFullAssemblyName(this MetadataReader reader)
 		{
 			if (!reader.IsAssembly)
@@ -26,6 +66,20 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			return $"{reader.GetString(asm.Name)}, Version={asm.Version}, Culture={reader.GetString(asm.Culture)}, PublicKeyToken={publicKey}";
 		}
 
+		public static string GetFullAssemblyName(this AssemblyReference reference, MetadataReader reader)
+		{
+			string publicKey = "null";
+			if (!reference.PublicKeyOrToken.IsNil && (reference.Flags & AssemblyFlags.PublicKey) != 0) {
+				SHA1 sha1 = SHA1.Create();
+				var publicKeyTokenBytes = sha1.ComputeHash(reader.GetBlobBytes(reference.PublicKeyOrToken)).Skip(12).ToArray();
+				publicKey = publicKeyTokenBytes.ToHexString();
+			}
+			string properties = "";
+			if ((reference.Flags & AssemblyFlags.Retargetable) != 0)
+				properties = ", Retargetable=true";
+			return $"{reader.GetString(reference.Name)}, Version={reference.Version}, Culture={reader.GetString(reference.Culture)}, PublicKeyToken={publicKey}{properties}";
+		}
+
 		static string ToHexString(this byte[] bytes)
 		{
 			StringBuilder sb = new StringBuilder(bytes.Length * 2);
@@ -37,7 +91,24 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		/// <summary>
 		/// Gets the type of the attribute.
 		/// </summary>
-		/// <returns>Either <see cref="TypeDefinitionHandle"/>, <see cref="TypeReferenceHandle"/>,<see cref="TypeSpecificationHandle".</returns>
+		public static Dom.ITypeReference GetAttributeType(this CustomAttribute attribute, Dom.PEFile module)
+		{
+			var reader = module.GetMetadataReader();
+			switch (attribute.Constructor.Kind) {
+				case HandleKind.MethodDefinition:
+					var md = reader.GetMethodDefinition((MethodDefinitionHandle)attribute.Constructor);
+					return new Dom.TypeDefinition(module, md.GetDeclaringType());
+				case HandleKind.MemberReference:
+					var mr = reader.GetMemberReference((MemberReferenceHandle)attribute.Constructor);
+					return mr.Parent.CoerceTypeReference(module);
+				default:
+					throw new NotSupportedException();
+			}
+		}
+
+		/// <summary>
+		/// Gets the type of the attribute.
+		/// </summary>
 		public static EntityHandle GetAttributeType(this CustomAttribute attribute, MetadataReader reader)
 		{
 			switch (attribute.Constructor.Kind) {
@@ -52,32 +123,61 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
+		public static IEnumerable<TypeDefinitionHandle> GetTopLevelTypeDefinitions(this MetadataReader reader)
+		{
+			var queue = new Queue<NamespaceDefinition>();
+			queue.Enqueue(reader.GetNamespaceDefinitionRoot());
+			while (queue.Count > 0) {
+				var ns = queue.Dequeue();
+				foreach (var td in ns.TypeDefinitions)
+					yield return td;
+				foreach (var nestedNS in ns.NamespaceDefinitions)
+					queue.Enqueue(reader.GetNamespaceDefinition(nestedNS));
+			}
+		}
+
 		public static FullTypeName GetFullTypeName(this EntityHandle handle, MetadataReader reader)
 		{
+			if (handle.IsNil)
+				throw new ArgumentNullException(nameof(handle));
 			switch (handle.Kind) {
 				case HandleKind.TypeDefinition:
 					return ((TypeDefinitionHandle)handle).GetFullTypeName(reader);
 				case HandleKind.TypeReference:
 					return ((TypeReferenceHandle)handle).GetFullTypeName(reader);
+				case HandleKind.TypeSpecification:
+					return ((TypeSpecificationHandle)handle).GetFullTypeName(reader);
 				default:
 					throw new NotSupportedException();
 			}
 		}
 
-		public static FullTypeName GetFullTypeName(this TypeReferenceHandle handle, MetadataReader reader)
+		public static FullTypeName GetFullTypeName(this TypeSpecificationHandle handle, MetadataReader reader, bool omitGenericParamCount = false)
 		{
+			if (handle.IsNil)
+				throw new ArgumentNullException(nameof(handle));
+			var ts = reader.GetTypeSpecification(handle);
+			return ts.DecodeSignature(new Dom.FullTypeNameSignatureDecoder(reader), default(Unit));
+		}
+
+		public static FullTypeName GetFullTypeName(this TypeReferenceHandle handle, MetadataReader reader, bool omitGenericParamCount = false)
+		{
+			if (handle.IsNil)
+				throw new ArgumentNullException(nameof(handle));
 			var tr = reader.GetTypeReference(handle);
 			TypeReferenceHandle declaringTypeHandle;
 			if ((declaringTypeHandle = tr.GetDeclaringType()).IsNil) {
 				string @namespace = tr.Namespace.IsNil ? "" : reader.GetString(tr.Namespace);
 				return new FullTypeName(new TopLevelTypeName(@namespace, reader.GetString(tr.Name)));
 			} else {
-				return declaringTypeHandle.GetFullTypeName(reader).NestedType(reader.GetString(tr.Name), 0);
+				return declaringTypeHandle.GetFullTypeName(reader, omitGenericParamCount).NestedType(reader.GetString(tr.Name), 0);
 			}
 		}
 
 		public static FullTypeName GetFullTypeName(this TypeDefinitionHandle handle, MetadataReader reader)
 		{
+			if (handle.IsNil)
+				throw new ArgumentNullException(nameof(handle));
 			return reader.GetTypeDefinition(handle).GetFullTypeName(reader);
 		}
 
@@ -86,9 +186,21 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			TypeDefinitionHandle declaringTypeHandle;
 			if ((declaringTypeHandle = td.GetDeclaringType()).IsNil) {
 				string @namespace = td.Namespace.IsNil ? "" : reader.GetString(td.Namespace);
-				return new FullTypeName(new TopLevelTypeName(@namespace, reader.GetString(td.Name), td.GetGenericParameters().Count));
+				return new FullTypeName(new TopLevelTypeName(@namespace, reader.GetString(td.Name)));
 			} else {
-				return declaringTypeHandle.GetFullTypeName(reader).NestedType(reader.GetString(td.Name), td.GetGenericParameters().Count);
+				return declaringTypeHandle.GetFullTypeName(reader).NestedType(reader.GetString(td.Name), 0);
+			}
+		}
+
+		public static string ToILNameString(this FullTypeName typeName)
+		{
+			var escapedName = Disassembler.DisassemblerHelpers.Escape(typeName.Name);
+			if (typeName.IsNested) {
+				return $"{typeName.GetDeclaringType().ToILNameString()}/{escapedName}";
+			} else if (!string.IsNullOrEmpty(typeName.TopLevelTypeName.Namespace)) {
+				return $"{typeName.TopLevelTypeName.Namespace}.{escapedName}";
+			} else {
+				return $"{escapedName}";
 			}
 		}
 
@@ -115,23 +227,6 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			}
 		}
 
-		public unsafe static MethodSemanticsAttributes GetMethodSemanticsAttributes(this MethodDefinitionHandle handle, MetadataReader reader)
-		{
-			byte* startPointer = reader.MetadataPointer;
-			int offset = reader.GetTableMetadataOffset(TableIndex.MethodSemantics);
-			int rowSize = reader.GetTableRowSize(TableIndex.MethodSemantics);
-			int rowCount = reader.GetTableRowCount(TableIndex.MethodSemantics);
-			int token = reader.GetToken(handle);
-			for (int row = rowCount - 1; row >= 0; row--) {
-				byte* ptr = startPointer + offset + rowSize * row;
-				ushort methodToken = *(ptr + 2);
-				if (token == methodToken) {
-					return (MethodSemanticsAttributes)(*ptr);
-				}
-			}
-			return 0;
-		}
-
 		public static bool IsValueType(this TypeDefinition typeDefinition, MetadataReader reader)
 		{
 			if (typeDefinition.BaseType.IsNil)
@@ -155,6 +250,32 @@ namespace ICSharpCode.Decompiler.TypeSystem
 			if (typeDefinition.BaseType.IsNil)
 				return false;
 			return typeDefinition.BaseType.GetFullTypeName(reader).ToString() == "System.Enum";
+		}
+
+		public static string GetDefaultMemberName(this TypeDefinitionHandle type, MetadataReader reader)
+		{
+			return type.GetDefaultMemberName(reader, out var attr);
+		}
+
+		static readonly ITypeResolveContext minimalCorlibContext = new SimpleTypeResolveContext(MinimalCorlib.Instance.CreateCompilation());
+
+		public static string GetDefaultMemberName(this TypeDefinitionHandle type, MetadataReader reader, out CustomAttributeHandle defaultMemberAttribute)
+		{
+			var td = reader.GetTypeDefinition(type);
+
+			foreach (var h in td.GetCustomAttributes()) {
+				var ca = reader.GetCustomAttribute(h);
+				if (ca.GetAttributeType(reader).ToString() == "System.Reflection.DefaultMemberAttribute") {
+					var decodedValues = ca.DecodeValue(new TypeSystemAttributeTypeProvider(minimalCorlibContext));
+					if (decodedValues.FixedArguments.Length == 1 && decodedValues.FixedArguments[0].Value is string value) {
+						defaultMemberAttribute = h;
+						return value;
+					}
+				}
+			}
+
+			defaultMemberAttribute = default(CustomAttributeHandle);
+			return null;
 		}
 
 		public static bool HasOverrides(this MethodDefinitionHandle handle, MetadataReader reader)
@@ -266,6 +387,76 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				default:
 					return KnownTypeCode.None;
 			}
+		}
+
+		public static bool IsSmallReference(this MetadataReader reader, TableIndex table)
+		{
+			// TODO detect whether #JTD is present (EnC)
+			return reader.GetTableRowCount(table) <= ushort.MaxValue;
+		}
+
+		public static int GetReferenceSize(this MetadataReader reader, TableIndex table)
+		{
+			return IsSmallReference(reader, table) ? 2 : 4;
+		}
+
+		public static unsafe (int startRow, int endRow) BinarySearchRange(this MetadataReader reader, TableIndex table, int valueOffset, uint referenceValue, bool small)
+		{
+			int offset = reader.GetTableMetadataOffset(table);
+			int rowSize = reader.GetTableRowSize(table);
+			int rowCount = reader.GetTableRowCount(table);
+			int tableLength = rowSize * rowCount;
+			byte* startPointer = reader.MetadataPointer;
+
+			int result = BinarySearch();
+			if (result == -1)
+				return (-1, -1);
+
+			int start = result;
+
+			while (start > 0 && GetValue(start - 1) == referenceValue)
+				start--;
+
+			int end = result;
+
+			while (end + 1 < tableLength && GetValue(end + 1) == referenceValue)
+				end++;
+
+			return (start, end);
+
+			uint GetValue(int row)
+			{
+				if (small)
+					return *(ushort*)(startPointer + offset + row * rowSize + valueOffset);
+				else
+					return *(uint*)(startPointer + offset + row * rowSize + valueOffset);
+			}
+
+			int BinarySearch()
+			{
+				int startRow = 0;
+				int endRow = rowCount - 1;
+				while (startRow <= endRow) {
+					int row = (startRow + endRow) / 2;
+					uint currentValue = GetValue(row);
+					if (referenceValue > currentValue) {
+						startRow = row + 1;
+					} else if (referenceValue < currentValue) {
+						endRow = row - 1;
+					} else {
+						return row;
+					}
+				}
+				return -1;
+			}
+		}
+
+		public static AssemblyDefinition? GetAssemblyDefinition(this PEReader reader)
+		{
+			var metadata = reader.GetMetadataReader();
+			if (metadata.IsAssembly)
+				return metadata.GetAssemblyDefinition();
+			return null;
 		}
 	}
 }

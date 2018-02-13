@@ -20,7 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.Util;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -30,7 +32,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedTypeUsedByTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
+			if (analyzedType.IsNil)
 				throw new ArgumentNullException(nameof(analyzedType));
 
 			this.analyzedType = analyzedType;
@@ -46,7 +48,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			var analyzer = new ScopedWhereUsedAnalyzer<AnalyzerTreeNode>(analyzedType, FindTypeUsage);
 			return analyzer.PerformAnalysis(ct)
 				.Cast<AnalyzerEntityTreeNode>()
-				.Where(n => n.Member.DeclaringType != analyzedType)
+				.Where(n => n.Member.DeclaringType.FullName != analyzedType.FullName)
 				.Distinct(new AnalyzerEntityTreeNodeComparer())
 				.OrderBy(n => n.Text);
 		}
@@ -59,7 +61,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (IsUsedInTypeDefinition(type))
 				yield return new AnalyzedTypeTreeNode(type) { Language = Language };
 
-			foreach (var field in type.Fields.Where(IsUsedInFieldReference))
+			foreach (var field in type.Fields.Where(IsUsedInField))
 				yield return new AnalyzedFieldTreeNode(field) { Language = Language };
 
 			foreach (var method in type.Methods.Where(IsUsedInMethodDefinition))
@@ -80,7 +82,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return types.Any(IsUsedInTypeReference);
 		}
 
-		private bool IsUsedInTypeReference(TypeReference type)
+		private bool IsUsedInTypeReference(ITypeReference type)
 		{
 			if (type == null)
 				return false;
@@ -96,16 +98,14 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				   || IsUsedInTypeReferences(type.Interfaces.Select(i => i.InterfaceType));
 		}
 
-		private bool IsUsedInFieldReference(FieldReference field)
+		private bool IsUsedInField(FieldDefinition field)
 		{
-			if (field == null)
-				return false;
+			if (field.IsNil) return false;
 
-			return TypeMatches(field.DeclaringType)
-				|| TypeMatches(field.FieldType);
+			return TypeMatches(field.DeclaringType) || field.DecodeSignature(new TypeUsedInSignature(analyzedType), default(Unit));
 		}
 
-		private bool IsUsedInMethodReference(MethodReference method)
+		private bool IsUsedInMethod(MethodDefinition method)
 		{
 			if (method == null)
 				return false;
@@ -161,10 +161,10 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			return TypeMatches(parameter.ParameterType);
 		}
 
-		private bool TypeMatches(TypeReference tref)
+		private bool TypeMatches(ITypeReference tref)
 		{
 			if (tref != null && tref.Name == analyzedType.Name) {
-				var tdef = tref.Resolve();
+				var tdef = tref.GetDefinition();
 				if (tdef != null) {
 					return (tdef == analyzedType);
 				}

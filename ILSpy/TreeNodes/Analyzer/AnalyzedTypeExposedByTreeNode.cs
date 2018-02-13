@@ -19,8 +19,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -30,7 +31,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedTypeExposedByTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
+			if (analyzedType.IsNil)
 				throw new ArgumentNullException(nameof(analyzedType));
 
 			this.analyzedType = analyzedType;
@@ -135,7 +136,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 			// exclude methods with 'semantics'. for example, property getters & setters.
 			// HACK: this is a potentially fragile implementation, as the MethodSemantics may be extended to other uses at a later date.
-			if (method.SemanticsAttributes != MethodSemanticsAttributes.None)
+			if (method.GetMethodSemanticsAttributes() != 0)
 				return false;
 
 			if (method.ReturnType.Resolve() == analyzedType)
@@ -153,8 +154,8 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private static bool IsPrivate(PropertyDefinition property)
 		{
-			bool isGetterPublic = (property.GetMethod != null && !property.GetMethod.IsPrivate);
-			bool isSetterPublic = (property.SetMethod != null && !property.SetMethod.IsPrivate);
+			bool isGetterPublic = (!property.GetMethod.IsNil && !property.GetMethod.IsPrivate);
+			bool isSetterPublic = (!property.SetMethod.IsNil && !property.SetMethod.IsPrivate);
 			return !(isGetterPublic || isSetterPublic);
 		}
 

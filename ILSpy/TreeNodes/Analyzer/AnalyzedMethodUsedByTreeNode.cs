@@ -66,7 +66,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				foreach (Instruction instr in method.Body.Instructions) {
 					MethodReference mr = instr.Operand as MethodReference;
 					if (mr != null && mr.Name == name &&
-						Helpers.IsReferencedBy(analyzedMethod.DeclaringType, mr.DeclaringType) &&
+						Helpers.IsSameType(analyzedMethod.DeclaringType, mr.DeclaringType) &&
 						mr.Resolve() == analyzedMethod) {
 						found = true;
 						break;

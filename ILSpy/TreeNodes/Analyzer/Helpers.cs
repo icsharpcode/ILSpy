@@ -26,7 +26,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
 	internal static class Helpers
 	{
-		public static bool IsReferencedBy(TypeDefinition type, TypeReference typeRef)
+		public static bool IsSameType(TypeDefinition type, TypeReference typeRef)
 		{
 			// TODO: move it to a better place after adding support for more cases.
 			if (type == null)
@@ -44,7 +44,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (type.DeclaringType != null || typeRef.DeclaringType != null) {
 				if (type.DeclaringType == null || typeRef.DeclaringType == null)
 					return false;
-				if (!IsReferencedBy(type.DeclaringType, typeRef.DeclaringType))
+				if (!IsSameType(type.DeclaringType, typeRef.DeclaringType))
 					return false;
 			}
 
@@ -105,7 +105,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				foreach (Instruction instr in method.Body.Instructions) {
 					MethodReference mr = instr.Operand as MethodReference;
 					if (mr != null && mr.Name == name &&
-						IsReferencedBy(analyzedMethod.DeclaringType, mr.DeclaringType) &&
+						IsSameType(analyzedMethod.DeclaringType, mr.DeclaringType) &&
 						mr.Resolve() == analyzedMethod) {
 						found = true;
 						break;

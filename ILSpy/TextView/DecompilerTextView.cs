@@ -200,12 +200,12 @@ namespace ICSharpCode.ILSpy.TextView
 					string documentation = docProvider.GetDocumentation("F:System.Reflection.Emit.OpCodes." + code.EncodedName);
 					if (documentation != null) {
 						XmlDocRenderer renderer = new XmlDocRenderer();
-						renderer.AppendText($"{code.Name} (0x{code.Code:x2}) - ");
+						renderer.AppendText($"{code.Name} (0x{code.Code:x}) - ");
 						renderer.AddXmlDocumentation(documentation);
 						return renderer.CreateTextBlock();
 					}
 				}
-				return $"{code.Name} (0x{code.Code:x2})";
+				return $"{code.Name} (0x{code.Code:x})";
 			} else if (segment.Reference is MemberReference) {
 				MemberReference mr = (MemberReference)segment.Reference;
 				// if possible, resolve the reference
@@ -215,7 +215,7 @@ namespace ICSharpCode.ILSpy.TextView
 					mr = ((MethodReference)mr).Resolve() ?? mr;
 				}
 				XmlDocRenderer renderer = new XmlDocRenderer();
-				renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(mr));
+				//renderer.AppendText(MainWindow.Instance.CurrentLanguage.GetTooltip(mr));
 				try {
 					XmlDocumentationProvider docProvider = XmlDocLoader.LoadDocumentation(mr.Module);
 					if (docProvider != null) {

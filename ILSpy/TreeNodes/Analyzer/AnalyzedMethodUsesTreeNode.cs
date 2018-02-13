@@ -20,8 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Dom;
+using ICSharpCode.Decompiler.IL;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -34,7 +35,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedMethodUsesTreeNode(MethodDefinition analyzedMethod)
 		{
-			if (analyzedMethod == null)
+			if (analyzedMethod.IsNil)
 				throw new ArgumentNullException(nameof(analyzedMethod));
 
 			this.analyzedMethod = analyzedMethod;
@@ -61,24 +62,42 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		private IEnumerable<MethodDefinition> GetUsedMethods()
 		{
-			foreach (Instruction instr in analyzedMethod.Body.Instructions) {
-				MethodReference mr = instr.Operand as MethodReference;
-				if (mr != null) {
-					MethodDefinition def = mr.Resolve();
-					if (def != null)
-						yield return def;
+			if (!analyzedMethod.HasBody) yield break;
+			var blob = analyzedMethod.Body.GetILReader();
+			while (blob.RemainingBytes > 0) {
+				var opCode = ILParser.DecodeOpCode(ref blob);
+				switch (opCode.GetOperandType()) {
+					case OperandType.Method:
+					case OperandType.Sig:
+					case OperandType.Tok:
+						var member = ILParser.DecodeMemberToken(ref blob, analyzedMethod.Module).GetDefinition();
+						if (member is MethodDefinition md)
+							yield return md;
+						break;
+					default:
+						ILParser.SkipOperand(ref blob, opCode);
+						break;
 				}
 			}
 		}
 
-		private IEnumerable<FieldDefinition> GetUsedFields()
+		IEnumerable<FieldDefinition> GetUsedFields()
 		{
-			foreach (Instruction instr in analyzedMethod.Body.Instructions) {
-				FieldReference fr = instr.Operand as FieldReference;
-				if (fr != null) {
-					FieldDefinition def = fr.Resolve();
-					if (def != null)
-						yield return def;
+			if (!analyzedMethod.HasBody) yield break;
+			var blob = analyzedMethod.Body.GetILReader();
+			while (blob.RemainingBytes > 0) {
+				var opCode = ILParser.DecodeOpCode(ref blob);
+				switch (opCode.GetOperandType()) {
+					case OperandType.Field:
+					case OperandType.Sig:
+					case OperandType.Tok:
+						var member = ILParser.DecodeMemberToken(ref blob, analyzedMethod.Module).GetDefinition();
+						if (member is FieldDefinition fd)
+							yield return fd;
+						break;
+					default:
+						ILParser.SkipOperand(ref blob, opCode);
+						break;
 				}
 			}
 		}

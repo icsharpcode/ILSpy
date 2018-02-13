@@ -17,7 +17,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System;
-using Mono.Cecil;
+using System.Reflection;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -28,7 +29,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedMethodTreeNode(MethodDefinition analyzedMethod, string prefix = "")
 		{
-			if (analyzedMethod == null)
+			if (analyzedMethod.IsNil)
 				throw new ArgumentNullException(nameof(analyzedMethod));
 			this.analyzedMethod = analyzedMethod;
 			this.prefix = prefix;
@@ -53,7 +54,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			if (analyzedMethod.HasBody)
 				this.Children.Add(new AnalyzedMethodUsesTreeNode(analyzedMethod));
 
-			if (analyzedMethod.IsVirtual && !(analyzedMethod.IsNewSlot && analyzedMethod.IsFinal))
+			if (analyzedMethod.HasFlag(MethodAttributes.Virtual) && !(analyzedMethod.HasFlag(MethodAttributes.NewSlot) && analyzedMethod.HasFlag(MethodAttributes.Final)))
 				this.Children.Add(new AnalyzedVirtualMethodUsedByTreeNode(analyzedMethod));
 			else
 				this.Children.Add(new AnalyzedMethodUsedByTreeNode(analyzedMethod));
@@ -65,8 +66,6 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				this.Children.Add(new AnalyzedInterfaceMethodImplementedByTreeNode(analyzedMethod));
 		}
 
-		public override MemberReference Member {
-			get { return analyzedMethod; }
-		}
+		public override IMemberReference Member => analyzedMethod;
 	}
 }

@@ -20,9 +20,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Mono.Cecil;
 using System.Collections.Concurrent;
 using ICSharpCode.Decompiler.Util;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -43,7 +43,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedAttributeAppliedToTreeNode(TypeDefinition analyzedType)
 		{
-			if (analyzedType == null)
+			if (analyzedType.IsNil)
 				throw new ArgumentNullException(nameof(analyzedType));
 
 			this.analyzedType = analyzedType;
@@ -103,7 +103,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		#region standard custom attributes
 
-		private IEnumerable<AnalyzerTreeNode> FindReferencesInAssembly(ModuleDefinition module, TypeReference tr, CancellationToken ct)
+		private IEnumerable<AnalyzerTreeNode> FindReferencesInAssembly(PEFile module, TypeReference tr, CancellationToken ct)
 		{
 			//since we do not display modules as separate entities, coalesce the assembly and module searches
 			bool foundInAssyOrModule = false;

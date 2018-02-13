@@ -21,8 +21,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using Mono.Cecil;
-using Mono.Cecil.Cil;
+using ICSharpCode.Decompiler.Disassembler;
+using ICSharpCode.Decompiler.Dom;
+
+using ILOpCode = System.Reflection.Metadata.ILOpCode;
 
 namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 {
@@ -35,7 +37,7 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 
 		public AnalyzedFieldAccessTreeNode(FieldDefinition analyzedField, bool showWrites)
 		{
-			if (analyzedField == null)
+			if (analyzedField.IsNil)
 				throw new ArgumentNullException(nameof(analyzedField));
 
 			this.analyzedField = analyzedField;
@@ -67,24 +69,27 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 				bool found = false;
 				if (!method.HasBody)
 					continue;
-				foreach (Instruction instr in method.Body.Instructions) {
-					if (CanBeReference(instr.OpCode.Code)) {
-						FieldReference fr = instr.Operand as FieldReference;
-						if (fr != null && fr.Name == name &&
-							Helpers.IsReferencedBy(analyzedField.DeclaringType, fr.DeclaringType) &&
-							fr.Resolve() == analyzedField) {
-							found = true;
-							break;
-						}
+				var blob = method.Body.GetILReader();
+				while (blob.RemainingBytes > 0) {
+					var opCode = ILParser.DecodeOpCode(ref blob);
+					if (!CanBeReference(opCode)) {
+						ILParser.SkipOperand(ref blob, opCode);
+						continue;
 					}
+					var field = ILParser.DecodeMemberToken(ref blob, method.Module);
+					if (field == null || field.Name != name)
+						continue;
+					var definition = field.GetDefinition() as FieldDefinition?;
+					if (definition?.DeclaringType.FullName != analyzedField.DeclaringType.FullName)
+						continue;
+					found = true;
+					break;
 				}
 
-				method.Body = null;
-
 				if (found) {
-					MethodDefinition codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition;
-					if (codeLocation != null && !HasAlreadyBeenFound(codeLocation)) {
-						var node = new AnalyzedMethodTreeNode(codeLocation);
+					MethodDefinition? codeLocation = this.Language.GetOriginalCodeLocation(method) as MethodDefinition?;
+					if (codeLocation != null && !HasAlreadyBeenFound(codeLocation.Value)) {
+						var node = new AnalyzedMethodTreeNode(codeLocation.Value);
 						node.Language = this.Language;
 						yield return node;
 					}
@@ -92,17 +97,17 @@ namespace ICSharpCode.ILSpy.TreeNodes.Analyzer
 			}
 		}
 
-		private bool CanBeReference(Code code)
+		private bool CanBeReference(ILOpCode code)
 		{
 			switch (code) {
-				case Code.Ldfld:
-				case Code.Ldsfld:
+				case ILOpCode.Ldfld:
+				case ILOpCode.Ldsfld:
 					return !showWrites;
-				case Code.Stfld:
-				case Code.Stsfld:
+				case ILOpCode.Stfld:
+				case ILOpCode.Stsfld:
 					return showWrites;
-				case Code.Ldflda:
-				case Code.Ldsflda:
+				case ILOpCode.Ldflda:
+				case ILOpCode.Ldsflda:
 					return true; // always show address-loading
 				default:
 					return false;

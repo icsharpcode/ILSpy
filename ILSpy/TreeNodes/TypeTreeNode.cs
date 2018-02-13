@@ -19,32 +19,32 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Windows.Media;
 
 using ICSharpCode.Decompiler;
-using Mono.Cecil;
+using ICSharpCode.Decompiler.Dom;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
 	public sealed class TypeTreeNode : ILSpyTreeNode, IMemberTreeNode
 	{
-		
-		public TypeTreeNode(TypeDefinition type, AssemblyTreeNode parentAssemblyNode)
+		readonly TypeDefinition typeDefinition;
+
+		public TypeTreeNode(TypeDefinition typeDefinition, AssemblyTreeNode parentAssemblyNode)
 		{
-			if (parentAssemblyNode == null)
-				throw new ArgumentNullException(nameof(parentAssemblyNode));
-			if (type == null)
-				throw new ArgumentNullException(nameof(type));
-			this.TypeDefinition = type;
-			this.ParentAssemblyNode = parentAssemblyNode;
+			if (typeDefinition.IsNil)
+				throw new ArgumentNullException(nameof(typeDefinition));
+			this.ParentAssemblyNode = parentAssemblyNode ?? throw new ArgumentNullException(nameof(parentAssemblyNode));
+			this.typeDefinition = typeDefinition;
 			this.LazyLoading = true;
 		}
 
-		public TypeDefinition TypeDefinition { get; }
+		public TypeDefinition TypeDefinition => typeDefinition;
 
 		public AssemblyTreeNode ParentAssemblyNode { get; }
 
-		public override object Text => HighlightSearchMatch(this.Language.FormatTypeName(TypeDefinition), TypeDefinition.MetadataToken.ToSuffixString());
+		public override object Text => HighlightSearchMatch(this.Language.FormatTypeName(TypeDefinition), TypeDefinition.Handle.ToSuffixString());
 
 		public override bool IsPublicAPI {
 			get {
@@ -76,9 +76,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		
 		protected override void LoadChildren()
 		{
-			if (TypeDefinition.BaseType != null || TypeDefinition.HasInterfaces)
+			//if (TypeDefinition.BaseType != null || TypeDefinition.HasInterfaces)
 				this.Children.Add(new BaseTypesTreeNode(TypeDefinition));
-			if (!TypeDefinition.IsSealed)
+			if (!TypeDefinition.HasFlag(TypeAttributes.Sealed))
 				this.Children.Add(new DerivedTypesTreeNode(ParentAssemblyNode.AssemblyList, TypeDefinition));
 			foreach (TypeDefinition nestedType in TypeDefinition.NestedTypes.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new TypeTreeNode(nestedType, ParentAssemblyNode));
@@ -93,9 +93,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			foreach (EventDefinition ev in TypeDefinition.Events.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
 				this.Children.Add(new EventTreeNode(ev));
 			}
-			HashSet<MethodDefinition> accessorMethods = TypeDefinition.GetAccessorMethods();
 			foreach (MethodDefinition method in TypeDefinition.Methods.OrderBy(m => m.Name, NaturalStringComparer.Instance)) {
-				if (!accessorMethods.Contains(method)) {
+				if (method.GetMethodSemanticsAttributes() == 0) {
 					this.Children.Add(new MethodTreeNode(method));
 				}
 			}
@@ -128,7 +127,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			} else {
 				if (type.IsInterface)
 					return TypeIcon.Interface;
-				else if (IsDelegate(type))
+				else if (type.IsDelegate)
 					return TypeIcon.Delegate;
 				else if (IsStaticClass(type))
 					return TypeIcon.StaticClass;
@@ -165,16 +164,11 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			return overlay;
 		}
 
-		private static bool IsDelegate(TypeDefinition type)
-		{
-			return type.BaseType != null && type.BaseType.FullName == typeof(MulticastDelegate).FullName;
-		}
-
 		private static bool IsStaticClass(TypeDefinition type)
 		{
-			return type.IsSealed && type.IsAbstract;
+			return type.HasFlag(TypeAttributes.Sealed) && type.HasFlag(TypeAttributes.Abstract);
 		}
 
-		MemberReference IMemberTreeNode.Member => TypeDefinition;
+		IMemberReference IMemberTreeNode.Member => TypeDefinition;
 	}
 }

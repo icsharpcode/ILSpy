@@ -227,7 +227,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 				InitTypeDefinition(cecilTypeDefs[i], typeDefs[i]);
 			}
 
-			AddToTypeSystemTranslationTable(this.currentAssembly, assemblyDefinition);
+			//AddToTypeSystemTranslationTable(this.currentAssembly, assemblyDefinition);
 			// Freezing the assembly here is important:
 			// otherwise it will be frozen when a compilation is first created
 			// from it. But freezing has the effect of changing some collection instances
@@ -911,7 +911,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		{
 			foreach (MethodDefinitionHandle h in typeDefinition.GetMethods()) {
 				var method = currentModule.GetMethodDefinition(h);
-				if (IsVisible(method.Attributes) && !IsAccessor(h.GetMethodSemanticsAttributes(currentModule))) {
+				/*if (IsVisible(method.Attributes) && !IsAccessor(h.GetMethodSemanticsAttributes(currentModule))) {
 					SymbolKind type = SymbolKind.Method;
 					if ((method.Attributes & MethodAttributes.SpecialName) != 0) {
 						if (method.IsConstructor(currentModule))
@@ -920,7 +920,7 @@ namespace ICSharpCode.Decompiler.TypeSystem
 							type = SymbolKind.Operator;
 					}
 					members.Add(ReadMethod(h, td, type));
-				}
+				}*/
 			}
 			foreach (FieldDefinitionHandle h in typeDefinition.GetFields()) {
 				var field = currentModule.GetFieldDefinition(h);
@@ -1714,39 +1714,45 @@ namespace ICSharpCode.Decompiler.TypeSystem
 		
 		public AssemblyDefinition GetCecilObject (IUnresolvedAssembly content)
 		{
-			return InternalGetCecilObject<AssemblyDefinition> (content);
+			throw new NotImplementedException();
+			//return InternalGetCecilObject<AssemblyDefinition> (content);
 		}
-		
+
 
 		public TypeDefinition GetCecilObject (IUnresolvedTypeDefinition type)
 		{
 			if (type == null)
 				throw new ArgumentNullException ("type");
-			return InternalGetCecilObject<TypeDefinition> (type);
+			throw new NotImplementedException();
+			//return InternalGetCecilObject<TypeDefinition> (type);
 		}
-		
+
 
 		public MethodDefinition GetCecilObject (IUnresolvedMethod method)
 		{
-			return InternalGetCecilObject<MethodDefinition> (method);
+			throw new NotImplementedException();
+			//return InternalGetCecilObject<MethodDefinition> (method);
 		}
-		
+
 
 		public FieldDefinition GetCecilObject (IUnresolvedField field)
 		{
-			return InternalGetCecilObject<FieldDefinition> (field);
+			throw new NotImplementedException();
+			//return InternalGetCecilObject<FieldDefinition> (field);
 		}
-		
+
 
 		public EventDefinition GetCecilObject (IUnresolvedEvent evt)
 		{
-			return InternalGetCecilObject<EventDefinition> (evt);
+			throw new NotImplementedException();
+			//return InternalGetCecilObject<EventDefinition> (evt);
 		}
-		
+
 
 		public PropertyDefinition GetCecilObject (IUnresolvedProperty property)
 		{
-			return InternalGetCecilObject<PropertyDefinition> (property);
+			throw new NotImplementedException();
+			//return InternalGetCecilObject<PropertyDefinition> (property);
 		}
 		#endregion
 	}

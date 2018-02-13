@@ -19,8 +19,8 @@
 using System;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
+using ICSharpCode.Decompiler.Dom;
 using ICSharpCode.TreeView;
-using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -37,15 +37,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			this.LazyLoading = true;
 		}
 
-		public override object Text
-		{
-			get { return "Base Types"; }
-		}
+		public override object Text => "Base Types";
 
-		public override object Icon
-		{
-			get { return Images.SuperTypes; }
-		}
+		public override object Icon => Images.SuperTypes;
 
 		protected override void LoadChildren()
 		{
@@ -57,7 +51,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			if (type.BaseType != null)
 				children.Add(new BaseTypesEntryNode(type.BaseType, false));
 			foreach (var i in type.Interfaces) {
-				children.Add(new BaseTypesEntryNode(i.InterfaceType, true));
+				children.Add(new BaseTypesEntryNode(i, true));
 			}
 		}
 

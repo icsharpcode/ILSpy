@@ -23,23 +23,21 @@ using System.ComponentModel.Composition;
 using System.IO;
 using System.Linq;
 using System.Resources;
-
+using System.Windows;
+using System.Windows.Controls;
 using ICSharpCode.Decompiler;
-using ICSharpCode.ILSpy.Options;
-using Mono.Cecil;
 using ICSharpCode.Decompiler.CSharp;
 using ICSharpCode.Decompiler.CSharp.OutputVisitor;
 using ICSharpCode.Decompiler.CSharp.Syntax;
-using ICSharpCode.Decompiler.TypeSystem;
-using System.Windows;
-using System.Windows.Controls;
-using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.Decompiler.CSharp.Transforms;
-using ICSharpCode.AvalonEdit.Highlighting;
-using System.Windows.Media;
+using ICSharpCode.Decompiler.TypeSystem;
+using ICSharpCode.ILSpy.Options;
+using ICSharpCode.ILSpy.TreeNodes;
+using Mono.Cecil;
 
 namespace ICSharpCode.ILSpy
 {
+#if false
 	/// <summary>
 	/// C# decompiler integration into ILSpy.
 	/// Note: if you're interested in using the decompiler without the ILSpy UI,
@@ -250,40 +248,6 @@ namespace ICSharpCode.ILSpy
 			WriteCommentLine(output, TypeToString(type, includeNamespace: true));
 			CSharpDecompiler decompiler = CreateDecompiler(type.Module, options);
 			WriteCode(output, options.DecompilerSettings, decompiler.Decompile(type), decompiler.TypeSystem);
-		}
-
-		public static string GetPlatformDisplayName(ModuleDefinition module)
-		{
-			switch (module.Architecture) {
-				case TargetArchitecture.I386:
-					if ((module.Attributes & ModuleAttributes.Preferred32Bit) == ModuleAttributes.Preferred32Bit)
-						return "AnyCPU (32-bit preferred)";
-					else if ((module.Attributes & ModuleAttributes.Required32Bit) == ModuleAttributes.Required32Bit)
-						return "x86";
-					else
-						return "AnyCPU (64-bit preferred)";
-				case TargetArchitecture.AMD64:
-					return "x64";
-				case TargetArchitecture.IA64:
-					return "Itanium";
-				default:
-					return module.Architecture.ToString();
-			}
-		}
-
-		public static string GetRuntimeDisplayName(ModuleDefinition module)
-		{
-			switch (module.Runtime) {
-				case TargetRuntime.Net_1_0:
-					return ".NET 1.0";
-				case TargetRuntime.Net_1_1:
-					return ".NET 1.1";
-				case TargetRuntime.Net_2_0:
-					return ".NET 2.0";
-				case TargetRuntime.Net_4_0:
-					return ".NET 4.0";
-			}
-			return null;
 		}
 
 		void AddReferenceWarningMessage(AssemblyDefinition assembly, ITextOutput output)
@@ -519,4 +483,5 @@ namespace ICSharpCode.ILSpy
 			return new CSharpAmbience() { ConversionFlags = flags }.ConvertSymbol(symbol);
 		}
 	}
+#endif
 }
