@@ -45,9 +45,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public AssemblyListTreeNode(AssemblyList assemblyList)
 		{
-			if (assemblyList == null)
-				throw new ArgumentNullException(nameof(assemblyList));
-			this.assemblyList = assemblyList;
+			this.assemblyList = assemblyList ?? throw new ArgumentNullException(nameof(assemblyList));
 			BindToObservableCollection(assemblyList.assemblies);
 		}
 
@@ -154,7 +152,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		}
 
 		#region Find*Node
-		/*
 		public ILSpyTreeNode FindResourceNode(Resource resource)
 		{
 			if (resource == null)
@@ -178,7 +175,6 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 			return null;
 		}
-		*/
 
 		public AssemblyTreeNode FindAssemblyNode(PEFile module)
 		{

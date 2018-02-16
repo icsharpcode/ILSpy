@@ -150,7 +150,7 @@ namespace ICSharpCode.Decompiler.Disassembler
 					var moduleRef = metadata.GetModuleReference(info.Module);
 					output.Write("(\"" + DisassemblerHelpers.EscapeString(metadata.GetString(moduleRef.Name)) + "\"");
 
-					if (!info.Name.IsNil && metadata.GetString(info.Name) != method.Name)
+					if (!info.Name.IsNil && metadata.GetString(info.Name) != metadata.GetString(methodDefinition.Name))
 						output.Write(" as \"" + DisassemblerHelpers.EscapeString(metadata.GetString(info.Name)) + "\"");
 
 					if ((info.Attributes & MethodImportAttributes.ExactSpelling) == MethodImportAttributes.ExactSpelling)
@@ -221,9 +221,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 
 			if (isCompilerControlled) {
-				output.Write(DisassemblerHelpers.Escape(method.Name + "$PST" + MetadataTokens.GetToken(method.Handle).ToString("X8")));
+				output.Write(DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name) + "$PST" + MetadataTokens.GetToken(method.Handle).ToString("X8")));
 			} else {
-				output.Write(DisassemblerHelpers.Escape(method.Name));
+				output.Write(DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name)));
 			}
 
 			WriteTypeParameters(output, method.Module, new GenericContext(method), methodDefinition.GetGenericParameters());
@@ -1227,26 +1227,56 @@ namespace ICSharpCode.Decompiler.Disassembler
 		public void WriteModuleHeader(PEFile module)
 		{
 			var metadata = module.GetMetadataReader();
+
+			void WriteExportedType(ExportedType exportedType)
+			{
+				if (!exportedType.Namespace.IsNil) {
+					output.Write(DisassemblerHelpers.Escape(metadata.GetString(exportedType.Namespace)));
+					output.Write('.');
+				}
+				output.Write(DisassemblerHelpers.Escape(metadata.GetString(exportedType.Name)));
+			}
+
 			foreach (var et in metadata.ExportedTypes) {
 				var exportedType = metadata.GetExportedType(et);
 				output.Write(".class extern ");
 				if (exportedType.IsForwarder)
 					output.Write("forwarder ");
-				/*exportedType.Implementation.WriteTo(metadata, output);
-				output.Write(metadata.GetFullName(exportedType. != null ? exportedType.Name : exportedType.FullName);
+				WriteExportedType(exportedType);
 				OpenBlock(false);
-				if (exportedType.DeclaringType != null)
-					output.WriteLine(".class extern {0}", DisassemblerHelpers.Escape(exportedType.DeclaringType.FullName));
-				else
-					output.WriteLine(".assembly extern {0}", DisassemblerHelpers.Escape(exportedType.Scope.Name));
-				CloseBlock();*/
+				switch (exportedType.Implementation.Kind) {
+					case HandleKind.AssemblyFile:
+						throw new NotImplementedException();
+					case HandleKind.ExportedType:
+						output.Write(".class extern ");
+						var declaringType = metadata.GetExportedType((ExportedTypeHandle)exportedType.Implementation);
+						while (true) {
+							WriteExportedType(declaringType);
+							if (declaringType.Implementation.Kind == HandleKind.ExportedType) {
+								declaringType = metadata.GetExportedType((ExportedTypeHandle)declaringType.Implementation);
+							} else {
+								break;
+							}
+						}
+						output.WriteLine();
+						break;
+					case HandleKind.AssemblyReference:
+						output.Write(".assembly extern ");
+						var reference = metadata.GetAssemblyReference((AssemblyReferenceHandle)exportedType.Implementation);
+						output.Write(DisassemblerHelpers.Escape(metadata.GetString(reference.Name)));
+						output.WriteLine();
+						break;
+					default:
+						throw new NotSupportedException();
+				}
+				CloseBlock();
 			}
 			var moduleDefinition = metadata.GetModuleDefinition();
 
 			output.WriteLine(".module {0}", metadata.GetString(moduleDefinition.Name));
 			output.WriteLine("// MVID: {0}", metadata.GetGuid(moduleDefinition.Mvid).ToString("B").ToUpperInvariant());
 			// TODO: imagebase, file alignment, stackreserve, subsystem
-			//output.WriteLine(".corflags 0x{0:x} // {1}", module., module.Attributes.ToString());
+			output.WriteLine(".corflags 0x{0:x} // {1}", module.Reader.PEHeaders.CorHeader.Flags, module.Reader.PEHeaders.CorHeader.Flags.ToString());
 
 			WriteAttributes(module, metadata.GetCustomAttributes(EntityHandle.ModuleDefinition));
 		}

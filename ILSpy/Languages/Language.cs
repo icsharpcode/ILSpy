@@ -62,7 +62,9 @@ namespace ICSharpCode.ILSpy
 
 		public virtual void DecompileMethod(MethodDefinition method, ITextOutput output, DecompilationOptions options)
 		{
-			WriteCommentLine(output, TypeToString(new Entity(method.Module, method.This().GetDeclaringType()), true) + "." + method.Name);
+			var metadata = method.Module.GetMetadataReader();
+			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
+			WriteCommentLine(output, TypeToString(new Entity(method.Module, methodDefinition.GetDeclaringType()), true) + "." + metadata.GetString(methodDefinition.Name));
 		}
 
 		public virtual void DecompileProperty(PropertyDefinition property, ITextOutput output, DecompilationOptions options)

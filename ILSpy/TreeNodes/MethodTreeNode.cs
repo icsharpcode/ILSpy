@@ -79,8 +79,8 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			var metadata = method.Module.GetMetadataReader();
 			var methodDefinition = metadata.GetMethodDefinition(method.Handle);
-
-			if (methodDefinition.HasFlag(MethodAttributes.SpecialName) && method.Name.StartsWith("op_", StringComparison.Ordinal)) {
+			var methodName = metadata.GetString(methodDefinition.Name);
+			if (methodDefinition.HasFlag(MethodAttributes.SpecialName) && methodName.StartsWith("op_", StringComparison.Ordinal)) {
 				return Images.GetIcon(MemberIcon.Operator, GetOverlayIcon(methodDefinition.Attributes), false);
 			}
 
@@ -89,7 +89,7 @@ namespace ICSharpCode.ILSpy.TreeNodes
 			}
 
 			if (methodDefinition.HasFlag(MethodAttributes.SpecialName) &&
-				(method.Name == ".ctor" || method.Name == ".cctor")) {
+				(methodName == ".ctor" || methodName == ".cctor")) {
 				return Images.GetIcon(MemberIcon.Constructor, GetOverlayIcon(methodDefinition.Attributes), methodDefinition.HasFlag(MethodAttributes.Static));
 			}
 
@@ -137,7 +137,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		{
 			if (!settings.ShowInternalApi && !IsPublicAPI)
 				return FilterResult.Hidden;
-			if (settings.SearchTermMatches(MethodDefinition.Name) && settings.Language.ShowMember(MethodDefinition))
+			var metadata = MethodDefinition.Module.GetMetadataReader();
+			var methodDefinition = metadata.GetMethodDefinition(MethodDefinition.Handle);
+			if (settings.SearchTermMatches(metadata.GetString(methodDefinition.Name)) && settings.Language.ShowMember(MethodDefinition))
 				return FilterResult.Match;
 			else
 				return FilterResult.Hidden;

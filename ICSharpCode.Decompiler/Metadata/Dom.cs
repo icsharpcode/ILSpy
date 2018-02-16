@@ -137,7 +137,7 @@ namespace ICSharpCode.Decompiler.Metadata
 		AssemblyLinked,
 	}
 
-	public struct Resource
+	public struct Resource : IEquatable<Resource>
 	{
 		public PEFile Module { get; }
 		public ManifestResourceHandle Handle { get; }
@@ -150,6 +150,26 @@ namespace ICSharpCode.Decompiler.Metadata
 		}
 
 		ManifestResource This() => Module.GetMetadataReader().GetManifestResource(Handle);
+
+		public bool Equals(Resource other)
+		{
+			return Module == other.Module && Handle == other.Handle;
+		}
+
+		public override bool Equals(object obj)
+		{
+			if (obj is Resource res)
+				return Equals(res);
+			return false;
+		}
+
+		public override int GetHashCode()
+		{
+			return unchecked(982451629 * Module.GetHashCode() + 982451653 * MetadataTokens.GetToken(Handle));
+		}
+
+		public static bool operator ==(Resource lhs, Resource rhs) => lhs.Equals(rhs);
+		public static bool operator !=(Resource lhs, Resource rhs) => !lhs.Equals(rhs);
 
 		public string Name => Module.GetMetadataReader().GetString(This().Name);
 
@@ -449,24 +469,6 @@ namespace ICSharpCode.Decompiler.Metadata
 		public static bool operator ==(MethodDefinition lhs, MethodDefinition rhs) => lhs.Equals(rhs);
 		public static bool operator !=(MethodDefinition lhs, MethodDefinition rhs) => !lhs.Equals(rhs);
 
-		public string Name {
-			get {
-				var reader = Module.GetMetadataReader();
-				return reader.GetString(reader.GetMethodDefinition(Handle).Name);
-			}
-		}
-		/*
-		public TypeDefinition DeclaringType => new TypeDefinition(Module, This().GetDeclaringType());
-
-		public MethodAttributes Attributes => This().Attributes;
-		public MethodImplAttributes ImplAttributes => This().ImplAttributes;
-		public CustomAttributeHandleCollection CustomAttributes => This().GetCustomAttributes();
-		public DeclarativeSecurityAttributeHandleCollection DeclarativeSecurityAttributes => This().GetDeclarativeSecurityAttributes();
-		public bool HasFlag(MethodAttributes attribute) => (This().Attributes & attribute) == attribute;
-		public bool HasPInvokeInfo => !This().GetImport().Module.IsNil || HasFlag(MethodAttributes.PinvokeImpl);
-		public bool IsConstructor => This().IsConstructor(Module.GetMetadataReader());
-		public bool HasParameters => This().GetParameters().Count > 0;*/
-
 		public IList<SequencePoint> GetSequencePoints()
 		{
 			return Module.DebugInfo?.GetSequencePoints(this);
@@ -512,60 +514,6 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static bool operator ==(PropertyDefinition lhs, PropertyDefinition rhs) => lhs.Equals(rhs);
 		public static bool operator !=(PropertyDefinition lhs, PropertyDefinition rhs) => !lhs.Equals(rhs);
-		/*
-		public string Name {
-			get {
-				var reader = Module.GetMetadataReader();
-				return reader.GetString(reader.GetPropertyDefinition(Handle).Name);
-			}
-		}
-
-		public TypeDefinition DeclaringType => GetAccessors().First().Method.DeclaringType;
-
-		public MethodDefinition GetMethod => GetAccessors().FirstOrDefault(m => m.Kind == MethodSemanticsAttributes.Getter).Method;
-		public MethodDefinition SetMethod => GetAccessors().FirstOrDefault(m => m.Kind == MethodSemanticsAttributes.Setter).Method;
-		public ImmutableArray<MethodDefinition> OtherMethods => GetAccessors().Where(a => a.Kind == MethodSemanticsAttributes.Other).Select(a => a.Method).ToImmutableArray();
-
-		public PropertyAttributes Attributes => This().Attributes;
-		public bool HasFlag(PropertyAttributes attribute) => (This().Attributes & attribute) == attribute;
-		public bool HasParameters => Handle.HasParameters(Module.GetMetadataReader());
-		public CustomAttributeHandleCollection CustomAttributes => This().GetCustomAttributes();
-
-		public bool IsIndexer => HasMatchingDefaultMemberAttribute(out var attr);
-
-		public unsafe ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)> GetAccessors()
-		{
-			return GetAccessors(Module, (uint)(MetadataTokens.GetRowNumber(Handle) << 1) | 1);
-		}
-
-		internal static unsafe ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)> GetAccessors(PEFile module, uint encodedTag)
-		{
-			var reader = module.GetMetadataReader();
-			byte* startPointer = reader.MetadataPointer;
-			int offset = reader.GetTableMetadataOffset(TableIndex.MethodSemantics);
-
-			var methodDefRefSize = reader.GetReferenceSize(TableIndex.MethodDef);
-			(int startRow, int endRow) = reader.BinarySearchRange(TableIndex.MethodSemantics, 2 + methodDefRefSize, encodedTag, reader.IsSmallReference(TableIndex.MethodSemantics));
-			if (startRow == -1)
-				return ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)>.Empty;
-			var methods = new(MethodSemanticsAttributes Kind, MethodDefinition Method)[endRow - startRow + 1];
-			int rowSize = reader.GetTableRowSize(TableIndex.MethodSemantics);
-			for (int row = startRow; row <= endRow; row++) {
-				int rowOffset = row * rowSize;
-				byte* ptr = startPointer + offset + rowOffset;
-				var kind = (MethodSemanticsAttributes)(*(ushort*)ptr);
-				uint rowNo = methodDefRefSize == 2 ? *(ushort*)(ptr + 2) : *(uint*)(ptr + 2);
-				var handle = MetadataTokens.MethodDefinitionHandle((int)rowNo);
-				methods[row - startRow] = (kind, new MethodDefinition(module, handle));
-			}
-			return methods.ToImmutableArray();
-		}
-
-		public MethodSignature<TType> DecodeSignature<TType, TGenericContext>(ISignatureTypeProvider<TType, TGenericContext> provider, TGenericContext genericContext)
-		{
-			return This().DecodeSignature(provider, genericContext);
-		}
-		*/
 	}
 
 	public struct FieldDefinition : IEquatable<FieldDefinition>, IMetadataEntity
@@ -677,29 +625,6 @@ namespace ICSharpCode.Decompiler.Metadata
 
 		public static bool operator ==(EventDefinition lhs, EventDefinition rhs) => lhs.Equals(rhs);
 		public static bool operator !=(EventDefinition lhs, EventDefinition rhs) => !lhs.Equals(rhs);
-		/*
-		public string Name {
-			get {
-				var reader = Module.GetMetadataReader();
-				return reader.GetString(reader.GetEventDefinition(Handle).Name);
-			}
-		}
-
-		public TypeDefinition DeclaringType => GetAccessors().First().Method.DeclaringType;
-
-		public EventAttributes Attributes => This().Attributes;
-		public bool HasFlag(EventAttributes attribute) => (This().Attributes & attribute) == attribute;
-		public CustomAttributeHandleCollection CustomAttributes => This().GetCustomAttributes();
-
-		public MethodDefinition AddMethod => GetAccessors().FirstOrDefault(m => m.Kind == MethodSemanticsAttributes.Adder).Method;
-		public MethodDefinition RemoveMethod => GetAccessors().FirstOrDefault(m => m.Kind == MethodSemanticsAttributes.Remover).Method;
-		public MethodDefinition InvokeMethod => GetAccessors().FirstOrDefault(m => m.Kind == MethodSemanticsAttributes.Raiser).Method;
-		public ImmutableArray<MethodDefinition> OtherMethods => GetAccessors().Where(a => a.Kind == MethodSemanticsAttributes.Other).Select(a => a.Method).ToImmutableArray();
-
-		public unsafe ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)> GetAccessors()
-		{
-			return PropertyDefinition.GetAccessors(Module, (uint)(MetadataTokens.GetRowNumber(Handle) << 1) | 0);
-		}*/
 	}
 
 	public struct TypeDefinition : IEquatable<TypeDefinition>, IMetadataEntity

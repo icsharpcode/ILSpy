@@ -71,9 +71,9 @@ namespace ICSharpCode.Decompiler.Disassembler
 			}
 			bool isCompilerControlled = (methodDefinition.Attributes & MethodAttributes.MemberAccessMask) == MethodAttributes.PrivateScope;
 			if (isCompilerControlled) {
-				output.Write(DisassemblerHelpers.Escape(method.Name + "$PST" + MetadataTokens.GetToken(method.Handle).ToString("X8")));
+				output.Write(DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name) + "$PST" + MetadataTokens.GetToken(method.Handle).ToString("X8")));
 			} else {
-				output.Write(DisassemblerHelpers.Escape(method.Name));
+				output.Write(DisassemblerHelpers.Escape(metadata.GetString(methodDefinition.Name)));
 			}
 			var genericParameters = methodDefinition.GetGenericParameters();
 			if (genericParameters.Count > 0) {

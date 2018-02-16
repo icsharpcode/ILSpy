@@ -34,6 +34,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using ICSharpCode.Decompiler;
 using ICSharpCode.Decompiler.Documentation;
+using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.ILSpy.TextView;
 using ICSharpCode.ILSpy.TreeNodes;
 using ICSharpCode.TreeView;
@@ -576,44 +577,16 @@ namespace ICSharpCode.ILSpy
 		
 		public ILSpyTreeNode FindTreeNode(object reference)
 		{
-			/*if (reference is TypeReference)
-			{
-				return assemblyListTreeNode.FindTypeNode(((TypeReference)reference).Resolve());
+			switch (reference) {
+				case PEFile asm:
+					return assemblyListTreeNode.FindAssemblyNode(asm);
+				case Resource res:
+					return assemblyListTreeNode.FindResourceNode(res);
+				case IMetadataEntity entity:
+					throw new NotImplementedException();
+				default:
+					return null;
 			}
-			else if (reference is MethodReference)
-			{
-				return assemblyListTreeNode.FindMethodNode(((MethodReference)reference).Resolve());
-			}
-			else if (reference is FieldReference)
-			{
-				return assemblyListTreeNode.FindFieldNode(((FieldReference)reference).Resolve());
-			}
-			else if (reference is PropertyReference)
-			{
-				return assemblyListTreeNode.FindPropertyNode(((PropertyReference)reference).Resolve());
-			}
-			else if (reference is EventReference)
-			{
-				return assemblyListTreeNode.FindEventNode(((EventReference)reference).Resolve());
-			}
-			else if (reference is PEFile)
-			{
-				return assemblyListTreeNode.FindAssemblyNode((AssemblyDefinition)reference);
-			}
-			else if (reference is ModuleDefinition)
-			{
-				return assemblyListTreeNode.FindAssemblyNode((ModuleDefinition)reference);
-			}
-			else if (reference is Resource)
-			{
-				return null;
-				//return assemblyListTreeNode.FindResourceNode((Resource)reference);
-			}
-			else
-			{
-				return null;
-			}*/
-			return null;
 		}
 		
 		public void JumpToReference(object reference)

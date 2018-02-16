@@ -158,22 +158,6 @@ namespace ICSharpCode.Decompiler.Disassembler
 			if (operand == null)
 				throw new ArgumentNullException(nameof(operand));
 
-			/*VariableReference variableRef = operand as VariableReference;
-			if (variableRef != null) {
-				writer.WriteReference(variableRef.Index.ToString(), variableRef);
-				return;
-			}
-
-			ParameterReference paramRef = operand as ParameterReference;
-			if (paramRef != null) {
-				if (string.IsNullOrEmpty(paramRef.Name)) {
-					var paramDef = paramRef.Resolve();
-					writer.WriteReference((paramDef == null ? paramRef.Index : paramDef.Sequence).ToString(), paramRef);
-				} else
-					writer.WriteReference(Escape(paramRef.Name), paramRef);
-				return;
-			}*/
-
 			string s = operand as string;
 			if (s != null) {
 				WriteOperand(writer, s);

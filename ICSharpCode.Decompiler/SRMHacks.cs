@@ -58,5 +58,30 @@ namespace ICSharpCode.Decompiler
 
 			return list.ToImmutableArray();
 		}
+
+		/*
+		internal static unsafe ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)> GetAccessors(PEFile module, uint encodedTag)
+		{
+			var reader = module.GetMetadataReader();
+			byte* startPointer = reader.MetadataPointer;
+			int offset = reader.GetTableMetadataOffset(TableIndex.MethodSemantics);
+
+			var methodDefRefSize = reader.GetReferenceSize(TableIndex.MethodDef);
+			(int startRow, int endRow) = reader.BinarySearchRange(TableIndex.MethodSemantics, 2 + methodDefRefSize, encodedTag, reader.IsSmallReference(TableIndex.MethodSemantics));
+			if (startRow == -1)
+				return ImmutableArray<(MethodSemanticsAttributes Kind, MethodDefinition Method)>.Empty;
+			var methods = new(MethodSemanticsAttributes Kind, MethodDefinition Method)[endRow - startRow + 1];
+			int rowSize = reader.GetTableRowSize(TableIndex.MethodSemantics);
+			for (int row = startRow; row <= endRow; row++) {
+				int rowOffset = row * rowSize;
+				byte* ptr = startPointer + offset + rowOffset;
+				var kind = (MethodSemanticsAttributes)(*(ushort*)ptr);
+				uint rowNo = methodDefRefSize == 2 ? *(ushort*)(ptr + 2) : *(uint*)(ptr + 2);
+				var handle = MetadataTokens.MethodDefinitionHandle((int)rowNo);
+				methods[row - startRow] = (kind, new MethodDefinition(module, handle));
+			}
+			return methods.ToImmutableArray();
+		}
+		*/
 	}
 }

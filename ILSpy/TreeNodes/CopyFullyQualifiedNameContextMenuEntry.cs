@@ -1,5 +1,6 @@
-﻿using System.Windows;
-using Mono.Cecil;
+﻿using System;
+using System.Windows;
+using ICSharpCode.Decompiler.Metadata;
 
 namespace ICSharpCode.ILSpy.TreeNodes
 {
@@ -15,9 +16,9 @@ namespace ICSharpCode.ILSpy.TreeNodes
 
 		public void Execute(TextViewContext context)
 		{
-			/*var member = GetMemberNodeFromContext(context)?.Member;
+			var member = GetMemberNodeFromContext(context)?.Member;
 			if (member == null) return;
-			Clipboard.SetText(GetFullyQualifiedName(member));*/
+			Clipboard.SetText(GetFullyQualifiedName(member));
 		}
 
 		private IMemberTreeNode GetMemberNodeFromContext(TextViewContext context)
@@ -28,15 +29,16 @@ namespace ICSharpCode.ILSpy.TreeNodes
 		/// <summary>
 		/// Resolve full type name using .NET type representation for nested types.
 		/// </summary>
-		private string GetFullyQualifiedName(MemberReference member)
+		private string GetFullyQualifiedName(IMetadataEntity member)
 		{
-			if (member.DeclaringType != null) {
+			/*if (member.DeclaringType != null) {
 				if (member is TypeReference)
 					return GetFullyQualifiedName(member.DeclaringType) + "+" + member.Name;
 				else
 					return GetFullyQualifiedName(member.DeclaringType) + "." + member.Name;
 			}
-			return (member is TypeReference t ? t.Namespace + "." : "") + member.Name;
+			return (member is TypeReference t ? t.Namespace + "." : "") + member.Name;*/
+			throw new NotImplementedException();
 		}
 	}
 }
